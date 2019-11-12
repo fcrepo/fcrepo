@@ -20,7 +20,6 @@ package org.fcrepo.persistence.ocfl.api;
 
 import java.io.InputStream;
 
-import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
 /**
@@ -60,9 +59,9 @@ public interface OCFLObjectSession {
      *
      * @param subpath path of the file relative to a version of an ocfl object
      * @return contents of the file as an InputStream.
-     * @throws PersistentItemNotFoundException if the file or object is not found
+     * @throws PersistentStorageException if unable to read the file
      */
-    InputStream read(String subpath) throws PersistentItemNotFoundException;
+    InputStream read(String subpath) throws PersistentStorageException;
 
     /**
      * Read the state of the file at subpath from the specified version of the OCFL object.
@@ -70,9 +69,9 @@ public interface OCFLObjectSession {
      * @param subpath path relative to the object
      * @param version identifier of the version
      * @return the contents of the file from the specified version
-     * @throws PersistentItemNotFoundException if the file or object is not found
+     * @throws PersistentStorageException if unable to read the file
      */
-    InputStream read(String subpath, String version) throws PersistentItemNotFoundException;
+    InputStream read(String subpath, String version) throws PersistentStorageException;
 
     /**
      * Verify that the change set in this session can be committed. A PersistentStorageException is thrown if there

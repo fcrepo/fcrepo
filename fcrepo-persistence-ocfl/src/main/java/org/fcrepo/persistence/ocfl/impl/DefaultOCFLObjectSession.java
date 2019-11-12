@@ -39,6 +39,8 @@ import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.CommitOption;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.wisc.library.ocfl.api.model.ObjectVersionId;
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
@@ -53,6 +55,8 @@ import edu.wisc.library.ocfl.api.model.CommitInfo;
  * @author bbpennel
  */
 public class DefaultOCFLObjectSession implements OCFLObjectSession {
+
+    private static final Logger log = LoggerFactory.getLogger(DefaultOCFLObjectSession.class);
 
     private String objectIdentifier;
 
@@ -90,20 +94,25 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
      */
     @Override
     public synchronized void write(final String subpath, final InputStream stream) throws PersistentStorageException {
-        assertSessionOpen();
-
         // Determine the staging path for the incoming content
         final var stagedPath = resolveStagedPath(subpath);
-        final var parentPath = stagedPath.getParent();
-
         try {
+            assertSessionOpen();
+
+            final var parentPath = stagedPath.getParent();
+
             // Fill in any missing parent directories
             Files.createDirectories(parentPath);
             // write contents to subpath within the staging path
             Files.copy(stream, stagedPath, StandardCopyOption.REPLACE_EXISTING);
-            stream.close();
         } catch (final IOException e) {
             throw new PersistentStorageException("Unable to persist content to " + stagedPath, e);
+        } finally {
+            try {
+                stream.close();
+            } catch (final IOException e) {
+                log.error("Failed to close inputstream while writing {}", subpath, e);
+            }
         }
     }
 
@@ -155,7 +164,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         if (!isStagingEmpty()) {
             cleanupStaging();
             deletePaths = new HashSet<>();
-        } else if (!ocflRepository.containsObject(objectIdentifier)) {
+        } else if (isNewObject()) {
             // fail if attempting to delete object that does not exist and has no staged changes
             throw new PersistentItemNotFoundException(format(
                     "Cannot delete object %s, it does not exist", objectIdentifier));
@@ -191,7 +200,9 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
      * {@inheritDoc}
      */
     @Override
-    public InputStream read(final String subpath) throws PersistentItemNotFoundException {
+    public InputStream read(final String subpath) throws PersistentStorageException {
+        assertSessionOpen();
+
         final var stagedPath = resolveStagedPath(subpath);
 
         if (hasStagedChanges(stagedPath)) {
@@ -215,7 +226,9 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
      * {@inheritDoc}
      */
     @Override
-    public InputStream read(final String subpath, final String version) throws PersistentItemNotFoundException {
+    public InputStream read(final String subpath, final String version) throws PersistentStorageException {
+        assertSessionOpen();
+
         // If the object was deleted, then only uncommitted staged files can be available
         if (objectDeleted) {
             throw new PersistentItemNotFoundException(format("Could not find %s within object %s",
@@ -234,7 +247,10 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
                 throw new PersistentItemNotFoundException(format("Could not find %s within object %s version %s",
                         subpath, objectIdentifier, version.getVersionId()));
             }
-            return file.getStream();
+            final var stream = file.getStream();
+            // Disable automatic fixity check
+            stream.on(false);
+            return stream;
         } catch (final NotFoundException e) {
             throw new PersistentItemNotFoundException(format(
                     "Unable to read %s from object %s version %s, object was not found.",
@@ -324,21 +340,21 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
             if (ocflRepository.hasStagedChanges(objectIdentifier)) {
                 // Persist the current changes to the mutable head, and then commit the head as a version
                 ocflRepository.stageChanges(ObjectVersionId.head(objectIdentifier),
-                        new CommitInfo(),
+                        null,
                         commitChangeUpdater);
-                return ocflRepository.commitStagedChanges(objectIdentifier, new CommitInfo())
+                return ocflRepository.commitStagedChanges(objectIdentifier, null)
                         .getVersionId().toString();
             } else {
                 // Commit directly to a new version
                 return ocflRepository.updateObject(ObjectVersionId.head(objectIdentifier),
-                        new CommitInfo(),
+                        null,
                         commitChangeUpdater)
                         .getVersionId().toString();
             }
         } else {
             // perform commit to mutable head version
             return ocflRepository.stageChanges(ObjectVersionId.head(objectIdentifier),
-                    new CommitInfo(),
+                    null,
                     commitChangeUpdater)
                     .getVersionId().toString();
         }
@@ -372,7 +388,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         return stagingPath.resolve(subpath);
     }
 
-    private synchronized void assertSessionOpen() throws PersistentSessionClosedException {
+    private void assertSessionOpen() throws PersistentSessionClosedException {
         if (sessionClosed) {
             throw new PersistentSessionClosedException("Cannot perform operation, session is closed");
         }

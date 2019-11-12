@@ -43,7 +43,6 @@ import org.junit.rules.TemporaryFolder;
 
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import edu.wisc.library.ocfl.api.OcflObjectVersion;
-import edu.wisc.library.ocfl.api.model.CommitInfo;
 import edu.wisc.library.ocfl.api.model.ObjectDetails;
 import edu.wisc.library.ocfl.api.model.ObjectVersionId;
 import edu.wisc.library.ocfl.api.model.VersionId;
@@ -133,7 +132,7 @@ public class DefaultOCFLObjectSessionTest {
     public void write_ReplaceFile_NewVersion_ExistingObject() throws Exception {
         final var preStagingPath = tempFolder.newFolder("prestage").toPath();
         Files.writeString(preStagingPath.resolve(FILE1_SUBPATH), FILE_CONTENT1);
-        ocflRepository.putObject(ObjectVersionId.head(OBJ_ID), preStagingPath, new CommitInfo());
+        ocflRepository.putObject(ObjectVersionId.head(OBJ_ID), preStagingPath, null);
 
         session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT2));
         final String versionId = session.commit(NEW_VERSION);
@@ -148,7 +147,7 @@ public class DefaultOCFLObjectSessionTest {
     public void write_ReplaceFileInMHead_ExistingObject() throws Exception {
         final var preStagingPath = tempFolder.newFolder("prestage").toPath();
         Files.writeString(preStagingPath.resolve(FILE1_SUBPATH), FILE_CONTENT1);
-        ocflRepository.stageChanges(ObjectVersionId.head(OBJ_ID), new CommitInfo(), updater -> {
+        ocflRepository.stageChanges(ObjectVersionId.head(OBJ_ID), null, updater -> {
             updater.addPath(preStagingPath, "", MOVE_SOURCE);
         });
 
@@ -200,7 +199,7 @@ public class DefaultOCFLObjectSessionTest {
     @Test(expected = PersistentItemNotFoundException.class)
     public void read_FileNotExist() throws Exception {
         Files.writeString(stagingPath.resolve(FILE1_SUBPATH), FILE_CONTENT1);
-        ocflRepository.putObject(ObjectVersionId.head(OBJ_ID), stagingPath, new CommitInfo());
+        ocflRepository.putObject(ObjectVersionId.head(OBJ_ID), stagingPath, null);
 
         session.read(FILE2_SUBPATH);
     }
@@ -217,7 +216,8 @@ public class DefaultOCFLObjectSessionTest {
         session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
         session.commit(MUTABLE_HEAD);
 
-        assertStreamMatches(FILE_CONTENT1, session.read(FILE1_SUBPATH));
+        final var session2 = makeNewSession();
+        assertStreamMatches(FILE_CONTENT1, session2.read(FILE1_SUBPATH));
     }
 
     @Test
@@ -225,7 +225,8 @@ public class DefaultOCFLObjectSessionTest {
         session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
         session.commit(NEW_VERSION);
 
-        assertStreamMatches(FILE_CONTENT1, session.read(FILE1_SUBPATH));
+        final var session2 = makeNewSession();
+        assertStreamMatches(FILE_CONTENT1, session2.read(FILE1_SUBPATH));
     }
 
     @Test
@@ -258,8 +259,9 @@ public class DefaultOCFLObjectSessionTest {
         session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
         session.commit(NEW_VERSION);
 
+        final var session2 = makeNewSession();
         // Try a path that doesn't exist
-        session.read(FILE2_SUBPATH, "v1");
+        session2.read(FILE2_SUBPATH, "v1");
     }
 
     @Test(expected = PersistentItemNotFoundException.class)
@@ -273,8 +275,9 @@ public class DefaultOCFLObjectSessionTest {
         session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
         session.commit(NEW_VERSION);
 
+        final var session2 = makeNewSession();
         // version that hasn't been created yet
-        session.read(FILE2_SUBPATH, "v99");
+        session2.read(FILE2_SUBPATH, "v99");
     }
 
     @Test
@@ -282,7 +285,8 @@ public class DefaultOCFLObjectSessionTest {
         session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
         session.commit(NEW_VERSION);
 
-        assertStreamMatches(FILE_CONTENT1, session.read(FILE1_SUBPATH));
+        final var session2 = makeNewSession();
+        assertStreamMatches(FILE_CONTENT1, session2.read(FILE1_SUBPATH));
     }
 
     // Verify that subpaths with parent directories are created and readable
