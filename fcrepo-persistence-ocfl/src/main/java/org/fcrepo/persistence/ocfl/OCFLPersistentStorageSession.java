@@ -71,6 +71,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
      * Constructor
      *
      * @param sessionId session id.
+     * @param fedoraOcflIndex the index
      */
     protected OCFLPersistentStorageSession(final String sessionId, final FedoraToOCFLObjectIndex fedoraOcflIndex) {
         this.sessionId = sessionId;

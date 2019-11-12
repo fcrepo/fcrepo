@@ -17,12 +17,11 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import java.lang.reflect.ParameterizedType;
-
-
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.ocfl.api.Persister;
+
+import java.lang.reflect.ParameterizedType;
 
 /**
  * A base abstract persister class
