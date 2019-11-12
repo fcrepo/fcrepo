@@ -17,12 +17,12 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
+
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
-
-import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
-import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
 
 
 /**
@@ -32,8 +32,27 @@ import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
  */
 public class UpdateNonRdfSourceOperationBuilder implements NonRdfSourceOperationBuilder {
 
-    protected UpdateNonRdfSourceOperationBuilder(final String rescId, final String handling, final URI contentUri) {
+    private final String resourceId;
 
+    private InputStream contentStream;
+
+    private String externalType;
+
+    private URI externalUri;
+
+    protected UpdateNonRdfSourceOperationBuilder(final String rescId, final InputStream stream) {
+        this(rescId);
+        this.contentStream = stream;
+    }
+
+    protected UpdateNonRdfSourceOperationBuilder(final String rescId, final String handling, final URI contentUri) {
+        this(rescId);
+        this.externalType = handling;
+        this.externalUri = contentUri;
+    }
+
+    private UpdateNonRdfSourceOperationBuilder(final String rescId) {
+        this.resourceId = rescId;
     }
 
     @Override
@@ -56,24 +75,6 @@ public class UpdateNonRdfSourceOperationBuilder implements NonRdfSourceOperation
 
     @Override
     public NonRdfSourceOperationBuilder contentSize(final long size) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public NonRdfSourceOperationBuilder content(final InputStream content) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public NonRdfSourceOperationBuilder externalContentURI(final URI externalUri) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public NonRdfSourceOperationBuilder externalContentHandling(final String externalType) {
         // TODO Auto-generated method stub
         return null;
     }
