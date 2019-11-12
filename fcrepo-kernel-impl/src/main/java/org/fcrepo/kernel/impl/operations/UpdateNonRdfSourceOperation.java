@@ -19,6 +19,10 @@ package org.fcrepo.kernel.impl.operations;
 
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
 
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Collection;
+
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 
 /**
@@ -28,8 +32,35 @@ import org.fcrepo.kernel.api.operations.ResourceOperationType;
  */
 public class UpdateNonRdfSourceOperation extends AbstractNonRdfSourceOperation {
 
-    protected UpdateNonRdfSourceOperation(final String rescId) {
-        super(rescId);
+    /**
+     * Constructor for external content.
+     *
+     * @param rescId the internal identifier.
+     * @param externalContentURI the URI of the external content.
+     * @param externalHandling the type of external content handling (REDIRECT, PROXY)
+     * @param mimeType the mime-type of the content.
+     * @param filename the filename.
+     * @param digests the checksum digests.
+     */
+    protected UpdateNonRdfSourceOperation(final String rescId, final URI externalContentURI,
+                                            final String externalHandling, final String mimeType, final String filename,
+                                            final Collection<URI> digests) {
+        super(rescId, externalContentURI, externalHandling, mimeType, filename, digests);
+    }
+
+    /**
+     * Constructor for internal binaries.
+     *
+     * @param rescId the internal identifier.
+     * @param content the stream of the content.
+     * @param mimeType the mime-type of the content.
+     * @param contentSize the size of the inputstream.
+     * @param filename the filename.
+     * @param digests the checksum digests.
+     */
+    protected UpdateNonRdfSourceOperation(final String rescId, final InputStream content, final String mimeType,
+                                            final long contentSize, final String filename, final Collection<URI> digests) {
+        super(rescId, content, mimeType, contentSize, filename, digests);
     }
 
     @Override

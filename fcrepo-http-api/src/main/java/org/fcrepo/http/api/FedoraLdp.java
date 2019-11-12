@@ -133,6 +133,7 @@ import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.CreateResourceService;
 import org.fcrepo.kernel.api.services.FixityService;
+import org.fcrepo.kernel.api.services.UpdateResourceService;
 import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
@@ -162,6 +163,8 @@ public class FedoraLdp extends ContentExposingResource {
     @Inject private FedoraHttpConfiguration httpConfiguration;
 
     @Inject private CreateResourceService createResourceService;
+
+    @Inject private UpdateResourceService updateResourceService;
 
     @Inject
     private DeleteResourceService deleteResourceService;
@@ -438,20 +441,22 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String fedoraId = identifierConverter().convert(externalPath());
 
+        final String filename = contentDisposition.getFileName();
+
+        final long size = contentDisposition.getSize();
+
         // TODO: Refactor to check preconditions
         //evaluateRequestPreconditions(request, servletResponse, resource, transaction);
 
         if (isBinary(interactionModel, requestContentType.toString(), requestBodyStream != null,
                 extContent != null)) {
-            // TODO: Implement UpdateResourceService
-           // createResourceService.perform(transaction.getId(), fedoraId, slug, contentType, links, digest,
-           //         requestBodyStream, extContent);
+            updateResourceService.perform(transaction.getId(), fedoraId, filename, contentType, checksums,
+                    requestBodyStream, size, extContent);
         } else {
             final Model model = parseBodyAsModel(requestBodyStream, contentType, fedoraId);
             // TODO: Do translation services.
             // TODO: Implement UpdateResourceService
-            //createResourceService.perform(transaction.getId(), fedoraId, slug, contentType, links,
-            //        model);
+            updateResourceService.perform(transaction.getId(), fedoraId, contentType, model);
         }
 
         // TODO: How to generate a response.
@@ -592,10 +597,14 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String fedoraId = identifierConverter().convert(externalPath());
 
+        final String filename = contentDisposition.getFileName();
+
+        final long size = contentDisposition.getSize();
+
         if (isBinary(interactionModel, requestContentType.toString(), requestContentType != null,
                 extContent != null)) {
-            createResourceService.perform(transaction.getId(), fedoraId, slug, contentType, links, checksums,
-                    requestBodyStream, extContent);
+            createResourceService.perform(transaction.getId(), fedoraId, slug, filename, contentType, links, checksums,
+                    requestBodyStream, size, extContent);
         } else {
             final Model model = parseBodyAsModel(requestBodyStream, contentType, fedoraId);
             // TODO: Do translation services.
