@@ -20,17 +20,18 @@ package org.fcrepo.http.commons.api.rdf;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-
 import static org.junit.Assert.assertEquals;
-
-import java.util.UUID;
-
-import javax.ws.rs.core.UriBuilder;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import javax.ws.rs.core.UriBuilder;
+
+import java.util.UUID;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class HttpIdentifierConverterTest {
@@ -52,30 +53,54 @@ public class HttpIdentifierConverterTest {
     @Test(expected = IllegalArgumentException.class)
     public void testBlankUri() {
         final String testUri = "";
-        final String fedoraId = converter.convert(testUri);
+        final String fedoraId = converter.toInternalId(testUri);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testBlankId() {
         final String testId = "";
-        final String fedoraId = converter.reverse().convert(testId);
+        final String fedoraId = converter.toExternalId(testId);
+    }
+
+    @Test
+    public void testinExternalDomainSuccess() {
+        final String testURI = uriBase + "/someurl/thatWeWant";
+        assertTrue(converter.inExternalDomain(testURI));
+    }
+
+    @Test
+    public void testinExternalDomainFailure() {
+        final String testURI = "http://someplace.com/whatHappened";
+        assertFalse(converter.inExternalDomain(testURI));
+    }
+
+    @Test
+    public void testinInternalDomainSuccess() {
+        final String testID = "info:fedora/myLittleResource";
+        assertTrue(converter.inInternalDomain(testID));
+    }
+
+    @Test
+    public void testinInternalDomainFailure() {
+        final String testID = "info:test/myLittleResource";
+        assertFalse(converter.inInternalDomain(testID));
     }
 
     @Test
     public void testRootUriWithTrailingSlash() {
         final String testUri = uriBase + "/";
-        final String fedoraId = converter.convert(testUri);
+        final String fedoraId = converter.toInternalId(testUri);
         assertEquals("info:fedora/", fedoraId);
-        final String httpUri = converter.reverse().convert(fedoraId);
+        final String httpUri = converter.toExternalId(fedoraId);
         assertEquals(testUri, httpUri);
     }
 
     @Test
     public void testRootUriWithoutTrailingSlash() {
         final String testUri = uriBase;
-        final String fedoraId = converter.convert(testUri);
+        final String fedoraId = converter.toInternalId(testUri);
         assertEquals("info:fedora/", fedoraId);
-        final String httpUri = converter.reverse().convert(fedoraId);
+        final String httpUri = converter.toExternalId(fedoraId);
         // We also return the trailing slash.
         assertEquals(testUri + "/", httpUri);
     }
@@ -84,9 +109,9 @@ public class HttpIdentifierConverterTest {
     public void testFirstLevel() {
         final String baseUid = getUniqueId();
         final String testUri = uriBase + "/" + baseUid;
-        final String fedoraId = converter.convert(testUri);
+        final String fedoraId = converter.toInternalId(testUri);
         assertEquals("info:fedora/" + baseUid, fedoraId);
-        final String httpUri = converter.reverse().convert(fedoraId);
+        final String httpUri = converter.toExternalId(fedoraId);
         assertEquals(testUri, httpUri);
     }
 
@@ -95,9 +120,9 @@ public class HttpIdentifierConverterTest {
         final String baseUid = getUniqueId();
         final String baseUrl = uriBase + "/" + baseUid;
         final String testUri = baseUrl + "/" + FCR_ACL;
-        final String fedoraId = converter.convert(testUri);
+        final String fedoraId = converter.toInternalId(testUri);
         assertEquals("info:fedora/" + baseUid, fedoraId);
-        final String httpUri = converter.reverse().convert(fedoraId);
+        final String httpUri = converter.toExternalId(fedoraId);
         assertEquals(baseUrl, httpUri);
     }
 
@@ -106,9 +131,9 @@ public class HttpIdentifierConverterTest {
         final String baseUid = getUniqueId();
         final String baseUrl = uriBase + "/" + baseUid;
         final String testUri = baseUrl + "/" + FCR_METADATA;
-        final String fedoraId = converter.convert(testUri);
+        final String fedoraId = converter.toInternalId(testUri);
         assertEquals("info:fedora/" + baseUid + "/" + FCR_METADATA, fedoraId);
-        final String httpUri = converter.reverse().convert(fedoraId);
+        final String httpUri = converter.toExternalId(fedoraId);
         assertEquals(testUri, httpUri);
     }
 
@@ -117,9 +142,9 @@ public class HttpIdentifierConverterTest {
         final String baseUid = getUniqueId();
         final String baseUrl = uriBase + "/" + baseUid;
         final String testUri = baseUrl + "/" + FCR_VERSIONS;
-        final String fedoraId = converter.convert(testUri);
+        final String fedoraId = converter.toInternalId(testUri);
         assertEquals("info:fedora/" + baseUid, fedoraId);
-        final String httpUri = converter.reverse().convert(fedoraId);
+        final String httpUri = converter.toExternalId(fedoraId);
         assertEquals(baseUrl, httpUri);
     }
 
@@ -129,9 +154,9 @@ public class HttpIdentifierConverterTest {
         final String baseUid = getUniqueId();
         final String baseUrl = uriBase + "/" + baseUid;
         final String testUri = baseUrl + "/" + FCR_VERSIONS + "/" + memento;
-        final String fedoraId = converter.convert(testUri);
+        final String fedoraId = converter.toInternalId(testUri);
         assertEquals("info:fedora/" + baseUid, fedoraId);
-        final String httpUri = converter.reverse().convert(fedoraId);
+        final String httpUri = converter.toExternalId(fedoraId);
         assertEquals(baseUrl, httpUri);
     }
 
@@ -139,9 +164,9 @@ public class HttpIdentifierConverterTest {
     public void testSecondLevel() {
         final String baseUid = getUniqueId() + "/" + getUniqueId();
         final String testUri = uriBase + "/" + baseUid;
-        final String fedoraId = converter.convert(testUri);
+        final String fedoraId = converter.toInternalId(testUri);
         assertEquals("info:fedora/" + baseUid, fedoraId);
-        final String httpUri = converter.reverse().convert(fedoraId);
+        final String httpUri = converter.toExternalId(fedoraId);
         assertEquals(testUri, httpUri);
     }
 
@@ -150,9 +175,9 @@ public class HttpIdentifierConverterTest {
         final String baseUid = getUniqueId() + "/" + getUniqueId();
         final String baseUrl = uriBase + "/" + baseUid;
         final String testUri = baseUrl + "/" + FCR_ACL;
-        final String fedoraId = converter.convert(testUri);
+        final String fedoraId = converter.toInternalId(testUri);
         assertEquals("info:fedora/" + baseUid, fedoraId);
-        final String httpUri = converter.reverse().convert(fedoraId);
+        final String httpUri = converter.toExternalId(fedoraId);
         assertEquals(baseUrl, httpUri);
     }
 
@@ -161,9 +186,9 @@ public class HttpIdentifierConverterTest {
         final String baseUid = getUniqueId() + "/" + getUniqueId();
         final String baseUrl = uriBase + "/" + baseUid;
         final String testUri = baseUrl + "/" + FCR_METADATA;
-        final String fedoraId = converter.convert(testUri);
+        final String fedoraId = converter.toInternalId(testUri);
         assertEquals("info:fedora/" + baseUid + "/" + FCR_METADATA, fedoraId);
-        final String httpUri = converter.reverse().convert(fedoraId);
+        final String httpUri = converter.toExternalId(fedoraId);
         assertEquals(testUri, httpUri);
     }
 
@@ -172,9 +197,9 @@ public class HttpIdentifierConverterTest {
         final String baseUid = getUniqueId() + "/" + getUniqueId();
         final String baseUrl = uriBase + "/" + baseUid;
         final String testUri = baseUrl + "/" + FCR_VERSIONS;
-        final String fedoraId = converter.convert(testUri);
+        final String fedoraId = converter.toInternalId(testUri);
         assertEquals("info:fedora/" + baseUid, fedoraId);
-        final String httpUri = converter.reverse().convert(fedoraId);
+        final String httpUri = converter.toExternalId(fedoraId);
         assertEquals(baseUrl, httpUri);
     }
 
@@ -184,9 +209,9 @@ public class HttpIdentifierConverterTest {
         final String baseUid = getUniqueId() + "/" + getUniqueId();
         final String baseUrl = uriBase + "/" + baseUid;
         final String testUri = baseUrl + "/" + FCR_VERSIONS + "/" + memento;
-        final String fedoraId = converter.convert(testUri);
+        final String fedoraId = converter.toInternalId(testUri);
         assertEquals("info:fedora/" + baseUid, fedoraId);
-        final String httpUri = converter.reverse().convert(fedoraId);
+        final String httpUri = converter.toExternalId(fedoraId);
         assertEquals(baseUrl, httpUri);
     }
 
@@ -195,9 +220,9 @@ public class HttpIdentifierConverterTest {
         final String baseUid = getUniqueId();
         final String baseUrl = uriBase + "/" + baseUid;
         final String testUri = baseUrl + "/" + FCR_ACL + "/" + FCR_ACL;
-        final String fedoraId = converter.convert(testUri);
+        final String fedoraId = converter.toInternalId(testUri);
         assertEquals("info:fedora/" + baseUid, fedoraId);
-        final String httpUri = converter.reverse().convert(fedoraId);
+        final String httpUri = converter.toExternalId(fedoraId);
         assertEquals(baseUrl, httpUri);
     }
 
