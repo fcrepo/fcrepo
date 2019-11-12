@@ -27,7 +27,7 @@ import java.io.File;
 
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.INTERNAL_FEDORA_DIRECTORY;
-import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.resolveSubpath;
+import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.relativizeSubpath;
 import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.writeRDF;
 
 /**
@@ -51,7 +51,7 @@ public class CreateRDFSourcePersister extends AbstractPersister<RdfSourceOperati
     public void persist(final OCFLObjectSession session, final RdfSourceOperation operation,
                         final FedoraOCFLMapping mapping) throws PersistentStorageException {
         log.debug("creating RDFSource ({}) to {}", operation.getResourceId(), mapping.getOcflObjectId());
-        final String subpath = resolveSubpath(mapping.getParentFedoraResourceId(), operation.getResourceId());
+        final String subpath = relativizeSubpath(mapping.getParentFedoraResourceId(), operation.getResourceId());
 
         //write user triples
         writeRDF(session, operation.getTriples(), subpath);

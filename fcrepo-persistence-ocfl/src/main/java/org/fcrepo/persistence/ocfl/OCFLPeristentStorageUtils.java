@@ -64,13 +64,13 @@ public class OCFLPeristentStorageUtils {
     public static String DEFAULT_RDF_EXTENSION = ".n3";
 
     /**
-     * Resolves the subpath of the resourceId based on the ancestor's resource id.
+     * Returns the relative subpath of the resourceId based on the ancestor's resource id.
      *
      * @param ancestorResourceId The ancestor resource
      * @param resourceId         The identifier of the resource whose subpath you wish to resolve.
      * @return The resolved subpath
      */
-    public static String resolveSubpath(final String ancestorResourceId, final String resourceId) {
+    public static String relativizeSubpath(final String ancestorResourceId, final String resourceId) {
         if (resourceId.startsWith(ancestorResourceId)) {
             return resourceId.substring(ancestorResourceId.length() + 1);
         }
