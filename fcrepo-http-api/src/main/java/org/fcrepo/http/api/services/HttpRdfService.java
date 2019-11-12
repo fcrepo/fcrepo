@@ -80,18 +80,19 @@ public class HttpRdfService {
         while (stmtIterator.hasNext()) {
             final Statement stmt = stmtIterator.nextStatement();
             final String originalSubj = stmt.getSubject().getURI();
-            final String subj = idTranslator.convert(originalSubj);
+            final String subj = idTranslator.inExternalDomain(originalSubj) ?
+                idTranslator.toInternalId(originalSubj) : originalSubj;
 
             RDFNode obj = stmt.getObject();
             if (stmt.getObject().isResource()) {
                 final String objString = stmt.getObject().asResource().getURI();
-                obj = model.getResource(idTranslator.convert(objString));
+                obj = model.getResource(idTranslator.inExternalDomain(objString) ?
+                    idTranslator.toInternalId(objString) : objString);
             }
 
             if (!subj.equals(originalSubj) || !obj.equals(stmt.getObject())) {
                 insertStatements.add(new StatementImpl(model.getResource(subj),
-                        stmt.getPredicate(),
-                        obj));
+                    stmt.getPredicate(), obj));
 
                 stmtIterator.remove();
             }

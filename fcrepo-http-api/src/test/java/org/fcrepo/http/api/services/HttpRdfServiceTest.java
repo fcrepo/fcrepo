@@ -21,15 +21,10 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.when;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.ws.rs.core.MediaType;
-//import javax.ws.rs.BadRequestException;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.graph.Triple;
-//import org.junit.Ignore;
-import org.fcrepo.kernel.api.exception.MalformedRdfException;
-import org.junit.Ignore;
 import org.junit.Test;
 import java.io.InputStream;
 import java.io.ByteArrayInputStream;
@@ -43,8 +38,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import org.slf4j.Logger;
-
 /**
  * Unit tests for HttpRdfService
  * @author bseeger
@@ -52,9 +45,6 @@ import org.slf4j.Logger;
  */
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class HttpRdfServiceTest {
-
-
-    private static final Logger log = getLogger(HttpRdfService.class);
 
     @Mock
     HttpIdentifierConverter idTranslator;
@@ -73,33 +63,16 @@ public class HttpRdfServiceTest {
                 "<%s>  dc:title 'fancy title' ;" +
                 "  dcterms:isPartOf <%s>, <%s> . ", fedoraUri, externalUri, fedoraUri);
 
-
     private final MediaType contentType = new MediaType("text", "turtle");
     private final InputStream requestBodyStream = new ByteArrayInputStream(rdfString.getBytes());
 
-    private final String badRdfString = String.format("@prefix dc: <http://purl.org/dc/elements/1.1/> . \n" +
-            "@prefix dcterms: <http://purl.org/dc/terms/> .\n" +
-            "<%s> dc:title ; 'fancy title' . \n" +
-            " dcterms:isPartOf <%s>; \n" +
-            " dcterms:isPartOf <%s>.\n", fedoraUri, externalUri, fedoraUri);
-    private final InputStream badRequestStream = new ByteArrayInputStream(rdfString.getBytes());
-
-    @Test (expected = MalformedRdfException.class)
-    @Ignore
-    public void testGetModelWithBadRdf() throws Exception {
-        when(idTranslator.convert(fedoraUri)).thenReturn(fedoraId);
-        when(resource.getId()).thenReturn(fedoraId);
-
-        final Model model = httpRdfService.bodyToInternalModel(fedoraUri, badRequestStream,
-            contentType);
-    }
-
     @Test
-    @Ignore
     public void testGetModelFromInputStream() {
-        when(idTranslator.convert(fedoraUri)).thenReturn(fedoraId);
-        when(resource.getId()).thenReturn(fedoraId);
+        when(idTranslator.toInternalId(fedoraUri)).thenReturn(fedoraId);
+        when(idTranslator.inExternalDomain(fedoraUri)).thenReturn(true);
+        when(idTranslator.inExternalDomain(externalUri)).thenReturn(false);
 
+        when(resource.getId()).thenReturn(fedoraId);
 
         final Model model = httpRdfService.bodyToInternalModel(fedoraUri, requestBodyStream,
             contentType);
@@ -110,9 +83,10 @@ public class HttpRdfServiceTest {
     }
 
     @Test
-    @Ignore
     public void testGetRdfStreamFromInputStream() {
-        when(idTranslator.convert(fedoraUri)).thenReturn("info:fedora/resource1");
+        when(idTranslator.toInternalId(fedoraUri)).thenReturn("info:fedora/resource1");
+        when(idTranslator.inExternalDomain(fedoraUri)).thenReturn(true);
+        when(idTranslator.inExternalDomain(externalUri)).thenReturn(false);
 
         final RdfStream stream = httpRdfService.bodyToInternalStream(fedoraUri, requestBodyStream,
             contentType);
@@ -127,12 +101,7 @@ public class HttpRdfServiceTest {
 
     private void verifyTriples(final RdfStream rdfStream) {
 
-        final Integer numOutsideDomain = Integer.valueOf(0);
-
         final List<Triple> triples = rdfStream.map(triple -> {
-            log.info("\nTriple: s: '{}' p: '{}' o: '{}'\n", triple.getSubject().getURI(),
-                triple.getPredicate().getURI(),
-                triple.getObject().isURI() ? triple.getObject().getURI() : "notta");
             assertFalse(triple.getSubject().getURI().equals(fedoraUri));
             assertFalse(triple.getObject().isURI() && triple.getObject().toString().equals(fedoraUri));
             return triple;
@@ -140,7 +109,6 @@ public class HttpRdfServiceTest {
         .filter(triple -> triple.getObject().isURI() && triple.getObject().getURI().equals(externalUri))
         .collect(Collectors.toList());
 
-        log.info("external URI triples: {}", triples.size());
         assertTrue(triples.size() == 1);
     }
 }
