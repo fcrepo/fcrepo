@@ -978,8 +978,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                                              final MediaType contentType,
                                              final RdfStream resourceTriples) throws MalformedRdfException {
 
-        final Model inputModel = httpRdfService.bodyToInternalModel(resource, requestBodyStream, contentType,
-                                                                    httpIdentifierConverter);
+        final Model inputModel = httpRdfService.bodyToInternalModel(resource.getId(), requestBodyStream, contentType);
+
 
         ensureValidMemberRelation(inputModel);
 

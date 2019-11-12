@@ -25,23 +25,27 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.MediaType;
 import org.apache.jena.atlas.RuntimeIOException;
+import org.apache.jena.rdf.model.impl.StatementImpl;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RiotException;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.models.FedoraResource;
 import org.slf4j.Logger;
 
 /**
- * A service that will translate the resourceURI to fedora ID in the Rdf InputStream
+ * A service that will translate the resourceURI to Fedora ID in the Rdf InputStream
  *
  * @author bseeger
  * @author bbpennel
@@ -50,61 +54,71 @@ import org.slf4j.Logger;
 
 public class HttpRdfService {
 
-    private static final Logger LOGGER = getLogger(HttpRdfService.class);
+    private static final Logger log = getLogger(HttpRdfService.class);
+
+    @Inject
+    private HttpIdentifierConverter idTranslator;
 
     /**
      * Parse the request body to a Model, with the URI to Fedora ID translations done.
      *
-     * @param resource the fedora resource
+     * @param resourceId the ID of the Fedora resource
      * @param stream the input stream containing the RDF
      * @param contentType the media type of the RDF
-     * @param idTranslator the uri to fedora resource ID translator
-     * @return RdfStream containing triples from request body, with fedora IDs in them
+     * @return RdfStream containing triples from request body, with Fedora IDs in them
      * @throws MalformedRdfException in case rdf json cannot be parsed
      * @throws BadRequestException in the case where the RDF syntax is bad
      */
-    public Model bodyToInternalModel(final FedoraResource resource, final InputStream stream,
-                                     final MediaType contentType, final HttpIdentifierConverter idTranslator)
+    public Model bodyToInternalModel(final String resourceId, final InputStream stream,
+                                     final MediaType contentType)
                                      throws RepositoryRuntimeException, BadRequestException {
 
-        final Model model = parseBodyAsModel(stream, contentType, resource);
-
+        final Model model = parseBodyAsModel(stream, contentType, resourceId);
+        final List<Statement> insertStatements = new ArrayList<Statement>();
         final StmtIterator stmtIterator = model.listStatements();
-        while (stmtIterator.hasNext()) {
-            final Statement stmt = stmtIterator.next();
 
-            String subj = stmt.getSubject().getURI().toString();
-            subj = subj.replace(subj, idTranslator.convert(subj));
-            String obj = stmt.getObject().asLiteral().toString();
-            if (stmt.getObject().isURIResource()) {
-                obj = stmt.getObject().asLiteral().toString().replace(obj, idTranslator.convert(obj));
+        while (stmtIterator.hasNext()) {
+            final Statement stmt = stmtIterator.nextStatement();
+            final String originalSubj = stmt.getSubject().getURI();
+            final String subj = idTranslator.convert(originalSubj);
+
+            RDFNode obj = stmt.getObject();
+            if (stmt.getObject().isResource()) {
+                final String objString = stmt.getObject().asResource().getURI();
+                obj = model.getResource(idTranslator.convert(objString));
             }
 
-            model.getResource(subj).addProperty(stmt.getPredicate(), obj);
-            stmtIterator.remove();
+            if (!subj.equals(originalSubj) || !obj.equals(stmt.getObject())) {
+                insertStatements.add(new StatementImpl(model.getResource(subj),
+                        stmt.getPredicate(),
+                        obj));
+
+                stmtIterator.remove();
+            }
         }
 
-        LOGGER.debug("Model: {}", model);
+        model.add(insertStatements);
+
+        log.debug("Model: {}", model);
         return model;
     }
 
      /**
      * Parse the request body to a RdfStream, with the URI to Fedora ID translations done.
      *
-     * @param resource the fedora resource
+     * @param resourceId the ID of the Fedora resource
      * @param stream the input stream containing the RDF
      * @param contentType the media type of the RDF
-     * @param idTranslator the uri to fedora resource ID translator
-     * @return RdfStream containing triples from request body, with fedora IDs in them
+     * @return RdfStream containing triples from request body, with Fedora IDs in them
      * @throws MalformedRdfException in case rdf json cannot be parsed
      * @throws BadRequestException in the case where the RDF syntax is bad
      */
-    public RdfStream bodyToInternalStream(final FedoraResource resource, final InputStream stream,
-                                          final MediaType contentType, final HttpIdentifierConverter idTranslator)
+    public RdfStream bodyToInternalStream(final String resourceId, final InputStream stream,
+                                          final MediaType contentType)
                                           throws RepositoryRuntimeException, BadRequestException {
-        final Model model = bodyToInternalModel(resource, stream, contentType, idTranslator);
+        final Model model = bodyToInternalModel(resourceId, stream, contentType);
 
-        return fromModel(model.getResource(resource.getId()).asNode(), model);
+        return fromModel(model.getResource(resourceId).asNode(), model);
     }
 
     /**
@@ -112,21 +126,21 @@ public class HttpRdfService {
      *
      * @param requestBodyStream rdf request body
      * @param contentType content type of body
-     * @param resource the fedora resource
+     * @param resourceId the id of the Fedora resource
      * @return Model containing triples from request body
      * @throws MalformedRdfException in case rdf json cannot be parsed
      * @throws BadRequestException in the case where the RDF syntax is bad
      */
     public static Model parseBodyAsModel(final InputStream requestBodyStream,
                                          final MediaType contentType,
-                                         final FedoraResource resource) throws BadRequestException,
+                                         final String resourceId) throws BadRequestException,
                                          RepositoryRuntimeException {
         final Lang format = contentTypeToLang(contentType.toString());
 
         final Model inputModel;
         try {
             inputModel = createDefaultModel();
-            inputModel.read(requestBodyStream, resource.getId(), format.getName().toUpperCase());
+            inputModel.read(requestBodyStream, resourceId, format.getName().toUpperCase());
             return inputModel;
         } catch (final RiotException e) {
             throw new BadRequestException("RDF was not parsable: " + e.getMessage(), e);
