@@ -21,6 +21,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.fcrepo.persistence.ocfl.impl.FedoraOCFLMapping;
 import org.junit.Before;
 import org.junit.Test;
@@ -63,6 +64,9 @@ public class OCFLPersistentSessionManagerTest {
 
     @Mock
     private FedoraOCFLMapping mapping;
+
+    @Mock
+    private OCFLObjectSessionFactory objectSessionFactory;
 
     @Before
     public void setUp() {

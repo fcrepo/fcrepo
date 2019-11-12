@@ -20,6 +20,7 @@ package org.fcrepo.persistence.ocfl.api;
 
 import java.io.InputStream;
 
+import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
 /**
@@ -67,7 +68,7 @@ public interface OCFLObjectSession {
      * Read the state of the file at subpath from the specified version of the OCFL object.
      *
      * @param subpath path relative to the object
-     * @param version identifier of the version
+     * @param version identifier of the version. If null, the head state of the file will be returned.
      * @return the contents of the file from the specified version
      * @throws PersistentStorageException if unable to read the file
      */

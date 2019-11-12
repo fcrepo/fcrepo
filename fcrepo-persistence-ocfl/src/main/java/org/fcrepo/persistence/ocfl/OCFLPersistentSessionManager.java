@@ -17,12 +17,13 @@
  */
 package org.fcrepo.persistence.ocfl;
 
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
+
 import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.fcrepo.persistence.api.PersistentStorageSession;
-import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 
 /**
  * OCFL implementation of PersistentStorageSessionManager
@@ -36,6 +37,9 @@ public class OCFLPersistentSessionManager implements PersistentStorageSessionMan
     private OCFLPersistentStorageSession readOnlySession;
 
     private Map<String,OCFLPersistentStorageSession> sessionMap;
+
+    @Inject
+    private OCFLObjectSessionFactory objectSessionFactory;
 
     @Inject
     private FedoraToOCFLObjectIndex fedoraOcflIndex;
@@ -60,7 +64,9 @@ public class OCFLPersistentSessionManager implements PersistentStorageSessionMan
             return session;
         }
 
-        final OCFLPersistentStorageSession newSession = new OCFLPersistentStorageSession(sessionId, fedoraOcflIndex);
+        final OCFLPersistentStorageSession newSession = new OCFLPersistentStorageSession(sessionId,
+                                                                                         fedoraOcflIndex,
+                                                                                         objectSessionFactory);
 
         sessionMap.put(sessionId, newSession);
 
@@ -70,7 +76,7 @@ public class OCFLPersistentSessionManager implements PersistentStorageSessionMan
     @Override
     public PersistentStorageSession getReadOnlySession() {
         if(this.readOnlySession == null) {
-            this.readOnlySession = new OCFLPersistentStorageSession(fedoraOcflIndex);
+            this.readOnlySession = new OCFLPersistentStorageSession(fedoraOcflIndex, objectSessionFactory);
         }
 
         return this.readOnlySession;

@@ -19,7 +19,6 @@ package org.fcrepo.persistence.ocfl;
 
 import static java.lang.String.format;
 
-import java.io.File;
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.HashMap;
@@ -33,13 +32,22 @@ import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
+import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.fcrepo.persistence.ocfl.api.Persister;
-import org.fcrepo.persistence.ocfl.impl.DefaultOCFLObjectSession;
 import org.fcrepo.persistence.ocfl.impl.DeleteResourcePersister;
 import org.fcrepo.persistence.ocfl.impl.FedoraOCFLMapping;
 import org.fcrepo.persistence.ocfl.impl.NonRdfSourcePersister;
 import org.fcrepo.persistence.ocfl.impl.RDFSourcePersister;
+
+import java.util.Collection;
+import java.util.concurrent.locks.ReentrantLock;
+
+import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.getInternalFedoraDirectory;
+import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.getRDFFileExtension;
+import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.getRdfStream;
+import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.relativizeSubpath;
 
 /**
  * OCFL Persistent Storage class.
@@ -48,6 +56,8 @@ import org.fcrepo.persistence.ocfl.impl.RDFSourcePersister;
  * @since 2019-09-20
  */
 public class OCFLPersistentStorageSession implements PersistentStorageSession {
+
+    private static final String FEDORA_METADATA_SUFFIX = "/fcr:metadata";
 
     /**
      * Externally generated id for the session.
@@ -58,8 +68,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     private final Map<String, OCFLObjectSession> sessionMap;
 
-    //TODO make the stagingPathRoot configurable.
-    private final File stagingPathRoot = new File(System.getProperty("java.io.tmpdir"), "ocfl-staging");
+    private final ReentrantLock mutex = new ReentrantLock();
 
     private final static List<Persister> PERSISTER_LIST = new LinkedList<>();
 
@@ -70,25 +79,32 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         //TODO add new persisters here as they are implemented.
     }
 
+    private OCFLObjectSessionFactory objectSessionFactory;
+
     /**
      * Constructor
      *
-     * @param sessionId session id.
+     * @param sessionId       session id.
      * @param fedoraOcflIndex the index
+     * @param objectSessionFactory the session factory
      */
-    protected OCFLPersistentStorageSession(final String sessionId, final FedoraToOCFLObjectIndex fedoraOcflIndex) {
+    protected OCFLPersistentStorageSession(final String sessionId, final FedoraToOCFLObjectIndex fedoraOcflIndex,
+                                           final OCFLObjectSessionFactory objectSessionFactory) {
         this.sessionId = sessionId;
         this.fedoraOcflIndex = fedoraOcflIndex;
+        this.objectSessionFactory = objectSessionFactory;
         this.sessionMap = new HashMap<>();
-        stagingPathRoot.mkdirs();
     }
 
     /**
      * Constructor
-     * @param fedoraOcflIndex  the index
+     *
+     * @param fedoraOcflIndex the index
+     * @param objectSessionFactory the session factory
      */
-    protected OCFLPersistentStorageSession(final FedoraToOCFLObjectIndex fedoraOcflIndex) {
-        this(null, fedoraOcflIndex);
+    protected OCFLPersistentStorageSession(final FedoraToOCFLObjectIndex fedoraOcflIndex,
+                                           final OCFLObjectSessionFactory objectSessionFactory) {
+        this(null, fedoraOcflIndex, objectSessionFactory);
     }
 
     @Override
@@ -100,23 +116,30 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     public void persist(final ResourceOperation operation) throws PersistentStorageException {
         actionNeedsWrite();
 
-        //resolve the mapping between the fedora resource identifier and the associated OCFL object.
-        final FedoraOCFLMapping mapping = fedoraOcflIndex.getMapping(operation.getResourceId());
+        try {
+            mutex.lock();
 
-        //get the session.
-        final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
+            //resolve the mapping between the fedora resource identifier and the associated OCFL object.
+            final FedoraOCFLMapping mapping = fedoraOcflIndex.getMapping(operation.getResourceId());
 
-        //resolve the persister based on the operation
-        final Persister persister = PERSISTER_LIST.stream().filter(p -> p.handle(operation)).findFirst().orElse(null);
+            //get the session.
+            final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
 
-        if (persister == null) {
-            throw new UnsupportedOperationException(format("The %s is not yet supported", operation.getClass()));
+            //resolve the persister based on the operation
+            final Persister persister = PERSISTER_LIST.stream().filter(p -> p.handle(operation)).findFirst().orElse(null);
+
+            if (persister == null) {
+                throw new UnsupportedOperationException(format("The %s is not yet supported", operation.getClass()));
+            }
+
+            //perform the operation
+            persister.persist(objSession, operation, mapping);
+
+        } finally {
+            mutex.unlock();
         }
 
-
-        //perform the operation
-        persister.persist(objSession, operation, mapping);
-    }
+   }
 
     private OCFLObjectSession findOrCreateSession(final String ocflId) {
         final OCFLObjectSession sessionObj = this.sessionMap.get(ocflId);
@@ -124,9 +147,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
             return sessionObj;
         }
 
-        final File stagingDirectory = new File(stagingPathRoot, sessionId);
-        stagingDirectory.mkdir();
-        final OCFLObjectSession newSession = new DefaultOCFLObjectSession(ocflId, stagingDirectory.toPath(), null);
+        final OCFLObjectSession newSession = this.objectSessionFactory.create(ocflId, getId());
         sessionMap.put(ocflId, newSession);
         return newSession;
     }
@@ -138,15 +159,33 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     }
 
     @Override
-    public RdfStream getTriples(final String identifier, final Instant version) throws PersistentItemNotFoundException {
-        // TODO Auto-generated method stub
-        return null;
+    public RdfStream getTriples(final String identifier, final Instant version)
+            throws PersistentStorageException {
+        final FedoraOCFLMapping mapping = fedoraOcflIndex.getMapping(identifier);
+        final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
+        final String fedoraSubpath = relativizeSubpath(mapping.getParentFedoraResourceId(), identifier);
+        final String ocflSubpath = resolveOCFLSubpath(fedoraSubpath);
+        final String filePath = ocflSubpath + getRDFFileExtension();
+        return getRdfStream(identifier, version, objSession, filePath);
+    }
+
+    private String resolveOCFLSubpath(final String fedoraSubpath) {
+        if (fedoraSubpath.endsWith(FEDORA_METADATA_SUFFIX)) {
+            return fedoraSubpath.substring(FEDORA_METADATA_SUFFIX.length());
+        } else {
+            return fedoraSubpath;
+        }
     }
 
     @Override
-    public RdfStream getManagedProperties(final String identifier, final Instant version) throws PersistentItemNotFoundException {
-        // TODO Auto-generated method stub
-        return null;
+    public RdfStream getManagedProperties(final String identifier, final Instant version)
+            throws PersistentStorageException {
+        final FedoraOCFLMapping mapping = fedoraOcflIndex.getMapping(identifier);
+        final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
+        final String fedoraSubpath = relativizeSubpath(mapping.getParentFedoraResourceId(), identifier);
+        final String ocflSubpath = resolveOCFLSubpath(fedoraSubpath);
+        final String filePath = getInternalFedoraDirectory() + ocflSubpath + getRDFFileExtension();
+        return getRdfStream(identifier, version, objSession, filePath);
     }
 
     @Override
@@ -156,12 +195,37 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     }
 
     @Override
-    public void commit() throws PersistentStorageException {
+    public void commit(final CommitOption option) throws PersistentStorageException {
         if (isReadOnly()) {
             // No changes to commit.
             return;
         }
-        // commit changes.
+
+        try {
+            mutex.lock();
+            //prepare session for commit
+            final Collection<OCFLObjectSession> sessions = this.sessionMap.values();
+
+            for(OCFLObjectSession objectSession : sessions){
+                objectSession.prepare();
+            }
+
+            //perform commit
+            for(OCFLObjectSession objectSession : sessions){
+                objectSession.commit(option);
+            }
+
+            //close each session
+            for(OCFLObjectSession objectSession : sessions){
+                objectSession.close();
+            }
+
+            //purge object sessions
+            sessionMap.clear();
+
+        } finally {
+            mutex.unlock();
+        }
     }
 
     @Override

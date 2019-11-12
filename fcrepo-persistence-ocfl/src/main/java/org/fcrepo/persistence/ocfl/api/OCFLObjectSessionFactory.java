@@ -17,13 +17,18 @@
  */
 package org.fcrepo.persistence.ocfl.api;
 
-
 /**
- * Options for defining the behavior when performing a commit to an OCFL object
- *
- * @author bbpennel
+ * A factory interface for creating {@link org.fcrepo.persistence.ocfl.api.OCFLObjectSession}.
+ * @author dbernstein
+ * @since 6.0.0
  */
-public enum CommitOption {
-    MUTABLE_HEAD,
-    NEW_VERSION
+public interface OCFLObjectSessionFactory {
+
+    /**
+     * Create new session.
+     * @param ocflId The OCFL Object identifier
+     * @param persistentStorageSessionId The id of the persistent storage session associated with this session.
+     * @return The newly created session.
+     */
+    OCFLObjectSession create(final String ocflId, final String persistentStorageSessionId);
 }

@@ -19,7 +19,7 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import static edu.wisc.library.ocfl.api.OcflOption.OVERWRITE;
 import static edu.wisc.library.ocfl.api.OcflOption.MOVE_SOURCE;
-import static org.fcrepo.persistence.ocfl.api.CommitOption.NEW_VERSION;
+import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
 import static java.lang.String.format;
 
 import java.io.FileInputStream;
@@ -37,7 +37,7 @@ import org.apache.commons.io.FileUtils;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.ocfl.api.CommitOption;
+import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
