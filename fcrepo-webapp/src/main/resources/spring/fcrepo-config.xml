@@ -227,5 +227,11 @@
 
     <!-- Manages Transactions -->
     <bean class="org.fcrepo.kernel.api.TransactionManager"/>
+
+    <!-- Containment Index DB -->
+    <bean id="containmentIndexDataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+      <property name="driverClassName" value="org.h2.Driver" />
+      <property name="url" value="jdbc:h2:index" />
+    </bean>
     
 </beans>
