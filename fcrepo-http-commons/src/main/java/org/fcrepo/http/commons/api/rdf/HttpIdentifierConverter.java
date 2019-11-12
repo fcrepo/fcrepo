@@ -21,12 +21,13 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.google.common.base.Converter;
-import java.util.HashMap;
-import java.util.Map;
-import javax.ws.rs.core.UriBuilder;
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
+
+import javax.ws.rs.core.UriBuilder;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Convert between HTTP URIs (LDP paths) and internal Fedora ID using a
@@ -35,14 +36,11 @@ import org.slf4j.Logger;
  * @author whikloj
  * @since 2019-09-26
  */
-public class HttpIdentifierConverter extends Converter<String, String> {
+public class HttpIdentifierConverter {
 
     private static final Logger LOGGER = getLogger(HttpIdentifierConverter.class);
 
     private final UriBuilder uriBuilder;
-
-    protected Converter<String, String> forward = identity();
-    protected Converter<String, String> reverse = identity();
 
     private final UriTemplate uriTemplate;
 
@@ -80,12 +78,13 @@ public class HttpIdentifierConverter extends Converter<String, String> {
         this.uriTemplate = new UriTemplate(uriBuilder.toTemplate());
     }
 
-    private UriBuilder uriBuilder() {
-        return UriBuilder.fromUri(uriBuilder.toTemplate());
-    }
-
-    @Override
-    protected String doForward(final String httpUri) {
+    /**
+     * Convert an external URI to an internal ID.
+     *
+     * @param httpUri the external URI.
+     * @return the internal identifier.
+     */
+    protected String toInternalId(final String httpUri) {
         LOGGER.debug(String.format("Translating http URI %s to Fedora ID", httpUri));
 
         final String path = getPath(httpUri);
@@ -99,8 +98,13 @@ public class HttpIdentifierConverter extends Converter<String, String> {
         throw new IllegalArgumentException("Cannot translate NULL path");
     }
 
-    @Override
-    protected String doBackward(final String fedoraId) {
+    /**
+     * Convert an internal identifier to an external URI.
+     *
+     * @param fedoraId the internal identifier.
+     * @return the external URI.
+     */
+    protected String toExternalId(final String fedoraId) {
         LOGGER.debug(String.format("Translating Fedora ID %s to Http URI", fedoraId));
         if (fedoraId.startsWith(FEDORA_ID_PREFIX)) {
             // If it starts with our prefix, strip the prefix and use it as the path
@@ -110,6 +114,15 @@ public class HttpIdentifierConverter extends Converter<String, String> {
             return uriBuilder().build(values, false).toString();
         }
         throw new IllegalArgumentException("Cannot translate IDs without our prefix");
+    }
+
+    /**
+     * Return a UriBuilder for the current template.
+     *
+     * @return the uri builder.
+     */
+    private UriBuilder uriBuilder() {
+        return UriBuilder.fromUri(uriBuilder.toTemplate());
     }
 
     /**
