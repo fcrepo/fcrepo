@@ -55,7 +55,7 @@ import org.mockito.junit.MockitoJUnitRunner;
  * @since 6.0.0
  */
 @RunWith(MockitoJUnitRunner.class)
-public class CreateUpdateRDFSourcePersisterTest {
+public class RDFSourcePersisterTest {
 
     @Mock
     private RdfSourceOperation operation;
@@ -72,7 +72,7 @@ public class CreateUpdateRDFSourcePersisterTest {
     @Captor
     private ArgumentCaptor<InputStream> serverTriplesIsCaptor;
 
-    private final CreateUpdateRDFSourcePersister persister = new CreateUpdateRDFSourcePersister();
+    private final RDFSourcePersister persister = new RDFSourcePersister();
 
     @Test
     public void test() throws PersistentStorageException {

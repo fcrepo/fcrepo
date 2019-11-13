@@ -23,6 +23,8 @@ import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.INTERNAL_FED
 import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.relativizeSubpath;
 import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.writeRDF;
 
+import static java.util.Arrays.asList;
+
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -40,28 +42,23 @@ import java.util.Set;
  * @author dbernstein
  * @since 6.0.0
  */
-public class CreateUpdateRDFSourcePersister extends AbstractPersister<RdfSourceOperation> {
+public class RDFSourcePersister extends AbstractPersister<RdfSourceOperation> {
 
-    private static final Logger log = LoggerFactory.getLogger(CreateUpdateRDFSourcePersister.class);
+    private static final Logger log = LoggerFactory.getLogger(RDFSourcePersister.class);
 
-    private static final Set<ResourceOperationType> OPERATION_TYPES = new HashSet<>();
-
-    static {
-        OPERATION_TYPES.add(CREATE);
-        OPERATION_TYPES.add(UPDATE);
-    }
+    private static final Set<ResourceOperationType> OPERATION_TYPES = new HashSet<>(asList(CREATE, UPDATE));
 
     /**
      * Constructor
      */
-    public CreateUpdateRDFSourcePersister() {
+    public RDFSourcePersister() {
         super(OPERATION_TYPES);
     }
 
     @Override
     public void persist(final OCFLObjectSession session, final RdfSourceOperation operation,
                         final FedoraOCFLMapping mapping) throws PersistentStorageException {
-        log.debug("creating/updating RDFSource ({}) to {}", operation.getResourceId(), mapping.getOcflObjectId());
+        log.debug("persisting RDFSource ({}) to {}", operation.getResourceId(), mapping.getOcflObjectId());
         final String subpath = relativizeSubpath(mapping.getParentFedoraResourceId(), operation.getResourceId());
 
         //write user triples
