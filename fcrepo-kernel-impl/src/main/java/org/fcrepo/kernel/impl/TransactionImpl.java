@@ -99,4 +99,9 @@ public class TransactionImpl implements Transaction {
        }
     }
 
+    @Override
+    public void refresh() {
+        // TODO Auto-generated method stub
+    }
+
 }

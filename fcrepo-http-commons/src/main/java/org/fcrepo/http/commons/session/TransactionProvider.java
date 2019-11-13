@@ -59,6 +59,9 @@ public class TransactionProvider implements Factory<Transaction> {
     @Override
     public Transaction provide() {
         final Transaction transaction = getTransactionForRequest(request);
+        if (!transaction.isShortLived()) {
+            transaction.refresh();
+        }
         LOGGER.trace("Providing new transaction {}", transaction);
         return transaction;
     }
