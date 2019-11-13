@@ -18,11 +18,15 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
+import java.util.HashSet;
+import java.util.Set;
 
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
+import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,13 +43,19 @@ public class AbstractPersisterTest {
     @Mock
     private NonRdfSourceOperation nonRdfSourceOperation;
 
+    private static final Set<ResourceOperationType> OPERATION_TYPES = new HashSet<>();
+
+    static {
+        OPERATION_TYPES.add(CREATE);
+        OPERATION_TYPES.add(UPDATE);
+    }
 
     @Test
     public void testHandle() {
         class MyPersister extends AbstractPersister<NonRdfSourceOperation> {
-           MyPersister(){
-               super(CREATE);
-           }
+            MyPersister() {
+                super(CREATE);
+            }
 
             @Override
             public void persist(final OCFLObjectSession session,
@@ -55,6 +65,27 @@ public class AbstractPersisterTest {
 
         when(nonRdfSourceOperation.getType()).thenReturn(CREATE);
         final MyPersister mp = new MyPersister();
+        assertTrue(mp.handle(nonRdfSourceOperation));
+    }
+
+    @Test
+    public void testHandleMultiple() {
+        class MyPersister extends AbstractPersister<NonRdfSourceOperation> {
+            MyPersister() {
+                super(OPERATION_TYPES);
+            }
+
+            @Override
+            public void persist(final OCFLObjectSession session,
+                                final NonRdfSourceOperation operation,
+                                final FedoraOCFLMapping mapping) {
+            }
+        }
+        when(nonRdfSourceOperation.getType()).thenReturn(CREATE);
+        final MyPersister mp = new MyPersister();
+        assertTrue(mp.handle(nonRdfSourceOperation));
+
+        when(nonRdfSourceOperation.getType()).thenReturn(UPDATE);
         assertTrue(mp.handle(nonRdfSourceOperation));
     }
 }

@@ -22,6 +22,8 @@ import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.ocfl.api.Persister;
 
 import java.lang.reflect.ParameterizedType;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A base abstract persister class
@@ -31,10 +33,19 @@ import java.lang.reflect.ParameterizedType;
  */
 public abstract class AbstractPersister<T extends ResourceOperation> implements Persister<T> {
 
-    private ResourceOperationType resourceOperationType;
+    private final Set<ResourceOperationType> resourceOperationType;
+
+    AbstractPersister(final Set<ResourceOperationType> resourceOperationType) {
+        this.resourceOperationType = resourceOperationType;
+    }
 
     AbstractPersister(final ResourceOperationType resourceOperationType) {
-        this.resourceOperationType = resourceOperationType;
+        this();
+        this.resourceOperationType.add(resourceOperationType);
+    }
+
+    AbstractPersister() {
+        this.resourceOperationType = new HashSet<>();
     }
 
     @Override
@@ -46,10 +57,10 @@ public abstract class AbstractPersister<T extends ResourceOperation> implements 
         final var interfaces = operation.getClass().getInterfaces();
 
         //ensure that at least one of them match.
-        for (var i : interfaces) {
+        for (final var i : interfaces) {
             if (clazz.equals(i)) {
                 //return true if the operation types match.
-                return this.resourceOperationType.equals(operation.getType());
+                return this.resourceOperationType.contains(operation.getType());
             }
         }
         return false;

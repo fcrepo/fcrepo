@@ -17,18 +17,22 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
+import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.INTERNAL_FEDORA_DIRECTORY;
+import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.relativizeSubpath;
+import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.writeRDF;
+
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
+import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
-import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.INTERNAL_FEDORA_DIRECTORY;
-import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.relativizeSubpath;
-import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.writeRDF;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * This class implements the persistence of a new RDFSource
@@ -36,21 +40,28 @@ import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.writeRDF;
  * @author dbernstein
  * @since 6.0.0
  */
-public class CreateRDFSourcePersister extends AbstractPersister<RdfSourceOperation> {
+public class CreateUpdateRDFSourcePersister extends AbstractPersister<RdfSourceOperation> {
 
-    private static final Logger log = LoggerFactory.getLogger(CreateRDFSourcePersister.class);
+    private static final Logger log = LoggerFactory.getLogger(CreateUpdateRDFSourcePersister.class);
+
+    private static final Set<ResourceOperationType> OPERATION_TYPES = new HashSet<>();
+
+    static {
+        OPERATION_TYPES.add(CREATE);
+        OPERATION_TYPES.add(UPDATE);
+    }
 
     /**
      * Constructor
      */
-    public CreateRDFSourcePersister() {
-        super(CREATE);
+    public CreateUpdateRDFSourcePersister() {
+        super(OPERATION_TYPES);
     }
 
     @Override
     public void persist(final OCFLObjectSession session, final RdfSourceOperation operation,
                         final FedoraOCFLMapping mapping) throws PersistentStorageException {
-        log.debug("creating RDFSource ({}) to {}", operation.getResourceId(), mapping.getOcflObjectId());
+        log.debug("creating/updating RDFSource ({}) to {}", operation.getResourceId(), mapping.getOcflObjectId());
         final String subpath = relativizeSubpath(mapping.getParentFedoraResourceId(), operation.getResourceId());
 
         //write user triples
