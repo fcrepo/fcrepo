@@ -17,6 +17,15 @@
  */
 package org.fcrepo.persistence.ocfl;
 
+import static org.apache.jena.riot.RDFFormat.NTRIPLES;
+import static org.apache.jena.riot.system.StreamRDFWriter.getWriterStream;
+
+import static java.lang.String.format;
+
+import java.io.IOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.system.StreamRDF;
 import org.fcrepo.kernel.api.RdfStream;
@@ -25,25 +34,17 @@ import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
-
-import static java.lang.String.format;
-import static org.apache.jena.riot.RDFFormat.NTRIPLES;
-import static org.apache.jena.riot.system.StreamRDFWriter.getWriterStream;
-
 /**
  * A set of utility functions for supporting OCFL persistence activities.
  *
  * @author dbernstein
  * @since 6.0.0
  */
-public class OCFLPeristentStorageUtils {
+public class OCFLPersistentStorageUtils {
 
-    private static final Logger log = LoggerFactory.getLogger(OCFLPeristentStorageUtils.class);
+    private static final Logger log = LoggerFactory.getLogger(OCFLPersistentStorageUtils.class);
 
-    private OCFLPeristentStorageUtils() {
+    private OCFLPersistentStorageUtils() {
     }
 
     /**

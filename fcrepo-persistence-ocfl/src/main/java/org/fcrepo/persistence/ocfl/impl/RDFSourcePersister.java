@@ -19,9 +19,9 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
-import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.INTERNAL_FEDORA_DIRECTORY;
-import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.relativizeSubpath;
-import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.writeRDF;
+import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.INTERNAL_FEDORA_DIRECTORY;
+import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.relativizeSubpath;
+import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.writeRDF;
 
 import static java.util.Arrays.asList;
 

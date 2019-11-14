@@ -21,8 +21,8 @@ import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
-import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.DEFAULT_RDF_EXTENSION;
-import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.INTERNAL_FEDORA_DIRECTORY;
+import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.DEFAULT_RDF_EXTENSION;
+import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.INTERNAL_FEDORA_DIRECTORY;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -49,6 +49,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+<<<<<<<HEAD:fcrepo-persistence-ocfl/src/test/java/org/fcrepo/persistence/ocfl/impl/RDFSourcePersisterTest.java
+        =======
+        >>>>>>>Add delete persister:fcrepo-persistence-ocfl/src/test/java/org/fcrepo/persistence/ocfl/impl/CreateRDFSourcePersisterTest.java
 
 /**
  * @author dbernstein
