@@ -17,6 +17,20 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
+import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.DEFAULT_RDF_EXTENSION;
+import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.INTERNAL_FEDORA_DIRECTORY;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.InputStream;
+import java.util.stream.Stream;
+
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
@@ -36,26 +50,12 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.io.InputStream;
-import java.util.stream.Stream;
-
-import static org.apache.jena.graph.NodeFactory.createLiteral;
-import static org.apache.jena.graph.NodeFactory.createURI;
-import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
-import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
-import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.DEFAULT_RDF_EXTENSION;
-import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.INTERNAL_FEDORA_DIRECTORY;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 /**
  * @author dbernstein
  * @since 6.0.0
  */
 @RunWith(MockitoJUnitRunner.class)
-public class CreateRDFSourcePersisterTest {
+public class RDFSourcePersisterTest {
 
     @Mock
     private RdfSourceOperation operation;
@@ -72,7 +72,7 @@ public class CreateRDFSourcePersisterTest {
     @Captor
     private ArgumentCaptor<InputStream> serverTriplesIsCaptor;
 
-    private CreateRDFSourcePersister persister = new CreateRDFSourcePersister();
+    private final RDFSourcePersister persister = new RDFSourcePersister();
 
     @Test
     public void test() throws PersistentStorageException {

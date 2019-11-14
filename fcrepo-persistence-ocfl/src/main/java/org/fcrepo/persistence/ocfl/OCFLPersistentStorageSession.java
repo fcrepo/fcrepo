@@ -27,7 +27,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
@@ -36,9 +35,9 @@ import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.Persister;
-import org.fcrepo.persistence.ocfl.impl.CreateRDFSourcePersister;
 import org.fcrepo.persistence.ocfl.impl.DefaultOCFLObjectSession;
 import org.fcrepo.persistence.ocfl.impl.FedoraOCFLMapping;
+import org.fcrepo.persistence.ocfl.impl.RDFSourcePersister;
 
 /**
  * OCFL Persistent Storage class.
@@ -63,7 +62,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     private final static List<Persister> PERSISTER_LIST = new LinkedList<>();
 
     static {
-        PERSISTER_LIST.add(new CreateRDFSourcePersister());
+        PERSISTER_LIST.add(new RDFSourcePersister());
         //TODO add new persisters here as they are implemented.
     }
 

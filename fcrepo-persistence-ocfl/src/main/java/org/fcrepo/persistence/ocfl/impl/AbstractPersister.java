@@ -17,11 +17,12 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.ocfl.api.Persister;
-
-import java.lang.reflect.ParameterizedType;
 
 /**
  * A base abstract persister class
@@ -29,27 +30,42 @@ import java.lang.reflect.ParameterizedType;
  * @author dbernstein
  * @since 6.0.0
  */
-public abstract class AbstractPersister<T extends ResourceOperation> implements Persister<T> {
+public abstract class AbstractPersister implements Persister {
 
-    private ResourceOperationType resourceOperationType;
+    private final Set<ResourceOperationType> resourceOperationType;
 
-    AbstractPersister(final ResourceOperationType resourceOperationType) {
+    private final Set<Class<? extends ResourceOperation>> resourceOperations;
+
+    AbstractPersister(final Set<Class<? extends ResourceOperation>> resourceOperations, final Set<ResourceOperationType> resourceOperationType) {
+        this.resourceOperations = resourceOperations;
         this.resourceOperationType = resourceOperationType;
     }
 
+    AbstractPersister(final Class<? extends ResourceOperation> resourceOperation, final ResourceOperationType resourceOperationType) {
+        this();
+        this.resourceOperations.add(resourceOperation);
+        this.resourceOperationType.add(resourceOperationType);
+    }
+
+    AbstractPersister(final Class<? extends ResourceOperation> resourceOperation, final Set<ResourceOperationType> resourceOperationType) {
+        this.resourceOperations = new HashSet<>();
+        this.resourceOperations.add(resourceOperation);
+        this.resourceOperationType = resourceOperationType;
+    }
+
+    private AbstractPersister() {
+        this.resourceOperations = new HashSet<>();
+        this.resourceOperationType = new HashSet<>();
+    }
+
+
     @Override
     public boolean handle(final ResourceOperation operation) {
-        //get the class of T
-        final var clazz = ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
-
-        //retrieve the interfaces of the operation class
-        final var interfaces = operation.getClass().getInterfaces();
-
         //ensure that at least one of them match.
-        for (var i : interfaces) {
-            if (clazz.equals(i)) {
+        for (final var c : this.resourceOperations) {
+            if (c.isInstance(operation)) {
                 //return true if the operation types match.
-                return this.resourceOperationType.equals(operation.getType());
+                return this.resourceOperationType.contains(operation.getType());
             }
         }
         return false;
