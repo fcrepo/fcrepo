@@ -19,12 +19,9 @@ package org.fcrepo.http.api;
 
 import static java.time.Instant.now;
 import static java.util.Optional.of;
-import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.junit.Assert.assertEquals;
-// import static org.mockito.Mockito.any;
-// import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-// import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.net.URISyntaxException;
@@ -33,12 +30,15 @@ import java.security.Principal;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
+import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.AdditionalMatchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -47,11 +47,8 @@ import org.mockito.junit.MockitoJUnitRunner;
  *
  * @author awoods
  */
-@Ignore // TODO fix these tests
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class TransactionsTest {
-
-    private static final String USER_NAME = "test";
 
     private Transactions testObj;
 
@@ -59,10 +56,10 @@ public class TransactionsTest {
     private Transaction mockTransaction;
 
     @Mock
-    private Transaction regularTransaction;
+    private TransactionManager mockTxManager;
 
     @Mock
-    private TransactionManager mockTxManager;
+    private HttpResourceConverter mockTranslator;
 
     @Mock
     private Principal mockPrincipal;
@@ -73,74 +70,51 @@ public class TransactionsTest {
     @Before
     public void setUp() {
         testObj = new Transactions();
-        // testSession = new HttpSession(mockTransaction);
-        // testSession.makeBatchSession();
+        mockTransaction.setShortLived(false);
+        when(mockTxManager.create()).thenReturn(mockTransaction);
+        when(mockTxManager.get("tx:123")).thenReturn(mockTransaction);
+        when(mockTxManager.get(AdditionalMatchers.not(ArgumentMatchers.eq("tx:123"))))
+            .thenThrow(new RuntimeException("No Transaction found with transactionId"));
         when(mockTransaction.getId()).thenReturn("123");
         when(mockTransaction.getExpires()).thenReturn(of(now().plusSeconds(100)));
-        when(regularTransaction.getExpires()).thenReturn(of(now().minusSeconds(100)));
-        setField(testObj, "uriInfo", getUriInfoImpl());
-        // setField(testObj, "session", testSession);
-        // setField(testObj, "batchService", mockTxService);
-        setField(testObj, "securityContext", mockSecurityContext);
+        setField(testObj, "txManager", mockTxManager);
     }
 
+    @Ignore // TODO Enable after HttpResourceConvertor.toDomain is implemented
     @Test
     public void shouldStartANewTransaction() throws URISyntaxException {
-        // setField(testObj, "session", new HttpSession(regularTransaction));
-        when(mockSecurityContext.getUserPrincipal()).thenReturn(mockPrincipal);
-        when(mockPrincipal.getName()).thenReturn(USER_NAME);
-        testObj.createTransaction(null);
-        // verify(mockTxService).begin(regularTransaction, USER_NAME);
-    }
-
-    @Test
-    public void shouldUpdateExpiryOnExistingTransaction() throws URISyntaxException {
-        when(mockSecurityContext.getUserPrincipal()).thenReturn(mockPrincipal);
-        when(mockPrincipal.getName()).thenReturn(USER_NAME);
-        // when(mockTxService.exists(any(String.class), any(String.class))).thenReturn(true);
-        testObj.createTransaction(null);
-        // verify(mockTxService).refresh(anyString(), anyString());
+        setField(testObj, "transaction", mockTransaction);
+        setField(testObj, "idTranslator", mockTranslator);
+        final Response response = testObj.createTransaction();
+        verify(mockTxManager).create();
+        assertEquals(201, response.getStatus());
+        assertEquals("/tx:123", response.getHeaderString("Location"));
     }
 
     @Test
     public void shouldCommitATransaction() {
-        // when(mockTxService.exists(any(String.class), any(String.class))).thenReturn(true);
-        testObj.commit(null);
-        // verify(mockTxService).commit("123", null);
+        final Response response = testObj.commit("tx:123");
+        assertEquals(204, response.getStatus());
+        verify(mockTransaction).commit();
     }
 
     @Test
-    public void shouldErrorIfTheContextSessionIsNotATransaction() {
-        // setField(testObj, "session", new HttpSession(regularTransaction));
-        final Response commit = testObj.commit(null);
-        assertEquals(400, commit.getStatus());
-    }
-
-    @Test
-    public void shouldErrorIfCommitIsNotCalledAtTheRepoRoot() {
-        // setField(testObj, "session", new HttpSession(regularTransaction));
-        final Response commit = testObj.commit("a");
-        assertEquals(400, commit.getStatus());
+    public void shouldErrorIfCommitNonExistingTransactionId() {
+        final Response response = testObj.commit("tx:404");
+        assertEquals(400, response.getStatus());
     }
 
     @Test
     public void shouldRollBackATransaction() {
-        // when(mockTxService.exists(any(String.class), any(String.class))).thenReturn(true);
-        testObj.commit(null);
-        // verify(mockTxService).commit("123", null);
+        final Response response = testObj.rollback("tx:123");
+        assertEquals(204, response.getStatus());
+        verify(mockTransaction).rollback();
     }
 
     @Test
-    public void shouldErrorIfTheContextSessionIsNotATransactionAtRollback() {
-        // setField(testObj, "session", new HttpSession(regularTransaction));
-        final Response commit = testObj.rollback(null);
-        assertEquals(400, commit.getStatus());
+    public void shouldErrorIfRollbackNonExistingTransactionId() {
+        final Response rollback = testObj.rollback("tx:404");
+        assertEquals(400, rollback.getStatus());
     }
 
-    @Test
-    public void shouldErrorIfRollbackIsNotCalledAtTheRepoRoot() {
-        // setField(testObj, "session", testSession);
-        final Response commit = testObj.rollback("a");
-        assertEquals(400, commit.getStatus());
-    }
 }

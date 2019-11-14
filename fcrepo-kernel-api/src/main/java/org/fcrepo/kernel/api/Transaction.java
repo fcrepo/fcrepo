@@ -83,4 +83,9 @@ public interface Transaction {
      */
     Optional<Instant> getExpires();
 
+    /**
+     * Refresh the transaction to extend its expiration window.
+     */
+    void refresh();
+
 }
