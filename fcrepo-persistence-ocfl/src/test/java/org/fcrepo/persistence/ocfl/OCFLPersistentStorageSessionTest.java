@@ -21,8 +21,10 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.vocabulary.DC;
 import org.apache.jena.vocabulary.RDF;
+import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
@@ -73,6 +75,9 @@ public class OCFLPersistentStorageSessionTest {
     private RdfSourceOperation rdfSourceOperation;
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
+
+    @Mock
+    private ResourceOperation unsupportedOperation;
 
     @Before
     public void setUp() throws IOException {
@@ -146,6 +151,48 @@ public class OCFLPersistentStorageSessionTest {
         assertEquals(rdfSourceTriple, retrievedServerStream.findFirst().get());
 
 
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void unsupportedPersistOperation() throws Exception {
+       this.session.persist(unsupportedOperation);
+    }
+
+    @Test
+    public void getTriplesOfBinaryDescription() throws Exception {
+        when(mapping.getOcflObjectId()).thenReturn("ocfl-object-id");
+        when(mapping.getParentFedoraResourceId()).thenReturn(parentId);
+
+        final String descriptionResource = resourceId + "/" + FedoraTypes.FCR_METADATA;
+        when(index.getMapping(descriptionResource)).thenReturn(mapping);
+
+        final Node resourceUri = createURI(resourceId);
+        final Node descriptionUri = createURI(descriptionResource);
+
+        //create some test user triples
+        final String title = "my title";
+        final var dcTitleTriple = Triple.create(resourceUri, DC.title.asNode(), createLiteral(title));
+        final Stream<Triple> userTriples = Stream.of(dcTitleTriple);
+        final DefaultRdfStream userStream = new DefaultRdfStream(resourceUri, userTriples);
+        when(rdfSourceOperation.getTriples()).thenReturn(userStream);
+        when(rdfSourceOperation.getServerManagedProperties())
+                .thenReturn(new DefaultRdfStream(resourceUri, Stream.empty()));
+        when(rdfSourceOperation.getResourceId()).thenReturn(descriptionResource);
+        when(rdfSourceOperation.getType()).thenReturn(CREATE);
+
+        //perform the create rdf operation
+        session.persist(rdfSourceOperation);
+
+        //commit to OCFL
+        session.commit(CommitOption.UNVERSIONED);
+
+        //create a new session and verify the returned rdf stream.
+        final OCFLPersistentStorageSession newSession = createSession(index, objectSessionFactory);
+
+        //verify get triples outside of the transaction
+        final RdfStream retrievedUserStream = newSession.getTriples(descriptionResource, null);
+        assertEquals(resourceUri, retrievedUserStream.topic());
+        assertEquals(dcTitleTriple, retrievedUserStream.findFirst().get());
     }
 
 }

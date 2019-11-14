@@ -21,18 +21,18 @@ import static java.lang.String.format;
 
 import java.io.InputStream;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.fcrepo.persistence.ocfl.api.Persister;
@@ -40,14 +40,21 @@ import org.fcrepo.persistence.ocfl.impl.DeleteResourcePersister;
 import org.fcrepo.persistence.ocfl.impl.FedoraOCFLMapping;
 import org.fcrepo.persistence.ocfl.impl.NonRdfSourcePersister;
 import org.fcrepo.persistence.ocfl.impl.RDFSourcePersister;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Phaser;
+import java.util.stream.Collectors;
 
 import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.getInternalFedoraDirectory;
 import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.getRDFFileExtension;
 import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.getRdfStream;
 import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.relativizeSubpath;
+
+import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
+import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.resolveOCFLSubpath;
 
 /**
  * OCFL Persistent Storage class.
@@ -57,7 +64,7 @@ import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.relativizeS
  */
 public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
-    private static final String FEDORA_METADATA_SUFFIX = "/fcr:metadata";
+    private static final Logger LOGGER = LoggerFactory.getLogger(OCFLPersistentStorageSession.class);
 
     /**
      * Externally generated id for the session.
@@ -68,9 +75,13 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     private final Map<String, OCFLObjectSession> sessionMap;
 
-    private final ReentrantLock mutex = new ReentrantLock();
+    private final Phaser phaser = new Phaser();
 
-    private final static List<Persister> PERSISTER_LIST = new LinkedList<>();
+    private final static List<Persister> PERSISTER_LIST = new ArrayList<>();
+
+    private List<CommittedSession> sessionsToRollback = null;
+
+    private State state = State.COMMIT_NOT_STARTED;
 
     static {
         PERSISTER_LIST.add(new RDFSourcePersister());
@@ -81,11 +92,32 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     private OCFLObjectSessionFactory objectSessionFactory;
 
+    private class CommittedSession {
+        final OCFLObjectSession session;
+        final CommitOption option;
+
+        CommittedSession(final OCFLObjectSession session, final CommitOption option) {
+            this.session = session;
+            this.option = option;
+        }
+    }
+
+    private enum State {
+        COMMIT_NOT_STARTED,
+        COMMIT_STARTED,
+        PREPARE_FAILRED,
+        COMMITTED,
+        COMMIT_FAILED,
+        ROLLING_BACK,
+        ROLLED_BACK,
+        ROLLBACK_FAILED;
+    }
+
     /**
      * Constructor
      *
-     * @param sessionId       session id.
-     * @param fedoraOcflIndex the index
+     * @param sessionId            session id.
+     * @param fedoraOcflIndex      the index
      * @param objectSessionFactory the session factory
      */
     protected OCFLPersistentStorageSession(final String sessionId, final FedoraToOCFLObjectIndex fedoraOcflIndex,
@@ -93,13 +125,13 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         this.sessionId = sessionId;
         this.fedoraOcflIndex = fedoraOcflIndex;
         this.objectSessionFactory = objectSessionFactory;
-        this.sessionMap = new HashMap<>();
+        this.sessionMap = new ConcurrentHashMap<>();
     }
 
     /**
      * Constructor
      *
-     * @param fedoraOcflIndex the index
+     * @param fedoraOcflIndex      the index
      * @param objectSessionFactory the session factory
      */
     protected OCFLPersistentStorageSession(final FedoraToOCFLObjectIndex fedoraOcflIndex,
@@ -115,9 +147,17 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     @Override
     public void persist(final ResourceOperation operation) throws PersistentStorageException {
         actionNeedsWrite();
+        ensureCommitNotStarted();
 
         try {
-            mutex.lock();
+            phaser.register();
+
+            //resolve the persister based on the operation
+            final var persister = PERSISTER_LIST.stream().filter(p -> p.handle(operation)).findFirst().orElse(null);
+
+            if (persister == null) {
+                throw new UnsupportedOperationException(format("The %s is not yet supported", operation.getClass()));
+            }
 
             //resolve the mapping between the fedora resource identifier and the associated OCFL object.
             final FedoraOCFLMapping mapping = fedoraOcflIndex.getMapping(operation.getResourceId());
@@ -125,21 +165,21 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
             //get the session.
             final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
 
-            //resolve the persister based on the operation
-            final Persister persister = PERSISTER_LIST.stream().filter(p -> p.handle(operation)).findFirst().orElse(null);
-
-            if (persister == null) {
-                throw new UnsupportedOperationException(format("The %s is not yet supported", operation.getClass()));
-            }
-
             //perform the operation
             persister.persist(objSession, operation, mapping);
 
         } finally {
-            mutex.unlock();
+            phaser.arriveAndDeregister();
         }
 
-   }
+    }
+
+    private void ensureCommitNotStarted() throws PersistentSessionClosedException {
+        if (!state.equals(State.COMMIT_NOT_STARTED)) {
+            throw new PersistentSessionClosedException("The session cannot be committed: current state: " + state);
+        }
+    }
+
 
     private OCFLObjectSession findOrCreateSession(final String ocflId) {
         final OCFLObjectSession sessionObj = this.sessionMap.get(ocflId);
@@ -161,31 +201,26 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     @Override
     public RdfStream getTriples(final String identifier, final Instant version)
             throws PersistentStorageException {
+        ensureCommitNotStarted();
+
         final FedoraOCFLMapping mapping = fedoraOcflIndex.getMapping(identifier);
         final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
         final String fedoraSubpath = relativizeSubpath(mapping.getParentFedoraResourceId(), identifier);
         final String ocflSubpath = resolveOCFLSubpath(fedoraSubpath);
         final String filePath = ocflSubpath + getRDFFileExtension();
-        return getRdfStream(identifier, version, objSession, filePath);
-    }
-
-    private String resolveOCFLSubpath(final String fedoraSubpath) {
-        if (fedoraSubpath.endsWith(FEDORA_METADATA_SUFFIX)) {
-            return fedoraSubpath.substring(FEDORA_METADATA_SUFFIX.length());
-        } else {
-            return fedoraSubpath;
-        }
+        return getRdfStream(identifier, objSession, filePath, version);
     }
 
     @Override
     public RdfStream getManagedProperties(final String identifier, final Instant version)
             throws PersistentStorageException {
+        ensureCommitNotStarted();
         final FedoraOCFLMapping mapping = fedoraOcflIndex.getMapping(identifier);
         final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
         final String fedoraSubpath = relativizeSubpath(mapping.getParentFedoraResourceId(), identifier);
         final String ocflSubpath = resolveOCFLSubpath(fedoraSubpath);
         final String filePath = getInternalFedoraDirectory() + ocflSubpath + getRDFFileExtension();
-        return getRdfStream(identifier, version, objSession, filePath);
+        return getRdfStream(identifier, objSession, filePath, version);
     }
 
     @Override
@@ -195,36 +230,51 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     }
 
     @Override
-    public void commit(final CommitOption option) throws PersistentStorageException {
+    public synchronized void commit(final CommitOption option) throws PersistentStorageException {
+        ensureCommitNotStarted();
         if (isReadOnly()) {
             // No changes to commit.
             return;
         }
 
-        try {
-            mutex.lock();
-            //prepare session for commit
-            final Collection<OCFLObjectSession> sessions = this.sessionMap.values();
+        this.state = State.COMMIT_STARTED;
+        LOGGER.debug("Starting commit.");
 
-            for(OCFLObjectSession objectSession : sessions){
+        phaser.arriveAndAwaitAdvance();
+
+        LOGGER.debug("All persisters are complete");
+
+        //prepare session for commit
+        final Collection<OCFLObjectSession> sessions = this.sessionMap.values();
+
+        try {
+            LOGGER.debug("Preparing commit...");
+
+            for (OCFLObjectSession objectSession : sessions) {
                 objectSession.prepare();
             }
 
+            LOGGER.debug("Prepare succeeded.");
+        } catch (final Exception e) {
+            this.state = State.PREPARE_FAILRED;
+            throw new PersistentStorageException("Commit failed due to : " + e.getMessage(), e);
+        }
+
+        try {
+            this.sessionsToRollback = new ArrayList<>(sessions.size());
+
             //perform commit
-            for(OCFLObjectSession objectSession : sessions){
+            for (OCFLObjectSession objectSession : sessions) {
                 objectSession.commit(option);
+                sessionsToRollback.add(new CommittedSession(objectSession, option));
             }
 
-            //close each session
-            for(OCFLObjectSession objectSession : sessions){
-                objectSession.close();
-            }
 
-            //purge object sessions
-            sessionMap.clear();
-
-        } finally {
-            mutex.unlock();
+            state = State.COMMITTED;
+            LOGGER.info("Successfully committed {}", this);
+        } catch (final Exception e) {
+            this.state = State.COMMIT_FAILED;
+            throw new PersistentStorageException("Commit failed due to : " + e.getMessage(), e);
         }
     }
 
@@ -234,7 +284,48 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
             // No changes to rollback
             return;
         }
-        // rollback changes
+
+        if (!state.equals(State.COMMIT_FAILED) && !state.equals(State.PREPARE_FAILRED)) {
+            throw new PersistentStorageException("This session cannot be rolled back in this state: " + state);
+        }
+
+        this.state = State.ROLLING_BACK;
+        LOGGER.info("rolling back...");
+
+        //close any uncommitted sessions
+        final List<OCFLObjectSession> committedSessions = this.sessionsToRollback.stream().map(c -> c.session).collect(Collectors.toList());
+        final List<OCFLObjectSession> uncommittedSessions = new ArrayList<>(this.sessionMap.values());
+        uncommittedSessions.removeAll(committedSessions);
+        for (OCFLObjectSession obj : uncommittedSessions) {
+            obj.close();
+        }
+
+        // rollback committed sessions
+        //for each committed session, rollback if possible
+        final List<String> rollbackFailures = new ArrayList<>(this.sessionsToRollback.size());
+        for (CommittedSession cs : this.sessionsToRollback) {
+            if (cs.option == NEW_VERSION) {
+                //TODO rollback to previous OCFL version
+                //add any failure messages here.
+            } else {
+                rollbackFailures.add(format("%s was already committed to the unversioned head", cs.session));
+            }
+        }
+        //throw an exception if any sessions could not be rolled back.
+        if (rollbackFailures.size() > 0) {
+            state = State.ROLLBACK_FAILED;
+            final StringBuilder builder = new StringBuilder();
+            builder.append("Unable to rollback successfully due to the following reasons: \n");
+            for (String failures : rollbackFailures) {
+                builder.append("\t\t" + failures + "\n");
+            }
+
+            throw new PersistentStorageException(builder.toString());
+        }
+
+        this.state = State.ROLLED_BACK;
+        LOGGER.info("rolled back successfully.");
+
     }
 
     /**

@@ -34,9 +34,9 @@ import java.util.Map;
  */
 public class OCFLPersistentSessionManager implements PersistentStorageSessionManager {
 
-    private OCFLPersistentStorageSession readOnlySession;
+    private PersistentStorageSession readOnlySession;
 
-    private Map<String,OCFLPersistentStorageSession> sessionMap;
+    private Map<String, PersistentStorageSession> sessionMap;
 
     @Inject
     private OCFLObjectSessionFactory objectSessionFactory;
@@ -54,32 +54,28 @@ public class OCFLPersistentSessionManager implements PersistentStorageSessionMan
     @Override
     public PersistentStorageSession getSession(final String sessionId) {
 
-        if(sessionId == null) {
+        if (sessionId == null) {
             throw new IllegalArgumentException("session id must be non-null");
         }
 
-        final OCFLPersistentStorageSession session = sessionMap.get(sessionId);
+        final PersistentStorageSession session = sessionMap.get(sessionId);
 
-        if(session != null) {
+        if (session != null) {
             return session;
         }
 
-        final OCFLPersistentStorageSession newSession = new OCFLPersistentStorageSession(sessionId,
-                                                                                         fedoraOcflIndex,
-                                                                                         objectSessionFactory);
-
+        final PersistentStorageSession newSession = new OCFLPersistentStorageSession(sessionId,
+                fedoraOcflIndex,
+                objectSessionFactory);
         sessionMap.put(sessionId, newSession);
-
         return newSession;
     }
 
     @Override
     public PersistentStorageSession getReadOnlySession() {
-        if(this.readOnlySession == null) {
+        if (this.readOnlySession == null) {
             this.readOnlySession = new OCFLPersistentStorageSession(fedoraOcflIndex, objectSessionFactory);
         }
-
         return this.readOnlySession;
     }
-
 }

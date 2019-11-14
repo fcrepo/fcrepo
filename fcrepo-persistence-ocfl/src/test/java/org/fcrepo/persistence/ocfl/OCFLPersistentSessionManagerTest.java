@@ -31,8 +31,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.UUID.randomUUID;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
 
 /**
  * Test class for {@link org.fcrepo.persistence.ocfl.OCFLPersistentSessionManager}
@@ -76,11 +74,6 @@ public class OCFLPersistentSessionManagerTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void testNormalSession() throws Exception {
-        final String resourceId = "resource1";
-        final String ocflObjectId = "ocflObjectId";
-        when(mockOperation.getResourceId()).thenReturn(resourceId);
-        when(index.getMapping(eq(resourceId))).thenReturn(mapping);
-        when(mapping.getOcflObjectId()).thenReturn(ocflObjectId);
         readWriteSession.persist(mockOperation);
     }
 

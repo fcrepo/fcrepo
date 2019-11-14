@@ -18,10 +18,10 @@
 package org.fcrepo.persistence.ocfl;
 
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.system.StreamRDF;
+import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -67,6 +67,8 @@ public class OCFLPersistentStorageUtils {
 
     private static RDFFormat DEFAULT_RDF_FORMAT = NTRIPLES;
 
+    private static final String FEDORA_METADATA_SUFFIX = "/" + FedoraTypes.FCR_METADATA;
+
     /**
      * Returns the relative subpath of the resourceId based on the ancestor's resource id.
      *
@@ -81,6 +83,36 @@ public class OCFLPersistentStorageUtils {
 
         throw new IllegalArgumentException(format("resource (%s) is not prefixed by ancestor resource (%s)", resourceId,
                 ancestorResourceId));
+    }
+
+    /**
+     * Returns the OCFL subpath for a given fedora subpath.  This returned subpath
+     * does not include any added extendsions.
+     * @param fedoraSubpath
+     * @return
+     */
+    public static  String resolveOCFLSubpath(final String fedoraSubpath) {
+        if (fedoraSubpath.endsWith(FEDORA_METADATA_SUFFIX)) {
+            return fedoraSubpath.substring(0, fedoraSubpath.indexOf(FEDORA_METADATA_SUFFIX));
+        } else {
+            return fedoraSubpath;
+        }
+    }
+
+    /**
+     * Returns the RDF topic to be returned for a given resource identifier
+     * For example:  passing info:fedora/resource1/fcr:metadata would return
+     *  info:fedora/resource1 since  info:fedora/resource1 would be the expected
+     *  topic.
+     * @param fedoraIdentifier
+     * @return
+     */
+    public static  String resolveTopic(final String fedoraIdentifier) {
+        if (fedoraIdentifier.endsWith(FEDORA_METADATA_SUFFIX)) {
+            return fedoraIdentifier.substring(0, fedoraIdentifier.indexOf(FEDORA_METADATA_SUFFIX));
+        } else {
+            return fedoraIdentifier;
+        }
     }
 
     /**
@@ -107,9 +139,9 @@ public class OCFLPersistentStorageUtils {
         }
     }
 
-    private static InputStream readFile(final String version,  final OCFLObjectSession objSession, final String filename)
+    private static InputStream readFile(final OCFLObjectSession objSession, final String subpath, final String version)
             throws PersistentStorageException {
-        return version == null ? objSession.read(filename) : objSession.read(filename, version);
+        return version == null ? objSession.read(subpath) : objSession.read(subpath, version);
     }
 
     /**
@@ -117,20 +149,20 @@ public class OCFLPersistentStorageUtils {
      * @param identifier The resource identifier
      * @param version The version.  If null, the head state will be returned.
      * @param objSession The OCFL object session
-     * @param filePath The path to the desired file.
+     * @param subpath The path to the desired file.
      * @return
      * @throws PersistentStorageException
      */
-    public static RdfStream getRdfStream(final String identifier, final Instant version,
+    public static RdfStream getRdfStream(final String identifier,
                                          final OCFLObjectSession objSession,
-                                         final String filePath) throws PersistentStorageException {
-
-        final String versionNumber = resolveVersionId(objSession, version);
-        try (final InputStream is = readFile(null, objSession, filePath)) {
+                                         final String subpath,
+                                         final Instant version) throws PersistentStorageException {
+        final String versionId = resolveVersionId(objSession, version);
+        try (final InputStream is = readFile(objSession, subpath, versionId)) {
             final Model model = createDefaultModel();
             RDFDataMgr.read(model, is, DEFAULT_RDF_FORMAT.getLang());
-            return new DefaultRdfStream(createURI(identifier),
-                    model.listStatements().toList().stream().map(Statement::asTriple));
+            final String topic = resolveTopic(identifier);
+            return DefaultRdfStream.fromModel(createURI(topic), model);
         } catch (IOException ex) {
             throw new PersistentStorageException(format("unable to read %s ;  version = %s", identifier, version), ex);
         }

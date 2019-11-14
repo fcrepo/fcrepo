@@ -72,7 +72,7 @@ public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory
         this.ocflStagingRoot = ocflStagingRoot;
         this.ocflRepository = new OcflRepositoryBuilder().buildMutable(
                 new FileSystemOcflStorage(ocflStorageRootDir.toPath(),
-                        new ObjectIdPathMapperBuilder().buildFlatMapper()),
+                        new ObjectIdPathMapperBuilder().buildDefaultPairTreeMapper()),
                 ocflWorkDir.toPath());
 
     }
