@@ -38,7 +38,6 @@ import org.fcrepo.persistence.ocfl.api.Persister;
 import org.fcrepo.persistence.ocfl.impl.DefaultOCFLObjectSession;
 import org.fcrepo.persistence.ocfl.impl.DeleteResourcePersister;
 import org.fcrepo.persistence.ocfl.impl.FedoraOCFLMapping;
-import org.fcrepo.persistence.ocfl.impl.RDFSourcePersister;
 
 /**
  * OCFL Persistent Storage class.

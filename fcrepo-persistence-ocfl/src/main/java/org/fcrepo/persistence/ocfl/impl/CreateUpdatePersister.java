@@ -29,6 +29,7 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
@@ -43,30 +44,54 @@ import org.slf4j.LoggerFactory;
  * @author dbernstein
  * @since 6.0.0
  */
-public class RDFSourcePersister extends AbstractPersister {
+public class CreateUpdatePersister extends AbstractPersister {
 
-    private static final Logger log = LoggerFactory.getLogger(RDFSourcePersister.class);
+    private static final Logger log = LoggerFactory.getLogger(CreateUpdatePersister.class);
 
-    private static final Set<ResourceOperationType> OPERATION_TYPES = new HashSet<>(asList(CREATE, UPDATE));
+    private static final Set<Class<? extends ResourceOperation>> OPERATION_TYPES = new HashSet<>(asList(
+            RdfSourceOperation.class,
+            NonRdfSourceOperation.class
+    ));
+
+    private static final Set<ResourceOperationType> OPERATION_ACTIONS = new HashSet<>(asList(CREATE, UPDATE));
 
     /**
      * Constructor
      */
-    public RDFSourcePersister() {
-        super(RdfSourceOperation.class, OPERATION_TYPES);
+    public CreateUpdatePersister() {
+        super(OPERATION_TYPES, OPERATION_ACTIONS);
     }
 
     @Override
     public void persist(final OCFLObjectSession session, final ResourceOperation operation,
                         final FedoraOCFLMapping mapping) throws PersistentStorageException {
-        log.debug("persisting RDFSource ({}) to {}", operation.getResourceId(), mapping.getOcflObjectId());
+        log.debug("persisting ({}) to {}", operation.getResourceId(), mapping.getOcflObjectId());
         final String subpath = relativizeSubpath(mapping.getParentFedoraResourceId(), operation.getResourceId());
 
-        //write user triples
-        writeRDF(session, ((RdfSourceOperation) operation).getTriples(), subpath);
+        if (operation instanceof RdfSourceOperation) {
+            //write user triples
+            writeRDF(session, ((RdfSourceOperation) operation).getTriples(), subpath);
+        } else if (operation instanceof NonRdfSourceOperation) {
+            // write user content
+            final NonRdfSourceOperation nonRdfSourceOperation = ((NonRdfSourceOperation) operation);
+            final String extension = getExtension(nonRdfSourceOperation.getFilename());
+            session.write(subpath + (extension != null ? "." + extension : ""), nonRdfSourceOperation.getContentStream());
+        }
 
         //write server props
         writeRDF(session, operation.getServerManagedProperties(), INTERNAL_FEDORA_DIRECTORY + File.separator + subpath);
     }
 
+    /**
+     * Get the extensionn of the filename.
+     *
+     * @param filename the filename
+     * @return the extension without leading period or null if none exists.
+     */
+    private String getExtension(final String filename) {
+        if (filename == null || !filename.contains(".")) {
+            return null;
+        }
+        return filename.substring(filename.lastIndexOf(".") + 1);
+    }
 }
