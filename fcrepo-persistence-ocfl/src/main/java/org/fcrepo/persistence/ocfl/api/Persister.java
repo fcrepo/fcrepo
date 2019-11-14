@@ -22,12 +22,10 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.impl.FedoraOCFLMapping;
 
 /**
- * @param <T> The operation to be persisted.
- *
  * @author dbernstein
  * @since 6.0.0
  */
-public interface Persister<T extends ResourceOperation> {
+public interface Persister {
 
     /**
      * The method returns true if the operation can be persisted by this persister.
@@ -43,6 +41,6 @@ public interface Persister<T extends ResourceOperation> {
      * @param mapping The mapping information needed to perform the persistence operation
      * @throws PersistentStorageException on failure
      */
-    void persist(final OCFLObjectSession session, final T operation, final FedoraOCFLMapping mapping)
+    void persist(final OCFLObjectSession session, final ResourceOperation operation, final FedoraOCFLMapping mapping)
             throws PersistentStorageException;
 }

@@ -25,16 +25,17 @@ import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.writeRDF;
 
 import static java.util.Arrays.asList;
 
+import java.io.File;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * This class implements the persistence of a new RDFSource
@@ -42,7 +43,7 @@ import java.util.Set;
  * @author dbernstein
  * @since 6.0.0
  */
-public class RDFSourcePersister extends AbstractPersister<RdfSourceOperation> {
+public class RDFSourcePersister extends AbstractPersister {
 
     private static final Logger log = LoggerFactory.getLogger(RDFSourcePersister.class);
 
@@ -52,19 +53,20 @@ public class RDFSourcePersister extends AbstractPersister<RdfSourceOperation> {
      * Constructor
      */
     public RDFSourcePersister() {
-        super(OPERATION_TYPES);
+        super(RdfSourceOperation.class, OPERATION_TYPES);
     }
 
     @Override
-    public void persist(final OCFLObjectSession session, final RdfSourceOperation operation,
+    public void persist(final OCFLObjectSession session, final ResourceOperation operation,
                         final FedoraOCFLMapping mapping) throws PersistentStorageException {
         log.debug("persisting RDFSource ({}) to {}", operation.getResourceId(), mapping.getOcflObjectId());
         final String subpath = relativizeSubpath(mapping.getParentFedoraResourceId(), operation.getResourceId());
 
         //write user triples
-        writeRDF(session, operation.getTriples(), subpath);
+        writeRDF(session, ((RdfSourceOperation) operation).getTriples(), subpath);
 
         //write server props
         writeRDF(session, operation.getServerManagedProperties(), INTERNAL_FEDORA_DIRECTORY + File.separator + subpath);
     }
+
 }
