@@ -27,6 +27,7 @@ import org.apache.jena.vocabulary.DC;
 import org.apache.jena.vocabulary.DCTerms;
 import javax.ws.rs.core.MediaType;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
 import org.junit.Before;
 import org.junit.Test;
 import java.io.InputStream;
@@ -59,24 +60,28 @@ public class HttpRdfServiceTest {
     @InjectMocks
     private HttpRdfService httpRdfService;
 
-    private static final String FEDORA_URI = "http://www.example.com/fedora/rest/resource1";
-    private static final String FEDORA_ID = "info:fedora/resource1";
+    private static final String FEDORA_URI_1 = "http://www.example.com/fedora/rest/resource1";
+    private static final String FEDORA_URI_2 = "http://www.example.com/fedora/rest/resource2";
+    private static final String FEDORA_ID_1 = "info:fedora/resource1";
+    private static final String FEDORA_ID_2 = "info:fedora/resource2";
     private static final String NON_FEDORA_URI = "http://www.otherdomain.org/resource5";
     private static final String RDF =
                 "@prefix dc: <"  + DC.getURI() + "> ." +
                 "@prefix dcterms: <"  + DCTerms.getURI() + "> ." +
-                "<" + FEDORA_URI + "> dc:title 'fancy title' ;" +
+                "<" + FEDORA_URI_1 + "> dc:title 'fancy title' ;" +
                 "    dcterms:isPartOf <" + NON_FEDORA_URI + "> ;" +
-                "    dcterms:isPartOf <" + FEDORA_URI + "> .";
+                "    dcterms:isPartOf <" + FEDORA_URI_2 + "> .";
 
     private static final MediaType CONTENT_TYPE = new MediaType("text", "turtle");
 
     @Before
     public void setup(){
-        when(idTranslator.toInternalId(FEDORA_URI)).thenReturn(FEDORA_ID);
-        when(idTranslator.inExternalDomain(FEDORA_URI)).thenReturn(true);
+        when(idTranslator.toInternalId(FEDORA_URI_1)).thenReturn(FEDORA_ID_1);
+        when(idTranslator.toInternalId(FEDORA_URI_2)).thenReturn(FEDORA_ID_2);
+        when(idTranslator.inExternalDomain(FEDORA_URI_1)).thenReturn(true);
+        when(idTranslator.inExternalDomain(FEDORA_URI_2)).thenReturn(true);
         when(idTranslator.inExternalDomain(NON_FEDORA_URI)).thenReturn(false);
-        when(resource.getId()).thenReturn(FEDORA_ID);
+        when(resource.getId()).thenReturn(FEDORA_ID_1);
 
         log.debug("Rdf is: {}", RDF);
     }
@@ -85,7 +90,7 @@ public class HttpRdfServiceTest {
     public void testGetModelFromInputStream() {
 
         final InputStream requestBodyStream = new ByteArrayInputStream(RDF.getBytes());
-        final Model model = httpRdfService.bodyToInternalModel(FEDORA_URI, requestBodyStream,
+        final Model model = httpRdfService.bodyToInternalModel(FEDORA_URI_1, requestBodyStream,
             CONTENT_TYPE);
 
         assertFalse(model.isEmpty());
@@ -97,7 +102,7 @@ public class HttpRdfServiceTest {
     public void testGetRdfStreamFromInputStream() {
 
         final InputStream requestBodyStream = new ByteArrayInputStream(RDF.getBytes());
-        final RdfStream stream = httpRdfService.bodyToInternalStream(FEDORA_URI, requestBodyStream,
+        final RdfStream stream = httpRdfService.bodyToInternalStream(FEDORA_URI_1, requestBodyStream,
             CONTENT_TYPE);
 
         assertTrue(stream.toString().length() > 0);
@@ -106,18 +111,16 @@ public class HttpRdfServiceTest {
 
     private void verifyTriples(final Model model)  {
 
+        final Resource fedoraResource = model.createResource(FEDORA_ID_1);
+
         // make sure it changed the fedora uri to id, but didn't touch the non fedora domain
-        assertTrue(model.contains(model.createResource(FEDORA_ID),
-            model.createProperty(DCTerms.isPartOf.toString()),
-            model.createResource(NON_FEDORA_URI)));
+        assertTrue(model.contains(fedoraResource, DCTerms.isPartOf, model.createResource(NON_FEDORA_URI)));
+
+        // make sure it translated the fedora uri to fedora id for this triple in both the subject and object
+        assertTrue(model.contains(fedoraResource, DCTerms.isPartOf, model.createResource(FEDORA_ID_2)));
 
         // make sure there are no triples that have the subject of the fedora uri
-        assertFalse(model.containsResource(model.createResource(FEDORA_URI)));
-
-        // make sure it translated the fedora uri to fedora id for this triple
-        assertTrue(model.contains(model.createResource(FEDORA_ID),
-            model.createProperty(DCTerms.isPartOf.toString()),
-            model.createResource(FEDORA_ID)));
+        assertFalse(model.containsResource(model.createResource(FEDORA_URI_1)));
     }
 
     private void verifyTriples(final RdfStream rdfStream) {
