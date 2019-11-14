@@ -61,16 +61,11 @@ public abstract class AbstractPersister implements Persister {
 
     @Override
     public boolean handle(final ResourceOperation operation) {
-        //retrieve the interfaces of the operation class
-        final var interfaces = operation.getClass().getInterfaces();
-
         //ensure that at least one of them match.
-        for (final var i : interfaces) {
-            for (final var c : this.resourceOperations) {
-                if (c.equals(i)) {
-                    //return true if the operation types match.
-                    return this.resourceOperationType.contains(operation.getType());
-                }
+        for (final var c : this.resourceOperations) {
+            if (c.isInstance(operation)) {
+                //return true if the operation types match.
+                return this.resourceOperationType.contains(operation.getType());
             }
         }
         return false;
