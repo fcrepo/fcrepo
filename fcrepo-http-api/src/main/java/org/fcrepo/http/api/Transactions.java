@@ -42,7 +42,8 @@ import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
 /**
- * Transactions over REST
+ * The rest interface for transaction management. The interfaces
+ * allows for creation, commit and rollback of transactions.
  *
  * @author awoods
  * @author gregjan
