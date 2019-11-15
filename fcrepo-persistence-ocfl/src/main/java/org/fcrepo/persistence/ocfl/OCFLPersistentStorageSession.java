@@ -79,7 +79,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     private final static List<Persister> PERSISTER_LIST = new ArrayList<>();
 
-    private List<CommittedSession> sessionsToRollback = null;
+    private List<CommittedSession> sessionsToRollback = new ArrayList<>();
 
     private State state = State.COMMIT_NOT_STARTED;
 
@@ -105,7 +105,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     private enum State {
         COMMIT_NOT_STARTED,
         COMMIT_STARTED,
-        PREPARE_FAILRED,
+        PREPARE_FAILED,
         COMMITTED,
         COMMIT_FAILED,
         ROLLING_BACK,
@@ -176,7 +176,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     private void ensureCommitNotStarted() throws PersistentSessionClosedException {
         if (!state.equals(State.COMMIT_NOT_STARTED)) {
-            throw new PersistentSessionClosedException("The session cannot be committed: current state: " + state);
+            throw new PersistentSessionClosedException("The session cannot be committed in the  " + state + " state");
         }
     }
 
@@ -256,7 +256,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
             LOGGER.debug("Prepare succeeded.");
         } catch (final Exception e) {
-            this.state = State.PREPARE_FAILRED;
+            this.state = State.PREPARE_FAILED;
             throw new PersistentStorageException("Commit failed due to : " + e.getMessage(), e);
         }
 
@@ -268,7 +268,6 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
                 objectSession.commit(option);
                 sessionsToRollback.add(new CommittedSession(objectSession, option));
             }
-
 
             state = State.COMMITTED;
             LOGGER.info("Successfully committed {}", this);
@@ -285,12 +284,23 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
             return;
         }
 
-        if (!state.equals(State.COMMIT_FAILED) && !state.equals(State.PREPARE_FAILRED)) {
+        if (!(state.equals(State.COMMIT_FAILED) || state.equals(State.PREPARE_FAILED) ||
+                state.equals(State.COMMIT_NOT_STARTED))) {
             throw new PersistentStorageException("This session cannot be rolled back in this state: " + state);
         }
 
+        final boolean commitWasStarted = this.state != State.COMMIT_NOT_STARTED;
+
         this.state = State.ROLLING_BACK;
         LOGGER.info("rolling back...");
+
+        if (!commitWasStarted) {
+            //if the commit had not been started at the time this method was invoked
+            //we must ensure that all persist operations are complete before we close any
+            //ocfl object sessions. If the commit had been started then this synchronization step
+            //will have already occurred and is thus unnecessary.
+            this.phaser.arriveAndAwaitAdvance();
+        }
 
         //close any uncommitted sessions
         final List<OCFLObjectSession> committedSessions = this.sessionsToRollback.stream().map(c -> c.session).collect(Collectors.toList());
@@ -300,29 +310,31 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
             obj.close();
         }
 
-        // rollback committed sessions
-        //for each committed session, rollback if possible
-        final List<String> rollbackFailures = new ArrayList<>(this.sessionsToRollback.size());
-        for (CommittedSession cs : this.sessionsToRollback) {
-            if (cs.option == NEW_VERSION) {
-                //TODO rollback to previous OCFL version
-                //add any failure messages here.
-            } else {
-                rollbackFailures.add(format("%s was already committed to the unversioned head", cs.session));
+        if (commitWasStarted) {
+
+            // rollback committed sessions
+            //for each committed session, rollback if possible
+            final List<String> rollbackFailures = new ArrayList<>(this.sessionsToRollback.size());
+            for (CommittedSession cs : this.sessionsToRollback) {
+                if (cs.option == NEW_VERSION) {
+                    //TODO rollback to previous OCFL version
+                    //add any failure messages here.
+                } else {
+                    rollbackFailures.add(format("%s was already committed to the unversioned head", cs.session));
+                }
+            }
+            //throw an exception if any sessions could not be rolled back.
+            if (rollbackFailures.size() > 0) {
+                state = State.ROLLBACK_FAILED;
+                final StringBuilder builder = new StringBuilder();
+                builder.append("Unable to rollback successfully due to the following reasons: \n");
+                for (String failures : rollbackFailures) {
+                    builder.append("        " + failures + "\n");
+                }
+
+                throw new PersistentStorageException(builder.toString());
             }
         }
-        //throw an exception if any sessions could not be rolled back.
-        if (rollbackFailures.size() > 0) {
-            state = State.ROLLBACK_FAILED;
-            final StringBuilder builder = new StringBuilder();
-            builder.append("Unable to rollback successfully due to the following reasons: \n");
-            for (String failures : rollbackFailures) {
-                builder.append("\t\t" + failures + "\n");
-            }
-
-            throw new PersistentStorageException(builder.toString());
-        }
-
         this.state = State.ROLLED_BACK;
         LOGGER.info("rolled back successfully.");
 

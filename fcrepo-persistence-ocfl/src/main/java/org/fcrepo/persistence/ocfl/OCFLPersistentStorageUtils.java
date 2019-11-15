@@ -77,7 +77,9 @@ public class OCFLPersistentStorageUtils {
      * @return The resolved subpath
      */
     public static String relativizeSubpath(final String ancestorResourceId, final String resourceId) {
-        if (resourceId.startsWith(ancestorResourceId)) {
+        if (resourceId.equals(ancestorResourceId)) {
+            return resourceId;
+        } else if (resourceId.startsWith(ancestorResourceId)) {
             return resourceId.substring(ancestorResourceId.length() + 1);
         }
 
