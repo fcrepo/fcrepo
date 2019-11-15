@@ -25,6 +25,7 @@ import java.time.Instant;
 
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.slf4j.Logger;
@@ -37,23 +38,23 @@ import org.slf4j.LoggerFactory;
  */
 public class TransactionImpl implements Transaction {
 
-    private final static Logger log = LoggerFactory.getLogger(TransactionImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(TransactionImpl.class);
 
-    final String id;
+    private static final Duration DEFAULT_TIMEOUT = ofMinutes(3);
 
-    final TransactionManagerImpl txManager;
+    private final String id;
 
-    final Duration DEFAULT_TIMEOUT = ofMinutes(3);
+    private final TransactionManagerImpl txManager;
 
-    boolean shortLived = true;
+    private boolean shortLived = true;
 
-    Instant expiration;
+    private Instant expiration;
 
-    boolean expired = false;
+    private boolean expired = false;
 
-    boolean rolledback = false;
+    private boolean rolledback = false;
 
-    boolean commited = false;
+    private boolean commited = false;
 
     protected TransactionImpl(final String id, final TransactionManagerImpl txManager) {
         if (id == null || id.isEmpty()) {
@@ -65,10 +66,10 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
-    public void commit() {
+    public synchronized void commit() {
         failIfExpired();
         failIfRolledback();
-        if(this.commited) {
+        if (this.commited) {
             return;
         }
         try {
@@ -76,20 +77,22 @@ public class TransactionImpl implements Transaction {
             this.getPersistentSession().commit();
             this.commited = true;
         } catch (final PersistentStorageException ex) {
+            // Rollback on commit failure
+            rollback();
             throw new RepositoryRuntimeException("failed to commit transaction " + id, ex);
         }
     }
 
     @Override
-    public void rollback() {
+    public synchronized void rollback() {
         failIfCommited();
-        if(this.rolledback) {
+        if (this.rolledback) {
             return;
         }
         try {
             log.debug("Rolling back transaction {}", id);
-            this.getPersistentSession().rollback();
             this.rolledback = true;
+            this.getPersistentSession().rollback();
         } catch (final PersistentStorageException ex) {
             throw new RepositoryRuntimeException("failed to rollback transaction " + id, ex);
         }
@@ -111,7 +114,7 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
-    public void expire() {
+    public synchronized void expire() {
         this.expiration = Instant.now();
         this.expired = true;
     }
@@ -126,7 +129,7 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
-    public Instant updateExpiry(final Duration amountToAdd) {
+    public synchronized Instant updateExpiry(final Duration amountToAdd) {
         failIfExpired();
         failIfCommited();
         failIfRolledback();
@@ -162,20 +165,20 @@ public class TransactionImpl implements Transaction {
     }
 
     private void failIfExpired() {
-        if(hasExpired()) {
-            throw new RuntimeException("Transaction with transactionId: " + id + " expired!");
+        if (hasExpired()) {
+            throw new TransactionRuntimeException("Transaction with transactionId: " + id + " expired!");
         }
     }
 
     private void failIfCommited() {
-        if(this.commited) {
-            throw new RuntimeException("Transaction with transactionId: " + id + " is already committed!");
+        if (this.commited) {
+            throw new TransactionRuntimeException("Transaction with transactionId: " + id + " is already committed!");
         }
     }
 
     private void failIfRolledback() {
-        if(this.rolledback) {
-            throw new RuntimeException("Transaction with transactionId: " + id + " is already rolledback!");
+        if (this.rolledback) {
+            throw new TransactionRuntimeException("Transaction with transactionId: " + id + " is already rolledback!");
         }
     }
 }

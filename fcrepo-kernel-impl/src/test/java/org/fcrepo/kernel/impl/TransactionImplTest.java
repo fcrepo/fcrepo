@@ -19,12 +19,17 @@ package org.fcrepo.kernel.impl;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
 import java.time.Instant;
 
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -79,84 +84,108 @@ public class TransactionImplTest {
     }
 
     @Test
-    public void testCommit() {
+    public void testCommit() throws Exception {
         testTx.commit();
-        try {
-            verify(psSession).commit();
-        } catch (PersistentStorageException e) {
-            e.printStackTrace();
-        }
+        verify(psSession).commit();
     }
 
     @Test
-    public void testCommitIfShortLived() {
+    public void testCommitIfShortLived() throws Exception {
         testTx.setShortLived(true);
         testTx.commitIfShortLived();
-        try {
-            verify(psSession).commit();
-        } catch (PersistentStorageException e) {
-            e.printStackTrace();
-        }
+        verify(psSession).commit();
     }
 
     @Test
-    public void testCommitIfShortLivedOnNonShortLived() {
+    public void testCommitIfShortLivedOnNonShortLived() throws Exception {
         testTx.setShortLived(false);
         testTx.commitIfShortLived();
-        try {
-            verify(psSession, never()).commit();
-        } catch (PersistentStorageException e) {
-            e.printStackTrace();
-        }
+        verify(psSession, never()).commit();
     }
 
-    @Test(expected = RuntimeException.class)
-    public void testCommitExpired() {
+    @Test(expected = TransactionRuntimeException.class)
+    public void testCommitExpired() throws Exception {
         testTx.expire();
-        testTx.commit();
         try {
-            verify(psSession).commit();
-        } catch (PersistentStorageException e) {
-            e.printStackTrace();
+            testTx.commit();
+        } finally {
+            verify(psSession, never()).commit();
         }
     }
 
-    @Test(expected = RuntimeException.class)
-    public void testCommitRolledbackTx() {
+    @Test(expected = TransactionRuntimeException.class)
+    public void testCommitRolledbackTx() throws Exception {
         testTx.rollback();
-        testTx.commit();
         try {
+            testTx.commit();
+        } finally {
             verify(psSession, never()).commit();
-        } catch (PersistentStorageException e) {
-            e.printStackTrace();
+        }
+    }
+
+    @Test(expected = RepositoryRuntimeException.class)
+    public void testEnsureRollbackOnFailedCommit() throws Exception {
+        doThrow(new PersistentStorageException("Failed")).when(psSession).commit();
+        try {
+            testTx.commit();
+        } finally {
+            verify(psSession).commit();
+            verify(psSession).rollback();
         }
     }
 
     @Test
-    public void testRollback() {
+    public void testCommitAlreadyCommittedTx() throws Exception {
+        testTx.commit();
+        testTx.commit();
+        verify(psSession, times(1)).commit();
+    }
+
+    @Test
+    public void testRollback() throws Exception {
         testTx.rollback();
+        verify(psSession).rollback();
+    }
+
+    @Test(expected = TransactionRuntimeException.class)
+    public void testRollbackCommited() throws Exception {
+        testTx.commit();
         try {
-            verify(psSession).rollback();
-        } catch (PersistentStorageException e) {
-            e.printStackTrace();
+            testTx.rollback();
+        } finally {
+            verify(psSession, never()).rollback();
         }
     }
 
-    @Test(expected = RuntimeException.class)
-    public void testRollbackCommited() {
-        testTx.commit();
+    @Test
+    public void testRollbackAlreadyRolledbackTx() throws Exception {
         testTx.rollback();
-        try {
-            verify(psSession, never()).rollback();
-        } catch (PersistentStorageException e) {
-            e.printStackTrace();
-        }
+        testTx.rollback();
+        verify(psSession, times(1)).rollback();
     }
 
     @Test
     public void testExpire() {
         testTx.expire();
-        assertEquals(true, testTx.hasExpired());
+        assertTrue(testTx.hasExpired());
+    }
+
+    @Test
+    public void testUpdateExpiry() {
+        final Instant previousExpiry = testTx.getExpires();
+        testTx.updateExpiry(Duration.ofSeconds(1));
+        assertTrue(testTx.getExpires().isAfter(previousExpiry));
+    }
+
+    @Test(expected = TransactionRuntimeException.class)
+    public void testUpdateExpiryOnExpired() {
+        testTx.expire();
+        final Instant previousExpiry = testTx.getExpires();
+        try {
+            testTx.updateExpiry(Duration.ofSeconds(1));
+        } finally {
+            assertTrue(testTx.getExpires().equals(previousExpiry));
+        }
     }
 
     @Test
@@ -166,8 +195,19 @@ public class TransactionImplTest {
         assertTrue(testTx.getExpires().isAfter(previousExpiry));
     }
 
+    @Test(expected = TransactionRuntimeException.class)
+    public void testRefreshOnExpired() {
+        testTx.expire();
+        final Instant previousExpiry = testTx.getExpires();
+        try {
+            testTx.refresh();
+        } finally {
+            assertTrue(testTx.getExpires().equals(previousExpiry));
+        }
+    }
+
     @Test
     public void testNewTransactionNotExpired() {
-        assertTrue(testTx.getExpires().compareTo(Instant.now()) > 0);
+        assertTrue(testTx.getExpires().isAfter(Instant.now()));
     }
 }

@@ -19,12 +19,18 @@ package org.fcrepo.kernel.impl;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import org.fcrepo.kernel.api.TransactionManager;
-
+import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /**
@@ -39,9 +45,17 @@ public class TransactionManagerImplTest {
 
     private TransactionManager testTxManager;
 
+    @Mock
+    private PersistentStorageSessionManager pssManager;
+
+    @Mock
+    private PersistentStorageSession psSession;
+
     @Before
     public void setUp() {
         testTxManager = new TransactionManagerImpl();
+        when(pssManager.getSession(any())).thenReturn(psSession);
+        setField(testTxManager, "pSessionManager", pssManager);
         testTx = (TransactionImpl) testTxManager.create();
     }
 
@@ -58,12 +72,12 @@ public class TransactionManagerImplTest {
         assertEquals(testTx.getId(), tx.getId());
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test(expected = TransactionRuntimeException.class)
     public void testGetTransactionWithInvalidID() {
         testTxManager.get("invalid-id");
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test(expected = TransactionRuntimeException.class)
     public void testGetExpiredTransaction() {
         testTx.expire();
         testTxManager.get(testTx.getId());

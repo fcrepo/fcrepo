@@ -21,6 +21,7 @@ import static java.util.UUID.randomUUID;
 
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 
 import java.util.HashMap;
@@ -44,6 +45,8 @@ public class TransactionManagerImpl implements TransactionManager {
         transactions = new HashMap();
     }
 
+    // TODO Add a timer to periadically rollback and cleanup expired transaction?
+
     @Override
     public synchronized Transaction create() {
         String txId = randomUUID().toString();
@@ -62,12 +65,12 @@ public class TransactionManagerImpl implements TransactionManager {
             if(transaction.hasExpired()) {
                 transaction.rollback();
                 transactions.remove(transactionId);
-                throw new RuntimeException("Transaction with transactionId: " + transactionId +
+                throw new TransactionRuntimeException("Transaction with transactionId: " + transactionId +
                     " expired at " + transaction.getExpires() + "!");
             }
             return transaction;
         } else {
-            throw new RuntimeException("No Transaction found with transactionId: " + transactionId);
+            throw new TransactionRuntimeException("No Transaction found with transactionId: " + transactionId);
         }
     }
 
