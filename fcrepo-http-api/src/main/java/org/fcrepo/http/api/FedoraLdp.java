@@ -398,6 +398,7 @@ public class FedoraLdp extends ContentExposingResource {
             final InputStream requestBodyStream,
             @HeaderParam(CONTENT_DISPOSITION) final ContentDisposition contentDisposition,
             @HeaderParam("If-Match") final String ifMatch,
+            @HeaderParam("Slug") final String slug,
             @HeaderParam(LINK) final List<String> rawLinks,
             @HeaderParam("Digest") final String digest)
             throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException {
@@ -421,6 +422,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String interactionModel = checkInteractionModel(links);
 
+        // TODO: check if it exists or if we're creating it.
         if ("We exist in persistent storage already".isEmpty()) {
 
             if (httpConfiguration.putRequiresIfMatch() && StringUtils.isBlank(ifMatch)) {
@@ -436,7 +438,8 @@ public class FedoraLdp extends ContentExposingResource {
             //}
         }
 
-        final String fedoraId = identifierConverter().convert(externalPath());
+        // TODO: double check this logic
+        final String fedoraId = identifierConverter().toInternalId(externalPath()) + "/" + slug;
 
         // TODO: Refactor to check preconditions
         //evaluateRequestPreconditions(request, servletResponse, resource, transaction);
@@ -444,14 +447,19 @@ public class FedoraLdp extends ContentExposingResource {
         if (isBinary(interactionModel, requestContentType.toString(), requestBodyStream != null,
                 extContent != null)) {
             // TODO: Implement UpdateResourceService
-           // createResourceService.perform(transaction.getId(), fedoraId, slug, contentType, links, digest,
-           //         requestBodyStream, extContent);
+            //createResourceService.perform(transaction.getId(), fedoraId, slug, contentType, links, digest,
+            //    requestBodyStream, extContent);
         } else {
-            final Model model = parseBodyAsModel(requestBodyStream, contentType, fedoraId);
-            // TODO: Do translation services.
-            // TODO: Implement UpdateResourceService
-            //createResourceService.perform(transaction.getId(), fedoraId, slug, contentType, links,
-            //        model);
+            final Model model = httpRdfService.bodyToInternalModel(externalPath(), requestBodyStream,
+                requestContentType);
+
+            if ("Resource Exists".isEmpty()) {
+                replacePropertiesService.perform(transaction.getId(), fedoraId, requestContentType.toString(),
+                    model);
+            } else {
+                createResourceService.perform(transaction.getId(), fedoraId, slug, contentType, links,
+                    model);
+            }
         }
 
         // TODO: How to generate a response.
@@ -569,7 +577,7 @@ public class FedoraLdp extends ContentExposingResource {
     public Response createObject(@HeaderParam(CONTENT_DISPOSITION) final ContentDisposition contentDisposition,
                                  @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
                                  @HeaderParam("Slug") final String slug,
-            final InputStream requestBodyStream,
+                                 final InputStream requestBodyStream,
                                  @HeaderParam(LINK) final List<String> rawLinks,
                                  @HeaderParam("Digest") final String digest)
             throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException {
@@ -590,7 +598,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String interactionModel = checkInteractionModel(links);
 
-        final String fedoraId = identifierConverter().convert(externalPath());
+        final String fedoraId = identifierConverter().toInternalId(externalPath());
 
         if (isBinary(interactionModel, requestContentType.toString(), requestContentType != null,
                 extContent != null)) {

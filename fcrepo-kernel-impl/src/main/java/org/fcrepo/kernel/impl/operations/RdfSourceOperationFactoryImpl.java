@@ -37,8 +37,7 @@ public class RdfSourceOperationFactoryImpl implements RdfSourceOperationFactory 
 
     @Override
     public RdfSourceOperationBuilder updateBuilder(final String rescId) {
-        // TODO Auto-generated method stub
-        return null;
+        return new UpdateRdfSourceOperationBuilder(rescId);
     }
 
     @Override

@@ -17,44 +17,60 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
-import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.rdf.model.ResourceFactory.createStatement;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
+import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.api.RdfLexicon.DEFAULT_INTERACTION_MODEL;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS_FULL;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_ACCESS_TO;
+import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_ACCESS_TO_PROPERTY;
+import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_ACCESS_TO_CLASS;
+import static org.slf4j.LoggerFactory.getLogger;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import org.apache.jena.atlas.RuntimeIOException;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
+import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RiotException;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.RDFNode;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.exception.ACLAuthorizationConstraintViolationException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.RequestWithAclLinkHeaderException;
+import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 
-import java.io.InputStream;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.ArrayList;
 import java.util.function.Predicate;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
 
 public class AbstractService {
+
+    private static final Logger log = getLogger(ReplacePropertiesServiceImpl.class);
+
+    private static final Node WEBAC_ACCESS_TO_URI = createURI(WEBAC_ACCESS_TO);
+
+    private static final Node WEBAC_ACCESS_TO_CLASS_URI = createURI(WEBAC_ACCESS_TO_CLASS);
 
     static String rdfType = RDF_NAMESPACE + "type";
 
@@ -112,41 +128,6 @@ public class AbstractService {
     }
 
     /**
-     * Parse the request body as a Model.
-     * TODO: Replace this with HttpRdfService.parseBodyAsModel once https://github.com/fcrepo4/fcrepo4/pull/1575 lands.
-     *
-     * @param requestBodyStream rdf request body
-     * @param contentType content type of body
-     * @param fedoraId the fedora resource identifier
-     *
-     * @return Model containing triples from request body
-     *
-     * @throws MalformedRdfException in case rdf cannot be parsed
-     */
-    Model parseBodyAsModel(final InputStream requestBodyStream,
-                                   final String contentType, final String fedoraId) throws MalformedRdfException {
-        if (requestBodyStream == null) {
-            return null;
-        }
-
-        final Lang format = contentTypeToLang(contentType);
-        final Model inputModel;
-        try {
-            inputModel = createDefaultModel();
-            inputModel.read(requestBodyStream, fedoraId, format.getName().toUpperCase());
-            return inputModel;
-        } catch (final RiotException e) {
-            throw new MalformedRdfException("RDF was not parsable: " + e.getMessage(), e);
-
-        } catch (final RuntimeIOException e) {
-            if (e.getCause() instanceof JsonParseException) {
-                throw new MalformedRdfException(e.getCause());
-            }
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
-    /**
      * Looks through an RdfStream for rdf:types in the LDP namespace or server managed predicates.
      *
      * @param model The RDF model.
@@ -160,6 +141,87 @@ public class AbstractService {
                 throw new MalformedRdfException("RDF contains a server managed triple or restricted rdf:type");
             }
         }
+    }
+
+    /*
+     * This method throws an exception if the arg model contains a triple with 'ldp:hasMemberRelation' as a predicate
+     *   and a server-managed property as the object.
+     *
+     * @param inputModel to be checked
+     * @throws ServerManagedPropertyException on error
+     */
+    protected void ensureValidMemberRelation(final Model inputModel) {
+        // check that ldp:hasMemberRelation value is not server managed predicate.
+        inputModel.listStatements().forEachRemaining((final Statement s) -> {
+            log.debug("statement: s={}, p={}, o={}", s.getSubject(), s.getPredicate(), s.getObject());
+
+            if (s.getPredicate().equals(HAS_MEMBER_RELATION)) {
+                final RDFNode obj = s.getObject();
+                if (obj.isURIResource()) {
+                    final String uri = obj.asResource().getURI();
+
+                    // Throw exception if object is a server-managed property
+                    if (isManagedPredicate.test(createProperty(uri))) {
+                            throw new ServerManagedPropertyException(
+                                    String.format(
+                                            "{0} cannot take a server managed property " +
+                                                    "as an object: property value = {1}.",
+                                            HAS_MEMBER_RELATION, uri));
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * This method does two things:
+     * - Throws an exception if an authorization has both accessTo and accessToClass
+     * - Adds a default accessTo target if an authorization has neither accessTo nor accessToClass
+     *
+     * @param fedoraId the fedora Id
+     * @param inputModel to be checked and updated
+     */
+    protected void ensureValidACLAuthorization(final String fedoraId, final Model inputModel) {
+
+        // TODO -- check ACL first
+
+        final Set<Node> uniqueAuthSubjects = new HashSet<>();
+        inputModel.listStatements().forEachRemaining((final Statement s) -> {
+            log.debug("statement: s={}, p={}, o={}", s.getSubject(), s.getPredicate(), s.getObject());
+            final Node subject = s.getSubject().asNode();
+            // If subject is Authorization Hash Resource, add it to the map with its accessTo/accessToClass status.
+            if (subject.toString().contains("/" + FCR_ACL + "#")) {
+                uniqueAuthSubjects.add(subject);
+            }
+        });
+        final Graph graph = inputModel.getGraph();
+        uniqueAuthSubjects.forEach((final Node subject) -> {
+            if (graph.contains(subject, WEBAC_ACCESS_TO_URI, Node.ANY) &&
+                    graph.contains(subject, WEBAC_ACCESS_TO_CLASS_URI, Node.ANY)) {
+                throw new ACLAuthorizationConstraintViolationException(
+                    String.format(
+                            "Using both accessTo and accessToClass within " +
+                                    "a single Authorization is not allowed: {0}.",
+                            subject.toString().substring(subject.toString().lastIndexOf("#"))));
+            } else if (!(graph.contains(subject, WEBAC_ACCESS_TO_URI, Node.ANY) ||
+                    graph.contains(subject, WEBAC_ACCESS_TO_CLASS_URI, Node.ANY))) {
+                inputModel.add(createDefaultAccessToStatement(subject.toString()));
+            }
+        });
+    }
+
+    /**
+     * Returns a Statement with the resource containing the acl to be the accessTo target for the given auth subject.
+     *
+     * @param authSubject - acl authorization subject uri string
+     * @return acl statement
+     */
+    private Statement createDefaultAccessToStatement(final String authSubject) {
+        final String currentResourcePath = authSubject.substring(0, authSubject.indexOf("/" + FCR_ACL));
+        return createStatement(
+                        createResource(authSubject),
+                        WEBAC_ACCESS_TO_PROPERTY,
+                        createResource(currentResourcePath));
     }
 
     /**

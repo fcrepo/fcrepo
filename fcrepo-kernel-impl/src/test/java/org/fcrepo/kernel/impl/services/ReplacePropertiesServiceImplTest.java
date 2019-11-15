@@ -25,9 +25,11 @@ import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static java.util.stream.Stream.of;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
+import org.apache.jena.vocabulary.DC;
+import org.apache.jena.vocabulary.DCTerms;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.fcrepo.kernel.api.Transaction;
@@ -41,6 +43,7 @@ import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -64,53 +67,58 @@ public class ReplacePropertiesServiceImplTest {
     private PersistentStorageSessionManager psManager;
 
     @Mock
-    private RdfSourceOperationFactory factory;
+    FedoraResource resource;
 
     @Mock
     private RdfSourceOperationBuilder builder;
 
-    @Mock
+    @InjectMocks
     private UpdateRdfSourceOperation operation;
-
-    @Mock
-    FedoraResource resource;
 
     @InjectMocks
     private ReplacePropertiesServiceImpl service;
 
-    private final String id = "test-resource";
-    private final String txId = "tx-1234";
-    private final String contentType = "text/turtle";
-    private final String resourceName = "testResource";
-    private final Node subject = createURI(resourceName);
-    private final Triple triple1 = new Triple(createURI(resourceName),
+    private RdfSourceOperationFactory factory;
+
+    private static final String FEDORA_URI = "http://www.example.com/fedora/rest/resource1";
+    private static final String FEDORA_ID = "info:fedora/resource1";
+    private static final String TX_ID = "tx-1234";
+    private static final String CONTENT_TYPE = "text/turtle";
+
+    private static final String RDF =
+            "@prefix dc: <"  + DC.getURI() + "> ." +
+            "@prefix dcterms: <"  + DCTerms.getURI() + "> ." +
+            "<" + FEDORA_URI + "> dc:title 'fancy title' ;" +
+            "<" + FEDORA_URI + "> dc:title 'another fancy title' ;";
+
+    private final Node subject = createURI(FEDORA_ID);
+
+    private final Triple triple1 = new Triple(createURI(FEDORA_ID),
         createURI("http://purl.org/dc/elements/1.1/title"),
         createLiteral("title one", XSDDatatype.XSDstring));
-    private final Triple triple2 = new Triple(createURI(resourceName),
+    private final Triple triple2 = new Triple(createURI(FEDORA_ID),
         createURI("http://purl.org/dc/elements/1.1/title"),
         createLiteral("title two", XSDDatatype.XSDstring));
 
-    private final DefaultRdfStream rdfStream = new DefaultRdfStream(subject, of(triple1, triple2));
 
-    private final String rdfString = "@prefix dc: <http://purl.org/dc/elements/1.1/> . \n" +
-                    "</path/to/resource1>\n" +
-                    "dc:title 'fancy title'\n";
-
-    final InputStream requestBodyStream = new ByteArrayInputStream(rdfString.getBytes());
+    @Before
+    public void setup() {
+        when(tx.getId()).thenReturn(TX_ID);
+        when(psManager.getSession(anyString())).thenReturn(pSession);
+        when(resource.getId()).thenReturn(FEDORA_ID);
+        when(factory.updateBuilder(eq(FEDORA_ID))).thenReturn(builder);
+        when(builder.build()).thenReturn(operation);
+    }
 
     @Test
     @Ignore
-    public void test() throws PersistentStorageException {
-
-        // TODO finish test
-        when(tx.getId()).thenReturn(txId);
-        when(psManager.getSession(anyString())).thenReturn(pSession);
-        when(resource.getId()).thenReturn(id);
+    public void testReplaceProperties() throws PersistentStorageException {
+        final DefaultRdfStream rdfStream = new DefaultRdfStream(subject, of(triple1, triple2));
         when(resource.getTriples()).thenReturn(rdfStream);
-        when(factory.updateBuilder(eq(id))).thenReturn(builder);
-        when(builder.build()).thenReturn(operation);
 
-        service.replaceProperties(tx, resource, requestBodyStream, contentType);
+        final Model model = ModelFactory.createDefaultModel();
+
+        service.perform(tx.getId(), resource.getId(), CONTENT_TYPE, model);
         verify(pSession).persist(operation);
     }
 }

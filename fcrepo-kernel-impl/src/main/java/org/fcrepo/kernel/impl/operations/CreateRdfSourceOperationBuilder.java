@@ -79,6 +79,8 @@ public class CreateRdfSourceOperationBuilder implements RdfSourceOperationBuilde
         } else {
             stream = null;
         }
-        return triples(stream);
+
+        tripleStream = stream;
+        return this;
     }
 }

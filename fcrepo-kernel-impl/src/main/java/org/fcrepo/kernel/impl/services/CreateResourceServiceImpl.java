@@ -148,7 +148,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
      * @return the new full path identifier.
      */
     private String doInternalPerform(final PersistentStorageSession pSession, final String fedoraId,
-                                                       final String slug, final List<String> linkHeaders) {
+                                     final String slug, final List<String> linkHeaders) {
         checkAclLinkHeader(linkHeaders);
 
         final ResourceHeaders parent;

@@ -145,11 +145,12 @@ public class FedoraAcl extends ContentExposingResource {
                 requestContentType == null ? RDFMediaType.TURTLE_TYPE : MediaType.valueOf(getSimpleContentType(requestContentType));
             if (isRdfContentType(contentType.toString())) {
 
-                try (final RdfStream resourceTriples =
-                         created ? new DefaultRdfStream(asNode(aclResource)) : getResourceTriples(aclResource)) {
-                    replacePropertiesService.replaceProperties(transaction, aclResource, requestBodyStream,
-                        contentType.toString());
-                }
+                // TODO: confirm this is correct logic for ACL's
+                final Model model = httpRdfService.bodyToInternalModel(externalPath() + "/fcr:acl",
+                        requestBodyStream, requestContentType);
+
+                replacePropertiesService.perform(transaction.getId(), aclResource.getId(),
+                    requestContentType.toString(), model);
             } else {
                 throw new BadRequestException("Content-Type (" + requestContentType + ") is invalid. Try text/turtle " +
                                               "or other RDF compatible type.");

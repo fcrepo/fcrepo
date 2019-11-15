@@ -119,10 +119,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Statement;
 import org.fcrepo.http.api.services.HttpRdfService;
 import org.fcrepo.http.commons.api.HttpHeaderInjector;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
@@ -949,88 +946,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                     checksumURIs,
                     originalFileName,
                     storagePolicyDecisionPoint);
-        }
-    }
-
-    protected void replaceResourceWithStream(final FedoraResource resource,
-                                             final InputStream requestBodyStream,
-                                             final MediaType contentType,
-                                             final RdfStream resourceTriples) throws MalformedRdfException {
-
-        final Model inputModel = httpRdfService.bodyToInternalModel(resource.getId(), requestBodyStream, contentType);
-
-
-        ensureValidMemberRelation(inputModel);
-
-        ensureValidACLAuthorization(resource, inputModel);
-
-        replacePropertiesService.replaceProperties(resource, inputModel, resourceTriples);
-    }
-
-
-    /**
-     * This method throws an exception if the arg model contains a triple with 'ldp:hasMemberRelation' as a predicate
-     *   and a server-managed property as the object.
-     *
-     * @param inputModel to be checked
-     * @throws ServerManagedPropertyException on error
-     */
-    private void ensureValidMemberRelation(final Model inputModel) {
-        // check that ldp:hasMemberRelation value is not server managed predicate.
-        inputModel.listStatements().forEachRemaining((final Statement s) -> {
-            LOGGER.debug("statement: s={}, p={}, o={}", s.getSubject(), s.getPredicate(), s.getObject());
-
-            if (s.getPredicate().equals(HAS_MEMBER_RELATION)) {
-                final RDFNode obj = s.getObject();
-                if (obj.isURIResource()) {
-                    final String uri = obj.asResource().getURI();
-
-                    // Throw exception if object is a server-managed property
-                    if (isManagedPredicate.test(createProperty(uri))) {
-                            throw new ServerManagedPropertyException(
-                                    format(
-                                            "{0} cannot take a server managed property " +
-                                                    "as an object: property value = {1}.",
-                                            HAS_MEMBER_RELATION, uri));
-                    }
-                }
-            }
-        });
-    }
-
-    /**
-     * This method does two things:
-     * - Throws an exception if an authorization has both accessTo and accessToClass
-     * - Adds a default accessTo target if an authorization has neither accessTo nor accessToClass
-     *
-     * @param resource the fedora resource
-     * @param inputModel to be checked and updated
-     */
-    private void ensureValidACLAuthorization(final FedoraResource resource, final Model inputModel) {
-        if (resource.isAcl()) {
-            final Set<Node> uniqueAuthSubjects = new HashSet<>();
-            inputModel.listStatements().forEachRemaining((final Statement s) -> {
-                LOGGER.debug("statement: s={}, p={}, o={}", s.getSubject(), s.getPredicate(), s.getObject());
-                final Node subject = s.getSubject().asNode();
-                // If subject is Authorization Hash Resource, add it to the map with its accessTo/accessToClass status.
-                if (subject.toString().contains("/" + FCR_ACL + "#")) {
-                    uniqueAuthSubjects.add(subject);
-                }
-            });
-            final Graph graph = inputModel.getGraph();
-            uniqueAuthSubjects.forEach((final Node subject) -> {
-                if (graph.contains(subject, WEBAC_ACCESS_TO_URI, Node.ANY) &&
-                        graph.contains(subject, WEBAC_ACCESS_TO_CLASS_URI, Node.ANY)) {
-                    throw new ACLAuthorizationConstraintViolationException(
-                        format(
-                                "Using both accessTo and accessToClass within " +
-                                        "a single Authorization is not allowed: {0}.",
-                                subject.toString().substring(subject.toString().lastIndexOf("#"))));
-                } else if (!(graph.contains(subject, WEBAC_ACCESS_TO_URI, Node.ANY) ||
-                        graph.contains(subject, WEBAC_ACCESS_TO_CLASS_URI, Node.ANY))) {
-                    inputModel.add(createDefaultAccessToStatement(subject.toString()));
-                }
-            });
         }
     }
 

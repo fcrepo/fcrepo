@@ -19,33 +19,72 @@ package org.fcrepo.kernel.impl.operations;
 
 import java.io.InputStream;
 
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.riot.Lang;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
+
+import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 
 
 /**
  * Builder for operations to update rdf sources
  *
  * @author bbpennel
+ * @author bseeger
+ * @since 11/2019
  */
+
 public class UpdateRdfSourceOperationBuilder implements RdfSourceOperationBuilder {
+
+    /**
+     * Holds the stream of user's triples.
+     */
+    private RdfStream tripleStream;
+
+    /**
+     * String of the resource ID.
+     */
+    private final String resourceId;
+
+    /**
+     * Constructor.
+     *
+     * @param resourceId the internal identifier.
+     */
+    public UpdateRdfSourceOperationBuilder(final String resourceId) {
+        this.resourceId = resourceId;
+    }
 
     @Override
     public RdfSourceOperation build() {
-        // TODO Perform triples validation, relaxed SMTs, etc
-        return null;
+        // TODO Perform triples validation, relaxed SMTs, etc here?
+        return new UpdateRdfSourceOperation(this.resourceId, this.tripleStream);
     }
 
     @Override
     public RdfSourceOperationBuilder triples(final RdfStream triples) {
-        // TODO Auto-generated method stub
-        return null;
+        tripleStream = triples;
+        return this;
     }
 
     @Override
     public RdfSourceOperationBuilder triples(final InputStream contentStream, final String mimetype) {
-        // TODO Auto-generated method stub
-        return null;
+        final RdfStream stream;
+        if (contentStream != null && mimetype != null) {
+            final Model model = ModelFactory.createDefaultModel();
+            final Lang lang = contentTypeToLang(mimetype);
+            model.read(contentStream, this.resourceId, lang.getName().toUpperCase());
+            stream = fromModel(ResourceFactory.createResource(this.resourceId).asNode(), model);
+        } else {
+            stream = null;
+        }
+
+        tripleStream = stream;
+        return this;
     }
 }
