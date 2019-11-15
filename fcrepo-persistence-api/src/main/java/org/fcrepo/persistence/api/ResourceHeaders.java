@@ -15,14 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.models;
+package org.fcrepo.persistence.api;
 
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
 
 /**
- * An object containing header information which describes a FedoraResource.
+ * Header information for fedora resources.
  *
  * @author bbpennel
  */
@@ -36,6 +36,13 @@ public interface ResourceHeaders {
     String getId();
 
     /**
+     * Get the identifier of the parent of the resource
+     *
+     * @return identifier of the parent
+     */
+    String getParent();
+
+    /**
      * Get the State Token value for the resource.
      *
      * @return state-token value
@@ -43,11 +50,11 @@ public interface ResourceHeaders {
     String getStateToken();
 
     /**
-     * Get the rdf:type values for the resource
+     * Get the interaction model for the resource
      *
-     * @return types
+     * @return interaction model URI
      */
-    Collection<String> getTypes();
+    String getInteractionModel();
 
     /**
      * Get the mimetype describing the content contained by this resource
@@ -99,6 +106,13 @@ public interface ResourceHeaders {
     Instant getCreatedDate();
 
     /**
+     * Get the created by for the resource
+     *
+     * @return created by
+     */
+    String getCreatedBy();
+
+    /**
      * Get the date this resource was last modified
      *
      * @return last modified date
@@ -106,9 +120,9 @@ public interface ResourceHeaders {
     Instant getLastModifiedDate();
 
     /**
-     * Retrieve the mementoDatetime property and return it as an Instant
+     * Get the last modified by value for the resource
      *
-     * @return the Instant for this resource
+     * @return last modified by
      */
-    Instant getMementoDatetime();
+    String getLastModifiedBy();
 }
