@@ -33,7 +33,7 @@ import org.mockito.junit.MockitoJUnitRunner;
  * @author mohideen
  */
 @RunWith(MockitoJUnitRunner.Silent.class)
-public class TransactionManagerTest {
+public class TransactionManagerImplTest {
 
     private TransactionImpl testTx;
 
@@ -60,6 +60,12 @@ public class TransactionManagerTest {
 
     @Test(expected = RuntimeException.class)
     public void testGetTransactionWithInvalidID() {
-        final TransactionImpl tx = (TransactionImpl) testTxManager.get("invalid-id");
+        testTxManager.get("invalid-id");
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testGetExpiredTransaction() {
+        testTx.expire();
+        testTxManager.get(testTx.getId());
     }
 }

@@ -18,7 +18,6 @@
 package org.fcrepo.http.api;
 
 import static java.time.Instant.now;
-import static java.util.Optional.of;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -76,7 +75,7 @@ public class TransactionsTest {
         when(mockTxManager.get(AdditionalMatchers.not(ArgumentMatchers.eq("tx:123"))))
             .thenThrow(new RuntimeException("No Transaction found with transactionId"));
         when(mockTransaction.getId()).thenReturn("123");
-        when(mockTransaction.getExpires()).thenReturn(of(now().plusSeconds(100)));
+        when(mockTransaction.getExpires()).thenReturn(now().plusSeconds(100));
         setField(testObj, "txManager", mockTxManager);
     }
 
