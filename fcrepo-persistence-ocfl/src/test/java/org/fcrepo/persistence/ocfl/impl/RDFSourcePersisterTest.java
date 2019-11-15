@@ -50,10 +50,6 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-<<<<<<<HEAD:fcrepo-persistence-ocfl/src/test/java/org/fcrepo/persistence/ocfl/impl/RDFSourcePersisterTest.java
-        =======
-        >>>>>>>Add delete persister:fcrepo-persistence-ocfl/src/test/java/org/fcrepo/persistence/ocfl/impl/CreateRDFSourcePersisterTest.java
-
 /**
  * @author dbernstein
  * @since 6.0.0

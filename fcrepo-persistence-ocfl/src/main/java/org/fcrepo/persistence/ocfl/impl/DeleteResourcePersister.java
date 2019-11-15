@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
  * Delete Resource Persister
  * @author whikloj
  */
-public class DeleteResourcePersister extends AbstractPersister<ResourceOperation> {
+public class DeleteResourcePersister extends AbstractPersister {
 
     private static final Logger log = LoggerFactory.getLogger(DeleteResourcePersister.class);
 
@@ -38,14 +38,14 @@ public class DeleteResourcePersister extends AbstractPersister<ResourceOperation
      * Constructor.
      */
     public DeleteResourcePersister() {
-        super(DELETE);
+        super(ResourceOperation.class, DELETE);
     }
 
     @Override
     public void persist(final OCFLObjectSession session, final ResourceOperation operation, final FedoraOCFLMapping mapping)
             throws PersistentStorageException {
         log.debug("Deleting {} from {}", operation.getResourceId(), mapping.getOcflObjectId());
-        if (mapping.getParentFedoraResourceId() == operation.getResourceId()) {
+        if (mapping.getParentFedoraResourceId().equals(operation.getResourceId())) {
             // We are at the root of the object.
             session.deleteObject();
         } else {
