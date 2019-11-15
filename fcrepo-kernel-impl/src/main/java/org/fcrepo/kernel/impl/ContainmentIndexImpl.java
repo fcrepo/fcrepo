@@ -26,10 +26,10 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.stream.Stream;
 
 /**
@@ -43,12 +43,23 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     private PreparedStatement childrenQuery;
 
+    private PreparedStatement insertChild;
+
+    private static final String TABLE_NAME = "resources";
+
     private static final String FEDORA_ID_COLUMN = "fedoraId";
 
-    private static final String RESOURCES_TABLE_DDL = "CREATE TABLE resources (" +
-            FEDORA_ID_COLUMN + " text PRIMARY KEY, parent text);";
+    private static final String PARENT_COLUMN = "parent";
 
-    private static final String SELECT_CHILDREN = "SELECT " + FEDORA_ID_COLUMN + " FROM resources WHERE parent = ?";
+    private static final String RESOURCES_TABLE_DDL = "CREATE TABLE " + TABLE_NAME + " (" +
+            FEDORA_ID_COLUMN + " text PRIMARY KEY, " +
+            PARENT_COLUMN + " text);";
+
+    private static final String SELECT_CHILDREN = "SELECT " + FEDORA_ID_COLUMN +
+            " FROM " + TABLE_NAME + " WHERE " + PARENT_COLUMN + " = ?";
+
+    private static final String INSERT_CHILD = "INSERT INTO " + TABLE_NAME +
+            " (" + FEDORA_ID_COLUMN + ", " + PARENT_COLUMN + ") VALUES (?, ?)";
 
     /**
      * check if the "resources" table exists
@@ -76,6 +87,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
                 conn.createStatement().execute(RESOURCES_TABLE_DDL);
             }
             childrenQuery = conn.prepareStatement(SELECT_CHILDREN);
+            insertChild = conn.prepareStatement(INSERT_CHILD);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -131,5 +143,23 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     public Stream<String> getContainedBy(final Transaction tx, final FedoraResource fedoraResource) {
         final String txId = (tx != null) ? tx.getId() : null;
         return getChildren(fedoraResource.getId(), txId);
+    }
+
+    /**
+     * Add a contained by relation between the child resource and its parent.
+     *
+     * @param tx The transaction.  If no transaction, null is okay.
+     * @param parent The containing fedora resource
+     * @param child The contained fedora resource
+     */
+    public void addContainedBy(final Transaction tx, final FedoraResource parent, final FedoraResource child) {
+        final String txId = (tx != null) ? tx.getId() : null;
+        try {
+            insertChild.setString(1, child.getId());
+            insertChild.setString(2, parent.getId());
+            insertChild.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }
