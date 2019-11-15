@@ -45,6 +45,8 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     private PreparedStatement insertChild;
 
+    private PreparedStatement deleteChild;
+
     private static final String TABLE_NAME = "resources";
 
     private static final String FEDORA_ID_COLUMN = "fedoraId";
@@ -60,6 +62,9 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     private static final String INSERT_CHILD = "INSERT INTO " + TABLE_NAME +
             " (" + FEDORA_ID_COLUMN + ", " + PARENT_COLUMN + ") VALUES (?, ?)";
+
+    private static final String DELETE_CHILD = "DELETE FROM " + TABLE_NAME +
+            " WHERE " + FEDORA_ID_COLUMN + " = ? AND " + PARENT_COLUMN + " = ?";
 
     /**
      * check if the "resources" table exists
@@ -88,6 +93,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             }
             childrenQuery = conn.prepareStatement(SELECT_CHILDREN);
             insertChild = conn.prepareStatement(INSERT_CHILD);
+            deleteChild = conn.prepareStatement(DELETE_CHILD);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -158,6 +164,24 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             insertChild.setString(1, child.getId());
             insertChild.setString(2, parent.getId());
             insertChild.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Remove a contained by relation between the child resource and its parent.
+     *
+     * @param tx The transaction.  If no transaction, null is okay.
+     * @param parent The containing fedora resource
+     * @param child The contained fedora resource
+     */
+    public void removeContainedBy(final Transaction tx, final FedoraResource parent, final FedoraResource child) {
+        final String txId = (tx != null) ? tx.getId() : null;
+        try {
+            deleteChild.setString(1, child.getId());
+            deleteChild.setString(2, parent.getId());
+            deleteChild.execute();
         } catch (SQLException e) {
             e.printStackTrace();
         }
