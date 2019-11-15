@@ -25,9 +25,10 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
-import java.sql.SQLException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.util.stream.Stream;
 
@@ -44,7 +45,24 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     private static final String FEDORA_ID_COLUMN = "fedoraId";
 
+    private static final String RESOURCES_TABLE_DDL = "CREATE TABLE resources (" +
+            FEDORA_ID_COLUMN + " text PRIMARY KEY, parent text);";
+
     private static final String SELECT_CHILDREN = "SELECT " + FEDORA_ID_COLUMN + " FROM resources WHERE parent = ?";
+
+    /**
+     * check if the "resources" table exists
+     */
+    private boolean tableExists() throws SQLException {
+        final DatabaseMetaData dbMeta = conn.getMetaData();
+        final ResultSet tables = dbMeta.getTables(null, null, "resources", new String[]{"TABLE"});
+        while (tables.next()) {
+            if (tables.getString("TABLE_NAME").equals("resources")) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /**
      * Connect to the database
@@ -53,6 +71,10 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     private void setup() {
         try {
             conn = containmentIndexDataSource.getConnection();
+            // create the table if it doesn't already exist
+            if (!tableExists()) {
+                conn.createStatement().execute(RESOURCES_TABLE_DDL);
+            }
             childrenQuery = conn.prepareStatement(SELECT_CHILDREN);
         } catch (SQLException e) {
             e.printStackTrace();
