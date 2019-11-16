@@ -30,7 +30,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
-import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -39,27 +38,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class implements the persistence of a new RDFSource
+ * This class implements the persistence of a NonRDFSource
  *
- * @author dbernstein
+ * @author whikloj
  * @since 6.0.0
  */
-public class CreateUpdatePersister extends AbstractPersister {
+public class NonRdfSourcePersister extends AbstractPersister {
 
-    private static final Logger log = LoggerFactory.getLogger(CreateUpdatePersister.class);
-
-    private static final Set<Class<? extends ResourceOperation>> OPERATION_TYPES = new HashSet<>(asList(
-            RdfSourceOperation.class,
-            NonRdfSourceOperation.class
-    ));
+    private static final Logger log = LoggerFactory.getLogger(NonRdfSourcePersister.class);
 
     private static final Set<ResourceOperationType> OPERATION_ACTIONS = new HashSet<>(asList(CREATE, UPDATE));
 
     /**
      * Constructor
      */
-    public CreateUpdatePersister() {
-        super(OPERATION_TYPES, OPERATION_ACTIONS);
+    public NonRdfSourcePersister() {
+        super(NonRdfSourceOperation.class, OPERATION_ACTIONS);
     }
 
     @Override
@@ -68,30 +62,11 @@ public class CreateUpdatePersister extends AbstractPersister {
         log.debug("persisting ({}) to {}", operation.getResourceId(), mapping.getOcflObjectId());
         final String subpath = relativizeSubpath(mapping.getParentFedoraResourceId(), operation.getResourceId());
 
-        if (operation instanceof RdfSourceOperation) {
-            //write user triples
-            writeRDF(session, ((RdfSourceOperation) operation).getTriples(), subpath);
-        } else if (operation instanceof NonRdfSourceOperation) {
-            // write user content
-            final NonRdfSourceOperation nonRdfSourceOperation = ((NonRdfSourceOperation) operation);
-            final String extension = getExtension(nonRdfSourceOperation.getFilename());
-            session.write(subpath + (extension != null ? "." + extension : ""), nonRdfSourceOperation.getContentStream());
-        }
+        // write user content
+        final NonRdfSourceOperation nonRdfSourceOperation = ((NonRdfSourceOperation) operation);
+        session.write(subpath, nonRdfSourceOperation.getContentStream());
 
         //write server props
         writeRDF(session, operation.getServerManagedProperties(), INTERNAL_FEDORA_DIRECTORY + File.separator + subpath);
-    }
-
-    /**
-     * Get the extensionn of the filename.
-     *
-     * @param filename the filename
-     * @return the extension without leading period or null if none exists.
-     */
-    private String getExtension(final String filename) {
-        if (filename == null || !filename.contains(".")) {
-            return null;
-        }
-        return filename.substring(filename.lastIndexOf(".") + 1);
     }
 }
