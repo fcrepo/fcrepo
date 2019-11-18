@@ -21,7 +21,12 @@ import static java.util.UUID.randomUUID;
 
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+
 import java.util.HashMap;
+
+import javax.inject.Inject;
 
 
 /**
@@ -33,9 +38,14 @@ public class TransactionManagerImpl implements TransactionManager {
 
     private final HashMap<String, Transaction> transactions;
 
+    @Inject
+    private static PersistentStorageSessionManager pSessionManager;
+
     TransactionManagerImpl() {
         transactions = new HashMap();
     }
+
+    // TODO Add a timer to periadically rollback and cleanup expired transaction?
 
     @Override
     public synchronized Transaction create() {
@@ -43,18 +53,28 @@ public class TransactionManagerImpl implements TransactionManager {
         while(transactions.containsKey(txId)) {
             txId = randomUUID().toString();
         }
-        final Transaction tx = new TransactionImpl(txId);
+        final Transaction tx = new TransactionImpl(txId, this);
         transactions.put(txId, tx);
         return tx;
     }
 
     @Override
     public Transaction get(final String transactionId) {
-        if(transactions.containsKey(transactionId)) {
-            return transactions.get(transactionId);
+        if (transactions.containsKey(transactionId)) {
+            final Transaction transaction = transactions.get(transactionId);
+            if (transaction.hasExpired()) {
+                transaction.rollback();
+                transactions.remove(transactionId);
+                throw new TransactionRuntimeException("Transaction with transactionId: " + transactionId +
+                    " expired at " + transaction.getExpires() + "!");
+            }
+            return transaction;
         } else {
-            throw new RuntimeException("No Transaction found with transactionId: " + transactionId);
+            throw new TransactionRuntimeException("No Transaction found with transactionId: " + transactionId);
         }
     }
 
+    protected PersistentStorageSessionManager getPersistentStorageSessionManager() {
+        return TransactionManagerImpl.pSessionManager;
+    }
 }
