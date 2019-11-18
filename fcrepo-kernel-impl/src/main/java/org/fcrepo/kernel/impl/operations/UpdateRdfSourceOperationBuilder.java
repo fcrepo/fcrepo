@@ -35,12 +35,11 @@ public class UpdateRdfSourceOperationBuilder extends AbstractRdfSourceOperationB
      * @param resourceId the internal identifier.
      */
     public UpdateRdfSourceOperationBuilder(final String resourceId) {
-        super(resourceId);
+        super(resourceId, null);
     }
 
     @Override
     public RdfSourceOperation build() {
-        // TODO Perform triples validation, relaxed SMTs, etc here?
-        return new UpdateRdfSourceOperation(resourceId, tripleStream);
+        return new UpdateRdfSourceOperation(this.resourceId, this.tripleStream);
     }
 }

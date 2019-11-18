@@ -895,14 +895,14 @@ public class FedoraLdpTest {
         when(mockNodeService.exists(mockTransaction, "/some/path")).thenReturn(false);
         // when(mockContainerService.findOrCreate(mockTransaction, "/some/path", null)).thenReturn(mockContainer);
 
-        final Response actual = testObj.createOrReplaceObjectRdf(null, null, null, null, null, null, null);
+        final Response actual = testObj.createOrReplaceObjectRdf(null, null, null, null, null, null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
     }
 
     @Test(expected = CannotCreateResourceException.class)
     public void testPutNewObjectLdpr() throws Exception {
-        testObj.createOrReplaceObjectRdf(null, null, null, null, null,
+        testObj.createOrReplaceObjectRdf(null, null, null, null,
                 singletonList("<http://www.w3.org/ns/ldp#Resource>; rel=\"type\""), null);
     }
 
@@ -919,7 +919,7 @@ public class FedoraLdpTest {
         // when(mockContainerService.findOrCreate(mockTransaction, "/some/path", null)).thenReturn(mockContainer);
 
         final Response actual = testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
-                toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null, null);
+                toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(replacePropertiesService).perform(eq(mockTransaction.getId()), eq(mockContainer.getId()),
@@ -938,7 +938,7 @@ public class FedoraLdpTest {
         // when(mockBinaryService.findOrCreate(mockTransaction, "/some/path")).thenReturn(mockBinary);
 
         final Response actual = testObj.createOrReplaceObjectRdf(TEXT_PLAIN_TYPE,
-                toInputStream("xyz", UTF_8), null, null, null, nonRDFSourceLink, null);
+                toInputStream("xyz", UTF_8), null, null, nonRDFSourceLink, null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
     }
@@ -956,7 +956,7 @@ public class FedoraLdpTest {
         // when(mockContainerService.findOrCreate(mockTransaction, "/some/path", null)).thenReturn(mockObject);
 
         final Response actual = testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
-                toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null, null);
+                toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
 
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
         verify(replacePropertiesService).perform(eq(mockTransaction.getId()), eq(mockObject.getId()),
@@ -975,7 +975,7 @@ public class FedoraLdpTest {
         // when(mockContainerService.findOrCreate(mockTransaction, "/some/path", null)).thenReturn(mockObject);
 
         testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
-                toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null, null);
+                toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
 
     }
 

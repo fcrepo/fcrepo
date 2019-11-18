@@ -38,8 +38,14 @@ public abstract class AbstractResourceOperation implements ResourceOperation {
      */
     private RdfStream serverManagedProperties;
 
-    protected AbstractResourceOperation(final String rescId) {
+    /**
+     * The interaction model, null if not used (ie. an update operation)
+     */
+    private String interactionModel;
+
+    protected AbstractResourceOperation(final String rescId, final String interactionModel) {
         this.rescId = rescId;
+        this.interactionModel = interactionModel;
     }
 
     @Override

@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
@@ -58,7 +60,7 @@ public abstract class AbstractNonRdfSourceOperation extends AbstractResourceOper
     protected AbstractNonRdfSourceOperation(final String rescId, final URI externalContentURI,
                                             final String externalHandling, final String mimeType, final String filename,
                                             final Collection<URI> digests) {
-        super(rescId);
+        super(rescId, NON_RDF_SOURCE.toString());
         this.externalHandlingURI = externalContentURI;
         this.mimeType = mimeType;
         this.externalHandlingType = externalHandling;
@@ -78,7 +80,7 @@ public abstract class AbstractNonRdfSourceOperation extends AbstractResourceOper
      */
     protected AbstractNonRdfSourceOperation(final String rescId, final InputStream content, final String mimeType,
                                             final long contentSize, final String filename, final Collection<URI> digests) {
-        super(rescId);
+        super(rescId, NON_RDF_SOURCE.toString());
         this.content = content;
         this.mimeType = mimeType;
         this.contentSize = contentSize;
@@ -92,7 +94,7 @@ public abstract class AbstractNonRdfSourceOperation extends AbstractResourceOper
      * @param rescId The internal Fedora ID.
      */
     protected AbstractNonRdfSourceOperation(final String rescId) {
-        super(rescId);
+        super(rescId, NON_RDF_SOURCE.toString());
     }
 
     @Override

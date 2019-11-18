@@ -31,7 +31,7 @@ import org.fcrepo.kernel.api.operations.ResourceOperationType;
 public class UpdateRdfSourceOperation extends AbstractRdfSourceOperation {
 
     protected UpdateRdfSourceOperation(final String rescId, final RdfStream triples) {
-        super(rescId, triples);
+        super(rescId, null, triples);
     }
 
     @Override

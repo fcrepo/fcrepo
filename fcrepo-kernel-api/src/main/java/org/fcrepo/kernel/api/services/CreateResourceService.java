@@ -37,14 +37,15 @@ public interface CreateResourceService {
      * @param txId The transaction ID for the request.
      * @param fedoraId The internal identifier of the parent.
      * @param slug The Slug header or null if none.
+     * @param isContained The new resource is contained by fedoraId (ie. POST).
      * @param contentType The content-type header or null if none.
      * @param linkHeaders The original LINK headers or null if none.
      * @param digest The binary digest or null if none.
      * @param requestBody The request body or null if none.
      * @param externalContent The external content handler or null if none.
      */
-    void perform(final String txId, final String fedoraId, final String slug, final String contentType,
-                 final List<String> linkHeaders, final Collection<String> digest,
+    void perform(final String txId, final String fedoraId, final String slug, final boolean isContained,
+                 final String contentType, final List<String> linkHeaders, final Collection<String> digest,
                  final InputStream requestBody, final ExternalContent externalContent);
 
     /**
@@ -53,9 +54,11 @@ public interface CreateResourceService {
      * @param txId The transaction ID for the request.
      * @param fedoraId The internal identifier of the parent.
      * @param slug The Slug header or null if none.
+     * @param isContained The new resource is contained by fedoraId (ie. POST).
      * @param linkHeaders The original LINK headers or null if none.
      * @param model The request body RDF as a Model
      */
-    void perform(final String txId, final String fedoraId, final String slug, final String contentType,
+    void perform(final String txId, final String fedoraId, final String slug, final boolean isContained,
                  final List<String> linkHeaders, final Model model);
+
 }

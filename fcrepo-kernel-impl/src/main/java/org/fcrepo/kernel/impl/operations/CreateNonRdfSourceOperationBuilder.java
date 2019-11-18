@@ -103,7 +103,7 @@ public class CreateNonRdfSourceOperationBuilder implements NonRdfSourceOperation
 
     @Override
     public CreateNonRdfSourceOperation build() {
-        if (content == null && externalURI != null && externalType != null) {
+        if (externalURI != null && externalType != null) {
             return new CreateNonRdfSourceOperation(this.resourceId, this.externalURI, this.externalType,
                     this.mimeType, this.filename, this.digests);
         } else {

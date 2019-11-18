@@ -30,8 +30,8 @@ import org.fcrepo.kernel.api.operations.ResourceOperationType;
  */
 public class CreateRdfSourceOperation extends AbstractRdfSourceOperation {
 
-    protected CreateRdfSourceOperation(final String rescId, final RdfStream triples) {
-        super(rescId, triples);
+    protected CreateRdfSourceOperation(final String rescId, final String interactionModel, final RdfStream triples) {
+        super(rescId, interactionModel, triples);
     }
 
     @Override
