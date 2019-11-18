@@ -60,9 +60,9 @@ public class TransactionManagerImpl implements TransactionManager {
 
     @Override
     public Transaction get(final String transactionId) {
-        if(transactions.containsKey(transactionId)) {
+        if (transactions.containsKey(transactionId)) {
             final Transaction transaction = transactions.get(transactionId);
-            if(transaction.hasExpired()) {
+            if (transaction.hasExpired()) {
                 transaction.rollback();
                 transactions.remove(transactionId);
                 throw new TransactionRuntimeException("Transaction with transactionId: " + transactionId +
