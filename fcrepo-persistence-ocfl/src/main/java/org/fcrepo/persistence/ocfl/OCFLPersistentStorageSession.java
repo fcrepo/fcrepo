@@ -38,6 +38,7 @@ import org.fcrepo.persistence.ocfl.api.Persister;
 import org.fcrepo.persistence.ocfl.impl.DefaultOCFLObjectSession;
 import org.fcrepo.persistence.ocfl.impl.DeleteResourcePersister;
 import org.fcrepo.persistence.ocfl.impl.FedoraOCFLMapping;
+import org.fcrepo.persistence.ocfl.impl.NonRdfSourcePersister;
 import org.fcrepo.persistence.ocfl.impl.RDFSourcePersister;
 
 /**
@@ -64,6 +65,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     static {
         PERSISTER_LIST.add(new RDFSourcePersister());
+        PERSISTER_LIST.add(new NonRdfSourcePersister());
         PERSISTER_LIST.add(new DeleteResourcePersister());
         //TODO add new persisters here as they are implemented.
     }
