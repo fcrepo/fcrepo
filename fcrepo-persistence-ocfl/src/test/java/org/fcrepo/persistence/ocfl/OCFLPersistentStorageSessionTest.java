@@ -28,13 +28,13 @@ import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.api.PersistentStorageSession;
-import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.fcrepo.persistence.ocfl.impl.DefaultOCFLObjectSessionFactory;
 import org.fcrepo.persistence.ocfl.impl.FedoraOCFLMapping;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -47,6 +47,8 @@ import org.mockito.stubbing.Answer;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.apache.jena.graph.NodeFactory.createLiteral;
@@ -54,11 +56,12 @@ import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -70,7 +73,8 @@ import static org.mockito.Mockito.when;
 public class OCFLPersistentStorageSessionTest {
 
 
-    public static final String OCFL_OBJECT_ID = "ocfl-object-id";
+    private static final String OCFL_OBJECT_ID = "ocfl-object-id";
+
     private OCFLPersistentStorageSession session;
 
     @Mock
@@ -124,11 +128,31 @@ public class OCFLPersistentStorageSessionTest {
         return new OCFLPersistentStorageSession(new Random().nextLong() + "", index, objectSessionFactory);
     }
 
-    @Test
-    public void roundtripCreateContainerCreation() throws Exception {
-        when(mapping.getOcflObjectId()).thenReturn("ocfl-object-id");
+    private void mockMappingAndIndex(final String ocflObjectId, final String resourceId, final String parentId,
+                                     final FedoraOCFLMapping mapping) {
+        when(mapping.getOcflObjectId()).thenReturn(ocflObjectId);
         when(mapping.getParentFedoraResourceId()).thenReturn(parentId);
         when(index.getMapping(resourceId)).thenReturn(mapping);
+    }
+
+    private void mockResourceOperation(final RdfSourceOperation rdfSourceOperation, final RdfStream userStream,
+                                       final RdfStream serverStream, final String resourceId) {
+        when(rdfSourceOperation.getTriples()).thenReturn(userStream);
+        when(rdfSourceOperation.getServerManagedProperties()).thenReturn(serverStream);
+        when(rdfSourceOperation.getResourceId()).thenReturn(resourceId);
+        when(rdfSourceOperation.getType()).thenReturn(CREATE);
+    }
+
+    private void mockResourceOperation(final RdfSourceOperation rdfSourceOperation, final String resourceId) {
+        final Node resourceUri = createURI(resourceId);
+        mockResourceOperation(rdfSourceOperation, new DefaultRdfStream(resourceUri, Stream.empty()),
+                new DefaultRdfStream(resourceUri, Stream.empty()),
+                resourceUri.getURI());
+    }
+
+    @Test
+    public void roundtripCreateContainerCreation() throws Exception {
+        mockMappingAndIndex(OCFL_OBJECT_ID, resourceId, parentId, mapping);
 
         final Node resourceUri = createURI(resourceId);
 
@@ -142,11 +166,7 @@ public class OCFLPersistentStorageSessionTest {
         final Stream<Triple> serverTriples = Stream.of(rdfSourceTriple);
         final RdfStream serverStream = new DefaultRdfStream(resourceUri, serverTriples);
 
-        when(rdfSourceOperation.getTriples()).thenReturn(userStream);
-        when(rdfSourceOperation.getServerManagedProperties()).thenReturn(serverStream);
-
-        when(rdfSourceOperation.getResourceId()).thenReturn(resourceId);
-        when(rdfSourceOperation.getType()).thenReturn(CREATE);
+        mockResourceOperation(rdfSourceOperation, userStream, serverStream, resourceId);
 
         //perform the create rdf operation
         session.persist(rdfSourceOperation);
@@ -178,8 +198,6 @@ public class OCFLPersistentStorageSessionTest {
         retrievedServerStream = newSession.getManagedProperties(resourceId, null);
         assertEquals(node, retrievedServerStream.topic());
         assertEquals(rdfSourceTriple, retrievedServerStream.findFirst().get());
-
-
     }
 
     @Test(expected = UnsupportedOperationException.class)
@@ -189,11 +207,9 @@ public class OCFLPersistentStorageSessionTest {
 
     @Test
     public void getTriplesOfBinaryDescription() throws Exception {
-        when(mapping.getOcflObjectId()).thenReturn("ocfl-object-id");
-        when(mapping.getParentFedoraResourceId()).thenReturn(parentId);
 
         final String descriptionResource = resourceId + "/" + FedoraTypes.FCR_METADATA;
-        when(index.getMapping(descriptionResource)).thenReturn(mapping);
+        mockMappingAndIndex(OCFL_OBJECT_ID, descriptionResource, parentId, mapping);
 
         final Node resourceUri = createURI(resourceId);
 
@@ -202,11 +218,8 @@ public class OCFLPersistentStorageSessionTest {
         final var dcTitleTriple = Triple.create(resourceUri, DC.title.asNode(), createLiteral(title));
         final Stream<Triple> userTriples = Stream.of(dcTitleTriple);
         final DefaultRdfStream userStream = new DefaultRdfStream(resourceUri, userTriples);
-        when(rdfSourceOperation.getTriples()).thenReturn(userStream);
-        when(rdfSourceOperation.getServerManagedProperties())
-                .thenReturn(new DefaultRdfStream(resourceUri, Stream.empty()));
-        when(rdfSourceOperation.getResourceId()).thenReturn(descriptionResource);
-        when(rdfSourceOperation.getType()).thenReturn(CREATE);
+        mockResourceOperation(rdfSourceOperation, userStream, new DefaultRdfStream(resourceUri, Stream.empty()),
+                descriptionResource);
 
         //perform the create rdf operation
         session.persist(rdfSourceOperation);
@@ -225,17 +238,8 @@ public class OCFLPersistentStorageSessionTest {
 
     @Test
     public void persistFailsIfCommitAlreadyComplete() throws PersistentStorageException {
-        when(mapping.getOcflObjectId()).thenReturn("ocfl-object-id");
-        when(mapping.getParentFedoraResourceId()).thenReturn(parentId);
-        when(index.getMapping(resourceId)).thenReturn(mapping);
-
-        final Node resourceUri = createURI(resourceId);
-
-        when(rdfSourceOperation.getTriples()).thenReturn(new DefaultRdfStream(resourceUri, Stream.empty()));
-        when(rdfSourceOperation.getServerManagedProperties())
-                .thenReturn(new DefaultRdfStream(resourceUri, Stream.empty()));
-        when(rdfSourceOperation.getResourceId()).thenReturn(resourceId);
-        when(rdfSourceOperation.getType()).thenReturn(CREATE);
+        mockMappingAndIndex(OCFL_OBJECT_ID, resourceId, parentId, mapping);
+        mockResourceOperation(rdfSourceOperation, resourceId);
 
         //perform the create rdf operation
         session.persist(rdfSourceOperation);
@@ -254,17 +258,8 @@ public class OCFLPersistentStorageSessionTest {
 
     @Test
     public void getTriplesFailsIfAlreadyCommitted() throws PersistentStorageException {
-        when(mapping.getOcflObjectId()).thenReturn("ocfl-object-id");
-        when(mapping.getParentFedoraResourceId()).thenReturn(parentId);
-        when(index.getMapping(resourceId)).thenReturn(mapping);
-
-        final Node resourceUri = createURI(resourceId);
-
-        when(rdfSourceOperation.getTriples()).thenReturn(new DefaultRdfStream(resourceUri, Stream.empty()));
-        when(rdfSourceOperation.getServerManagedProperties())
-                .thenReturn(new DefaultRdfStream(resourceUri, Stream.empty()));
-        when(rdfSourceOperation.getResourceId()).thenReturn(resourceId);
-        when(rdfSourceOperation.getType()).thenReturn(CREATE);
+        mockMappingAndIndex(OCFL_OBJECT_ID, resourceId, parentId, mapping);
+        mockResourceOperation(rdfSourceOperation, resourceId);
 
         //perform the create rdf operation
         session.persist(rdfSourceOperation);
@@ -283,17 +278,8 @@ public class OCFLPersistentStorageSessionTest {
 
     @Test
     public void commitFailsIfAlreadyCommitted() throws PersistentStorageException {
-        when(mapping.getOcflObjectId()).thenReturn("ocfl-object-id");
-        when(mapping.getParentFedoraResourceId()).thenReturn(parentId);
-        when(index.getMapping(resourceId)).thenReturn(mapping);
-
-        final Node resourceUri = createURI(resourceId);
-
-        when(rdfSourceOperation.getTriples()).thenReturn(new DefaultRdfStream(resourceUri, Stream.empty()));
-        when(rdfSourceOperation.getServerManagedProperties())
-                .thenReturn(new DefaultRdfStream(resourceUri, Stream.empty()));
-        when(rdfSourceOperation.getResourceId()).thenReturn(resourceId);
-        when(rdfSourceOperation.getType()).thenReturn(CREATE);
+        mockMappingAndIndex(OCFL_OBJECT_ID, resourceId, parentId, mapping);
+        mockResourceOperation(rdfSourceOperation, resourceId);
 
         //perform the create rdf operation
         session.persist(rdfSourceOperation);
@@ -311,18 +297,9 @@ public class OCFLPersistentStorageSessionTest {
     }
 
     @Test
-    public void verifyRollbackForUncommittedSessionSucceeds() throws PersistentStorageException {
-        when(mapping.getOcflObjectId()).thenReturn(OCFL_OBJECT_ID);
-        when(mapping.getParentFedoraResourceId()).thenReturn(parentId);
-        when(index.getMapping(resourceId)).thenReturn(mapping);
-
-        final Node resourceUri = createURI(resourceId);
-
-        when(rdfSourceOperation.getTriples()).thenReturn(new DefaultRdfStream(resourceUri, Stream.empty()));
-        when(rdfSourceOperation.getServerManagedProperties())
-                .thenReturn(new DefaultRdfStream(resourceUri, Stream.empty()));
-        when(rdfSourceOperation.getResourceId()).thenReturn(resourceId);
-        when(rdfSourceOperation.getType()).thenReturn(CREATE);
+    public void verifyGetTriplesFailsAfterRollback() throws PersistentStorageException {
+        mockMappingAndIndex(OCFL_OBJECT_ID, resourceId, parentId, mapping);
+        mockResourceOperation(rdfSourceOperation, resourceId);
 
         //perform the create rdf operation
         session.persist(rdfSourceOperation);
@@ -340,15 +317,6 @@ public class OCFLPersistentStorageSessionTest {
         } catch (PersistentStorageException ex) {
             //expected failure
         }
-
-        //verify that the resource cannot be found now (since it wasn't committed).
-        try {
-            final OCFLPersistentStorageSession newSession = createSession(index, objectSessionFactory);
-            newSession.getTriples(resourceId, null);
-            fail("second session.getTriples(...) invocation should have failed.");
-        } catch (PersistentItemNotFoundException ex) {
-            //expected failure
-        }
     }
 
     /**
@@ -357,32 +325,14 @@ public class OCFLPersistentStorageSessionTest {
      *
      * @throws PersistentStorageException
      */
-    @Test
-    public void rollbackOnSessionWithCommitsToMutableHeadShouldFail() throws PersistentStorageException {
-        when(mapping.getOcflObjectId()).thenReturn(OCFL_OBJECT_ID);
-        when(mapping.getParentFedoraResourceId()).thenReturn(parentId);
-        when(index.getMapping(resourceId)).thenReturn(mapping);
+    @Test(expected = PersistentStorageException.class)
+    public void rollbackOnSessionWithCommitsToMutableHeadShouldFail() throws Exception {
+        mockMappingAndIndex(OCFL_OBJECT_ID, resourceId, parentId, mapping);
+        mockResourceOperation(rdfSourceOperation, resourceId);
 
         final String ocfObjectId2 = OCFL_OBJECT_ID + "2";
-        when(mapping2.getOcflObjectId()).thenReturn(ocfObjectId2);
-        when(mapping2.getParentFedoraResourceId()).thenReturn(resourceId2);
-        when(index.getMapping(resourceId2)).thenReturn(mapping2);
-
-        final Node resourceUri = createURI(resourceId);
-
-        when(rdfSourceOperation.getTriples()).thenReturn(new DefaultRdfStream(resourceUri, Stream.empty()));
-        when(rdfSourceOperation.getServerManagedProperties())
-                .thenReturn(new DefaultRdfStream(resourceUri, Stream.empty()));
-        when(rdfSourceOperation.getResourceId()).thenReturn(resourceId);
-        when(rdfSourceOperation.getType()).thenReturn(CREATE);
-
-        final Node resourceUri2 = createURI(resourceId2);
-
-        when(rdfSourceOperation2.getTriples()).thenReturn(new DefaultRdfStream(resourceUri2, Stream.empty()));
-        when(rdfSourceOperation2.getServerManagedProperties())
-                .thenReturn(new DefaultRdfStream(resourceUri2, Stream.empty()));
-        when(rdfSourceOperation2.getResourceId()).thenReturn(resourceId2);
-        when(rdfSourceOperation2.getType()).thenReturn(CREATE);
+        mockMappingAndIndex(ocfObjectId2, resourceId2, resourceId2, mapping2);
+        mockResourceOperation(rdfSourceOperation2, resourceId2);
 
         //mock success on commit for the first object session
         when(mockSessionFactory.create(eq(OCFL_OBJECT_ID), anyString())).thenReturn(objectSession1);
@@ -392,11 +342,14 @@ public class OCFLPersistentStorageSessionTest {
         when(objectSession2.commit(eq(CommitOption.UNVERSIONED))).thenThrow(PersistentStorageException.class);
 
         final PersistentStorageSession session1 = createSession(index, mockSessionFactory);
-        //persist the two operations
-        session1.persist(rdfSourceOperation);
+        try {
+            //perform the create rdf operations
+            session1.persist(rdfSourceOperation);
+            session1.persist(rdfSourceOperation2);
+        } catch (PersistentStorageException e) {
+            fail("Operations should not fail.");
+        }
 
-        //perform the create rdf operation
-        session1.persist(rdfSourceOperation2);
 
         //get triples should now fail because the session is effectively closed.
         try {
@@ -404,29 +357,15 @@ public class OCFLPersistentStorageSessionTest {
             fail("session1.commit(...) invocation should fail.");
         } catch (PersistentStorageException ex) {
             //attempted rollback should also fail:
-            try {
-                session1.rollback();
-                fail("session1.rollback(...) invocation should fail.");
-            } catch (final PersistentStorageException e) {
-                assertTrue("exception does not contain expected text",
-                        e.getMessage().contains("already committed to the unversioned "));
-            }
+            session1.rollback();
+            fail("session1.rollback(...) invocation should fail.");
         }
     }
 
     @Test
-    public void getTriplesFailsIfCommitHasAlreadyStarted() throws PersistentStorageException {
-        when(mapping.getOcflObjectId()).thenReturn(OCFL_OBJECT_ID);
-        when(mapping.getParentFedoraResourceId()).thenReturn(parentId);
-        when(index.getMapping(resourceId)).thenReturn(mapping);
-
-        final Node resourceUri = createURI(resourceId);
-
-        when(rdfSourceOperation.getTriples()).thenReturn(new DefaultRdfStream(resourceUri, Stream.empty()));
-        when(rdfSourceOperation.getServerManagedProperties())
-                .thenReturn(new DefaultRdfStream(resourceUri, Stream.empty()));
-        when(rdfSourceOperation.getResourceId()).thenReturn(resourceId);
-        when(rdfSourceOperation.getType()).thenReturn(CREATE);
+    public void getTriplesFailsIfCommitHasAlreadyStarted() throws Exception {
+        mockMappingAndIndex(OCFL_OBJECT_ID, resourceId, parentId, mapping);
+        mockResourceOperation(rdfSourceOperation, resourceId);
 
         //mock success on commit for the first object session
         when(mockSessionFactory.create(eq(OCFL_OBJECT_ID), anyString())).thenReturn(objectSession1);
@@ -441,25 +380,153 @@ public class OCFLPersistentStorageSessionTest {
         });
 
         final PersistentStorageSession session1 = createSession(index, mockSessionFactory);
-        //persist the two operations
-        session1.persist(rdfSourceOperation);
+        //persist the operation
+        try {
+            session1.persist(rdfSourceOperation);
+        } catch (PersistentStorageException e) {
+            fail("Operation should not fail.");
+        }
 
+        final CountDownLatch latch = new CountDownLatch(1);
         new Thread(() -> {
             try {
                 session1.commit(CommitOption.UNVERSIONED);
             } catch (PersistentStorageException e) {
+                fail("The commit() should not fail.");
+            } finally {
+                latch.countDown();
             }
         }).start();
 
+        //sleep for a fraction of a second to ensure
+        //commit thread runs first.
+        Thread.sleep(500);
         //get triples should now fail because the commit has started.
         try {
-            //sleep for a fraction of a second to ensure
-            //commit thread runs first.
-            Thread.sleep(500);
             session1.getTriples(resourceId, null);
-            fail("session1.getTriples(...) invocation should fail.");
-        } catch (Exception ex) {
+            fail("session1.getTriples(...) invocation should have failed.");
+        } catch (PersistentStorageException e){
+            //do nothing
+        }
+
+        latch.await(1000, TimeUnit.MILLISECONDS);
+
+        verify(objectSession1).commit(CommitOption.UNVERSIONED);
+    }
+
+    @Test
+    public void rollbackSucceedsWhenPrepareFails() throws Exception {
+        mockMappingAndIndex(OCFL_OBJECT_ID, resourceId, parentId, mapping);
+        mockResourceOperation(rdfSourceOperation, resourceId);
+
+        //mock success on commit for the first object session
+        when(mockSessionFactory.create(eq(OCFL_OBJECT_ID), anyString())).thenReturn(objectSession1);
+
+        //throw on prepare
+        doThrow(new RuntimeException("prepare failure")).when(objectSession1).prepare();
+
+        final PersistentStorageSession session1 = createSession(index, mockSessionFactory);
+        //persist the operation
+        try {
+            session1.persist(rdfSourceOperation);
+        } catch (PersistentStorageException e) {
+            fail("Operation should not fail.");
+        }
+
+        try {
+            session1.commit(CommitOption.UNVERSIONED);
+            fail("Operation should have failed.");
+        } catch (PersistentStorageException e) {
+            //do nothing
+        }
+
+        session1.rollback();
+
+        verify(objectSession1).close();
+    }
+
+    @Test(expected = PersistentStorageException.class)
+    public void rollbackFailsWhenAlreadyCommitted() throws Exception {
+        mockMappingAndIndex(OCFL_OBJECT_ID, resourceId, parentId, mapping);
+        mockResourceOperation(rdfSourceOperation, resourceId);
+
+        final PersistentStorageSession session1 = createSession(index, objectSessionFactory);
+        //persist the operation
+        try {
+            session1.persist(rdfSourceOperation);
+            session1.commit(CommitOption.NEW_VERSION);
+        } catch (PersistentStorageException e) {
+            fail("Operation should not fail.");
+        }
+
+        session1.rollback();
+        fail("session1.rollback() invocation should have failed.");
+    }
+
+    @Test(expected = PersistentStorageException.class)
+    public void rollbackSucceedsOnUncommittedChanges() throws Exception {
+        mockMappingAndIndex(OCFL_OBJECT_ID, resourceId, parentId, mapping);
+        mockResourceOperation(rdfSourceOperation, resourceId);
+        final PersistentStorageSession session1 = createSession(index, this.objectSessionFactory);
+
+        try {
+            session1.persist(rdfSourceOperation);
+            session1.rollback();
+        }catch(PersistentStorageException e) {
+            fail("Neither persist() nor rollback() should have failed.");
 
         }
+        //verify that the resource cannot be found now (since it wasn't committed).
+        final OCFLPersistentStorageSession newSession = createSession(index, objectSessionFactory);
+        newSession.getTriples(resourceId, null);
+        fail("second session.getTriples(...) invocation should have failed.");
     }
+
+    @Test(expected = PersistentStorageException.class)
+    public void rollbackFailsWhenAlreadyRolledBack() throws Exception {
+        mockMappingAndIndex(OCFL_OBJECT_ID, resourceId, parentId, mapping);
+        mockResourceOperation(rdfSourceOperation, resourceId);
+        when(mockSessionFactory.create(eq(OCFL_OBJECT_ID), anyString())).thenReturn(objectSession1);
+        doThrow(new PersistentStorageException("commit error")).when(objectSession1).commit(any(CommitOption.class));
+
+        final PersistentStorageSession session1 = createSession(index, mockSessionFactory);
+        try {
+            session1.persist(rdfSourceOperation);
+        } catch (PersistentStorageException e) {
+            fail("Operation should not fail.");
+        }
+
+        try {
+            session1.commit(CommitOption.NEW_VERSION);
+            fail("Operation should fail.");
+        } catch (PersistentStorageException e) {
+            //expected failure
+        }
+
+        try {
+            session1.rollback();
+        } catch (PersistentStorageException e) {
+            fail("Operation should not fail.");
+        }
+
+        verify(objectSession1).close();
+
+        session1.rollback();
+    }
+
+
+    //TODO implement this test once rollback is fully implemented.
+    @Ignore
+    @Test(expected = PersistentStorageException.class)
+    public void rollbackFailsWhenInRollingBackState() throws Exception {
+
+    }
+
+    //TODO implement this test once rollback is fully implemented.
+    @Ignore
+    @Test(expected = PersistentStorageException.class)
+    public void rollbackSucceedsWhenRollingBackCommittedVersions() throws Exception {
+
+    }
+
 }

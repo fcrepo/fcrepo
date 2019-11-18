@@ -319,6 +319,8 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
                 if (cs.option == NEW_VERSION) {
                     //TODO rollback to previous OCFL version
                     //add any failure messages here.
+                    rollbackFailures.add(format("rollback of previously committed versions is not yet supported",
+                            cs.session));
                 } else {
                     rollbackFailures.add(format("%s was already committed to the unversioned head", cs.session));
                 }

@@ -25,8 +25,10 @@ import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 
 import java.io.File;
+import java.nio.file.Paths;
 
 import static java.lang.System.getProperty;
+import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 
 /**
  * A default implemenntation of the {@link org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory} interface.
@@ -36,16 +38,23 @@ import static java.lang.System.getProperty;
  */
 public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory {
 
-    private static final File DEFAULT_STAGING_DIR = new File(getProperty("fcrepo.ocfl.staging.dir",
-            getProperty("java.io.tmpdir") + File.separator + "fcrepo-ocfl-staging"));
-    private static final File DEFAULT_OCFL_STORAGE_ROOT_DIR = new File(getProperty("fcrepo.ocfl.storage.root.dir",
-            getProperty("java.io.tmpdir") + File.separator + "fcrepo-ocfl"));
-    private static final File DEFAULT_OCFL_WORK_DIR = new File(getProperty("fcrepo.ocfl.work.dir",
-            getProperty("java.io.tmpdir") + File.separator + "fcrepo-ocfl-work"));
+    private static final File STAGING_DIR = resolveDir("fcrepo.ocfl.staging.dir", "fcrepo-ocfl-staging");
+    private static final File OCFL_STORAGE_ROOT_DIR = resolveDir("fcrepo.ocfl.storage.root.dir", "fcrepo-ocfl");
+    private static final File OCFL_WORK_DIR = resolveDir("fcrepo.ocfl.work.dir", "fcrepo-ocfl-work");
 
-    private File ocflStagingRoot;
+    private File ocflStagingDir;
 
     private MutableOcflRepository ocflRepository;
+
+    private static final File resolveDir(final String systemPropertyKey, final String defaultDirectoryName) {
+        final String path = getProperty(systemPropertyKey);
+        if (path != null) {
+            return new File(path);
+        } else {
+            //return default
+            return Paths.get(getProperty(JAVA_IO_TMPDIR), defaultDirectoryName).toFile();
+        }
+    }
 
     /**
      * Default Constructor.  You can set the ocfl staging, storage root, and work directories by setting the following
@@ -53,7 +62,7 @@ public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory
      * are not set, default directories will be created in java.io.tmpdir.
      */
     public DefaultOCFLObjectSessionFactory() {
-        this(DEFAULT_STAGING_DIR, DEFAULT_OCFL_STORAGE_ROOT_DIR, DEFAULT_OCFL_WORK_DIR);
+        this(STAGING_DIR, OCFL_STORAGE_ROOT_DIR, OCFL_WORK_DIR);
     }
 
     /**
@@ -69,7 +78,7 @@ public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory
         ocflStorageRootDir.mkdirs();
         ocflWorkDir.mkdirs();
 
-        this.ocflStagingRoot = ocflStagingRoot;
+        this.ocflStagingDir = ocflStagingDir;
         this.ocflRepository = new OcflRepositoryBuilder().buildMutable(
                 new FileSystemOcflStorage(ocflStorageRootDir.toPath(),
                         new ObjectIdPathMapperBuilder().buildDefaultPairTreeMapper()),
@@ -79,7 +88,7 @@ public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory
 
     @Override
     public OCFLObjectSession create(final String ocflId, final String persistentStorageSessionId) {
-        final File stagingDirectory = new File(this.ocflStagingRoot, persistentStorageSessionId);
+        final File stagingDirectory = new File(this.ocflStagingDir, persistentStorageSessionId);
         stagingDirectory.mkdirs();
         return new DefaultOCFLObjectSession(ocflId, stagingDirectory.toPath(), this.ocflRepository);
     }
