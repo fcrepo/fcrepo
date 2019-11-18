@@ -28,6 +28,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Stream;
@@ -108,7 +109,7 @@ public class NonRdfSourcePersisterTest {
         assertEquals(inputContent, IOUtils.toString(userContent, StandardCharsets.UTF_8));
 
         //verify server triples
-        verify(session).write(eq(INTERNAL_FEDORA_DIRECTORY + "/child" + DEFAULT_RDF_EXTENSION), serverTriplesIsCaptor.capture());
+        verify(session).write(eq(INTERNAL_FEDORA_DIRECTORY + File.separator + "child" + DEFAULT_RDF_EXTENSION), serverTriplesIsCaptor.capture());
         final InputStream serverTriplesIs = serverTriplesIsCaptor.getValue();
 
         final Model serverModel = createDefaultModel();
