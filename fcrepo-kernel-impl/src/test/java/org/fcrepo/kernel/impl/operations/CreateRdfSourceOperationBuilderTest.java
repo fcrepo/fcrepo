@@ -18,10 +18,10 @@
 package org.fcrepo.kernel.impl.operations;
 
 import static junit.framework.TestCase.assertTrue;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 import static org.junit.Assert.assertEquals;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -35,7 +35,6 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.io.OutputStream;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
@@ -45,34 +44,31 @@ public class CreateRdfSourceOperationBuilderTest {
 
     private Model model;
 
-    private String turtleGraph;
-
     private RdfStream stream;
 
-    private final String resourceId = "info:fedora/test-subject";
+    private static final String RESOURCE_ID = "info:fedora/test-subject";
 
-    private final Node id = ResourceFactory.createResource(resourceId).asNode();
+    private final Node id = ResourceFactory.createResource(RESOURCE_ID).asNode();
 
-    private final String propertyId = "http://example.org/isLinkedTo/";
+    private static final String PROPERTY_ID = "http://example.org/isLinkedTo/";
 
-    private final Node prop = ResourceFactory.createProperty(propertyId).asNode();
+    private final Node prop = ResourceFactory.createProperty(PROPERTY_ID).asNode();
 
-    private final String objectValue = "Somebody";
+    private static final String OBJECT_VALUE = "Somebody";
 
-    private final Node object = ResourceFactory.createPlainLiteral(objectValue).asNode();
+    private final Node object = ResourceFactory.createPlainLiteral(OBJECT_VALUE).asNode();
 
     @Before
     public void setUp() {
-        builder = new CreateRdfSourceOperationBuilder(resourceId);
+        builder = new CreateRdfSourceOperationBuilder(RESOURCE_ID, RDF_SOURCE.toString());
         model = ModelFactory.createDefaultModel();
         model.add(
-                ResourceFactory.createResource(resourceId),
-                ResourceFactory.createProperty(propertyId),
-                ResourceFactory.createPlainLiteral(objectValue)
+                ResourceFactory.createResource(RESOURCE_ID),
+                ResourceFactory.createProperty(PROPERTY_ID),
+                ResourceFactory.createPlainLiteral(OBJECT_VALUE)
         );
         final OutputStream outputStream = new ByteArrayOutputStream();
         model.write(outputStream, "TURTLE");
-        turtleGraph = outputStream.toString();
         stream = fromModel(id, model);
     }
 
@@ -84,11 +80,4 @@ public class CreateRdfSourceOperationBuilderTest {
         assertEquals(stream, op.getTriples());
     }
 
-    @Test
-    public void testContent() throws Exception {
-        final InputStream input = IOUtils.toInputStream(turtleGraph, "UTF-8");
-        final RdfSourceOperation op = builder.triples(input, "text/turtle").build();
-        assertEquals(CreateRdfSourceOperation.class, op.getClass());
-        assertTrue(op.getTriples().anyMatch(t -> t.matches(id, prop, object)));
-    }
 }

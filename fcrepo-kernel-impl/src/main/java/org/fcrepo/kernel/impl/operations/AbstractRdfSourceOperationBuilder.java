@@ -17,17 +17,8 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
-import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
-import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
-
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.riot.Lang;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
-
-import java.io.InputStream;
 
 public abstract class AbstractRdfSourceOperationBuilder implements RdfSourceOperationBuilder {
 
@@ -41,9 +32,14 @@ public abstract class AbstractRdfSourceOperationBuilder implements RdfSourceOper
      */
     protected final String resourceId;
 
+    /**
+     * The interaction model of this resource, null in case of update.
+     */
+    protected final String interactionModel;
 
-    protected AbstractRdfSourceOperationBuilder(final String rescId) {
+    protected AbstractRdfSourceOperationBuilder(final String rescId, final String model) {
         resourceId = rescId;
+        interactionModel = model;
     }
 
     @Override
@@ -52,19 +48,4 @@ public abstract class AbstractRdfSourceOperationBuilder implements RdfSourceOper
         return this;
     }
 
-    @Override
-    public RdfSourceOperationBuilder triples(final InputStream contentStream, final String mimetype) {
-        final RdfStream stream;
-        if (contentStream != null && mimetype != null) {
-            final Model model = ModelFactory.createDefaultModel();
-            final Lang lang = contentTypeToLang(mimetype);
-            model.read(contentStream, this.resourceId, lang.getName().toUpperCase());
-            stream = fromModel(ResourceFactory.createResource(this.resourceId).asNode(), model);
-        } else {
-            stream = null;
-        }
-
-        tripleStream = stream;
-        return this;
-    }
 }

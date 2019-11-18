@@ -17,34 +17,36 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.apache.jena.graph.NodeFactory.createURI;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
-import static java.util.stream.Stream.of;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.vocabulary.DC;
-import org.apache.jena.vocabulary.DCTerms;
-import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
+import org.fcrepo.kernel.api.RdfCollectors;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
-import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
-import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.impl.operations.RdfSourceOperationFactoryImpl;
 import org.fcrepo.kernel.impl.operations.UpdateRdfSourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
-import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.Before;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -67,10 +69,7 @@ public class ReplacePropertiesServiceImplTest {
     private PersistentStorageSessionManager psManager;
 
     @Mock
-    FedoraResource resource;
-
-    @Mock
-    private RdfSourceOperationBuilder builder;
+    private FedoraResource resource;
 
     @InjectMocks
     private UpdateRdfSourceOperation operation;
@@ -80,46 +79,46 @@ public class ReplacePropertiesServiceImplTest {
 
     private RdfSourceOperationFactory factory;
 
-    private static final String FEDORA_URI = "http://www.example.com/fedora/rest/resource1";
+    @Captor
+    private ArgumentCaptor<UpdateRdfSourceOperation> operationCaptor;
+
     private static final String FEDORA_ID = "info:fedora/resource1";
     private static final String TX_ID = "tx-1234";
     private static final String CONTENT_TYPE = "text/turtle";
 
     private static final String RDF =
-            "@prefix dc: <"  + DC.getURI() + "> ." +
-            "@prefix dcterms: <"  + DCTerms.getURI() + "> ." +
-            "<" + FEDORA_URI + "> dc:title 'fancy title' ;" +
-            "<" + FEDORA_URI + "> dc:title 'another fancy title' ;";
+            "<" + FEDORA_ID + "> <" + DC.getURI() + "title> 'fancy title' .\n" +
+            "<" + FEDORA_ID + "> <" + DC.getURI() + "title> 'another fancy title' .";
 
     private final Node subject = createURI(FEDORA_ID);
-
-    private final Triple triple1 = new Triple(createURI(FEDORA_ID),
-        createURI("http://purl.org/dc/elements/1.1/title"),
-        createLiteral("title one", XSDDatatype.XSDstring));
-    private final Triple triple2 = new Triple(createURI(FEDORA_ID),
-        createURI("http://purl.org/dc/elements/1.1/title"),
-        createLiteral("title two", XSDDatatype.XSDstring));
 
 
     @Before
     public void setup() {
+        factory = new RdfSourceOperationFactoryImpl();
+        setField(service, "factory", factory);
         when(tx.getId()).thenReturn(TX_ID);
         when(psManager.getSession(anyString())).thenReturn(pSession);
         when(resource.getId()).thenReturn(FEDORA_ID);
-        when(factory.updateBuilder(eq(FEDORA_ID))).thenReturn(builder);
-        when(builder.build()).thenReturn(operation);
     }
 
     @Test
-    @Ignore
-    public void testReplaceProperties() throws PersistentStorageException {
-        final DefaultRdfStream rdfStream = new DefaultRdfStream(subject, of(triple1, triple2));
-        when(resource.getTriples()).thenReturn(rdfStream);
-
+    public void testReplaceProperties() throws Exception {
         final Model model = ModelFactory.createDefaultModel();
+        RDFDataMgr.read(model, IOUtils.toInputStream(RDF, "UTF-8"), Lang.NTRIPLES);
 
         service.perform(tx.getId(), resource.getId(), CONTENT_TYPE, model);
-        verify(pSession).persist(operation);
+        verify(pSession).persist(operationCaptor.capture());
+        assertEquals(FEDORA_ID, operationCaptor.getValue().getResourceId());
+        final RdfStream stream = operationCaptor.getValue().getTriples();
+        final Model captureModel = stream.collect(RdfCollectors.toModel());
+
+        assertTrue(captureModel.contains(ResourceFactory.createResource(FEDORA_ID),
+                ResourceFactory.createProperty("http://purl.org/dc/elements/1.1/title"),
+                "another fancy title"));
+        assertTrue(captureModel.contains(ResourceFactory.createResource(FEDORA_ID),
+                ResourceFactory.createProperty("http://purl.org/dc/elements/1.1/title"),
+                "fancy title"));
     }
 }
 

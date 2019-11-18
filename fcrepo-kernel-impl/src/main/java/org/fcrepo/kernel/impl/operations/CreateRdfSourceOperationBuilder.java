@@ -31,13 +31,12 @@ public class CreateRdfSourceOperationBuilder extends AbstractRdfSourceOperationB
      *
      * @param resourceId the internal identifier.
      */
-    public CreateRdfSourceOperationBuilder(final String resourceId) {
-        super(resourceId);
+    public CreateRdfSourceOperationBuilder(final String resourceId, final String interactionModel) {
+        super(resourceId, interactionModel);
     }
 
     @Override
     public RdfSourceOperation build() {
-        return new CreateRdfSourceOperation(resourceId, tripleStream);
+        return new CreateRdfSourceOperation(this.resourceId, this.interactionModel, tripleStream);
     }
-
 }

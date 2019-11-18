@@ -143,9 +143,8 @@ public class HttpRdfService {
         }
 
         final Lang format = contentTypeToLang(contentType.toString());
-        final Model inputModel;
         try {
-            inputModel = createDefaultModel();
+            final Model inputModel = createDefaultModel();
             inputModel.read(requestBodyStream, extResourceId, format.getName().toUpperCase());
             return inputModel;
         } catch (final RiotException e) {

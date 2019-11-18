@@ -19,6 +19,7 @@ package org.fcrepo.http.commons.api.rdf;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.glassfish.jersey.uri.UriTemplate;
@@ -43,8 +44,6 @@ public class HttpIdentifierConverter {
     private final UriBuilder uriBuilder;
 
     private final UriTemplate uriTemplate;
-
-    private static final String FEDORA_ID_PREFIX = "info:fedora/";
 
     /**
      * Things in a URL that we want to remove from the end of identifiers. Also removes everything after these.

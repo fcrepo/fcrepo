@@ -22,6 +22,7 @@ import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.rdf.model.ResourceFactory.createStatement;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
@@ -53,6 +54,7 @@ import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 
+import java.io.File;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -72,9 +74,9 @@ public class AbstractService {
 
     private static final Node WEBAC_ACCESS_TO_CLASS_URI = createURI(WEBAC_ACCESS_TO_CLASS);
 
-    static String rdfType = RDF_NAMESPACE + "type";
+    private static final String RDF_TYPE = RDF_NAMESPACE + "type";
 
-    List<Triple> serverManagedProperties = new ArrayList<>();
+    protected final List<Triple> serverManagedProperties = new ArrayList<>();
 
     /**
      * Utility to determine the correct interaction model from elements of a request.
@@ -85,7 +87,7 @@ public class AbstractService {
      * @param isExternalContent Is there Link headers that define external content?
      * @return The determined or default interaction model.
      */
-    String determineInteractionModel(final List<String> linkTypes,
+    protected String determineInteractionModel(final List<String> linkTypes,
                                                    final boolean isRdfContentType, final boolean contentPresent,
                                                    final boolean isExternalContent) {
         final String interactionModel = linkTypes == null ? null : linkTypes.stream().filter(INTERACTION_MODELS_FULL::contains).findFirst()
@@ -103,11 +105,25 @@ public class AbstractService {
     }
 
     /**
+     * Find the closest ancestor.
+     * @param path The path to check
+     * @return The ancestor ID or null if root
+     */
+    protected String findExistingAncestor(final String path) {
+        // Remove the ID prefix as it can include a /
+        final String removePrefix = path.substring(FEDORA_ID_PREFIX.length());
+        if (removePrefix.contains(File.separator)) {
+            return FEDORA_ID_PREFIX + removePrefix.substring(0, removePrefix.lastIndexOf(File.separator));
+        }
+        return null;
+    }
+
+    /**
      * Check that we don't try to provide an ACL Link header.
      * @param links list of the link headers provided.
      * @throws RequestWithAclLinkHeaderException If we provide an rel="acl" link header.
      */
-    void checkAclLinkHeader(final List<String> links) throws RequestWithAclLinkHeaderException {
+    protected void checkAclLinkHeader(final List<String> links) throws RequestWithAclLinkHeaderException {
         final Predicate matcher = Pattern.compile("rel=[\"']?acl[\"']?").asPredicate();
         if (links != null && links.stream().anyMatch(matcher)) {
             throw new RequestWithAclLinkHeaderException(
@@ -120,7 +136,7 @@ public class AbstractService {
      *
      * @param externalPath the path.
      */
-    void hasRestrictedPath(final String externalPath) {
+    protected void hasRestrictedPath(final String externalPath) {
         final String[] pathSegments = externalPath.split("/");
         if (Arrays.stream(pathSegments).anyMatch(p -> p.startsWith("fedora:"))) {
             throw new ServerManagedTypeException("Path cannot contain a fedora: prefixed segment.");
@@ -132,12 +148,13 @@ public class AbstractService {
      *
      * @param model The RDF model.
      */
-    void checkForSmtsLdpTypes(final Model model) {
+    protected void checkForSmtsLdpTypes(final Model model) {
         final StmtIterator it = model.listStatements();
         while (it.hasNext()) {
             final Statement st = it.next();
-            if (st.getPredicate().hasURI(rdfType) && st.getObject().isURIResource() &&
-                    st.getObject().toString().startsWith(LDP_NAMESPACE)) {
+            if ((st.getPredicate().hasURI(RDF_TYPE) && st.getObject().isURIResource() &&
+                    st.getObject().toString().startsWith(LDP_NAMESPACE)) ||
+                    isManagedPredicate.test(st.getPredicate())) {
                 throw new MalformedRdfException("RDF contains a server managed triple or restricted rdf:type");
             }
         }
@@ -229,7 +246,7 @@ public class AbstractService {
      * @param fedoraId The current resource ID.
      * @return The RDF stream of server managed properties.
      */
-    RdfStream getServerManagedStream(final String fedoraId) {
+    protected RdfStream getServerManagedStream(final String fedoraId) {
         populateServerManagedTriples(fedoraId);
         return new DefaultRdfStream(asNode(fedoraId), serverManagedProperties.stream());
     }
@@ -238,7 +255,7 @@ public class AbstractService {
      * Populate server managed properties.
      * Override in subclasses to add additional triples, always call super() first;
      */
-    void populateServerManagedTriples(final String fedoraId) {
+    protected void populateServerManagedTriples(final String fedoraId) {
         final ZonedDateTime now = ZonedDateTime.now();
         serverManagedProperties.add(new Triple(
                 asNode(fedoraId),
@@ -258,7 +275,7 @@ public class AbstractService {
      * @param uri the resource.
      * @return the resource as a Node.
      */
-    Node asNode(final String uri) {
+    protected Node asNode(final String uri) {
         return ResourceFactory.createResource(uri).asNode();
     }
 
@@ -268,7 +285,7 @@ public class AbstractService {
      * @param type The datatype.
      * @return The literal as a node.
      */
-    Node asLiteral(final String literal, final RDFDatatype type) {
+    protected Node asLiteral(final String literal, final RDFDatatype type) {
         return ResourceFactory.createTypedLiteral(literal, type).asNode();
     }
 }

@@ -25,6 +25,8 @@ package org.fcrepo.kernel.api;
  */
 public interface FedoraTypes {
 
+    String FEDORA_ID_PREFIX = "info:fedora/";
+
     String FEDORA_BINARY = "fedora:Binary";
 
     String FEDORA_CONTAINER = "fedora:Container";

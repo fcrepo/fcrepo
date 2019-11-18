@@ -56,6 +56,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Create a RdfSource resource.
+ * @author whikloj
+ * TODO: bbpennel has thoughts about moving this to HTTP layer.
+ */
 public class CreateResourceServiceImpl extends AbstractService implements CreateResourceService {
 
     @Inject
@@ -71,12 +76,17 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
     private UniqueValueSupplier minter;
 
     @Override
-    public void perform(final String txId, final String fedoraId, final String slug, final String contentType,
-                        final List<String> linkHeaders, final Collection<String> digest,
+    public void perform(final String txId, final String fedoraId, final String slug, final boolean isContained,
+                        final String contentType, final List<String> linkHeaders, final Collection<String> digest,
                         final InputStream requestBody, final ExternalContent externalContent) {
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
-        final String fullPath = doInternalPerform(pSession, fedoraId, slug, linkHeaders);
-        final Collection<URI> uriDigests = digest.stream().map(URI::create).collect(Collectors.toCollection(HashSet::new));
+        checkAclLinkHeader(linkHeaders);
+        checkParent(pSession, (isContained ? fedoraId : findExistingAncestor(fedoraId)));
+
+        final String fullPath = isContained ? getResourcePath(pSession, fedoraId, slug) : fedoraId;
+
+        final Collection<URI> uriDigests = (digest == null ?
+                digest.stream().map(URI::create).collect(Collectors.toCollection(HashSet::new)) : new HashSet<>());
         final NonRdfSourceOperationBuilder builder;
         if (externalContent == null) {
             builder = nonRdfSourceOperationFactory.createInternalBinaryBuilder(fullPath, requestBody);
@@ -93,14 +103,15 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         } catch (PersistentStorageException exc) {
             throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
         }
-
     }
 
     @Override
-    public void perform(final String txId, final String fedoraId, final String slug, final String contentType,
+    public void perform(final String txId, final String fedoraId, final String slug, final boolean isContained,
                         final List<String> linkHeaders, final Model model) {
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
-        final String fullPath = doInternalPerform(pSession, fedoraId, slug, linkHeaders);
+        checkAclLinkHeader(linkHeaders);
+        checkParent(pSession, (isContained ? fedoraId : findExistingAncestor(fedoraId)));
+        final String fullPath = isContained ? getResourcePath(pSession, fedoraId, slug) : fedoraId;
 
         final String interactionModel = determineInteractionModel(getTypes(linkHeaders), true,
                 model != null, false);
@@ -111,6 +122,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                     .triples(stream).build();
 
         // Set server managed is only on AbstractResourceOperation.
+        // TODO: Consider moving .setServerManagedProperties to the ResourceOperation interface.
         ((AbstractResourceOperation)createOp).setServerManagedProperties(getServerManagedStream(fullPath));
 
         try {
@@ -122,7 +134,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
     }
 
     @Override
-    void populateServerManagedTriples(final String fedoraId) {
+    protected void populateServerManagedTriples(final String fedoraId) {
         super.populateServerManagedTriples(fedoraId);
         final ZonedDateTime now = ZonedDateTime.now();
         serverManagedProperties.add(new Triple(
@@ -139,42 +151,51 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
     }
 
     /**
-     * Do some common checks for RdfSource and NonRdfSource create requests.
+     * Check the parent to contain the new resource exists and can have a child.
      *
      * @param pSession a persistence session.
-     * @param fedoraId Id of parent.
-     * @param slug Id of the slug.
-     * @param linkHeaders link headers.
-     * @return the new full path identifier.
+     * @param fedoraId Id of parent or null if root.
      */
-    private String doInternalPerform(final PersistentStorageSession pSession, final String fedoraId,
-                                     final String slug, final List<String> linkHeaders) {
-        checkAclLinkHeader(linkHeaders);
+    private void checkParent(final PersistentStorageSession pSession, final String fedoraId) {
 
-        final ResourceHeaders parent;
-        try {
-            // Make sure the parent exists.
-            parent = pSession.getHeaders(fedoraId, null);
-        } catch (PersistentItemNotFoundException exc) {
-            throw new ItemNotFoundException(String.format("Item %s was not found", fedoraId), exc);
-        }
+        if (fedoraId != null) {
+            final ResourceHeaders parent;
+            try {
+                // Make sure the parent exists.
+                // TODO: object existence check could be from an index. Review later.
+                parent = pSession.getHeaders(fedoraId, null);
+            } catch (PersistentItemNotFoundException exc) {
+                throw new ItemNotFoundException(String.format("Item %s was not found", fedoraId), exc);
+            }
 
-        final boolean isParentBinary = parent.getTypes().stream().anyMatch(t -> t.equalsIgnoreCase(NON_RDF_SOURCE.toString()));
-        if (isParentBinary) {
-            // Binary is not a container, can't have children.
-            throw new CannotCreateResourceException("NonRdfSource resources cannot contain other resources");
+            final boolean isParentBinary = parent.getTypes().stream().anyMatch(t -> t.equalsIgnoreCase(NON_RDF_SOURCE.toString()));
+            if (isParentBinary) {
+                // Binary is not a container, can't have children.
+                throw new CannotCreateResourceException("NonRdfSource resources cannot contain other resources");
+            }
+            // TODO: Will this type still be needed?
+            final boolean isPairTree = parent.getTypes().stream().anyMatch(t -> t.equalsIgnoreCase(FEDORA_PAIRTREE));
+            if (isPairTree) {
+                throw new CannotCreateResourceException("Objects cannot be created under pairtree nodes");
+            }
         }
-        // TODO: Will this type still be needed?
-        final boolean isPairTree = parent.getTypes().stream().anyMatch(t -> t.equalsIgnoreCase(FEDORA_PAIRTREE));
-        if (isPairTree) {
-            throw new CannotCreateResourceException("Objects cannot be created under pairtree nodes");
-        }
+    }
+
+    /**
+     * Get the path of a new child with or without a slug.
+     * @param pSession a persistent storage session.
+     * @param fedoraId the current parent's identifier.
+     * @param slug a provided slug or null
+     * @return the new identifier.
+     */
+    private String getResourcePath(final PersistentStorageSession pSession, final String fedoraId, final String slug) {
 
         String finalSlug;
         if (slug == null) {
             finalSlug = this.minter.get();
         } else {
             try {
+                // TODO: object existence check could be from an index. Review later.
                 pSession.getHeaders(fedoraId + "/" + slug, null);
                 // Slug exists, so we need to generate a new path.
                 finalSlug = this.minter.get();
@@ -183,11 +204,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                 finalSlug = slug;
             }
         }
-        final String fullPath = addToIdentifier(fedoraId, finalSlug);
-
-        hasRestrictedPath(fullPath);
-
-        return fullPath;
+        return addToIdentifier(fedoraId, finalSlug);
     }
 
     /**
@@ -196,10 +213,9 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
      * @return a list of LINK headers with rel="type"
      */
     private List<String> getTypes(final List<String> headers) {
-        final List<String> types = getLinkHeaders(headers) == null ? null : getLinkHeaders(headers).stream()
+        return getLinkHeaders(headers) == null ? null : getLinkHeaders(headers).stream()
                 .filter(p -> p.getRel().equalsIgnoreCase("type")).map(Link::getUri)
                 .map(URI::toString).collect(Collectors.toList());
-        return types;
     }
 
     /**
