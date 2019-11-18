@@ -20,6 +20,7 @@ package org.fcrepo.persistence.api;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Header information for fedora resources.
@@ -55,6 +56,13 @@ public interface ResourceHeaders {
      * @return interaction model URI
      */
     String getInteractionModel();
+
+    /**
+     * List the RDF types which describe the resource
+     *
+     * @return list of RDF types in URI form
+     */
+    List<String> getTypes();
 
     /**
      * Get the mimetype describing the content contained by this resource

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
 
 /**
  * A resource in a Fedora repository.
@@ -41,6 +42,14 @@ public interface FedoraResource {
     String getId();
 
     /**
+     * Get the resource which contains this resource.
+     *
+     * @return the parent resource
+     * @throws PathNotFoundException thrown if the parent cannot be found
+     */
+    FedoraResource getParent() throws PathNotFoundException;
+
+    /**
      * Get the path to the resource
      *
      * @return path
@@ -48,13 +57,6 @@ public interface FedoraResource {
      */
     @Deprecated
     String getPath();
-
-    /**
-     * Get an object containing header information describing this resource.
-     *
-     * @return header information
-     */
-    ResourceHeaders getHeaders();
 
     /**
      * Get the children of this resource
@@ -149,10 +151,23 @@ public interface FedoraResource {
     Instant getCreatedDate();
 
     /**
+     * Get the created by value
+     *
+     * @return created by
+     */
+    String getCreatedBy();
+
+    /**
      * Get the date this resource was last modified
      * @return last modified date
      */
     Instant getLastModifiedDate();
+
+    /**
+     * Get the last modified by value
+     * @return last modified by
+     */
+    String getLastModifiedBy();
 
     /**
      * Check if this object uses a given RDF type
@@ -181,6 +196,7 @@ public interface FedoraResource {
      *
      * @param type the type to add
      */
+    @Deprecated
     void addType(final String type);
 
     /**
@@ -191,23 +207,17 @@ public interface FedoraResource {
     RdfStream getTriples();
 
     /**
-     * Returns the managed properties for this resource.
-     *
-     * @return the managed properties for this resource as an RdfStream
-     */
-    RdfStream getManagedProperties();
-
-    /**
      * Check if a resource was created in this session
      *
      * @return if resource created in this session
      */
+    @Deprecated
     Boolean isNew();
 
     /**
      * Construct an ETag value for the resource.
      *
-     * @return constructed state-token value
+     * @return constructed etag value
      */
     String getEtagValue();
 

@@ -17,8 +17,6 @@
  */
 package org.fcrepo.kernel.impl.models;
 
-import java.lang.reflect.Constructor;
-import java.util.Collection;
 import javax.inject.Inject;
 
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
@@ -26,17 +24,19 @@ import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 
+import java.net.URI;
+import java.util.stream.Collectors;
+
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ResourceTypeException;
-import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
-import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.persistence.api.ResourceHeaders;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
@@ -49,31 +49,8 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
  */
 public class ResourceFactoryImpl implements ResourceFactory {
 
-    /**
-     * Singleton persistentStorageSessionManager;
-     */
-    private static ResourceFactory instance = null;
-
     @Inject
     private static PersistentStorageSessionManager persistentStorageSessionManager;
-
-    /**
-     * Private constructor
-     */
-    private ResourceFactoryImpl() {
-    }
-
-    /**
-     * Get instance of ResourceFactory.
-     *
-     * @return the singleton ResourceFactory.
-     */
-    public static ResourceFactory getInstance() {
-        if (instance == null) {
-            instance = new ResourceFactoryImpl();
-        }
-        return instance;
-    }
 
     @Override
     public FedoraResource getResource(final String identifier)
@@ -105,17 +82,17 @@ public class ResourceFactoryImpl implements ResourceFactory {
      * @param headers headers for the resource being constructed
      * @return FedoraResource class
      */
-    private Class<? extends FedoraResource> getClassForTypes(final ResourceHeaders headers) {
-        final Collection<String> types = headers.getTypes();
-        if (types.contains(BASIC_CONTAINER.toString()) || types.contains(INDIRECT_CONTAINER.toString()) || types
-                .contains(DIRECT_CONTAINER.toString())) {
-            return Container.class;
+    private Class<? extends FedoraResourceImpl> getClassForTypes(final ResourceHeaders headers) {
+        final var ixModel = headers.getInteractionModel();
+        if (BASIC_CONTAINER.getURI().equals(ixModel) || INDIRECT_CONTAINER.getURI().equals(ixModel)
+                || DIRECT_CONTAINER.getURI().equals(ixModel)) {
+            return ContainerImpl.class;
         }
-        if (types.contains(NON_RDF_SOURCE.toString())) {
-            return Binary.class;
+        if (NON_RDF_SOURCE.getURI().equals(ixModel)) {
+            return BinaryImpl.class;
         }
         // TODO add the rest of the types
-        throw new ResourceTypeException("Could not identify the resource type from values " + types.toString());
+        throw new ResourceTypeException("Could not identify the resource type for interaction model " + ixModel);
     }
 
     /**
@@ -129,23 +106,47 @@ public class ResourceFactoryImpl implements ResourceFactory {
     private FedoraResource instantiateResource(final Transaction transaction, final String identifier)
             throws PathNotFoundException {
         try {
-            final PersistentStorageSession psSession = getSession(transaction);
-            final ResourceHeaders headers = psSession.getHeaders(identifier, null);
+            final var psSession = getSession(transaction);
+            final var headers = psSession.getHeaders(identifier, null);
 
             // Determine the appropriate class from headers
-            final Class<? extends FedoraResource> createClass = getClassForTypes(headers);
+            final var createClass = getClassForTypes(headers);
 
             // Retrieve standard constructor
-            final Constructor<? extends FedoraResource> constructor = createClass.getConstructor(
-                    ResourceHeaders.class, Transaction.class, PersistentStorageSessionManager.class);
+            final var constructor = createClass.getConstructor(
+                    String.class,
+                    Transaction.class,
+                    PersistentStorageSessionManager.class,
+                    ResourceFactory.class);
 
-            return constructor.newInstance(headers, transaction, persistentStorageSessionManager);
+            final var rescImpl = constructor.newInstance(identifier, transaction,
+                    persistentStorageSessionManager, this);
+            populateResourceHeaders(rescImpl, headers);
+
+            return rescImpl;
         } catch (SecurityException | ReflectiveOperationException e) {
             throw new RepositoryRuntimeException("Unable to construct object", e);
         } catch (final PersistentItemNotFoundException e) {
             throw new PathNotFoundException(e);
-        } catch (PersistentStorageException e) {
+        } catch (final PersistentStorageException e) {
             throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    private void populateResourceHeaders(final FedoraResourceImpl resc, final ResourceHeaders headers) {
+        resc.setCreatedBy(headers.getCreatedBy());
+        resc.setCreatedDate(headers.getCreatedDate());
+        resc.setLastModifiedBy(headers.getLastModifiedBy());
+        resc.setLastModifiedDate(headers.getLastModifiedDate());
+        resc.setParentId(headers.getParent());
+        resc.setEtag(headers.getStateToken());
+        resc.setStateToken(headers.getStateToken());
+        if (headers.getTypes() != null) {
+            resc.setTypes(headers.getTypes().stream().map(URI::create).collect(Collectors.toList()));
+        }
+
+        if (resc instanceof Binary) {
+            // set binary headers
         }
     }
 
