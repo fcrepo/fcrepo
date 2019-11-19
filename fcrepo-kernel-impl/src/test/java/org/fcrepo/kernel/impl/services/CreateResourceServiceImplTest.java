@@ -26,12 +26,20 @@ import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
+import static org.fcrepo.kernel.impl.services.functions.FedoraUtils.addToIdentifier;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
+
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
@@ -63,14 +71,6 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.io.File;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
 
 
 @RunWith(MockitoJUnitRunner.Silent.class)
@@ -234,7 +234,7 @@ public class CreateResourceServiceImplTest {
     @Test
     public void testWithSlugExistsRdf() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
-        final String childId = fedoraId + File.separator + "testSlug";
+        final String childId = addToIdentifier(fedoraId, "testSlug");
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(psSession.getHeaders(childId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getTypes()).thenReturn(BASIC_CONTAINER_TYPES);
@@ -249,7 +249,7 @@ public class CreateResourceServiceImplTest {
     @Test
     public void testWithSlugExistsBinary() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
-        final String childId = fedoraId + "/" + "testSlug";
+        final String childId = addToIdentifier(fedoraId, "testSlug");
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(psSession.getHeaders(childId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getTypes()).thenReturn(BASIC_CONTAINER_TYPES);
@@ -265,7 +265,7 @@ public class CreateResourceServiceImplTest {
     @Test
     public void testWithSlugDoesntExistsRdf() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
-        final String childId = fedoraId + File.separator + "testSlug";
+        final String childId = addToIdentifier(fedoraId, "testSlug");
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(psSession.getHeaders(childId, null))
                 .thenThrow(PersistentItemNotFoundException.class);
@@ -279,7 +279,7 @@ public class CreateResourceServiceImplTest {
     public void testWithSlugDoesntExistsBinary() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
-        when(psSession.getHeaders(fedoraId + "/" + "testSlug", null))
+        when(psSession.getHeaders(addToIdentifier(fedoraId, "testSlug"), null))
                 .thenThrow(PersistentItemNotFoundException.class);
         when(resourceHeaders.getTypes()).thenReturn(BASIC_CONTAINER_TYPES);
         createResourceService.perform(TX_ID, fedoraId, "testSlug", true, null, null, digests,
@@ -317,7 +317,7 @@ public class CreateResourceServiceImplTest {
     @Test
     public void testWithSlugExistsExternal() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
-        final String childId = fedoraId + "/" + "testSlug";
+        final String childId = addToIdentifier(fedoraId, "testSlug");
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(psSession.getHeaders(childId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getTypes()).thenReturn(BASIC_CONTAINER_TYPES);
@@ -333,7 +333,7 @@ public class CreateResourceServiceImplTest {
     @Test
     public void testWithSlugDoesntExistsExternal() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
-        final String childId = fedoraId + "/" + "testSlug";
+        final String childId = addToIdentifier(fedoraId, "testSlug");
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(psSession.getHeaders(childId, null))
                 .thenThrow(PersistentItemNotFoundException.class);
@@ -512,5 +512,4 @@ public class CreateResourceServiceImplTest {
                         "handling=\"proxy\"; type=\"image/tiff\"");
         createResourceService.checkAclLinkHeader(links);
     }
-
 }
