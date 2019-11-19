@@ -17,11 +17,19 @@
  */
 package org.fcrepo.kernel.impl;
 
+
+import static java.time.Duration.ofMinutes;
+
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Optional;
 
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The Fedora Transaction implementation
@@ -30,28 +38,64 @@ import org.fcrepo.kernel.api.Transaction;
  */
 public class TransactionImpl implements Transaction {
 
-    final String id;
+    private static final Logger log = LoggerFactory.getLogger(TransactionImpl.class);
 
-    boolean shortLived = true;
+    private static final Duration DEFAULT_TIMEOUT = ofMinutes(3);
 
-    TransactionImpl(final String id) {
+    private final String id;
+
+    private final TransactionManagerImpl txManager;
+
+    private boolean shortLived = true;
+
+    private Instant expiration;
+
+    private boolean expired = false;
+
+    private boolean rolledback = false;
+
+    private boolean commited = false;
+
+    protected TransactionImpl(final String id, final TransactionManagerImpl txManager) {
         if (id == null || id.isEmpty()) {
             throw new IllegalArgumentException("Transaction id should not be empty!");
         }
         this.id = id;
+        this.txManager = txManager;
+        this.expiration = Instant.now().plus(timeout());
     }
 
     @Override
-    public void commit() {
-        // Prepare Persistence Transactions
-        // Commit Persistence Transactions
+    public synchronized void commit() {
+        failIfExpired();
+        failIfRolledback();
+        if (this.commited) {
+            return;
+        }
+        try {
+            log.debug("Commiting transaction {}", id);
+            this.getPersistentSession().commit();
+            this.commited = true;
+        } catch (final PersistentStorageException ex) {
+            // Rollback on commit failure
+            rollback();
+            throw new RepositoryRuntimeException("failed to commit transaction " + id, ex);
+        }
     }
 
     @Override
-    public void rollback() {
-        // Rollback Persistence Transactions
-
-        // Delete Transaction from TransactionManager state?
+    public synchronized void rollback() {
+        failIfCommited();
+        if (this.rolledback) {
+            return;
+        }
+        try {
+            log.debug("Rolling back transaction {}", id);
+            this.rolledback = true;
+            this.getPersistentSession().rollback();
+        } catch (final PersistentStorageException ex) {
+            throw new RepositoryRuntimeException("failed to rollback transaction " + id, ex);
+        }
     }
 
     @Override
@@ -59,11 +103,6 @@ public class TransactionImpl implements Transaction {
         return id;
     }
 
-    /**
-     * Set transaction short-lived state.
-     * 
-     * @param shortLived boolean true (short-lived - default) or false (not short-lived)
-     */
     @Override
     public void setShortLived(final boolean shortLived) {
         this.shortLived = shortLived;
@@ -75,21 +114,32 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
-    public void expire() {
-        // TODO Auto-generated method stub
-
+    public synchronized void expire() {
+        this.expiration = Instant.now();
+        this.expired = true;
     }
 
     @Override
-    public Instant updateExpiry(final Duration amountToAdd) {
-        // TODO Auto-generated method stub
-        return null;
+    public boolean hasExpired() {
+        if (this.expired) {
+            return true;
+        }
+        this.expired = this.expiration.isBefore(Instant.now());
+        return this.expired;
     }
 
     @Override
-    public Optional<Instant> getExpires() {
-        // TODO Auto-generated method stub
-        return null;
+    public synchronized Instant updateExpiry(final Duration amountToAdd) {
+        failIfExpired();
+        failIfCommited();
+        failIfRolledback();
+        this.expiration = this.expiration.plus(amountToAdd);
+        return this.expiration;
+    }
+
+    @Override
+    public Instant getExpires() {
+        return this.expiration;
     }
 
     @Override
@@ -101,7 +151,34 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public void refresh() {
-        // TODO Auto-generated method stub
+        updateExpiry(timeout());
     }
 
+    private Duration timeout() {
+        // TODO Get the user configured timeout?
+        // Otherwise, use the default timeout
+        return DEFAULT_TIMEOUT;
+    }
+
+    private PersistentStorageSession getPersistentSession() {
+        return this.txManager.getPersistentStorageSessionManager().getSession(this.id);
+    }
+
+    private void failIfExpired() {
+        if (hasExpired()) {
+            throw new TransactionRuntimeException("Transaction with transactionId: " + id + " expired!");
+        }
+    }
+
+    private void failIfCommited() {
+        if (this.commited) {
+            throw new TransactionRuntimeException("Transaction with transactionId: " + id + " is already committed!");
+        }
+    }
+
+    private void failIfRolledback() {
+        if (this.rolledback) {
+            throw new TransactionRuntimeException("Transaction with transactionId: " + id + " is already rolledback!");
+        }
+    }
 }

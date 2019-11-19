@@ -73,9 +73,7 @@ public class Transactions extends FedoraBaseResource {
 
         final Response.ResponseBuilder res = created(
                 new URI(translator().toDomain("/tx:" + transaction.getId()).toString()));
-        transaction.getExpires().ifPresent(expires -> {
-            res.expires(from(expires));
-        });
+        res.expires(from(transaction.getExpires()));
         return res.build();
     }
 

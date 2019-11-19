@@ -25,11 +25,13 @@ import java.util.stream.Stream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
 /**
  * Implementation of a Fedora resource, containing functionality common to the more concrete resource implementations.
@@ -173,6 +175,8 @@ public class FedoraResourceImpl implements FedoraResource {
             return getSession().getTriples(id, getMementoDatetime());
         } catch (final PersistentItemNotFoundException e) {
             throw new ItemNotFoundException("Unable to retrieve triples for " + getId(), e);
+        } catch (PersistentStorageException e) {
+            throw new RepositoryRuntimeException(e);
         }
     }
 
@@ -182,6 +186,8 @@ public class FedoraResourceImpl implements FedoraResource {
             return getSession().getManagedProperties(id, getMementoDatetime());
         } catch (final PersistentItemNotFoundException e) {
             throw new ItemNotFoundException("Unable to retrieve managed properties for " + getId(), e);
+        } catch (PersistentStorageException e) {
+            throw new RepositoryRuntimeException(e);
         }
     }
 

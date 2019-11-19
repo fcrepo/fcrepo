@@ -19,7 +19,6 @@ package org.fcrepo.kernel.api;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Optional;
 
 /**
  * The Fedora Transaction abstraction
@@ -71,6 +70,11 @@ public interface Transaction {
     public void expire();
 
     /**
+     * Has the transaction expired?
+     */
+    public boolean hasExpired();
+
+    /**
     * Update the expiry by the provided amount
     * @param amountToAdd the amount of time to add
     * @return the new expiration date
@@ -81,7 +85,7 @@ public interface Transaction {
      * Get the date this session expires
      * @return expiration date, if one exists
      */
-    Optional<Instant> getExpires();
+    Instant getExpires();
 
     /**
      * Refresh the transaction to extend its expiration window.

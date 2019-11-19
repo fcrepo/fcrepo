@@ -17,10 +17,10 @@
  */
 package org.fcrepo.persistence.ocfl;
 
-import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.fcrepo.persistence.ocfl.impl.FedoraOCFLMapping;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,8 +30,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.UUID.randomUUID;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
 
 /**
  * Test class for {@link org.fcrepo.persistence.ocfl.OCFLPersistentSessionManager}
@@ -42,18 +40,13 @@ import static org.mockito.Mockito.when;
 public class OCFLPersistentSessionManagerTest {
 
     @InjectMocks
-    private OCFLPersistentSessionManager sessionFactory;
+    private OCFLPersistentSessionManager sessionManager;
 
     private PersistentStorageSession readWriteSession;
 
     private PersistentStorageSession readOnlySession;
 
     private final String testSessionId = randomUUID().toString();
-
-    private final String testResourcePath = "/" + randomUUID().toString();
-
-    @Mock
-    private FedoraResource resource;
 
     @Mock
     private ResourceOperation mockOperation;
@@ -64,19 +57,17 @@ public class OCFLPersistentSessionManagerTest {
     @Mock
     private FedoraOCFLMapping mapping;
 
+    @Mock
+    private OCFLObjectSessionFactory objectSessionFactory;
+
     @Before
     public void setUp() {
-        readWriteSession = this.sessionFactory.getSession(testSessionId);
-        readOnlySession = this.sessionFactory.getReadOnlySession();
+        readWriteSession = this.sessionManager.getSession(testSessionId);
+        readOnlySession = this.sessionManager.getReadOnlySession();
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void testNormalSession() throws Exception {
-        final String resourceId = "resource1";
-        final String ocflObjectId = "ocflObjectId";
-        when(mockOperation.getResourceId()).thenReturn(resourceId);
-        when(index.getMapping(eq(resourceId))).thenReturn(mapping);
-        when(mapping.getOcflObjectId()).thenReturn(ocflObjectId);
+    public void testUnsupportedOperationOnUnrecognizedOperation() throws Exception {
         readWriteSession.persist(mockOperation);
     }
 
@@ -87,7 +78,7 @@ public class OCFLPersistentSessionManagerTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testNullSessionId() {
-        this.sessionFactory.getSession(null);
+        this.sessionManager.getSession(null);
     }
 
 }

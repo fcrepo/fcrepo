@@ -21,7 +21,6 @@ import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
 import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.getInternalFedoraDirectory;
 import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.relativizeSubpath;
-import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.resolveOCFLSubpath;
 import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.writeRDF;
 
 import static java.util.Arrays.asList;
@@ -29,7 +28,7 @@ import static java.util.Arrays.asList;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.fcrepo.kernel.api.operations.RdfSourceOperation;
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -38,35 +37,35 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class implements the persistence of a new RDFSource
+ * This class implements the persistence of a NonRDFSource
  *
- * @author dbernstein
+ * @author whikloj
  * @since 6.0.0
  */
-public class RDFSourcePersister extends AbstractPersister {
+public class NonRdfSourcePersister extends AbstractPersister {
 
-    private static final Logger log = LoggerFactory.getLogger(RDFSourcePersister.class);
+    private static final Logger log = LoggerFactory.getLogger(NonRdfSourcePersister.class);
 
-    private static final Set<ResourceOperationType> OPERATION_TYPES = new HashSet<>(asList(CREATE, UPDATE));
+    private static final Set<ResourceOperationType> OPERATION_ACTIONS = new HashSet<>(asList(CREATE, UPDATE));
 
     /**
      * Constructor
      */
-    public RDFSourcePersister() {
-        super(RdfSourceOperation.class, OPERATION_TYPES);
+    public NonRdfSourcePersister() {
+        super(NonRdfSourceOperation.class, OPERATION_ACTIONS);
     }
 
     @Override
     public void persist(final OCFLObjectSession session, final ResourceOperation operation,
                         final FedoraOCFLMapping mapping) throws PersistentStorageException {
-        final RdfSourceOperation rdfSourceOp = (RdfSourceOperation)operation;
-        log.debug("persisting RDFSource ({}) to {}", operation.getResourceId(), mapping.getOcflObjectId());
+        log.debug("persisting ({}) to {}", operation.getResourceId(), mapping.getOcflObjectId());
         final String subpath = relativizeSubpath(mapping.getParentFedoraResourceId(), operation.getResourceId());
-        final String resolvedSubpath = resolveOCFLSubpath(subpath);
-        //write user triples
-        writeRDF(session, rdfSourceOp.getTriples(), resolvedSubpath);
+
+        // write user content
+        final NonRdfSourceOperation nonRdfSourceOperation = ((NonRdfSourceOperation) operation);
+        session.write(subpath, nonRdfSourceOperation.getContentStream());
 
         //write server props
-        writeRDF(session, operation.getServerManagedProperties(), getInternalFedoraDirectory() + resolvedSubpath);
+        writeRDF(session, operation.getServerManagedProperties(), getInternalFedoraDirectory() + subpath);
     }
 }
