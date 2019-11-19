@@ -31,6 +31,13 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 public interface OCFLObjectSession {
 
     /**
+     * The default commit option configured for the OCFL Object represented by this session.
+     * If no default commit option has been defined for the specific OCFL Object, the
+     * value returned will be the system defined global default commit option.
+     * @return The default commit option
+     */
+    CommitOption getDefaultCommitOption();
+    /**
      * Write the provided content to specified subpath.
      *
      * @param subpath path of the resource to write, relative to the OCFL object

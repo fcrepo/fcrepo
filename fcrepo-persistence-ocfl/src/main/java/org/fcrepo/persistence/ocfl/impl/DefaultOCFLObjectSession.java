@@ -19,8 +19,10 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import static edu.wisc.library.ocfl.api.OcflOption.OVERWRITE;
 import static edu.wisc.library.ocfl.api.OcflOption.MOVE_SOURCE;
+import static java.lang.System.getProperty;
 import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
 import static java.lang.String.format;
+import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -72,6 +74,10 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
     private MutableOcflRepository ocflRepository;
 
+
+    private static CommitOption globalDefaultCommitOption =
+            Boolean.valueOf(getProperty("fcrepo.autoversioning.enabled", "false")) ? NEW_VERSION : UNVERSIONED;
+
     /**
      * Instantiate an OCFL object session
      *
@@ -87,6 +93,21 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         this.deletePaths = new HashSet<>();
         this.objectDeleted = false;
         this.sessionClosed = false;
+    }
+
+    /**
+     * Set the system-wide default {@link org.fcrepo.persistence.api.CommitOption}.
+     * This method overrides system runtime settings, but not OCFL Object level
+     * settings.
+     * @param commitOption The commit option to be set.
+     */
+    public static void setGlobaDefaultCommitOption(final CommitOption commitOption) {
+        globalDefaultCommitOption = commitOption;
+    }
+
+    @Override
+    public CommitOption getDefaultCommitOption() {
+        return globalDefaultCommitOption;
     }
 
     /**

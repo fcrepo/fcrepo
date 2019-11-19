@@ -230,7 +230,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     }
 
     @Override
-    public synchronized void commit(final CommitOption option) throws PersistentStorageException {
+    public synchronized void commit() throws PersistentStorageException {
         ensureCommitNotStarted();
         if (isReadOnly()) {
             // No changes to commit.
@@ -265,6 +265,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
             //perform commit
             for (OCFLObjectSession objectSession : sessions) {
+                final CommitOption option = objectSession.getDefaultCommitOption();
                 objectSession.commit(option);
                 sessionsToRollback.add(new CommittedSession(objectSession, option));
             }

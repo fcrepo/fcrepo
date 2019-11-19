@@ -99,10 +99,9 @@ public interface PersistentStorageSession {
 
     /**
      * Commits any changes in the current sesssion to persistent storage.
-     * @param option The commit option indicating the
      * @throws PersistentStorageException Error during commit.
      */
-    public void commit(final CommitOption option) throws PersistentStorageException;
+    public void commit() throws PersistentStorageException;
 
     /**
      * Rolls back any changes in the current session.
