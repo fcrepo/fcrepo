@@ -17,7 +17,13 @@
  */
 package org.fcrepo.kernel.impl.services.functions;
 
-public final class FedoraUtils {
+/**
+ * This class provides some utilities to help with working with Fedora Ids
+ * @author whikloj
+ * @since 11/2019
+ */
+
+public final class FedoraIdUtils {
 
     /**
      * Add a subpath to an existing identifier.
@@ -33,7 +39,7 @@ public final class FedoraUtils {
     /**
      * Private Constructor.
      */
-    private FedoraUtils() {
+    private FedoraIdUtils() {
         // This constructor left intentionally blank.
     }
 }

@@ -20,6 +20,12 @@ package org.fcrepo.kernel.impl.operations;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
 
+
+/**
+ * Abstract builder for interacting with an Rdf Source Operation Builder
+ * @author bseeger
+ */
+
 public abstract class AbstractRdfSourceOperationBuilder implements RdfSourceOperationBuilder {
 
     /**

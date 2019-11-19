@@ -23,7 +23,6 @@ import org.fcrepo.kernel.api.operations.RdfSourceOperation;
  * Builder for operations to update rdf sources
  *
  * @author bbpennel
- * @author bseeger
  * @since 11/2019
  */
 

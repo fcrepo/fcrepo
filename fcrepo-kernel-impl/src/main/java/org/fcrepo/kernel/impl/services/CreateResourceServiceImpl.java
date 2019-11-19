@@ -21,7 +21,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CREATED;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
-import static org.fcrepo.kernel.impl.services.functions.FedoraUtils.addToIdentifier;
+import static org.fcrepo.kernel.impl.services.functions.FedoraIdUtils.addToIdentifier;
 
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Triple;
@@ -203,8 +203,8 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         } else {
             try {
                 // TODO: object existence check could be from an index. Review later.
-                pSession.getHeaders(fedoraId + "/" + slug, null);
-                // Slug exists, so we need to generate a new path.
+                pSession.getHeaders(addToIdentifier(fedoraId, slug), null);
+                // Resource with slug name exists already, so we need to generate a new path.
                 finalSlug = this.minter.get();
             } catch (PersistentItemNotFoundException exc) {
                 // Doesn't already exist so the slug is fine.
