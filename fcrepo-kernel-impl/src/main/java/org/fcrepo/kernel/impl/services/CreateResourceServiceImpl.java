@@ -82,7 +82,10 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                         final InputStream requestBody, final ExternalContent externalContent) {
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
         checkAclLinkHeader(linkHeaders);
-        checkParent(pSession, (isContained ? fedoraId : findExistingAncestor(fedoraId)));
+        // If we are PUTting then fedoraId is the path, we need to locate a containment parent if exists.
+        // Otherwise we use fedoraId and create a resource contained in it.
+        final String parentId = isContained ? fedoraId : findExistingAncestor(fedoraId);
+        checkParent(pSession, parentId);
 
         final String fullPath = isContained ? getResourcePath(pSession, fedoraId, slug) : fedoraId;
 
@@ -111,7 +114,10 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                         final List<String> linkHeaders, final Model model) {
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
         checkAclLinkHeader(linkHeaders);
-        checkParent(pSession, (isContained ? fedoraId : findExistingAncestor(fedoraId)));
+        // If we are PUTting then fedoraId is the path, we need to locate a containment parent if exists.
+        // Otherwise we use fedoraId and create a resource contained in it.
+        final String parentId = isContained ? fedoraId : findExistingAncestor(fedoraId);
+        checkParent(pSession, parentId);
         final String fullPath = isContained ? getResourcePath(pSession, fedoraId, slug) : fedoraId;
 
         final String interactionModel = determineInteractionModel(getTypes(linkHeaders), true,

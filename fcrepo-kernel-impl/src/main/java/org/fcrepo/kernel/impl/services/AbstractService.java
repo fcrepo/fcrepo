@@ -24,17 +24,27 @@ import static org.apache.jena.rdf.model.ResourceFactory.createStatement;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
-import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.api.RdfLexicon.DEFAULT_INTERACTION_MODEL;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS_FULL;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_ACCESS_TO;
-import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_ACCESS_TO_PROPERTY;
 import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_ACCESS_TO_CLASS;
+import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_ACCESS_TO_PROPERTY;
+import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
@@ -42,10 +52,10 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.rdf.model.StmtIterator;
-import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.ACLAuthorizationConstraintViolationException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
@@ -54,15 +64,6 @@ import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 
-import java.io.File;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.regex.Pattern;
 import org.slf4j.Logger;
 
 public class AbstractService {
@@ -104,15 +105,15 @@ public class AbstractService {
     }
 
     /**
-     * Find the closest ancestor.
-     * @param path The path to check
+     * Find the closest ancestor using a Fedora ID.
+     * @param fedoraId The fedora ID to check
      * @return The ancestor ID or null if root
      */
-    protected String findExistingAncestor(final String path) {
+    protected String findExistingAncestor(final String fedoraId) {
         // Remove the ID prefix as it can include a /
-        final String removePrefix = path.substring(FEDORA_ID_PREFIX.length());
-        if (removePrefix.contains(File.separator)) {
-            return FEDORA_ID_PREFIX + removePrefix.substring(0, removePrefix.lastIndexOf(File.separator));
+        final String removePrefix = fedoraId.substring(FEDORA_ID_PREFIX.length());
+        if (removePrefix.contains("/")) {
+            return FEDORA_ID_PREFIX + removePrefix.substring(0, removePrefix.lastIndexOf("/"));
         }
         return null;
     }
