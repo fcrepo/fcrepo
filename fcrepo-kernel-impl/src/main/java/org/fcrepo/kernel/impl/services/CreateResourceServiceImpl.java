@@ -52,6 +52,7 @@ import java.net.URI;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -85,8 +86,8 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
         final String fullPath = isContained ? getResourcePath(pSession, fedoraId, slug) : fedoraId;
 
-        final Collection<URI> uriDigests = (digest == null ?
-                digest.stream().map(URI::create).collect(Collectors.toCollection(HashSet::new)) : new HashSet<>());
+        final Collection<URI> uriDigests = (digest == null ? Collections.emptySet() :
+                digest.stream().map(URI::create).collect(Collectors.toCollection(HashSet::new)));
         final NonRdfSourceOperationBuilder builder;
         if (externalContent == null) {
             builder = nonRdfSourceOperationFactory.createInternalBinaryBuilder(fullPath, requestBody);

@@ -59,7 +59,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.ArrayList;
-import java.util.function.Predicate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -124,7 +123,7 @@ public class AbstractService {
      * @throws RequestWithAclLinkHeaderException If we provide an rel="acl" link header.
      */
     protected void checkAclLinkHeader(final List<String> links) throws RequestWithAclLinkHeaderException {
-        final Predicate matcher = Pattern.compile("rel=[\"']?acl[\"']?").asPredicate();
+        final var matcher = Pattern.compile("rel=[\"']?acl[\"']?").asPredicate();
         if (links != null && links.stream().anyMatch(matcher)) {
             throw new RequestWithAclLinkHeaderException(
                     "Unable to handle request with the specified LDP-RS as the ACL.");

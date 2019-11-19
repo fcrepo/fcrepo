@@ -564,7 +564,6 @@ public class FedoraLdp extends ContentExposingResource {
             throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException {
 
         final List<String> links = unpackLinks(rawLinks);
-        final Collection<String> checksums = parseDigestHeader(digest);
 
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
             handleRequestDisallowedOnMemento();
@@ -583,12 +582,12 @@ public class FedoraLdp extends ContentExposingResource {
 
         if (isBinary(interactionModel, requestContentType.toString(), requestContentType != null,
                 extContent != null)) {
+            final Collection<String> checksums = parseDigestHeader(digest);
             createResourceService.perform(transaction.getId(), fedoraId, slug, true, contentType, links, checksums,
                     requestBodyStream, extContent);
         } else {
             final Model model = httpRdfService.bodyToInternalModel(externalPath(), requestBodyStream,
                     requestContentType);
-            // TODO: Do translation services.
             createResourceService.perform(transaction.getId(), fedoraId, slug, true, links,
                     model);
         }
