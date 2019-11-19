@@ -163,7 +163,8 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
      * @param pSession a persistence session.
      * @param fedoraId Id of parent or null if root.
      */
-    private void checkParent(final PersistentStorageSession pSession, final String fedoraId) {
+    private void checkParent(final PersistentStorageSession pSession, final String fedoraId)
+        throws RepositoryRuntimeException {
 
         if (fedoraId != null) {
             final ResourceHeaders parent;
@@ -173,6 +174,9 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                 parent = pSession.getHeaders(fedoraId, null);
             } catch (PersistentItemNotFoundException exc) {
                 throw new ItemNotFoundException(String.format("Item %s was not found", fedoraId), exc);
+            } catch (PersistentStorageException exc) {
+                throw new RepositoryRuntimeException(String.format("Failed to find storage headers for %s", fedoraId),
+                    exc);
             }
 
             final boolean isParentBinary = parent.getTypes().stream().anyMatch(t -> t.equalsIgnoreCase(NON_RDF_SOURCE.toString()));
@@ -195,7 +199,8 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
      * @param slug a provided slug or null
      * @return the new identifier.
      */
-    private String getResourcePath(final PersistentStorageSession pSession, final String fedoraId, final String slug) {
+    private String getResourcePath(final PersistentStorageSession pSession, final String fedoraId, final String slug)
+        throws RepositoryRuntimeException {
 
         String finalSlug;
         if (slug == null) {
@@ -209,6 +214,9 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
             } catch (PersistentItemNotFoundException exc) {
                 // Doesn't already exist so the slug is fine.
                 finalSlug = slug;
+            } catch (PersistentStorageException exc) {
+                throw new RepositoryRuntimeException(String.format("Failed to find storage headers for %s", fedoraId),
+                    exc);
             }
         }
         return addToIdentifier(fedoraId, finalSlug);
