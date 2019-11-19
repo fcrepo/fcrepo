@@ -23,7 +23,6 @@ import java.time.Instant;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
-import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
 /**
@@ -57,10 +56,10 @@ public interface PersistentStorageSession {
      * @param version instant identifying the version of the resource to read from.
      *      If null, then the head version is used.
      * @return header information
-     * @throws PersistentItemNotFoundException If the identifier doesn't exist.
+     * @throws PersistentStorageException  Either a PersistentItemNotFoundException or PersistentSessionClosedException
      */
     public ResourceHeaders getHeaders(final String identifier, final Instant version)
-            throws PersistentItemNotFoundException;
+            throws PersistentStorageException;
 
     /**
      * Get the client managed triples for the provided resource.
@@ -69,10 +68,10 @@ public interface PersistentStorageSession {
      * @param version instant identifying the version of the resource to read from. If null, then the head version is
      *        used.
      * @return the triples as an RdfStream.
-     * @throws PersistentItemNotFoundException If the identifier doesn't exist.
+     * @throws PersistentStorageException  Either a PersistentItemNotFoundException or PersistentSessionClosedException
      */
     public RdfStream getTriples(final String identifier, final Instant version)
-            throws PersistentItemNotFoundException;
+            throws PersistentStorageException;
 
     /**
      * Get the server managed properties for this provided resource.
@@ -81,10 +80,10 @@ public interface PersistentStorageSession {
      * @param version instant identifying the version of the resource to read from. If null, then the head version is
      *        used.
      * @return the server managed properties as an RdfStream.
-     * @throws PersistentItemNotFoundException If the identifier doesn't exist.
+     * @throws PersistentStorageException  Either a PersistentItemNotFoundException or PersistentSessionClosedException
      */
     public RdfStream getManagedProperties(final String identifier, final Instant version)
-            throws PersistentItemNotFoundException;
+            throws PersistentStorageException;
 
     /**
      * Get the persisted binary content for the provided resource.
@@ -93,14 +92,13 @@ public interface PersistentStorageSession {
      * @param version instant identifying the version of the resource to read from. If null, then the head version is
      *        used.
      * @return the binary content.
-     * @throws PersistentItemNotFoundException If the identifier doesn't exist.
+     * @throws PersistentStorageException  Either a PersistentItemNotFoundException or PersistentSessionClosedException
      */
     public InputStream getBinaryContent(final String identifier, final Instant version)
-            throws PersistentItemNotFoundException;
+            throws PersistentStorageException;
 
     /**
      * Commits any changes in the current sesssion to persistent storage.
-     *
      * @throws PersistentStorageException Error during commit.
      */
     public void commit() throws PersistentStorageException;

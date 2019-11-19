@@ -17,8 +17,8 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static org.fcrepo.persistence.ocfl.api.CommitOption.NEW_VERSION;
-import static org.fcrepo.persistence.ocfl.api.CommitOption.MUTABLE_HEAD;
+import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
+import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -110,7 +110,7 @@ public class DefaultOCFLObjectSessionTest {
     @Test
     public void writeNewFile_ToMHead_NewObject() throws Exception {
         session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
-        session.commit(MUTABLE_HEAD);
+        session.commit(UNVERSIONED);
 
         assertMutableHeadPopulated(OBJ_ID);
         assertFileInHeadVersion(OBJ_ID, FILE1_SUBPATH, FILE_CONTENT1);
@@ -152,7 +152,7 @@ public class DefaultOCFLObjectSessionTest {
         });
 
         session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT2));
-        final String versionId = session.commit(MUTABLE_HEAD);
+        final String versionId = session.commit(UNVERSIONED);
 
         assertEquals("Multiple commits to head should stay on version", "v2", versionId);
         assertMutableHeadPopulated(OBJ_ID);
@@ -163,7 +163,7 @@ public class DefaultOCFLObjectSessionTest {
     public void writeToMHeadThenNewVersion() throws Exception {
         // Write first file to mutable head
         session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
-        session.commit(MUTABLE_HEAD);
+        session.commit(UNVERSIONED);
 
         assertMutableHeadPopulated(OBJ_ID);
 
@@ -214,7 +214,7 @@ public class DefaultOCFLObjectSessionTest {
     @Test
     public void read_FromMHead() throws Exception {
         session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
-        session.commit(MUTABLE_HEAD);
+        session.commit(UNVERSIONED);
 
         final var session2 = makeNewSession();
         assertStreamMatches(FILE_CONTENT1, session2.read(FILE1_SUBPATH));
@@ -244,7 +244,7 @@ public class DefaultOCFLObjectSessionTest {
     @Test
     public void read_FromStagedAndMHead() throws Exception {
         session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
-        session.commit(MUTABLE_HEAD);
+        session.commit(UNVERSIONED);
 
         final var session2 = makeNewSession();
         session2.write(FILE1_SUBPATH, fileStream(FILE_CONTENT2));
@@ -346,11 +346,11 @@ public class DefaultOCFLObjectSessionTest {
     @Test
     public void delete_FromMHead() throws Exception {
         session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
-        session.commit(MUTABLE_HEAD);
+        session.commit(UNVERSIONED);
 
         final var session2 = makeNewSession();
         session2.delete(FILE1_SUBPATH);
-        session2.commit(MUTABLE_HEAD);
+        session2.commit(UNVERSIONED);
 
         assertFileNotInHeadVersion(OBJ_ID, FILE1_SUBPATH);
     }
@@ -385,12 +385,12 @@ public class DefaultOCFLObjectSessionTest {
     @Test
     public void delete_FromStagedAndMHead() throws Exception {
         session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
-        session.commit(MUTABLE_HEAD);
+        session.commit(UNVERSIONED);
 
         final var session2 = makeNewSession();
         session2.write(FILE1_SUBPATH, fileStream(FILE_CONTENT2));
         session2.delete(FILE1_SUBPATH);
-        session2.commit(MUTABLE_HEAD);
+        session2.commit(UNVERSIONED);
 
         assertFileNotInHeadVersion(OBJ_ID, FILE1_SUBPATH);
         assertFileNotInVersion(OBJ_ID, "v1", FILE1_SUBPATH);
@@ -557,10 +557,10 @@ public class DefaultOCFLObjectSessionTest {
     @Test
     public void commit_MHead_NoChanges() throws Exception {
         session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
-        session.commit(MUTABLE_HEAD);
+        session.commit(UNVERSIONED);
 
         final var session2 = makeNewSession();
-        session2.commit(MUTABLE_HEAD);
+        session2.commit(UNVERSIONED);
 
         final ObjectDetails objDetails = ocflRepository.describeObject(OBJ_ID);
         final var versionMap = objDetails.getVersionMap();

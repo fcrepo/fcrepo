@@ -20,15 +20,14 @@ package org.fcrepo.persistence.ocfl.impl;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.DEFAULT_RDF_EXTENSION;
-import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.INTERNAL_FEDORA_DIRECTORY;
+import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.getInternalFedoraDirectory;
+import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.getRDFFileExtension;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Stream;
@@ -109,7 +108,7 @@ public class NonRdfSourcePersisterTest {
         assertEquals(inputContent, IOUtils.toString(userContent, StandardCharsets.UTF_8));
 
         //verify server triples
-        verify(session).write(eq(INTERNAL_FEDORA_DIRECTORY + File.separator + "child" + DEFAULT_RDF_EXTENSION), serverTriplesIsCaptor.capture());
+        verify(session).write(eq(getInternalFedoraDirectory() + "child" + getRDFFileExtension()), serverTriplesIsCaptor.capture());
         final InputStream serverTriplesIs = serverTriplesIsCaptor.getValue();
 
         final Model serverModel = createDefaultModel();

@@ -38,6 +38,7 @@ import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
 
 /**
@@ -143,6 +144,8 @@ public class ResourceFactoryImpl implements ResourceFactory {
             throw new RepositoryRuntimeException("Unable to construct object", e);
         } catch (final PersistentItemNotFoundException e) {
             throw new PathNotFoundException(e);
+        } catch (PersistentStorageException e) {
+            throw new RepositoryRuntimeException(e);
         }
     }
 
