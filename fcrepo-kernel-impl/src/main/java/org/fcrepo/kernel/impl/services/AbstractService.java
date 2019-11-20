@@ -65,6 +65,14 @@ import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 
 import org.slf4j.Logger;
 
+
+/**
+ * Abstract service for interacting with a kernel service
+ *
+ * @author whikloj
+ * @author bseeger
+ */
+
 public abstract class AbstractService {
 
     private static final Logger log = getLogger(ReplacePropertiesServiceImpl.class);
