@@ -17,32 +17,34 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import static org.junit.Assert.assertEquals;
+
 import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
-import org.fcrepo.kernel.api.operations.ResourceOperationBuilder;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.UUID;
+
+@RunWith(MockitoJUnitRunner.Silent.class)
+public class RdfSourceOperationFactoryImplTest {
+
+    private RdfSourceOperationFactory factory;
+    private String randomId;
 
 
-/**
- * Implementation of a factory for operations on rdf sources
- *
- * @author bbpennel
- */
-public class RdfSourceOperationFactoryImpl implements RdfSourceOperationFactory {
-
-    @Override
-    public RdfSourceOperationBuilder createBuilder(final String rescId, final String interactionModel) {
-        return new CreateRdfSourceOperationBuilder(rescId, interactionModel);
+    @Before
+    public void setUp() {
+        factory = new RdfSourceOperationFactoryImpl();
+        randomId = UUID.randomUUID().toString();
     }
 
-    @Override
-    public RdfSourceOperationBuilder updateBuilder(final String rescId) {
-        return new UpdateRdfSourceOperationBuilder(rescId);
+    @Test
+    public void testCreateBuilder() {
+        final String model = "some-interaction-model";
+        final RdfSourceOperationBuilder builder = factory.createBuilder(randomId, model);
+        assertEquals(CreateRdfSourceOperationBuilder.class, builder.getClass());
     }
-
-    @Override
-    public ResourceOperationBuilder sparqlUpdateBuilder(final String rescId, final String updateQuery) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
 }

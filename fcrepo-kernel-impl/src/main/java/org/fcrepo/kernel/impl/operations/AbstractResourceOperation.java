@@ -28,12 +28,24 @@ import org.fcrepo.kernel.api.operations.ResourceOperation;
  */
 public abstract class AbstractResourceOperation implements ResourceOperation {
 
+    /**
+     * The internal Fedora ID.
+     */
     private final String rescId;
 
+    /**
+     * The server managed triples.
+     */
     private RdfStream serverManagedProperties;
 
-    protected AbstractResourceOperation(final String rescId) {
+    /**
+     * The interaction model, null if not used (ie. an update operation)
+     */
+    private String interactionModel;
+
+    protected AbstractResourceOperation(final String rescId, final String interactionModel) {
         this.rescId = rescId;
+        this.interactionModel = interactionModel;
     }
 
     @Override
@@ -54,4 +66,5 @@ public abstract class AbstractResourceOperation implements ResourceOperation {
     public void setServerManagedProperties(final RdfStream serverManagedProperties) {
         this.serverManagedProperties = serverManagedProperties;
     }
+
 }

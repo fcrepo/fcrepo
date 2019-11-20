@@ -18,25 +18,26 @@
 package org.fcrepo.kernel.api.services;
 
 import org.apache.jena.rdf.model.Model;
-import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
-import org.fcrepo.kernel.api.models.FedoraResource;
 
 /**
  * @author peichman
  * @since 6.0.0
  */
 public interface ReplacePropertiesService {
+
   /**
    * Replace the properties of this object with the properties from the given
    * model
    *
-   * @param fedoraResource the Fedora resource to update
-   * @param inputModel the input model
-   * @param originalTriples the original triples
+   * @param txId the Transaction Id
+   * @param fedoraId the internal Id of the fedora resource to update
+   * @param contentType the original triples
+   * @param inputModel the model built from the body of the request
    * @throws MalformedRdfException if malformed rdf exception occurred
    */
-  void replaceProperties(final FedoraResource fedoraResource,
-                         final Model inputModel,
-                         final RdfStream originalTriples) throws MalformedRdfException;
+  void perform (final String txId,
+                final String fedoraId,
+                final String contentType,
+                final Model inputModel) throws MalformedRdfException;
 }

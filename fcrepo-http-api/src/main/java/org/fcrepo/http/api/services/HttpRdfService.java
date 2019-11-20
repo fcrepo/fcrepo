@@ -133,16 +133,18 @@ public class HttpRdfService {
      * @throws MalformedRdfException in case rdf json cannot be parsed
      * @throws BadRequestException in the case where the RDF syntax is bad
      */
-    public static Model parseBodyAsModel(final InputStream requestBodyStream,
+    protected static Model parseBodyAsModel(final InputStream requestBodyStream,
                                          final MediaType contentType,
                                          final String extResourceId) throws BadRequestException,
                                          RepositoryRuntimeException {
 
-        final Lang format = contentTypeToLang(contentType.toString());
+        if (requestBodyStream == null) {
+            return null;
+        }
 
-        final Model inputModel;
+        final Lang format = contentTypeToLang(contentType.toString());
         try {
-            inputModel = createDefaultModel();
+            final Model inputModel = createDefaultModel();
             inputModel.read(requestBodyStream, extResourceId, format.getName().toUpperCase());
             return inputModel;
         } catch (final RiotException e) {

@@ -17,35 +17,28 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
-import java.io.InputStream;
-
-import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
-import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
-
 
 /**
  * Builder for operations to update rdf sources
  *
  * @author bbpennel
+ * @since 11/2019
  */
-public class UpdateRdfSourceOperationBuilder implements RdfSourceOperationBuilder {
+
+public class UpdateRdfSourceOperationBuilder extends AbstractRdfSourceOperationBuilder {
+
+    /**
+     * Constructor.
+     *
+     * @param resourceId the internal identifier.
+     */
+    public UpdateRdfSourceOperationBuilder(final String resourceId) {
+        super(resourceId, null);
+    }
 
     @Override
     public RdfSourceOperation build() {
-        // TODO Perform triples validation, relaxed SMTs, etc
-        return null;
-    }
-
-    @Override
-    public RdfSourceOperationBuilder triples(final RdfStream triples) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public RdfSourceOperationBuilder triples(final InputStream contentStream, final String mimetype) {
-        // TODO Auto-generated method stub
-        return null;
+        return new UpdateRdfSourceOperation(this.resourceId, this.tripleStream);
     }
 }

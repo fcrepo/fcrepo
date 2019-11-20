@@ -17,25 +17,41 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
-
 import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.operations.ResourceOperationType;
+import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
 
 
 /**
- * Operation to create an RDF source.
- *
- * @author bbpennel
+ * Abstract builder for interacting with an Rdf Source Operation Builder
+ * @author bseeger
  */
-public class CreateRdfSourceOperation extends AbstractRdfSourceOperation {
 
-    protected CreateRdfSourceOperation(final String rescId, final String interactionModel, final RdfStream triples) {
-        super(rescId, interactionModel, triples);
+public abstract class AbstractRdfSourceOperationBuilder implements RdfSourceOperationBuilder {
+
+    /**
+     * Holds the stream of user's triples.
+     */
+    protected RdfStream tripleStream;
+
+    /**
+     * String of the resource ID.
+     */
+    protected final String resourceId;
+
+    /**
+     * The interaction model of this resource, null in case of update.
+     */
+    protected final String interactionModel;
+
+    protected AbstractRdfSourceOperationBuilder(final String rescId, final String model) {
+        resourceId = rescId;
+        interactionModel = model;
     }
 
     @Override
-    public ResourceOperationType getType() {
-        return CREATE;
+    public RdfSourceOperationBuilder triples(final RdfStream triples) {
+        this.tripleStream = triples;
+        return this;
     }
+
 }

@@ -922,7 +922,8 @@ public class FedoraLdpTest {
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(replacePropertiesService).replaceProperties(eq(mockContainer), any(Model.class), any(RdfStream.class));
+        verify(replacePropertiesService).perform(eq(mockTransaction.getId()), eq(mockContainer.getId()),
+                any(String.class),any(Model.class));
     }
 
     @Test
@@ -958,7 +959,8 @@ public class FedoraLdpTest {
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
 
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
-        verify(replacePropertiesService).replaceProperties(eq(mockObject), any(Model.class), any(RdfStream.class));
+        verify(replacePropertiesService).perform(eq(mockTransaction.getId()), eq(mockObject.getId()),
+                any(String.class), any(Model.class));
     }
 
     @Test(expected = ClientErrorException.class)
@@ -1062,7 +1064,8 @@ public class FedoraLdpTest {
         final Response actual = testObj.createObject(null, NTRIPLES_TYPE, "b",
                 toInputStream("_:a <info:b> _:c .", UTF_8), null, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(replacePropertiesService).replaceProperties(eq(mockContainer), any(Model.class), any(RdfStream.class));
+        verify(replacePropertiesService).perform(eq(mockTransaction.getId()), eq(mockContainer.getId()),
+                any(String.class), any(Model.class));
     }
 
 
@@ -1224,7 +1227,7 @@ public class FedoraLdpTest {
     @Test
     public void testGetSimpleContentType() {
         final MediaType mediaType = new MediaType("text", "plain", ImmutableMap.of("charset", "UTF-8"));
-        final MediaType sanitizedMediaType = getSimpleContentType(mediaType);
+        final MediaType sanitizedMediaType = MediaType.valueOf(getSimpleContentType(mediaType));
         assertEquals("text/plain", sanitizedMediaType.toString());
     }
 

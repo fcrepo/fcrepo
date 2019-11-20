@@ -30,8 +30,8 @@ public abstract class AbstractRdfSourceOperation extends AbstractResourceOperati
 
     protected RdfStream triples;
 
-    protected AbstractRdfSourceOperation(final String rescId, final RdfStream triples) {
-        super(rescId);
+    protected AbstractRdfSourceOperation(final String rescId, final String interactionModel, final RdfStream triples) {
+        super(rescId, interactionModel);
         this.triples = triples;
     }
 

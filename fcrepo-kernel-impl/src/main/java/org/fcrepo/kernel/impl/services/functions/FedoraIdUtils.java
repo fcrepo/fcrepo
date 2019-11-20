@@ -15,19 +15,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api;
+package org.fcrepo.kernel.impl.services.functions;
 
 /**
- * @author bseeger
+ * This class provides some utilities to help with working with Fedora Ids
+ * @author whikloj
+ * @since 11/2019
  */
 
-public final class ExternalContent {
+public final class FedoraIdUtils {
 
-    public static final String PROXY = "proxy";
+    /**
+     * Add a subpath to an existing identifier.
+     *
+     * @param oldId the old identifier
+     * @param newIdPart the new identifier part
+     * @return A combination of old and new.
+     */
+    public static String addToIdentifier(final String oldId, final String newIdPart) {
+        return oldId + (oldId.endsWith("/") ? "" : "/") + newIdPart;
+    }
 
-    public static final String REDIRECT = "redirect";
-
-    public static final String COPY = "copy";
-
-    private ExternalContent() { }
+    /**
+     * Private Constructor.
+     */
+    private FedoraIdUtils() {
+        // This constructor left intentionally blank.
+    }
 }

@@ -17,11 +17,11 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
-import java.io.InputStream;
-import java.net.URI;
-
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
+
+import java.io.InputStream;
+import java.net.URI;
 
 
 /**
@@ -45,14 +45,12 @@ public class NonRdfSourceOperationFactoryImpl implements NonRdfSourceOperationFa
 
     @Override
     public NonRdfSourceOperationBuilder createExternalBinaryBuilder(final String rescId, final String handling, final URI contentUri) {
-        // TODO Auto-generated method stub
-        return null;
+        return new CreateNonRdfSourceOperationBuilder(rescId, handling, contentUri);
     }
 
     @Override
     public NonRdfSourceOperationBuilder createInternalBinaryBuilder(final String rescId, final InputStream contentStream) {
-        // TODO Auto-generated method stub
-        return null;
+        return new CreateNonRdfSourceOperationBuilder(rescId, contentStream);
     }
 
 }
