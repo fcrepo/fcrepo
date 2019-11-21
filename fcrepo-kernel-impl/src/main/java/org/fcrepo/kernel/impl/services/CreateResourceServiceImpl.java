@@ -27,11 +27,11 @@ import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.models.ExternalContent;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
@@ -104,7 +104,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
         try {
             pSession.persist(createOp);
-        } catch (PersistentStorageException exc) {
+        } catch (final PersistentStorageException exc) {
             throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
         }
     }
@@ -134,7 +134,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
         try {
             pSession.persist(createOp);
-        } catch (PersistentStorageException exc) {
+        } catch (final PersistentStorageException exc) {
             throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
         }
 
@@ -172,9 +172,9 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                 // Make sure the parent exists.
                 // TODO: object existence check could be from an index. Review later.
                 parent = pSession.getHeaders(fedoraId, null);
-            } catch (PersistentItemNotFoundException exc) {
+            } catch (final PersistentItemNotFoundException exc) {
                 throw new ItemNotFoundException(String.format("Item %s was not found", fedoraId), exc);
-            } catch (PersistentStorageException exc) {
+            } catch (final PersistentStorageException exc) {
                 throw new RepositoryRuntimeException(String.format("Failed to find storage headers for %s", fedoraId),
                     exc);
             }
@@ -211,10 +211,10 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                 pSession.getHeaders(addToIdentifier(fedoraId, slug), null);
                 // Resource with slug name exists already, so we need to generate a new path.
                 finalSlug = this.minter.get();
-            } catch (PersistentItemNotFoundException exc) {
+            } catch (final PersistentItemNotFoundException exc) {
                 // Doesn't already exist so the slug is fine.
                 finalSlug = slug;
-            } catch (PersistentStorageException exc) {
+            } catch (final PersistentStorageException exc) {
                 throw new RepositoryRuntimeException(String.format("Failed to find storage headers for %s", fedoraId),
                     exc);
             }

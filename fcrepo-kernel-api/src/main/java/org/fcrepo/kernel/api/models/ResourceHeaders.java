@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.persistence.api;
+package org.fcrepo.kernel.api.models;
 
 import java.net.URI;
 import java.time.Instant;

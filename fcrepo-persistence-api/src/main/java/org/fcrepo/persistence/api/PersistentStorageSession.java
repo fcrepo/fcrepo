@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.time.Instant;
 
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 

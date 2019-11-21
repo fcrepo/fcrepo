@@ -165,12 +165,19 @@ public class OCFLPersistentStorageUtils {
             RDFDataMgr.read(model, is, DEFAULT_RDF_FORMAT.getLang());
             final String topic = resolveTopic(identifier);
             return DefaultRdfStream.fromModel(createURI(topic), model);
-        } catch (IOException ex) {
+        } catch (final IOException ex) {
             throw new PersistentStorageException(format("unable to read %s ;  version = %s", identifier, version), ex);
         }
     }
 
-    private static  String resolveVersionId(final OCFLObjectSession objSession, final Instant version) {
+    /**
+     * Resolve an instant to a version
+     *
+     * @param objSession session
+     * @param version version time
+     * @return name of version
+     */
+    public static String resolveVersionId(final OCFLObjectSession objSession, final Instant version) {
         //TODO Implement resolution of a version id (OCFL-speak) from an instant (memento-speak)
        return null;
     }

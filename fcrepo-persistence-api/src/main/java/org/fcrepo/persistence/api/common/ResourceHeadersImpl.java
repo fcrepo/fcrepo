@@ -15,14 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.persistence.common;
+package org.fcrepo.persistence.api.common;
 
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 
-import org.fcrepo.persistence.api.ResourceHeaders;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
 
 
 /**

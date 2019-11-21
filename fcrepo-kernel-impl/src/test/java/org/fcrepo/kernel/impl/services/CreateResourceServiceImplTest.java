@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import static java.util.Collections.singletonList;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DEFAULT_INTERACTION_MODEL;
@@ -111,9 +112,9 @@ public class CreateResourceServiceImplTest {
 
     private static final String TX_ID = "tx1234";
 
-    private static final Collection<String> NON_RDF_SOURCE_TYPES = Collections.singleton(NON_RDF_SOURCE.toString());
+    private static final List<String> NON_RDF_SOURCE_TYPES = singletonList(NON_RDF_SOURCE.toString());
 
-    private static final Collection<String> BASIC_CONTAINER_TYPES = Collections.singleton(BASIC_CONTAINER.toString());
+    private static final List<String> BASIC_CONTAINER_TYPES = singletonList(BASIC_CONTAINER.toString());
 
     private final Model model = ModelFactory.createDefaultModel();
 
