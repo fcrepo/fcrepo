@@ -1,0 +1,22 @@
+version: '2'
+services:
+  fcrepo:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - fcrepo.modeshape.configuration=classpath:config/jdbc-postgresql/repository.json
+      - fcrepo.postgresql.host=postgres
+      - fcrepo.postgresql.username=fcrepo
+      - fcrepo.postgresql.password=AuTiBElMAn
+    depends_on:
+      - postgres
+
+  postgres:
+    image: "postgres:11"
+    environment:
+      - POSTGRES_USER=fcrepo
+      - POSTGRES_PASSWORD=AuTiBElMAn
+    ports:
+      - 5432:5432
+

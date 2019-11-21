@@ -104,4 +104,29 @@ options to the JaCoCo code coverage plugin:
 $ MAVEN_OPTS="-Xmx1024m" mvn -Djacoco.agent.it.arg="-XX:MaxMetaspaceSize=1024m -Xmx1024m" -Djacoco.agent.ut.arg="-XX:MaxMetaspaceSize=1024m -Xmx1024m"  clean install
 ```
 
+## Building and running Fedora in Docker
 
+For this method, you need Docker to be installed on your system. 
+Then, follow these steps:
+
+    mvn install
+    docker-compose build
+    docker-compose up
+
+Now there should be a _PostgreSQL_ database running on port `5432` and 
+the Fedora repository on port `8080`. Ports can be changed in
+`docker-compose.yml`. If needed, you can access the database on 
+`localhost` with user `fcrepo` to database `fcrepo` and 
+password `AuTiBElMAn`.
+
+Now you can go to http://localhost:8080/rest/ and log in as either:
+
+    admin / admin
+
+as a user with write access, or as:
+
+    user / user
+    
+as a user with read-only access. Users and passwords can be modified in
+`fcrepo-configs/docker/tomcat-users.xml`, followed by another 
+`docker-compose build`.   
