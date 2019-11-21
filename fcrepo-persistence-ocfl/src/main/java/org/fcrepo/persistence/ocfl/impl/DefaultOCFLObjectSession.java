@@ -20,6 +20,7 @@ package org.fcrepo.persistence.ocfl.impl;
 import static edu.wisc.library.ocfl.api.OcflOption.OVERWRITE;
 import static edu.wisc.library.ocfl.api.OcflOption.MOVE_SOURCE;
 import static java.lang.System.getProperty;
+import static java.util.Collections.sort;
 import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
 import static java.lang.String.format;
 import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
@@ -31,10 +32,14 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
+import edu.wisc.library.ocfl.api.model.VersionDetails;
 import org.apache.commons.io.FileUtils;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
@@ -391,6 +396,35 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         sessionClosed = true;
 
         cleanupStaging();
+    }
+
+    @Override
+    public List<VersionDetails> listVersions() throws PersistentStorageException {
+        assertSessionOpen();
+        //get a list of all versions in the object.
+        final List<VersionDetails> versionList = this.ocflRepository.describeObject(this.objectIdentifier)
+                                                                    .getVersionMap().values().stream()
+                                                                    // TODO uncomment when VersionDetails.isMutable()
+                                                                    // is available
+                                                                    //.filter(v -> !v.isMutable())
+                                                                    .collect(Collectors.toList());
+        //TODO remove following four lines once VersionDetails.isMutable() is available
+        //remove the last element in the list if it is a staged (ie not immutable) change.
+        if(this.ocflRepository.hasStagedChanges(this.objectIdentifier)){
+            versionList.remove(versionList.size()-1);
+        }
+
+        sort(versionList, VERSION_COMPARATOR);
+        return versionList;
+    }
+
+    private static final VersionComparator VERSION_COMPARATOR = new VersionComparator();
+
+    private static class VersionComparator implements Comparator<VersionDetails> {
+        @Override
+        public int compare(final VersionDetails a, final VersionDetails b) {
+            return a.getCreated().compareTo(b.getCreated());
+        }
     }
 
     private boolean isStagingEmpty() {

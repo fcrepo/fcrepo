@@ -19,7 +19,9 @@
 package org.fcrepo.persistence.ocfl.api;
 
 import java.io.InputStream;
+import java.util.List;
 
+import edu.wisc.library.ocfl.api.model.VersionDetails;
 import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
@@ -103,5 +105,13 @@ public interface OCFLObjectSession {
      * @throws PersistentStorageException if unable to close the session.
      */
     void close() throws PersistentStorageException;
+
+
+    /**
+     * Return the list of versions associated with this OCFL Object in chronological order.
+     * @return The list of versions
+     * @throws PersistentStorageException
+     */
+    List<VersionDetails> listVersions() throws PersistentStorageException;
 
 }
