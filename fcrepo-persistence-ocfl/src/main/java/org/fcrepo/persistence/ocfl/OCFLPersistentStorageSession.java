@@ -213,8 +213,8 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     /**
      * Returns a list of immutable versions associated with the specified fedora identifier
-     * @param fedoraIdentifier
-     * @return
+     * @param fedoraIdentifier The fedora identifier
+     * @return The list of instants that map to the underlying versions
      * @throws PersistentStorageException
      */
      List<Instant> listVersions(final String fedoraIdentifier) throws PersistentStorageException {

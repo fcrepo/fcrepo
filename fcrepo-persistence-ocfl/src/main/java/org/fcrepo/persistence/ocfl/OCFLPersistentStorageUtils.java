@@ -17,7 +17,6 @@
  */
 package org.fcrepo.persistence.ocfl;
 
-import edu.wisc.library.ocfl.api.model.VersionDetails;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
@@ -202,7 +201,7 @@ public class OCFLPersistentStorageUtils {
     }
 
     /**
-     * A utility method that returns a list of {@link java.time.Instant} objects representing versions
+     * A utility method that returns a list of  {@link java.time.Instant} objects representing immutable versions
      * accessible from the OCFL Object represented by the session.
      *
      * @param objSession The OCFL object session
@@ -210,8 +209,7 @@ public class OCFLPersistentStorageUtils {
      * @throws PersistentStorageException
      */
     public static List<Instant> listVersions(final OCFLObjectSession objSession) throws PersistentStorageException {
-        final List<VersionDetails> versionList = objSession.listVersions();
-        return versionList.stream().map(versionDetails -> versionDetails.getCreated().toInstant())
+        return  objSession.listVersions().stream().map(versionDetails -> versionDetails.getCreated().toInstant())
                 .collect(Collectors.toList());
     }
 

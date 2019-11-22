@@ -20,7 +20,6 @@ package org.fcrepo.persistence.ocfl.impl;
 import static edu.wisc.library.ocfl.api.OcflOption.OVERWRITE;
 import static edu.wisc.library.ocfl.api.OcflOption.MOVE_SOURCE;
 import static java.lang.System.getProperty;
-import static java.util.Collections.sort;
 import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
 import static java.lang.String.format;
 import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
@@ -402,20 +401,11 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     public List<VersionDetails> listVersions() throws PersistentStorageException {
         assertSessionOpen();
         //get a list of all versions in the object.
-        final List<VersionDetails> versionList = this.ocflRepository.describeObject(this.objectIdentifier)
+        return this.ocflRepository.describeObject(this.objectIdentifier)
                                                                     .getVersionMap().values().stream()
-                                                                    // TODO uncomment when VersionDetails.isMutable()
-                                                                    // is available
-                                                                    //.filter(v -> !v.isMutable())
+                                                                    .filter(v -> !v.isMutable())
+                                                                    .sorted(VERSION_COMPARATOR)
                                                                     .collect(Collectors.toList());
-        //TODO remove following four lines once VersionDetails.isMutable() is available
-        //remove the last element in the list if it is a staged (ie not immutable) change.
-        if(this.ocflRepository.hasStagedChanges(this.objectIdentifier)){
-            versionList.remove(versionList.size()-1);
-        }
-
-        sort(versionList, VERSION_COMPARATOR);
-        return versionList;
     }
 
     private static final VersionComparator VERSION_COMPARATOR = new VersionComparator();

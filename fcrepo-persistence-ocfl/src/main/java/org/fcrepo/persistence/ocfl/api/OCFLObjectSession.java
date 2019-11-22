@@ -108,7 +108,7 @@ public interface OCFLObjectSession {
 
 
     /**
-     * Return the list of versions associated with this OCFL Object in chronological order.
+     * Return the list of immutable versions associated with this OCFL Object in chronological order.
      * @return The list of versions
      * @throws PersistentStorageException
      */
