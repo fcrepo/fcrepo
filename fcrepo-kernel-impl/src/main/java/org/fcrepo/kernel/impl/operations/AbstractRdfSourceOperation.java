@@ -17,8 +17,11 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import java.time.Instant;
+
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
+import org.fcrepo.kernel.api.operations.ResourceOperationType;
 
 
 /**
@@ -30,13 +33,46 @@ public abstract class AbstractRdfSourceOperation extends AbstractResourceOperati
 
     protected RdfStream triples;
 
-    protected AbstractRdfSourceOperation(final String rescId, final String interactionModel, final RdfStream triples) {
-        super(rescId, interactionModel);
+    protected String lastModifiedBy;
+
+    protected String createdBy;
+
+    protected Instant lastModifiedDate;
+
+    protected Instant createdDate;
+
+    protected AbstractRdfSourceOperation(final String rescId, final RdfStream triples) {
+        super(rescId);
         this.triples = triples;
     }
 
     @Override
     public RdfStream getTriples() {
         return triples;
+    }
+
+    @Override
+    public ResourceOperationType getType() {
+        return null;
+    }
+
+    @Override
+    public String getLastModifiedBy() {
+        return lastModifiedBy;
+    }
+
+    @Override
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    @Override
+    public Instant getLastModifiedDate() {
+        return lastModifiedDate;
+    }
+
+    @Override
+    public Instant getCreatedDate() {
+        return createdDate;
     }
 }

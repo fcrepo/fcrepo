@@ -17,45 +17,39 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CREATED;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_PAIR_TREE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 import static org.fcrepo.kernel.impl.services.functions.FedoraIdUtils.addToIdentifier;
 
-import org.apache.jena.datatypes.xsd.XSDDatatype;
-import org.apache.jena.graph.Triple;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+import javax.ws.rs.core.Link;
+
 import org.apache.jena.rdf.model.Model;
-import org.fcrepo.kernel.api.models.ExternalContent;
-import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.models.ExternalContent;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.services.CreateResourceService;
 import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
-import org.fcrepo.kernel.impl.operations.AbstractResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-
-import javax.inject.Inject;
-import javax.ws.rs.core.Link;
-
-import java.io.InputStream;
-import java.net.URI;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Create a RdfSource resource.
@@ -77,7 +71,8 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
     private UniqueValueSupplier minter;
 
     @Override
-    public void perform(final String txId, final String fedoraId, final String slug, final boolean isContained,
+    public void perform(final String txId, final String userPrincipal, final String fedoraId, final String slug,
+            final boolean isContained,
                         final String contentType, final List<String> linkHeaders, final Collection<String> digest,
                         final InputStream requestBody, final ExternalContent externalContent) {
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
@@ -98,9 +93,11 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
             builder = nonRdfSourceOperationFactory.createExternalBinaryBuilder(fullPath, externalContent.getHandling(),
                     URI.create(externalContent.getURL()));
         }
-        final ResourceOperation createOp = builder.contentDigests(uriDigests).mimeType(contentType).build();
-        // Set server managed is only on AbstractResourceOperation.
-        ((AbstractResourceOperation)createOp).setServerManagedProperties(getServerManagedStream(fullPath));
+        final ResourceOperation createOp = builder
+                .userPrincipal(userPrincipal)
+                .contentDigests(uriDigests)
+                .mimeType(contentType)
+                .build();
 
         try {
             pSession.persist(createOp);
@@ -110,8 +107,8 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
     }
 
     @Override
-    public void perform(final String txId, final String fedoraId, final String slug, final boolean isContained,
-                        final List<String> linkHeaders, final Model model) {
+    public void perform(final String txId, final String userPrincipal, final String fedoraId, final String slug,
+            final boolean isContained, final List<String> linkHeaders, final Model model) {
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
         checkAclLinkHeader(linkHeaders);
         // If we are PUTting then fedoraId is the path, we need to locate a containment parent if exists.
@@ -126,11 +123,9 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         final RdfStream stream = fromModel(model.getResource(fedoraId).asNode(), model);
 
         final ResourceOperation createOp = rdfSourceOperationFactory.createBuilder(fullPath, interactionModel)
-                    .triples(stream).build();
-
-        // Set server managed is only on AbstractResourceOperation.
-        // TODO: Consider moving .setServerManagedProperties to the ResourceOperation interface.
-        ((AbstractResourceOperation)createOp).setServerManagedProperties(getServerManagedStream(fullPath));
+                .triples(stream)
+                .relaxedProperties(model)
+                .build();
 
         try {
             pSession.persist(createOp);
@@ -138,23 +133,6 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
             throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
         }
 
-    }
-
-    @Override
-    protected void populateServerManagedTriples(final String fedoraId) {
-        super.populateServerManagedTriples(fedoraId);
-        final ZonedDateTime now = ZonedDateTime.now();
-        serverManagedProperties.add(new Triple(
-                asNode(fedoraId),
-                asNode(FEDORA_CREATED),
-                asLiteral(now.format(DateTimeFormatter.RFC_1123_DATE_TIME), XSDDatatype.XSDdateTime))
-        );
-        // TODO: get current user.
-        // this.serverManagedProperties.add(new Triple(
-        //      asNode(fedoraId),
-        //      asNode(FEDORA_CREATEDBY),
-        //      asLiteral(user))
-        // );
     }
 
     /**
@@ -179,13 +157,13 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                     exc);
             }
 
-            final boolean isParentBinary = parent.getTypes().stream().anyMatch(t -> t.equalsIgnoreCase(NON_RDF_SOURCE.toString()));
+            final boolean isParentBinary = NON_RDF_SOURCE.toString().equals(parent.getInteractionModel());
             if (isParentBinary) {
                 // Binary is not a container, can't have children.
                 throw new CannotCreateResourceException("NonRdfSource resources cannot contain other resources");
             }
             // TODO: Will this type still be needed?
-            final boolean isPairTree = parent.getTypes().stream().anyMatch(t -> t.equalsIgnoreCase(FEDORA_PAIRTREE));
+            final boolean isPairTree = FEDORA_PAIR_TREE.toString().equals(parent.getInteractionModel());
             if (isPairTree) {
                 throw new CannotCreateResourceException("Objects cannot be created under pairtree nodes");
             }

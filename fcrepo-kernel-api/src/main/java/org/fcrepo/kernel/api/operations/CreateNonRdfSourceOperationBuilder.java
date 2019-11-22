@@ -17,29 +17,37 @@
  */
 package org.fcrepo.kernel.api.operations;
 
+import java.net.URI;
+import java.util.Collection;
+
 /**
- * Operation for manipulating a resource
+ * Builder for operations to create non-rdf sources
  *
  * @author bbpennel
  */
-public interface ResourceOperation {
+public interface CreateNonRdfSourceOperationBuilder extends NonRdfSourceOperationBuilder {
+
+    @Override
+    CreateNonRdfSourceOperationBuilder mimeType(String mimetype);
+
+    @Override
+    CreateNonRdfSourceOperationBuilder filename(String filename);
+
+    @Override
+    CreateNonRdfSourceOperationBuilder contentDigests(Collection<URI> digests);
+
+    @Override
+    CreateNonRdfSourceOperationBuilder contentSize(long size);
 
     /**
-     * Id of the resource
+     * Set the parent identifier of the resource
      *
-     * @return the ID.
+     * @param parentId parent internal identifier
+     * @return the builder
      */
-    String getResourceId();
+    CreateNonRdfSourceOperationBuilder parentId(String parentId);
 
-    /**
-     * @return the user principal performing this operation
-     */
-    String getUserPrincipal();
+    @Override
+    CreateNonRdfSourceOperationBuilder userPrincipal(String userPrincipal);
 
-    /**
-     * Returns the type of operation represented by this request
-     *
-     * @return operation type
-     */
-    ResourceOperationType getType();
 }

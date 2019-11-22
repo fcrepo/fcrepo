@@ -17,6 +17,9 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.apache.jena.rdf.model.Model;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.operations.CreateRdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 
 /**
@@ -24,19 +27,50 @@ import org.fcrepo.kernel.api.operations.RdfSourceOperation;
  *
  * @author bbpennel
  */
-public class CreateRdfSourceOperationBuilder extends AbstractRdfSourceOperationBuilder {
+public class CreateRdfSourceOperationBuilderImpl extends AbstractRdfSourceOperationBuilder implements
+        CreateRdfSourceOperationBuilder {
+
+    private String parentId;
 
     /**
      * Constructor.
      *
      * @param resourceId the internal identifier.
+     * @param interactionModel interaction model
      */
-    public CreateRdfSourceOperationBuilder(final String resourceId, final String interactionModel) {
+    public CreateRdfSourceOperationBuilderImpl(final String resourceId, final String interactionModel) {
         super(resourceId, interactionModel);
     }
 
     @Override
     public RdfSourceOperation build() {
-        return new CreateRdfSourceOperation(this.resourceId, this.interactionModel, tripleStream);
+        final var operation = new CreateRdfSourceOperation(resourceId, interactionModel, tripleStream);
+        operation.setParentId(parentId);
+        operation.setUserPrincipal(userPrincipal);
+        return operation;
+    }
+
+    @Override
+    public CreateRdfSourceOperationBuilder userPrincipal(final String userPrincipal) {
+        super.userPrincipal(userPrincipal);
+        return this;
+    }
+
+    @Override
+    public CreateRdfSourceOperationBuilder triples(final RdfStream triples) {
+        super.triples(triples);
+        return this;
+    }
+
+    @Override
+    public CreateRdfSourceOperationBuilder parentId(final String parentId) {
+        this.parentId = parentId;
+        return this;
+    }
+
+    @Override
+    public CreateRdfSourceOperationBuilder relaxedProperties(final Model model) {
+        super.relaxedProperties(model);
+        return this;
     }
 }

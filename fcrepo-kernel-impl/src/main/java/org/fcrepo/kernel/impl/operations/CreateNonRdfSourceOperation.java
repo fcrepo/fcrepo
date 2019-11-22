@@ -17,20 +17,21 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
-import org.fcrepo.kernel.api.operations.ResourceOperationType;
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 
 import java.io.InputStream;
 import java.net.URI;
-import java.util.Collection;
+
+import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 
 /**
  * Operation for creating a new non-rdf source
  *
  * @author bbpennel
  */
-public class CreateNonRdfSourceOperation extends AbstractNonRdfSourceOperation {
+public class CreateNonRdfSourceOperation extends AbstractNonRdfSourceOperation implements CreateResourceOperation {
 
+    private String parentId;
 
     /**
      * Constructor for external content.
@@ -38,14 +39,10 @@ public class CreateNonRdfSourceOperation extends AbstractNonRdfSourceOperation {
      * @param rescId the internal identifier.
      * @param externalContentURI the URI of the external content.
      * @param externalHandling the type of external content handling (REDIRECT, PROXY)
-     * @param mimeType the mime-type of the content.
-     * @param filename the filename.
-     * @param digests the checksum digests.
      */
     protected CreateNonRdfSourceOperation(final String rescId, final URI externalContentURI,
-                                            final String externalHandling, final String mimeType, final String filename,
-                                            final Collection<URI> digests) {
-        super(rescId, externalContentURI, externalHandling, mimeType, filename, digests);
+            final String externalHandling) {
+        super(rescId, externalContentURI, externalHandling);
     }
 
     /**
@@ -53,18 +50,25 @@ public class CreateNonRdfSourceOperation extends AbstractNonRdfSourceOperation {
      *
      * @param rescId the internal identifier.
      * @param content the stream of the content.
-     * @param mimeType the mime-type of the content.
-     * @param contentSize the size of the inputstream.
-     * @param filename the filename.
-     * @param digests the checksum digests.
      */
-    protected CreateNonRdfSourceOperation(final String rescId, final InputStream content, final String mimeType,
-                                            final long contentSize, final String filename, final Collection<URI> digests) {
-        super(rescId, content, mimeType, contentSize, filename, digests);
+    protected CreateNonRdfSourceOperation(final String rescId, final InputStream content) {
+        super(rescId, content);
     }
 
     @Override
-    public ResourceOperationType getType() {
-        return CREATE;
+    public String getInteractionModel() {
+        return NON_RDF_SOURCE.toString();
+    }
+
+    @Override
+    public String getParentId() {
+        return parentId;
+    }
+
+    /**
+     * @param parentId the parentId to set
+     */
+    public void setParentId(final String parentId) {
+        this.parentId = parentId;
     }
 }

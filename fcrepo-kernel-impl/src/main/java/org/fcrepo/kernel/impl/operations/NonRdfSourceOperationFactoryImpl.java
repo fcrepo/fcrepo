@@ -44,13 +44,15 @@ public class NonRdfSourceOperationFactoryImpl implements NonRdfSourceOperationFa
     }
 
     @Override
-    public NonRdfSourceOperationBuilder createExternalBinaryBuilder(final String rescId, final String handling, final URI contentUri) {
-        return new CreateNonRdfSourceOperationBuilder(rescId, handling, contentUri);
+    public NonRdfSourceOperationBuilder createExternalBinaryBuilder(final String rescId,
+            final String handling, final URI contentUri) {
+        return new CreateNonRdfSourceOperationBuilderImpl(rescId, handling, contentUri);
     }
 
     @Override
-    public NonRdfSourceOperationBuilder createInternalBinaryBuilder(final String rescId, final InputStream contentStream) {
-        return new CreateNonRdfSourceOperationBuilder(rescId, contentStream);
+    public NonRdfSourceOperationBuilder createInternalBinaryBuilder(final String rescId,
+            final InputStream contentStream) {
+        return new CreateNonRdfSourceOperationBuilderImpl(rescId, contentStream);
     }
 
 }

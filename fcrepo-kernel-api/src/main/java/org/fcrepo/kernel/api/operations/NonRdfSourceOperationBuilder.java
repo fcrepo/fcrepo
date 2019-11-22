@@ -60,5 +60,8 @@ public interface NonRdfSourceOperationBuilder extends ResourceOperationBuilder {
     NonRdfSourceOperationBuilder contentSize(long size);
 
     @Override
+    NonRdfSourceOperationBuilder userPrincipal(String userPrincipal);
+
+    @Override
     NonRdfSourceOperation build();
 }

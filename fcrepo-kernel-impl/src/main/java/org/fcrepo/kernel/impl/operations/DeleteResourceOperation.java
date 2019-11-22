@@ -18,8 +18,6 @@
 package org.fcrepo.kernel.impl.operations;
 
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.DELETE;
-import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 
 
@@ -28,22 +26,10 @@ import org.fcrepo.kernel.api.operations.ResourceOperationType;
  *
  * @author bbpennel
  */
-public class DeleteResourceOperation implements ResourceOperation {
-
-    private final String rescId;
+public class DeleteResourceOperation extends AbstractResourceOperation {
 
     protected DeleteResourceOperation(final String rescId) {
-        this.rescId = rescId;
-    }
-
-    @Override
-    public String getResourceId() {
-        return rescId;
-    }
-
-    @Override
-    public RdfStream getServerManagedProperties() {
-        return null;
+        super(rescId);
     }
 
     @Override

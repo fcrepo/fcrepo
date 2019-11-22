@@ -29,6 +29,8 @@ public class DeleteResourceOperationBuilder implements ResourceOperationBuilder 
 
     private String rescId;
 
+    private String userPrincipal;
+
     /**
      * Construct the builder
      *
@@ -39,7 +41,15 @@ public class DeleteResourceOperationBuilder implements ResourceOperationBuilder 
     }
 
     @Override
+    public DeleteResourceOperationBuilder userPrincipal(final String userPrincipal) {
+        this.userPrincipal = userPrincipal;
+        return this;
+    }
+
+    @Override
     public DeleteResourceOperation build() {
-        return new DeleteResourceOperation(rescId);
+        final var operation = new DeleteResourceOperation(rescId);
+        operation.setUserPrincipal(userPrincipal);
+        return operation;
     }
 }

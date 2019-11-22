@@ -427,7 +427,8 @@ public class FedoraLdp extends ContentExposingResource {
             if ("Resource Exists".isEmpty()) {
                 // TODO: Implement UpdateResourceService
             } else {
-                createResourceService.perform(transaction.getId(), fedoraId, null, false, contentType,
+                createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, null, false,
+                        contentType,
                         links, checksums, requestBodyStream, extContent);
             }
         } else {
@@ -435,10 +436,11 @@ public class FedoraLdp extends ContentExposingResource {
                 requestContentType);
 
             if ("Resource Exists".isEmpty()) {
-                replacePropertiesService.perform(transaction.getId(), fedoraId, requestContentType.toString(),
+                replacePropertiesService.perform(transaction.getId(), getUserPrincipal(), fedoraId, requestContentType
+                        .toString(),
                     model);
             } else {
-                createResourceService.perform(transaction.getId(), fedoraId, null, false, links,
+                createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, null, false, links,
                     model);
             }
         }
@@ -583,12 +585,13 @@ public class FedoraLdp extends ContentExposingResource {
         if (isBinary(interactionModel, requestContentType.toString(), requestContentType != null,
                 extContent != null)) {
             final Collection<String> checksums = parseDigestHeader(digest);
-            createResourceService.perform(transaction.getId(), fedoraId, slug, true, contentType, links, checksums,
+            createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, slug, true, contentType,
+                    links, checksums,
                     requestBodyStream, extContent);
         } else {
             final Model model = httpRdfService.bodyToInternalModel(externalPath(), requestBodyStream,
                     requestContentType);
-            createResourceService.perform(transaction.getId(), fedoraId, slug, true, links,
+            createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, slug, true, links,
                     model);
         }
 

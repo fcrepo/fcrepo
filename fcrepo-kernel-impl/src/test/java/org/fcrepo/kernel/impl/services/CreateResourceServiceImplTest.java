@@ -17,7 +17,6 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static java.util.Collections.singletonList;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DEFAULT_INTERACTION_MODEL;
@@ -112,9 +111,7 @@ public class CreateResourceServiceImplTest {
 
     private static final String TX_ID = "tx1234";
 
-    private static final List<String> NON_RDF_SOURCE_TYPES = singletonList(NON_RDF_SOURCE.toString());
-
-    private static final List<String> BASIC_CONTAINER_TYPES = singletonList(BASIC_CONTAINER.toString());
+    private static final String USER_PRINCIPAL = "fedoraUser";
 
     private final Model model = ModelFactory.createDefaultModel();
 
@@ -137,14 +134,14 @@ public class CreateResourceServiceImplTest {
     public void testNoParentRdf_Post() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
-        createResourceService.perform(TX_ID, fedoraId, null, true, null, model);
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null, model);
     }
 
     @Test
     public void testNoParentRdf_Put() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
-        createResourceService.perform(TX_ID, fedoraId, null, false, null, model);
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, false, null, model);
         verify(psSession).persist(operationCaptor.capture());
         assertEquals(fedoraId, operationCaptor.getValue().getResourceId());
     }
@@ -153,7 +150,7 @@ public class CreateResourceServiceImplTest {
     public void testNoParentBinary_Post() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
-        createResourceService.perform(TX_ID, fedoraId, null, true, null, null, digests,
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null, null, digests,
                 null, null);
     }
 
@@ -161,7 +158,7 @@ public class CreateResourceServiceImplTest {
     public void testNoParentBinary_Put() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
-        createResourceService.perform(TX_ID, fedoraId, null, false, null, null, digests,
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, false, null, null, digests,
                 null, null);
         verify(psSession).persist(operationCaptor.capture());
         assertEquals(fedoraId, operationCaptor.getValue().getResourceId());
@@ -170,17 +167,17 @@ public class CreateResourceServiceImplTest {
     @Test(expected = CannotCreateResourceException.class)
     public void testParentIsBinaryRdf() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
-        when(resourceHeaders.getTypes()).thenReturn(NON_RDF_SOURCE_TYPES);
+        when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
-        createResourceService.perform(TX_ID, fedoraId, null, true, null, model);
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null, model);
     }
 
     @Test(expected = CannotCreateResourceException.class)
     public void testParentIsBinaryBinary() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
-        when(resourceHeaders.getTypes()).thenReturn(NON_RDF_SOURCE_TYPES);
+        when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
-        createResourceService.perform(TX_ID, fedoraId, null, true, null, null, digests,
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null, null, digests,
                 null, null);
     }
 
@@ -188,8 +185,8 @@ public class CreateResourceServiceImplTest {
     public void testSlugIsNullRdf_Post() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
-        when(resourceHeaders.getTypes()).thenReturn(BASIC_CONTAINER_TYPES);
-        createResourceService.perform(TX_ID, fedoraId, null, true, null, model);
+        when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null, model);
         verify(psSession).persist(operationCaptor.capture());
         final String persistedId = operationCaptor.getValue().getResourceId();
         assertNotEquals(fedoraId, persistedId);
@@ -200,8 +197,8 @@ public class CreateResourceServiceImplTest {
     public void testSlugIsNullRdf_Put() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
-        when(resourceHeaders.getTypes()).thenReturn(BASIC_CONTAINER_TYPES);
-        createResourceService.perform(TX_ID, fedoraId, null, false, null, model);
+        when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, false, null, model);
         verify(psSession).persist(operationCaptor.capture());
         final String persistedId = operationCaptor.getValue().getResourceId();
         assertEquals(fedoraId, persistedId);
@@ -211,8 +208,8 @@ public class CreateResourceServiceImplTest {
     public void testSlugIsNullBinary_Post() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
-        when(resourceHeaders.getTypes()).thenReturn(BASIC_CONTAINER_TYPES);
-        createResourceService.perform(TX_ID, fedoraId, null, true, null, null, digests,
+        when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null, null, digests,
                 null, null);
         verify(psSession).persist(operationCaptor.capture());
         final String persistedId = operationCaptor.getValue().getResourceId();
@@ -224,8 +221,8 @@ public class CreateResourceServiceImplTest {
     public void testSlugIsNullBinary_Put() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
-        when(resourceHeaders.getTypes()).thenReturn(BASIC_CONTAINER_TYPES);
-        createResourceService.perform(TX_ID, fedoraId, null, false, null, null, digests,
+        when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, false, null, null, digests,
                 null, null);
         verify(psSession).persist(operationCaptor.capture());
         final String persistedId = operationCaptor.getValue().getResourceId();
@@ -238,8 +235,8 @@ public class CreateResourceServiceImplTest {
         final String childId = addToIdentifier(fedoraId, "testSlug");
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(psSession.getHeaders(childId, null)).thenReturn(resourceHeaders);
-        when(resourceHeaders.getTypes()).thenReturn(BASIC_CONTAINER_TYPES);
-        createResourceService.perform(TX_ID, fedoraId, "testSlug", true, null, model);
+        when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, null, model);
         verify(psSession).persist(operationCaptor.capture());
         final String persistedId = operationCaptor.getValue().getResourceId();
         assertNotEquals(fedoraId, persistedId);
@@ -253,8 +250,8 @@ public class CreateResourceServiceImplTest {
         final String childId = addToIdentifier(fedoraId, "testSlug");
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(psSession.getHeaders(childId, null)).thenReturn(resourceHeaders);
-        when(resourceHeaders.getTypes()).thenReturn(BASIC_CONTAINER_TYPES);
-        createResourceService.perform(TX_ID, fedoraId, "testSlug", true, null, null, digests,
+        when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, null, null, digests,
                 null, null);
         verify(psSession).persist(operationCaptor.capture());
         final String persistedId = operationCaptor.getValue().getResourceId();
@@ -270,8 +267,8 @@ public class CreateResourceServiceImplTest {
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(psSession.getHeaders(childId, null))
                 .thenThrow(PersistentItemNotFoundException.class);
-        when(resourceHeaders.getTypes()).thenReturn(BASIC_CONTAINER_TYPES);
-        createResourceService.perform(TX_ID, fedoraId, "testSlug", true, null, model);
+        when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, null, model);
         verify(psSession).persist(operationCaptor.capture());
         assertEquals(childId, operationCaptor.getValue().getResourceId());
     }
@@ -282,8 +279,8 @@ public class CreateResourceServiceImplTest {
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(psSession.getHeaders(addToIdentifier(fedoraId, "testSlug"), null))
                 .thenThrow(PersistentItemNotFoundException.class);
-        when(resourceHeaders.getTypes()).thenReturn(BASIC_CONTAINER_TYPES);
-        createResourceService.perform(TX_ID, fedoraId, "testSlug", true, null, null, digests,
+        when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, null, null, digests,
                 null, null);
         verify(psSession).persist(ArgumentMatchers.any(ResourceOperation.class));
     }
@@ -292,16 +289,16 @@ public class CreateResourceServiceImplTest {
     public void testNoParentExternal() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
-        createResourceService.perform(TX_ID, fedoraId, null, true, null, null, digests,
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null, null, digests,
                 null, extContent);
     }
 
     @Test(expected = CannotCreateResourceException.class)
     public void testParentIsExternal() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
-        when(resourceHeaders.getTypes()).thenReturn(NON_RDF_SOURCE_TYPES);
+        when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
-        createResourceService.perform(TX_ID, fedoraId, null, true, null, null, digests,
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null, null, digests,
                 null, extContent);
     }
 
@@ -309,8 +306,8 @@ public class CreateResourceServiceImplTest {
     public void testSlugIsNullExternal() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
-        when(resourceHeaders.getTypes()).thenReturn(BASIC_CONTAINER_TYPES);
-        createResourceService.perform(TX_ID, fedoraId, null, true, null, null, digests,
+        when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null, null, digests,
                 null, extContent);
         verify(psSession).persist(ArgumentMatchers.any(ResourceOperation.class));
     }
@@ -321,8 +318,8 @@ public class CreateResourceServiceImplTest {
         final String childId = addToIdentifier(fedoraId, "testSlug");
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(psSession.getHeaders(childId, null)).thenReturn(resourceHeaders);
-        when(resourceHeaders.getTypes()).thenReturn(BASIC_CONTAINER_TYPES);
-        createResourceService.perform(TX_ID, fedoraId, "testSlug", true, null, null, digests,
+        when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, null, null, digests,
                 null, extContent);
         verify(psSession).persist(operationCaptor.capture());
         final String persistedId = operationCaptor.getValue().getResourceId();
@@ -338,8 +335,8 @@ public class CreateResourceServiceImplTest {
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(psSession.getHeaders(childId, null))
                 .thenThrow(PersistentItemNotFoundException.class);
-        when(resourceHeaders.getTypes()).thenReturn(BASIC_CONTAINER_TYPES);
-        createResourceService.perform(TX_ID, fedoraId, "testSlug", true, null, null, digests,
+        when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, null, null, digests,
                 null, extContent);
         verify(psSession).persist(operationCaptor.capture());
         assertEquals(childId, operationCaptor.getValue().getResourceId());

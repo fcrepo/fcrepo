@@ -80,6 +80,12 @@ public class UpdateNonRdfSourceOperationBuilder implements NonRdfSourceOperation
     }
 
     @Override
+    public NonRdfSourceOperationBuilder userPrincipal(final String userPrincipal) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
     public NonRdfSourceOperation build() {
         // TODO Auto-generated method stub
         return null;

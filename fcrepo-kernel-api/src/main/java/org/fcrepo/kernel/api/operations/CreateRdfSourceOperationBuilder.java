@@ -15,27 +15,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.impl.operations;
-
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
+package org.fcrepo.kernel.api.operations;
 
 import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.operations.ResourceOperationType;
-
 
 /**
- * Operation for updating an RDF source
- *
  * @author bbpennel
+ *
  */
-public class UpdateRdfSourceOperation extends AbstractRdfSourceOperation {
-
-    protected UpdateRdfSourceOperation(final String rescId, final RdfStream triples) {
-        super(rescId, triples);
-    }
+public interface CreateRdfSourceOperationBuilder extends RdfSourceOperationBuilder {
 
     @Override
-    public ResourceOperationType getType() {
-        return UPDATE;
-    }
+    CreateRdfSourceOperationBuilder userPrincipal(String userPrincipal);
+
+    @Override
+    CreateRdfSourceOperationBuilder triples(RdfStream triples);
+
+    /**
+     * Set the parent identifier of the resource
+     *
+     * @param parentId parent internal identifier
+     * @return the builder
+     */
+    CreateRdfSourceOperationBuilder parentId(String parentId);
 }

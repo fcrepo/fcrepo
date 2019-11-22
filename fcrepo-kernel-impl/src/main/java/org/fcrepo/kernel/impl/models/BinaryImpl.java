@@ -39,10 +39,10 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
     /**
      * Construct the binary
      *
-     * @param id
-     * @param tx
-     * @param pSessionManager
-     * @param resourceFactory
+     * @param id internal identifier
+     * @param tx transaction
+     * @param pSessionManager session manager
+     * @param resourceFactory resource factory
      */
     public BinaryImpl(final String id, final Transaction tx, final PersistentStorageSessionManager pSessionManager,
             final ResourceFactory resourceFactory) {

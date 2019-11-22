@@ -31,7 +31,7 @@ public class RdfSourceOperationFactoryImpl implements RdfSourceOperationFactory 
 
     @Override
     public RdfSourceOperationBuilder createBuilder(final String rescId, final String interactionModel) {
-        return new CreateRdfSourceOperationBuilder(rescId, interactionModel);
+        return new CreateRdfSourceOperationBuilderImpl(rescId, interactionModel);
     }
 
     @Override

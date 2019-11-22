@@ -60,7 +60,7 @@ public class CreateRdfSourceOperationBuilderTest {
 
     @Before
     public void setUp() {
-        builder = new CreateRdfSourceOperationBuilder(RESOURCE_ID, RDF_SOURCE.toString());
+        builder = new CreateRdfSourceOperationBuilderImpl(RESOURCE_ID, RDF_SOURCE.toString());
         model = ModelFactory.createDefaultModel();
         model.add(
                 ResourceFactory.createResource(RESOURCE_ID),

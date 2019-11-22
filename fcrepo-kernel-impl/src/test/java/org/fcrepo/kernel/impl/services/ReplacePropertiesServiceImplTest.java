@@ -19,20 +19,18 @@ package org.fcrepo.kernel.impl.services;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
-import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.vocabulary.DC;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.graph.Node;
 import org.fcrepo.kernel.api.RdfCollectors;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
@@ -42,8 +40,8 @@ import org.fcrepo.kernel.impl.operations.RdfSourceOperationFactoryImpl;
 import org.fcrepo.kernel.impl.operations.UpdateRdfSourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
-import org.junit.Test;
 import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -58,6 +56,8 @@ import org.mockito.junit.MockitoJUnitRunner;
  */
 @RunWith(MockitoJUnitRunner.Strict.class)
 public class ReplacePropertiesServiceImplTest {
+
+    private static final String USER_PRINCIPAL = "fedoraUser";
 
     @Mock
     private Transaction tx;
@@ -90,9 +90,6 @@ public class ReplacePropertiesServiceImplTest {
             "<" + FEDORA_ID + "> <" + DC.getURI() + "title> 'fancy title' .\n" +
             "<" + FEDORA_ID + "> <" + DC.getURI() + "title> 'another fancy title' .";
 
-    private final Node subject = createURI(FEDORA_ID);
-
-
     @Before
     public void setup() {
         factory = new RdfSourceOperationFactoryImpl();
@@ -107,7 +104,7 @@ public class ReplacePropertiesServiceImplTest {
         final Model model = ModelFactory.createDefaultModel();
         RDFDataMgr.read(model, IOUtils.toInputStream(RDF, "UTF-8"), Lang.NTRIPLES);
 
-        service.perform(tx.getId(), resource.getId(), CONTENT_TYPE, model);
+        service.perform(tx.getId(), USER_PRINCIPAL, resource.getId(), CONTENT_TYPE, model);
         verify(pSession).persist(operationCaptor.capture());
         assertEquals(FEDORA_ID, operationCaptor.getValue().getResourceId());
         final RdfStream stream = operationCaptor.getValue().getTriples();
