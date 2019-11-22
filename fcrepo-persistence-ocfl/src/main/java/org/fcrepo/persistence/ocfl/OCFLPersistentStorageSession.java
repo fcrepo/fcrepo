@@ -211,6 +211,18 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         return getRdfStream(identifier, objSession, filePath, version);
     }
 
+    /**
+     * Returns a list of immutable versions associated with the specified fedora identifier
+     * @param fedoraIdentifier The fedora identifier
+     * @return The list of instants that map to the underlying versions
+     * @throws PersistentStorageException Due the underlying resource not existing or is otherwise unreadable.
+     */
+     List<Instant> listVersions(final String fedoraIdentifier) throws PersistentStorageException {
+        final FedoraOCFLMapping mapping = fedoraOcflIndex.getMapping(fedoraIdentifier);
+        final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
+        return OCFLPersistentStorageUtils.listVersions(objSession);
+    }
+
     @Override
     public RdfStream getManagedProperties(final String identifier, final Instant version)
             throws PersistentStorageException {

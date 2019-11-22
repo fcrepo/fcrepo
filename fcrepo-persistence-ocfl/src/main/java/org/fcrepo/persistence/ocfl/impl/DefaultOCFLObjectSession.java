@@ -31,10 +31,14 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
+import edu.wisc.library.ocfl.api.model.VersionDetails;
 import org.apache.commons.io.FileUtils;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
@@ -391,6 +395,26 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         sessionClosed = true;
 
         cleanupStaging();
+    }
+
+    @Override
+    public List<VersionDetails> listVersions() throws PersistentStorageException {
+        assertSessionOpen();
+        //get a list of all versions in the object.
+        return this.ocflRepository.describeObject(this.objectIdentifier)
+                                                                    .getVersionMap().values().stream()
+                                                                    .filter(v -> !v.isMutable())
+                                                                    .sorted(VERSION_COMPARATOR)
+                                                                    .collect(Collectors.toList());
+    }
+
+    private static final VersionComparator VERSION_COMPARATOR = new VersionComparator();
+
+    private static class VersionComparator implements Comparator<VersionDetails> {
+        @Override
+        public int compare(final VersionDetails a, final VersionDetails b) {
+            return a.getCreated().compareTo(b.getCreated());
+        }
     }
 
     private boolean isStagingEmpty() {

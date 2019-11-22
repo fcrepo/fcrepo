@@ -24,6 +24,7 @@ import org.apache.jena.riot.system.StreamRDF;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.slf4j.Logger;
@@ -35,6 +36,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static org.apache.jena.graph.NodeFactory.createURI;
@@ -91,7 +94,7 @@ public class OCFLPersistentStorageUtils {
      * Returns the OCFL subpath for a given fedora subpath.  This returned subpath
      * does not include any added extendsions.
      * @param fedoraSubpath
-     * @return
+     * @return The resolved OCFL subpath
      */
     public static  String resolveOCFLSubpath(final String fedoraSubpath) {
         if (fedoraSubpath.endsWith(FEDORA_METADATA_SUFFIX)) {
@@ -106,8 +109,8 @@ public class OCFLPersistentStorageUtils {
      * For example:  passing info:fedora/resource1/fcr:metadata would return
      *  info:fedora/resource1 since  info:fedora/resource1 would be the expected
      *  topic.
-     * @param fedoraIdentifier
-     * @return
+     * @param fedoraIdentifier The fedora identifier
+     * @return The resolved topic
      */
     public static  String resolveTopic(final String fedoraIdentifier) {
         if (fedoraIdentifier.endsWith(FEDORA_METADATA_SUFFIX)) {
@@ -127,7 +130,7 @@ public class OCFLPersistentStorageUtils {
      */
     public static void writeRDF(final OCFLObjectSession session, final RdfStream triples, final String subpath)
             throws PersistentStorageException {
-        try (final var  os = new ByteArrayOutputStream()) {
+        try (final var os = new ByteArrayOutputStream()) {
             final StreamRDF streamRDF = getWriterStream(os, getRdfFormat());
             streamRDF.start();
             triples.forEach(streamRDF::triple);
@@ -148,12 +151,13 @@ public class OCFLPersistentStorageUtils {
 
     /**
      * Get an RDF stream for the specified file.
+     *
      * @param identifier The resource identifier
-     * @param version The version.  If null, the head state will be returned.
+     * @param version    The version.  If null, the head state will be returned.
      * @param objSession The OCFL object session
      * @param subpath The path to the desired file.
-     * @return
-     * @throws PersistentStorageException
+     * @return the RDF stream
+     * @throws PersistentStorageException If unable to read the specified rdf stream.
      */
     public static RdfStream getRdfStream(final String identifier,
                                          final OCFLObjectSession objSession,
@@ -170,21 +174,57 @@ public class OCFLPersistentStorageUtils {
         }
     }
 
-    private static  String resolveVersionId(final OCFLObjectSession objSession, final Instant version) {
-        //TODO Implement resolution of a version id (OCFL-speak) from an instant (memento-speak)
-       return null;
+    private static String resolveVersionId(final OCFLObjectSession objSession, final Instant version)
+            throws PersistentStorageException {
+        if (version != null) {
+            return objSession.listVersions()
+                    .stream()
+                    .filter(vd -> {
+                        //filter by comparing Epoch seconds since
+                        //Memento has second granularity while OCFL versions are
+                        //millisecond granularity
+                        return vd.getCreated()
+                                .toInstant()
+                                .toEpochMilli() / 1000 == version.toEpochMilli() / 1000;
+                    }).map(vd -> vd.getVersionId().toString()) //return the versionId the matches
+                    .findFirst()
+                    .orElseThrow(() -> {
+                        //otherwise throw an exception.
+                        return new PersistentItemNotFoundException(format(
+                                "There is no version in %s with a created date matchin %s",
+                                objSession, version));
+                    });
+        } else {
+            //return null if the instant is null
+            return null;
+        }
+    }
+
+    /**
+     * A utility method that returns a list of  {@link java.time.Instant} objects representing immutable versions
+     * accessible from the OCFL Object represented by the session.
+     *
+     * @param objSession The OCFL object session
+     * @return A list of Instant objects
+     * @throws PersistentStorageException On read failure due to the session being closed or some other problem.
+     */
+    public static List<Instant> listVersions(final OCFLObjectSession objSession) throws PersistentStorageException {
+        return  objSession.listVersions().stream().map(versionDetails -> versionDetails.getCreated().toInstant())
+                .collect(Collectors.toList());
     }
 
     /**
      * Returns the RDF Format. By default NTRIPLES are returned.
+     *
      * @return
      */
-    public static RDFFormat getRdfFormat(){
+    public static RDFFormat getRdfFormat() {
         return DEFAULT_RDF_FORMAT;
     }
 
     /**
      * Returns the RDF file extension.
+     *
      * @return
      */
     public static String getRDFFileExtension() {
@@ -193,6 +233,7 @@ public class OCFLPersistentStorageUtils {
 
     /**
      * The path ( including the final slash ) to the internal Fedora directory within an OCFL object.
+     *
      * @return
      */
     public static String getInternalFedoraDirectory() {
