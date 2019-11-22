@@ -94,7 +94,7 @@ public class OCFLPersistentStorageUtils {
      * Returns the OCFL subpath for a given fedora subpath.  This returned subpath
      * does not include any added extendsions.
      * @param fedoraSubpath
-     * @return
+     * @return The resolved OCFL subpath
      */
     public static  String resolveOCFLSubpath(final String fedoraSubpath) {
         if (fedoraSubpath.endsWith(FEDORA_METADATA_SUFFIX)) {
@@ -109,8 +109,8 @@ public class OCFLPersistentStorageUtils {
      * For example:  passing info:fedora/resource1/fcr:metadata would return
      *  info:fedora/resource1 since  info:fedora/resource1 would be the expected
      *  topic.
-     * @param fedoraIdentifier
-     * @return
+     * @param fedoraIdentifier The fedora identifier
+     * @return The resolved topic
      */
     public static  String resolveTopic(final String fedoraIdentifier) {
         if (fedoraIdentifier.endsWith(FEDORA_METADATA_SUFFIX)) {
@@ -156,8 +156,8 @@ public class OCFLPersistentStorageUtils {
      * @param version    The version.  If null, the head state will be returned.
      * @param objSession The OCFL object session
      * @param subpath The path to the desired file.
-     * @return
-     * @throws PersistentStorageException
+     * @return the RDF stream
+     * @throws PersistentStorageException If unable to read the specified rdf stream.
      */
     public static RdfStream getRdfStream(final String identifier,
                                          final OCFLObjectSession objSession,
@@ -206,7 +206,7 @@ public class OCFLPersistentStorageUtils {
      *
      * @param objSession The OCFL object session
      * @return A list of Instant objects
-     * @throws PersistentStorageException
+     * @throws PersistentStorageException On read failure due to the session being closed or some other problem.
      */
     public static List<Instant> listVersions(final OCFLObjectSession objSession) throws PersistentStorageException {
         return  objSession.listVersions().stream().map(versionDetails -> versionDetails.getCreated().toInstant())

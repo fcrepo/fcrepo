@@ -215,7 +215,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
      * Returns a list of immutable versions associated with the specified fedora identifier
      * @param fedoraIdentifier The fedora identifier
      * @return The list of instants that map to the underlying versions
-     * @throws PersistentStorageException
+     * @throws PersistentStorageException Due the underlying resource not existing or is otherwise unreadable.
      */
      List<Instant> listVersions(final String fedoraIdentifier) throws PersistentStorageException {
         final FedoraOCFLMapping mapping = fedoraOcflIndex.getMapping(fedoraIdentifier);
