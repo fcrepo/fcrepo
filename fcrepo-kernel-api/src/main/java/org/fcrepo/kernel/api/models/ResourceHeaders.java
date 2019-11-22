@@ -83,7 +83,7 @@ public interface ResourceHeaders {
      *
      * @return size
      */
-    long getContentSize();
+    Long getContentSize();
 
     /**
      * Get the list of all digest URIs recorded for this resource

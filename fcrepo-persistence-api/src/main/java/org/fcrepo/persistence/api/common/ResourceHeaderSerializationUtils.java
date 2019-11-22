@@ -17,6 +17,8 @@
  */
 package org.fcrepo.persistence.api.common;
 
+import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,10 +27,12 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 /**
  * Utility for working with serializations of resource headers
@@ -39,9 +43,14 @@ public class ResourceHeaderSerializationUtils {
 
     public static final String RESOURCE_HEADER_EXTENSION = ".json";
 
-    private static final ObjectReader HEADER_READER = new ObjectMapper().readerFor(ResourceHeadersImpl.class);
+    private static final ObjectMapper HEADER_MAPPER = new ObjectMapper()
+            .configure(WRITE_DATES_AS_TIMESTAMPS, false)
+            .registerModule(new JavaTimeModule())
+            .setSerializationInclusion(Include.NON_NULL);
 
-    private static final ObjectWriter HEADER_WRITER = new ObjectMapper().writerFor(ResourceHeaders.class);
+    private static final ObjectReader HEADER_READER = HEADER_MAPPER.readerFor(ResourceHeadersImpl.class);
+
+    private static final ObjectWriter HEADER_WRITER = HEADER_MAPPER.writerFor(ResourceHeaders.class);
 
     private ResourceHeaderSerializationUtils() {
     }

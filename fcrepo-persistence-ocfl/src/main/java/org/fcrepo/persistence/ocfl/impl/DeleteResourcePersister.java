@@ -21,6 +21,7 @@ import static org.fcrepo.kernel.api.operations.ResourceOperationType.DELETE;
 import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.relativizeSubpath;
 
 import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.slf4j.Logger;
@@ -42,7 +43,8 @@ public class DeleteResourcePersister extends AbstractPersister {
     }
 
     @Override
-    public void persist(final OCFLObjectSession session, final ResourceOperation operation, final FedoraOCFLMapping mapping)
+    public void persist(final PersistentStorageSession storageSession, final OCFLObjectSession session,
+            final ResourceOperation operation, final FedoraOCFLMapping mapping)
             throws PersistentStorageException {
         log.debug("Deleting {} from {}", operation.getResourceId(), mapping.getOcflObjectId());
         if (mapping.getParentFedoraResourceId().equals(operation.getResourceId())) {

@@ -24,7 +24,6 @@ import java.util.List;
 
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 
-
 /**
  * Common implementation of resource headers
  *
@@ -46,7 +45,7 @@ public class ResourceHeadersImpl implements ResourceHeaders {
 
     private String filename;
 
-    private long contentSize;
+    private Long contentSize;
 
     private Collection<URI> digests;
 
@@ -156,14 +155,14 @@ public class ResourceHeadersImpl implements ResourceHeaders {
      * @return the contentSize
      */
     @Override
-    public long getContentSize() {
+    public Long getContentSize() {
         return contentSize;
     }
 
     /**
      * @param contentSize the contentSize to set
      */
-    public void setContentSize(final long contentSize) {
+    public void setContentSize(final Long contentSize) {
         this.contentSize = contentSize;
     }
 

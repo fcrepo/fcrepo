@@ -21,6 +21,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.Persister;
 import org.junit.Test;
@@ -39,6 +40,9 @@ public class DeleteResourcePersisterTest {
     private FedoraOCFLMapping mapping;
 
     @Mock
+    private PersistentStorageSession storageSession;
+
+    @Mock
     private OCFLObjectSession session;
 
     @Mock
@@ -51,7 +55,7 @@ public class DeleteResourcePersisterTest {
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
         when(mapping.getParentFedoraResourceId()).thenReturn("info:fedora/an-ocfl-object");
         when(operation.getResourceId()).thenReturn("info:fedora/an-ocfl-object/some-subpath");
-        persister.persist(session, operation, mapping);
+        persister.persist(storageSession, session, operation, mapping);
         verify(session).delete("some-subpath");
     }
 
@@ -60,7 +64,7 @@ public class DeleteResourcePersisterTest {
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
         when(mapping.getParentFedoraResourceId()).thenReturn("info:fedora/an-ocfl-object");
         when(operation.getResourceId()).thenReturn("info:fedora/an-ocfl-object");
-        persister.persist(session, operation, mapping);
+        persister.persist(storageSession, session, operation, mapping);
         verify(session).deleteObject();
     }
 
@@ -69,6 +73,6 @@ public class DeleteResourcePersisterTest {
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
         when(mapping.getParentFedoraResourceId()).thenReturn("info:fedora/some-wrong-object");
         when(operation.getResourceId()).thenReturn("info:fedora/an-ocfl-object");
-        persister.persist(session, operation, mapping);
+        persister.persist(storageSession, session, operation, mapping);
     }
 }

@@ -17,20 +17,27 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import static java.util.Arrays.asList;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
-import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.getInternalFedoraDirectory;
+import static org.fcrepo.persistence.api.common.ResourceHeaderUtils.newResourceHeaders;
+import static org.fcrepo.persistence.api.common.ResourceHeaderUtils.populateBinaryHeaders;
+import static org.fcrepo.persistence.api.common.ResourceHeaderUtils.populateExternalBinaryHeaders;
+import static org.fcrepo.persistence.api.common.ResourceHeaderUtils.touchCreationHeaders;
+import static org.fcrepo.persistence.api.common.ResourceHeaderUtils.touchModificationHeaders;
 import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.relativizeSubpath;
-import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.writeRDF;
-
-import static java.util.Arrays.asList;
 
 import java.util.HashSet;
 import java.util.Set;
 
+import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.common.ResourceHeadersImpl;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.slf4j.Logger;
@@ -56,16 +63,44 @@ public class NonRdfSourcePersister extends AbstractPersister {
     }
 
     @Override
-    public void persist(final OCFLObjectSession session, final ResourceOperation operation,
+    public void persist(final PersistentStorageSession storageSession, final OCFLObjectSession session,
+            final ResourceOperation operation,
                         final FedoraOCFLMapping mapping) throws PersistentStorageException {
         log.debug("persisting ({}) to {}", operation.getResourceId(), mapping.getOcflObjectId());
         final String subpath = relativizeSubpath(mapping.getParentFedoraResourceId(), operation.getResourceId());
 
         // write user content
-        final NonRdfSourceOperation nonRdfSourceOperation = ((NonRdfSourceOperation) operation);
+        final var nonRdfSourceOperation = (NonRdfSourceOperation) operation;
         session.write(subpath, nonRdfSourceOperation.getContentStream());
 
-        //write server props
-        writeRDF(session, operation.getServerManagedProperties(), getInternalFedoraDirectory() + subpath);
+        // Write resource headers
+        final var headers = populateHeaders(storageSession, nonRdfSourceOperation);
+        writeHeaders(session, headers, subpath);
+    }
+
+    private ResourceHeaders populateHeaders(final PersistentStorageSession storageSession,
+            final NonRdfSourceOperation operation) throws PersistentStorageException {
+        final ResourceHeadersImpl headers;
+        if (CREATE.equals(operation.getType())) {
+            final var createOperation = (CreateResourceOperation) operation;
+            headers = newResourceHeaders(createOperation.getParentId(),
+                    operation.getResourceId(),
+                    NON_RDF_SOURCE.toString());
+            touchCreationHeaders(headers, operation.getUserPrincipal());
+        } else {
+            headers = (ResourceHeadersImpl) storageSession.getHeaders(operation.getResourceId(), null);
+        }
+        touchModificationHeaders(headers, operation.getUserPrincipal());
+
+        populateBinaryHeaders(headers, operation.getMimeType(),
+                operation.getFilename(),
+                operation.getContentSize(),
+                operation.getContentDigests());
+        if (operation.getContentUri() != null) {
+            populateExternalBinaryHeaders(headers, operation.getContentUri().toString(),
+                    operation.getExternalHandling());
+        }
+
+        return headers;
     }
 }

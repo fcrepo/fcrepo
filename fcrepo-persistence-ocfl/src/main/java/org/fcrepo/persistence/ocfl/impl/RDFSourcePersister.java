@@ -17,21 +17,26 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import static java.util.Arrays.asList;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
-import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.getInternalFedoraDirectory;
+import static org.fcrepo.persistence.api.common.ResourceHeaderUtils.newResourceHeaders;
+import static org.fcrepo.persistence.api.common.ResourceHeaderUtils.touchCreationHeaders;
+import static org.fcrepo.persistence.api.common.ResourceHeaderUtils.touchModificationHeaders;
 import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.relativizeSubpath;
 import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.resolveOCFLSubpath;
 import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.writeRDF;
 
-import static java.util.Arrays.asList;
-
 import java.util.HashSet;
 import java.util.Set;
 
+import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.common.ResourceHeadersImpl;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.slf4j.Logger;
@@ -57,7 +62,8 @@ public class RDFSourcePersister extends AbstractPersister {
     }
 
     @Override
-    public void persist(final OCFLObjectSession session, final ResourceOperation operation,
+    public void persist(final PersistentStorageSession storageSession, final OCFLObjectSession session,
+            final ResourceOperation operation,
                         final FedoraOCFLMapping mapping) throws PersistentStorageException {
         final RdfSourceOperation rdfSourceOp = (RdfSourceOperation)operation;
         log.debug("persisting RDFSource ({}) to {}", operation.getResourceId(), mapping.getOcflObjectId());
@@ -66,7 +72,43 @@ public class RDFSourcePersister extends AbstractPersister {
         //write user triples
         writeRDF(session, rdfSourceOp.getTriples(), resolvedSubpath);
 
-        //write server props
-        writeRDF(session, operation.getServerManagedProperties(), getInternalFedoraDirectory() + resolvedSubpath);
+        // Write resource headers
+        final var headers = populateHeaders(storageSession, rdfSourceOp);
+        writeHeaders(session, headers, subpath);
+    }
+
+    private ResourceHeaders populateHeaders(final PersistentStorageSession storageSession,
+            final RdfSourceOperation operation) throws PersistentStorageException {
+        final ResourceHeadersImpl headers;
+        if (CREATE.equals(operation.getType())) {
+            final var createOperation = (CreateResourceOperation) operation;
+            headers = newResourceHeaders(createOperation.getParentId(),
+                    operation.getResourceId(),
+                    createOperation.getInteractionModel());
+            touchCreationHeaders(headers, operation.getUserPrincipal());
+        } else {
+            headers = (ResourceHeadersImpl) storageSession.getHeaders(operation.getResourceId(), null);
+        }
+        touchModificationHeaders(headers, operation.getUserPrincipal());
+
+        overrideRelaxedProperties(headers, operation);
+
+        return headers;
+    }
+
+    private void overrideRelaxedProperties(final ResourceHeadersImpl headers, final RdfSourceOperation operation) {
+        // Override relaxed properties if provided
+        if (operation.getLastModifiedBy() != null) {
+            headers.setLastModifiedBy(operation.getLastModifiedBy());
+        }
+        if (operation.getLastModifiedDate() != null) {
+            headers.setLastModifiedDate(operation.getLastModifiedDate());
+        }
+        if (operation.getCreatedBy() != null) {
+            headers.setCreatedBy(operation.getCreatedBy());
+        }
+        if (operation.getCreatedDate() != null) {
+            headers.setCreatedDate(operation.getCreatedDate());
+        }
     }
 }

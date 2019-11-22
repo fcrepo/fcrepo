@@ -31,6 +31,7 @@ import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
+import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -69,7 +70,8 @@ public class AbstractPersisterTest {
             }
 
             @Override
-            public void persist(final OCFLObjectSession session,
+            public void persist(final PersistentStorageSession storageSession,
+                                final OCFLObjectSession objectSession,
                                 final ResourceOperation operation,
                                 final FedoraOCFLMapping mapping) {}
         }
@@ -87,7 +89,8 @@ public class AbstractPersisterTest {
             }
 
             @Override
-            public void persist(final OCFLObjectSession session,
+            public void persist(final PersistentStorageSession storageSession,
+                                final OCFLObjectSession session,
                                 final ResourceOperation operation,
                                 final FedoraOCFLMapping mapping) {
             }
@@ -105,7 +108,8 @@ public class AbstractPersisterTest {
             }
 
             @Override
-            public void persist(final OCFLObjectSession session,
+            public void persist(final PersistentStorageSession storageSession,
+                                final OCFLObjectSession session,
                                 final ResourceOperation operation,
                                 final FedoraOCFLMapping mapping) {
             }
@@ -125,7 +129,8 @@ public class AbstractPersisterTest {
             }
 
             @Override
-            public void persist(final OCFLObjectSession session,
+            public void persist(final PersistentStorageSession storageSession,
+                                final OCFLObjectSession session,
                                 final ResourceOperation operation,
                                 final FedoraOCFLMapping mapping) {
             }
@@ -146,7 +151,8 @@ public class AbstractPersisterTest {
             }
 
             @Override
-            public void persist(final OCFLObjectSession session,
+            public void persist(final PersistentStorageSession storageSession,
+                                final OCFLObjectSession session,
                                 final ResourceOperation operation,
                                 final FedoraOCFLMapping mapping) {
             }
@@ -174,7 +180,8 @@ public class AbstractPersisterTest {
             }
 
             @Override
-            public void persist(final OCFLObjectSession session,
+            public void persist(final PersistentStorageSession storageSession,
+                                final OCFLObjectSession session,
                                 final ResourceOperation operation,
                                 final FedoraOCFLMapping mapping) {
             }
