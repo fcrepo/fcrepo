@@ -31,7 +31,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
+import edu.wisc.library.ocfl.api.model.VersionDetails;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
@@ -600,6 +602,32 @@ public class DefaultOCFLObjectSessionTest {
 
         session.close();
     }
+
+    @Test
+    public void listVersions() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.commit(NEW_VERSION);
+        session.close();
+
+        final var session1 = makeNewSession();
+
+        session1.commit(NEW_VERSION);
+        session1.close();
+
+        final var session2 = makeNewSession();
+        session2.commit(UNVERSIONED);
+        session2.close();
+
+        final var session3 = makeNewSession();
+
+        final List<VersionDetails> versions = session3.listVersions();
+        session3.close();
+
+        assertEquals("First version in list is not \"v1\"", "v1", versions.get(0).getVersionId().toString());
+        assertEquals("Second version in list is not \"v2\"", "v2", versions.get(1).getVersionId().toString());
+        assertEquals("There should be exactly two versions",2, versions.size());
+    }
+
 
     private static InputStream fileStream(final String content) {
         return new ByteArrayInputStream(content.getBytes());

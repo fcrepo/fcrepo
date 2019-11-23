@@ -36,6 +36,7 @@ import static org.mockito.Mockito.withSettings;
 
 import java.io.InputStream;
 import java.time.Instant;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -547,7 +548,41 @@ public class OCFLPersistentStorageSessionTest {
     @Ignore
     @Test(expected = PersistentStorageException.class)
     public void rollbackSucceedsWhenRollingBackCommittedVersions() throws Exception {
-
     }
 
+    @Test
+    public void getTriplesFromPreviousVersion() throws Exception {
+        DefaultOCFLObjectSession.setGlobaDefaultCommitOption(NEW_VERSION);
+        mockMappingAndIndex(OCFL_OBJECT_ID, RESOURCE_ID, PARENT_ID, mapping);
+
+        final Node resourceUri = createURI(RESOURCE_ID);
+
+        //mock the operation
+        final String title = "my title";
+        final var dcTitleTriple = Triple.create(resourceUri, DC.title.asNode(), createLiteral(title));
+        final Stream<Triple> userTriples = Stream.of(dcTitleTriple);
+        final DefaultRdfStream userStream = new DefaultRdfStream(resourceUri, userTriples);
+
+        mockResourceOperation(rdfSourceOperation, userStream, USER_PRINCIPAL, RESOURCE_ID);
+
+        //perform the create rdf operation
+        session.persist(rdfSourceOperation);
+
+        //commit to new version
+        session.commit();
+
+
+        //create a new session and verify that the state is the same
+        final OCFLPersistentStorageSession newSession = createSession(index, objectSessionFactory);
+
+        //get the newly created version
+        final List<Instant> versions = newSession.listVersions(RESOURCE_ID);
+        final Instant version = versions.get(versions.size() - 1);
+
+        //verify get triples from version
+        final RdfStream retrievedUserStream = newSession.getTriples(RESOURCE_ID, version);
+        final var node = createURI(RESOURCE_ID);
+        assertEquals(node, retrievedUserStream.topic());
+        assertEquals(dcTitleTriple, retrievedUserStream.findFirst().get());
+    }
 }
