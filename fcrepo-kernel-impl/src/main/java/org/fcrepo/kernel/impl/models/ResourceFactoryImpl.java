@@ -17,15 +17,12 @@
  */
 package org.fcrepo.kernel.impl.models;
 
-import javax.inject.Inject;
-
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 
-import java.net.URI;
-import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
@@ -141,9 +138,6 @@ public class ResourceFactoryImpl implements ResourceFactory {
         resc.setParentId(headers.getParent());
         resc.setEtag(headers.getStateToken());
         resc.setStateToken(headers.getStateToken());
-        if (headers.getTypes() != null) {
-            resc.setTypes(headers.getTypes().stream().map(URI::create).collect(Collectors.toList()));
-        }
 
         if (resc instanceof Binary) {
             // set binary headers

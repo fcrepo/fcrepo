@@ -20,7 +20,6 @@ package org.fcrepo.persistence.api.common;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.List;
 
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 
@@ -38,8 +37,6 @@ public class ResourceHeadersImpl implements ResourceHeaders {
     private String stateToken;
 
     private String interactionModel;
-
-    private List<String> types;
 
     private String mimeType;
 
@@ -263,17 +260,5 @@ public class ResourceHeadersImpl implements ResourceHeaders {
     @Override
     public String getExternalUrl() {
         return externalUrl;
-    }
-
-    @Override
-    public List<String> getTypes() {
-        return types;
-    }
-
-    /**
-     * @param types the types to set
-     */
-    public void setTypes(final List<String> types) {
-        this.types = types;
     }
 }

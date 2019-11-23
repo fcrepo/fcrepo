@@ -17,10 +17,8 @@
  */
 package org.fcrepo.kernel.impl.models;
 
-import static java.util.Arrays.stream;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.junit.Assert.assertEquals;
@@ -31,11 +29,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
-import java.net.URI;
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.Transaction;
@@ -170,19 +165,6 @@ public class ResourceFactoryImplTest {
     }
 
     @Test
-    public void getResource_BasicContainer_WithTypes() throws Exception {
-        populateHeaders(resourceHeaders, BASIC_CONTAINER);
-        resourceHeaders.setTypes(typesToStringList(BASIC_CONTAINER, FEDORA_CONTAINER));
-
-        final var resc = factory.getResource(fedoraId);
-
-        assertTrue("Factory must return a container", resc instanceof Container);
-        assertEquals(fedoraId, resc.getId());
-        assertStateFieldsMatches(resc);
-        assertTypesMatch(resc, BASIC_CONTAINER, FEDORA_CONTAINER);
-    }
-
-    @Test
     public void getResource_BasicContainer_InTransaction() throws Exception {
         populateHeaders(resourceHeaders, BASIC_CONTAINER);
 
@@ -263,12 +245,6 @@ public class ResourceFactoryImplTest {
         factory.getResource(fedoraId);
     }
 
-    private void assertTypesMatch(final FedoraResource resc, final Resource... types) {
-        assertEquals("Incorrect number of types found", types.length, resc.getTypes().size());
-        assertTrue("One or more expected types were missing",
-                resc.getTypes().containsAll(typesToUriList(types)));
-    }
-
     private void assertStateFieldsMatches(final FedoraResource resc) {
         assertEquals(CREATED_DATE, resc.getCreatedDate());
         assertEquals(CREATED_BY, resc.getCreatedBy());
@@ -285,13 +261,5 @@ public class ResourceFactoryImplTest {
         headers.setLastModifiedBy(LAST_MODIFIED_BY);
         headers.setLastModifiedDate(LAST_MODIFIED_DATE);
         headers.setStateToken(STATE_TOKEN);
-    }
-
-    private static List<String> typesToStringList(final Resource... types) {
-        return stream(types).map(Resource::getURI).collect(Collectors.toList());
-    }
-
-    private static List<URI> typesToUriList(final Resource... types) {
-        return stream(types).map(Resource::getURI).map(URI::create).collect(Collectors.toList());
     }
 }
