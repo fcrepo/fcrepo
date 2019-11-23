@@ -15,39 +15,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.operations;
+package org.fcrepo.persistence.api;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.Collection;
 
 /**
- * Builder for operations to create non-rdf sources
+ * Information describing the outcome of a write operation.
  *
  * @author bbpennel
  */
-public interface CreateNonRdfSourceOperationBuilder extends NonRdfSourceOperationBuilder {
-
-    @Override
-    CreateNonRdfSourceOperationBuilder mimeType(String mimetype);
-
-    @Override
-    CreateNonRdfSourceOperationBuilder filename(String filename);
-
-    @Override
-    CreateNonRdfSourceOperationBuilder contentDigests(Collection<URI> digests);
-
-    @Override
-    CreateNonRdfSourceOperationBuilder contentSize(Long size);
+public interface WriteOutcome {
 
     /**
-     * Set the parent identifier of the resource
+     * The size of the file written.
      *
-     * @param parentId parent internal identifier
-     * @return the builder
+     * @return content size
      */
-    CreateNonRdfSourceOperationBuilder parentId(String parentId);
+    Long getContentSize();
 
-    @Override
-    CreateNonRdfSourceOperationBuilder userPrincipal(String userPrincipal);
+    /**
+     * The time at which the write completed
+     *
+     * @return instant representing the time the write completed
+     */
+    Instant getTimeWritten();
 
+    /**
+     * Digests calculated from the content during writing
+     *
+     * @return digests
+     */
+    Collection<URI> getDigests();
 }

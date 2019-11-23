@@ -110,7 +110,7 @@ public abstract class AbstractNonRdfSourceOperation extends AbstractResourceOper
     }
 
     @Override
-    public long getContentSize() {
+    public Long getContentSize() {
         return contentSize;
     }
 

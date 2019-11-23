@@ -57,7 +57,7 @@ public interface NonRdfSourceOperationBuilder extends ResourceOperationBuilder {
      * @param size size of the content in bytes
      * @return the builder
      */
-    NonRdfSourceOperationBuilder contentSize(long size);
+    NonRdfSourceOperationBuilder contentSize(Long size);
 
     @Override
     NonRdfSourceOperationBuilder userPrincipal(String userPrincipal);

@@ -428,7 +428,7 @@ public class FedoraLdp extends ContentExposingResource {
                 // TODO: Implement UpdateResourceService
             } else {
                 createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, null, false,
-                        contentType,
+                        contentType, contentDisposition.getFileName(), contentDisposition.getSize(),
                         links, checksums, requestBodyStream, extContent);
             }
         } else {
@@ -585,9 +585,9 @@ public class FedoraLdp extends ContentExposingResource {
         if (isBinary(interactionModel, requestContentType.toString(), requestContentType != null,
                 extContent != null)) {
             final Collection<String> checksums = parseDigestHeader(digest);
+            final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
             createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, slug, true, contentType,
-                    links, checksums,
-                    requestBodyStream, extContent);
+                    originalFileName, contentDisposition.getSize(), links, checksums, requestBodyStream, extContent);
         } else {
             final Model model = httpRdfService.bodyToInternalModel(externalPath(), requestBodyStream,
                     requestContentType);

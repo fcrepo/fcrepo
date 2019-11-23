@@ -60,9 +60,26 @@ public class ResourceHeaderUtils {
      * @param userPrincipal user principal performing the change
      */
     public static void touchCreationHeaders(final ResourceHeadersImpl headers, final String userPrincipal) {
-        final ZonedDateTime now = ZonedDateTime.now();
-        final Instant nowInstant = now.toInstant();
-        headers.setCreatedDate(nowInstant);
+        touchCreationHeaders(headers, userPrincipal, null);
+    }
+
+    /**
+     * Update creation headers to the current state.
+     *
+     * @param headers headers object to update
+     * @param userPrincipal user principal performing the change
+     * @param createdDate time created. Defaults to now if not provided.
+     */
+    public static void touchCreationHeaders(final ResourceHeadersImpl headers, final String userPrincipal,
+            final Instant createdDate) {
+        final Instant instant;
+        if (createdDate == null) {
+            final ZonedDateTime now = ZonedDateTime.now();
+            instant = now.toInstant();
+        } else {
+            instant = createdDate;
+        }
+        headers.setCreatedDate(instant);
         headers.setCreatedBy(userPrincipal);
     }
 
@@ -73,9 +90,26 @@ public class ResourceHeaderUtils {
      * @param userPrincipal user principal performing the change
      */
     public static void touchModificationHeaders(final ResourceHeadersImpl headers, final String userPrincipal) {
-        final ZonedDateTime now = ZonedDateTime.now();
-        final Instant nowInstant = now.toInstant();
-        headers.setLastModifiedDate(nowInstant);
+        touchModificationHeaders(headers, userPrincipal, null);
+    }
+
+    /**
+     * Update modification headers to the current state
+     *
+     * @param headers headers object to update
+     * @param userPrincipal user principal performing the change
+     * @param modifiedDate modified time. Defaults to now if not provided.
+     */
+    public static void touchModificationHeaders(final ResourceHeadersImpl headers, final String userPrincipal,
+            final Instant modifiedDate) {
+        final Instant instant;
+        if (modifiedDate == null) {
+            final ZonedDateTime now = ZonedDateTime.now();
+            instant = now.toInstant();
+        } else {
+            instant = modifiedDate;
+        }
+        headers.setLastModifiedDate(instant);
         headers.setLastModifiedBy(userPrincipal);
     }
 

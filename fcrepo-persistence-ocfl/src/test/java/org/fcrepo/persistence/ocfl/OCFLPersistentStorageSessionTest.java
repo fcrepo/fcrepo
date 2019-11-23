@@ -17,40 +17,6 @@
  */
 package org.fcrepo.persistence.ocfl;
 
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
-import org.apache.jena.vocabulary.DC;
-import org.fcrepo.kernel.api.FedoraTypes;
-import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.operations.CreateResourceOperation;
-import org.fcrepo.kernel.api.operations.RdfSourceOperation;
-import org.fcrepo.kernel.api.operations.ResourceOperation;
-import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.persistence.api.CommitOption;
-import org.fcrepo.persistence.api.PersistentStorageSession;
-import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
-import org.fcrepo.persistence.ocfl.impl.DefaultOCFLObjectSession;
-import org.fcrepo.persistence.ocfl.impl.DefaultOCFLObjectSessionFactory;
-import org.fcrepo.persistence.ocfl.impl.FedoraOCFLMapping;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
-
-import java.io.IOException;
-import java.time.Instant;
-import java.util.Random;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
-
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
@@ -67,6 +33,41 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
+
+import java.io.InputStream;
+import java.time.Instant;
+import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
+
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.vocabulary.DC;
+import org.fcrepo.kernel.api.FedoraTypes;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.operations.CreateResourceOperation;
+import org.fcrepo.kernel.api.operations.RdfSourceOperation;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.persistence.api.CommitOption;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.WriteOutcome;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
+import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
+import org.fcrepo.persistence.ocfl.impl.DefaultOCFLObjectSession;
+import org.fcrepo.persistence.ocfl.impl.DefaultOCFLObjectSessionFactory;
+import org.fcrepo.persistence.ocfl.impl.FedoraOCFLMapping;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.stubbing.Answer;
 
 /**
  * Test class for {@link OCFLPersistentStorageSession}
@@ -88,6 +89,9 @@ public class OCFLPersistentStorageSessionTest {
 
     @Mock
     private FedoraOCFLMapping mapping2;
+
+    @Mock
+    private WriteOutcome writeOutcome;
 
     @Mock
     private OCFLObjectSessionFactory mockSessionFactory;
@@ -119,7 +123,7 @@ public class OCFLPersistentStorageSessionTest {
     private ResourceOperation unsupportedOperation;
 
     @Before
-    public void setUp() throws IOException {
+    public void setUp() throws Exception {
         final var stagingDir = tempFolder.newFolder("ocfl-staging");
         final var repoDir = tempFolder.newFolder("ocfl-repo");
         final var workDir = tempFolder.newFolder("ocfl-work");
@@ -133,6 +137,9 @@ public class OCFLPersistentStorageSessionTest {
                 CreateResourceOperation.class));
         rdfSourceOperation2 = mock(RdfSourceOperation.class, withSettings().extraInterfaces(
                 CreateResourceOperation.class));
+
+        when(objectSession1.write(anyString(), any(InputStream.class))).thenReturn(writeOutcome);
+        when(objectSession2.write(anyString(), any(InputStream.class))).thenReturn(writeOutcome);
     }
 
     private OCFLPersistentStorageSession createSession(final FedoraToOCFLObjectIndex index,

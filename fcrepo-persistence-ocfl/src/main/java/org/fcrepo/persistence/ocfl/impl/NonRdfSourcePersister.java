@@ -37,6 +37,7 @@ import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.common.ResourceHeadersImpl;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
@@ -64,43 +65,71 @@ public class NonRdfSourcePersister extends AbstractPersister {
 
     @Override
     public void persist(final PersistentStorageSession storageSession, final OCFLObjectSession session,
-            final ResourceOperation operation,
-                        final FedoraOCFLMapping mapping) throws PersistentStorageException {
+                        final ResourceOperation operation, final FedoraOCFLMapping mapping)
+                                throws PersistentStorageException {
         log.debug("persisting ({}) to {}", operation.getResourceId(), mapping.getOcflObjectId());
         final String subpath = relativizeSubpath(mapping.getParentFedoraResourceId(), operation.getResourceId());
 
         // write user content
         final var nonRdfSourceOperation = (NonRdfSourceOperation) operation;
-        session.write(subpath, nonRdfSourceOperation.getContentStream());
+        // TODO supply list of digests to calculate or wrap contentStream in DigestInputStream
+        final WriteOutcome outcome;
+        if (forExternalBinary(nonRdfSourceOperation)) {
+            outcome = null;
+        } else {
+            outcome = session.write(subpath, nonRdfSourceOperation.getContentStream());
+        }
+        // TODO verify digests in the outcome match supplied digests
 
         // Write resource headers
-        final var headers = populateHeaders(storageSession, nonRdfSourceOperation);
+        final var headers = populateHeaders(storageSession, nonRdfSourceOperation, outcome);
         writeHeaders(session, headers, subpath);
     }
 
     private ResourceHeaders populateHeaders(final PersistentStorageSession storageSession,
-            final NonRdfSourceOperation operation) throws PersistentStorageException {
-        final ResourceHeadersImpl headers;
-        if (CREATE.equals(operation.getType())) {
-            final var createOperation = (CreateResourceOperation) operation;
-            headers = newResourceHeaders(createOperation.getParentId(),
-                    operation.getResourceId(),
-                    NON_RDF_SOURCE.toString());
-            touchCreationHeaders(headers, operation.getUserPrincipal());
-        } else {
-            headers = (ResourceHeadersImpl) storageSession.getHeaders(operation.getResourceId(), null);
-        }
-        touchModificationHeaders(headers, operation.getUserPrincipal());
+            final NonRdfSourceOperation op, final WriteOutcome writeOutcome) throws PersistentStorageException {
 
-        populateBinaryHeaders(headers, operation.getMimeType(),
-                operation.getFilename(),
-                operation.getContentSize(),
-                operation.getContentDigests());
-        if (operation.getContentUri() != null) {
-            populateExternalBinaryHeaders(headers, operation.getContentUri().toString(),
-                    operation.getExternalHandling());
+        final ResourceHeadersImpl headers;
+        final var timeWritten = writeOutcome != null ? writeOutcome.getTimeWritten() : null;
+        if (CREATE.equals(op.getType())) {
+            final var createOperation = (CreateResourceOperation) op;
+            headers = newResourceHeaders(createOperation.getParentId(),
+                    op.getResourceId(),
+                    NON_RDF_SOURCE.toString());
+            touchCreationHeaders(headers, op.getUserPrincipal(), timeWritten);
+        } else {
+            headers = (ResourceHeadersImpl) storageSession.getHeaders(op.getResourceId(), null);
+        }
+        touchModificationHeaders(headers, op.getUserPrincipal(), timeWritten);
+
+        final var contentSize = getContentSize(op, writeOutcome);
+
+        populateBinaryHeaders(headers, op.getMimeType(),
+                op.getFilename(),
+                contentSize,
+                op.getContentDigests());
+        if (forExternalBinary(op)) {
+            populateExternalBinaryHeaders(headers, op.getContentUri().toString(),
+                    op.getExternalHandling());
         }
 
         return headers;
+    }
+
+    private Long getContentSize(final NonRdfSourceOperation op, final WriteOutcome writeOutcome)
+            throws PersistentStorageException {
+        if (writeOutcome == null) {
+            return op.getContentSize();
+        } else {
+            final var writtenSize = writeOutcome.getContentSize();
+            if (op.getContentSize() != null && !writtenSize.equals(op.getContentSize())) {
+                throw new PersistentStorageException("Size of persisted binary did not match supplied expected size");
+            }
+            return writtenSize;
+        }
+    }
+
+    private boolean forExternalBinary(final NonRdfSourceOperation op) {
+        return op.getContentUri() != null && op.getExternalHandling() != null;
     }
 }

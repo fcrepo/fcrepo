@@ -40,14 +40,16 @@ public interface CreateResourceService {
      * @param slug The Slug header or null if none.
      * @param isContained The new resource is contained by fedoraId (ie. POST).
      * @param contentType The content-type header or null if none.
+     * @param filename original filename of the binary
+     * @param contentSize size of the content stream
      * @param linkHeaders The original LINK headers or null if none.
      * @param digest The binary digest or null if none.
      * @param requestBody The request body or null if none.
      * @param externalContent The external content handler or null if none.
      */
     void perform(String txId, String userPrincipal, String fedoraId, String slug, boolean isContained,
-            String contentType, List<String> linkHeaders, Collection<String> digest,
-            InputStream requestBody, ExternalContent externalContent);
+            String contentType, String filename, Long contentSize, List<String> linkHeaders,
+            Collection<String> digest, InputStream requestBody, ExternalContent externalContent);
 
     /**
      * Create a new RdfSource resource.

@@ -24,6 +24,7 @@ import org.apache.jena.riot.system.StreamRDF;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.slf4j.Logger;
@@ -123,9 +124,10 @@ public class OCFLPersistentStorageUtils {
      * @param session The object session
      * @param triples The triples
      * @param subpath The subpath within the OCFL Object
+     * @return the outcome of the write operation
      * @throws PersistentStorageException on write failure
      */
-    public static void writeRDF(final OCFLObjectSession session, final RdfStream triples, final String subpath)
+    public static WriteOutcome writeRDF(final OCFLObjectSession session, final RdfStream triples, final String subpath)
             throws PersistentStorageException {
         try (final var  os = new ByteArrayOutputStream()) {
             final StreamRDF streamRDF = getWriterStream(os, getRdfFormat());
@@ -134,8 +136,9 @@ public class OCFLPersistentStorageUtils {
             streamRDF.finish();
 
             final var is = new ByteArrayInputStream(os.toByteArray());
-            session.write(subpath + getRDFFileExtension(), is);
+            final var outcome = session.write(subpath + getRDFFileExtension(), is);
             log.debug("wrote {} to {}", subpath, session);
+            return outcome;
         } catch (final IOException ex) {
             throw new PersistentStorageException(format("failed to write subpath %s in %s", subpath, session), ex);
         }

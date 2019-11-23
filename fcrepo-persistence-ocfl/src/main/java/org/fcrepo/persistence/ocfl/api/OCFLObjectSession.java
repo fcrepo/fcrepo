@@ -21,6 +21,7 @@ package org.fcrepo.persistence.ocfl.api;
 import java.io.InputStream;
 
 import org.fcrepo.persistence.api.CommitOption;
+import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
 /**
@@ -37,14 +38,16 @@ public interface OCFLObjectSession {
      * @return The default commit option
      */
     CommitOption getDefaultCommitOption();
+
     /**
      * Write the provided content to specified subpath.
      *
      * @param subpath path of the resource to write, relative to the OCFL object
      * @param stream stream of content to write
+     * @return information about the data written.
      * @throws PersistentStorageException thrown if unable to persist content
      */
-    void write(String subpath, InputStream stream) throws PersistentStorageException;
+    WriteOutcome write(String subpath, InputStream stream) throws PersistentStorageException;
 
     /**
      * Delete a file from this ocfl object.

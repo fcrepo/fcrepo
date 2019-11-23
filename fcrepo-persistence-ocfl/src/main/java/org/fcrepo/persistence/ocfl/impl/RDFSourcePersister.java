@@ -36,6 +36,7 @@ import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.common.ResourceHeadersImpl;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
@@ -70,26 +71,28 @@ public class RDFSourcePersister extends AbstractPersister {
         final String subpath = relativizeSubpath(mapping.getParentFedoraResourceId(), operation.getResourceId());
         final String resolvedSubpath = resolveOCFLSubpath(subpath);
         //write user triples
-        writeRDF(session, rdfSourceOp.getTriples(), resolvedSubpath);
+        final var outcome = writeRDF(session, rdfSourceOp.getTriples(), resolvedSubpath);
 
         // Write resource headers
-        final var headers = populateHeaders(storageSession, rdfSourceOp);
+        final var headers = populateHeaders(storageSession, rdfSourceOp, outcome);
         writeHeaders(session, headers, subpath);
     }
 
     private ResourceHeaders populateHeaders(final PersistentStorageSession storageSession,
-            final RdfSourceOperation operation) throws PersistentStorageException {
+            final RdfSourceOperation operation, final WriteOutcome outcome) throws PersistentStorageException {
+
         final ResourceHeadersImpl headers;
+        final var timeWritten = outcome.getTimeWritten();
         if (CREATE.equals(operation.getType())) {
             final var createOperation = (CreateResourceOperation) operation;
             headers = newResourceHeaders(createOperation.getParentId(),
                     operation.getResourceId(),
                     createOperation.getInteractionModel());
-            touchCreationHeaders(headers, operation.getUserPrincipal());
+            touchCreationHeaders(headers, operation.getUserPrincipal(), timeWritten);
         } else {
             headers = (ResourceHeadersImpl) storageSession.getHeaders(operation.getResourceId(), null);
         }
-        touchModificationHeaders(headers, operation.getUserPrincipal());
+        touchModificationHeaders(headers, operation.getUserPrincipal(), timeWritten);
 
         overrideRelaxedProperties(headers, operation);
 

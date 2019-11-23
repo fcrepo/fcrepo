@@ -33,6 +33,8 @@ import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.getInternal
 import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.getRDFFileExtension;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -55,6 +57,7 @@ import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.junit.Before;
 import org.junit.Test;
@@ -97,6 +100,9 @@ public class RDFSourcePersisterTest {
     @Mock
     private FedoraOCFLMapping mapping;
 
+    @Mock
+    private WriteOutcome writeOutcome;
+
     @Captor
     private ArgumentCaptor<InputStream> userTriplesIsCaptor;
 
@@ -106,9 +112,11 @@ public class RDFSourcePersisterTest {
     private final RDFSourcePersister persister = new RDFSourcePersister();
 
     @Before
-    public void setup() {
+    public void setup() throws Exception {
         operation = mock(RdfSourceOperation.class, withSettings().extraInterfaces(
                 CreateResourceOperation.class));
+
+        when(session.write(anyString(), any(InputStream.class))).thenReturn(writeOutcome);
     }
 
     @Test

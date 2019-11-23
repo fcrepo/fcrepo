@@ -102,7 +102,7 @@ public class CreateNonRdfSourceOperationBuilderImpl implements CreateNonRdfSourc
     }
 
     @Override
-    public CreateNonRdfSourceOperationBuilderImpl contentSize(final long size) {
+    public CreateNonRdfSourceOperationBuilderImpl contentSize(final Long size) {
         this.contentSize = size;
         return this;
     }

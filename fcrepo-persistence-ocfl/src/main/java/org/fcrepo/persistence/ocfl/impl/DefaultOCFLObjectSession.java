@@ -40,6 +40,8 @@ import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.api.CommitOption;
+import org.fcrepo.persistence.api.WriteOutcome;
+import org.fcrepo.persistence.api.common.FileWriteOutcome;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,7 +116,8 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
      * {@inheritDoc}
      */
     @Override
-    public synchronized void write(final String subpath, final InputStream stream) throws PersistentStorageException {
+    public synchronized WriteOutcome write(final String subpath, final InputStream stream)
+            throws PersistentStorageException {
         // Determine the staging path for the incoming content
         final var stagedPath = resolveStagedPath(subpath);
         try {
@@ -126,6 +129,8 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
             Files.createDirectories(parentPath);
             // write contents to subpath within the staging path
             Files.copy(stream, stagedPath, StandardCopyOption.REPLACE_EXISTING);
+
+            return new FileWriteOutcome(stagedPath);
         } catch (final IOException e) {
             throw new PersistentStorageException("Unable to persist content to " + stagedPath, e);
         } finally {

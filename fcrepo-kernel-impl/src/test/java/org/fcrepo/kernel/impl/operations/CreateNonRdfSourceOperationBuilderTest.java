@@ -79,8 +79,8 @@ public class CreateNonRdfSourceOperationBuilderTest {
 
     @Test
     public void testSize() {
-        final long filesize = 123;
-        final NonRdfSourceOperation op = internalBuilder.contentSize(123).build();
+        final Long filesize = 123l;
+        final NonRdfSourceOperation op = internalBuilder.contentSize(filesize).build();
         assertEquals(filesize, op.getContentSize());
     }
 

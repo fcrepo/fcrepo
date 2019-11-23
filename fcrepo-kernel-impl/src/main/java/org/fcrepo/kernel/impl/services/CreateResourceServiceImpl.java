@@ -72,8 +72,8 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
     @Override
     public void perform(final String txId, final String userPrincipal, final String fedoraId, final String slug,
-            final boolean isContained,
-                        final String contentType, final List<String> linkHeaders, final Collection<String> digest,
+                        final boolean isContained, final String contentType, final String filename,
+                        final Long contentSize, final List<String> linkHeaders, final Collection<String> digest,
                         final InputStream requestBody, final ExternalContent externalContent) {
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
         checkAclLinkHeader(linkHeaders);
@@ -87,16 +87,21 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         final Collection<URI> uriDigests = (digest == null ? Collections.emptySet() :
                 digest.stream().map(URI::create).collect(Collectors.toCollection(HashSet::new)));
         final NonRdfSourceOperationBuilder builder;
+        final String mimeType;
         if (externalContent == null) {
             builder = nonRdfSourceOperationFactory.createInternalBinaryBuilder(fullPath, requestBody);
+            mimeType = contentType;
         } else {
             builder = nonRdfSourceOperationFactory.createExternalBinaryBuilder(fullPath, externalContent.getHandling(),
                     URI.create(externalContent.getURL()));
+            mimeType = externalContent.getContentType();
         }
         final ResourceOperation createOp = builder
                 .userPrincipal(userPrincipal)
                 .contentDigests(uriDigests)
-                .mimeType(contentType)
+                .mimeType(mimeType)
+                .contentSize(contentSize)
+                .filename(filename)
                 .build();
 
         try {
