@@ -54,7 +54,7 @@ public interface NonRdfSourceOperationFactory extends ResourceOperationFactory {
      * @param contentUri the URI of the external binary content
      * @return a new builder
      */
-    NonRdfSourceOperationBuilder createExternalBinaryBuilder(String rescId, String handling, URI contentUri);
+    CreateNonRdfSourceOperationBuilder createExternalBinaryBuilder(String rescId, String handling, URI contentUri);
 
     /**
      * Get a builder for an internal binary create operation
@@ -63,5 +63,5 @@ public interface NonRdfSourceOperationFactory extends ResourceOperationFactory {
      * @param contentStream inputstream for the content of this binary
      * @return a new builder
      */
-    NonRdfSourceOperationBuilder createInternalBinaryBuilder(String rescId, InputStream contentStream);
+    CreateNonRdfSourceOperationBuilder createInternalBinaryBuilder(String rescId, InputStream contentStream);
 }

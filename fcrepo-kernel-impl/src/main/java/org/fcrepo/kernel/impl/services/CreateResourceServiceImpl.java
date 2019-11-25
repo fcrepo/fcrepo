@@ -40,7 +40,7 @@ import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.ExternalContent;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
-import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
+import org.fcrepo.kernel.api.operations.CreateNonRdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
@@ -86,7 +86,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
         final Collection<URI> uriDigests = (digest == null ? Collections.emptySet() :
                 digest.stream().map(URI::create).collect(Collectors.toCollection(HashSet::new)));
-        final NonRdfSourceOperationBuilder builder;
+        final CreateNonRdfSourceOperationBuilder builder;
         final String mimeType;
         if (externalContent == null) {
             builder = nonRdfSourceOperationFactory.createInternalBinaryBuilder(fullPath, requestBody);
@@ -97,6 +97,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
             mimeType = externalContent.getContentType();
         }
         final ResourceOperation createOp = builder
+                .parentId(parentId)
                 .userPrincipal(userPrincipal)
                 .contentDigests(uriDigests)
                 .mimeType(mimeType)
@@ -128,6 +129,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         final RdfStream stream = fromModel(model.getResource(fedoraId).asNode(), model);
 
         final ResourceOperation createOp = rdfSourceOperationFactory.createBuilder(fullPath, interactionModel)
+                .parentId(parentId)
                 .triples(stream)
                 .relaxedProperties(model)
                 .build();
@@ -185,18 +187,19 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
     private String getResourcePath(final PersistentStorageSession pSession, final String fedoraId, final String slug)
         throws RepositoryRuntimeException {
 
-        String finalSlug;
+        final String finalSlug;
         if (slug == null) {
             finalSlug = this.minter.get();
         } else {
+            final var joinedId = addToIdentifier(fedoraId, slug);
             try {
                 // TODO: object existence check could be from an index. Review later.
-                pSession.getHeaders(addToIdentifier(fedoraId, slug), null);
+                pSession.getHeaders(joinedId, null);
                 // Resource with slug name exists already, so we need to generate a new path.
                 finalSlug = this.minter.get();
             } catch (final PersistentItemNotFoundException exc) {
                 // Doesn't already exist so the slug is fine.
-                finalSlug = slug;
+                return joinedId;
             } catch (final PersistentStorageException exc) {
                 throw new RepositoryRuntimeException(String.format("Failed to find storage headers for %s", fedoraId),
                     exc);

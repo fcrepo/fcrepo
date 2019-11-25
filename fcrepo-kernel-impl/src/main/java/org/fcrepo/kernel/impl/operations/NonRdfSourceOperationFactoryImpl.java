@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.operations.CreateNonRdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
 
@@ -44,13 +45,13 @@ public class NonRdfSourceOperationFactoryImpl implements NonRdfSourceOperationFa
     }
 
     @Override
-    public NonRdfSourceOperationBuilder createExternalBinaryBuilder(final String rescId,
+    public CreateNonRdfSourceOperationBuilder createExternalBinaryBuilder(final String rescId,
             final String handling, final URI contentUri) {
         return new CreateNonRdfSourceOperationBuilderImpl(rescId, handling, contentUri);
     }
 
     @Override
-    public NonRdfSourceOperationBuilder createInternalBinaryBuilder(final String rescId,
+    public CreateNonRdfSourceOperationBuilder createInternalBinaryBuilder(final String rescId,
             final InputStream contentStream) {
         return new CreateNonRdfSourceOperationBuilderImpl(rescId, contentStream);
     }

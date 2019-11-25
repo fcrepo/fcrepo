@@ -19,16 +19,22 @@ package org.fcrepo.kernel.impl.services;
 
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DEFAULT_INTERACTION_MODEL;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED_PROPERTIES_MODE;
 import static org.fcrepo.kernel.impl.services.functions.FedoraIdUtils.addToIdentifier;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,9 +42,11 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -57,9 +65,12 @@ import org.fcrepo.kernel.api.models.ExternalContent;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
+import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
+import org.fcrepo.kernel.impl.operations.CreateNonRdfSourceOperation;
+import org.fcrepo.kernel.impl.operations.CreateRdfSourceOperation;
 import org.fcrepo.kernel.impl.operations.NonRdfSourceOperationFactoryImpl;
 import org.fcrepo.kernel.impl.operations.RdfSourceOperationFactoryImpl;
 import org.fcrepo.persistence.api.PersistentStorageSession;
@@ -174,7 +185,9 @@ public class CreateResourceServiceImplTest {
         createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, false, null, FILENAME, CONTENT_SIZE,
                 null, DIGESTS, null, null);
         verify(psSession).persist(operationCaptor.capture());
-        assertEquals(fedoraId, operationCaptor.getValue().getResourceId());
+        final var operation = operationCaptor.getValue();
+        assertEquals(fedoraId, operation.getResourceId());
+        assertNull(((CreateNonRdfSourceOperation) operation).getParentId());
     }
 
     @Test(expected = CannotCreateResourceException.class)
@@ -213,8 +226,10 @@ public class CreateResourceServiceImplTest {
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, false, null, model);
         verify(psSession).persist(operationCaptor.capture());
-        final String persistedId = operationCaptor.getValue().getResourceId();
+        final var operation = (CreateRdfSourceOperation) operationCaptor.getValue();
+        final String persistedId = operation.getResourceId();
         assertEquals(fedoraId, persistedId);
+        assertNull("No parent expected", operation.getParentId());
     }
 
     @Test
@@ -224,12 +239,14 @@ public class CreateResourceServiceImplTest {
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, CONTENT_TYPE, FILENAME,
                 CONTENT_SIZE, null, DIGESTS, null, null);
+
         verify(psSession).persist(operationCaptor.capture());
-        final var operation = operationCaptor.getValue();
+        final var operation = (CreateNonRdfSourceOperation) operationCaptor.getValue();
         final String persistedId = operation.getResourceId();
         assertNotEquals(fedoraId, persistedId);
         assertTrue(persistedId.startsWith(fedoraId));
         assertBinaryPropertiesPresent(operation);
+        assertEquals(fedoraId, operation.getParentId());
     }
 
     @Test
@@ -239,11 +256,13 @@ public class CreateResourceServiceImplTest {
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, false, CONTENT_TYPE, FILENAME,
                 CONTENT_SIZE, null, DIGESTS, null, null);
+
         verify(psSession).persist(operationCaptor.capture());
-        final var operation = operationCaptor.getValue();
+        final var operation = (CreateNonRdfSourceOperation) operationCaptor.getValue();
         final String persistedId = operation.getResourceId();
         assertEquals(fedoraId, persistedId);
         assertBinaryPropertiesPresent(operation);
+        assertNull("No parent expected", operation.getParentId());
     }
 
     @Test
@@ -254,11 +273,54 @@ public class CreateResourceServiceImplTest {
         when(psSession.getHeaders(childId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, null, model);
+
         verify(psSession).persist(operationCaptor.capture());
-        final String persistedId = operationCaptor.getValue().getResourceId();
+        final var operation = (CreateRdfSourceOperation) operationCaptor.getValue();
+        final String persistedId = operation.getResourceId();
         assertNotEquals(fedoraId, persistedId);
         assertNotEquals(childId, persistedId);
         assertTrue(persistedId.startsWith(fedoraId));
+        assertEquals(fedoraId, operation.getParentId());
+    }
+
+    @Test
+    public void testRdfSetRelaxedProperties_Post() throws Exception {
+        final var createdDate = Instant.parse("2019-11-12T10:00:30.0Z");
+        final var lastModifiedDate = Instant.parse("2019-11-12T14:11:05.0Z");
+        final String relaxedUser = "relaxedUser";
+
+        final String fedoraId = UUID.randomUUID().toString();
+        final String childId = addToIdentifier(fedoraId, "testSlug");
+
+        final var resc = model.getResource(childId);
+        resc.addLiteral(LAST_MODIFIED_DATE, Date.from(lastModifiedDate));
+        resc.addLiteral(LAST_MODIFIED_BY, relaxedUser);
+        resc.addLiteral(CREATED_DATE, Date.from(createdDate));
+        resc.addLiteral(CREATED_BY, relaxedUser);
+
+        when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
+        when(psSession.getHeaders(childId, null)).thenThrow(PersistentItemNotFoundException.class);
+
+        when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
+        try {
+            System.setProperty(SERVER_MANAGED_PROPERTIES_MODE, "relaxed");
+            createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, null, model);
+        } finally {
+            System.clearProperty(SERVER_MANAGED_PROPERTIES_MODE);
+        }
+
+        verify(psSession).persist(operationCaptor.capture());
+
+        final var operation = operationCaptor.getValue();
+        final String persistedId = operation.getResourceId();
+        assertNotEquals(fedoraId, persistedId);
+        assertTrue(persistedId.startsWith(fedoraId));
+
+        final var rdfOp = (RdfSourceOperation) operation;
+        assertEquals(relaxedUser, rdfOp.getCreatedBy());
+        assertEquals(relaxedUser, rdfOp.getLastModifiedBy());
+        assertEquals(createdDate, rdfOp.getCreatedDate());
+        assertEquals(lastModifiedDate, rdfOp.getLastModifiedDate());
     }
 
     @Test
@@ -271,12 +333,13 @@ public class CreateResourceServiceImplTest {
         createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, CONTENT_TYPE, FILENAME,
                 CONTENT_SIZE, null, DIGESTS, null, null);
         verify(psSession).persist(operationCaptor.capture());
-        final var operation = operationCaptor.getValue();
+        final var operation = (CreateNonRdfSourceOperation) operationCaptor.getValue();
         final String persistedId = operation.getResourceId();
         assertNotEquals(fedoraId, persistedId);
         assertNotEquals(childId, persistedId);
         assertTrue(persistedId.startsWith(fedoraId));
         assertBinaryPropertiesPresent(operation);
+        assertEquals(fedoraId, operation.getParentId());
     }
 
     @Test
@@ -288,20 +351,28 @@ public class CreateResourceServiceImplTest {
                 .thenThrow(PersistentItemNotFoundException.class);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, null, model);
+
         verify(psSession).persist(operationCaptor.capture());
-        assertEquals(childId, operationCaptor.getValue().getResourceId());
+        final var operation = (CreateRdfSourceOperation) operationCaptor.getValue();
+        assertEquals(childId, operation.getResourceId());
+        assertEquals(fedoraId, operation.getParentId());
     }
 
     @Test
     public void testWithSlugDoesntExistsBinary() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
+        final var childId = addToIdentifier(fedoraId, "testSlug");
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
-        when(psSession.getHeaders(addToIdentifier(fedoraId, "testSlug"), null))
+        when(psSession.getHeaders(childId, null))
                 .thenThrow(PersistentItemNotFoundException.class);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, null, FILENAME,
                 CONTENT_SIZE, null, DIGESTS, null, null);
-        verify(psSession).persist(ArgumentMatchers.any(ResourceOperation.class));
+
+        verify(psSession).persist(operationCaptor.capture());
+        final var operation = (CreateNonRdfSourceOperation) operationCaptor.getValue();
+        assertEquals(childId, operation.getResourceId());
+        assertEquals(fedoraId, operation.getParentId());
     }
 
     @Test(expected = ItemNotFoundException.class)

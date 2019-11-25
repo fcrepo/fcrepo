@@ -18,33 +18,43 @@
 package org.fcrepo.kernel.impl.operations;
 
 import static junit.framework.TestCase.assertTrue;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED_PROPERTIES_MODE;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
+import java.time.Instant;
+import java.util.Date;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.operations.CreateRdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
-import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
-
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class CreateRdfSourceOperationBuilderTest {
 
-    private RdfSourceOperationBuilder builder;
+    private CreateRdfSourceOperationBuilder builder;
 
     private Model model;
 
     private RdfStream stream;
+
+    private static final String PARENT_ID = "info:fedora/parent";
 
     private static final String RESOURCE_ID = "info:fedora/test-subject";
 
@@ -57,6 +67,12 @@ public class CreateRdfSourceOperationBuilderTest {
     private static final String OBJECT_VALUE = "Somebody";
 
     private final Node object = ResourceFactory.createPlainLiteral(OBJECT_VALUE).asNode();
+
+    private final Instant CREATED_INSTANT = Instant.parse("2019-11-12T10:00:30.0Z");
+
+    private final Instant MODIFIED_INSTANT = Instant.parse("2019-11-12T14:11:05.0Z");
+
+    private final String USER_PRINCIPAL = "fedoraUser";
 
     @Before
     public void setUp() {
@@ -80,4 +96,85 @@ public class CreateRdfSourceOperationBuilderTest {
         assertEquals(stream, op.getTriples());
     }
 
+    @Test
+    public void testRelaxedPropertiesAllFields() {
+        final var resc = model.getResource(RESOURCE_ID);
+        resc.addLiteral(LAST_MODIFIED_DATE, Date.from(MODIFIED_INSTANT));
+        resc.addLiteral(LAST_MODIFIED_BY, USER_PRINCIPAL);
+        resc.addLiteral(CREATED_DATE, Date.from(CREATED_INSTANT));
+        resc.addLiteral(CREATED_BY, USER_PRINCIPAL);
+
+        final RdfSourceOperation op = buildOperationWithRelaxProperties(model);
+
+        assertEquals(USER_PRINCIPAL, op.getCreatedBy());
+        assertEquals(USER_PRINCIPAL, op.getLastModifiedBy());
+        assertEquals(CREATED_INSTANT, op.getCreatedDate());
+        assertEquals(MODIFIED_INSTANT, op.getLastModifiedDate());
+    }
+
+    @Test
+    public void testRelaxedPropertiesNonDate() {
+        final var resc = model.getResource(RESOURCE_ID);
+        resc.addLiteral(LAST_MODIFIED_DATE, "Notadate");
+        resc.addLiteral(LAST_MODIFIED_BY, USER_PRINCIPAL);
+        resc.addLiteral(CREATED_DATE, "Notadate");
+        resc.addLiteral(CREATED_BY, USER_PRINCIPAL);
+
+        final RdfSourceOperation op = buildOperationWithRelaxProperties(model);
+
+        assertEquals(USER_PRINCIPAL, op.getCreatedBy());
+        assertEquals(USER_PRINCIPAL, op.getLastModifiedBy());
+        assertNull(op.getCreatedDate());
+        assertNull(op.getLastModifiedDate());
+    }
+
+    @Test
+    public void testRelaxedPropertiesNotRelaxed() {
+        final var resc = model.getResource(RESOURCE_ID);
+        resc.addLiteral(LAST_MODIFIED_DATE, Date.from(MODIFIED_INSTANT));
+        resc.addLiteral(LAST_MODIFIED_BY, USER_PRINCIPAL);
+        resc.addLiteral(CREATED_DATE, Date.from(CREATED_INSTANT));
+        resc.addLiteral(CREATED_BY, USER_PRINCIPAL);
+
+        // Relaxed system property not set
+        final RdfSourceOperation op = builder.relaxedProperties(model).build();
+
+        assertNull(op.getCreatedBy());
+        assertNull(op.getLastModifiedBy());
+        assertNull(op.getCreatedDate());
+        assertNull(op.getLastModifiedDate());
+    }
+
+    @Test
+    public void testRelaxedPropertiesNoProperties() {
+        final RdfSourceOperation op = buildOperationWithRelaxProperties(model);
+
+        assertNull(op.getCreatedBy());
+        assertNull(op.getLastModifiedBy());
+        assertNull(op.getCreatedDate());
+        assertNull(op.getLastModifiedDate());
+    }
+
+    private RdfSourceOperation buildOperationWithRelaxProperties(final Model model) {
+        try {
+            System.setProperty(SERVER_MANAGED_PROPERTIES_MODE, "relaxed");
+            return builder.relaxedProperties(model).build();
+        } finally {
+            System.clearProperty(SERVER_MANAGED_PROPERTIES_MODE);
+        }
+    }
+
+    @Test
+    public void testUserPrincipal() {
+        final RdfSourceOperation op = builder.userPrincipal(USER_PRINCIPAL).build();
+
+        assertEquals(USER_PRINCIPAL, op.getUserPrincipal());
+    }
+
+    @Test
+    public void testParentId() {
+        final CreateRdfSourceOperation op = (CreateRdfSourceOperation) builder.parentId(PARENT_ID).build();
+
+        assertEquals(PARENT_ID, op.getParentId());
+    }
 }

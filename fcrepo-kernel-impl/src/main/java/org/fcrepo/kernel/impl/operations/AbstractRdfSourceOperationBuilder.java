@@ -24,8 +24,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED_PROPERTIES_MODE;
 
 import java.time.Instant;
+import java.util.Date;
 
-import org.apache.jena.datatypes.xsd.XSDDateTime;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
@@ -120,10 +120,11 @@ public abstract class AbstractRdfSourceOperationBuilder implements RdfSourceOper
     private static Instant getPropertyAsInstant(final Resource resc, final Property property) {
         if (resc.hasProperty(property)) {
             final var propObj = resc.getProperty(property).getObject();
-            if (propObj.isLiteral() && propObj instanceof XSDDateTime) {
-                final var literalValue = propObj.asLiteral();
-                if (literalValue instanceof XSDDateTime) {
-                    return ((XSDDateTime) literalValue).asCalendar().toInstant();
+
+            if (propObj.isLiteral()) {
+                final var literalValue = propObj.asLiteral().getValue();
+                if (literalValue instanceof Date) {
+                    return ((Date) literalValue).toInstant();
                 }
             }
         }

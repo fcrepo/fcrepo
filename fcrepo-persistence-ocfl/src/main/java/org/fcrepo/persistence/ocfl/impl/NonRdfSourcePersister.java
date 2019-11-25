@@ -17,6 +17,7 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
@@ -123,7 +124,9 @@ public class NonRdfSourcePersister extends AbstractPersister {
         } else {
             final var writtenSize = writeOutcome.getContentSize();
             if (op.getContentSize() != null && !writtenSize.equals(op.getContentSize())) {
-                throw new PersistentStorageException("Size of persisted binary did not match supplied expected size");
+                throw new PersistentStorageException(format(
+                        "Size of persisted binary did not match supplied expected size: expected %s, received %s",
+                        op.getContentSize(), writtenSize));
             }
             return writtenSize;
         }

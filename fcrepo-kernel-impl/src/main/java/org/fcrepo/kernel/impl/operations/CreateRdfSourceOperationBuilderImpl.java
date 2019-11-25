@@ -47,6 +47,10 @@ public class CreateRdfSourceOperationBuilderImpl extends AbstractRdfSourceOperat
         final var operation = new CreateRdfSourceOperation(resourceId, interactionModel, tripleStream);
         operation.setParentId(parentId);
         operation.setUserPrincipal(userPrincipal);
+        operation.setCreatedBy(createdBy);
+        operation.setCreatedDate(createdDate);
+        operation.setLastModifiedBy(lastModifiedBy);
+        operation.setLastModifiedDate(lastModifiedDate);
         return operation;
     }
 

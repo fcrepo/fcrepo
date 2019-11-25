@@ -75,4 +75,32 @@ public abstract class AbstractRdfSourceOperation extends AbstractResourceOperati
     public Instant getCreatedDate() {
         return createdDate;
     }
+
+    /**
+     * @param lastModifiedBy the lastModifiedBy to set
+     */
+    protected void setLastModifiedBy(final String lastModifiedBy) {
+        this.lastModifiedBy = lastModifiedBy;
+    }
+
+    /**
+     * @param createdBy the createdBy to set
+     */
+    protected void setCreatedBy(final String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    /**
+     * @param lastModifiedDate the lastModifiedDate to set
+     */
+    protected void setLastModifiedDate(final Instant lastModifiedDate) {
+        this.lastModifiedDate = lastModifiedDate;
+    }
+
+    /**
+     * @param createdDate the createdDate to set
+     */
+    protected void setCreatedDate(final Instant createdDate) {
+        this.createdDate = createdDate;
+    }
 }

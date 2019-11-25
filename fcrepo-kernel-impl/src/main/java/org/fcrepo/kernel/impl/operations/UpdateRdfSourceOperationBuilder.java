@@ -39,7 +39,13 @@ public class UpdateRdfSourceOperationBuilder extends AbstractRdfSourceOperationB
 
     @Override
     public RdfSourceOperation build() {
-        return new UpdateRdfSourceOperation(this.resourceId, this.tripleStream);
+        final var operation = new UpdateRdfSourceOperation(this.resourceId, this.tripleStream);
+        operation.setUserPrincipal(userPrincipal);
+        operation.setCreatedBy(createdBy);
+        operation.setCreatedDate(createdDate);
+        operation.setLastModifiedBy(lastModifiedBy);
+        operation.setLastModifiedDate(lastModifiedDate);
+        return operation;
     }
 
     @Override
