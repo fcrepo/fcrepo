@@ -40,6 +40,7 @@ public interface Binary extends FedoraResource {
      *
      * @param content Inputstream
      */
+    @Deprecated
     void setContentStream(InputStream content);
 
     /**
@@ -52,6 +53,7 @@ public interface Binary extends FedoraResource {
      * @param storagePolicyDecisionPoint Policy decision point for storing the content (optional)
      * @throws InvalidChecksumException if invalid checksum exception occurred
      */
+    @Deprecated
     void setContent(InputStream content, String contentType, Collection<URI> checksums,
                     String originalFileName,
                     StoragePolicyDecisionPoint storagePolicyDecisionPoint)
@@ -67,6 +69,7 @@ public interface Binary extends FedoraResource {
      * @param externalUrl Url for the external resourcej
      * @throws InvalidChecksumException if invalid checksum exception occurred
      */
+    @Deprecated
     void setExternalContent(String contentType, Collection<URI> checksums,
                     String originalFileName, String externalHandling, String externalUrl)
             throws InvalidChecksumException;
@@ -101,6 +104,7 @@ public interface Binary extends FedoraResource {
      * Set the URL that this resource is a proxy for
      * @param url - the url of the resource this is a proxy for
      */
+    @Deprecated
     void setProxyURL(String url);
 
     /**
@@ -123,6 +127,7 @@ public interface Binary extends FedoraResource {
      *
      * @param url - the url of the resource this redirects to
      */
+    @Deprecated
     void setRedirectURL(String url);
 
     /**
