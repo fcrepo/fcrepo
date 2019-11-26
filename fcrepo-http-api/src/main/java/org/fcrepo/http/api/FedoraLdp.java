@@ -595,7 +595,7 @@ public class FedoraLdp extends ContentExposingResource {
         if (isBinary(interactionModel, requestContentType.toString(), requestContentType != null,
                 extContent != null)) {
             final Collection<String> checksums = parseDigestHeader(digest);
-            createResourceService.perform(transaction.getId(), fedoraId, slug, false, filename, contentType, links, checksums,
+            createResourceService.perform(transaction.getId(), fedoraId, slug, true, filename, contentType, links, checksums,
                     requestBodyStream, size, extContent);
         } else {
             final Model model = httpRdfService.bodyToInternalModel(externalPath(), requestBodyStream,
