@@ -87,6 +87,16 @@ public class NonRdfSourcePersister extends AbstractPersister {
         writeHeaders(session, headers, subpath);
     }
 
+    /**
+     * Constructs a ResourceHeaders object populated with the properties provided by the
+     * operation, and merged with existing properties if appropriate.
+     *
+     * @param storageSession the storage session encapsulating the operation
+     * @param op the operation being persisted
+     * @param writeOutcome outcome of persisting the original file
+     * @return populated resource headers
+     * @throws PersistentStorageException if unexpectedly unable to retrieve existing object headers
+     */
     private ResourceHeaders populateHeaders(final PersistentStorageSession storageSession,
             final NonRdfSourceOperation op, final WriteOutcome writeOutcome) throws PersistentStorageException {
 
@@ -117,6 +127,16 @@ public class NonRdfSourcePersister extends AbstractPersister {
         return headers;
     }
 
+    /**
+     * Return the size of the written file in bytes. This will either come from the number of bytes written to disk,
+     * or in the case of external binaries, the size provided in the operation
+     *
+     * @param op operation
+     * @param writeOutcome outcome of persisting the original file if applicable
+     * @return size of the file
+     * @throws PersistentStorageException if the number of bytes written does not match the expected file size
+     *         provided in the operation.
+     */
     private Long getContentSize(final NonRdfSourceOperation op, final WriteOutcome writeOutcome)
             throws PersistentStorageException {
         if (writeOutcome == null) {
@@ -132,6 +152,10 @@ public class NonRdfSourcePersister extends AbstractPersister {
         }
     }
 
+    /**
+     * @param op the operation
+     * @return Returns true if the operation involved persisting an external binary
+     */
     private boolean forExternalBinary(final NonRdfSourceOperation op) {
         return op.getContentUri() != null && op.getExternalHandling() != null;
     }

@@ -176,12 +176,6 @@ public class FedoraResourceImpl implements FedoraResource {
     }
 
     @Override
-    public void addType(final String type) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
     public RdfStream getTriples() {
         try {
             return getSession().getTriples(id, getMementoDatetime());

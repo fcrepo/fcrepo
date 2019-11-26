@@ -136,7 +136,7 @@ public class NonRdfSourcePersisterTest {
         final InputStream userContent = userContentCaptor.getValue();
         assertEquals(CONTENT_BODY, IOUtils.toString(userContent, StandardCharsets.UTF_8));
 
-        //verify server triples
+        // verify resource headers
         final var resultHeaders = retrievePersistedHeaders("child");
 
         assertEquals(NON_RDF_SOURCE.toString(), resultHeaders.getInteractionModel());
@@ -157,7 +157,7 @@ public class NonRdfSourcePersisterTest {
 
         persister.persist(storageSession, session, nonRdfSourceOperation, mapping);
 
-        // verify server triples
+        // verify resource headers
         final var resultHeaders = retrievePersistedHeaders("child");
 
         assertEquals(NON_RDF_SOURCE.toString(), resultHeaders.getInteractionModel());
@@ -191,7 +191,7 @@ public class NonRdfSourcePersisterTest {
         final InputStream userContent = userContentCaptor.getValue();
         assertEquals(CONTENT_BODY, IOUtils.toString(userContent, StandardCharsets.UTF_8));
 
-        // verify server triples
+        // verify resource headers
         final var resultHeaders = retrievePersistedHeaders("child");
 
         assertEquals(NON_RDF_SOURCE.toString(), resultHeaders.getInteractionModel());

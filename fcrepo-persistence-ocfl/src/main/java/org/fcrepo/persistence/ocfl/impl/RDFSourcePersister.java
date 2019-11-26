@@ -78,6 +78,16 @@ public class RDFSourcePersister extends AbstractPersister {
         writeHeaders(session, headers, subpath);
     }
 
+    /**
+     * Constructs a ResourceHeaders object populated with the properties provided by the
+     * operation, and merged with existing properties if appropriate.
+     *
+     * @param storageSessionthe storage session encapsulating the operation
+     * @param operation the operation being persisted
+     * @param outcome outcome of persisting the RDF file
+     * @return populated resource headers
+     * @throws PersistentStorageException if unexpectedly unable to retrieve existing object headers
+     */
     private ResourceHeaders populateHeaders(final PersistentStorageSession storageSession,
             final RdfSourceOperation operation, final WriteOutcome outcome) throws PersistentStorageException {
 
@@ -99,6 +109,14 @@ public class RDFSourcePersister extends AbstractPersister {
         return headers;
     }
 
+    /**
+     * Overrides generated creation and modification headers with the values
+     * provided in the operation if they are present. They should only be present
+     * if the server is in relaxed mode for handling server managed triples
+     *
+     * @param headers the resource headers
+     * @param operation the operation
+     */
     private void overrideRelaxedProperties(final ResourceHeadersImpl headers, final RdfSourceOperation operation) {
         // Override relaxed properties if provided
         if (operation.getLastModifiedBy() != null) {
