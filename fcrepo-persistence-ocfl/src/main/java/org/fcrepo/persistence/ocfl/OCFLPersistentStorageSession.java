@@ -55,8 +55,8 @@ import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.getRdfStrea
 import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.relativizeSubpath;
 
 import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
-import static org.fcrepo.persistence.api.common.ResourceHeaderSerializationUtils.RESOURCE_HEADER_EXTENSION;
-import static org.fcrepo.persistence.api.common.ResourceHeaderSerializationUtils.deserializeHeaders;
+import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.RESOURCE_HEADER_EXTENSION;
+import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
 import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.resolveOCFLSubpath;
 
 /**

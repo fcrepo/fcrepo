@@ -15,16 +15,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.persistence.api.common;
+package org.fcrepo.persistence.common;
 
 import static java.util.Arrays.asList;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.persistence.api.common.ResourceHeaderSerializationUtils.deserializeHeaders;
-import static org.fcrepo.persistence.api.common.ResourceHeaderSerializationUtils.serializeHeaders;
-import static org.fcrepo.persistence.api.common.ResourceHeaderUtils.newResourceHeaders;
-import static org.fcrepo.persistence.api.common.ResourceHeaderUtils.populateBinaryHeaders;
-import static org.fcrepo.persistence.api.common.ResourceHeaderUtils.populateExternalBinaryHeaders;
+import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
+import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.serializeHeaders;
+import static org.fcrepo.persistence.common.ResourceHeaderUtils.newResourceHeaders;
+import static org.fcrepo.persistence.common.ResourceHeaderUtils.populateBinaryHeaders;
+import static org.fcrepo.persistence.common.ResourceHeaderUtils.populateExternalBinaryHeaders;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 

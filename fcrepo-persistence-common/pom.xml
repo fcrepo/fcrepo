@@ -7,9 +7,9 @@
     <version>6.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>fcrepo-persistence-api</artifactId>
-  <name>Fedora Repository Persistence API Module</name>
-  <description>Provides a common interface for persistence operations</description>
+  <artifactId>fcrepo-persistence-common</artifactId>
+  <name>Fedora Repository Persistence Common Module</name>
+  <description>Provides implementations for common persistence operations</description>
   <packaging>bundle</packaging>
   <properties>
     <osgi.import.packages>
@@ -18,7 +18,7 @@
       *   
     </osgi.import.packages>
     <osgi.export.packages>
-      org.fcrepo.persistence.api.*;version=${project.version}
+      org.fcrepo.persistence.common.*;version=${project.version}
     </osgi.export.packages>
   </properties>
   
@@ -27,6 +27,16 @@
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-kernel-api</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-persistence-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
     </dependency>
     
     <!-- test gear -->  

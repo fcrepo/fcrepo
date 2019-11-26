@@ -17,8 +17,8 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static org.fcrepo.persistence.api.common.ResourceHeaderSerializationUtils.RESOURCE_HEADER_EXTENSION;
-import static org.fcrepo.persistence.api.common.ResourceHeaderSerializationUtils.serializeHeaders;
+import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.RESOURCE_HEADER_EXTENSION;
+import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.serializeHeaders;
 import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.getInternalFedoraDirectory;
 
 import java.util.HashSet;

@@ -90,6 +90,7 @@
     <module>fcrepo-integration-rdf</module>
     <module>fcrepo-auth-webac</module>
     <module>fcrepo-persistence-api</module>
+    <module>fcrepo-persistence-common</module>
     <module>fcrepo-persistence-ocfl</module>
   </modules>
   <dependencyManagement>
