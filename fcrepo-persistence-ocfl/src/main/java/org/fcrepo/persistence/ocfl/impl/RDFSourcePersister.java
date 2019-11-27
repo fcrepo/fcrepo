@@ -35,7 +35,6 @@ import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
-import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
@@ -63,9 +62,8 @@ public class RDFSourcePersister extends AbstractPersister {
     }
 
     @Override
-    public void persist(final PersistentStorageSession storageSession, final OCFLObjectSession session,
-            final ResourceOperation operation,
-                        final FedoraOCFLMapping mapping) throws PersistentStorageException {
+    public void persist(final OCFLObjectSession session, final ResourceOperation operation,
+            final FedoraOCFLMapping mapping) throws PersistentStorageException {
         final RdfSourceOperation rdfSourceOp = (RdfSourceOperation)operation;
         log.debug("persisting RDFSource ({}) to {}", operation.getResourceId(), mapping.getOcflObjectId());
         final String subpath = relativizeSubpath(mapping.getParentFedoraResourceId(), operation.getResourceId());
@@ -74,7 +72,7 @@ public class RDFSourcePersister extends AbstractPersister {
         final var outcome = writeRDF(session, rdfSourceOp.getTriples(), resolvedSubpath);
 
         // Write resource headers
-        final var headers = populateHeaders(storageSession, rdfSourceOp, outcome);
+        final var headers = populateHeaders(session, subpath, rdfSourceOp, outcome);
         writeHeaders(session, headers, subpath);
     }
 
@@ -82,13 +80,14 @@ public class RDFSourcePersister extends AbstractPersister {
      * Constructs a ResourceHeaders object populated with the properties provided by the
      * operation, and merged with existing properties if appropriate.
      *
-     * @param storageSessionthe storage session encapsulating the operation
+     * @param objSession the object session
+     * @param subpath the subpath of the file
      * @param operation the operation being persisted
      * @param outcome outcome of persisting the RDF file
      * @return populated resource headers
      * @throws PersistentStorageException if unexpectedly unable to retrieve existing object headers
      */
-    private ResourceHeaders populateHeaders(final PersistentStorageSession storageSession,
+    private ResourceHeaders populateHeaders(final OCFLObjectSession objSession, final String subpath,
             final RdfSourceOperation operation, final WriteOutcome outcome) throws PersistentStorageException {
 
         final ResourceHeadersImpl headers;
@@ -100,7 +99,7 @@ public class RDFSourcePersister extends AbstractPersister {
                     createOperation.getInteractionModel());
             touchCreationHeaders(headers, operation.getUserPrincipal(), timeWritten);
         } else {
-            headers = (ResourceHeadersImpl) storageSession.getHeaders(operation.getResourceId(), null);
+            headers = (ResourceHeadersImpl) readHeaders(objSession, subpath);
         }
         touchModificationHeaders(headers, operation.getUserPrincipal(), timeWritten);
 

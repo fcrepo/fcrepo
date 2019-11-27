@@ -32,6 +32,8 @@ public interface ResourceOperation {
     String getResourceId();
 
     /**
+     * Returns the user principal performing this operation
+     *
      * @return the user principal performing this operation
      */
     String getUserPrincipal();

@@ -58,24 +58,18 @@ public class ResourceHeadersImpl implements ResourceHeaders {
 
     private String lastModifiedBy;
 
-    /**
-     * @return the id
-     */
     @Override
     public String getId() {
         return id;
     }
 
     /**
-     * @param id the id to set
+     * @param id the fedora id to set
      */
     public void setId(final String id) {
         this.id = id;
     }
 
-    /**
-     * @return the parent
-     */
     @Override
     public String getParent() {
         return parent;
@@ -88,9 +82,6 @@ public class ResourceHeadersImpl implements ResourceHeaders {
         this.parent = parent;
     }
 
-    /**
-     * @return the stateToken
-     */
     @Override
     public String getStateToken() {
         return stateToken;
@@ -103,9 +94,6 @@ public class ResourceHeadersImpl implements ResourceHeaders {
         this.stateToken = stateToken;
     }
 
-    /**
-     * @return the interactionModel
-     */
     @Override
     public String getInteractionModel() {
         return interactionModel;
@@ -118,9 +106,6 @@ public class ResourceHeadersImpl implements ResourceHeaders {
         this.interactionModel = interactionModel;
     }
 
-    /**
-     * @return the mimeType
-     */
     @Override
     public String getMimeType() {
         return mimeType;
@@ -133,9 +118,6 @@ public class ResourceHeadersImpl implements ResourceHeaders {
         this.mimeType = mimeType;
     }
 
-    /**
-     * @return the filename
-     */
     @Override
     public String getFilename() {
         return filename;
@@ -148,9 +130,6 @@ public class ResourceHeadersImpl implements ResourceHeaders {
         this.filename = filename;
     }
 
-    /**
-     * @return the contentSize
-     */
     @Override
     public Long getContentSize() {
         return contentSize;
@@ -163,9 +142,6 @@ public class ResourceHeadersImpl implements ResourceHeaders {
         this.contentSize = contentSize;
     }
 
-    /**
-     * @return the digests
-     */
     @Override
     public Collection<URI> getDigests() {
         return digests;
@@ -178,9 +154,6 @@ public class ResourceHeadersImpl implements ResourceHeaders {
         this.digests = digests;
     }
 
-    /**
-     * @return the externalHandling
-     */
     @Override
     public String getExternalHandling() {
         return externalHandling;
@@ -193,9 +166,6 @@ public class ResourceHeadersImpl implements ResourceHeaders {
         this.externalHandling = externalHandling;
     }
 
-    /**
-     * @return the createdDate
-     */
     @Override
     public Instant getCreatedDate() {
         return createdDate;
@@ -208,9 +178,6 @@ public class ResourceHeadersImpl implements ResourceHeaders {
         this.createdDate = createdDate;
     }
 
-    /**
-     * @return the createdBy
-     */
     @Override
     public String getCreatedBy() {
         return createdBy;
@@ -223,9 +190,6 @@ public class ResourceHeadersImpl implements ResourceHeaders {
         this.createdBy = createdBy;
     }
 
-    /**
-     * @return the lastModifiedDate
-     */
     @Override
     public Instant getLastModifiedDate() {
         return lastModifiedDate;

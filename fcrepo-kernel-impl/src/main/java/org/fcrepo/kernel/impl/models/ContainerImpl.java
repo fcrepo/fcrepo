@@ -24,7 +24,7 @@ import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 
 
 /**
- * Implementation of a LDP Container resource
+ * Implementation of an LDP Container resource
  *
  * @author bbpennel
  */

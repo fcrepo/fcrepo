@@ -31,7 +31,7 @@ public interface ReplacePropertiesService {
      * model
      *
      * @param txId the Transaction Id
-     * @param userPrincipal user performing service
+     * @param userPrincipal the user performing the service
      * @param fedoraId the internal Id of the fedora resource to update
      * @param contentType the original triples
      * @param inputModel the model built from the body of the request

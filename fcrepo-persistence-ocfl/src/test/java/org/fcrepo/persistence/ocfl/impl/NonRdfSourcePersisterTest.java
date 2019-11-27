@@ -22,6 +22,7 @@ import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.RESOURCE_HEADER_EXTENSION;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
+import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.serializeHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.newResourceHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchCreationHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchModificationHeaders;
@@ -45,7 +46,6 @@ import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
-import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
@@ -66,9 +66,6 @@ public class NonRdfSourcePersisterTest {
 
     @Mock
     private NonRdfSourceOperation nonRdfSourceOperation;
-
-    @Mock
-    private PersistentStorageSession storageSession;
 
     @Mock
     private OCFLObjectSession session;
@@ -129,7 +126,7 @@ public class NonRdfSourcePersisterTest {
         when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel())
                 .thenReturn(NON_RDF_SOURCE.toString());
 
-        persister.persist(storageSession, session, nonRdfSourceOperation, mapping);
+        persister.persist(session, nonRdfSourceOperation, mapping);
 
         // verify user content
         verify(session).write(eq("child"), userContentCaptor.capture());
@@ -155,7 +152,7 @@ public class NonRdfSourcePersisterTest {
         when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel()).thenReturn(NON_RDF_SOURCE
                 .toString());
 
-        persister.persist(storageSession, session, nonRdfSourceOperation, mapping);
+        persister.persist(session, nonRdfSourceOperation, mapping);
 
         // verify resource headers
         final var resultHeaders = retrievePersistedHeaders("child");
@@ -179,12 +176,13 @@ public class NonRdfSourcePersisterTest {
         final var headers = newResourceHeaders(PARENT_RESOURCE_ID, RESOURCE_ID, NON_RDF_SOURCE.toString());
         touchCreationHeaders(headers, USER_PRINCIPAL);
         touchModificationHeaders(headers, USER_PRINCIPAL);
-        when(storageSession.getHeaders(RESOURCE_ID, null)).thenReturn(headers);
+        final var headerStream = serializeHeaders(headers);
+        when(session.read(anyString())).thenReturn(headerStream);
 
         final var originalCreation = headers.getCreatedDate();
         final var originalModified = headers.getLastModifiedDate();
 
-        persister.persist(storageSession, session, nonRdfSourceOperation, mapping);
+        persister.persist(session, nonRdfSourceOperation, mapping);
 
         // verify user content
         verify(session).write(eq("child"), userContentCaptor.capture());
@@ -212,7 +210,7 @@ public class NonRdfSourcePersisterTest {
         when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel())
                 .thenReturn(NON_RDF_SOURCE.toString());
 
-        persister.persist(storageSession, session, nonRdfSourceOperation, mapping);
+        persister.persist(session, nonRdfSourceOperation, mapping);
     }
 
     private ResourceHeaders retrievePersistedHeaders(final String subpath) throws Exception {

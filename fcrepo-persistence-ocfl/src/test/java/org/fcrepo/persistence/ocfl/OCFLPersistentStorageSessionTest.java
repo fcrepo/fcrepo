@@ -336,11 +336,9 @@ public class OCFLPersistentStorageSessionTest {
         }
     }
 
-    /**
+    /*
      * This test covers the expected behavior when two OCFL Object Sessions are modified and one of the commits to
      * the mutable head fails.
-     *
-     * @throws Exception
      */
     @Test(expected = PersistentStorageException.class)
     public void rollbackOnSessionWithCommitsToMutableHeadShouldFail() throws Exception {

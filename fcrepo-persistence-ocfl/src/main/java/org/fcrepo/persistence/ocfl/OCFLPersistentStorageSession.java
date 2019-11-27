@@ -169,7 +169,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
             final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
 
             //perform the operation
-            persister.persist(this, objSession, operation, mapping);
+            persister.persist(objSession, operation, mapping);
 
         } finally {
             phaser.arriveAndDeregister();

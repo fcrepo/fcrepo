@@ -26,6 +26,7 @@ import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.RESOURCE_HEADER_EXTENSION;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
+import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.serializeHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.newResourceHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchCreationHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchModificationHeaders;
@@ -56,7 +57,6 @@ import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.junit.Before;
@@ -90,9 +90,6 @@ public class RDFSourcePersisterTest {
 
     @Mock
     private RdfSourceOperation operation;
-
-    @Mock
-    private PersistentStorageSession storageSession;
 
     @Mock
     private OCFLObjectSession session;
@@ -130,7 +127,7 @@ public class RDFSourcePersisterTest {
         when(operation.getType()).thenReturn(CREATE);
         when(((CreateResourceOperation) operation).getInteractionModel()).thenReturn(RDF_SOURCE.toString());
         when(operation.getTriples()).thenReturn(userTriplesStream);
-        persister.persist(storageSession, session, operation, mapping);
+        persister.persist(session, operation, mapping);
 
         //verify user triples
         final Model userModel = retrievePersistedUserModel("child");
@@ -159,12 +156,13 @@ public class RDFSourcePersisterTest {
         final var headers = newResourceHeaders(PARENT_RESOURCE_ID, RESOURCE_ID, BASIC_CONTAINER.toString());
         touchCreationHeaders(headers, USER_PRINCIPAL);
         touchModificationHeaders(headers, USER_PRINCIPAL);
-        when(storageSession.getHeaders(RESOURCE_ID, null)).thenReturn(headers);
+        final var headerStream = serializeHeaders(headers);
+        when(session.read(anyString())).thenReturn(headerStream);
 
         final var originalCreation = headers.getCreatedDate();
         final var originalModified = headers.getLastModifiedDate();
 
-        persister.persist(storageSession, session, operation, mapping);
+        persister.persist(session, operation, mapping);
 
         // verify user triples
         final Model userModel = retrievePersistedUserModel("child");
@@ -198,7 +196,7 @@ public class RDFSourcePersisterTest {
         when(operation.getLastModifiedDate()).thenReturn(MODIFIED_DATE);
         when(operation.getCreatedDate()).thenReturn(CREATED_DATE);
 
-        persister.persist(storageSession, session, operation, mapping);
+        persister.persist(session, operation, mapping);
 
         // verify user triples
         final Model userModel = retrievePersistedUserModel("child");

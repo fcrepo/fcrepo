@@ -92,9 +92,10 @@ public class OCFLPersistentStorageUtils {
     }
 
     /**
-     * Returns the OCFL subpath for a given fedora subpath.  This returned subpath
+     * Returns the OCFL subpath for a given fedora subpath. This returned subpath
      * does not include any added extendsions.
-     * @param fedoraSubpath
+     *
+     * @param fedoraSubpath subpath of file within ocfl object
      * @return The resolved OCFL subpath
      */
     public static  String resolveOCFLSubpath(final String fedoraSubpath) {
@@ -183,6 +184,7 @@ public class OCFLPersistentStorageUtils {
      * @param objSession session
      * @param version version time
      * @return name of version
+     * @throws PersistentStorageException thrown if version not found
      */
     public static String resolveVersionId(final OCFLObjectSession objSession, final Instant version)
             throws PersistentStorageException {
@@ -224,27 +226,21 @@ public class OCFLPersistentStorageUtils {
     }
 
     /**
-     * Returns the RDF Format. By default NTRIPLES are returned.
-     *
-     * @return
+     * @return the RDF Format. By default NTRIPLES are returned.
      */
     public static RDFFormat getRdfFormat() {
         return DEFAULT_RDF_FORMAT;
     }
 
     /**
-     * Returns the RDF file extension.
-     *
-     * @return
+     * @return the RDF file extension.
      */
     public static String getRDFFileExtension() {
         return "." + DEFAULT_RDF_FORMAT.getLang().getFileExtensions().get(0);
     }
 
     /**
-     * The path ( including the final slash ) to the internal Fedora directory within an OCFL object.
-     *
-     * @return
+     * @return The path ( including the final slash ) to the internal Fedora directory within an OCFL object.
      */
     public static String getInternalFedoraDirectory() {
         return INTERNAL_FEDORA_DIRECTORY + File.separator;
