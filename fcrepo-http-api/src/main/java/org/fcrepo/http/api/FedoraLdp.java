@@ -49,8 +49,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODEL_RESOURCES;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -64,6 +62,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
@@ -85,9 +84,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilderException;
 import javax.ws.rs.core.Variant.VariantListBuilder;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.rdf.model.Model;
@@ -113,12 +109,16 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.CreateResourceService;
-import org.fcrepo.kernel.api.services.FixityService;
 import org.fcrepo.kernel.api.services.DeleteResourceService;
+import org.fcrepo.kernel.api.services.FixityService;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 
 /**
  * @author cabeer
@@ -427,7 +427,8 @@ public class FedoraLdp extends ContentExposingResource {
             if ("Resource Exists".isEmpty()) {
                 // TODO: Implement UpdateResourceService
             } else {
-                createResourceService.perform(transaction.getId(), fedoraId, null, false, contentType,
+                createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, null, false,
+                        contentType, contentDisposition.getFileName(), contentDisposition.getSize(),
                         links, checksums, requestBodyStream, extContent);
             }
         } else {
@@ -435,10 +436,11 @@ public class FedoraLdp extends ContentExposingResource {
                 requestContentType);
 
             if ("Resource Exists".isEmpty()) {
-                replacePropertiesService.perform(transaction.getId(), fedoraId, requestContentType.toString(),
+                replacePropertiesService.perform(transaction.getId(), getUserPrincipal(), fedoraId, requestContentType
+                        .toString(),
                     model);
             } else {
-                createResourceService.perform(transaction.getId(), fedoraId, null, false, links,
+                createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, null, false, links,
                     model);
             }
         }
@@ -448,22 +450,6 @@ public class FedoraLdp extends ContentExposingResource {
         transaction.commit();
         return createUpdateResponse(null, true);
 
-    }
-
-    /**
-     * Make sure the resource has the specified interaction model
-     */
-    private static void ensureInteractionType(final FedoraResource resource, final String interactionModel,
-            final boolean defaultContent) {
-        if (interactionModel != null) {
-            if (!resource.hasType(interactionModel)) {
-                resource.addType(interactionModel);
-            }
-        } else if (defaultContent) {
-            resource.addType(LDP_BASIC_CONTAINER);
-        } else if (resource instanceof Binary) {
-            resource.addType(LDP_NON_RDF_SOURCE);
-        }
     }
 
     /**
@@ -583,12 +569,13 @@ public class FedoraLdp extends ContentExposingResource {
         if (isBinary(interactionModel, requestContentType.toString(), requestContentType != null,
                 extContent != null)) {
             final Collection<String> checksums = parseDigestHeader(digest);
-            createResourceService.perform(transaction.getId(), fedoraId, slug, true, contentType, links, checksums,
-                    requestBodyStream, extContent);
+            final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
+            createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, slug, true, contentType,
+                    originalFileName, contentDisposition.getSize(), links, checksums, requestBodyStream, extContent);
         } else {
             final Model model = httpRdfService.bodyToInternalModel(externalPath(), requestBodyStream,
                     requestContentType);
-            createResourceService.perform(transaction.getId(), fedoraId, slug, true, links,
+            createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, slug, true, links,
                     model);
         }
 

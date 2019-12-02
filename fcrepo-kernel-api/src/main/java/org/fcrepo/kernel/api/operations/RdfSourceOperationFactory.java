@@ -32,7 +32,7 @@ public interface RdfSourceOperationFactory extends ResourceOperationFactory {
      * @param interactionModel interaction model for the resource being created
      * @return new builder
      */
-    RdfSourceOperationBuilder createBuilder(String rescId, String interactionModel);
+    CreateRdfSourceOperationBuilder createBuilder(String rescId, String interactionModel);
 
     /**
      * Get a builder for an operation to update an RDF source

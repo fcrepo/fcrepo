@@ -21,6 +21,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.Persister;
 import org.junit.Test;
@@ -37,6 +38,9 @@ public class DeleteResourcePersisterTest {
 
     @Mock
     private FedoraOCFLMapping mapping;
+
+    @Mock
+    private PersistentStorageSession storageSession;
 
     @Mock
     private OCFLObjectSession session;

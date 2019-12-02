@@ -46,6 +46,7 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
 
     @Override
     public void perform(final String txId,
+                        final String userPrincipal,
                         final String fedoraId,
                         final String contentType,
                         final Model inputModel) throws MalformedRdfException {
@@ -61,6 +62,8 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
             checkForSmtsLdpTypes(inputModel);
 
             final ResourceOperation updateOp = factory.updateBuilder(fedoraId)
+                .relaxedProperties(inputModel)
+                .userPrincipal(userPrincipal)
                 .triples(fromModel(inputModel.createResource(fedoraId).asNode(), inputModel))
                 .build();
 

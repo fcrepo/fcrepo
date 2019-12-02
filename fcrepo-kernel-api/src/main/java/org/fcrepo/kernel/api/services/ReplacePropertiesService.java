@@ -26,18 +26,20 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
  */
 public interface ReplacePropertiesService {
 
-  /**
-   * Replace the properties of this object with the properties from the given
-   * model
-   *
-   * @param txId the Transaction Id
-   * @param fedoraId the internal Id of the fedora resource to update
-   * @param contentType the original triples
-   * @param inputModel the model built from the body of the request
-   * @throws MalformedRdfException if malformed rdf exception occurred
-   */
-  void perform (final String txId,
-                final String fedoraId,
-                final String contentType,
-                final Model inputModel) throws MalformedRdfException;
+    /**
+     * Replace the properties of this object with the properties from the given
+     * model
+     *
+     * @param txId the Transaction Id
+     * @param userPrincipal the user performing the service
+     * @param fedoraId the internal Id of the fedora resource to update
+     * @param contentType the original triples
+     * @param inputModel the model built from the body of the request
+     * @throws MalformedRdfException if malformed rdf exception occurred
+     */
+    void perform(String txId,
+                String userPrincipal,
+                String fedoraId,
+                String contentType,
+                Model inputModel) throws MalformedRdfException;
 }

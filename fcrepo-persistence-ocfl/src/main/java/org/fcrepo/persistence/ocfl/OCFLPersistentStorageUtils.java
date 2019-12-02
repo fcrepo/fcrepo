@@ -24,6 +24,7 @@ import org.apache.jena.riot.system.StreamRDF;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
@@ -91,9 +92,10 @@ public class OCFLPersistentStorageUtils {
     }
 
     /**
-     * Returns the OCFL subpath for a given fedora subpath.  This returned subpath
+     * Returns the OCFL subpath for a given fedora subpath. This returned subpath
      * does not include any added extendsions.
-     * @param fedoraSubpath
+     *
+     * @param fedoraSubpath subpath of file within ocfl object
      * @return The resolved OCFL subpath
      */
     public static  String resolveOCFLSubpath(final String fedoraSubpath) {
@@ -126,9 +128,10 @@ public class OCFLPersistentStorageUtils {
      * @param session The object session
      * @param triples The triples
      * @param subpath The subpath within the OCFL Object
+     * @return the outcome of the write operation
      * @throws PersistentStorageException on write failure
      */
-    public static void writeRDF(final OCFLObjectSession session, final RdfStream triples, final String subpath)
+    public static WriteOutcome writeRDF(final OCFLObjectSession session, final RdfStream triples, final String subpath)
             throws PersistentStorageException {
         try (final var os = new ByteArrayOutputStream()) {
             final StreamRDF streamRDF = getWriterStream(os, getRdfFormat());
@@ -137,8 +140,9 @@ public class OCFLPersistentStorageUtils {
             streamRDF.finish();
 
             final var is = new ByteArrayInputStream(os.toByteArray());
-            session.write(subpath + getRDFFileExtension(), is);
+            final var outcome = session.write(subpath + getRDFFileExtension(), is);
             log.debug("wrote {} to {}", subpath, session);
+            return outcome;
         } catch (final IOException ex) {
             throw new PersistentStorageException(format("failed to write subpath %s in %s", subpath, session), ex);
         }
@@ -169,12 +173,20 @@ public class OCFLPersistentStorageUtils {
             RDFDataMgr.read(model, is, DEFAULT_RDF_FORMAT.getLang());
             final String topic = resolveTopic(identifier);
             return DefaultRdfStream.fromModel(createURI(topic), model);
-        } catch (IOException ex) {
+        } catch (final IOException ex) {
             throw new PersistentStorageException(format("unable to read %s ;  version = %s", identifier, version), ex);
         }
     }
 
-    private static String resolveVersionId(final OCFLObjectSession objSession, final Instant version)
+    /**
+     * Resolve an instant to a version
+     *
+     * @param objSession session
+     * @param version version time
+     * @return name of version
+     * @throws PersistentStorageException thrown if version not found
+     */
+    public static String resolveVersionId(final OCFLObjectSession objSession, final Instant version)
             throws PersistentStorageException {
         if (version != null) {
             return objSession.listVersions()
@@ -214,27 +226,21 @@ public class OCFLPersistentStorageUtils {
     }
 
     /**
-     * Returns the RDF Format. By default NTRIPLES are returned.
-     *
-     * @return
+     * @return the RDF Format. By default NTRIPLES are returned.
      */
     public static RDFFormat getRdfFormat() {
         return DEFAULT_RDF_FORMAT;
     }
 
     /**
-     * Returns the RDF file extension.
-     *
-     * @return
+     * @return the RDF file extension.
      */
     public static String getRDFFileExtension() {
         return "." + DEFAULT_RDF_FORMAT.getLang().getFileExtensions().get(0);
     }
 
     /**
-     * The path ( including the final slash ) to the internal Fedora directory within an OCFL object.
-     *
-     * @return
+     * @return The path ( including the final slash ) to the internal Fedora directory within an OCFL object.
      */
     public static String getInternalFedoraDirectory() {
         return INTERNAL_FEDORA_DIRECTORY + File.separator;

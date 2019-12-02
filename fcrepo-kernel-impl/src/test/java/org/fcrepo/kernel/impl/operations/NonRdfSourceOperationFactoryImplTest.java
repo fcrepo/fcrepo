@@ -48,7 +48,7 @@ public class NonRdfSourceOperationFactoryImplTest {
     public void testCreateInternalBuilder() throws Exception {
         final InputStream stream = IOUtils.toInputStream("This is some test data", "UTF-8");
         final NonRdfSourceOperationBuilder builder = factory.createInternalBinaryBuilder(randomId, stream);
-        assertEquals(CreateNonRdfSourceOperationBuilder.class, builder.getClass());
+        assertEquals(CreateNonRdfSourceOperationBuilderImpl.class, builder.getClass());
     }
 
     @Test
@@ -56,6 +56,6 @@ public class NonRdfSourceOperationFactoryImplTest {
         final URI externalURI = URI.create("http://example.com/some/location");
         final NonRdfSourceOperationBuilder builder = factory.createExternalBinaryBuilder(randomId, "PROXY",
                 externalURI);
-        assertEquals(CreateNonRdfSourceOperationBuilder.class, builder.getClass());
+        assertEquals(CreateNonRdfSourceOperationBuilderImpl.class, builder.getClass());
     }
 }

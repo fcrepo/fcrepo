@@ -149,7 +149,7 @@ public class FedoraAcl extends ContentExposingResource {
                 final Model model = httpRdfService.bodyToInternalModel(externalPath() + "/fcr:acl",
                         requestBodyStream, requestContentType);
 
-                replacePropertiesService.perform(transaction.getId(), aclResource.getId(),
+                replacePropertiesService.perform(transaction.getId(), getUserPrincipal(), aclResource.getId(),
                     requestContentType.toString(), model);
             } else {
                 throw new BadRequestException("Content-Type (" + requestContentType + ") is invalid. Try text/turtle " +

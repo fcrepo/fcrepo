@@ -36,11 +36,13 @@ public interface Persister {
 
     /**
      * The persistence handling for the given operation using the provided session and mapping.
-     * @param session The session associated with the OCFL object
+     *
+     * @param objectSession The session associated with the OCFL object
      * @param operation The operation and associated data need to perform the operation.
      * @param mapping The mapping information needed to perform the persistence operation
      * @throws PersistentStorageException on failure
      */
-    void persist(final OCFLObjectSession session, final ResourceOperation operation, final FedoraOCFLMapping mapping)
+    void persist(final OCFLObjectSession objectSession,
+            final ResourceOperation operation, final FedoraOCFLMapping mapping)
             throws PersistentStorageException;
 }

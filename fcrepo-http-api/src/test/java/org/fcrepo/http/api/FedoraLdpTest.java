@@ -63,6 +63,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -922,7 +923,7 @@ public class FedoraLdpTest {
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(replacePropertiesService).perform(eq(mockTransaction.getId()), eq(mockContainer.getId()),
+        verify(replacePropertiesService).perform(eq(mockTransaction.getId()), anyString(), eq(mockContainer.getId()),
                 any(String.class),any(Model.class));
     }
 
@@ -959,7 +960,7 @@ public class FedoraLdpTest {
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
 
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
-        verify(replacePropertiesService).perform(eq(mockTransaction.getId()), eq(mockObject.getId()),
+        verify(replacePropertiesService).perform(eq(mockTransaction.getId()), anyString(), eq(mockObject.getId()),
                 any(String.class), any(Model.class));
     }
 
@@ -1064,7 +1065,7 @@ public class FedoraLdpTest {
         final Response actual = testObj.createObject(null, NTRIPLES_TYPE, "b",
                 toInputStream("_:a <info:b> _:c .", UTF_8), null, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(replacePropertiesService).perform(eq(mockTransaction.getId()), eq(mockContainer.getId()),
+        verify(replacePropertiesService).perform(eq(mockTransaction.getId()), anyString(), eq(mockContainer.getId()),
                 any(String.class), any(Model.class));
     }
 

@@ -17,25 +17,50 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
-
 import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.operations.ResourceOperationType;
-
+import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 
 /**
  * Operation to create an RDF source.
  *
  * @author bbpennel
  */
-public class CreateRdfSourceOperation extends AbstractRdfSourceOperation {
+public class CreateRdfSourceOperation extends AbstractRdfSourceOperation implements CreateResourceOperation {
 
-    protected CreateRdfSourceOperation(final String rescId, final String interactionModel, final RdfStream triples) {
-        super(rescId, interactionModel, triples);
+    private String parentId;
+
+    /**
+     * The interaction model
+     */
+    private String interactionModel;
+
+    /**
+     * Constructor for creation operation
+     *
+     * @param rescId the internal identifier.
+     * @param interactionModel interaction model for the resource
+     * @param triples triples stream for the resource
+     */
+    protected CreateRdfSourceOperation(final String rescId, final String interactionModel,
+            final RdfStream triples) {
+        super(rescId, triples);
+        this.interactionModel = interactionModel;
     }
 
     @Override
-    public ResourceOperationType getType() {
-        return CREATE;
+    public String getInteractionModel() {
+        return interactionModel;
+    }
+
+    @Override
+    public String getParentId() {
+        return parentId;
+    }
+
+    /**
+     * @param parentId the parentId to set
+     */
+    public void setParentId(final String parentId) {
+        this.parentId = parentId;
     }
 }

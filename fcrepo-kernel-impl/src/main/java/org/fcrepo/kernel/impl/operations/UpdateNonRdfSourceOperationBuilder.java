@@ -74,7 +74,13 @@ public class UpdateNonRdfSourceOperationBuilder implements NonRdfSourceOperation
     }
 
     @Override
-    public NonRdfSourceOperationBuilder contentSize(final long size) {
+    public NonRdfSourceOperationBuilder contentSize(final Long size) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public NonRdfSourceOperationBuilder userPrincipal(final String userPrincipal) {
         // TODO Auto-generated method stub
         return null;
     }
@@ -84,5 +90,4 @@ public class UpdateNonRdfSourceOperationBuilder implements NonRdfSourceOperation
         // TODO Auto-generated method stub
         return null;
     }
-
 }

@@ -45,6 +45,6 @@ public class RdfSourceOperationFactoryImplTest {
     public void testCreateBuilder() {
         final String model = "some-interaction-model";
         final RdfSourceOperationBuilder builder = factory.createBuilder(randomId, model);
-        assertEquals(CreateRdfSourceOperationBuilder.class, builder.getClass());
+        assertEquals(CreateRdfSourceOperationBuilderImpl.class, builder.getClass());
     }
 }

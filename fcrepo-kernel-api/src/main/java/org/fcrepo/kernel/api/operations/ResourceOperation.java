@@ -17,8 +17,6 @@
  */
 package org.fcrepo.kernel.api.operations;
 
-import org.fcrepo.kernel.api.RdfStream;
-
 /**
  * Operation for manipulating a resource
  *
@@ -34,11 +32,11 @@ public interface ResourceOperation {
     String getResourceId();
 
     /**
-     * Get the server managed properties for the resource
+     * Returns the user principal performing this operation
      *
-     * @return server managed properties
+     * @return the user principal performing this operation
      */
-    RdfStream getServerManagedProperties();
+    String getUserPrincipal();
 
     /**
      * Returns the type of operation represented by this request

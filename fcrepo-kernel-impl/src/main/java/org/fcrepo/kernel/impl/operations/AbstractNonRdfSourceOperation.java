@@ -17,8 +17,6 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
-import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
@@ -45,7 +43,7 @@ public abstract class AbstractNonRdfSourceOperation extends AbstractResourceOper
 
     private Collection<URI> digests;
 
-    private long contentSize;
+    private Long contentSize;
 
     /**
      * Constructor for external content.
@@ -53,19 +51,12 @@ public abstract class AbstractNonRdfSourceOperation extends AbstractResourceOper
      * @param rescId the internal identifier.
      * @param externalContentURI the URI of the external content.
      * @param externalHandling the type of external content handling (REDIRECT, PROXY)
-     * @param mimeType the mime-type of the content.
-     * @param filename the filename.
-     * @param digests the checksum digests.
      */
     protected AbstractNonRdfSourceOperation(final String rescId, final URI externalContentURI,
-                                            final String externalHandling, final String mimeType, final String filename,
-                                            final Collection<URI> digests) {
-        super(rescId, NON_RDF_SOURCE.toString());
+            final String externalHandling) {
+        super(rescId);
         this.externalHandlingURI = externalContentURI;
-        this.mimeType = mimeType;
         this.externalHandlingType = externalHandling;
-        this.filename = filename;
-        this.digests = digests;
     }
 
     /**
@@ -73,19 +64,10 @@ public abstract class AbstractNonRdfSourceOperation extends AbstractResourceOper
      *
      * @param rescId the internal identifier.
      * @param content the stream of the content.
-     * @param mimeType the mime-type of the content.
-     * @param contentSize the size of the inputstream.
-     * @param filename the filename.
-     * @param digests the checksum digests.
      */
-    protected AbstractNonRdfSourceOperation(final String rescId, final InputStream content, final String mimeType,
-                                            final long contentSize, final String filename, final Collection<URI> digests) {
-        super(rescId, NON_RDF_SOURCE.toString());
+    protected AbstractNonRdfSourceOperation(final String rescId, final InputStream content) {
+        super(rescId);
         this.content = content;
-        this.mimeType = mimeType;
-        this.contentSize = contentSize;
-        this.filename = filename;
-        this.digests = digests;
     }
 
     /**
@@ -94,7 +76,7 @@ public abstract class AbstractNonRdfSourceOperation extends AbstractResourceOper
      * @param rescId The internal Fedora ID.
      */
     protected AbstractNonRdfSourceOperation(final String rescId) {
-        super(rescId, NON_RDF_SOURCE.toString());
+        super(rescId);
     }
 
     @Override
@@ -128,7 +110,84 @@ public abstract class AbstractNonRdfSourceOperation extends AbstractResourceOper
     }
 
     @Override
-    public long getContentSize() {
+    public Long getContentSize() {
         return contentSize;
+    }
+
+    /**
+     * @return the content
+     */
+    protected InputStream getContent() {
+        return content;
+    }
+
+    /**
+     * @param content the content to set
+     */
+    protected void setContent(final InputStream content) {
+        this.content = content;
+    }
+
+    /**
+     * @return the externalHandlingURI
+     */
+    protected URI getExternalHandlingURI() {
+        return externalHandlingURI;
+    }
+
+    /**
+     * @param externalHandlingURI the externalHandlingURI to set
+     */
+    protected void setExternalHandlingURI(final URI externalHandlingURI) {
+        this.externalHandlingURI = externalHandlingURI;
+    }
+
+    /**
+     * @return the externalHandlingType
+     */
+    protected String getExternalHandlingType() {
+        return externalHandlingType;
+    }
+
+    /**
+     * @param externalHandlingType the externalHandlingType to set
+     */
+    protected void setExternalHandlingType(final String externalHandlingType) {
+        this.externalHandlingType = externalHandlingType;
+    }
+
+    /**
+     * @return the digests
+     */
+    protected Collection<URI> getDigests() {
+        return digests;
+    }
+
+    /**
+     * @param digests the digests to set
+     */
+    protected void setDigests(final Collection<URI> digests) {
+        this.digests = digests;
+    }
+
+    /**
+     * @param mimeType the mimeType to set
+     */
+    protected void setMimeType(final String mimeType) {
+        this.mimeType = mimeType;
+    }
+
+    /**
+     * @param filename the filename to set
+     */
+    protected void setFilename(final String filename) {
+        this.filename = filename;
+    }
+
+    /**
+     * @param contentSize the contentSize to set
+     */
+    protected void setContentSize(final Long contentSize) {
+        this.contentSize = contentSize;
     }
 }

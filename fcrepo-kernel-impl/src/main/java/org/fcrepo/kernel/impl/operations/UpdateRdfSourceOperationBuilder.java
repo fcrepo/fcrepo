@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 
 /**
@@ -25,7 +26,6 @@ import org.fcrepo.kernel.api.operations.RdfSourceOperation;
  * @author bbpennel
  * @since 11/2019
  */
-
 public class UpdateRdfSourceOperationBuilder extends AbstractRdfSourceOperationBuilder {
 
     /**
@@ -39,6 +39,18 @@ public class UpdateRdfSourceOperationBuilder extends AbstractRdfSourceOperationB
 
     @Override
     public RdfSourceOperation build() {
-        return new UpdateRdfSourceOperation(this.resourceId, this.tripleStream);
+        final var operation = new UpdateRdfSourceOperation(this.resourceId, this.tripleStream);
+        operation.setUserPrincipal(userPrincipal);
+        operation.setCreatedBy(createdBy);
+        operation.setCreatedDate(createdDate);
+        operation.setLastModifiedBy(lastModifiedBy);
+        operation.setLastModifiedDate(lastModifiedDate);
+        return operation;
+    }
+
+    @Override
+    public UpdateRdfSourceOperationBuilder relaxedProperties(final Model model) {
+        super.relaxedProperties(model);
+        return this;
     }
 }

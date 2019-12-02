@@ -69,7 +69,7 @@ public class AbstractPersisterTest {
             }
 
             @Override
-            public void persist(final OCFLObjectSession session,
+            public void persist(final OCFLObjectSession objectSession,
                                 final ResourceOperation operation,
                                 final FedoraOCFLMapping mapping) {}
         }

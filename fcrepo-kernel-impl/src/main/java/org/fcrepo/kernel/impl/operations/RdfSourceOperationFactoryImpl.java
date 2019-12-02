@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.operations.CreateRdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.ResourceOperationBuilder;
@@ -30,8 +31,8 @@ import org.fcrepo.kernel.api.operations.ResourceOperationBuilder;
 public class RdfSourceOperationFactoryImpl implements RdfSourceOperationFactory {
 
     @Override
-    public RdfSourceOperationBuilder createBuilder(final String rescId, final String interactionModel) {
-        return new CreateRdfSourceOperationBuilder(rescId, interactionModel);
+    public CreateRdfSourceOperationBuilder createBuilder(final String rescId, final String interactionModel) {
+        return new CreateRdfSourceOperationBuilderImpl(rescId, interactionModel);
     }
 
     @Override

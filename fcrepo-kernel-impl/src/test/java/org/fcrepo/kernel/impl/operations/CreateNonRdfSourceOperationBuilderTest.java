@@ -44,7 +44,7 @@ public class CreateNonRdfSourceOperationBuilderTest {
     @Before
     public void setUp() throws Exception {
         stream = IOUtils.toInputStream("This is some test data", "UTF-8");
-        internalBuilder = new CreateNonRdfSourceOperationBuilder(resourceId, stream);
+        internalBuilder = new CreateNonRdfSourceOperationBuilderImpl(resourceId, stream);
     }
 
     @Test
@@ -57,7 +57,7 @@ public class CreateNonRdfSourceOperationBuilderTest {
     public void testExternal() {
         final URI uri = URI.create("http://example.org/test/location");
         final String handling = ExternalContent.PROXY;
-        final NonRdfSourceOperationBuilder builder = new CreateNonRdfSourceOperationBuilder(resourceId, handling, uri);
+        final NonRdfSourceOperationBuilder builder = new CreateNonRdfSourceOperationBuilderImpl(resourceId, handling, uri);
         final NonRdfSourceOperation op = builder.build();
         assertEquals(uri, op.getContentUri());
         assertEquals(handling, op.getExternalHandling());
@@ -79,8 +79,8 @@ public class CreateNonRdfSourceOperationBuilderTest {
 
     @Test
     public void testSize() {
-        final long filesize = 123;
-        final NonRdfSourceOperation op = internalBuilder.contentSize(123).build();
+        final Long filesize = 123l;
+        final NonRdfSourceOperation op = internalBuilder.contentSize(filesize).build();
         assertEquals(filesize, op.getContentSize());
     }
 

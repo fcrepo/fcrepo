@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.api.operations;
 
+import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.RdfStream;
 
 /**
@@ -25,6 +26,9 @@ import org.fcrepo.kernel.api.RdfStream;
  * @author bbpennel
  */
 public interface RdfSourceOperationBuilder extends ResourceOperationBuilder {
+
+    @Override
+    RdfSourceOperationBuilder userPrincipal(String userPrincipal);
 
     @Override
     RdfSourceOperation build();
@@ -37,4 +41,12 @@ public interface RdfSourceOperationBuilder extends ResourceOperationBuilder {
      */
     RdfSourceOperationBuilder triples(RdfStream triples);
 
+    /**
+     * Set the relaxed managed properties for this resource if the server
+     * is in relaxed mode.
+     *
+     * @param model rdf of the resource
+     * @return this builder
+     */
+    RdfSourceOperationBuilder relaxedProperties(Model model);
 }

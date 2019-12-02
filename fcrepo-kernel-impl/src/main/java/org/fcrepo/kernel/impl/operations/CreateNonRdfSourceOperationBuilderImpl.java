@@ -17,7 +17,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
-import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
+import org.fcrepo.kernel.api.operations.CreateNonRdfSourceOperationBuilder;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -29,17 +29,22 @@ import java.util.Collection;
  *
  * @author bbpennel
  */
-public class CreateNonRdfSourceOperationBuilder implements NonRdfSourceOperationBuilder {
+public class CreateNonRdfSourceOperationBuilderImpl implements CreateNonRdfSourceOperationBuilder {
 
     /**
      * The resource id.
      */
     private final String resourceId;
 
+    private String parentId;
+
+    private String userPrincipal;
+
     private String mimeType;
     private String filename;
     private Collection<URI> digests;
-    private long contentSize;
+
+    private Long contentSize;
     private InputStream content;
     private URI externalURI;
     private String externalType;
@@ -51,7 +56,8 @@ public class CreateNonRdfSourceOperationBuilder implements NonRdfSourceOperation
      * @param handling    the external content handling type.
      * @param externalUri the external content URI.
      */
-    protected CreateNonRdfSourceOperationBuilder(final String rescId, final String handling, final URI externalUri) {
+    protected CreateNonRdfSourceOperationBuilderImpl(final String rescId, final String handling,
+            final URI externalUri) {
         this(rescId);
         this.externalURI = externalUri;
         this.externalType = handling;
@@ -63,7 +69,7 @@ public class CreateNonRdfSourceOperationBuilder implements NonRdfSourceOperation
      * @param rescId the internal identifier.
      * @param stream the content stream.
      */
-    protected CreateNonRdfSourceOperationBuilder(final String rescId, final InputStream stream) {
+    protected CreateNonRdfSourceOperationBuilderImpl(final String rescId, final InputStream stream) {
         this(rescId);
         this.content = stream;
     }
@@ -73,43 +79,62 @@ public class CreateNonRdfSourceOperationBuilder implements NonRdfSourceOperation
      *
      * @param rescId the internal identifier.
      */
-    CreateNonRdfSourceOperationBuilder(final String rescId) {
+    private CreateNonRdfSourceOperationBuilderImpl(final String rescId) {
         this.resourceId = rescId;
     }
 
     @Override
-    public CreateNonRdfSourceOperationBuilder mimeType(final String mimetype) {
+    public CreateNonRdfSourceOperationBuilderImpl mimeType(final String mimetype) {
         this.mimeType = mimetype;
         return this;
     }
 
     @Override
-    public CreateNonRdfSourceOperationBuilder filename(final String filename) {
+    public CreateNonRdfSourceOperationBuilderImpl filename(final String filename) {
         this.filename = filename;
         return this;
     }
 
     @Override
-    public CreateNonRdfSourceOperationBuilder contentDigests(final Collection<URI> digests) {
+    public CreateNonRdfSourceOperationBuilderImpl contentDigests(final Collection<URI> digests) {
         this.digests = digests;
         return this;
     }
 
     @Override
-    public CreateNonRdfSourceOperationBuilder contentSize(final long size) {
+    public CreateNonRdfSourceOperationBuilderImpl contentSize(final Long size) {
         this.contentSize = size;
         return this;
     }
 
     @Override
-    public CreateNonRdfSourceOperation build() {
-        if (externalURI != null && externalType != null) {
-            return new CreateNonRdfSourceOperation(this.resourceId, this.externalURI, this.externalType,
-                    this.mimeType, this.filename, this.digests);
-        } else {
-            return new CreateNonRdfSourceOperation(this.resourceId, this.content, this.mimeType, this.contentSize,
-                    this.filename, this.digests);
-        }
+    public CreateNonRdfSourceOperationBuilderImpl userPrincipal(final String userPrincipal) {
+        this.userPrincipal = userPrincipal;
+        return this;
     }
 
+    @Override
+    public CreateNonRdfSourceOperationBuilder parentId(final String parentId) {
+        this.parentId = parentId;
+        return this;
+    }
+
+    @Override
+    public CreateNonRdfSourceOperation build() {
+        final CreateNonRdfSourceOperation operation;
+        if (externalURI != null && externalType != null) {
+            operation = new CreateNonRdfSourceOperation(resourceId, externalURI, externalType);
+        } else {
+            operation = new CreateNonRdfSourceOperation(resourceId, content);
+        }
+
+        operation.setUserPrincipal(userPrincipal);
+        operation.setDigests(digests);
+        operation.setFilename(filename);
+        operation.setContentSize(contentSize);
+        operation.setMimeType(mimeType);
+        operation.setParentId(parentId);
+
+        return operation;
+    }
 }

@@ -42,8 +42,8 @@ public class DeleteResourcePersister extends AbstractPersister {
     }
 
     @Override
-    public void persist(final OCFLObjectSession session, final ResourceOperation operation, final FedoraOCFLMapping mapping)
-            throws PersistentStorageException {
+    public void persist(final OCFLObjectSession session, final ResourceOperation operation,
+            final FedoraOCFLMapping mapping) throws PersistentStorageException {
         log.debug("Deleting {} from {}", operation.getResourceId(), mapping.getOcflObjectId());
         if (mapping.getParentFedoraResourceId().equals(operation.getResourceId())) {
             // We are at the root of the object.

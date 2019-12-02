@@ -128,6 +128,8 @@ public final class RdfLexicon {
             createResource(REPOSITORY_NAMESPACE + "Binary");
     public static final Resource FEDORA_RESOURCE =
             createResource(REPOSITORY_NAMESPACE + "Resource");
+    public static final Resource FEDORA_PAIR_TREE =
+            createResource(REPOSITORY_NAMESPACE + "Pairtree");
 
     // Linked Data Platform
     public static final Property PAGE =

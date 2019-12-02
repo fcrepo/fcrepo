@@ -17,9 +17,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
-import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
-
 
 /**
  * Abstract operation for interacting with a resource
@@ -33,19 +31,10 @@ public abstract class AbstractResourceOperation implements ResourceOperation {
      */
     private final String rescId;
 
-    /**
-     * The server managed triples.
-     */
-    private RdfStream serverManagedProperties;
+    private String userPrincipal;
 
-    /**
-     * The interaction model, null if not used (ie. an update operation)
-     */
-    private String interactionModel;
-
-    protected AbstractResourceOperation(final String rescId, final String interactionModel) {
+    protected AbstractResourceOperation(final String rescId) {
         this.rescId = rescId;
-        this.interactionModel = interactionModel;
     }
 
     @Override
@@ -54,17 +43,15 @@ public abstract class AbstractResourceOperation implements ResourceOperation {
     }
 
     @Override
-    public RdfStream getServerManagedProperties() {
-        return serverManagedProperties;
+    public String getUserPrincipal() {
+        return userPrincipal;
     }
 
     /**
-     * Set the server managed properties for the resource
-     *
-     * @param serverManagedProperties stream of properties
+     * @param userPrincipal the userPrincipal to set
      */
-    public void setServerManagedProperties(final RdfStream serverManagedProperties) {
-        this.serverManagedProperties = serverManagedProperties;
+    public void setUserPrincipal(final String userPrincipal) {
+        this.userPrincipal = userPrincipal;
     }
 
 }

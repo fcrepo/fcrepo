@@ -15,33 +15,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.impl.operations;
+package org.fcrepo.kernel.api.operations;
 
-import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.operations.RdfSourceOperation;
-import org.fcrepo.kernel.api.operations.ResourceOperationBuilder;
-
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 
 /**
- * Build an operation for updating
+ * Operation for creating a resource
  *
  * @author bbpennel
  */
-public class SparqlUpdateOperationBuilder implements ResourceOperationBuilder {
+public interface CreateResourceOperation extends ResourceOperation {
 
-    private final String rescId;
+    /**
+     * Get the identifier of the parent of the resource being created
+     *
+     * @return identifer of parent
+     */
+    String getParentId();
 
-    private final String updateQuery;
-
-    protected SparqlUpdateOperationBuilder(final String rescId, final String updateQuery) {
-        this.rescId = rescId;
-        this.updateQuery = updateQuery;
-    }
+    /**
+     * Get the interaction model of the resource being created
+     *
+     * @return interaction model
+     */
+    String getInteractionModel();
 
     @Override
-    public RdfSourceOperation build() {
-        // TODO Perform the sparql update
-        final RdfStream triples = null;
-        return new UpdateRdfSourceOperation(rescId, triples);
+    public default ResourceOperationType getType() {
+        return CREATE;
     }
 }

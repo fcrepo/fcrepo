@@ -17,11 +17,19 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.RESOURCE_HEADER_EXTENSION;
+import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
+import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.serializeHeaders;
+import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.getInternalFedoraDirectory;
+
 import java.util.HashSet;
 import java.util.Set;
 
+import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.Persister;
 
 /**
@@ -58,6 +66,21 @@ public abstract class AbstractPersister implements Persister {
         this.resourceOperationType = new HashSet<>();
     }
 
+    protected static String getSidecarSubpath(final String subpath) {
+        return getInternalFedoraDirectory() + subpath + RESOURCE_HEADER_EXTENSION;
+    }
+
+    protected static void writeHeaders(final OCFLObjectSession session, final ResourceHeaders headers,
+            final String subpath) throws PersistentStorageException {
+        final var headerStream = serializeHeaders(headers);
+        session.write(getSidecarSubpath(subpath), headerStream);
+    }
+
+    protected static ResourceHeaders readHeaders(final OCFLObjectSession objSession, final String subpath)
+            throws PersistentStorageException {
+        final var headerStream = objSession.read(getSidecarSubpath(subpath));
+        return deserializeHeaders(headerStream);
+    }
 
     @Override
     public boolean handle(final ResourceOperation operation) {

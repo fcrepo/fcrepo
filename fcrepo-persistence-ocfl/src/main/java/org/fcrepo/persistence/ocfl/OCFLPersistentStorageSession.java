@@ -18,6 +18,7 @@
 package org.fcrepo.persistence.ocfl;
 
 import static java.lang.String.format;
+import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.resolveVersionId;
 
 import java.io.InputStream;
 import java.time.Instant;
@@ -54,6 +55,8 @@ import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.getRdfStrea
 import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.relativizeSubpath;
 
 import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
+import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.RESOURCE_HEADER_EXTENSION;
+import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
 import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.resolveOCFLSubpath;
 
 /**
@@ -193,9 +196,26 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     }
 
     @Override
-    public ResourceHeaders getHeaders(final String identifier, final Instant version) throws PersistentItemNotFoundException {
-        // TODO Auto-generated method stub
-        return null;
+    public ResourceHeaders getHeaders(final String identifier, final Instant version)
+            throws PersistentStorageException {
+
+        ensureCommitNotStarted();
+
+        final FedoraOCFLMapping mapping = fedoraOcflIndex.getMapping(identifier);
+        final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
+        final String fedoraSubpath = relativizeSubpath(mapping.getParentFedoraResourceId(), identifier);
+        final String ocflSubpath = resolveOCFLSubpath(fedoraSubpath);
+        final String sidecarSubpath = getInternalFedoraDirectory() + ocflSubpath + RESOURCE_HEADER_EXTENSION;
+
+        final InputStream headerStream;
+        if (version != null) {
+            final String versionId = resolveVersionId(objSession, version);
+            headerStream = objSession.read(sidecarSubpath, versionId);
+        } else {
+            headerStream = objSession.read(sidecarSubpath);
+        }
+
+        return deserializeHeaders(headerStream);
     }
 
     @Override
@@ -262,7 +282,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         try {
             LOGGER.debug("Preparing commit...");
 
-            for (OCFLObjectSession objectSession : sessions) {
+            for (final OCFLObjectSession objectSession : sessions) {
                 objectSession.prepare();
             }
 
@@ -276,7 +296,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
             this.sessionsToRollback = new ArrayList<>(sessions.size());
 
             //perform commit
-            for (OCFLObjectSession objectSession : sessions) {
+            for (final OCFLObjectSession objectSession : sessions) {
                 final CommitOption option = objectSession.getDefaultCommitOption();
                 objectSession.commit(option);
                 sessionsToRollback.add(new CommittedSession(objectSession, option));
@@ -319,7 +339,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         final List<OCFLObjectSession> committedSessions = this.sessionsToRollback.stream().map(c -> c.session).collect(Collectors.toList());
         final List<OCFLObjectSession> uncommittedSessions = new ArrayList<>(this.sessionMap.values());
         uncommittedSessions.removeAll(committedSessions);
-        for (OCFLObjectSession obj : uncommittedSessions) {
+        for (final OCFLObjectSession obj : uncommittedSessions) {
             obj.close();
         }
 
@@ -328,7 +348,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
             // rollback committed sessions
             //for each committed session, rollback if possible
             final List<String> rollbackFailures = new ArrayList<>(this.sessionsToRollback.size());
-            for (CommittedSession cs : this.sessionsToRollback) {
+            for (final CommittedSession cs : this.sessionsToRollback) {
                 if (cs.option == NEW_VERSION) {
                     //TODO rollback to previous OCFL version
                     //add any failure messages here.
@@ -343,7 +363,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
                 state = State.ROLLBACK_FAILED;
                 final StringBuilder builder = new StringBuilder();
                 builder.append("Unable to rollback successfully due to the following reasons: \n");
-                for (String failures : rollbackFailures) {
+                for (final String failures : rollbackFailures) {
                     builder.append("        " + failures + "\n");
                 }
 
