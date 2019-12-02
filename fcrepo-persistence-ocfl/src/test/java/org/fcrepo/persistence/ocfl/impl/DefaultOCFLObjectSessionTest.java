@@ -17,14 +17,14 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import static edu.wisc.library.ocfl.api.OcflOption.MOVE_SOURCE;
+import static java.lang.String.format;
 import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
 import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static edu.wisc.library.ocfl.api.OcflOption.MOVE_SOURCE;
-import static java.lang.String.format;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -33,7 +33,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import edu.wisc.library.ocfl.api.model.VersionDetails;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
@@ -47,9 +46,10 @@ import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import edu.wisc.library.ocfl.api.OcflObjectVersion;
 import edu.wisc.library.ocfl.api.model.ObjectDetails;
 import edu.wisc.library.ocfl.api.model.ObjectVersionId;
+import edu.wisc.library.ocfl.api.model.VersionDetails;
 import edu.wisc.library.ocfl.api.model.VersionId;
 import edu.wisc.library.ocfl.core.OcflRepositoryBuilder;
-import edu.wisc.library.ocfl.core.mapping.ObjectIdPathMapperBuilder;
+import edu.wisc.library.ocfl.core.extension.layout.config.DefaultLayoutConfig;
 import edu.wisc.library.ocfl.core.storage.FileSystemOcflStorage;
 
 /**
@@ -84,10 +84,10 @@ public class DefaultOCFLObjectSessionTest {
         final var repoDir = tempFolder.newFolder("ocfl-repo").toPath();
         final var workDir = tempFolder.newFolder("ocfl-work").toPath();
 
-        ocflRepository = new OcflRepositoryBuilder().buildMutable(
-                new FileSystemOcflStorage(repoDir,
-                        new ObjectIdPathMapperBuilder().buildFlatMapper()),
-                workDir);
+        ocflRepository = new OcflRepositoryBuilder()
+                .layoutConfig(DefaultLayoutConfig.flatPairTreeConfig())
+                .buildMutable(FileSystemOcflStorage.builder().build(
+                        repoDir), workDir);
 
         session = makeNewSession();
     }

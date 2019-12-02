@@ -17,18 +17,19 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import edu.wisc.library.ocfl.api.MutableOcflRepository;
-import edu.wisc.library.ocfl.core.OcflRepositoryBuilder;
-import edu.wisc.library.ocfl.core.mapping.ObjectIdPathMapperBuilder;
-import edu.wisc.library.ocfl.core.storage.FileSystemOcflStorage;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
+import static java.lang.System.getProperty;
+import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 
 import java.io.File;
 import java.nio.file.Paths;
 
-import static java.lang.System.getProperty;
-import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
+import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
+import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
+
+import edu.wisc.library.ocfl.api.MutableOcflRepository;
+import edu.wisc.library.ocfl.core.OcflRepositoryBuilder;
+import edu.wisc.library.ocfl.core.extension.layout.config.DefaultLayoutConfig;
+import edu.wisc.library.ocfl.core.storage.FileSystemOcflStorage;
 
 /**
  * A default implemenntation of the {@link org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory} interface.
@@ -79,10 +80,10 @@ public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory
         ocflWorkDir.mkdirs();
 
         this.ocflStagingDir = ocflStagingDir;
-        this.ocflRepository = new OcflRepositoryBuilder().buildMutable(
-                new FileSystemOcflStorage(ocflStorageRootDir.toPath(),
-                        new ObjectIdPathMapperBuilder().buildDefaultPairTreeMapper()),
-                ocflWorkDir.toPath());
+        this.ocflRepository = new OcflRepositoryBuilder()
+                .layoutConfig(DefaultLayoutConfig.nTupleHashConfig())
+                .buildMutable(FileSystemOcflStorage.builder().build(
+                        ocflStorageRootDir.toPath()), ocflWorkDir.toPath());
 
     }
 
