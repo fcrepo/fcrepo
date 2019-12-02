@@ -277,10 +277,8 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
                 throw new PersistentItemNotFoundException(format("Could not find %s within object %s version %s",
                         subpath, objectIdentifier, version.getVersionId()));
             }
-            final var stream = file.getStream();
             // Disable automatic fixity check
-            stream.on(false);
-            return stream;
+            return file.getStream().enableFixityCheck(false);
         } catch (final NotFoundException e) {
             throw new PersistentItemNotFoundException(format(
                     "Unable to read %s from object %s version %s, object was not found.",
