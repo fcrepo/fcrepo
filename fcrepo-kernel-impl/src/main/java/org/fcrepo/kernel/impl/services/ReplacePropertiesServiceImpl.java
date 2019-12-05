@@ -30,12 +30,13 @@ import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.springframework.stereotype.Component;
 
 /**
  * This class mediates update operations between the kernel and persistent storage layers
  * @author bseeger
  */
-
+@Component
 public class ReplacePropertiesServiceImpl extends AbstractService implements ReplacePropertiesService {
 
     @Inject

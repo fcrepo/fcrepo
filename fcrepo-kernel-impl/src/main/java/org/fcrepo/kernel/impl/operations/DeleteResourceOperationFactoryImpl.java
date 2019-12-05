@@ -18,12 +18,14 @@
 package org.fcrepo.kernel.impl.operations;
 
 import org.fcrepo.kernel.api.operations.DeleteResourceOperationFactory;
+import org.springframework.stereotype.Component;
 
 /**
  * Implementation of a delete resource operation factory
  *
  * @author bbpennel
  */
+@Component
 public class DeleteResourceOperationFactoryImpl implements DeleteResourceOperationFactory {
 
     @Override

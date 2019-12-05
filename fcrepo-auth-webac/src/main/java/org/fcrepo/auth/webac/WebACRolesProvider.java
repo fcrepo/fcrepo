@@ -56,7 +56,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.inject.Inject;
 
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Resource;
@@ -67,11 +66,13 @@ import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
 
 /**
  * @author acoburn
  * @since 9/3/15
  */
+@Component
 public class WebACRolesProvider {
 
     public static final String GROUP_AGENT_BASE_URI_PROPERTY = "fcrepo.auth.webac.groupAgent.baseUri";
@@ -86,7 +87,7 @@ public class WebACRolesProvider {
     private static final org.apache.jena.graph.Node VCARD_GROUP_NODE = createURI(VCARD_GROUP_VALUE);
     private static final org.apache.jena.graph.Node VCARD_MEMBER_NODE = createURI(VCARD_MEMBER_VALUE);
 
-    @Inject
+    // TODO: Should eventually `Inject`
     private NodeService nodeService;
 
     /**

@@ -51,11 +51,7 @@
       <artifactId>jena-core</artifactId>
     </dependency>
 
-    <!-- test gear -->  
-    <dependency>
-        <groupId>org.springframework</groupId>
-        <artifactId>spring-test</artifactId>
-    </dependency>
+    <!-- test gear -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -70,6 +66,10 @@
       <groupId>org.springframework</groupId>
       <artifactId>spring-test</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
     </dependency>
     <!-- This dependency is for compile-time: it keeps this module independent 
       of any given choice of JAX-RS implementation. It must be _after_ the test 

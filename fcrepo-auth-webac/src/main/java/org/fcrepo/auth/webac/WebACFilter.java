@@ -130,13 +130,13 @@ public class WebACFilter implements Filter {
 
     private static Subject FOAF_AGENT_SUBJECT;
 
-    @Inject
+    // TODO: Should eventually `Inject`
     private NodeService nodeService;
 
     @Inject
     private HttpServletRequest request;
 
-    @Inject
+    // TODO: Should eventually `Inject`
     private TransactionProvider txProvider;
 
     private static Set<URI> directOrIndirect = new HashSet<>();

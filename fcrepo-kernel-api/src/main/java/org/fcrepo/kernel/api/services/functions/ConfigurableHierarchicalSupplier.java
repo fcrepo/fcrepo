@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.api.services.functions;
 
+import org.springframework.stereotype.Component;
+
 import static java.util.UUID.randomUUID;
 
 import java.util.StringJoiner;
@@ -28,6 +30,7 @@ import java.util.stream.IntStream;
  * @author rdfloyd
  * @author whikloj
  */
+@Component
 public class ConfigurableHierarchicalSupplier implements UniqueValueSupplier {
 
     private static final int DEFAULT_LENGTH = 0;

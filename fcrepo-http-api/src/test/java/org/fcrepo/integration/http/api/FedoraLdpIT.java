@@ -194,7 +194,7 @@ import nu.validator.saxtree.TreeBuilder;
  * @author cabeer
  * @author ajs6f
  */
-@Ignore //TODO Fix these tests
+//@Ignore //TODO Fix these tests
 public class FedoraLdpIT extends AbstractResourceIT {
 
     private static final Node DC_IDENTIFIER = DC_11.identifier.asNode();
@@ -242,6 +242,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
       DateTimeFormatter.ISO_INSTANT.withZone(of("GMT"));
 
     @Test
+@Ignore
     public void testHeadRepositoryGraph() throws IOException {
         final HttpHead headObjMethod = new HttpHead(serverAddress);
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
@@ -251,6 +252,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testHeadObject() throws IOException {
         final String id = getRandomUniqueId();
         createObject(id).close();
@@ -259,6 +261,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testHeadDefaultContainer() throws IOException {
         final String id = getRandomUniqueId();
         createObject(id).close();
@@ -271,6 +274,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testHeadBasicContainer() throws IOException {
         final String id = getRandomUniqueId();
 
@@ -285,21 +289,25 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testHeadTurtleContentType() throws IOException {
         testHeadDefaultContentType(RDFMediaType.TURTLE_WITH_CHARSET);
     }
 
     @Test
+@Ignore
     public void testHeadRDFContentType() throws IOException {
         testHeadDefaultContentType(RDFMediaType.RDF_XML);
     }
 
     @Test
+@Ignore
     public void testHeadJSONLDContentType() throws IOException {
         testHeadDefaultContentType(RDFMediaType.JSON_LD);
     }
 
     @Test
+@Ignore
     public void testHeadDefaultContentType() throws IOException {
         testHeadDefaultContentType(null);
     }
@@ -341,6 +349,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testHeadDefaultRDF() throws IOException {
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id, "text/turtle", "<> a <http://example.com/Foo> .");
@@ -355,6 +364,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testHeadDefaultNonRDF() throws IOException {
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id, "text/plain", "<> a <http://example.com/Foo> .");
@@ -368,6 +378,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testHeadDirectContainer() throws IOException {
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
@@ -384,6 +395,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testHeadIndirectContainer() throws IOException {
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
@@ -399,6 +411,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testHeadDatastream() throws IOException, ParseException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", "123");
@@ -416,6 +429,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testHeadDatastreamWithWantDigest() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", TEST_BINARY_CONTENT);
@@ -433,6 +447,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testHeadDatastreamWithWantDigestMultiple() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", TEST_BINARY_CONTENT);
@@ -453,6 +468,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testHeadDatastreamWithWantDigestSha256() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", TEST_BINARY_CONTENT);
@@ -471,6 +487,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testHeadRdfResourceHeaders() throws IOException {
         final String id = getRandomUniqueId();
         createObject(id).close();
@@ -484,6 +501,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testHeadNonRdfHeaders() throws IOException {
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id, "text/plain", "<> a <http://example.com/Foo> .");
@@ -498,6 +516,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testOptions() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -510,6 +529,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testOptionsBinary() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", id);
@@ -523,6 +543,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testOptionsBinaryMetadata() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", null);
@@ -535,6 +556,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testOptionsBinaryMetadataWithUriEncoding() throws Exception {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", null);
@@ -594,6 +616,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetRDFSource() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -610,6 +633,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetRDFSourceWithPreferMinimal() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -626,6 +650,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testCheckGetAclResourceHeaders() throws IOException {
         final String aclUri = createAcl();
 
@@ -638,6 +663,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetRDFSourceWithPreferRepresentation() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -656,6 +682,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetNonRDFSource() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", "some content");
@@ -671,6 +698,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetNonRDFSourceDescription() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", "some content");
@@ -694,6 +722,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetNonRDFSourceWithWantDigest() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", TEST_BINARY_CONTENT);
@@ -713,6 +742,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetNonRDFSourceWithWantDigestMultiple() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", TEST_BINARY_CONTENT);
@@ -740,6 +770,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
      * format being requested.
      */
     @Test
+@Ignore
     public void testGetRDFSourceWrongAccept() {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -751,6 +782,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetRDFSourceWithUserTypes() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -759,6 +791,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetNonRDFSourceAndDescriptionWithUserTypes() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "ds", "sample-content");
@@ -804,6 +837,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testDeleteObject() {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -812,6 +846,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testDeleteContainerWithDepthHeaderSet() {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -822,6 +857,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testDeleteContainerWithIncorrectDepthHeaderSet() {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -832,6 +868,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testDeleteHierarchy() {
         final String id = getRandomUniqueId();
         createObjectAndClose(id + "/foo");
@@ -841,6 +878,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testDeleteObjectAndTombstone() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -857,6 +895,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testTrailingSlashTombstoneLink() throws IOException {
         final String id = getRandomUniqueId();
         final URI expectedTombstone = URI.create(serverAddress + id + "/fcr:tombstone");
@@ -882,6 +921,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testEmptyPatch() {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -892,6 +932,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testUpdateObjectGraph() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -905,6 +946,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testDeleteMultipleMultiValuedProperties() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -968,6 +1010,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPatchBinary() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", "some content");
@@ -984,6 +1027,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
      * @throws IOException in case of IOException
      */
     @Test
+@Ignore
     public void testPatchBinaryDescription() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", "some content");
@@ -1003,6 +1047,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
      * @throws IOException on error
      */
     @Test
+@Ignore
     public void testPatchBinaryDescriptionWithBinaryProperties() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", "some content");
@@ -1024,6 +1069,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPatchBinaryNameAndType() throws IOException {
         final String pid = getRandomUniqueId();
 
@@ -1058,6 +1104,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPatchWithBlankNode() throws Exception {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -1082,6 +1129,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testReplaceGraph() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -1108,6 +1156,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testCreateGraph() throws IOException {
         final String subjectURI = serverAddress + getRandomUniqueId();
         final HttpPut createMethod = new HttpPut(subjectURI);
@@ -1123,11 +1172,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testCreateVersionedRDFResource() throws IOException {
         createVersionedRDFResource();
     }
 
     @Test
+@Ignore
     public void testGetVersionedResourceHeaders() throws IOException {
         final String subjectURI = createVersionedRDFResource();
         try (final CloseableHttpResponse response = execute(new HttpGet(subjectURI))) {
@@ -1137,6 +1188,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testHeadVersionedResourceHeaders() throws IOException {
         final String subjectURI = createVersionedRDFResource();
         try (final CloseableHttpResponse response = execute(new HttpHead(subjectURI))) {
@@ -1181,6 +1233,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testCreateVersionedBinaryResource() throws IOException {
         final HttpPost method = postObjMethod();
         final String id = getRandomUniqueId();
@@ -1209,6 +1262,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testCreateGraphWithBlanknodes() throws IOException {
         final String subjectURI = serverAddress + getRandomUniqueId();
         final HttpPut createMethod = new HttpPut(subjectURI);
@@ -1231,6 +1285,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testRoundTripReplaceGraph() throws IOException {
 
         final String subjectURI = getLocation(postObjMethod());
@@ -1252,6 +1307,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPutBinary() throws IOException {
 
         final String id = getRandomUniqueId();
@@ -1279,6 +1335,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPutBinaryChildViolation() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "binary", "some-content");
@@ -1288,6 +1345,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testBinaryEtags() throws IOException, InterruptedException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -1414,6 +1472,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPutBinaryRdfChanges() throws Exception {
         final String id = getRandomUniqueId();
         final Model model = createDefaultModel();
@@ -1482,6 +1541,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testETagOnDeletedChild() throws Exception {
         final String id = getRandomUniqueId();
         final String child = id + "/child";
@@ -1505,6 +1565,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testETagOnDeletedLdpDirectContainerChild() throws Exception {
         final String id = getRandomUniqueId();
         final String members = id + "/members";
@@ -1541,6 +1602,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testETagOnDeletedLdpIndirectContainerChild() throws Exception {
         final String id = getRandomUniqueId();
         final String members = id + "/members";
@@ -1585,6 +1647,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPutDatastreamContentOnObject() throws IOException {
         final String content = "foo";
         final String id = getRandomUniqueId();
@@ -1599,12 +1662,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testInvalidNamespaceOnHeadReturnsCorrectContentType() throws IOException {
         assertEquals("Expected " + TEXT_PLAIN_WITH_CHARSET,
                 TEXT_PLAIN_WITH_CHARSET, getContentType(headObjMethod("/fcr:accessroles"), Status.BAD_REQUEST));
     }
 
     @Test
+@Ignore
     public void testEmptyPutToExistingObject() {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -1613,6 +1678,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPutMalformedRDFOnObject() throws IOException {
         final String content = "this is not legitimate RDF";
         final String id = getRandomUniqueId();
@@ -1626,6 +1692,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testIngest() throws IOException {
         final String id = getRandomUniqueId();
         try (final CloseableHttpResponse response = createObject(id)) {
@@ -1638,6 +1705,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testIngestWithNewAndSparqlQuery() throws IOException {
         final HttpPost method = postObjMethod();
         method.addHeader(CONTENT_TYPE, "application/sparql-update");
@@ -1660,6 +1728,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testIngestWithSparqlQueryBadNS() throws IOException {
         final HttpPost method = postObjMethod();
         method.addHeader(CONTENT_TYPE, "application/sparql-update");
@@ -1670,6 +1739,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testIngestWithNewAndGraph() throws IOException {
         final HttpPost method = postObjMethod();
         method.addHeader(CONTENT_TYPE, "text/n3");
@@ -1690,6 +1760,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testIngestWithSlug() throws IOException {
         final HttpPost method = postObjMethod();
         method.addHeader("Slug", getRandomUniqueId());
@@ -1704,6 +1775,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testIngestWithRepeatedSlug() {
         final String id = getRandomUniqueId();
         assertEquals(CREATED.getStatusCode(), getStatus(putObjMethod(id)));
@@ -1718,6 +1790,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testIngestWithBinary() throws IOException {
         final HttpPost method = postObjMethod();
         method.addHeader(CONTENT_TYPE, "application/octet-stream");
@@ -1743,6 +1816,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     /* Verifies RDF persisted as binary is retrieved with byte-for-byte fidelity */
     @Test
+@Ignore
     public void testIngestOpaqueRdfAsBinary() throws IOException {
         final HttpPost method = postObjMethod();
         method.addHeader(CONTENT_TYPE, "application/n-triples");
@@ -1770,6 +1844,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
      * with a SHA1 sum of the binary content
      */
     @Test
+@Ignore
     public void testIngestWithBinaryAndChecksum() {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
@@ -1787,6 +1862,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
      * content
      */
     @Test
+@Ignore
     public void testIngestWithBinaryAndChecksumMismatch() {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
@@ -1802,6 +1878,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
      * Ensure that the a malformed Digest header returns a 400 Bad Request
      */
     @Test
+@Ignore
     public void testIngestWithBinaryAndMalformedDigestHeader() {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
@@ -1816,6 +1893,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
      * Ensure that a non-SHA1 Digest header returns a 409 Conflict
      */
     @Test
+@Ignore
     public void testIngestWithBinaryAndNonSha1DigestHeader() {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
@@ -1828,6 +1906,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testIngestWithBinaryAndMD5DigestHeader() {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
@@ -1840,6 +1919,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testIngestWithBinaryAndTwoValidHeadersDigestHeaders() {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
@@ -1853,6 +1933,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testIngestWithBinaryAndValidAndInvalidDigestHeaders() {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
@@ -1866,6 +1947,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testContentDispositionHeader() throws ParseException, IOException {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
@@ -1914,6 +1996,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testIngestOnSubtree() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -1928,6 +2011,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
      * @throws IOException in case of IOException
      */
     @Test
+@Ignore
     public void testIngestOnPairtree() throws IOException {
         final String parent = "123456/789/10";
         executeAndClose(putObjMethod(parent));
@@ -1945,6 +2029,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testIngestWithRDFLang() throws IOException {
         final HttpPost method = postObjMethod();
         method.addHeader(CONTENT_TYPE, "text/n3");
@@ -1964,6 +2049,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     // TODO It's not clear what this test is actually testing, or why it sleeps while running
             public
             void testCreateManyObjects() throws IOException, InterruptedException {
@@ -1979,6 +2065,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testDeleteWithBadEtag() throws IOException {
         try (final CloseableHttpResponse response = execute(postObjMethod())) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
@@ -1989,6 +2076,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetDatastream() throws IOException, ParseException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -2011,6 +2099,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetLongRange() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -2029,6 +2118,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testDeleteDatastream() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -2038,6 +2128,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testDeleteBinaryDescription() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id, NON_RDF_SOURCE_LINK_HEADER);
@@ -2105,6 +2196,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetObjectGraphHtml() throws IOException {
         final HttpGet getObjMethod = new HttpGet(getLocation(postObjMethod()));
         getObjMethod.addHeader(ACCEPT, "text/html");
@@ -2112,6 +2204,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetObjectGraphVariants() throws IOException {
         final String location = getLocation(postObjMethod());
         for (final Variant variant : POSSIBLE_RDF_VARIANTS) {
@@ -2123,6 +2216,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetObjectGraph() throws IOException {
         logger.trace("Entering testGetObjectGraph()...");
         final String location = getLocation(postObjMethod());
@@ -2143,6 +2237,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void verifyFullSetOfRdfTypes() throws IOException {
         logger.trace("Entering verifyFullSetOfRdfTypes()...");
         final String id = getRandomUniqueId();
@@ -2162,6 +2257,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetObjectGraphWithChild() throws IOException {
         final String id = getRandomUniqueId();
         final String location = getLocation(createObject(id));
@@ -2179,6 +2275,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetObjectGraphWithChildren() throws IOException {
         final String id = getRandomUniqueId();
         final String location = getLocation(createObject(id));
@@ -2203,6 +2300,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetObjectGraphWithBadLimit() throws IOException {
         final String id = getRandomUniqueId();
         getLocation(createObject(id));
@@ -2215,6 +2313,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetObjectGraphMinimal() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id, BASIC_CONTAINER_LINK_HEADER);
@@ -2229,6 +2328,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetObjectOmitMembership() throws IOException {
         final String id = getRandomUniqueId();
         final Node resource = createURI(serverAddress + id);
@@ -2253,6 +2353,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetObjectOmitContainment() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -2287,6 +2388,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetObjectOmitServerManaged() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -2330,6 +2432,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetObjectIncludeContainmentAndOmitServerManaged() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -2354,6 +2457,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetLDPRmOmitServerManaged() throws IOException {
         final String versionedResourceURI = createVersionedRDFResource();
         final String mementoResourceURI = getLocation(new HttpPost(versionedResourceURI + "/fcr:versions"));
@@ -2384,6 +2488,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetLDPRmWithoutOmitServerManager() throws IOException {
         final String versionedResourceURI = createVersionedRDFResource();
         final String mementoResourceURI = getLocation(new HttpPost(versionedResourceURI + "/fcr:versions"));
@@ -2412,6 +2517,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPatchToCreateDirectContainerInSparqlUpdate() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -2426,6 +2532,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPatchWithLdpContainsIndirectContainer() throws IOException {
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
@@ -2443,6 +2550,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPatchWithoutLdpContainsIndirectContainer() throws IOException {
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
@@ -2460,6 +2568,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPatchWithLdpContainsDirectContainer() throws IOException {
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
@@ -2477,6 +2586,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPatchWithoutDirectContainer() throws IOException {
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
@@ -2494,6 +2604,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPatchToDeleteNonRdfSourceInteractionModel() throws IOException {
         final String pid = getRandomUniqueId();
 
@@ -2510,6 +2621,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPutToChangeNonRdfSourceToRdfSource() throws IOException {
         final String pid = getRandomUniqueId();
 
@@ -2523,6 +2635,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPutChangeBinaryTypeNotAllowed() throws IOException {
         final HttpPost postMethod = new HttpPost(serverAddress);
         postMethod.setEntity(new StringEntity("TestString."));
@@ -2551,6 +2664,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPutChangeBasicContainerToParent() throws Exception {
         final String pid = getRandomUniqueId();
         final String location = serverAddress + pid;
@@ -2574,6 +2688,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPutToChangeInteractionModelWithRdf() throws IOException {
         final String pid = getRandomUniqueId();
         final String resource = serverAddress + pid;
@@ -2634,6 +2749,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testChangeInteractionModelWithPut() throws IOException {
         final String pid = getRandomUniqueId();
         final String resource = serverAddress + pid;
@@ -2677,6 +2793,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetObjectReferences() throws IOException {
         final String id = getRandomUniqueId();
         final String resource = serverAddress + id;
@@ -2707,6 +2824,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testGetObjectReferencesIndirect() throws Exception {
         final String uuid = getRandomUniqueId();
         final String pid1 = uuid + "/parent";
@@ -2802,6 +2920,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testLinkToNonExistent() throws IOException {
         final HttpPatch patch = new HttpPatch(getLocation(postObjMethod()));
         patch.addHeader(CONTENT_TYPE, "application/sparql-update");
@@ -2811,6 +2930,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testUpdateAndReplaceObjectGraph() throws IOException {
         final String subjectURI = getLocation(postObjMethod());
         final HttpPatch updateObjectGraphMethod = new HttpPatch(subjectURI);
@@ -2857,6 +2977,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     // TODO there is no actual use of the JCR namespace in this test-- what is it testing?
             public
             void testUpdateWithSparqlQueryJcrNS() throws IOException {
@@ -2870,6 +2991,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testUpdateObjectGraphWithProblems() throws IOException {
         final String subjectURI = getLocation(postObjMethod());
         final Link ex = fromUri(URI.create(serverAddress + "static/constraints/ServerManagedPropertyException.rdf"))
@@ -2886,6 +3008,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPutResourceBadRdf() throws IOException {
         final HttpPut httpPut = new HttpPut(serverAddress + getRandomUniqueId());
         httpPut.setHeader(CONTENT_TYPE, "text/turtle");
@@ -2894,6 +3017,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testRepeatedPut() {
         final String id = getRandomUniqueId();
         assertEquals(CREATED.getStatusCode(), getStatus(new HttpPut(serverAddress + id)));
@@ -2904,11 +3028,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testCreateResourceWithoutContentType() {
         assertEquals(CREATED.getStatusCode(), getStatus(new HttpPut(serverAddress + getRandomUniqueId())));
     }
 
     @Test
+@Ignore
     public void testUpdateObjectWithoutContentType() throws IOException {
         final HttpPut httpPut = new HttpPut(getLocation(postObjMethod()));
         // use a bytestream-based entity to avoid settin a content type
@@ -2917,6 +3043,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testUpdateBinaryWithoutContentType() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", "xyz");
@@ -2925,6 +3052,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testCreateBinaryUpperCaseMimeType() throws IOException {
         final String subjectURI = serverAddress + getRandomUniqueId();
         final HttpPut createMethod = new HttpPut(subjectURI);
@@ -2948,6 +3076,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
      * attempt to change the mime type to something syntactically invalid. Ensure one can still retrieve it.
      */
     @Test
+@Ignore
     public void testBinarySetBadMimeType() throws IOException {
         final String subjectURI = serverAddress + getRandomUniqueId();
         final HttpPut createMethod = new HttpPut(subjectURI);
@@ -2986,6 +3115,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testCreateBinaryCSV() throws IOException {
         final String subjectURI = serverAddress + getRandomUniqueId();
         final HttpPut createMethod = new HttpPut(subjectURI);
@@ -3007,6 +3137,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testRoundTripReplaceGraphForDatastreamDescription() throws IOException {
         final String id = getRandomUniqueId();
         final String subjectURI = serverAddress + id + "/ds1";
@@ -3035,6 +3166,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testResponseContentTypes() throws Exception {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -3046,6 +3178,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testDescribeRdfCached() throws IOException {
         try (final CloseableHttpClient cachClient = CachingHttpClientBuilder.create().setCacheConfig(DEFAULT).build()) {
             final String location = getLocation(postObjMethod());
@@ -3065,11 +3198,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testValidHTMLForRepo() throws IOException, SAXException {
         validateHTML("");
     }
 
     @Test
+@Ignore
     public void testValidHTMLForObject() throws IOException, SAXException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -3077,6 +3212,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testValidHTMLForDS() throws IOException, SAXException {
         final String id = getRandomUniqueId();
         createDatastream(id, "ds", "content");
@@ -3120,6 +3256,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testLinkedDeletion() {
         final String linkedFrom = getRandomUniqueId();
         final String linkedTo = getRandomUniqueId();
@@ -3138,6 +3275,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testUpdateObjectWithSpaces() throws IOException {
         final String id = getRandomUniqueId() + " 2";
         try (final CloseableHttpResponse createResponse = createObject(id)) {
@@ -3151,6 +3289,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testCreatedAndModifiedDates() throws IOException {
         final String location = getLocation(postObjMethod());
         final HttpGet getObjMethod = new HttpGet(location);
@@ -3176,6 +3315,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPostCreateDate() throws IOException {
         final HttpPost httpPost = postObjMethod("/");
         httpPost.addHeader("Slug", getRandomUniqueId());
@@ -3187,6 +3327,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testNonRDFSourceInteraction() throws IOException {
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id, "text/turtle", "<> a <http://example.com/Foo> .");
@@ -3196,6 +3337,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testContainerInteraction() throws IOException {
         final String id = getRandomUniqueId();
         final String location;
@@ -3237,6 +3379,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testIndirectContainerInteraction() throws IOException {
 
         // Create resource (object)
@@ -3301,6 +3444,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testWithHashUris() throws IOException {
         final HttpPost method = postObjMethod();
         method.addHeader(CONTENT_TYPE, "text/turtle");
@@ -3324,6 +3468,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testCreateAndReplaceGraphMinimal() throws IOException {
         LOGGER.trace("Entering testCreateAndReplaceGraphMinimal()...");
         final HttpPost httpPost = postObjMethod("/");
@@ -3350,6 +3495,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testAclHeaderWithPost() throws IOException {
         final String pid = getRandomUniqueId();
         final HttpPost httpPost = postObjMethod("/");
@@ -3362,6 +3508,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testAclHeaderWithPut() throws IOException {
         final String pid = getRandomUniqueId();
         final String location = serverAddress + pid;
@@ -3398,6 +3545,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testEmbeddedContainedResources() throws IOException {
         final String id = getRandomUniqueId();
         final String binaryId = "binary0";
@@ -3429,6 +3577,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
 
     @Test
+@Ignore
     public void testJsonLdProfileCompacted() throws IOException {
         // Create a resource
         final HttpPost method = postObjMethod();
@@ -3463,6 +3612,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testJsonLdProfileExpanded() throws IOException {
         // Create a resource
         final HttpPost method = postObjMethod();
@@ -3498,6 +3648,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testJsonLdProfileFlattened() throws IOException {
         // Create a resource
         final HttpPost method = postObjMethod();
@@ -3533,6 +3684,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPathWithEmptySegment() {
         final String badLocation = "test/me/mb/er/s//members/9528a300-22da-40f2-bf3c-5b345d71affb";
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(headObjMethod(badLocation)));
@@ -3546,6 +3698,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testUpdateObjectGraphWithNonLocalTriples() throws IOException {
         final String pid = getRandomUniqueId();
         createObject(pid);
@@ -3563,6 +3716,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPutMalformedHeader() throws IOException {
         // Create a resource
         final String id = getRandomUniqueId();
@@ -3595,6 +3749,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPutServerManagedPredicateInIndirectContainer() throws IOException {
         LOGGER.info("running testPutServerManagedPredicateInIndirectContainer");
         // Create a resource
@@ -3624,6 +3779,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPutEmptyBody() throws IOException {
         final HttpPut httpPut = putObjMethod(getRandomUniqueId());
         httpPut.addHeader(CONTENT_TYPE, "application/ld+json");
@@ -3634,12 +3790,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPutOgg() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", "OggS");
     }
 
     @Test
+@Ignore
     public void testPutReferenceRoot() throws Exception {
         final HttpPut httpPut = putObjMethod(getRandomUniqueId());
         httpPut.addHeader(CONTENT_TYPE, "text/turtle");
@@ -3655,6 +3813,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testDeleteLargeLiteralStoredAsBinary() throws IOException {
 
         final String pid = getRandomUniqueId();
@@ -3693,6 +3852,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testInboundLinksDoNotUpdateEtag() throws IOException {
         final String id1 = getRandomUniqueId();
         final HttpPut httpPut = putObjMethod(id1);
@@ -3722,18 +3882,21 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testCreationResponseDefault() {
         testCreationResponse(null, null, CREATED, "text/plain");
         testCreationResponse(null, "application/ld+json", NOT_ACCEPTABLE, "text/html");
     }
 
     @Test
+@Ignore
     public void testCreationResponseMinimal() {
         testCreationResponse("minimal", null, CREATED, null);
         testCreationResponse("minimal", "application/ld+json", CREATED, null);
     }
 
     @Test
+@Ignore
     public void testCreationResponseRepresentation() {
         testCreationResponse("representation", null, CREATED, "text/turtle");
         testCreationResponse("representation", "application/ld+json", CREATED, "application/ld+json");
@@ -3765,6 +3928,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPathsWithBrackets() {
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(deleteObjMethod("%5bfoo")));
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(getObjMethod("%5bfoo")));
@@ -3774,6 +3938,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testConcurrentPuts() throws InterruptedException, IOException {
         final String parent = getRandomUniqueId();
         executeAndClose(putObjMethod(parent));
@@ -3807,6 +3972,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testConcurrentPutsWithPairtrees() throws InterruptedException, IOException {
         final String parent = getRandomUniqueId();
         executeAndClose(putObjMethod(parent));
@@ -3861,6 +4027,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testConcurrentUpdatesToBinary() throws IOException, InterruptedException {
         // create a binary
         final String path = getRandomUniqueId();
@@ -3929,6 +4096,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testConcurrentPatches() throws IOException, InterruptedException {
         // create a resource
         final String path = getRandomUniqueId();
@@ -4002,6 +4170,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
 
     @Test
+@Ignore
     public void testBinaryLastModified() throws Exception {
         final String objid = getRandomUniqueId();
         final String objURI = serverAddress + objid;
@@ -4042,6 +4211,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testContainerLastModified() throws Exception {
         final String objid = getRandomUniqueId();
         final String objURI = serverAddress + objid;
@@ -4114,6 +4284,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testDigestConsistency() throws IOException {
         final String id = getRandomUniqueId();
         executeAndClose(putDSMethod(id, "binary1", "some test content"));
@@ -4135,6 +4306,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testDigestAbsence() throws IOException {
         final String id = getRandomUniqueId();
         executeAndClose(putDSMethod(id, "binary1", "some test content"));
@@ -4151,6 +4323,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPostFedoraSlug() throws IOException {
         final HttpPost httpPost = postObjMethod("/");
         httpPost.addHeader("Slug", "fedora:path");
@@ -4161,6 +4334,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPutFedoraPath() throws IOException {
         final HttpPut httpPut = putObjMethod("/fedora:path");
         try (final CloseableHttpResponse response = execute(httpPut)) {
@@ -4170,6 +4344,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testDeleteWithFedoraPath() throws IOException {
         final String id = getRandomUniqueId() + "/fedora:delete";
         final HttpDelete httpDelete = deleteObjMethod(id);
@@ -4181,6 +4356,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPostCreateNonRDFSourceWithAcl() throws IOException {
         final String aclURI = createAcl();
         final String subjectURI = getRandomUniqueId();
@@ -4194,6 +4370,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
 @Test
+@Ignore
     public void testPostCreateRDFSourceWithAcl() throws IOException {
         final String aclURI = createAcl();
         final String subjectURI = getRandomUniqueId();
@@ -4207,6 +4384,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 }
 
     @Test
+@Ignore
     public void testPutCreateNonRDFSourceWithAcl() throws IOException {
         final String aclURI = createAcl();
         final String subjectURI = serverAddress + getRandomUniqueId();
@@ -4219,6 +4397,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPutCreateRDFSourceWithAcl() throws IOException {
         final String aclURI = createAcl();
         final String subjectURI = serverAddress + getRandomUniqueId();
@@ -4238,6 +4417,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPostCreateRDFSourceWithMementoNamespaceType() throws IOException {
         final String subjectURI = getRandomUniqueId();
         final HttpPost createMethod = new HttpPost(serverAddress);
@@ -4252,6 +4432,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPutCreateRDFSourceWithMementoNamespaceType() throws IOException {
         final String subjectURI = serverAddress + getRandomUniqueId();
         final HttpPut putMethod = new HttpPut(subjectURI);
@@ -4265,6 +4446,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPatchInsertMementoNamespaceType() throws IOException {
         final String pid =  getRandomUniqueId();
         final String subjectURI = serverAddress + pid;
@@ -4280,6 +4462,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPostCreateRDFSourceWithMementoNamespacePredicate() throws IOException {
         final String subjectURI = getRandomUniqueId();
         final HttpPost createMethod = new HttpPost(serverAddress);
@@ -4295,6 +4478,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPutCreateRDFSourceWithMementoNamespacePredicate() throws IOException {
         final String subjectURI = serverAddress + getRandomUniqueId();
         final HttpPut putMethod = new HttpPut(subjectURI);
@@ -4309,6 +4493,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPatchInsertMementoNamespacePredicate() throws IOException {
         final String pid = getRandomUniqueId();
         final String subjectURI = serverAddress + pid;
@@ -4325,6 +4510,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPatchUpdateIndirectContainerServerManaged() throws IOException {
         final String pid = getRandomUniqueId();
         final String subjectURI = serverAddress + pid;
@@ -4348,6 +4534,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPutUpdateBinaryWithType() throws Exception {
         final String objid = getRandomUniqueId();
         final String objURI = serverAddress + objid;
@@ -4390,6 +4577,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPatchUpdateBinaryWithType() throws Exception {
         final String objid = getRandomUniqueId();
         final String objURI = serverAddress + objid;
@@ -4448,6 +4636,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPutGetRdfSourceWithUndefinedPrefix() throws Exception {
         final String id = "some_prefix:" + getRandomUniqueId();
         final HttpPut putMethod = putObjMethod(id);
@@ -4459,6 +4648,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testPutGetNonRdfSourceWithUndefinedPrefix() throws Exception {
         final String id = "some_prefix:" + getRandomUniqueId();
         final String dsid = "anotherPrefix:" + getRandomUniqueId();

@@ -22,7 +22,7 @@
     <maven.build.timestamp.format>yyyy-MM-dd</maven.build.timestamp.format>
     <!-- for standalone operation -->
     <jetty.users.file>${project.build.directory}/test-classes/jetty-users.properties</jetty.users.file>
-    <jetty-console.version>1.61</jetty-console.version>
+    <jetty-console.version>1.61-SNAPSHOT</jetty-console.version>
   </properties>
 
   <dependencies>
@@ -38,6 +38,16 @@
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-http-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-kernel-impl</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-persistence-ocfl</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -86,8 +96,14 @@
 
     <dependency>
       <groupId>org.glassfish.jersey.ext</groupId>
-      <artifactId>jersey-spring3</artifactId>
+      <artifactId>jersey-spring5</artifactId>
       <version>${jersey.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>jakarta.annotation</groupId>
+          <artifactId>jakarta.annotation-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>junit</groupId>

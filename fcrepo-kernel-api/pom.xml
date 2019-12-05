@@ -55,6 +55,10 @@
       <artifactId>jackson-dataformat-yaml</artifactId>
       <version>${jackson2.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+    </dependency>
 
     <!-- test gear -->
     <dependency>

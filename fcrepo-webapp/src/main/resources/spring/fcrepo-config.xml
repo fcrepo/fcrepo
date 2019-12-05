@@ -63,8 +63,6 @@
            NOTE: Only supported in WebAC authentication -->
     <bean name="delegatedPrincipalProvider" class="org.fcrepo.auth.common.DelegateHeaderPrincipalProvider"/>
 
-    <bean name="accessRolesProvider" class="org.fcrepo.auth.webac.WebACRolesProvider"/>
-
     <!-- Shiro Auth Confiuration -->
     <!-- Define the Shiro Realm implementation you want to use to connect to your back-end -->
     <!-- WebAC Authorization Realm -->
@@ -224,8 +222,5 @@
 
 
     <bean id="connectionManager" class="org.apache.http.impl.conn.PoolingHttpClientConnectionManager" />
-
-    <!-- Manages Transactions -->
-    <bean class="org.fcrepo.kernel.api.TransactionManager"/>
     
 </beans>

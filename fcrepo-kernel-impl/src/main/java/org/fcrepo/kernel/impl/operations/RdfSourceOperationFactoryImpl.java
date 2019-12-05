@@ -21,6 +21,7 @@ import org.fcrepo.kernel.api.operations.CreateRdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.ResourceOperationBuilder;
+import org.springframework.stereotype.Component;
 
 
 /**
@@ -28,6 +29,7 @@ import org.fcrepo.kernel.api.operations.ResourceOperationBuilder;
  *
  * @author bbpennel
  */
+@Component
 public class RdfSourceOperationFactoryImpl implements RdfSourceOperationFactory {
 
     @Override

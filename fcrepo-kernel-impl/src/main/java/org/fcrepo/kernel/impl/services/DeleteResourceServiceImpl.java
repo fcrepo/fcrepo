@@ -35,6 +35,7 @@ import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.util.stream.Stream;
@@ -46,11 +47,12 @@ import static java.lang.String.format;
  *
  * @author dbernstein
  */
+@Component
 public class DeleteResourceServiceImpl implements DeleteResourceService {
 
     private final static Logger log = LoggerFactory.getLogger(DeleteResourceService.class);
 
-    @Inject
+    // TODO: Should eventually `Inject`
     private ContainmentIndex containmentIndex;
 
     @Inject

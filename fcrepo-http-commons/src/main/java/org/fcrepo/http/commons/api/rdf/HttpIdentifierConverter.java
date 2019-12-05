@@ -78,6 +78,17 @@ public class HttpIdentifierConverter {
     }
 
     /**
+     * TODO: This constructor should be removed!
+     * ..it is only used so that Spring can create this class... since it is unclear where the `UriBuilder` will come
+     * ..from when this class is expected to be injected into `ContentExposingResource.java`
+     */
+    public HttpIdentifierConverter() {
+        // nothing :(
+        this.uriBuilder = null;
+        this.uriTemplate = null;
+    }
+
+    /**
      * Convert an external URI to an internal ID.
      *
      * @param httpUri the external URI.
