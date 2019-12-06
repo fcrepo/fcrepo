@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.security.Principal;
+import java.util.Base64;
 import java.util.Set;
 
 import javax.servlet.Filter;
@@ -39,7 +40,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
 
 import org.glassfish.grizzly.http.server.GrizzlyPrincipal;
-import org.glassfish.jersey.internal.util.Base64;
 import org.slf4j.Logger;
 
 /**
@@ -119,7 +119,7 @@ public class TestAuthenticationRequestFilter implements Filter {
             return null;
         }
         authentication = authentication.substring("Basic ".length());
-        final String[] values = Base64.decodeAsString(authentication).split(":");
+        final String[] values = new String(Base64.getDecoder().decode(authentication)).split(":");
         if (values.length < 2) {
             throw new WebApplicationException(400);
             // "Invalid syntax for username and password"

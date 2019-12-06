@@ -138,7 +138,8 @@ public class FedoraLdp extends ContentExposingResource {
 
     @PathParam("path") protected String externalPath;
 
-    @Inject private FixityService fixityService;
+    // TODO: Should eventually `Inject`
+    private FixityService fixityService;
 
     @Inject private FedoraHttpConfiguration httpConfiguration;
 

@@ -26,7 +26,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_TRANSACTION_SERVICE;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
-import org.fcrepo.http.api.repository.FedoraRepositoryTransactions;
+import org.fcrepo.http.api.Transactions;
 import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -77,7 +77,7 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
         final Resource s) {
         // fcr:tx
         model.add(s, HAS_TRANSACTION_SERVICE, createResource(uriInfo
-                .getBaseUriBuilder().path(FedoraRepositoryTransactions.class)
+                .getBaseUriBuilder().path(Transactions.class)
                 .build().toASCIIString()));
     }
 

@@ -20,6 +20,7 @@ package org.fcrepo.persistence.ocfl;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
+import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.util.HashMap;
@@ -32,6 +33,7 @@ import java.util.Map;
  * @author dbernstein
  * @since 2019-09-20
  */
+@Component
 public class OCFLPersistentSessionManager implements PersistentStorageSessionManager {
 
     private PersistentStorageSession readOnlySession;
@@ -41,7 +43,7 @@ public class OCFLPersistentSessionManager implements PersistentStorageSessionMan
     @Inject
     private OCFLObjectSessionFactory objectSessionFactory;
 
-    @Inject
+    // TODO: Should eventually 'Inject'
     private FedoraToOCFLObjectIndex fedoraOcflIndex;
 
     /**

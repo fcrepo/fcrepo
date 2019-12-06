@@ -212,10 +212,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     @Inject
     protected ReplacePropertiesService replacePropertiesService;
 
-    @Inject
+    // TODO: Should eventually `Inject`
     protected UpdatePropertiesService updatePropertiesService;
 
-    @Inject
+    // TODO: Should eventually `Inject`
     protected HttpIdentifierConverter httpIdentifierConverter;
 
     @Inject

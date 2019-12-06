@@ -58,7 +58,7 @@ public class AbstractResource {
     /**
      * The JCR node service
      */
-    @Inject
+    // TODO: Should eventually `Inject`
     protected NodeService nodeService;
 
     /**
@@ -78,13 +78,13 @@ public class AbstractResource {
     /**
      * The version service
      */
-    @Inject
+    // TODO: Should eventually `Inject`
     protected VersionService versionService;
 
     /**
      * The timemap service
      */
-    @Inject
+    // TODO: Should eventually `Inject`
     protected TimeMapService timeMapService;
 
     /**

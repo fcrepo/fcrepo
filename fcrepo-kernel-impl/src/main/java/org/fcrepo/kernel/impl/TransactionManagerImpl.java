@@ -23,6 +23,7 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 
@@ -34,6 +35,7 @@ import javax.inject.Inject;
  *
  * @author mohideen
  */
+@Component
 public class TransactionManagerImpl implements TransactionManager {
 
     private final HashMap<String, Transaction> transactions;

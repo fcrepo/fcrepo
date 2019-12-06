@@ -20,6 +20,7 @@ package org.fcrepo.kernel.impl.operations;
 import org.fcrepo.kernel.api.operations.CreateNonRdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
+import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -30,6 +31,7 @@ import java.net.URI;
  *
  * @author bbpennel
  */
+@Component
 public class NonRdfSourceOperationFactoryImpl implements NonRdfSourceOperationFactory {
 
     @Override

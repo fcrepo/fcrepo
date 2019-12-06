@@ -61,6 +61,10 @@
       <artifactId>ocfl-java-api</artifactId>
       <version>${ocfl-java.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+    </dependency>
 
     <!-- test gear -->
     <dependency>

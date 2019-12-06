@@ -27,7 +27,6 @@ import com.fasterxml.jackson.core.JsonParseException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.MediaType;
 import org.apache.jena.atlas.RuntimeIOException;
@@ -43,6 +42,7 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.RdfStream;
 import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
 
 /**
  * A service that will translate the resourceURI to Fedora ID in the Rdf InputStream
@@ -51,12 +51,12 @@ import org.slf4j.Logger;
  * @author bbpennel
  * @since 2019-11-07
  */
-
+@Component
 public class HttpRdfService {
 
     private static final Logger log = getLogger(HttpRdfService.class);
 
-    @Inject
+    // TODO: Should eventually `Inject`
     private HttpIdentifierConverter idTranslator;
 
     /**

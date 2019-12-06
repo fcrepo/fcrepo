@@ -56,13 +56,13 @@ public class LinkHeaderProvider implements UriAwareHttpHeaderFactory {
 
     private static final Logger LOGGER = getLogger(LinkHeaderProvider.class);
 
-    @Inject
+    // TODO: Should eventually `Inject`
     private TransactionProvider txProvider;
 
     @Inject
     private HttpServletRequest request;
 
-    @Inject
+    // TODO: Should eventually `Inject`
     private NodeService nodeService;
 
     @Override

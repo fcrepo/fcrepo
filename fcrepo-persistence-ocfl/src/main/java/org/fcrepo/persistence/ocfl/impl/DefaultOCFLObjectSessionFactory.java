@@ -30,6 +30,7 @@ import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import edu.wisc.library.ocfl.core.OcflRepositoryBuilder;
 import edu.wisc.library.ocfl.core.extension.layout.config.DefaultLayoutConfig;
 import edu.wisc.library.ocfl.core.storage.FileSystemOcflStorage;
+import org.springframework.stereotype.Component;
 
 /**
  * A default implemenntation of the {@link org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory} interface.
@@ -37,6 +38,7 @@ import edu.wisc.library.ocfl.core.storage.FileSystemOcflStorage;
  * @author dbernstein
  * @since 6.0.0
  */
+@Component
 public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory {
 
     private static final File STAGING_DIR = resolveDir("fcrepo.ocfl.staging.dir", "fcrepo-ocfl-staging");

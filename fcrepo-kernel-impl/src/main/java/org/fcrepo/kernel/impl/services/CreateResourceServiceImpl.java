@@ -50,12 +50,14 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.springframework.stereotype.Component;
 
 /**
  * Create a RdfSource resource.
  * @author whikloj
  * TODO: bbpennel has thoughts about moving this to HTTP layer.
  */
+@Component
 public class CreateResourceServiceImpl extends AbstractService implements CreateResourceService {
 
     @Inject

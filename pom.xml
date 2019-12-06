@@ -29,7 +29,7 @@
     <commons-io.version>2.6</commons-io.version>
     <commons-lang.version>3.7</commons-lang.version>
     <narayana-jta.version>5.9.0.Final</narayana-jta.version>
-    <jetty.version>9.3.27.v20190418</jetty.version>
+    <jetty.version>9.4.24.v20191120</jetty.version>
     <guava.version>28.1-jre</guava.version>
     <hk2.version>2.5.0-b62</hk2.version>
     <htmlunit.version>2.33</htmlunit.version>
@@ -44,7 +44,7 @@
     <jackson2.version>2.10.0</jackson2.version>
     <jboss-logging.version>3.3.2.Final</jboss-logging.version>
     <jena.version>3.8.0</jena.version>
-    <jersey.version>2.25.1</jersey.version>
+    <jersey.version>2.29.1</jersey.version>
     <jgroups.version>4.0.13.Final</jgroups.version>
     <jsonld.version>0.12.1</jsonld.version>
     <logback.version>1.2.3</logback.version>
@@ -124,8 +124,36 @@
 	  </dependency>
       <dependency>
         <groupId>org.glassfish.jersey.core</groupId>
+        <artifactId>jersey-common</artifactId>
+        <version>${jersey.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.jersey.core</groupId>
         <artifactId>jersey-server</artifactId>
         <version>${jersey.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.jersey.ext</groupId>
+        <artifactId>jersey-spring5</artifactId>
+        <version>${jersey.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.glassfish.hk2.external</groupId>
@@ -147,6 +175,16 @@
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>${guava.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.checkerframework</groupId>
+            <artifactId>checker-qual</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.google.errorprone</groupId>
+            <artifactId>error_prone_annotations</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.jena</groupId>
