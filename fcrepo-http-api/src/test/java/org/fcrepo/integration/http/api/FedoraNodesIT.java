@@ -44,7 +44,8 @@ import org.junit.Test;
  * @author ajs6f
  */
 @Ignore //TODO Fix these tests
-public class FedoraNodesIT extends AbstractResourceIT {
+public class
+FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testCopy() throws IOException {

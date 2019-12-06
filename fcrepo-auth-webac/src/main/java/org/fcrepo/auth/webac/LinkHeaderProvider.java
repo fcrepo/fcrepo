@@ -17,33 +17,31 @@
  */
 package org.fcrepo.auth.webac;
 
-import static org.fcrepo.auth.webac.URIConstants.WEBAC_ACCESS_CONTROL_VALUE;
-import static org.fcrepo.kernel.api.RdfCollectors.toModel;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
-
-import java.net.URI;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimap;
+import org.apache.jena.rdf.model.Resource;
+import org.fcrepo.http.commons.api.UriAwareHttpHeaderFactory;
+import org.fcrepo.http.commons.session.TransactionProvider;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.UriInfo;
+import java.net.URI;
 
-import org.fcrepo.http.commons.api.UriAwareHttpHeaderFactory;
-import org.fcrepo.http.commons.session.TransactionProvider;
-import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.services.NodeService;
-
-import org.slf4j.Logger;
-
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Multimap;
-import org.apache.jena.rdf.model.Resource;
-
-import org.springframework.stereotype.Component;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_ACCESS_CONTROL_VALUE;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Insert WebAC Link headers to responses
@@ -56,14 +54,14 @@ public class LinkHeaderProvider implements UriAwareHttpHeaderFactory {
 
     private static final Logger LOGGER = getLogger(LinkHeaderProvider.class);
 
-    // TODO: Should eventually `Inject`
+    @Inject
     private TransactionProvider txProvider;
 
     @Inject
     private HttpServletRequest request;
 
-    // TODO: Should eventually `Inject`
-    private NodeService nodeService;
+    @Inject
+    private ResourceFactory resourceFactory;
 
     @Override
     public Multimap<String, String> createHttpHeadersForResource(final UriInfo uriInfo, final FedoraResource resource) {
@@ -78,17 +76,21 @@ public class LinkHeaderProvider implements UriAwareHttpHeaderFactory {
         // Get the correct Acl for this resource
         WebACRolesProvider.getEffectiveAcl(resource, false).ifPresent(acls -> {
             // If the Acl is present we need to use the internal session to get its URI
-            nodeService.find(transaction, acls.resource.getPath())
-            .getTriples()
-            .collect(toModel()).listObjectsOfProperty(createProperty(WEBAC_ACCESS_CONTROL_VALUE))
-            .forEachRemaining(linkObj -> {
-                if (linkObj.isURIResource()) {
-                    final Resource acl = linkObj.asResource();
-                    final String aclPath = translator.convert(acl).getPath();
-                    final URI aclUri = uriInfo.getBaseUriBuilder().path(aclPath).build();
-                    headers.put("Link", Link.fromUri(aclUri).rel("acl").build().toString());
-                }
-            });
+            try {
+                resourceFactory.getResource(transaction, acls.resource.getPath())
+                .getTriples()
+                .collect(toModel()).listObjectsOfProperty(createProperty(WEBAC_ACCESS_CONTROL_VALUE))
+                .forEachRemaining(linkObj -> {
+                    if (linkObj.isURIResource()) {
+                        final Resource acl = linkObj.asResource();
+                        final String aclPath = translator.convert(acl).getPath();
+                        final URI aclUri = uriInfo.getBaseUriBuilder().path(aclPath).build();
+                        headers.put("Link", Link.fromUri(aclUri).rel("acl").build().toString());
+                    }
+                });
+            } catch (PathNotFoundException e) {
+                throw new PathNotFoundRuntimeException(e);
+            }
         });
 
         return headers;

@@ -68,6 +68,8 @@ import org.fcrepo.kernel.api.services.NodeService;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
+
 /**
  * @author acoburn
  * @since 9/3/15
@@ -87,7 +89,7 @@ public class WebACRolesProvider {
     private static final org.apache.jena.graph.Node VCARD_GROUP_NODE = createURI(VCARD_GROUP_VALUE);
     private static final org.apache.jena.graph.Node VCARD_MEMBER_NODE = createURI(VCARD_MEMBER_VALUE);
 
-    // TODO: Should eventually `Inject`
+    @Inject
     private NodeService nodeService;
 
     /**

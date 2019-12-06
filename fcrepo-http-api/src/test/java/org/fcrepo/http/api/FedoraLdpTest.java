@@ -1054,7 +1054,7 @@ public class FedoraLdpTest {
         final Response actual = testObj.createObject(null,
                 MediaType.valueOf(contentTypeSPARQLUpdate), "b", toInputStream("x", UTF_8), null, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(updatePropertiesService).updateProperties(eq(mockContainer), eq("x"), any(RdfStream.class));
+        verify(updatePropertiesService).updateProperties(anyString(), anyString(), anyString(), eq("x"), any(RdfStream.class));
     }
 
     @Test

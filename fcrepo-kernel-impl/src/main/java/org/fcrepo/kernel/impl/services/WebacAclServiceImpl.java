@@ -15,21 +15,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.services;
+package org.fcrepo.kernel.impl.services;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.models.WebacAcl;
+import org.fcrepo.kernel.api.services.WebacAclService;
+import org.springframework.stereotype.Component;
 
 /**
- * @author cabeer
+ * Implementation of {@link WebacAclService}
+ *
+ * @author dbernstein
  */
-public interface ExternalContentService {
-    /**
-     * Fetch the content body at a given URI
-     * @param sourceUri the source uri
-     * @return an InputStream of the content body
-     * @throws IOException if IO exception occurred
-     */
-    InputStream retrieveExternalContent(URI sourceUri) throws IOException;
+@Component
+public class WebacAclServiceImpl extends AbstractService implements WebacAclService {
+
+    @Override
+    public boolean exists(final Transaction transaction, final String path) {
+        return false;
+    }
+
+    @Override
+    public WebacAcl find(final Transaction transaction, final String path) {
+        return null;
+    }
+
+    @Override
+    public WebacAcl findOrCreate(final Transaction transaction, final String path) {
+        return null;
+    }
 }

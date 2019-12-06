@@ -15,20 +15,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.services;
+package org.fcrepo.kernel.impl.services;
+
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.models.TimeMap;
+import org.fcrepo.kernel.api.services.TimeMapService;
+import org.springframework.stereotype.Component;
 
 /**
- * @author acoburn
- * @since Jun 2, 2016
+ * Implementation of {@link org.fcrepo.kernel.api.services.TimeMapService}
+ *
+ * @author dbernstein
  */
-public interface CredentialsService {
+@Component
+public class TimeMapServiceImpl extends AbstractService implements TimeMapService {
 
-    /**
-     * Get the credentials for the given request
-     *
-     * @param request the request
-     * @return the credentials for the given request
-     */
-    Object getCredentials(final Object request);
+    @Override
+    public boolean exists(final Transaction transaction, final String path) {
+        return false;
+    }
 
+    @Override
+    public TimeMap find(final Transaction transaction, final String path) {
+        return null;
+    }
+
+    @Override
+    public TimeMap findOrCreate(final Transaction transaction, final String path) {
+        return null;
+    }
 }

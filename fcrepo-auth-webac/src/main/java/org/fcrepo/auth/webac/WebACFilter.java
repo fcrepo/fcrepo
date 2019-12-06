@@ -18,55 +18,7 @@
 
 package org.fcrepo.auth.webac;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.stream.Collectors.toList;
-import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
-import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
-import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
-import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
-import static org.apache.jena.riot.WebContent.contentTypeJSONLD;
-import static org.apache.jena.riot.WebContent.contentTypeTurtle;
-import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
-import static org.apache.jena.riot.WebContent.contentTypeN3;
-import static org.apache.jena.riot.WebContent.contentTypeNTriples;
-import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_ADMIN_ROLE;
-import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_USER_ROLE;
-import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
-import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_APPEND;
-import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_CONTROL;
-import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
-import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
-import static org.fcrepo.auth.webac.WebACAuthorizingRealm.URIS_TO_AUTHORIZE;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
-import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.io.IOException;
-import java.net.URI;
-import java.security.Principal;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Stream;
-
-import javax.inject.Inject;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriBuilder;
-
+import com.fasterxml.jackson.core.JsonParseException;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.atlas.RuntimeIOException;
 import org.apache.jena.graph.Node;
@@ -99,13 +51,56 @@ import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.slf4j.Logger;
+import org.springframework.web.filter.RequestContextFilter;
 
-import com.fasterxml.jackson.core.JsonParseException;
+import javax.inject.Inject;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.core.Link;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriBuilder;
+import java.io.IOException;
+import java.net.URI;
+import java.security.Principal;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.stream.Collectors.toList;
+import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+import static org.apache.jena.riot.WebContent.contentTypeJSONLD;
+import static org.apache.jena.riot.WebContent.contentTypeN3;
+import static org.apache.jena.riot.WebContent.contentTypeNTriples;
+import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.apache.jena.riot.WebContent.contentTypeTurtle;
+import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_ADMIN_ROLE;
+import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_USER_ROLE;
+import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_APPEND;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_CONTROL;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
+import static org.fcrepo.auth.webac.WebACAuthorizingRealm.URIS_TO_AUTHORIZE;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author peichman
  */
-public class WebACFilter implements Filter {
+public class WebACFilter extends RequestContextFilter {
 
     private static final Logger log = getLogger(WebACFilter.class);
 
@@ -130,13 +125,13 @@ public class WebACFilter implements Filter {
 
     private static Subject FOAF_AGENT_SUBJECT;
 
-    // TODO: Should eventually `Inject`
+    @Inject
     private NodeService nodeService;
 
     @Inject
     private HttpServletRequest request;
 
-    // TODO: Should eventually `Inject`
+    @Inject
     private TransactionProvider txProvider;
 
     private static Set<URI> directOrIndirect = new HashSet<>();
@@ -152,10 +147,6 @@ public class WebACFilter implements Filter {
         rdfContentTypes.add(contentTypeN3);
         rdfContentTypes.add(contentTypeRDFXML);
         rdfContentTypes.add(contentTypeNTriples);
-    }
-    @Override
-    public void init(final FilterConfig filterConfig) {
-        // this method intentionally left empty
     }
 
     /**
@@ -174,9 +165,10 @@ public class WebACFilter implements Filter {
         targetURIs.add(uri);
     }
 
+
     @Override
-    public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain)
-            throws IOException, ServletException {
+    protected void doFilterInternal(final HttpServletRequest request, final HttpServletResponse response,
+                                    final FilterChain chain) throws ServletException, IOException {
         final Subject currentUser = SecurityUtils.getSubject();
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         if (isSparqlUpdate(httpRequest) || isRdfRequest(httpRequest)) {
@@ -514,7 +506,7 @@ public class WebACFilter implements Filter {
     /**
      * Is the current resource a direct or indirect container
      *
-     * @param request
+     * @param resource
      * @return
      */
     private boolean isResourceIndirectOrDirect(final FedoraResource resource) {
@@ -600,9 +592,7 @@ public class WebACFilter implements Filter {
     /**
      * Get the memberRelation object from the contents.
      *
-     * @param baseUri The current request URL
-     * @param body The request body
-     * @param contentType The content type.
+     * @param request The request.
      * @return The URI of the memberRelation object
      * @throws IOException when getting request's inputstream
      */

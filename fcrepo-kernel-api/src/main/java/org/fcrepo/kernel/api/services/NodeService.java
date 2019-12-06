@@ -17,7 +17,6 @@
  */
 package org.fcrepo.kernel.api.services;
 
-import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.models.FedoraResource;
 
 /**
@@ -25,19 +24,5 @@ import org.fcrepo.kernel.api.models.FedoraResource;
  * @since Feb 20, 2014
  */
 public interface NodeService extends Service<FedoraResource> {
-    /**
-     * Copy an existing object from the source path to the destination path
-     * @param transaction the transaction
-     * @param source the source
-     * @param destination the destination
-     */
-    void copyObject(Transaction transaction, String source, String destination);
 
-    /**
-     * Move an existing object from the source path to the destination path
-     * @param transaction the transaction
-     * @param source the source
-     * @param destination the destination
-     */
-    void moveObject(Transaction transaction, String source, String destination);
 }
