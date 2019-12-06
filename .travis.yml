@@ -29,7 +29,7 @@ before_script:
  - sudo service ssh stop
 
 script:
- - mvn -Dfcrepo.streaming.parallel=true install -B -V
+ - ./mvnw -Dfcrepo.streaming.parallel=true install -B -V
 
 notifications:
   irc: "irc.freenode.org#fcrepo"
