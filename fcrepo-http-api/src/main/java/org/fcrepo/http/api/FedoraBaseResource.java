@@ -25,9 +25,12 @@ import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.Tombstone;
 import org.slf4j.Logger;
 
@@ -61,6 +64,9 @@ abstract public class FedoraBaseResource extends AbstractResource {
 
     @Context
     protected SecurityContext securityContext;
+
+    @Inject
+    private ResourceFactory resourceFactory;
 
     protected IdentifierConverter<Resource, FedoraResource> idTranslator;
 
@@ -101,15 +107,19 @@ abstract public class FedoraBaseResource extends AbstractResource {
      */
     @VisibleForTesting
     public FedoraResource getResourceFromPath(final String externalPath) {
-        final Resource resource = translator().toDomain(externalPath);
-        final FedoraResource fedoraResource = translator().convert(resource);
+        final String fedoraId = identifierConverter().toInternalId(externalPath);
+        try {
+            final FedoraResource fedoraResource = resourceFactory.getResource(transaction, fedoraId);
 
-        if (fedoraResource instanceof Tombstone) {
-            final String resourceURI = TRAILING_SLASH_REGEX.matcher(resource.getURI()).replaceAll("");
-            throw new TombstoneException(fedoraResource, resourceURI + "/fcr:tombstone");
+            if (fedoraResource instanceof Tombstone) {
+                final String resourceURI = TRAILING_SLASH_REGEX.matcher(externalPath).replaceAll("");
+                throw new TombstoneException(fedoraResource, resourceURI + "/fcr:tombstone");
+            }
+
+            return fedoraResource;
+        } catch (PathNotFoundException exc) {
+            throw new PathNotFoundRuntimeException(exc);
         }
-
-        return fedoraResource;
     }
 
     /**

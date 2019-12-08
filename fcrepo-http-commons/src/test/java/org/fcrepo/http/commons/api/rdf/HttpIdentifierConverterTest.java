@@ -50,10 +50,11 @@ public class HttpIdentifierConverterTest {
         converter = new HttpIdentifierConverter(uriBuilder);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testBlankUri() {
         final String testUri = "";
         final String fedoraId = converter.toInternalId(testUri);
+        assertEquals("info:fedora/", fedoraId);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -113,6 +114,16 @@ public class HttpIdentifierConverterTest {
         assertEquals("info:fedora/" + baseUid, fedoraId);
         final String httpUri = converter.toExternalId(fedoraId);
         assertEquals(testUri, httpUri);
+    }
+
+    @Test
+    public void testFirstLevelExternalPath() {
+        final String baseUid = getUniqueId();
+        final String testUri = "/" + baseUid;
+        final String fedoraId = converter.toInternalId(testUri);
+        assertEquals("info:fedora/" + baseUid, fedoraId);
+        final String httpUri = converter.toExternalId(fedoraId);
+        assertEquals(uriBase + testUri, httpUri);
     }
 
     @Test

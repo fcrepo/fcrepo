@@ -97,7 +97,7 @@ public class HttpIdentifierConverter {
     public String toInternalId(final String httpUri) {
         LOGGER.debug("Translating http URI {} to Fedora ID", httpUri);
 
-        final String path = getPath(httpUri);
+        final String path = getPath(toDomain(httpUri));
         if (path != null) {
 
             // Take the URL and remove any hash uris, or fcr: endpoints.
@@ -159,6 +159,41 @@ public class HttpIdentifierConverter {
      */
     private UriBuilder uriBuilder() {
         return UriBuilder.fromUri(uriBuilder.toTemplate());
+    }
+
+    /**
+     * Convert a path to a full url using the UriBuilder template.
+     * @param path the external path.
+     * @return the full url.
+     */
+    private String toDomain(final String path) {
+
+        if (path.startsWith("http:") || path.startsWith("https:")) {
+            // Already a full URI so return it.
+            return path;
+        }
+        final String realPath;
+        if (path == null) {
+            realPath = "";
+        } else if (path.startsWith("/")) {
+            realPath = path.substring(1);
+        } else {
+            realPath = path;
+        }
+
+        final UriBuilder uri = uriBuilder();
+
+        if (realPath.contains("#")) {
+
+            final String[] split = realPath.split("#", 2);
+
+            uri.resolveTemplate("path", split[0], false);
+            uri.fragment(split[1]);
+        } else {
+            uri.resolveTemplate("path", realPath, false);
+
+        }
+        return uri.build().toString();
     }
 
     /**
