@@ -97,7 +97,7 @@ public class HttpIdentifierConverter {
     public String toInternalId(final String httpUri) {
         LOGGER.debug("Translating http URI {} to Fedora ID", httpUri);
 
-        final String path = getPath(toDomain(httpUri));
+        final String path = getPath(httpUri);
         if (path != null) {
 
             // Take the URL and remove any hash uris, or fcr: endpoints.
@@ -166,12 +166,8 @@ public class HttpIdentifierConverter {
      * @param path the external path.
      * @return the full url.
      */
-    private String toDomain(final String path) {
+    public String toDomain(final String path) {
 
-        if (path.startsWith("http:") || path.startsWith("https:")) {
-            // Already a full URI so return it.
-            return path;
-        }
         final String realPath;
         if (path == null) {
             realPath = "";

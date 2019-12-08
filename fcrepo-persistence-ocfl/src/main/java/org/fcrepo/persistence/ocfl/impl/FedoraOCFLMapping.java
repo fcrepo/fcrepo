@@ -17,11 +17,14 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import org.springframework.stereotype.Component;
+
 /**
  * A mapping that links the parent fedora resource to its corresponding OCFL object.
  *
  * @author dbernstein
  */
+@Component
 public class FedoraOCFLMapping {
     private String parentFedoraResourceId;
     private String ocflObjectId;
