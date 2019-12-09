@@ -18,6 +18,8 @@
 package org.fcrepo.persistence.ocfl;
 
 import static java.lang.String.format;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.resolveVersionId;
 
 import java.io.InputStream;
@@ -34,6 +36,7 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.fcrepo.persistence.ocfl.api.Persister;
@@ -163,8 +166,18 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
             }
 
             //resolve the mapping between the fedora resource identifier and the associated OCFL object.
-            final FedoraOCFLMapping mapping = fedoraOcflIndex.getMapping(operation.getResourceId());
+            final String resourceId = operation.getResourceId();
+            final FedoraOCFLMapping mapping = fedoraOcflIndex.getMapping(resourceId);
 
+            //if no mapping exists, create one
+            if(mapping == null) {
+                if(operation instanceof CreateResourceOperation) {
+                    final String parentId = ((CreateResourceOperation)operation).getParentId();
+                    fedoraOcflIndex.addMapping(resourceId,  parentId, mintOCFLObjectId(parentId));
+               } else {
+                    throw new PersistentStorageException("Unable to resolve parent identifier for " + resourceId);
+                }
+            }
             //get the session.
             final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
 
@@ -175,6 +188,15 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
             phaser.arriveAndDeregister();
         }
 
+    }
+
+    private String mintOCFLObjectId ( final String fedoraIdentifier) {
+        //TODO make OBJECT minting more configurable.
+        String bareFedoraIdentifier = fedoraIdentifier;
+        if(fedoraIdentifier.indexOf(FEDORA_ID_PREFIX) == 0){
+            bareFedoraIdentifier = fedoraIdentifier.substring(FEDORA_ID_PREFIX.length());
+        }
+        return bareFedoraIdentifier.replace("/", "_");
     }
 
     private void ensureCommitNotStarted() throws PersistentSessionClosedException {

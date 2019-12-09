@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.persistence.ocfl;
+package org.fcrepo.persistence.ocfl.api;
 
 import org.fcrepo.persistence.ocfl.impl.FedoraOCFLMapping;
 
@@ -40,5 +40,14 @@ public interface FedoraToOCFLObjectIndex {
      * @return the mapping
      */
     FedoraOCFLMapping getMapping(final String fedoraResourceIdentifier);
+
+    /**
+     * Adds a mapping to the index
+     * @param fedoraResourceIdentifier The fedora resource
+     * @param parentFedoraResourceId The parent of the fedora resource
+     * @param ocflObjectId The ocfl object id
+     */
+    public void addMapping(final String fedoraResourceIdentifier, final String parentFedoraResourceId,
+                           final String ocflObjectId);
 }
 
