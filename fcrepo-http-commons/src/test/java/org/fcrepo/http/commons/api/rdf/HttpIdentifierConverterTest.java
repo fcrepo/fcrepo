@@ -56,6 +56,16 @@ public class HttpIdentifierConverterTest {
         final String fedoraId = converter.toInternalId(testUri);
     }
 
+    /**
+     * Test that a blank string toDomain becomes a /
+     */
+    @Test
+    public void testBlankToDomain() {
+        final String testUri = "";
+        final String fedoraUri = converter.toDomain(testUri);
+        assertEquals(uriBase + "/", fedoraUri);
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testBlankId() {
         final String testId = "";
@@ -113,6 +123,16 @@ public class HttpIdentifierConverterTest {
         assertEquals("info:fedora/" + baseUid, fedoraId);
         final String httpUri = converter.toExternalId(fedoraId);
         assertEquals(testUri, httpUri);
+    }
+
+    @Test
+    public void testFirstLevelExternalPath() {
+        final String baseUid = getUniqueId();
+        final String testUri = "/" + baseUid;
+        final String fedoraId = converter.toInternalId(converter.toDomain(testUri));
+        assertEquals("info:fedora/" + baseUid, fedoraId);
+        final String httpUri = converter.toExternalId(fedoraId);
+        assertEquals(uriBase + testUri, httpUri);
     }
 
     @Test

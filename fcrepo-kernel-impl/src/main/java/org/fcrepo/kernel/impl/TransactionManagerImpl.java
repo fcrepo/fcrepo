@@ -41,7 +41,7 @@ public class TransactionManagerImpl implements TransactionManager {
     private final HashMap<String, Transaction> transactions;
 
     @Inject
-    private static PersistentStorageSessionManager pSessionManager;
+    private PersistentStorageSessionManager pSessionManager;
 
     TransactionManagerImpl() {
         transactions = new HashMap();
@@ -77,6 +77,6 @@ public class TransactionManagerImpl implements TransactionManager {
     }
 
     protected PersistentStorageSessionManager getPersistentStorageSessionManager() {
-        return TransactionManagerImpl.pSessionManager;
+        return pSessionManager;
     }
 }

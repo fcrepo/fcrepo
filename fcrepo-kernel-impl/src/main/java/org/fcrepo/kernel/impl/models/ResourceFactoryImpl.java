@@ -49,7 +49,7 @@ import org.springframework.stereotype.Component;
 public class ResourceFactoryImpl implements ResourceFactory {
 
     @Inject
-    private static PersistentStorageSessionManager persistentStorageSessionManager;
+    private PersistentStorageSessionManager persistentStorageSessionManager;
 
     @Override
     public FedoraResource getResource(final String identifier)
