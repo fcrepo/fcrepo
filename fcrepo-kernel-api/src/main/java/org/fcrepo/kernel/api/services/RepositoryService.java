@@ -42,22 +42,4 @@ public interface RepositoryService {
      */
     Long getRepositoryObjectCount();
 
-    /**
-     * This method backups up a running repository
-     *
-     * @param transaction the transaction
-     * @param backupDirectory the backup directory
-     * @return problems
-     */
-    Collection<Throwable> backupRepository(Transaction transaction, File backupDirectory);
-
-    /**
-     * This methods restores the repository from a backup
-     *
-     * @param transaction the transaction
-     * @param backupDirectory the backup directory
-     * @return problems
-     */
-    Collection<Throwable> restoreRepository(Transaction transaction, File backupDirectory);
-
 }

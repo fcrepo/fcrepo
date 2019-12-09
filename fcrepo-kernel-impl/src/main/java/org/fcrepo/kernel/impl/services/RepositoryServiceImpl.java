@@ -43,16 +43,4 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
         //TODO implement
         throw new NotImplementedException("not implemented");
     }
-
-    @Override
-    public Collection<Throwable> backupRepository(final Transaction transaction, final File backupDirectory) {
-        //TODO implement
-        throw new NotImplementedException("not implemented");
-    }
-
-    @Override
-    public Collection<Throwable> restoreRepository(final Transaction transaction, final File backupDirectory) {
-        //TODO implement
-        throw new NotImplementedException("not implemented");
-    }
 }
