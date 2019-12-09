@@ -17,11 +17,6 @@
  */
 package org.fcrepo.kernel.api.services;
 
-import java.io.File;
-import java.util.Collection;
-
-import org.fcrepo.kernel.api.Transaction;
-
 /**
  * @author bbpennel
  * @since Feb 20, 2014

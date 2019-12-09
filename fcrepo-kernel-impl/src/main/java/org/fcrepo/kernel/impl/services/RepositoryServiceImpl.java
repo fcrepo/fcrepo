@@ -18,12 +18,8 @@
 package org.fcrepo.kernel.impl.services;
 
 import org.apache.commons.lang3.NotImplementedException;
-import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.services.RepositoryService;
 import org.springframework.stereotype.Component;
-
-import java.io.File;
-import java.util.Collection;
 
 /**
  * Implementation of {@link org.fcrepo.kernel.api.services.RepositoryService}
