@@ -31,6 +31,8 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.models.ResourceFactory;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
@@ -51,7 +53,6 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.services.NodeService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -92,7 +93,7 @@ public class WebACFilterTest {
     private TransactionProvider mockTransactionProvider;
 
     @Mock
-    private NodeService mockNodeService;
+    private ResourceFactory mockResourceFactory;
 
     @Mock
     private Transaction mockTransaction;
@@ -134,7 +135,7 @@ public class WebACFilterTest {
     private Subject mockSubject;
 
     @Before
-    public void setupRequest() {
+    public void setupRequest() throws PathNotFoundException{
         SecurityUtils.setSecurityManager(mockSecurityManager);
 
         mockSubject = Mockito.mock(Subject.class);
@@ -160,11 +161,9 @@ public class WebACFilterTest {
 
         when(mockTransactionProvider.getTransactionForRequest(request)).thenReturn(mockTransaction);
 
-        when(mockNodeService.exists(mockTransaction, testPath)).thenReturn(true);
-        when(mockNodeService.exists(mockTransaction, testChildPath)).thenReturn(false);
-        when(mockNodeService.exists(mockTransaction, "/")).thenReturn(true);
+        when(mockResourceFactory.getResource(mockTransaction, testChildPath)).thenReturn(null);
 
-        when(mockNodeService.find(mockTransaction, "/")).thenReturn(mockRoot);
+        when(mockResourceFactory.getResource(mockTransaction, "/")).thenReturn(mockRoot);
         when(mockContainer.getContainer()).thenReturn(mockRoot);
         when(mockChildContainer.getContainer()).thenReturn(mockContainer);
 
@@ -181,14 +180,14 @@ public class WebACFilterTest {
         setupContainerResource();
     }
 
-    private void setupContainerResource() {
-        when(mockNodeService.find(mockTransaction, testPath)).thenReturn(mockContainer);
-        when(mockNodeService.find(mockTransaction, testChildPath)).thenReturn(mockChildContainer);
+    private void setupContainerResource() throws PathNotFoundException {
+        when(mockResourceFactory.getResource(mockTransaction, testPath)).thenReturn(mockContainer);
+        when(mockResourceFactory.getResource(mockTransaction, testChildPath)).thenReturn(mockChildContainer);
         when(mockBinary.hasType(FEDORA_BINARY)).thenReturn(false);
     }
 
-    private void setupBinaryResource() {
-        when(mockNodeService.find(mockTransaction, testPath)).thenReturn(mockBinary);
+    private void setupBinaryResource() throws PathNotFoundException {
+        when(mockResourceFactory.getResource(mockTransaction, testPath)).thenReturn(mockBinary);
         when(mockBinary.hasType(FEDORA_BINARY)).thenReturn(true);
     }
 
@@ -562,7 +561,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserAppendPostBinary() throws IOException, ServletException {
+    public void testAuthUserAppendPostBinary() throws IOException, ServletException, PathNotFoundException {
         setupAuthUserAppendOnly();
         setupBinaryResource();
         // POST => 403
@@ -595,7 +594,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserReadAppendPostBinary() throws IOException, ServletException {
+    public void testAuthUserReadAppendPostBinary() throws IOException, ServletException, PathNotFoundException{
         setupAuthUserReadAppend();
         setupBinaryResource();
         // POST => 403
@@ -627,7 +626,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserReadAppendWritePostBinary() throws IOException, ServletException {
+    public void testAuthUserReadAppendWritePostBinary() throws IOException, ServletException, PathNotFoundException {
         setupAuthUserReadAppendWrite();
         setupBinaryResource();
         // POST => 200

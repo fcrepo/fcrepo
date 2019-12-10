@@ -41,6 +41,9 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_NAMESPACE_VALUE;
 import static org.fcrepo.http.api.FedoraAcl.getDefaultAcl;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.models.ResourceFactory;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
@@ -64,11 +67,11 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.services.NodeService;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
+
 
 /**
  * @author acoburn
@@ -90,7 +93,7 @@ public class WebACRolesProvider {
     private static final org.apache.jena.graph.Node VCARD_MEMBER_NODE = createURI(VCARD_MEMBER_VALUE);
 
     @Inject
-    private NodeService nodeService;
+    private ResourceFactory resourceFactory;
 
     /**
      * Get the roles assigned to this Node.
@@ -224,9 +227,14 @@ public class WebACRolesProvider {
                                          agentGroup.substring(0, hashIndex) :
                                          agentGroup;
                 final String hashedSuffix = hashIndex > 0 ? agentGroup.substring(hashIndex) : null;
-                final FedoraResource resource = nodeService.find(
-                    transaction, agentGroupNoHash.substring(FEDORA_INTERNAL_PREFIX.length()));
-                return getAgentMembers(translator, resource, hashedSuffix);
+                try {
+                    final FedoraResource resource = resourceFactory.getResource(
+                            transaction, agentGroupNoHash.substring(FEDORA_INTERNAL_PREFIX.length()));
+
+                    return getAgentMembers(translator, resource, hashedSuffix);
+                } catch (PathNotFoundException e) {
+                    throw new PathNotFoundRuntimeException(e);
+                }
             } else if (agentGroup.equals(FOAF_AGENT_VALUE)) {
                 return of(agentGroup);
             } else {

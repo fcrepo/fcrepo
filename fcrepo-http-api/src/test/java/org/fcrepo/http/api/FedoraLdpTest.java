@@ -106,7 +106,6 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
-import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.domain.MultiPrefer;
 import org.fcrepo.http.commons.domain.PreferTag;
@@ -128,7 +127,6 @@ import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
 import org.fcrepo.kernel.api.services.DeleteResourceService;
-import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.TimeMapService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
@@ -183,9 +181,6 @@ public class FedoraLdpTest {
 
     private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
-    @Mock
-    private NodeService mockNodeService;
-
     // @Mock
     // TODO: Replace with some other service/factory
     // private ContainerService mockContainerService;
@@ -211,12 +206,6 @@ public class FedoraLdpTest {
 
     @Mock
     private ServletContext mockServletContext;
-
-    @Mock
-    private PathLockManager mockLockManager;
-
-    @Mock
-    private AcquiredLock mockLock;
 
     @Mock
     private MultiPrefer prefer;
@@ -253,14 +242,12 @@ public class FedoraLdpTest {
         setField(testObj, "uriInfo", getUriInfoImpl());
         setField(testObj, "headers", mockHeaders);
         setField(testObj, "idTranslator", idTranslator);
-        setField(testObj, "nodeService", mockNodeService);
         // setField(testObj, "containerService", mockContainerService);
         // setField(testObj, "binaryService", mockBinaryService);
         setField(testObj, "timeMapService", mockTimeMapService);
         setField(testObj, "httpConfiguration", mockHttpConfiguration);
         setField(testObj, "transaction", mockTransaction);
         setField(testObj, "securityContext", mockSecurityContext);
-        setField(testObj, "lockManager", mockLockManager);
         setField(testObj, "context", mockServletContext);
         setField(testObj, "prefer", prefer);
         setField(testObj, "extContentHandlerFactory", extContentHandlerFactory);
@@ -293,9 +280,6 @@ public class FedoraLdpTest {
         when(mockHeaders.getHeaderString("user-agent")).thenReturn("Test UserAgent");
         when(mockHeaders.getHeaderString("X-If-State-Token")).thenReturn(null);
 
-        when(mockLockManager.lockForRead(any())).thenReturn(mockLock);
-        when(mockLockManager.lockForWrite(any(), any(), any())).thenReturn(mockLock);
-        when(mockLockManager.lockForDelete(any())).thenReturn(mockLock);
         when(mockTransaction.getId()).thenReturn("foo1234");
 
         when(mockServletContext.getContextPath()).thenReturn("/");
@@ -314,10 +298,10 @@ public class FedoraLdpTest {
         }
 
         final Answer<RdfStream> answer = invocationOnMock -> new DefaultRdfStream(
-                createURI(invocationOnMock.getMock().toString()),
-                of(Triple.create(createURI(invocationOnMock.getMock().toString()),
+                createURI("test"),
+                of(Triple.create(createURI("test"),
                         createURI("called"),
-                        createURI(invocationOnMock.getArguments()[1].toString()))));
+                        createURI("test"))));
 
         doReturn(mockResource).when(testObj).resource();
         when(mockResource.getPath()).thenReturn(path);
@@ -893,7 +877,6 @@ public class FedoraLdpTest {
         doReturn(mockObject).when(testObj).resource();
         when(mockContainer.isNew()).thenReturn(true);
 
-        when(mockNodeService.exists(mockTransaction, "/some/path")).thenReturn(false);
         // when(mockContainerService.findOrCreate(mockTransaction, "/some/path", null)).thenReturn(mockContainer);
 
         final Response actual = testObj.createOrReplaceObjectRdf(null, null, null, null, null, null);
@@ -916,7 +899,6 @@ public class FedoraLdpTest {
         doReturn(mockObject).when(testObj).resource();
         when(mockContainer.isNew()).thenReturn(true);
 
-        when(mockNodeService.exists(mockTransaction, "/some/path")).thenReturn(false);
         // when(mockContainerService.findOrCreate(mockTransaction, "/some/path", null)).thenReturn(mockContainer);
 
         final Response actual = testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
@@ -935,7 +917,6 @@ public class FedoraLdpTest {
         doReturn(mockObject).when(testObj).resource();
         when(mockBinary.isNew()).thenReturn(true);
 
-        when(mockNodeService.exists(mockTransaction, "/some/path")).thenReturn(false);
         // when(mockBinaryService.findOrCreate(mockTransaction, "/some/path")).thenReturn(mockBinary);
 
         final Response actual = testObj.createOrReplaceObjectRdf(TEXT_PLAIN_TYPE,
@@ -953,7 +934,6 @@ public class FedoraLdpTest {
         doReturn(mockObject).when(testObj).resource();
         when(mockObject.isNew()).thenReturn(false);
 
-        when(mockNodeService.exists(mockTransaction, "/some/path")).thenReturn(true);
         // when(mockContainerService.findOrCreate(mockTransaction, "/some/path", null)).thenReturn(mockObject);
 
         final Response actual = testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
@@ -972,7 +952,6 @@ public class FedoraLdpTest {
         doReturn(mockObject).when(testObj).resource();
         when(mockObject.isNew()).thenReturn(false);
 
-        when(mockNodeService.exists(mockTransaction, "/some/path")).thenReturn(true);
         // when(mockContainerService.findOrCreate(mockTransaction, "/some/path", null)).thenReturn(mockObject);
 
         testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
