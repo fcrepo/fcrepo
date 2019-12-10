@@ -69,7 +69,7 @@
     <mockito.version>2.22.0</mockito.version>
     <wiremock.version>2.13.0</wiremock.version>
     <!-- fcrepo5-specific plugins -->
-    <enforcer.plugin.version>1.4.1</enforcer.plugin.version>
+    <enforcer.plugin.version>3.0.0-M3</enforcer.plugin.version>
     <enforce-victims.rule.version>1.3.4</enforce-victims.rule.version>
     <war.plugin.version>3.2.2</war.plugin.version>
     <!-- default properties that can be altered on the command line -->
@@ -678,6 +678,12 @@
             </goals>
             <configuration>
               <rules>
+                <requireMavenVersion>
+                  <version>[3.6.3,)</version>
+                </requireMavenVersion>
+                <requireJavaVersion>
+                  <version>[11,)</version>
+                </requireJavaVersion>
                 <DependencyConvergence />
                 <bannedDependencies>
                   <searchTransitive>true</searchTransitive>

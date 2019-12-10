@@ -8,6 +8,7 @@ jdk:
 before_install:  
  - "echo $JAVA_OPTS"
  - "export JAVA_OPTS=-Xmx512m"
+ - "mvn -N io.takari:maven:0.7.7:wrapper -Dmaven=${MAVEN_VERSION}"
 
 # Default installation command is 
 # mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
@@ -29,7 +30,7 @@ before_script:
  - sudo service ssh stop
 
 script:
- - mvn -Dfcrepo.streaming.parallel=true install -B -V
+ - ./mvnw -Dfcrepo.streaming.parallel=true install -B -V
 
 notifications:
   irc: "irc.freenode.org#fcrepo"
