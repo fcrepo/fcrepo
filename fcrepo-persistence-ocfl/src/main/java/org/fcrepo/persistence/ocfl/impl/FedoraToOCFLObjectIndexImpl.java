@@ -17,6 +17,7 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.springframework.stereotype.Component;
 
@@ -26,23 +27,31 @@ import java.util.Map;
 
 /**
  * An simple in-memory implementation of the {@link org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex}
+ *
  * @author dbernstein
  * @since 6.0.0
  */
 @Component
 public class FedoraToOCFLObjectIndexImpl implements FedoraToOCFLObjectIndex {
-    private Map<String,FedoraOCFLMapping> fedoraOCFLMappingMap = Collections.synchronizedMap(new HashMap<>());
+    private Map<String, FedoraOCFLMapping> fedoraOCFLMappingMap = Collections.synchronizedMap(new HashMap<>());
 
     @Override
-    public FedoraOCFLMapping getMapping(final String fedoraResourceIdentifier) {
-        return fedoraOCFLMappingMap.get(fedoraResourceIdentifier);
+    public FedoraOCFLMapping getMapping(final String fedoraResourceIdentifier)
+            throws FedoraOCFLMappingNotFoundException {
+
+        final FedoraOCFLMapping m = fedoraOCFLMappingMap.get(fedoraResourceIdentifier);
+        if (m == null) {
+            throw new FedoraOCFLMappingNotFoundException(fedoraResourceIdentifier);
+        }
+
+        return m;
     }
 
     @Override
     public void addMapping(final String fedoraResourceIdentifier, final String parentFedoraResourceId, final String ocflObjectId) {
         FedoraOCFLMapping mapping = fedoraOCFLMappingMap.get(parentFedoraResourceId);
 
-        if(mapping == null){
+        if (mapping == null) {
             mapping = new FedoraOCFLMapping(parentFedoraResourceId, ocflObjectId);
             fedoraOCFLMappingMap.put(parentFedoraResourceId, mapping);
         }

@@ -22,6 +22,8 @@ import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
 import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
+
+import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -150,7 +152,7 @@ public class OCFLPersistentStorageSessionTest {
     }
 
     private void mockMappingAndIndex(final String ocflObjectId, final String resourceId, final String parentId,
-                                     final FedoraOCFLMapping mapping) {
+                                     final FedoraOCFLMapping mapping) throws FedoraOCFLMappingNotFoundException {
         when(mapping.getOcflObjectId()).thenReturn(ocflObjectId);
         when(mapping.getParentFedoraResourceId()).thenReturn(parentId);
         when(index.getMapping(resourceId)).thenReturn(mapping);
@@ -255,7 +257,7 @@ public class OCFLPersistentStorageSessionTest {
     }
 
     @Test
-    public void persistFailsIfCommitAlreadyComplete() throws PersistentStorageException {
+    public void persistFailsIfCommitAlreadyComplete() throws Exception {
         mockMappingAndIndex(OCFL_OBJECT_ID, RESOURCE_ID, PARENT_ID, mapping);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
 
@@ -275,7 +277,7 @@ public class OCFLPersistentStorageSessionTest {
     }
 
     @Test
-    public void getTriplesFailsIfAlreadyCommitted() throws PersistentStorageException {
+    public void getTriplesFailsIfAlreadyCommitted() throws Exception {
         mockMappingAndIndex(OCFL_OBJECT_ID, RESOURCE_ID, PARENT_ID, mapping);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
 
@@ -295,7 +297,7 @@ public class OCFLPersistentStorageSessionTest {
     }
 
     @Test
-    public void commitFailsIfAlreadyCommitted() throws PersistentStorageException {
+    public void commitFailsIfAlreadyCommitted() throws Exception {
         mockMappingAndIndex(OCFL_OBJECT_ID, RESOURCE_ID, PARENT_ID, mapping);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
 
@@ -315,7 +317,7 @@ public class OCFLPersistentStorageSessionTest {
     }
 
     @Test
-    public void verifyGetTriplesFailsAfterRollback() throws PersistentStorageException {
+    public void verifyGetTriplesFailsAfterRollback() throws Exception {
         mockMappingAndIndex(OCFL_OBJECT_ID, RESOURCE_ID, PARENT_ID, mapping);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
 

@@ -19,7 +19,6 @@ package org.fcrepo.persistence.ocfl;
 
 import static java.lang.String.format;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.resolveVersionId;
 
 import java.io.InputStream;
@@ -29,13 +28,16 @@ import java.util.List;
 import java.util.Map;
 
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
@@ -88,6 +90,8 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     private List<CommittedSession> sessionsToRollback = new ArrayList<>();
 
     private State state = State.COMMIT_NOT_STARTED;
+
+    private static final String DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID = "_fedora_repository_root";
 
     static {
         PERSISTER_LIST.add(new RDFSourcePersister());
@@ -167,17 +171,10 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
             //resolve the mapping between the fedora resource identifier and the associated OCFL object.
             final String resourceId = operation.getResourceId();
-            final FedoraOCFLMapping mapping = fedoraOcflIndex.getMapping(resourceId);
 
-            //if no mapping exists, create one
-            if(mapping == null) {
-                if(operation instanceof CreateResourceOperation) {
-                    final String parentId = ((CreateResourceOperation)operation).getParentId();
-                    fedoraOcflIndex.addMapping(resourceId,  parentId, mintOCFLObjectId(parentId));
-               } else {
-                    throw new PersistentStorageException("Unable to resolve parent identifier for " + resourceId);
-                }
-            }
+            //retrieve the mapping
+            final FedoraOCFLMapping mapping = findOrCreateFedoraOCFLMapping(operation, resourceId);
+
             //get the session.
             final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
 
@@ -190,13 +187,49 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     }
 
-    private String mintOCFLObjectId ( final String fedoraIdentifier) {
-        //TODO make OBJECT minting more configurable.
+    private FedoraOCFLMapping findOrCreateFedoraOCFLMapping(final ResourceOperation operation, final String resourceId)
+            throws PersistentStorageException {
+        FedoraOCFLMapping mapping;
+
+        try {
+            mapping = fedoraOcflIndex.getMapping(resourceId);
+        } catch (FedoraOCFLMappingNotFoundException e) {
+            //if no mapping exists, create one
+            if (operation instanceof CreateResourceOperation) {
+                final String parentId = ((CreateResourceOperation) operation).getParentId();
+                fedoraOcflIndex.addMapping(resourceId, parentId, mintOCFLObjectId(parentId));
+                try {
+                    mapping = fedoraOcflIndex.getMapping(resourceId);
+                } catch (FedoraOCFLMappingNotFoundException ex) {
+                    throw new PersistentStorageException("Failed to retrieve new mapping for " + resourceId);
+                }
+            } else {
+                throw new PersistentStorageException("Unable to resolve parent identifier for " + resourceId);
+            }
+        }
+
+        return mapping;
+    }
+
+    private String mintOCFLObjectId(final String fedoraIdentifier) {
+        //TODO make OCFL Object Id minting more configurable.
         String bareFedoraIdentifier = fedoraIdentifier;
-        if(fedoraIdentifier.indexOf(FEDORA_ID_PREFIX) == 0){
+        if (fedoraIdentifier.indexOf(FEDORA_ID_PREFIX) == 0) {
             bareFedoraIdentifier = fedoraIdentifier.substring(FEDORA_ID_PREFIX.length());
         }
-        return bareFedoraIdentifier.replace("/", "_");
+
+        //ensure no accidental collisions with the root ocfl identifier
+        if (bareFedoraIdentifier.equals(DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID)) {
+            throw new RepositoryRuntimeException(bareFedoraIdentifier + " in a reserved identifier");
+        }
+
+        bareFedoraIdentifier = bareFedoraIdentifier.replace("/", "_");
+
+        if (bareFedoraIdentifier.length() == 0) {
+            bareFedoraIdentifier = DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
+        }
+
+        return bareFedoraIdentifier;
     }
 
     private void ensureCommitNotStarted() throws PersistentSessionClosedException {
@@ -223,7 +256,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
         ensureCommitNotStarted();
 
-        final FedoraOCFLMapping mapping = fedoraOcflIndex.getMapping(identifier);
+        final FedoraOCFLMapping mapping = getFedoraOCFLMapping(identifier);
         final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
         final String fedoraSubpath = relativizeSubpath(mapping.getParentFedoraResourceId(), identifier);
         final String ocflSubpath = resolveOCFLSubpath(fedoraSubpath);
@@ -240,12 +273,20 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         return deserializeHeaders(headerStream);
     }
 
+    private FedoraOCFLMapping getFedoraOCFLMapping(final String identifier) throws PersistentStorageException {
+        try {
+            return fedoraOcflIndex.getMapping(identifier);
+        } catch (FedoraOCFLMappingNotFoundException e) {
+            throw new PersistentStorageException(e.getMessage());
+        }
+    }
+
     @Override
     public RdfStream getTriples(final String identifier, final Instant version)
             throws PersistentStorageException {
         ensureCommitNotStarted();
 
-        final FedoraOCFLMapping mapping = fedoraOcflIndex.getMapping(identifier);
+        final FedoraOCFLMapping mapping = getFedoraOCFLMapping(identifier);
         final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
         final String fedoraSubpath = relativizeSubpath(mapping.getParentFedoraResourceId(), identifier);
         final String ocflSubpath = resolveOCFLSubpath(fedoraSubpath);
@@ -255,12 +296,13 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     /**
      * Returns a list of immutable versions associated with the specified fedora identifier
+     *
      * @param fedoraIdentifier The fedora identifier
      * @return The list of instants that map to the underlying versions
      * @throws PersistentStorageException Due the underlying resource not existing or is otherwise unreadable.
      */
-     List<Instant> listVersions(final String fedoraIdentifier) throws PersistentStorageException {
-        final FedoraOCFLMapping mapping = fedoraOcflIndex.getMapping(fedoraIdentifier);
+    List<Instant> listVersions(final String fedoraIdentifier) throws PersistentStorageException {
+        final FedoraOCFLMapping mapping = getFedoraOCFLMapping(fedoraIdentifier);
         final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
         return OCFLPersistentStorageUtils.listVersions(objSession);
     }
@@ -269,7 +311,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     public RdfStream getManagedProperties(final String identifier, final Instant version)
             throws PersistentStorageException {
         ensureCommitNotStarted();
-        final FedoraOCFLMapping mapping = fedoraOcflIndex.getMapping(identifier);
+        final FedoraOCFLMapping mapping = getFedoraOCFLMapping(identifier);
         final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
         final String fedoraSubpath = relativizeSubpath(mapping.getParentFedoraResourceId(), identifier);
         final String ocflSubpath = resolveOCFLSubpath(fedoraSubpath);
