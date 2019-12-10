@@ -15,10 +15,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
- * This package provides functionality for core repository management.
- *
- * @author osmandin
- */
+package org.fcrepo.kernel.impl.services;
 
-package org.fcrepo.http.api.repository;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.models.TimeMap;
+import org.fcrepo.kernel.api.services.TimeMapService;
+import org.springframework.stereotype.Component;
+
+/**
+ * Implementation of {@link org.fcrepo.kernel.api.services.TimeMapService}
+ *
+ * @author dbernstein
+ */
+@Component
+public class TimeMapServiceImpl extends AbstractService implements TimeMapService {
+
+    @Override
+    public boolean exists(final Transaction transaction, final String path) {
+        return false;
+    }
+
+    @Override
+    public TimeMap find(final Transaction transaction, final String path) {
+        return null;
+    }
+
+    @Override
+    public TimeMap findOrCreate(final Transaction transaction, final String path) {
+        return null;
+    }
+}

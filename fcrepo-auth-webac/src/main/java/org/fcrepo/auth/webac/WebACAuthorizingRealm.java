@@ -76,7 +76,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
 
     public static final String URIS_TO_AUTHORIZE = "URIS_TO_AUTHORIZE";
 
-    // TODO: Should eventually `Inject`
+    @Inject
     private TransactionProvider txProvider;
 
     @Inject

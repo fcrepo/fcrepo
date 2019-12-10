@@ -15,20 +15,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.services;
+package org.fcrepo.kernel.impl.services;
+
+import org.apache.commons.lang3.NotImplementedException;
+import org.fcrepo.kernel.api.services.RepositoryService;
+import org.springframework.stereotype.Component;
 
 /**
- * @author acoburn
- * @since Jun 2, 2016
+ * Implementation of {@link org.fcrepo.kernel.api.services.RepositoryService}
+ *
+ * @author dbernstein
  */
-public interface CredentialsService {
+@Component
+public class RepositoryServiceImpl extends AbstractService implements RepositoryService {
+    @Override
+    public Long getRepositorySize() {
+        //TODO implement
+        throw new NotImplementedException("not implemented");
+    }
 
-    /**
-     * Get the credentials for the given request
-     *
-     * @param request the request
-     * @return the credentials for the given request
-     */
-    Object getCredentials(final Object request);
-
+    @Override
+    public Long getRepositoryObjectCount() {
+        //TODO implement
+        throw new NotImplementedException("not implemented");
+    }
 }

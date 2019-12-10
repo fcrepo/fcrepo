@@ -28,6 +28,7 @@ import org.apache.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.TimeMapService;
 import org.fcrepo.kernel.api.services.VersionService;
@@ -55,36 +56,22 @@ public class AbstractResource {
     @Context
     protected HttpHeaders headers;
 
-    /**
-     * The JCR node service
-     */
-    // TODO: Should eventually `Inject`
+    @Inject
     protected NodeService nodeService;
 
-    /**
-     * The repository object service
-     */
-    // @Inject
-    // TODO: Replace with some other service/factory
-    // protected ContainerService containerService;
-
-    /**
-     * The bitstream service
-     */
-    // @Inject
-    // TODO: Replace with some other service/factory
-    // protected BinaryService binaryService;
+    @Inject
+    protected ResourceFactory resourceFactory;
 
     /**
      * The version service
      */
-    // TODO: Should eventually `Inject`
+    @Inject
     protected VersionService versionService;
 
     /**
      * The timemap service
      */
-    // TODO: Should eventually `Inject`
+    @Inject
     protected TimeMapService timeMapService;
 
     /**

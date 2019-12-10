@@ -212,7 +212,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     @Inject
     protected ReplacePropertiesService replacePropertiesService;
 
-    // TODO: Should eventually `Inject`
+    @Inject
     protected UpdatePropertiesService updatePropertiesService;
 
     // TODO: Should eventually `Inject`
@@ -952,7 +952,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected void patchResourcewithSparql(final FedoraResource resource,
             final String requestBody,
             final RdfStream resourceTriples) {
-        updatePropertiesService.updateProperties(resource, requestBody, resourceTriples);
+        updatePropertiesService.updateProperties(transaction.getId(),
+                                                 getUserPrincipal(),
+                                                 resource.getId(),
+                                                 requestBody, resourceTriples);
     }
 
     /**

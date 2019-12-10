@@ -15,34 +15,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.services;
+package org.fcrepo.kernel.impl.services;
 
 import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.models.Binary;
-import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.services.NodeService;
+import org.springframework.stereotype.Component;
 
 /**
- * @author cabeer
- * @since 10/10/14
+ * Implementation of {@link NodeService}
+ *
+ * @author dbernstein
  */
-public interface BinaryService extends Service<Binary> {
+@Component
+public class NodeServiceImpl extends AbstractService implements NodeService {
 
-    /**
-     * Retrieves a Binary instance by transaction and path.
-     *
-     * @param transaction transaction
-     * @param path path of binary datastream
-     * @return retrieved Binary
-     */
-    Binary findOrCreateBinary(Transaction transaction, String path);
+    @Override
+    public boolean exists(final Transaction transaction, final String path) {
+        return false;
+    }
 
-    /**
-     * Retrieves a binary description instance by transaction and path.
-     *
-     * @param transaction transaction
-     * @param path path of description
-     * @return retrieved NonRdfSourceDescription
-     */
-    NonRdfSourceDescription findOrCreateDescription(Transaction transaction, String path);
+    @Override
+    public FedoraResource find(final Transaction transaction, final String path) {
+        return null;
+    }
 
+    @Override
+    public FedoraResource findOrCreate(final Transaction transaction, final String path) {
+        return null;
+    }
 }

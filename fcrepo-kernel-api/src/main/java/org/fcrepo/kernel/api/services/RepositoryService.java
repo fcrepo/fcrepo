@@ -17,11 +17,6 @@
  */
 package org.fcrepo.kernel.api.services;
 
-import java.io.File;
-import java.util.Collection;
-
-import org.fcrepo.kernel.api.Transaction;
-
 /**
  * @author bbpennel
  * @since Feb 20, 2014
@@ -41,23 +36,5 @@ public interface RepositoryService {
      * @return number of objects in the repository
      */
     Long getRepositoryObjectCount();
-
-    /**
-     * This method backups up a running repository
-     *
-     * @param transaction the transaction
-     * @param backupDirectory the backup directory
-     * @return problems
-     */
-    Collection<Throwable> backupRepository(Transaction transaction, File backupDirectory);
-
-    /**
-     * This methods restores the repository from a backup
-     *
-     * @param transaction the transaction
-     * @param backupDirectory the backup directory
-     * @return problems
-     */
-    Collection<Throwable> restoreRepository(Transaction transaction, File backupDirectory);
 
 }
