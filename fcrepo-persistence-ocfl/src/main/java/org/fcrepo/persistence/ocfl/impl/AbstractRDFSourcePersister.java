@@ -17,19 +17,6 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static java.util.Arrays.asList;
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
-import static org.fcrepo.persistence.common.ResourceHeaderUtils.newResourceHeaders;
-import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchCreationHeaders;
-import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchModificationHeaders;
-import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.relativizeSubpath;
-import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.resolveOCFLSubpath;
-import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.writeRDF;
-
-import java.util.HashSet;
-import java.util.Set;
-
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
@@ -38,9 +25,19 @@ import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
+import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
+import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
+import static org.fcrepo.persistence.common.ResourceHeaderUtils.newResourceHeaders;
+import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchCreationHeaders;
+import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchModificationHeaders;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.relativizeSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveOCFLSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.writeRDF;
 
 /**
  * This class implements the persistence of a new RDFSource
@@ -48,22 +45,23 @@ import org.slf4j.LoggerFactory;
  * @author dbernstein
  * @since 6.0.0
  */
-public class RDFSourcePersister extends AbstractPersister {
+public abstract class AbstractRDFSourcePersister extends AbstractPersister {
 
-    private static final Logger log = LoggerFactory.getLogger(RDFSourcePersister.class);
-
-    private static final Set<ResourceOperationType> OPERATION_TYPES = new HashSet<>(asList(CREATE, UPDATE));
+    private static final Logger log = LoggerFactory.getLogger(AbstractRDFSourcePersister.class);
 
     /**
      * Constructor
      */
-    public RDFSourcePersister() {
-        super(RdfSourceOperation.class, OPERATION_TYPES);
+    AbstractRDFSourcePersister(final Class<? extends ResourceOperation> resourceOperation,
+                               final ResourceOperationType resourceOperationType,
+                               final OCFLObjectSessionFactory objectFactory,
+                               final FedoraToOCFLObjectIndex index) {
+        super(resourceOperation, resourceOperationType, objectFactory, index);
     }
 
-    @Override
-    public void persist(final OCFLObjectSession session, final ResourceOperation operation,
-            final FedoraOCFLMapping mapping) throws PersistentStorageException {
+    protected void persistRDF(final OCFLObjectSession session, final ResourceOperation operation,
+                              final FedoraOCFLMapping mapping) throws PersistentStorageException {
+
         final RdfSourceOperation rdfSourceOp = (RdfSourceOperation)operation;
         log.debug("persisting RDFSource ({}) to {}", operation.getResourceId(), mapping.getOcflObjectId());
         final String subpath = relativizeSubpath(mapping.getParentFedoraResourceId(), operation.getResourceId());

@@ -61,6 +61,11 @@ public class CreateNonRdfSourceOperation extends AbstractNonRdfSourceOperation i
     }
 
     @Override
+    public boolean isArchivalGroup() {
+        return false;
+    }
+
+    @Override
     public String getParentId() {
         return parentId;
     }

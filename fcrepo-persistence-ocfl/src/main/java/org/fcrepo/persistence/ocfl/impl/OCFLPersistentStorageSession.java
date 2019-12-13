@@ -15,11 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.persistence.ocfl;
+package org.fcrepo.persistence.ocfl.impl;
 
 import static java.lang.String.format;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.resolveVersionId;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveVersionId;
 
 import java.io.InputStream;
 import java.time.Instant;
@@ -28,9 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
-import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.api.PersistentStorageSession;
@@ -42,10 +39,6 @@ import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.fcrepo.persistence.ocfl.api.Persister;
-import org.fcrepo.persistence.ocfl.impl.DeleteResourcePersister;
-import org.fcrepo.persistence.ocfl.impl.FedoraOCFLMapping;
-import org.fcrepo.persistence.ocfl.impl.NonRdfSourcePersister;
-import org.fcrepo.persistence.ocfl.impl.RDFSourcePersister;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,15 +47,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Phaser;
 import java.util.stream.Collectors;
 
-import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.getInternalFedoraDirectory;
-import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.getRDFFileExtension;
-import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.getRdfStream;
-import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.relativizeSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getInternalFedoraDirectory;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getRDFFileExtension;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getRdfStream;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.relativizeSubpath;
 
 import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.RESOURCE_HEADER_EXTENSION;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
-import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.resolveOCFLSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveOCFLSubpath;
 
 /**
  * OCFL Persistent Storage class.
@@ -85,20 +78,11 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     private final Phaser phaser = new Phaser();
 
-    private final static List<Persister> PERSISTER_LIST = new ArrayList<>();
+    private final List<Persister> persisterList = new ArrayList<>();
 
     private List<CommittedSession> sessionsToRollback = new ArrayList<>();
 
     private State state = State.COMMIT_NOT_STARTED;
-
-    private static final String DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID = "_fedora_repository_root";
-
-    static {
-        PERSISTER_LIST.add(new RDFSourcePersister());
-        PERSISTER_LIST.add(new NonRdfSourcePersister());
-        PERSISTER_LIST.add(new DeleteResourcePersister());
-        //TODO add new persisters here as they are implemented.
-    }
 
     private OCFLObjectSessionFactory objectSessionFactory;
 
@@ -136,6 +120,14 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         this.fedoraOcflIndex = fedoraOcflIndex;
         this.objectSessionFactory = objectSessionFactory;
         this.sessionMap = new ConcurrentHashMap<>();
+
+        //load the persister list if empty
+        persisterList.add(new CreateRDFSourcePersister(this.objectSessionFactory, this.fedoraOcflIndex));
+        persisterList.add(new UpdateRDFSourcePersister(this.objectSessionFactory, this.fedoraOcflIndex));
+        persisterList.add(new CreateNonRdfSourcePersister(this.objectSessionFactory, this.fedoraOcflIndex));
+        persisterList.add(new UpdateNonRdfSourcePersister(this.objectSessionFactory, this.fedoraOcflIndex));
+        persisterList.add(new DeleteResourcePersister(this.objectSessionFactory, this.fedoraOcflIndex));
+
     }
 
     /**
@@ -163,73 +155,19 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
             phaser.register();
 
             //resolve the persister based on the operation
-            final var persister = PERSISTER_LIST.stream().filter(p -> p.handle(operation)).findFirst().orElse(null);
+            final var persister = persisterList.stream().filter(p -> p.handle(operation)).findFirst().orElse(null);
 
             if (persister == null) {
                 throw new UnsupportedOperationException(format("The %s is not yet supported", operation.getClass()));
             }
 
-            //resolve the mapping between the fedora resource identifier and the associated OCFL object.
-            final String resourceId = operation.getResourceId();
-
-            //retrieve the mapping
-            final FedoraOCFLMapping mapping = findOrCreateFedoraOCFLMapping(operation, resourceId);
-
-            //get the session.
-            final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
-
             //perform the operation
-            persister.persist(objSession, operation, mapping);
+            persister.persist(this, operation);
 
         } finally {
             phaser.arriveAndDeregister();
         }
 
-    }
-
-    private FedoraOCFLMapping findOrCreateFedoraOCFLMapping(final ResourceOperation operation, final String resourceId)
-            throws PersistentStorageException {
-        FedoraOCFLMapping mapping;
-
-        try {
-            mapping = fedoraOcflIndex.getMapping(resourceId);
-        } catch (FedoraOCFLMappingNotFoundException e) {
-            //if no mapping exists, create one
-            if (operation instanceof CreateResourceOperation) {
-                final String parentId = ((CreateResourceOperation) operation).getParentId();
-                fedoraOcflIndex.addMapping(resourceId, parentId, mintOCFLObjectId(parentId));
-                try {
-                    mapping = fedoraOcflIndex.getMapping(resourceId);
-                } catch (FedoraOCFLMappingNotFoundException ex) {
-                    throw new PersistentStorageException("Failed to retrieve new mapping for " + resourceId);
-                }
-            } else {
-                throw new PersistentStorageException("Unable to resolve parent identifier for " + resourceId);
-            }
-        }
-
-        return mapping;
-    }
-
-    private String mintOCFLObjectId(final String fedoraIdentifier) {
-        //TODO make OCFL Object Id minting more configurable.
-        String bareFedoraIdentifier = fedoraIdentifier;
-        if (fedoraIdentifier.indexOf(FEDORA_ID_PREFIX) == 0) {
-            bareFedoraIdentifier = fedoraIdentifier.substring(FEDORA_ID_PREFIX.length());
-        }
-
-        //ensure no accidental collisions with the root ocfl identifier
-        if (bareFedoraIdentifier.equals(DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID)) {
-            throw new RepositoryRuntimeException(bareFedoraIdentifier + " in a reserved identifier");
-        }
-
-        bareFedoraIdentifier = bareFedoraIdentifier.replace("/", "_");
-
-        if (bareFedoraIdentifier.length() == 0) {
-            bareFedoraIdentifier = DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
-        }
-
-        return bareFedoraIdentifier;
     }
 
     private void ensureCommitNotStarted() throws PersistentSessionClosedException {
@@ -239,7 +177,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     }
 
 
-    private OCFLObjectSession findOrCreateSession(final String ocflId) {
+    OCFLObjectSession findOrCreateSession(final String ocflId) {
         final OCFLObjectSession sessionObj = this.sessionMap.get(ocflId);
         if (sessionObj != null) {
             return sessionObj;

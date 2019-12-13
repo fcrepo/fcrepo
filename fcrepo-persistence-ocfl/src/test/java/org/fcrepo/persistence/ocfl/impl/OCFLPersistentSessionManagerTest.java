@@ -15,14 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.persistence.ocfl;
+package org.fcrepo.persistence.ocfl.impl;
 
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
-import org.fcrepo.persistence.ocfl.impl.FedoraOCFLMapping;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,7 +32,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import static java.util.UUID.randomUUID;
 
 /**
- * Test class for {@link org.fcrepo.persistence.ocfl.OCFLPersistentSessionManager}
+ * Test class for {@link OCFLPersistentSessionManager}
  *
  * @author dbernstein
  */

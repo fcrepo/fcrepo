@@ -17,9 +17,7 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.DELETE;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.relativizeSubpath;
-
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
@@ -28,30 +26,30 @@ import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
+
 /**
- * Delete Resource Persister
+ * This class implements the persistence of a NonRDFSource
+ *
  * @author whikloj
+ * @since 6.0.0
  */
-class DeleteResourcePersister extends AbstractPersister {
+class UpdateNonRdfSourcePersister extends AbstractNonRdfSourcePersister {
 
-    private static final Logger log = LoggerFactory.getLogger(DeleteResourcePersister.class);
+    private static final Logger log = LoggerFactory.getLogger(UpdateNonRdfSourcePersister.class);
 
-    DeleteResourcePersister(final OCFLObjectSessionFactory objectSessionFactory,
-                            final FedoraToOCFLObjectIndex fedoraOcflIndex) {
-        super(ResourceOperation.class, DELETE, objectSessionFactory, fedoraOcflIndex);
+    /**
+     * Constructor
+     */
+    UpdateNonRdfSourcePersister(final OCFLObjectSessionFactory objectFactory,
+                                final FedoraToOCFLObjectIndex index) {
+        super(NonRdfSourceOperation.class, UPDATE, objectFactory, index);
     }
 
     @Override
     public void persist(final OCFLPersistentStorageSession session, final ResourceOperation operation) throws PersistentStorageException {
-        final FedoraOCFLMapping mapping = getMapping(operation.getResourceId());
-        final OCFLObjectSession objectSession = session.findOrCreateSession(mapping.getOcflObjectId());
-        log.debug("Deleting {} from {}", operation.getResourceId(), mapping.getOcflObjectId());
-        if (mapping.getParentFedoraResourceId().equals(operation.getResourceId())) {
-            // We are at the root of the object.
-            objectSession.deleteObject();
-        } else {
-            final String subpath = relativizeSubpath(mapping.getParentFedoraResourceId(), operation.getResourceId());
-            objectSession.delete(subpath);
-        }
+        final FedoraOCFLMapping fedoraOCFLMapping = getMapping(operation.getResourceId());
+        final OCFLObjectSession objSession = session.findOrCreateSession(fedoraOCFLMapping.getOcflObjectId());
+        persistNonRDFSource(operation, fedoraOCFLMapping, objSession);
     }
 }

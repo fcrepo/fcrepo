@@ -26,9 +26,8 @@ import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.ser
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.newResourceHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchCreationHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchModificationHeaders;
-import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.getInternalFedoraDirectory;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getInternalFedoraDirectory;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -39,7 +38,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
 
 import java.io.InputStream;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.IOUtils;
@@ -48,7 +46,9 @@ import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
+import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -62,7 +62,7 @@ import org.mockito.junit.MockitoJUnitRunner;
  * @since 6.0.0
  */
 @RunWith(MockitoJUnitRunner.Silent.class)
-public class NonRdfSourcePersisterTest {
+public class UpdateNonRdfSourcePersisterTest {
 
     @Mock
     private NonRdfSourceOperation nonRdfSourceOperation;
@@ -74,6 +74,12 @@ public class NonRdfSourcePersisterTest {
     private FedoraOCFLMapping mapping;
 
     @Mock
+    private FedoraToOCFLObjectIndex index;
+
+    @Mock
+    private OCFLObjectSessionFactory objectSessionFactory;
+
+    @Mock
     private WriteOutcome writeOutcome;
 
     @Captor
@@ -81,6 +87,9 @@ public class NonRdfSourcePersisterTest {
 
     @Captor
     private ArgumentCaptor<InputStream> headersIsCaptor;
+
+    @Mock
+    private OCFLPersistentStorageSession psSession;
 
     private static final String RESOURCE_ID = "info:fedora/parent/child";
 
@@ -98,7 +107,7 @@ public class NonRdfSourcePersisterTest {
 
     private static final Long EXTERNAL_CONTENT_SIZE = 526632l;
 
-    private final NonRdfSourcePersister persister = new NonRdfSourcePersister();
+    private UpdateNonRdfSourcePersister persister;
 
     @Before
     public void setUp() throws Exception {
@@ -114,55 +123,14 @@ public class NonRdfSourcePersisterTest {
         when(nonRdfSourceOperation.getContentSize()).thenReturn(null);
 
         when(writeOutcome.getContentSize()).thenReturn(LOCAL_CONTENT_SIZE);
-    }
+        when(psSession.findOrCreateSession(anyString())).thenReturn(session);
+        when(index.getMapping(anyString())).thenReturn(mapping);
 
-    @Test
-    public void testNonRdfNewResource() throws Exception {
+        persister = new UpdateNonRdfSourcePersister(objectSessionFactory, index);
 
-        final InputStream content = IOUtils.toInputStream(CONTENT_BODY, "UTF-8");
+        when(psSession.findOrCreateSession(anyString())).thenReturn(session);
+        when(index.getMapping(anyString())).thenReturn(mapping);
 
-        when(nonRdfSourceOperation.getContentStream()).thenReturn(content);
-        when(nonRdfSourceOperation.getType()).thenReturn(CREATE);
-        when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel())
-                .thenReturn(NON_RDF_SOURCE.toString());
-
-        persister.persist(session, nonRdfSourceOperation, mapping);
-
-        // verify user content
-        verify(session).write(eq("child"), userContentCaptor.capture());
-        final InputStream userContent = userContentCaptor.getValue();
-        assertEquals(CONTENT_BODY, IOUtils.toString(userContent, StandardCharsets.UTF_8));
-
-        // verify resource headers
-        final var resultHeaders = retrievePersistedHeaders("child");
-
-        assertEquals(NON_RDF_SOURCE.toString(), resultHeaders.getInteractionModel());
-        assertEquals(LOCAL_CONTENT_SIZE, resultHeaders.getContentSize());
-
-        assertModificationHeadersSet(resultHeaders);
-    }
-
-    @Test
-    public void testNonRdfNewExternalBinary() throws Exception {
-
-        when(nonRdfSourceOperation.getType()).thenReturn(CREATE);
-        when(nonRdfSourceOperation.getContentUri()).thenReturn(URI.create(EXTERNAL_URL));
-        when(nonRdfSourceOperation.getExternalHandling()).thenReturn(EXTERNAL_HANDLING);
-        when(nonRdfSourceOperation.getContentSize()).thenReturn(EXTERNAL_CONTENT_SIZE);
-        when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel()).thenReturn(NON_RDF_SOURCE
-                .toString());
-
-        persister.persist(session, nonRdfSourceOperation, mapping);
-
-        // verify resource headers
-        final var resultHeaders = retrievePersistedHeaders("child");
-
-        assertEquals(NON_RDF_SOURCE.toString(), resultHeaders.getInteractionModel());
-        assertEquals(EXTERNAL_HANDLING, resultHeaders.getExternalHandling());
-        assertEquals(EXTERNAL_URL, resultHeaders.getExternalUrl());
-        assertEquals(EXTERNAL_CONTENT_SIZE, resultHeaders.getContentSize());
-
-        assertModificationHeadersSet(resultHeaders);
     }
 
     @Test
@@ -182,7 +150,7 @@ public class NonRdfSourcePersisterTest {
         final var originalCreation = headers.getCreatedDate();
         final var originalModified = headers.getLastModifiedDate();
 
-        persister.persist(session, nonRdfSourceOperation, mapping);
+        persister.persist(psSession, nonRdfSourceOperation);
 
         // verify user content
         verify(session).write(eq("child"), userContentCaptor.capture());
@@ -210,7 +178,7 @@ public class NonRdfSourcePersisterTest {
         when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel())
                 .thenReturn(NON_RDF_SOURCE.toString());
 
-        persister.persist(session, nonRdfSourceOperation, mapping);
+        persister.persist(psSession, nonRdfSourceOperation);
     }
 
     private ResourceHeaders retrievePersistedHeaders(final String subpath) throws Exception {
@@ -218,12 +186,5 @@ public class NonRdfSourcePersisterTest {
                 headersIsCaptor.capture());
         final var headersIs = headersIsCaptor.getValue();
         return deserializeHeaders(headersIs);
-    }
-
-    private void assertModificationHeadersSet(final ResourceHeaders headers) {
-        assertEquals(USER_PRINCIPAL, headers.getCreatedBy());
-        assertNotNull(headers.getCreatedDate());
-        assertEquals(USER_PRINCIPAL, headers.getLastModifiedBy());
-        assertNotNull(headers.getLastModifiedDate());
     }
 }

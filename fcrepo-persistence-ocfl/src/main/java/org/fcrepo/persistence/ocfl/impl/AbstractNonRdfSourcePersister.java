@@ -27,7 +27,7 @@ import static org.fcrepo.persistence.common.ResourceHeaderUtils.populateBinaryHe
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.populateExternalBinaryHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchCreationHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchModificationHeaders;
-import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.relativizeSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.relativizeSubpath;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -40,7 +40,9 @@ import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
+import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
+import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,22 +52,24 @@ import org.slf4j.LoggerFactory;
  * @author whikloj
  * @since 6.0.0
  */
-public class NonRdfSourcePersister extends AbstractPersister {
+abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
 
-    private static final Logger log = LoggerFactory.getLogger(NonRdfSourcePersister.class);
+    private static final Logger log = LoggerFactory.getLogger(AbstractNonRdfSourcePersister.class);
 
     private static final Set<ResourceOperationType> OPERATION_ACTIONS = new HashSet<>(asList(CREATE, UPDATE));
 
     /**
      * Constructor
      */
-    public NonRdfSourcePersister() {
-        super(NonRdfSourceOperation.class, OPERATION_ACTIONS);
+    AbstractNonRdfSourcePersister(final Class<? extends ResourceOperation> resourceOperation,
+                                  final ResourceOperationType resourceOperationType,
+                                  final OCFLObjectSessionFactory objectFactory,
+                                  final FedoraToOCFLObjectIndex index) {
+        super(resourceOperation, resourceOperationType, objectFactory, index);
     }
 
-    @Override
-    public void persist(final OCFLObjectSession session, final ResourceOperation operation,
-            final FedoraOCFLMapping mapping) throws PersistentStorageException {
+    protected void persistNonRDFSource(final ResourceOperation operation, final FedoraOCFLMapping mapping,
+                                       final OCFLObjectSession objectSession) throws PersistentStorageException {
         log.debug("persisting ({}) to {}", operation.getResourceId(), mapping.getOcflObjectId());
         final String subpath = relativizeSubpath(mapping.getParentFedoraResourceId(), operation.getResourceId());
 
@@ -76,13 +80,13 @@ public class NonRdfSourcePersister extends AbstractPersister {
         if (forExternalBinary(nonRdfSourceOperation)) {
             outcome = null;
         } else {
-            outcome = session.write(subpath, nonRdfSourceOperation.getContentStream());
+            outcome = objectSession.write(subpath, nonRdfSourceOperation.getContentStream());
         }
         // TODO verify digests in the outcome match supplied digests
 
         // Write resource headers
-        final var headers = populateHeaders(session, subpath, nonRdfSourceOperation, outcome);
-        writeHeaders(session, headers, subpath);
+        final var headers = populateHeaders(objectSession, subpath, nonRdfSourceOperation, outcome);
+        writeHeaders(objectSession, headers, subpath);
     }
 
     /**

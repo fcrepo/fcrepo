@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.persistence.ocfl;
+package org.fcrepo.persistence.ocfl.impl;
 
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
@@ -60,9 +60,6 @@ import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
-import org.fcrepo.persistence.ocfl.impl.DefaultOCFLObjectSession;
-import org.fcrepo.persistence.ocfl.impl.DefaultOCFLObjectSessionFactory;
-import org.fcrepo.persistence.ocfl.impl.FedoraOCFLMapping;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -156,6 +153,7 @@ public class OCFLPersistentStorageSessionTest {
         when(mapping.getOcflObjectId()).thenReturn(ocflObjectId);
         when(mapping.getParentFedoraResourceId()).thenReturn(parentId);
         when(index.getMapping(resourceId)).thenReturn(mapping);
+
     }
 
     private void mockResourceOperation(final RdfSourceOperation rdfSourceOperation, final RdfStream userStream,

@@ -17,19 +17,22 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.RESOURCE_HEADER_EXTENSION;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.serializeHeaders;
-import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.getInternalFedoraDirectory;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getInternalFedoraDirectory;
 
-import java.util.HashSet;
-import java.util.Set;
-
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
+import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
+import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.fcrepo.persistence.ocfl.api.Persister;
 
 /**
@@ -40,30 +43,21 @@ import org.fcrepo.persistence.ocfl.api.Persister;
  */
 public abstract class AbstractPersister implements Persister {
 
-    private final Set<ResourceOperationType> resourceOperationType;
+    private final Class<? extends ResourceOperation> resourceOperation;
+    private final ResourceOperationType resourceOperationType;
+    private final OCFLObjectSessionFactory objectFactory;
+    private final FedoraToOCFLObjectIndex index;
 
-    private final Set<Class<? extends ResourceOperation>> resourceOperations;
+    private static final String DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID = "_fedora_repository_root";
 
-    AbstractPersister(final Set<Class<? extends ResourceOperation>> resourceOperations, final Set<ResourceOperationType> resourceOperationType) {
-        this.resourceOperations = resourceOperations;
+    AbstractPersister(final Class<? extends ResourceOperation> resourceOperation,
+                      final ResourceOperationType resourceOperationType,
+                      final OCFLObjectSessionFactory objectFactory,
+                      final FedoraToOCFLObjectIndex index) {
+        this.resourceOperation = resourceOperation;
         this.resourceOperationType = resourceOperationType;
-    }
-
-    AbstractPersister(final Class<? extends ResourceOperation> resourceOperation, final ResourceOperationType resourceOperationType) {
-        this();
-        this.resourceOperations.add(resourceOperation);
-        this.resourceOperationType.add(resourceOperationType);
-    }
-
-    AbstractPersister(final Class<? extends ResourceOperation> resourceOperation, final Set<ResourceOperationType> resourceOperationType) {
-        this.resourceOperations = new HashSet<>();
-        this.resourceOperations.add(resourceOperation);
-        this.resourceOperationType = resourceOperationType;
-    }
-
-    private AbstractPersister() {
-        this.resourceOperations = new HashSet<>();
-        this.resourceOperationType = new HashSet<>();
+        this.objectFactory = objectFactory;
+        this.index = index;
     }
 
     protected static String getSidecarSubpath(final String subpath) {
@@ -84,13 +78,70 @@ public abstract class AbstractPersister implements Persister {
 
     @Override
     public boolean handle(final ResourceOperation operation) {
-        //ensure that at least one of them match.
-        for (final var c : this.resourceOperations) {
-            if (c.isInstance(operation)) {
-                //return true if the operation types match.
-                return this.resourceOperationType.contains(operation.getType());
+            return resourceOperation.isInstance(operation) && resourceOperationType.equals(operation.getType());
+    }
+
+    protected FedoraOCFLMapping getMapping(final String resourceId) throws PersistentStorageException {
+        try {
+            return this.index.getMapping(resourceId);
+        } catch (FedoraOCFLMappingNotFoundException e){
+            throw new PersistentStorageException(e.getMessage());
+        }
+    }
+
+    protected FedoraOCFLMapping findOrCreateFedoraOCFLMapping(final ResourceOperation operation,
+                                                            final OCFLPersistentStorageSession session)
+            throws PersistentStorageException {
+
+        final String resourceId = operation.getResourceId();
+
+        try {
+            return index.getMapping(resourceId);
+        } catch (FedoraOCFLMappingNotFoundException e) {
+            //if no mapping exists, create one
+            if (operation instanceof CreateResourceOperation) {
+                final CreateResourceOperation createResourceOp = ((CreateResourceOperation)operation);
+                final boolean archivalGroup = createResourceOp.isArchivalGroup();
+                final String rootObjectId = archivalGroup ? resourceId : resolveRootObjectId(createResourceOp, session);
+                return index.addMapping(resourceId, rootObjectId, mintOCFLObjectId(rootObjectId));
+            } else {
+                throw new PersistentStorageException("Unable to resolve parent identifier for " + resourceId);
             }
         }
-        return false;
+    }
+
+    protected String resolveRootObjectId(final CreateResourceOperation operation,
+                                       final OCFLPersistentStorageSession session) {
+        final String parentId = operation.getParentId();
+
+        //final ResourceHeaders headers = session.getHeaders(parentId, null);
+        final boolean parentIsAg  = false; // TODO uncomment when headers.isAchivalGroup() is available
+        if(parentIsAg) {
+            return parentId;
+        } else {
+            return operation.getResourceId();
+        }
+
+    }
+
+    private String mintOCFLObjectId(final String fedoraIdentifier) {
+        //TODO make OCFL Object Id minting more configurable.
+        String bareFedoraIdentifier = fedoraIdentifier;
+        if (fedoraIdentifier.indexOf(FEDORA_ID_PREFIX) == 0) {
+            bareFedoraIdentifier = fedoraIdentifier.substring(FEDORA_ID_PREFIX.length());
+        }
+
+        //ensure no accidental collisions with the root ocfl identifier
+        if (bareFedoraIdentifier.equals(DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID)) {
+            throw new RepositoryRuntimeException(bareFedoraIdentifier + " in a reserved identifier");
+        }
+
+        bareFedoraIdentifier = bareFedoraIdentifier.replace("/", "_");
+
+        if (bareFedoraIdentifier.length() == 0) {
+            bareFedoraIdentifier = DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
+        }
+
+        return bareFedoraIdentifier;
     }
 }

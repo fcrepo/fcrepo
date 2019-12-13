@@ -19,7 +19,7 @@ package org.fcrepo.persistence.ocfl.api;
 
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.ocfl.impl.FedoraOCFLMapping;
+import org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageSession;
 
 /**
  * @author dbernstein
@@ -35,14 +35,13 @@ public interface Persister {
     boolean handle(ResourceOperation operation);
 
     /**
-     * The persistence handling for the given operation using the provided session and mapping.
+     * The persistence handling for the given operation.
      *
-     * @param objectSession The session associated with the OCFL object
+     * @param session The persistent storage session
      * @param operation The operation and associated data need to perform the operation.
-     * @param mapping The mapping information needed to perform the persistence operation
      * @throws PersistentStorageException on failure
      */
-    void persist(final OCFLObjectSession objectSession,
-            final ResourceOperation operation, final FedoraOCFLMapping mapping)
+    void persist(final OCFLPersistentStorageSession session,
+            final ResourceOperation operation)
             throws PersistentStorageException;
 }

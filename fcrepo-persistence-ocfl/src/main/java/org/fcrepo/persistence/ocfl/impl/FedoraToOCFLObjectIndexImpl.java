@@ -48,15 +48,18 @@ public class FedoraToOCFLObjectIndexImpl implements FedoraToOCFLObjectIndex {
     }
 
     @Override
-    public void addMapping(final String fedoraResourceIdentifier, final String parentFedoraResourceId, final String ocflObjectId) {
-        FedoraOCFLMapping mapping = fedoraOCFLMappingMap.get(parentFedoraResourceId);
+    public FedoraOCFLMapping addMapping(final String fedoraResourceIdentifier, final String fedoraRootObjectResourceId, final String ocflObjectId) {
+        FedoraOCFLMapping mapping = fedoraOCFLMappingMap.get(fedoraRootObjectResourceId);
 
         if (mapping == null) {
-            mapping = new FedoraOCFLMapping(parentFedoraResourceId, ocflObjectId);
-            fedoraOCFLMappingMap.put(parentFedoraResourceId, mapping);
+            mapping = new FedoraOCFLMapping(fedoraRootObjectResourceId, ocflObjectId);
+            fedoraOCFLMappingMap.put(fedoraRootObjectResourceId, mapping);
         }
 
-        fedoraOCFLMappingMap.put(fedoraResourceIdentifier, mapping);
+        if(!fedoraResourceIdentifier.equals(fedoraRootObjectResourceId)){
+            fedoraOCFLMappingMap.put(fedoraResourceIdentifier, mapping);
+        }
+        return mapping;
     }
 
 }
