@@ -46,11 +46,11 @@ class DeleteResourcePersister extends AbstractPersister {
         final FedoraOCFLMapping mapping = getMapping(operation.getResourceId());
         final OCFLObjectSession objectSession = session.findOrCreateSession(mapping.getOcflObjectId());
         log.debug("Deleting {} from {}", operation.getResourceId(), mapping.getOcflObjectId());
-        if (mapping.getParentFedoraResourceId().equals(operation.getResourceId())) {
+        if (mapping.getRootObjectIdentifier().equals(operation.getResourceId())) {
             // We are at the root of the object.
             objectSession.deleteObject();
         } else {
-            final String subpath = relativizeSubpath(mapping.getParentFedoraResourceId(), operation.getResourceId());
+            final String subpath = relativizeSubpath(mapping.getRootObjectIdentifier(), operation.getResourceId());
             objectSession.delete(subpath);
         }
     }

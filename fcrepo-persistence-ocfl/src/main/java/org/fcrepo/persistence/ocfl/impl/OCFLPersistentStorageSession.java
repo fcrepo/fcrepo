@@ -196,7 +196,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
         final FedoraOCFLMapping mapping = getFedoraOCFLMapping(identifier);
         final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
-        final String fedoraSubpath = relativizeSubpath(mapping.getParentFedoraResourceId(), identifier);
+        final String fedoraSubpath = relativizeSubpath(mapping.getRootObjectIdentifier(), identifier);
         final String ocflSubpath = resolveOCFLSubpath(fedoraSubpath);
         final String sidecarSubpath = getInternalFedoraDirectory() + ocflSubpath + RESOURCE_HEADER_EXTENSION;
 
@@ -226,7 +226,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
         final FedoraOCFLMapping mapping = getFedoraOCFLMapping(identifier);
         final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
-        final String fedoraSubpath = relativizeSubpath(mapping.getParentFedoraResourceId(), identifier);
+        final String fedoraSubpath = relativizeSubpath(mapping.getRootObjectIdentifier(), identifier);
         final String ocflSubpath = resolveOCFLSubpath(fedoraSubpath);
         final String filePath = ocflSubpath + getRDFFileExtension();
         return getRdfStream(identifier, objSession, filePath, version);
@@ -251,7 +251,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         ensureCommitNotStarted();
         final FedoraOCFLMapping mapping = getFedoraOCFLMapping(identifier);
         final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
-        final String fedoraSubpath = relativizeSubpath(mapping.getParentFedoraResourceId(), identifier);
+        final String fedoraSubpath = relativizeSubpath(mapping.getRootObjectIdentifier(), identifier);
         final String ocflSubpath = resolveOCFLSubpath(fedoraSubpath);
         final String filePath = getInternalFedoraDirectory() + ocflSubpath + getRDFFileExtension();
         return getRdfStream(identifier, objSession, filePath, version);

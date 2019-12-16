@@ -79,7 +79,7 @@ public class DeleteResourcePersisterTest {
     @Test
     public void testDeleteSubPath() throws Exception {
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
-        when(mapping.getParentFedoraResourceId()).thenReturn("info:fedora/an-ocfl-object");
+        when(mapping.getRootObjectIdentifier()).thenReturn("info:fedora/an-ocfl-object");
         when(operation.getResourceId()).thenReturn("info:fedora/an-ocfl-object/some-subpath");
 
         persister.persist(psSession, operation);
@@ -89,7 +89,7 @@ public class DeleteResourcePersisterTest {
     @Test
     public void testDeleteFullObject() throws Exception {
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
-        when(mapping.getParentFedoraResourceId()).thenReturn("info:fedora/an-ocfl-object");
+        when(mapping.getRootObjectIdentifier()).thenReturn("info:fedora/an-ocfl-object");
         when(operation.getResourceId()).thenReturn("info:fedora/an-ocfl-object");
         persister.persist(psSession, operation);
         verify(session).deleteObject();
@@ -98,7 +98,7 @@ public class DeleteResourcePersisterTest {
     @Test(expected = IllegalArgumentException.class)
     public void testNotPartOfObject() throws Exception {
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
-        when(mapping.getParentFedoraResourceId()).thenReturn("info:fedora/some-wrong-object");
+        when(mapping.getRootObjectIdentifier()).thenReturn("info:fedora/some-wrong-object");
         when(operation.getResourceId()).thenReturn("info:fedora/an-ocfl-object");
         persister.persist(psSession, operation);
     }

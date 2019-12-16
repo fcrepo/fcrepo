@@ -29,23 +29,23 @@ public class FedoraToOCFLObjectIndexImplTest {
     private static final String RESOURCE_ID_1 = "info:fedora/parent/child1";
     private static final String RESOURCE_ID_2 = "info:fedora/parent/child1";
 
-    private static final String PARENT_RESOURCE_ID = "info:fedora/parent";
+    private static final String ROOT_RESOURCE_ID = "info:fedora/parent";
     private static final String OCFL_ID = "ocfl-id";
 
     @Test
     public void test() throws Exception {
         final FedoraToOCFLObjectIndexImpl index = new FedoraToOCFLObjectIndexImpl();
 
-        index.addMapping(RESOURCE_ID_1, PARENT_RESOURCE_ID, OCFL_ID);
-        index.addMapping(RESOURCE_ID_2, PARENT_RESOURCE_ID, OCFL_ID);
+        index.addMapping(RESOURCE_ID_1, ROOT_RESOURCE_ID, OCFL_ID);
+        index.addMapping(RESOURCE_ID_2, ROOT_RESOURCE_ID, OCFL_ID);
 
         final FedoraOCFLMapping mapping1 = index.getMapping(RESOURCE_ID_1);
         final FedoraOCFLMapping mapping2 = index.getMapping(RESOURCE_ID_2);
-        final FedoraOCFLMapping mapping3 = index.getMapping(PARENT_RESOURCE_ID);
+        final FedoraOCFLMapping mapping3 = index.getMapping(ROOT_RESOURCE_ID);
 
         assertEquals(mapping1, mapping2);
         assertEquals(mapping2, mapping3);
-        assertEquals(PARENT_RESOURCE_ID, mapping1.getParentFedoraResourceId());
+        assertEquals(ROOT_RESOURCE_ID, mapping1.getRootObjectIdentifier());
         assertEquals(OCFL_ID, mapping1.getOcflObjectId());
     }
 }

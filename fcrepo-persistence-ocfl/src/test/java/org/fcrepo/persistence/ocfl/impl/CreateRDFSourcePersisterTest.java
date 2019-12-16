@@ -72,7 +72,7 @@ public class CreateRDFSourcePersisterTest {
 
     private static final String RESOURCE_ID = "info:fedora/parent/child";
 
-    private static final String PARENT_RESOURCE_ID = "info:fedora/parent";
+    private static final String ROOT_RESOURCE_ID = "info:fedora/parent";
 
     private static final String USER_PRINCIPAL2 = "anotherUser";
 
@@ -128,7 +128,7 @@ public class CreateRDFSourcePersisterTest {
         final RdfStream userTriplesStream = constructTitleStream(RESOURCE_ID, TITLE);
 
         when(mapping.getOcflObjectId()).thenReturn("object-id");
-        when(mapping.getParentFedoraResourceId()).thenReturn(PARENT_RESOURCE_ID);
+        when(mapping.getRootObjectIdentifier()).thenReturn(ROOT_RESOURCE_ID);
 
         when(operation.getResourceId()).thenReturn(RESOURCE_ID);
         when(operation.getType()).thenReturn(CREATE);
@@ -153,7 +153,7 @@ public class CreateRDFSourcePersisterTest {
         final RdfStream userTriplesStream = constructTitleStream(RESOURCE_ID, TITLE);
 
         when(mapping.getOcflObjectId()).thenReturn("object-id");
-        when(mapping.getParentFedoraResourceId()).thenReturn(PARENT_RESOURCE_ID);
+        when(mapping.getRootObjectIdentifier()).thenReturn(ROOT_RESOURCE_ID);
 
         when(operation.getResourceId()).thenReturn(RESOURCE_ID);
         when(operation.getType()).thenReturn(CREATE);

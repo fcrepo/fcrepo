@@ -64,7 +64,7 @@ public abstract class AbstractRDFSourcePersister extends AbstractPersister {
 
         final RdfSourceOperation rdfSourceOp = (RdfSourceOperation)operation;
         log.debug("persisting RDFSource ({}) to {}", operation.getResourceId(), mapping.getOcflObjectId());
-        final String subpath = relativizeSubpath(mapping.getParentFedoraResourceId(), operation.getResourceId());
+        final String subpath = relativizeSubpath(mapping.getRootObjectIdentifier(), operation.getResourceId());
         final String resolvedSubpath = resolveOCFLSubpath(subpath);
         //write user triples
         final var outcome = writeRDF(session, rdfSourceOp.getTriples(), resolvedSubpath);

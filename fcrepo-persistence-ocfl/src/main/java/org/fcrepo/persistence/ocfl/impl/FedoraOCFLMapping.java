@@ -23,25 +23,25 @@ package org.fcrepo.persistence.ocfl.impl;
  * @author dbernstein
  */
 public class FedoraOCFLMapping {
-    private String parentFedoraResourceId;
+    private String rootObjectIdentifier;
     private String ocflObjectId;
 
     /**
      * Default constructor
-     * @param parentFedoraResourceId The parent fedora resource identifier
+     * @param rootObjectIdentifier The fedora root object resource identifier
      * @param ocflObjectId The OCFL Object identitifer
      */
-    public FedoraOCFLMapping(final String parentFedoraResourceId, final String ocflObjectId){
-        this.parentFedoraResourceId = parentFedoraResourceId;
+    public FedoraOCFLMapping(final String rootObjectIdentifier, final String ocflObjectId){
+        this.rootObjectIdentifier = rootObjectIdentifier;
         this.ocflObjectId = ocflObjectId;
     }
 
     /**
      * The id for the fedora resource which represents this ocfl object
-     * @return the fedora resource identifier
+     * @return the fedora root object identifier
      */
-    public String getParentFedoraResourceId() {
-        return parentFedoraResourceId;
+    public String getRootObjectIdentifier() {
+        return rootObjectIdentifier;
     }
 
     /**

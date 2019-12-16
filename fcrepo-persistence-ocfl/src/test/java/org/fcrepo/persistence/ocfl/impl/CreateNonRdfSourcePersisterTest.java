@@ -89,7 +89,7 @@ public class CreateNonRdfSourcePersisterTest {
 
     private static final String RESOURCE_ID = "info:fedora/parent/child";
 
-    private static final String PARENT_RESOURCE_ID = "info:fedora/parent";
+    private static final String ROOT_RESOURCE_ID = "info:fedora/parent";
 
     private static final String USER_PRINCIPAL = "fedoraUser";
 
@@ -108,7 +108,7 @@ public class CreateNonRdfSourcePersisterTest {
     @Before
     public void setUp() throws Exception {
         when(mapping.getOcflObjectId()).thenReturn("object-id");
-        when(mapping.getParentFedoraResourceId()).thenReturn(PARENT_RESOURCE_ID);
+        when(mapping.getRootObjectIdentifier()).thenReturn(ROOT_RESOURCE_ID);
 
         when(session.write(anyString(), any(InputStream.class))).thenReturn(writeOutcome);
 

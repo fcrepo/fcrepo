@@ -74,7 +74,7 @@ public class UpdateRDFSourcePersisterTest {
 
     private static final String RESOURCE_ID = "info:fedora/parent/child";
 
-    private static final String PARENT_RESOURCE_ID = "info:fedora/parent";
+    private static final String ROOT_RESOURCE_ID = "info:fedora/parent";
 
     private static final String USER_PRINCIPAL = "fedoraUser";
 
@@ -129,14 +129,14 @@ public class UpdateRDFSourcePersisterTest {
         final RdfStream userTriplesStream = constructTitleStream(RESOURCE_ID, TITLE);
 
         when(mapping.getOcflObjectId()).thenReturn("object-id");
-        when(mapping.getParentFedoraResourceId()).thenReturn(PARENT_RESOURCE_ID);
+        when(mapping.getRootObjectIdentifier()).thenReturn(ROOT_RESOURCE_ID);
 
         when(operation.getResourceId()).thenReturn(RESOURCE_ID);
         when(operation.getType()).thenReturn(UPDATE);
         when(operation.getTriples()).thenReturn(userTriplesStream);
 
         // Setup headers of resource before this operation
-        final var headers = newResourceHeaders(PARENT_RESOURCE_ID, RESOURCE_ID, BASIC_CONTAINER.toString());
+        final var headers = newResourceHeaders(ROOT_RESOURCE_ID, RESOURCE_ID, BASIC_CONTAINER.toString());
         touchCreationHeaders(headers, USER_PRINCIPAL);
         touchModificationHeaders(headers, USER_PRINCIPAL);
         final var headerStream = serializeHeaders(headers);
