@@ -31,10 +31,10 @@ public interface FedoraToOCFLObjectIndex {
      * as an OCFL object and returns its identifiers.
      *
      * If you pass fedora identifier that is not part of an archival group such as
-     * "my/fedora/binary/fcr:metadata"  the parent fedora resource returned in the mapping will be "my/fedora/binary".
-     *
+     * "my/fedora/binary/fcr:metadata"  the  fedora resource returned in the mapping will be "my/fedora/binary".
+     * <p>
      * Contrast this  with an Archival Group example:  if you pass in "my/archival-group/binary/fcr:metadata" the
-     * parent returned in the mapping would be "my/archival-group".
+     * resource returned in the mapping would be "my/archival-group".
      *
      * @param fedoraResourceIdentifier the fedora resource identifier
      * @return the mapping
@@ -46,11 +46,11 @@ public interface FedoraToOCFLObjectIndex {
      * Adds a mapping to the index
      *
      * @param fedoraResourceIdentifier The fedora resource
-     * @param fedoraRootObjectId   The fedora resource that maps directly to the ocfl object
+     * @param fedoraRootObjectIdentifier   The identifier of the root fedora object resource
      * @param ocflObjectId             The ocfl object id
      * @return  The newly created mapping
      */
-    public FedoraOCFLMapping addMapping(final String fedoraResourceIdentifier, final String fedoraRootObjectId,
+    public FedoraOCFLMapping addMapping(final String fedoraResourceIdentifier, final String fedoraRootObjectIdentifier,
                            final String ocflObjectId);
 }
 
