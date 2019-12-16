@@ -130,9 +130,6 @@ public class WebACFilter extends RequestContextFilter {
     private ResourceFactory resourceFactory;
 
     @Inject
-    private HttpServletRequest request;
-
-    @Inject
     private TransactionProvider txProvider;
 
     private static Set<URI> directOrIndirect = new HashSet<>();
@@ -268,7 +265,7 @@ public class WebACFilter extends RequestContextFilter {
     private FedoraResource resource(final HttpServletRequest servletRequest, final String path) {
         try {
             return this.resourceFactory.getResource(transaction(servletRequest), path);
-        } catch( PathNotFoundException e){
+        } catch (PathNotFoundException e) {
             return null;
         }
     }
