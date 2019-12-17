@@ -21,8 +21,6 @@ import java.time.Instant;
 
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
-import org.fcrepo.kernel.api.operations.ResourceOperationType;
-
 
 /**
  * Abstract operation for interacting with an rdf source
@@ -49,11 +47,6 @@ public abstract class AbstractRdfSourceOperation extends AbstractResourceOperati
     @Override
     public RdfStream getTriples() {
         return triples;
-    }
-
-    @Override
-    public ResourceOperationType getType() {
-        return null;
     }
 
     @Override

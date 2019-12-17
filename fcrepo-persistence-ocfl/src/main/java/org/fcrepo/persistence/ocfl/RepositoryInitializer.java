@@ -30,7 +30,6 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 
 /**
  * This class is responsible for initializing the repository on start-up.
@@ -56,7 +55,7 @@ public class RepositoryInitializer {
         try {
             session.getHeaders(FEDORA_ID_PREFIX, null);
         } catch (PersistentItemNotFoundException e) {
-            final RdfSourceOperation operation = this.operationFactory.createBuilder(FEDORA_ID_PREFIX, LDP_BASIC_CONTAINER)
+            final RdfSourceOperation operation = this.operationFactory.createBuilder(FEDORA_ID_PREFIX, "http://www.w3.org/ns/ldp#BasicContainer")
                     .parentId(FEDORA_ID_PREFIX).build();
             try {
                 session.persist(operation);

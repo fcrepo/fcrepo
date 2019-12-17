@@ -144,7 +144,7 @@ public class FedoraAcl extends ContentExposingResource {
 
             // TODO: confirm this is correct logic for ACL's
             final Model model = httpRdfService.bodyToInternalModel(externalPath() + "/fcr:acl",
-                    requestBodyStream, requestContentType);
+                    requestBodyStream, requestContentType, identifierConverter());
 
             replacePropertiesService.perform(transaction.getId(), getUserPrincipal(), aclResource.getId(),
                 requestContentType.toString(), model);

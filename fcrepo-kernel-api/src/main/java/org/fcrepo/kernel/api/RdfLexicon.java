@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.api;
 
 import static com.google.common.collect.ImmutableSet.of;
+import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 
@@ -25,6 +26,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 
@@ -57,6 +59,7 @@ public final class RdfLexicon {
     public static final String MEMENTO_NAMESPACE = "http://mementoweb.org/ns#";
 
     public static final String RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+
 
     /**
      * Namespace for the W3C WebAC vocabulary.
@@ -130,6 +133,9 @@ public final class RdfLexicon {
             createResource(REPOSITORY_NAMESPACE + "Resource");
     public static final Resource FEDORA_PAIR_TREE =
             createResource(REPOSITORY_NAMESPACE + "Pairtree");
+
+    //RDF
+    public static final Node RDF_TYPE = createURI(RDF_NAMESPACE + "type");
 
     // Linked Data Platform
     public static final Property PAGE =

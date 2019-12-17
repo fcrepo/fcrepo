@@ -56,8 +56,6 @@ public class HttpRdfService {
 
     private static final Logger log = getLogger(HttpRdfService.class);
 
-    // TODO: Should eventually `Inject`
-    private HttpIdentifierConverter idTranslator;
 
     /**
      * Parse the request body to a Model, with the URI to Fedora ID translations done.
@@ -65,12 +63,13 @@ public class HttpRdfService {
      * @param extResourceId the external ID of the Fedora resource
      * @param stream the input stream containing the RDF
      * @param contentType the media type of the RDF
+     * @param idTranslator the identifier convert
      * @return RdfStream containing triples from request body, with Fedora IDs in them
      * @throws MalformedRdfException in case rdf json cannot be parsed
      * @throws BadRequestException in the case where the RDF syntax is bad
      */
     public Model bodyToInternalModel(final String extResourceId, final InputStream stream,
-                                     final MediaType contentType)
+                                     final MediaType contentType, final HttpIdentifierConverter idTranslator)
                                      throws RepositoryRuntimeException, BadRequestException {
 
         final Model model = parseBodyAsModel(stream, contentType, extResourceId);
@@ -111,14 +110,15 @@ public class HttpRdfService {
      * @param extResourceId the external ID of the Fedora resource
      * @param stream the input stream containing the RDF
      * @param contentType the media type of the RDF
+     * @param idTranslator the identifier convert
      * @return RdfStream containing triples from request body, with Fedora IDs in them
      * @throws MalformedRdfException in case rdf json cannot be parsed
      * @throws BadRequestException in the case where the RDF syntax is bad
      */
     public RdfStream bodyToInternalStream(final String extResourceId, final InputStream stream,
-                                          final MediaType contentType)
+                                          final MediaType contentType, final HttpIdentifierConverter idTranslator)
                                           throws RepositoryRuntimeException, BadRequestException {
-        final Model model = bodyToInternalModel(extResourceId, stream, contentType);
+        final Model model = bodyToInternalModel(extResourceId, stream, contentType, idTranslator);
 
         return fromModel(model.getResource(idTranslator.toInternalId(extResourceId)).asNode(), model);
     }

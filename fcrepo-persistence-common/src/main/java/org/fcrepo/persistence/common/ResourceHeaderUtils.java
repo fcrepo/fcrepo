@@ -17,6 +17,8 @@
  */
 package org.fcrepo.persistence.common;
 
+import org.apache.commons.codec.digest.DigestUtils;
+
 import java.net.URI;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -111,6 +113,9 @@ public class ResourceHeaderUtils {
         }
         headers.setLastModifiedDate(instant);
         headers.setLastModifiedBy(userPrincipal);
+
+        final String stateToken = DigestUtils.md5Hex(instant.toEpochMilli() + "").toUpperCase();
+        headers.setStateToken(stateToken);
     }
 
     /**

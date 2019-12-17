@@ -30,12 +30,12 @@ import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.slf4j.Logger;
-import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.ext.Provider;
 import java.net.URI;
 
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
@@ -49,18 +49,18 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @author whikloj
  * @since 2015-10-30
  */
-@Component
+@Provider
 public class LinkHeaderProvider implements UriAwareHttpHeaderFactory {
 
     private static final Logger LOGGER = getLogger(LinkHeaderProvider.class);
 
-    @Inject
+    @Context
     private TransactionProvider txProvider;
 
-    @Inject
+    @Context
     private HttpServletRequest request;
 
-    @Inject
+    @Context
     private ResourceFactory resourceFactory;
 
     @Override

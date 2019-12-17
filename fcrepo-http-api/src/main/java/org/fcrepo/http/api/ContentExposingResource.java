@@ -74,10 +74,10 @@ import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
-import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
-import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
-import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT;
-import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
+//import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
+//import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
+//import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT;
+//import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
@@ -122,7 +122,6 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.jena.graph.Triple;
 import org.fcrepo.http.api.services.HttpRdfService;
 import org.fcrepo.http.commons.api.HttpHeaderInjector;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.domain.MultiPrefer;
 import org.fcrepo.http.commons.domain.PreferTag;
@@ -212,9 +211,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     @Inject
     protected UpdatePropertiesService updatePropertiesService;
 
-    // TODO: Should eventually `Inject`
-    protected HttpIdentifierConverter httpIdentifierConverter;
-
     @Inject
     protected HttpRdfService httpRdfService;
 
@@ -281,10 +277,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         varyValues.forEach(x -> servletResponse.addHeader("Vary", x));
     }
 
-
-
-
-
     protected RdfStream getResourceTriples(final FedoraResource resource) {
         return getResourceTriples(-1, resource);
     }
@@ -330,32 +322,32 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             // Additional server-managed triples about this resource
             // Mementos already have the server managed properties in the PROPERTIES category
             // since mementos are immutable and these triples are no longer managed
-             if (ldpPreferences.prefersServerManaged() && !resource.isMemento()) {
-                streams.add(getTriples(resource, SERVER_MANAGED));
+            if (ldpPreferences.prefersServerManaged() && !resource.isMemento()) {
+                //streams.add(getTriples(resource, SERVER_MANAGED));
             }
 
             // containment triples about this resource
             if (ldpPreferences.prefersContainment()) {
                 if (limit == -1) {
-                    streams.add(getTriples(resource, LDP_CONTAINMENT));
+                    // streams.add(getTriples(resource, LDP_CONTAINMENT));
                 } else {
-                    streams.add(getTriples(resource, LDP_CONTAINMENT).limit(limit));
+                   // streams.add(getTriples(resource, LDP_CONTAINMENT).limit(limit));
                 }
             }
 
             // LDP container membership triples for this resource
             if (ldpPreferences.prefersMembership()) {
-                streams.add(getTriples(resource, LDP_MEMBERSHIP));
+                //streams.add(getTriples(resource, LDP_MEMBERSHIP));
             }
 
             // Include inbound references to this object
             if (ldpPreferences.prefersReferences()) {
-                streams.add(getTriples(resource, INBOUND_REFERENCES));
+                //streams.add(getTriples(resource, INBOUND_REFERENCES));
             }
 
             // Embed the children of this object
             if (ldpPreferences.prefersEmbed()) {
-                streams.add(getTriples(resource, EMBED_RESOURCES));
+                //streams.add(getTriples(resource, EMBED_RESOURCES));
             }
         }
 
@@ -447,7 +439,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected URI getUri(final FedoraResource resource) {
         try {
-            final String uri = translator().reverse().convert(resource).getURI();
+            final String uri = this.identifierConverter.toExternalId(resource.getId());
             return new URI(uri);
         } catch (final URISyntaxException e) {
             throw new BadRequestException(e);
