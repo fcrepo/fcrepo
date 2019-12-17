@@ -71,7 +71,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.jena.riot.Lang;
-import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.LinkFormatStream;
 import org.fcrepo.kernel.api.RdfStream;
@@ -147,9 +146,6 @@ public class FedoraVersioning extends ContentExposingResource {
         final FedoraResource resource = resource();
         final FedoraResource timeMap = resource.getTimeMap();
 
-        final AcquiredLock lock = lockManager.lockForWrite(timeMap.getPath(),
-            transaction, nodeService);
-
         try {
             final MediaType contentType = MediaType.valueOf(getSimpleContentType(requestContentType));
 
@@ -222,8 +218,6 @@ public class FedoraVersioning extends ContentExposingResource {
             } else {
                 throw e;
             }
-        } finally {
-            lock.release();
         }
     }
 
@@ -305,11 +299,8 @@ public class FedoraVersioning extends ContentExposingResource {
             versionLinks.add(linkBuilder.build());
             return ok(new LinkFormatStream(versionLinks.stream())).build();
         } else {
-            final AcquiredLock readLock = lockManager.lockForRead(theTimeMap.getPath());
             try (final RdfStream rdfStream = new DefaultRdfStream(asNode(theTimeMap))) {
                 return getContent(rangeValue, getChildrenLimit(), rdfStream, theTimeMap);
-            } finally {
-                readLock.release();
             }
         }
     }

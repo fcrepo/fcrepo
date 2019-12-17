@@ -88,7 +88,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
-import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
@@ -260,7 +259,6 @@ public class FedoraLdp extends ContentExposingResource {
         checkCacheControlHeaders(request, servletResponse, resource(), transaction);
 
         LOGGER.info("GET resource '{}'", externalPath);
-        final AcquiredLock readLock = lockManager.lockForRead(resource().getPath());
         try (final RdfStream rdfStream = new DefaultRdfStream(asNode(resource()))) {
 
             // If requesting a binary, check the mime-type if "Accept:" header is present.
@@ -291,8 +289,6 @@ public class FedoraLdp extends ContentExposingResource {
             } else {
                 return getContent(rangeValue, getChildrenLimit(), rdfStream, resource());
             }
-        } finally {
-            readLock.release();
         }
     }
 
@@ -350,15 +346,9 @@ public class FedoraLdp extends ContentExposingResource {
 
         LOGGER.info("Delete resource '{}'", externalPath);
 
-        final AcquiredLock lock = lockManager.lockForDelete(resource().getPath());
-
-        try {
-            deleteResourceService.perform(transaction, resource());
-            transaction.commitIfShortLived();
-            return noContent().build();
-        } finally {
-            lock.release();
-        }
+        deleteResourceService.perform(transaction, resource());
+        transaction.commitIfShortLived();
+        return noContent().build();
     }
 
     /**
@@ -482,9 +472,6 @@ public class FedoraLdp extends ContentExposingResource {
             throw new BadRequestException(resource().getPath() + " is not a valid object to receive a PATCH");
         }
 
-        final AcquiredLock lock = lockManager.lockForWrite(resource().getPath(), transaction,
-                nodeService);
-
         try {
             final String requestBody = IOUtils.toString(requestBodyStream, UTF_8);
             if (isBlank(requestBody)) {
@@ -514,8 +501,6 @@ public class FedoraLdp extends ContentExposingResource {
                 throw new BadRequestException(cause.getMessage());
             }
             throw ex;
-        } finally {
-            lock.release();
         }
     }
 

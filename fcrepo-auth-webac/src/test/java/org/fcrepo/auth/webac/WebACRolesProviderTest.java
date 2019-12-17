@@ -27,6 +27,8 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE_VALUE;
 import static org.fcrepo.http.api.FedoraAcl.ROOT_AUTHORIZATION_PROPERTY;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.models.ResourceFactory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -48,7 +50,6 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.RepositoryException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.kernel.api.services.NodeService;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -74,7 +75,7 @@ public class WebACRolesProviderTest {
     private Transaction mockTransaction;
 
     @Mock
-    private NodeService mockNodeService;
+    private ResourceFactory mockResourceFactory;
 
     @Mock
     private FedoraResource mockResource, mockParentResource;
@@ -92,7 +93,7 @@ public class WebACRolesProviderTest {
     public void setUp() throws RepositoryException {
 
         roleProvider = new WebACRolesProvider();
-        setField(roleProvider, "nodeService", mockNodeService);
+        setField(roleProvider, "resourceFactory", mockResourceFactory);
 
         when(mockResource.getDescribedResource()).thenReturn(mockResource);
         when(mockResource.getDescription()).thenReturn(mockResource);
@@ -197,13 +198,13 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void acl01Test1() throws RepositoryException {
+    public void acl01Test1() throws RepositoryException, PathNotFoundException {
         final String agent = "user01";
         final String accessTo = "/webacl_box1";
         final String acl = "/acls/01/acl.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
+        when(mockResourceFactory.getResource(mockTransaction, acl)).thenReturn(mockAclResource);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
@@ -223,12 +224,12 @@ public class WebACRolesProviderTest {
 
     @Ignore // TODO FIX THIS TEST
     @Test
-    public void acl01Test2() throws RepositoryException {
+    public void acl01Test2() throws RepositoryException, PathNotFoundException{
         final String accessTo = "/webacl_box2";
         final String acl = "/acls/01/acl.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
+        when(mockResourceFactory.getResource(mockTransaction, acl)).thenReturn(mockAclResource);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
@@ -266,13 +267,13 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void acl03Test1() throws RepositoryException {
+    public void acl03Test1() throws RepositoryException, PathNotFoundException{
         final String agent = "http://xmlns.com/foaf/0.1/Agent";
         final String accessTo = "/dark/archive/sunshine";
         final String acl = "/acls/03/acl.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
+        when(mockResourceFactory.getResource(mockTransaction, acl)).thenReturn(mockAclResource);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
@@ -289,14 +290,14 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void acl03Test2() throws RepositoryException {
+    public void acl03Test2() throws RepositoryException, PathNotFoundException {
         final String agent = "Restricted";
         final String accessTo = "/dark/archive";
         final String acl = "/acls/03/acl.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
         when(mockAclResource.isAcl()).thenReturn(true);
-        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
+        when(mockResourceFactory.getResource(mockTransaction, acl)).thenReturn(mockAclResource);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
@@ -311,13 +312,13 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void foafAgentTest() throws RepositoryException {
+    public void foafAgentTest() throws RepositoryException, PathNotFoundException {
         final String agent = "http://xmlns.com/foaf/0.1/Agent";
         final String accessTo = "/foaf-agent";
         final String acl = "/acls/03/foaf-agent.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
+        when(mockResourceFactory.getResource(mockTransaction, acl)).thenReturn(mockAclResource);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockAclResource.isAcl()).thenReturn(true);
         when(mockResource.getPath()).thenReturn(accessTo);
@@ -335,13 +336,13 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void authenticatedAgentTest() throws RepositoryException {
+    public void authenticatedAgentTest() throws RepositoryException, PathNotFoundException {
         final String aclAuthenticatedAgent = "http://www.w3.org/ns/auth/acl#AuthenticatedAgent";
         final String accessTo = "/authenticated-agent";
         final String acl = "/acls/03/authenticated-agent.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
+        when(mockResourceFactory.getResource(mockTransaction, acl)).thenReturn(mockAclResource);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockAclResource.isAcl()).thenReturn(true);
         when(mockResource.getPath()).thenReturn(accessTo);
@@ -359,14 +360,14 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void acl04Test() throws RepositoryException {
+    public void acl04Test() throws RepositoryException, PathNotFoundException {
         final String agent1 = "http://xmlns.com/foaf/0.1/Agent";
         final String agent2 = "Editors";
         final String accessTo = "/public_collection";
         final String acl = "/acls/04/acl.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
+        when(mockResourceFactory.getResource(mockTransaction, acl)).thenReturn(mockAclResource);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockAclResource.isAcl()).thenReturn(true);
         when(mockResource.getPath()).thenReturn(accessTo);
@@ -385,14 +386,14 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void acl05Test() throws RepositoryException {
+    public void acl05Test() throws RepositoryException, PathNotFoundException {
         final String agent1 = "http://xmlns.com/foaf/0.1/Agent";
         final String agent2 = "Admins";
         final String accessTo = "/mixedCollection";
         final String acl = "/acls/05/acl.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
+        when(mockResourceFactory.getResource(mockTransaction, acl)).thenReturn(mockAclResource);
         when(mockResource.getTypes()).thenReturn(singletonList(URI.create("http://example.com/terms#publicImage")));
         when(mockAclResource.isAcl()).thenReturn(true);
         when(mockAclResource.getPath()).thenReturn(acl);
@@ -411,13 +412,13 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void acl05Test2() throws RepositoryException {
+    public void acl05Test2() throws RepositoryException, PathNotFoundException {
         final String agent1 = "http://xmlns.com/foaf/0.1/Agent";
         final String accessTo = "/someOtherCollection";
         final String acl = "/acls/05/acl.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
+        when(mockResourceFactory.getResource(mockTransaction, acl)).thenReturn(mockAclResource);
         when(mockResource.getTypes()).thenReturn(singletonList(URI.create("http://example.com/terms#publicImage")));
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockAclResource.isAcl()).thenReturn(true);
@@ -439,7 +440,7 @@ public class WebACRolesProviderTest {
      * therefore retrieve two agents.
      */
     @Test
-    public void acl09Test1() throws RepositoryException {
+    public void acl09Test1() throws RepositoryException, PathNotFoundException{
         final String agent1 = "person1";
         final String accessTo = "/anotherCollection";
 
@@ -448,10 +449,10 @@ public class WebACRolesProviderTest {
         final String acl = aclDir + "/acl.ttl";
         final String group = aclDir + "/group.ttl";
 
-        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockTransaction, groupResource)).thenReturn(mockAgentClassResource);
+        when(mockResourceFactory.getResource(mockTransaction, acl)).thenReturn(mockAclResource);
+        when(mockResourceFactory.getResource(mockTransaction, groupResource)).thenReturn(mockAgentClassResource);
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
+        when(mockResourceFactory.getResource(mockTransaction, acl)).thenReturn(mockAclResource);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
@@ -481,17 +482,17 @@ public class WebACRolesProviderTest {
      */
     @Ignore // TODO FIX THIS TEST
     @Test
-    public void acl09Test2() throws RepositoryException {
+    public void acl09Test2() throws RepositoryException, PathNotFoundException {
         final String accessTo = "/anotherCollection";
 
         final String groupResource = "/group/foo";
         final String acl = "/acls/09/acl.ttl";
         final String group = "/acls/09/group.ttl";
 
-        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockTransaction, groupResource)).thenReturn(mockAgentClassResource);
+        when(mockResourceFactory.getResource(mockTransaction, acl)).thenReturn(mockAclResource);
+        when(mockResourceFactory.getResource(mockTransaction, groupResource)).thenReturn(mockAgentClassResource);
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
+        when(mockResourceFactory.getResource(mockTransaction, acl)).thenReturn(mockAclResource);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
@@ -509,13 +510,13 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void acl17Test1() throws RepositoryException {
+    public void acl17Test1() throws RepositoryException, PathNotFoundException {
         final String foafAgent = "http://xmlns.com/foaf/0.1/Agent";
         final String accessTo = "/dark/archive/sunshine";
         final String acl = "/acls/17/acl.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
+        when(mockResourceFactory.getResource(mockTransaction, acl)).thenReturn(mockAclResource);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockAclResource.isAcl()).thenReturn(true);
         when(mockResource.getPath()).thenReturn(accessTo);

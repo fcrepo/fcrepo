@@ -201,9 +201,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     private FedoraResource fedoraResource;
 
     @Inject
-    protected  PathLockManager lockManager;
-
-    @Inject
     protected ExternalContentHandlerFactory extContentHandlerFactory;
 
     @Inject

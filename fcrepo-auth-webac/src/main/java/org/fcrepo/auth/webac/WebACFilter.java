@@ -46,10 +46,11 @@ import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.session.TransactionProvider;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.services.NodeService;
+import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.slf4j.Logger;
 import org.springframework.web.filter.RequestContextFilter;
 
@@ -126,10 +127,7 @@ public class WebACFilter extends RequestContextFilter {
     private static Subject FOAF_AGENT_SUBJECT;
 
     @Inject
-    private NodeService nodeService;
-
-    @Inject
-    private HttpServletRequest request;
+    private ResourceFactory resourceFactory;
 
     @Inject
     private TransactionProvider txProvider;
@@ -251,28 +249,25 @@ public class WebACFilter extends RequestContextFilter {
         return baseUrl + String.join("/", parentPaths);
     }
 
-    private boolean containerExists(final HttpServletRequest servletRequest) {
-        if (resourceExists(servletRequest)) {
-            return true;
-        }
-        final String parentURI = getContainerUrl(servletRequest);
-        return nodeService.exists(transaction(servletRequest), getRepoPath(servletRequest, parentURI));
-    }
-
     private FedoraResource getContainer(final HttpServletRequest servletRequest) {
-        if (resourceExists(servletRequest)) {
+        final FedoraResource resource = resource(servletRequest);
+        if (resource != null) {
             return resource(servletRequest).getContainer();
         }
         final String parentURI = getContainerUrl(servletRequest);
-        return nodeService.find(transaction(servletRequest), getRepoPath(servletRequest, parentURI));
+        return resource(servletRequest, getRepoPath(servletRequest, parentURI));
     }
 
     private FedoraResource resource(final HttpServletRequest servletRequest) {
-        return nodeService.find(transaction(servletRequest), getRepoPath(servletRequest));
+        return resource(servletRequest, getRepoPath(servletRequest));
     }
 
-    private boolean resourceExists(final HttpServletRequest servletRequest) {
-        return nodeService.exists(transaction(servletRequest), getRepoPath(servletRequest));
+    private FedoraResource resource(final HttpServletRequest servletRequest, final String path) {
+        try {
+            return this.resourceFactory.getResource(transaction(servletRequest), path);
+        } catch (PathNotFoundException e) {
+            return null;
+        }
     }
 
     private IdentifierConverter<Resource, FedoraResource> translator(final HttpServletRequest servletRequest) {
@@ -297,6 +292,8 @@ public class WebACFilter extends RequestContextFilter {
         final boolean isAcl = requestURL.endsWith(FCR_ACL);
         final URI requestURI = URI.create(requestURL);
         log.debug("Request URI is {}", requestURI);
+        final FedoraResource resource = resource(httpRequest);
+        final FedoraResource container = getContainer(httpRequest);
 
         // WebAC permissions
         final WebACPermission toRead = new WebACPermission(WEBAC_MODE_READ, requestURI);
@@ -329,14 +326,14 @@ public class WebACFilter extends RequestContextFilter {
                     return false;
                 }
             } else if (currentUser.isPermitted(toWrite)) {
-                if (!isAuthorizedForMembershipResource(httpRequest, currentUser)) {
+                if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {
                     log.debug("PUT denied, not authorized to write to membershipRelation");
                     return false;
                 }
                 log.debug("PUT allowed by {} permission", toWrite);
                 return true;
             } else {
-                if (resourceExists(httpRequest)) {
+                if (resource != null) {
                     // can't PUT to an existing resource without acl:Write permission
                     log.debug("PUT prohibited to existing resource without {} permission", toWrite);
                     return false;
@@ -346,7 +343,7 @@ public class WebACFilter extends RequestContextFilter {
                     // added as the resource, not the accessTo or other URI in the original authorization
                     log.debug("Resource doesn't exist; checking parent resources for acl:Append permission");
                     if (currentUser.isPermitted(toAppend)) {
-                        if (!isAuthorizedForMembershipResource(httpRequest, currentUser)) {
+                        if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {
                             log.debug("PUT denied, not authorized to write to membershipRelation");
                             return false;
                         }
@@ -360,15 +357,15 @@ public class WebACFilter extends RequestContextFilter {
             }
         case "POST":
             if (currentUser.isPermitted(toWrite)) {
-                if (!isAuthorizedForMembershipResource(httpRequest, currentUser)) {
+                if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {
                     log.debug("POST denied, not authorized to write to membershipRelation");
                     return false;
                 }
                 log.debug("POST allowed by {} permission", toWrite);
                 return true;
             }
-            if (resourceExists(httpRequest)) {
-                if (resource(httpRequest).hasType(FEDORA_BINARY)) {
+            if (resource != null) {
+                if (resource.hasType(FEDORA_BINARY)) {
                     // LDP-NR
                     // user without the acl:Write permission cannot POST to binaries
                     log.debug("POST prohibited to binary resource without {} permission", toWrite);
@@ -377,7 +374,7 @@ public class WebACFilter extends RequestContextFilter {
                     // LDP-RS
                     // user with the acl:Append permission may POST to containers
                     if (currentUser.isPermitted(toAppend)) {
-                        if (!isAuthorizedForMembershipResource(httpRequest, currentUser)) {
+                        if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {
                             log.debug("POST denied, not authorized to write to membershipRelation");
                             return false;
                         }
@@ -403,7 +400,7 @@ public class WebACFilter extends RequestContextFilter {
                     return false;
                 }
             } else {
-                if (!isAuthorizedForMembershipResource(httpRequest, currentUser)) {
+                if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {
                     log.debug("DELETE denied, not authorized to write to membershipRelation");
                     return false;
                 }
@@ -420,14 +417,14 @@ public class WebACFilter extends RequestContextFilter {
                     return false;
                 }
             } else if (currentUser.isPermitted(toWrite)) {
-                if (!isAuthorizedForMembershipResource(httpRequest, currentUser)) {
+                if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {
                     log.debug("PATCH denied, not authorized to write to membershipRelation");
                     return false;
                 }
                 return true;
             } else {
                 if (currentUser.isPermitted(toAppend)) {
-                    if (!isAuthorizedForMembershipResource(httpRequest, currentUser)) {
+                    if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {
                         log.debug("PATCH denied, not authorized to write to membershipRelation");
                         return false;
                     }
@@ -519,14 +516,17 @@ public class WebACFilter extends RequestContextFilter {
      *
      * @param request The current request
      * @param currentUser The current principal
+     * @param resource The resource
+     * @param container The container
      * @return Whether we are creating an indirect/direct container and can write the membershipRelation
      * @throws IOException when getting request's inputstream
      */
-    private boolean isAuthorizedForMembershipResource(final HttpServletRequest request, final Subject currentUser)
+    private boolean isAuthorizedForMembershipResource(final HttpServletRequest request, final Subject currentUser,
+                                                      final FedoraResource resource, final FedoraResource container)
             throws IOException {
-        if (resourceExists(request) && request.getMethod().equalsIgnoreCase("POST")) {
+        if (resource != null && request.getMethod().equalsIgnoreCase("POST")) {
             // Check resource if it exists and we are POSTing to it.
-            if (isResourceIndirectOrDirect(resource(request))) {
+            if (isResourceIndirectOrDirect(resource)) {
                 final URI membershipResource = getHasMemberFromResource(request);
                 addURIToAuthorize(request, membershipResource);
                 if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, membershipResource))) {
@@ -535,14 +535,14 @@ public class WebACFilter extends RequestContextFilter {
             }
         } else if (request.getMethod().equalsIgnoreCase("PUT")) {
             // PUT to a URI check that the immediate container is not direct or indirect.
-            if (containerExists(request) && isResourceIndirectOrDirect(getContainer(request))) {
-                final URI membershipResource = getHasMemberFromResource(request, getContainer(request));
+            if (container != null && isResourceIndirectOrDirect(container)) {
+                final URI membershipResource = getHasMemberFromResource(request, container);
                 addURIToAuthorize(request, membershipResource);
                 if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, membershipResource))) {
                     return false;
                 }
             }
-        } else if (isSparqlUpdate(request) && isResourceIndirectOrDirect(resource(request))) {
+        } else if (isSparqlUpdate(request) && isResourceIndirectOrDirect(resource)) {
             // PATCH to a direct/indirect might change the ldp:membershipResource
             final URI membershipResource = getHasMemberFromPatch(request);
             if (membershipResource != null) {
@@ -554,17 +554,16 @@ public class WebACFilter extends RequestContextFilter {
                 }
             }
         } else if (request.getMethod().equalsIgnoreCase("DELETE")) {
-            if (isResourceIndirectOrDirect(resource(request))) {
+            if (isResourceIndirectOrDirect(resource)) {
                 // If we delete a direct/indirect container we have to have access to the ldp:membershipResource
                 final URI membershipResource = getHasMemberFromResource(request);
                 addURIToAuthorize(request, membershipResource);
                 if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, membershipResource))) {
                     return false;
                 }
-            } else if (isResourceIndirectOrDirect(getContainer(request))) {
+            } else if (isResourceIndirectOrDirect(container)) {
                 // or if we delete a child of a direct/indirect container we have to have access to the
                 // ldp:membershipResource
-                final FedoraResource container = getContainer(request);
                 final URI membershipResource = getHasMemberFromResource(request, container);
                 addURIToAuthorize(request, membershipResource);
                 if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, membershipResource))) {

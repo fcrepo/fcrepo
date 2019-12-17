@@ -67,7 +67,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shared.JenaException;
-import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
@@ -134,31 +133,26 @@ public class FedoraAcl extends ContentExposingResource {
         final FedoraResource aclResource;
 
         final String path = toPath(translator(), externalPath);
-        final AcquiredLock lock = lockManager.lockForWrite(path, transaction, nodeService);
-        try {
-            LOGGER.info("PUT acl resource '{}'", externalPath);
+        LOGGER.info("PUT acl resource '{}'", externalPath);
 
-            aclResource = webacAclService.findOrCreate(transaction, path);
-            created = aclResource.isNew();
+        aclResource = webacAclService.findOrCreate(transaction, path);
+        created = aclResource.isNew();
 
-            final MediaType contentType =
-                requestContentType == null ? RDFMediaType.TURTLE_TYPE : MediaType.valueOf(getSimpleContentType(requestContentType));
-            if (isRdfContentType(contentType.toString())) {
+        final MediaType contentType =
+            requestContentType == null ? RDFMediaType.TURTLE_TYPE : MediaType.valueOf(getSimpleContentType(requestContentType));
+        if (isRdfContentType(contentType.toString())) {
 
-                // TODO: confirm this is correct logic for ACL's
-                final Model model = httpRdfService.bodyToInternalModel(externalPath() + "/fcr:acl",
-                        requestBodyStream, requestContentType);
+            // TODO: confirm this is correct logic for ACL's
+            final Model model = httpRdfService.bodyToInternalModel(externalPath() + "/fcr:acl",
+                    requestBodyStream, requestContentType);
 
-                replacePropertiesService.perform(transaction.getId(), getUserPrincipal(), aclResource.getId(),
-                    requestContentType.toString(), model);
-            } else {
-                throw new BadRequestException("Content-Type (" + requestContentType + ") is invalid. Try text/turtle " +
-                                              "or other RDF compatible type.");
-            }
-            transaction.commit();
-        } finally {
-            lock.release();
+            replacePropertiesService.perform(transaction.getId(), getUserPrincipal(), aclResource.getId(),
+                requestContentType.toString(), model);
+        } else {
+            throw new BadRequestException("Content-Type (" + requestContentType + ") is invalid. Try text/turtle " +
+                                          "or other RDF compatible type.");
         }
+        transaction.commit();
 
         addCacheControlHeaders(servletResponse, aclResource, transaction);
         final URI location = getUri(aclResource);
@@ -198,8 +192,6 @@ public class FedoraAcl extends ContentExposingResource {
             throw new ItemNotFoundException("not found");
         }
 
-        final AcquiredLock lock = lockManager.lockForWrite(aclResource.getPath(), transaction, nodeService);
-
         try {
             final String requestBody = IOUtils.toString(requestBodyStream, UTF_8);
             if (isBlank(requestBody)) {
@@ -230,8 +222,6 @@ public class FedoraAcl extends ContentExposingResource {
                 throw new BadRequestException(cause.getMessage());
             }
             throw ex;
-        } finally {
-            lock.release();
         }
     }
 
@@ -276,14 +266,11 @@ public class FedoraAcl extends ContentExposingResource {
         checkCacheControlHeaders(request, servletResponse, aclResource, transaction);
 
         LOGGER.info("GET resource '{}'", externalPath);
-        final AcquiredLock readLock = lockManager.lockForRead(aclResource.getId());
         try (final RdfStream rdfStream = new DefaultRdfStream(asNode(aclResource))) {
 
             addResourceHttpHeaders(aclResource);
             return getContent(rangeValue, getChildrenLimit(), rdfStream, aclResource);
 
-        } finally {
-            readLock.release();
         }
     }
 
@@ -298,30 +285,24 @@ public class FedoraAcl extends ContentExposingResource {
         hasRestrictedPath(externalPath);
         LOGGER.info("Delete resource '{}'", externalPath);
 
-        final AcquiredLock lock = lockManager.lockForDelete(resource().getId());
-
-        try {
-            final FedoraResource aclResource = resource().getAcl();
-            if (aclResource != null) {
-                deleteResourceService.perform(transaction, aclResource);
-            }
-            transaction.commit();
-
-            if (aclResource == null) {
-                if (resource().hasType(FEDORA_REPOSITORY_ROOT)) {
-                    throw new ClientErrorException("The default root ACL is system generated and cannot be deleted. " +
-                            "To override the default root ACL you must PUT a user-defined ACL to this endpoint.",
-                            CONFLICT);
-                }
-
-                throw new ItemNotFoundException("not found");
-            }
-
-            return noContent().build();
-
-        } finally {
-            lock.release();
+        final FedoraResource aclResource = resource().getAcl();
+        if (aclResource != null) {
+            deleteResourceService.perform(transaction, aclResource);
         }
+        transaction.commit();
+
+        if (aclResource == null) {
+            if (resource().hasType(FEDORA_REPOSITORY_ROOT)) {
+                throw new ClientErrorException("The default root ACL is system generated and cannot be deleted. " +
+                        "To override the default root ACL you must PUT a user-defined ACL to this endpoint.",
+                        CONFLICT);
+            }
+
+            throw new ItemNotFoundException("not found");
+        }
+
+        return noContent().build();
+
     }
 
     /**

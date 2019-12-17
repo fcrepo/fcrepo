@@ -31,16 +31,15 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import org.fcrepo.kernel.api.models.ResourceFactory;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import javax.servlet.ServletException;
 
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.mgt.SecurityManager;
@@ -51,7 +50,6 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.services.NodeService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -92,7 +90,7 @@ public class WebACFilterTest {
     private TransactionProvider mockTransactionProvider;
 
     @Mock
-    private NodeService mockNodeService;
+    private ResourceFactory mockResourceFactory;
 
     @Mock
     private Transaction mockTransaction;
@@ -134,7 +132,7 @@ public class WebACFilterTest {
     private Subject mockSubject;
 
     @Before
-    public void setupRequest() {
+    public void setupRequest() throws Exception{
         SecurityUtils.setSecurityManager(mockSecurityManager);
 
         mockSubject = Mockito.mock(Subject.class);
@@ -160,11 +158,9 @@ public class WebACFilterTest {
 
         when(mockTransactionProvider.getTransactionForRequest(request)).thenReturn(mockTransaction);
 
-        when(mockNodeService.exists(mockTransaction, testPath)).thenReturn(true);
-        when(mockNodeService.exists(mockTransaction, testChildPath)).thenReturn(false);
-        when(mockNodeService.exists(mockTransaction, "/")).thenReturn(true);
+        when(mockResourceFactory.getResource(mockTransaction, testChildPath)).thenReturn(null);
 
-        when(mockNodeService.find(mockTransaction, "/")).thenReturn(mockRoot);
+        when(mockResourceFactory.getResource(mockTransaction, "/")).thenReturn(mockRoot);
         when(mockContainer.getContainer()).thenReturn(mockRoot);
         when(mockChildContainer.getContainer()).thenReturn(mockContainer);
 
@@ -181,14 +177,14 @@ public class WebACFilterTest {
         setupContainerResource();
     }
 
-    private void setupContainerResource() {
-        when(mockNodeService.find(mockTransaction, testPath)).thenReturn(mockContainer);
-        when(mockNodeService.find(mockTransaction, testChildPath)).thenReturn(mockChildContainer);
+    private void setupContainerResource() throws Exception {
+        when(mockResourceFactory.getResource(mockTransaction, testPath)).thenReturn(mockContainer);
+        when(mockResourceFactory.getResource(mockTransaction, testChildPath)).thenReturn(mockChildContainer);
         when(mockBinary.hasType(FEDORA_BINARY)).thenReturn(false);
     }
 
-    private void setupBinaryResource() {
-        when(mockNodeService.find(mockTransaction, testPath)).thenReturn(mockBinary);
+    private void setupBinaryResource() throws Exception {
+        when(mockResourceFactory.getResource(mockTransaction, testPath)).thenReturn(mockBinary);
         when(mockBinary.hasType(FEDORA_BINARY)).thenReturn(true);
     }
 
@@ -294,7 +290,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAdminUserHead() throws ServletException, IOException {
+    public void testAdminUserHead() throws Exception {
         setupAdminUser();
         // HEAD => 200
         request.setMethod("HEAD");
@@ -303,7 +299,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAdminUserOptions() throws ServletException, IOException {
+    public void testAdminUserOptions() throws Exception {
         setupAdminUser();
         // GET => 200
         request.setMethod("OPTIONS");
@@ -312,7 +308,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAdminUserGet() throws ServletException, IOException {
+    public void testAdminUserGet() throws Exception {
         setupAdminUser();
         // GET => 200
         request.setMethod("GET");
@@ -321,7 +317,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAdminUserPost() throws ServletException, IOException {
+    public void testAdminUserPost() throws Exception {
         setupAdminUser();
         // GET => 200
         request.setMethod("POST");
@@ -330,7 +326,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAdminUserPut() throws ServletException, IOException {
+    public void testAdminUserPut() throws Exception {
         setupAdminUser();
         // GET => 200
         request.setMethod("PUT");
@@ -339,7 +335,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAdminUserPatch() throws ServletException, IOException {
+    public void testAdminUserPatch() throws Exception {
         setupAdminUser();
         // GET => 200
         request.setMethod("PATCH");
@@ -348,7 +344,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAdminUserDelete() throws ServletException, IOException {
+    public void testAdminUserDelete() throws Exception {
         setupAdminUser();
         // GET => 200
         request.setMethod("DELETE");
@@ -357,7 +353,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserNoPermsHead() throws ServletException, IOException {
+    public void testAuthUserNoPermsHead() throws Exception {
         setupAuthUserNoPerms();
         // HEAD => 403
         request.setMethod("HEAD");
@@ -366,7 +362,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserNoPermsOptions() throws ServletException, IOException {
+    public void testAuthUserNoPermsOptions() throws Exception {
         setupAuthUserNoPerms();
         // GET => 403
         request.setMethod("OPTIONS");
@@ -375,7 +371,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserNoPermsGet() throws ServletException, IOException {
+    public void testAuthUserNoPermsGet() throws Exception {
         setupAuthUserNoPerms();
         // GET => 403
         request.setMethod("GET");
@@ -384,7 +380,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserNoPermsPost() throws ServletException, IOException {
+    public void testAuthUserNoPermsPost() throws Exception {
         setupAuthUserNoPerms();
         // POST => 403
         request.setMethod("POST");
@@ -393,7 +389,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserNoPermsPut() throws ServletException, IOException {
+    public void testAuthUserNoPermsPut() throws Exception {
         setupAuthUserNoPerms();
         // PUT => 403
         request.setMethod("PUT");
@@ -402,7 +398,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserNoPermsPatch() throws ServletException, IOException {
+    public void testAuthUserNoPermsPatch() throws Exception {
         setupAuthUserNoPerms();
         // PATCH => 403
         request.setMethod("PATCH");
@@ -412,7 +408,7 @@ public class WebACFilterTest {
 
     @Ignore // TODO FIX THIS TEST
     @Test
-    public void testAuthUserNoPermsDelete() throws ServletException, IOException {
+    public void testAuthUserNoPermsDelete() throws Exception {
         setupAuthUserNoPerms();
         // DELETE => 403
         request.setMethod("DELETE");
@@ -421,7 +417,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserReadOnlyHead() throws ServletException, IOException {
+    public void testAuthUserReadOnlyHead() throws Exception {
         setupAuthUserReadOnly();
         // HEAD => 200
         request.setMethod("HEAD");
@@ -430,7 +426,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserReadOnlyOptions() throws ServletException, IOException {
+    public void testAuthUserReadOnlyOptions() throws Exception {
         setupAuthUserReadOnly();
         // GET => 200
         request.setMethod("OPTIONS");
@@ -439,7 +435,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserReadOnlyGet() throws ServletException, IOException {
+    public void testAuthUserReadOnlyGet() throws Exception {
         setupAuthUserReadOnly();
         // GET => 200
         request.setMethod("GET");
@@ -448,7 +444,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserReadOnlyPost() throws ServletException, IOException {
+    public void testAuthUserReadOnlyPost() throws Exception {
         setupAuthUserReadOnly();
         // POST => 403
         request.setMethod("POST");
@@ -457,7 +453,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserReadOnlyPut() throws ServletException, IOException {
+    public void testAuthUserReadOnlyPut() throws Exception {
         setupAuthUserReadOnly();
         // PUT => 403
         request.setMethod("PUT");
@@ -467,7 +463,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserReadOnlyPatch() throws ServletException, IOException {
+    public void testAuthUserReadOnlyPatch() throws Exception {
         setupAuthUserReadOnly();
         // PATCH => 403
         request.setMethod("PATCH");
@@ -477,7 +473,7 @@ public class WebACFilterTest {
 
     @Ignore // TODO FIX THIS TEST
     @Test
-    public void testAuthUserReadOnlyDelete() throws ServletException, IOException {
+    public void testAuthUserReadOnlyDelete() throws Exception {
         setupAuthUserReadOnly();
         // DELETE => 403
         request.setMethod("DELETE");
@@ -486,7 +482,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserReadAppendPatchNonSparqlContent() throws ServletException, IOException {
+    public void testAuthUserReadAppendPatchNonSparqlContent() throws Exception {
         setupAuthUserReadAppend();
         // PATCH (Non Sparql Content) => 403
         request.setRequestURI(testPath);
@@ -497,7 +493,7 @@ public class WebACFilterTest {
 
     @Ignore // TODO FIX THIS TEST
     @Test
-    public void testAuthUserReadAppendPatchSparqlNoContent() throws ServletException, IOException {
+    public void testAuthUserReadAppendPatchSparqlNoContent() throws Exception {
         setupAuthUserReadAppend();
         // PATCH (Sparql No Content) => 200 (204)
         request.setContentType(contentTypeSPARQLUpdate);
@@ -509,7 +505,7 @@ public class WebACFilterTest {
 
     @Ignore // TODO FIX THIS TEST
     @Test
-    public void testAuthUserReadAppendPatchSparqlInvalidContent() throws ServletException, IOException {
+    public void testAuthUserReadAppendPatchSparqlInvalidContent() throws Exception {
         setupAuthUserReadAppend();
         // PATCH (Sparql Invalid Content) => 403
         request.setContentType(contentTypeSPARQLUpdate);
@@ -522,7 +518,7 @@ public class WebACFilterTest {
 
     @Ignore // TODO FIX THIS TEST
     @Test
-    public void testAuthUserReadAppendPatchSparqlInsert() throws ServletException, IOException {
+    public void testAuthUserReadAppendPatchSparqlInsert() throws Exception {
         setupAuthUserReadAppend();
         // PATCH (Sparql INSERT) => 200 (204)
         final String updateString =
@@ -537,7 +533,7 @@ public class WebACFilterTest {
 
     @Ignore // TODO FIX THIS TEST
     @Test
-    public void testAuthUserReadAppendPatchSparqlDelete() throws ServletException, IOException {
+    public void testAuthUserReadAppendPatchSparqlDelete() throws Exception {
         setupAuthUserReadAppend();
         // PATCH (Sparql DELETE) => 403
         final String updateString =
@@ -552,7 +548,7 @@ public class WebACFilterTest {
 
     @Ignore // TODO FIX THIS TEST
     @Test
-    public void testAuthUserAppendPostContainer() throws IOException, ServletException {
+    public void testAuthUserAppendPostContainer() throws Exception {
         setupAuthUserAppendOnly();
         // POST => 200
         request.setRequestURI(testPath);
@@ -562,7 +558,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserAppendPostBinary() throws IOException, ServletException {
+    public void testAuthUserAppendPostBinary() throws Exception {
         setupAuthUserAppendOnly();
         setupBinaryResource();
         // POST => 403
@@ -574,7 +570,7 @@ public class WebACFilterTest {
 
     @Ignore // TODO FIX THIS TEST
     @Test
-    public void testAuthUserAppendDelete() throws IOException, ServletException {
+    public void testAuthUserAppendDelete() throws Exception {
         setupAuthUserAppendOnly();
         // POST => 403
         request.setRequestURI(testPath);
@@ -585,7 +581,7 @@ public class WebACFilterTest {
 
     @Ignore // TODO FIX THIS TEST
     @Test
-    public void testAuthUserReadAppendPostContainer() throws IOException, ServletException {
+    public void testAuthUserReadAppendPostContainer() throws Exception {
         setupAuthUserReadAppend();
         // POST => 200
         request.setRequestURI(testPath);
@@ -595,7 +591,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserReadAppendPostBinary() throws IOException, ServletException {
+    public void testAuthUserReadAppendPostBinary() throws Exception{
         setupAuthUserReadAppend();
         setupBinaryResource();
         // POST => 403
@@ -607,7 +603,7 @@ public class WebACFilterTest {
 
     @Ignore // TODO FIX THIS TEST
     @Test
-    public void testAuthUserReadAppendDelete() throws ServletException, IOException {
+    public void testAuthUserReadAppendDelete() throws Exception {
         setupAuthUserReadAppend();
         // DELETE => 403
         request.setRequestURI(testPath);
@@ -617,7 +613,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserReadAppendWritePostContainer() throws IOException, ServletException {
+    public void testAuthUserReadAppendWritePostContainer() throws Exception {
         setupAuthUserReadAppendWrite();
         // POST => 200
         request.setRequestURI(testPath);
@@ -627,7 +623,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserReadAppendWritePostBinary() throws IOException, ServletException {
+    public void testAuthUserReadAppendWritePostBinary() throws Exception {
         setupAuthUserReadAppendWrite();
         setupBinaryResource();
         // POST => 200
@@ -638,7 +634,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserReadWriteHead() throws ServletException, IOException {
+    public void testAuthUserReadWriteHead() throws Exception {
         setupAuthUserReadWrite();
         // HEAD => 200
         request.setMethod("HEAD");
@@ -647,7 +643,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserReadWriteOptions() throws ServletException, IOException {
+    public void testAuthUserReadWriteOptions() throws Exception {
         setupAuthUserReadWrite();
         // GET => 200
         request.setMethod("OPTIONS");
@@ -656,7 +652,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserReadWriteGet() throws ServletException, IOException {
+    public void testAuthUserReadWriteGet() throws Exception {
         setupAuthUserReadWrite();
         // GET => 200
         request.setMethod("GET");
@@ -665,7 +661,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserReadWritePost() throws ServletException, IOException {
+    public void testAuthUserReadWritePost() throws Exception {
         setupAuthUserReadWrite();
         // POST => 200
         request.setMethod("POST");
@@ -674,7 +670,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserReadWritePut() throws ServletException, IOException {
+    public void testAuthUserReadWritePut() throws Exception {
         setupAuthUserReadWrite();
         // PUT => 200
         request.setMethod("PUT");
@@ -685,7 +681,7 @@ public class WebACFilterTest {
 
     @Ignore // TODO FIX THIS TEST
     @Test
-    public void testAuthUserReadWritePatch() throws ServletException, IOException {
+    public void testAuthUserReadWritePatch() throws Exception {
         setupAuthUserReadWrite();
         // PATCH => 200
         request.setMethod("PATCH");
@@ -695,7 +691,7 @@ public class WebACFilterTest {
 
     @Ignore // TODO FIX THIS TEST
     @Test
-    public void testAuthUserReadWriteDelete() throws ServletException, IOException {
+    public void testAuthUserReadWriteDelete() throws Exception {
         setupAuthUserReadWrite();
         // DELETE => 200
         request.setMethod("DELETE");
@@ -705,7 +701,7 @@ public class WebACFilterTest {
 
     @Ignore // TODO FIX THIS TEST
     @Test
-    public void testAuthUserReadAppendWriteDelete() throws ServletException, IOException {
+    public void testAuthUserReadAppendWriteDelete() throws Exception {
         setupAuthUserReadAppendWrite();
         // DELETE => 200
         request.setRequestURI(testPath);
@@ -715,7 +711,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserAppendPutNewChild() throws IOException, ServletException {
+    public void testAuthUserAppendPutNewChild() throws Exception {
         setupAuthUserAppendOnly();
         // PUT => 200
         request.setRequestURI(testChildPath);
@@ -726,7 +722,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAclControlPutToAcl() throws ServletException, IOException {
+    public void testAclControlPutToAcl() throws Exception {
         setupAuthUserAclControl();
         request.setRequestURI(testAclPath);
         request.setMethod("PUT");
@@ -735,7 +731,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testNoAclControlPutToAcl() throws ServletException, IOException {
+    public void testNoAclControlPutToAcl() throws Exception {
         setupAuthUserNoAclControl();
         request.setRequestURI(testAclPath);
         request.setMethod("PUT");
@@ -744,7 +740,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAclControlGetToAcl() throws ServletException, IOException {
+    public void testAclControlGetToAcl() throws Exception {
         setupAuthUserAclControl();
         request.setRequestURI(testAclPath);
         request.setMethod("GET");
@@ -753,7 +749,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testNoAclControlGetToAcl() throws ServletException, IOException {
+    public void testNoAclControlGetToAcl() throws Exception {
         setupAuthUserNoAclControl();
         request.setRequestURI(testAclPath);
         request.setMethod("GET");
@@ -762,7 +758,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAclControlHeadToAcl() throws ServletException, IOException {
+    public void testAclControlHeadToAcl() throws Exception {
         setupAuthUserAclControl();
         request.setRequestURI(testAclPath);
         request.setMethod("HEAD");
@@ -771,7 +767,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testNoAclControlHeadToAcl() throws ServletException, IOException {
+    public void testNoAclControlHeadToAcl() throws Exception {
         setupAuthUserNoAclControl();
         request.setRequestURI(testAclPath);
         request.setMethod("HEAD");
@@ -780,7 +776,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAclControlPatchToAcl() throws ServletException, IOException {
+    public void testAclControlPatchToAcl() throws Exception {
         setupAuthUserAclControl();
         request.setRequestURI(testAclPath);
         request.setMethod("PATCH");
@@ -789,7 +785,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testNoAclControlPatchToAcl() throws ServletException, IOException {
+    public void testNoAclControlPatchToAcl() throws Exception {
         setupAuthUserNoAclControl();
         request.setRequestURI(testAclPath);
         request.setMethod("PATCH");
@@ -798,7 +794,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAclControlDelete() throws ServletException, IOException {
+    public void testAclControlDelete() throws Exception {
         setupAuthUserAclControl();
         request.setRequestURI(testAclPath);
         request.setMethod("DELETE");
@@ -807,7 +803,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testNoAclControlDelete() throws ServletException, IOException {
+    public void testNoAclControlDelete() throws Exception {
         setupAuthUserNoAclControl();
         request.setRequestURI(testAclPath);
         request.setMethod("DELETE");
