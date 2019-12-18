@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -84,6 +85,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     private static CommitOption globalDefaultCommitOption =
             Boolean.valueOf(getProperty("fcrepo.autoversioning.enabled", "false")) ? NEW_VERSION : UNVERSIONED;
 
+    private Instant created;
     /**
      * Instantiate an OCFL object session
      *
@@ -99,6 +101,8 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         this.deletePaths = new HashSet<>();
         this.objectDeleted = false;
         this.sessionClosed = false;
+        this.created = Instant.now();
+
     }
 
     /**
@@ -411,6 +415,10 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
                                                                     .collect(Collectors.toList());
     }
 
+    @Override
+    public Instant getCreated() {
+        return this.created;
+    }
     private static final VersionComparator VERSION_COMPARATOR = new VersionComparator();
 
     private static class VersionComparator implements Comparator<VersionDetails> {

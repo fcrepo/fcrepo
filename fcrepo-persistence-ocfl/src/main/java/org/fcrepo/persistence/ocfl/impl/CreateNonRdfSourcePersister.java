@@ -23,11 +23,11 @@ import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.mintOCFLObjectId;
 
 /**
  * This class implements the persistence of a new NonRDFSource
@@ -42,17 +42,21 @@ class CreateNonRdfSourcePersister extends AbstractNonRdfSourcePersister {
     /**
      * Constructor
      */
-    CreateNonRdfSourcePersister(final OCFLObjectSessionFactory objectFactory,
-                                final FedoraToOCFLObjectIndex index) {
-        super(NonRdfSourceOperation.class, CREATE, objectFactory, index);
+    protected CreateNonRdfSourcePersister(final FedoraToOCFLObjectIndex index) {
+        super(NonRdfSourceOperation.class, CREATE, index);
     }
 
     @Override
     public void persist(final OCFLPersistentStorageSession session, final ResourceOperation operation) throws PersistentStorageException {
-        final String ocflId = resolveRootObjectId((CreateResourceOperation) operation, session);
+        final var resourceId = operation.getResourceId();
+        log.debug("persisting {} to {}", resourceId, session);
+        final CreateResourceOperation createResourceOp = ((CreateResourceOperation)operation);
+        final boolean archivalGroup = createResourceOp.isArchivalGroup();
+        final String rootObjectId = archivalGroup ? createResourceOp.getResourceId() :
+                resolveRootObjectId(createResourceOp, session);
+        final String ocflId = mintOCFLObjectId(rootObjectId);
         final OCFLObjectSession ocflObjectSession = session.findOrCreateSession(ocflId);
-        final FedoraOCFLMapping mapping = findOrCreateFedoraOCFLMapping(operation, session);
-
-        persistNonRDFSource(operation, mapping, ocflObjectSession);
+        persistNonRDFSource(operation, ocflObjectSession, rootObjectId, ocflId);
+        index.addMapping(resourceId, rootObjectId, ocflId);
     }
 }

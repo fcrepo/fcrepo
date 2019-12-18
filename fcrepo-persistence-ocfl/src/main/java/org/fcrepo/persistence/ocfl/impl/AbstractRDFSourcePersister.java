@@ -27,7 +27,6 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
 import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,26 +44,26 @@ import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.writeR
  * @author dbernstein
  * @since 6.0.0
  */
-public abstract class AbstractRDFSourcePersister extends AbstractPersister {
+abstract class AbstractRDFSourcePersister extends AbstractPersister {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractRDFSourcePersister.class);
 
     /**
      * Constructor
      */
-    AbstractRDFSourcePersister(final Class<? extends ResourceOperation> resourceOperation,
+    protected AbstractRDFSourcePersister(final Class<? extends ResourceOperation> resourceOperation,
                                final ResourceOperationType resourceOperationType,
-                               final OCFLObjectSessionFactory objectFactory,
                                final FedoraToOCFLObjectIndex index) {
-        super(resourceOperation, resourceOperationType, objectFactory, index);
+        super(resourceOperation, resourceOperationType, index);
     }
 
     protected void persistRDF(final OCFLObjectSession session, final ResourceOperation operation,
-                              final FedoraOCFLMapping mapping) throws PersistentStorageException {
+                              final String rootId, final String ocflId) throws PersistentStorageException {
 
         final RdfSourceOperation rdfSourceOp = (RdfSourceOperation)operation;
-        log.debug("persisting RDFSource ({}) to {}", operation.getResourceId(), mapping.getOcflObjectId());
-        final String subpath = relativizeSubpath(mapping.getRootObjectIdentifier(), operation.getResourceId());
+        log.debug("persisting RDFSource ({}) to {}", operation.getResourceId(), ocflId);
+
+        final String subpath = relativizeSubpath(rootId, operation.getResourceId());
         final String resolvedSubpath = resolveOCFLSubpath(subpath);
         //write user triples
         final var outcome = writeRDF(session, rdfSourceOp.getTriples(), resolvedSubpath);

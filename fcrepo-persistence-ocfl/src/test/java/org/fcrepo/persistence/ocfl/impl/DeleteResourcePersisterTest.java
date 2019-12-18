@@ -18,6 +18,7 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,15 +26,15 @@ import static org.mockito.Mockito.when;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
 
 /**
  * Delete Persister tests.
@@ -58,39 +59,57 @@ public class DeleteResourcePersisterTest {
     private FedoraToOCFLObjectIndex index;
 
     @Mock
-    private OCFLObjectSessionFactory sessionFactory;
-
-    @Mock
     private OCFLPersistentStorageSession psSession;
-
 
     private DeleteResourcePersister persister;
 
     @Before
     public void setup() throws Exception {
         operation = mock(RdfSourceOperation.class);
-        persister = new DeleteResourcePersister(this.sessionFactory, this.index);
+        persister = new DeleteResourcePersister(this.index);
 
         when(psSession.findOrCreateSession(anyString())).thenReturn(session);
-        when(index.getMapping(anyString())).thenReturn(mapping);
     }
-
 
     @Test
     public void testDeleteSubPath() throws Exception {
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
         when(mapping.getRootObjectIdentifier()).thenReturn("info:fedora/an-ocfl-object");
         when(operation.getResourceId()).thenReturn("info:fedora/an-ocfl-object/some-subpath");
+        when(index.getMapping(anyString())).thenReturn(mapping);
+        persister.persist(psSession, operation);
+        verify(session).delete("an-ocfl-object/some-subpath");
+    }
+
+    @Test(expected = PersistentStorageException.class)
+    public void testDeleteSubPathDoesNotExist() throws Exception {
+        when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
+        when(mapping.getRootObjectIdentifier()).thenReturn("info:fedora/an-ocfl-object");
+        when(operation.getResourceId()).thenReturn("info:fedora/an-ocfl-object/some-subpath");
+        when(index.getMapping(anyString())).thenReturn(mapping);
+        doThrow(new PersistentStorageException("error")).when(session).delete("an-ocfl-object/some-subpath");
+        persister.persist(psSession, operation);
+    }
+
+    @Test(expected = PersistentStorageException.class)
+    public void testDeleteFullObjectDoesNotExist() throws Exception {
+        when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
+        when(mapping.getRootObjectIdentifier()).thenReturn("info:fedora/an-ocfl-object");
+        when(operation.getResourceId()).thenReturn("info:fedora/an-ocfl-object");
+        when(index.getMapping(anyString())).thenThrow(new FedoraOCFLMappingNotFoundException("error"));
 
         persister.persist(psSession, operation);
         verify(session).delete("some-subpath");
     }
+
 
     @Test
     public void testDeleteFullObject() throws Exception {
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
         when(mapping.getRootObjectIdentifier()).thenReturn("info:fedora/an-ocfl-object");
         when(operation.getResourceId()).thenReturn("info:fedora/an-ocfl-object");
+        when(index.getMapping(anyString())).thenReturn(mapping);
+
         persister.persist(psSession, operation);
         verify(session).deleteObject();
     }
@@ -100,6 +119,7 @@ public class DeleteResourcePersisterTest {
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
         when(mapping.getRootObjectIdentifier()).thenReturn("info:fedora/some-wrong-object");
         when(operation.getResourceId()).thenReturn("info:fedora/an-ocfl-object");
+        when(index.getMapping(anyString())).thenReturn(mapping);
         persister.persist(psSession, operation);
     }
 }

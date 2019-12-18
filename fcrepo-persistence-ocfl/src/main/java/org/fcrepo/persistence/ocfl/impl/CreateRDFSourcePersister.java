@@ -17,16 +17,17 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.mintOCFLObjectId;
 
 /**
  * This class implements the persistence of a new RDFSource
@@ -34,25 +35,32 @@ import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
  * @author dbernstein
  * @since 6.0.0
  */
-public class CreateRDFSourcePersister extends AbstractRDFSourcePersister {
+class CreateRDFSourcePersister extends AbstractRDFSourcePersister {
 
     private static final Logger log = LoggerFactory.getLogger(CreateRDFSourcePersister.class);
 
     /**
      * Constructor
-     * @param objectFactory The OCFL Object factory
      * @param index The FedoraToOCFLObjectIndex
      */
-    public CreateRDFSourcePersister(final OCFLObjectSessionFactory objectFactory,
-                                    final FedoraToOCFLObjectIndex index) {
-        super(RdfSourceOperation.class, CREATE, objectFactory, index);
+    protected CreateRDFSourcePersister(final FedoraToOCFLObjectIndex index) {
+        super(RdfSourceOperation.class, CREATE, index);
     }
 
     @Override
     public void persist(final OCFLPersistentStorageSession session, final ResourceOperation operation)
             throws PersistentStorageException {
-        final FedoraOCFLMapping mapping = findOrCreateFedoraOCFLMapping(operation, session);
-        final OCFLObjectSession ocflObjectSession = session.findOrCreateSession(mapping.getOcflObjectId());
-        persistRDF(ocflObjectSession, operation, mapping);
+
+        final var resourceId = operation.getResourceId();
+        log.debug("persisting {} to {}", resourceId, session);
+
+        final CreateResourceOperation createResourceOp = ((CreateResourceOperation)operation);
+        final boolean archivalGroup = createResourceOp.isArchivalGroup();
+        final String rootObjectId = archivalGroup ? createResourceOp.getResourceId() :
+                                                    resolveRootObjectId(createResourceOp, session);
+        final String ocflObjectId = mintOCFLObjectId(rootObjectId);
+        final OCFLObjectSession ocflObjectSession = session.findOrCreateSession(ocflObjectId);
+        persistRDF(ocflObjectSession, operation, rootObjectId, ocflObjectId);
+        index.addMapping(resourceId, rootObjectId, ocflObjectId);
     }
 }

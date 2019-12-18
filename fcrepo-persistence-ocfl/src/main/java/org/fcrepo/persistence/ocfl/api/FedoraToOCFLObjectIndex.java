@@ -46,11 +46,11 @@ public interface FedoraToOCFLObjectIndex {
      * Adds a mapping to the index
      *
      * @param fedoraResourceIdentifier The fedora resource
-     * @param parentFedoraResourceId   The parent of the fedora resource
+     * @param fedoraRootObjectId   The fedora resource that maps directly to the ocfl object
      * @param ocflObjectId             The ocfl object id
      * @return  The newly created mapping
      */
-    public FedoraOCFLMapping addMapping(final String fedoraResourceIdentifier, final String parentFedoraResourceId,
+    public FedoraOCFLMapping addMapping(final String fedoraResourceIdentifier, final String fedoraRootObjectId,
                            final String ocflObjectId);
 }
 

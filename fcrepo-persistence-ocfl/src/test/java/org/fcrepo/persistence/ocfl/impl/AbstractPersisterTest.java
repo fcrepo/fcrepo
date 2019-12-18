@@ -23,13 +23,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
-import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -48,22 +44,11 @@ public class AbstractPersisterTest {
     @Mock
     private RdfSourceOperation rdfSourceOperation;
 
-    private static final Set<Class<? extends ResourceOperation>> RESOURCE_OPERATION_TYPES = new HashSet<>();
-
-    private static final Set<ResourceOperationType> OPERATION_TYPES = new HashSet<>();
-
-    static {
-        RESOURCE_OPERATION_TYPES.add(RdfSourceOperation.class);
-        RESOURCE_OPERATION_TYPES.add(NonRdfSourceOperation.class);
-        OPERATION_TYPES.add(CREATE);
-        OPERATION_TYPES.add(UPDATE);
-    }
-
     @Test
     public void testHandleSingles() {
         class MyPersister extends AbstractPersister {
             MyPersister() {
-                super(NonRdfSourceOperation.class, CREATE, null, null);
+                super(NonRdfSourceOperation.class, CREATE, null);
             }
 
             @Override
@@ -80,7 +65,7 @@ public class AbstractPersisterTest {
     public void testHandleSinglesFailureOperation() {
         class MyPersister extends AbstractPersister {
             MyPersister() {
-                super(RdfSourceOperation.class, CREATE, null, null);
+                super(RdfSourceOperation.class, CREATE,  null);
             }
 
             @Override
@@ -96,7 +81,7 @@ public class AbstractPersisterTest {
     public void testHandleSinglesFailureType() {
         class MyPersister extends AbstractPersister {
             MyPersister() {
-                super(NonRdfSourceOperation.class, CREATE, null, null);
+                super(NonRdfSourceOperation.class, CREATE, null);
             }
 
             @Override

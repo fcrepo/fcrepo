@@ -23,6 +23,7 @@ import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.system.StreamRDF;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
@@ -45,6 +46,10 @@ import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.riot.RDFFormat.NTRIPLES;
 import static org.apache.jena.riot.system.StreamRDFWriter.getWriterStream;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.fcrepo.persistence.ocfl.api.OCFLPersistenceConstants.DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
 
 /**
  * A set of utility functions for supporting OCFL persistence activities.
@@ -74,26 +79,52 @@ public class OCFLPersistentStorageUtils {
     private static final String FEDORA_METADATA_SUFFIX = "/" + FedoraTypes.FCR_METADATA;
 
     /**
-     * Returns the relative subpath of the resourceId based on the ancestor's resource id.
+     * Returns the relative subpath of the resourceId based on the root object's resource id.
      *
-     * @param ancestorResourceId The ancestor resource
-     * @param resourceId         The identifier of the resource whose subpath you wish to resolve.
+     * @param rootObjectId The fedora root object identifier
+     * @param resourceId   The identifier of the resource whose subpath you wish to resolve.
      * @return The resolved subpath
      */
-    public static String relativizeSubpath(final String ancestorResourceId, final String resourceId) {
-        if (resourceId.equals(ancestorResourceId)) {
-            return resourceId;
-        } else if (resourceId.startsWith(ancestorResourceId)) {
-            return resourceId.substring(ancestorResourceId.length() + 1);
+    public static String relativizeSubpath(final String rootObjectId, final String resourceId) {
+        if (resourceId.equals(rootObjectId)) {
+            return resourceId.substring(FEDORA_ID_PREFIX.length());
+        } else if (resourceId.startsWith(rootObjectId)) {
+
+            final var rawSubpath = resourceId.substring(rootObjectId.length() + 1);
+            //grab the last path segment of the rootObjectId
+            final var lastPathSegment = rootObjectId.substring(rootObjectId.lastIndexOf("/") + 1);
+
+            if (rawSubpath.endsWith(FCR_ACL) || rawSubpath.endsWith(FCR_METADATA)) {
+                final var lastSlashIndex = rawSubpath.indexOf("/");
+                String beforeSlash = null;
+                String suffix = rawSubpath;
+
+                if (lastSlashIndex > -1) {
+                    beforeSlash = rawSubpath.substring(0, lastSlashIndex);
+                    suffix = rawSubpath.substring(lastSlashIndex + 1);
+                }
+
+                String translatedSuffix = null;
+                if (suffix.equals(FCR_METADATA)) {
+                    translatedSuffix = "-description";
+                } else {
+                    translatedSuffix = "-acl";
+                }
+
+                return lastPathSegment + (beforeSlash != null ? beforeSlash : "") + translatedSuffix;
+            } else {
+                return lastPathSegment + "/" +  rawSubpath;
+            }
         }
 
-        throw new IllegalArgumentException(format("resource (%s) is not prefixed by ancestor resource (%s)", resourceId,
-                ancestorResourceId));
+        throw new IllegalArgumentException(format("resource (%s) is not prefixed by root object indentifier (%s)",
+                resourceId,
+                rootObjectId));
     }
 
     /**
      * Returns the OCFL subpath for a given fedora subpath. This returned subpath
-     * does not include any added extendsions.
+     * does not include any added extensions.
      *
      * @param fedoraSubpath subpath of file within ocfl object
      * @return The resolved OCFL subpath
@@ -246,4 +277,30 @@ public class OCFLPersistentStorageUtils {
         return INTERNAL_FEDORA_DIRECTORY + File.separator;
     }
 
+
+    /**
+     * Mints an OCFL ID for the specified identifier
+     * @param fedoraIdentifier The fedora identifier for the root OCFL object
+     * @return The OCFL ID
+     */
+    public static String mintOCFLObjectId(final String fedoraIdentifier) {
+        //TODO make OCFL Object Id minting more configurable.
+        String bareFedoraIdentifier = fedoraIdentifier;
+        if (fedoraIdentifier.indexOf(FEDORA_ID_PREFIX) == 0) {
+            bareFedoraIdentifier = fedoraIdentifier.substring(FEDORA_ID_PREFIX.length());
+        }
+
+        //ensure no accidental collisions with the root ocfl identifier
+        if (bareFedoraIdentifier.equals(DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID)) {
+            throw new RepositoryRuntimeException(bareFedoraIdentifier + " in a reserved identifier");
+        }
+
+        bareFedoraIdentifier = bareFedoraIdentifier.replace("/", "_");
+
+        if (bareFedoraIdentifier.length() == 0) {
+            bareFedoraIdentifier = DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
+        }
+
+        return bareFedoraIdentifier;
+    }
 }

@@ -22,7 +22,6 @@ import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,25 +33,27 @@ import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
  * @author dbernstein
  * @since 6.0.0
  */
-public class UpdateRDFSourcePersister extends AbstractRDFSourcePersister {
+class UpdateRDFSourcePersister extends AbstractRDFSourcePersister {
 
     private static final Logger log = LoggerFactory.getLogger(UpdateRDFSourcePersister.class);
 
     /**
      * Constructor
-     * @param objectFactory The OCFL Object factory
      * @param index The FedoraToOCFLObjectIndex
      */
-    public UpdateRDFSourcePersister(final OCFLObjectSessionFactory objectFactory,
-                                    final FedoraToOCFLObjectIndex index) {
-        super(RdfSourceOperation.class, UPDATE, objectFactory, index);
+    protected UpdateRDFSourcePersister(final FedoraToOCFLObjectIndex index) {
+        super(RdfSourceOperation.class, UPDATE, index);
     }
 
     @Override
     public void persist(final OCFLPersistentStorageSession session, final ResourceOperation operation)
             throws PersistentStorageException {
-        final FedoraOCFLMapping fedoraOCFLMapping = getMapping(operation.getResourceId());
-        final OCFLObjectSession objSession = session.findOrCreateSession(fedoraOCFLMapping.getOcflObjectId());
-        persistRDF(objSession, operation, fedoraOCFLMapping);
+        final var resourceId = operation.getResourceId();
+        log.debug("persisting {} to {}", resourceId, session);
+
+        final var fedoraOCFLMapping = getMapping(resourceId);
+        final var ocflId = fedoraOCFLMapping.getOcflObjectId();
+        final OCFLObjectSession objSession = session.findOrCreateSession(ocflId);
+        persistRDF(objSession, operation, fedoraOCFLMapping.getRootObjectIdentifier(),ocflId);
     }
 }

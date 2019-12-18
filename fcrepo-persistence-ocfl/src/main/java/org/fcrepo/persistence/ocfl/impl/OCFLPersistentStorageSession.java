@@ -23,6 +23,8 @@ import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolv
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -42,7 +44,6 @@ import org.fcrepo.persistence.ocfl.api.Persister;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Phaser;
 import java.util.stream.Collectors;
@@ -86,6 +87,10 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     private OCFLObjectSessionFactory objectSessionFactory;
 
+    private static Comparator<OCFLObjectSession> CREATION_TIME_ORDER =
+            (OCFLObjectSession o1, OCFLObjectSession o2)->o1.getCreated().compareTo(o2.getCreated());
+
+
     private class CommittedSession {
         final OCFLObjectSession session;
         final CommitOption option;
@@ -122,11 +127,11 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         this.sessionMap = new ConcurrentHashMap<>();
 
         //load the persister list if empty
-        persisterList.add(new CreateRDFSourcePersister(this.objectSessionFactory, this.fedoraOcflIndex));
-        persisterList.add(new UpdateRDFSourcePersister(this.objectSessionFactory, this.fedoraOcflIndex));
-        persisterList.add(new CreateNonRdfSourcePersister(this.objectSessionFactory, this.fedoraOcflIndex));
-        persisterList.add(new UpdateNonRdfSourcePersister(this.objectSessionFactory, this.fedoraOcflIndex));
-        persisterList.add(new DeleteResourcePersister(this.objectSessionFactory, this.fedoraOcflIndex));
+        persisterList.add(new CreateRDFSourcePersister(this.fedoraOcflIndex));
+        persisterList.add(new UpdateRDFSourcePersister(this.fedoraOcflIndex));
+        persisterList.add(new CreateNonRdfSourcePersister(this.fedoraOcflIndex));
+        persisterList.add(new UpdateNonRdfSourcePersister(this.fedoraOcflIndex));
+        persisterList.add(new DeleteResourcePersister(this.fedoraOcflIndex));
 
     }
 
@@ -279,7 +284,10 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         LOGGER.debug("All persisters are complete");
 
         //prepare session for commit
-        final Collection<OCFLObjectSession> sessions = this.sessionMap.values();
+        final List<OCFLObjectSession> sessions = new ArrayList<>(this.sessionMap.values());
+
+        //order in order of session creation time. (supports testing)
+        Collections.sort(sessions, CREATION_TIME_ORDER);
 
         try {
             LOGGER.debug("Preparing commit...");
@@ -296,6 +304,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
         try {
             this.sessionsToRollback = new ArrayList<>(sessions.size());
+
 
             //perform commit
             for (final OCFLObjectSession objectSession : sessions) {
