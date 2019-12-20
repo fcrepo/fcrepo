@@ -18,6 +18,7 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import org.apache.commons.io.IOUtils;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
@@ -38,10 +39,12 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.RESOURCE_HEADER_EXTENSION;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
+import static org.fcrepo.persistence.ocfl.api.OCFLPersistenceConstants.DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getInternalFedoraDirectory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -195,6 +198,20 @@ public class CreateNonRdfSourcePersisterTest {
 
         persister.persist(psSession, nonRdfSourceOperation);
     }
+
+    @Test(expected = RepositoryRuntimeException.class)
+    public void testPersistNewRootResource() throws Exception {
+        final String rootResourceId = FEDORA_ID_PREFIX + DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
+        final InputStream content = IOUtils.toInputStream(CONTENT_BODY, "UTF-8");
+        when(nonRdfSourceOperation.getResourceId()).thenReturn(rootResourceId);
+        when(nonRdfSourceOperation.getContentStream()).thenReturn(content);
+        when(nonRdfSourceOperation.getContentSize()).thenReturn(99l);
+        when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel())
+                .thenReturn(NON_RDF_SOURCE.toString());
+
+        persister.persist(psSession, nonRdfSourceOperation);
+    }
+
 
     private ResourceHeaders retrievePersistedHeaders(final String subpath) throws Exception {
         verify(session).write(eq(getInternalFedoraDirectory() + subpath + RESOURCE_HEADER_EXTENSION),

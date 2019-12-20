@@ -292,7 +292,7 @@ public class OCFLPersistentStorageUtils {
 
         //ensure no accidental collisions with the root ocfl identifier
         if (bareFedoraIdentifier.equals(DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID)) {
-            throw new RepositoryRuntimeException(bareFedoraIdentifier + " in a reserved identifier");
+            throw new RepositoryRuntimeException(bareFedoraIdentifier + " is a reserved identifier");
         }
 
         bareFedoraIdentifier = bareFedoraIdentifier.replace("/", "_");

@@ -56,7 +56,7 @@ public class FedoraToOCFLObjectIndexImpl implements FedoraToOCFLObjectIndex {
             fedoraOCFLMappingMap.put(fedoraRootObjectResourceId, mapping);
         }
 
-        if(!fedoraResourceIdentifier.equals(fedoraRootObjectResourceId)){
+        if (!fedoraResourceIdentifier.equals(fedoraRootObjectResourceId)) {
             fedoraOCFLMappingMap.put(fedoraResourceIdentifier, mapping);
         }
         return mapping;

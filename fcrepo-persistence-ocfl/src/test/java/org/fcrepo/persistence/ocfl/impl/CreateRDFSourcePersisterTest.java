@@ -24,6 +24,7 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.vocabulary.DC;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
@@ -46,11 +47,13 @@ import java.util.stream.Stream;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.RESOURCE_HEADER_EXTENSION;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
+import static org.fcrepo.persistence.ocfl.api.OCFLPersistenceConstants.DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getInternalFedoraDirectory;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getRDFFileExtension;
 import static org.junit.Assert.assertEquals;
@@ -127,6 +130,13 @@ public class CreateRDFSourcePersisterTest {
         final RdfSourceOperation badOperation = mock(RdfSourceOperation.class);
         when(badOperation.getType()).thenReturn(UPDATE);
         assertFalse(this.persister.handle(badOperation));
+    }
+
+    @Test(expected = RepositoryRuntimeException.class)
+    public void testPersistNewRootResource() throws Exception {
+        final String rootResourceId = FEDORA_ID_PREFIX + DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
+        when(operation.getResourceId()).thenReturn(rootResourceId);
+        persister.persist(psSession, operation);
     }
 
     @Test
