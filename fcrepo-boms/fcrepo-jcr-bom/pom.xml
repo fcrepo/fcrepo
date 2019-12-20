@@ -2,7 +2,7 @@
   <parent>
     <artifactId>fcrepo</artifactId>
     <groupId>org.fcrepo</groupId>
-    <version>4.7.4-umd-1.0</version>
+    <version>4.7.5-umd-1.0</version>
     <relativePath>../..</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
@@ -52,9 +52,9 @@
         <version>${modeshape.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.jboss.jbossts</groupId>
-        <artifactId>jbossjta</artifactId>
-        <version>${jbossjta.version}</version>
+        <groupId>org.jboss.narayana.jta</groupId>
+        <artifactId>narayana-jta</artifactId>
+        <version>${narayana-jta.version}</version>
       </dependency>
       <dependency>
         <groupId>org.xerial.snappy</groupId>

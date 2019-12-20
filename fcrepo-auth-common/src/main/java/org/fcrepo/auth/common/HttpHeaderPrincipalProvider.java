@@ -39,11 +39,19 @@ import java.util.Set;
  */
 public class HttpHeaderPrincipalProvider implements PrincipalProvider {
 
-    protected static class HttpHeaderPrincipal implements Principal {
+    /**
+     * Principal created from an HTTP header.
+     */
+    public static class HttpHeaderPrincipal implements Principal {
 
         private final String name;
 
-        HttpHeaderPrincipal(final String name) {
+        /**
+         * Create a principal from a string.
+         *
+         * @param name
+         */
+        public HttpHeaderPrincipal(final String name) {
             this.name = name;
         }
 

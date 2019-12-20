@@ -42,7 +42,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
@@ -90,16 +90,6 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
     public static final String templatesLocation = "/views";
 
     /**
-     * Location in the classpath where the common css file is to be found.
-     */
-    public static final String commonCssLocation = "/views/common.css";
-
-    /**
-     * Location in the classpath where the common javascript file is to be found.
-     */
-    public static final String commonJsLocation = "/views/common.js";
-
-    /**
      * A map from String names for primary node types to the Velocity templates
      * that should be used for those node types.
      */
@@ -117,7 +107,6 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
 
     @PostConstruct
     void init() throws IOException {
-
         LOGGER.trace("Velocity engine initializing...");
         final Properties properties = new Properties();
         final String fcrepoHome = getProperty("fcrepo.home");
@@ -165,7 +154,6 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
                         final OutputStream entityStream) throws IOException {
 
         final Node subject = ViewHelpers.getContentNode(nsStream.stream.topic());
-
         final Model model = nsStream.stream.collect(toModel());
         model.setNsPrefixes(nsStream.namespaces);
 
@@ -184,6 +172,14 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
         final FieldTool fieldTool = new FieldTool();
 
         final Context context = new VelocityContext();
+        final String[] baseUrl = uriInfo.getBaseUri().getPath().split("/");
+        if (baseUrl.length > 0) {
+            final String staticBaseUrl =
+                Arrays.asList(Arrays.copyOf(baseUrl, baseUrl.length - 1)).stream().collect(Collectors.joining("/"));
+            context.put("staticBaseUrl", staticBaseUrl);
+        } else {
+            context.put("staticBaseUrl", "/");
+        }
         context.put("rdfLexicon", fieldTool.in(RdfLexicon.class));
         context.put("helpers", VIEW_HELPERS);
         context.put("esc", escapeTool);

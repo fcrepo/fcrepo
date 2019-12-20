@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo</artifactId>
-    <version>4.7.4-umd-1.0</version>
+    <version>4.7.5-umd-1.0</version>
   </parent>
   <artifactId>fcrepo-http-commons</artifactId>
   <name>Fedora Repository HTTP Commons Module</name>
@@ -82,8 +82,8 @@
           <artifactId>logback-classic</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>org.jboss.jbossts</groupId>
-          <artifactId>jbossjta</artifactId>
+          <groupId>org.jboss.narayana.jta</groupId>
+          <artifactId>narayana-jta</artifactId>
         </exclusion>
         <exclusion>
           <groupId>org.modeshape</groupId>

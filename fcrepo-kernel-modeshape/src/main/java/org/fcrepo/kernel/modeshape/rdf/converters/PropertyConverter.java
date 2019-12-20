@@ -153,6 +153,7 @@ public class PropertyConverter extends Converter<javax.jcr.Property, Property> {
                 namespaceRegistry.registerNamespace(prefix, namespace);
             } else {
                 prefix = namespaceRegistry.registerNamespace(namespace);
+                LOGGER.debug("Registered prefix: {} for namespace: {}.", prefix, namespace);
             }
         }
 

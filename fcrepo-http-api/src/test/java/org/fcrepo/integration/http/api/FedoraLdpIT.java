@@ -40,6 +40,7 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
+import static javax.ws.rs.core.Response.Status.PARTIAL_CONTENT;
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static javax.ws.rs.core.Response.Status.TEMPORARY_REDIRECT;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
@@ -1504,6 +1505,24 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testGetLongRange() throws IOException, ParseException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        final StringBuffer buf = new StringBuffer();
+        while ( buf.length() < 9000 ) {
+            buf.append("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        }
+        createDatastream(id, "ds1", buf.toString());
+
+        final HttpGet get = getDSMethod(id, "ds1");
+        get.setHeader("Range", "bytes=0-8199");
+        try (final CloseableHttpResponse response = execute(get)) {
+            assertEquals("Expected 206 Partial Content!", PARTIAL_CONTENT.getStatusCode(), getStatus(response));
+            assertEquals("Expected range length (8200)!", "8200", response.getFirstHeader(CONTENT_LENGTH).getValue());
+        }
+    }
+
+    @Test
     public void testDeleteDatastream() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -2602,6 +2621,33 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
         }
     }
+
+    @Test
+    public void testPutWithNamespaces() throws Exception {
+        final String pid = getRandomUniqueId();
+        final String subjectURI = serverAddress + pid;
+
+        // create object with rdf that contains a namespace declaration
+        final HttpPut httpPut = putObjMethod(pid);
+        httpPut.addHeader(CONTENT_TYPE, "text/turtle");
+        httpPut.setEntity(new StringEntity("@prefix asdf: <http://asdf.org/> . <> asdf:foo 'bar' ."));
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+        }
+
+        // that namespace should now be defined
+        final HttpGet httpGet = getObjMethod(pid);
+        httpGet.addHeader(ACCEPT, "text/turtle");
+        final Model model = createDefaultModel();
+        try (final CloseableHttpResponse getResponse = execute(httpGet)) {
+            final String response = EntityUtils.toString(getResponse.getEntity());
+            try (final StringReader r = new StringReader(response)) {
+                model.read(r, subjectURI, "TURTLE");
+                assertEquals("http://asdf.org/", model.getNsPrefixMap().get("asdf"));
+            }
+        }
+    }
+
     @Test
     public void testDeleteLargeLiteralStoredAsBinary() throws IOException {
 

@@ -805,7 +805,7 @@ public class FedoraLdp extends ContentExposingResource {
                     .map(entry -> ContentDigest.asURI(entry.getKey(), entry.getValue()).toString())
                     .collect(Collectors.toSet());
             } else {
-                throw new InvalidChecksumException(String.format("Unsupported Digest Algorithim: %1$s", digest));
+                throw new InvalidChecksumException(String.format("Unsupported Digest Algorithm: %1$s", digest));
             }
         } catch (final RuntimeException e) {
             if (e instanceof IllegalArgumentException) {
