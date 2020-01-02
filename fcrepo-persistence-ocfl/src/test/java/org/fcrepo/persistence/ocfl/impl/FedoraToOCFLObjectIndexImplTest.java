@@ -54,8 +54,6 @@ public class FedoraToOCFLObjectIndexImplTest {
     @Test(expected = FedoraOCFLMappingNotFoundException.class)
     public void testNotExists() throws Exception {
         final FedoraToOCFLObjectIndexImpl index = new FedoraToOCFLObjectIndexImpl();
-
-
-        final FedoraOCFLMapping mapping1 = index.getMapping(RESOURCE_ID_1);
+        index.getMapping(RESOURCE_ID_1);
     }
 }

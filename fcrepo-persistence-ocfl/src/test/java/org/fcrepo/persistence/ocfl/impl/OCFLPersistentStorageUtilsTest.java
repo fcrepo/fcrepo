@@ -30,6 +30,20 @@ import static org.junit.Assert.assertEquals;
 public class OCFLPersistentStorageUtilsTest {
 
     @Test
+    public void testRelativizeSubpathWhereRootEqualsResource() {
+        final var rootObjectId = "info:fedora/test/object";
+        final var resourceId = "info:fedora/test/object";
+        assertEquals("object", relativizeSubpath(rootObjectId, resourceId));
+    }
+
+    @Test
+    public void testRelativizeSubpathWhereRootAndResourceHaveTrailingSlashes() {
+        final var rootObjectId = "info:fedora/test/object/";
+        final var resourceId = "info:fedora/test/object/resource/";
+        assertEquals("object/resource", relativizeSubpath(rootObjectId, resourceId));
+    }
+
+    @Test
     public void testRelativizeSubpath() {
         final var rootObjectId = "info:fedora/test/object";
         final var resourceId = "info:fedora/test/object/resource";

@@ -81,17 +81,22 @@ public class OCFLPersistentStorageUtils {
     /**
      * Returns the relative subpath of the resourceId based on the root object's resource id.
      *
-     * @param rootObjectId The fedora root object identifier
-     * @param resourceId   The identifier of the resource whose subpath you wish to resolve.
+     * @param rootFedoraObjectId The fedora root object identifier
+     * @param fedoraResourceId   The identifier of the resource whose subpath you wish to resolve.
      * @return The resolved subpath
      */
-    public static String relativizeSubpath(final String rootObjectId, final String resourceId) {
+    public static String relativizeSubpath(final String rootFedoraObjectId, final String fedoraResourceId) {
+
+        final var resourceId = trimTrailingSlashes(fedoraResourceId);
+        final var rootObjectId = trimTrailingSlashes(rootFedoraObjectId);
+
+        final var lastPathSegment = rootObjectId.substring(rootObjectId.lastIndexOf("/") + 1);
+
         if (resourceId.equals(rootObjectId)) {
-            return resourceId.substring(FEDORA_ID_PREFIX.length());
+            return lastPathSegment;
         } else if (resourceId.startsWith(rootObjectId) && resourceId.charAt(rootObjectId.length()) == '/') {
             final var rawSubpath = resourceId.substring(rootObjectId.length() + 1);
             //grab the last path segment of the rootObjectId
-            final var lastPathSegment = rootObjectId.substring(rootObjectId.lastIndexOf("/") + 1);
             final var subpath =  lastPathSegment + "/" +  rawSubpath;
 
             if (subpath.endsWith(FCR_ACL)) {
@@ -106,6 +111,10 @@ public class OCFLPersistentStorageUtils {
         throw new IllegalArgumentException(format("resource (%s) is not prefixed by root object indentifier (%s)",
                 resourceId,
                 rootObjectId));
+    }
+
+    private static String trimTrailingSlashes(final String string) {
+        return string.replaceAll("/+$", "");
     }
 
     /**

@@ -150,13 +150,13 @@ public class CreateRDFSourcePersisterTest {
         persister.persist(psSession, operation);
 
         //verify user triples
-        final Model userModel = retrievePersistedUserModel("parent/child");
+        final Model userModel = retrievePersistedUserModel("child");
 
         assertTrue(userModel.contains(userModel.createResource(RESOURCE_ID),
                 DC.title, TITLE));
 
         //verify server triples
-        final var headers = retrievePersistedHeaders("parent/child");
+        final var headers = retrievePersistedHeaders("child");
 
         assertEquals(RDF_SOURCE.toString(), headers.getInteractionModel());
     }
@@ -179,13 +179,13 @@ public class CreateRDFSourcePersisterTest {
         persister.persist(psSession, operation);
 
         // verify user triples
-        final Model userModel = retrievePersistedUserModel("parent/child");
+        final Model userModel = retrievePersistedUserModel("child");
 
         assertTrue(userModel.contains(userModel.createResource(RESOURCE_ID),
                 DC.title, TITLE));
 
         // verify server triples
-        final var resultHeaders = retrievePersistedHeaders("parent/child");
+        final var resultHeaders = retrievePersistedHeaders("child");
 
         assertEquals(RDF_SOURCE.toString(), resultHeaders.getInteractionModel());
 
