@@ -88,32 +88,18 @@ public class OCFLPersistentStorageUtils {
     public static String relativizeSubpath(final String rootObjectId, final String resourceId) {
         if (resourceId.equals(rootObjectId)) {
             return resourceId.substring(FEDORA_ID_PREFIX.length());
-        } else if (resourceId.startsWith(rootObjectId)) {
-
+        } else if (resourceId.startsWith(rootObjectId) && resourceId.charAt(rootObjectId.length()) == '/') {
             final var rawSubpath = resourceId.substring(rootObjectId.length() + 1);
             //grab the last path segment of the rootObjectId
             final var lastPathSegment = rootObjectId.substring(rootObjectId.lastIndexOf("/") + 1);
+            final var subpath =  lastPathSegment + "/" +  rawSubpath;
 
-            if (rawSubpath.endsWith(FCR_ACL) || rawSubpath.endsWith(FCR_METADATA)) {
-                final var lastSlashIndex = rawSubpath.indexOf("/");
-                String beforeSlash = null;
-                String suffix = rawSubpath;
-
-                if (lastSlashIndex > -1) {
-                    beforeSlash = rawSubpath.substring(0, lastSlashIndex);
-                    suffix = rawSubpath.substring(lastSlashIndex + 1);
-                }
-
-                String translatedSuffix = null;
-                if (suffix.equals(FCR_METADATA)) {
-                    translatedSuffix = "-description";
-                } else {
-                    translatedSuffix = "-acl";
-                }
-
-                return lastPathSegment + (beforeSlash != null ? beforeSlash : "") + translatedSuffix;
+            if (subpath.endsWith(FCR_ACL)) {
+                return subpath.replace( "/" + FCR_ACL, "-acl");
+            } else if (rawSubpath.endsWith(FCR_METADATA)) {
+                return subpath.replace( "/" + FCR_METADATA, "-description");
             } else {
-                return lastPathSegment + "/" +  rawSubpath;
+                return subpath;
             }
         }
 

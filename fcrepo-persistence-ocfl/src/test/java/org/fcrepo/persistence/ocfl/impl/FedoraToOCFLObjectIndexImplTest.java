@@ -18,6 +18,8 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import static org.junit.Assert.assertEquals;
+
+import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
 import org.junit.Test;
 
 /**
@@ -47,5 +49,13 @@ public class FedoraToOCFLObjectIndexImplTest {
         assertEquals(mapping2, mapping3);
         assertEquals(ROOT_RESOURCE_ID, mapping1.getRootObjectIdentifier());
         assertEquals(OCFL_ID, mapping1.getOcflObjectId());
+    }
+
+    @Test(expected = FedoraOCFLMappingNotFoundException.class)
+    public void testNotExists() throws Exception {
+        final FedoraToOCFLObjectIndexImpl index = new FedoraToOCFLObjectIndexImpl();
+
+
+        final FedoraOCFLMapping mapping1 = index.getMapping(RESOURCE_ID_1);
     }
 }

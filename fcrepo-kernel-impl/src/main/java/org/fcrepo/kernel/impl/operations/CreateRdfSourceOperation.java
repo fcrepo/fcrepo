@@ -19,9 +19,6 @@ package org.fcrepo.kernel.impl.operations;
 
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
-import org.fcrepo.kernel.api.operations.ResourceOperationType;
-
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 
 /**
  * Operation to create an RDF source.
@@ -72,8 +69,4 @@ public class CreateRdfSourceOperation extends AbstractRdfSourceOperation impleme
         this.parentId = parentId;
     }
 
-    @Override
-    public ResourceOperationType getType() {
-        return CREATE;
-    }
 }

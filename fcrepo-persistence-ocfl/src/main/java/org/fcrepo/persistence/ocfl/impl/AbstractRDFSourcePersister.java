@@ -57,11 +57,18 @@ abstract class AbstractRDFSourcePersister extends AbstractPersister {
         super(resourceOperation, resourceOperationType, index);
     }
 
+    /**
+     * Persists the RDF using the specified operation and session.
+     * @param session The session.
+     * @param operation The operation
+     * @param rootId The fedora root object identifier tha maps to the OCFL object root.
+     * @throws PersistentStorageException
+     */
     protected void persistRDF(final OCFLObjectSession session, final ResourceOperation operation,
-                              final String rootId, final String ocflId) throws PersistentStorageException {
+                              final String rootId) throws PersistentStorageException {
 
         final RdfSourceOperation rdfSourceOp = (RdfSourceOperation)operation;
-        log.debug("persisting RDFSource ({}) to {}", operation.getResourceId(), ocflId);
+        log.debug("persisting RDFSource ({}) to OCFL", operation.getResourceId());
 
         final String subpath = relativizeSubpath(rootId, operation.getResourceId());
         final String resolvedSubpath = resolveOCFLSubpath(subpath);

@@ -54,6 +54,6 @@ class UpdateRDFSourcePersister extends AbstractRDFSourcePersister {
         final var fedoraOCFLMapping = getMapping(resourceId);
         final var ocflId = fedoraOCFLMapping.getOcflObjectId();
         final OCFLObjectSession objSession = session.findOrCreateSession(ocflId);
-        persistRDF(objSession, operation, fedoraOCFLMapping.getRootObjectIdentifier(),ocflId);
+        persistRDF(objSession, operation, fedoraOCFLMapping.getRootObjectIdentifier());
     }
 }

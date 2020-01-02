@@ -18,13 +18,11 @@
 package org.fcrepo.kernel.impl.operations;
 
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 
 import java.io.InputStream;
 import java.net.URI;
 
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
-import org.fcrepo.kernel.api.operations.ResourceOperationType;
 
 /**
  * Operation for creating a new non-rdf source
@@ -79,8 +77,4 @@ public class CreateNonRdfSourceOperation extends AbstractNonRdfSourceOperation i
         this.parentId = parentId;
     }
 
-    @Override
-    public ResourceOperationType getType() {
-        return CREATE;
-    }
 }
