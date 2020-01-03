@@ -19,6 +19,8 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -33,12 +35,15 @@ import java.util.Map;
  */
 @Component
 public class FedoraToOCFLObjectIndexImpl implements FedoraToOCFLObjectIndex {
+    private static Logger LOGGER = LoggerFactory.getLogger(FedoraToOCFLObjectIndexImpl.class);
+
     private Map<String, FedoraOCFLMapping> fedoraOCFLMappingMap = Collections.synchronizedMap(new HashMap<>());
 
     @Override
     public FedoraOCFLMapping getMapping(final String fedoraResourceIdentifier)
             throws FedoraOCFLMappingNotFoundException {
 
+        LOGGER.debug("getting {}", fedoraResourceIdentifier);
         final FedoraOCFLMapping m = fedoraOCFLMappingMap.get(fedoraResourceIdentifier);
         if (m == null) {
             throw new FedoraOCFLMappingNotFoundException(fedoraResourceIdentifier);
@@ -54,11 +59,14 @@ public class FedoraToOCFLObjectIndexImpl implements FedoraToOCFLObjectIndex {
         if (mapping == null) {
             mapping = new FedoraOCFLMapping(fedoraRootObjectResourceId, ocflObjectId);
             fedoraOCFLMappingMap.put(fedoraRootObjectResourceId, mapping);
+
         }
 
         if (!fedoraResourceIdentifier.equals(fedoraRootObjectResourceId)) {
             fedoraOCFLMappingMap.put(fedoraResourceIdentifier, mapping);
         }
+
+        LOGGER.debug("added mapping {} for {}", mapping, fedoraResourceIdentifier);
         return mapping;
     }
 

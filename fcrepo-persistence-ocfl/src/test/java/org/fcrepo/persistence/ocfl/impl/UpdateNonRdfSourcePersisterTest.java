@@ -153,12 +153,12 @@ public class UpdateNonRdfSourcePersisterTest {
         persister.persist(psSession, nonRdfSourceOperation);
 
         // verify user content
-        verify(session).write(eq("parent/child"), userContentCaptor.capture());
+        verify(session).write(eq("child"), userContentCaptor.capture());
         final InputStream userContent = userContentCaptor.getValue();
         assertEquals(CONTENT_BODY, IOUtils.toString(userContent, StandardCharsets.UTF_8));
 
         // verify resource headers
-        final var resultHeaders = retrievePersistedHeaders("parent/child");
+        final var resultHeaders = retrievePersistedHeaders("child");
 
         assertEquals(NON_RDF_SOURCE.toString(), resultHeaders.getInteractionModel());
         assertEquals(originalCreation, resultHeaders.getCreatedDate());

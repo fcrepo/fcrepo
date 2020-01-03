@@ -148,13 +148,13 @@ public class UpdateRDFSourcePersisterTest {
         persister.persist(psSession, operation);
 
         // verify user triples
-        final Model userModel = retrievePersistedUserModel("parent/child");
+        final Model userModel = retrievePersistedUserModel("child");
 
         assertTrue(userModel.contains(userModel.createResource(RESOURCE_ID),
                 DC.title, TITLE));
 
         // verify server triples
-        final var resultHeaders = retrievePersistedHeaders("parent/child");
+        final var resultHeaders = retrievePersistedHeaders("child");
 
         assertEquals(BASIC_CONTAINER.toString(), resultHeaders.getInteractionModel());
         assertEquals(originalCreation, resultHeaders.getCreatedDate());

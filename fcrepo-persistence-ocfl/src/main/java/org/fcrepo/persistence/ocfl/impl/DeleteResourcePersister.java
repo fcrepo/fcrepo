@@ -19,11 +19,11 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.DELETE;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.relativizeSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveOCFLSubpath;
 
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,15 +41,18 @@ class DeleteResourcePersister extends AbstractPersister {
 
     @Override
     public void persist(final OCFLPersistentStorageSession session, final ResourceOperation operation) throws PersistentStorageException {
-        final FedoraOCFLMapping mapping = getMapping(operation.getResourceId());
-        final OCFLObjectSession objectSession = session.findOrCreateSession(mapping.getOcflObjectId());
-        log.debug("Deleting {} from {}", operation.getResourceId(), mapping.getOcflObjectId());
-        if (mapping.getRootObjectIdentifier().equals(operation.getResourceId())) {
+        final var mapping = getMapping(operation.getResourceId());
+        final var fedoraResourceRoot = mapping.getRootObjectIdentifier();
+        final var resourceId = operation.getResourceId();
+        final var objectSession = session.findOrCreateSession(mapping.getOcflObjectId());
+        log.debug("Deleting {} from {}", resourceId, mapping.getOcflObjectId());
+        if (fedoraResourceRoot.equals(resourceId)) {
             // We are at the root of the object.
             objectSession.deleteObject();
         } else {
-            final String subpath = relativizeSubpath(mapping.getRootObjectIdentifier(), operation.getResourceId());
-            objectSession.delete(subpath);
+            final var relativeSubPath = relativizeSubpath(fedoraResourceRoot, operation.getResourceId());
+            final var ocflSubPath = resolveOCFLSubpath(fedoraResourceRoot, relativeSubPath);
+            objectSession.delete(ocflSubPath);
         }
     }
 }

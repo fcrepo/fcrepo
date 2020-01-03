@@ -19,10 +19,9 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
-import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.RESOURCE_HEADER_EXTENSION;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.serializeHeaders;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getInternalFedoraDirectory;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getSidecarSubpath;
 
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
@@ -42,28 +41,47 @@ import org.fcrepo.persistence.ocfl.api.Persister;
  */
 abstract class AbstractPersister implements Persister {
 
-    private final Class<? extends ResourceOperation> resourceOperation;
+    /*
+     * The resourceOperationClass variable, in conjunction with the resourceOperationType, is used by the handle(...) method
+     * to determine whether or not the persister can perform the persistence routine on the operation passed in the
+     * persist(...) method.
+     */
+    private final Class<? extends ResourceOperation> resourceOperationClass;
+    /*
+     * The resourceOperationType, in conjunction with the resourceOperationClass is used by the handle(...) method
+     * to determine which operations the persister knows how to handle.
+     */
     private final ResourceOperationType resourceOperationType;
     protected final FedoraToOCFLObjectIndex index;
 
-    protected AbstractPersister(final Class<? extends ResourceOperation> resourceOperation,
+    protected AbstractPersister(final Class<? extends ResourceOperation> resourceOperationClass,
                       final ResourceOperationType resourceOperationType,
                       final FedoraToOCFLObjectIndex index) {
-        this.resourceOperation = resourceOperation;
+        this.resourceOperationClass = resourceOperationClass;
         this.resourceOperationType = resourceOperationType;
         this.index = index;
     }
 
-    protected static String getSidecarSubpath(final String subpath) {
-        return getInternalFedoraDirectory() + subpath + RESOURCE_HEADER_EXTENSION;
-    }
-
+    /**
+     * Writes the resource headers to the sidecar file.
+     * @param session The OCFL object session
+     * @param headers The resource headers
+     * @param subpath The subpath of the resource whose headers you are writing
+     * @throws PersistentStorageException
+     */
     protected static void writeHeaders(final OCFLObjectSession session, final ResourceHeaders headers,
             final String subpath) throws PersistentStorageException {
         final var headerStream = serializeHeaders(headers);
         session.write(getSidecarSubpath(subpath), headerStream);
     }
 
+    /**
+     * Reads the headers associated with the resource at specified subpath.
+     * @param objSession The OCFL object session
+     * @param subpath The subpath of the resource whose headers you are reading
+     * @return The resource's headers object
+     * @throws PersistentStorageException
+     */
     protected static ResourceHeaders readHeaders(final OCFLObjectSession objSession, final String subpath)
             throws PersistentStorageException {
         final var headerStream = objSession.read(getSidecarSubpath(subpath));
@@ -72,9 +90,15 @@ abstract class AbstractPersister implements Persister {
 
     @Override
     public boolean handle(final ResourceOperation operation) {
-            return resourceOperation.isInstance(operation) && resourceOperationType.equals(operation.getType());
+            return resourceOperationClass.isInstance(operation) && resourceOperationType.equals(operation.getType());
     }
 
+    /**
+     *
+     * @param resourceId The fedora resource identifier
+     * @return The associated mapping
+     * @throws PersistentStorageException When no mapping is found.
+     */
     protected FedoraOCFLMapping getMapping(final String resourceId) throws PersistentStorageException {
         try {
             return this.index.getMapping(resourceId);
@@ -83,19 +107,12 @@ abstract class AbstractPersister implements Persister {
         }
     }
 
-    protected FedoraOCFLMapping findMapping(final ResourceOperation operation,
-                                            final OCFLPersistentStorageSession session)
-            throws PersistentStorageException {
-
-        final String resourceId = operation.getResourceId();
-
-        try {
-            return index.getMapping(resourceId);
-        } catch (FedoraOCFLMappingNotFoundException e) {
-            throw new PersistentStorageException("Unable to resolve parent identifier for " + resourceId);
-        }
-    }
-
+    /**
+     * Resolves the fedora root object identifier associated with the operation's resource identifier.
+     * @param operation The operation
+     * @param session The OCFL persistent storage session.
+     * @return The fedora root object identifier associated with the resource described by the operation.
+     */
     protected String resolveRootObjectId(final CreateResourceOperation operation,
                                        final OCFLPersistentStorageSession session) {
 

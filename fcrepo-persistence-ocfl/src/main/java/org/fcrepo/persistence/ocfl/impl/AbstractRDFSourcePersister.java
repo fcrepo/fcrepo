@@ -71,13 +71,13 @@ abstract class AbstractRDFSourcePersister extends AbstractPersister {
         log.debug("persisting RDFSource ({}) to OCFL", operation.getResourceId());
 
         final String subpath = relativizeSubpath(rootId, operation.getResourceId());
-        final String resolvedSubpath = resolveOCFLSubpath(subpath);
+        final String resolvedSubpath = resolveOCFLSubpath(rootId, subpath);
         //write user triples
         final var outcome = writeRDF(session, rdfSourceOp.getTriples(), resolvedSubpath);
 
         // Write resource headers
-        final var headers = populateHeaders(session, subpath, rdfSourceOp, outcome);
-        writeHeaders(session, headers, subpath);
+        final var headers = populateHeaders(session, resolvedSubpath, rdfSourceOp, outcome);
+        writeHeaders(session, headers, resolvedSubpath);
     }
 
     /**

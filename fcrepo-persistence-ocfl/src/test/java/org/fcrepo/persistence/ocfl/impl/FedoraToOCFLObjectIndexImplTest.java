@@ -18,6 +18,7 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
 import org.junit.Test;
@@ -30,9 +31,10 @@ public class FedoraToOCFLObjectIndexImplTest {
 
     private static final String RESOURCE_ID_1 = "info:fedora/parent/child1";
     private static final String RESOURCE_ID_2 = "info:fedora/parent/child1";
-
+    private static final String RESOURCE_ID_3 = "info:fedora/resource3";
     private static final String ROOT_RESOURCE_ID = "info:fedora/parent";
     private static final String OCFL_ID = "ocfl-id";
+    private static final String OCFL_ID_RESOURCE_3 = "ocfl-id-resource-3";
 
     @Test
     public void test() throws Exception {
@@ -40,6 +42,7 @@ public class FedoraToOCFLObjectIndexImplTest {
 
         index.addMapping(RESOURCE_ID_1, ROOT_RESOURCE_ID, OCFL_ID);
         index.addMapping(RESOURCE_ID_2, ROOT_RESOURCE_ID, OCFL_ID);
+        index.addMapping(RESOURCE_ID_3, RESOURCE_ID_3, OCFL_ID_RESOURCE_3);
 
         final FedoraOCFLMapping mapping1 = index.getMapping(RESOURCE_ID_1);
         final FedoraOCFLMapping mapping2 = index.getMapping(RESOURCE_ID_2);
@@ -47,8 +50,21 @@ public class FedoraToOCFLObjectIndexImplTest {
 
         assertEquals(mapping1, mapping2);
         assertEquals(mapping2, mapping3);
+
+        verifyMapping(mapping1, ROOT_RESOURCE_ID, OCFL_ID);
+
+        final FedoraOCFLMapping mapping4 = index.getMapping(RESOURCE_ID_3);
+        assertNotEquals(mapping4, mapping3);
+
+        verifyMapping(mapping4, RESOURCE_ID_3, OCFL_ID_RESOURCE_3);
+
         assertEquals(ROOT_RESOURCE_ID, mapping1.getRootObjectIdentifier());
         assertEquals(OCFL_ID, mapping1.getOcflObjectId());
+    }
+
+    private void verifyMapping(final FedoraOCFLMapping mapping1, final String rootResourceId, final String ocflId) {
+        assertEquals(rootResourceId, mapping1.getRootObjectIdentifier());
+        assertEquals(ocflId, mapping1.getOcflObjectId());
     }
 
     @Test(expected = FedoraOCFLMappingNotFoundException.class)

@@ -78,7 +78,7 @@ public class DeleteResourcePersisterTest {
         when(operation.getResourceId()).thenReturn("info:fedora/an-ocfl-object/some-subpath");
         when(index.getMapping(anyString())).thenReturn(mapping);
         persister.persist(psSession, operation);
-        verify(session).delete("an-ocfl-object/some-subpath");
+        verify(session).delete("some-subpath");
     }
 
     @Test(expected = PersistentStorageException.class)
@@ -87,7 +87,7 @@ public class DeleteResourcePersisterTest {
         when(mapping.getRootObjectIdentifier()).thenReturn("info:fedora/an-ocfl-object");
         when(operation.getResourceId()).thenReturn("info:fedora/an-ocfl-object/some-subpath");
         when(index.getMapping(anyString())).thenReturn(mapping);
-        doThrow(new PersistentStorageException("error")).when(session).delete("an-ocfl-object/some-subpath");
+        doThrow(new PersistentStorageException("error")).when(session).delete("some-subpath");
         persister.persist(psSession, operation);
     }
 

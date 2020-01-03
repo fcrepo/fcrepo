@@ -49,6 +49,7 @@ import static org.apache.jena.riot.system.StreamRDFWriter.getWriterStream;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.RESOURCE_HEADER_EXTENSION;
 import static org.fcrepo.persistence.ocfl.api.OCFLPersistenceConstants.DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
 
 /**
@@ -90,22 +91,10 @@ public class OCFLPersistentStorageUtils {
         final var resourceId = trimTrailingSlashes(fedoraResourceId);
         final var rootObjectId = trimTrailingSlashes(rootFedoraObjectId);
 
-        final var lastPathSegment = rootObjectId.substring(rootObjectId.lastIndexOf("/") + 1);
-
         if (resourceId.equals(rootObjectId)) {
-            return lastPathSegment;
+            return "";
         } else if (resourceId.startsWith(rootObjectId) && resourceId.charAt(rootObjectId.length()) == '/') {
-            final var rawSubpath = resourceId.substring(rootObjectId.length() + 1);
-            //grab the last path segment of the rootObjectId
-            final var subpath =  lastPathSegment + "/" +  rawSubpath;
-
-            if (subpath.endsWith(FCR_ACL)) {
-                return subpath.replace( "/" + FCR_ACL, "-acl");
-            } else if (rawSubpath.endsWith(FCR_METADATA)) {
-                return subpath.replace( "/" + FCR_METADATA, "-description");
-            } else {
-                return subpath;
-            }
+            return resourceId.substring(rootObjectId.length() + 1);
         }
 
         throw new IllegalArgumentException(format("resource (%s) is not prefixed by root object indentifier (%s)",
@@ -121,15 +110,37 @@ public class OCFLPersistentStorageUtils {
      * Returns the OCFL subpath for a given fedora subpath. This returned subpath
      * does not include any added extensions.
      *
+     * @param rootFedoraObjectId  The fedora object root identifier
      * @param fedoraSubpath subpath of file within ocfl object
      * @return The resolved OCFL subpath
      */
-    public static  String resolveOCFLSubpath(final String fedoraSubpath) {
-        if (fedoraSubpath.endsWith(FEDORA_METADATA_SUFFIX)) {
-            return fedoraSubpath.substring(0, fedoraSubpath.indexOf(FEDORA_METADATA_SUFFIX));
+    public static  String resolveOCFLSubpath(final String rootFedoraObjectId, final String fedoraSubpath) {
+
+        final var rootObjectId = trimTrailingSlashes(rootFedoraObjectId);
+
+        final var lastPathSegment = rootObjectId.substring(rootObjectId.lastIndexOf("/") + 1);
+
+        String subPath;
+
+        if (fedoraSubpath == "") {
+            subPath = lastPathSegment;
+        } else if (fedoraSubpath.endsWith(FCR_ACL)) {
+            subPath = fedoraSubpath.replaceAll("/?" + FCR_ACL + "$", "-acl");
+            //prepend last path segment if acl of object root
+            if (fedoraSubpath.equals(FCR_ACL)) {
+                subPath = lastPathSegment + subPath;
+            }
+        } else if (fedoraSubpath.endsWith(FCR_METADATA)) {
+            subPath = fedoraSubpath.replaceAll("/?" + FCR_METADATA + "$", "-description");
+            //prepend last path segment if description of object root
+            if (fedoraSubpath.equals(FCR_METADATA)) {
+                subPath = lastPathSegment + subPath;
+            }
         } else {
-            return fedoraSubpath;
+            subPath = fedoraSubpath;
         }
+
+        return subPath;
     }
 
     /**
@@ -239,6 +250,16 @@ public class OCFLPersistentStorageUtils {
     }
 
     /**
+     * Returns the subpath to the fedora metadata file associated with the specified subpath.
+     * @param subpath   The subpath to the ocfl resource whose metadata file (sidecar subpath) you wish to
+     *                  retrieve.
+     * @return The subpath to the (sidecar) metadata file.
+     */
+    protected static String getSidecarSubpath(final String subpath) {
+        return getInternalFedoraDirectory() + subpath + RESOURCE_HEADER_EXTENSION;
+    }
+
+    /**
      * A utility method that returns a list of  {@link java.time.Instant} objects representing immutable versions
      * accessible from the OCFL Object represented by the session.
      *
@@ -295,6 +316,8 @@ public class OCFLPersistentStorageUtils {
         if (bareFedoraIdentifier.length() == 0) {
             bareFedoraIdentifier = DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
         }
+
+        log.debug("minted new ocfl object id:  {}", bareFedoraIdentifier);
 
         return bareFedoraIdentifier;
     }

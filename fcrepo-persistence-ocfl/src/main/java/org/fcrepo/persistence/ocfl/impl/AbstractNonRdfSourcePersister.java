@@ -26,6 +26,7 @@ import static org.fcrepo.persistence.common.ResourceHeaderUtils.populateExternal
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchCreationHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchModificationHeaders;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.relativizeSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveOCFLSubpath;
 
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
@@ -59,13 +60,21 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
         super(resourceOperation, resourceOperationType, index);
     }
 
+    /**
+     * This method handles the shared logic for writing the resource specified in the operation parameter to
+     * the OCFL Object Session.
+     * @param operation The operation to perform the persistence routine on
+     * @param objectSession The ocfl object session
+     * @param rootIdentifier The fedora object root identifier associated with the resource to be persisted.
+     * @throws PersistentStorageException
+     */
     protected void persistNonRDFSource(final ResourceOperation operation,
-                                       final OCFLObjectSession objectSession, final String rootIdentifier,
-                                       final String ocflId) throws PersistentStorageException {
+                                       final OCFLObjectSession objectSession, final String rootIdentifier)
+            throws PersistentStorageException {
         final var resourceId = operation.getResourceId();
-        log.debug("persisting ({}) to {}", operation.getResourceId(), ocflId);
-        final String subpath = relativizeSubpath(rootIdentifier, resourceId);
-
+        log.debug("persisting ({}) to {}", operation.getResourceId());
+        final var fedoraSubpath = relativizeSubpath(rootIdentifier, resourceId);
+        final var subpath = resolveOCFLSubpath(rootIdentifier, fedoraSubpath);
         // write user content
         final var nonRdfSourceOperation = (NonRdfSourceOperation) operation;
         // TODO supply list of digests to calculate or wrap contentStream in DigestInputStream

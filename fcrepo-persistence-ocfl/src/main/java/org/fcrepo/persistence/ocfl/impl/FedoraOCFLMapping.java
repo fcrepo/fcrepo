@@ -17,6 +17,8 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToString;
+
 /**
  * A mapping that links the parent fedora resource to its corresponding OCFL object.
  *
@@ -50,5 +52,10 @@ public class FedoraOCFLMapping {
      */
     public String getOcflObjectId() {
         return ocflObjectId;
+    }
+
+    @Override
+    public String toString() {
+        return reflectionToString(this);
     }
 }
