@@ -30,7 +30,7 @@ import org.junit.Test;
 public class FedoraToOCFLObjectIndexImplTest {
 
     private static final String RESOURCE_ID_1 = "info:fedora/parent/child1";
-    private static final String RESOURCE_ID_2 = "info:fedora/parent/child1";
+    private static final String RESOURCE_ID_2 = "info:fedora/parent/child2";
     private static final String RESOURCE_ID_3 = "info:fedora/resource3";
     private static final String ROOT_RESOURCE_ID = "info:fedora/parent";
     private static final String OCFL_ID = "ocfl-id";
