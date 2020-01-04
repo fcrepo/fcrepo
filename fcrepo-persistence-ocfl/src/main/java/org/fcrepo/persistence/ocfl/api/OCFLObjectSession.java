@@ -19,6 +19,7 @@
 package org.fcrepo.persistence.ocfl.api;
 
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.List;
 
 import edu.wisc.library.ocfl.api.model.VersionDetails;
@@ -118,4 +119,9 @@ public interface OCFLObjectSession {
      */
     List<VersionDetails> listVersions() throws PersistentStorageException;
 
+    /**
+     * The instant at which the session was created.
+     * @return
+     */
+    Instant getCreated();
 }

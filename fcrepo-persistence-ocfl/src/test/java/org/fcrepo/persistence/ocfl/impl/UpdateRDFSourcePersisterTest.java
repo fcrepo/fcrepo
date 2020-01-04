@@ -21,8 +21,6 @@ import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.RESOURCE_HEADER_EXTENSION;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
@@ -30,9 +28,10 @@ import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.ser
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.newResourceHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchCreationHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchModificationHeaders;
-import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.getInternalFedoraDirectory;
-import static org.fcrepo.persistence.ocfl.OCFLPersistentStorageUtils.getRDFFileExtension;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getInternalFedoraDirectory;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getRDFFileExtension;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -40,10 +39,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.withSettings;
 
 import java.io.InputStream;
-import java.time.Instant;
 import java.util.stream.Stream;
 
 import org.apache.jena.graph.Node;
@@ -54,10 +51,11 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.vocabulary.DC;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
-import org.fcrepo.kernel.api.operations.CreateResourceOperation;
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.persistence.api.WriteOutcome;
+import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.junit.Before;
 import org.junit.Test;
@@ -72,19 +70,13 @@ import org.mockito.junit.MockitoJUnitRunner;
  * @since 6.0.0
  */
 @RunWith(MockitoJUnitRunner.class)
-public class RDFSourcePersisterTest {
+public class UpdateRDFSourcePersisterTest {
 
     private static final String RESOURCE_ID = "info:fedora/parent/child";
 
-    private static final String PARENT_RESOURCE_ID = "info:fedora/parent";
+    private static final String ROOT_RESOURCE_ID = "info:fedora/parent";
 
     private static final String USER_PRINCIPAL = "fedoraUser";
-
-    private static final String USER_PRINCIPAL2 = "anotherUser";
-
-    private static final Instant CREATED_DATE = Instant.parse("2019-11-22T12:10:04.000000Z");
-
-    private static final Instant MODIFIED_DATE = Instant.parse("2019-11-22T12:40:33.697004Z");
 
     private static final String TITLE = "My title";
 
@@ -98,6 +90,12 @@ public class RDFSourcePersisterTest {
     private FedoraOCFLMapping mapping;
 
     @Mock
+    private FedoraToOCFLObjectIndex index;
+
+   @Mock
+    private OCFLPersistentStorageSession psSession;
+
+    @Mock
     private WriteOutcome writeOutcome;
 
     @Captor
@@ -106,39 +104,25 @@ public class RDFSourcePersisterTest {
     @Captor
     private ArgumentCaptor<InputStream> headersIsCaptor;
 
-    private final RDFSourcePersister persister = new RDFSourcePersister();
+    private UpdateRDFSourcePersister persister;
 
     @Before
     public void setup() throws Exception {
-        operation = mock(RdfSourceOperation.class, withSettings().extraInterfaces(
-                CreateResourceOperation.class));
+        operation = mock(RdfSourceOperation.class);
 
         when(session.write(anyString(), any(InputStream.class))).thenReturn(writeOutcome);
+        when(psSession.findOrCreateSession(anyString())).thenReturn(session);
+        when(index.getMapping(anyString())).thenReturn(mapping);
+        when(operation.getType()).thenReturn(UPDATE);
+
+        persister = new UpdateRDFSourcePersister(this.index);
     }
 
     @Test
-    public void testPersistNewResource() throws Exception {
-        final RdfStream userTriplesStream = constructTitleStream(RESOURCE_ID, TITLE);
-
-        when(mapping.getOcflObjectId()).thenReturn("object-id");
-        when(mapping.getParentFedoraResourceId()).thenReturn(PARENT_RESOURCE_ID);
-
-        when(operation.getResourceId()).thenReturn(RESOURCE_ID);
-        when(operation.getType()).thenReturn(CREATE);
-        when(((CreateResourceOperation) operation).getInteractionModel()).thenReturn(RDF_SOURCE.toString());
-        when(operation.getTriples()).thenReturn(userTriplesStream);
-        persister.persist(session, operation, mapping);
-
-        //verify user triples
-        final Model userModel = retrievePersistedUserModel("child");
-
-        assertTrue(userModel.contains(userModel.createResource(RESOURCE_ID),
-                DC.title, TITLE));
-
-        //verify server triples
-        final var headers = retrievePersistedHeaders("child");
-
-        assertEquals(RDF_SOURCE.toString(), headers.getInteractionModel());
+    public void testHandle(){
+        assertTrue(this.persister.handle(this.operation));
+        final NonRdfSourceOperation badOperation = mock(NonRdfSourceOperation.class);
+        assertFalse(this.persister.handle(badOperation));
     }
 
     @Test
@@ -146,14 +130,13 @@ public class RDFSourcePersisterTest {
         final RdfStream userTriplesStream = constructTitleStream(RESOURCE_ID, TITLE);
 
         when(mapping.getOcflObjectId()).thenReturn("object-id");
-        when(mapping.getParentFedoraResourceId()).thenReturn(PARENT_RESOURCE_ID);
+        when(mapping.getRootObjectIdentifier()).thenReturn(ROOT_RESOURCE_ID);
 
         when(operation.getResourceId()).thenReturn(RESOURCE_ID);
-        when(operation.getType()).thenReturn(UPDATE);
         when(operation.getTriples()).thenReturn(userTriplesStream);
 
         // Setup headers of resource before this operation
-        final var headers = newResourceHeaders(PARENT_RESOURCE_ID, RESOURCE_ID, BASIC_CONTAINER.toString());
+        final var headers = newResourceHeaders(ROOT_RESOURCE_ID, RESOURCE_ID, BASIC_CONTAINER.toString());
         touchCreationHeaders(headers, USER_PRINCIPAL);
         touchModificationHeaders(headers, USER_PRINCIPAL);
         final var headerStream = serializeHeaders(headers);
@@ -162,7 +145,7 @@ public class RDFSourcePersisterTest {
         final var originalCreation = headers.getCreatedDate();
         final var originalModified = headers.getLastModifiedDate();
 
-        persister.persist(session, operation, mapping);
+        persister.persist(psSession, operation);
 
         // verify user triples
         final Model userModel = retrievePersistedUserModel("child");
@@ -176,43 +159,6 @@ public class RDFSourcePersisterTest {
         assertEquals(BASIC_CONTAINER.toString(), resultHeaders.getInteractionModel());
         assertEquals(originalCreation, resultHeaders.getCreatedDate());
         assertTrue(originalModified.isBefore(resultHeaders.getLastModifiedDate()));
-    }
-
-    @Test
-    public void testPersistNewResourceOverrideRelaxed() throws Exception {
-        final RdfStream userTriplesStream = constructTitleStream(RESOURCE_ID, TITLE);
-
-        when(mapping.getOcflObjectId()).thenReturn("object-id");
-        when(mapping.getParentFedoraResourceId()).thenReturn(PARENT_RESOURCE_ID);
-
-        when(operation.getResourceId()).thenReturn(RESOURCE_ID);
-        when(operation.getType()).thenReturn(CREATE);
-        when(((CreateResourceOperation) operation).getInteractionModel()).thenReturn(RDF_SOURCE.toString());
-        when(operation.getTriples()).thenReturn(userTriplesStream);
-
-        // Setting relaxed properties
-        when(operation.getCreatedBy()).thenReturn(USER_PRINCIPAL2);
-        when(operation.getLastModifiedBy()).thenReturn(USER_PRINCIPAL2);
-        when(operation.getLastModifiedDate()).thenReturn(MODIFIED_DATE);
-        when(operation.getCreatedDate()).thenReturn(CREATED_DATE);
-
-        persister.persist(session, operation, mapping);
-
-        // verify user triples
-        final Model userModel = retrievePersistedUserModel("child");
-
-        assertTrue(userModel.contains(userModel.createResource(RESOURCE_ID),
-                DC.title, TITLE));
-
-        // verify server triples
-        final var resultHeaders = retrievePersistedHeaders("child");
-
-        assertEquals(RDF_SOURCE.toString(), resultHeaders.getInteractionModel());
-
-        assertEquals(MODIFIED_DATE, resultHeaders.getLastModifiedDate());
-        assertEquals(CREATED_DATE, resultHeaders.getCreatedDate());
-        assertEquals(USER_PRINCIPAL2, resultHeaders.getCreatedBy());
-        assertEquals(USER_PRINCIPAL2, resultHeaders.getLastModifiedBy());
     }
 
     private RdfStream constructTitleStream(final String resourceId, final String title) {
@@ -232,7 +178,7 @@ public class RDFSourcePersisterTest {
     }
 
     private Model retrievePersistedUserModel(final String subpath) throws Exception {
-        verify(session).write(eq("child" + getRDFFileExtension()), userTriplesIsCaptor.capture());
+        verify(session).write(eq(subpath + getRDFFileExtension()), userTriplesIsCaptor.capture());
         final InputStream userTriplesIs = userTriplesIsCaptor.getValue();
 
         final Model userModel = createDefaultModel();

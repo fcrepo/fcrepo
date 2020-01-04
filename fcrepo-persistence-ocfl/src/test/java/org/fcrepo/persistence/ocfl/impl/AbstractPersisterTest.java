@@ -18,20 +18,14 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.DELETE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
-import org.fcrepo.kernel.api.operations.ResourceOperationType;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -50,28 +44,16 @@ public class AbstractPersisterTest {
     @Mock
     private RdfSourceOperation rdfSourceOperation;
 
-    private static final Set<Class<? extends ResourceOperation>> RESOURCE_OPERATION_TYPES = new HashSet<>();
-
-    private static final Set<ResourceOperationType> OPERATION_TYPES = new HashSet<>();
-
-    static {
-        RESOURCE_OPERATION_TYPES.add(RdfSourceOperation.class);
-        RESOURCE_OPERATION_TYPES.add(NonRdfSourceOperation.class);
-        OPERATION_TYPES.add(CREATE);
-        OPERATION_TYPES.add(UPDATE);
-    }
-
     @Test
     public void testHandleSingles() {
         class MyPersister extends AbstractPersister {
             MyPersister() {
-                super(NonRdfSourceOperation.class, CREATE);
+                super(NonRdfSourceOperation.class, CREATE, null);
             }
 
             @Override
-            public void persist(final OCFLObjectSession objectSession,
-                                final ResourceOperation operation,
-                                final FedoraOCFLMapping mapping) {}
+            public void persist(final OCFLPersistentStorageSession session,
+                                final ResourceOperation operation) {}
         }
 
         when(nonRdfSourceOperation.getType()).thenReturn(CREATE);
@@ -83,14 +65,12 @@ public class AbstractPersisterTest {
     public void testHandleSinglesFailureOperation() {
         class MyPersister extends AbstractPersister {
             MyPersister() {
-                super(RdfSourceOperation.class, CREATE);
+                super(RdfSourceOperation.class, CREATE,  null);
             }
 
             @Override
-            public void persist(final OCFLObjectSession session,
-                                final ResourceOperation operation,
-                                final FedoraOCFLMapping mapping) {
-            }
+            public void persist(final OCFLPersistentStorageSession session,
+                                final ResourceOperation operation) {}
         }
 
         final MyPersister mp = new MyPersister();
@@ -101,90 +81,16 @@ public class AbstractPersisterTest {
     public void testHandleSinglesFailureType() {
         class MyPersister extends AbstractPersister {
             MyPersister() {
-                super(NonRdfSourceOperation.class, CREATE);
+                super(NonRdfSourceOperation.class, CREATE, null);
             }
 
             @Override
-            public void persist(final OCFLObjectSession session,
-                                final ResourceOperation operation,
-                                final FedoraOCFLMapping mapping) {
-            }
+            public void persist(final OCFLPersistentStorageSession session,
+                                final ResourceOperation operation) {}
         }
 
         when(nonRdfSourceOperation.getType()).thenReturn(UPDATE);
         final MyPersister mp = new MyPersister();
         assertFalse(mp.handle(nonRdfSourceOperation));
-    }
-
-
-    @Test
-    public void testHandleSingleTypeMultipleOperation() {
-        class MyPersister extends AbstractPersister {
-            MyPersister() {
-                super(NonRdfSourceOperation.class, OPERATION_TYPES);
-            }
-
-            @Override
-            public void persist(final OCFLObjectSession session,
-                                final ResourceOperation operation,
-                                final FedoraOCFLMapping mapping) {
-            }
-        }
-        when(nonRdfSourceOperation.getType()).thenReturn(CREATE);
-        final MyPersister mp = new MyPersister();
-        assertTrue(mp.handle(nonRdfSourceOperation));
-
-        when(nonRdfSourceOperation.getType()).thenReturn(UPDATE);
-        assertTrue(mp.handle(nonRdfSourceOperation));
-    }
-
-    @Test
-    public void testHandleMultipleTypeMultipleOperation() {
-        class MyPersister extends AbstractPersister {
-            MyPersister() {
-                super(RESOURCE_OPERATION_TYPES, OPERATION_TYPES);
-            }
-
-            @Override
-            public void persist(final OCFLObjectSession session,
-                                final ResourceOperation operation,
-                                final FedoraOCFLMapping mapping) {
-            }
-        }
-        final MyPersister mp = new MyPersister();
-
-        when(nonRdfSourceOperation.getType()).thenReturn(CREATE);
-        assertTrue(mp.handle(nonRdfSourceOperation));
-
-        when(rdfSourceOperation.getType()).thenReturn(UPDATE);
-        assertTrue(mp.handle(rdfSourceOperation));
-
-        when(nonRdfSourceOperation.getType()).thenReturn(UPDATE);
-        assertTrue(mp.handle(nonRdfSourceOperation));
-
-        when(rdfSourceOperation.getType()).thenReturn(CREATE);
-        assertTrue(mp.handle(rdfSourceOperation));
-    }
-
-    @Test
-    public void testHandleMultipleTypeMultipleOperationFailure() {
-        class MyPersister extends AbstractPersister {
-            MyPersister() {
-                super(RESOURCE_OPERATION_TYPES, OPERATION_TYPES);
-            }
-
-            @Override
-            public void persist(final OCFLObjectSession session,
-                                final ResourceOperation operation,
-                                final FedoraOCFLMapping mapping) {
-            }
-        }
-        final MyPersister mp = new MyPersister();
-
-        when(nonRdfSourceOperation.getType()).thenReturn(DELETE);
-        assertFalse(mp.handle(nonRdfSourceOperation));
-
-        when(rdfSourceOperation.getType()).thenReturn(DELETE);
-        assertFalse(mp.handle(rdfSourceOperation));
     }
 }

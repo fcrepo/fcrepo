@@ -17,31 +17,33 @@
  */
 package org.fcrepo.persistence.ocfl.api;
 
-import org.fcrepo.kernel.api.operations.ResourceOperation;
-import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageSession;
 
 /**
+ * Indicates the fedora identifier was not found in the index.
+ *
  * @author dbernstein
- * @since 6.0.0
+
  */
-public interface Persister {
+public class FedoraOCFLMappingNotFoundException extends Exception {
+
+    private static final long serialVersionUID = 1L;
 
     /**
-     * The method returns true if the operation can be persisted by this persister.
-     * @param operation the operation to persist
-     * @return true or false
-     */
-    boolean handle(ResourceOperation operation);
-
-    /**
-     * The persistence handling for the given operation.
+     * Ordinary constructor
      *
-     * @param session The persistent storage session
-     * @param operation The operation and associated data need to perform the operation.
-     * @throws PersistentStorageException on failure
+     * @param msg the message
      */
-    void persist(final OCFLPersistentStorageSession session,
-            final ResourceOperation operation)
-            throws PersistentStorageException;
+    public FedoraOCFLMappingNotFoundException(final String msg) {
+        super(msg);
+    }
+
+    /**
+     * Constructor for wrapping exception.
+     *
+     * @param exception the original exception.
+     */
+    public FedoraOCFLMappingNotFoundException(final Throwable exception) {
+        super(exception);
+    }
+
 }

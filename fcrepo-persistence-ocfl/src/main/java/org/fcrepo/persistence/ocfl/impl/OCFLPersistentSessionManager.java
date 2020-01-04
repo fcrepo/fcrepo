@@ -15,10 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.persistence.ocfl;
+package org.fcrepo.persistence.ocfl.impl;
 
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.springframework.stereotype.Component;
 
@@ -43,7 +44,7 @@ public class OCFLPersistentSessionManager implements PersistentStorageSessionMan
     @Inject
     private OCFLObjectSessionFactory objectSessionFactory;
 
-    // TODO: Should eventually 'Inject'
+    @Inject
     private FedoraToOCFLObjectIndex fedoraOcflIndex;
 
     /**

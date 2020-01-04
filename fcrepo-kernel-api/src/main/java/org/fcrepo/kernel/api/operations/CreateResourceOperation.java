@@ -44,4 +44,10 @@ public interface CreateResourceOperation extends ResourceOperation {
     public default ResourceOperationType getType() {
         return CREATE;
     }
+
+    /**
+     * A flag indicating whether or the new resource should be created as an archival group.
+     * @return
+     */
+    public boolean isArchivalGroup();
 }
