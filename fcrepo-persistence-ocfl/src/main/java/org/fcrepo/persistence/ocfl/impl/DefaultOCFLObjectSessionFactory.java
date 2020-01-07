@@ -30,6 +30,8 @@ import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import edu.wisc.library.ocfl.core.OcflRepositoryBuilder;
 import edu.wisc.library.ocfl.core.extension.layout.config.DefaultLayoutConfig;
 import edu.wisc.library.ocfl.core.storage.FileSystemOcflStorage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
@@ -41,21 +43,23 @@ import org.springframework.stereotype.Component;
 @Component
 public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory {
 
-    private static final File STAGING_DIR = resolveDir("fcrepo.ocfl.staging.dir", "fcrepo-ocfl-staging");
-    private static final File OCFL_STORAGE_ROOT_DIR = resolveDir("fcrepo.ocfl.storage.root.dir", "fcrepo-ocfl");
-    private static final File OCFL_WORK_DIR = resolveDir("fcrepo.ocfl.work.dir", "fcrepo-ocfl-work");
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultOCFLObjectSessionFactory.class);
+
+    private static final File STAGING_DIR = resolveDir("fcrepo.ocfl.staging.dir");
+    private static final File OCFL_STORAGE_ROOT_DIR = resolveDir("fcrepo.ocfl.storage.root.dir");
+    private static final File OCFL_WORK_DIR = resolveDir("fcrepo.ocfl.work.dir");
 
     private File ocflStagingDir;
 
     private MutableOcflRepository ocflRepository;
 
-    private static final File resolveDir(final String systemPropertyKey, final String defaultDirectoryName) {
+    private static final File resolveDir(final String systemPropertyKey) {
         final String path = getProperty(systemPropertyKey);
         if (path != null) {
             return new File(path);
         } else {
             //return default
-            return Paths.get(getProperty(JAVA_IO_TMPDIR), defaultDirectoryName).toFile();
+            return Paths.get(JAVA_IO_TMPDIR, systemPropertyKey).toFile();
         }
     }
 
@@ -77,6 +81,9 @@ public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory
      */
     public DefaultOCFLObjectSessionFactory(final File ocflStagingDir, final File ocflStorageRootDir,
                                            final File ocflWorkDir) {
+        LOGGER.info("Fedora OCFL persistence directories:\n- {}\n- {}\n- {}",
+                ocflStagingDir, ocflStorageRootDir, ocflWorkDir);
+
         ocflStagingDir.mkdirs();
         ocflStorageRootDir.mkdirs();
         ocflWorkDir.mkdirs();
