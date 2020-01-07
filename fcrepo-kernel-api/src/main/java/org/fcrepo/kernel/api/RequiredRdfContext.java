@@ -29,9 +29,6 @@ public enum RequiredRdfContext implements TripleCategory {
     /* A Minimal representation of Rdf Triples */
     MINIMAL,
 
-    /* User-created properties Context */
-    PROPERTIES,
-
     /* Versions Context */
     VERSIONS,
 
@@ -40,9 +37,6 @@ public enum RequiredRdfContext implements TripleCategory {
 
     /* fedora:InboundReferences Context: assertions from other Fedora resources */
     INBOUND_REFERENCES,
-
-    /* fedora:ServerManaged Context: all server-managed triples */
-    SERVER_MANAGED,
 
     /* fedora:PreferMembership Context: ldp membership triples */
     LDP_MEMBERSHIP,

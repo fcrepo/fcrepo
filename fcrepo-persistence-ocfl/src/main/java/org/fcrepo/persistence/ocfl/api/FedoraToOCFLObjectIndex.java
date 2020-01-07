@@ -32,7 +32,7 @@ public interface FedoraToOCFLObjectIndex {
      *
      * If you pass fedora identifier that is not part of an archival group such as
      * "my/fedora/binary/fcr:metadata"  the  fedora resource returned in the mapping will be "my/fedora/binary".
-     * <p>
+     *
      * Contrast this  with an Archival Group example:  if you pass in "my/archival-group/binary/fcr:metadata" the
      * resource returned in the mapping would be "my/archival-group".
      *

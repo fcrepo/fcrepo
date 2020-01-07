@@ -19,6 +19,7 @@ package org.fcrepo.kernel.impl.models;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -175,14 +176,25 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public List<URI> getTypes() {
+        if(types == null){
+            types = new ArrayList<URI>();
+            try {
+                types.add(URI.create(getSession().getHeaders(getId(), getMementoDatetime()).getInteractionModel()));
+            } catch (final PersistentItemNotFoundException e) {
+                throw new ItemNotFoundException("Unable to retrieve triples for " + getId(), e);
+            } catch (final PersistentStorageException e) {
+                throw new RepositoryRuntimeException(e);
+            }
+
+        }
+
         return types;
     }
 
     @Override
     public RdfStream getTriples() {
         try {
-            final var triples = Stream.concat(getSession().getTriples(id, getMementoDatetime()),
-                                                    getSession().getManagedProperties(id, getMementoDatetime()));
+            final var triples = getSession().getTriples(id, getMementoDatetime());
 
             return new DefaultRdfStream(createURI(id), triples);
         } catch (final PersistentItemNotFoundException e) {

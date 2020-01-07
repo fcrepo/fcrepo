@@ -49,6 +49,7 @@ import org.springframework.context.ApplicationContext;
  * @author cabeer
  * @since 10/5/14
  */
+@Deprecated
 public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraResource> {
 
     private static final Logger LOGGER = getLogger(HttpResourceConverter.class);

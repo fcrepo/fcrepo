@@ -59,6 +59,7 @@ public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory
             return new File(path);
         } else {
             //return default
+
             return Paths.get(JAVA_IO_TMPDIR, systemPropertyKey).toFile();
         }
     }

@@ -416,17 +416,23 @@
                   <name>integration-test</name>
                   <value>true</value>
                 </systemProperty>
-
                 <systemProperty>
                   <name>
-                    com.arjuna.ats.arjuna.common.ObjectStoreEnvironmentBean.default.objectStoreDir
+                    fcrepo.ocfl.staging.dir
                   </name>
-                  <value>${project.build.directory}/object-store-default</value>
+                  <value>${project.build.directory}/ocfl-staging</value>
                 </systemProperty>
-
                 <systemProperty>
-                  <name>com.arjuna.ats.arjuna.objectstore.objectStoreDir</name>
-                  <value>${project.build.directory}/object-store</value>
+                  <name>
+                    fcrepo.ocfl.storage.root.dir
+                  </name>
+                  <value>${project.build.directory}/ocfl-root</value>
+                </systemProperty>
+                <systemProperty>
+                  <name>
+                    fcrepo.ocfl.work.dir
+                  </name>
+                  <value>${project.build.directory}/ocfl-work</value>
                 </systemProperty>
 
                 <systemProperty>

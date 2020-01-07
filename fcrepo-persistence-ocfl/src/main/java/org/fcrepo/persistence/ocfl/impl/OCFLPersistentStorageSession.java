@@ -19,10 +19,6 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import static java.lang.String.format;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getSidecarSubpath;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
-import static org.apache.jena.graph.NodeFactory.createURI;
-import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveVersionId;
 
 import java.io.InputStream;
@@ -33,12 +29,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.jena.graph.Triple;
-import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
-import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
@@ -256,22 +249,6 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         final FedoraOCFLMapping mapping = getFedoraOCFLMapping(fedoraIdentifier);
         final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
         return OCFLPersistentStorageUtils.listVersions(objSession);
-    }
-
-    @Override
-    public RdfStream getManagedProperties(final String identifier, final Instant version)
-            throws PersistentStorageException {
-        ensureCommitNotStarted();
-
-        final var headers = getHeaders(identifier, version);
-        final List<Triple> triples = new ArrayList<>();
-        final var subject = createURI(identifier);
-        triples.add(Triple.create(subject, CREATED_DATE.asNode(),
-                createLiteral(headers.getCreatedDate().toString())));
-        triples.add(Triple.create(subject, LAST_MODIFIED_DATE.asNode(),
-                createLiteral(headers.getLastModifiedDate().toString())));
-        triples.add(Triple.create(subject, RdfLexicon.RDF_TYPE, createURI(headers.getInteractionModel())));
-        return new DefaultRdfStream(subject, triples.stream());
     }
 
     @Override

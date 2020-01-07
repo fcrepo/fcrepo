@@ -24,12 +24,15 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.impl.OCFLPersistentSessionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 
 /**
  * This class is responsible for initializing the repository on start-up.
@@ -39,6 +42,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 @Component
 public class RepositoryInitializer {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(RepositoryInitializer.class);
     @Inject
     private OCFLPersistentSessionManager sessionManager;
 
@@ -51,20 +55,23 @@ public class RepositoryInitializer {
     @PostConstruct
     public void initialize() {
         //check that the root is initialized
-        final PersistentStorageSession session = this.sessionManager.getSession("initializationSession" + System.currentTimeMillis());
+        final PersistentStorageSession session = this.sessionManager.getSession("initializationSession" +
+                                                                                 System.currentTimeMillis());
+
         try {
-            session.getHeaders(FEDORA_ID_PREFIX, null);
-        } catch (PersistentItemNotFoundException e) {
-            final RdfSourceOperation operation = this.operationFactory.createBuilder(FEDORA_ID_PREFIX, "http://www.w3.org/ns/ldp#BasicContainer")
-                    .parentId(FEDORA_ID_PREFIX).build();
             try {
+                session.getHeaders(FEDORA_ID_PREFIX, null);
+            } catch (PersistentItemNotFoundException e) {
+                LOGGER.info("Repository root ({}) not found. Creating...", FEDORA_ID_PREFIX);
+                final RdfSourceOperation operation = this.operationFactory.createBuilder(FEDORA_ID_PREFIX,
+                        BASIC_CONTAINER.getURI()).parentId(FEDORA_ID_PREFIX).build();
+
                 session.persist(operation);
                 session.commit();
-            } catch (PersistentStorageException ex) {
-                throw new RepositoryRuntimeException(e);
+                LOGGER.info("Successfully create repository root ({}).", FEDORA_ID_PREFIX);
             }
-        } catch (PersistentStorageException e) {
-            throw new RepositoryRuntimeException(e);
+        } catch (PersistentStorageException ex) {
+            throw new RepositoryRuntimeException(ex);
         }
     }
 }

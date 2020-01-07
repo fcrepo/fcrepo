@@ -19,7 +19,6 @@ package org.fcrepo.http.api;
 
 import static com.google.common.base.Strings.nullToEmpty;
 import static java.text.MessageFormat.format;
-import static java.util.EnumSet.of;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
@@ -74,13 +73,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
-//import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
-//import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
-//import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT;
-//import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
-import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
-import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
-import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -147,6 +139,7 @@ import org.fcrepo.kernel.api.models.WebacAcl;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
+import org.fcrepo.kernel.api.services.ManagedPropertiesService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
@@ -210,6 +203,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     @Inject
     protected UpdatePropertiesService updatePropertiesService;
+
+    @Inject
+    protected ManagedPropertiesService managedPropertiesService;
 
     @Inject
     protected HttpRdfService httpRdfService;
@@ -307,41 +303,48 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         final List<Stream<Triple>> streams = new ArrayList<>();
 
-
         if (returnPreference.getValue().equals("minimal")) {
-            streams.add(getTriples(resource, of(PROPERTIES, MINIMAL)).filter(tripleFilter));
-
+            streams.add(resource.getTriples().filter(tripleFilter));
+            //streams.add(getTriples(resource, MINIMAL));
             // Mementos already have the server managed properties in the PROPERTIES category
             // since mementos are immutable and these triples are no longer managed
             if (ldpPreferences.prefersServerManaged() && !resource.isMemento())  {
-                streams.add(getTriples(resource, of(SERVER_MANAGED, MINIMAL)));
+                streams.add(this.managedPropertiesService.get(resource));
+                //TOOD Implement minimal return preference
+                //streams.add(getTriples(resource, MINIMAL));
             }
         } else {
-            streams.add(getTriples(resource, PROPERTIES).filter(tripleFilter));
+            streams.add(resource.getTriples().filter(tripleFilter));
 
             // Additional server-managed triples about this resource
             // Mementos already have the server managed properties in the PROPERTIES category
             // since mementos are immutable and these triples are no longer managed
             if (ldpPreferences.prefersServerManaged() && !resource.isMemento()) {
-                //streams.add(getTriples(resource, SERVER_MANAGED));
+                streams.add(this.managedPropertiesService.get(resource));
             }
 
             // containment triples about this resource
             if (ldpPreferences.prefersContainment()) {
                 if (limit == -1) {
-                    // streams.add(getTriples(resource, LDP_CONTAINMENT));
+                    //TODO Implement retrieving containment triples service
+                    //  https://jira.lyrasis.org/browse/FCREPO-3164
+                    //streams.add(getTriples(resource, LDP_CONTAINMENT));
                 } else {
-                   // streams.add(getTriples(resource, LDP_CONTAINMENT).limit(limit));
+                    //streams.add(getTriples(resource, LDP_CONTAINMENT).limit(limit));
                 }
             }
 
             // LDP container membership triples for this resource
             if (ldpPreferences.prefersMembership()) {
+                //TODO implement memebership triple retrieval service:
+                // https://jira.lyrasis.org/browse/FCREPO-3165
                 //streams.add(getTriples(resource, LDP_MEMBERSHIP));
             }
 
             // Include inbound references to this object
             if (ldpPreferences.prefersReferences()) {
+                //TODO implement inbound triple retrieval service:
+                // https://jira.lyrasis.org/browse/FCREPO-3166
                 //streams.add(getTriples(resource, INBOUND_REFERENCES));
             }
 
@@ -428,18 +431,16 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
 
     private RdfStream getTriples(final FedoraResource resource, final Set<? extends TripleCategory> x) {
-        // TODO Reimplement filtering of triples by categories
-        return resource.getTriples();
+        return null;
     }
 
     private RdfStream getTriples(final FedoraResource resource, final TripleCategory x) {
-        // TODO Reimplement filtering of triples by categories
-        return resource.getTriples();
+        return null;
     }
 
     protected URI getUri(final FedoraResource resource) {
         try {
-            final String uri = this.identifierConverter.toExternalId(resource.getId());
+            final String uri = identifierConverter().toExternalId(resource.getId());
             return new URI(uri);
         } catch (final URISyntaxException e) {
             throw new BadRequestException(e);
