@@ -40,7 +40,8 @@ class DeleteResourcePersister extends AbstractPersister {
     }
 
     @Override
-    public void persist(final OCFLPersistentStorageSession session, final ResourceOperation operation) throws PersistentStorageException {
+    public void persist(final OCFLPersistentStorageSession session, final ResourceOperation operation)
+            throws PersistentStorageException {
         final var mapping = getMapping(operation.getResourceId());
         final var fedoraResourceRoot = mapping.getRootObjectIdentifier();
         final var resourceId = operation.getResourceId();

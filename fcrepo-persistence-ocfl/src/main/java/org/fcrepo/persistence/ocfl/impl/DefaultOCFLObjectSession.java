@@ -272,7 +272,8 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         return readVersion(subpath, ObjectVersionId.version(objectIdentifier, version));
     }
 
-    private InputStream readVersion(final String subpath, final ObjectVersionId version) throws PersistentItemNotFoundException {
+    private InputStream readVersion(final String subpath, final ObjectVersionId version)
+            throws PersistentItemNotFoundException {
         try {
             // read the head version of the file from the ocfl object
             final var file = ocflRepository.getObject(version)

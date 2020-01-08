@@ -57,7 +57,8 @@ public class CreateNonRdfSourceOperationBuilderTest {
     public void testExternal() {
         final URI uri = URI.create("http://example.org/test/location");
         final String handling = ExternalContent.PROXY;
-        final NonRdfSourceOperationBuilder builder = new CreateNonRdfSourceOperationBuilderImpl(resourceId, handling, uri);
+        final NonRdfSourceOperationBuilder builder =
+                new CreateNonRdfSourceOperationBuilderImpl(resourceId, handling, uri);
         final NonRdfSourceOperation op = builder.build();
         assertEquals(uri, op.getContentUri());
         assertEquals(handling, op.getExternalHandling());

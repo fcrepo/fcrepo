@@ -532,7 +532,8 @@ public class CreateResourceServiceImplTest {
 
     @Test(expected = MalformedRdfException.class)
     public void testCheckServerManagedLdpType() throws Exception {
-        final InputStream graph = IOUtils.toInputStream("@prefix ldp: <" + LDP_NAMESPACE + "> .\n@prefix dc: <" + DC_11.getURI() + "> .\n" +
+        final InputStream graph = IOUtils.toInputStream("@prefix ldp: <" + LDP_NAMESPACE + "> .\n" +
+                "@prefix dc: <" + DC_11.getURI() + "> .\n" +
                 "@prefix example: <http://example.org/stuff#> .\n" +
                 "<> a example:Thing, ldp:BasicContainer ; dc:title \"The thing\" .", "UTF-8");
         final Model model = ModelFactory.createDefaultModel();
@@ -542,9 +543,11 @@ public class CreateResourceServiceImplTest {
 
     @Test(expected = MalformedRdfException.class)
     public void testCheckServerManagedPredicate() throws Exception {
-        final InputStream graph = IOUtils.toInputStream("@prefix fr: <" + REPOSITORY_NAMESPACE + "> .\n@prefix dc: <" + DC_11.getURI() + "> .\n" +
+        final InputStream graph = IOUtils.toInputStream("@prefix fr: <" + REPOSITORY_NAMESPACE + "> .\n" +
+                "@prefix dc: <" + DC_11.getURI() + "> .\n" +
                 "@prefix example: <http://example.org/stuff#> .\n@prefix xsd: <" + XSD.getURI() + ">.\n" +
-                "<> a example:Thing; dc:title \"The thing\"; fr:lastModified \"2000-01-01T00:00:00Z\"^^xsd:datetime .", "UTF-8");
+                "<> a example:Thing; dc:title \"The thing\"; fr:lastModified \"2000-01-01T00:00:00Z\"^^xsd:datetime .",
+                "UTF-8");
         final Model model = ModelFactory.createDefaultModel();
         model.read(graph, "http://localhost:8080/rest/test1", "TURTLE");
         createResourceService.checkForSmtsLdpTypes(model);
@@ -554,7 +557,8 @@ public class CreateResourceServiceImplTest {
     public void testCheckServerManagedSuccess() throws Exception {
         final InputStream graph = IOUtils.toInputStream("@prefix dc: <" + DC_11.getURI() + "> .\n" +
                 "@prefix example: <http://example.org/stuff#> .\n@prefix xsd: <" + XSD.getURI() + ">.\n" +
-                "<> a example:Thing; dc:title \"The thing\"; example:lastModified \"2000-01-01T00:00:00Z\"^^xsd:datetime .", "UTF-8");
+                "<> a example:Thing; dc:title \"The thing\"; " +
+                "example:lastModified \"2000-01-01T00:00:00Z\"^^xsd:datetime .", "UTF-8");
         final Model model = ModelFactory.createDefaultModel();
         model.read(graph, "http://localhost:8080/rest/test1", "TURTLE");
         createResourceService.checkForSmtsLdpTypes(model);
@@ -577,7 +581,8 @@ public class CreateResourceServiceImplTest {
         final List<String> links =Arrays.asList("<" + NON_RDF_SOURCE.toString() + ">; rel=\"type\"",
                 "<http://example.org/some/location/image.tiff>; " +
                         "rel=\"http://fedora.info/definitions/fcrepo#ExternalContent\"; " +
-                        "handling=\"proxy\"; type=\"image/tiff\"", "<http://example.org/some/otherlocation>; rel=\"acl\"");
+                        "handling=\"proxy\"; type=\"image/tiff\"",
+                "<http://example.org/some/otherlocation>; rel=\"acl\"");
         createResourceService.checkAclLinkHeader(links);
     }
 
@@ -586,7 +591,8 @@ public class CreateResourceServiceImplTest {
         final List<String> links = Arrays.asList("<" + NON_RDF_SOURCE.toString() + ">; rel=\"type\"",
                 "<http://example.org/some/location/image.tiff>; " +
                         "rel=\"http://fedora.info/definitions/fcrepo#ExternalContent\"; " +
-                        "handling=\"proxy\"; type=\"image/tiff\"", "<http://example.org/some/otherlocation>; rel='acl'");
+                        "handling=\"proxy\"; type=\"image/tiff\"",
+                "<http://example.org/some/otherlocation>; rel='acl'");
         createResourceService.checkAclLinkHeader(links);
     }
 

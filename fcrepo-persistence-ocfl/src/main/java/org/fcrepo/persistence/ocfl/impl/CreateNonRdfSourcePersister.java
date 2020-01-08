@@ -47,7 +47,8 @@ class CreateNonRdfSourcePersister extends AbstractNonRdfSourcePersister {
     }
 
     @Override
-    public void persist(final OCFLPersistentStorageSession session, final ResourceOperation operation) throws PersistentStorageException {
+    public void persist(final OCFLPersistentStorageSession session, final ResourceOperation operation)
+            throws PersistentStorageException {
         final var resourceId = operation.getResourceId();
         log.debug("persisting {} to {}", resourceId, session);
         final CreateResourceOperation createResourceOp = ((CreateResourceOperation)operation);

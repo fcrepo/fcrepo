@@ -252,7 +252,8 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     }
 
     @Override
-    public InputStream getBinaryContent(final String identifier, final Instant version) throws PersistentItemNotFoundException {
+    public InputStream getBinaryContent(final String identifier, final Instant version)
+            throws PersistentItemNotFoundException {
         // TODO Auto-generated method stub
         return null;
     }
@@ -336,7 +337,8 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         }
 
         //close any uncommitted sessions
-        final List<OCFLObjectSession> committedSessions = this.sessionsToRollback.stream().map(c -> c.session).collect(Collectors.toList());
+        final List<OCFLObjectSession> committedSessions =
+                this.sessionsToRollback.stream().map(c -> c.session).collect(Collectors.toList());
         final List<OCFLObjectSession> uncommittedSessions = new ArrayList<>(this.sessionMap.values());
         uncommittedSessions.removeAll(committedSessions);
         for (final OCFLObjectSession obj : uncommittedSessions) {

@@ -70,8 +70,11 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
     }
 
     @Override
-    public void setExternalContent(final String contentType, final Collection<URI> checksums, final String originalFileName,
-            final String externalHandling, final String externalUrl) throws InvalidChecksumException {
+    public void setExternalContent(final String contentType,
+                                   final Collection<URI> checksums,
+                                   final String originalFileName,
+                                   final String externalHandling,
+                                   final String externalUrl) throws InvalidChecksumException {
         // TODO Auto-generated method stub
 
     }

@@ -19,6 +19,7 @@ package org.fcrepo.http.api;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.MediaType.valueOf;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
@@ -139,7 +140,7 @@ public class FedoraAcl extends ContentExposingResource {
         created = aclResource.isNew();
 
         final MediaType contentType =
-            requestContentType == null ? RDFMediaType.TURTLE_TYPE : MediaType.valueOf(getSimpleContentType(requestContentType));
+            requestContentType == null ? RDFMediaType.TURTLE_TYPE : valueOf(getSimpleContentType(requestContentType));
         if (isRdfContentType(contentType.toString())) {
 
             // TODO: confirm this is correct logic for ACL's
