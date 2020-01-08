@@ -176,7 +176,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public List<URI> getTypes() {
-        if(types == null){
+        if (types == null) {
             types = new ArrayList<URI>();
             try {
                 types.add(URI.create(getSession().getHeaders(getId(), getMementoDatetime()).getInteractionModel()));
