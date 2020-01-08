@@ -429,7 +429,7 @@ public class FedoraLdp extends ContentExposingResource {
             }
         } else {
             final Model model = httpRdfService.bodyToInternalModel(externalUri, requestBodyStream,
-                requestContentType, identifierConverter);
+                requestContentType, identifierConverter());
 
             if ("Resource Exists".isEmpty()) {
                 replacePropertiesService.perform(transaction.getId(), getUserPrincipal(), fedoraId, requestContentType
