@@ -43,8 +43,8 @@ import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.fcrepo.http.api.FedoraLdp;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
-import org.fcrepo.http.commons.session.TransactionProvider;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -91,6 +91,7 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_CONTROL;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
 import static org.fcrepo.auth.webac.WebACAuthorizingRealm.URIS_TO_AUTHORIZE;
+import static org.fcrepo.http.commons.session.TransactionProvider.ATOMIC_ID_HEADER;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
@@ -130,7 +131,7 @@ public class WebACFilter extends RequestContextFilter {
     private ResourceFactory resourceFactory;
 
     @Inject
-    private TransactionProvider txProvider;
+    private TransactionManager transactionManager;
 
     private static Set<URI> directOrIndirect = new HashSet<>();
 
@@ -222,7 +223,7 @@ public class WebACFilter extends RequestContextFilter {
     }
 
     private Transaction transaction(final HttpServletRequest request) {
-        return txProvider.getTransactionForRequest(request);
+        return transactionManager.get(request.getHeader(ATOMIC_ID_HEADER));
     }
 
     private String getBaseURL(final HttpServletRequest servletRequest) {

@@ -22,7 +22,6 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.api.UriAwareHttpHeaderFactory;
-import org.fcrepo.http.commons.session.TransactionProvider;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
@@ -30,12 +29,11 @@ import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.Context;
+import javax.inject.Inject;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.ext.Provider;
 import java.net.URI;
 
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
@@ -49,24 +47,19 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @author whikloj
  * @since 2015-10-30
  */
-@Provider
+@Component
 public class LinkHeaderProvider implements UriAwareHttpHeaderFactory {
 
     private static final Logger LOGGER = getLogger(LinkHeaderProvider.class);
 
-    @Context
-    private TransactionProvider txProvider;
-
-    @Context
-    private HttpServletRequest request;
-
-    @Context
+    @Inject
     private ResourceFactory resourceFactory;
 
     @Override
-    public Multimap<String, String> createHttpHeadersForResource(final UriInfo uriInfo, final FedoraResource resource) {
+    public Multimap<String, String> createHttpHeadersForResource(final Transaction transaction,
+                                                                 final UriInfo uriInfo,
+                                                                 final FedoraResource resource) {
 
-        final Transaction transaction = txProvider.getTransactionForRequest(request);
         //TODO figure out where the translator should be coming from.
         final IdentifierConverter<Resource, FedoraResource> translator = null;
 

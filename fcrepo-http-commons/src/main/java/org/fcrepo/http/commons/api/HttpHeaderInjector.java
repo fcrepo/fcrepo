@@ -23,6 +23,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.UriInfo;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.models.FedoraResource;
 
 import org.slf4j.Logger;
@@ -59,17 +60,19 @@ public class HttpHeaderInjector extends ApplicationObjectSupport {
     /**
      * Add additional Http Headers
      *
+     * @param transaction in which this request is being made
      * @param servletResponse the response
      * @param uriInfo the URI context
      * @param resource the resource
      */
-    public void addHttpHeaderToResponseStream(final HttpServletResponse servletResponse,
+    public void addHttpHeaderToResponseStream(final Transaction transaction,
+                                              final HttpServletResponse servletResponse,
                                               final UriInfo uriInfo,
                                               final FedoraResource resource) {
 
         getUriAwareHttpHeaderFactories().forEach((bean, factory) -> {
             LOGGER.debug("Adding HTTP headers using: {}", bean);
-            final Multimap<String, String> h = factory.createHttpHeadersForResource(uriInfo, resource);
+            final Multimap<String, String> h = factory.createHttpHeadersForResource(transaction, uriInfo, resource);
 
             h.entries().forEach(entry -> {
                 servletResponse.addHeader(entry.getKey(), entry.getValue());

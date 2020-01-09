@@ -681,7 +681,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             servletResponse.addHeader(LINK, buildLink(RDF_SOURCE.getURI(), "type"));
         }
         if (httpHeaderInject != null) {
-            httpHeaderInject.addHttpHeaderToResponseStream(servletResponse, uriInfo, resource);
+            httpHeaderInject.addHttpHeaderToResponseStream(transaction, servletResponse, uriInfo, resource);
         }
 
         addLinkAndOptionsHttpHeaders(resource);
