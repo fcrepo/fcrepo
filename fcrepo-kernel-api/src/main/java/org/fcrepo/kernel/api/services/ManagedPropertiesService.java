@@ -23,7 +23,8 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import java.util.stream.Stream;
 
 /**
- * Interface for a service to create a new resource via a POST request.
+ * Interface for a service that converts managed properties from a {@link org.fcrepo.kernel.api.models.FedoraResource}
+ * into a triple stream
  *
  * @author dbernstein
  * @since 2020-01-07

@@ -114,7 +114,7 @@ public class ResourceHeaderUtils {
         headers.setLastModifiedDate(instant);
         headers.setLastModifiedBy(userPrincipal);
 
-        final String stateToken = DigestUtils.md5Hex(instant.toEpochMilli() + "").toUpperCase();
+        final String stateToken = DigestUtils.md5Hex(String.valueOf(instant.toEpochMilli())).toUpperCase();
         headers.setStateToken(stateToken);
     }
 

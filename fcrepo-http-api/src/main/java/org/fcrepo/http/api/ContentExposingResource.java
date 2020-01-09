@@ -298,13 +298,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         final LdpPreferTag ldpPreferences = new LdpPreferTag(returnPreference);
 
-        final Predicate<Triple> tripleFilter = ldpPreferences.prefersServerManaged() ? x -> true :
-            IS_MANAGED_TRIPLE.negate();
-
         final List<Stream<Triple>> streams = new ArrayList<>();
 
         if (returnPreference.getValue().equals("minimal")) {
-            streams.add(resource.getTriples().filter(tripleFilter));
+            streams.add(resource.getTriples());
             //streams.add(getTriples(resource, MINIMAL));
             // Mementos already have the server managed properties in the PROPERTIES category
             // since mementos are immutable and these triples are no longer managed
@@ -314,7 +311,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 //streams.add(getTriples(resource, MINIMAL));
             }
         } else {
-            streams.add(resource.getTriples().filter(tripleFilter));
+            streams.add(resource.getTriples());
 
             // Additional server-managed triples about this resource
             // Mementos already have the server managed properties in the PROPERTIES category
