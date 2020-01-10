@@ -90,6 +90,10 @@ abstract public class FedoraBaseResource extends AbstractResource {
         return identifierConverter;
     }
 
+    protected FedoraResource getResourceHead(final String fedoraId) throws PathNotFoundException {
+        return this.resourceFactory.getResource(fedoraId);
+    }
+
     /**
      * This is a helper method for using the idTranslator to convert this resource into an associated Jena Node.
      *

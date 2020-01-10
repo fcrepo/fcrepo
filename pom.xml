@@ -501,12 +501,9 @@
             <systemPropertyVariables>
               <fcrepo.dynamic.test.port>${fcrepo.dynamic.test.port}</fcrepo.dynamic.test.port>
               <fcrepo.test.context.path>${fcrepo.test.context.path}</fcrepo.test.context.path>
-              <com.arjuna.ats.arjuna.common.ObjectStoreEnvironmentBean.default.objectStoreDir>
-                ${project.build.directory}/object-store-default
-              </com.arjuna.ats.arjuna.common.ObjectStoreEnvironmentBean.default.objectStoreDir>
-              <com.arjuna.ats.arjuna.objectstore.objectStoreDir>
-                ${project.build.directory}/object-store
-              </com.arjuna.ats.arjuna.objectstore.objectStoreDir>
+              <fcrepo.ocfl.staging.dir>target/fcrepo-data/ocfl-staging</fcrepo.ocfl.staging.dir>
+              <fcrepo.ocfl.storage.root.dir>target/fcrepo-data/ocfl-root</fcrepo.ocfl.storage.root.dir>
+              <fcrepo.ocfl.work.dir>target/fcrepo-data/ocfl-work</fcrepo.ocfl.work.dir>
               <integration-test>true</integration-test>
             </systemPropertyVariables>
           </configuration>

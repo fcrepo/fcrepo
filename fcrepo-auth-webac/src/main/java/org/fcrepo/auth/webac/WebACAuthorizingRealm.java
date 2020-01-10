@@ -23,6 +23,7 @@ import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_AUTHENTICATED_AGENT_VALUE;
 import static org.fcrepo.auth.common.HttpHeaderPrincipalProvider.HttpHeaderPrincipal;
 import static org.fcrepo.auth.common.DelegateHeaderPrincipalProvider.DelegatedHeaderPrincipal;
+import static org.fcrepo.http.commons.session.TransactionProvider.ATOMIC_ID_HEADER;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
@@ -52,7 +53,7 @@ import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrin
 import org.fcrepo.http.api.FedoraLdp;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.http.commons.session.TransactionProvider;
+import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryConfigurationException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -77,21 +78,16 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     public static final String URIS_TO_AUTHORIZE = "URIS_TO_AUTHORIZE";
 
     @Inject
-    private TransactionProvider txProvider;
-
-    @Inject
     private HttpServletRequest request;
 
     @Inject
     private WebACRolesProvider rolesProvider;
 
-    private Transaction transaction;
+    @Inject
+    private TransactionManager transactionManager;
 
     private Transaction transaction() {
-        if (transaction == null) {
-            transaction = txProvider.getTransactionForRequest(request);
-        }
-        return transaction;
+        return transactionManager.get(request.getHeader(ATOMIC_ID_HEADER));
     }
 
     private IdentifierConverter<Resource, FedoraResource> idTranslator;

@@ -22,7 +22,6 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.api.UriAwareHttpHeaderFactory;
-import org.fcrepo.http.commons.session.TransactionProvider;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
@@ -33,7 +32,6 @@ import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
@@ -55,18 +53,13 @@ public class LinkHeaderProvider implements UriAwareHttpHeaderFactory {
     private static final Logger LOGGER = getLogger(LinkHeaderProvider.class);
 
     @Inject
-    private TransactionProvider txProvider;
-
-    @Inject
-    private HttpServletRequest request;
-
-    @Inject
     private ResourceFactory resourceFactory;
 
     @Override
-    public Multimap<String, String> createHttpHeadersForResource(final UriInfo uriInfo, final FedoraResource resource) {
+    public Multimap<String, String> createHttpHeadersForResource(final Transaction transaction,
+                                                                 final UriInfo uriInfo,
+                                                                 final FedoraResource resource) {
 
-        final Transaction transaction = txProvider.getTransactionForRequest(request);
         //TODO figure out where the translator should be coming from.
         final IdentifierConverter<Resource, FedoraResource> translator = null;
 

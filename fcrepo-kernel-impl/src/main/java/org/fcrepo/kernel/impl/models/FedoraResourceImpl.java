@@ -19,6 +19,7 @@ package org.fcrepo.kernel.impl.models;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -29,10 +30,13 @@ import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+
+import static org.apache.jena.graph.NodeFactory.createURI;
 
 /**
  * Implementation of a Fedora resource, containing functionality common to the more concrete resource implementations.
@@ -172,13 +176,27 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public List<URI> getTypes() {
+        if (types == null) {
+            types = new ArrayList<URI>();
+            try {
+                types.add(URI.create(getSession().getHeaders(getId(), getMementoDatetime()).getInteractionModel()));
+            } catch (final PersistentItemNotFoundException e) {
+                throw new ItemNotFoundException("Unable to retrieve triples for " + getId(), e);
+            } catch (final PersistentStorageException e) {
+                throw new RepositoryRuntimeException(e);
+            }
+
+        }
+
         return types;
     }
 
     @Override
     public RdfStream getTriples() {
         try {
-            return getSession().getTriples(id, getMementoDatetime());
+            final var triples = getSession().getTriples(id, getMementoDatetime());
+
+            return new DefaultRdfStream(createURI(id), triples);
         } catch (final PersistentItemNotFoundException e) {
             throw new ItemNotFoundException("Unable to retrieve triples for " + getId(), e);
         } catch (final PersistentStorageException e) {

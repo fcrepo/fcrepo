@@ -33,6 +33,7 @@ import javax.ws.rs.core.UriBuilder;
 
 import com.google.common.base.Converter;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -48,6 +49,7 @@ import org.springframework.context.ApplicationContext;
  * @author cabeer
  * @since 10/5/14
  */
+@Deprecated
 public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraResource> {
 
     private static final Logger LOGGER = getLogger(HttpResourceConverter.class);
@@ -96,8 +98,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
     @Override
     protected Resource doBackward(final FedoraResource resource) {
-            //@TODO Implement this
-            return null;
+        return ResourceFactory.createResource(resource.getId());
     }
 
     @Override

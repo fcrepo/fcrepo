@@ -28,7 +28,6 @@ import org.fcrepo.kernel.api.TransactionManager;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.jersey.process.internal.RequestScoped;
 import org.slf4j.Logger;
-import org.springframework.stereotype.Component;
 
 /**
  * Provide a fedora tranasction within the current request context
@@ -37,7 +36,6 @@ import org.springframework.stereotype.Component;
  */
 @Provider
 @RequestScoped
-@Component
 public class TransactionProvider implements Factory<Transaction> {
 
     @Inject

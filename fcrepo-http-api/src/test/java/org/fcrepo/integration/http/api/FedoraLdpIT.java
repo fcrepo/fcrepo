@@ -242,7 +242,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
       DateTimeFormatter.ISO_INSTANT.withZone(of("GMT"));
 
     @Test
-@Ignore
     public void testHeadRepositoryGraph() throws IOException {
         final HttpHead headObjMethod = new HttpHead(serverAddress);
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
@@ -349,7 +348,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testHeadDefaultRDF() throws IOException {
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id, "text/turtle", "<> a <http://example.com/Foo> .");

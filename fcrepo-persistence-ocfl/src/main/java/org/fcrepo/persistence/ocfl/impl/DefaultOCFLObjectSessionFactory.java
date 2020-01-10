@@ -59,6 +59,7 @@ public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory
             return new File(path);
         } else {
             //return default
+
             return Paths.get(JAVA_IO_TMPDIR, systemPropertyKey).toFile();
         }
     }
@@ -98,7 +99,9 @@ public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory
 
     @Override
     public OCFLObjectSession create(final String ocflId, final String persistentStorageSessionId) {
-        final File stagingDirectory = new File(this.ocflStagingDir, persistentStorageSessionId);
+
+        final File stagingDirectory = new File(this.ocflStagingDir,
+                persistentStorageSessionId == null ? "read-only" : persistentStorageSessionId);
         stagingDirectory.mkdirs();
         return new DefaultOCFLObjectSession(ocflId, stagingDirectory.toPath(), this.ocflRepository);
     }

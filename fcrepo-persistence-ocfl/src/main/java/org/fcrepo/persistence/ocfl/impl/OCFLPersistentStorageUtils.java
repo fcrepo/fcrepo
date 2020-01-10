@@ -173,7 +173,9 @@ public class OCFLPersistentStorageUtils {
         try (final var os = new ByteArrayOutputStream()) {
             final StreamRDF streamRDF = getWriterStream(os, getRdfFormat());
             streamRDF.start();
-            triples.forEach(streamRDF::triple);
+            if (triples != null) {
+                triples.forEach(streamRDF::triple);
+            }
             streamRDF.finish();
 
             final var is = new ByteArrayInputStream(os.toByteArray());

@@ -74,18 +74,6 @@ public interface PersistentStorageSession {
             throws PersistentStorageException;
 
     /**
-     * Get the server managed properties for this provided resource.
-     *
-     * @param identifier identifier for the resource.
-     * @param version instant identifying the version of the resource to read from. If null, then the head version is
-     *        used.
-     * @return the server managed properties as an RdfStream.
-     * @throws PersistentStorageException  Either a PersistentItemNotFoundException or PersistentSessionClosedException
-     */
-    public RdfStream getManagedProperties(final String identifier, final Instant version)
-            throws PersistentStorageException;
-
-    /**
      * Get the persisted binary content for the provided resource.
      *
      * @param identifier identifier for the resource.

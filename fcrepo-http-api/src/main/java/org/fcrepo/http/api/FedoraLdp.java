@@ -98,6 +98,7 @@ import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.InvalidMementoPathException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
@@ -374,7 +375,8 @@ public class FedoraLdp extends ContentExposingResource {
             @HeaderParam("If-Match") final String ifMatch,
             @HeaderParam(LINK) final List<String> rawLinks,
             @HeaderParam("Digest") final String digest)
-            throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException {
+            throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException,
+                   PathNotFoundException {
 
         hasRestrictedPath(externalPath);
 
@@ -409,7 +411,8 @@ public class FedoraLdp extends ContentExposingResource {
             //}
         }
 
-        final String fedoraId = identifierConverter().toInternalId(externalPath());
+        final String externalUri = this.uriInfo.getRequestUri().toString();
+        final String fedoraId = identifierConverter().toInternalId(externalUri);
 
         // TODO: Refactor to check preconditions
         //evaluateRequestPreconditions(request, servletResponse, resource, transaction);
@@ -425,8 +428,8 @@ public class FedoraLdp extends ContentExposingResource {
                         links, checksums, requestBodyStream, extContent);
             }
         } else {
-            final Model model = httpRdfService.bodyToInternalModel(externalPath(), requestBodyStream,
-                requestContentType);
+            final Model model = httpRdfService.bodyToInternalModel(externalUri, requestBodyStream,
+                requestContentType, identifierConverter());
 
             if ("Resource Exists".isEmpty()) {
                 replacePropertiesService.perform(transaction.getId(), getUserPrincipal(), fedoraId, requestContentType
@@ -441,7 +444,7 @@ public class FedoraLdp extends ContentExposingResource {
         // TODO: How to generate a response.
         LOGGER.debug("Finished creating resource with path: {}", externalPath());
         transaction.commit();
-        return createUpdateResponse(null, true);
+        return createUpdateResponse(getResourceHead(fedoraId), true);
 
     }
 
@@ -562,7 +565,7 @@ public class FedoraLdp extends ContentExposingResource {
                     originalFileName, contentDisposition.getSize(), links, checksums, requestBodyStream, extContent);
         } else {
             final Model model = httpRdfService.bodyToInternalModel(externalPath(), requestBodyStream,
-                    requestContentType);
+                    requestContentType, identifierConverter());
             createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, slug, true, links,
                     model);
         }

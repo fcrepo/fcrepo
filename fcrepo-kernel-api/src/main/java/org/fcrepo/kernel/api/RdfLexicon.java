@@ -58,6 +58,7 @@ public final class RdfLexicon {
 
     public static final String RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
 
+
     /**
      * Namespace for the W3C WebAC vocabulary.
      */

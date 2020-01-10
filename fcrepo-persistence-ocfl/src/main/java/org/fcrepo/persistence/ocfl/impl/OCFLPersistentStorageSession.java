@@ -49,7 +49,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Phaser;
 import java.util.stream.Collectors;
 
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getInternalFedoraDirectory;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getRDFFileExtension;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getRdfStream;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.relativizeSubpath;
@@ -221,7 +220,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         try {
             return fedoraOcflIndex.getMapping(identifier);
         } catch (FedoraOCFLMappingNotFoundException e) {
-            throw new PersistentStorageException(e.getMessage());
+            throw new PersistentItemNotFoundException(e.getMessage());
         }
     }
 
@@ -250,19 +249,6 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         final FedoraOCFLMapping mapping = getFedoraOCFLMapping(fedoraIdentifier);
         final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
         return OCFLPersistentStorageUtils.listVersions(objSession);
-    }
-
-    @Override
-    public RdfStream getManagedProperties(final String identifier, final Instant version)
-            throws PersistentStorageException {
-        ensureCommitNotStarted();
-        final var mapping = getFedoraOCFLMapping(identifier);
-        final var objSession = findOrCreateSession(mapping.getOcflObjectId());
-        final var rootIdentifier = mapping.getRootObjectIdentifier();
-        final var fedoraSubpath = relativizeSubpath(rootIdentifier, identifier);
-        final var ocflSubpath = resolveOCFLSubpath(rootIdentifier, fedoraSubpath);
-        final var filePath = getInternalFedoraDirectory() + ocflSubpath + getRDFFileExtension();
-        return getRdfStream(identifier, objSession, filePath, version);
     }
 
     @Override

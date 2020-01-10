@@ -19,6 +19,7 @@ package org.fcrepo.kernel.impl.models;
 
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.models.Container;
+import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 
@@ -41,5 +42,10 @@ public class ContainerImpl extends FedoraResourceImpl implements Container {
     public ContainerImpl(final String id, final Transaction tx, final PersistentStorageSessionManager pSessionManager,
             final ResourceFactory resourceFactory) {
         super(id, tx, pSessionManager, resourceFactory);
+    }
+
+    @Override
+    public FedoraResource getDescribedResource() {
+        return this;
     }
 }

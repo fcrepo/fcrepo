@@ -19,6 +19,7 @@ package org.fcrepo.http.commons.api;
 
 import javax.ws.rs.core.UriInfo;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.models.FedoraResource;
 
 import com.google.common.collect.Multimap;
@@ -34,10 +35,13 @@ public interface UriAwareHttpHeaderFactory {
     /**
      * Given a resource and session, update the JAX-RS response with any additional headers.
      *
+     * @param transaction associated with this invocation
      * @param uriInfo contextual information for building URLs
      * @param resource the resource from the request
      * @return Multimap of HTTP Header field names and field values
      */
-    Multimap<String, String> createHttpHeadersForResource(UriInfo uriInfo, FedoraResource resource);
+    Multimap<String, String> createHttpHeadersForResource(Transaction transaction,
+                                                          UriInfo uriInfo,
+                                                          FedoraResource resource);
 
 }

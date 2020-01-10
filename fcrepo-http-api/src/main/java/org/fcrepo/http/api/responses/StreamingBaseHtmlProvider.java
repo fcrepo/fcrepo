@@ -25,6 +25,7 @@ import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.sparql.util.graph.GraphUtils.multiValueURI;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
+import static org.fcrepo.http.commons.session.TransactionProvider.ATOMIC_ID_HEADER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
@@ -44,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import javax.annotation.PostConstruct;
+import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
@@ -67,9 +69,9 @@ import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.http.commons.responses.ViewHelpers;
-import org.fcrepo.http.commons.session.TransactionProvider;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.RdfLexicon;
+import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -88,17 +90,17 @@ import org.slf4j.Logger;
 public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespacedStream> {
 
 
-    @javax.ws.rs.core.Context
+    @Inject
     UriInfo uriInfo;
 
-    @javax.ws.rs.core.Context
-    TransactionProvider txProvider;
+    @Inject
+    TransactionManager transactionManager;
 
-    @javax.ws.rs.core.Context
+    @Inject
     HttpServletRequest request;
 
     private Transaction transaction() {
-        return txProvider.getTransactionForRequest(request);
+        return transactionManager.get(request.getHeader(ATOMIC_ID_HEADER));
     }
 
     private IdentifierConverter<Resource, FedoraResource> translator() {

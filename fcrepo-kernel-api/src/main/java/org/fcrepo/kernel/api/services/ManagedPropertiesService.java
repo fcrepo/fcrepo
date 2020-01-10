@@ -15,21 +15,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.http.api.responses;
+package org.fcrepo.kernel.api.services;
 
-import org.springframework.stereotype.Component;
+import org.apache.jena.graph.Triple;
+import org.fcrepo.kernel.api.models.FedoraResource;
 
-import javax.ws.rs.Produces;
-
-import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
+import java.util.stream.Stream;
 
 /**
- * JAX-RS provider for taking an RdfStream and returning some nice looking
- * HTML
+ * Interface for a service that converts managed properties from a {@link org.fcrepo.kernel.api.models.FedoraResource}
+ * into a triple stream
  *
- * @author ajs6f
+ * @author dbernstein
+ * @since 2020-01-07
  */
-@Component
-@Produces({TEXT_HTML_WITH_CHARSET})
-public class StreamingHtmlProvider extends StreamingBaseHtmlProvider{
+public interface ManagedPropertiesService {
+
+    /**
+     * Retrieve the managed properties as triples
+     *
+     * @param resource The fedora resource
+     */
+    Stream<Triple> get(FedoraResource resource);
+
 }
