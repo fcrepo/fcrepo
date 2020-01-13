@@ -23,13 +23,14 @@ import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import java.io.File;
 import java.nio.file.Paths;
 
+import edu.wisc.library.ocfl.core.storage.filesystem.FileSystemOcflStorage;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import edu.wisc.library.ocfl.core.OcflRepositoryBuilder;
 import edu.wisc.library.ocfl.core.extension.layout.config.DefaultLayoutConfig;
-import edu.wisc.library.ocfl.core.storage.FileSystemOcflStorage;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
