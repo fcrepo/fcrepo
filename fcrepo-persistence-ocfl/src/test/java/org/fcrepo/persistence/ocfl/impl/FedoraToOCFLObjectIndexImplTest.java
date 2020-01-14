@@ -17,10 +17,26 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import static java.lang.System.getProperty;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -35,6 +51,16 @@ public class FedoraToOCFLObjectIndexImplTest {
     private static final String ROOT_RESOURCE_ID = "info:fedora/parent";
     private static final String OCFL_ID = "ocfl-id";
     private static final String OCFL_ID_RESOURCE_3 = "ocfl-id-resource-3";
+
+    private final Path indexMappingPath = getProperty("fcrepo.ocfl.work.dir") == null ?
+            Paths.get(JAVA_IO_TMPDIR, "fcrepo.ocfl.work.dir", "fedoraToOcflIndex.tsv") :
+            Paths.get(getProperty("fcrepo.ocfl.work.dir"), "fedoraToOcflIndex.tsv");
+    private File indexFile = indexMappingPath.toFile();
+
+    @Before
+    public void setup() {
+        removeIndexMappingFile();
+    }
 
     @Test
     public void test() throws Exception {
@@ -71,5 +97,58 @@ public class FedoraToOCFLObjectIndexImplTest {
     public void testNotExists() throws Exception {
         final FedoraToOCFLObjectIndexImpl index = new FedoraToOCFLObjectIndexImpl();
         index.getMapping(RESOURCE_ID_1);
+    }
+
+    @Test
+    public void testSaveToIndex() throws Exception {
+        assertFalse(indexFile.exists());
+
+        final FedoraToOCFLObjectIndexImpl index = new FedoraToOCFLObjectIndexImpl();
+
+        index.addMapping(RESOURCE_ID_1, ROOT_RESOURCE_ID, OCFL_ID);
+        index.addMapping(RESOURCE_ID_2, ROOT_RESOURCE_ID, OCFL_ID);
+        index.addMapping(RESOURCE_ID_3, RESOURCE_ID_3, OCFL_ID_RESOURCE_3);
+
+        assertTrue(indexFile.exists());
+
+        final List<String> lines = Files.lines(indexFile.toPath()).collect(Collectors.toList());
+
+        assertEquals(4, lines.size());
+    }
+
+    @Test
+    public void testReadFromIndex() throws Exception {
+        assertFalse(indexFile.exists());
+
+        final BufferedWriter output = new BufferedWriter(new FileWriter(indexFile, true));
+        output.write(String.format("%s\t%s\t%s\n", RESOURCE_ID_2, ROOT_RESOURCE_ID, OCFL_ID));
+        output.close();
+
+        assertTrue(indexFile.exists());
+
+        final FedoraToOCFLObjectIndexImpl index = new FedoraToOCFLObjectIndexImpl();
+        try {
+            index.getMapping(RESOURCE_ID_1);
+            fail();
+        } catch (FedoraOCFLMappingNotFoundException e) {
+            // We're okay
+        }
+
+        final FedoraOCFLMapping mapping = index.getMapping(RESOURCE_ID_2);
+        assertEquals(ROOT_RESOURCE_ID, mapping.getRootObjectIdentifier());
+        assertEquals(OCFL_ID, mapping.getOcflObjectId());
+
+        try {
+            index.getMapping(RESOURCE_ID_3);
+            fail();
+        } catch (FedoraOCFLMappingNotFoundException e) {
+            // We're okay
+        }
+    }
+
+    private void removeIndexMappingFile() {
+        if (indexFile.exists()) {
+            indexFile.delete();
+        }
     }
 }
