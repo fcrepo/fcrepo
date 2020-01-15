@@ -35,13 +35,16 @@ import java.net.URI;
 public class NonRdfSourceOperationFactoryImpl implements NonRdfSourceOperationFactory {
 
     @Override
-    public NonRdfSourceOperationBuilder updateExternalBinaryBuilder(final String rescId, final String handling, final URI contentUri) {
+    public NonRdfSourceOperationBuilder updateExternalBinaryBuilder(final String rescId,
+                                                                    final String handling,
+                                                                    final URI contentUri) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public NonRdfSourceOperationBuilder updateInternalBinaryBuilder(final String rescId, final InputStream contentStream) {
+    public NonRdfSourceOperationBuilder updateInternalBinaryBuilder(final String rescId,
+                                                                    final InputStream contentStream) {
         // TODO Auto-generated method stub
         return null;
     }

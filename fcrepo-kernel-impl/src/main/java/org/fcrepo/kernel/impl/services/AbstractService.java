@@ -86,8 +86,8 @@ public abstract class AbstractService {
     protected String determineInteractionModel(final List<String> linkTypes,
                                                    final boolean isRdfContentType, final boolean contentPresent,
                                                    final boolean isExternalContent) {
-        final String interactionModel = linkTypes == null ? null : linkTypes.stream().filter(INTERACTION_MODELS_FULL::contains).findFirst()
-                .orElse(null);
+        final String interactionModel = linkTypes == null ? null :
+                linkTypes.stream().filter(INTERACTION_MODELS_FULL::contains).findFirst().orElse(null);
 
         // If you define a valid interaction model, we try to use it.
         if (interactionModel != null) {

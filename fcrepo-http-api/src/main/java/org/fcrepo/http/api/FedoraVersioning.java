@@ -225,7 +225,8 @@ public class FedoraVersioning extends ContentExposingResource {
                                                   final Instant mementoInstant,
                                                   final InputStream requestBodyStream,
                                                   final ExternalContentHandler extContent,
-                                                  final String digest) throws InvalidChecksumException, UnsupportedAlgorithmException {
+                                                  final String digest)
+            throws InvalidChecksumException, UnsupportedAlgorithmException {
 
         final Collection<String> checksums = parseDigestHeader(digest);
         final Collection<URI> checksumURIs = checksums == null ? new HashSet<>() : checksums.stream().map(

@@ -42,9 +42,9 @@ import org.fcrepo.persistence.ocfl.api.Persister;
 abstract class AbstractPersister implements Persister {
 
     /*
-     * The resourceOperationClass variable, in conjunction with the resourceOperationType, is used by the handle(...) method
-     * to determine whether or not the persister can perform the persistence routine on the operation passed in the
-     * persist(...) method.
+     * The resourceOperationClass variable, in conjunction with the resourceOperationType, is used by the handle(...)
+     * method to determine whether or not the persister can perform the persistence routine on the operation passed in
+     * the persist(...) method.
      */
     private final Class<? extends ResourceOperation> resourceOperationClass;
     /*

@@ -109,7 +109,8 @@ public class WebACRolesProvider {
      *  For a given FedoraResource, get a mapping of acl:agent values to acl:mode values and
      *  for foaf:Agent and acl:AuthenticatedAgent include the acl:agentClass value to acl:mode.
      */
-    private Map<String, Collection<String>> getAgentRoles(final FedoraResource resource, final Transaction transaction) {
+    private Map<String, Collection<String>> getAgentRoles(final FedoraResource resource,
+                                                          final Transaction transaction) {
         LOGGER.debug("Getting agent roles for: {}", resource.getPath());
 
         // Get the effective ACL by searching the target node and any ancestors.
@@ -163,7 +164,8 @@ public class WebACRolesProvider {
         authorizations.stream()
                       .filter(checkAccessTo.or(checkAccessToClass))
                       .forEach(auth -> {
-                          concat(auth.getAgents().stream(), dereferenceAgentGroups(transaction, auth.getAgentGroups()).stream())
+                          concat(auth.getAgents().stream(),
+                                  dereferenceAgentGroups(transaction, auth.getAgentGroups()).stream())
                               .filter(agent -> !agent.equals(FOAF_AGENT_VALUE) &&
                                                !agent.equals(WEBAC_AUTHENTICATED_AGENT_VALUE))
                               .forEach(agent -> {
