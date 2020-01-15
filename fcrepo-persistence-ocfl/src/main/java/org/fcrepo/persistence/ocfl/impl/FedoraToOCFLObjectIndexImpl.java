@@ -124,7 +124,8 @@ public class FedoraToOCFLObjectIndexImpl implements FedoraToOCFLObjectIndex {
                     fedoraOCFLMapping.getOcflObjectId()));
             output.close();
         } catch (IOException exception) {
-            LOGGER.warn("Unable to create/write on disk FedoraToOCFL Mapping at {}", FEDORA_TO_OCFL_INDEX_FILE.toString());
+            LOGGER.warn("Unable to create/write on disk FedoraToOCFL Mapping at {}",
+                    FEDORA_TO_OCFL_INDEX_FILE.toString());
         }
     }
 }
