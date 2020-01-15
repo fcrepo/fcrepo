@@ -48,7 +48,13 @@ public class FedoraToOCFLObjectIndexImpl implements FedoraToOCFLObjectIndex {
     private Map<String, FedoraOCFLMapping> fedoraOCFLMappingMap = Collections.synchronizedMap(new HashMap<>());
 
     /**
-     * Constructor
+     * Constructor.
+     *
+     * On disk index file is a text file with 3 values per line separated by tabs.
+     * 1. fedora identifier (ie. info:fedora/parent/object1 or info:fedora/object1)
+     * 2. fedora root object ID (ie. info:fedora/parent or info:fedora/object1). Used for root of Archival groups.
+     * 3. OCFL object ID (ie. parent/object1 or object1)
+     *
      * @throws IOException If we can't access the file.
      */
     public FedoraToOCFLObjectIndexImpl() throws IOException {
@@ -61,6 +67,8 @@ public class FedoraToOCFLObjectIndexImpl implements FedoraToOCFLObjectIndex {
                 if (map.length == 3) {
                     final FedoraOCFLMapping ocflMapping = new FedoraOCFLMapping(map[1], map[2]);
                     fedoraOCFLMappingMap.put(map[0], ocflMapping);
+                } else {
+                    LOGGER.warn("Expected 3 tab-separated values, found {}. Ignoring line.", map.length);
                 }
             });
         }
@@ -106,9 +114,7 @@ public class FedoraToOCFLObjectIndexImpl implements FedoraToOCFLObjectIndex {
     private void writeMappingToDisk(final String fedoraId, final FedoraOCFLMapping fedoraOCFLMapping) {
         try {
             if (!FEDORA_TO_OCFL_INDEX_FILE.exists()) {
-                final String dirName = FEDORA_TO_OCFL_INDEX_FILE.toPath().toAbsolutePath().toString().substring(0,
-                        FEDORA_TO_OCFL_INDEX_FILE.toPath().toAbsolutePath().toString().lastIndexOf(File.separator));
-                final File dir = new File(dirName);
+                final File dir = FEDORA_TO_OCFL_INDEX_FILE.getParentFile();
                 if (!dir.exists()) {
                     dir.mkdirs();
                 }
