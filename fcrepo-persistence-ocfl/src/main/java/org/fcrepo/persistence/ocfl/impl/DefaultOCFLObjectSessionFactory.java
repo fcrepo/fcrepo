@@ -17,11 +17,11 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static java.lang.System.getProperty;
-import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
+import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.OCFL_STORAGE_ROOT_DIR;
+import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.OCFL_WORK_DIR;
+import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.STAGING_DIR;
 
 import java.io.File;
-import java.nio.file.Paths;
 
 import edu.wisc.library.ocfl.core.storage.filesystem.FileSystemOcflStorage;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
@@ -46,24 +46,9 @@ public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultOCFLObjectSessionFactory.class);
 
-    private static final File STAGING_DIR = resolveDir("fcrepo.ocfl.staging.dir");
-    private static final File OCFL_STORAGE_ROOT_DIR = resolveDir("fcrepo.ocfl.storage.root.dir");
-    private static final File OCFL_WORK_DIR = resolveDir("fcrepo.ocfl.work.dir");
-
     private File ocflStagingDir;
 
     private MutableOcflRepository ocflRepository;
-
-    private static final File resolveDir(final String systemPropertyKey) {
-        final String path = getProperty(systemPropertyKey);
-        if (path != null) {
-            return new File(path);
-        } else {
-            //return default
-
-            return Paths.get(JAVA_IO_TMPDIR, systemPropertyKey).toFile();
-        }
-    }
 
     /**
      * Default Constructor.  You can set the ocfl staging, storage root, and work directories by setting the following
