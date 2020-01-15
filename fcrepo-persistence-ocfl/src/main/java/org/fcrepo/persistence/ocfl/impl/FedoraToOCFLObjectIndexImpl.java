@@ -17,9 +17,7 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
-
-import static java.lang.System.getProperty;
+import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.FEDORA_TO_OCFL_INDEX_FILE;
 
 import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
@@ -32,8 +30,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,12 +43,6 @@ import java.util.Map;
 @Component
 public class FedoraToOCFLObjectIndexImpl implements FedoraToOCFLObjectIndex {
 
-    private Path indexFilePath = getProperty("fcrepo.ocfl.work.dir") == null ?
-            Paths.get(JAVA_IO_TMPDIR, "fcrepo.ocfl.work.dir", "fedoraToOcflIndex.tsv") :
-            Paths.get(getProperty("fcrepo.ocfl.work.dir"), "fedoraToOcflIndex.tsv");
-
-    private File indexFile = indexFilePath.toFile();
-
     private static Logger LOGGER = LoggerFactory.getLogger(FedoraToOCFLObjectIndexImpl.class);
 
     private Map<String, FedoraOCFLMapping> fedoraOCFLMappingMap = Collections.synchronizedMap(new HashMap<>());
@@ -62,8 +52,8 @@ public class FedoraToOCFLObjectIndexImpl implements FedoraToOCFLObjectIndex {
      * @throws IOException If we can't access the file.
      */
     public FedoraToOCFLObjectIndexImpl() throws IOException {
-        if (indexFile.exists() && indexFile.canRead()) {
-            Files.lines(indexFile.toPath()).filter(l -> {
+        if (FEDORA_TO_OCFL_INDEX_FILE.exists() && FEDORA_TO_OCFL_INDEX_FILE.canRead()) {
+            Files.lines(FEDORA_TO_OCFL_INDEX_FILE.toPath()).filter(l -> {
                 final String m = l.split("\t")[0];
                 return (!fedoraOCFLMappingMap.containsKey(m));
             }).forEach(l -> {
@@ -115,21 +105,20 @@ public class FedoraToOCFLObjectIndexImpl implements FedoraToOCFLObjectIndex {
      */
     private void writeMappingToDisk(final String fedoraId, final FedoraOCFLMapping fedoraOCFLMapping) {
         try {
-            if (!indexFile.exists()) {
-                final String dirName = indexFile.toPath().toAbsolutePath().toString().substring(0,
-                        indexFile.toPath().toAbsolutePath().toString().lastIndexOf(File.separator));
+            if (!FEDORA_TO_OCFL_INDEX_FILE.exists()) {
+                final String dirName = FEDORA_TO_OCFL_INDEX_FILE.toPath().toAbsolutePath().toString().substring(0,
+                        FEDORA_TO_OCFL_INDEX_FILE.toPath().toAbsolutePath().toString().lastIndexOf(File.separator));
                 final File dir = new File(dirName);
                 if (!dir.exists()) {
                     dir.mkdirs();
                 }
-                indexFile.createNewFile();
             }
-            final BufferedWriter output = new BufferedWriter(new FileWriter(indexFile, true));
+            final BufferedWriter output = new BufferedWriter(new FileWriter(FEDORA_TO_OCFL_INDEX_FILE, true));
             output.write(String.format("%s\t%s\t%s\n", fedoraId, fedoraOCFLMapping.getRootObjectIdentifier(),
                     fedoraOCFLMapping.getOcflObjectId()));
             output.close();
         } catch (IOException exception) {
-            LOGGER.warn("Unable to create/write on disk FedoraToOCFL Mapping at {}", indexFile.toString());
+            LOGGER.warn("Unable to create/write on disk FedoraToOCFL Mapping at {}", FEDORA_TO_OCFL_INDEX_FILE.toString());
         }
     }
 }
