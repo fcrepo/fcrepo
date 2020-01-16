@@ -380,6 +380,7 @@ public class FedoraLdp extends ContentExposingResource {
             @HeaderParam("Digest") final String digest)
             throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException,
                    PathNotFoundException {
+        LOGGER.debug("Create resource: {}", externalPath);
 
         hasRestrictedPath(externalPath);
 
@@ -417,9 +418,12 @@ public class FedoraLdp extends ContentExposingResource {
         final String externalUri = this.uriInfo.getRequestUri().toString();
         final String fedoraId = identifierConverter().toInternalId(externalUri);
 
-        final String filename = contentDisposition.getFileName();
-
-        final long size = contentDisposition.getSize();
+        String filename = null;
+        long size = -1;
+        if (contentDisposition != null) {
+            filename = contentDisposition.getFileName();
+            size = contentDisposition.getSize();
+        }
 
         // TODO: Refactor to check preconditions
         //evaluateRequestPreconditions(request, servletResponse, resource, transaction);

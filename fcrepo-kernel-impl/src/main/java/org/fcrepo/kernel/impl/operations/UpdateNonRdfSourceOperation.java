@@ -58,8 +58,12 @@ public class UpdateNonRdfSourceOperation extends AbstractNonRdfSourceOperation {
      * @param filename the filename.
      * @param digests the checksum digests.
      */
-    protected UpdateNonRdfSourceOperation(final String rescId, final InputStream content, final String mimeType,
-                                            final long contentSize, final String filename, final Collection<URI> digests) {
+    protected UpdateNonRdfSourceOperation(final String rescId,
+                                          final InputStream content,
+                                          final String mimeType,
+                                          final long contentSize,
+                                          final String filename,
+                                          final Collection<URI> digests) {
         super(rescId, content, mimeType, contentSize, filename, digests);
     }
 

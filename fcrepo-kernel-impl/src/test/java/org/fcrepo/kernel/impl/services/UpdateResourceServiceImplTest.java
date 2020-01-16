@@ -122,7 +122,8 @@ public class UpdateResourceServiceImplTest {
         when(extContent.getURL()).thenReturn(extUrl);
         when(extContent.getHandling()).thenReturn(ExternalContent.REDIRECT);
         updateResourceService.perform(txId, fedoraId, null, null, digests, null, 0, extContent);
-        verify(nonRdfSourceOperationFactory).updateExternalBinaryBuilder(fedoraId, ExternalContent.REDIRECT, URI.create(extUrl));
+        verify(nonRdfSourceOperationFactory).updateExternalBinaryBuilder(
+                fedoraId, ExternalContent.REDIRECT, URI.create(extUrl));
         verify(psSession).persist(ArgumentMatchers.any(ResourceOperation.class));
     }
 

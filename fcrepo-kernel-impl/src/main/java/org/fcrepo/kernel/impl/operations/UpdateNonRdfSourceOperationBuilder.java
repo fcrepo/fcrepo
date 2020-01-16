@@ -29,7 +29,8 @@ import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
  *
  * @author bbpennel
  */
-public class UpdateNonRdfSourceOperationBuilder extends AbstractNonRdfSourceOperationBuilder implements NonRdfSourceOperationBuilder {
+public class UpdateNonRdfSourceOperationBuilder extends AbstractNonRdfSourceOperationBuilder
+        implements NonRdfSourceOperationBuilder {
 
     protected UpdateNonRdfSourceOperationBuilder(final String rescId, final InputStream stream) {
         this(rescId);

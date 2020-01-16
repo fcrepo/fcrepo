@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import static java.util.stream.Collectors.toCollection;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 
 import org.fcrepo.kernel.api.models.ExternalContent;
@@ -32,6 +33,7 @@ import org.fcrepo.kernel.impl.operations.AbstractResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 
@@ -39,8 +41,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.stream.Collectors;
 
+@Component
 public class UpdateResourceServiceImpl extends AbstractService implements UpdateResourceService {
 
     @Inject
@@ -58,7 +60,7 @@ public class UpdateResourceServiceImpl extends AbstractService implements Update
             final long size, final ExternalContent externalContent) {
 
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
-        final Collection<URI> uriDigests = digest.stream().map(URI::create).collect(Collectors.toCollection(HashSet::new));
+        final Collection<URI> uriDigests = digest.stream().map(URI::create).collect(toCollection(HashSet::new));
 
         // TODO: Verify permissions Write or Append permissions on parent.
 
