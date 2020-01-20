@@ -158,23 +158,27 @@ public class CreateResourceServiceImplTest {
     public void testNoParentRdf_Post() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
-        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null, model);
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true,null,
+                model);
     }
 
     @Test
     public void testNoParentRdf_Put() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
-        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, false, null, model);
+        final String newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null,
+                false, null, model);
         verify(psSession).persist(operationCaptor.capture());
         assertEquals(fedoraId, operationCaptor.getValue().getResourceId());
+        assertEquals(fedoraId, newID);
     }
 
     @Test(expected = ItemNotFoundException.class)
     public void testNoParentBinary_Post() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
-        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null, FILENAME, CONTENT_SIZE, null,
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null,
+                FILENAME, CONTENT_SIZE, null,
                 DIGESTS, null, null);
     }
 
@@ -182,12 +186,14 @@ public class CreateResourceServiceImplTest {
     public void testNoParentBinary_Put() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
-        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, false, null, FILENAME, CONTENT_SIZE,
+        final String newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null,
+                false, null, FILENAME, CONTENT_SIZE,
                 null, DIGESTS, null, null);
         verify(psSession).persist(operationCaptor.capture());
         final var operation = operationCaptor.getValue();
         assertEquals(fedoraId, operation.getResourceId());
         assertNull(((CreateNonRdfSourceOperation) operation).getParentId());
+        assertEquals(fedoraId, newID);
     }
 
     @Test(expected = CannotCreateResourceException.class)
@@ -195,7 +201,8 @@ public class CreateResourceServiceImplTest {
         final String fedoraId = UUID.randomUUID().toString();
         when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
-        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null, model);
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null,
+                model);
     }
 
     @Test(expected = CannotCreateResourceException.class)
@@ -203,7 +210,8 @@ public class CreateResourceServiceImplTest {
         final String fedoraId = UUID.randomUUID().toString();
         when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
-        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null, FILENAME, CONTENT_SIZE, null,
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null,
+                FILENAME, CONTENT_SIZE, null,
                 DIGESTS, null, null);
     }
 
@@ -212,11 +220,13 @@ public class CreateResourceServiceImplTest {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
-        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null, model);
+        final String newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true,
+                null, model);
         verify(psSession).persist(operationCaptor.capture());
         final String persistedId = operationCaptor.getValue().getResourceId();
         assertNotEquals(fedoraId, persistedId);
         assertTrue(persistedId.startsWith(fedoraId));
+        assertEquals(persistedId, newID);
     }
 
     @Test
@@ -224,11 +234,13 @@ public class CreateResourceServiceImplTest {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
-        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, false, null, model);
+        final String newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null,
+                false,null, model);
         verify(psSession).persist(operationCaptor.capture());
         final var operation = (CreateRdfSourceOperation) operationCaptor.getValue();
         final String persistedId = operation.getResourceId();
         assertEquals(fedoraId, persistedId);
+        assertEquals(fedoraId, newID);
         assertNull("No parent expected", operation.getParentId());
     }
 
@@ -237,7 +249,8 @@ public class CreateResourceServiceImplTest {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
-        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, CONTENT_TYPE, FILENAME,
+        final String newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true,
+                CONTENT_TYPE, FILENAME,
                 CONTENT_SIZE, null, DIGESTS, null, null);
 
         verify(psSession).persist(operationCaptor.capture());
@@ -245,6 +258,7 @@ public class CreateResourceServiceImplTest {
         final String persistedId = operation.getResourceId();
         assertNotEquals(fedoraId, persistedId);
         assertTrue(persistedId.startsWith(fedoraId));
+        assertEquals(persistedId, newID);
         assertBinaryPropertiesPresent(operation);
         assertEquals(fedoraId, operation.getParentId());
     }
@@ -254,13 +268,15 @@ public class CreateResourceServiceImplTest {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
-        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, false, CONTENT_TYPE, FILENAME,
+        final String newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null,
+                false, CONTENT_TYPE, FILENAME,
                 CONTENT_SIZE, null, DIGESTS, null, null);
 
         verify(psSession).persist(operationCaptor.capture());
         final var operation = (CreateNonRdfSourceOperation) operationCaptor.getValue();
         final String persistedId = operation.getResourceId();
         assertEquals(fedoraId, persistedId);
+        assertEquals(fedoraId, newID);
         assertBinaryPropertiesPresent(operation);
         assertNull("No parent expected", operation.getParentId());
     }
@@ -272,11 +288,13 @@ public class CreateResourceServiceImplTest {
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(psSession.getHeaders(childId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
-        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, null, model);
+        final String newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug",
+                true, null, model);
 
         verify(psSession).persist(operationCaptor.capture());
         final var operation = (CreateRdfSourceOperation) operationCaptor.getValue();
         final String persistedId = operation.getResourceId();
+        assertEquals(persistedId, newID);
         assertNotEquals(fedoraId, persistedId);
         assertNotEquals(childId, persistedId);
         assertTrue(persistedId.startsWith(fedoraId));
@@ -302,9 +320,11 @@ public class CreateResourceServiceImplTest {
         when(psSession.getHeaders(childId, null)).thenThrow(PersistentItemNotFoundException.class);
 
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
+        final String newID;
         try {
             System.setProperty(SERVER_MANAGED_PROPERTIES_MODE, "relaxed");
-            createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, null, model);
+            newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true,
+                    null, model);
         } finally {
             System.clearProperty(SERVER_MANAGED_PROPERTIES_MODE);
         }
@@ -315,6 +335,7 @@ public class CreateResourceServiceImplTest {
         final String persistedId = operation.getResourceId();
         assertNotEquals(fedoraId, persistedId);
         assertTrue(persistedId.startsWith(fedoraId));
+        assertEquals(persistedId, newID);
 
         final var rdfOp = (RdfSourceOperation) operation;
         assertEquals(relaxedUser, rdfOp.getCreatedBy());
@@ -330,7 +351,8 @@ public class CreateResourceServiceImplTest {
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(psSession.getHeaders(childId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
-        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, CONTENT_TYPE, FILENAME,
+        final String newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug",
+                true, CONTENT_TYPE, FILENAME,
                 CONTENT_SIZE, null, DIGESTS, null, null);
         verify(psSession).persist(operationCaptor.capture());
         final var operation = (CreateNonRdfSourceOperation) operationCaptor.getValue();
@@ -338,6 +360,7 @@ public class CreateResourceServiceImplTest {
         assertNotEquals(fedoraId, persistedId);
         assertNotEquals(childId, persistedId);
         assertTrue(persistedId.startsWith(fedoraId));
+        assertEquals(persistedId, newID);
         assertBinaryPropertiesPresent(operation);
         assertEquals(fedoraId, operation.getParentId());
     }
@@ -350,12 +373,14 @@ public class CreateResourceServiceImplTest {
         when(psSession.getHeaders(childId, null))
                 .thenThrow(PersistentItemNotFoundException.class);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
-        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, null, model);
+        final String newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug",
+                true, null, model);
 
         verify(psSession).persist(operationCaptor.capture());
         final var operation = (CreateRdfSourceOperation) operationCaptor.getValue();
         assertEquals(childId, operation.getResourceId());
         assertEquals(fedoraId, operation.getParentId());
+        assertEquals(childId, newID);
     }
 
     @Test
@@ -366,7 +391,8 @@ public class CreateResourceServiceImplTest {
         when(psSession.getHeaders(childId, null))
                 .thenThrow(PersistentItemNotFoundException.class);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
-        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, null, FILENAME,
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true,
+                null, FILENAME,
                 CONTENT_SIZE, null, DIGESTS, null, null);
 
         verify(psSession).persist(operationCaptor.capture());
@@ -379,8 +405,8 @@ public class CreateResourceServiceImplTest {
     public void testNoParentExternal() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
-        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null, FILENAME,
-                CONTENT_SIZE, null, DIGESTS, null, extContent);
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null,
+                FILENAME, CONTENT_SIZE, null, DIGESTS, null, extContent);
     }
 
     @Test(expected = CannotCreateResourceException.class)
@@ -388,8 +414,8 @@ public class CreateResourceServiceImplTest {
         final String fedoraId = UUID.randomUUID().toString();
         when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
-        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null, FILENAME,
-                CONTENT_SIZE, null, DIGESTS, null, extContent);
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null,
+                FILENAME, CONTENT_SIZE, null, DIGESTS, null, extContent);
     }
 
     @Test
@@ -397,8 +423,8 @@ public class CreateResourceServiceImplTest {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
-        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null, FILENAME,
-                CONTENT_SIZE, null, DIGESTS, null, extContent);
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null,
+                FILENAME, CONTENT_SIZE, null, DIGESTS, null, extContent);
         verify(psSession).persist(operationCaptor.capture());
         final var operation = operationCaptor.getValue();
         assertExternalBinaryPropertiesPresent(operation);
@@ -411,8 +437,8 @@ public class CreateResourceServiceImplTest {
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(psSession.getHeaders(childId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
-        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, CONTENT_TYPE, FILENAME,
-                CONTENT_SIZE, null, DIGESTS, null, extContent);
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, CONTENT_TYPE,
+                FILENAME, CONTENT_SIZE, null, DIGESTS, null, extContent);
         verify(psSession).persist(operationCaptor.capture());
         final var operation = operationCaptor.getValue();
         final String persistedId = operation.getResourceId();
@@ -431,8 +457,8 @@ public class CreateResourceServiceImplTest {
         when(psSession.getHeaders(childId, null))
                 .thenThrow(PersistentItemNotFoundException.class);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
-        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, null, FILENAME,
-                CONTENT_SIZE, null, DIGESTS, null, extContent);
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true,
+                null, FILENAME, CONTENT_SIZE, null, DIGESTS, null, extContent);
         verify(psSession).persist(operationCaptor.capture());
         final var operation = operationCaptor.getValue();
         assertEquals(childId, operation.getResourceId());
@@ -443,90 +469,90 @@ public class CreateResourceServiceImplTest {
     public void testSendingValidInteractionModel() {
         // If you provide a valid interaction model, you should always get it back.
         final String expected = BASIC_CONTAINER.toString();
-        final String model1 = createResourceService.determineInteractionModel(STRING_TYPES_VALID, false, false,
-                false);
+        final String model1 = createResourceService.determineInteractionModel(STRING_TYPES_VALID, false,
+                false, false);
         assertEquals(expected, model1);
-        final String model2 = createResourceService.determineInteractionModel(STRING_TYPES_VALID, false, false,
-                true);
+        final String model2 = createResourceService.determineInteractionModel(STRING_TYPES_VALID, false,
+                false, true);
         assertEquals(expected, model2);
-        final String model3 = createResourceService.determineInteractionModel(STRING_TYPES_VALID, false, true,
-                false);
+        final String model3 = createResourceService.determineInteractionModel(STRING_TYPES_VALID, false,
+                true, false);
         assertEquals(expected, model3);
-        final String model4 = createResourceService.determineInteractionModel(STRING_TYPES_VALID, false, true,
-                true);
+        final String model4 = createResourceService.determineInteractionModel(STRING_TYPES_VALID, false,
+                true, true);
         assertEquals(expected, model4);
-        final String model5 = createResourceService.determineInteractionModel(STRING_TYPES_VALID, true, false,
-                false);
+        final String model5 = createResourceService.determineInteractionModel(STRING_TYPES_VALID, true,
+                false, false);
         assertEquals(expected, model5);
-        final String model6 = createResourceService.determineInteractionModel(STRING_TYPES_VALID, true, false,
-                true);
+        final String model6 = createResourceService.determineInteractionModel(STRING_TYPES_VALID, true,
+                false, true);
         assertEquals(expected, model6);
-        final String model7 = createResourceService.determineInteractionModel(STRING_TYPES_VALID, true, true,
-                false);
+        final String model7 = createResourceService.determineInteractionModel(STRING_TYPES_VALID, true,
+                true, false);
         assertEquals(expected, model7);
-        final String model8 = createResourceService.determineInteractionModel(STRING_TYPES_VALID, true, true,
-                true);
+        final String model8 = createResourceService.determineInteractionModel(STRING_TYPES_VALID, true,
+                true, true);
         assertEquals(expected, model8);
     }
 
     @Test
     public void testSendingInvalidInteractionModelIsNotRdf() {
-        final String model = createResourceService.determineInteractionModel(STRING_TYPES_NOT_VALID, false, false,
-                false);
+        final String model = createResourceService.determineInteractionModel(STRING_TYPES_NOT_VALID,
+                false, false, false);
         assertEquals(defaultInteractionModel, model);
     }
 
     @Test
     public void testNotRdfNoContentIsExternal() {
         final String expected = NON_RDF_SOURCE.toString();
-        final String model = createResourceService.determineInteractionModel(STRING_TYPES_NOT_VALID, false, false,
-                true);
+        final String model = createResourceService.determineInteractionModel(STRING_TYPES_NOT_VALID,
+                false, false, true);
         assertEquals(expected, model);
     }
 
     @Test
     public void testNotRdfContentPresentNotExternal() {
         final String expected = NON_RDF_SOURCE.toString();
-        final String model = createResourceService.determineInteractionModel(STRING_TYPES_NOT_VALID, false, true,
-                false);
+        final String model = createResourceService.determineInteractionModel(STRING_TYPES_NOT_VALID,
+                false, true, false);
         assertEquals(expected, model);
     }
 
     @Test
     public void testNotRdfContentPresentIsExternal() {
         final String expected = NON_RDF_SOURCE.toString();
-        final String model = createResourceService.determineInteractionModel(STRING_TYPES_NOT_VALID, false, true,
-                true);
+        final String model = createResourceService.determineInteractionModel(STRING_TYPES_NOT_VALID,
+                false, true, true);
         assertEquals(expected, model);
     }
 
     @Test
     public void testIsRdfNoContentNotExternal() {
-        final String model = createResourceService.determineInteractionModel(STRING_TYPES_NOT_VALID, true, false,
-                false);
+        final String model = createResourceService.determineInteractionModel(STRING_TYPES_NOT_VALID,
+                true, false, false);
         assertEquals(defaultInteractionModel, model);
     }
 
     @Test
     public void testIsRdfNoContentIsExternal() {
         final String expected = NON_RDF_SOURCE.toString();
-        final String model = createResourceService.determineInteractionModel(STRING_TYPES_NOT_VALID, true, false,
-                true);
+        final String model = createResourceService.determineInteractionModel(STRING_TYPES_NOT_VALID,
+                true, false, true);
         assertEquals(expected, model);
     }
 
     @Test
     public void testIsRdfHasContentNotExternal() {
-        final String model = createResourceService.determineInteractionModel(STRING_TYPES_NOT_VALID, true, true,
-                false);
+        final String model = createResourceService.determineInteractionModel(STRING_TYPES_NOT_VALID,
+                true, true, false);
         assertEquals(defaultInteractionModel, model);
     }
 
     @Test
     public void testIsRdfHasContentIsExternal() {
         final String expected = NON_RDF_SOURCE.toString();
-        final String model = createResourceService.determineInteractionModel(STRING_TYPES_NOT_VALID, true, true,
-                true);
+        final String model = createResourceService.determineInteractionModel(STRING_TYPES_NOT_VALID,
+                true, true, true);
         assertEquals(expected, model);
     }
 

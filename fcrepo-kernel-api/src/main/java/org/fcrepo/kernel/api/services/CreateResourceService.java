@@ -46,8 +46,10 @@ public interface CreateResourceService {
      * @param digest The binary digest or null if none.
      * @param requestBody The request body or null if none.
      * @param externalContent The external content handler or null if none.
+     *
+     * @return The identifier of the created resource.
      */
-    void perform(String txId, String userPrincipal, String fedoraId, String slug, boolean isContained,
+    String perform(String txId, String userPrincipal, String fedoraId, String slug, boolean isContained,
             String contentType, String filename, Long contentSize, List<String> linkHeaders,
             Collection<String> digest, InputStream requestBody, ExternalContent externalContent);
 
@@ -61,8 +63,10 @@ public interface CreateResourceService {
      * @param isContained The new resource is contained by fedoraId (ie. POST).
      * @param linkHeaders The original LINK headers or null if none.
      * @param model The request body RDF as a Model
+     *
+     * @return The identifier of the created resource.
      */
-    void perform(String txId, String userPrincipal, String fedoraId, String slug, boolean isContained,
+    String perform(String txId, String userPrincipal, String fedoraId, String slug, boolean isContained,
             List<String> linkHeaders, Model model);
 
 }

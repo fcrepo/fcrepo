@@ -73,7 +73,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
     private UniqueValueSupplier minter;
 
     @Override
-    public void perform(final String txId, final String userPrincipal, final String fedoraId, final String slug,
+    public String perform(final String txId, final String userPrincipal, final String fedoraId, final String slug,
                         final boolean isContained, final String contentType, final String filename,
                         final Long contentSize, final List<String> linkHeaders, final Collection<String> digest,
                         final InputStream requestBody, final ExternalContent externalContent) {
@@ -109,13 +109,14 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
         try {
             pSession.persist(createOp);
+            return fullPath;
         } catch (final PersistentStorageException exc) {
             throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
         }
     }
 
     @Override
-    public void perform(final String txId, final String userPrincipal, final String fedoraId, final String slug,
+    public String perform(final String txId, final String userPrincipal, final String fedoraId, final String slug,
             final boolean isContained, final List<String> linkHeaders, final Model model) {
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
         checkAclLinkHeader(linkHeaders);
@@ -138,6 +139,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
         try {
             pSession.persist(createOp);
+            return fullPath;
         } catch (final PersistentStorageException exc) {
             throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
         }
