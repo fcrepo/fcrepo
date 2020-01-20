@@ -169,7 +169,6 @@ public class DefaultOCFLObjectSessionTest {
 
         assertMutableHeadPopulated(OBJ_ID);
 
-        stagingPath = tempFolder.newFolder("obj1-staging").toPath();
         session = new DefaultOCFLObjectSession(OBJ_ID, stagingPath, ocflRepository);
 
         // Commit changes to new version in second commit
@@ -323,10 +322,12 @@ public class DefaultOCFLObjectSessionTest {
         session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
 
         assertEquals(1, stagingPath.toFile().listFiles().length);
+        assertEquals(1, stagingPath.resolve(OBJ_ID).toFile().listFiles().length);
 
         session.delete(FILE1_SUBPATH);
 
-        assertEquals(0, stagingPath.toFile().listFiles().length);
+        assertEquals(1, stagingPath.toFile().listFiles().length);
+        assertEquals(0, stagingPath.resolve(OBJ_ID).toFile().listFiles().length);
     }
 
     @Test

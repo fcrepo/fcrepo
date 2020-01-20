@@ -88,7 +88,6 @@ public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory
 
         final File stagingDirectory = new File(this.ocflStagingDir,
                 persistentStorageSessionId == null ? "read-only" : persistentStorageSessionId);
-        stagingDirectory.mkdirs();
         return new DefaultOCFLObjectSession(ocflId, stagingDirectory.toPath(), this.ocflRepository);
     }
 }
