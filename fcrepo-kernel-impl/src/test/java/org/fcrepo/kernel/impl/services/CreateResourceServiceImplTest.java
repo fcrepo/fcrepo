@@ -158,7 +158,7 @@ public class CreateResourceServiceImplTest {
     public void testNoParentRdf_Post() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
-        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true,null,
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null,
                 model);
     }
 
@@ -178,8 +178,7 @@ public class CreateResourceServiceImplTest {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
         createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null,
-                FILENAME, CONTENT_SIZE, null,
-                DIGESTS, null, null);
+                FILENAME, CONTENT_SIZE, null, DIGESTS, null, null);
     }
 
     @Test
@@ -187,8 +186,7 @@ public class CreateResourceServiceImplTest {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
         final String newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null,
-                false, null, FILENAME, CONTENT_SIZE,
-                null, DIGESTS, null, null);
+                false, null, FILENAME, CONTENT_SIZE, null, DIGESTS, null, null);
         verify(psSession).persist(operationCaptor.capture());
         final var operation = operationCaptor.getValue();
         assertEquals(fedoraId, operation.getResourceId());
@@ -211,8 +209,7 @@ public class CreateResourceServiceImplTest {
         when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null,
-                FILENAME, CONTENT_SIZE, null,
-                DIGESTS, null, null);
+                FILENAME, CONTENT_SIZE, null, DIGESTS, null, null);
     }
 
     @Test
@@ -235,7 +232,7 @@ public class CreateResourceServiceImplTest {
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         final String newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null,
-                false,null, model);
+                false, null, model);
         verify(psSession).persist(operationCaptor.capture());
         final var operation = (CreateRdfSourceOperation) operationCaptor.getValue();
         final String persistedId = operation.getResourceId();
@@ -250,8 +247,7 @@ public class CreateResourceServiceImplTest {
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         final String newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true,
-                CONTENT_TYPE, FILENAME,
-                CONTENT_SIZE, null, DIGESTS, null, null);
+                CONTENT_TYPE, FILENAME, CONTENT_SIZE, null, DIGESTS, null, null);
 
         verify(psSession).persist(operationCaptor.capture());
         final var operation = (CreateNonRdfSourceOperation) operationCaptor.getValue();
@@ -269,8 +265,7 @@ public class CreateResourceServiceImplTest {
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         final String newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null,
-                false, CONTENT_TYPE, FILENAME,
-                CONTENT_SIZE, null, DIGESTS, null, null);
+                false, CONTENT_TYPE, FILENAME, CONTENT_SIZE, null, DIGESTS, null, null);
 
         verify(psSession).persist(operationCaptor.capture());
         final var operation = (CreateNonRdfSourceOperation) operationCaptor.getValue();
@@ -352,8 +347,7 @@ public class CreateResourceServiceImplTest {
         when(psSession.getHeaders(childId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         final String newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug",
-                true, CONTENT_TYPE, FILENAME,
-                CONTENT_SIZE, null, DIGESTS, null, null);
+                true, CONTENT_TYPE, FILENAME, CONTENT_SIZE, null, DIGESTS, null, null);
         verify(psSession).persist(operationCaptor.capture());
         final var operation = (CreateNonRdfSourceOperation) operationCaptor.getValue();
         final String persistedId = operation.getResourceId();
@@ -392,8 +386,7 @@ public class CreateResourceServiceImplTest {
                 .thenThrow(PersistentItemNotFoundException.class);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true,
-                null, FILENAME,
-                CONTENT_SIZE, null, DIGESTS, null, null);
+                null, FILENAME, CONTENT_SIZE, null, DIGESTS, null, null);
 
         verify(psSession).persist(operationCaptor.capture());
         final var operation = (CreateNonRdfSourceOperation) operationCaptor.getValue();
@@ -469,8 +462,8 @@ public class CreateResourceServiceImplTest {
     public void testSendingValidInteractionModel() {
         // If you provide a valid interaction model, you should always get it back.
         final String expected = BASIC_CONTAINER.toString();
-        final String model1 = createResourceService.determineInteractionModel(STRING_TYPES_VALID, false,
-                false, false);
+        final String model1 = createResourceService.determineInteractionModel(STRING_TYPES_VALID, false, false,
+                false);
         assertEquals(expected, model1);
         final String model2 = createResourceService.determineInteractionModel(STRING_TYPES_VALID, false,
                 false, true);
@@ -570,9 +563,9 @@ public class CreateResourceServiceImplTest {
     @Test(expected = MalformedRdfException.class)
     public void testCheckServerManagedPredicate() throws Exception {
         final InputStream graph = IOUtils.toInputStream("@prefix fr: <" + REPOSITORY_NAMESPACE + "> .\n" +
-                "@prefix dc: <" + DC_11.getURI() + "> .\n" +
-                "@prefix example: <http://example.org/stuff#> .\n@prefix xsd: <" + XSD.getURI() + ">.\n" +
-                "<> a example:Thing; dc:title \"The thing\"; fr:lastModified \"2000-01-01T00:00:00Z\"^^xsd:datetime .",
+                        "@prefix dc: <" + DC_11.getURI() + "> .\n" +
+                        "@prefix example: <http://example.org/stuff#> .\n@prefix xsd: <" + XSD.getURI() + ">.\n" +
+                        "<> a example:Thing; dc:title \"The thing\"; fr:lastModified \"2000-01-01T00:00:00Z\"^^xsd:datetime .",
                 "UTF-8");
         final Model model = ModelFactory.createDefaultModel();
         model.read(graph, "http://localhost:8080/rest/test1", "TURTLE");
@@ -604,7 +597,7 @@ public class CreateResourceServiceImplTest {
 
     @Test(expected = RequestWithAclLinkHeaderException.class)
     public void testCheckAclLinkHeaderFailDblQ() throws Exception {
-        final List<String> links =Arrays.asList("<" + NON_RDF_SOURCE.toString() + ">; rel=\"type\"",
+        final List<String> links = Arrays.asList("<" + NON_RDF_SOURCE.toString() + ">; rel=\"type\"",
                 "<http://example.org/some/location/image.tiff>; " +
                         "rel=\"http://fedora.info/definitions/fcrepo#ExternalContent\"; " +
                         "handling=\"proxy\"; type=\"image/tiff\"",
