@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.UUID;
 
 import edu.wisc.library.ocfl.core.storage.filesystem.FileSystemOcflStorage;
 import org.apache.commons.io.IOUtils;
@@ -629,6 +630,21 @@ public class DefaultOCFLObjectSessionTest {
         assertEquals("There should be exactly two versions",2, versions.size());
     }
 
+    @Test
+    public void ensureFilesDontStageTogether() throws Exception {
+        final String obj1ID = UUID.randomUUID().toString();
+        final String obj2ID = UUID.randomUUID().toString();
+        final var session1 = new DefaultOCFLObjectSession(obj1ID, stagingPath, ocflRepository);
+        final var session2 = new DefaultOCFLObjectSession(obj2ID, stagingPath, ocflRepository);
+        session1.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session2.write(FILE2_SUBPATH, fileStream(FILE_CONTENT2));
+        session1.commit(NEW_VERSION);
+        session2.commit(NEW_VERSION);
+        assertFileInVersion(obj1ID, "v1", FILE1_SUBPATH, FILE_CONTENT1);
+        assertFileNotInVersion(obj1ID, "v1", FILE2_SUBPATH);
+        assertFileInVersion(obj2ID, "v1", FILE2_SUBPATH, FILE_CONTENT2);
+        assertFileNotInVersion(obj2ID, "v1", FILE1_SUBPATH);
+    }
 
     private static InputStream fileStream(final String content) {
         return new ByteArrayInputStream(content.getBytes());
