@@ -555,7 +555,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String interactionModel = checkInteractionModel(links);
 
-        final String fedoraId = identifierConverter().toInternalId(externalPath());
+        final String fedoraId = identifierConverter().toInternalId(identifierConverter().toDomain(externalPath()));
 
         if (isBinary(interactionModel, requestContentType.toString(), requestContentType != null,
                 extContent != null)) {

@@ -35,6 +35,7 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -96,7 +97,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     public DefaultOCFLObjectSession(final String objectIdentifier, final Path stagingPath,
             final MutableOcflRepository ocflRepository) {
         this.objectIdentifier = objectIdentifier;
-        this.stagingPath = stagingPath;
+        this.stagingPath = stagingPath.resolve(objectIdentifier);
         this.ocflRepository = ocflRepository;
         this.deletePaths = new HashSet<>();
         this.objectDeleted = false;
@@ -126,6 +127,10 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     @Override
     public synchronized WriteOutcome write(final String subpath, final InputStream stream)
             throws PersistentStorageException {
+        // Check that the staging path exists now that we are writing.
+        if (!this.stagingPath.toFile().exists()) {
+            this.stagingPath.toFile().mkdirs();
+        }
         // Determine the staging path for the incoming content
         final var stagedPath = resolveStagedPath(subpath);
         try {
@@ -430,7 +435,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     }
 
     private boolean isStagingEmpty() {
-        return stagingPath.toFile().listFiles().length == 0;
+        return !stagingPath.toFile().exists() || Objects.requireNonNull(stagingPath.toFile().listFiles()).length == 0;
     }
 
     private boolean hasStagedChanges(final Path path) {
