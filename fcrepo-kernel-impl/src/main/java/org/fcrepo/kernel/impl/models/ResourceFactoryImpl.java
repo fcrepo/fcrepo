@@ -21,8 +21,11 @@ import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
+
+import java.time.Instant;
 
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
@@ -36,6 +39,7 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
 
@@ -47,6 +51,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class ResourceFactoryImpl implements ResourceFactory {
+
+    private static final Logger LOGGER = getLogger(ResourceFactoryImpl.class);
 
     @Inject
     private PersistentStorageSessionManager persistentStorageSessionManager;
@@ -73,6 +79,37 @@ public class ResourceFactoryImpl implements ResourceFactory {
     public <T extends FedoraResource> T getResource(final Transaction transaction, final String identifier,
             final Class<T> clazz) throws PathNotFoundException {
         return clazz.cast(getResource(transaction, identifier));
+    }
+
+    @Override
+    public boolean doesResourceExist(final Transaction transaction, final String fedoraId, final Instant version) {
+        // TODO: Check the index first.
+
+        final PersistentStorageSession psSession;
+        if (transaction == null) {
+            psSession = persistentStorageSessionManager.getReadOnlySession();
+        } else {
+            psSession = persistentStorageSessionManager.getSession(transaction.getId());
+        }
+        try {
+            psSession.getHeaders(fedoraId, version);
+            return true;
+        } catch (PersistentItemNotFoundException e) {
+            // Object doesn't exist.
+            return false;
+        } catch (PersistentStorageException e) {
+            // Other error, pass along.
+            throw new RepositoryRuntimeException(e);
+        } finally {
+            if (transaction == null) {
+                // Commit session (if read-only) so it doesn't hang around.
+                try {
+                    psSession.commit();
+                } catch (PersistentStorageException e) {
+                    LOGGER.error("Error committing session, message: {}", e.getMessage());
+                }
+            }
+        }
     }
 
     /**
