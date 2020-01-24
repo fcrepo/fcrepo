@@ -22,6 +22,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
@@ -43,6 +44,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
 import org.junit.Before;
@@ -243,6 +245,44 @@ public class ResourceFactoryImplTest {
         populateHeaders(resourceHeaders, NON_RDF_SOURCE);
 
         factory.getResource(fedoraId);
+    }
+
+    @Test
+    public void doesResourceExists_Exists_WithSession() throws Exception {
+        final boolean answer = factory.doesResourceExist(mockTx, fedoraId, null);
+        assertTrue(answer);
+    }
+
+    @Test
+    public void doesResourceExists_Exists_WithoutSession() throws Exception {
+        final boolean answer = factory.doesResourceExist(null, fedoraId, null);
+        assertTrue(answer);
+    }
+
+    @Test
+    public void doesResourceExist_DoesntExist_WithSession() throws Exception {
+        when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
+        final boolean answer = factory.doesResourceExist(mockTx, fedoraId, null);
+        assertFalse(answer);
+    }
+
+    @Test
+    public void doesResourceExist_DoesntExist_WithoutSession() throws Exception {
+        when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
+        final boolean answer = factory.doesResourceExist(null, fedoraId, null);
+        assertFalse(answer);
+    }
+
+    @Test(expected = RepositoryRuntimeException.class)
+    public void doesResourceExist_Exception_WithSession() throws Exception {
+        when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentSessionClosedException.class);
+        factory.doesResourceExist(mockTx, fedoraId, null);
+    }
+
+    @Test(expected = RepositoryRuntimeException.class)
+    public void doesResourceExist_Exception_WithoutSession() throws Exception {
+        when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentSessionClosedException.class);
+        factory.doesResourceExist(null, fedoraId, null);
     }
 
     private void assertStateFieldsMatches(final FedoraResource resc) {

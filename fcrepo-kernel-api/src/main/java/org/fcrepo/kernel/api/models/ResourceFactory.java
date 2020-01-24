@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.api.models;
 
+import java.time.Instant;
+
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 
@@ -73,4 +75,13 @@ public interface ResourceFactory {
      */
     public <T extends FedoraResource> T getResource(final Transaction transaction, final String identifier,
             final Class<T> clazz) throws PathNotFoundException;
+
+    /**
+     * Check if a resource exists.
+     * @param transaction The current transaction or null if read-only.
+     * @param fedoraId The internal identifier
+     * @param version The version datetime or null for head.
+     * @return True if the identifier resolves to a resource.
+     */
+    public boolean doesResourceExist(final Transaction transaction, final String fedoraId, final Instant version);
 }
