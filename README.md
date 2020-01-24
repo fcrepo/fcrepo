@@ -11,7 +11,7 @@ the `5.x-maintenance` branch.
 
 ---
 
-[![Build Status](https://travis-ci.org/fcrepo4/fcrepo4.svg?branch=master)](https://travis-ci.org/fcrepo4/fcrepo4)
+[![Build Status](https://travis-ci.com/fcrepo4/fcrepo4.svg?branch=master)](https://travis-ci.com/fcrepo4/fcrepo4)
 
 [JavaDocs](http://docs.fcrepo.org/) | 
 [Fedora Wiki](https://wiki.duraspace.org/display/FF) | 
