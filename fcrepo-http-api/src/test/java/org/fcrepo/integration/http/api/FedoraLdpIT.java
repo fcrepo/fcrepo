@@ -251,7 +251,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testHeadObject() throws IOException {
         final String id = getRandomUniqueId();
         createObject(id).close();
@@ -260,7 +259,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testHeadDefaultContainer() throws IOException {
         final String id = getRandomUniqueId();
         createObject(id).close();
@@ -273,7 +271,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testHeadBasicContainer() throws IOException {
         final String id = getRandomUniqueId();
 
@@ -288,25 +285,21 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testHeadTurtleContentType() throws IOException {
         testHeadDefaultContentType(RDFMediaType.TURTLE_WITH_CHARSET);
     }
 
     @Test
-@Ignore
     public void testHeadRDFContentType() throws IOException {
         testHeadDefaultContentType(RDFMediaType.RDF_XML);
     }
 
     @Test
-@Ignore
     public void testHeadJSONLDContentType() throws IOException {
         testHeadDefaultContentType(RDFMediaType.JSON_LD);
     }
 
     @Test
-@Ignore
     public void testHeadDefaultContentType() throws IOException {
         testHeadDefaultContentType(null);
     }

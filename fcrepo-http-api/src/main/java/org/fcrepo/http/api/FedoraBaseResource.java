@@ -66,7 +66,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
     protected SecurityContext securityContext;
 
     @Inject
-    protected ResourceFactory resourceFactory;
+    private ResourceFactory resourceFactory;
 
     protected IdentifierConverter<Resource, FedoraResource> idTranslator;
 
@@ -90,7 +90,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
         return identifierConverter;
     }
 
-    protected FedoraResource getResourceHead(final String fedoraId) throws PathNotFoundException {
+    protected FedoraResource getFedoraResource(final String fedoraId) throws PathNotFoundException {
         return this.resourceFactory.getResource(fedoraId);
     }
 
