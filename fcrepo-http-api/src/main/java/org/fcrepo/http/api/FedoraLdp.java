@@ -451,7 +451,7 @@ public class FedoraLdp extends ContentExposingResource {
         // TODO: How to generate a response.
         LOGGER.debug("Finished creating resource with path: {}", externalPath());
         transaction.commit();
-        return createUpdateResponse(getResourceHead(fedoraId), created);
+        return createUpdateResponse(getFedoraResource(fedoraId), created);
 
     }
 
@@ -583,7 +583,7 @@ public class FedoraLdp extends ContentExposingResource {
         LOGGER.debug("Finished creating resource: {}", newFedoraId);
         transaction.commit();
         try {
-            return createUpdateResponse(getResourceHead(newFedoraId), true);
+            return createUpdateResponse(getFedoraResource(newFedoraId), true);
         } catch (PathNotFoundException e) {
             // We just created this resource, so something major must have happened.
             throw new RepositoryRuntimeException("Failure to find newly created resource", e);
