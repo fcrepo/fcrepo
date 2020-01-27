@@ -557,23 +557,32 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String fedoraId = identifierConverter().toInternalId(identifierConverter().toDomain(externalPath()));
 
+        final String newFedoraId;
         if (isBinary(interactionModel, requestContentType.toString(), requestContentType != null,
                 extContent != null)) {
             final Collection<String> checksums = parseDigestHeader(digest);
             final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
-            createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, slug, true, contentType,
-                    originalFileName, contentDisposition.getSize(), links, checksums, requestBodyStream, extContent);
+            newFedoraId = createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, slug, true,
+                    contentType, originalFileName, contentDisposition.getSize(), links, checksums, requestBodyStream,
+                    extContent);
         } else {
             final Model model = httpRdfService.bodyToInternalModel(externalPath(), requestBodyStream,
                     requestContentType, identifierConverter());
-            createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, slug, true, links,
-                    model);
+            newFedoraId = createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, slug, true,
+                    links, model);
         }
-
         // TODO: How to generate a response.
         LOGGER.debug("Finished creating resource with path: {}", externalPath());
+
+        final FedoraResource resource;
+        try {
+            resource = resourceFactory.getResource(transaction, newFedoraId);
+        } catch (PathNotFoundException e) {
+            // We just created this resource, so something major must have happened.
+            throw new RepositoryRuntimeException("Failure to find newly created resource", e);
+        }
         transaction.commit();
-        return createUpdateResponse(null, true);
+        return createUpdateResponse(resource, true);
     }
 
     /**
