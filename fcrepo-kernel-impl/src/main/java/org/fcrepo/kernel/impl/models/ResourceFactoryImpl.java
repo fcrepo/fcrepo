@@ -19,6 +19,7 @@ package org.fcrepo.kernel.impl.models;
 
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -94,10 +95,10 @@ public class ResourceFactoryImpl implements ResourceFactory {
         try {
             psSession.getHeaders(fedoraId, version);
             return true;
-        } catch (PersistentItemNotFoundException e) {
+        } catch (final PersistentItemNotFoundException e) {
             // Object doesn't exist.
             return false;
-        } catch (PersistentStorageException e) {
+        } catch (final PersistentStorageException e) {
             // Other error, pass along.
             throw new RepositoryRuntimeException(e);
         } finally {
@@ -105,7 +106,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
                 // Commit session (if read-only) so it doesn't hang around.
                 try {
                     psSession.commit();
-                } catch (PersistentStorageException e) {
+                } catch (final PersistentStorageException e) {
                     LOGGER.error("Error committing session, message: {}", e.getMessage());
                 }
             }
@@ -126,6 +127,9 @@ public class ResourceFactoryImpl implements ResourceFactory {
         }
         if (NON_RDF_SOURCE.getURI().equals(ixModel)) {
             return BinaryImpl.class;
+        }
+        if (FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI.equals(ixModel)) {
+            return NonRdfSourceDescriptionImpl.class;
         }
         // TODO add the rest of the types
         throw new ResourceTypeException("Could not identify the resource type for interaction model " + ixModel);
@@ -179,7 +183,13 @@ public class ResourceFactoryImpl implements ResourceFactory {
         resc.setStateToken(headers.getStateToken());
 
         if (resc instanceof Binary) {
-            // set binary headers
+            final var binary = (BinaryImpl) resc;
+            binary.setContentSize(headers.getContentSize());
+            binary.setExternalHandling(headers.getExternalHandling());
+            binary.setExternalUrl(headers.getExternalUrl());
+            binary.setDigests(headers.getDigests());
+            binary.setFilename(headers.getFilename());
+            binary.setMimeType(headers.getMimeType());
         }
     }
 

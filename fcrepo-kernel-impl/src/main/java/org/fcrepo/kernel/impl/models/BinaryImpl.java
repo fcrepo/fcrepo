@@ -17,13 +17,20 @@
  */
 package org.fcrepo.kernel.impl.models;
 
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
+
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
 
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.models.Binary;
+import org.fcrepo.kernel.api.models.ExternalContent;
+import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
@@ -35,6 +42,18 @@ import org.fcrepo.persistence.api.PersistentStorageSessionManager;
  * @author bbpennel
  */
 public class BinaryImpl extends FedoraResourceImpl implements Binary {
+
+    private String externalHandling;
+
+    private String externalUrl;
+
+    private Long contentSize;
+
+    private String filename;
+
+    private String mimeType;
+
+    private Collection<URI> digests;
 
     /**
      * Construct the binary
@@ -81,62 +100,93 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
 
     @Override
     public long getContentSize() {
-        // TODO Auto-generated method stub
-        return 0;
+        return contentSize;
     }
 
     @Override
     public URI getContentDigest() {
-        // TODO Auto-generated method stub
-        return null;
+        // Returning the first digest for the time being
+        if (digests == null) {
+            return null;
+        }
+        final var digest = digests.stream().findFirst();
+        return digest.isPresent() ? digest.get() : null;
     }
 
     @Override
     public Boolean isProxy() {
-        // TODO Auto-generated method stub
-        return null;
+        return PROXY.equals(externalHandling);
     }
 
     @Override
     public Boolean isRedirect() {
-        // TODO Auto-generated method stub
-        return null;
+        return ExternalContent.REDIRECT.equals(externalHandling);
     }
 
     @Override
-    public String getProxyURL() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public void setProxyURL(final String url) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public String getRedirectURL() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public void setRedirectURL(final String url) {
-        // TODO Auto-generated method stub
-
+    public String getExternalURL() {
+        return externalUrl;
     }
 
     @Override
     public String getMimeType() {
-        // TODO Auto-generated method stub
-        return null;
+        return mimeType;
     }
 
     @Override
     public String getFilename() {
-        // TODO Auto-generated method stub
-        return null;
+        return filename;
     }
 
+    @Override
+    public FedoraResource getDescription() {
+        try {
+            final var descId = getId() + "/" + FCR_METADATA;
+            return resourceFactory.getResource(tx, descId);
+        } catch (final PathNotFoundException e) {
+            throw new PathNotFoundRuntimeException(e);
+        }
+    }
+
+    /**
+     * @param externalHandling the externalHandling to set
+     */
+    protected void setExternalHandling(final String externalHandling) {
+        this.externalHandling = externalHandling;
+    }
+
+    /**
+     * @param externalUrl the externalUrl to set
+     */
+    protected void setExternalUrl(final String externalUrl) {
+        this.externalUrl = externalUrl;
+    }
+
+    /**
+     * @param contentSize the contentSize to set
+     */
+    protected void setContentSize(final Long contentSize) {
+        this.contentSize = contentSize;
+    }
+
+    /**
+     * @param filename the filename to set
+     */
+    protected void setFilename(final String filename) {
+        this.filename = filename;
+    }
+
+    /**
+     * @param mimeType the mimeType to set
+     */
+    protected void setMimeType(final String mimeType) {
+        this.mimeType = mimeType;
+    }
+
+    /**
+     * @param digests the digests to set
+     */
+    protected void setDigests(final Collection<URI> digests) {
+        this.digests = digests;
+    }
 }

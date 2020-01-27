@@ -17,10 +17,12 @@
  */
 package org.fcrepo.kernel.impl.models;
 
+import static java.util.Arrays.asList;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -30,7 +32,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
+import java.net.URI;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.UUID;
 
 import org.apache.jena.rdf.model.Resource;
@@ -40,6 +44,7 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ResourceTypeException;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
+import org.fcrepo.kernel.api.models.ExternalContent;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
@@ -69,6 +74,16 @@ public class ResourceFactoryImplTest {
     private final static String LAST_MODIFIED_BY = "user2";
 
     private final static String STATE_TOKEN = "stately_value";
+
+    private final static long CONTENT_SIZE = 100l;
+
+    private final static String MIME_TYPE = "text/plain";
+
+    private final static String FILENAME = "testfile.txt";
+
+    private final static URI DIGEST = URI.create("sha:12345");
+
+    private final static Collection<URI> DIGESTS = asList(DIGEST);
 
     @Mock
     private PersistentStorageSessionManager sessionManager;
@@ -230,12 +245,14 @@ public class ResourceFactoryImplTest {
     @Test
     public void getResource_Binary() throws Exception {
         populateHeaders(resourceHeaders, NON_RDF_SOURCE);
+        populateInternalBinaryHeaders(resourceHeaders);
 
         final var resc = factory.getResource(fedoraId);
 
         assertTrue("Factory must return a container", resc instanceof Binary);
         assertEquals(fedoraId, resc.getId());
         assertStateFieldsMatches(resc);
+        assertBinaryFieldsMatch(resc);
     }
 
     @Test(expected = RepositoryRuntimeException.class)
@@ -243,8 +260,28 @@ public class ResourceFactoryImplTest {
         when(psSession.getHeaders(fedoraId, null)).thenThrow(new PersistentStorageException("Boom"));
 
         populateHeaders(resourceHeaders, NON_RDF_SOURCE);
+        populateInternalBinaryHeaders(resourceHeaders);
 
         factory.getResource(fedoraId);
+    }
+
+    @Test
+    public void getResource_ExternalBinary() throws Exception {
+        populateHeaders(resourceHeaders, NON_RDF_SOURCE);
+        populateInternalBinaryHeaders(resourceHeaders);
+        final String externalUrl = "http://example.com/stuff";
+        resourceHeaders.setExternalUrl(externalUrl);
+        resourceHeaders.setExternalHandling(PROXY);
+
+        final var resc = factory.getResource(fedoraId);
+
+        assertTrue("Factory must return a container", resc instanceof Binary);
+        assertEquals(fedoraId, resc.getId());
+        assertStateFieldsMatches(resc);
+        assertBinaryFieldsMatch(resc);
+        final var binary = (Binary) resc;
+        assertEquals(externalUrl, binary.getExternalURL());
+        assertTrue(binary.isProxy());
     }
 
     @Test
@@ -301,5 +338,20 @@ public class ResourceFactoryImplTest {
         headers.setLastModifiedBy(LAST_MODIFIED_BY);
         headers.setLastModifiedDate(LAST_MODIFIED_DATE);
         headers.setStateToken(STATE_TOKEN);
+    }
+
+    private void assertBinaryFieldsMatch(final FedoraResource resc) {
+        final Binary binary = (Binary) resc;
+        assertEquals(CONTENT_SIZE, binary.getContentSize());
+        assertEquals(MIME_TYPE, binary.getMimeType());
+        assertEquals(DIGEST, binary.getContentDigest());
+        assertEquals(FILENAME, binary.getFilename());
+    }
+
+    private static void populateInternalBinaryHeaders(final ResourceHeadersImpl headers) {
+        headers.setContentSize(CONTENT_SIZE);
+        headers.setMimeType(MIME_TYPE);
+        headers.setDigests(DIGESTS);
+        headers.setFilename(FILENAME);
     }
 }
