@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_PAIR_TREE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
@@ -86,6 +88,9 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
         final String fullPath = isContained ? getResourcePath(pSession, fedoraId, slug) : fedoraId;
 
+        // Populate the description for the new binary
+        createDescription(pSession, userPrincipal, fullPath);
+
         final Collection<URI> uriDigests = (digest == null ? Collections.emptySet() :
                 digest.stream().map(URI::create).collect(Collectors.toCollection(HashSet::new)));
         final CreateNonRdfSourceOperationBuilder builder;
@@ -112,6 +117,20 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
             return fullPath;
         } catch (final PersistentStorageException exc) {
             throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
+        }
+    }
+
+    private String createDescription(final PersistentStorageSession pSession, final String userPrincipal,
+            final String binaryId) {
+        final var descId = binaryId + "/" + FCR_METADATA;
+        final var createOp = rdfSourceOperationFactory.createBuilder(descId, FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI)
+                .userPrincipal(userPrincipal)
+                .build();
+        try {
+            pSession.persist(createOp);
+            return descId;
+        } catch (final PersistentStorageException exc) {
+            throw new RepositoryRuntimeException(String.format("failed to create description %s", descId), exc);
         }
     }
 

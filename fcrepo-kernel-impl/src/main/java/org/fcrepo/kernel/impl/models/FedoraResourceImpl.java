@@ -233,8 +233,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public FedoraResource getDescribedResource() {
-        // TODO Auto-generated method stub
-        return null;
+        return this;
     }
 
     private PersistentStorageSession getSession() {

@@ -44,7 +44,6 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ResourceTypeException;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
-import org.fcrepo.kernel.api.models.ExternalContent;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;

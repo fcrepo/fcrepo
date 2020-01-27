@@ -203,7 +203,7 @@ public class FedoraLdp extends ContentExposingResource {
             final MediaType mediaType = getBinaryResourceMediaType(binary);
 
             if (binary.isRedirect()) {
-                    builder = temporaryRedirect(binary.getRedirectURI());
+                builder = temporaryRedirect(binary.getExternalURI());
             }
 
             // we set the content-type explicitly to avoid content-negotiation from getting in the way
@@ -292,7 +292,7 @@ public class FedoraLdp extends ContentExposingResource {
             addResourceHttpHeaders(resource());
 
             if (resource() instanceof Binary && ((Binary)resource()).isRedirect()) {
-                return temporaryRedirect(((Binary) resource()).getRedirectURI()).build();
+                return temporaryRedirect(((Binary) resource()).getExternalURI()).build();
             } else {
                 return getContent(rangeValue, getChildrenLimit(), rdfStream, resource());
             }
@@ -586,6 +586,7 @@ public class FedoraLdp extends ContentExposingResource {
             final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
             final var binaryType = requestContentType != null ? requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;
             final var contentType = extContent == null ? binaryType.toString() : extContent.getContentType();
+            final var contentSize = contentDisposition != null ? contentDisposition.getSize() : null;
 
             newFedoraId = createResourceService.perform(transaction.getId(),
                                                         getUserPrincipal(),
@@ -594,7 +595,7 @@ public class FedoraLdp extends ContentExposingResource {
                                                         true,
                                                         contentType,
                                                         originalFileName,
-                                                        contentDisposition.getSize(),
+                    contentSize,
                                                         links,
                                                         checksums,
                                                         requestBodyStream,
@@ -609,14 +610,13 @@ public class FedoraLdp extends ContentExposingResource {
                                                         links,
                                                         model);
         }
-
-        LOGGER.debug("Finished creating resource: {}", newFedoraId);
+        LOGGER.debug("Finished creating resource with path: {}", externalPath());
         transaction.commitIfShortLived();
         try {
             return createUpdateResponse(getFedoraResource(newFedoraId), true);
-        } catch (PathNotFoundException e) {
+        } catch (final PathNotFoundException e) {
             // We just created this resource, so something major must have happened.
-            throw new RepositoryRuntimeException("Failure to find newly created resource", e);
+            throw new PathNotFoundRuntimeException(e);
         }
     }
 

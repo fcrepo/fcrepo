@@ -88,7 +88,6 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -482,10 +481,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         if (resource instanceof Binary) {
             final Binary binary = (Binary)resource;
 
-            if (binary.isProxy()) {
-                servletResponse.addHeader(CONTENT_LOCATION, binary.getProxyURL());
-            } else if (binary.isRedirect()) {
-                servletResponse.addHeader(CONTENT_LOCATION, binary.getRedirectURL());
+            if (binary.isProxy() || binary.isRedirect()) {
+                servletResponse.addHeader(CONTENT_LOCATION, binary.getExternalURL());
             }
         }
     }
@@ -909,32 +906,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         return contentTypeToLang(contentTypeString) != null;
     }
 
-    protected void replaceResourceBinaryWithStream(final Binary result,
-                                                   final InputStream requestBodyStream,
-                                                   final ContentDisposition contentDisposition,
-                                                   final MediaType contentType,
-                                                   final Collection<String> checksums,
-                                                   final String externalHandling,
-                                                   final String externalUrl) throws InvalidChecksumException {
-        final Collection<URI> checksumURIs = checksums == null ?
-                new HashSet<>() : checksums.stream().map(checksum -> checksumURI(checksum)).collect(Collectors.toSet());
-        final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
-        final String originalContentType = contentType != null ? contentType.toString() : "";
-
-        if (externalHandling != null) {
-            result.setExternalContent(originalContentType,
-                    checksumURIs,
-                    originalFileName,
-                    externalHandling,
-                    externalUrl);
-        } else {
-            result.setContent(requestBodyStream,
-                    originalContentType,
-                    checksumURIs,
-                    originalFileName,
-                    storagePolicyDecisionPoint);
-        }
-    }
 
     protected void patchResourcewithSparql(final FedoraResource resource,
             final String requestBody,
