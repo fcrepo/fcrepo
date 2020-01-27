@@ -581,15 +581,13 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         LOGGER.debug("Finished creating resource: {}", newFedoraId);
-        final FedoraResource resource;
+        transaction.commit();
         try {
-            resource = resourceFactory.getResource(transaction, newFedoraId);
+            return createUpdateResponse(getResourceHead(newFedoraId), true);
         } catch (PathNotFoundException e) {
             // We just created this resource, so something major must have happened.
             throw new RepositoryRuntimeException("Failure to find newly created resource", e);
         }
-        transaction.commit();
-        return createUpdateResponse(resource, true);
     }
 
     /**
