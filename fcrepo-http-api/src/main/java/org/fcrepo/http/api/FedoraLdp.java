@@ -47,6 +47,9 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_TYPE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_OCTET_STREAM_TYPE;
+
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODEL_RESOURCES;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
@@ -89,7 +92,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.domain.PATCH;
-import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
@@ -136,7 +138,9 @@ public class FedoraLdp extends ContentExposingResource {
     private static final String WANT_DIGEST = "Want-Digest";
 
     private static final String DIGEST = "Digest";
-    public static final MediaType DEFAULT_CONTENT_TYPE = RDFMediaType.TURTLE_TYPE;
+
+    private static final MediaType DEFAULT_RDF_CONTENT_TYPE = TURTLE_TYPE;
+    private static final MediaType DEFAULT_NON_RDF_CONTENT_TYPE = APPLICATION_OCTET_STREAM_TYPE;
 
     @PathParam("path") protected String externalPath;
 
@@ -427,9 +431,18 @@ public class FedoraLdp extends ContentExposingResource {
             if ("Resource Exists".isEmpty()) {
                 // TODO: Implement UpdateResourceService
             } else {
-                fedoraId = createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, null, false,
-                        contentType, contentDisposition.getFileName(), contentDisposition.getSize(),
-                        links, checksums, requestBodyStream, extContent);
+                fedoraId = createResourceService.perform(transaction.getId(),
+                                                            getUserPrincipal(),
+                                                            fedoraId,
+                                                            null,
+                                                            false,
+                                                            contentType,
+                                                            contentDisposition.getFileName(),
+                                                            contentDisposition.getSize(),
+                                                            links,
+                                                            checksums,
+                                                            requestBodyStream,
+                                                            extContent);
                 created = true;
             }
         } else {
@@ -437,20 +450,21 @@ public class FedoraLdp extends ContentExposingResource {
                 requestContentType, identifierConverter());
 
             if ("Resource Exists".isEmpty()) {
-                replacePropertiesService.perform(transaction.getId(), getUserPrincipal(), fedoraId, requestContentType
-                        .toString(),
-                    model);
+                replacePropertiesService.perform(transaction.getId(),
+                                                 getUserPrincipal(),
+                                                 fedoraId,
+                                                 requestContentType.toString(),
+                                                 model);
             } else {
                 fedoraId = createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, null,
-                        false, links,
-                    model);
+                                              false, links, model);
                 created = true;
             }
         }
 
         // TODO: How to generate a response.
         LOGGER.debug("Finished creating resource with path: {}", externalPath());
-        transaction.commit();
+        transaction.commitIfShortLived();
         return createUpdateResponse(getFedoraResource(fedoraId), created);
 
     }
@@ -495,7 +509,7 @@ public class FedoraLdp extends ContentExposingResource {
                 LOGGER.info("PATCH for '{}'", externalPath);
                 patchResourcewithSparql(resource(), requestBody, resourceTriples);
             }
-            transaction.commit();
+            transaction.commitIfShortLived();
 
             addCacheControlHeaders(servletResponse, resource(), transaction);
 
@@ -555,33 +569,49 @@ public class FedoraLdp extends ContentExposingResource {
             return status(METHOD_NOT_ALLOWED).build();
         }
 
-        final var contentType = requestContentType != null ? requestContentType : DEFAULT_CONTENT_TYPE;
         // If request is an external binary, verify link header before proceeding
         final ExternalContent extContent = extContentHandlerFactory.createFromLinks(links);
-        final String contentTypeStr = extContent == null ? contentType.toString() : extContent.getContentType();
 
         final String interactionModel = checkInteractionModel(links);
 
         final String fedoraId = identifierConverter().toInternalId(identifierConverter().toDomain(externalPath()));
         final String newFedoraId;
-
-        if (isBinary(interactionModel, contentType.toString(), requestContentType != null,
-                extContent != null)) {
+        final var defaultContentType = requestContentType != null ?
+                                            requestContentType : DEFAULT_RDF_CONTENT_TYPE;
+        if (isBinary(interactionModel,
+                     defaultContentType.toString(),
+                     requestBodyStream != null,
+                     extContent != null)) {
             final Collection<String> checksums = parseDigestHeader(digest);
             final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
-            newFedoraId = createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, slug,
-                    true, contentTypeStr,
-                    originalFileName, contentDisposition.getSize(), links, checksums, requestBodyStream, extContent);
+            final var binaryType = requestContentType != null ? requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;
+            final var contentType = extContent == null ? binaryType.toString() : extContent.getContentType();
+
+            newFedoraId = createResourceService.perform(transaction.getId(),
+                                                        getUserPrincipal(),
+                                                        fedoraId,
+                                                        slug,
+                                                        true,
+                                                        contentType,
+                                                        originalFileName,
+                                                        contentDisposition.getSize(),
+                                                        links,
+                                                        checksums,
+                                                        requestBodyStream,
+                                                        extContent);
         } else {
             final Model model = httpRdfService.bodyToInternalModel(externalPath(), requestBodyStream,
-                    contentType, identifierConverter());
-            newFedoraId = createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, slug,
-                    true, links,
-                    model);
+                    defaultContentType, identifierConverter());
+            newFedoraId = createResourceService.perform(transaction.getId(),
+                                                        getUserPrincipal(),
+                                                        fedoraId, slug,
+                                                        true,
+                                                        links,
+                                                        model);
         }
 
         LOGGER.debug("Finished creating resource: {}", newFedoraId);
-        transaction.commit();
+        transaction.commitIfShortLived();
         try {
             return createUpdateResponse(getFedoraResource(newFedoraId), true);
         } catch (PathNotFoundException e) {
