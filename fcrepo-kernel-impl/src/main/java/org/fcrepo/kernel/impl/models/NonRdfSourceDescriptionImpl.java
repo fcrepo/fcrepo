@@ -32,10 +32,10 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl {
     /**
      * Construct a description resource
      *
-     * @param id
-     * @param tx
-     * @param pSessionManager
-     * @param resourceFactory
+     * @param id internal identifier
+     * @param tx transaction
+     * @param pSessionManager session manager
+     * @param resourceFactory resource factory
      */
     public NonRdfSourceDescriptionImpl(final String id,
             final Transaction tx,
