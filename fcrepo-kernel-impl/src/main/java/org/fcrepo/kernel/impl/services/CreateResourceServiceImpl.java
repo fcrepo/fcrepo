@@ -229,6 +229,6 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
      * @return the list of LINK headers.
      */
     private List<Link> getLinkHeaders(final List<String> headers) {
-        return headers == null ? null : headers.stream().map(p -> Link.fromUri(p).build()).collect(Collectors.toList());
+        return headers == null ? null : headers.stream().map(p -> Link.valueOf(p)).collect(Collectors.toList());
     }
 }

@@ -89,6 +89,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.domain.PATCH;
+import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
@@ -135,6 +136,7 @@ public class FedoraLdp extends ContentExposingResource {
     private static final String WANT_DIGEST = "Want-Digest";
 
     private static final String DIGEST = "Digest";
+    public static final MediaType DEFAULT_CONTENT_TYPE = RDFMediaType.TURTLE_TYPE;
 
     @PathParam("path") protected String externalPath;
 
@@ -412,10 +414,12 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         final String externalUri = this.uriInfo.getRequestUri().toString();
-        final String fedoraId = identifierConverter().toInternalId(externalUri);
+        String fedoraId = identifierConverter().toInternalId(externalUri);
 
         // TODO: Refactor to check preconditions
         //evaluateRequestPreconditions(request, servletResponse, resource, transaction);
+
+        boolean created = false;
 
         if (isBinary(interactionModel, requestContentType.toString(), requestBodyStream != null,
                 extContent != null)) {
@@ -423,9 +427,10 @@ public class FedoraLdp extends ContentExposingResource {
             if ("Resource Exists".isEmpty()) {
                 // TODO: Implement UpdateResourceService
             } else {
-                createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, null, false,
+                fedoraId = createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, null, false,
                         contentType, contentDisposition.getFileName(), contentDisposition.getSize(),
                         links, checksums, requestBodyStream, extContent);
+                created = true;
             }
         } else {
             final Model model = httpRdfService.bodyToInternalModel(externalUri, requestBodyStream,
@@ -436,15 +441,17 @@ public class FedoraLdp extends ContentExposingResource {
                         .toString(),
                     model);
             } else {
-                createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, null, false, links,
+                fedoraId = createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, null,
+                        false, links,
                     model);
+                created = true;
             }
         }
 
         // TODO: How to generate a response.
         LOGGER.debug("Finished creating resource with path: {}", externalPath());
         transaction.commit();
-        return createUpdateResponse(getResourceHead(fedoraId), true);
+        return createUpdateResponse(getResourceHead(fedoraId), created);
 
     }
 
@@ -548,32 +555,32 @@ public class FedoraLdp extends ContentExposingResource {
             return status(METHOD_NOT_ALLOWED).build();
         }
 
+        final var contentType = requestContentType != null ? requestContentType : DEFAULT_CONTENT_TYPE;
         // If request is an external binary, verify link header before proceeding
         final ExternalContent extContent = extContentHandlerFactory.createFromLinks(links);
-
-        final String contentType = extContent == null ? requestContentType.toString() : extContent.getContentType();
+        final String contentTypeStr = extContent == null ? contentType.toString() : extContent.getContentType();
 
         final String interactionModel = checkInteractionModel(links);
 
         final String fedoraId = identifierConverter().toInternalId(identifierConverter().toDomain(externalPath()));
-
         final String newFedoraId;
-        if (isBinary(interactionModel, requestContentType.toString(), requestContentType != null,
+
+        if (isBinary(interactionModel, contentType.toString(), requestContentType != null,
                 extContent != null)) {
             final Collection<String> checksums = parseDigestHeader(digest);
             final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
-            newFedoraId = createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, slug, true,
-                    contentType, originalFileName, contentDisposition.getSize(), links, checksums, requestBodyStream,
-                    extContent);
+            newFedoraId = createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, slug,
+                    true, contentTypeStr,
+                    originalFileName, contentDisposition.getSize(), links, checksums, requestBodyStream, extContent);
         } else {
             final Model model = httpRdfService.bodyToInternalModel(externalPath(), requestBodyStream,
-                    requestContentType, identifierConverter());
-            newFedoraId = createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, slug, true,
-                    links, model);
+                    contentType, identifierConverter());
+            newFedoraId = createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, slug,
+                    true, links,
+                    model);
         }
-        // TODO: How to generate a response.
-        LOGGER.debug("Finished creating resource with path: {}", externalPath());
 
+        LOGGER.debug("Finished creating resource: {}", newFedoraId);
         final FedoraResource resource;
         try {
             resource = resourceFactory.getResource(transaction, newFedoraId);
