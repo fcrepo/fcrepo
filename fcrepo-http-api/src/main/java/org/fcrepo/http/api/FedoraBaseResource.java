@@ -94,6 +94,11 @@ abstract public class FedoraBaseResource extends AbstractResource {
         return this.resourceFactory.getResource(fedoraId);
     }
 
+    protected FedoraResource getFedoraResource(final Transaction transaction, final String fedoraId)
+            throws PathNotFoundException {
+        return this.resourceFactory.getResource(transaction, fedoraId);
+    }
+
     /**
      * This is a helper method for using the idTranslator to convert this resource into an associated Jena Node.
      *
@@ -121,7 +126,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
             }
 
             return fedoraResource;
-        } catch (PathNotFoundException exc) {
+        } catch (final PathNotFoundException exc) {
             throw new PathNotFoundRuntimeException(exc);
         }
     }
