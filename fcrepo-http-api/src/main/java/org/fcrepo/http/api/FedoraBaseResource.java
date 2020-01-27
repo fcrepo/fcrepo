@@ -94,9 +94,24 @@ abstract public class FedoraBaseResource extends AbstractResource {
         return this.resourceFactory.getResource(fedoraId);
     }
 
-    protected FedoraResource getFedoraResource(final Transaction transaction, final String fedoraId)
-            throws PathNotFoundException {
-        return this.resourceFactory.getResource(transaction, fedoraId);
+    /**
+     * Gets a fedora resource by id. Uses the provided transaction if it is uncommitted,
+     * or uses a new transaction.
+     *
+     * @param transaction the fedora transaction
+     * @param fedoraId identifier of the resource
+     * @return the requested FedoraResource
+     */
+    protected FedoraResource getFedoraResource(final Transaction transaction, final String fedoraId) {
+        try {
+            if (transaction.isCommitted()) {
+                return getFedoraResource(fedoraId);
+            } else {
+                return resourceFactory.getResource(transaction, fedoraId);
+            }
+        } catch (final PathNotFoundException e) {
+            throw new PathNotFoundRuntimeException(e);
+        }
     }
 
     /**

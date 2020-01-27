@@ -465,7 +465,7 @@ public class FedoraLdp extends ContentExposingResource {
         // TODO: How to generate a response.
         LOGGER.debug("Finished creating resource with path: {}", externalPath());
         transaction.commitIfShortLived();
-        return createUpdateResponse(getFedoraResource(fedoraId), created);
+        return createUpdateResponse(getFedoraResource(transaction, fedoraId), created);
 
     }
 
@@ -613,20 +613,7 @@ public class FedoraLdp extends ContentExposingResource {
         LOGGER.debug("Finished creating resource with path: {}", externalPath());
         transaction.commitIfShortLived();
 
-        final FedoraResource resource;
-        try {
-            // Need to commit transaction before retrieving the resource for the response,
-            // otherwise the session will have expired in some cases.
-            if (transaction.isShortLived()) {
-                resource = getFedoraResource(newFedoraId);
-            } else {
-                resource = getFedoraResource(transaction, newFedoraId);
-            }
-        } catch (final PathNotFoundException e) {
-            // We just created this resource, so something major must have happened.
-            throw new PathNotFoundRuntimeException(e);
-        }
-
+        final var resource = getFedoraResource(transaction, newFedoraId);
         return createUpdateResponse(resource, true);
     }
 
