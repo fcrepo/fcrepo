@@ -66,7 +66,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
     protected SecurityContext securityContext;
 
     @Inject
-    private ResourceFactory resourceFactory;
+    protected ResourceFactory resourceFactory;
 
     protected IdentifierConverter<Resource, FedoraResource> idTranslator;
 
