@@ -95,40 +95,20 @@ public interface Binary extends FedoraResource {
     Boolean isRedirect();
 
     /**
-     * Get the URL that this resource is a Proxy for
-     * @return String containing URL of object to proxy
+     * @return the external url for this binary if present, or null.
      */
-    String getProxyURL();
+    String getExternalURL();
 
     /**
-     * Set the URL that this resource is a proxy for
-     * @param url - the url of the resource this is a proxy for
+     * @return Get the external uri for this binary if present, or null
      */
-    @Deprecated
-    void setProxyURL(String url);
-
-    /**
-     * Get the URL this resource should redirect to
-     * @return String containing URL of object to redirect to
-     */
-    String getRedirectURL();
-
-    /**
-     * Get URL as a URI
-     *
-     * @return URI containing the object to redirect to.
-     */
-    default URI getRedirectURI() {
-        return URI.create(getRedirectURL());
+    default URI getExternalURI() {
+        final var externalUrl = getExternalURL();
+        if (externalUrl == null) {
+            return null;
+        }
+        return URI.create(externalUrl);
     }
-
-    /**
-     * Set the URL that this is a redirect to
-     *
-     * @param url - the url of the resource this redirects to
-     */
-    @Deprecated
-    void setRedirectURL(String url);
 
     /**
      * @return The MimeType of content associated with this datastream.

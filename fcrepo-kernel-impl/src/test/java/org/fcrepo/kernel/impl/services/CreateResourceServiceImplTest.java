@@ -36,6 +36,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
@@ -185,11 +186,16 @@ public class CreateResourceServiceImplTest {
         when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
         final String newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, false, null, FILENAME,
                 CONTENT_SIZE, null, DIGESTS, null, null);
-        verify(psSession).persist(operationCaptor.capture());
-        final var operation = operationCaptor.getValue();
+
+        verify(psSession, times(2)).persist(operationCaptor.capture());
+        final List<ResourceOperation> operations = operationCaptor.getAllValues();
+        final var operation = getOperation(operations, CreateNonRdfSourceOperation.class);
         assertEquals(fedoraId, operation.getResourceId());
-        assertNull(((CreateNonRdfSourceOperation) operation).getParentId());
+        assertNull(operation.getParentId());
         assertEquals(fedoraId, newID);
+
+        final var descOperation = getOperation(operations, CreateRdfSourceOperation.class);
+        assertEquals(operation.getResourceId() + "/fcr:metadata", descOperation.getResourceId());
     }
 
     @Test(expected = CannotCreateResourceException.class)
@@ -244,8 +250,9 @@ public class CreateResourceServiceImplTest {
         final String newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, CONTENT_TYPE,
                 FILENAME, CONTENT_SIZE, null, DIGESTS, null, null);
 
-        verify(psSession).persist(operationCaptor.capture());
-        final var operation = (CreateNonRdfSourceOperation) operationCaptor.getValue();
+        verify(psSession, times(2)).persist(operationCaptor.capture());
+        final List<ResourceOperation> operations = operationCaptor.getAllValues();
+        final var operation = getOperation(operations, CreateNonRdfSourceOperation.class);
         final String persistedId = operation.getResourceId();
         assertNotEquals(fedoraId, persistedId);
         assertTrue(persistedId.startsWith(fedoraId));
@@ -262,13 +269,17 @@ public class CreateResourceServiceImplTest {
         final String newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, false, CONTENT_TYPE,
                 FILENAME, CONTENT_SIZE, null, DIGESTS, null, null);
 
-        verify(psSession).persist(operationCaptor.capture());
-        final var operation = (CreateNonRdfSourceOperation) operationCaptor.getValue();
+        verify(psSession, times(2)).persist(operationCaptor.capture());
+        final List<ResourceOperation> operations = operationCaptor.getAllValues();
+        final var operation = getOperation(operations, CreateNonRdfSourceOperation.class);
         final String persistedId = operation.getResourceId();
         assertEquals(fedoraId, persistedId);
         assertEquals(fedoraId, newID);
         assertBinaryPropertiesPresent(operation);
         assertNull("No parent expected", operation.getParentId());
+
+        final var descOperation = getOperation(operations, CreateRdfSourceOperation.class);
+        assertEquals(persistedId + "/fcr:metadata", descOperation.getResourceId());
     }
 
     @Test
@@ -342,8 +353,10 @@ public class CreateResourceServiceImplTest {
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         final String newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true,
                 CONTENT_TYPE, FILENAME, CONTENT_SIZE, null, DIGESTS, null, null);
-        verify(psSession).persist(operationCaptor.capture());
-        final var operation = (CreateNonRdfSourceOperation) operationCaptor.getValue();
+
+        verify(psSession, times(2)).persist(operationCaptor.capture());
+        final List<ResourceOperation> operations = operationCaptor.getAllValues();
+        final var operation = getOperation(operations, CreateNonRdfSourceOperation.class);
         final String persistedId = operation.getResourceId();
         assertNotEquals(fedoraId, persistedId);
         assertNotEquals(childId, persistedId);
@@ -351,6 +364,9 @@ public class CreateResourceServiceImplTest {
         assertEquals(persistedId, newID);
         assertBinaryPropertiesPresent(operation);
         assertEquals(fedoraId, operation.getParentId());
+
+        final var descOperation = getOperation(operations, CreateRdfSourceOperation.class);
+        assertEquals(persistedId + "/fcr:metadata", descOperation.getResourceId());
     }
 
     @Test
@@ -380,10 +396,14 @@ public class CreateResourceServiceImplTest {
         createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, null, FILENAME, CONTENT_SIZE,
                 null, DIGESTS, null, null);
 
-        verify(psSession).persist(operationCaptor.capture());
-        final var operation = (CreateNonRdfSourceOperation) operationCaptor.getValue();
+        verify(psSession, times(2)).persist(operationCaptor.capture());
+        final List<ResourceOperation> operations = operationCaptor.getAllValues();
+        final var operation = getOperation(operations, CreateNonRdfSourceOperation.class);
         assertEquals(childId, operation.getResourceId());
         assertEquals(fedoraId, operation.getParentId());
+
+        final var descOperation = getOperation(operations, CreateRdfSourceOperation.class);
+        assertEquals(operation.getResourceId() + "/fcr:metadata", descOperation.getResourceId());
     }
 
     @Test(expected = ItemNotFoundException.class)
@@ -410,8 +430,9 @@ public class CreateResourceServiceImplTest {
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null, FILENAME, CONTENT_SIZE, null,
                 DIGESTS, null, extContent);
-        verify(psSession).persist(operationCaptor.capture());
-        final var operation = operationCaptor.getValue();
+        verify(psSession, times(2)).persist(operationCaptor.capture());
+        final List<ResourceOperation> operations = operationCaptor.getAllValues();
+        final var operation = getOperation(operations, CreateNonRdfSourceOperation.class);
         assertExternalBinaryPropertiesPresent(operation);
     }
 
@@ -424,14 +445,18 @@ public class CreateResourceServiceImplTest {
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, CONTENT_TYPE, FILENAME,
                 CONTENT_SIZE, null, DIGESTS, null, extContent);
-        verify(psSession).persist(operationCaptor.capture());
-        final var operation = operationCaptor.getValue();
+        verify(psSession, times(2)).persist(operationCaptor.capture());
+        final List<ResourceOperation> operations = operationCaptor.getAllValues();
+        final var operation = getOperation(operations, CreateNonRdfSourceOperation.class);
         final String persistedId = operation.getResourceId();
         assertNotEquals(fedoraId, persistedId);
         assertNotEquals(childId, persistedId);
         assertTrue(persistedId.startsWith(fedoraId));
 
         assertExternalBinaryPropertiesPresent(operation);
+
+        final var descOperation = getOperation(operations, CreateRdfSourceOperation.class);
+        assertEquals(persistedId + "/fcr:metadata", descOperation.getResourceId());
     }
 
     @Test
@@ -443,10 +468,15 @@ public class CreateResourceServiceImplTest {
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, null, FILENAME, CONTENT_SIZE,
                 null, DIGESTS, null, extContent);
-        verify(psSession).persist(operationCaptor.capture());
-        final var operation = operationCaptor.getValue();
+
+        verify(psSession, times(2)).persist(operationCaptor.capture());
+        final List<ResourceOperation> operations = operationCaptor.getAllValues();
+        final var operation = getOperation(operations, CreateNonRdfSourceOperation.class);
         assertEquals(childId, operation.getResourceId());
         assertExternalBinaryPropertiesPresent(operation);
+
+        final var descOperation = getOperation(operations, CreateRdfSourceOperation.class);
+        assertEquals(operation.getResourceId() + "/fcr:metadata", descOperation.getResourceId());
     }
 
     @Test
@@ -624,5 +654,13 @@ public class CreateResourceServiceImplTest {
         assertEquals(EXTERNAL_URL, nonRdfOperation.getContentUri().toString());
         assertEquals(ExternalContent.PROXY, nonRdfOperation.getExternalHandling());
         assertEquals(EXTERNAL_CONTENT_TYPE, nonRdfOperation.getMimeType());
+    }
+
+    private <T extends ResourceOperation> T getOperation(final List<ResourceOperation> operations,
+            final Class<T> clazz) {
+        return clazz.cast(operations.stream()
+                .filter(o -> (clazz.isInstance(o)))
+                .findFirst()
+                .get());
     }
 }

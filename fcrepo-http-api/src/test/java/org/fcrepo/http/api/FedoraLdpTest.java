@@ -445,8 +445,8 @@ public class FedoraLdpTest {
         when(mockResource.isProxy()).thenReturn(false);
         when(mockResource.isRedirect()).thenReturn(true);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-        when(mockResource.getRedirectURL()).thenReturn(url);
-        when(mockResource.getRedirectURI()).thenReturn(URI.create(url));
+        when(mockResource.getExternalURL()).thenReturn(url);
+        when(mockResource.getExternalURI()).thenReturn(URI.create(url));
         final Response actual = testObj.head();
         assertEquals(TEMPORARY_REDIRECT.getStatusCode(), actual.getStatus());
         assertEquals(new URI(url), actual.getLocation());
@@ -778,8 +778,8 @@ public class FedoraLdpTest {
         when(mockResource.isProxy()).thenReturn(false);
         when(mockResource.isRedirect()).thenReturn(true);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-        when(mockResource.getRedirectURI()).thenReturn(URI.create(url));
-        when(mockResource.getRedirectURL()).thenReturn(url);
+        when(mockResource.getExternalURI()).thenReturn(URI.create(url));
+        when(mockResource.getExternalURL()).thenReturn(url);
         when(mockResource.getContent()).thenReturn(toInputStream("xyz", UTF_8));
         final Response actual = testObj.getResource(null);
         assertEquals(TEMPORARY_REDIRECT.getStatusCode(), actual.getStatus());

@@ -47,7 +47,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     private final PersistentStorageSessionManager pSessionManager;
 
-    private final ResourceFactory resourceFactory;
+    protected final ResourceFactory resourceFactory;
 
     private final String id;
 
@@ -70,7 +70,7 @@ public class FedoraResourceImpl implements FedoraResource {
     private String etag;
 
     // The transaction this representation of the resource belongs to
-    private final Transaction tx;
+    protected final Transaction tx;
 
     protected FedoraResourceImpl(final String id,
             final Transaction tx,
@@ -107,8 +107,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public FedoraResource getOriginalResource() {
-        // TODO Auto-generated method stub
-        return null;
+        return this;
     }
 
     @Override
@@ -229,18 +228,20 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public FedoraResource getDescription() {
-        // TODO Auto-generated method stub
-        return null;
+        return this;
     }
 
     @Override
     public FedoraResource getDescribedResource() {
-        // TODO Auto-generated method stub
-        return null;
+        return this;
     }
 
     private PersistentStorageSession getSession() {
-        return pSessionManager.getSession(tx.getId());
+        if (tx == null) {
+            return pSessionManager.getReadOnlySession();
+        } else {
+            return pSessionManager.getSession(tx.getId());
+        }
     }
 
     @Override

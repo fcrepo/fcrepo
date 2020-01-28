@@ -84,6 +84,11 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
+    public synchronized boolean isCommitted() {
+        return commited;
+    }
+
+    @Override
     public synchronized void rollback() {
         failIfCommited();
         if (this.rolledback) {

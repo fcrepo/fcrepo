@@ -95,6 +95,26 @@ abstract public class FedoraBaseResource extends AbstractResource {
     }
 
     /**
+     * Gets a fedora resource by id. Uses the provided transaction if it is uncommitted,
+     * or uses a new transaction.
+     *
+     * @param transaction the fedora transaction
+     * @param fedoraId identifier of the resource
+     * @return the requested FedoraResource
+     */
+    protected FedoraResource getFedoraResource(final Transaction transaction, final String fedoraId) {
+        try {
+            if (transaction.isCommitted()) {
+                return getFedoraResource(fedoraId);
+            } else {
+                return resourceFactory.getResource(transaction, fedoraId);
+            }
+        } catch (final PathNotFoundException e) {
+            throw new PathNotFoundRuntimeException(e);
+        }
+    }
+
+    /**
      * This is a helper method for using the idTranslator to convert this resource into an associated Jena Node.
      *
      * @param resource to be converted into a Jena Node
@@ -121,7 +141,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
             }
 
             return fedoraResource;
-        } catch (PathNotFoundException exc) {
+        } catch (final PathNotFoundException exc) {
             throw new PathNotFoundRuntimeException(exc);
         }
     }
