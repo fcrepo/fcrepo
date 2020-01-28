@@ -192,6 +192,13 @@ public class OCFLPersistentStorageUtils {
         return version == null ? objSession.read(subpath) : objSession.read(subpath, version);
     }
 
+    public static InputStream getBinaryStream(final OCFLObjectSession objSession,
+            final String subpath,
+            final Instant version) throws PersistentStorageException {
+        final String versionId = resolveVersionId(objSession, version);
+        return readFile(objSession, subpath, versionId);
+    }
+
     /**
      * Get an RDF stream for the specified file.
      *
