@@ -36,14 +36,6 @@ public interface Binary extends FedoraResource {
     InputStream getContent();
 
     /**
-     * Set the content stream for this resource.
-     *
-     * @param content Inputstream
-     */
-    @Deprecated
-    void setContentStream(InputStream content);
-
-    /**
      * Sets the content of this Datastream.
      *
      * @param content  InputStream of binary content to be stored
@@ -59,20 +51,6 @@ public interface Binary extends FedoraResource {
                     StoragePolicyDecisionPoint storagePolicyDecisionPoint)
             throws InvalidChecksumException;
 
-    /**
-     * Sets the external content reference for this datastream
-     *
-     * @param contentType MIME type of content (optional)
-     * @param checksums Collection of checksum URIs of the content (optional)
-     * @param originalFileName Original file name of the content (optional)
-     * @param externalHandling What type of handling the external resource needs (proxy or redirect)
-     * @param externalUrl Url for the external resourcej
-     * @throws InvalidChecksumException if invalid checksum exception occurred
-     */
-    @Deprecated
-    void setExternalContent(String contentType, Collection<URI> checksums,
-                    String originalFileName, String externalHandling, String externalUrl)
-            throws InvalidChecksumException;
     /**
      * @return The size in bytes of content associated with this datastream.
      */

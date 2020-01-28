@@ -1785,29 +1785,35 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpPost method = postObjMethod();
         method.addHeader(CONTENT_TYPE, "application/octet-stream");
         method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
-        method.setEntity(new StringEntity("xyz"));
+        final String binaryContent = "xyz";
+        method.setEntity(new StringEntity(binaryContent));
 
         try (final CloseableHttpResponse response = execute(method)) {
             final String content = EntityUtils.toString(response.getEntity());
             final int status = getStatus(response);
             assertEquals("Didn't get a CREATED response! Got content:\n" + content, CREATED.getStatusCode(), status);
             assertIdentifierness(content);
-            // TODO reanble once GET implemented
-            // final String location = getLocation(response);
-            // assertEquals("Object wasn't created!", OK.getStatusCode(), getStatus(new HttpGet(location)));
-            // final Link link = Link.valueOf(response.getFirstHeader(LINK).getValue());
-            //
-            // assertEquals("describedby", link.getRel());
-            // assertTrue("Expected an anchor to the newly created resource", link.getParams().containsKey("anchor"));
-            // assertEquals("Expected anchor at the newly created resource", location,
-            // link.getParams().get("anchor"));
-            // assertEquals("Expected describedBy link", location + "/" + FCR_METADATA, link.getUri().toString());
+            final String location = getLocation(response);
+
+            try (final CloseableHttpResponse getResponse = execute(new HttpGet(location))) {
+                assertEquals("Object wasn't created!", OK.getStatusCode(), getResponse.getStatusLine().getStatusCode());
+                final String resp = IOUtils.toString(getResponse.getEntity().getContent(), UTF_8);
+                assertEquals("application/octet-stream", getResponse.getFirstHeader(CONTENT_TYPE).getValue());
+                assertEquals(binaryContent, resp);
+            }
+
+            final Link link = Link.valueOf(response.getFirstHeader(LINK).getValue());
+
+            assertEquals("describedby", link.getRel());
+            assertTrue("Expected an anchor to the newly created resource", link.getParams().containsKey("anchor"));
+            assertEquals("Expected anchor at the newly created resource", location,
+                    link.getParams().get("anchor"));
+            assertEquals("Expected describedBy link", location + "/" + FCR_METADATA, link.getUri().toString());
         }
     }
 
     /* Verifies RDF persisted as binary is retrieved with byte-for-byte fidelity */
     @Test
-@Ignore
     public void testIngestOpaqueRdfAsBinary() throws IOException {
         final HttpPost method = postObjMethod();
         method.addHeader(CONTENT_TYPE, "application/n-triples");
@@ -1868,7 +1874,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
      * Ensure that the a malformed Digest header returns a 400 Bad Request
      */
     @Test
-@Ignore
     public void testIngestWithBinaryAndMalformedDigestHeader() {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
@@ -1937,7 +1942,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testContentDispositionHeader() throws ParseException, IOException {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
@@ -1957,20 +1961,21 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // Retrieve the new resource and verify the content-disposition
         verifyContentDispositionFilename(location, filename);
 
+        // TODO enble once PATCH is working
         // Update the filename
-        final String filename1 = "new-file.png";
-        final HttpPatch patch = new HttpPatch(location + "/" + FCR_METADATA);
-        patch.setHeader(CONTENT_TYPE, "application/sparql-update");
-        final String updateString = "PREFIX ebucore: <http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#>\n" +
-                "DELETE { <> ebucore:filename ?x}\n" +
-                "INSERT { <> ebucore:filename \"" + filename1 + "\"}\n" +
-                "WHERE { <> ebucore:filename ?x}";
-
-        patch.setEntity(new StringEntity(updateString));
-        assertEquals(location, NO_CONTENT.getStatusCode(), getStatus(patch));
-
-        // Retrieve the new resource and verify the content-disposition
-        verifyContentDispositionFilename(location, filename1);
+        // final String filename1 = "new-file.png";
+        // final HttpPatch patch = new HttpPatch(location + "/" + FCR_METADATA);
+        // patch.setHeader(CONTENT_TYPE, "application/sparql-update");
+        // final String updateString = "PREFIX ebucore: <http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#>\n" +
+        // "DELETE { <> ebucore:filename ?x}\n" +
+        // "INSERT { <> ebucore:filename \"" + filename1 + "\"}\n" +
+        // "WHERE { <> ebucore:filename ?x}";
+        //
+        // patch.setEntity(new StringEntity(updateString));
+        // assertEquals(location, NO_CONTENT.getStatusCode(), getStatus(patch));
+        //
+        // // Retrieve the new resource and verify the content-disposition
+        // verifyContentDispositionFilename(location, filename1);
     }
 
     private void verifyContentDispositionFilename(final String location, final String filename)

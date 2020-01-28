@@ -42,7 +42,6 @@ import static org.mockito.Mockito.withSettings;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 import java.util.Random;

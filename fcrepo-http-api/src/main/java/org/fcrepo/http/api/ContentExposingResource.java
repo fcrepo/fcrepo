@@ -242,16 +242,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                                   final RdfStream rdfStream,
                                   final FedoraResource resource) throws IOException {
 
-        final RdfNamespacedStream outputStream;
-
-        if (resource instanceof Binary) {
-            return getBinaryContent(rangeValue, resource);
-        } else {
-            outputStream = new RdfNamespacedStream(
+        final var outputStream = new RdfNamespacedStream(
                     new DefaultRdfStream(rdfStream.topic(), concat(rdfStream,
                         getResourceTriples(limit, resource))),
                     namespaceRegistry.getNamespaces());
-        }
         setVaryAndPreferenceAppliedHeaders(servletResponse, prefer, resource);
         return ok(outputStream).build();
     }
@@ -369,7 +363,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @return Binary blob
      * @throws IOException if io exception occurred
      */
-    private Response getBinaryContent(final String rangeValue, final FedoraResource resource)
+    protected Response getBinaryContent(final String rangeValue, final FedoraResource resource)
             throws IOException {
             final Binary binary = (Binary)resource;
             final CacheControl cc = new CacheControl();
