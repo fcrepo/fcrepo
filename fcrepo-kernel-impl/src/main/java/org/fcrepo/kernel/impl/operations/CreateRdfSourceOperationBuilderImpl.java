@@ -32,6 +32,7 @@ public class CreateRdfSourceOperationBuilderImpl extends AbstractRdfSourceOperat
 
     private String parentId;
 
+    private boolean archivalGroup = false;
     /**
      * Constructor.
      *
@@ -51,6 +52,7 @@ public class CreateRdfSourceOperationBuilderImpl extends AbstractRdfSourceOperat
         operation.setCreatedDate(createdDate);
         operation.setLastModifiedBy(lastModifiedBy);
         operation.setLastModifiedDate(lastModifiedDate);
+        operation.setArchivalGroup(archivalGroup);
         return operation;
     }
 
@@ -75,6 +77,12 @@ public class CreateRdfSourceOperationBuilderImpl extends AbstractRdfSourceOperat
     @Override
     public CreateRdfSourceOperationBuilder relaxedProperties(final Model model) {
         super.relaxedProperties(model);
+        return this;
+    }
+
+    @Override
+    public CreateRdfSourceOperationBuilder archivalGroup(final boolean flag) {
+        this.archivalGroup = flag;
         return this;
     }
 }

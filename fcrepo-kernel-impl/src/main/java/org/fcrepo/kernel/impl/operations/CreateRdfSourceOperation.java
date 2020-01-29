@@ -34,6 +34,8 @@ public class CreateRdfSourceOperation extends AbstractRdfSourceOperation impleme
      */
     private String interactionModel;
 
+    private boolean archivalGroup = false;
+
     /**
      * Constructor for creation operation
      *
@@ -54,7 +56,7 @@ public class CreateRdfSourceOperation extends AbstractRdfSourceOperation impleme
 
     @Override
     public boolean isArchivalGroup() {
-        return false;
+        return this.archivalGroup;
     }
 
     @Override
@@ -68,5 +70,14 @@ public class CreateRdfSourceOperation extends AbstractRdfSourceOperation impleme
     public void setParentId(final String parentId) {
         this.parentId = parentId;
     }
+
+    /**
+     *
+     * @param flag flag indicating whether resource is an Archival Group
+     */
+    public void setArchivalGroup(final boolean flag) {
+        this.archivalGroup = flag;
+    }
+
 
 }

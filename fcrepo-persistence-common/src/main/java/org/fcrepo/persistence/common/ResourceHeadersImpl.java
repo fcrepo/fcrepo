@@ -58,6 +58,8 @@ public class ResourceHeadersImpl implements ResourceHeaders {
 
     private String lastModifiedBy;
 
+    private boolean archivalGroup;
+
     @Override
     public String getId() {
         return id;
@@ -224,5 +226,18 @@ public class ResourceHeadersImpl implements ResourceHeaders {
     @Override
     public String getExternalUrl() {
         return externalUrl;
+    }
+
+    /**
+     *
+     * @param flag boolean flag
+     */
+    public void setArchivalGroup(final boolean flag) {
+        this.archivalGroup = flag;
+    }
+
+    @Override
+    public boolean isArchivalGroup() {
+        return archivalGroup;
     }
 }

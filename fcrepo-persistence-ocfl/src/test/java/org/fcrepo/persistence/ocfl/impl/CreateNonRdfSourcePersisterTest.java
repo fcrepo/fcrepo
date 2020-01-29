@@ -87,6 +87,9 @@ public class CreateNonRdfSourcePersisterTest {
     private ArgumentCaptor<InputStream> headersIsCaptor;
 
     @Mock
+    private ResourceHeaders headers;
+
+    @Mock
     private OCFLPersistentStorageSession psSession;
 
     private static final String RESOURCE_ID = "info:fedora/parent/child";
@@ -139,6 +142,9 @@ public class CreateNonRdfSourcePersisterTest {
         when(nonRdfSourceOperation.getContentStream()).thenReturn(content);
         when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel())
                 .thenReturn(NON_RDF_SOURCE.toString());
+        when(headers.isArchivalGroup()).thenReturn(false);
+        when(psSession.getHeaders(((CreateResourceOperation) nonRdfSourceOperation).getParentId(), null))
+                      .thenReturn(headers);
 
         persister.persist(psSession, nonRdfSourceOperation);
 
@@ -172,6 +178,9 @@ public class CreateNonRdfSourcePersisterTest {
         when(nonRdfSourceOperation.getContentSize()).thenReturn(EXTERNAL_CONTENT_SIZE);
         when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel()).thenReturn(NON_RDF_SOURCE
                 .toString());
+        when(headers.isArchivalGroup()).thenReturn(false);
+        when(psSession.getHeaders(((CreateResourceOperation) nonRdfSourceOperation).getParentId(), null))
+                .thenReturn(headers);
 
         persister.persist(psSession, nonRdfSourceOperation);
 
@@ -195,6 +204,9 @@ public class CreateNonRdfSourcePersisterTest {
         when(nonRdfSourceOperation.getContentSize()).thenReturn(99l);
         when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel())
                 .thenReturn(NON_RDF_SOURCE.toString());
+        when(headers.isArchivalGroup()).thenReturn(false);
+        when(psSession.getHeaders(((CreateResourceOperation) nonRdfSourceOperation).getParentId(), null))
+                .thenReturn(headers);
 
         persister.persist(psSession, nonRdfSourceOperation);
     }
@@ -208,6 +220,9 @@ public class CreateNonRdfSourcePersisterTest {
         when(nonRdfSourceOperation.getContentSize()).thenReturn(99l);
         when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel())
                 .thenReturn(NON_RDF_SOURCE.toString());
+        when(headers.isArchivalGroup()).thenReturn(false);
+        when(psSession.getHeaders(((CreateResourceOperation) nonRdfSourceOperation).getParentId(), null))
+                .thenReturn(headers);
 
         persister.persist(psSession, nonRdfSourceOperation);
     }

@@ -26,6 +26,7 @@ import static org.fcrepo.persistence.common.ResourceHeaderUtils.newResourceHeade
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.populateBinaryHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.populateExternalBinaryHeaders;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -111,7 +112,7 @@ public class ResourceHeaderSerializationUtilsTest {
         headers.setLastModifiedDate(Instant.parse(MODIFIED_DATE));
         headers.setCreatedBy(USER_PRINCIPAL);
         headers.setCreatedDate(Instant.parse(CREATED_DATE));
-
+        headers.setArchivalGroup(true);
         final var headerStream = serializeHeaders(headers);
 
         final var resultHeaders = deserializeHeaders(headerStream);
@@ -124,6 +125,7 @@ public class ResourceHeaderSerializationUtilsTest {
         assertEquals(USER_PRINCIPAL, resultHeaders.getLastModifiedBy());
         assertEquals(MODIFIED_DATE, resultHeaders.getLastModifiedDate().toString());
         assertEquals(CREATED_DATE, resultHeaders.getCreatedDate().toString());
+        assertTrue(resultHeaders.isArchivalGroup());
     }
 
     @Test
@@ -157,6 +159,7 @@ public class ResourceHeaderSerializationUtilsTest {
         assertTrue(DIGESTS.containsAll(resultHeaders.getDigests()));
         assertEquals(EXTERNAL_URL, resultHeaders.getExternalUrl());
         assertEquals(EXTERNAL_HANDLING, resultHeaders.getExternalHandling());
+        assertFalse(resultHeaders.isArchivalGroup());
 
     }
 }

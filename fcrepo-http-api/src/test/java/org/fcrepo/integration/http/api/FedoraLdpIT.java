@@ -70,15 +70,10 @@ import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
-import static org.fcrepo.kernel.api.models.ExternalContent.COPY;
-import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
-import static org.fcrepo.kernel.api.models.ExternalContent.REDIRECT;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
@@ -104,6 +99,12 @@ import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
+import static org.fcrepo.kernel.api.models.ExternalContent.COPY;
+import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
+import static org.fcrepo.kernel.api.models.ExternalContent.REDIRECT;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -174,6 +175,7 @@ import org.apache.jena.vocabulary.DC_11;
 import org.apache.jena.vocabulary.RDF;
 import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.fcrepo.persistence.ocfl.impl.DefaultOCFLObjectSessionFactory;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -212,6 +214,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     private static final String BASIC_CONTAINER_LINK_HEADER = "<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\"";
     private static final String DIRECT_CONTAINER_LINK_HEADER = "<" + DIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
     private static final String INDIRECT_CONTAINER_LINK_HEADER = "<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
+    private static final String ARCHIVAL_GROUP_LINK_HEADER = "<" + ARCHIVAL_GROUP.getURI() + ">;rel=\"type\"";
 
     private static final String RESOURCE_LINK_HEADER = "<" + RESOURCE.getURI() + ">;rel=\"type\"";
     private static final String RDF_SOURCE_LINK_HEADER = "<" + RDF_SOURCE.getURI() + ">;rel=\"type\"";
@@ -281,6 +284,99 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final Collection<String> links = getLinkHeaders(response);
             checkForLinkHeader(response, RDF_SOURCE.getURI(), "type");
             assertTrue("Didn't find LDP container link header!", links.contains(BASIC_CONTAINER_LINK_HEADER));
+        }
+    }
+
+    @Test
+    public void testCreateArchivalGroup() throws Exception {
+        final var id = getRandomUniqueId();
+        final var childId = id + "/child";
+        final var grandChildId = childId + "/grandchild";
+
+        createObjectAndClose(id, BASIC_CONTAINER_LINK_HEADER, ARCHIVAL_GROUP_LINK_HEADER);
+
+        final var headObjMethod = headObjMethod(id);
+        try (final CloseableHttpResponse response = execute(headObjMethod)) {
+            final Collection<String> links = getLinkHeaders(response);
+            assertTrue("Didn't find LDP ArchivalGroup link header!", links.contains(ARCHIVAL_GROUP_LINK_HEADER));
+            assertTrue("Didn't find LDP container link header!", links.contains(BASIC_CONTAINER_LINK_HEADER));
+        }
+
+
+        executeAndClose(putObjMethod(childId, "text/turtle", "<> a <http://example.com/Foo> ."));
+
+        final var childHeadObjMethod = headObjMethod(childId);
+        try (final CloseableHttpResponse response = execute(childHeadObjMethod)) {
+            final Collection<String> links = getLinkHeaders(response);
+            assertTrue("Didn't find LDP container link header!", links.contains(BASIC_CONTAINER_LINK_HEADER));
+            assertFalse("Unexpectedly found LDP ArchivalGroup link header!",
+                    links.contains(ARCHIVAL_GROUP_LINK_HEADER));
+        }
+
+        executeAndClose(putObjMethod(grandChildId, "text/turtle", "<> a <http://example.com/Foo> ."));
+
+        final var grandChildHeadObjMethod = headObjMethod(grandChildId);
+        try (final CloseableHttpResponse response = execute(grandChildHeadObjMethod)) {
+            final Collection<String> links = getLinkHeaders(response);
+            assertTrue("Didn't find LDP container link header!", links.contains(BASIC_CONTAINER_LINK_HEADER));
+            assertFalse("Unexpectedly found LDP ArchivalGroup link header!",
+                    links.contains(ARCHIVAL_GROUP_LINK_HEADER));
+        }
+
+        final var ocflObjectSessionFactory = new DefaultOCFLObjectSessionFactory();
+        final var session = ocflObjectSessionFactory.create(id, null);
+        session.read(id + ".nt");
+        session.read("child.nt");
+        session.read("child/grandchild.nt");
+    }
+
+    @Test
+    public void testCreateArchivalGroupWithinAnArchivalGroupFails() throws Exception {
+        final var id = getRandomUniqueId();
+        final var childId = id + "/child";
+
+        createObjectAndClose(id, BASIC_CONTAINER_LINK_HEADER, ARCHIVAL_GROUP_LINK_HEADER);
+
+        final var headObjMethod = headObjMethod(id);
+        try (final CloseableHttpResponse response = execute(headObjMethod)) {
+            final Collection<String> links = getLinkHeaders(response);
+            assertTrue("Didn't find LDP ArchivalGroup link header!", links.contains(ARCHIVAL_GROUP_LINK_HEADER));
+            assertTrue("Didn't find LDP container link header!", links.contains(BASIC_CONTAINER_LINK_HEADER));
+        }
+
+        final var putObjMethod = putObjMethod(childId, "text/turtle", "<> a <http://example.com/Foo> .");
+        putObjMethod.setHeader("Link", ARCHIVAL_GROUP_LINK_HEADER);
+        try (final CloseableHttpResponse response = execute(putObjMethod)) {
+            assertEquals("Expected Conflict response", CONFLICT.getStatusCode(),
+                    response.getStatusLine().getStatusCode());
+        }
+    }
+
+    @Test
+    public void testCreateBinaryAsArchivalGroupWithPostFails() throws Exception {
+        final var id = getRandomUniqueId();
+        final var postMethod = postObjMethod(id);
+        postMethod.setEntity(new StringEntity("test"));
+        postMethod.addHeader("Link", ARCHIVAL_GROUP_LINK_HEADER);
+        postMethod.addHeader("Content-Type", "text/plain");
+
+        try (final CloseableHttpResponse response = execute(postMethod)) {
+            final Collection<String> links = getLinkHeaders(response);
+            assertEquals("Expected Bad Request response", BAD_REQUEST.getStatusCode(),
+                    response.getStatusLine().getStatusCode());
+        }
+    }
+
+    @Test
+    public void testCreateBinaryAsArchivalGroupWithPutFails() throws Exception {
+        final var id = getRandomUniqueId();
+        final var putMethod = putObjMethod(id, "text/plain", "testcontent");
+        putMethod.addHeader("Link", ARCHIVAL_GROUP_LINK_HEADER);
+
+        try (final CloseableHttpResponse response = execute(putMethod)) {
+            final Collection<String> links = getLinkHeaders(response);
+            assertEquals("Expected Bad Request response", BAD_REQUEST.getStatusCode(),
+                    response.getStatusLine().getStatusCode());
         }
     }
 

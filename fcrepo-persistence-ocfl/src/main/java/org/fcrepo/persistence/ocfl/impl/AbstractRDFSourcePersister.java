@@ -102,13 +102,14 @@ abstract class AbstractRDFSourcePersister extends AbstractPersister {
                     operation.getResourceId(),
                     createOperation.getInteractionModel());
             touchCreationHeaders(headers, operation.getUserPrincipal(), timeWritten);
+            headers.setArchivalGroup(createOperation.isArchivalGroup());
+
         } else {
             headers = (ResourceHeadersImpl) readHeaders(objSession, subpath);
         }
         touchModificationHeaders(headers, operation.getUserPrincipal(), timeWritten);
 
         overrideRelaxedProperties(headers, operation);
-
         return headers;
     }
 

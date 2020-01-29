@@ -15,34 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.operations;
-
-import org.fcrepo.kernel.api.RdfStream;
+package org.fcrepo.persistence.api.exceptions;
 
 /**
- * @author bbpennel
+ * If an item is not found in the storage.
  *
+ * @author whikloj
+ * @since 2019-09-24
  */
-public interface CreateRdfSourceOperationBuilder extends RdfSourceOperationBuilder {
+public class PersistentItemConflictException extends PersistentStorageException {
 
-    @Override
-    CreateRdfSourceOperationBuilder userPrincipal(String userPrincipal);
-
-    @Override
-    CreateRdfSourceOperationBuilder triples(RdfStream triples);
+    private static final long serialVersionUID = 1L;
 
     /**
-     * Set the parent identifier of the resource
+     * Basic constructor
      *
-     * @param parentId parent internal identifier
-     * @return the builder
+     * @param msg The text of the exception.
      */
-    CreateRdfSourceOperationBuilder parentId(String parentId);
+    public PersistentItemConflictException(final String msg) {
+        super(msg);
+    }
 
-    /**
-     * Indicates that this resource should be created as an Archival Group
-     * @param flag if true, this operation should create this resource Archival Group
-     * @return this builder
-     */
-    RdfSourceOperationBuilder archivalGroup(boolean flag);
 }

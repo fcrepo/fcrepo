@@ -49,4 +49,5 @@ public interface RdfSourceOperationBuilder extends ResourceOperationBuilder {
      * @return this builder
      */
     RdfSourceOperationBuilder relaxedProperties(Model model);
+
 }

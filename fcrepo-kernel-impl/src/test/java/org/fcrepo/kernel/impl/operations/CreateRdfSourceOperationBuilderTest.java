@@ -26,6 +26,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED_PROPERTIES_MODE;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 
 import java.io.ByteArrayOutputStream;
@@ -154,6 +155,19 @@ public class CreateRdfSourceOperationBuilderTest {
         assertNull(op.getCreatedDate());
         assertNull(op.getLastModifiedDate());
     }
+
+    @Test
+    public void testArchivalGroupFalseByDefault() {
+        final CreateRdfSourceOperation op =  (CreateRdfSourceOperation)builder.build();
+        assertFalse(op.isArchivalGroup());
+    }
+
+    @Test
+    public void testArchivalGroup() {
+        final CreateRdfSourceOperation op =  (CreateRdfSourceOperation)builder.archivalGroup(true).build();
+        assertTrue(op.isArchivalGroup());
+    }
+
 
     private RdfSourceOperation buildOperationWithRelaxProperties(final Model model) {
         try {
