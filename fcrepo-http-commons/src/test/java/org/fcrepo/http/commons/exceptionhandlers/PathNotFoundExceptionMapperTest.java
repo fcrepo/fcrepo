@@ -21,8 +21,6 @@ import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import javax.ws.rs.core.Response;
 
@@ -32,7 +30,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * <p>PathNotFoundExceptionMapperTest class.</p>
+ * PathNotFoundExceptionMapperTest class.
  *
  * @author robyj
  */
@@ -48,12 +46,9 @@ public class PathNotFoundExceptionMapperTest {
     @Test
     public void testToResponse() {
         final PathNotFoundException input = new PathNotFoundException("xyz");
-        Response actual = testObj.toResponse(input);
+        final Response actual = testObj.toResponse(input);
         assertEquals(NOT_FOUND.getStatusCode(), actual.getStatus());
-        assertTrue(actual.getEntity() != "xyz");
-        testObj.showStackTrace = false;
-        actual = testObj.toResponse(input);
+        assertEquals(actual.getEntity(),"Error: xyz");
         assertNotEquals(INTERNAL_SERVER_ERROR.getStatusCode(), actual.getStatus());
-        assertNotNull(actual.getEntity());
     }
 }

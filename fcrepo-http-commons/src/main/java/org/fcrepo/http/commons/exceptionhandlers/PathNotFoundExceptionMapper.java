@@ -35,28 +35,16 @@ import org.slf4j.Logger;
 public class PathNotFoundExceptionMapper implements
         ExceptionMapper<PathNotFoundException>, ExceptionDebugLogging {
 
-    Boolean showStackTrace = true;
-
     private static final Logger LOGGER =
         getLogger(PathNotFoundExceptionMapper.class);
 
     @Override
     public Response toResponse(final PathNotFoundException e) {
 
-        LOGGER.error("Exception intercepted by PathNotFoundExceptionMapper: {}\n", e.getMessage());
+        LOGGER.debug("Exception intercepted by PathNotFoundExceptionMapper: {}\n", e.getMessage());
         debugException(this, e, LOGGER);
         return Response.status(Response.Status.NOT_FOUND).
                 entity("Error: " + e.getMessage()).build();
-    }
-
-    /**
-     * Set whether the full stack trace should be returned as part of the
-     * error response. This may be a bad idea if the stack trace is exposed
-     * to the public.
-     * @param showStackTrace the boolean value of showing stack trace
-     */
-    public void setShowStackTrace(final Boolean showStackTrace) {
-        this.showStackTrace = showStackTrace;
     }
 }
 
