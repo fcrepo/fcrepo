@@ -19,9 +19,9 @@ package org.fcrepo.http.api;
 
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
+import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
-import static javax.ws.rs.core.Response.ok;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_LINK_FORMAT;
@@ -48,9 +48,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
@@ -69,7 +67,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import com.google.common.annotations.VisibleForTesting;
+
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.LinkFormatStream;
@@ -84,6 +82,8 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
+
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * @author cabeer
@@ -228,9 +228,7 @@ public class FedoraVersioning extends ContentExposingResource {
                                                   final String digest)
             throws InvalidChecksumException, UnsupportedAlgorithmException {
 
-        final Collection<String> checksums = parseDigestHeader(digest);
-        final Collection<URI> checksumURIs = checksums == null ? new HashSet<>() : checksums.stream().map(
-                checksum -> checksumURI(checksum)).collect(Collectors.toSet());
+        final Collection<URI> checksumURIs = parseDigestHeader(digest);
 
         // Create internal binary either from supplied body or copy external uri
         if (extContent == null || extContent.isCopy()) {

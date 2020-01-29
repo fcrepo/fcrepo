@@ -101,6 +101,11 @@ public class ExternalContentHandler implements ExternalContent {
     }
 
     @Override
+    public URI getURI() {
+        return link != null ? link.getUri() : null;
+    }
+
+    @Override
     public boolean isCopy() {
         return handling != null && handling.equals(COPY);
     }

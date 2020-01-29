@@ -27,8 +27,6 @@ import static org.fcrepo.kernel.impl.services.functions.FedoraIdUtils.addToIdent
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -77,7 +75,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
     @Override
     public String perform(final String txId, final String userPrincipal, final String fedoraId, final String slug,
                         final boolean isContained, final String contentType, final String filename,
-                        final Long contentSize, final List<String> linkHeaders, final Collection<String> digest,
+                        final Long contentSize, final List<String> linkHeaders, final Collection<URI> digest,
                         final InputStream requestBody, final ExternalContent externalContent) {
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
         checkAclLinkHeader(linkHeaders);
@@ -91,22 +89,21 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         // Populate the description for the new binary
         createDescription(pSession, userPrincipal, fullPath);
 
-        final Collection<URI> uriDigests = (digest == null ? Collections.emptySet() :
-                digest.stream().map(URI::create).collect(Collectors.toCollection(HashSet::new)));
         final CreateNonRdfSourceOperationBuilder builder;
-        final String mimeType;
+        String mimeType = contentType;
         if (externalContent == null) {
             builder = nonRdfSourceOperationFactory.createInternalBinaryBuilder(fullPath, requestBody);
-            mimeType = contentType;
         } else {
             builder = nonRdfSourceOperationFactory.createExternalBinaryBuilder(fullPath, externalContent.getHandling(),
                     URI.create(externalContent.getURL()));
-            mimeType = externalContent.getContentType();
+            if (externalContent.getContentType() != null) {
+                mimeType = externalContent.getContentType();
+            }
         }
         final ResourceOperation createOp = builder
                 .parentId(parentId)
                 .userPrincipal(userPrincipal)
-                .contentDigests(uriDigests)
+                .contentDigests(digest)
                 .mimeType(mimeType)
                 .contentSize(contentSize)
                 .filename(filename)

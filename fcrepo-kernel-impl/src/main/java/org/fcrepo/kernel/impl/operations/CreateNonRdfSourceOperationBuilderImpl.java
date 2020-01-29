@@ -29,25 +29,10 @@ import java.util.Collection;
  *
  * @author bbpennel
  */
-public class CreateNonRdfSourceOperationBuilderImpl implements CreateNonRdfSourceOperationBuilder {
-
-    /**
-     * The resource id.
-     */
-    private final String resourceId;
+public class CreateNonRdfSourceOperationBuilderImpl extends AbstractNonRdfSourceOperationBuilder
+        implements CreateNonRdfSourceOperationBuilder {
 
     private String parentId;
-
-    private String userPrincipal;
-
-    private String mimeType;
-    private String filename;
-    private Collection<URI> digests;
-
-    private Long contentSize;
-    private InputStream content;
-    private URI externalURI;
-    private String externalType;
 
     /**
      * Constructor for external binary.
@@ -58,9 +43,7 @@ public class CreateNonRdfSourceOperationBuilderImpl implements CreateNonRdfSourc
      */
     protected CreateNonRdfSourceOperationBuilderImpl(final String rescId, final String handling,
             final URI externalUri) {
-        this(rescId);
-        this.externalURI = externalUri;
-        this.externalType = handling;
+        super(rescId, handling, externalUri);
     }
 
     /**
@@ -70,47 +53,32 @@ public class CreateNonRdfSourceOperationBuilderImpl implements CreateNonRdfSourc
      * @param stream the content stream.
      */
     protected CreateNonRdfSourceOperationBuilderImpl(final String rescId, final InputStream stream) {
-        this(rescId);
-        this.content = stream;
-    }
-
-    /**
-     * Constructor
-     *
-     * @param rescId the internal identifier.
-     */
-    private CreateNonRdfSourceOperationBuilderImpl(final String rescId) {
-        this.resourceId = rescId;
+        super(rescId, stream);
     }
 
     @Override
-    public CreateNonRdfSourceOperationBuilderImpl mimeType(final String mimetype) {
-        this.mimeType = mimetype;
-        return this;
+    public CreateNonRdfSourceOperationBuilder mimeType(final String mimeType) {
+        return (CreateNonRdfSourceOperationBuilder) super.mimeType(mimeType);
     }
 
     @Override
-    public CreateNonRdfSourceOperationBuilderImpl filename(final String filename) {
-        this.filename = filename;
-        return this;
+    public CreateNonRdfSourceOperationBuilder filename(final String filename) {
+        return (CreateNonRdfSourceOperationBuilder) super.filename(filename);
     }
 
     @Override
-    public CreateNonRdfSourceOperationBuilderImpl contentDigests(final Collection<URI> digests) {
-        this.digests = digests;
-        return this;
+    public CreateNonRdfSourceOperationBuilder contentDigests(final Collection<URI> digests) {
+        return (CreateNonRdfSourceOperationBuilder) super.contentDigests(digests);
     }
 
     @Override
-    public CreateNonRdfSourceOperationBuilderImpl contentSize(final Long size) {
-        this.contentSize = size;
-        return this;
+    public CreateNonRdfSourceOperationBuilder contentSize(final Long size) {
+        return (CreateNonRdfSourceOperationBuilder) super.contentSize(size);
     }
 
     @Override
-    public CreateNonRdfSourceOperationBuilderImpl userPrincipal(final String userPrincipal) {
-        this.userPrincipal = userPrincipal;
-        return this;
+    public CreateNonRdfSourceOperationBuilder userPrincipal(final String userPrincipal) {
+        return (CreateNonRdfSourceOperationBuilder) super.userPrincipal(userPrincipal);
     }
 
     @Override

@@ -19,6 +19,9 @@ package org.fcrepo.kernel.impl.operations;
 
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
 
+import java.io.InputStream;
+import java.net.URI;
+
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 
 /**
@@ -28,8 +31,26 @@ import org.fcrepo.kernel.api.operations.ResourceOperationType;
  */
 public class UpdateNonRdfSourceOperation extends AbstractNonRdfSourceOperation {
 
-    protected UpdateNonRdfSourceOperation(final String rescId) {
-        super(rescId);
+    /**
+     * Constructor for internal binaries.
+     *
+     * @param rescId the internal identifier.
+     * @param content the stream of the content.
+     */
+    protected UpdateNonRdfSourceOperation(final String rescId, final InputStream content) {
+        super(rescId, content);
+    }
+
+    /**
+     * Constructor for external content.
+     *
+     * @param rescId the internal identifier.
+     * @param externalContentURI the URI of the external content.
+     * @param externalHandling the type of external content handling (REDIRECT, PROXY)
+     */
+    protected UpdateNonRdfSourceOperation(final String rescId, final URI externalContentURI,
+            final String externalHandling) {
+        super(rescId, externalContentURI, externalHandling);
     }
 
     @Override
