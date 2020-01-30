@@ -175,7 +175,6 @@ import org.apache.jena.vocabulary.DC_11;
 import org.apache.jena.vocabulary.RDF;
 import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
-import org.fcrepo.persistence.ocfl.impl.DefaultOCFLObjectSessionFactory;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -298,7 +297,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final var headObjMethod = headObjMethod(id);
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             final Collection<String> links = getLinkHeaders(response);
-            assertTrue("Didn't find LDP ArchivalGroup link header!", links.contains(ARCHIVAL_GROUP_LINK_HEADER));
+            assertTrue("Didn't find ArchivalGroup link header!", links.contains(ARCHIVAL_GROUP_LINK_HEADER));
             assertTrue("Didn't find LDP container link header!", links.contains(BASIC_CONTAINER_LINK_HEADER));
         }
 
@@ -309,7 +308,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(childHeadObjMethod)) {
             final Collection<String> links = getLinkHeaders(response);
             assertTrue("Didn't find LDP container link header!", links.contains(BASIC_CONTAINER_LINK_HEADER));
-            assertFalse("Unexpectedly found LDP ArchivalGroup link header!",
+            assertFalse("Unexpectedly found ArchivalGroup link header!",
                     links.contains(ARCHIVAL_GROUP_LINK_HEADER));
         }
 
@@ -319,15 +318,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(grandChildHeadObjMethod)) {
             final Collection<String> links = getLinkHeaders(response);
             assertTrue("Didn't find LDP container link header!", links.contains(BASIC_CONTAINER_LINK_HEADER));
-            assertFalse("Unexpectedly found LDP ArchivalGroup link header!",
+            assertFalse("Unexpectedly found ArchivalGroup link header!",
                     links.contains(ARCHIVAL_GROUP_LINK_HEADER));
         }
-
-        final var ocflObjectSessionFactory = new DefaultOCFLObjectSessionFactory();
-        final var session = ocflObjectSessionFactory.create(id, null);
-        session.read(id + ".nt");
-        session.read("child.nt");
-        session.read("child/grandchild.nt");
     }
 
     @Test
@@ -358,10 +351,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final var postMethod = postObjMethod(id);
         postMethod.setEntity(new StringEntity("test"));
         postMethod.addHeader("Link", ARCHIVAL_GROUP_LINK_HEADER);
+        postMethod.addHeader("Link", NON_RDF_SOURCE_LINK_HEADER);
         postMethod.addHeader("Content-Type", "text/plain");
 
         try (final CloseableHttpResponse response = execute(postMethod)) {
-            final Collection<String> links = getLinkHeaders(response);
             assertEquals("Expected Bad Request response", BAD_REQUEST.getStatusCode(),
                     response.getStatusLine().getStatusCode());
         }
@@ -372,9 +365,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final var id = getRandomUniqueId();
         final var putMethod = putObjMethod(id, "text/plain", "testcontent");
         putMethod.addHeader("Link", ARCHIVAL_GROUP_LINK_HEADER);
+        putMethod.addHeader("Link", NON_RDF_SOURCE_LINK_HEADER);
 
         try (final CloseableHttpResponse response = execute(putMethod)) {
-            final Collection<String> links = getLinkHeaders(response);
             assertEquals("Expected Bad Request response", BAD_REQUEST.getStatusCode(),
                     response.getStatusLine().getStatusCode());
         }

@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.api.operations;
 
+import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.RdfStream;
 
 /**
@@ -31,6 +32,12 @@ public interface CreateRdfSourceOperationBuilder extends RdfSourceOperationBuild
     @Override
     CreateRdfSourceOperationBuilder triples(RdfStream triples);
 
+    @Override
+    CreateRdfSourceOperationBuilder relaxedProperties(Model model);
+
+    @Override
+    CreateRdfSourceOperation build();
+
     /**
      * Set the parent identifier of the resource
      *
@@ -41,8 +48,9 @@ public interface CreateRdfSourceOperationBuilder extends RdfSourceOperationBuild
 
     /**
      * Indicates that this resource should be created as an Archival Group
-     * @param flag if true, this operation should create this resource Archival Group
+     * @param flag if true, create as Archival Group
      * @return this builder
      */
-    RdfSourceOperationBuilder archivalGroup(boolean flag);
+    CreateRdfSourceOperationBuilder archivalGroup(boolean flag);
+
 }

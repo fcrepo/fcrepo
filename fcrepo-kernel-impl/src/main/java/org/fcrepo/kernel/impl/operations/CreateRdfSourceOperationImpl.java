@@ -18,14 +18,14 @@
 package org.fcrepo.kernel.impl.operations;
 
 import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.operations.CreateResourceOperation;
+import org.fcrepo.kernel.api.operations.CreateRdfSourceOperation;
 
 /**
  * Operation to create an RDF source.
  *
  * @author bbpennel
  */
-public class CreateRdfSourceOperation extends AbstractRdfSourceOperation implements CreateResourceOperation {
+public class CreateRdfSourceOperationImpl extends AbstractRdfSourceOperation implements CreateRdfSourceOperation {
 
     private String parentId;
 
@@ -43,8 +43,8 @@ public class CreateRdfSourceOperation extends AbstractRdfSourceOperation impleme
      * @param interactionModel interaction model for the resource
      * @param triples triples stream for the resource
      */
-    protected CreateRdfSourceOperation(final String rescId, final String interactionModel,
-            final RdfStream triples) {
+    protected CreateRdfSourceOperationImpl(final String rescId, final String interactionModel,
+                                           final RdfStream triples) {
         super(rescId, triples);
         this.interactionModel = interactionModel;
     }

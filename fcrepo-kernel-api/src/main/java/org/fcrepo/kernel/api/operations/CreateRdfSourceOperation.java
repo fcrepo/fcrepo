@@ -15,26 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.persistence.api.exceptions;
+package org.fcrepo.kernel.api.operations;
 
 /**
- * If an operation results in a conflict preventing the successful completion of a persistence
- * operation.
+ * Operation for creating an rdf source
  *
  * @author dbernstein
- * @since 2020-01-29
  */
-public class PersistentItemConflictException extends PersistentStorageException {
-
-    private static final long serialVersionUID = 1L;
-
-    /**
-     * Basic constructor
-     *
-     * @param msg The text of the exception.
-     */
-    public PersistentItemConflictException(final String msg) {
-        super(msg);
-    }
+public interface CreateRdfSourceOperation extends RdfSourceOperation, CreateResourceOperation {
 
 }

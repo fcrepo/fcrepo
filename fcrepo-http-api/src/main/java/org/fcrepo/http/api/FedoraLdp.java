@@ -434,7 +434,7 @@ public class FedoraLdp extends ContentExposingResource {
                         providedContentType,
                         requestBodyStream != null && providedContentType != null,
                         extContent != null)) {
-            checkArchivalGroupLinkPresent(links);
+            ensureArchivalGroupHeaderNotPresentForBinaries(links);
 
             final Collection<URI> checksums = parseDigestHeader(digest);
             final var binaryType = requestContentType != null ? requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;
@@ -610,8 +610,8 @@ public class FedoraLdp extends ContentExposingResource {
                      providedContentType,
                      requestBodyStream != null && providedContentType != null,
                      extContent != null)) {
+            ensureArchivalGroupHeaderNotPresentForBinaries(links);
 
-            checkArchivalGroupLinkPresent(links);
             final Collection<URI> checksums = parseDigestHeader(digest);
             final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
             final var binaryType = requestContentType != null ? requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;
@@ -731,12 +731,12 @@ public class FedoraLdp extends ContentExposingResource {
                 .replaceFirst(":", "=").replaceFirst("sha1=", "sha=")).collect(Collectors.joining(","));
     }
 
-    private static void checkArchivalGroupLinkPresent(final List<String> links){
+    private static void ensureArchivalGroupHeaderNotPresentForBinaries(final List<String> links){
         if (links == null) {
             return;
         }
 
-        if(links.stream().map(l -> Link.valueOf(l))
+        if (links.stream().map(l -> Link.valueOf(l))
                       .filter(l -> l.getUri().toString().equals(ARCHIVAL_GROUP.getURI()))
                       .filter(l -> l.getRel().equals("type"))
                       .findFirst().isPresent()) {
@@ -755,7 +755,7 @@ public class FedoraLdp extends ContentExposingResource {
                 final Link linq = Link.valueOf(link);
                 if ("type".equals(linq.getRel())) {
                     //skip ArchivalGroup types
-                    if(linq.getUri().toString().equals(ARCHIVAL_GROUP.getURI())) {
+                    if (linq.getUri().toString().equals(ARCHIVAL_GROUP.getURI())) {
                         continue;
                     }
                     final Resource type = createResource(linq.getUri().toString());

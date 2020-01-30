@@ -19,8 +19,8 @@ package org.fcrepo.kernel.impl.operations;
 
 import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.operations.CreateRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.CreateRdfSourceOperationBuilder;
-import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 
 /**
  * Builder for operations to create rdf sources
@@ -44,8 +44,8 @@ public class CreateRdfSourceOperationBuilderImpl extends AbstractRdfSourceOperat
     }
 
     @Override
-    public RdfSourceOperation build() {
-        final var operation = new CreateRdfSourceOperation(resourceId, interactionModel, tripleStream);
+    public CreateRdfSourceOperation build() {
+        final var operation = new CreateRdfSourceOperationImpl(resourceId, interactionModel, tripleStream);
         operation.setParentId(parentId);
         operation.setUserPrincipal(userPrincipal);
         operation.setCreatedBy(createdBy);
@@ -85,4 +85,5 @@ public class CreateRdfSourceOperationBuilderImpl extends AbstractRdfSourceOperat
         this.archivalGroup = flag;
         return this;
     }
+
 }

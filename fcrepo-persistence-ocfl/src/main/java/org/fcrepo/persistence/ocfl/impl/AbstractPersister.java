@@ -123,7 +123,8 @@ abstract class AbstractPersister implements Persister {
         final var resourceId = operation.getResourceId();
         //is resource or any parent an archival group?
         final var startingResourceId = operation.getType().equals(CREATE) ? operation.getParentId() : resourceId;
-        final var archivalGroupId = findArchivalGroupInAncestry(startingResourceId, session);
+        final var archivalGroupId = startingResourceId == null ? null : findArchivalGroupInAncestry(startingResourceId,
+                session);
 
         if (archivalGroupId != null) {
             return archivalGroupId;
@@ -135,7 +136,7 @@ abstract class AbstractPersister implements Persister {
 }
 
     protected String findArchivalGroupInAncestry(final String resourceId, final OCFLPersistentStorageSession session) {
-            if (resourceId == null || resourceId.endsWith(FEDORA_ID_PREFIX)) {
+            if (resourceId.endsWith(FEDORA_ID_PREFIX)) {
                 return null;
             }
 
@@ -151,7 +152,8 @@ abstract class AbstractPersister implements Persister {
                     return cleanedResourceId;
                 }
             } catch (final PersistentItemNotFoundException ex) {
-                //do nothing
+                //do nothing since there are cases where the resourceId will be the resource
+                //that is about to be created and thus will not yet exist in peristent storage.
             } catch (final PersistentStorageException ex) {
                 throw new RepositoryRuntimeException(ex);
             }

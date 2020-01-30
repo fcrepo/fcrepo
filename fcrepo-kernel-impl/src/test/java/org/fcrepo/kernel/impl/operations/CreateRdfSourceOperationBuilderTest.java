@@ -39,6 +39,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.operations.CreateRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.CreateRdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.junit.Before;
@@ -92,7 +93,7 @@ public class CreateRdfSourceOperationBuilderTest {
     @Test
     public void testStream() {
         final RdfSourceOperation op = builder.triples(stream).build();
-        assertEquals(CreateRdfSourceOperation.class, op.getClass());
+        assertEquals(CreateRdfSourceOperationImpl.class, op.getClass());
         assertTrue(op.getTriples().anyMatch(t -> t.matches(id, prop, object)));
         assertEquals(stream, op.getTriples());
     }
@@ -158,13 +159,13 @@ public class CreateRdfSourceOperationBuilderTest {
 
     @Test
     public void testArchivalGroupFalseByDefault() {
-        final CreateRdfSourceOperation op =  (CreateRdfSourceOperation)builder.build();
+        final CreateRdfSourceOperation op = builder.build();
         assertFalse(op.isArchivalGroup());
     }
 
     @Test
     public void testArchivalGroup() {
-        final CreateRdfSourceOperation op =  (CreateRdfSourceOperation)builder.archivalGroup(true).build();
+        final CreateRdfSourceOperation op = builder.archivalGroup(true).build();
         assertTrue(op.isArchivalGroup());
     }
 
@@ -187,7 +188,7 @@ public class CreateRdfSourceOperationBuilderTest {
 
     @Test
     public void testParentId() {
-        final CreateRdfSourceOperation op = (CreateRdfSourceOperation) builder.parentId(PARENT_ID).build();
+        final CreateRdfSourceOperation op = builder.parentId(PARENT_ID).build();
 
         assertEquals(PARENT_ID, op.getParentId());
     }

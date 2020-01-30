@@ -181,7 +181,7 @@ public class FedoraResourceImpl implements FedoraResource {
             try {
                 final var headers = getSession().getHeaders(getId(), getMementoDatetime());
                 types.add(create(headers.getInteractionModel()));
-                if(headers.isArchivalGroup()){
+                if (headers.isArchivalGroup()) {
                     types.add(create(ARCHIVAL_GROUP.getURI()));
                 }
             } catch (final PersistentItemNotFoundException e) {

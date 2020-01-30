@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import static java.util.Collections.emptyList;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
@@ -43,10 +44,8 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.ExternalContent;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateNonRdfSourceOperationBuilder;
-import org.fcrepo.kernel.api.operations.CreateRdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
-import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.services.CreateResourceService;
@@ -147,20 +146,18 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         checkParent(pSession, parentId);
         final String fullPath = isContained ? getResourcePath(pSession, fedoraId, slug) : fedoraId;
 
-        final var rdfTypes = isEmpty(linkHeaders) ?  Collections.EMPTY_LIST: getTypes(linkHeaders);
+        final List<String> rdfTypes = isEmpty(linkHeaders) ? emptyList() : getTypes(linkHeaders);
         final String interactionModel = determineInteractionModel(rdfTypes, true,
                 model != null, false);
 
         final RdfStream stream = fromModel(model.getResource(fedoraId).asNode(), model);
 
-        final RdfSourceOperationBuilder builder = rdfSourceOperationFactory.createBuilder(fullPath, interactionModel)
+        final RdfSourceOperation createOp = rdfSourceOperationFactory.createBuilder(fullPath, interactionModel)
                 .parentId(parentId)
                 .triples(stream)
-                .relaxedProperties(model);
-
-        final RdfSourceOperation createOp = ((CreateRdfSourceOperationBuilder)builder)
-                                                .archivalGroup(rdfTypes.contains(ARCHIVAL_GROUP.getURI()))
-                                                .build();
+                .relaxedProperties(model)
+                .archivalGroup(rdfTypes.contains(ARCHIVAL_GROUP.getURI()))
+                .build();
 
         try {
             pSession.persist(createOp);
@@ -243,7 +240,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
      * @return a list of LINK headers with rel="type"
      */
     private List<String> getTypes(final List<String> headers) {
-        return getLinkHeaders(headers) == null ? null : getLinkHeaders(headers).stream()
+        return getLinkHeaders(headers) == null ? emptyList() : getLinkHeaders(headers).stream()
                 .filter(p -> p.getRel().equalsIgnoreCase("type")).map(Link::getUri)
                 .map(URI::toString).collect(Collectors.toList());
     }

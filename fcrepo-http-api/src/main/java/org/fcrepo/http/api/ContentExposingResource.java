@@ -658,7 +658,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         if (resource instanceof Binary) {
             servletResponse.addHeader(LINK, "<" + LDP_NAMESPACE + "NonRDFSource>;rel=\"type\"");
         } else if (resource instanceof Container || resource instanceof TimeMap) {
-            if(resource.hasType(ARCHIVAL_GROUP.getURI())){
+            if (resource.hasType(ARCHIVAL_GROUP.getURI())) {
                 servletResponse.addHeader(LINK, "<" + ARCHIVAL_GROUP.getURI() + ">;rel=\"type\"");
             }
 

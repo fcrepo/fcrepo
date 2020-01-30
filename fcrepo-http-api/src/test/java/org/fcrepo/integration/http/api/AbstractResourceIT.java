@@ -426,7 +426,7 @@ public abstract class AbstractResourceIT {
         }
 
         if (linkHeaders != null && linkHeaders.length > 0) {
-            for(String linkHeader : linkHeaders){
+            for (String linkHeader : linkHeaders) {
                 httpPost.addHeader(LINK, linkHeader);
             }
         }
