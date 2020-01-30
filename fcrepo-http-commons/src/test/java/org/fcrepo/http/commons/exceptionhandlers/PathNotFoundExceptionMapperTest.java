@@ -49,7 +49,6 @@ public class PathNotFoundExceptionMapperTest {
         final PathNotFoundException input = new PathNotFoundException("xyz");
         final Response actual = testObj.toResponse(input);
         assertEquals(NOT_FOUND.getStatusCode(), actual.getStatus());
-        assertEquals(actual.getEntity(),"Error: xyz");
-        assertNotEquals(INTERNAL_SERVER_ERROR.getStatusCode(), actual.getStatus());
+        assertEquals(actual.getEntity(), "Error: xyz");
     }
 }
