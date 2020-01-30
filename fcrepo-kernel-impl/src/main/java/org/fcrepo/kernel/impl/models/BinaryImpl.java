@@ -26,14 +26,18 @@ import java.util.Collection;
 
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.ExternalContent;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
 
 /**
@@ -70,30 +74,20 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
 
     @Override
     public InputStream getContent() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public void setContentStream(final InputStream content) {
-        // TODO Auto-generated method stub
-
+        try {
+            return getSession().getBinaryContent(getId(), getMementoDatetime());
+        } catch (final PersistentItemNotFoundException e) {
+            throw new ItemNotFoundException("Unable to find content for " + getId()
+                    + " version " + getMementoDatetime(), e);
+        } catch (final PersistentStorageException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     @Override
     public void setContent(final InputStream content, final String contentType, final Collection<URI> checksums,
             final String originalFileName, final StoragePolicyDecisionPoint storagePolicyDecisionPoint)
             throws InvalidChecksumException {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void setExternalContent(final String contentType,
-                                   final Collection<URI> checksums,
-                                   final String originalFileName,
-                                   final String externalHandling,
-                                   final String externalUrl) throws InvalidChecksumException {
         // TODO Auto-generated method stub
 
     }

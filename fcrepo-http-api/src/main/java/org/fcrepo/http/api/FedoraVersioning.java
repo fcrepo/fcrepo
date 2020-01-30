@@ -250,7 +250,6 @@ public class FedoraVersioning extends ContentExposingResource {
     /**
      * Get the list of versions for the object
      *
-     * @param rangeValue starting and ending byte offsets
      * @param acceptValue the rdf media-type
      * @return List of versions for the object as RDF
      * @throws IOException in case of error extracting content
@@ -260,8 +259,7 @@ public class FedoraVersioning extends ContentExposingResource {
     @Produces({ TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
         N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
         TURTLE_X, TEXT_HTML_WITH_CHARSET, APPLICATION_LINK_FORMAT })
-    public Response getVersionList(@HeaderParam("Range") final String rangeValue,
-        @HeaderParam("Accept") final String acceptValue) throws IOException {
+    public Response getVersionList(@HeaderParam("Accept") final String acceptValue) throws IOException {
 
         final FedoraResource theTimeMap = resource().getTimeMap();
         checkCacheControlHeaders(request, servletResponse, theTimeMap, transaction);
@@ -301,7 +299,7 @@ public class FedoraVersioning extends ContentExposingResource {
             return ok(new LinkFormatStream(versionLinks.stream())).build();
         } else {
             try (final RdfStream rdfStream = new DefaultRdfStream(asNode(theTimeMap))) {
-                return getContent(rangeValue, getChildrenLimit(), rdfStream, theTimeMap);
+                return getContent(getChildrenLimit(), rdfStream, theTimeMap);
             }
         }
     }

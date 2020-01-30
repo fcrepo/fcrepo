@@ -20,6 +20,7 @@ package org.fcrepo.persistence.ocfl.impl;
 import static java.lang.String.format;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getSidecarSubpath;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveVersionId;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getBinaryStream;
 
 import java.io.InputStream;
 import java.time.Instant;
@@ -253,9 +254,16 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     @Override
     public InputStream getBinaryContent(final String identifier, final Instant version)
-            throws PersistentItemNotFoundException {
-        // TODO Auto-generated method stub
-        return null;
+            throws PersistentStorageException {
+        ensureCommitNotStarted();
+
+        final var mapping = getFedoraOCFLMapping(identifier);
+        final var rootIdentifier = mapping.getRootObjectIdentifier();
+        final var objSession = findOrCreateSession(mapping.getOcflObjectId());
+        final var fedoraSubpath = relativizeSubpath(rootIdentifier, identifier);
+        final var ocflSubpath = resolveOCFLSubpath(rootIdentifier, fedoraSubpath);
+
+        return getBinaryStream(objSession, ocflSubpath, version);
     }
 
     @Override

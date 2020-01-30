@@ -265,36 +265,34 @@ public class FedoraLdp extends ContentExposingResource {
 
         checkCacheControlHeaders(request, servletResponse, resource(), transaction);
 
+        final ImmutableList<MediaType> acceptableMediaTypes = ImmutableList.copyOf(headers
+                .getAcceptableMediaTypes());
+
         LOGGER.info("GET resource '{}'", externalPath);
-        try (final RdfStream rdfStream = new DefaultRdfStream(asNode(resource()))) {
-
-            // If requesting a binary, check the mime-type if "Accept:" header is present.
-            // (This needs to be done before setting up response headers, as getContent
-            // returns a response - so changing headers after that won't work so nicely.)
-            final ImmutableList<MediaType> acceptableMediaTypes = ImmutableList.copyOf(headers
-                    .getAcceptableMediaTypes());
-
-            if (resource() instanceof Binary && acceptableMediaTypes.size() > 0) {
-
+        if (resource() instanceof Binary) {
+            final Binary binary = (Binary) resource();
+            if (!acceptableMediaTypes.isEmpty()) {
                 final MediaType mediaType = getBinaryResourceMediaType(resource());
-
-                // Respect the Want-Digest header for fixity check
-                final String wantDigest = headers.getHeaderString(WANT_DIGEST);
-                if (!isNullOrEmpty(wantDigest)) {
-                    servletResponse.addHeader(DIGEST, handleWantDigestHeader((Binary)resource(), wantDigest));
-                }
 
                 if (acceptableMediaTypes.stream().noneMatch(t -> t.isCompatible(mediaType))) {
                     return notAcceptable(VariantListBuilder.newInstance().mediaTypes(mediaType).build()).build();
                 }
             }
 
-            addResourceHttpHeaders(resource());
+            // Respect the Want-Digest header for fixity check
+            final String wantDigest = headers.getHeaderString(WANT_DIGEST);
+            if (!isNullOrEmpty(wantDigest)) {
+                servletResponse.addHeader(DIGEST, handleWantDigestHeader(binary, wantDigest));
+            }
 
-            if (resource() instanceof Binary && ((Binary)resource()).isRedirect()) {
-                return temporaryRedirect(((Binary) resource()).getExternalURI()).build();
+            if (binary.isRedirect()) {
+                return temporaryRedirect(binary.getExternalURI()).build();
             } else {
-                return getContent(rangeValue, getChildrenLimit(), rdfStream, resource());
+                return getBinaryContent(rangeValue, binary);
+            }
+        } else {
+            try (final var rdfStream = new DefaultRdfStream(asNode(resource()))) {
+                return getContent(getChildrenLimit(), rdfStream, resource());
             }
         }
     }
@@ -586,7 +584,12 @@ public class FedoraLdp extends ContentExposingResource {
             final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
             final var binaryType = requestContentType != null ? requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;
             final var contentType = extContent == null ? binaryType.toString() : extContent.getContentType();
-            final var contentSize = contentDisposition != null ? contentDisposition.getSize() : null;
+            final Long contentSize;
+            if (contentDisposition == null || contentDisposition.getSize() == -1) {
+                contentSize = null;
+            } else {
+                contentSize = contentDisposition.getSize();
+            }
 
             newFedoraId = createResourceService.perform(transaction.getId(),
                                                         getUserPrincipal(),
@@ -595,7 +598,7 @@ public class FedoraLdp extends ContentExposingResource {
                                                         true,
                                                         contentType,
                                                         originalFileName,
-                    contentSize,
+                                                        contentSize,
                                                         links,
                                                         checksums,
                                                         requestBodyStream,

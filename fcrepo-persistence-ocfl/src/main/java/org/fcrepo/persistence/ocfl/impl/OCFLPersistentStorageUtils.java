@@ -193,6 +193,21 @@ public class OCFLPersistentStorageUtils {
     }
 
     /**
+     * Get the content of the specified binary file.
+     *
+     * @param objSession The OCFL object session
+     * @param subpath The path to the desired file
+     * @param version The version. If null, the head state will be returned.
+     * @return the binary content stream
+     * @throws PersistentStorageException If unable to read the specified binary stream.
+     */
+    public static InputStream getBinaryStream(final OCFLObjectSession objSession,
+            final String subpath, final Instant version) throws PersistentStorageException {
+        final String versionId = resolveVersionId(objSession, version);
+        return readFile(objSession, subpath, versionId);
+    }
+
+    /**
      * Get an RDF stream for the specified file.
      *
      * @param identifier The resource identifier

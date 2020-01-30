@@ -17,6 +17,7 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
@@ -39,6 +40,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.List;
@@ -47,12 +49,14 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.vocabulary.DC;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
@@ -118,6 +122,8 @@ public class OCFLPersistentStorageSessionTest {
     private RdfSourceOperation rdfSourceOperation;
 
     private RdfSourceOperation rdfSourceOperation2;
+
+    private static final String BINARY_CONTENT = "Some test content";
 
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
@@ -590,5 +596,98 @@ public class OCFLPersistentStorageSessionTest {
         final var node = createURI(RESOURCE_ID);
         assertEquals(node, retrievedUserStream.topic());
         assertEquals(dcTitleTriple, retrievedUserStream.findFirst().get());
+    }
+
+    @Test
+    public void getBinaryContent() throws Exception {
+        mockMappingAndIndex(mintOCFLObjectId(RESOURCE_ID), RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+
+        // create the binary
+        final var binOperation = mockNonRdfSourceOperation(BINARY_CONTENT, USER_PRINCIPAL, RESOURCE_ID);
+
+        // perform the create non-rdf source operation
+        session.persist(binOperation);
+
+        // commit to OCFL
+        session.commit();
+
+        // create a new session and verify the returned rdf stream.
+        final var newSession = createSession(index, objectSessionFactory);
+        final var result = IOUtils.toString(newSession.getBinaryContent(RESOURCE_ID, null), UTF_8);
+
+        assertEquals(BINARY_CONTENT, result);
+    }
+
+    @Test
+    public void getBinaryContentFailsIfAlreadyCommitted() throws Exception {
+        mockMappingAndIndex(mintOCFLObjectId(RESOURCE_ID), RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+
+        // create the binary
+        final var binOperation = mockNonRdfSourceOperation(BINARY_CONTENT, USER_PRINCIPAL, RESOURCE_ID);
+
+        // perform the create non-rdf source operation
+        session.persist(binOperation);
+
+        // commit to OCFL
+        session.commit();
+
+        try {
+            session.getBinaryContent(RESOURCE_ID, null);
+            fail("Get must fail due to session having been committed");
+        } catch (final PersistentStorageException ex) {
+            // expected failure, handled with catch since the persist can throw same error
+        }
+    }
+
+    @Test
+    public void getBinaryContentVersion() throws Exception {
+        DefaultOCFLObjectSession.setGlobaDefaultCommitOption(NEW_VERSION);
+        // SEE getTriplesFromPreviousVersion
+        mockMappingAndIndex(mintOCFLObjectId(RESOURCE_ID), RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+
+        // create the binary
+        final var binOperation = mockNonRdfSourceOperation(BINARY_CONTENT, USER_PRINCIPAL, RESOURCE_ID);
+        // perform the create non-rdf source operation
+        session.persist(binOperation);
+        // commit to OCFL
+        session.commit();
+
+        // create a new session and verify that the state is the same
+        final var newSession = createSession(index, objectSessionFactory);
+
+        final var versions = newSession.listVersions(RESOURCE_ID);
+        final var version1 = versions.get(versions.size() - 1);
+        assertEquals(BINARY_CONTENT,
+                IOUtils.toString(newSession.getBinaryContent(RESOURCE_ID, version1), UTF_8));
+    }
+
+    @Test
+    public void getBinaryContentUncommitted() throws Exception {
+        mockMappingAndIndex(mintOCFLObjectId(RESOURCE_ID), RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+
+        // create the binary
+        final var binOperation = mockNonRdfSourceOperation(BINARY_CONTENT, USER_PRINCIPAL, RESOURCE_ID);
+
+        // perform the create non-rdf source operation
+        session.persist(binOperation);
+
+        // create a new session and verify the returned rdf stream.
+        final var result = IOUtils.toString(session.getBinaryContent(RESOURCE_ID, null), UTF_8);
+
+        assertEquals(BINARY_CONTENT, result);
+    }
+
+    private NonRdfSourceOperation mockNonRdfSourceOperation(final String content,
+            final String userPrincipal, final String resourceId) {
+        final var binOperation = mock(NonRdfSourceOperation.class,
+                withSettings().extraInterfaces(CreateResourceOperation.class));
+
+        final var contentStream = new ByteArrayInputStream(content.getBytes());
+        when(binOperation.getContentStream()).thenReturn(contentStream);
+        when(binOperation.getContentSize()).thenReturn((long) content.length());
+        when(binOperation.getResourceId()).thenReturn(resourceId);
+        when(binOperation.getType()).thenReturn(CREATE);
+        when(binOperation.getUserPrincipal()).thenReturn(userPrincipal);
+        return binOperation;
     }
 }

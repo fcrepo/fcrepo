@@ -230,28 +230,20 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     /**
      * This method returns an HTTP response with content body appropriate to the following arguments.
      *
-     * @param rangeValue starting and ending byte offsets, see {@link Range}
      * @param limit is the number of child resources returned in the response, -1 for all
      * @param rdfStream to which response RDF will be concatenated
      * @param resource the fedora resource
      * @return HTTP response
      * @throws IOException in case of error extracting content
      */
-    protected Response getContent(final String rangeValue,
-                                  final int limit,
+    protected Response getContent(final int limit,
                                   final RdfStream rdfStream,
                                   final FedoraResource resource) throws IOException {
 
-        final RdfNamespacedStream outputStream;
-
-        if (resource instanceof Binary) {
-            return getBinaryContent(rangeValue, resource);
-        } else {
-            outputStream = new RdfNamespacedStream(
+        final var outputStream = new RdfNamespacedStream(
                     new DefaultRdfStream(rdfStream.topic(), concat(rdfStream,
                         getResourceTriples(limit, resource))),
                     namespaceRegistry.getNamespaces());
-        }
         setVaryAndPreferenceAppliedHeaders(servletResponse, prefer, resource);
         return ok(outputStream).build();
     }
@@ -369,7 +361,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @return Binary blob
      * @throws IOException if io exception occurred
      */
-    private Response getBinaryContent(final String rangeValue, final FedoraResource resource)
+    protected Response getBinaryContent(final String rangeValue, final FedoraResource resource)
             throws IOException {
             final Binary binary = (Binary)resource;
             final CacheControl cc = new CacheControl();

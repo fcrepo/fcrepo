@@ -234,7 +234,6 @@ public class FedoraAcl extends ContentExposingResource {
     /**
      * GET to retrieve the ACL resource.
      *
-     * @param rangeValue the range value
      * @return a binary or the triples for the specified node
      * @throws IOException if IO exception occurred
      */
@@ -242,7 +241,7 @@ public class FedoraAcl extends ContentExposingResource {
     @Produces({ TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
                 N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
                 TURTLE_X, TEXT_HTML_WITH_CHARSET })
-    public Response getResource(@HeaderParam("Range") final String rangeValue)
+    public Response getResource()
             throws IOException, ItemNotFoundException {
 
         LOGGER.info("GET resource '{}'", externalPath);
@@ -270,7 +269,7 @@ public class FedoraAcl extends ContentExposingResource {
         try (final RdfStream rdfStream = new DefaultRdfStream(asNode(aclResource))) {
 
             addResourceHttpHeaders(aclResource);
-            return getContent(rangeValue, getChildrenLimit(), rdfStream, aclResource);
+            return getContent(getChildrenLimit(), rdfStream, aclResource);
 
         }
     }
