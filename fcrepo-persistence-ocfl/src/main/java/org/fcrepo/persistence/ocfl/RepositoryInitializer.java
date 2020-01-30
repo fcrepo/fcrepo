@@ -23,6 +23,9 @@ import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
+import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndexUtil;
+import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.fcrepo.persistence.ocfl.impl.OCFLPersistentSessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +36,7 @@ import javax.inject.Inject;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.FEDORA_TO_OCFL_INDEX_FILE;
 
 /**
  * This class is responsible for initializing the repository on start-up.
@@ -49,6 +53,15 @@ public class RepositoryInitializer {
     @Inject
     private RdfSourceOperationFactory operationFactory;
 
+    @Inject
+    private FedoraToOCFLObjectIndex fedoraToOCFLObjectIndex;
+
+    @Inject
+    private FedoraToOCFLObjectIndexUtil fedoraToOCFLObjectIndexUtil;
+
+    @Inject
+    private OCFLObjectSessionFactory objectSessionFactory;
+
     /**
      * Initializes the repository
      */
@@ -57,6 +70,12 @@ public class RepositoryInitializer {
         //check that the root is initialized
         final PersistentStorageSession session = this.sessionManager.getSession("initializationSession" +
                                                                                  System.currentTimeMillis());
+
+        if(!FEDORA_TO_OCFL_INDEX_FILE.exists()) {
+            fedoraToOCFLObjectIndexUtil.rebuild();
+        } else {
+            LOGGER.info("The Fedora to OCFL Index already exists. Skipping rebuild.");
+        }
 
         try {
             try {
@@ -70,8 +89,10 @@ public class RepositoryInitializer {
                 session.commit();
                 LOGGER.info("Successfully create repository root ({}).", FEDORA_ID_PREFIX);
             }
+
         } catch (PersistentStorageException ex) {
             throw new RepositoryRuntimeException(ex);
         }
     }
+
 }

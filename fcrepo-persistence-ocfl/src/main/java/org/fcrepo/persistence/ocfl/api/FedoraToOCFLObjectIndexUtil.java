@@ -17,20 +17,17 @@
  */
 package org.fcrepo.persistence.ocfl.api;
 
+
 /**
- * A factory interface for creating {@link org.fcrepo.persistence.ocfl.api.OCFLObjectSession}.
+ * Utility for managing the FedoraToOCFLObjectIndex.
  * @author dbernstein
  * @since 6.0.0
  */
-public interface OCFLObjectSessionFactory {
+public interface FedoraToOCFLObjectIndexUtil {
 
     /**
-     * Create new session.
-     * @param ocflId The OCFL Object identifier
-     * @param persistentStorageSessionId The id of the persistent storage session associated with this session.
-     * @return The newly created session.
+     * Rebuild the index.
      */
-    OCFLObjectSession create(final String ocflId, final String persistentStorageSessionId);
-
-
+    public void rebuild();
 }
+

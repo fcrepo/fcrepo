@@ -87,8 +87,9 @@ public class DefaultOCFLObjectSessionTest {
 
         ocflRepository = new OcflRepositoryBuilder()
                 .layoutConfig(DefaultLayoutConfig.flatPairTreeConfig())
-                .buildMutable(FileSystemOcflStorage.builder().build(
-                        repoDir), workDir);
+                .workDir(workDir)
+                .storage(FileSystemOcflStorage.builder().repositoryRoot(repoDir).build())
+                .buildMutable();
 
         session = makeNewSession();
     }

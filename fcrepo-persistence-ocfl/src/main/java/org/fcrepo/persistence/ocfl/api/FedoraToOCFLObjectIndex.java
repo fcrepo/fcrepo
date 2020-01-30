@@ -52,5 +52,10 @@ public interface FedoraToOCFLObjectIndex {
      */
     public FedoraOCFLMapping addMapping(final String fedoraResourceIdentifier, final String fedoraRootObjectIdentifier,
                            final String ocflObjectId);
+
+    /**
+     * Remove all persistent state associated with the index.
+     */
+    public void reset();
 }
 
