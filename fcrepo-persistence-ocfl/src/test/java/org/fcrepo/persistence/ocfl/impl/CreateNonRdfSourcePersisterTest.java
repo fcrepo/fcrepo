@@ -17,28 +17,8 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import org.apache.commons.io.IOUtils;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.models.ResourceHeaders;
-import org.fcrepo.kernel.api.operations.CreateResourceOperation;
-import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
-import org.fcrepo.kernel.api.operations.ResourceOperation;
-import org.fcrepo.persistence.api.WriteOutcome;
-import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-
-import java.io.InputStream;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Arrays.asList;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
@@ -57,6 +37,31 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
+
+import java.io.InputStream;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+
+import org.apache.commons.io.IOUtils;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.kernel.api.operations.CreateResourceOperation;
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.persistence.api.WriteOutcome;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
+import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.stubbing.Answer;
 
 /**
  * @author dbernstein
@@ -96,6 +101,10 @@ public class CreateNonRdfSourcePersisterTest {
     private static final String USER_PRINCIPAL = "fedoraUser";
 
     private static final String CONTENT_BODY = "this is some example content";
+
+    private static final String CONTENT_SHA1 = "75e72e503d19628d1fd9067b60e6e79e17fc1ef4";
+
+    private static final URI CONTENT_SHA1_URI = URI.create("urn:sha1:" + CONTENT_SHA1);
 
     private static final Long LOCAL_CONTENT_SIZE = Long.valueOf(CONTENT_BODY.length());
 
@@ -212,6 +221,62 @@ public class CreateNonRdfSourcePersisterTest {
         persister.persist(psSession, nonRdfSourceOperation);
     }
 
+    @Test
+    public void testInternalWithDigest() throws Exception {
+        // During write, ensure that input stream is consumed
+        mockSessionWriteConsumeStream();
+
+        final InputStream content = IOUtils.toInputStream(CONTENT_BODY, UTF_8);
+
+        when(nonRdfSourceOperation.getContentDigests()).thenReturn(asList(CONTENT_SHA1_URI));
+
+        when(nonRdfSourceOperation.getContentStream()).thenReturn(content);
+        when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel())
+                .thenReturn(NON_RDF_SOURCE.toString());
+
+        persister.persist(psSession, nonRdfSourceOperation);
+
+        // verify user content
+        verify(session).write(eq("child"), any(InputStream.class));
+
+        // verify resource headers
+        final var resultHeaders = retrievePersistedHeaders("child");
+
+        assertEquals(NON_RDF_SOURCE.toString(), resultHeaders.getInteractionModel());
+        assertEquals(LOCAL_CONTENT_SIZE, resultHeaders.getContentSize());
+
+        assertModificationHeadersSet(resultHeaders);
+        assertTrue("Headers did not contain the provided sha1 digest",
+                resultHeaders.getDigests().contains(CONTENT_SHA1_URI));
+    }
+
+    @Test(expected = InvalidChecksumException.class)
+    public void testInternalWithInvalidDigest() throws Exception {
+        // During write, ensure that input stream is consumed
+        mockSessionWriteConsumeStream();
+
+        final InputStream content = IOUtils.toInputStream(CONTENT_BODY, UTF_8);
+
+        when(nonRdfSourceOperation.getContentDigests()).thenReturn(asList(
+                CONTENT_SHA1_URI, URI.create("urn:md5:baaaaaad")));
+
+        when(nonRdfSourceOperation.getContentStream()).thenReturn(content);
+        when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel())
+                .thenReturn(NON_RDF_SOURCE.toString());
+
+        persister.persist(psSession, nonRdfSourceOperation);
+    }
+
+    private void mockSessionWriteConsumeStream() throws Exception {
+        when(session.write(eq("child"), any(InputStream.class))).thenAnswer(new Answer<WriteOutcome>() {
+            @Override
+            public WriteOutcome answer(final InvocationOnMock invocation) throws Throwable {
+                // Consume the input stream
+                IOUtils.toString((InputStream) invocation.getArgument(1), UTF_8);
+                return writeOutcome;
+            }
+        });
+    }
 
     private ResourceHeaders retrievePersistedHeaders(final String subpath) throws Exception {
         verify(session).write(eq(getInternalFedoraDirectory() + subpath + RESOURCE_HEADER_EXTENSION),
