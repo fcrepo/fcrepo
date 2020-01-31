@@ -49,6 +49,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_TYPE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_OCTET_STREAM_TYPE;
 
+import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODEL_RESOURCES;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
@@ -433,6 +434,8 @@ public class FedoraLdp extends ContentExposingResource {
                         providedContentType,
                         requestBodyStream != null && providedContentType != null,
                         extContent != null)) {
+            ensureArchivalGroupHeaderNotPresentForBinaries(links);
+
             final Collection<URI> checksums = parseDigestHeader(digest);
             final var binaryType = requestContentType != null ? requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;
             final var contentType = extContent == null ? binaryType.toString() : extContent.getContentType();
@@ -607,6 +610,8 @@ public class FedoraLdp extends ContentExposingResource {
                      providedContentType,
                      requestBodyStream != null && providedContentType != null,
                      extContent != null)) {
+            ensureArchivalGroupHeaderNotPresentForBinaries(links);
+
             final Collection<URI> checksums = parseDigestHeader(digest);
             final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
             final var binaryType = requestContentType != null ? requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;
@@ -726,6 +731,20 @@ public class FedoraLdp extends ContentExposingResource {
                 .replaceFirst(":", "=").replaceFirst("sha1=", "sha=")).collect(Collectors.joining(","));
     }
 
+    private static void ensureArchivalGroupHeaderNotPresentForBinaries(final List<String> links){
+        if (links == null) {
+            return;
+        }
+
+        if (links.stream().map(l -> Link.valueOf(l))
+                      .filter(l -> l.getUri().toString().equals(ARCHIVAL_GROUP.getURI()))
+                      .filter(l -> l.getRel().equals("type"))
+                      .findFirst().isPresent()) {
+            throw new ClientErrorException("Binary resources cannot be created as an" +
+                    " ArchiveGroup. Please remove the ArchiveGroup link header and try again", BAD_REQUEST);
+        }
+    }
+
     private static String checkInteractionModel(final List<String> links) {
         if (links == null) {
             return null;
@@ -735,6 +754,10 @@ public class FedoraLdp extends ContentExposingResource {
             for (final String link : links) {
                 final Link linq = Link.valueOf(link);
                 if ("type".equals(linq.getRel())) {
+                    //skip ArchivalGroup types
+                    if (linq.getUri().toString().equals(ARCHIVAL_GROUP.getURI())) {
+                        continue;
+                    }
                     final Resource type = createResource(linq.getUri().toString());
                     if (INTERACTION_MODEL_RESOURCES.contains(type)) {
                         return "ldp:" + type.getLocalName();

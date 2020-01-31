@@ -419,13 +419,16 @@ public abstract class AbstractResourceIT {
         return createObjectWithLinkHeader(pid, null);
     }
 
-    private CloseableHttpResponse createObjectWithLinkHeader(final String pid, final String linkHeader) {
+    private CloseableHttpResponse createObjectWithLinkHeader(final String pid, final String... linkHeaders) {
         final HttpPost httpPost = postObjMethod("/");
         if (isNotEmpty(pid)) {
             httpPost.addHeader("Slug", pid);
         }
-        if (isNotEmpty(linkHeader)) {
-            httpPost.addHeader(LINK, linkHeader);
+
+        if (linkHeaders != null && linkHeaders.length > 0) {
+            for (String linkHeader : linkHeaders) {
+                httpPost.addHeader(LINK, linkHeader);
+            }
         }
         try {
             final CloseableHttpResponse response = execute(httpPost);
@@ -444,9 +447,10 @@ public abstract class AbstractResourceIT {
         }
     }
 
-    protected void createObjectAndClose(final String pid, final String linkHeader) {
+    protected void createObjectAndClose(final String pid, final String... linkHeaders) {
         try {
-            createObjectWithLinkHeader(pid, linkHeader).close();
+
+            createObjectWithLinkHeader(pid, linkHeaders).close();
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }

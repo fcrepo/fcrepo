@@ -36,7 +36,9 @@ import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
+import static java.net.URI.create;
 import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 
 /**
  * Implementation of a Fedora resource, containing functionality common to the more concrete resource implementations.
@@ -169,8 +171,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public boolean hasType(final String type) {
-        // TODO Auto-generated method stub
-        return false;
+        return getTypes().contains(create(type));
     }
 
     @Override
@@ -178,7 +179,11 @@ public class FedoraResourceImpl implements FedoraResource {
         if (types == null) {
             types = new ArrayList<URI>();
             try {
-                types.add(URI.create(getSession().getHeaders(getId(), getMementoDatetime()).getInteractionModel()));
+                final var headers = getSession().getHeaders(getId(), getMementoDatetime());
+                types.add(create(headers.getInteractionModel()));
+                if (headers.isArchivalGroup()) {
+                    types.add(create(ARCHIVAL_GROUP.getURI()));
+                }
             } catch (final PersistentItemNotFoundException e) {
                 throw new ItemNotFoundException("Unable to retrieve triples for " + getId(), e);
             } catch (final PersistentStorageException e) {

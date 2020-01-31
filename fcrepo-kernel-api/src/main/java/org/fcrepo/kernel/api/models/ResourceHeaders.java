@@ -125,4 +125,10 @@ public interface ResourceHeaders {
      * @return last modified by
      */
     String getLastModifiedBy();
+
+    /**
+     * Determine whether a resource is an Archival Group
+     * @return Archival Group status
+     */
+    boolean isArchivalGroup();
 }

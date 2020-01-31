@@ -18,6 +18,7 @@
 package org.fcrepo.http.api;
 
 import static com.google.common.base.Strings.nullToEmpty;
+import static java.net.URI.create;
 import static java.text.MessageFormat.format;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Stream.concat;
@@ -55,6 +56,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
@@ -594,7 +596,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @return the string version of the link.
      */
     protected static String buildLink(final String linkUri, final String relation) {
-        return buildLink(URI.create(linkUri), relation);
+        return buildLink(create(linkUri), relation);
     }
 
     /**
@@ -656,6 +658,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         if (resource instanceof Binary) {
             servletResponse.addHeader(LINK, "<" + LDP_NAMESPACE + "NonRDFSource>;rel=\"type\"");
         } else if (resource instanceof Container || resource instanceof TimeMap) {
+            if (resource.hasType(ARCHIVAL_GROUP.getURI())) {
+                servletResponse.addHeader(LINK, "<" + ARCHIVAL_GROUP.getURI() + ">;rel=\"type\"");
+            }
+
             servletResponse.addHeader(LINK, "<" + CONTAINER.getURI() + ">;rel=\"type\"");
             servletResponse.addHeader(LINK, buildLink(RDF_SOURCE.getURI(), "type"));
             if (resource.hasType(LDP_BASIC_CONTAINER)) {
@@ -936,7 +942,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      **/
     protected static URI checksumURI( final String checksum ) {
         if (!isBlank(checksum)) {
-            return URI.create(checksum);
+            return create(checksum);
         }
         return null;
     }
