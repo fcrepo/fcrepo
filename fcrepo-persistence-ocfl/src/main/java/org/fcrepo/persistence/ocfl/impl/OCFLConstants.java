@@ -31,11 +31,60 @@ import java.nio.file.Paths;
  */
 public final class OCFLConstants {
 
-    public static final File STAGING_DIR = resolveDir("fcrepo.ocfl.staging.dir");
-    public static final File OCFL_STORAGE_ROOT_DIR = resolveDir("fcrepo.ocfl.storage.root.dir");
-    public static final File OCFL_WORK_DIR = resolveDir("fcrepo.ocfl.work.dir");
-    public static final File FEDORA_TO_OCFL_INDEX_FILE = new File(OCFL_WORK_DIR.toString() + File.separator +
-            "fedoraToOcflIndex.tsv");
+    public static final String OCFL_STAGING_PROPERTY = "fcrepo.ocfl.staging.dir";
+
+    public static final String OCFL_STORAGE_ROOT_PROPERTY = "fcrepo.ocfl.storage.root.dir";
+
+    public static final String OCFL_WORK_PROPERTY = "fcrepo.ocfl.work.dir";
+
+    private static File ocflStagingDir;
+
+    private static File ocflStorageRootDir;
+
+    private static File ocflWorkDir;
+
+    private static File fedoraToOcflIndexFile;
+
+    /**
+     * @return the staging directory for OCFL
+     */
+    public static File getOCFLStagingDir() {
+        if (ocflStagingDir == null) {
+            ocflStagingDir = resolveDir(OCFL_STAGING_PROPERTY);
+        }
+        return ocflStagingDir;
+    }
+
+    /**
+     * @return the OCFL storage root directory
+     */
+    public static File getOCFLStorageRootDir() {
+        if (ocflStorageRootDir == null) {
+            ocflStorageRootDir = resolveDir(OCFL_STORAGE_ROOT_PROPERTY);
+        }
+        return ocflStorageRootDir;
+    }
+
+    /**
+     * @return the OCFL work directory
+     */
+    public static File getOCFLWorkDir() {
+        if (ocflWorkDir == null) {
+            ocflWorkDir = resolveDir(OCFL_WORK_PROPERTY);
+        }
+        return ocflWorkDir;
+    }
+
+    /**
+     * @return the index file for fedora to OCFL mappings
+     */
+    public static File getFedoraToOCFLIndexFile() {
+        if (fedoraToOcflIndexFile == null) {
+            fedoraToOcflIndexFile = new File(getOCFLWorkDir().toString(),
+                    "fedoraToOcflIndex.tsv");
+        }
+        return fedoraToOcflIndexFile;
+    }
 
     /**
      * Return the system property key path as file or a file of the temporary directory + "system property key"

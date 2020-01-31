@@ -17,23 +17,22 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.OCFL_STORAGE_ROOT_DIR;
-import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.OCFL_WORK_DIR;
-import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.STAGING_DIR;
+import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.getOCFLStagingDir;
+import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.getOCFLStorageRootDir;
+import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.getOCFLWorkDir;
 
 import java.io.File;
 
-import edu.wisc.library.ocfl.core.storage.filesystem.FileSystemOcflStorage;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import edu.wisc.library.ocfl.core.OcflRepositoryBuilder;
 import edu.wisc.library.ocfl.core.extension.layout.config.DefaultLayoutConfig;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
+import edu.wisc.library.ocfl.core.storage.filesystem.FileSystemOcflStorage;
 
 /**
  * A default implemenntation of the {@link org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory} interface.
@@ -56,7 +55,7 @@ public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory
      * are not set, default directories will be created in java.io.tmpdir.
      */
     public DefaultOCFLObjectSessionFactory() {
-        this(STAGING_DIR, OCFL_STORAGE_ROOT_DIR, OCFL_WORK_DIR);
+        this(getOCFLStagingDir(), getOCFLStorageRootDir(), getOCFLWorkDir());
     }
 
     /**

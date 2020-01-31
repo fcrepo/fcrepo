@@ -11,6 +11,9 @@
     http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd
     http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
+  <!-- Establish OCFL storage paths -->
+  <bean id="temporaryOcflRepositoryHelper" class="org.fcrepo.persistence.ocfl.TemporaryOCFLRepositoryHelper" />
+
   <!-- Master context for the test application. -->
   
   <context:property-placeholder />

@@ -12,6 +12,9 @@
     http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
   <!-- Master context for the test application. -->
+  
+  <!-- Establish OCFL storage paths -->
+  <bean id="temporaryOcflRepositoryHelper" class="org.fcrepo.persistence.ocfl.TemporaryOCFLRepositoryHelper" />
 
   <!-- Context that supports the actual ModeShape JCR itself -->
 
