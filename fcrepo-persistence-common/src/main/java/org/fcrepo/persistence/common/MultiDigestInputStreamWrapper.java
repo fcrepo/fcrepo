@@ -36,7 +36,7 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 
 /**
  * Wrapper for an InputStream that allows for the computation and evaluation
- * multiple digests at once
+ * of multiple digests at once
  *
  * @author bbpennel
  */
@@ -47,6 +47,8 @@ public class MultiDigestInputStreamWrapper {
     private Map<String, String> algToDigest;
 
     private Map<String, DigestInputStream> algToDigestStream;
+
+    private boolean streamRetrieved;
 
     /**
      * Construct a MultiDigestInputStreamWrapper
@@ -72,6 +74,7 @@ public class MultiDigestInputStreamWrapper {
      * @return wrapped input stream
      */
     public InputStream getInputStream() {
+        streamRetrieved = true;
         InputStream digestStream = sourceStream;
         for (final String algorithm : algToDigest.keySet()) {
             try {
@@ -94,6 +97,9 @@ public class MultiDigestInputStreamWrapper {
      * @throws InvalidChecksumException thrown if any of the digests did not match
      */
     public void checkFixity() throws InvalidChecksumException {
+        if (!streamRetrieved) {
+            throw new RepositoryRuntimeException("Cannot check fixity before stream has been read");
+        }
         for (final var entry: algToDigestStream.entrySet()) {
             final String algorithm = entry.getKey();
             final String originalDigest = algToDigest.get(algorithm);

@@ -109,4 +109,13 @@ public class MultiDigestInputStreamWrapperTest {
 
         wrapper.getInputStream();
     }
+
+    @Test(expected = RepositoryRuntimeException.class)
+    public void checkFixity_BeforeRead() throws Exception {
+        final Collection<URI> digests = emptyList();
+        final var wrapper = new MultiDigestInputStreamWrapper(contentStream, digests);
+
+        // Expect no failures
+        wrapper.checkFixity();
+    }
 }
