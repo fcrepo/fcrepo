@@ -424,6 +424,8 @@ public class WebACRecipesIT extends AbstractResourceIT {
      *  4. Deny(403) on PATCH with SPARQL DELETE statements.
      *  5. Allow(400) on PATCH with empty SPARQL content.
      *  6. Deny(403) on PATCH with non-SPARQL content.
+     *
+     * @throws IOException thrown from injestObj() or *ObjMethod() calls
      */
     @Test
     public void scenario18Test1() throws IOException {
@@ -487,6 +489,8 @@ public class WebACRecipesIT extends AbstractResourceIT {
      *  1. Allow(200) on GET.
      *  2. Allow(204) on PATCH.
      *  3. Deny(403) on DELETE.
+     *
+     * @throws IOException thrown from called functions within this function
      */
     @Test
     public void scenario18Test2() throws IOException {
@@ -532,6 +536,8 @@ public class WebACRecipesIT extends AbstractResourceIT {
      *  1. Allow(200) on GET.
      *  2. Allow(204) on PATCH.
      *  3. Allow(204) on DELETE.
+     *
+     * @throws IOException from functions called from this function
      */
     @Test
     public void scenario18Test3() throws IOException {
