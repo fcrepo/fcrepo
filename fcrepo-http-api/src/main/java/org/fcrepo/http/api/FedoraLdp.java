@@ -18,7 +18,6 @@
 package org.fcrepo.http.api;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static com.google.common.base.Strings.nullToEmpty;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
@@ -114,6 +113,7 @@ import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.CreateResourceService;
 import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.fcrepo.kernel.api.services.FixityService;
+import org.fcrepo.kernel.api.services.ReplaceBinariesService;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
@@ -155,6 +155,9 @@ public class FedoraLdp extends ContentExposingResource {
 
     @Inject
     private DeleteResourceService deleteResourceService;
+
+    @Inject
+    protected ReplaceBinariesService replaceBinariesService;
 
     /**
      * Default JAX-RS entry point
@@ -269,6 +272,8 @@ public class FedoraLdp extends ContentExposingResource {
                 .getAcceptableMediaTypes());
 
         LOGGER.info("GET resource '{}'", externalPath);
+        addResourceHttpHeaders(resource());
+
         if (resource() instanceof Binary) {
             final Binary binary = (Binary) resource();
             if (!acceptableMediaTypes.isEmpty()) {
@@ -395,12 +400,13 @@ public class FedoraLdp extends ContentExposingResource {
         // If request is an external binary, verify link header before proceeding
         final ExternalContent extContent = extContentHandlerFactory.createFromLinks(links);
 
-        final String contentType = extContent == null ? requestContentType.toString() : extContent.getContentType();
-
         final String interactionModel = checkInteractionModel(links);
 
-        // TODO: check if it exists or if we're creating it.
-        if ("We exist in persistent storage already".isEmpty()) {
+        final String externalUri = this.uriInfo.getRequestUri().toString();
+        String fedoraId = identifierConverter().toInternalId(externalUri);
+        final boolean resourceExists = doesResourceExist(transaction, fedoraId);
+
+        if (resourceExists) {
 
             if (httpConfiguration.putRequiresIfMatch() && StringUtils.isBlank(ifMatch)) {
                 throw new ClientErrorException("An If-Match header is required", 428);
@@ -415,43 +421,64 @@ public class FedoraLdp extends ContentExposingResource {
             //}
         }
 
-        final String externalUri = this.uriInfo.getRequestUri().toString();
-        String fedoraId = identifierConverter().toInternalId(externalUri);
-
         // TODO: Refactor to check preconditions
         //evaluateRequestPreconditions(request, servletResponse, resource, transaction);
 
+        final var providedContentType = requestContentType != null ? requestContentType.toString() : null;
+
         boolean created = false;
 
-        if (isBinary(interactionModel, requestContentType.toString(), requestBodyStream != null,
-                extContent != null)) {
-            final Collection<String> checksums = parseDigestHeader(digest);
-            if ("Resource Exists".isEmpty()) {
-                // TODO: Implement UpdateResourceService
+        if ((resourceExists && resource() instanceof Binary) ||
+                isBinary(interactionModel,
+                        providedContentType,
+                        requestBodyStream != null && providedContentType != null,
+                        extContent != null)) {
+            final Collection<URI> checksums = parseDigestHeader(digest);
+            final var binaryType = requestContentType != null ? requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;
+            final var contentType = extContent == null ? binaryType.toString() : extContent.getContentType();
+            final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
+            final Long contentSize;
+            if (contentDisposition == null || contentDisposition.getSize() == -1) {
+                contentSize = null;
+            } else {
+                contentSize = contentDisposition.getSize();
+            }
+
+            if (resourceExists) {
+                replaceBinariesService.perform(transaction.getId(),
+                                               getUserPrincipal(),
+                                               fedoraId,
+                                               originalFileName,
+                                               contentType,
+                                               checksums,
+                                               requestBodyStream,
+                                               contentSize,
+                                               extContent);
             } else {
                 fedoraId = createResourceService.perform(transaction.getId(),
-                                                            getUserPrincipal(),
-                                                            fedoraId,
-                                                            null,
-                                                            false,
-                                                            contentType,
-                                                            contentDisposition.getFileName(),
-                                                            contentDisposition.getSize(),
-                                                            links,
-                                                            checksums,
-                                                            requestBodyStream,
-                                                            extContent);
+                                                         getUserPrincipal(),
+                                                         fedoraId,
+                                                         null,
+                                                         false,
+                                                         contentType,
+                                                         originalFileName,
+                                                         contentSize,
+                                                         links,
+                                                         checksums,
+                                                         requestBodyStream,
+                                                         extContent);
                 created = true;
             }
         } else {
+            final var contentType = requestContentType != null ? requestContentType : DEFAULT_RDF_CONTENT_TYPE;
             final Model model = httpRdfService.bodyToInternalModel(externalUri, requestBodyStream,
-                requestContentType, identifierConverter());
+                    contentType, identifierConverter());
 
-            if ("Resource Exists".isEmpty()) {
+            if (resourceExists) {
                 replacePropertiesService.perform(transaction.getId(),
                                                  getUserPrincipal(),
                                                  fedoraId,
-                                                 requestContentType.toString(),
+                                                 contentType.toString(),
                                                  model);
             } else {
                 fedoraId = createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, null,
@@ -574,13 +601,13 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String fedoraId = identifierConverter().toInternalId(identifierConverter().toDomain(externalPath()));
         final String newFedoraId;
-        final var defaultContentType = requestContentType != null ?
-                                            requestContentType : DEFAULT_RDF_CONTENT_TYPE;
+        final var providedContentType = requestContentType != null ? requestContentType.toString() : null;
+
         if (isBinary(interactionModel,
-                     defaultContentType.toString(),
-                     requestBodyStream != null,
+                     providedContentType,
+                     requestBodyStream != null && providedContentType != null,
                      extContent != null)) {
-            final Collection<String> checksums = parseDigestHeader(digest);
+            final Collection<URI> checksums = parseDigestHeader(digest);
             final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
             final var binaryType = requestContentType != null ? requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;
             final var contentType = extContent == null ? binaryType.toString() : extContent.getContentType();
@@ -604,8 +631,9 @@ public class FedoraLdp extends ContentExposingResource {
                                                         requestBodyStream,
                                                         extContent);
         } else {
+            final var contentType = requestContentType != null ? requestContentType : DEFAULT_RDF_CONTENT_TYPE;
             final Model model = httpRdfService.bodyToInternalModel(externalPath(), requestBodyStream,
-                    defaultContentType, identifierConverter());
+                    contentType, identifierConverter());
             newFedoraId = createResourceService.perform(transaction.getId(),
                                                         getUserPrincipal(),
                                                         fedoraId, slug,
@@ -678,8 +706,8 @@ public class FedoraLdp extends ContentExposingResource {
      */
     private boolean isBinary(final String interactionModel, final String contentType,
                              final boolean contentPresent, final boolean contentExternal) {
-            final String simpleContentType = contentPresent ? contentType : null;
-            final boolean isRdfContent = isRdfContentType(simpleContentType);
+        final String simpleContentType = contentPresent ? contentType : null;
+        final boolean isRdfContent = isRdfContentType(simpleContentType);
         return "ldp:NonRDFSource".equals(interactionModel) || contentExternal ||
                 (contentPresent && interactionModel == null && !isRdfContent);
     }
@@ -730,37 +758,6 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         return null;
-    }
-
-    /**
-     * Parse the RFC-3230 Digest response header value.  Look for a
-     * sha1 checksum and return it as a urn, if missing or malformed
-     * an empty string is returned.
-     * @param digest The Digest header value
-     * @return the sha1 checksum value
-     * @throws UnsupportedAlgorithmException if an unsupported digest is used
-     */
-    protected static Collection<String> parseDigestHeader(final String digest) throws UnsupportedAlgorithmException {
-        try {
-            final Map<String,String> digestPairs = RFC3230_SPLITTER.split(nullToEmpty(digest));
-            final boolean allSupportedAlgorithms = digestPairs.keySet().stream().allMatch(
-                    ContentDigest.DIGEST_ALGORITHM::isSupportedAlgorithm);
-
-            // If you have one or more digests that are all valid or no digests.
-            if (digestPairs.isEmpty() || allSupportedAlgorithms) {
-                return digestPairs.entrySet().stream()
-                    .filter(entry -> ContentDigest.DIGEST_ALGORITHM.isSupportedAlgorithm(entry.getKey()))
-                    .map(entry -> ContentDigest.asURI(entry.getKey(), entry.getValue()).toString())
-                    .collect(Collectors.toSet());
-            } else {
-                throw new UnsupportedAlgorithmException(String.format("Unsupported Digest Algorithm: %1$s", digest));
-            }
-        } catch (final RuntimeException e) {
-            if (e instanceof IllegalArgumentException) {
-                throw new ClientErrorException("Invalid Digest header: " + digest + "\n", BAD_REQUEST);
-            }
-            throw e;
-        }
     }
 
     /**

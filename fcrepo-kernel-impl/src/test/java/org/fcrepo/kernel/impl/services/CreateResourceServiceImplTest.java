@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import static java.util.Collections.singleton;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
@@ -46,11 +47,9 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
@@ -86,7 +85,6 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class CreateResourceServiceImplTest {
@@ -140,7 +138,7 @@ public class CreateResourceServiceImplTest {
 
     private final Model model = ModelFactory.createDefaultModel();
 
-    private static final Collection<String> DIGESTS = Collections.singleton("urn:sha1:12345abced");
+    private static final Collection<URI> DIGESTS = singleton(URI.create("urn:sha1:12345abced"));
 
     @Before
     public void setUp() {
@@ -644,9 +642,7 @@ public class CreateResourceServiceImplTest {
         assertEquals(CONTENT_SIZE, nonRdfOperation.getContentSize());
         assertEquals(FILENAME, nonRdfOperation.getFilename());
         assertEquals(CONTENT_TYPE, nonRdfOperation.getMimeType());
-        assertTrue(DIGESTS.containsAll(
-                nonRdfOperation.getContentDigests().stream().map(URI::toString).collect(Collectors.toList())));
-
+        assertTrue(DIGESTS.containsAll(nonRdfOperation.getContentDigests()));
     }
 
     private void assertExternalBinaryPropertiesPresent(final ResourceOperation operation) {

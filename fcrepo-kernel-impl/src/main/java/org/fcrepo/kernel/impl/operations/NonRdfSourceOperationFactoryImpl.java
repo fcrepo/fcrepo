@@ -17,14 +17,12 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
-import org.fcrepo.kernel.api.operations.CreateNonRdfSourceOperationBuilder;
-import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
-import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
-import org.springframework.stereotype.Component;
-
 import java.io.InputStream;
 import java.net.URI;
 
+import org.fcrepo.kernel.api.operations.CreateNonRdfSourceOperationBuilder;
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
+import org.springframework.stereotype.Component;
 
 /**
  * Factory for operations to update non-rdf sources
@@ -35,18 +33,16 @@ import java.net.URI;
 public class NonRdfSourceOperationFactoryImpl implements NonRdfSourceOperationFactory {
 
     @Override
-    public NonRdfSourceOperationBuilder updateExternalBinaryBuilder(final String rescId,
+    public UpdateNonRdfSourceOperationBuilder updateExternalBinaryBuilder(final String rescId,
                                                                     final String handling,
                                                                     final URI contentUri) {
-        // TODO Auto-generated method stub
-        return null;
+        return new UpdateNonRdfSourceOperationBuilder(rescId, handling, contentUri);
     }
 
     @Override
-    public NonRdfSourceOperationBuilder updateInternalBinaryBuilder(final String rescId,
+    public UpdateNonRdfSourceOperationBuilder updateInternalBinaryBuilder(final String rescId,
                                                                     final InputStream contentStream) {
-        // TODO Auto-generated method stub
-        return null;
+        return new UpdateNonRdfSourceOperationBuilder(rescId, contentStream);
     }
 
     @Override

@@ -21,6 +21,7 @@ import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.models.ExternalContent;
 
 import java.io.InputStream;
+import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 
@@ -51,7 +52,7 @@ public interface CreateResourceService {
      */
     String perform(String txId, String userPrincipal, String fedoraId, String slug, boolean isContained,
             String contentType, String filename, Long contentSize, List<String> linkHeaders,
-            Collection<String> digest, InputStream requestBody, ExternalContent externalContent);
+            Collection<URI> digest, InputStream requestBody, ExternalContent externalContent);
 
     /**
      * Create a new RdfSource resource.

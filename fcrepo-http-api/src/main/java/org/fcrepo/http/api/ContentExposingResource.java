@@ -19,6 +19,7 @@ package org.fcrepo.http.api;
 
 import static com.google.common.base.Strings.nullToEmpty;
 import static java.text.MessageFormat.format;
+import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
@@ -54,9 +55,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
-import static org.fcrepo.kernel.api.models.ExternalContent.COPY;
-import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
-import static org.fcrepo.kernel.api.models.ExternalContent.REDIRECT;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
@@ -73,27 +71,28 @@ import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
+import static org.fcrepo.kernel.api.models.ExternalContent.COPY;
+import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
+import static org.fcrepo.kernel.api.models.ExternalContent.REDIRECT;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.servlet.ServletContext;
@@ -108,6 +107,7 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.jena.graph.Triple;
@@ -120,8 +120,8 @@ import org.fcrepo.http.commons.domain.Range;
 import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
-import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
@@ -133,9 +133,9 @@ import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.TimeMap;
 import org.fcrepo.kernel.api.models.WebacAcl;
-import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
 import org.fcrepo.kernel.api.services.ManagedPropertiesService;
@@ -143,9 +143,13 @@ import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.api.utils.ContentDigest;
+import org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jvnet.hk2.annotations.Optional;
 import org.slf4j.Logger;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
 
 /**
  * An abstract class that sits between AbstractResource and any resource that
@@ -985,26 +989,22 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @return the sha1 checksum value
      * @throws UnsupportedAlgorithmException if an unsupported digest is used
      */
-    protected static Collection<String> parseDigestHeader(final String digest) throws UnsupportedAlgorithmException {
+    protected static Collection<URI> parseDigestHeader(final String digest) throws UnsupportedAlgorithmException {
         try {
-            final Map<String, String> digestPairs = RFC3230_SPLITTER.split(nullToEmpty(digest));
-            final boolean allSupportedAlgorithms = digestPairs.keySet().stream().allMatch(
-                ContentDigest.DIGEST_ALGORITHM::isSupportedAlgorithm);
+            final var digestPairs = RFC3230_SPLITTER.split(nullToEmpty(digest));
+            final var allSupportedAlgorithms = digestPairs.keySet().stream()
+                    .allMatch(DIGEST_ALGORITHM::isSupportedAlgorithm);
 
             // If you have one or more digests that are all valid or no digests.
             if (digestPairs.isEmpty() || allSupportedAlgorithms) {
                 return digestPairs.entrySet().stream()
-                    .filter(entry -> ContentDigest.DIGEST_ALGORITHM.isSupportedAlgorithm(entry.getKey()))
-                    .map(entry -> ContentDigest.asURI(entry.getKey(), entry.getValue()).toString())
-                    .collect(Collectors.toSet());
+                    .map(entry -> ContentDigest.asURI(entry.getKey(), entry.getValue()))
+                    .collect(toSet());
             } else {
                 throw new UnsupportedAlgorithmException(String.format("Unsupported Digest Algorithim: %1$s", digest));
             }
-        } catch (final RuntimeException e) {
-            if (e instanceof IllegalArgumentException) {
-                throw new ClientErrorException("Invalid Digest header: " + digest + "\n", BAD_REQUEST);
-            }
-            throw e;
+        } catch (final IllegalArgumentException e) {
+            throw new ClientErrorException("Invalid Digest header: " + digest + "\n", BAD_REQUEST);
         }
     }
 

@@ -115,6 +115,15 @@ abstract public class FedoraBaseResource extends AbstractResource {
     }
 
     /**
+     * @param transaction the transaction in which to check
+     * @param fedoraId identifier of the object to check
+     * @return Returns true if an object with the provided id exists
+     */
+    protected boolean doesResourceExist(final Transaction transaction, final String fedoraId) {
+        return resourceFactory.doesResourceExist(transaction, fedoraId, null);
+    }
+
+    /**
      * This is a helper method for using the idTranslator to convert this resource into an associated Jena Node.
      *
      * @param resource to be converted into a Jena Node

@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.api.models;
 
 import java.io.InputStream;
+import java.net.URI;
 
 /**
  * Interface for the ExternalContent information class.
@@ -46,6 +47,12 @@ public interface ExternalContent {
      * @return a String of the URL that was in the Link header
      */
     public String getURL();
+
+    /**
+     * Retrieve URI in link header
+     * @return a URI to the external content
+     */
+    public URI getURI();
 
     /**
      * Returns whether or not the handling parameter is "copy"

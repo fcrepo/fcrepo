@@ -17,77 +17,38 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
-import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
-import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
-
 import java.io.InputStream;
 import java.net.URI;
-import java.util.Collection;
-
 
 /**
  * Builder for operations to update non-rdf sources
  *
  * @author bbpennel
  */
-public class UpdateNonRdfSourceOperationBuilder implements NonRdfSourceOperationBuilder {
-
-    private final String resourceId;
-
-    private InputStream contentStream;
-
-    private String externalType;
-
-    private URI externalUri;
-
+public class UpdateNonRdfSourceOperationBuilder extends AbstractNonRdfSourceOperationBuilder {
     protected UpdateNonRdfSourceOperationBuilder(final String rescId, final InputStream stream) {
-        this(rescId);
-        this.contentStream = stream;
+        super(rescId, stream);
     }
 
     protected UpdateNonRdfSourceOperationBuilder(final String rescId, final String handling, final URI contentUri) {
-        this(rescId);
-        this.externalType = handling;
-        this.externalUri = contentUri;
-    }
-
-    private UpdateNonRdfSourceOperationBuilder(final String rescId) {
-        this.resourceId = rescId;
+        super(rescId, handling, contentUri);
     }
 
     @Override
-    public NonRdfSourceOperationBuilder mimeType(final String mimetype) {
-        // TODO Auto-generated method stub
-        return null;
-    }
+    public UpdateNonRdfSourceOperation build() {
+        final UpdateNonRdfSourceOperation operation;
+        if (externalURI != null && externalType != null) {
+            operation = new UpdateNonRdfSourceOperation(resourceId, externalURI, externalType);
+        } else {
+            operation = new UpdateNonRdfSourceOperation(resourceId, content);
+        }
 
-    @Override
-    public NonRdfSourceOperationBuilder filename(final String filename) {
-        // TODO Auto-generated method stub
-        return null;
-    }
+        operation.setUserPrincipal(userPrincipal);
+        operation.setDigests(digests);
+        operation.setFilename(filename);
+        operation.setContentSize(contentSize);
+        operation.setMimeType(mimeType);
 
-    @Override
-    public NonRdfSourceOperationBuilder contentDigests(final Collection<URI> digests) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public NonRdfSourceOperationBuilder contentSize(final Long size) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public NonRdfSourceOperationBuilder userPrincipal(final String userPrincipal) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public NonRdfSourceOperation build() {
-        // TODO Auto-generated method stub
-        return null;
+        return operation;
     }
 }
