@@ -207,6 +207,16 @@
         <artifactId>maven-failsafe-plugin</artifactId>
       </plugin>
       <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables>
+            <fcrepo.ocfl.staging.dir>target/ocfl_base/staging</fcrepo.ocfl.staging.dir>
+            <fcrepo.ocfl.storage.root.dir>target/ocfl_base/storage_root</fcrepo.ocfl.storage.root.dir>
+            <fcrepo.ocfl.work.dir>target/ocfl_base/work</fcrepo.ocfl.work.dir>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+      <plugin>
         <artifactId>maven-jar-plugin</artifactId>
         <executions>
           <execution>
