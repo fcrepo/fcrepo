@@ -99,7 +99,7 @@ public class MultiDigestInputStreamWrapper {
             final String originalDigest = algToDigest.get(algorithm);
             final String computed = encodeHexString(entry.getValue().getMessageDigest().digest());
 
-            if (!originalDigest.equals(computed)) {
+            if (!originalDigest.equalsIgnoreCase(computed)) {
                 throw new InvalidChecksumException(format(
                         "Checksum mismatch, computed %s digest %s did not match expected value %s",
                         algorithm, computed, originalDigest));
