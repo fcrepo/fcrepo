@@ -236,7 +236,7 @@ public class CreateNonRdfSourcePersisterTest {
 
         persister.persist(psSession, nonRdfSourceOperation);
 
-        // verify user content
+        // verify content was written
         verify(session).write(eq("child"), any(InputStream.class));
 
         // verify resource headers
