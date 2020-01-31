@@ -333,7 +333,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final var headObjMethod = headObjMethod(id);
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             final Collection<String> links = getLinkHeaders(response);
-            assertTrue("Didn't find LDP ArchivalGroup link header!", links.contains(ARCHIVAL_GROUP_LINK_HEADER));
+            assertTrue("Didn't find ArchivalGroup link header!", links.contains(ARCHIVAL_GROUP_LINK_HEADER));
             assertTrue("Didn't find LDP container link header!", links.contains(BASIC_CONTAINER_LINK_HEADER));
         }
 
