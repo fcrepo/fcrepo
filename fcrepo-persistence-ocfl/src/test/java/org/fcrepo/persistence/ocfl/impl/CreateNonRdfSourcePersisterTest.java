@@ -70,7 +70,6 @@ import org.mockito.stubbing.Answer;
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class CreateNonRdfSourcePersisterTest {
 
-    @Mock
     private NonRdfSourceOperation nonRdfSourceOperation;
 
     @Mock
@@ -134,6 +133,9 @@ public class CreateNonRdfSourcePersisterTest {
         when(nonRdfSourceOperation.getType()).thenReturn(CREATE);
         when(((CreateResourceOperation)nonRdfSourceOperation).getParentId()).thenReturn(ROOT_RESOURCE_ID);
 
+        when(psSession.getHeaders(((CreateResourceOperation) nonRdfSourceOperation).getParentId(), null))
+                .thenReturn(headers);
+
         when(writeOutcome.getContentSize()).thenReturn(LOCAL_CONTENT_SIZE);
 
         persister = new CreateNonRdfSourcePersister(index);
@@ -152,8 +154,6 @@ public class CreateNonRdfSourcePersisterTest {
         when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel())
                 .thenReturn(NON_RDF_SOURCE.toString());
         when(headers.isArchivalGroup()).thenReturn(false);
-        when(psSession.getHeaders(((CreateResourceOperation) nonRdfSourceOperation).getParentId(), null))
-                      .thenReturn(headers);
 
         persister.persist(psSession, nonRdfSourceOperation);
 
@@ -188,8 +188,6 @@ public class CreateNonRdfSourcePersisterTest {
         when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel()).thenReturn(NON_RDF_SOURCE
                 .toString());
         when(headers.isArchivalGroup()).thenReturn(false);
-        when(psSession.getHeaders(((CreateResourceOperation) nonRdfSourceOperation).getParentId(), null))
-                .thenReturn(headers);
 
         persister.persist(psSession, nonRdfSourceOperation);
 
@@ -214,8 +212,6 @@ public class CreateNonRdfSourcePersisterTest {
         when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel())
                 .thenReturn(NON_RDF_SOURCE.toString());
         when(headers.isArchivalGroup()).thenReturn(false);
-        when(psSession.getHeaders(((CreateResourceOperation) nonRdfSourceOperation).getParentId(), null))
-                .thenReturn(headers);
 
         persister.persist(psSession, nonRdfSourceOperation);
     }
@@ -230,8 +226,6 @@ public class CreateNonRdfSourcePersisterTest {
         when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel())
                 .thenReturn(NON_RDF_SOURCE.toString());
         when(headers.isArchivalGroup()).thenReturn(false);
-        when(psSession.getHeaders(((CreateResourceOperation) nonRdfSourceOperation).getParentId(), null))
-                .thenReturn(headers);
 
         persister.persist(psSession, nonRdfSourceOperation);
     }
