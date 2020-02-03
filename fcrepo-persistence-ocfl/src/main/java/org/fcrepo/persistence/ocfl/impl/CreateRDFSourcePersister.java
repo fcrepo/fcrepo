@@ -20,6 +20,7 @@ package org.fcrepo.persistence.ocfl.impl;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.persistence.api.exceptions.PersistentItemConflictException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
@@ -56,8 +57,19 @@ class CreateRDFSourcePersister extends AbstractRDFSourcePersister {
 
         final CreateResourceOperation createResourceOp = ((CreateResourceOperation)operation);
         final boolean archivalGroup = createResourceOp.isArchivalGroup();
-        final String rootObjectId = archivalGroup ? createResourceOp.getResourceId() :
-                                                    resolveRootObjectId(createResourceOp, session);
+
+        final String rootObjectId;
+        if (archivalGroup) {
+            //if archival group, ensure that there are no archival group ancestors
+            if (findArchivalGroupInAncestry(resourceId, session) != null) {
+                throw new PersistentItemConflictException("Nesting an ArchivalGroup within an ArchivalGroup is not " +
+                        "permitted");
+            }
+            rootObjectId = resourceId;
+        } else {
+            rootObjectId = resolveRootObjectId(createResourceOp, session);
+        }
+
         final String ocflObjectId = mintOCFLObjectId(rootObjectId);
         final OCFLObjectSession ocflObjectSession = session.findOrCreateSession(ocflObjectId);
         persistRDF(ocflObjectSession, operation, rootObjectId);

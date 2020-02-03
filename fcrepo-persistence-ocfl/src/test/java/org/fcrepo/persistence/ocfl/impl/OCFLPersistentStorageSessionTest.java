@@ -392,6 +392,7 @@ public class OCFLPersistentStorageSessionTest {
     private void mockOCFLObjectSession(final OCFLObjectSession objectSession, final CommitOption option) {
         when(objectSession.getDefaultCommitOption()).thenReturn(option);
         when(objectSession.getCreated()).thenReturn(Instant.now());
+
     }
 
     @Test

@@ -19,14 +19,18 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.serializeHeaders;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getSidecarSubpath;
 
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
+import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
@@ -116,18 +120,47 @@ abstract class AbstractPersister implements Persister {
     protected String resolveRootObjectId(final CreateResourceOperation operation,
                                        final OCFLPersistentStorageSession session) {
 
-        final var parentId = operation.getParentId();
         final var resourceId = operation.getResourceId();
-        //final ResourceHeaders headers = session.getHeaders(parentId, null);
-        final boolean parentIsAg  = false; // TODO uncomment when headers.isAchivalGroup() is available
-        if (parentIsAg) {
-            return parentId;
+        //is resource or any parent an archival group?
+        final var startingResourceId = operation.getType().equals(CREATE) ? operation.getParentId() : resourceId;
+        final var archivalGroupId = startingResourceId == null ? null : findArchivalGroupInAncestry(startingResourceId,
+                session);
+
+        if (archivalGroupId != null) {
+            return archivalGroupId;
         } else if (resourceId.endsWith("/" + FCR_METADATA) || resourceId.endsWith("/" + FCR_ACL)) {
             return resourceId.substring(0, resourceId.lastIndexOf("/"));
         } else {
             return resourceId;
         }
+}
 
+    protected String findArchivalGroupInAncestry(final String resourceId, final OCFLPersistentStorageSession session) {
+            if (resourceId.endsWith(FEDORA_ID_PREFIX)) {
+                return null;
+            }
+
+            //strip off trailing slash if exists
+            String cleanedResourceId = resourceId;
+            if (resourceId.endsWith("/")) {
+                cleanedResourceId = resourceId.substring(0, resourceId.length() - 1);
+            }
+
+            try {
+                final var headers = session.getHeaders(cleanedResourceId, null);
+                if (headers.isArchivalGroup()) {
+                    return cleanedResourceId;
+                }
+            } catch (final PersistentItemNotFoundException ex) {
+                //do nothing since there are cases where the resourceId will be the resource
+                //that is about to be created and thus will not yet exist in peristent storage.
+            } catch (final PersistentStorageException ex) {
+                throw new RepositoryRuntimeException(ex);
+            }
+
+            //get the previous path segment including the trailing slash
+            final String parentId = cleanedResourceId.substring(0, cleanedResourceId.lastIndexOf('/') + 1);
+            return findArchivalGroupInAncestry(parentId, session);
     }
 
 }

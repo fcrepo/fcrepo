@@ -96,4 +96,5 @@ public abstract class AbstractRdfSourceOperation extends AbstractResourceOperati
     protected void setCreatedDate(final Instant createdDate) {
         this.createdDate = createdDate;
     }
+
 }
