@@ -28,6 +28,8 @@ import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchModificatio
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.relativizeSubpath;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveOCFLSubpath;
 
+import java.io.InputStream;
+
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
@@ -35,6 +37,7 @@ import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.common.MultiDigestInputStreamWrapper;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
 import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
@@ -63,28 +66,46 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
     /**
      * This method handles the shared logic for writing the resource specified in the operation parameter to
      * the OCFL Object Session.
+     *
      * @param operation The operation to perform the persistence routine on
      * @param objectSession The ocfl object session
      * @param rootIdentifier The fedora object root identifier associated with the resource to be persisted.
-     * @throws PersistentStorageException
+     * @throws PersistentStorageException thrown if writing fails
      */
     protected void persistNonRDFSource(final ResourceOperation operation,
                                        final OCFLObjectSession objectSession, final String rootIdentifier)
             throws PersistentStorageException {
         final var resourceId = operation.getResourceId();
-        log.debug("persisting ({}) to {}", operation.getResourceId());
         final var fedoraSubpath = relativizeSubpath(rootIdentifier, resourceId);
         final var subpath = resolveOCFLSubpath(rootIdentifier, fedoraSubpath);
+        log.debug("persisting ({}) to {}", resourceId, subpath);
         // write user content
         final var nonRdfSourceOperation = (NonRdfSourceOperation) operation;
-        // TODO supply list of digests to calculate or wrap contentStream in DigestInputStream
+
         final WriteOutcome outcome;
         if (forExternalBinary(nonRdfSourceOperation)) {
             outcome = null;
         } else {
-            outcome = objectSession.write(subpath, nonRdfSourceOperation.getContentStream());
+            // if transmission digests provided, wrap inputstream to calculate for incoming data
+            final var digests = nonRdfSourceOperation.getContentDigests();
+            MultiDigestInputStreamWrapper multiDigestWrapper = null;
+            final InputStream contentStream;
+            if (digests == null || digests.isEmpty()) {
+                contentStream = nonRdfSourceOperation.getContentStream();
+            } else {
+                multiDigestWrapper = new MultiDigestInputStreamWrapper(
+                        nonRdfSourceOperation.getContentStream(),
+                        nonRdfSourceOperation.getContentDigests());
+                contentStream = multiDigestWrapper.getInputStream();
+            }
+
+            outcome = objectSession.write(subpath, contentStream);
+
+            // Verify that the content matches the provided digests
+            if (multiDigestWrapper != null) {
+                multiDigestWrapper.checkFixity();
+            }
         }
-        // TODO verify digests in the outcome match supplied digests
 
         // Write resource headers
         final var headers = populateHeaders(objectSession, subpath, nonRdfSourceOperation, outcome);

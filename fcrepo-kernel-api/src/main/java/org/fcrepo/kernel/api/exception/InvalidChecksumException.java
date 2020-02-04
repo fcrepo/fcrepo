@@ -22,7 +22,7 @@ package org.fcrepo.kernel.api.exception;
  * @author ajs6f
  * @since Mar 10, 2013
  */
-public class InvalidChecksumException extends Exception {
+public class InvalidChecksumException extends RepositoryRuntimeException {
 
     private static final long serialVersionUID = 1L;
 

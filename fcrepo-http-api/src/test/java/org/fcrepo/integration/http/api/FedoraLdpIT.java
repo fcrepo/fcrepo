@@ -1947,7 +1947,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
      * content
      */
     @Test
-@Ignore
     public void testIngestWithBinaryAndChecksumMismatch() {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
@@ -1977,7 +1976,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
      * Ensure that a non-SHA1 Digest header returns a 409 Conflict
      */
     @Test
-@Ignore
     public void testIngestWithBinaryAndNonSha1DigestHeader() {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
@@ -1990,7 +1988,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testIngestWithBinaryAndMD5DigestHeader() {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
@@ -2003,7 +2000,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testIngestWithBinaryAndTwoValidHeadersDigestHeaders() {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
@@ -2017,7 +2013,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testIngestWithBinaryAndValidAndInvalidDigestHeaders() {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
@@ -4383,7 +4378,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testDigestAbsence() throws IOException {
         final String id = getRandomUniqueId();
         executeAndClose(putDSMethod(id, "binary1", "some test content"));
