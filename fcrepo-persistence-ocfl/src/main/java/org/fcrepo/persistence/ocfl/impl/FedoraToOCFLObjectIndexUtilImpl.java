@@ -29,8 +29,6 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 
-import java.util.stream.Stream;
-
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getSidecarSubpath;
 
@@ -64,23 +62,25 @@ public class FedoraToOCFLObjectIndexUtilImpl implements FedoraToOCFLObjectIndexU
     @Override
     public void rebuild() {
 
-        final Stream<String> ocflIds = ocflRepository.listObjectIds();
         LOGGER.info("Initiating index rebuild.");
         fedoraToOCFLObjectIndex.reset();
         LOGGER.debug("Reading object ids...");
-        ocflIds.forEach(ocflId -> {
-            try {
-                LOGGER.debug("Reading {}", ocflId);
-                final var objSession = objectSessionFactory.create(ocflId, null);
-                final var sidecarSubpath = getSidecarSubpath(ocflId);
-                final var headers = deserializeHeaders(objSession.read(sidecarSubpath));
-                final var fedoraIdentifier = headers.getId();
-                fedoraToOCFLObjectIndex.addMapping(fedoraIdentifier, fedoraIdentifier, ocflId);
-                LOGGER.debug("Index entry created for {}", ocflId);
-            } catch (final PersistentStorageException e) {
-                throw new RepositoryRuntimeException("Failed to rebuild fedora-to-ocfl index: " + e.getMessage(), e);
-            }
-        });
+        try (final var ocflIds = ocflRepository.listObjectIds()) {
+            ocflIds.forEach(ocflId -> {
+                try {
+                    LOGGER.debug("Reading {}", ocflId);
+                    final var objSession = objectSessionFactory.create(ocflId, null);
+                    final var sidecarSubpath = getSidecarSubpath(ocflId);
+                    final var headers = deserializeHeaders(objSession.read(sidecarSubpath));
+                    final var fedoraIdentifier = headers.getId();
+                    fedoraToOCFLObjectIndex.addMapping(fedoraIdentifier, fedoraIdentifier, ocflId);
+                    LOGGER.debug("Index entry created for {}", ocflId);
+                } catch (final PersistentStorageException e) {
+                    throw new RepositoryRuntimeException("Failed to rebuild fedora-to-ocfl index: " +
+                            e.getMessage(), e);
+                }
+            });
+        }
         LOGGER.info("Index rebuild complete");
     }
 }
