@@ -51,14 +51,7 @@ public class FedoraToOCFLObjectIndexUtilImpl implements FedoraToOCFLObjectIndexU
 
     @Inject
     private OcflRepository ocflRepository;
-
-    /**
-     * Default constructor
-     */
-    public FedoraToOCFLObjectIndexUtilImpl() {
-    }
-
-
+    
     @Override
     public void rebuild() {
 
