@@ -282,6 +282,15 @@ public class OCFLPersistentStorageUtils {
     }
 
     /**
+     * Returns true of the subpath is a sidecar file
+     * @param subpath The subpath to be evaluated
+     * @return True if the subpath is a sidecar file.
+     */
+    public static boolean isSidecarSubpath(final String subpath) {
+        return subpath.startsWith(getInternalFedoraDirectory()) && subpath.endsWith(RESOURCE_HEADER_EXTENSION);
+    }
+
+    /**
      * A utility method that returns a list of  {@link java.time.Instant} objects representing immutable versions
      * accessible from the OCFL Object represented by the session.
      *

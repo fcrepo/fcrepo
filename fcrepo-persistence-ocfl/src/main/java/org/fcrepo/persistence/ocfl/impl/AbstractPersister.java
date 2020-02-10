@@ -20,6 +20,7 @@ package org.fcrepo.persistence.ocfl.impl;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.serializeHeaders;
@@ -122,7 +123,20 @@ abstract class AbstractPersister implements Persister {
 
         final var resourceId = operation.getResourceId();
         //is resource or any parent an archival group?
-        final var startingResourceId = operation.getType().equals(CREATE) ? operation.getParentId() : resourceId;
+        final String startingResourceId;
+        if (operation.getType().equals(CREATE)) {
+            final var parentId = operation.getParentId();
+            if (parentId != null) {
+                startingResourceId = parentId;
+            } else if (FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI.equals(operation.getInteractionModel())) {
+                startingResourceId = resourceId.replace("/" + FCR_METADATA, "");
+            } else {
+                startingResourceId = null;
+            }
+        } else {
+            startingResourceId = resourceId;
+        }
+
         final var archivalGroupId = startingResourceId == null ? null : findArchivalGroupInAncestry(startingResourceId,
                 session);
 
@@ -133,7 +147,7 @@ abstract class AbstractPersister implements Persister {
         } else {
             return resourceId;
         }
-}
+    }
 
     protected String findArchivalGroupInAncestry(final String resourceId, final OCFLPersistentStorageSession session) {
             if (resourceId.endsWith(FEDORA_ID_PREFIX)) {

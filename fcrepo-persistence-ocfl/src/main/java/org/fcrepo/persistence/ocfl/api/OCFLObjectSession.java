@@ -21,6 +21,7 @@ package org.fcrepo.persistence.ocfl.api;
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.List;
+import java.util.stream.Stream;
 
 import edu.wisc.library.ocfl.api.model.VersionDetails;
 import org.fcrepo.persistence.api.CommitOption;
@@ -38,6 +39,7 @@ public interface OCFLObjectSession {
      * The default commit option configured for the OCFL Object represented by this session.
      * If no default commit option has been defined for the specific OCFL Object, the
      * value returned will be the system defined global default commit option.
+     *
      * @return The default commit option
      */
     CommitOption getDefaultCommitOption();
@@ -123,5 +125,17 @@ public interface OCFLObjectSession {
      * The instant at which the session was created.
      * @return
      */
+
     Instant getCreated();
+
+    /**
+     * Lists the subpaths associated with the HEAD (ie the latest committed state)
+     *
+     * @return the subpaths as a stream
+     * @throws PersistentStorageException If subpaths cannot be listed due to the underlying session being closed
+     *                                    or for some other reason.
+     */
+
+    Stream<String> listHeadSubpaths() throws PersistentStorageException;
+
 }

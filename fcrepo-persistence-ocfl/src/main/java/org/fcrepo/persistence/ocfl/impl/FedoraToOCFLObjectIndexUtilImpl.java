@@ -29,8 +29,10 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 
+import static java.lang.String.format;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getSidecarSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.isSidecarSubpath;
 
 /**
  * An implementation of {@link FedoraToOCFLObjectIndexUtil}
@@ -51,7 +53,7 @@ public class FedoraToOCFLObjectIndexUtilImpl implements FedoraToOCFLObjectIndexU
 
     @Inject
     private OcflRepository ocflRepository;
-    
+
     @Override
     public void rebuild() {
 
@@ -60,14 +62,31 @@ public class FedoraToOCFLObjectIndexUtilImpl implements FedoraToOCFLObjectIndexU
         LOGGER.debug("Reading object ids...");
         try (final var ocflIds = ocflRepository.listObjectIds()) {
             ocflIds.forEach(ocflId -> {
-                try {
-                    LOGGER.debug("Reading {}", ocflId);
-                    final var objSession = objectSessionFactory.create(ocflId, null);
+                LOGGER.debug("Reading {}", ocflId);
+                final var objSession = objectSessionFactory.create(ocflId, null);
+
+                //list all the subpaths
+                try (final var subpaths = objSession.listHeadSubpaths()) {
+
+                    //but first resolve the root identifier
                     final var sidecarSubpath = getSidecarSubpath(ocflId);
-                    final var headers = deserializeHeaders(objSession.read(sidecarSubpath));
-                    final var fedoraIdentifier = headers.getId();
-                    fedoraToOCFLObjectIndex.addMapping(fedoraIdentifier, fedoraIdentifier, ocflId);
-                    LOGGER.debug("Index entry created for {}", ocflId);
+                    final var rootHeaders = deserializeHeaders(objSession.read(sidecarSubpath));
+                    final var fedoraRootIdentifier = rootHeaders.getId();
+
+                    subpaths.forEach(subpath -> {
+                        if (isSidecarSubpath(subpath)) {
+                            //we're only interested in sidecar subpaths
+                            try {
+                                final var headers = deserializeHeaders(objSession.read(subpath));
+                                final var fedoraIdentifier = headers.getId();
+                                fedoraToOCFLObjectIndex.addMapping(fedoraIdentifier, fedoraRootIdentifier, ocflId);
+                                LOGGER.debug("Rebuilt fedora-to-ocfl object index entry for {}", fedoraIdentifier);
+                            } catch (PersistentStorageException e) {
+                                throw new RepositoryRuntimeException(format("fedora-to-ocfl index rebuild failed: %s",
+                                        e.getMessage()), e);
+                            }
+                        }
+                    });
                 } catch (final PersistentStorageException e) {
                     throw new RepositoryRuntimeException("Failed to rebuild fedora-to-ocfl index: " +
                             e.getMessage(), e);

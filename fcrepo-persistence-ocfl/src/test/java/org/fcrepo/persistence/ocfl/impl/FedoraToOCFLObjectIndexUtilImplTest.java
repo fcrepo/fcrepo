@@ -18,11 +18,14 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import java.io.ByteArrayInputStream;
 
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.createRepository;
@@ -68,17 +71,31 @@ public class FedoraToOCFLObjectIndexUtilImplTest {
 
         final var session1Id = "session1";
         final var resource1 = "info:fedora/resource1";
+        final var resource2 =  resource1 + "/resource2";
+
         final var session = sessionManager.getSession(session1Id);
 
         final var operation = mock(RdfSourceOperation.class, withSettings().extraInterfaces(
                 CreateResourceOperation.class));
         when(operation.getResourceId()).thenReturn(resource1);
         when(operation.getType()).thenReturn(CREATE);
+        when(((CreateResourceOperation)operation).isArchivalGroup()).thenReturn(true);
         session.persist(operation);
+
+        final var operation2 = mock(NonRdfSourceOperation.class, withSettings().extraInterfaces(
+                CreateResourceOperation.class));
+        when(operation2.getResourceId()).thenReturn(resource2);
+        when(operation2.getType()).thenReturn(CREATE);
+        final var bytes = "test".getBytes();
+        final var stream = new ByteArrayInputStream(bytes);
+        when(operation2.getContentSize()).thenReturn((long)bytes.length);
+        when(operation2.getContentStream()).thenReturn(stream);
+        when(operation2.getMimeType()).thenReturn("text/plain");
+        when(operation2.getFilename()).thenReturn("test");
+        when(((CreateResourceOperation)operation2).getParentId()).thenReturn(resource1);
+        session.persist(operation2);
         session.commit();
-
         assertNotNull(index.getMapping(resource1));
-
         index.reset();
 
         try {
@@ -89,10 +106,8 @@ public class FedoraToOCFLObjectIndexUtilImplTest {
         }
 
         ocflObjectSessionFactory.create(resource1, session1Id);
-
         util.rebuild();
-
         assertNotNull(index.getMapping(resource1));
-
+        assertNotNull(index.getMapping(resource2));
     }
 }

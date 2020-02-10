@@ -31,8 +31,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import edu.wisc.library.ocfl.core.storage.filesystem.FileSystemOcflStorage;
 import org.apache.commons.io.IOUtils;
@@ -629,6 +631,25 @@ public class DefaultOCFLObjectSessionTest {
         assertEquals("First version in list is not \"v1\"", "v1", versions.get(0).getVersionId().toString());
         assertEquals("Second version in list is not \"v2\"", "v2", versions.get(1).getVersionId().toString());
         assertEquals("There should be exactly two versions",2, versions.size());
+    }
+
+    @Test
+    public void listHeadSubpaths() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.write(FILE2_SUBPATH, fileStream(FILE_CONTENT2));
+        session.commit(NEW_VERSION);
+        session.close();
+
+        final var session2 = makeNewSession();
+
+        final List<String> subpaths = session2.listHeadSubpaths().collect(Collectors.toList());
+
+        session2.close();
+
+        assertEquals("Expected 2 subpaths", 2, subpaths.size());
+        Arrays.asList(FILE1_SUBPATH, FILE2_SUBPATH).stream().forEach(subpath -> {
+            assertTrue(format("Expected subpath %s to be presented", subpath), subpaths.contains(subpath));
+        });
     }
 
     @Test
