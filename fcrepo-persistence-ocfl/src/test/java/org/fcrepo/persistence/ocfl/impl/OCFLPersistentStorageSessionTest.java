@@ -27,6 +27,7 @@ import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
 import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.createRepository;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.mintOCFLObjectId;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -39,6 +40,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -137,7 +139,9 @@ public class OCFLPersistentStorageSessionTest {
         final var repoDir = tempFolder.newFolder("ocfl-repo");
         final var workDir = tempFolder.newFolder("ocfl-work");
 
-        this.objectSessionFactory = new DefaultOCFLObjectSessionFactory(stagingDir, repoDir, workDir);
+        final var repository = createRepository(repoDir, workDir);
+        this.objectSessionFactory = new DefaultOCFLObjectSessionFactory(stagingDir);
+        setField(this.objectSessionFactory, "ocflRepository", repository);
         session = createSession(index, objectSessionFactory);
         DefaultOCFLObjectSession.setGlobaDefaultCommitOption(UNVERSIONED);
 

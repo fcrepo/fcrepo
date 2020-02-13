@@ -17,23 +17,20 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.OCFL_STORAGE_ROOT_DIR;
-import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.OCFL_WORK_DIR;
 import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.STAGING_DIR;
 
 import java.io.File;
 
-import edu.wisc.library.ocfl.core.storage.filesystem.FileSystemOcflStorage;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
-import edu.wisc.library.ocfl.core.OcflRepositoryBuilder;
-import edu.wisc.library.ocfl.core.extension.layout.config.DefaultLayoutConfig;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
 
 /**
  * A default implemenntation of the {@link org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory} interface.
@@ -48,6 +45,7 @@ public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory
 
     private File ocflStagingDir;
 
+    @Inject
     private MutableOcflRepository ocflRepository;
 
     /**
@@ -56,31 +54,20 @@ public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory
      * are not set, default directories will be created in java.io.tmpdir.
      */
     public DefaultOCFLObjectSessionFactory() {
-        this(STAGING_DIR, OCFL_STORAGE_ROOT_DIR, OCFL_WORK_DIR);
+        this(STAGING_DIR);
     }
 
     /**
      * Constructor
      *
      * @param ocflStagingDir     The OCFL staging directory
-     * @param ocflStorageRootDir The OCFL storage root directory
-     * @param ocflWorkDir        The OCFL work directory
      */
-    public DefaultOCFLObjectSessionFactory(final File ocflStagingDir, final File ocflStorageRootDir,
-                                           final File ocflWorkDir) {
-        LOGGER.info("Fedora OCFL persistence directories:\n- {}\n- {}\n- {}",
-                ocflStagingDir, ocflStorageRootDir, ocflWorkDir);
+    public DefaultOCFLObjectSessionFactory(final File ocflStagingDir) {
+        LOGGER.info("Fedora OCFL persistence staging directory:\n- {}",
+                ocflStagingDir);
 
         ocflStagingDir.mkdirs();
-        ocflStorageRootDir.mkdirs();
-        ocflWorkDir.mkdirs();
-
         this.ocflStagingDir = ocflStagingDir;
-        this.ocflRepository = new OcflRepositoryBuilder()
-                .layoutConfig(DefaultLayoutConfig.nTupleHashConfig())
-                .buildMutable(FileSystemOcflStorage.builder().build(
-                        ocflStorageRootDir.toPath()), ocflWorkDir.toPath());
-
     }
 
     @Override

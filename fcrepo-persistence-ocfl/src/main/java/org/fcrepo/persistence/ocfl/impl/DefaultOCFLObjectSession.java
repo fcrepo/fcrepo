@@ -39,6 +39,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import edu.wisc.library.ocfl.api.model.VersionDetails;
 import org.apache.commons.io.FileUtils;
@@ -419,6 +420,15 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
                                                                     .filter(v -> !v.isMutable())
                                                                     .sorted(VERSION_COMPARATOR)
                                                                     .collect(Collectors.toList());
+    }
+
+    @Override
+    public Stream<String> listHeadSubpaths() throws PersistentStorageException {
+        assertSessionOpen();
+
+        return this.ocflRepository.describeVersion(ObjectVersionId.head(this.objectIdentifier))
+                .getFiles()
+                .stream().map(f -> f.getPath());
     }
 
     @Override

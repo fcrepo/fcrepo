@@ -17,6 +17,10 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import edu.wisc.library.ocfl.api.MutableOcflRepository;
+import edu.wisc.library.ocfl.core.OcflRepositoryBuilder;
+import edu.wisc.library.ocfl.core.extension.layout.config.DefaultLayoutConfig;
+import edu.wisc.library.ocfl.core.storage.filesystem.FileSystemOcflStorage;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
@@ -121,8 +125,9 @@ public class OCFLPersistentStorageUtils {
         final var lastPathSegment = rootObjectId.substring(rootObjectId.lastIndexOf("/") + 1);
 
         String subPath;
-
-        if (fedoraSubpath == "") {
+        if (FEDORA_ID_PREFIX.equals(rootFedoraObjectId) && "".equals(fedoraSubpath)) {
+            subPath = DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
+        } else if ("".equals(fedoraSubpath)) {
             subPath = lastPathSegment;
         } else if (fedoraSubpath.endsWith(FCR_ACL)) {
             subPath = fedoraSubpath.replaceAll("/?" + FCR_ACL + "$", "-acl");
@@ -272,8 +277,17 @@ public class OCFLPersistentStorageUtils {
      *                  retrieve.
      * @return The subpath to the (sidecar) metadata file.
      */
-    protected static String getSidecarSubpath(final String subpath) {
+    public static String getSidecarSubpath(final String subpath) {
         return getInternalFedoraDirectory() + subpath + RESOURCE_HEADER_EXTENSION;
+    }
+
+    /**
+     * Returns true of the subpath is a sidecar file
+     * @param subpath The subpath to be evaluated
+     * @return True if the subpath is a sidecar file.
+     */
+    public static boolean isSidecarSubpath(final String subpath) {
+        return subpath.startsWith(getInternalFedoraDirectory()) && subpath.endsWith(RESOURCE_HEADER_EXTENSION);
     }
 
     /**
@@ -338,4 +352,24 @@ public class OCFLPersistentStorageUtils {
 
         return bareFedoraIdentifier;
     }
+
+    /**
+     * Create a new ocfl repository
+     * @param ocflStorageRootDir The ocfl storage root directory
+     * @param ocflWorkDir The ocfl work directory
+     * @return the repository
+     */
+    public static MutableOcflRepository createRepository(final File ocflStorageRootDir, final File ocflWorkDir) {
+        ocflStorageRootDir.mkdirs();
+        ocflWorkDir.mkdirs();
+
+        log.info("Fedora OCFL persistence directories:\n- {}\n- {}", ocflStorageRootDir, ocflWorkDir);
+
+        return new OcflRepositoryBuilder()
+                .layoutConfig(DefaultLayoutConfig.nTupleHashConfig())
+                .storage((FileSystemOcflStorage.builder().repositoryRoot(ocflStorageRootDir.toPath()).build()))
+                .workDir(ocflWorkDir.toPath())
+                .buildMutable();
+    }
+
 }
