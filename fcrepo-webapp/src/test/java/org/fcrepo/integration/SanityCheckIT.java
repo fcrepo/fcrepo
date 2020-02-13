@@ -57,7 +57,6 @@ import javax.ws.rs.core.Link;
  *
  * @author fasseg
  */
-@Ignore // TODO FIX THESE TESTS
 public class SanityCheckIT {
 
     /**
@@ -108,6 +107,7 @@ public class SanityCheckIT {
         return response;
     }
 
+    @Ignore // TODO FIX THIS TEST
     @Test
     public void testConstraintLink() throws Exception {
         // Create a resource

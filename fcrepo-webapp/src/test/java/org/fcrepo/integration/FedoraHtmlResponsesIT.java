@@ -69,7 +69,6 @@ import com.gargoylesoftware.htmlunit.html.HtmlTextArea;
  *
  * @author cbeer
  */
-@Ignore // TODO FIX THESE TESTS
 public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
     private WebClient webClient;
@@ -103,6 +102,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
                         namespaceLabel);
     }
 
+    @Ignore // TODO FIX THIS TEST
     @Test
     public void testCreateNewNodeWithProvidedId() throws IOException {
         createAndVerifyObjectWithIdFromRootPage(newPid());
@@ -139,6 +139,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore // TODO FIX THIS TEST
     @Test
     public void testCreateNewNodeWithGeneratedId() throws IOException {
 
@@ -153,6 +154,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         assertTrue("Didn't see new information in page!", !page1.asText().equals(page.asText()));
     }
 
+    @Ignore // TODO FIX THIS TEST
     @Test
     public void testCreateNewBasicContainer() throws IOException {
         final HtmlPage newPage = createAndVerifyObjectWithIdFromRootPage(newPid(), "basic container");
@@ -160,6 +162,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
                 "http://www.w3.org/ns/ldp#BasicContainer"));
     }
 
+    @Ignore // TODO FIX THIS TEST
     @Test
     public void testCreateNewDirectContainer() throws IOException {
         final HtmlPage newPage = createAndVerifyObjectWithIdFromRootPage(newPid(), "direct container");
@@ -167,6 +170,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
                 "http://www.w3.org/ns/ldp#DirectContainer"));
     }
 
+    @Ignore // TODO FIX THIS TEST
     @Test
     public void testCreateNewIndirectContainer() throws IOException {
         final HtmlPage newPage = createAndVerifyObjectWithIdFromRootPage(newPid(), "indirect container");
@@ -224,6 +228,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         assertEquals(NOT_FOUND.getStatusCode(), status);
     }
 
+    @Ignore // TODO FIX THIS TEST
     @Test
     public void testCreateNewObjectAndDeleteIt() throws IOException {
         final boolean throwExceptionOnFailingStatusCode = webClient.getOptions().isThrowExceptionOnFailingStatusCode();
@@ -243,6 +248,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         webClient.getOptions().setThrowExceptionOnFailingStatusCode(throwExceptionOnFailingStatusCode);
     }
 
+    @Ignore // TODO FIX THIS TEST
     @Test
     public void testVersionsListWorksWhenNoVersionsPresent() throws IOException {
         final boolean throwExceptionOnFailingStatusCode = webClient.getOptions().isThrowExceptionOnFailingStatusCode();

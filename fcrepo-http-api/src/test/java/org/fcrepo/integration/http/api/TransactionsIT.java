@@ -61,7 +61,6 @@ import org.junit.Test;
  *
  * @author awoods
  */
-@Ignore //TODO Fix these tests
 public class TransactionsIT extends AbstractResourceIT {
 
     public static final long REAP_INTERVAL = 1000;
@@ -70,6 +69,7 @@ public class TransactionsIT extends AbstractResourceIT {
 
     public static final String DEFAULT_TIMEOUT = Long.toString(ofMinutes(3).toMillis());
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateTransaction() throws IOException {
         final String location = createTransaction();
@@ -78,12 +78,14 @@ public class TransactionsIT extends AbstractResourceIT {
                 compile("tx:[0-9a-f-]+$").matcher(location).find());
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testRequestsInTransactionThatDoestExist() {
         /* create a tx */
         assertEquals(GONE.getStatusCode(), getStatus(new HttpPost(serverAddress + "tx:123/objects")));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateAndTimeoutTransaction() throws IOException, InterruptedException {
 
@@ -110,6 +112,7 @@ public class TransactionsIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateDoStuffAndRollbackTransaction() throws IOException {
         /* create a tx */
@@ -140,6 +143,7 @@ public class TransactionsIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPost(txLocation + "/fcr:tx/fcr:rollback")));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testTransactionKeepAlive() throws IOException {
         /* create a tx */
@@ -149,6 +153,7 @@ public class TransactionsIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateDoStuffAndCommitTransaction() throws IOException {
         /* create a tx */
@@ -177,6 +182,7 @@ public class TransactionsIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateDoStuffAndCommitTransactionSeparateConnections() throws IOException {
         /* create a tx */
@@ -213,6 +219,7 @@ public class TransactionsIT extends AbstractResourceIT {
      *
      * @throws IOException exception thrown during this function
      */
+    @Ignore //TODO Fix this test
     @Test
     public void testIngestNewWithSparqlPatchWithinTransaction() throws IOException {
         final String objectInTxCommit = getRandomUniqueId();
@@ -250,6 +257,7 @@ public class TransactionsIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testGetNonExistingObject() throws IOException {
         final String txLocation = createTransaction();
@@ -263,6 +271,7 @@ public class TransactionsIT extends AbstractResourceIT {
      *
      * @throws IOException exception thrown during this function
      */
+    @Ignore //TODO Fix this test
     @Test
     public void testTransactionHijackingNotPossible() throws IOException {
 
@@ -298,6 +307,7 @@ public class TransactionsIT extends AbstractResourceIT {
      *
      * @throws IOException exception thrown during this function
      */
+    @Ignore //TODO Fix this test
     @Test
     public void testTransactionHijackingNotPossibleAnoymous() throws IOException {
 
@@ -332,6 +342,7 @@ public class TransactionsIT extends AbstractResourceIT {
      *
      * @throws IOException exception thrown during this function
      */
+    @Ignore //TODO Fix this test
     @Test
     public void testNoCachingHeadersDuringTransaction() throws IOException {
         final String txLocation = createTransaction();
@@ -357,6 +368,7 @@ public class TransactionsIT extends AbstractResourceIT {
      * Test for issue https://jira.duraspace.org/browse/FCREPO-2975
      * @throws java.lang.Exception exception thrown during this function
      */
+    @Ignore //TODO Fix this test
     @Test
     public void testHeadAndDeleteInTransaction() throws Exception {
         final String id = getRandomUniqueId();
@@ -430,6 +442,7 @@ public class TransactionsIT extends AbstractResourceIT {
                 NO_CONTENT.getStatusCode(), getStatus(new HttpPost(deleterTxLocation + "/fcr:tx/fcr:commit")));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCacheHeadersInTransaction() throws IOException {
         /* create a tx */

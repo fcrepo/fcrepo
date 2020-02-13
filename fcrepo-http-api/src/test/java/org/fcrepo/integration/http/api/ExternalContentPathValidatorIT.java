@@ -59,7 +59,6 @@ import org.springframework.test.context.support.DependencyInjectionTestExecution
 /**
  * @author bbpennel
  */
-@Ignore //TODO Fix these tests
 @RunWith(SpringJUnit4ClassRunner.class)
 @DirtiesContext(classMode = ClassMode.BEFORE_CLASS)
 @TestExecutionListeners(listeners = { DependencyInjectionTestExecutionListener.class,
@@ -121,6 +120,7 @@ public class ExternalContentPathValidatorIT extends AbstractResourceIT {
         System.clearProperty("fcrepo.external.content.allowed");
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testAllowedPath() throws Exception {
         final HttpPost method = postObjMethod();
@@ -163,6 +163,7 @@ public class ExternalContentPathValidatorIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testAllowedFilePath() throws Exception {
         final String fileContent = "content";

@@ -35,7 +35,6 @@ import org.junit.Test;
  *
  * @author awoods
  */
-@Ignore //TODO Fix these tests
 public class FedoraHtmlIT extends AbstractResourceIT {
 
     @Test
@@ -72,6 +71,7 @@ public class FedoraHtmlIT extends AbstractResourceIT {
         assertEquals(200, getStatus(method));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testGetContainerTemplate() throws IOException {
         final String pid = getRandomUniqueId();
@@ -85,6 +85,7 @@ public class FedoraHtmlIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testGetBinaryTemplate() throws IOException {
         final String pid = getRandomUniqueId();
@@ -98,6 +99,7 @@ public class FedoraHtmlIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testGetRootTemplate() throws IOException {
 

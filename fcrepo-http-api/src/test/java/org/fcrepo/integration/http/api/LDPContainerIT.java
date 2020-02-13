@@ -50,7 +50,6 @@ import org.junit.Test;
 /**
  * @author bbpennel
  */
-@Ignore //TODO Fix these tests
 public class LDPContainerIT extends AbstractResourceIT {
 
     private final String PCDM_HAS_MEMBER = "http://pcdm.org/models#hasMember";
@@ -61,6 +60,7 @@ public class LDPContainerIT extends AbstractResourceIT {
 
     private static final String INDIRECT_CONTAINER_LINK_HEADER = "<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
 
+    @Ignore //TODO Fix this test
     @Test
     public void testIndirectContainerDefaults() throws Exception {
         final String id = getRandomUniqueId();
@@ -84,6 +84,7 @@ public class LDPContainerIT extends AbstractResourceIT {
                 resc.hasProperty(INSERTED_CONTENT_RELATION, MEMBER_SUBJECT));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testIndirectContainerOverrides() throws Exception {
         final String parentId = getRandomUniqueId();
@@ -115,6 +116,7 @@ public class LDPContainerIT extends AbstractResourceIT {
                 resc.hasProperty(INSERTED_CONTENT_RELATION, MEMBER_SUBJECT));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testIndirectContainerDefaultsAfterPUT() throws Exception {
         final String parentId = getRandomUniqueId();
@@ -152,6 +154,7 @@ public class LDPContainerIT extends AbstractResourceIT {
                 resc.hasProperty(INSERTED_CONTENT_RELATION, MEMBER_SUBJECT));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testIndirectContainerDefaultsAfterPatch() throws Exception {
         final String parentId = getRandomUniqueId();
@@ -206,6 +209,7 @@ public class LDPContainerIT extends AbstractResourceIT {
         executeAndClose(putIndirect);
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testDirectContainerDefaults() throws Exception {
         final String id = getRandomUniqueId();
@@ -225,6 +229,7 @@ public class LDPContainerIT extends AbstractResourceIT {
                 resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testDirectContainerOverrides() throws Exception {
         final String parentId = getRandomUniqueId();
@@ -250,6 +255,7 @@ public class LDPContainerIT extends AbstractResourceIT {
                 resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testDirectContainerDefaultsAfterPUT() throws Exception {
         final String parentId = getRandomUniqueId();
@@ -281,6 +287,7 @@ public class LDPContainerIT extends AbstractResourceIT {
                 resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testDirectContainerDefaultsAfterPatch() throws Exception {
         final String parentId = getRandomUniqueId();
