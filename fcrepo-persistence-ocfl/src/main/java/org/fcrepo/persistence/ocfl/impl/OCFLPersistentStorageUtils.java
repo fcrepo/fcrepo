@@ -362,6 +362,9 @@ public class OCFLPersistentStorageUtils {
     public static MutableOcflRepository createRepository(final File ocflStorageRootDir, final File ocflWorkDir) {
         ocflStorageRootDir.mkdirs();
         ocflWorkDir.mkdirs();
+
+        log.info("Fedora OCFL persistence directories:\n- {}\n- {}", ocflStorageRootDir, ocflWorkDir);
+
         return new OcflRepositoryBuilder()
                 .layoutConfig(DefaultLayoutConfig.nTupleHashConfig())
                 .storage((FileSystemOcflStorage.builder().repositoryRoot(ocflStorageRootDir.toPath()).build()))

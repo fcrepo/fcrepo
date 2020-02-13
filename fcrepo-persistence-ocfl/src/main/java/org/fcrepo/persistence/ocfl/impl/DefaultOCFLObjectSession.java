@@ -426,8 +426,8 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     public Stream<String> listHeadSubpaths() throws PersistentStorageException {
         assertSessionOpen();
 
-        return this.ocflRepository.describeObject(objectIdentifier)
-                .getHeadVersion().getFiles()
+        return this.ocflRepository.describeVersion(ObjectVersionId.head(this.objectIdentifier))
+                .getFiles()
                 .stream().map(f -> f.getPath());
     }
 

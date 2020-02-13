@@ -21,12 +21,12 @@ import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 
+import static java.lang.System.currentTimeMillis;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.createRepository;
 import static org.junit.Assert.assertNotNull;
@@ -42,17 +42,14 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
  */
 public class FedoraToOCFLObjectIndexUtilImplTest {
 
-    private static final String RESOURCE_ID_1 = "info:fedora/resource";
-
-    @Rule
-    public TemporaryFolder tempFolder = new TemporaryFolder();
-
     @Test
     public void testRebuild() throws Exception {
+        final var targetDir = new File("target");
+        final var dataDir = new File(targetDir, "test-fcrepo-data-" + currentTimeMillis());
+        final var repoDir = new File(dataDir,"ocfl-repo");
+        final var workDir = new File(dataDir,"ocfl-work");
+        final var staging = new File(dataDir,"ocfl-staging");
 
-        final var repoDir = tempFolder.newFolder("ocfl-repo");
-        final var workDir = tempFolder.newFolder("ocfl-work");
-        final var staging = tempFolder.newFolder("ocfl-staging");
         final var repository = createRepository(repoDir, workDir);
 
         final var index = new FedoraToOCFLObjectIndexImpl();
@@ -105,7 +102,6 @@ public class FedoraToOCFLObjectIndexUtilImplTest {
             //do nothing - expected
         }
 
-        ocflObjectSessionFactory.create(resource1, session1Id);
         util.rebuild();
         assertNotNull(index.getMapping(resource1));
         assertNotNull(index.getMapping(resource2));

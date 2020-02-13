@@ -20,12 +20,10 @@ package org.fcrepo.persistence.ocfl.impl;
 import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.FEDORA_TO_OCFL_INDEX_FILE;
 import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -47,9 +45,6 @@ public class FedoraToOCFLObjectIndexImpl implements FedoraToOCFLObjectIndex {
     private static Logger LOGGER = LoggerFactory.getLogger(FedoraToOCFLObjectIndexImpl.class);
 
     private Map<String, FedoraOCFLMapping> fedoraOCFLMappingMap = Collections.synchronizedMap(new HashMap<>());
-
-    @Inject
-    private OCFLObjectSessionFactory objectSessionFactory;
 
     /**
      * Constructor.

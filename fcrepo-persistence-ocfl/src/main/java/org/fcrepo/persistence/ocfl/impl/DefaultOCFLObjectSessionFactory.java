@@ -67,7 +67,7 @@ public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory
                 ocflStagingDir);
 
         ocflStagingDir.mkdirs();
-       this.ocflStagingDir = ocflStagingDir;
+        this.ocflStagingDir = ocflStagingDir;
     }
 
     @Override

@@ -125,7 +125,6 @@ public interface OCFLObjectSession {
      * The instant at which the session was created.
      * @return
      */
-
     Instant getCreated();
 
     /**
@@ -135,7 +134,6 @@ public interface OCFLObjectSession {
      * @throws PersistentStorageException If subpaths cannot be listed due to the underlying session being closed
      *                                    or for some other reason.
      */
-
     Stream<String> listHeadSubpaths() throws PersistentStorageException;
 
 }

@@ -31,6 +31,4 @@ public interface OCFLObjectSessionFactory {
      * @return The newly created session.
      */
     OCFLObjectSession create(final String ocflId, final String persistentStorageSessionId);
-
-
 }
