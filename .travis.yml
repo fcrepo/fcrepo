@@ -1,12 +1,26 @@
-language: java
-sudo: true
 
-dist: trusty
-jdk:
-  - openjdk11
+jobs:
+  include:
+    - os: linux
+      language: java
+      dist: trusty
+      sudo: true
+      jdk: openjdk11
+    - os: windows
+      language: shell
 
-before_install:  
- - "echo $JAVA_OPTS"
+env:
+  - MAVEN_VERSION=3.6.3
+
+before_install:
+ - if [ "$TRAVIS_OS_NAME" = "windows" ]; then
+    choco install openjdk11 --version 11.0.5.10;
+    export JAVA_HOME='/c/Program Files/OpenJDK/openjdk-11.0.5_10'
+    export PATH="${PATH}:${JAVA_HOME}/bin";
+    choco install maven --version ${MAVEN_VERSION};
+    export PATH="${PATH}:/c/ProgramData/chocolatey/lib/maven/apache-maven-3.6.3/bin";
+  fi;
+ - "echo $PATH"
  - "export JAVA_OPTS=-Xmx512m"
  - "mvn -N io.takari:maven:0.7.7:wrapper -Dmaven=${MAVEN_VERSION}"
 
@@ -17,18 +31,20 @@ install:
  - true
 
 before_script:
- - sudo service mysql stop
- - sudo service postgresql stop
- - sudo service acpid stop
- - sudo service atd stop
- - sudo service cron stop
- - sudo service memcached stop
- - sudo service ntp stop
- - sudo service rabbitmq-server stop
- - sudo service resolvconf stop
- - sudo service sshguard stop
- - sudo service ssh stop
-
+ - if [ "$TRAVIS_OS_NAME" = "linux" ]; then 
+     sudo service mysql stop;
+     sudo service postgresql stop;
+     sudo service acpid stop;
+     sudo service atd stop;
+     sudo service cron stop;
+     sudo service memcached stop;
+     sudo service ntp stop;
+     sudo service rabbitmq-server stop;
+     sudo service resolvconf stop;
+     sudo service sshguard stop;
+     sudo service ssh stop;
+   fi
+    
 script:
  - ./mvnw -Dfcrepo.streaming.parallel=true install -B -V
 
