@@ -321,7 +321,7 @@ public class OCFLPersistentStorageUtils {
      * @return The path ( including the final slash ) to the internal Fedora directory within an OCFL object.
      */
     public static String getInternalFedoraDirectory() {
-        return INTERNAL_FEDORA_DIRECTORY + File.separator;
+        return INTERNAL_FEDORA_DIRECTORY + "/";
     }
 
 
