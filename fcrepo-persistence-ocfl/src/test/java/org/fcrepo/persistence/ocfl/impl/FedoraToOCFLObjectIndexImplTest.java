@@ -137,8 +137,9 @@ public class FedoraToOCFLObjectIndexImplTest {
     }
 
     private void removeIndexMappingFile() {
-        if (FEDORA_TO_OCFL_INDEX_FILE.exists()) {
-            FEDORA_TO_OCFL_INDEX_FILE.delete();
+        if (FEDORA_TO_OCFL_INDEX_FILE.exists() &&
+                !FEDORA_TO_OCFL_INDEX_FILE.delete()) {
+            throw new RuntimeException("Could not delete file " + FEDORA_TO_OCFL_INDEX_FILE);
         }
     }
 }
