@@ -158,7 +158,8 @@ public class UpdateRDFSourcePersisterTest {
 
         assertEquals(BASIC_CONTAINER.toString(), resultHeaders.getInteractionModel());
         assertEquals(originalCreation, resultHeaders.getCreatedDate());
-        assertTrue(originalModified.isBefore(resultHeaders.getLastModifiedDate()));
+        assertTrue(originalModified + " is not before " + resultHeaders.getLastModifiedDate(),
+                originalModified.isBefore(resultHeaders.getLastModifiedDate()));
     }
 
     private RdfStream constructTitleStream(final String resourceId, final String title) {

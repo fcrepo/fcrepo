@@ -120,10 +120,10 @@ public class FedoraToOCFLObjectIndexImpl implements FedoraToOCFLObjectIndex {
                     dir.mkdirs();
                 }
             }
-            final BufferedWriter output = new BufferedWriter(new FileWriter(FEDORA_TO_OCFL_INDEX_FILE, true));
-            output.write(String.format("%s\t%s\t%s\n", fedoraId, fedoraOCFLMapping.getRootObjectIdentifier(),
-                    fedoraOCFLMapping.getOcflObjectId()));
-            output.close();
+            try (var fw = new FileWriter(FEDORA_TO_OCFL_INDEX_FILE, true); var output= new BufferedWriter(fw)) {
+                output.write(String.format("%s\t%s\t%s\n", fedoraId, fedoraOCFLMapping.getRootObjectIdentifier(),
+                        fedoraOCFLMapping.getOcflObjectId()));
+            }
         } catch (IOException exception) {
             LOGGER.warn("Unable to create/write on disk FedoraToOCFL Mapping at {}", FEDORA_TO_OCFL_INDEX_FILE);
         }

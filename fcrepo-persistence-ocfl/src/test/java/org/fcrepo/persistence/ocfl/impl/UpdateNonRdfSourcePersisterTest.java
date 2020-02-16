@@ -162,7 +162,8 @@ public class UpdateNonRdfSourcePersisterTest {
 
         assertEquals(NON_RDF_SOURCE.toString(), resultHeaders.getInteractionModel());
         assertEquals(originalCreation, resultHeaders.getCreatedDate());
-        assertTrue(originalModified.isBefore(resultHeaders.getLastModifiedDate()));
+        assertTrue(originalModified + " is not before " + resultHeaders.getLastModifiedDate(),
+                originalModified.isBefore(resultHeaders.getLastModifiedDate()));
 
         assertEquals(LOCAL_CONTENT_SIZE, resultHeaders.getContentSize());
     }
