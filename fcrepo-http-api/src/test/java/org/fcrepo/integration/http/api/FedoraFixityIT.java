@@ -72,12 +72,12 @@ import org.apache.jena.sparql.core.DatasetGraph;
  * @author awoods
  * @author ajs6f
  */
-@Ignore //TODO Fix these tests
 public class FedoraFixityIT extends AbstractResourceIT {
 
     private static final RDFDatatype IntegerType = TypeMapper.getInstance().getTypeByClass(Integer.class);
     private static final RDFDatatype StringType = TypeMapper.getInstance().getTypeByClass(String.class);
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCheckDatastreamFixity() throws IOException {
         final String id = getRandomUniqueId();
@@ -99,6 +99,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCheckDatastreamFixityMD5() throws IOException {
         final String id = getRandomUniqueId();
@@ -131,6 +132,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testFixityHeaders() throws IOException {
         final String id = getRandomUniqueId();
@@ -161,6 +163,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testResponseContentTypes() throws IOException {
         final String id = getRandomUniqueId();

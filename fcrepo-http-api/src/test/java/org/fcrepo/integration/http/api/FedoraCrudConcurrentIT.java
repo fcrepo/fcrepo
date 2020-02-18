@@ -32,7 +32,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.BasicHttpEntity;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -44,7 +43,6 @@ import org.junit.Test;
  *
  * @author lsitu
  */
-@Ignore //TODO Fix these tests
 public class FedoraCrudConcurrentIT extends AbstractResourceIT {
 
     private static final String TEST_ACTIVATION_PROPERTY = "fcrepo.test.http.concurrent";

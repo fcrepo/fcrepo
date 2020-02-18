@@ -131,7 +131,6 @@ import org.junit.rules.TemporaryFolder;
  * @author lsitu
  * @author bbpennel
  */
-@Ignore //TODO Fix these tests
 public class FedoraVersioningIT extends AbstractResourceIT {
 
     private static final String BINARY_CONTENT = "binary content";
@@ -162,6 +161,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         subjectUri = serverAddress + id;
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testDeleteTimeMapNotAllowed() throws Exception {
         createVersionedContainer(id);
@@ -172,6 +172,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                      getStatus(new HttpDelete(serverAddress + id + "/" + FCR_VERSIONS)));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testGetTimeMapResponse() throws Exception {
         createVersionedContainer(id);
@@ -180,6 +181,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         verifyTimemapResponse(subjectUri, id, MEMENTO_DATETIME);
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testGetTimeMapResponseMultipleMementos() throws Exception {
         createVersionedContainer(id);
@@ -196,6 +198,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         verifyTimemapResponse(subjectUri, id, mementos, memento3, memento2);
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testGetTimeMapRDFSubject() throws Exception {
         createVersionedContainer(id);
@@ -209,6 +212,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateVersion() throws Exception {
         createVersionedContainer(id);
@@ -228,6 +232,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateVersionFromResourceWithHashURI() throws Exception {
         final HttpPost createMethod = postObjMethod();
@@ -254,6 +259,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateVersionFromResourceWithBlankNode() throws Exception {
         final HttpPost createMethod = postObjMethod();
@@ -293,6 +299,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
      * thereby changing the time.
      * @throws java.lang.Exception exception thrown during this function
      */
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateVersionWithLastModifiedDateTimestamp() throws Exception {
         try {
@@ -339,6 +346,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 BAD_REQUEST.getStatusCode(), getStatus(post));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateVersionWithMementoDatetimeFormat() throws Exception {
         createVersionedContainer(id);
@@ -377,6 +385,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(post2));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateVersionWithDatetime() throws Exception {
         createVersionedContainer(id);
@@ -394,6 +403,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateContainerWithoutServerManagedTriples() throws Exception {
         createVersionedContainer(id);
@@ -417,6 +427,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
      *
      * @throws Exception in case of error with test
      */
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateVersionWithBody() throws Exception {
         createVersionedContainer(id);
@@ -440,6 +451,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateVersionWithDatetimeAndBody() throws Exception {
         createVersionedContainer(id);
@@ -474,6 +486,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateVersionDuplicateMementoDatetime() throws Exception {
         createVersionedContainer(id);
@@ -505,6 +518,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateVersionWithDatetimeAndEmptyBody() throws Exception {
         createVersionedContainer(id);
@@ -522,6 +536,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testDeleteAndPostContainerMemento() throws Exception {
         createVersionedContainer(id);
@@ -539,6 +554,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 OK.getStatusCode(), getStatus(new HttpGet(recreatedUri)));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testDeleteAndPostBinaryMemento() throws Exception {
         createVersionedBinary(id);
@@ -556,6 +572,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 OK.getStatusCode(), getStatus(new HttpGet(recreatedUri)));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testDeleteAndPostDescriptionMemento() throws Exception {
         createVersionedBinary(id);
@@ -575,6 +592,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 OK.getStatusCode(), getStatus(new HttpGet(recreatedUri)));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testMementoContainmentReferences() throws Exception {
         createVersionedContainer(id);
@@ -606,6 +624,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testHeadOnMemento() throws Exception {
 
@@ -628,6 +647,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         checkResponseWithInvalidMementoID(headMethodInvalid);
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testGetOnMemento() throws Exception {
 
@@ -650,6 +670,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         checkResponseWithInvalidMementoID(getMementoInvalid);
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testGetOnMementoWithAcceptDatetimePresent() throws Exception {
         createVersionedContainer(id);
@@ -664,6 +685,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                      getStatus(getMemento));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testHeadOnMementoWithAcceptDatetimePresent() throws Exception {
         createVersionedContainer(id);
@@ -678,6 +700,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 getStatus(headMemento));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testOptionsOnMemento() throws Exception {
 
@@ -701,6 +724,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         checkResponseWithInvalidMementoID(optionsMementoInvalid);
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testMementoExternalReference() throws Exception {
         createVersionedContainer(id);
@@ -745,6 +769,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testDescriptionMementoReference() throws Exception {
         // Create binary with description referencing other resource
@@ -812,6 +837,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertEquals(405, getStatus(new HttpPatch(serverAddress + id + "/" + FCR_VERSIONS)));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testGetTimeMapResponseForBinary() throws Exception {
         createVersionedBinary(id);
@@ -832,6 +858,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testGetTimeMapResponseForBinaryDescription() throws Exception {
         createVersionedBinary(id);
@@ -945,6 +972,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertEquals(1, response.getHeaders("Accept-Post").length);
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateVersionOfBinary() throws Exception {
         createVersionedBinary(id);
@@ -969,6 +997,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateVersionOfBinaryWithDatetimeAndContentType() throws Exception {
         createVersionedBinary(id);
@@ -987,6 +1016,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateVersionOfBinaryWithBody() throws Exception {
         createVersionedBinary(id);
@@ -1004,6 +1034,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateVersionOfBinaryWithDatetimeAndBody() throws Exception {
         createVersionedBinary(id);
@@ -1024,6 +1055,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateVersionOfBinaryDescription() throws Exception {
         createVersionedBinary(id);
@@ -1070,6 +1102,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     /*
      * Attempt to create binary description with container triples
      */
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateVersionOfBinaryDescriptionInvalidTriples() throws Exception {
         final String containerId = getRandomUniqueId();
@@ -1091,6 +1124,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateVersionBinaryDescriptionWithBodyAndDatetime() throws Exception {
         createVersionedBinary(id);
@@ -1114,6 +1148,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateVersionHistoricBinaryAndDescription() throws Exception {
         createVersionedBinary(id, "text/plain", BINARY_CONTENT);
@@ -1150,6 +1185,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testAddAndRetrieveVersion() throws Exception {
         createVersionedContainer(id);
@@ -1181,6 +1217,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testInvalidVersionDatetime() throws Exception {
         final String invalidDate = "blah";
@@ -1197,6 +1234,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(postReq));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testTimeMapResponseContentTypes() throws Exception {
         createVersionedContainer(id);
@@ -1209,6 +1247,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testGetVersionResponseContentTypes() throws Exception {
         createVersionedContainer(id);
@@ -1222,6 +1261,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testDatetimeNegotiationLDPRv() throws Exception {
         final CloseableHttpClient customClient = createClient(true);
@@ -1274,6 +1314,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testDatetimeNegotiationExactMatch() throws Exception {
         final CloseableHttpClient customClient = createClient(true);
@@ -1317,6 +1358,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testDatetimeNegotiationNoMementos() throws Exception {
         final CloseableHttpClient customClient = createClient(true);
@@ -1335,6 +1377,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
 
+    @Ignore //TODO Fix this test
     @Test
     public void testGetWithDateTimeNegotiation() throws Exception {
         final CloseableHttpClient customClient = createClient(true);
@@ -1366,6 +1409,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             BAD_REQUEST.getStatusCode(), getStatus(customClient.execute(getMethod3)));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testFixityOnVersionedResource() throws Exception {
         createVersionedBinary(id);
@@ -1378,6 +1422,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testOptionsMemento() throws Exception {
         createVersionedContainer(id);
@@ -1390,6 +1435,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testPatchOnMemento() throws Exception {
         createVersionedContainer(id);
@@ -1418,6 +1464,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertEquals(405, getStatus(anyPatch));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testPostOnMemento() throws Exception {
         createVersionedContainer(id);
@@ -1446,6 +1493,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertEquals(405, getStatus(anyPost));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testPutOnMemento() throws Exception {
         createVersionedContainer(id);
@@ -1474,6 +1522,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertEquals(405, getStatus(anyPut));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testGetLDPRSMementoHeaders() throws Exception {
         createVersionedContainer(id);
@@ -1497,6 +1546,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testGetLDPNRMementoHeaders() throws Exception {
         createVersionedBinary(id, "text/plain", "This is some versioned content");
@@ -1523,6 +1573,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
      * Verify binary description timemap RDF representation can be retrieved with and without
      * accompanying binary memento
      */
+    @Ignore //TODO Fix this test
     @Test
     public void testFcrepo2792() throws Exception {
         // 1. Create versioned resource
@@ -1565,6 +1616,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testOptionsTimeMap() throws Exception {
         createVersionedContainer(id);
@@ -1576,6 +1628,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateExternalBinaryProxyVersion() throws Exception {
         // Create binary to use as content for proxying
@@ -1601,6 +1654,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateHistoricExternalBinaryProxyVersion() throws Exception {
         // Create two binaries to use as content for proxying
@@ -1640,6 +1694,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateHistoricExternalBinaryRedirectVersion() throws Exception {
         // Create two binaries to use as content for proxying
@@ -1676,6 +1731,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateHistoricExternalBinaryCopyVersion() throws Exception {
         final String newContent = "new content";
@@ -1706,6 +1762,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void versionedResourcesCreatedByDefault() throws Exception {
         final String id = getRandomUniqueId();

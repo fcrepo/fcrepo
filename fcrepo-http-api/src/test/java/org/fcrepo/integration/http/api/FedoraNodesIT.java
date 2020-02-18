@@ -43,7 +43,7 @@ import org.junit.Test;
  * @author awoods
  * @author ajs6f
  */
-@Ignore //TODO Fix these tests
+@Ignore //TODO: Possibly remove these tests - COPY and MOVE may not be supported
 public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test

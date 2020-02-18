@@ -38,7 +38,6 @@ import org.junit.Test;
 /**
  * @author dbernstein
  */
-@Ignore //TODO Fix these tests
 public class StateTokensIT extends AbstractResourceIT {
 
     private static final String X_STATE_TOKEN_HEADER = "X-State-Token";
@@ -64,6 +63,7 @@ public class StateTokensIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testAclGetHasStateTokenRDFSource() throws IOException {
         final String id = getRandomUniqueId();
@@ -83,6 +83,7 @@ public class StateTokensIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testAclHeadHasStateTokenRDFSource() throws IOException {
         final String id = getRandomUniqueId();
@@ -102,6 +103,7 @@ public class StateTokensIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testLdpcvGetHasStateTokenRDFSource() throws IOException {
         final String id = getRandomUniqueId();
@@ -112,6 +114,7 @@ public class StateTokensIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testLdpcvHeadHasStateTokenRDFSource() throws IOException {
         final String id = getRandomUniqueId();
@@ -122,6 +125,7 @@ public class StateTokensIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testGetHasStateTokenNonRDFSource() throws IOException {
         final String id = getRandomUniqueId();
@@ -137,6 +141,7 @@ public class StateTokensIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testHeadHasStateTokenNonRDFSource() throws IOException {
         final String id = getRandomUniqueId();
@@ -152,6 +157,7 @@ public class StateTokensIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testPutWithStateTokenOnNonRDFSource() throws IOException {
         final String id = getRandomUniqueId();
@@ -185,6 +191,7 @@ public class StateTokensIT extends AbstractResourceIT {
 
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testPatchWithStateTokenOnRDFSource() throws IOException {
         final String id = getRandomUniqueId();
@@ -223,6 +230,7 @@ public class StateTokensIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testPatchWithStateTokenOnAcl() throws IOException {
         final String id = getRandomUniqueId();

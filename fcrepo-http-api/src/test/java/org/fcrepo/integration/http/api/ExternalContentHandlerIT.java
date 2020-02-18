@@ -58,7 +58,6 @@ import org.junit.Test;
  * @author whikloj
  * @since 2018-07-10
  */
-@Ignore //TODO Fix these tests
 public class ExternalContentHandlerIT extends AbstractResourceIT {
 
     private static final String NON_RDF_SOURCE_LINK_HEADER = "<" + NON_RDF_SOURCE.getURI() + ">;rel=\"type\"";
@@ -73,6 +72,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
 
     private static final String TEST_MD5_DIGEST_HEADER_VALUE = "md5=baed005300234f3d1503c50a48ce8e6f";
 
+    @Ignore //TODO Fix this test
     @Test
     public void testRemoteUriContentType() throws Exception {
         final HttpPost method = postObjMethod();
@@ -102,6 +102,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
 
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testExternalDatastreamProxyWithWantDigestForLocalFile() throws IOException {
 
@@ -127,6 +128,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         checkExternalDataStreamResponseHeader(getObjMethod, fileUri, expectedDigestHeaderValue);
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testExternalDatastreamCopyWithWantDigestForLocalFile() throws IOException {
 
@@ -152,6 +154,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         checkExternalDataStreamResponseHeader(getObjMethod, null, expectedDigestHeaderValue);
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testExternalDatastreamProxyWithWantDigest() throws IOException {
 
@@ -178,6 +181,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         checkExternalDataStreamResponseHeader(getObjMethod, dsUrl, expectedDigestHeaderValue);
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testExternalDatastreamCopyWithWantDigest() throws IOException {
 
@@ -204,6 +208,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         checkExternalDataStreamResponseHeader(getObjMethod, null, expectedDigestHeaderValue);
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testExternalDatastreamProxyWithWantDigestMultipleForLocalFile() throws IOException {
 
@@ -275,6 +280,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testHeadExternalDatastreamRedirect() throws IOException, ParseException {
 
@@ -300,6 +306,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testGetExternalDatastream() throws IOException, ParseException {
         final String id = getRandomUniqueId();
@@ -340,6 +347,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testRedirectWithWantDigest() throws IOException {
 
@@ -390,6 +398,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
                 TEST_SHA_DIGEST_HEADER_VALUE, TEST_MD5_DIGEST_HEADER_VALUE);
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testExternalMessageBodyRedirect() throws IOException {
 
@@ -413,6 +422,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testExternalMessageBodyCopyLocalFile() throws Exception {
         final String entityStr = "Hello there, this is the original object speaking.";
@@ -440,6 +450,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testExternalMessageBodyCopy() throws IOException {
         // create a random binary object
@@ -469,6 +480,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testExternalMessageBodyProxy() throws IOException {
         // Create a resource
@@ -499,6 +511,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testPostExternalContentProxy() throws Exception {
         // Create a resource
@@ -572,6 +585,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCopyNotFoundHttpContent() throws Exception {
         final String nonexistentPath = serverAddress + getRandomUniqueId();
@@ -587,6 +601,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCopyUnreachableHttpContent() throws Exception {
         final String nonexistentPath = "http://" + getRandomUniqueId() + ".example.com/";
@@ -602,6 +617,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testProxyNotFoundHttpContent() throws Exception {
         final String nonexistentPath = serverAddress + getRandomUniqueId();
@@ -622,6 +638,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testProxyUnreachableHttpContent() throws Exception {
         final String nonexistentPath = "http://" + getRandomUniqueId() + ".example.com/";
@@ -642,6 +659,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testRedirectUnreachableHttpContent() throws Exception {
         final String nonexistentPath = "http://" + getRandomUniqueId() + ".example.com/";

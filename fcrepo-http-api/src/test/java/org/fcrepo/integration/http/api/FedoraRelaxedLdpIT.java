@@ -88,7 +88,6 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Mike Durbin
  */
-@Ignore //TODO Fix these tests
 @RunWith(SpringJUnit4ClassRunner.class)
 public class FedoraRelaxedLdpIT extends AbstractResourceIT {
 
@@ -106,6 +105,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
     }
 
 
+    @Ignore //TODO Fix this test
     @Test
     public void testBasicPutRoundtrip() throws IOException {
         final String subjectURI;
@@ -127,6 +127,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(put));
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testCreateResourceWithSpecificCreationInformationIsAllowed() throws IOException {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
@@ -144,6 +145,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testUpdateNonRdfResourceWithSpecificInformationIsAllowed() throws IOException {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
@@ -171,6 +173,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testValidSparqlUpdate() throws IOException {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
@@ -201,6 +204,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testInvalidSparqlUpdate() throws IOException {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
@@ -230,6 +234,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore //TODO Fix this test
     @Test
     public void testUpdateResourceWithSpecificModificationInformationIsAllowed() throws IOException {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
@@ -259,6 +264,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
      * Tests a lossless roundtrip of a resource.
      * @throws IOException if an error occurs while reading or writing to repository over HTTP
      */
+    @Ignore //TODO Fix this test
     @Test
     public void testRoundtripping() throws IOException {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check

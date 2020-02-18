@@ -195,7 +195,6 @@ import nu.validator.saxtree.TreeBuilder;
  * @author cabeer
  * @author ajs6f
  */
-//@Ignore //TODO Fix these tests
 public class FedoraLdpIT extends AbstractResourceIT {
 
     private static final Node DC_IDENTIFIER = DC_11.identifier.asNode();
@@ -567,7 +566,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testHeadRdfResourceHeaders() throws IOException {
         final String id = getRandomUniqueId();
         createObject(id).close();
@@ -596,7 +594,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testOptions() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -696,7 +693,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testGetRDFSource() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -713,7 +709,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testGetRDFSourceWithPreferMinimal() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -743,7 +738,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testGetRDFSourceWithPreferRepresentation() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -850,7 +844,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
      * format being requested.
      */
     @Test
-@Ignore
     public void testGetRDFSourceWrongAccept() {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -937,7 +930,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testDeleteContainerWithIncorrectDepthHeaderSet() {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -1001,7 +993,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testEmptyPatch() {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -1387,7 +1378,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPutBinary() throws IOException {
 
         final String id = getRandomUniqueId();
@@ -1758,7 +1748,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPutMalformedRDFOnObject() throws IOException {
         final String content = "this is not legitimate RDF";
         final String id = getRandomUniqueId();
@@ -1772,7 +1761,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testIngest() throws IOException {
         final String id = getRandomUniqueId();
         try (final CloseableHttpResponse response = createObject(id)) {
@@ -1840,7 +1828,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testIngestWithSlug() throws IOException {
         final HttpPost method = postObjMethod();
         method.addHeader("Slug", getRandomUniqueId());
@@ -1855,7 +1842,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testIngestWithRepeatedSlug() {
         final String id = getRandomUniqueId();
         assertEquals(CREATED.getStatusCode(), getStatus(putObjMethod(id)));
@@ -2075,7 +2061,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testIngestOnSubtree() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -2128,7 +2113,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     // TODO It's not clear what this test is actually testing, or why it sleeps while running
             public
             void testCreateManyObjects() throws IOException, InterruptedException {
@@ -2144,7 +2128,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testDeleteWithBadEtag() throws IOException {
         try (final CloseableHttpResponse response = execute(postObjMethod())) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
@@ -2273,7 +2256,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testGetObjectGraphHtml() throws IOException {
         final HttpGet getObjMethod = new HttpGet(getLocation(postObjMethod()));
         getObjMethod.addHeader(ACCEPT, "text/html");
@@ -2281,7 +2263,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testGetObjectGraphVariants() throws IOException {
         final String location = getLocation(postObjMethod());
         for (final Variant variant : POSSIBLE_RDF_VARIANTS) {
@@ -2377,7 +2358,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testGetObjectGraphWithBadLimit() throws IOException {
         final String id = getRandomUniqueId();
         getLocation(createObject(id));
@@ -2390,7 +2370,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testGetObjectGraphMinimal() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id, BASIC_CONTAINER_LINK_HEADER);
@@ -3054,7 +3033,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     // TODO there is no actual use of the JCR namespace in this test-- what is it testing?
             public
             void testUpdateWithSparqlQueryJcrNS() throws IOException {
@@ -3105,7 +3083,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testCreateResourceWithoutContentType() {
         assertEquals(CREATED.getStatusCode(), getStatus(new HttpPut(serverAddress + getRandomUniqueId())));
     }
@@ -3241,7 +3218,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testResponseContentTypes() throws Exception {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -3253,7 +3229,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testDescribeRdfCached() throws IOException {
         try (final CloseableHttpClient cachClient = CachingHttpClientBuilder.create().setCacheConfig(DEFAULT).build()) {
             final String location = getLocation(postObjMethod());
@@ -3273,13 +3248,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testValidHTMLForRepo() throws IOException, SAXException {
         validateHTML("");
     }
 
     @Test
-@Ignore
     public void testValidHTMLForObject() throws IOException, SAXException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -3542,7 +3515,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testCreateAndReplaceGraphMinimal() throws IOException {
         LOGGER.trace("Entering testCreateAndReplaceGraphMinimal()...");
         final HttpPost httpPost = postObjMethod("/");
@@ -3569,7 +3541,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testAclHeaderWithPost() throws IOException {
         final String pid = getRandomUniqueId();
         final HttpPost httpPost = postObjMethod("/");
@@ -3582,7 +3553,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testAclHeaderWithPut() throws IOException {
         final String pid = getRandomUniqueId();
         final String location = serverAddress + pid;
@@ -3686,7 +3656,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testJsonLdProfileExpanded() throws IOException {
         // Create a resource
         final HttpPost method = postObjMethod();
@@ -3722,7 +3691,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testJsonLdProfileFlattened() throws IOException {
         // Create a resource
         final HttpPost method = postObjMethod();
@@ -3870,7 +3838,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPutReferenceRoot() throws Exception {
         final HttpPut httpPut = putObjMethod(getRandomUniqueId());
         httpPut.addHeader(CONTENT_TYPE, "text/turtle");
@@ -4405,7 +4372,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPutFedoraPath() throws IOException {
         final HttpPut httpPut = putObjMethod("/fedora:path");
         try (final CloseableHttpResponse response = execute(httpPut)) {
@@ -4415,7 +4381,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testDeleteWithFedoraPath() throws IOException {
         final String id = getRandomUniqueId() + "/fedora:delete";
         final HttpDelete httpDelete = deleteObjMethod(id);
