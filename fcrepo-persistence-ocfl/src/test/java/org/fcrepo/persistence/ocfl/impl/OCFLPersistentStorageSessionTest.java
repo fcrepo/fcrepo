@@ -127,6 +127,8 @@ public class OCFLPersistentStorageSessionTest {
 
     private static final String BINARY_CONTENT = "Some test content";
 
+    private MonotonicInstant timestep;
+
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
 
@@ -138,6 +140,7 @@ public class OCFLPersistentStorageSessionTest {
         final var stagingDir = tempFolder.newFolder("ocfl-staging");
         final var repoDir = tempFolder.newFolder("ocfl-repo");
         final var workDir = tempFolder.newFolder("ocfl-work");
+        this.timestep = new MonotonicInstant();
 
         final var repository = createRepository(repoDir, workDir);
         this.objectSessionFactory = new DefaultOCFLObjectSessionFactory(stagingDir);
@@ -384,6 +387,7 @@ public class OCFLPersistentStorageSessionTest {
 
         //get triples should now fail because the session is effectively closed.
         try {
+            System.out.println("Committing session 1");
             session1.commit();
             fail("session1.commit(...) invocation should fail.");
         } catch (final PersistentStorageException ex) {
@@ -395,8 +399,7 @@ public class OCFLPersistentStorageSessionTest {
 
     private void mockOCFLObjectSession(final OCFLObjectSession objectSession, final CommitOption option) {
         when(objectSession.getDefaultCommitOption()).thenReturn(option);
-        when(objectSession.getCreated()).thenReturn(Instant.now());
-
+        when(objectSession.getCreated()).thenReturn(timestep.next());
     }
 
     @Test
