@@ -147,9 +147,10 @@ public class ExternalContentHandler implements ExternalContent {
      * @throws ExternalMessageBodyException on error
      */
     private Link parseLinkHeader(final String link) throws ExternalMessageBodyException {
-        final Link realLink = Link.valueOf(link);
+        final Link realLink;
 
         try {
+            realLink = Link.valueOf(link);
             final String handling = realLink.getParams().get(HANDLING);
             if (handling == null || !handling.matches("(?i)" + PROXY + "|" + COPY + "|" + REDIRECT)) {
                 // error
