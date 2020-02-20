@@ -477,10 +477,6 @@
     </pluginRepository>
   </pluginRepositories>
 
-  <prerequisites>
-    <maven>3.0.0</maven>
-  </prerequisites>
-
   <profiles>
     <profile>
       <id>release-sign-artifacts</id>
