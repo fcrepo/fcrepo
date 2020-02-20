@@ -23,10 +23,6 @@ import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
 import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
-
-import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
-import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
-
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.createRepository;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.mintOCFLObjectId;
 import static org.junit.Assert.assertEquals;
@@ -66,6 +62,8 @@ import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
+import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.junit.Before;
@@ -127,6 +125,8 @@ public class OCFLPersistentStorageSessionTest {
 
     private static final String BINARY_CONTENT = "Some test content";
 
+    private MonotonicInstant timestep;
+
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
 
@@ -138,6 +138,7 @@ public class OCFLPersistentStorageSessionTest {
         final var stagingDir = tempFolder.newFolder("ocfl-staging");
         final var repoDir = tempFolder.newFolder("ocfl-repo");
         final var workDir = tempFolder.newFolder("ocfl-work");
+        this.timestep = new MonotonicInstant();
 
         final var repository = createRepository(repoDir, workDir);
         this.objectSessionFactory = new DefaultOCFLObjectSessionFactory(stagingDir);
@@ -395,8 +396,7 @@ public class OCFLPersistentStorageSessionTest {
 
     private void mockOCFLObjectSession(final OCFLObjectSession objectSession, final CommitOption option) {
         when(objectSession.getDefaultCommitOption()).thenReturn(option);
-        when(objectSession.getCreated()).thenReturn(Instant.now());
-
+        when(objectSession.getCreated()).thenReturn(timestep.next());
     }
 
     @Test

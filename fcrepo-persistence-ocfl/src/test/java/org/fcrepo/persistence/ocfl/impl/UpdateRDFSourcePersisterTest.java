@@ -92,7 +92,7 @@ public class UpdateRDFSourcePersisterTest {
     @Mock
     private FedoraToOCFLObjectIndex index;
 
-   @Mock
+    @Mock
     private OCFLPersistentStorageSession psSession;
 
     @Mock
@@ -158,7 +158,10 @@ public class UpdateRDFSourcePersisterTest {
 
         assertEquals(BASIC_CONTAINER.toString(), resultHeaders.getInteractionModel());
         assertEquals(originalCreation, resultHeaders.getCreatedDate());
-        assertTrue(originalModified.isBefore(resultHeaders.getLastModifiedDate()));
+        // The relationship between the actual resource last modified date and the
+        // client-asserted last modified data is unclear.
+        assertTrue(originalModified.equals(resultHeaders.getLastModifiedDate())
+                || originalModified.isBefore(resultHeaders.getLastModifiedDate()));
     }
 
     private RdfStream constructTitleStream(final String resourceId, final String title) {
