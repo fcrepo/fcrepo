@@ -101,7 +101,10 @@ public class FedoraToOCFLObjectIndexImplTest {
 
         assertTrue(FEDORA_TO_OCFL_INDEX_FILE.exists());
 
-        final List<String> lines = Files.lines(FEDORA_TO_OCFL_INDEX_FILE.toPath()).collect(Collectors.toList());
+        final List<String> lines;
+        try (var l = Files.lines(FEDORA_TO_OCFL_INDEX_FILE.toPath())) {
+            lines = l.collect(Collectors.toList());
+        }
 
         assertEquals(4, lines.size());
     }
