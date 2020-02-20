@@ -23,10 +23,6 @@ import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
 import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
-
-import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
-import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
-
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.createRepository;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.mintOCFLObjectId;
 import static org.junit.Assert.assertEquals;
@@ -66,6 +62,8 @@ import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
+import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.junit.Before;
@@ -387,7 +385,6 @@ public class OCFLPersistentStorageSessionTest {
 
         //get triples should now fail because the session is effectively closed.
         try {
-            System.out.println("Committing session 1");
             session1.commit();
             fail("session1.commit(...) invocation should fail.");
         } catch (final PersistentStorageException ex) {
