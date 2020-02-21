@@ -27,9 +27,13 @@ import com.fasterxml.jackson.core.JsonParseException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.MediaType;
 import org.apache.jena.atlas.RuntimeIOException;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.impl.StatementImpl;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Statement;
@@ -41,6 +45,7 @@ import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -56,6 +61,36 @@ public class HttpRdfService {
 
     private static final Logger log = getLogger(HttpRdfService.class);
 
+
+    /**
+     * Convert internal IDs to external URIs
+     * @param extResourceId The external URI of the resource.
+     * @param stream The RDF stream to be translated.
+     * @param idTranslator The identifier converter.
+     * @return a converted RDF Stream.
+     */
+    public RdfStream bodyToExternalStream(final String extResourceId, final RdfStream stream,
+                                     final HttpIdentifierConverter idTranslator) {
+        return new DefaultRdfStream(NodeFactory.createURI(extResourceId), stream.map(t -> {
+            final Node subject = makeExternalNode(t.getSubject(), idTranslator);
+            final Node object = makeExternalNode(t.getObject(), idTranslator);
+            return new Triple(subject, t.getPredicate(), object);
+        }));
+    }
+
+    /**
+     * Return a converted or original resource.
+     * @param resource The Node to be checked.
+     * @param identifierConverter A identifier converter.
+     * @return The resulting node.
+     */
+    private Node makeExternalNode(final Node resource, final HttpIdentifierConverter identifierConverter) {
+        if (resource.isURI() && identifierConverter.inInternalDomain(resource.toString())) {
+            return NodeFactory.createURI(identifierConverter.toExternalId(resource.toString()));
+        } else {
+            return resource;
+        }
+    }
 
     /**
      * Parse the request body to a Model, with the URI to Fedora ID translations done.

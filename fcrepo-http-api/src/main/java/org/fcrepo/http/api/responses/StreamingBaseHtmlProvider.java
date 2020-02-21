@@ -41,7 +41,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -51,6 +50,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
@@ -58,7 +58,6 @@ import javax.ws.rs.ext.Provider;
 import com.google.common.collect.ImmutableMap;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Resource;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -66,17 +65,18 @@ import org.apache.velocity.context.Context;
 import org.apache.velocity.tools.generic.EscapeTool;
 import org.apache.velocity.tools.generic.FieldTool;
 import org.fcrepo.http.api.FedoraLdp;
-import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.http.commons.responses.ViewHelpers;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.TransactionManager;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.glassfish.jersey.uri.UriTemplate;
+import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.slf4j.Logger;
 
 /**
@@ -100,13 +100,25 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
     @Inject
     HttpServletRequest request;
 
+    @Inject
+    private ResourceFactory resourceFactory;
+
+    private HttpIdentifierConverter identifierConverter;
+
     private Transaction transaction() {
-        return transactionManager.get(request.getHeader(ATOMIC_ID_HEADER));
+        if (request.getHeader(ATOMIC_ID_HEADER) != null) {
+            return transactionManager.get(request.getHeader(ATOMIC_ID_HEADER));
+        }
+        return null;
     }
 
-    private IdentifierConverter<Resource, FedoraResource> translator() {
-        return new HttpResourceConverter(transaction(),
-                uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));
+    private HttpIdentifierConverter identifierConverter() {
+        if (identifierConverter == null) {
+            final UriBuilder uriBuilder =
+                    uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class);
+            identifierConverter = new HttpIdentifierConverter(uriBuilder);
+        }
+        return identifierConverter;
     }
 
     private static final EscapeTool escapeTool = new EscapeTool();
@@ -211,18 +223,18 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
      * @return FedoraResource if exists or null
      */
     private FedoraResource getResourceFromSubject(final String subjectUri) {
-        final UriTemplate uriTemplate =
-            new UriTemplate(uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class).toTemplate());
-        final Map<String, String> values = new HashMap<>();
-        uriTemplate.match(subjectUri, values);
-        if (values.containsKey("path")) {
-            try {
-                return translator().convert(translator().toDomain(values.get("path")));
-            } catch (final RuntimeException e) {
-                throw e;
+
+        try {
+            if (transaction() == null) {
+                return resourceFactory.getResource(
+                        identifierConverter().toInternalId(subjectUri));
+            } else {
+                return resourceFactory.getResource(transaction(),
+                        identifierConverter().toInternalId(subjectUri));
             }
+        } catch (final PathNotFoundException e) {
+            throw new RepositoryRuntimeException(e);
         }
-        return null;
     }
 
     private Context getContext(final Model model, final Node subject) {

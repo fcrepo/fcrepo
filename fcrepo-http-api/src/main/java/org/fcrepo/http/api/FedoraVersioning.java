@@ -60,12 +60,10 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.LinkFormatStream;
-import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -207,9 +205,7 @@ public class FedoraVersioning extends ContentExposingResource {
             versionLinks.add(linkBuilder.build());
             return ok(new LinkFormatStream(versionLinks.stream())).build();
         } else {
-            try (final RdfStream rdfStream = new DefaultRdfStream(asNode(theTimeMap))) {
-                return getContent(getChildrenLimit(), rdfStream, theTimeMap);
-            }
+            return getContent(getChildrenLimit(), theTimeMap);
         }
     }
 

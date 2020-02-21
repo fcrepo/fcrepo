@@ -297,9 +297,7 @@ public class FedoraLdp extends ContentExposingResource {
                 return getBinaryContent(rangeValue, binary);
             }
         } else {
-            try (final var rdfStream = new DefaultRdfStream(asNode(resource()))) {
-                return getContent(getChildrenLimit(), rdfStream, resource());
-            }
+            return getContent(getChildrenLimit(), resource());
         }
     }
 
