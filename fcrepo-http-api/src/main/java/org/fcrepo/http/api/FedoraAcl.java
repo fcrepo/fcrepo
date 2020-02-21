@@ -266,12 +266,9 @@ public class FedoraAcl extends ContentExposingResource {
         checkCacheControlHeaders(request, servletResponse, aclResource, transaction);
 
         LOGGER.info("GET resource '{}'", externalPath);
-        try (final RdfStream rdfStream = new DefaultRdfStream(asNode(aclResource))) {
+        addResourceHttpHeaders(aclResource);
+        return getContent(getChildrenLimit(), aclResource);
 
-            addResourceHttpHeaders(aclResource);
-            return getContent(getChildrenLimit(), rdfStream, aclResource);
-
-        }
     }
 
     /**

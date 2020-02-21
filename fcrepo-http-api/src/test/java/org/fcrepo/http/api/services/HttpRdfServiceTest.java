@@ -21,8 +21,13 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.when;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.vocabulary.DC;
 import org.apache.jena.vocabulary.DCTerms;
 import javax.ws.rs.core.MediaType;
@@ -61,17 +66,27 @@ public class HttpRdfServiceTest {
     private HttpRdfService httpRdfService;
 
     private static final String FEDORA_URI_1 = "http://www.example.com/fedora/rest/resource1";
+    private static final Resource FEDORA_URI_1_RESOURCE = ResourceFactory.createResource(FEDORA_URI_1);
     private static final String FEDORA_URI_2 = "http://www.example.com/fedora/rest/resource2";
+    private static final Resource FEDORA_URI_2_RESOURCE = ResourceFactory.createResource(FEDORA_URI_2);
     private static final String FEDORA_ID_1 = "info:fedora/resource1";
+    private static final Resource FEDORA_ID_1_RESOURCE = ResourceFactory.createResource(FEDORA_ID_1);
     private static final String FEDORA_ID_2 = "info:fedora/resource2";
+    private static final Resource FEDORA_ID_2_RESOURCE = ResourceFactory.createResource(FEDORA_ID_2);
     private static final String NON_FEDORA_URI = "http://www.otherdomain.org/resource5";
+    private static final Resource NON_FEDORA_URI_RESOURCE = ResourceFactory.createResource(NON_FEDORA_URI);
     private static final String RDF =
                 "@prefix dc: <"  + DC.getURI() + "> ." +
                 "@prefix dcterms: <"  + DCTerms.getURI() + "> ." +
                 "<" + FEDORA_URI_1 + "> dc:title 'fancy title' ;" +
                 "    dcterms:isPartOf <" + NON_FEDORA_URI + "> ;" +
                 "    dcterms:isPartOf <" + FEDORA_URI_2 + "> .";
-
+    private static final String INTERNAL_RDF =
+                "@prefix dc: <"  + DC.getURI() + "> ." +
+                "@prefix dcterms: <"  + DCTerms.getURI() + "> ." +
+                "<" + FEDORA_ID_1 + "> dc:title 'fancy title' ;" +
+                "    dcterms:isPartOf <" + NON_FEDORA_URI + "> ;" +
+                "    dcterms:isPartOf <" + FEDORA_ID_2 + "> .";
     private static final MediaType CONTENT_TYPE = new MediaType("text", "turtle");
 
     @Before
@@ -81,6 +96,13 @@ public class HttpRdfServiceTest {
         when(idTranslator.inExternalDomain(FEDORA_URI_1)).thenReturn(true);
         when(idTranslator.inExternalDomain(FEDORA_URI_2)).thenReturn(true);
         when(idTranslator.inExternalDomain(NON_FEDORA_URI)).thenReturn(false);
+
+        when(idTranslator.toExternalId(FEDORA_ID_1)).thenReturn(FEDORA_URI_1);
+        when(idTranslator.toExternalId(FEDORA_ID_2)).thenReturn(FEDORA_URI_2);
+        when(idTranslator.inInternalDomain(FEDORA_ID_1)).thenReturn(true);
+        when(idTranslator.inInternalDomain(FEDORA_ID_2)).thenReturn(true);
+        when(idTranslator.inInternalDomain(NON_FEDORA_URI)).thenReturn(false);
+
         when(resource.getId()).thenReturn(FEDORA_ID_1);
 
         log.debug("Rdf is: {}", RDF);
@@ -107,6 +129,27 @@ public class HttpRdfServiceTest {
 
         assertTrue(stream.toString().length() > 0);
         verifyTriples(stream);
+    }
+
+    @Test
+    public void testConvertInternalToExternalStream() {
+        final InputStream requestBodyStream = new ByteArrayInputStream(INTERNAL_RDF.getBytes());
+        final Node topic = NodeFactory.createURI(FEDORA_ID_1);
+        final Model internalGraph = ModelFactory.createDefaultModel();
+        internalGraph.read(requestBodyStream, FEDORA_ID_1, "TURTLE");
+        final RdfStream stream = fromModel(topic, internalGraph);
+
+        final RdfStream converted = httpRdfService.bodyToExternalStream(FEDORA_ID_1, stream, idTranslator);
+
+        final Model model = converted.collect(toModel());
+        assertFalse(model.contains(FEDORA_ID_1_RESOURCE, DCTerms.isPartOf, NON_FEDORA_URI_RESOURCE));
+        assertTrue(model.contains(FEDORA_URI_1_RESOURCE, DCTerms.isPartOf, NON_FEDORA_URI_RESOURCE));
+
+        assertFalse(model.contains(FEDORA_ID_1_RESOURCE, DCTerms.isPartOf, FEDORA_ID_2_RESOURCE));
+        assertTrue(model.contains(FEDORA_URI_1_RESOURCE, DCTerms.isPartOf, FEDORA_URI_2_RESOURCE));
+
+        assertFalse(model.containsResource(FEDORA_ID_1_RESOURCE));
+        assertFalse(model.containsResource(FEDORA_ID_2_RESOURCE));
     }
 
     private void verifyTriples(final Model model)  {

@@ -21,7 +21,6 @@ import static com.google.common.base.Strings.nullToEmpty;
 import static java.net.URI.create;
 import static java.text.MessageFormat.format;
 import static java.util.stream.Collectors.toSet;
-import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
@@ -237,19 +236,15 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * This method returns an HTTP response with content body appropriate to the following arguments.
      *
      * @param limit is the number of child resources returned in the response, -1 for all
-     * @param rdfStream to which response RDF will be concatenated
      * @param resource the fedora resource
      * @return HTTP response
      * @throws IOException in case of error extracting content
      */
-    protected Response getContent(final int limit,
-                                  final RdfStream rdfStream,
-                                  final FedoraResource resource) throws IOException {
-
+    protected Response getContent(final int limit, final FedoraResource resource) throws IOException {
+        final RdfStream rdfStream = httpRdfService.bodyToExternalStream(getUri(resource()).toString(),
+                getResourceTriples(limit, resource), identifierConverter());
         final var outputStream = new RdfNamespacedStream(
-                    new DefaultRdfStream(rdfStream.topic(), concat(rdfStream,
-                        getResourceTriples(limit, resource))),
-                    namespaceRegistry.getNamespaces());
+                    rdfStream, namespaceRegistry.getNamespaces());
         setVaryAndPreferenceAppliedHeaders(servletResponse, prefer, resource);
         return ok(outputStream).build();
     }
