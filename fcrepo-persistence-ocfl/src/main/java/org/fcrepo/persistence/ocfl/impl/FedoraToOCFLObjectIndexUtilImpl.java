@@ -28,10 +28,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.lang.String.format;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getSidecarSubpath;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.isSidecarSubpath;
 
 /**
@@ -68,25 +69,35 @@ public class FedoraToOCFLObjectIndexUtilImpl implements FedoraToOCFLObjectIndexU
                 //list all the subpaths
                 try (final var subpaths = objSession.listHeadSubpaths()) {
 
-                    //but first resolve the root identifier
-                    final var sidecarSubpath = getSidecarSubpath(ocflId);
-                    final var rootHeaders = deserializeHeaders(objSession.read(sidecarSubpath));
-                    final var fedoraRootIdentifier = rootHeaders.getId();
+                    final var rootId = new AtomicReference<String>();
+                    final var fedoraIds = new ArrayList<String>();
 
                     subpaths.forEach(subpath -> {
                         if (isSidecarSubpath(subpath)) {
                             //we're only interested in sidecar subpaths
                             try {
                                 final var headers = deserializeHeaders(objSession.read(subpath));
-                                final var fedoraIdentifier = headers.getId();
-                                fedoraToOCFLObjectIndex.addMapping(fedoraIdentifier, fedoraRootIdentifier, ocflId);
-                                LOGGER.debug("Rebuilt fedora-to-ocfl object index entry for {}", fedoraIdentifier);
+                                fedoraIds.add(headers.getId());
+                                if (headers.isArchivalGroup()) {
+                                    rootId.set(headers.getId());
+                                }
                             } catch (PersistentStorageException e) {
                                 throw new RepositoryRuntimeException(format("fedora-to-ocfl index rebuild failed: %s",
                                         e.getMessage()), e);
                             }
                         }
                     });
+
+                    // if a resource is not an AG then there should only be a single resource per OCFL object
+                    if (fedoraIds.size() == 1 && rootId.get() == null) {
+                        rootId.set(fedoraIds.get(0));
+                    }
+
+                    fedoraIds.forEach(fedoraIdentifier -> {
+                        fedoraToOCFLObjectIndex.addMapping(fedoraIdentifier, rootId.get(), ocflId);
+                        LOGGER.debug("Rebuilt fedora-to-ocfl object index entry for {}", fedoraIdentifier);
+                    });
+
                 } catch (final PersistentStorageException e) {
                     throw new RepositoryRuntimeException("Failed to rebuild fedora-to-ocfl index: " +
                             e.getMessage(), e);
