@@ -18,15 +18,14 @@
 
 package org.fcrepo.persistence.ocfl.api;
 
+import org.fcrepo.persistence.api.CommitOption;
+import org.fcrepo.persistence.api.WriteOutcome;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.List;
 import java.util.stream.Stream;
-
-import edu.wisc.library.ocfl.api.model.VersionDetails;
-import org.fcrepo.persistence.api.CommitOption;
-import org.fcrepo.persistence.api.WriteOutcome;
-import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
 /**
  * A session for building and tracking the state of an OCFL object within a persistence session.
@@ -112,14 +111,24 @@ public interface OCFLObjectSession {
      */
     void close() throws PersistentStorageException;
 
-
     /**
      * Return the list of immutable versions associated with this OCFL Object in chronological order.
      * @return The list of versions
      * @throws PersistentStorageException If the versions cannot be read due to the underlying session being closed
      *                                    or for some other reason.
      */
-    List<VersionDetails> listVersions() throws PersistentStorageException;
+    List<OCFLVersion> listVersions() throws PersistentStorageException;
+
+    /**
+     * Return the list of immutable versions associated with this OCFL Object subpath in chronological order. Only
+     * versions where the subpath changed are returned.
+     *
+     * @param subpath path relative to the object; if the subpath is blank all of the object versions are listed
+     * @return The list of versions
+     * @throws PersistentStorageException If the versions cannot be read due to the underlying session being closed
+     *                                    or for some other reason.
+     */
+    List<OCFLVersion> listVersions(String subpath) throws PersistentStorageException;
 
     /**
      * The instant at which the session was created.

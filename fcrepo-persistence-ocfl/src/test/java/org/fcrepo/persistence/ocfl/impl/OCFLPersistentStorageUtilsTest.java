@@ -38,13 +38,6 @@ public class OCFLPersistentStorageUtilsTest {
     }
 
     @Test
-    public void testRelativizeSubpathWhereRootAndResourceHaveTrailingSlashes() {
-        final var rootObjectId = "info:fedora/test/object/";
-        final var resourceId = "info:fedora/test/object/resource/";
-        assertEquals("resource", relativizeSubpath(rootObjectId, resourceId));
-    }
-
-    @Test
     public void testRelativizeSubpath() {
         final var rootObjectId = "info:fedora/test/object";
         final var resourceId = "info:fedora/test/object/resource";

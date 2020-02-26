@@ -133,6 +133,8 @@ public final class RdfLexicon {
             createResource(REPOSITORY_NAMESPACE + "Pairtree");
     public static final Resource ARCHIVAL_GROUP =
             createResource(REPOSITORY_NAMESPACE + "ArchivalGroup");
+    public static final Resource TIME_MAP =
+            createResource(REPOSITORY_NAMESPACE + "TimeMap");
 
     // Linked Data Platform
     public static final Property PAGE =
@@ -267,6 +269,7 @@ public final class RdfLexicon {
      * Memento TimeMap type.
      */
     public static final String VERSIONING_TIMEMAP_TYPE = MEMENTO_NAMESPACE + "TimeMap";
+    public static final Resource VERSIONING_TIMEMAP = createResource(VERSIONING_TIMEMAP_TYPE);
 
     /**
      * Memento TimeGate type.
@@ -283,6 +286,9 @@ public final class RdfLexicon {
      */
     public static final Resource VERSIONED_RESOURCE =
         createResource(MEMENTO_NAMESPACE + "OriginalResource");
+
+    public static final Property MEMENTO_ORIGINAL_RESOURCE =
+        createProperty(MEMENTO_NAMESPACE + "original");
 
     /*
      * Interaction Models.

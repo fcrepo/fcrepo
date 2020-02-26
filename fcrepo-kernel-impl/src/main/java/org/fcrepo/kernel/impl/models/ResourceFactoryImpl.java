@@ -17,17 +17,6 @@
  */
 package org.fcrepo.kernel.impl.models;
 
-import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
-import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.inject.Inject;
-
-import java.time.Instant;
-
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -42,6 +31,16 @@ import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
+import java.time.Instant;
+
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
+import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.slf4j.LoggerFactory.getLogger;
 
 
 /**
@@ -67,7 +66,13 @@ public class ResourceFactoryImpl implements ResourceFactory {
     @Override
     public FedoraResource getResource(final Transaction transaction, final String identifier)
             throws PathNotFoundException {
-        return instantiateResource(transaction, identifier);
+        return getResource(transaction, identifier, (Instant) null);
+    }
+
+    @Override
+    public FedoraResource getResource(final Transaction transaction, final String identifier, final Instant version)
+            throws PathNotFoundException {
+        return instantiateResource(transaction, identifier, version);
     }
 
     @Override
@@ -80,6 +85,12 @@ public class ResourceFactoryImpl implements ResourceFactory {
     public <T extends FedoraResource> T getResource(final Transaction transaction, final String identifier,
             final Class<T> clazz) throws PathNotFoundException {
         return clazz.cast(getResource(transaction, identifier));
+    }
+
+    @Override
+    public <T extends FedoraResource> T getResource(final Transaction transaction, final String identifier,
+            final Instant version, final Class<T> clazz) throws PathNotFoundException {
+        return clazz.cast(getResource(transaction, identifier, version));
     }
 
     @Override
@@ -140,14 +151,16 @@ public class ResourceFactoryImpl implements ResourceFactory {
      *
      * @param transaction the transaction
      * @param identifier identifier for the new instance
+     * @param version The version datetime or null for head.
      * @return new FedoraResource instance
      * @throws PathNotFoundException
      */
-    private FedoraResource instantiateResource(final Transaction transaction, final String identifier)
+    private FedoraResource instantiateResource(final Transaction transaction,
+                                               final String identifier, final Instant version)
             throws PathNotFoundException {
         try {
             final var psSession = getSession(transaction);
-            final var headers = psSession.getHeaders(identifier, null);
+            final var headers = psSession.getHeaders(identifier, version);
 
             // Determine the appropriate class from headers
             final var createClass = getClassForTypes(headers);
@@ -161,7 +174,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
 
             final var rescImpl = constructor.newInstance(identifier, transaction,
                     persistentStorageSessionManager, this);
-            populateResourceHeaders(rescImpl, headers);
+            populateResourceHeaders(rescImpl, headers, version);
 
             return rescImpl;
         } catch (SecurityException | ReflectiveOperationException e) {
@@ -173,7 +186,8 @@ public class ResourceFactoryImpl implements ResourceFactory {
         }
     }
 
-    private void populateResourceHeaders(final FedoraResourceImpl resc, final ResourceHeaders headers) {
+    private void populateResourceHeaders(final FedoraResourceImpl resc, final ResourceHeaders headers,
+                                         final Instant version) {
         resc.setCreatedBy(headers.getCreatedBy());
         resc.setCreatedDate(headers.getCreatedDate());
         resc.setLastModifiedBy(headers.getLastModifiedBy());
@@ -181,6 +195,11 @@ public class ResourceFactoryImpl implements ResourceFactory {
         resc.setParentId(headers.getParent());
         resc.setEtag(headers.getStateToken());
         resc.setStateToken(headers.getStateToken());
+
+        if (version != null) {
+            resc.setIsMemento(true);
+            resc.setMementoDatetime(version);
+        }
 
         if (resc instanceof Binary) {
             final var binary = (BinaryImpl) resc;

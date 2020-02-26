@@ -25,6 +25,8 @@ import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
 import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.createRepository;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.mintOCFLObjectId;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItems;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -45,14 +47,15 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.vocabulary.DC;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.operations.CreateRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
@@ -123,6 +126,8 @@ public class OCFLPersistentStorageSessionTest {
 
     private RdfSourceOperation rdfSourceOperation2;
 
+    private CreateRdfSourceOperation createArchivalGroupOperation;
+
     private static final String BINARY_CONTENT = "Some test content";
 
     private MonotonicInstant timestep;
@@ -152,6 +157,9 @@ public class OCFLPersistentStorageSessionTest {
         rdfSourceOperation2 = mock(RdfSourceOperation.class, withSettings().extraInterfaces(
                 CreateResourceOperation.class));
 
+        createArchivalGroupOperation = mock(CreateRdfSourceOperation.class);
+        when(createArchivalGroupOperation.isArchivalGroup()).thenReturn(true);
+
         when(objectSession1.write(anyString(), any(InputStream.class))).thenReturn(writeOutcome);
         when(objectSession2.write(anyString(), any(InputStream.class))).thenReturn(writeOutcome);
     }
@@ -163,10 +171,13 @@ public class OCFLPersistentStorageSessionTest {
 
     private void mockMappingAndIndex(final String ocflObjectId, final String resourceId, final String rootObjectId,
                                      final FedoraOCFLMapping mapping) throws FedoraOCFLMappingNotFoundException {
+        mockMapping(ocflObjectId, rootObjectId, mapping);
+        when(index.getMapping(resourceId)).thenReturn(mapping);
+    }
+
+    private void mockMapping(final String ocflObjectId, final String rootObjectId, final FedoraOCFLMapping mapping) {
         when(mapping.getOcflObjectId()).thenReturn(ocflObjectId);
         when(mapping.getRootObjectIdentifier()).thenReturn(rootObjectId);
-        when(index.getMapping(resourceId)).thenReturn(mapping);
-
     }
 
     private void mockResourceOperation(final RdfSourceOperation rdfSourceOperation, final RdfStream userStream,
@@ -601,6 +612,50 @@ public class OCFLPersistentStorageSessionTest {
         final var node = createURI(RESOURCE_ID);
         assertEquals(node, retrievedUserStream.topic());
         assertEquals(dcTitleTriple, retrievedUserStream.findFirst().get());
+    }
+
+    @Test
+    public void listVersionsOfAResourceContainedInAnArchivalGroup() throws Exception {
+        DefaultOCFLObjectSession.setGlobaDefaultCommitOption(NEW_VERSION);
+        final Node resourceUri = createURI(RESOURCE_ID);
+
+        mockMapping(mintOCFLObjectId(RESOURCE_ID), ROOT_OBJECT_ID, mapping);
+        final var mappingCount = new AtomicInteger(0);
+        when(index.getMapping(RESOURCE_ID)).thenAnswer((Answer<FedoraOCFLMapping>) invocationOnMock -> {
+            final var current = mappingCount.getAndIncrement();
+            if (current == 0) {
+                throw new FedoraOCFLMappingNotFoundException("");
+            }
+            return mapping;
+        });
+
+        mockResourceOperation(createArchivalGroupOperation, RESOURCE_ID);
+        session.persist(createArchivalGroupOperation);
+        session.commit();
+
+        final var childId = RESOURCE_ID + "/child";
+        when(index.getMapping(childId)).thenReturn(mapping);
+
+        final String title = "title";
+        final var dcTitleTriple = Triple.create(resourceUri, DC.title.asNode(), createLiteral(title));
+        final Stream<Triple> userTriples = Stream.of(dcTitleTriple);
+        final DefaultRdfStream userStream = new DefaultRdfStream(resourceUri, userTriples);
+
+        final var session2 = createSession(index, objectSessionFactory);
+        mockResourceOperation(rdfSourceOperation, userStream, USER_PRINCIPAL, childId);
+        when(((CreateResourceOperation) rdfSourceOperation).getParentId()).thenReturn(RESOURCE_ID);
+
+        session2.persist(rdfSourceOperation);
+        session2.commit();
+
+        final var session3 = createSession(index, objectSessionFactory);
+
+        final var agVersions = session3.listVersions(RESOURCE_ID);
+        final var childVersions = session3.listVersions(childId);
+
+        assertEquals(2, agVersions.size());
+        assertEquals(1, childVersions.size());
+        assertThat(agVersions, hasItems(childVersions.get(0)));
     }
 
     @Test

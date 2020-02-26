@@ -19,6 +19,7 @@ package org.fcrepo.persistence.api;
 
 import java.io.InputStream;
 import java.time.Instant;
+import java.util.List;
 
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
@@ -83,6 +84,16 @@ public interface PersistentStorageSession {
      * @throws PersistentStorageException  Either a PersistentItemNotFoundException or PersistentSessionClosedException
      */
     public InputStream getBinaryContent(final String identifier, final Instant version)
+            throws PersistentStorageException;
+
+    /**
+     * Returns a list of immutable versions associated with the specified fedora identifier
+     *
+     * @param identifier identifier for the resource.
+     * @return The list of instants that map to the underlying versions
+     * @throws PersistentStorageException  Either a PersistentItemNotFoundException or PersistentSessionClosedException
+     */
+    List<Instant> listVersions(final String identifier)
             throws PersistentStorageException;
 
     /**

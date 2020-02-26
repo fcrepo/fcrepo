@@ -17,43 +17,43 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import edu.wisc.library.ocfl.api.MutableOcflRepository;
+import edu.wisc.library.ocfl.api.OcflObjectVersion;
 import static edu.wisc.library.ocfl.api.OcflOption.MOVE_SOURCE;
-import static java.lang.String.format;
-import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
-import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
+import edu.wisc.library.ocfl.api.model.ObjectDetails;
+import edu.wisc.library.ocfl.api.model.ObjectVersionId;
+import edu.wisc.library.ocfl.api.model.VersionId;
+import edu.wisc.library.ocfl.core.OcflRepositoryBuilder;
+import edu.wisc.library.ocfl.core.extension.layout.config.DefaultLayoutConfig;
+import edu.wisc.library.ocfl.core.storage.filesystem.FileSystemOcflStorage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import static java.lang.String.format;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-import edu.wisc.library.ocfl.core.storage.filesystem.FileSystemOcflStorage;
 import org.apache.commons.io.IOUtils;
+import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
+import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.ocfl.api.OCFLVersion;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsString;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import edu.wisc.library.ocfl.api.MutableOcflRepository;
-import edu.wisc.library.ocfl.api.OcflObjectVersion;
-import edu.wisc.library.ocfl.api.model.ObjectDetails;
-import edu.wisc.library.ocfl.api.model.ObjectVersionId;
-import edu.wisc.library.ocfl.api.model.VersionDetails;
-import edu.wisc.library.ocfl.api.model.VersionId;
-import edu.wisc.library.ocfl.core.OcflRepositoryBuilder;
-import edu.wisc.library.ocfl.core.extension.layout.config.DefaultLayoutConfig;
 
 /**
  * @author bbpennel
@@ -625,12 +625,70 @@ public class DefaultOCFLObjectSessionTest {
 
         final var session3 = makeNewSession();
 
-        final List<VersionDetails> versions = session3.listVersions();
+        final List<OCFLVersion> versions = session3.listVersions();
         session3.close();
 
-        assertEquals("First version in list is not \"v1\"", "v1", versions.get(0).getVersionId().toString());
-        assertEquals("Second version in list is not \"v2\"", "v2", versions.get(1).getVersionId().toString());
+        assertEquals("First version in list is not \"v1\"", "v1", versions.get(0).getOcflVersionId());
+        assertEquals("Second version in list is not \"v2\"", "v2", versions.get(1).getOcflVersionId());
         assertEquals("There should be exactly two versions",2, versions.size());
+    }
+
+    @Test
+    public void listVersionsForSubpath() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.write(FILE2_SUBPATH, fileStream(FILE_CONTENT2));
+        session.commit(NEW_VERSION);
+        session.close();
+
+        final var session1 = makeNewSession();
+
+        session1.write(FILE2_SUBPATH, fileStream("updated"));
+        session1.commit(NEW_VERSION);
+        session1.close();
+
+        final var session2 = makeNewSession();
+        session2.write("test_file3.txt", fileStream("another file"));
+        session2.commit(NEW_VERSION);
+        session2.close();
+
+        final var session3 = makeNewSession();
+
+        final List<OCFLVersion> file1Versions = session3.listVersions(FILE1_SUBPATH);
+        final List<OCFLVersion> file2Versions = session3.listVersions(FILE2_SUBPATH);
+        final List<OCFLVersion> allVersions = session3.listVersions(null);
+
+        session3.close();
+
+        assertThat(file1Versions.stream()
+                .map(OCFLVersion::getOcflVersionId)
+                .collect(Collectors.toList()), contains("v1"));
+
+        assertThat(file2Versions.stream()
+                .map(OCFLVersion::getOcflVersionId)
+                .collect(Collectors.toList()), contains("v1", "v2"));
+
+        assertThat(allVersions.stream()
+                .map(OCFLVersion::getOcflVersionId)
+                .collect(Collectors.toList()), contains("v1", "v2", "v3"));
+    }
+
+    @Test
+    public void throwExceptionWhenListingVersionsOnUnknownSubpath() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.write(FILE2_SUBPATH, fileStream(FILE_CONTENT2));
+        session.commit(NEW_VERSION);
+        session.close();
+
+        final var session3 = makeNewSession();
+
+        try {
+            session3.listVersions("bogus");
+            fail("listVersions should have thrown an exception");
+        } catch (PersistentItemNotFoundException e) {
+            assertThat(e.getMessage(), containsString("subpath bogus was not found"));
+        } finally {
+            session3.close();
+        }
     }
 
     @Test

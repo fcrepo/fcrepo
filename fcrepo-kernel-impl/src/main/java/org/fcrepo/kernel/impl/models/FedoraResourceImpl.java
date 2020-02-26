@@ -17,16 +17,11 @@
  */
 package org.fcrepo.kernel.impl.models;
 
-import java.net.URI;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Stream;
-
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
@@ -35,6 +30,12 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+
+import java.net.URI;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
 
 import static java.net.URI.create;
 import static org.apache.jena.graph.NodeFactory.createURI;
@@ -70,6 +71,8 @@ public class FedoraResourceImpl implements FedoraResource {
     private String stateToken;
 
     private String etag;
+
+    private boolean isMemento;
 
     // The transaction this representation of the resource belongs to
     protected final Transaction tx;
@@ -114,8 +117,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public FedoraResource getTimeMap() {
-        // TODO Auto-generated method stub
-        return null;
+        return new TimeMapImpl(this, tx, pSessionManager, resourceFactory);
     }
 
     @Override
@@ -125,8 +127,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public boolean isMemento() {
-        // TODO Auto-generated method stub
-        return false;
+        return isMemento;
     }
 
     @Override
@@ -137,8 +138,11 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public FedoraResource findMementoByDatetime(final Instant mementoDatetime) {
-        // TODO Auto-generated method stub
-        return null;
+        try {
+            return resourceFactory.getResource(tx, getId(), mementoDatetime);
+        } catch (PathNotFoundException e) {
+            throw new PathNotFoundRuntimeException(e);
+        }
     }
 
     @Override
@@ -177,7 +181,7 @@ public class FedoraResourceImpl implements FedoraResource {
     @Override
     public List<URI> getTypes() {
         if (types == null) {
-            types = new ArrayList<URI>();
+            types = new ArrayList<>();
             try {
                 final var headers = getSession().getHeaders(getId(), getMementoDatetime());
                 types.add(create(headers.getInteractionModel()));
@@ -185,7 +189,7 @@ public class FedoraResourceImpl implements FedoraResource {
                     types.add(create(ARCHIVAL_GROUP.getURI()));
                 }
             } catch (final PersistentItemNotFoundException e) {
-                throw new ItemNotFoundException("Unable to retrieve triples for " + getId(), e);
+                throw new ItemNotFoundException("Unable to retrieve headers for " + getId(), e);
             } catch (final PersistentStorageException e) {
                 throw new RepositoryRuntimeException(e);
             }
@@ -325,5 +329,12 @@ public class FedoraResourceImpl implements FedoraResource {
      */
     protected void setEtag(final String etag) {
         this.etag = etag;
+    }
+
+    /**
+     * @param isMemento indicates if the resource is a memento
+     */
+    public void setIsMemento(final boolean isMemento) {
+        this.isMemento = isMemento;
     }
 }

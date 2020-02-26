@@ -17,18 +17,17 @@
  */
 package org.fcrepo.http.commons.api.rdf;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
 
 import javax.ws.rs.core.UriBuilder;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Convert between HTTP URIs (LDP paths) and internal Fedora ID using a
@@ -67,6 +66,10 @@ public class HttpIdentifierConverter {
         return internalUri;
     }
 
+    private static String trimTrailingSlashes(final String string) {
+        return string.replaceAll("/+$", "");
+    }
+
     /**
      * Create a new identifier converter within the given session with the given URI template
      * @param uriBuilder the uri builder
@@ -101,7 +104,7 @@ public class HttpIdentifierConverter {
         if (path != null) {
 
             // Take the URL and remove any hash uris, or fcr: endpoints.
-            final String fedoraId = truncateSuffixes(path);
+            final String fedoraId = trimTrailingSlashes(truncateSuffixes(path));
 
             return FEDORA_ID_PREFIX + fedoraId.replaceFirst("\\/", "");
         }

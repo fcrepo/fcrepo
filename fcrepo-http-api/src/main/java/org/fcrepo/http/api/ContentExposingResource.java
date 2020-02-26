@@ -77,6 +77,7 @@ import static org.fcrepo.kernel.api.models.ExternalContent.COPY;
 import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
 import static org.fcrepo.kernel.api.models.ExternalContent.REDIRECT;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
+import org.fcrepo.kernel.api.utils.FedoraResourceIdConverter;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -434,7 +435,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected URI getUri(final FedoraResource resource) {
         try {
-            final String uri = identifierConverter().toExternalId(resource.getId());
+            final String uri = identifierConverter()
+                    .toExternalId(FedoraResourceIdConverter.resolveFedoraId(resource));
             return new URI(uri);
         } catch (final URISyntaxException e) {
             throw new BadRequestException(e);

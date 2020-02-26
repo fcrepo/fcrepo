@@ -282,16 +282,16 @@ public class FedoraVersioning extends ContentExposingResource {
                                      .build());
             });
             // Based on the dates of the above mementos, add the range to the below link.
-            final Instant[] Mementos = Arrays.stream(children).map(FedoraResource::getMementoDatetime)
+            final Instant[] mementos = Arrays.stream(children).map(FedoraResource::getMementoDatetime)
                 .sorted(Comparator.naturalOrder())
                 .toArray(Instant[]::new);
             final Builder linkBuilder =
                 Link.fromUri(parentUri + "/" + FCR_VERSIONS).rel("self").type(APPLICATION_LINK_FORMAT);
-            if (Mementos.length >= 2) {
+            if (mementos.length >= 2) {
                 // There are 2 or more Mementos so make a range.
-                linkBuilder.param("from", MEMENTO_RFC_1123_FORMATTER.format(Mementos[0].atZone(ZoneId.of("UTC"))));
+                linkBuilder.param("from", MEMENTO_RFC_1123_FORMATTER.format(mementos[0].atZone(ZoneId.of("UTC"))));
                 linkBuilder.param("until",
-                    MEMENTO_RFC_1123_FORMATTER.format(Mementos[Mementos.length - 1].atZone(ZoneId.of("UTC"))));
+                    MEMENTO_RFC_1123_FORMATTER.format(mementos[mementos.length - 1].atZone(ZoneId.of("UTC"))));
             }
             versionLinks.add(linkBuilder.build());
             return ok(new LinkFormatStream(versionLinks.stream())).build();
