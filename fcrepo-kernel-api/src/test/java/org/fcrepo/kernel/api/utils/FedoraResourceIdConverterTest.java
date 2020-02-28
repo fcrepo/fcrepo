@@ -18,6 +18,8 @@
 package org.fcrepo.kernel.api.utils;
 
 import java.time.Instant;
+
+import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -31,7 +33,7 @@ import static org.mockito.Mockito.when;
 public class FedoraResourceIdConverterTest {
 
     private final String id = "fedora:info/test-id";
-    private final String fcrVersions = "/fcr:versions";
+    private final String fcrVersions = "/" + FedoraTypes.FCR_VERSIONS;
 
     @Test
     public void doNotChangeIdWhenNotATimeMap() {

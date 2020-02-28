@@ -50,24 +50,24 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
             URI.create(RdfLexicon.VERSIONING_TIMEMAP.getURI())
     );
 
-    private final FedoraResource parent;
+    private final FedoraResource originalResource;
     private List<Instant> versions;
 
     protected TimeMapImpl(
-            final FedoraResource parent,
+            final FedoraResource originalResource,
             final Transaction tx,
             final PersistentStorageSessionManager pSessionManager,
             final ResourceFactory resourceFactory) {
-        super(parent.getId(), tx, pSessionManager, resourceFactory);
+        super(originalResource.getId(), tx, pSessionManager, resourceFactory);
 
-        this.parent = parent;
-        setCreatedBy(parent.getCreatedBy());
-        setCreatedDate(parent.getCreatedDate());
-        setLastModifiedBy(parent.getLastModifiedBy());
-        setLastModifiedDate(parent.getLastModifiedDate());
-        setParentId(parent.getId());
-        setEtag(parent.getEtagValue());
-        setStateToken(parent.getStateToken());
+        this.originalResource = originalResource;
+        setCreatedBy(originalResource.getCreatedBy());
+        setCreatedDate(originalResource.getCreatedDate());
+        setLastModifiedBy(originalResource.getLastModifiedBy());
+        setLastModifiedDate(originalResource.getLastModifiedDate());
+        setParentId(originalResource.getId());
+        setEtag(originalResource.getEtagValue());
+        setStateToken(originalResource.getStateToken());
         setTypes(TYPES);
     }
 
@@ -96,7 +96,7 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
 
     @Override
     public FedoraResource getOriginalResource() {
-        return parent;
+        return originalResource;
     }
 
     @Override

@@ -25,7 +25,7 @@ import java.time.Instant;
 public interface OCFLVersion {
 
     /**
-     * @return the OFCL object i
+     * @return the OFCL object id
      */
     String getOcflObjectId();
 

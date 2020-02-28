@@ -119,7 +119,8 @@ public class OCFLPersistentStorageUtils {
 
     /**
      * Returns the OCFL subpath for a given fedora subpath. This returned subpath
-     * does not include any added extensions.
+     * does not include any added extensions. It is expected that the rootObjectId
+     * DOES NOT contain a trailing slash at this point.
      *
      * @param rootObjectId  The fedora object root identifier
      * @param fedoraSubpath subpath of file within ocfl object

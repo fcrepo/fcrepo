@@ -151,7 +151,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
      *
      * @param transaction the transaction
      * @param identifier identifier for the new instance
-     * @param version The version datetime or null for head.
+     * @param version The version datetime or null for head
      * @return new FedoraResource instance
      * @throws PathNotFoundException
      */
@@ -196,6 +196,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
         resc.setEtag(headers.getStateToken());
         resc.setStateToken(headers.getStateToken());
 
+        // If there's a version, then it's a memento
         if (version != null) {
             resc.setIsMemento(true);
             resc.setMementoDatetime(version);

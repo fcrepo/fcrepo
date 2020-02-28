@@ -28,7 +28,7 @@ import org.fcrepo.kernel.api.services.VersionService;
 public final class FedoraResourceIdConverter {
 
     private FedoraResourceIdConverter() {
-
+        // Intentionally left blank
     }
 
     /**
