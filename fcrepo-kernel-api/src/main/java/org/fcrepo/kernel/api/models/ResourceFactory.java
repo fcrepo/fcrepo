@@ -52,6 +52,18 @@ public interface ResourceFactory {
             throws PathNotFoundException;
 
     /**
+     * Get a FedoraResource for existing resource
+     *
+     * @param transaction The transaction this request is part of.
+     * @param identifier The path or identifier for the resource.
+     * @param version The version datetime or null for head.
+     * @return The resource.
+     * @throws PathNotFoundException If the identifier cannot be found.
+     */
+    public FedoraResource getResource(final Transaction transaction, final String identifier, final Instant version)
+            throws PathNotFoundException;
+
+    /**
      * Get a resource as a particular type without a transaction
      *
      * @param <T> type for the resource
@@ -62,6 +74,20 @@ public interface ResourceFactory {
      */
     public <T extends FedoraResource> T getResource(final String identifier,
             final Class<T> clazz) throws PathNotFoundException;
+
+    /**
+     * Get a resource as a particular type
+     *
+     * @param <T> type for the resource
+     * @param transaction The transaction this request is part of.
+     * @param identifier The path or identifier for the resource.
+     * @param version The version datetime or null for head.
+     * @param clazz class the resource will be cast to
+     * @return The resource.
+     * @throws PathNotFoundException If the identifier cannot be found.
+     */
+    public <T extends FedoraResource> T getResource(final Transaction transaction, final String identifier,
+            final Instant version, final Class<T> clazz) throws PathNotFoundException;
 
     /**
      * Get a resource as a particular type

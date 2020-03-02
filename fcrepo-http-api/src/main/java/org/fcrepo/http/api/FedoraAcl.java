@@ -260,7 +260,7 @@ public class FedoraAcl extends ContentExposingResource {
                 return ok(output).build();
             }
 
-            throw new ItemNotFoundException("not found");
+            throw new ItemNotFoundException(String.format("No ACL found at %s", externalPath));
         }
 
         checkCacheControlHeaders(request, servletResponse, aclResource, transaction);

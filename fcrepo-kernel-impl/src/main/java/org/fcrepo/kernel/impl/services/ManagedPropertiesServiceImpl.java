@@ -21,6 +21,7 @@ import org.apache.jena.graph.Triple;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.ManagedPropertiesService;
+import org.fcrepo.kernel.api.utils.FedoraResourceIdConverter;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -45,7 +46,7 @@ public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {
     @Override
     public Stream<Triple> get(final FedoraResource resource) {
         final List<Triple> triples = new ArrayList<>();
-        final var subject = createURI(resource.getId());
+        final var subject = createURI(FedoraResourceIdConverter.resolveFedoraId(resource));
         triples.add(Triple.create(subject, CREATED_DATE.asNode(),
                 createLiteral(resource.getCreatedDate().toString())));
         triples.add(Triple.create(subject, LAST_MODIFIED_DATE.asNode(),

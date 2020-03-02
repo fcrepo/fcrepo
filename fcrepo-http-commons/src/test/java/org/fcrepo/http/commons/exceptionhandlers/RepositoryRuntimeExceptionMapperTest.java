@@ -69,4 +69,12 @@ public class RepositoryRuntimeExceptionMapperTest {
         final Response response = testObj.toResponse(ex);
         assertEquals(500, response.getStatus());
     }
+
+    @Test
+    public void testToResponseWithNoWrappedException() {
+        when(mockProviders.getExceptionMapper(Exception.class)).thenReturn(null);
+        final RepositoryRuntimeException ex = new RepositoryRuntimeException("!");
+        final Response response = testObj.toResponse(ex);
+        assertEquals(500, response.getStatus());
+    }
 }

@@ -15,35 +15,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.persistence.api.exceptions;
+package org.fcrepo.persistence.ocfl.api;
+
+import java.time.Instant;
 
 /**
- * If an item is not found in the storage.
- *
- * @author whikloj
- * @since 2019-09-24
+ * Contains details about an OCFL version
  */
-public class PersistentItemNotFoundException extends PersistentStorageException {
-
-    private static final long serialVersionUID = 1L;
+public interface OCFLVersion {
 
     /**
-     * Basic constructor
-     *
-     * @param msg The text of the exception.
+     * @return the OFCL object id
      */
-    public PersistentItemNotFoundException(final String msg) {
-        super(msg);
-    }
+    String getOcflObjectId();
 
     /**
-     * Constructor
-     *
-     * @param msg message
-     * @param e cause
+     * @return the OCFL version id
      */
-    public PersistentItemNotFoundException(final String msg, final Throwable e) {
-        super(msg, e);
-    }
+    String getOcflVersionId();
+
+    /**
+     * @return the instant, second granularity, the version was created
+     */
+    Instant getCreated();
+
+    /**
+     * @return who created the version; may be null
+     */
+    String getCreatedBy();
 
 }

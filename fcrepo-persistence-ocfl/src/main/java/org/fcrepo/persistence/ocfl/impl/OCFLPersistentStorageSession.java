@@ -18,6 +18,7 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import static java.lang.String.format;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getSidecarSubpath;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveVersionId;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getBinaryStream;
@@ -43,6 +44,7 @@ import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.fcrepo.persistence.ocfl.api.Persister;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resovleOCFLSubpathFromResourceId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,11 +54,9 @@ import java.util.stream.Collectors;
 
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getRDFFileExtension;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getRdfStream;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.relativizeSubpath;
 
 import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveOCFLSubpath;
 
 /**
  * OCFL Persistent Storage class.
@@ -202,8 +202,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         final FedoraOCFLMapping mapping = getFedoraOCFLMapping(identifier);
         final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
         final var rootIdentifier = mapping.getRootObjectIdentifier();
-        final var fedoraSubpath = relativizeSubpath(rootIdentifier, identifier);
-        final var ocflSubpath = resolveOCFLSubpath(rootIdentifier, fedoraSubpath);
+        final var ocflSubpath = resovleOCFLSubpathFromResourceId(rootIdentifier, identifier);
         final var sidecarSubpath = getSidecarSubpath(ocflSubpath);
 
         final InputStream headerStream;
@@ -233,23 +232,29 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         final var mapping = getFedoraOCFLMapping(identifier);
         final var rootIdentifier = mapping.getRootObjectIdentifier();
         final var objSession = findOrCreateSession(mapping.getOcflObjectId());
-        final var fedoraSubpath = relativizeSubpath(rootIdentifier, identifier);
-        final var ocflSubpath = resolveOCFLSubpath(rootIdentifier, fedoraSubpath);
+        final var ocflSubpath = resovleOCFLSubpathFromResourceId(rootIdentifier, identifier);
         final var filePath = ocflSubpath + getRDFFileExtension();
         return getRdfStream(identifier, objSession, filePath, version);
     }
 
-    /**
-     * Returns a list of immutable versions associated with the specified fedora identifier
-     *
-     * @param fedoraIdentifier The fedora identifier
-     * @return The list of instants that map to the underlying versions
-     * @throws PersistentStorageException Due the underlying resource not existing or is otherwise unreadable.
-     */
-    List<Instant> listVersions(final String fedoraIdentifier) throws PersistentStorageException {
-        final FedoraOCFLMapping mapping = getFedoraOCFLMapping(fedoraIdentifier);
-        final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
-        return OCFLPersistentStorageUtils.listVersions(objSession);
+    @Override
+    public List<Instant> listVersions(final String fedoraIdentifier) throws PersistentStorageException {
+        final var mapping = getFedoraOCFLMapping(fedoraIdentifier);
+        final var objSession = findOrCreateSession(mapping.getOcflObjectId());
+
+        String subpath = null;
+
+        // Find the subpath if it's a child of an AG
+        if (!mapping.getRootObjectIdentifier().equals(fedoraIdentifier)) {
+            subpath = resovleOCFLSubpathFromResourceId(mapping.getRootObjectIdentifier(), fedoraIdentifier);
+
+            final var headers = getHeaders(fedoraIdentifier, null);
+            if (!NON_RDF_SOURCE.getURI().equals(headers.getInteractionModel())) {
+                subpath += getRDFFileExtension();
+            }
+        }
+
+        return OCFLPersistentStorageUtils.listVersions(objSession, subpath);
     }
 
     @Override
@@ -260,8 +265,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         final var mapping = getFedoraOCFLMapping(identifier);
         final var rootIdentifier = mapping.getRootObjectIdentifier();
         final var objSession = findOrCreateSession(mapping.getOcflObjectId());
-        final var fedoraSubpath = relativizeSubpath(rootIdentifier, identifier);
-        final var ocflSubpath = resolveOCFLSubpath(rootIdentifier, fedoraSubpath);
+        final var ocflSubpath = resovleOCFLSubpathFromResourceId(rootIdentifier, identifier);
 
         return getBinaryStream(objSession, ocflSubpath, version);
     }

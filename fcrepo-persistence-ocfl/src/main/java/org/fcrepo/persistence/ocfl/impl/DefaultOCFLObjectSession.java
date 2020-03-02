@@ -17,21 +17,28 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static edu.wisc.library.ocfl.api.OcflOption.OVERWRITE;
+import edu.wisc.library.ocfl.api.MutableOcflRepository;
+import edu.wisc.library.ocfl.api.OcflObjectUpdater;
 import static edu.wisc.library.ocfl.api.OcflOption.MOVE_SOURCE;
-import static java.lang.System.getProperty;
-import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
-import static java.lang.String.format;
-import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
-
+import static edu.wisc.library.ocfl.api.OcflOption.OVERWRITE;
+import edu.wisc.library.ocfl.api.exception.NotFoundException;
+import edu.wisc.library.ocfl.api.model.CommitInfo;
+import edu.wisc.library.ocfl.api.model.FileChangeType;
+import edu.wisc.library.ocfl.api.model.FileDetails;
+import edu.wisc.library.ocfl.api.model.ObjectVersionId;
+import edu.wisc.library.ocfl.api.model.VersionDetails;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import static java.lang.String.format;
+import static java.lang.System.getProperty;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -40,24 +47,20 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import edu.wisc.library.ocfl.api.model.VersionDetails;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.fcrepo.persistence.api.CommitOption;
+import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
+import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
+import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.FileWriteOutcome;
-import org.fcrepo.persistence.api.CommitOption;
-import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
+import org.fcrepo.persistence.ocfl.api.OCFLVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import edu.wisc.library.ocfl.api.model.ObjectVersionId;
-import edu.wisc.library.ocfl.api.MutableOcflRepository;
-import edu.wisc.library.ocfl.api.OcflObjectUpdater;
-import edu.wisc.library.ocfl.api.exception.NotFoundException;
-import edu.wisc.library.ocfl.api.model.CommitInfo;
 
 /**
  * Default implementation of an OCFL object session, which stages changes to the
@@ -251,7 +254,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
                 return new FileInputStream(stagedPath.toFile());
             } catch (final FileNotFoundException e) {
                 throw new PersistentItemNotFoundException(format("Could not find %s within object %s",
-                        subpath, objectIdentifier));
+                        subpath, objectIdentifier), e);
             }
         } else if (!objectDeleted) {
             // Fall back to the head version
@@ -293,7 +296,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         } catch (final NotFoundException e) {
             throw new PersistentItemNotFoundException(format(
                     "Unable to read %s from object %s version %s, object was not found.",
-                    subpath, objectIdentifier, version.getVersionId()));
+                    subpath, objectIdentifier, version.getVersionId()), e);
         }
     }
 
@@ -412,14 +415,51 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     }
 
     @Override
-    public List<VersionDetails> listVersions() throws PersistentStorageException {
+    public List<OCFLVersion> listVersions() throws PersistentStorageException {
         assertSessionOpen();
         //get a list of all versions in the object.
-        return this.ocflRepository.describeObject(this.objectIdentifier)
-                                                                    .getVersionMap().values().stream()
-                                                                    .filter(v -> !v.isMutable())
-                                                                    .sorted(VERSION_COMPARATOR)
-                                                                    .collect(Collectors.toList());
+        try {
+            return this.ocflRepository.describeObject(this.objectIdentifier)
+                    .getVersionMap().values().stream()
+                    .filter(version -> !version.isMutable())
+                    .sorted(VERSION_COMPARATOR)
+                    .map(version -> {
+                        return new OCFLVersionImpl()
+                                .setOcflObjectId(version.getObjectId())
+                                .setOcflVersionId(version.getVersionId().toString())
+                                .setCreatedBy(getCreatedBy(version.getCommitInfo()))
+                                .setCreated(toMementoInstant(version.getCreated()));
+                    }).collect(Collectors.toList());
+        } catch (final NotFoundException e) {
+            throw new PersistentItemNotFoundException(format(
+                    "Could not list versions, object %s was not found.",
+                    objectIdentifier), e);
+        }
+    }
+
+    @Override
+    public List<OCFLVersion> listVersions(final String subpath) throws PersistentStorageException {
+        if (StringUtils.isBlank(subpath)) {
+            return listVersions();
+        }
+
+        assertSessionOpen();
+
+        try {
+            return ocflRepository.fileChangeHistory(objectIdentifier, subpath).getFileChanges().stream()
+                    .filter(change -> change.getChangeType() == FileChangeType.UPDATE)
+                    .map(change -> {
+                        return new OCFLVersionImpl()
+                                .setOcflObjectId(objectIdentifier)
+                                .setOcflVersionId(change.getVersionId().toString())
+                                .setCreatedBy(getCreatedBy(change.getCommitInfo()))
+                                .setCreated(toMementoInstant(change.getTimestamp()));
+                    }).collect(Collectors.toList());
+        } catch (final NotFoundException e) {
+            throw new PersistentItemNotFoundException(format(
+                    "Could not list versions, object %s subpath %s was not found.",
+                    objectIdentifier, subpath), e);
+        }
     }
 
     @Override
@@ -428,7 +468,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
         return this.ocflRepository.describeVersion(ObjectVersionId.head(this.objectIdentifier))
                 .getFiles()
-                .stream().map(f -> f.getPath());
+                .stream().map(FileDetails::getPath);
     }
 
     @Override
@@ -465,4 +505,19 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
             throw new PersistentSessionClosedException("Cannot perform operation, session is closed");
         }
     }
+
+    private String getCreatedBy(final CommitInfo commitInfo) {
+        if (commitInfo != null) {
+            final var user = commitInfo.getUser();
+            if (user != null) {
+                return user.getName();
+            }
+        }
+        return null;
+    }
+
+    private Instant toMementoInstant(final OffsetDateTime timestamp) {
+        return timestamp.toInstant().truncatedTo(ChronoUnit.SECONDS);
+    }
+
 }

@@ -56,9 +56,12 @@ public class RepositoryRuntimeExceptionMapper implements
     @Override
     public Response toResponse(final RepositoryRuntimeException e) {
         final Throwable cause = e.getCause();
-        @SuppressWarnings("unchecked")
-        final ExceptionMapper<Throwable> exceptionMapper =
-                (ExceptionMapper<Throwable>) providers.getExceptionMapper(cause.getClass());
+        ExceptionMapper<Throwable> exceptionMapper = null;
+
+        if (cause != null) {
+            exceptionMapper = providers.getExceptionMapper((Class<Throwable>) cause.getClass());
+        }
+
         if (exceptionMapper != null) {
             return exceptionMapper.toResponse(cause);
         }

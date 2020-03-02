@@ -27,9 +27,9 @@ import static javax.ws.rs.core.HttpHeaders.LOCATION;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.FOUND;
 import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
-import static javax.ws.rs.core.Response.Status.FOUND;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -44,14 +44,16 @@ import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.api.FedoraLdp.ACCEPT_DATETIME;
 import static org.fcrepo.http.api.FedoraVersioning.MEMENTO_DATETIME_HEADER;
 import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_LINK_FORMAT;
-import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
+import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_FIXITY;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
+import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
@@ -74,11 +76,14 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -89,10 +94,8 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
+import java.util.stream.Collectors;
 import javax.ws.rs.core.Link;
-
-import com.google.common.collect.ImmutableList;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
@@ -121,6 +124,8 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.DC;
 import org.apache.jena.vocabulary.RDF;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.fcrepo.persistence.api.CommitOption;
+import org.fcrepo.persistence.ocfl.impl.DefaultOCFLObjectSession;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -179,6 +184,70 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
         verifyTimemapResponse(subjectUri, id, MEMENTO_DATETIME);
+    }
+
+    @Test
+    public void getTimeMapForContainerWithSingleVersion() throws Exception {
+        DefaultOCFLObjectSession.setGlobaDefaultCommitOption(CommitOption.NEW_VERSION);
+        try {
+            createVersionedContainer(id);
+            verifyTimemapResponse(subjectUri, id, now());
+        } finally {
+            DefaultOCFLObjectSession.setGlobaDefaultCommitOption(CommitOption.UNVERSIONED);
+        }
+    }
+
+    @Test
+    public void getTimeMapFromBinaryWithMultipleVersions() throws Exception {
+        DefaultOCFLObjectSession.setGlobaDefaultCommitOption(CommitOption.NEW_VERSION);
+        try {
+            final var v1 = now();
+            createVersionedBinary(id, OCTET_STREAM_TYPE, "v1");
+            Thread.sleep(1000);
+
+            final var v2 = now();
+            createVersionedBinary(id, OCTET_STREAM_TYPE, "v2");
+            Thread.sleep(1000);
+
+            final var v3 = now();
+            createVersionedBinary(id, OCTET_STREAM_TYPE, "v3");
+            Thread.sleep(1000);
+
+            verifyTimemapResponse(subjectUri, id, new String[]{v1, v2, v3}, v1, v3);
+        } finally {
+            DefaultOCFLObjectSession.setGlobaDefaultCommitOption(CommitOption.UNVERSIONED);
+        }
+    }
+
+    @Test
+    public void getTimeMapFromAgWithChildrenWithDifferentVersions() throws Exception {
+        DefaultOCFLObjectSession.setGlobaDefaultCommitOption(CommitOption.NEW_VERSION);
+        try {
+            final var childId1 = id + "/child1";
+            final var childId2 = id + "/child2";
+
+            final var v1 = now();
+            createVersionedArchivalGroup(id);
+            Thread.sleep(1000);
+
+            final var v2 = now();
+            putVersionedBinary(childId1, OCTET_STREAM_TYPE, "v2", false);
+            Thread.sleep(1000);
+
+            final var v3 = now();
+            putVersionedBinary(childId2, OCTET_STREAM_TYPE, "v3", false);
+            Thread.sleep(1000);
+
+            final var v4 = now();
+            putVersionedBinary(childId1, OCTET_STREAM_TYPE, "v4", true);
+            Thread.sleep(1000);
+
+            verifyTimemapResponse(subjectUri, id, new String[]{v1, v2, v3, v4}, v1, v4);
+            verifyTimemapResponse(subjectUri + "/child1", childId1, new String[]{v2, v4}, v2, v4);
+            verifyTimemapResponse(subjectUri + "/child2", childId2, v3);
+        } finally {
+            DefaultOCFLObjectSession.setGlobaDefaultCommitOption(CommitOption.UNVERSIONED);
+        }
     }
 
     @Ignore //TODO Fix this test
@@ -908,29 +977,30 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final String rangeStart, final String rangeEnd)
         throws Exception {
         final String ldpcvUri = uri + "/" + FCR_VERSIONS;
-        final List<Link> listLinks = new ArrayList<>();
-        listLinks.add(Link.fromUri(uri).rel("original").build());
-        listLinks.add(Link.fromUri(uri).rel("timegate").build());
+        final var expectedLinksOther = new ArrayList<Link>();
+        final var expectedLinksMemento = new ArrayList<Link>();
+        expectedLinksOther.add(Link.fromUri(uri).rel("original").build());
+        expectedLinksOther.add(Link.fromUri(uri).rel("timegate").build());
+        expectedLinksOther.sort(Comparator.comparing(Link::toString));
 
-        final javax.ws.rs.core.Link.Builder selfLink = Link.fromUri(ldpcvUri).rel("self").type(APPLICATION_LINK_FORMAT);
+        final var expectedSelfLinkBuilder = Link.fromUri(ldpcvUri).rel("self")
+                .type(APPLICATION_LINK_FORMAT);
         if (rangeStart != null && rangeEnd != null) {
-            selfLink.param("from", rangeStart).param("until",
+            expectedSelfLinkBuilder.param("from", rangeStart).param("until",
                 rangeEnd);
         }
-        listLinks.add(selfLink.build());
+        final var expectedSelfLink = expectedSelfLinkBuilder.build();
+
         if (mementoDateTime != null) {
             for (final String memento : mementoDateTime) {
                 final TemporalAccessor instant = MEMENTO_RFC_1123_FORMATTER.parse(memento);
-                listLinks.add(Link.fromUri(ldpcvUri + "/" + MEMENTO_LABEL_FORMATTER.format(instant))
+                expectedLinksMemento.add(Link.fromUri(ldpcvUri + "/" + MEMENTO_LABEL_FORMATTER.format(instant))
                               .rel("memento")
                     .param("datetime", memento)
                               .build());
             }
         }
-
-        final Link[] expectedLinks = listLinks.stream()
-                                              .sorted(Comparator.comparing(Link::toString))
-                                              .toArray(Link[]::new);
+        expectedLinksMemento.sort(Comparator.comparing(Link::toString));
 
         final HttpGet httpGet = getObjMethod(id + "/" + FCR_VERSIONS);
         httpGet.setHeader("Accept", APPLICATION_LINK_FORMAT);
@@ -938,15 +1008,82 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             assertEquals("Didn't get a OK response!", OK.getStatusCode(), getStatus(response));
             // verify headers in link format.
             verifyTimeMapHeaders(response, uri);
-            final List<String> bodyList = Arrays.asList(EntityUtils.toString(response.getEntity())
-                    .split("," + System.lineSeparator()));
+            final var responseBody = EntityUtils.toString(response.getEntity());
+            final List<String> bodyList = Arrays.asList(responseBody.split("," + System.lineSeparator()));
             //the links from the body are not
 
-            final Link[] bodyLinks = bodyList.stream().map(String::trim).filter(t -> !t.isEmpty())
+            Link selfLink = null;
+            final var mementoLinks = new ArrayList<Link>();
+            final var otherLinks = new ArrayList<Link>();
+
+            final var allLinks = bodyList.stream().map(String::trim).filter(t -> !t.isEmpty())
                                                       .sorted(Comparator.naturalOrder())
-                                                      .map(Link::valueOf).toArray(Link[]::new);
-            assertArrayEquals(expectedLinks, bodyLinks);
+                                                      .map(Link::valueOf).collect(Collectors.toList());
+
+            for (final var link : allLinks) {
+                if ("memento".equals(link.getRel())) {
+                    mementoLinks.add(link);
+                } else if ("self".equals(link.getRel())) {
+                    selfLink = link;
+                } else {
+                    otherLinks.add(link);
+                }
+            }
+
+            assertSelfLink(expectedSelfLink, selfLink);
+            assertEquals(expectedLinksOther, otherLinks);
+            assertEquals(expectedLinksMemento.size(), mementoLinks.size());
+            for (var i = 0; i < expectedLinksMemento.size(); i++) {
+                assertMementoLink(expectedLinksMemento.get(i), mementoLinks.get(i));
+            }
+
         }
+    }
+
+    private void assertSelfLink(final Link expected, final Link actual) {
+        if (!expected.equals(actual)) {
+            assertEquals(expected.getUri(), actual.getUri());
+
+            final var expectedFromStr = expected.getParams().get("from");
+            final var expectedUntilStr = expected.getParams().get("until");
+            final var actualFromStr = actual.getParams().get("from");
+            final var actualUntilStr = actual.getParams().get("until");
+
+            if (expectedFromStr != null) {
+                assertNotNull("link cannot have a null 'from' param", actualFromStr);
+                assertNotNull("link cannot have a null 'until' param", actualUntilStr);
+                assertDuration(expectedFromStr, actualFromStr);
+                assertDuration(expectedUntilStr, actualUntilStr);
+            } else {
+                assertNull("link cannot have a 'from' param", actualFromStr);
+                assertNull("link cannot have a 'until' param", actualUntilStr);
+            }
+        }
+    }
+
+    private void assertMementoLink(final Link expected, final Link actual) {
+        if (!expected.equals(actual)) {
+            assertDuration(expected.getParams().get("datetime"), actual.getParams().get("datetime"));
+
+            final var expectedUri = expected.getUri().toString();
+            final var actualUri = actual.getUri().toString();
+            assertEquals(expectedUri.substring(0, expectedUri.length() - 2),
+                    actualUri.substring(0, actualUri.length() - 2));
+        }
+    }
+
+    private void assertDuration(final String expected, final String actual) {
+        final var expectedInstant = parseToInstant(expected);
+        final var actualInstant = parseToInstant(actual);
+
+        final var diff = Duration.between(expectedInstant, actualInstant);
+
+        assertTrue("Difference in expected and actual times should be less than 5 seconds",
+                diff.abs().getSeconds() < 5);
+    }
+
+    private Instant parseToInstant(final String value) {
+        return Instant.from(MEMENTO_RFC_1123_FORMATTER.parse(value));
     }
 
     /**
@@ -1905,6 +2042,60 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     /**
+     * Create a versioned Archival Group
+     *
+     * @param id the desired slug
+     * @return Location of the new resource
+     * @throws Exception on error
+     */
+    private String createVersionedArchivalGroup(final String id) throws Exception {
+        final HttpPost createMethod = postObjMethod();
+        createMethod.addHeader("Slug", id);
+        createMethod.addHeader(CONTENT_TYPE, TURTLE);
+        createMethod.addHeader("Link", Link.fromUri(BASIC_CONTAINER.getURI()).rel("type").build().toString());
+        createMethod.addHeader("Link", Link.fromUri(ARCHIVAL_GROUP.getURI()).rel("type").build().toString());
+        createMethod.setEntity(new StringEntity("<> <info:test#label> \"foo\""));
+
+        try (final CloseableHttpResponse response = execute(createMethod)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            return response.getFirstHeader(LOCATION).getValue();
+        }
+    }
+
+    /**
+     * Put a versioned LDP-NR.
+     *
+     * @param id the desired slug
+     * @param mimeType the mimeType of the content
+     * @param content the actual content
+     * @param isUpdate whether or not the opertion is an update
+     * @throws Exception on error
+     */
+    private void putVersionedBinary(final String id, final String mimeType, final String content,
+                                    final boolean isUpdate)
+            throws Exception {
+        final HttpPut createMethod = putObjMethod(id);
+        createMethod.addHeader("Slug", id);
+        createMethod.addHeader("Link", Link.fromUri(NON_RDF_SOURCE.getURI()).rel("type").build().toString());
+        if (mimeType == null && content == null) {
+            createMethod.addHeader(CONTENT_TYPE, OCTET_STREAM_TYPE);
+            createMethod.setEntity(new StringEntity(BINARY_CONTENT));
+        } else {
+            createMethod.addHeader(CONTENT_TYPE, mimeType);
+            createMethod.setEntity(new StringEntity(content));
+        }
+
+        try (final CloseableHttpResponse response = execute(createMethod)) {
+            if (isUpdate) {
+                assertEquals("Didn't get a NO_CONTENT response!", NO_CONTENT.getStatusCode(), getStatus(response));
+            } else {
+                assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+                logger.info("created object: {}", response.getFirstHeader(LOCATION).getValue());
+            }
+        }
+    }
+
+    /**
      * Create a versioned LDP-NR.
      *
      * @param id the desired slug
@@ -2029,4 +2220,10 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             assertConstrainedByPresent(response);
         }
     }
+
+    private String now() {
+        return MEMENTO_RFC_1123_FORMATTER.format(OffsetDateTime.now(ZoneOffset.UTC)
+                .toInstant().truncatedTo(ChronoUnit.SECONDS));
+    }
+
 }

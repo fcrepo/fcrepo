@@ -33,6 +33,7 @@ import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
+import org.fcrepo.persistence.ocfl.api.OCFLVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,17 +85,27 @@ public class OCFLPersistentStorageUtils {
     private static final String FEDORA_METADATA_SUFFIX = "/" + FedoraTypes.FCR_METADATA;
 
     /**
-     * Returns the relative subpath of the resourceId based on the root object's resource id.
+     * Maps a Fedora resource id to a subpath and then converts it into an OCFL subpath. This method
+     * is a wrapper around {@link #relativizeSubpath} and {@link #resolveOCFLSubpath}.
      *
      * @param rootFedoraObjectId The fedora root object identifier
      * @param fedoraResourceId   The identifier of the resource whose subpath you wish to resolve.
+     * @return The resolved OCFL subpath
+     */
+    public static String resovleOCFLSubpathFromResourceId(final String rootFedoraObjectId,
+                                                          final String fedoraResourceId) {
+        final var fedoraSubpath = relativizeSubpath(rootFedoraObjectId, fedoraResourceId);
+        return resolveOCFLSubpath(rootFedoraObjectId, fedoraSubpath);
+    }
+
+    /**
+     * Returns the relative subpath of the resourceId based on the root object's resource id.
+     *
+     * @param rootObjectId The fedora root object identifier
+     * @param resourceId   The identifier of the resource whose subpath you wish to resolve.
      * @return The resolved subpath
      */
-    public static String relativizeSubpath(final String rootFedoraObjectId, final String fedoraResourceId) {
-
-        final var resourceId = trimTrailingSlashes(fedoraResourceId);
-        final var rootObjectId = trimTrailingSlashes(rootFedoraObjectId);
-
+    public static String relativizeSubpath(final String rootObjectId, final String resourceId) {
         if (resourceId.equals(rootObjectId)) {
             return "";
         } else if (resourceId.startsWith(rootObjectId) && resourceId.charAt(rootObjectId.length()) == '/') {
@@ -106,26 +117,20 @@ public class OCFLPersistentStorageUtils {
                 rootObjectId));
     }
 
-    private static String trimTrailingSlashes(final String string) {
-        return string.replaceAll("/+$", "");
-    }
-
     /**
      * Returns the OCFL subpath for a given fedora subpath. This returned subpath
-     * does not include any added extensions.
+     * does not include any added extensions. It is expected that the rootObjectId
+     * DOES NOT contain a trailing slash at this point.
      *
-     * @param rootFedoraObjectId  The fedora object root identifier
+     * @param rootObjectId  The fedora object root identifier
      * @param fedoraSubpath subpath of file within ocfl object
      * @return The resolved OCFL subpath
      */
-    public static  String resolveOCFLSubpath(final String rootFedoraObjectId, final String fedoraSubpath) {
-
-        final var rootObjectId = trimTrailingSlashes(rootFedoraObjectId);
-
+    public static  String resolveOCFLSubpath(final String rootObjectId, final String fedoraSubpath) {
         final var lastPathSegment = rootObjectId.substring(rootObjectId.lastIndexOf("/") + 1);
 
         String subPath;
-        if (FEDORA_ID_PREFIX.equals(rootFedoraObjectId) && "".equals(fedoraSubpath)) {
+        if (FEDORA_ID_PREFIX.equals(rootObjectId) && "".equals(fedoraSubpath)) {
             subPath = DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
         } else if ("".equals(fedoraSubpath)) {
             subPath = lastPathSegment;
@@ -251,13 +256,8 @@ public class OCFLPersistentStorageUtils {
             return objSession.listVersions()
                     .stream()
                     .filter(vd -> {
-                        //filter by comparing Epoch seconds since
-                        //Memento has second granularity while OCFL versions are
-                        //millisecond granularity
-                        return vd.getCreated()
-                                .toInstant()
-                                .toEpochMilli() / 1000 == version.toEpochMilli() / 1000;
-                    }).map(vd -> vd.getVersionId().toString()) //return the versionId the matches
+                        return vd.getCreated().equals(version);
+                    }).map(OCFLVersion::getOcflVersionId)
                     .findFirst()
                     .orElseThrow(() -> {
                         //otherwise throw an exception.
@@ -295,11 +295,15 @@ public class OCFLPersistentStorageUtils {
      * accessible from the OCFL Object represented by the session.
      *
      * @param objSession The OCFL object session
+     * @param subpath The subpath within the object to list versions of; if blank all of the versions of the object are
+     *                listed
      * @return A list of Instant objects
      * @throws PersistentStorageException On read failure due to the session being closed or some other problem.
      */
-    public static List<Instant> listVersions(final OCFLObjectSession objSession) throws PersistentStorageException {
-        return  objSession.listVersions().stream().map(versionDetails -> versionDetails.getCreated().toInstant())
+    public static List<Instant> listVersions(final OCFLObjectSession objSession, final String subpath)
+            throws PersistentStorageException {
+        return  objSession.listVersions(subpath).stream()
+                .map(OCFLVersion::getCreated)
                 .collect(Collectors.toList());
     }
 
