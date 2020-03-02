@@ -99,6 +99,7 @@ public class WebACRolesProvider {
      * Get the roles assigned to this Node.
      *
      * @param resource the subject resource
+     * @param transaction the transaction being acted upon
      * @return a set of roles for each principal
      */
     public Map<String, Collection<String>> getRoles(final FedoraResource resource, final Transaction transaction) {
