@@ -26,7 +26,8 @@ import static org.apache.jena.sparql.util.graph.GraphUtils.multiValueURI;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
 import static org.fcrepo.http.commons.session.TransactionProvider.ATOMIC_ID_HEADER;
-import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -167,8 +168,8 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
             .put(REPOSITORY_NAMESPACE + "Version", velocity.getTemplate(getTemplateLocation("resource")))
             .put(REPOSITORY_NAMESPACE + "Pairtree", velocity.getTemplate(getTemplateLocation("resource")))
             .put(REPOSITORY_NAMESPACE + "Container", velocity.getTemplate(getTemplateLocation("resource")))
-            .put(LDP_NAMESPACE + "NonRdfSource", velocity.getTemplate(getTemplateLocation("binary")))
-            .put(LDP_NAMESPACE + "RdfSource", velocity.getTemplate(getTemplateLocation("resource"))).build();
+            .put(NON_RDF_SOURCE.toString(), velocity.getTemplate(getTemplateLocation("binary")))
+            .put(RDF_SOURCE.toString(), velocity.getTemplate(getTemplateLocation("resource"))).build();
 
         LOGGER.trace("Assembled template map.");
         LOGGER.trace("HtmlProvider initialization complete.");

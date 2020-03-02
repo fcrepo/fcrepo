@@ -71,7 +71,6 @@ public class FedoraHtmlIT extends AbstractResourceIT {
         assertEquals(200, getStatus(method));
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testGetContainerTemplate() throws IOException {
         final String pid = getRandomUniqueId();

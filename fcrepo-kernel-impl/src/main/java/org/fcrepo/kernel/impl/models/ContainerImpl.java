@@ -17,11 +17,24 @@
  */
 package org.fcrepo.kernel.impl.models;
 
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
+
+import java.util.stream.Stream;
+
+import org.apache.jena.graph.Triple;
+import org.apache.jena.vocabulary.RDF;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.exception.ItemNotFoundException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
 
 /**
@@ -47,5 +60,20 @@ public class ContainerImpl extends FedoraResourceImpl implements Container {
     @Override
     public FedoraResource getDescribedResource() {
         return this;
+    }
+
+    @Override
+    public RdfStream getTriples() {
+        try {
+            final var triples = getSession().getTriples(id, getMementoDatetime());
+            final Stream<Triple> extra_triples = Stream.of(
+                    new Triple(createURI(id), RDF.Init.type().asNode(), RDF_SOURCE.asNode())
+            );
+            return new DefaultRdfStream(createURI(id), Stream.concat(triples, extra_triples));
+        } catch (final PersistentItemNotFoundException e) {
+            throw new ItemNotFoundException("Unable to retrieve triples for " + getId(), e);
+        } catch (final PersistentStorageException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 }
