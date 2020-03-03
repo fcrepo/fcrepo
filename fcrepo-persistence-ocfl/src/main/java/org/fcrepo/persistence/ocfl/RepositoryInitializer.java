@@ -17,9 +17,14 @@
  */
 package org.fcrepo.persistence.ocfl;
 
+
+import org.apache.jena.graph.Triple;
+import org.apache.jena.vocabulary.RDF;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -32,9 +37,13 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
+import static  org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_ROOT;
 import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.FEDORA_TO_OCFL_INDEX_FILE;
+
+import java.util.stream.Stream;
 
 /**
  * This class is responsible for initializing the repository on start-up.
@@ -53,6 +62,13 @@ public class RepositoryInitializer {
 
     @Inject
     private FedoraToOCFLObjectIndexUtil fedoraToOCFLObjectIndexUtil;
+
+    private static Stream<Triple> REPOSITORY_ROOT_TRIPLES = Stream.of(
+            new Triple(createURI(FEDORA_ID_PREFIX), RDF.type.asNode(), REPOSITORY_ROOT.asNode())
+    );
+
+    private static RdfStream REPOSITORY_ROOT_STREAM = new DefaultRdfStream(createURI(FEDORA_ID_PREFIX),
+            REPOSITORY_ROOT_TRIPLES);
 
     /**
      * Initializes the repository
@@ -75,7 +91,7 @@ public class RepositoryInitializer {
             } catch (PersistentItemNotFoundException e) {
                 LOGGER.info("Repository root ({}) not found. Creating...", FEDORA_ID_PREFIX);
                 final RdfSourceOperation operation = this.operationFactory.createBuilder(FEDORA_ID_PREFIX,
-                        BASIC_CONTAINER.getURI()).parentId(FEDORA_ID_PREFIX).build();
+                        BASIC_CONTAINER.getURI()).parentId(FEDORA_ID_PREFIX).triples(REPOSITORY_ROOT_STREAM).build();
 
                 session.persist(operation);
                 session.commit();

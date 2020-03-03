@@ -29,6 +29,7 @@ import static org.fcrepo.http.commons.session.TransactionProvider.ATOMIC_ID_HEAD
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_ROOT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -162,7 +163,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
             .forEach(key -> templatesMapBuilder.put(key, velocity.getTemplate(getTemplateLocation(key))));
 
         templatesMap = templatesMapBuilder
-            .put(REPOSITORY_NAMESPACE + "RepositoryRoot", velocity.getTemplate(getTemplateLocation("root")))
+            .put(REPOSITORY_ROOT.toString(), velocity.getTemplate(getTemplateLocation("root")))
             .put(REPOSITORY_NAMESPACE + "Binary", velocity.getTemplate(getTemplateLocation("binary")))
             .put(REPOSITORY_NAMESPACE + "Version", velocity.getTemplate(getTemplateLocation("resource")))
             .put(REPOSITORY_NAMESPACE + "Pairtree", velocity.getTemplate(getTemplateLocation("resource")))
