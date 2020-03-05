@@ -19,7 +19,6 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
 import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
-import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.STAGING_DIR;
 
 import java.io.File;
 
@@ -64,7 +63,7 @@ public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory
      * are not set, default directories will be created in java.io.tmpdir.
      */
     public DefaultOCFLObjectSessionFactory() {
-        this(STAGING_DIR);
+        this(new OCFLConstants().getStagingDir());
     }
 
     /**

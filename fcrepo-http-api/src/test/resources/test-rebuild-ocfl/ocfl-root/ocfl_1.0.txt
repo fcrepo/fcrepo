@@ -1,0 +1,853 @@
+Oxford Common File Layout Specification 0.3
+Candidate Recommendation 03 June 2019
+
+Latest editor's draft:
+    https://ocfl.io/draft/spec/
+Editors:
+    Andrew Hankinson (Bodleian Libraries, University of Oxford)
+    Neil Jefferies (Bodleian Libraries, University of Oxford)
+    Rosalyn Metz (Emory University)
+    Julian Morley (Stanford University)
+    Simeon Warner (Cornell University)
+    Andrew Woods (DuraSpace)
+Previous version:
+    https://ocfl.io/0.2/spec/
+Repository:
+    Github
+    Issues
+    Commits
+    Use Cases
+
+This document is licensed under a Creative Commons Attribution 4.0 License.
+Introduction
+
+This section is non-normative.
+
+This Oxford Common File Layout (OCFL) specification describes an application-independent approach to the storage of digital objects in a structured, transparent, and predictable manner. It is designed to promote long-term access and management of digital objects within digital repositories.
+Need §
+
+The OCFL initiative began as a discussion amongst digital repository practitioners to identify well-defined, common, and application-independent file management for a digital repository's persisted objects and represents a specification of the community’s collective recommendations addressing five primary requirements: completeness, parsability, versioning, robustness, and storage diversity.
+Completeness §
+
+The OCFL recommends storing metadata and the content it describes together so the OCFL object can be fully understood in the absence of original software. The OCFL does not make recommendations about what constitutes an object, nor does it assume what type of metadata is needed to fully understand the object, recognizing those decisions may differ from one repository to another. However, it is recommended that when making this decision, implementers consider what is necessary to rebuild the objects from the files stored.
+Parsability §
+
+One goal of the OCFL is to ensure objects remain fixed over time. This can be difficult as software and infrastructure change, and content is migrated. To combat this challenge, the OCFL ensures that both humans and machines can understand the layout and corresponding inventory regardless of the software or infrastructure used. This allows for humans to read the layout and corresponding inventory, and understand it without the use of machines. Additionally, if existing software were to become obsolete, the OCFL could easily be understood by a light weight application, even without the full feature repository that might have been used in the past.
+Versioning §
+
+Another need expressed by the community was the need to update and change objects, either the content itself or the metadata associated with the object. The OCFL relies heavily on the prior art in the [Moab] Design for Digital Object Versioning which utilizes forward deltas to track the history of the object. Utilizing this schema allows implementers of the OCFL to easily recreate past versions of an OCFL object. Like with objects, the OCFL remains silent on when versioning should occur recognizing this may differ from implementation to implementation.
+Robustness §
+
+The OCFL also fills the need for robustness against errors, corruption, and migration. The versioning schema ensures an OCFL object is robust enough to allow for the discovery of human errors. The fixity checking built into the OCFL via content addressable storage allows implementers to identify file corruption that might happen outside of normal human interactions. The OCFL eases content migrations by providing a technology agnostic method for verifying OCFL objects have remained fixed.
+Storage diversity §
+
+Finally, the community expressed a need to store content on a wide variety of storage technologies. With that in mind, the OCFL was written with an eye toward various storage infrastructures including cloud object stores.
+Note §
+
+This normative specification describes the nature of an OCFL Object (the "object-at-rest") and the arrangement of OCFL Objects under an OCFL Storage Root. A set of recommendations for how OCFL Objects should be acted upon (the "object-in-motion") can be found in the [OCFL-Implementation-Notes]. The OCFL editorial group recommends reading both the specification and the implementation notes in order to understand the full scope of the OCFL.
+
+This specification is designed to operate on storage systems that employ a hierarchical metaphor for presenting data to users. On traditional disk-based storage this may take the form of files and directories, and this is the terminology we use in this specification since it is widely known. However, it may equally apply to object stores, where namespaces, containers, and objects present a similar organization hierarchy to users.
+Status of This Document
+
+This document is draft of a potential specification. It has no official standing of any kind and does not represent the support or consensus of any standards organisation.
+Table of Contents
+
+    1. Conformance
+    2. Terminology
+    3. OCFL Object
+        3.1 Object Structure
+        3.2 Object Conformance Declaration
+        3.3 Version Directories
+        3.4 Digests
+        3.5 Inventory
+            3.5.1 Basic Structure
+            3.5.2 Manifest
+            3.5.3 Versions
+            3.5.4 Fixity
+        3.6 Inventory Digest
+        3.7 Version Inventory and Inventory Digest
+        3.8 Logs Directory
+    4. OCFL Storage Root
+        4.1 Root Structure
+        4.2 Root Conformance Declaration
+        4.3 Storage Hierarchies
+        4.4 Extensions
+        4.5 Filesystem features
+    5. Examples
+        5.1 Minimal OCFL Object
+        5.2 Versioned OCFL Object
+        5.3 Different Logical and Content Paths in an OCFL Object
+        5.4 BagIt in an OCFL Object
+        5.5 Moab in an OCFL Object
+    A. References
+        A.1 Normative references
+        A.2 Informative references
+
+1. Conformance §
+
+As well as sections marked as non-normative, all authoring guidelines, diagrams, examples, and notes in this specification are non-normative. Everything else in this specification is normative.
+
+The key words MAY, MUST, MUST NOT, SHOULD, and SHOULD NOT are to be interpreted as described in [RFC2119].
+2. Terminology §
+
+Content Path:
+    The file path of a file on disk or in an object store, relative to the OCFL Object Root. Content paths are used in the Manifest within an Inventory.
+Digest:
+    An algorithmic characterization of the contents of a file conforming to a standard digest algorithm.
+Inventory:
+    A file, expressed in JSON, that tracks the history and current state of an OCFL Object.
+Logical Path:
+    A path that represents a file's location in the logical state of an object. Logical paths are used in conjunction with a digest to represent the file name for a given bitstream at a given version.
+Logical State:
+    A grouping of logical paths tied to their corresponding bitstreams that reflect the state of the object content for a given version.
+Logs Directory:
+    A directory for storing information about the content (e.g., actions performed) that is not part of the content itself.
+Manifest
+    A section of the Inventory listing all files and their digests within an OCFL Object.
+OCFL Object:
+    A group of one or more content files and administrative information, that together have a unique identifier. The object may contain a sequence of versions of the files that represent the evolution of the object's contents.
+OCFL Object Root:
+    The base directory of an OCFL Object, identified by a [NAMASTE] file "0=ocfl_object_1.0".
+OCFL Storage Root:
+    A base directory used to store OCFL Objects, identified by a [NAMASTE] file "0=ocfl_1.0".
+OCFL Version:
+    The state of an OCFL Object's content which is constructed using the incremental changes recorded in the sequence of corresponding and prior version directories.
+
+3. OCFL Object §
+
+An OCFL Object is a group of one or more content files and administrative information, that are together identified by a URI. The object may contain a sequence of versions of the files that represent the evolution of the object's contents.
+
+A file is defined as a content bitstream that can be stored and transmitted. Directories (also called "folders") allow for the organization of files into tree-like hierarchies. The content of an OCFL Object is the files and the directories they are organized in that are stored within the hierarchy layout described in this specification.
+
+An OCFL Object includes administrative information that identifies a directory as an OCFL Object, and also provides a means of tracking changes to the contents of the object over time.
+
+An OCFL Object is therefore:
+
+    A conceptual gathering of all files (data and metadata), the directories they are organized in, and their changes over time which together form the digital representation of an entity that need to be managed, in preservation terms, as a single coherent whole (i.e., content); and
+    A file and directory layout and administrative information on a storage medium that provides a defined structure for the storage of this content, and through which these files and their changes may be understood (i.e., structure).
+
+A key goal of the OCFL is the rebuildability of a repository from an OCFL Storage Root without additional information resources. Consequently, a key implementation consideration should be to ensure that OCFL Objects contain all the data and metadata required to achieve this. With reference to the [OAIS] model, this would include all the descriptive, administrative, structural, representation and preservation metadata relevant to the object.
+
+A central feature of the OCFL specification is support for versioning. This recognizes that digital objects will change over time, through new requirements, fixes, updates, or format shifts. The specification takes no position on what constitutes a version or a versionable action, but it is recommended that implementers have a clear position on this within their local storage policies.
+3.1 Object Structure §
+
+The OCFL Object structure organizes content files and administrative information in order to support content storage and object validation. The structure for an object with one version is shown in the following figure:
+
+[object_root]
+    ├── 0=ocfl_object_1.0
+    ├── inventory.json
+    ├── inventory.json.sha512
+    └── v1
+        ├── inventory.json
+        ├── inventory.json.sha512
+        └── content
+               └── ... content files ...
+
+3.2 Object Conformance Declaration §
+
+The version declaration MUST be formatted according to the [NAMASTE] specification. It MUST be a file in the base directory of the OCFL Object Root giving the OCFL version in the filename. The filename MUST conform to the pattern T=dvalue, where T MUST be 0, and dvalue MUST be ocfl_object_, followed by the OCFL specification version number. The text contents of the file MUST be the same as dvalue, followed by a newline (\n).
+3.3 Version Directories §
+
+OCFL Object content MUST be stored as a sequence of one or more versions. Each object version is stored in a version directory under the object root. The sequence of version numbers is the sequence of positive, base-ten integers: 1, 2, 3, etc., and the version directory name is constructed by adding the prefix v. The version number sequence MUST start at 1 and MUST be continuous without missing integers.
+
+Implementations SHOULD use version directory names constructed without zero-padding the version number, ie. v1, v2, v3, etc..
+
+For compatibility with existing filesystem conventions, implementations MAY use zero-padded version directory numbers, with the following restriction: If zero-padded version directory numbers are used then they MUST start with the prefix v and then a zero. For example, in an implementation that uses five digits for version directory names then v00001 to v09999 are allowed, v10000 is not allowed.
+
+The first version of an object defines the naming convention for all version directories for the object. All version directories of an object MUST use the same naming convention: either a non-padded version directory number, or a zero-padded version directory number of consistent length. Operations that add a new version to an object MUST follow the version directory naming convention established by earlier versions. In all cases, references to files inside version directories from inventory files MUST use the actual version directory names.
+
+Version directories MUST contain a designated content sub-directory if the version contains files to be preserved, and SHOULD NOT contain this sub-directory otherwise. The name of this designated sub-directory MAY be defined in the inventory file using the key contentDirectory with the value being the chosen sub-directory name as a string, relative to the version directory. The contentDirectory value MUST NOT contain the forward slash (/) path separator. If the key contentDirectory is set, it MUST be set in the first version of the object and MUST NOT change between versions of the same object.
+
+There MUST be no other files as children of a version directory, other than an inventory file and a inventory digest. The version directory SHOULD NOT contain any directories other than the designated content sub-directory.
+
+If the key contentDirectory is not present in the inventory file then the name of the designated content sub-directory MUST be content. OCFL-compliant tools (including any validators) MUST ignore all directories in the object version directory except for the designated content directory.
+
+Every file within a version's content directory MUST be referenced in the manifest section of the inventory. There MUST NOT be empty directories within a version's content directory. A directory that would otherwise be empty MAY be maintained by creating a file within it named according to local conventions, for example by making an empty .keep file.
+3.4 Digests §
+
+Digests play two roles in an OCFL Object. The first is that digests allow for content-addressable reference to files within the OCFL Object. That is, the connection between a file's content path on physical storage and its logical path in a version of the object's content is made with a digest of its contents, rather than its filename. This use of the content digest facilitates de-duplication of files with the same content within an object, such as files that are unchanged from one version to the next. The second role that digests play is provide for fixity checks to determine whether a file has become corrupt, through hardware degradation or accident for example.
+
+For content-addressing, OCFL Objects SHOULD use sha512. The choice of the sha512 digest algorithm as default recognizes that it has no known collision vulnerabilities, is less computationally intensive to compute than sha256, [Stop-Using-SHA-256], and multiple implementations are available.
+
+For storage of additional fixity values, and perhaps to support legacy content migration, implementers MAY choose from the following list of digest algorithms:
+Digest Algorithm 	Note
+md5 	Insecure. Use only for legacy fixity values. MD5 algorithm and hex encoding defined by [RFC1321]. For example, the md5 digest of a zero-length bitstream is d41d8cd98f00b204e9800998ecf8427e.
+sha1 	Insecure. Use only for legacy fixity values. SHA-1 algorithm defined by [FIPS-180-4] and MUST be encoded using hex (base16) encoding [RFC4648]. For example, the sha1 digest of a zero-length bitstream is da39a3ee5e6b4b0d3255bfef95601890afd80709.
+sha256 	Non-truncated form only; note performance implications. SHA-256 algorithm defined by [FIPS-180-4] and MUST be encoded using hex (base16) encoding [RFC4648]. For example, the sha256 digest of a zero-length bitstream starts e3b0c44298fc1c149afbf4c8996fb92427ae41e4... (64 hex digits long).
+sha512 	Default choice. Non-truncated form only. SHA-512 algorithm defined by [FIPS-180-4] and MUST be encoded using hex (base16) encoding [RFC4648]. For example, the sha512 digest of a zero-length bitstream starts cf83e1357eefb8bdf1542850d66d8007d620e405... (128 hex digits long).
+blake2b 	Full-length form only, using the 2B variant (64 bit) as defined by [RFC7693]. MUST be encoded using hex (base16) encoding [RFC4648]. For example, the blake2b digest of a zero-length bitstream starts 786a02f742015903c6c6fd852552d272912f4740... (128 hex digits long).
+
+An OCFL Inventory MAY contain a fixity section that can store one or more blocks containing fixity values using multiple digest algorithms. See the section on fixity below for further details.
+
+    Non-normative note: Implementers may also store copies of their file digests in a system external to their OCFL Object stores at the point of ingest, to further safeguard against the possibility of malicious manipulation of file contents and digests.
+
+    Implementers should be aware that base16 digests are case insensitive. Different tools will generate digests in uppercase or lowercase, and this may lead to case differences between references to a digest and the digest itself within the inventory. If string-based methods are used to work with digests and inventories (as is the case in most common JSON libraries) then extra care must be taken to ensure case-insensitive comparisons are being made.
+
+3.5 Inventory §
+
+An OCFL Object Inventory MUST follow the [JSON] structure described in this section and MUST be named inventory.json. The order of entries in both the [JSON] objects and arrays used in inventory files has no significance.
+
+The forward slash (/) path separator MUST be used in content and logical paths in the manifest, fixity, and state blocks within the inventory. Implementations that target systems using other separators will need to translate paths appropriately.
+
+    Non-normative note: A [JSON-Schema] for validating OCFL Object Inventory files is provided at inventory_schema.json.
+
+3.5.1 Basic Structure §
+
+An OCFL Object Inventory MUST include the following keys:
+
+id
+    A unique identifier for the OCFL Object. This MUST be unique in the local context, and SHOULD be a URI [RFC3986]. There is no expectation that a URI used is resolvable. For example, URNs [RFC8141] MAY be used.
+type
+    A type for the inventory JSON object that also serves to document the OCFL specification version that the inventory complies with. This MUST be the URI of the inventory section of the specification, https://ocfl.io/1.0/spec/#inventory.
+digestAlgorithm
+    The digest algorithm used for calculating digests within the OCFL Object. This SHOULD be sha512, however other values are permitted. See the section on Digests for more information.
+head
+    The version directory name of the most recent version of the object. This MUST be the version directory name with the highest version number.
+
+There MAY be the following key:
+
+contentDirectory
+    The name of the designated content directory within the version directories. If not specified then the content directory name is content.
+
+In addition to these keys, there MUST be two other blocks present, manifest and versions, which are discussed in the next two sections.
+3.5.2 Manifest §
+
+The value of the manifest key is a JSON object, with keys corresponding to the digests of every content file in all versions of the OCFL Object. The value for each key is an array containing the content paths of files in the OCFL Object that have content with the given digest. Content paths within a manifest block MUST be relative to the OCFL Object Root.
+
+    Non-normative note: If only one file is stored in the OCFL Object for each digest, fully de-duplicating the content, then there will be only one content path for each digest. There may, however, be multiple logical paths for a given digest if the content was not entirely de-duplicated when constructing the OCFL Object.
+
+    An example manifest object for three content paths, all in version 1, is shown below:
+
+      "manifest": {
+        "7dcc35...c31": [ "v1/content/foo/bar.xml" ],
+        "cf83e1...a3e": [ "v1/content/empty.txt" ],
+        "ffccf6...62e": [ "v1/content/image.tiff" ]
+      }
+
+3.5.3 Versions §
+
+An OCFL Object Inventory MUST include a block for storing versions. This block MUST have the key of versions within the inventory, and it MUST be a JSON object. The keys of this object MUST correspond to the names of the version directories used. Each value MUST be another JSON object that characterizes the version, as described in the 3.5.3.1 Version section.
+3.5.3.1 Version §
+
+A JSON object to describe one OCFL Version, which MUST include the following keys:
+
+created
+    The value of this key is the datetime of creation of this version. It MUST be expressed in [ISO8601], and SHOULD include a timezone value or UTC. It SHOULD also be granular to the second level.
+state
+
+    The value of this key is a JSON object, containing a list of keys and values corresponding to the logical state of the object at that version. The keys of this JSON object are digest values, each of which MUST correspond to an entry in the manifest of the inventory. The value for each key is an array containing logical path names of files in the OCFL Object state that have content with the given digest.
+
+        Non-normative note: The logical state of the object uses content-addressing to map logical paths to their bitstreams, as expressed in the manifest section of the inventory. Notably, the version state provides de-duplication of content within the OCFL Object by mapping multiple logical paths with the same content to the same digest in the manifest. See [OCFL-Implementation-Notes].
+
+        An example state block is shown below:
+
+          "state": {
+            "4d27c8...b53": [ "foo/bar.xml" ],
+            "cf83e1...a3e": [ "empty.txt", "empty2.txt" ]
+          }
+
+        This state block describes an object with 3 files, two of which have the same content (empty.txt and empty2.txt), and one of which is in a sub-directory (bar.xml). The logical state shown as a tree is thus:
+
+            ├── empty.txt
+            ├── empty2.txt
+            └── foo
+                └── bar.xml
+
+The JSON object describing an OCFL Version, SHOULD include the following keys:
+
+message
+    The value of this key is freeform text, used to record the rationale for creating this version.
+user
+    The value of this key is a JSON object intended to identify the user or agent that created the current OCFL Version. The value of the user key MUST contain a user name key, name and SHOULD contain an address key, address. The name value is any readable name of the user, e.g., a proper name, user ID, agent ID. The address value is either a mailto URI [RFC6068] with the e-mail address of the user or a URL to a personal identifier, e.g., an ORCID iD.
+
+3.5.4 Fixity §
+
+An OCFL Object inventory MAY include a block for storing fixity checks. This block MUST have the key of fixity within the inventory.
+
+The fixity block MUST contain keys corresponding to digest algorithms listed in the Digests section. The value of each key MUST follow the structure of the manifest block; that is, a key corresponding to the digest value, and an array of content paths that match that digest.
+
+    An example fixity block with md5 and sha1 digests is shown below.
+
+      "fixity": {
+        "md5": {
+          "184f84e28cbe75e050e9c25ea7f2e939": [ "v1/content/foo/bar.xml" ],
+          "2673a7b11a70bc7ff960ad8127b4adeb": [ "v2/content/foo/bar.xml" ],
+          "c289c8ccd4bab6e385f5afdd89b5bda2": [ "v1/content/image.tiff" ],
+          "d41d8cd98f00b204e9800998ecf8427e": [ "v1/content/empty.txt" ]
+        },
+        "sha1": {
+          "66709b068a2faead97113559db78ccd44712cbf2": [ "v1/content/foo/bar.xml" ],
+          "a6357c99ecc5752931e133227581e914968f3b9c": [ "v2/content/foo/bar.xml" ],
+          "b9c7ccc6154974288132b63c15db8d2750716b49": [ "v1/content/image.tiff" ],
+          "da39a3ee5e6b4b0d3255bfef95601890afd80709": [ "v1/content/empty.txt" ]
+        }
+      }
+
+3.6 Inventory Digest §
+
+Every occurrence of an inventory file MUST have an accompanying sidecar file stating its digest. This sidecar file must be of the form inventory.json.ALGORITHM, where ALGORITHM is the chosen digest algorithm for the object. An example might be inventory.json.sha512.
+
+The digest sidecar file MUST contain the digest of the inventory file. This MUST follow the format:
+
+DIGEST inventory.json
+
+One or more whitespace characters (spaces or tabs) must separate DIGEST from the string inventory.json; that is, the name of the inventory file in the same directory.
+
+The digest of the inventory MUST be computed only after all changes to the inventory have been made, so this sidecar file SHOULD be created as the last step in the versioning process.
+3.7 Version Inventory and Inventory Digest §
+
+Every OCFL Object MUST have an inventory file within the OCFL Object Root, corresponding to the state of the OCFL Object at the current version. Additionally, every version directory SHOULD include an inventory file that is an Inventory of all content for versions up to and including that particular version. Where an OCFL Object contains inventory.json in version directories, the inventory file in the OCFL Object Root MUST be the same as the file in the most recent version. Every inventory file MUST have a corresponding Inventory Digest.
+
+    Non-normative note: Storing an inventory for every version provides redundancy for this critical information in a way that is compatible with storage strategies that have immutable version directories.
+
+3.8 Logs Directory §
+
+The base directory of an OCFL Object MAY contain a directory named logs, which MAY be empty. Implementers SHOULD use this for storing files that contain a record of actions taken on the object. Since these logs may be subject to local standards requirements, the format of these logs is considered out-of-scope for the OCFL Object. Clients operating on the object MAY log actions here that are not otherwise captured.
+
+    Non-normative note: The purpose of the logs directory is to provide implementers with a location for storing local information about actions to the OCFL Object's content that is not part of the content itself.
+
+    As an example, implementers may have different local requirements to store audit information for their content. Some may wish to store a log entry indicating that an audit was conducted, and nothing was wrong, while others may wish to only store a log entry if an intervention was required.
+
+4. OCFL Storage Root §
+
+An OCFL Storage Root is the base directory of an OCFL storage layout.
+4.1 Root Structure §
+
+An OCFL Storage Root MUST contain a Root Conformance Declaration identifying it as such.
+
+An OCFL Storage Root MAY contain other files. These might include a human-readable copy of the OCFL specification to make the storage root self-documenting, or files used by storage root extensions.
+
+An OCFL Storage Root MAY contain a JSON file named ocfl_layout.json to describe the arrangement of directories and OCFL objects under the storage root. If present, this JSON document MUST include the following two keys in the root JSON object:
+
+    uri - A URI identifying the precise arrangement of directories and OCFL objects under the storage root, i.e. how OCFL object identifiers are mapped to directory hierarchies. If a URL is used then it SHOULD resolve to a detailed specification of the arrangement.
+    description - A human readable description of the arrangement of directories and OCFL objects under the storage root.
+
+An OCFL Storage Root MAY contain a directory named deposit, which MAY be empty. Implementations MAY use this directory for assembling new or updated content. Clients performing any other operation, or validating a storage root, MUST ignore the deposit directory if present.
+
+Except for a deposit directory, sub-directories within an OCFL Storage Root MUST NOT contain files that are not part of an OCFL Object. Empty directories MUST NOT appear within a storage root.
+
+Although implementations may require multiple OCFL Storage Roots—that is, several logical or physical volumes, or multiple "buckets" in an object store—each OCFL Storage Root MUST be independent.
+
+The following example OCFL Storage Root represents the minimal set of files and folders:
+
+[storage_root]
+    ├── 0=ocfl_1.0
+    ├── ocfl_1.0.txt (human-readable text of the OCFL specification; optional)
+    └── ocfl_layout.json (description of storage hierarchy layout; optional)
+
+
+4.2 Root Conformance Declaration §
+
+The OCFL version declaration MUST be formatted according to the [NAMASTE] specification. It MUST be a file in the base directory of the OCFL Storage Root giving the OCFL version in the filename. The filename MUST conform to the pattern T=dvalue, where T MUST be 0, and dvalue MUST be ocfl_, followed by the OCFL specification version number. The text contents of the file MUST be the same as dvalue, followed by a newline (\n).
+
+Root conformance indicates that the OCFL Storage Root conforms to this section (i.e. the OCFL Storage Root section) of the specification. OCFL Objects within the OCFL Storage Root also include a conformance declaration which MUST indicate OCFL Object conformance to the same or earlier version of the specification.
+4.3 Storage Hierarchies §
+
+OCFL Object Roots MUST be stored either as the terminal resource at the end of a directory storage hierarchy or as direct children of a containing OCFL Storage Root.
+
+A common practice is to use a unique identifier scheme to compose this storage hierarchy, typically arranged according to some form of the [PairTree] specification. Irrespective of the pattern chosen for the storage hierarchies, the following restrictions apply:
+
+    Storage hierarchies MUST NOT include files within intermediate directories
+    Storage hierarchies MUST be terminated by OCFL Object Roots
+    Storage hierarchies within the same OCFL Storage Root SHOULD use just one layout pattern
+    Storage hierarchies within the same OCFL Storage Root SHOULD consistently use either a directory hierarchy of OCFL Objects or top-level OCFL Objects
+
+4.4 Extensions §
+
+The behavior of the storage root may be extended to support features from other specifications. An OCFL validator MUST ignore any files in the storage root it does not understand. Additional files MUST NOT appear in other directories under the storage root.
+
+    Non-normative note: Storage extensions can be used to support additional features, such as providing the storage hierarchy disposition when pairtree is in use, or additional human-readable text about the nature of the storage root.
+
+4.5 Filesystem features §
+
+In order to maximize the compatibility of the OCFL with different filesystems, and thus improve the portability of OCFL Objects between different systems, some restrictions on the use of certain filesystem features are necessary. If the preservation of non-OCFL-compliant features is required then the content MUST be wrapped in a suitable disk or filesystem image format which OCFL can treat as a regular file.
+
+    Filesystem metadata (e.g. permissions, access, and creation times) are not considered portable between filesystems or preservable through file transfer operations. These attributes also cannot be validated in terms of fixity in a consistent manner. As such, the OCFL does not support the portability of these attributes.
+    Hard and soft (symbolic) links are not portable and MUST NOT be used within OCFL Storage hierachies. A common use case for links is storage deduplication. OCFL inventories provide a portable method of achieving the same effect by using digests to address content.
+    File paths and filenames in the OCFL are case sensitive. Filesystems MUST preserve the case of OCFL filepaths and filenames.
+    Transparent filesystem features such as compression and encryption should be effectively invisible to OCFL operations. Consequently, they should not be expected to be portable.
+
+5. Examples §
+
+This section is non-normative.
+5.1 Minimal OCFL Object §
+
+The following example OCFL Object has content that is a single file (file.txt), and just one version (v1):
+
+[object root]
+    ├── 0=ocfl_object_1.0
+    ├── inventory.json
+    ├── inventory.json.sha512
+    └── v1
+        ├── inventory.json
+        ├── inventory.json.sha512
+        └── content
+            └── file.txt
+
+The inventory for this OCFL Object, the same both at the top-level and in the v1 directory, might be:
+
+{
+  "digestAlgorithm": "sha512",
+  "head": "v1",
+  "id": "http://example.org/minimal",
+  "manifest": {
+    "7545b8...f67": [ "v1/content/file.txt" ]
+  },
+  "type": "https://ocfl.io/1.0/spec/#inventory",
+  "versions": {
+    "v1": {
+      "created": "2018-10-02T12:00:00Z",
+      "message": "One file",
+      "state": {
+        "7545b8...f67": [ "file.txt" ]
+      },
+      "user": {
+        "address": "alice@example.org",
+        "name": "Alice"
+      }
+    }
+  }
+}
+
+5.2 Versioned OCFL Object §
+
+The following example OCFL Object has three versions:
+
+[object root]
+    ├── 0=ocfl_object_1.0
+    ├── inventory.json
+    ├── inventory.json.sha512
+    ├── v1
+    │   ├── inventory.json
+    │   ├── inventory.json.sha512
+    │   └── content
+    │       ├── empty.txt
+    │       ├── foo
+    │       │   └── bar.xml
+    │       └── image.tiff
+    ├── v2
+    │   ├── inventory.json
+    │   ├── inventory.json.sha512
+    │   └── content
+    │       └── foo
+    │           └── bar.xml
+    └── v3
+        ├── inventory.json
+        └── inventory.json.sha512
+
+
+In v1 there are three files, empty.txt, foo/bar.xml, and image.tiff. In v2 the content of foo/bar.xml is changed, empty2.txt is added with the same content as empty.txt, and image.tiff is removed. In v3 the file empty.txt is removed, and image.tiff is reinstated. As a result of forward-delta versioning, the object tree above shows only new content added in each version. The inventory shown below details the other changes, includes additional fixity information using md5 and sha1 digest algorithms, and minimal metadata for each version.
+
+{
+  "digestAlgorithm": "sha512",
+  "fixity": {
+    "md5": {
+      "184f84e28cbe75e050e9c25ea7f2e939": [ "v1/content/foo/bar.xml" ],
+      "2673a7b11a70bc7ff960ad8127b4adeb": [ "v2/content/foo/bar.xml" ],
+      "c289c8ccd4bab6e385f5afdd89b5bda2": [ "v1/content/image.tiff" ],
+      "d41d8cd98f00b204e9800998ecf8427e": [ "v1/content/empty.txt" ]
+    },
+    "sha1": {
+      "66709b068a2faead97113559db78ccd44712cbf2": [ "v1/content/foo/bar.xml" ],
+      "a6357c99ecc5752931e133227581e914968f3b9c": [ "v2/content/foo/bar.xml" ],
+      "b9c7ccc6154974288132b63c15db8d2750716b49": [ "v1/content/image.tiff" ],
+      "da39a3ee5e6b4b0d3255bfef95601890afd80709": [ "v1/content/empty.txt" ]
+    }
+  },
+  "head": "v3",
+  "id": "ark:/12345/bcd987",
+  "manifest": {
+    "4d27c8...b53": [ "v2/content/foo/bar.xml" ],
+    "7dcc35...c31": [ "v1/content/foo/bar.xml" ],
+    "cf83e1...a3e": [ "v1/content/empty.txt" ],
+    "ffccf6...62e": [ "v1/content/image.tiff" ]
+  },
+  "type": "https://ocfl.io/1.0/spec/#inventory",
+  "versions": {
+    "v1": {
+      "created": "2018-01-01T01:01:01Z",
+      "message": "Initial import",
+      "state": {
+        "7dcc35...c31": [ "foo/bar.xml" ],
+        "cf83e1...a3e": [ "empty.txt" ],
+        "ffccf6...62e": [ "image.tiff" ]
+      },
+      "user": {
+        "address": "alice@example.com",
+        "name": "Alice"
+      }
+    },
+    "v2": {
+      "created": "2018-02-02T02:02:02Z",
+      "message": "Fix bar.xml, remove image.tiff, add empty2.txt",
+      "state": {
+        "4d27c8...b53": [ "foo/bar.xml" ],
+        "cf83e1...a3e": [ "empty.txt", "empty2.txt" ]
+      },
+      "user": {
+        "address": "bob@example.com",
+        "name": "Bob"
+      }
+    },
+    "v3": {
+      "created": "2018-03-03T03:03:03Z",
+      "message": "Reinstate image.tiff, delete empty.txt",
+      "state": {
+        "4d27c8...b53": [ "foo/bar.xml" ],
+        "cf83e1...a3e": [ "empty2.txt" ],
+        "ffccf6...62e": [ "image.tiff" ]
+      },
+      "user": {
+        "address": "cecilia@example.com",
+        "name": "Cecilia"
+      }
+    }
+  }
+}
+
+5.3 Different Logical and Content Paths in an OCFL Object §
+
+The following example OCFL Object inventory shows how content paths may differ from logical paths. The example object has just one version, v1, which has two files with logical paths a file.wxy and another file.xyz as shown in the state block. The corresponding content paths are v1/content/3bacb119a98a15c5 and v1/content/9f2bab8ef869947d respectively, as shown in the manifest. Except for location within the appropriate version directory, v1/content in this example, the OCFL specification does not constrain the choice of content paths used when creating or updating an OCFL object. The choice might depend on particular limitations of, or optimizations for, the target storage system, or on portability considerations. Any compliant implementation will be able to recover version state with the original logical paths.
+
+{
+  "digestAlgorithm": "sha512",
+  "head": "v1",
+  "id": "http://example.org/diff-paths",
+  "manifest": {
+    "7545b8...f67": [ "v1/content/3bacb119a98a15c5" ],
+    "af318d...3cd": [ "v1/content/9f2bab8ef869947d" ]
+  },
+  "type": "https://ocfl.io/1.0/spec/#inventory",
+  "versions": {
+    "v1": {
+      "created": "2019-03-14T20:31:00Z",
+      "state": {
+        "7545b8...f67": [ "a file.wxy" ],
+        "af318d...3cd": [ "another file.xyz" ]
+      }
+    }
+  }
+}
+
+5.4 BagIt in an OCFL Object §
+
+[BagIt] is a common file packaging specification, but unlike the OCFL it does not provide a mechanism for content versioning. Using the OCFL it is possible to store a BagIt structure with content versioning, such that when the object state is resolved, it creates a valid BagIt 'bag'. This example will illustrate one way this can be accomplished, using the example of a basic bag given in the BagIt specification.
+
+[object root]
+    ├── 0=ocfl_object_1.0
+    ├── inventory.json
+    ├── inventory.json.sha512
+    └── v1
+        ├── inventory.json
+        ├── inventory.json.sha512
+        └── content
+            └── myfirstbag
+                ├── bagit.txt
+                ├── data
+                │   └── 27613-h
+                │       └── images
+                │           ├── q172.png
+                │           └── q172.txt
+                └── manifest-md5.txt
+
+If, for example, a new directory were added in a subsequent version, the OCFL Object would look like this:
+
+[object root]
+    ├── 0=ocfl_object_1.0
+    ├── inventory.json
+    ├── inventory.json.sha512
+    ├── v1
+    │   ├── inventory.json
+    │   ├── inventory.json.sha512
+    │   └── content
+    │       └── myfirstbag
+    │           ├── bagit.txt
+    │           ├── data
+    │           │   └── 27613-h
+    │           │       └── images
+    │           │           ├── q172.png
+    │           │           └── q172.txt
+    │           └── manifest-md5.txt
+    └── v2
+        ├── inventory.json
+        ├── inventory.json.sha512
+        └── content
+            └── myfirstbag
+                ├── data
+                │   └── 27614-h
+                │       └── images
+                │           ├── q173.png
+                │           └── q173.txt
+                └── manifest-md5.txt
+
+The state of the object at version 2 would be the following BagIt object:
+
+myfirstbag
+    ├── bagit.txt
+    ├── data
+    │   ├── 27613-h
+    │   │   └── images
+    │   │       ├── q172.png
+    │   │       └── q172.txt
+    │   └── 27614-h
+    │       └── images
+    │           ├── q173.png
+    │           └── q173.txt
+    └── manifest-md5.txt
+
+The OCFL Inventory for this object would be as follows:
+
+{
+  "digestAlgorithm": "sha512",
+  "head": "v2",
+  "id": "urn:uri:example.com/myfirstbag",
+  "manifest": {
+    "cf83e1...a3e": [ "v1/content/myfirstbag/bagit.txt" ],
+    "f15428...83f": [ "v1/content/myfirstbag/manifest-md5.txt" ],
+    "85f2b0...007": [ "v1/content/myfirstbag/data/27613-h/images/q172.png" ],
+    "d66d80...8bd": [ "v1/content/myfirstbag/data/27613-h/images/q172.txt" ],
+    "2b0ff8...620": [ "v2/content/myfirstbag/manifest-md5.txt" ],
+    "921d36...877": [ "v2/content/myfirstbag/data/27614-h/images/q173.png" ],
+    "b8bdf1...927": [ "v2/content/myfirstbag/data/27614-h/images/q173.txt" ]
+  },
+  "type": "https://ocfl.io/1.0/spec/#inventory",
+  "versions": {
+    "v1": {
+      "created": "2018-10-09T11:20:29.209164Z",
+      "message": "Initial Ingest",
+      "state": {
+        "cf83e1...a3e": [ "myfirstbag/bagit.txt" ],
+        "85f2b0...007": [ "myfirstbag/data/27613-h/images/q172.png" ],
+        "d66d80...8bd": [ "myfirstbag/data/27613-h/images/q172.txt" ],
+        "f15428...83f": [ "myfirstbag/manifest-md5.txt" ]
+      },
+      "user": {
+        "address": "someone@example.org",
+        "name": "Some One"
+      }
+    },
+    "v2": {
+      "created": "2018-10-31T11:20:29.209164Z",
+      "message": "Added new images",
+      "state": {
+        "cf83e1...a3e": [ "myfirstbag/bagit.txt" ],
+        "85f2b0...007": [ "myfirstbag/data/27613-h/images/q172.png" ],
+        "d66d80...8bd": [ "myfirstbag/data/27613-h/images/q172.txt" ],
+        "2b0ff8...620": [ "myfirstbag/manifest-md5.txt" ],
+        "921d36...877": [ "myfirstbag/data/27614-h/images/q173.png" ],
+        "b8bdf1...927": [ "myfirstbag/data/27614-h/images/q173.txt" ]
+      },
+      "user": {
+        "address": "somebody-else@example.org",
+        "name": "Somebody Else"
+      }
+    }
+  }
+}
+
+5.5 Moab in an OCFL Object §
+
+[Moab] is an archive information package format developed and used by Stanford University. Many of the ideas in Moab have been refined by the OCFL, and the OCFL is designed to give institutions currently using Moab an easy path to adoption.
+
+Converting content preserved in a Moab object in a way that does not compromise existing Moab access patterns whilst allowing for the eventual use of OCFL-native workflows requires a Moab to OCFL conversion tool. This tool uses the Moab-versioning gem to extract deltas and digests of the Moab data directory for each Moab version and translate those into version state blocks in an OCFL inventory file, which would be placed in the root directory of the Moab object. The content of the data directory in the Moab version directories (and thus, the bitstreams that Moab is preserving) is tracked by OCFL, via the contentDirectory value. The contents of the Moab manifests directories are not tracked, as the intention is not to encapsulate a Moab object inside an OCFL object, but rather to migrate Moab's preserved bitstreams into an OCFL object without compromising legacy access patterns.
+
+During the transitionary period the OCFL inventory file exists only in the root of the Moab object. Once OCFL-native object creation workflows have been completed, future versions of that object will be fully OCFL compliant - new versions will no longer have a manifests directory and will contain an OCFL inventory file. At this stage OCFL tools will be able to access all versions of the content originally preserved by Moab.
+
+Consider the following sample Moab object:
+
+[object root]
+    └── bj102hs9687
+        ├── v0001
+        │     ├── data
+        │     │   ├── content
+        │     │   │   ├── eric-smith-dissertation-augmented.pdf
+        │     │   │   └── eric-smith-dissertation.pdf
+        │     │   └── metadata
+        │     │       ├── contentMetadata.xml
+        │     │       ├── descMetadata.xml
+        │     │       ├── identityMetadata.xml
+        │     │       ├── provenanceMetadata.xml
+        │     │       ├── relationshipMetadata.xml
+        │     │       ├── rightsMetadata.xml
+        │     │       ├── technicalMetadata.xml
+        │     │       └── versionMetadata.xml
+        │     └── manifests
+        │         ├── fileInventoryDifference.xml
+        │         ├── manifestInventory.xml
+        │         ├── signatureCatalog.xml
+        │         ├── versionAdditions.xml
+        │         └── versionInventory.xml
+        ├── v0002
+        │     ├── data
+        │     │   └── metadata
+        │     │       ├── contentMetadata.xml
+        │     │       ├── embargoMetadata.xml
+        │     │       ├── events.xml
+        │     │       ├── identityMetadata.xml
+        │     │       ├── provenanceMetadata.xml
+        │     │       ├── relationshipMetadata.xml
+        │     │       ├── rightsMetadata.xml
+        │     │       ├── versionMetadata.xml
+        │     │       └── workflows.xml
+        │     └── manifests
+        │         ├── fileInventoryDifference.xml
+        │         ├── manifestInventory.xml
+        │         ├── signatureCatalog.xml
+        │         ├── versionAdditions.xml
+        │         └── versionInventory.xml
+        └── v0003
+              ├── data
+              │   └── metadata
+              │       ├── contentMetadata.xml
+              │       ├── descMetadata.xml
+              │       ├── embargoMetadata.xml
+              │       ├── events.xml
+              │       ├── identityMetadata.xml
+              │       ├── provenanceMetadata.xml
+              │       ├── rightsMetadata.xml
+              │       ├── technicalMetadata.xml
+              │       ├── versionMetadata.xml
+              │       └── workflows.xml
+              └── manifests
+                  ├── fileInventoryDifference.xml
+                  ├── manifestInventory.xml
+                  ├── signatureCatalog.xml
+                  ├── versionAdditions.xml
+                  └── versionInventory.xml
+
+An OCFL inventory that tracks the data directory would include a manifest comprised as follows. Note the absence of the manifests directory, as we are not encapsulating the Moab object in an OCFL object, and the presence of contentDirectory to specify data as the preserved content directory:
+
+{
+  "digestAlgorithm": "sha512",
+  "head": "v3",
+  "id": "druid:bj102hs9687",
+  "contentDirectory": "data",
+  "manifest": {
+    "98114a...588": [ "v0001/data/content/eric-smith-dissertation-augmented.pdf" ],
+    "7f3d87...15b": [ "v0001/data/content/eric-smith-dissertation.pdf" ],
+    "6d19f0...064": [ "v0001/data/metadata/technicalMetadata.xml" ],
+    "6e4be4...375": [ "v0001/data/metadata/provenanceMetadata.xml" ],
+    "d8a319...d0f": [ "v0001/data/metadata/descMetadata.xml" ],
+    "de823a...acc": [ "v0001/data/metadata/rightsMetadata.xml" ],
+    "080617...40c": [ "v0001/data/metadata/identityMetadata.xml" ],
+    "e15267...58d": [ "v0001/data/metadata/versionMetadata.xml" ],
+    "0d9e0b...9a2": [ "v0001/data/metadata/contentMetadata.xml" ],
+    "dd9289...31d": [ "v0001/data/metadata/relationshipMetadata.xml" ],
+    "7519c5...63f": [ "v0002/data/metadata/provenanceMetadata.xml" ],
+    "abda4c...622": [ "v0002/data/metadata/workflows.xml" ],
+    "76549e...b2b": [ "v0002/data/metadata/rightsMetadata.xml" ],
+    "bdc4d6...3b6": [ "v0002/data/metadata/events.xml" ],
+    "7b331c...f9b": [ "v0002/data/metadata/identityMetadata.xml" ],
+    "80ceac...b9c": [ "v0002/data/metadata/versionMetadata.xml" ],
+    "4853a2...fbe": [ "v0002/data/metadata/contentMetadata.xml" ],
+    "1d5090...f5f": [ "v0002/data/metadata/relationshipMetadata.xml" ],
+    "f209bf...ceb": [ "v0002/data/metadata/embargoMetadata.xml" ],
+    "dd9125...d4b": [ "v0003/data/metadata/technicalMetadata.xml" ],
+    "d9e177...477": [ "v0003/data/metadata/provenanceMetadata.xml" ],
+    "4f5908...4f5": [ "v0003/data/metadata/workflows.xml" ],
+    "e64db0...500": [ "v0003/data/metadata/descMetadata.xml" ],
+    "05fa51...818": [ "v0003/data/metadata/rightsMetadata.xml" ],
+    "d70dd8...5ad": [ "v0003/data/metadata/events.xml" ],
+    "509a2d...dc6": [ "v0003/data/metadata/identityMetadata.xml" ],
+    "548066...893": [ "v0003/data/metadata/versionMetadata.xml" ],
+    "93884e...aae": [ "v0003/data/metadata/contentMetadata.xml" ],
+    "4c5ab4...b02": [ "v0003/data/metadata/embargoMetadata.xml" ]
+  },
+  "type": "https://ocfl.io/1.0/spec/#inventory",
+  "versions": {
+    "v1": {
+      "created": "2019-03-14T20:31:00Z",
+      "state": {
+        "98114a...588": [ "content/eric-smith-dissertation-augmented.pdf" ],
+        "7f3d87...15b": [ "content/eric-smith-dissertation.pdf" ],
+        "6d19f0...064": [ "metadata/technicalMetadata.xml" ],
+        "6e4be4...375": [ "metadata/provenanceMetadata.xml" ],
+        "d8a319...d0f": [ "metadata/descMetadata.xml" ],
+        "de823a...acc": [ "metadata/rightsMetadata.xml" ],
+        "080617...40c": [ "metadata/identityMetadata.xml" ],
+        "e15267...58d": [ "metadata/versionMetadata.xml" ],
+        "0d9e0b...9a2": [ "metadata/contentMetadata.xml" ],
+        "dd9289...31d": [ "metadata/relationshipMetadata.xml" ]
+      }
+    },
+    "v2": {
+      "created": "2019-03-24T09:22:00Z",
+      "state": {
+        "98114a...588": [ "content/eric-smith-dissertation-augmented.pdf" ],
+        "7f3d87...15b": [ "content/eric-smith-dissertation.pdf" ],
+        "6d19f0...064": [ "metadata/technicalMetadata.xml" ],
+        "7519c5...63f": [ "metadata/provenanceMetadata.xml" ],
+        "d8a319...d0f": [ "metadata/descMetadata.xml" ],
+        "76549e...b2b": [ "metadata/rightsMetadata.xml" ],
+        "7b331c...f9b": [ "metadata/identityMetadata.xml" ],
+        "80ceac...b9c": [ "metadata/versionMetadata.xml" ],
+        "4853a2...fbe": [ "metadata/contentMetadata.xml" ],
+        "1d5090...f5f": [ "metadata/relationshipMetadata.xml" ],
+        "abda4c...622": [ "metadata/workflows.xml" ],
+        "bdc4d6...3b6": [ "metadata/events.xml" ],
+        "f209bf...ceb": [ "metadata/embargoMetadata.xml" ]
+      }
+    },
+    "v3": {
+      "created": "2019-04-02T11:07:00Z",
+      "state": {
+        "98114a...588": [ "content/eric-smith-dissertation-augmented.pdf" ],
+        "7f3d87...15b": [ "content/eric-smith-dissertation.pdf" ],
+        "dd9125...d4b": [ "metadata/technicalMetadata.xml" ],
+        "d9e177...477": [ "metadata/provenanceMetadata.xml" ],
+        "e64db0...500": [ "metadata/descMetadata.xml" ],
+        "05fa51...818": [ "metadata/rightsMetadata.xml" ],
+        "509a2d...dc6": [ "metadata/identityMetadata.xml" ],
+        "548066...893": [ "metadata/versionMetadata.xml" ],
+        "93884e...aae": [ "metadata/contentMetadata.xml" ],
+        "1d5090...f5f": [ "metadata/relationshipMetadata.xml" ],
+        "4f5908...4f5": [ "metadata/workflows.xml" ],
+        "d70dd8...5ad": [ "metadata/events.xml" ],
+        "4c5ab4...b02": [ "metadata/embargoMetadata.xml" ]
+      }
+    }
+  }
+}
+
+A. References §
+A.1 Normative references §
+
+[FIPS-180-4]
+    FIPS PUB 180-4 Secure Hash Standard. U.S. Department of Commerce/National Institute of Standards and Technology. URL: https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf
+[ISO8601]
+    Representation of dates and times. ISO 8601:2004.. International Organization for Standardization (ISO). 2004. ISO 8601:2004. URL: http://www.iso.org/iso/catalogue_detail?csnumber=40874
+[JSON]
+    The application/json Media Type for JavaScript Object Notation (JSON). D. Crockford. IETF. July 2006. Informational. URL: https://tools.ietf.org/html/rfc4627
+[NAMASTE]
+    Directory Description with Namaste Tags. J. Kunze.9 November 2009. URL: https://confluence.ucop.edu/download/attachments/14254149/NamasteSpec.pdf
+[RFC1321]
+    The MD5 Message-Digest Algorithm. R. Rivest. IETF. April 1992. Informational. URL: https://tools.ietf.org/html/rfc1321
+[RFC2119]
+    Key words for use in RFCs to Indicate Requirement Levels. S. Bradner. IETF. March 1997. Best Current Practice. URL: https://tools.ietf.org/html/rfc2119
+[RFC3986]
+    Uniform Resource Identifier (URI): Generic Syntax. T. Berners-Lee; R. Fielding; L. Masinter. IETF. January 2005. Internet Standard. URL: https://tools.ietf.org/html/rfc3986
+[RFC4648]
+    The Base16, Base32, and Base64 Data Encodings. S. Josefsson. IETF. October 2006. Proposed Standard. URL: https://tools.ietf.org/html/rfc4648
+[RFC7693]
+    The BLAKE2 Cryptographic Hash and Message Authentication Code (MAC). M-J. Saarinen, Ed.; J-P. Aumasson. IETF. November 2015. Informational. URL: https://tools.ietf.org/html/rfc7693
+
+A.2 Informative references §
+
+[BagIt]
+    The BagIt File Packaging Format (V1.0). J. Kunze; J. Littman; E. Madden; J. Scancella; C. Adams.17 September 2018. URL: https://tools.ietf.org/html/draft-kunze-bagit-17
+[JSON-Schema]
+    JSON Schema Validation: A Vocabulary for Structural Validation of JSON. A. Wright; H Andrews.20 September 2018. URL: https://json-schema.org/latest/json-schema-validation.html
+[Moab]
+    The Moab Design for Digital Object Versioning. Richard Anderson.15 July 2013. URL: https://journal.code4lib.org/articles/8482
+[OAIS]
+    Reference Model for an Open Archival Information System (OAIS), Issue 2. June 2012. URL: https://public.ccsds.org/pubs/650x0m2.pdf
+[OCFL-Implementation-Notes]
+    OCFL Implementation Notes. URL: ../implementation-notes
+[PairTree]
+    Pairtrees for Object Storage. J. Kunze; M. Haye; E. Hetzner; M. Reyes; C. Snavely.12 August 2008. URL: https://confluence.ucop.edu/display/Curation/PairTree
+[RFC6068]
+    The 'mailto' URI Scheme. M. Duerst; L. Masinter; J. Zawinski. IETF. October 2010. Proposed Standard. URL: https://tools.ietf.org/html/rfc6068
+[RFC8141]
+    Uniform Resource Names (URNs). P. Saint-Andre; J. Klensin. IETF. April 2017. Proposed Standard. URL: https://tools.ietf.org/html/rfc8141
+[Stop-Using-SHA-256]
+    Stop Using SHA-256. David Timothy Strauss.6 October 2017. URL: https://medium.com/@davidtstrauss/stop-using-sha-256-6adbb55c608

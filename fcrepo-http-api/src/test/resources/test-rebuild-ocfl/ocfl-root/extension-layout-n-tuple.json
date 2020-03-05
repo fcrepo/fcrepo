@@ -1,0 +1,12 @@
+{
+  "encoding" : "hash",
+  "casing" : "lower",
+  "digestAlgorithm" : "md5",
+  "size" : 2,
+  "depth" : 3,
+  "encapsulation" : {
+    "defaultString" : "obj",
+    "type" : "id",
+    "encoding" : "url"
+  }
+}

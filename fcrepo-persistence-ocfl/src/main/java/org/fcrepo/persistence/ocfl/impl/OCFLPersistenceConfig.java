@@ -21,8 +21,6 @@ import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.OCFL_STORAGE_ROOT_DIR;
-import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.OCFL_WORK_DIR;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.createRepository;
 
 /**
@@ -41,6 +39,7 @@ public class OCFLPersistenceConfig {
      */
     @Bean
     public MutableOcflRepository repository() {
-        return createRepository(OCFL_STORAGE_ROOT_DIR, OCFL_WORK_DIR);
+        final OCFLConstants constants = new OCFLConstants();
+        return createRepository(constants.getStorageRootDir(), constants.getWorkDir());
     }
 }
