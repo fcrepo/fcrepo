@@ -61,8 +61,8 @@ public class ContainerImpl extends FedoraResourceImpl implements Container {
     @Override
     public RdfStream getTriples() {
         final Stream<Triple> extra_triples = Stream.of(
-                new Triple(createURI(id), RDF.Init.type().asNode(), RDF_SOURCE.asNode())
+                new Triple(createURI(getId()), RDF.Init.type().asNode(), RDF_SOURCE.asNode())
         );
-        return new DefaultRdfStream(createURI(id), Stream.concat(super.getTriples(), extra_triples));
+        return new DefaultRdfStream(createURI(getId()), Stream.concat(super.getTriples(), extra_triples));
     }
 }

@@ -176,11 +176,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
             .forEach(key -> templatesMapBuilder.put(key, velocity.getTemplate(getTemplateLocation(key))));
 
         templatesMap = templatesMapBuilder
-            .put(REPOSITORY_ROOT.toString(), velocity.getTemplate(getTemplateLocation("root")))
-            .put(REPOSITORY_NAMESPACE + "Binary", velocity.getTemplate(getTemplateLocation("binary")))
-            .put(REPOSITORY_NAMESPACE + "Version", velocity.getTemplate(getTemplateLocation("resource")))
-            .put(REPOSITORY_NAMESPACE + "Pairtree", velocity.getTemplate(getTemplateLocation("resource")))
-            .put(REPOSITORY_NAMESPACE + "Container", velocity.getTemplate(getTemplateLocation("resource")))
+            .put(REPOSITORY_NAMESPACE + "RepositoryRoot", velocity.getTemplate(getTemplateLocation("root")))
             .put(NON_RDF_SOURCE.toString(), velocity.getTemplate(getTemplateLocation("binary")))
             .put(RDF_SOURCE.toString(), velocity.getTemplate(getTemplateLocation("resource"))).build();
 
@@ -270,9 +266,6 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
             .map(x -> ((HtmlTemplate) x).value()).filter(templatesMap::containsKey).findFirst()
             .orElseGet(() -> {
                 final List<String> types = multiValueURI(rdf.getResource(subject.getURI()), type);
-                if (types.contains(REPOSITORY_NAMESPACE + "RepositoryRoot")) {
-                    return REPOSITORY_NAMESPACE + "RepositoryRoot";
-                }
                 return types.stream().filter(templatesMap::containsKey).findFirst().orElse("default");
             });
         LOGGER.debug("Using template: {}", tplName);

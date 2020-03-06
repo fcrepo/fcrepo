@@ -17,9 +17,20 @@
  */
 package org.fcrepo.kernel.impl.models;
 
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+
+import java.util.stream.Stream;
+
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 
 /**
@@ -47,6 +58,20 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl {
     @Override
     public FedoraResource getDescribedResource() {
         // TODO must return the described binary
-        return this;
+        final String describedId = this.getId().replaceAll("/" + FCR_METADATA + "$", "");
+        try {
+            return this.resourceFactory.getResource(tx, describedId);
+        } catch (PathNotFoundException e) {
+            throw new PathNotFoundRuntimeException(e);
+        }
+    }
+
+    @Override
+    public RdfStream getTriples() {
+        // Remap the subject to the described resource
+        final Node describedID = createURI(this.getDescribedResource().getId());
+        final Stream<Triple> triples = super.getTriples().map(t ->
+                new Triple(describedID, t.getPredicate(), t.getObject()));
+        return new DefaultRdfStream(describedID, triples);
     }
 }

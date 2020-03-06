@@ -46,13 +46,13 @@ public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {
     @Override
     public Stream<Triple> get(final FedoraResource resource) {
         final List<Triple> triples = new ArrayList<>();
-        final var subject = createURI(FedoraResourceIdConverter.resolveFedoraId(resource));
+        final var subject = createURI(FedoraResourceIdConverter.resolveFedoraId(resource.getDescribedResource()));
         triples.add(Triple.create(subject, CREATED_DATE.asNode(),
                 createLiteral(resource.getCreatedDate().toString())));
         triples.add(Triple.create(subject, LAST_MODIFIED_DATE.asNode(),
                 createLiteral(resource.getLastModifiedDate().toString())));
 
-        resource.getTypes().forEach(triple -> {
+        resource.getDescribedResource().getTypes().forEach(triple -> {
             triples.add(Triple.create(subject, type.asNode(), createURI(triple.toString())));
         });
 
