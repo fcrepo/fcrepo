@@ -26,6 +26,7 @@ import org.fcrepo.persistence.ocfl.impl.FedoraToOCFLObjectIndexImpl;
 import org.fcrepo.persistence.ocfl.impl.FedoraToOCFLObjectIndexUtilImpl;
 import org.fcrepo.persistence.ocfl.impl.OCFLPersistenceConfig;
 import org.fcrepo.persistence.ocfl.impl.OCFLPersistentSessionManager;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -34,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
+import static java.lang.System.getProperty;
 import static java.lang.System.setProperty;
 import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.OCFL_STORAGE_ROOT_DIR_KEY;
 import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.OCFL_WORK_DIR_KEY;
@@ -48,14 +50,30 @@ public class RebuildIT {
 
     private OcflRepository ocflRepository;
 
-    private static AnnotationConfigApplicationContext ctx;
+    private static String origStorageRootDir;
+    private static String origWorkDir;
 
     @BeforeClass
     public static void beforeClass() {
+        // Save the pre-test System Property values
+        origStorageRootDir = getProperty(OCFL_STORAGE_ROOT_DIR_KEY);
+        origWorkDir = getProperty(OCFL_WORK_DIR_KEY);
+
         setProperty(OCFL_STORAGE_ROOT_DIR_KEY, "target/test-classes/test-rebuild-ocfl/ocfl-root");
         setProperty(OCFL_WORK_DIR_KEY, "target/test-classes/test-rebuild-ocfl/ocfl-work");
+    }
 
-        ctx = new AnnotationConfigApplicationContext(OCFLPersistenceConfig.class);
+    @AfterClass
+    public static void afterClass() {
+        // Restore pre-test System Property values
+        setProperty(OCFL_STORAGE_ROOT_DIR_KEY, origStorageRootDir);
+        setProperty(OCFL_WORK_DIR_KEY, origWorkDir);
+    }
+
+    @Before
+    public void setUp() {
+        final AnnotationConfigApplicationContext ctx =
+                new AnnotationConfigApplicationContext(OCFLPersistenceConfig.class);
 
         // RepositoryInitializer.initialize() happens as a part of the object's construction.
         ctx.register(RepositoryInitializer.class,
@@ -66,10 +84,6 @@ public class RebuildIT {
                 OCFLPersistenceConfig.class,
                 FedoraToOCFLObjectIndexImpl.class);
 
-    }
-
-    @Before
-    public void setUp() {
         ocflRepository = ctx.getBean(OcflRepository.class);
     }
 
