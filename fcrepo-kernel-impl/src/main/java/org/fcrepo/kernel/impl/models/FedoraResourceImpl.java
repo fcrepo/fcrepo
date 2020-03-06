@@ -246,7 +246,7 @@ public class FedoraResourceImpl implements FedoraResource {
     }
 
     protected PersistentStorageSession getSession() {
-        if (tx == null) {
+        if (tx == null || tx.isCommitted()) {
             return pSessionManager.getReadOnlySession();
         } else {
             return pSessionManager.getSession(tx.getId());

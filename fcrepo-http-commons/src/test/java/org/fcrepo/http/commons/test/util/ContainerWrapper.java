@@ -42,8 +42,10 @@ import org.glassfish.grizzly.servlet.ServletRegistration;
 import org.glassfish.grizzly.servlet.WebappContext;
 import org.slf4j.Logger;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.web.context.support.WebApplicationContextUtils;
 
 /**
  * <p>ContainerWrapper class.</p>
@@ -54,6 +56,7 @@ public class ContainerWrapper implements ApplicationContextAware {
 
     private static final Logger logger = getLogger(ContainerWrapper.class);
 
+    @Value("#{${fcrepo.dynamic.test.port} ?: 8080}")
     private int port;
 
     private HttpServer server;
@@ -146,11 +149,13 @@ public class ContainerWrapper implements ApplicationContextAware {
         }
     }
 
-    @Override
-    public void setApplicationContext(final ApplicationContext applicationContext)
-            throws BeansException {
-        // this.applicationContext = applicationContext;
+    public ApplicationContext getSpringAppContext() {
+        return WebApplicationContextUtils.findWebApplicationContext(appContext);
+    }
 
+    @Override
+    public void setApplicationContext(final ApplicationContext springAppContext)
+            throws BeansException {
     }
 
 }

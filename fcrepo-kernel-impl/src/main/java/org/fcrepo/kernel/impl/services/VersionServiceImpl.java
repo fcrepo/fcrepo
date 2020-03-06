@@ -17,21 +17,16 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.riot.Lang;
+import com.google.common.annotations.VisibleForTesting;
 import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.exception.InvalidChecksumException;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.models.Binary;
-import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.operations.VersionResourceOperationFactory;
 import org.fcrepo.kernel.api.services.VersionService;
-import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.springframework.stereotype.Component;
 
-import java.io.InputStream;
-import java.net.URI;
-import java.time.Instant;
-import java.util.Collection;
+import javax.inject.Inject;
 
 /**
  * Implementation of {@link VersionService}
@@ -41,41 +36,35 @@ import java.util.Collection;
 @Component
 public class VersionServiceImpl extends AbstractService implements VersionService {
 
-    @Override
-    public FedoraResource createVersion(final Transaction transaction, final FedoraResource resource,
-                                        final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                                        final Instant dateTime) {
-        return null;
-    }
+    @Inject
+    private PersistentStorageSessionManager psManager;
+
+    @Inject
+    private VersionResourceOperationFactory versionOperationFactory;
 
     @Override
-    public FedoraResource createVersion(final Transaction transaction, final FedoraResource resource,
-                                        final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                                        final Instant dateTime, final InputStream rdfInputStream,
-                                        final Lang rdfFormat) {
-        return null;
+    public void createVersion(final Transaction transaction, final String resourceId, final String userPrincipal) {
+        final var session = psManager.getSession(transaction.getId());
+        final var operation = versionOperationFactory.createBuilder(resourceId)
+                .userPrincipal(userPrincipal)
+                .build();
+
+        try {
+            session.persist(operation);
+        } catch (PersistentStorageException e) {
+            throw new RepositoryRuntimeException(String.format("Failed to create new version of %s",
+                    resourceId), e);
+        }
     }
 
-    @Override
-    public Binary createBinaryVersion(final Transaction transaction, final Binary resource, final Instant dateTime,
-                                      final InputStream contentStream, final Collection<URI> checksums,
-                                      final StoragePolicyDecisionPoint storagePolicyDecisionPoint)
-            throws InvalidChecksumException {
-        return null;
+    @VisibleForTesting
+    void setPsManager(final PersistentStorageSessionManager psManager) {
+        this.psManager = psManager;
     }
 
-    @Override
-    public Binary createBinaryVersion(final Transaction transaction, final Binary resource, final Instant dateTime,
-                                      final StoragePolicyDecisionPoint storagePolicyDecisionPoint)
-            throws InvalidChecksumException {
-        return null;
+    @VisibleForTesting
+    void setVersionOperationFactory(final VersionResourceOperationFactory versionOperationFactory) {
+        this.versionOperationFactory = versionOperationFactory;
     }
 
-    @Override
-    public Binary createExternalBinaryVersion(final Transaction transaction, final Binary resource,
-                                              final Instant dateTime, final Collection<URI> checksums,
-                                              final String externalHandling, final String externalUrl)
-            throws InvalidChecksumException {
-        return null;
-    }
 }

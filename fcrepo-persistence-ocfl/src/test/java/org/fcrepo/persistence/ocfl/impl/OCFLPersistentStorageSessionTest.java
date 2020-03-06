@@ -110,7 +110,7 @@ public class OCFLPersistentStorageSessionTest {
     @Mock
     private OCFLObjectSession objectSession2;
 
-    private OCFLObjectSessionFactory objectSessionFactory;
+    private DefaultOCFLObjectSessionFactory objectSessionFactory;
 
     private static final String ROOT_OBJECT_ID = "info:fedora/resource1";
 
@@ -149,7 +149,6 @@ public class OCFLPersistentStorageSessionTest {
         this.objectSessionFactory = new DefaultOCFLObjectSessionFactory(stagingDir);
         setField(this.objectSessionFactory, "ocflRepository", repository);
         session = createSession(index, objectSessionFactory);
-        DefaultOCFLObjectSession.setGlobaDefaultCommitOption(UNVERSIONED);
 
         // Create rdf operations implement two interfaces
         rdfSourceOperation = mock(RdfSourceOperation.class, withSettings().extraInterfaces(
@@ -377,11 +376,11 @@ public class OCFLPersistentStorageSessionTest {
 
         //mock success on commit for the first object session
         when(mockSessionFactory.create(eq(ocflId1), anyString())).thenReturn(objectSession1);
-        when(objectSession1.commit(eq(UNVERSIONED))).thenReturn(Instant.now().toString());
+        when(objectSession1.commit()).thenReturn(Instant.now().toString());
         mockOCFLObjectSession(objectSession1, UNVERSIONED);
         //mock failure on commit for the second object session
         when(mockSessionFactory.create(eq(ocflId2), anyString())).thenReturn(objectSession2);
-        when(objectSession2.commit(eq(UNVERSIONED))).thenThrow(PersistentStorageException.class);
+        when(objectSession2.commit()).thenThrow(PersistentStorageException.class);
         mockOCFLObjectSession(objectSession2, UNVERSIONED);
 
         final PersistentStorageSession session1 = createSession(index, mockSessionFactory);
@@ -406,7 +405,7 @@ public class OCFLPersistentStorageSessionTest {
     }
 
     private void mockOCFLObjectSession(final OCFLObjectSession objectSession, final CommitOption option) {
-        when(objectSession.getDefaultCommitOption()).thenReturn(option);
+        objectSessionFactory.setAutoVersioningEnabled(option == NEW_VERSION);
         when(objectSession.getCreated()).thenReturn(timestep.next());
     }
 
@@ -420,7 +419,7 @@ public class OCFLPersistentStorageSessionTest {
         when(mockSessionFactory.create(eq(ocflId), anyString())).thenReturn(objectSession1);
         mockOCFLObjectSession(objectSession1, UNVERSIONED);
         //pause on commit for 1 second
-        when(objectSession1.commit(any(CommitOption.class))).thenAnswer((Answer<String>) invocationOnMock -> {
+        when(objectSession1.commit()).thenAnswer((Answer<String>) invocationOnMock -> {
             Thread.sleep(1000);
             return null;
         });
@@ -457,7 +456,7 @@ public class OCFLPersistentStorageSessionTest {
 
         latch.await(1000, TimeUnit.MILLISECONDS);
 
-        verify(objectSession1).commit(UNVERSIONED);
+        verify(objectSession1).commit();
     }
 
     @Test
@@ -497,7 +496,7 @@ public class OCFLPersistentStorageSessionTest {
     public void rollbackFailsWhenAlreadyCommitted() throws Exception {
         mockMappingAndIndex(mintOCFLObjectId(RESOURCE_ID), RESOURCE_ID, ROOT_OBJECT_ID, mapping);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
-        DefaultOCFLObjectSession.setGlobaDefaultCommitOption(NEW_VERSION);
+        objectSessionFactory.setAutoVersioningEnabled(true);
 
         final PersistentStorageSession session1 = createSession(index, objectSessionFactory);
         //persist the operation
@@ -537,7 +536,7 @@ public class OCFLPersistentStorageSessionTest {
         mockMappingAndIndex(ocflId, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
         when(mockSessionFactory.create(eq(ocflId), anyString())).thenReturn(objectSession1);
-        doThrow(new PersistentStorageException("commit error")).when(objectSession1).commit(any(CommitOption.class));
+        doThrow(new PersistentStorageException("commit error")).when(objectSession1).commit();
         mockOCFLObjectSession(objectSession1, NEW_VERSION);
         final PersistentStorageSession session1 = createSession(index, mockSessionFactory);
         try {
@@ -580,7 +579,7 @@ public class OCFLPersistentStorageSessionTest {
 
     @Test
     public void getTriplesFromPreviousVersion() throws Exception {
-        DefaultOCFLObjectSession.setGlobaDefaultCommitOption(NEW_VERSION);
+        objectSessionFactory.setAutoVersioningEnabled(true);
         mockMappingAndIndex(mintOCFLObjectId(RESOURCE_ID), RESOURCE_ID, ROOT_OBJECT_ID, mapping);
 
         final Node resourceUri = createURI(RESOURCE_ID);
@@ -616,7 +615,7 @@ public class OCFLPersistentStorageSessionTest {
 
     @Test
     public void listVersionsOfAResourceContainedInAnArchivalGroup() throws Exception {
-        DefaultOCFLObjectSession.setGlobaDefaultCommitOption(NEW_VERSION);
+        objectSessionFactory.setAutoVersioningEnabled(true);
         final Node resourceUri = createURI(RESOURCE_ID);
 
         mockMapping(mintOCFLObjectId(RESOURCE_ID), ROOT_OBJECT_ID, mapping);
@@ -701,7 +700,7 @@ public class OCFLPersistentStorageSessionTest {
 
     @Test
     public void getBinaryContentVersion() throws Exception {
-        DefaultOCFLObjectSession.setGlobaDefaultCommitOption(NEW_VERSION);
+        objectSessionFactory.setAutoVersioningEnabled(true);
         // SEE getTriplesFromPreviousVersion
         mockMappingAndIndex(mintOCFLObjectId(RESOURCE_ID), RESOURCE_ID, ROOT_OBJECT_ID, mapping);
 

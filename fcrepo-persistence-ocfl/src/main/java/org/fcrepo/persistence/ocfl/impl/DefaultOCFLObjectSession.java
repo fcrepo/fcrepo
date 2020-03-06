@@ -32,7 +32,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import static java.lang.String.format;
-import static java.lang.System.getProperty;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -47,11 +46,12 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import edu.wisc.library.ocfl.api.model.VersionId;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.persistence.api.CommitOption;
 import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
-import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
 import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
@@ -86,9 +86,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
     private MutableOcflRepository ocflRepository;
 
-
-    private static CommitOption globalDefaultCommitOption =
-            Boolean.valueOf(getProperty("fcrepo.autoversioning.enabled", "false")) ? NEW_VERSION : UNVERSIONED;
+    private CommitOption commitOption;
 
     private Instant created;
     /**
@@ -97,32 +95,19 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
      * @param objectIdentifier identifier for the OCFL object
      * @param stagingPath path in which changes to the OCFL object will be staged.
      * @param ocflRepository the OCFL repository in which the object is stored.
+     * @param commitOption the commit option to use
      */
     public DefaultOCFLObjectSession(final String objectIdentifier, final Path stagingPath,
-            final MutableOcflRepository ocflRepository) {
+            final MutableOcflRepository ocflRepository, final CommitOption commitOption) {
         this.objectIdentifier = objectIdentifier;
         this.stagingPath = stagingPath.resolve(objectIdentifier);
         this.ocflRepository = ocflRepository;
+        this.commitOption = commitOption;
         this.deletePaths = new HashSet<>();
         this.objectDeleted = false;
         this.sessionClosed = false;
         this.created = Instant.now();
 
-    }
-
-    /**
-     * Set the system-wide default {@link org.fcrepo.persistence.api.CommitOption}.
-     * This method overrides system runtime settings, but not OCFL Object level
-     * settings.
-     * @param commitOption The commit option to be set.
-     */
-    public static void setGlobaDefaultCommitOption(final CommitOption commitOption) {
-        globalDefaultCommitOption = commitOption;
-    }
-
-    @Override
-    public CommitOption getDefaultCommitOption() {
-        return globalDefaultCommitOption;
     }
 
     /**
@@ -304,6 +289,22 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
      * {@inheritDoc}
      */
     @Override
+    public void setCommitOption(final CommitOption commitOption) {
+        this.commitOption = commitOption;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public CommitOption getCommitOption() {
+        return commitOption;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public synchronized void prepare() {
         // TODO check for conflicts and lock the object
     }
@@ -312,7 +313,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
      * {@inheritDoc}
      */
     @Override
-    public synchronized String commit(final CommitOption commitOption) throws PersistentStorageException {
+    public synchronized String commit() throws PersistentStorageException {
         assertSessionOpen();
 
         if (commitOption == null) {
@@ -369,6 +370,12 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     }
 
     private String commitUpdates(final CommitOption commitOption) {
+        // Nothing to do if there are no staged files, no deletes, and not mutable HEAD
+        if (isStagingEmpty() && deletePaths.isEmpty() && !ocflRepository.hasStagedChanges(objectIdentifier)) {
+            return ocflRepository.describeVersion(ObjectVersionId.head(objectIdentifier))
+                    .getVersionId().toString();
+        }
+
         // Updater which pushes all updated files and then performs queued deletes
         final Consumer<OcflObjectUpdater> commitChangeUpdater = updater -> {
             if (!isStagingEmpty()) {
@@ -421,7 +428,10 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         try {
             return this.ocflRepository.describeObject(this.objectIdentifier)
                     .getVersionMap().values().stream()
+                    // do not include mutable versions
                     .filter(version -> !version.isMutable())
+                    // do not include empty v1s, they were likely created as a mutable HEAD placeholder
+                    .filter(version -> !(VersionId.V1.equals(version.getVersionId()) && version.getFiles().isEmpty()))
                     .sorted(VERSION_COMPARATOR)
                     .map(version -> {
                         return new OCFLVersionImpl()
@@ -446,8 +456,12 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         assertSessionOpen();
 
         try {
+            final var headDesc = ocflRepository.describeVersion(ObjectVersionId.head(objectIdentifier));
+
             return ocflRepository.fileChangeHistory(objectIdentifier, subpath).getFileChanges().stream()
                     .filter(change -> change.getChangeType() == FileChangeType.UPDATE)
+                    // do not include changes that were made in the mutable head
+                    .filter(change -> !(headDesc.isMutable() && headDesc.getVersionId().equals(change.getVersionId())))
                     .map(change -> {
                         return new OCFLVersionImpl()
                                 .setOcflObjectId(objectIdentifier)
@@ -480,7 +494,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     private static class VersionComparator implements Comparator<VersionDetails> {
         @Override
         public int compare(final VersionDetails a, final VersionDetails b) {
-            return a.getCreated().compareTo(b.getCreated());
+            return a.getVersionId().compareTo(b.getVersionId());
         }
     }
 

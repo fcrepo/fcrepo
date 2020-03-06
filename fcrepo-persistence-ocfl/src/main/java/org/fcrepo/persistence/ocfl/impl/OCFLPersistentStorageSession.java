@@ -34,7 +34,6 @@ import java.util.Map;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
-import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
@@ -50,7 +49,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Phaser;
-import java.util.stream.Collectors;
 
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getRDFFileExtension;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getRdfStream;
@@ -81,7 +79,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     private final List<Persister> persisterList = new ArrayList<>();
 
-    private List<CommittedSession> sessionsToRollback = new ArrayList<>();
+    private List<OCFLObjectSession> sessionsToRollback = new ArrayList<>();
 
     private State state = State.COMMIT_NOT_STARTED;
 
@@ -90,16 +88,6 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     private static Comparator<OCFLObjectSession> CREATION_TIME_ORDER =
             (OCFLObjectSession o1, OCFLObjectSession o2)->o1.getCreated().compareTo(o2.getCreated());
 
-
-    private class CommittedSession {
-        final OCFLObjectSession session;
-        final CommitOption option;
-
-        CommittedSession(final OCFLObjectSession session, final CommitOption option) {
-            this.session = session;
-            this.option = option;
-        }
-    }
 
     private enum State {
         COMMIT_NOT_STARTED,
@@ -132,6 +120,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         persisterList.add(new CreateNonRdfSourcePersister(this.fedoraOcflIndex));
         persisterList.add(new UpdateNonRdfSourcePersister(this.fedoraOcflIndex));
         persisterList.add(new DeleteResourcePersister(this.fedoraOcflIndex));
+        persisterList.add(new CreateVersionPersister(this.fedoraOcflIndex));
 
     }
 
@@ -310,9 +299,8 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
             //perform commit
             for (final OCFLObjectSession objectSession : sessions) {
-                final CommitOption option = objectSession.getDefaultCommitOption();
-                objectSession.commit(option);
-                sessionsToRollback.add(new CommittedSession(objectSession, option));
+                objectSession.commit();
+                sessionsToRollback.add(objectSession);
             }
 
             state = State.COMMITTED;
@@ -349,10 +337,8 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         }
 
         //close any uncommitted sessions
-        final List<OCFLObjectSession> committedSessions =
-                this.sessionsToRollback.stream().map(c -> c.session).collect(Collectors.toList());
         final List<OCFLObjectSession> uncommittedSessions = new ArrayList<>(this.sessionMap.values());
-        uncommittedSessions.removeAll(committedSessions);
+        uncommittedSessions.removeAll(sessionsToRollback);
         for (final OCFLObjectSession obj : uncommittedSessions) {
             obj.close();
         }
@@ -362,14 +348,13 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
             // rollback committed sessions
             //for each committed session, rollback if possible
             final List<String> rollbackFailures = new ArrayList<>(this.sessionsToRollback.size());
-            for (final CommittedSession cs : this.sessionsToRollback) {
-                if (cs.option == NEW_VERSION) {
+            for (final var cs : this.sessionsToRollback) {
+                if (cs.getCommitOption() == NEW_VERSION) {
                     //TODO rollback to previous OCFL version
                     //add any failure messages here.
-                    rollbackFailures.add(format("rollback of previously committed versions is not yet supported",
-                            cs.session));
+                    rollbackFailures.add(format("rollback of previously committed versions is not yet supported", cs));
                 } else {
-                    rollbackFailures.add(format("%s was already committed to the unversioned head", cs.session));
+                    rollbackFailures.add(format("%s was already committed to the unversioned head", cs));
                 }
             }
             //throw an exception if any sessions could not be rolled back.

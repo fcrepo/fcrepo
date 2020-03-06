@@ -58,9 +58,13 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import javax.inject.Inject;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response.Status;
 import javax.xml.bind.DatatypeConverter;
+
+import com.google.common.base.Strings;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -89,6 +93,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.fcrepo.http.commons.test.util.ContainerWrapper;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -109,18 +114,26 @@ public abstract class AbstractResourceIT {
 
     protected static final String NON_RDF_SOURCE_LINK_HEADER = "<" + NON_RDF_SOURCE.getURI() + ">;rel=\"type\"";
 
+    @Inject
+    private ContainerWrapper containerWrapper;
+
     @Before
     public void setLogger() {
         logger = getLogger(this.getClass());
     }
 
-    private static final int SERVER_PORT = parseInt(System.getProperty("fcrepo.dynamic.test.port", "8080"));
+    private static final int SERVER_PORT = parseInt(Objects.requireNonNullElse(
+            Strings.emptyToNull(System.getProperty("fcrepo.dynamic.test.port")), "8080"));
 
     private static final String HOSTNAME = "localhost";
 
     private static final String PROTOCOL = "http";
 
     protected static final String serverAddress = PROTOCOL + "://" + HOSTNAME + ":" + SERVER_PORT + "/";
+
+    protected <T> T getBean(final Class<T> type) {
+        return containerWrapper.getSpringAppContext().getBean(type);
+    }
 
     protected static final CloseableHttpClient client = createClient();
 
@@ -267,7 +280,7 @@ public abstract class AbstractResourceIT {
             if (!(result > 199) || !(result < 400)) {
                 logger.warn("Got status {}", result);
                 if (response.getEntity() != null) {
-                    logger.trace(EntityUtils.toString(response.getEntity()));
+                    logger.warn(EntityUtils.toString(response.getEntity()));
                 }
             }
             EntityUtils.consume(response.getEntity());

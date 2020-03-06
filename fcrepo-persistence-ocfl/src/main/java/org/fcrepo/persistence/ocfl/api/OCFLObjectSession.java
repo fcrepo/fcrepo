@@ -35,15 +35,6 @@ import java.util.stream.Stream;
 public interface OCFLObjectSession {
 
     /**
-     * The default commit option configured for the OCFL Object represented by this session.
-     * If no default commit option has been defined for the specific OCFL Object, the
-     * value returned will be the system defined global default commit option.
-     *
-     * @return The default commit option
-     */
-    CommitOption getDefaultCommitOption();
-
-    /**
      * Write the provided content to specified subpath.
      *
      * @param subpath path of the resource to write, relative to the OCFL object
@@ -89,6 +80,20 @@ public interface OCFLObjectSession {
     InputStream read(String subpath, String version) throws PersistentStorageException;
 
     /**
+     * Overrides the default {@link CommitOption} to use when the session is committed. By default, is
+     * {@link CommitOption#UNVERSIONED} when fcrepo.autoversioning.enabled is false,
+     * and {@link CommitOption#NEW_VERSION} when it is true
+     *
+     * @param commitOption the commit option
+     */
+    void setCommitOption(CommitOption commitOption);
+
+    /**
+     * @return the commit option that's configured on the session
+     */
+    CommitOption getCommitOption();
+
+    /**
      * Verify that the change set in this session can be committed. A PersistentStorageException is thrown if there
      * are any conflicts that would prevent a commit.
      */
@@ -98,11 +103,10 @@ public interface OCFLObjectSession {
      * Commit the change set from this session to the OCFL object, following the strategy suggested by commitOption.
      * Creates the OCFL object if it did not previous exist.
      *
-     * @param commitOption option indicating where changes should be committed.
      * @return identifier of the version committed
      * @throws PersistentStorageException if unable to commit
      */
-    String commit(CommitOption commitOption) throws PersistentStorageException;
+    String commit() throws PersistentStorageException;
 
     /**
      * Close this session without committing changes.

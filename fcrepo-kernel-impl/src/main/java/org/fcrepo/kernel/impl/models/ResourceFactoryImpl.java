@@ -97,12 +97,8 @@ public class ResourceFactoryImpl implements ResourceFactory {
     public boolean doesResourceExist(final Transaction transaction, final String fedoraId, final Instant version) {
         // TODO: Check the index first.
 
-        final PersistentStorageSession psSession;
-        if (transaction == null) {
-            psSession = persistentStorageSessionManager.getReadOnlySession();
-        } else {
-            psSession = persistentStorageSessionManager.getSession(transaction.getId());
-        }
+        final PersistentStorageSession psSession = getSession(transaction);
+
         try {
             psSession.getHeaders(fedoraId, version);
             return true;
@@ -221,7 +217,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
      */
     private PersistentStorageSession getSession(final Transaction transaction) {
         final PersistentStorageSession session;
-        if (transaction == null) {
+        if (transaction == null || transaction.isCommitted()) {
             session = persistentStorageSessionManager.getReadOnlySession();
         } else {
             session = persistentStorageSessionManager.getSession(transaction.getId());

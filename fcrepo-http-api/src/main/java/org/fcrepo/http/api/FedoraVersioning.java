@@ -17,13 +17,7 @@
  */
 package org.fcrepo.http.api;
 
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.ok;
-import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
-import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_LINK_FORMAT;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;
@@ -39,20 +33,17 @@ import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FOR
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.OPTIONS;
@@ -63,21 +54,16 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Link.Builder;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.LinkFormatStream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
-import org.fcrepo.kernel.api.exception.ItemExistsException;
 import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
-import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.slf4j.Logger;
@@ -126,122 +112,47 @@ public class FedoraVersioning extends ContentExposingResource {
      * based off the provided body using that datetime. If one was not provided, then a version is created based off
      * the current version of the resource.
      *
-     * @param datetimeHeader memento-datetime header
-     * @param requestContentType Content-Type of the request body
-     * @param digest digests of the request body
-     * @param requestBodyStream request body stream
-     * @param rawLinks the list of unprocessed links
      * @return response
      * @throws InvalidChecksumException thrown if one of the provided digests does not match the content
      * @throws MementoDatetimeFormatException if the header value of memento-datetime is not RFC-1123 format
      */
     @POST
-    public Response addVersion(@HeaderParam(MEMENTO_DATETIME_HEADER) final String datetimeHeader,
-            @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
-            @HeaderParam("Digest") final String digest,
-            final InputStream requestBodyStream,
-            @HeaderParam(LINK) final List<String> rawLinks)
-            throws InvalidChecksumException, MementoDatetimeFormatException {
+    public Response addVersion() {
 
-        final FedoraResource resource = resource();
-        final FedoraResource timeMap = resource.getTimeMap();
+        if (headers.getHeaderString("Slug") != null) {
+            throw new BadRequestException("Slug header is no longer supported for versioning label.");
+        }
+
+        if (headers.getHeaderString(MEMENTO_DATETIME_HEADER) != null) {
+            throw new BadRequestException("date-time header is no longer supported on versioning.");
+        }
+
+        if (!transaction.isShortLived()) {
+            throw new BadRequestException("Version creation is not allowed within transactions.");
+        }
+
+        final var resource = resource();
 
         try {
-            final MediaType contentType = MediaType.valueOf(getSimpleContentType(requestContentType));
+            LOGGER.debug("Request to create version for <{}>", externalPath);
 
-            final String slug = headers.getHeaderString("Slug");
-            if (slug != null) {
-                throw new BadRequestException("Slug header is no longer supported for versioning label. "
-                        + "Please use " + MEMENTO_DATETIME_HEADER + " header with RFC-1123 date-time.");
+            versionService.createVersion(transaction, resource.getId(), getUserPrincipal());
+
+            // need to commit the transaction before loading the memento otherwise it won't exist
+            transaction.commitIfShortLived();
+
+            final var versions = resource.getTimeMap().getChildren().collect(Collectors.toList());
+
+            if (versions.isEmpty()) {
+                throw new RepositoryRuntimeException(String.format("Failed to create a version for %s", externalPath));
             }
 
-            final Instant mementoInstant;
-            try {
-                mementoInstant = (isBlank(datetimeHeader) ? Instant.now()
-                    : Instant.from(MEMENTO_RFC_1123_FORMATTER.parse(datetimeHeader)));
-            } catch (final DateTimeParseException e) {
-                throw new MementoDatetimeFormatException("Invalid memento date-time value. "
-                        + "Please use RFC-1123 date-time format, such as 'Tue, 3 Jun 2008 11:05:30 GMT'", e);
-            }
+            final var memento = versions.get(versions.size() - 1);
 
-            final boolean createFromExisting = isBlank(datetimeHeader);
-
-            try {
-                LOGGER.debug("Request to add version for date '{}' for '{}'", datetimeHeader, externalPath);
-
-                // Create memento
-                FedoraResource memento = null;
-                final boolean isBinary = resource instanceof Binary;
-                if (isBinary) {
-                    final Binary binaryResource = (Binary) resource;
-                    if (createFromExisting) {
-                        memento = versionService.createBinaryVersion(transaction,
-                                binaryResource, mementoInstant, storagePolicyDecisionPoint);
-                    } else {
-                        final List<String> links = unpackLinks(rawLinks);
-                        final ExternalContentHandler extContent = extContentHandlerFactory.createFromLinks(links);
-
-                        memento = createBinaryMementoFromRequest(binaryResource, mementoInstant,
-                                requestBodyStream, extContent, digest);
-                    }
-                }
-                // Create rdf memento if the request resource was an rdf resource or a binary from the
-                // current version of the original resource.
-                if (!isBinary || createFromExisting) {
-                    // Version the description in case the original is a binary
-                    final FedoraResource originalResource = resource().getDescription();
-                    final InputStream bodyStream = createFromExisting ? null : requestBodyStream;
-                    final Lang format = createFromExisting ? null : contentTypeToLang(contentType.toString());
-                    if (!createFromExisting && format == null) {
-                        throw new ClientErrorException("Invalid Content Type " + contentType.toString(),
-                                UNSUPPORTED_MEDIA_TYPE);
-                    }
-
-                    final FedoraResource rdfMemento = versionService.createVersion(transaction,
-                            originalResource, idTranslator, mementoInstant, bodyStream, format);
-                    // If a binary memento was also generated, use the binary in the response
-                    if (!isBinary) {
-                        memento = rdfMemento;
-                    }
-                }
-
-                transaction.commitIfShortLived();
-                return createUpdateResponse(memento, true);
-            } catch (final Exception e) {
-                checkForInsufficientStorageException(e, e);
-                return null; // not reachable
-            }
-        } catch (final RepositoryRuntimeException e) {
-            if (e.getCause() instanceof ItemExistsException) {
-                throw new ClientErrorException("Memento with provided datetime already exists",
-                        CONFLICT);
-            } else {
-                throw e;
-            }
-        }
-    }
-
-    private Binary createBinaryMementoFromRequest(final Binary binaryResource,
-                                                  final Instant mementoInstant,
-                                                  final InputStream requestBodyStream,
-                                                  final ExternalContentHandler extContent,
-                                                  final String digest)
-            throws InvalidChecksumException, UnsupportedAlgorithmException {
-
-        final Collection<URI> checksumURIs = parseDigestHeader(digest);
-
-        // Create internal binary either from supplied body or copy external uri
-        if (extContent == null || extContent.isCopy()) {
-            InputStream contentStream = requestBodyStream;
-            if (extContent != null) {
-                contentStream = extContent.fetchExternalContent();
-            }
-
-            return versionService.createBinaryVersion(transaction, binaryResource,
-                    mementoInstant, contentStream, checksumURIs, storagePolicyDecisionPoint);
-        } else {
-            return versionService.createExternalBinaryVersion(transaction, binaryResource,
-                    mementoInstant, checksumURIs, extContent.getHandling(), extContent.getURL());
+            return createUpdateResponse(memento, true);
+        } catch (final Exception e) {
+            checkForInsufficientStorageException(e, e);
+            return null; // not reachable
         }
     }
 

@@ -73,7 +73,7 @@ public class TransactionImpl implements Transaction {
             return;
         }
         try {
-            log.debug("Commiting transaction {}", id);
+            log.debug("Committing transaction {}", id);
             this.getPersistentSession().commit();
             this.commited = true;
         } catch (final PersistentStorageException ex) {
