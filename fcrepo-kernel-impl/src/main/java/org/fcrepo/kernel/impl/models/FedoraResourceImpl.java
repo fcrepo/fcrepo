@@ -52,7 +52,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     protected final ResourceFactory resourceFactory;
 
-    private final String id;
+    protected final String id;
 
     private String parentId;
 

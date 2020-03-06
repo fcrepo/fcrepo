@@ -17,10 +17,19 @@
  */
 package org.fcrepo.kernel.impl.models;
 
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
+
+import java.util.stream.Stream;
+
+import org.apache.jena.graph.Triple;
+import org.apache.jena.vocabulary.RDF;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 
 
@@ -47,5 +56,13 @@ public class ContainerImpl extends FedoraResourceImpl implements Container {
     @Override
     public FedoraResource getDescribedResource() {
         return this;
+    }
+
+    @Override
+    public RdfStream getTriples() {
+        final Stream<Triple> extra_triples = Stream.of(
+                new Triple(createURI(id), RDF.Init.type().asNode(), RDF_SOURCE.asNode())
+        );
+        return new DefaultRdfStream(createURI(id), Stream.concat(super.getTriples(), extra_triples));
     }
 }
