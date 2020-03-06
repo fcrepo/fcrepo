@@ -63,13 +63,6 @@ public class RepositoryInitializer {
     @Inject
     private FedoraToOCFLObjectIndexUtil fedoraToOCFLObjectIndexUtil;
 
-    private static Stream<Triple> REPOSITORY_ROOT_TRIPLES = Stream.of(
-            new Triple(createURI(FEDORA_ID_PREFIX), RDF.type.asNode(), REPOSITORY_ROOT.asNode())
-    );
-
-    private static RdfStream REPOSITORY_ROOT_STREAM = new DefaultRdfStream(createURI(FEDORA_ID_PREFIX),
-            REPOSITORY_ROOT_TRIPLES);
-
     /**
      * Initializes the repository
      */
@@ -90,8 +83,14 @@ public class RepositoryInitializer {
                 session.getHeaders(FEDORA_ID_PREFIX, null);
             } catch (PersistentItemNotFoundException e) {
                 LOGGER.info("Repository root ({}) not found. Creating...", FEDORA_ID_PREFIX);
+                final Stream<Triple> repositoryRootTriples = Stream.of(
+                        new Triple(createURI(FEDORA_ID_PREFIX), RDF.type.asNode(), REPOSITORY_ROOT.asNode())
+                );
+
+                final RdfStream repositoryRootStream = new DefaultRdfStream(createURI(FEDORA_ID_PREFIX),
+                        repositoryRootTriples);
                 final RdfSourceOperation operation = this.operationFactory.createBuilder(FEDORA_ID_PREFIX,
-                        BASIC_CONTAINER.getURI()).parentId(FEDORA_ID_PREFIX).triples(REPOSITORY_ROOT_STREAM).build();
+                        BASIC_CONTAINER.getURI()).parentId(FEDORA_ID_PREFIX).triples(repositoryRootStream).build();
 
                 session.persist(operation);
                 session.commit();
