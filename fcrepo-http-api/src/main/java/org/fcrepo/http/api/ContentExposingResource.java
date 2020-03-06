@@ -580,7 +580,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             options = "HEAD,GET,DELETE,PUT,PATCH,OPTIONS";
             servletResponse.addHeader(HTTP_HEADER_ACCEPT_PATCH, contentTypeSPARQLUpdate);
         } else if (resource instanceof Container) {
-            options = "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS";
+            options = "DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS";
             servletResponse.addHeader(HTTP_HEADER_ACCEPT_PATCH, contentTypeSPARQLUpdate);
             addAcceptPostHeader();
         } else {
