@@ -182,7 +182,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createVersionedContainer(id);
 
         createContainerMementoWithBody(subjectUri);
-//        createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
         verifyTimemapResponse(subjectUri, id, now());
     }
 
@@ -434,7 +433,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createVersionedContainer(id);
 
         final String mementoUri = createContainerMementoWithBody(subjectUri);
-//        final String mementoUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
         assertMementoUri(mementoUri, subjectUri);
         final Node mementoSubject = createURI(subjectUri);
         final Node subject = createURI(subjectUri);
@@ -470,7 +468,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createVersionedContainer(id);
 
         final String mementoUri = createContainerMementoWithBody(subjectUri);
-//        final String mementoUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
 
         assertEquals("Expected delete to succeed",
                 NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(mementoUri)));
@@ -479,7 +476,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 NOT_FOUND.getStatusCode(), getStatus(new HttpGet(mementoUri)));
 
         final String recreatedUri = createContainerMementoWithBody(subjectUri);
-//        final String recreatedUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
         assertEquals("Recreated memento must exist",
                 OK.getStatusCode(), getStatus(new HttpGet(recreatedUri)));
     }
@@ -490,7 +486,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createVersionedBinary(id);
 
         final String mementoUri = createLDPNRMementoWithExistingBody();
-//        final String mementoUri = createLDPNRMementoWithExistingBody(MEMENTO_DATETIME);
 
         assertEquals("Expected delete to succeed",
                 NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(mementoUri)));
@@ -499,7 +494,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 NOT_FOUND.getStatusCode(), getStatus(new HttpGet(mementoUri)));
 
         final String recreatedUri = createLDPNRMementoWithExistingBody();
-//        final String recreatedUri = createLDPNRMementoWithExistingBody(MEMENTO_DATETIME);
         assertEquals("Recreated memento must exist",
                 OK.getStatusCode(), getStatus(new HttpGet(recreatedUri)));
     }
@@ -512,7 +506,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final String descId = id + "/" + FCR_METADATA;
         final String descUri = serverAddress + descId;
         final String mementoUri = createMementoWithExistingBody(descId, false);
-//        final String mementoUri = createMementoWithExistingBody(descId, MEMENTO_DATETIME, false);
 
         assertEquals("Expected delete to succeed",
                 NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(mementoUri)));
@@ -521,7 +514,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 NOT_FOUND.getStatusCode(), getStatus(new HttpGet(mementoUri)));
 
         final String recreatedUri = createContainerMementoWithBody(descUri);
-//        final String recreatedUri = createContainerMementoWithBody(descUri, MEMENTO_DATETIME);
         assertEquals("Recreated memento must exist",
                 OK.getStatusCode(), getStatus(new HttpGet(recreatedUri)));
     }
@@ -536,7 +528,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         // create memento
         final String mementoUri = createContainerMementoWithBody(subjectUri);
-//        final String mementoUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
 
         // Remove the child resource
         assertEquals("Expected delete to succeed",
@@ -567,7 +558,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final String mementoDateTime =
             MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
         final String mementoUri = createLDPRSMementoWithExistingBody();
-//        final String mementoUri = createLDPRSMementoWithExistingBody(mementoDateTime);
 
         // Status 200: HEAD request on existing memento
         final HttpHead headMethod = new HttpHead(mementoUri);
@@ -591,7 +581,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final String mementoDateTime =
             MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
         final String mementoUri = createLDPRSMementoWithExistingBody();
-//        final String mementoUri = createLDPRSMementoWithExistingBody(mementoDateTime);
 
         // Status 200: GET request on existing memento
         final HttpGet getMemento = new HttpGet(mementoUri);
@@ -614,7 +603,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final String mementoDateTime =
             MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
         final String mementoUri = createLDPRSMementoWithExistingBody();
-//        final String mementoUri = createLDPRSMementoWithExistingBody(mementoDateTime);
         // Status 200: GET request on existing memento
         final HttpGet getMemento = new HttpGet(mementoUri);
         getMemento.addHeader(ACCEPT_DATETIME, mementoDateTime);
@@ -630,7 +618,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final String mementoDateTime =
                 MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
         final String mementoUri = createLDPRSMementoWithExistingBody();
-//        final String mementoUri = createLDPRSMementoWithExistingBody(mementoDateTime);
         // Status 200: HEAD request on existing memento
         final HttpHead headMemento = new HttpHead(mementoUri);
         headMemento.addHeader(ACCEPT_DATETIME, mementoDateTime);
@@ -647,7 +634,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final String mementoDateTime =
             MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
         final String mementoUri = createLDPRSMementoWithExistingBody();
-//        final String mementoUri = createLDPRSMementoWithExistingBody(mementoDateTime);
 
         // Status 200: OPTIONS request on existing memento
         final HttpOptions optionsMemento = new HttpOptions(mementoUri);
@@ -681,7 +667,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         // create memento
         final String mementoUri = createContainerMementoWithBody(subjectUri);
-//        final String mementoUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
 
         // Remove the referencing resource
         assertEquals("Expected delete to succeed",
@@ -1010,8 +995,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createVersionedBinary(id);
 
         final String mementoUri = createMemento(subjectUri);
-//        final String mementoUri = createMemento(subjectUri, MEMENTO_DATETIME,
-//                OCTET_STREAM_TYPE, null);
         assertMementoUri(mementoUri, subjectUri);
 
         // Verify that the memento has the updated binary
@@ -1030,8 +1013,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createVersionedBinary(id);
 
         final String mementoUri = createMemento(subjectUri);
-//        final String mementoUri = createMemento(subjectUri, null,
-//                OCTET_STREAM_TYPE, BINARY_UPDATED);
         assertMementoUri(mementoUri, subjectUri);
 
         final HttpGet httpGet = new HttpGet(mementoUri);
@@ -1049,8 +1030,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createVersionedBinary(id);
 
         final String mementoUri = createMemento(subjectUri);
-//        final String mementoUri = createMemento(subjectUri, MEMENTO_DATETIME,
-//                "text/plain", BINARY_UPDATED);
         assertMementoUri(mementoUri, subjectUri);
 
         // Verify that the memento has the updated binary
@@ -1117,7 +1096,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final String descriptionUri = subjectUri + "/fcr:metadata";
 
         final String mementoUri = createContainerMementoWithBody(descriptionUri);
-//        final String mementoUri = createContainerMementoWithBody(descriptionUri, MEMENTO_DATETIME);
         assertMementoUri(mementoUri, descriptionUri);
 
         try (final CloseableDataset dataset = getDataset(new HttpGet(mementoUri))) {
@@ -1142,12 +1120,9 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final String descriptionUri = subjectUri + "/fcr:metadata";
 
         final String binaryMementoUri = createMemento(subjectUri);
-//        final String binaryMementoUri = createMemento(subjectUri, MEMENTO_DATETIME,
-//                null, "content");
         assertMementoUri(binaryMementoUri, subjectUri);
 
         final String mementoUri = createContainerMementoWithBody(descriptionUri);
-//        final String mementoUri = createContainerMementoWithBody(descriptionUri, MEMENTO_DATETIME);
         assertMementoUri(mementoUri, descriptionUri);
 
         try (final CloseableDataset dataset = getDataset(new HttpGet(mementoUri))) {
@@ -1222,7 +1197,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     public void testGetVersionResponseContentTypes() throws Exception {
         createVersionedContainer(id);
         final String versionUri = createContainerMementoWithBody(subjectUri);
-//        final String versionUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
 
         final String[] rdfResponseTypes = rdfTypes.toArray(new String[rdfTypes.size()]);
         for (final String type : rdfResponseTypes) {
@@ -1241,11 +1215,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final String memento1 =
             MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
         final String version1Uri = createLDPRSMementoWithExistingBody();
-//        final String version1Uri = createLDPRSMementoWithExistingBody(memento1);
-        final String memento2 =
             MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2016-06-17T11:41:00Z", Instant::from));
         final String version2Uri = createLDPRSMementoWithExistingBody();
-//        final String version2Uri = createLDPRSMementoWithExistingBody(memento2);
 
         // Request datetime between memento1 and memento2
         final String request1Datetime =
@@ -1296,7 +1267,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         // Create a current memento
         final String version1Uri = createMemento(originalUri);
-//        final String version1Uri = createMemento(originalUri, null, "text/turtle", null);
         final HttpHead httpHead = new HttpHead(version1Uri);
         final String version1Datetime;
         try (final CloseableHttpResponse response = customClient.execute(httpHead)) {
@@ -1308,7 +1278,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             Instant.from(MEMENTO_RFC_1123_FORMATTER.parse(version1Datetime)).minus(5, ChronoUnit.SECONDS);
         final String version2Datetime = MEMENTO_RFC_1123_FORMATTER.format(version2Instant);
         final String version2Uri = createLDPRSMementoWithExistingBody();
-//        final String version2Uri = createLDPRSMementoWithExistingBody(version2Datetime);
 
         // Attempt to retrieve older memento
         final HttpGet getVersion2 = getObjMethod(id);
@@ -1369,7 +1338,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         // Create memento
         final String mementoUri = createLDPRSMementoWithExistingBody();
-//        final String mementoUri = createLDPRSMementoWithExistingBody(mementoDateTime);
 
         // Status 302: GET memento with datetime negotiation
         final HttpGet getMethod2 = getObjMethod(id);
@@ -1417,7 +1385,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createVersionedContainer(id);
 
         final String mementoUri = createContainerMementoWithBody(subjectUri);
-//        final String mementoUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
         final HttpPatch patch = new HttpPatch(mementoUri);
         patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         patch.setEntity(new StringEntity(
@@ -1447,7 +1414,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createVersionedContainer(id);
 
         final String mementoUri = createContainerMementoWithBody(subjectUri);
-//        final String mementoUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
         final String body = createContainerMementoBodyContent(subjectUri, N3);
         final HttpPost post = new HttpPost(mementoUri);
         post.addHeader(CONTENT_TYPE, N3);
@@ -1477,7 +1443,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createVersionedContainer(id);
 
         final String mementoUri = createContainerMementoWithBody(subjectUri);
-//        final String mementoUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
         final String body = createContainerMementoBodyContent(subjectUri, N3);
         final HttpPut put = new HttpPut(mementoUri);
         put.addHeader(CONTENT_TYPE, N3);
@@ -1509,7 +1474,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final String memento1 =
             MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2001-06-10T16:41:00Z", Instant::from));
         final String version1Uri = createLDPRSMementoWithExistingBody();
-//        final String version1Uri = createLDPRSMementoWithExistingBody(memento1);
         final HttpGet getRequest = new HttpGet(version1Uri);
 
         try (final CloseableHttpResponse response = execute(getRequest)) {
@@ -1534,7 +1498,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final String memento1 =
             MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2001-06-10T16:41:00Z", Instant::from));
         final String version1Uri = createLDPNRMementoWithExistingBody();
-//        final String version1Uri = createLDPNRMementoWithExistingBody(memento1);
         final HttpGet getRequest = new HttpGet(version1Uri);
 
         try (final CloseableHttpResponse response = execute(getRequest)) {

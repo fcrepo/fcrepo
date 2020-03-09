@@ -391,4 +391,13 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
             throw new PersistentStorageException("Session is read-only");
         }
     }
+
+    @Override
+    public String toString() {
+        return "OCFLPersistentStorageSession{" +
+                "sessionId='" + sessionId + '\'' +
+                ", state=" + state +
+                '}';
+    }
+
 }

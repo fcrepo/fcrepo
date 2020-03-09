@@ -19,19 +19,30 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import edu.wisc.library.ocfl.api.OcflObjectUpdater;
-import static edu.wisc.library.ocfl.api.OcflOption.MOVE_SOURCE;
-import static edu.wisc.library.ocfl.api.OcflOption.OVERWRITE;
 import edu.wisc.library.ocfl.api.exception.NotFoundException;
 import edu.wisc.library.ocfl.api.model.CommitInfo;
 import edu.wisc.library.ocfl.api.model.FileChangeType;
 import edu.wisc.library.ocfl.api.model.FileDetails;
 import edu.wisc.library.ocfl.api.model.ObjectVersionId;
 import edu.wisc.library.ocfl.api.model.VersionDetails;
+import edu.wisc.library.ocfl.api.model.VersionId;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.fcrepo.persistence.api.CommitOption;
+import org.fcrepo.persistence.api.WriteOutcome;
+import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.common.FileWriteOutcome;
+import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
+import org.fcrepo.persistence.ocfl.api.OCFLVersion;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import static java.lang.String.format;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -47,20 +58,10 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import edu.wisc.library.ocfl.api.model.VersionId;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.fcrepo.persistence.api.CommitOption;
+import static edu.wisc.library.ocfl.api.OcflOption.MOVE_SOURCE;
+import static edu.wisc.library.ocfl.api.OcflOption.OVERWRITE;
+import static java.lang.String.format;
 import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
-import org.fcrepo.persistence.api.WriteOutcome;
-import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
-import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
-import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.common.FileWriteOutcome;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
-import org.fcrepo.persistence.ocfl.api.OCFLVersion;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Default implementation of an OCFL object session, which stages changes to the
