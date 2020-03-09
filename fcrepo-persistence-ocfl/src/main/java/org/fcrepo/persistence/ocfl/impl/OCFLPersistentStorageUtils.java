@@ -43,6 +43,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -253,8 +254,10 @@ public class OCFLPersistentStorageUtils {
     public static String resolveVersionId(final OCFLObjectSession objSession, final Instant version)
             throws PersistentStorageException {
         if (version != null) {
-            return objSession.listVersions()
-                    .stream()
+            final var versions = objSession.listVersions();
+            // reverse order so that the most recent version is matched first
+            Collections.reverse(versions);
+            return versions.stream()
                     .filter(vd -> {
                         return vd.getCreated().equals(version);
                     }).map(OCFLVersion::getOcflVersionId)

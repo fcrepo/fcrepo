@@ -17,10 +17,13 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
+import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
 import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.STAGING_DIR;
 
 import java.io.File;
 
+import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 
@@ -28,6 +31,7 @@ import edu.wisc.library.ocfl.api.MutableOcflRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -42,6 +46,12 @@ import javax.inject.Inject;
 public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultOCFLObjectSessionFactory.class);
+
+    /**
+     * Controls whether or changes are committed to new OCFL versions or to a mutable HEAD
+     */
+    @Value("${fcrepo.autoversioning.enabled:false}")
+    private boolean autoVersioningEnabled;
 
     private File ocflStagingDir;
 
@@ -75,6 +85,24 @@ public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory
 
         final File stagingDirectory = new File(this.ocflStagingDir,
                 persistentStorageSessionId == null ? "read-only" : persistentStorageSessionId);
-        return new DefaultOCFLObjectSession(ocflId, stagingDirectory.toPath(), this.ocflRepository);
+        return new DefaultOCFLObjectSession(ocflId, stagingDirectory.toPath(),
+                this.ocflRepository, defaultCommitOption());
     }
+
+    private CommitOption defaultCommitOption() {
+        if (autoVersioningEnabled) {
+            return NEW_VERSION;
+        }
+        return UNVERSIONED;
+    }
+
+    /**
+     * Enable or disable auto versioning on future sessions the factory creates
+     *
+     * @param autoVersioningEnabled true if auto versioning is enabled
+     */
+    public void setAutoVersioningEnabled(final boolean autoVersioningEnabled) {
+        this.autoVersioningEnabled = autoVersioningEnabled;
+    }
+
 }
