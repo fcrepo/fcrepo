@@ -108,7 +108,6 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         this.objectDeleted = false;
         this.sessionClosed = false;
         this.created = Instant.now();
-
     }
 
     /**
@@ -371,8 +370,9 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     }
 
     private String commitUpdates(final CommitOption commitOption) {
-        // Nothing to do if there are no staged files, no deletes, and not mutable HEAD
-        if (isStagingEmpty() && deletePaths.isEmpty() && !ocflRepository.hasStagedChanges(objectIdentifier)) {
+        // Nothing to do if there are no staged files, no deletes, and not committing the mutable HEAD
+        if (isStagingEmpty() && deletePaths.isEmpty() &&
+                !(commitOption == NEW_VERSION && ocflRepository.hasStagedChanges(objectIdentifier))) {
             return ocflRepository.describeVersion(ObjectVersionId.head(objectIdentifier))
                     .getVersionId().toString();
         }

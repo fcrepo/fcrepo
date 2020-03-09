@@ -571,6 +571,24 @@ public class DefaultOCFLObjectSessionTest {
         commit(session2, UNVERSIONED);
 
         final ObjectDetails objDetails = ocflRepository.describeObject(OBJ_ID);
+        assertTrue("HEAD should be mutable", objDetails.getHeadVersion().isMutable());
+        final var versionMap = objDetails.getVersionMap();
+        assertEquals("Only the mutable head and initial version exist", 2, versionMap.size());
+
+        assertFileInVersion(OBJ_ID, "v2", FILE1_SUBPATH, FILE_CONTENT1);
+        assertFileNotInVersion(OBJ_ID, "v1", FILE1_SUBPATH);
+    }
+
+    @Test
+    public void commit_MHead_CreateNewVersionWhenStagedChanges() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        commit(UNVERSIONED);
+
+        final var session2 = makeNewSession();
+        commit(session2, NEW_VERSION);
+
+        final ObjectDetails objDetails = ocflRepository.describeObject(OBJ_ID);
+        assertFalse("HEAD should not be mutable", objDetails.getHeadVersion().isMutable());
         final var versionMap = objDetails.getVersionMap();
         assertEquals("Only the mutable head and initial version exist", 2, versionMap.size());
 
