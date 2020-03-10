@@ -173,6 +173,8 @@ public final class RdfLexicon {
     // REPOSITORY INFORMATION
     public static final Property HAS_TRANSACTION_SERVICE =
             createProperty(REPOSITORY_NAMESPACE + "hasTransactionProvider");
+    public static final Resource REPOSITORY_ROOT =
+            createResource(REPOSITORY_NAMESPACE + "RepositoryRoot");
 
     // OTHER SERVICES
     public static final Property HAS_FIXITY_SERVICE =

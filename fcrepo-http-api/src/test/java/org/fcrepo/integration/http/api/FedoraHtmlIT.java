@@ -98,7 +98,6 @@ public class FedoraHtmlIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testGetRootTemplate() throws IOException {
 
