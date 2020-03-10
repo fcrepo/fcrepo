@@ -32,6 +32,7 @@ import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
 import java.net.URI;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -112,6 +113,13 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public FedoraResource getOriginalResource() {
+        if (isMemento()) {
+            try {
+                return resourceFactory.getResource(tx, getId());
+            } catch (PathNotFoundException e) {
+                throw new PathNotFoundRuntimeException(e);
+            }
+        }
         return this;
     }
 
@@ -138,11 +146,22 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public FedoraResource findMementoByDatetime(final Instant mementoDatetime) {
-        try {
-            return resourceFactory.getResource(tx, getId(), mementoDatetime);
-        } catch (PathNotFoundException e) {
-            throw new PathNotFoundRuntimeException(e);
+        FedoraResource match = null;
+        long matchDiff = 0;
+
+        for (var it = getTimeMap().getChildren().iterator(); it.hasNext();) {
+            final var current = it.next();
+            final var diff = Duration.between(current.getMementoDatetime(), mementoDatetime).toSeconds();
+
+            if (match == null
+                    || (matchDiff < 0 && diff >= matchDiff)
+                    || (diff >= 0 && diff <= matchDiff)) {
+                match = current;
+                matchDiff = diff;
+            }
         }
+
+        return match;
     }
 
     @Override
@@ -231,8 +250,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public boolean isOriginalResource() {
-        // TODO Auto-generated method stub
-        return false;
+        return !isMemento();
     }
 
     @Override

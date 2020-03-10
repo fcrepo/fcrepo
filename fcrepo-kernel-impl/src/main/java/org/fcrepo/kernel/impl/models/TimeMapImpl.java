@@ -100,6 +100,11 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
     }
 
     @Override
+    public boolean isOriginalResource() {
+        return false;
+    }
+
+    @Override
     public FedoraResource getTimeMap() {
         return this;
     }

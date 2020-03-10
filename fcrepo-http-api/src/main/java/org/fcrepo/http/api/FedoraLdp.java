@@ -98,7 +98,6 @@ import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
-import org.fcrepo.kernel.api.exception.InvalidMementoPathException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
@@ -189,8 +188,6 @@ public class FedoraLdp extends ContentExposingResource {
     public Response head() throws UnsupportedAlgorithmException {
         LOGGER.info("HEAD for: {}", externalPath);
 
-        checkMementoPath();
-
         final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);
         if (!isBlank(datetimeHeader) && resource().isOriginalResource()) {
             return getMemento(datetimeHeader, resource());
@@ -238,8 +235,6 @@ public class FedoraLdp extends ContentExposingResource {
     public Response options() {
         LOGGER.info("OPTIONS for '{}'", externalPath);
 
-        checkMementoPath();
-
         addLinkAndOptionsHttpHeaders(resource());
         return ok().build();
     }
@@ -259,8 +254,6 @@ public class FedoraLdp extends ContentExposingResource {
             TURTLE_X, TEXT_HTML_WITH_CHARSET})
     public Response getResource(@HeaderParam("Range") final String rangeValue)
             throws IOException, UnsupportedAlgorithmException {
-
-        checkMementoPath();
 
         final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);
         if (!isBlank(datetimeHeader) && resource().isOriginalResource()) {
@@ -315,7 +308,7 @@ public class FedoraLdp extends ContentExposingResource {
             final Response builder;
             if (memento != null) {
                 builder =
-                    status(FOUND).header(LOCATION, translator().reverse().convert(memento).toString()).build();
+                    status(FOUND).header(LOCATION, getUri(memento)).build();
             } else {
                 builder = status(NOT_ACCEPTABLE).build();
             }
@@ -825,15 +818,4 @@ public class FedoraLdp extends ContentExposingResource {
             FedoraTypes.FCR_VERSIONS, externalPath);
     }
 
-    /*
-     * Ensure that an incoming versioning/memento path can be converted.
-     */
-    private void checkMementoPath() {
-        if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
-            final String path = toPath(translator(), externalPath);
-            if (path.contains(FedoraTypes.FCR_VERSIONS)) {
-                throw new InvalidMementoPathException("Invalid versioning request with path: " + path);
-            }
-        }
-    }
 }

@@ -62,7 +62,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED_PROPERTIES_MODE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
@@ -84,7 +83,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
@@ -250,6 +248,26 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     @Test
+    public void getMementoFromAgChild() throws Exception {
+        final var childId1 = id + "/child1";
+
+        createVersionedArchivalGroup(id);
+        createMemento(subjectUri);
+        TimeUnit.SECONDS.sleep(1);
+
+        putVersionedBinary(childId1, OCTET_STREAM_TYPE, "v2", false);
+        final var mementoUri = createMemento(subjectUri);
+        final var mementoTime = mementoUri.substring(mementoUri.lastIndexOf("/"));
+
+        final HttpGet httpGet = new HttpGet(subjectUri + "/child1/fcr:versions" + mementoTime);
+        try (final CloseableHttpResponse response = execute(httpGet)) {
+            assertMementoDatetimeHeaderMatches(response, now());
+            assertEquals("Binary content of memento must match original content",
+                    "v2", EntityUtils.toString(response.getEntity()));
+        }
+    }
+
+    @Test
     public void testGetTimeMapResponseMultipleMementos() throws Exception {
         createVersionedContainer(id);
         final var v1 = now();
@@ -282,7 +300,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore("get memento not implemented")
     @Test
     public void testCreateVersion() throws Exception {
         createVersionedContainer(id);
@@ -302,7 +319,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore("get memento not implemented")
     @Test
     public void testCreateVersionFromResourceWithHashURI() throws Exception {
         final HttpPost createMethod = postObjMethod();
@@ -329,7 +345,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore("get memento not implemented")
+    @Ignore
     @Test
     public void testCreateVersionFromResourceWithBlankNode() throws Exception {
         final HttpPost createMethod = postObjMethod();
@@ -362,42 +378,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    /**
-     * This will test for weird date/time scenario.  If the date time stamp has
-     * a ms field which is a multiple of 10 and only has one or two digits (ie, .5 or .86)
-     * then Modeshape 5.0 will incorrectly parse that value (ie. .5 s becomes .005 s),
-     * thereby changing the time.
-     * @throws java.lang.Exception exception thrown during this function
-     */
-    @Ignore("get memento not implemented")
-    @Test
-    public void testCreateVersionWithLastModifiedDateTimestamp() throws Exception {
-        try {
-            final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-
-            // relaxing the server managed mode here so lastModifiedDate can be set
-            System.setProperty(SERVER_MANAGED_PROPERTIES_MODE, "relaxed");
-
-            createVersionedContainer(id);
-
-            // this results in a time which has .86 in the ms area. This is key for this test.
-            final String createdDate = FMT.format(
-                    LocalDateTime.of(2018, 9, 21, 5, 30, 01, 860000000).atZone(ZoneOffset.UTC));
-
-            final String lastModified = FMT.format(
-                    LocalDateTime.of(2018, 9, 21, 5, 30, 03, 500000000).atZone(ZoneOffset.UTC));
-
-
-            final String memento = createMemento(subjectUri);
-
-            assertMementoEqualsOriginal(memento);
-
-        } finally {
-            // set server managed mode back to strict
-            System.clearProperty(SERVER_MANAGED_PROPERTIES_MODE);
-        }
-    }
-
     @Test
     public void testCreateVersionWithSlugHeader() throws Exception {
         createVersionedContainer(id);
@@ -427,42 +407,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 BAD_REQUEST.getStatusCode(), getStatus(post));
     }
 
-    @Ignore("get memento not implemented")
-    @Test
-    public void testCreateVersionWithDatetimeAndBody() throws Exception {
-        createVersionedContainer(id);
-
-        final String mementoUri = createContainerMementoWithBody(subjectUri);
-        assertMementoUri(mementoUri, subjectUri);
-        final Node mementoSubject = createURI(subjectUri);
-        final Node subject = createURI(subjectUri);
-
-        // Verify that the memento has the new property added to it
-        try (final CloseableHttpResponse response = execute(new HttpGet(mementoUri))) {
-            // Verify datetime was set correctly
-            assertMementoDatetimeHeaderMatches(response, MEMENTO_DATETIME);
-
-            final CloseableDataset dataset = getDataset(response);
-            final DatasetGraph results = dataset.asDatasetGraph();
-
-            assertFalse("Memento must not have original property",
-                    results.contains(ANY, mementoSubject, TEST_PROPERTY_NODE, createLiteral("foo")));
-            assertTrue("Memento must have updated property",
-                    results.contains(ANY, mementoSubject, TEST_PROPERTY_NODE, createLiteral("bar")));
-        }
-
-        // Verify that the original is unchanged
-        try (final CloseableDataset dataset = getDataset(new HttpGet(subjectUri))) {
-            final DatasetGraph results = dataset.asDatasetGraph();
-
-            assertTrue("Original must have original property",
-                    results.contains(ANY, subject, TEST_PROPERTY_NODE, createLiteral("foo")));
-            assertFalse("Original must not have updated property",
-                    results.contains(ANY, subject, TEST_PROPERTY_NODE, createLiteral("bar")));
-        }
-    }
-
-    @Ignore //TODO Fix this test
+    @Ignore("delete not implemented")
     @Test
     public void testDeleteAndPostContainerMemento() throws Exception {
         createVersionedContainer(id);
@@ -480,7 +425,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 OK.getStatusCode(), getStatus(new HttpGet(recreatedUri)));
     }
 
-    @Ignore //TODO Fix this test
+    @Ignore("delete not implemented")
     @Test
     public void testDeleteAndPostBinaryMemento() throws Exception {
         createVersionedBinary(id);
@@ -498,7 +443,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 OK.getStatusCode(), getStatus(new HttpGet(recreatedUri)));
     }
 
-    @Ignore //TODO Fix this test
+    @Ignore("delete not implemented")
     @Test
     public void testDeleteAndPostDescriptionMemento() throws Exception {
         createVersionedBinary(id);
@@ -518,7 +463,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 OK.getStatusCode(), getStatus(new HttpGet(recreatedUri)));
     }
 
-    @Ignore //TODO Fix this test
+    @Ignore("delete not implemented")
     @Test
     public void testMementoContainmentReferences() throws Exception {
         createVersionedContainer(id);
@@ -550,7 +495,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testHeadOnMemento() throws Exception {
 
@@ -573,13 +517,10 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         checkResponseWithInvalidMementoID(headMethodInvalid);
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testGetOnMemento() throws Exception {
 
         createVersionedContainer(id);
-        final String mementoDateTime =
-            MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
         final String mementoUri = createLDPRSMementoWithExistingBody();
 
         // Status 200: GET request on existing memento
@@ -596,7 +537,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         checkResponseWithInvalidMementoID(getMementoInvalid);
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testGetOnMementoWithAcceptDatetimePresent() throws Exception {
         createVersionedContainer(id);
@@ -611,7 +551,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                      getStatus(getMemento));
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testHeadOnMementoWithAcceptDatetimePresent() throws Exception {
         createVersionedContainer(id);
@@ -626,7 +565,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 getStatus(headMemento));
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testOptionsOnMemento() throws Exception {
 
@@ -927,7 +865,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    private void assertDuration(final String expected, final String actual) {
+    private static void assertDuration(final String expected, final String actual) {
         final var expectedInstant = parseToInstant(expected);
         final var actualInstant = parseToInstant(actual);
 
@@ -937,7 +875,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 diff.abs().getSeconds() < 5);
     }
 
-    private Instant parseToInstant(final String value) {
+    private static Instant parseToInstant(final String value) {
         return Instant.from(MEMENTO_RFC_1123_FORMATTER.parse(value));
     }
 
@@ -964,7 +902,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertEquals(1, response.getHeaders("Accept-Post").length);
     }
 
-    @Ignore("get memento not implemented")
     @Test
     public void testCreateVersionOfBinary() throws Exception {
         createVersionedBinary(id);
@@ -974,7 +911,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         final HttpGet httpGet = new HttpGet(mementoUri);
         try (final CloseableHttpResponse response = execute(httpGet)) {
-            assertMementoDatetimeHeaderPresent(response);
+            assertMementoDatetimeHeaderMatches(response, now());
             assertEquals("Binary content of memento must match original content",
                     BINARY_CONTENT, EntityUtils.toString(response.getEntity()));
         }
@@ -989,52 +926,35 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore("get memento not implemented")
-    @Test
-    public void testCreateVersionOfBinaryWithDatetimeAndContentType() throws Exception {
-        createVersionedBinary(id);
-
-        final String mementoUri = createMemento(subjectUri);
-        assertMementoUri(mementoUri, subjectUri);
-
-        // Verify that the memento has the updated binary
-        try (final CloseableHttpResponse response = execute(new HttpGet(mementoUri))) {
-            assertMementoDatetimeHeaderMatches(response, MEMENTO_DATETIME);
-
-            assertEquals("Binary content of memento must be empty",
-                    "", EntityUtils.toString(response.getEntity()));
-            assertEquals(OCTET_STREAM_TYPE, response.getFirstHeader(CONTENT_TYPE).getValue());
-        }
-    }
-
-    @Ignore("get memento not implemented")
-    @Test
-    public void testCreateVersionOfBinaryWithBody() throws Exception {
-        createVersionedBinary(id);
-
-        final String mementoUri = createMemento(subjectUri);
-        assertMementoUri(mementoUri, subjectUri);
-
-        final HttpGet httpGet = new HttpGet(mementoUri);
-        try (final CloseableHttpResponse response = execute(httpGet)) {
-            assertMementoDatetimeHeaderPresent(response);
-
-            assertEquals("Binary content of memento must not have changed",
-                    BINARY_CONTENT, EntityUtils.toString(response.getEntity()));
-        }
-    }
-
-    @Ignore("get memento not implemented")
     @Test
     public void testCreateVersionOfBinaryWithDatetimeAndBody() throws Exception {
         createVersionedBinary(id);
 
         final String mementoUri = createMemento(subjectUri);
+        final String v1Time = now();
         assertMementoUri(mementoUri, subjectUri);
+
+        TimeUnit.SECONDS.sleep(1);
+
+        putVersionedBinary(id, OCTET_STREAM_TYPE, BINARY_UPDATED, true);
+
+        final String mementoUri2 = createMemento(subjectUri);
+        final String v2Time = now();
+        assertMementoUri(mementoUri2, subjectUri);
 
         // Verify that the memento has the updated binary
         try (final CloseableHttpResponse response = execute(new HttpGet(mementoUri))) {
-            assertMementoDatetimeHeaderMatches(response, MEMENTO_DATETIME);
+            assertMementoDatetimeHeaderMatches(response, v1Time);
+
+            // Content-type is not retained for a binary memento created without description
+            assertEquals(OCTET_STREAM_TYPE, response.getFirstHeader(CONTENT_TYPE).getValue());
+
+            assertEquals("Binary content of memento must match original content",
+                    BINARY_CONTENT, EntityUtils.toString(response.getEntity()));
+        }
+
+        try (final CloseableHttpResponse response = execute(new HttpGet(mementoUri2))) {
+            assertMementoDatetimeHeaderMatches(response, v2Time);
 
             // Content-type is not retained for a binary memento created without description
             assertEquals(OCTET_STREAM_TYPE, response.getFirstHeader(CONTENT_TYPE).getValue());
@@ -1044,7 +964,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore("get memento not implemented")
+    @Ignore("patch not implemented")
     @Test
     public void testCreateVersionOfBinaryDescription() throws Exception {
         createVersionedBinary(id);
@@ -1088,7 +1008,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertEquals(NOT_FOUND.getStatusCode(), getStatus(new HttpGet(hypotheticalBinaryUri)));
     }
 
-    @Ignore //TODO Fix this test
+    @Ignore("descriptions aren't working")
     @Test
     public void testCreateVersionBinaryDescriptionWithBodyAndDatetime() throws Exception {
         createVersionedBinary(id);
@@ -1112,7 +1032,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
+    @Ignore("metadata problems and issues creating binary resources as text/plain")
     @Test
     public void testCreateVersionHistoricBinaryAndDescription() throws Exception {
         createVersionedBinary(id, "text/plain", BINARY_CONTENT);
@@ -1121,6 +1041,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         final String binaryMementoUri = createMemento(subjectUri);
         assertMementoUri(binaryMementoUri, subjectUri);
+
+        TimeUnit.SECONDS.sleep(1);
 
         final String mementoUri = createContainerMementoWithBody(descriptionUri);
         assertMementoUri(mementoUri, descriptionUri);
@@ -1148,7 +1070,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
+    @Ignore("patch doesn't work")
     @Test
     public void testAddAndRetrieveVersion() throws Exception {
         createVersionedContainer(id);
@@ -1192,7 +1114,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testGetVersionResponseContentTypes() throws Exception {
         createVersionedContainer(id);
@@ -1206,21 +1127,25 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testDatetimeNegotiationLDPRv() throws Exception {
+        final String startDatetime = MEMENTO_RFC_1123_FORMATTER.format(Instant.now().atZone(ZoneOffset.UTC));
+
         final CloseableHttpClient customClient = createClient(true);
 
         createVersionedContainer(id);
-        final String memento1 =
-            MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
         final String version1Uri = createLDPRSMementoWithExistingBody();
-            MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2016-06-17T11:41:00Z", Instant::from));
-        final String version2Uri = createLDPRSMementoWithExistingBody();
+
+        TimeUnit.SECONDS.sleep(1);
 
         // Request datetime between memento1 and memento2
-        final String request1Datetime =
-            MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-01-12T00:00:00Z", Instant::from));
+        final String request1Datetime = MEMENTO_RFC_1123_FORMATTER.format(Instant.now().atZone(ZoneOffset.UTC));
+
+        TimeUnit.SECONDS.sleep(1);
+
+        final String version2Uri = createLDPRSMementoWithExistingBody();
+
+
         final HttpGet getMemento = getObjMethod(id);
         getMemento.addHeader(ACCEPT_DATETIME, request1Datetime);
 
@@ -1232,8 +1157,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
 
         // Request datetime more recent than both mementos
-        final String request2Datetime =
-            MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2018-01-10T00:00:00Z", Instant::from));
+        final String request2Datetime = MEMENTO_RFC_1123_FORMATTER.format(Instant.now().atZone(ZoneOffset.UTC));
+
         final HttpGet getMemento2 = getObjMethod(id);
         getMemento2.addHeader(ACCEPT_DATETIME, request2Datetime);
 
@@ -1245,10 +1170,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
 
         // Request datetime older than either mementos
-        final String request3Datetime =
-            MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2014-01-01T00:00:00Z", Instant::from));
         final HttpGet getMemento3 = getObjMethod(id);
-        getMemento3.addHeader(ACCEPT_DATETIME, request3Datetime);
+        getMemento3.addHeader(ACCEPT_DATETIME, startDatetime);
 
         try (final CloseableHttpResponse response = customClient.execute(getMemento3)) {
             assertEquals("Did not get FOUND response", FOUND.getStatusCode(), getStatus(response));
@@ -1258,7 +1181,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testDatetimeNegotiationExactMatch() throws Exception {
         final CloseableHttpClient customClient = createClient(true);
@@ -1274,8 +1196,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
 
         // Create a slightly older memento
-        final Instant version2Instant =
-            Instant.from(MEMENTO_RFC_1123_FORMATTER.parse(version1Datetime)).minus(5, ChronoUnit.SECONDS);
+        final Instant version2Instant = Instant.now().minus(5, ChronoUnit.SECONDS);
         final String version2Datetime = MEMENTO_RFC_1123_FORMATTER.format(version2Instant);
         final String version2Uri = createLDPRSMementoWithExistingBody();
 
@@ -1302,7 +1223,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testDatetimeNegotiationNoMementos() throws Exception {
         final CloseableHttpClient customClient = createClient(true);
@@ -1321,7 +1241,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
 
-    @Ignore //TODO Fix this test
     @Test
     public void testGetWithDateTimeNegotiation() throws Exception {
         final CloseableHttpClient customClient = createClient(true);
@@ -1353,7 +1272,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             BAD_REQUEST.getStatusCode(), getStatus(customClient.execute(getMethod3)));
     }
 
-    @Ignore //TODO Fix this test
+    @Ignore("fixity not implemented")
     @Test
     public void testFixityOnVersionedResource() throws Exception {
         createVersionedBinary(id);
@@ -1366,7 +1285,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testOptionsMemento() throws Exception {
         createVersionedContainer(id);
@@ -1379,7 +1297,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
+    @Ignore("patch not implemented")
     @Test
     public void testPatchOnMemento() throws Exception {
         createVersionedContainer(id);
@@ -1408,7 +1326,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertEquals(405, getStatus(anyPatch));
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testPostOnMemento() throws Exception {
         createVersionedContainer(id);
@@ -1437,7 +1354,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertEquals(405, getStatus(anyPost));
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testPutOnMemento() throws Exception {
         createVersionedContainer(id);
@@ -1466,18 +1382,15 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertEquals(405, getStatus(anyPut));
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testGetLDPRSMementoHeaders() throws Exception {
         createVersionedContainer(id);
 
-        final String memento1 =
-            MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2001-06-10T16:41:00Z", Instant::from));
         final String version1Uri = createLDPRSMementoWithExistingBody();
         final HttpGet getRequest = new HttpGet(version1Uri);
 
         try (final CloseableHttpResponse response = execute(getRequest)) {
-            assertMementoDatetimeHeaderMatches(response, memento1);
+            assertMementoDatetimeHeaderMatches(response, now());
             checkForLinkHeader(response, MEMENTO_TYPE, "type");
             checkForLinkHeader(response, subjectUri, "original");
             checkForLinkHeader(response, subjectUri, "timegate");
@@ -1490,18 +1403,16 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
+    @Ignore("bug creating resources with text/plain")
     @Test
     public void testGetLDPNRMementoHeaders() throws Exception {
         createVersionedBinary(id, "text/plain", "This is some versioned content");
 
-        final String memento1 =
-            MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2001-06-10T16:41:00Z", Instant::from));
         final String version1Uri = createLDPNRMementoWithExistingBody();
         final HttpGet getRequest = new HttpGet(version1Uri);
 
         try (final CloseableHttpResponse response = execute(getRequest)) {
-            assertMementoDatetimeHeaderMatches(response, memento1);
+            assertMementoDatetimeHeaderMatches(response, now());
             checkForLinkHeader(response, MEMENTO_TYPE, "type");
             checkForLinkHeader(response, subjectUri, "original");
             checkForLinkHeader(response, subjectUri, "timegate");
@@ -1517,7 +1428,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
      * Verify binary description timemap RDF representation can be retrieved with and without
      * accompanying binary memento
      */
-    @Ignore //TODO Fix this test
+    @Ignore("descriptions aren't returned")
     @Test
     public void testFcrepo2792() throws Exception {
         // 1. Create versioned resource
@@ -1674,7 +1585,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
+    @Ignore("bug creating text/plain resources")
     @Test
     public void testCreateHistoricExternalBinaryCopyVersion() throws Exception {
         final String newContent = "new content";
@@ -1785,7 +1696,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     private String createContainerMementoWithBody(final String subjectUri)
             throws Exception {
 
-        createContainerMementoBodyContent(subjectUri, N3);
+        final var body = createContainerMementoBodyContent(subjectUri, N3);
+        createVersionedContainer(subjectUri, body);
         return createMemento(subjectUri);
     }
 
@@ -1825,6 +1737,25 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createMethod.addHeader("Slug", id);
         createMethod.addHeader(CONTENT_TYPE, N3);
         createMethod.setEntity(new StringEntity("<> <info:test#label> \"foo\""));
+
+        try (final CloseableHttpResponse response = execute(createMethod)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            return response.getFirstHeader(LOCATION).getValue();
+        }
+    }
+
+    /**
+     * Create a versioned LDP-RS
+     *
+     * @param subjectUri uri to post to
+     * @param content content
+     * @return Location of the new resource
+     * @throws Exception on error
+     */
+    private String createVersionedContainer(final String subjectUri, final String content) throws Exception {
+        final HttpPost createMethod = new HttpPost(subjectUri);
+        createMethod.addHeader(CONTENT_TYPE, N3);
+        createMethod.setEntity(new StringEntity(content));
 
         try (final CloseableHttpResponse response = execute(createMethod)) {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
@@ -1962,8 +1893,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     private static void assertMementoDatetimeHeaderMatches(final CloseableHttpResponse response,
             final String expected) {
         assertMementoDatetimeHeaderPresent(response);
-        assertEquals("Response memento datetime did not match expected value",
-                expected, response.getFirstHeader(MEMENTO_DATETIME_HEADER).getValue());
+        assertDuration(expected, response.getFirstHeader(MEMENTO_DATETIME_HEADER).getValue());
     }
 
     private static void patchLiteralProperty(final String url, final String predicate, final String literal)

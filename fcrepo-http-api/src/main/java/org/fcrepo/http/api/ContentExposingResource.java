@@ -291,7 +291,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             //streams.add(getTriples(resource, MINIMAL));
             // Mementos already have the server managed properties in the PROPERTIES category
             // since mementos are immutable and these triples are no longer managed
-            if (ldpPreferences.prefersServerManaged() && !resource.isMemento())  {
+            if (ldpPreferences.prefersServerManaged())  {
                 streams.add(this.managedPropertiesService.get(resource));
                 //TOOD Implement minimal return preference
                 //streams.add(getTriples(resource, MINIMAL));
@@ -302,7 +302,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             // Additional server-managed triples about this resource
             // Mementos already have the server managed properties in the PROPERTIES category
             // since mementos are immutable and these triples are no longer managed
-            if (ldpPreferences.prefersServerManaged() && !resource.isMemento()) {
+            if (ldpPreferences.prefersServerManaged()) {
                 streams.add(this.managedPropertiesService.get(resource));
             }
 
