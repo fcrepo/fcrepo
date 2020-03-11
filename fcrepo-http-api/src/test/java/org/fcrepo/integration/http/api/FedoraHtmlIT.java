@@ -27,7 +27,6 @@ import java.io.IOException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -84,10 +83,10 @@ public class FedoraHtmlIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testGetBinaryTemplate() throws IOException {
         final String pid = getRandomUniqueId();
+        createObject(pid);
         createDatastream(pid, "file", "binary content");
 
         final HttpGet method = new HttpGet(serverAddress + pid + "/file/fcr:metadata");
