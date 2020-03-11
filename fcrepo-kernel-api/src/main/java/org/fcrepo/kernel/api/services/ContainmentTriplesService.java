@@ -17,26 +17,26 @@
  */
 package org.fcrepo.kernel.api.services;
 
-import org.apache.jena.graph.Triple;
-import org.fcrepo.kernel.api.models.FedoraResource;
-
 import java.util.stream.Stream;
 
+import org.apache.jena.graph.Triple;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.models.FedoraResource;
+
 /**
- * Interface for a service that converts managed properties from a {@link org.fcrepo.kernel.api.models.FedoraResource}
- * into a triple stream
+ * Provides containment triples.
  *
- * @author dbernstein
- * @since 2020-01-07
+ * @author whikloj
+ * @since 6.0.0
  */
-public interface ManagedPropertiesService {
+public interface ContainmentTriplesService {
 
     /**
-     * Retrieve the managed properties as triples
+     * Retrieve the containment triples.
      *
+     * @param tx The transaction or null if none.
      * @param resource The fedora resource
-     * @return A stream of managed properties for the resource.
+     * @return A stream of containment triples for the resource.
      */
-    Stream<Triple> get(FedoraResource resource);
-
+    Stream<Triple> get(Transaction tx, FedoraResource resource);
 }

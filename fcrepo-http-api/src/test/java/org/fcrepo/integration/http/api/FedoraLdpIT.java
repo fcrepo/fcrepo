@@ -2315,7 +2315,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testGetObjectGraphWithChild() throws IOException {
         final String id = getRandomUniqueId();
         final String location = getLocation(createObject(id));
@@ -2333,7 +2332,28 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
+    public void testGetObjectGraphWithChildAndRemove() throws IOException {
+        final String id = getRandomUniqueId();
+        final String location = getLocation(createObject(id));
+        createObjectAndClose(id + "/c");
+        try (final CloseableHttpResponse response = execute(getObjMethod(id))) {
+            try (final CloseableDataset dataset = getDataset(response)) {
+                assertTrue("Didn't find child node!", dataset.asDatasetGraph().contains(ANY,
+                        createURI(location), createURI(LDP_NAMESPACE + "contains"), createURI(location + "/c")));
+            }
+        }
+
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteObjMethod(id + "/c")));
+
+        try (final CloseableHttpResponse response1 = execute(getObjMethod(id))) {
+            try (final CloseableDataset dataset = getDataset(response1)) {
+                assertFalse("Found child node!", dataset.asDatasetGraph().contains(ANY,
+                        createURI(location), createURI(LDP_NAMESPACE + "contains"), createURI(location + "/c")));
+            }
+        }
+    }
+
+    @Test
     public void testGetObjectGraphWithChildren() throws IOException {
         final String id = getRandomUniqueId();
         final String location = getLocation(createObject(id));

@@ -23,6 +23,7 @@ import static java.time.Duration.ofMinutes;
 import java.time.Duration;
 import java.time.Instant;
 
+import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
@@ -75,6 +76,7 @@ public class TransactionImpl implements Transaction {
         try {
             log.debug("Committing transaction {}", id);
             this.getPersistentSession().commit();
+            this.getContainmentIndex().commitTransaction(this);
             this.commited = true;
         } catch (final PersistentStorageException ex) {
             // Rollback on commit failure
@@ -98,6 +100,7 @@ public class TransactionImpl implements Transaction {
             log.debug("Rolling back transaction {}", id);
             this.rolledback = true;
             this.getPersistentSession().rollback();
+            this.getContainmentIndex().rollbackTransaction(this);
         } catch (final PersistentStorageException ex) {
             throw new RepositoryRuntimeException("failed to rollback transaction " + id, ex);
         }
@@ -185,5 +188,9 @@ public class TransactionImpl implements Transaction {
         if (this.rolledback) {
             throw new TransactionRuntimeException("Transaction with transactionId: " + id + " is already rolledback!");
         }
+    }
+
+    private ContainmentIndex getContainmentIndex() {
+        return this.txManager.getContainmentIndex();
     }
 }

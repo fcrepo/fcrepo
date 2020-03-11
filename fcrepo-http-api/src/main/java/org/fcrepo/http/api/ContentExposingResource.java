@@ -73,6 +73,8 @@ import static org.fcrepo.kernel.api.models.ExternalContent.COPY;
 import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
 import static org.fcrepo.kernel.api.models.ExternalContent.REDIRECT;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
+
+import org.fcrepo.kernel.api.services.ContainmentTriplesService;
 import org.fcrepo.kernel.api.utils.FedoraResourceIdConverter;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -211,6 +213,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     @Inject
     protected HttpRdfService httpRdfService;
 
+    @Inject
+    protected ContainmentTriplesService containmentTriplesService;
+
 
 
     protected abstract String externalPath();
@@ -309,11 +314,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             // containment triples about this resource
             if (ldpPreferences.prefersContainment()) {
                 if (limit == -1) {
-                    //TODO Implement retrieving containment triples service
-                    //  https://jira.lyrasis.org/browse/FCREPO-3164
-                    //streams.add(getTriples(resource, LDP_CONTAINMENT));
+                    streams.add(this.containmentTriplesService.get(transaction, resource));
                 } else {
-                    //streams.add(getTriples(resource, LDP_CONTAINMENT).limit(limit));
+                    streams.add(this.containmentTriplesService.get(transaction, resource).limit(limit));
                 }
             }
 
