@@ -57,7 +57,6 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl {
 
     @Override
     public FedoraResource getDescribedResource() {
-        // TODO must return the described binary
         final String describedId = this.getId().replaceAll("/" + FCR_METADATA + "$", "");
         try {
             return this.resourceFactory.getResource(tx, describedId);
