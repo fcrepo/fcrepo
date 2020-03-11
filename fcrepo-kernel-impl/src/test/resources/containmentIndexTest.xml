@@ -9,7 +9,7 @@
 
     <!-- Containment Index DB -->
     <bean id="containmentIndexDataSource" class="org.h2.jdbcx.JdbcDataSource">
-        <property name="url" value="jdbc:h2:mem:index" />
+        <property name="url" value="jdbc:h2:mem:index;DB_CLOSE_DELAY=-1" />
     </bean>
 
     <!-- Containment Index to test -->

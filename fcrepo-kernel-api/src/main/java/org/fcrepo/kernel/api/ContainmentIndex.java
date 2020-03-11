@@ -37,4 +37,34 @@ public interface ContainmentIndex {
      * @return A stream of contained identifiers
      */
     Stream<String> getContainedBy(Transaction tx, FedoraResource fedoraResource);
+
+    /**
+     * Remove a contained by relation between the child resource and its parent.
+     *
+     * @param tx The transaction.  If no transaction, null is okay.
+     * @param parent The containing fedora resource
+     * @param child The contained fedora resource
+     */
+    void removeContainedBy(final Transaction tx, final FedoraResource parent, final FedoraResource child);
+
+    /**
+     * Add a contained by relation between the child resource and its parent.
+     *
+     * @param tx The transaction.  If no transaction, null is okay.
+     * @param parent The containing fedora resource
+     * @param child The contained fedora resource
+     */
+    void addContainedBy(final Transaction tx, final FedoraResource parent, final FedoraResource child);
+
+    /**
+     * Commit the changes made in the transaction.
+     * @param tx The transaction.
+     */
+    void commitTransaction(final Transaction tx);
+
+    /**
+     * Rollback the containment index changes in the transaction.
+     * @param tx The transaction.
+     */
+    void rollbackTransaction(final Transaction tx);
 }

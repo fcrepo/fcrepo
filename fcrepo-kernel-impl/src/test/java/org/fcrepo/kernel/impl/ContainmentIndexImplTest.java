@@ -19,12 +19,15 @@ package org.fcrepo.kernel.impl;
 
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -33,17 +36,29 @@ import javax.inject.Inject;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration("/containmentIndexTest.xml")
 public class ContainmentIndexImplTest {
     @Mock
-    private FedoraResource parent;
+    private FedoraResource parent1;
 
     @Mock
-    private FedoraResource child;
+    private FedoraResource child1;
 
     @Mock
-    private Transaction transaction;
+    private FedoraResource parent2;
+
+    @Mock
+    private FedoraResource child2;
+
+    @Mock
+    private Transaction transaction1;
+
+    @Mock
+    private Transaction transaction2;
 
     @Inject
     private ContainmentIndexImpl containmentIndex;
@@ -51,50 +66,236 @@ public class ContainmentIndexImplTest {
     @Rule
     public MockitoRule rule = MockitoJUnit.rule();
 
+    private Map<String, FedoraResource> id_to_resource = new HashMap<>();
+    private Map<String, Transaction> id_to_transaction = new HashMap<>();
+
+    @Before
+    public void setUp() {
+        id_to_resource.put("parent1", parent1);
+        id_to_resource.put("parent2", parent2);
+        id_to_resource.put("child1", child1);
+        id_to_resource.put("child2", child2);
+        id_to_transaction.put("transaction1", transaction1);
+        id_to_transaction.put("transaction2", transaction2);
+    }
+
+    /**
+     * Utility method to make it easier to stub the getId() method and avoid MockitoHints.
+     * @param id The resource|transaction ID/name
+     */
+    private void stubObject(final String id) {
+        if (id_to_resource.containsKey(id)) {
+            when(id_to_resource.get(id).getId()).thenReturn(id);
+        } else if (id_to_transaction.containsKey(id)) {
+            when(id_to_transaction.get(id).getId()).thenReturn(id);
+        }
+    }
+
+    @After
+    public void cleanUp() {
+        // Rollback any in-process transactions.
+        containmentIndex.rollbackTransaction(transaction1);
+        containmentIndex.rollbackTransaction(transaction2);
+        // Remove all parent's children
+        containmentIndex.getContainedBy(null, parent1).forEach(t ->
+                containmentIndex.removeContainedBy(null, parent1, id_to_resource.get(t)));
+        // Remove all parent2's children
+        containmentIndex.getContainedBy(null, parent2).forEach(t ->
+                containmentIndex.removeContainedBy(null, parent2, id_to_resource.get(t)));
+    }
+
     @Test
     public void testAddChild() {
-        when(parent.getId()).thenReturn("A");
-        when(child.getId()).thenReturn("B");
-        assertEquals(0, containmentIndex.getContainedBy(null, parent).count());
-        containmentIndex.addContainedBy(null, parent, child);
-        assertEquals(1, containmentIndex.getContainedBy(null, parent).count());
-        assertEquals(child.getId(), containmentIndex.getContainedBy(null, parent).findFirst().get());
+        stubObject("parent1");
+        stubObject("child1");
+        assertEquals(0, containmentIndex.getContainedBy(null, parent1).count());
+        containmentIndex.addContainedBy(null, parent1, child1);
+        assertEquals(1, containmentIndex.getContainedBy(null, parent1).count());
+        assertEquals(child1.getId(), containmentIndex.getContainedBy(null, parent1).findFirst().get());
     }
 
     @Test
     public void testRemoveChild() {
-        when(parent.getId()).thenReturn("C");
-        when(child.getId()).thenReturn("D");
-        containmentIndex.addContainedBy(null, parent, child);
-        assertEquals(1, containmentIndex.getContainedBy(null, parent).count());
-        containmentIndex.removeContainedBy(null, parent, child);
-        assertEquals(0, containmentIndex.getContainedBy(null, parent).count());
+        stubObject("parent1");
+        stubObject("child1");
+        containmentIndex.addContainedBy(null, parent1, child1);
+        assertEquals(1, containmentIndex.getContainedBy(null, parent1).count());
+        containmentIndex.removeContainedBy(null, parent1, child1);
+        assertEquals(0, containmentIndex.getContainedBy(null, parent1).count());
     }
 
     @Test
     public void testAddChildInTransaction() {
-        when(parent.getId()).thenReturn("E");
-        when(child.getId()).thenReturn("F");
-        when(transaction.getId()).thenReturn("foo");
-        assertEquals(0, containmentIndex.getContainedBy(null, parent).count());
-        containmentIndex.addContainedBy(transaction, parent, child);
-        assertEquals(1, containmentIndex.getContainedBy(transaction, parent).count());
-        assertEquals(child.getId(), containmentIndex.getContainedBy(transaction, parent).findFirst().get());
+        stubObject("parent1");
+        stubObject("child1");
+        stubObject("transaction1");
+        assertEquals(0, containmentIndex.getContainedBy(null, parent1).count());
+        containmentIndex.addContainedBy(transaction1, parent1, child1);
+        assertEquals(1, containmentIndex.getContainedBy(transaction1, parent1).count());
+        assertEquals(child1.getId(), containmentIndex.getContainedBy(transaction1, parent1).findFirst().get());
         // outside of the transaction, the containment shouldn't show up
-        assertEquals(0, containmentIndex.getContainedBy(null, parent).count());
-        containmentIndex.removeContainedBy(transaction, parent, child);
-        assertEquals(0, containmentIndex.getContainedBy(transaction, parent).count());
+        assertEquals(0, containmentIndex.getContainedBy(null, parent1).count());
+        containmentIndex.removeContainedBy(transaction1, parent1, child1);
+        assertEquals(0, containmentIndex.getContainedBy(transaction1, parent1).count());
     }
 
     @Test
     public void testRemoveChildInTransaction() {
-        when(parent.getId()).thenReturn("G");
-        when(child.getId()).thenReturn("H");
-        when(transaction.getId()).thenReturn("bar");
-        assertEquals(0, containmentIndex.getContainedBy(transaction, parent).count());
-        containmentIndex.addContainedBy(transaction, parent, child);
-        assertEquals(1, containmentIndex.getContainedBy(transaction, parent).count());
-        containmentIndex.removeContainedBy(transaction, parent, child);
-        assertEquals(0, containmentIndex.getContainedBy(transaction, parent).count());
+        stubObject("parent1");
+        stubObject("child1");
+        stubObject("transaction1");
+        assertEquals(0, containmentIndex.getContainedBy(transaction1, parent1).count());
+        containmentIndex.addContainedBy(transaction1, parent1, child1);
+        assertEquals(1, containmentIndex.getContainedBy(transaction1, parent1).count());
+        containmentIndex.removeContainedBy(transaction1, parent1, child1);
+        assertEquals(0, containmentIndex.getContainedBy(transaction1, parent1).count());
+    }
+
+    @Test
+    public void testRollbackTransaction() {
+        stubObject("parent1");
+        stubObject("child1");
+        stubObject("transaction1");
+        assertEquals(0, containmentIndex.getContainedBy(null, parent1).count());
+        assertEquals(0, containmentIndex.getContainedBy(transaction1, parent1).count());
+        containmentIndex.addContainedBy(transaction1, parent1, child1);
+        assertEquals(0, containmentIndex.getContainedBy(null, parent1).count());
+        assertEquals(1, containmentIndex.getContainedBy(transaction1, parent1).count());
+        assertEquals(child1.getId(), containmentIndex.getContainedBy(transaction1, parent1).findFirst().get());
+        containmentIndex.rollbackTransaction(transaction1);
+        assertEquals(0, containmentIndex.getContainedBy(null, parent1).count());
+        assertEquals(0, containmentIndex.getContainedBy(transaction1, parent1).count());
+    }
+
+    @Test
+    public void testCommitTransaction() {
+        stubObject("parent1");
+        stubObject("child2");
+        stubObject("transaction1");
+        assertEquals(0, containmentIndex.getContainedBy(null, parent1).count());
+        assertEquals(0, containmentIndex.getContainedBy(transaction1, parent1).count());
+        containmentIndex.addContainedBy(transaction1, parent1, child2);
+        assertEquals(0, containmentIndex.getContainedBy(null, parent1).count());
+        assertEquals(1, containmentIndex.getContainedBy(transaction1, parent1).count());
+        assertEquals(child2.getId(), containmentIndex.getContainedBy(transaction1, parent1).findFirst().get());
+        containmentIndex.commitTransaction(transaction1);
+        assertEquals(1, containmentIndex.getContainedBy(null, parent1).count());
+        assertEquals(1, containmentIndex.getContainedBy(transaction1, parent1).count());
+        assertEquals(child2.getId(), containmentIndex.getContainedBy(null, parent1).findFirst().get());
+        assertEquals(child2.getId(), containmentIndex.getContainedBy(transaction1, parent1).findFirst().get());
+    }
+
+    @Test
+    public void testSwapContained() {
+        stubObject("parent1");
+        stubObject("child1");
+        stubObject("child2");
+        stubObject("transaction1");
+        stubObject("transaction2");
+        assertEquals(0, containmentIndex.getContainedBy(null, parent1).count());
+        containmentIndex.addContainedBy(null, parent1, child1);
+        assertEquals(1, containmentIndex.getContainedBy(null, parent1).count());
+        assertEquals(child1.getId(), containmentIndex.getContainedBy(null, parent1).findFirst().get());
+        containmentIndex.addContainedBy(transaction1, parent1, child2);
+        containmentIndex.removeContainedBy(transaction1, parent1, child1);
+        // Still the same outside
+        assertEquals(1, containmentIndex.getContainedBy(null, parent1).count());
+        assertEquals(child1.getId(), containmentIndex.getContainedBy(null, parent1).findFirst().get());
+        // Still the same in a different transaction
+        assertEquals(1, containmentIndex.getContainedBy(transaction2, parent1).count());
+        assertEquals(child1.getId(), containmentIndex.getContainedBy(transaction2, parent1).findFirst().get());
+        // Inside it has changed
+        assertEquals(1, containmentIndex.getContainedBy(transaction1, parent1).count());
+        assertEquals(child2.getId(), containmentIndex.getContainedBy(transaction1, parent1).findFirst().get());
+        containmentIndex.commitTransaction(transaction1);
+        // After commit() it is the same outside transactions.
+        assertEquals(1, containmentIndex.getContainedBy(null, parent1).count());
+        assertEquals(child2.getId(), containmentIndex.getContainedBy(null, parent1).findFirst().get());
+        // And now the same in a different transaction
+        assertEquals(1, containmentIndex.getContainedBy(transaction2, parent1).count());
+        assertEquals(child2.getId(), containmentIndex.getContainedBy(transaction2, parent1).findFirst().get());
+    }
+
+    @Test
+    public void testOnlyCommitOne() {
+        stubObject("parent1");
+        stubObject("child1");
+        stubObject("child2");
+        stubObject("transaction1");
+        stubObject("transaction2");
+        assertEquals(0, containmentIndex.getContainedBy(null, parent1).count());
+        containmentIndex.addContainedBy(null, parent1, child1);
+        containmentIndex.addContainedBy(null, parent1, child2);
+        assertEquals(2, containmentIndex.getContainedBy(null, parent1).count());
+        // Delete one object in separate transactions.
+        containmentIndex.removeContainedBy(transaction1, parent1, child1);
+        containmentIndex.removeContainedBy(transaction2, parent1, child2);
+        assertEquals(1, containmentIndex.getContainedBy(transaction1, parent1).count());
+        assertEquals(1, containmentIndex.getContainedBy(transaction2, parent1).count());
+        containmentIndex.commitTransaction(transaction1);
+        // Now only one record was removed
+        assertEquals(1, containmentIndex.getContainedBy(null, parent1).count());
+        assertEquals(1, containmentIndex.getContainedBy(transaction1, parent1).count());
+        // Except in the second transaction as it should now have 0
+        assertEquals(0, containmentIndex.getContainedBy(transaction2, parent1).count());
+        containmentIndex.commitTransaction(transaction2);
+        // Now all are gone
+        assertEquals(0, containmentIndex.getContainedBy(null, parent1).count());
+        assertEquals(0, containmentIndex.getContainedBy(transaction1, parent1).count());
+        assertEquals(0, containmentIndex.getContainedBy(transaction2, parent1).count());
+    }
+
+    @Test
+    public void testTwoTransactionDeleteSameChild() {
+        stubObject("parent1");
+        stubObject("child1");
+        stubObject("child2");
+        stubObject("transaction1");
+        stubObject("transaction2");
+        assertEquals(0, containmentIndex.getContainedBy(null, parent1).count());
+        containmentIndex.addContainedBy(null, parent1, child1);
+        containmentIndex.addContainedBy(null, parent1, child2);
+        assertEquals(2, containmentIndex.getContainedBy(null, parent1).count());
+        // Delete one object in separate transactions.
+        containmentIndex.removeContainedBy(transaction1, parent1, child1);
+        containmentIndex.removeContainedBy(transaction2, parent1, child1);
+        assertEquals(1, containmentIndex.getContainedBy(transaction1, parent1).count());
+        assertEquals(1, containmentIndex.getContainedBy(transaction2, parent1).count());
+        containmentIndex.commitTransaction(transaction1);
+        // Now only one record was removed
+        assertEquals(1, containmentIndex.getContainedBy(null, parent1).count());
+        assertEquals(1, containmentIndex.getContainedBy(transaction1, parent1).count());
+        assertEquals(1, containmentIndex.getContainedBy(transaction2, parent1).count());
+        containmentIndex.commitTransaction(transaction2);
+        // No change as the first transaction already committed.
+        assertEquals(1, containmentIndex.getContainedBy(null, parent1).count());
+        assertEquals(1, containmentIndex.getContainedBy(transaction1, parent1).count());
+        assertEquals(1, containmentIndex.getContainedBy(transaction2, parent1).count());
+    }
+
+    @Test(expected = DuplicateKeyException.class)
+    public void testContainedByTwoParentsException() {
+        stubObject("parent1");
+        stubObject("parent2");
+        stubObject("child1");
+        assertEquals(0, containmentIndex.getContainedBy(null, parent1).count());
+        assertEquals(0, containmentIndex.getContainedBy(null, parent2).count());
+        containmentIndex.addContainedBy(null, parent1, child1);
+        containmentIndex.addContainedBy(null, parent2, child1);
+    }
+
+    @Test(expected = DuplicateKeyException.class)
+    public void testContainedByTwoSameTransactionException() {
+        stubObject("parent1");
+        stubObject("parent2");
+        stubObject("child1");
+        stubObject("transaction1");
+        assertEquals(0, containmentIndex.getContainedBy(null, parent1).count());
+        assertEquals(0, containmentIndex.getContainedBy(null, parent2).count());
+        containmentIndex.addContainedBy(transaction1, parent1, child1);
+        containmentIndex.addContainedBy(transaction1, parent2, child1);
+        assertEquals(0, containmentIndex.getContainedBy(null, parent1).count());
+        assertEquals(0, containmentIndex.getContainedBy(null, parent2).count());
+        containmentIndex.commitTransaction(transaction1);
     }
 }
