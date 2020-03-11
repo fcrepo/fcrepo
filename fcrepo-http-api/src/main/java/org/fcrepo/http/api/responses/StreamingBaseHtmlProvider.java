@@ -28,7 +28,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET
 import static org.fcrepo.http.commons.session.TransactionProvider.ATOMIC_ID_HEADER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_ROOT;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -176,7 +175,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
             .forEach(key -> templatesMapBuilder.put(key, velocity.getTemplate(getTemplateLocation(key))));
 
         templatesMap = templatesMapBuilder
-            .put(REPOSITORY_NAMESPACE + "RepositoryRoot", velocity.getTemplate(getTemplateLocation("root")))
+            .put(REPOSITORY_ROOT.toString(), velocity.getTemplate(getTemplateLocation("root")))
             .put(NON_RDF_SOURCE.toString(), velocity.getTemplate(getTemplateLocation("binary")))
             .put(RDF_SOURCE.toString(), velocity.getTemplate(getTemplateLocation("resource"))).build();
 
@@ -266,6 +265,9 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
             .map(x -> ((HtmlTemplate) x).value()).filter(templatesMap::containsKey).findFirst()
             .orElseGet(() -> {
                 final List<String> types = multiValueURI(rdf.getResource(subject.getURI()), type);
+                if (types.contains(REPOSITORY_ROOT.toString())) {
+                    return REPOSITORY_ROOT.toString();
+                }
                 return types.stream().filter(templatesMap::containsKey).findFirst().orElse("default");
             });
         LOGGER.debug("Using template: {}", tplName);
