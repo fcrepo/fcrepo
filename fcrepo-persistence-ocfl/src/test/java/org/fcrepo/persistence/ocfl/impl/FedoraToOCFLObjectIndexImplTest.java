@@ -17,7 +17,6 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.FEDORA_TO_OCFL_INDEX_FILE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -25,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.nio.file.Files;
 import java.util.List;
@@ -47,8 +47,11 @@ public class FedoraToOCFLObjectIndexImplTest {
     private static final String OCFL_ID = "ocfl-id";
     private static final String OCFL_ID_RESOURCE_3 = "ocfl-id-resource-3";
 
+    private File fedoraToOcflIndexFile;
+
     @Before
     public void setup() {
+        fedoraToOcflIndexFile = new OCFLConstants().getFedoraToOCFLIndexFile();
         removeIndexMappingFile();
     }
 
@@ -91,7 +94,7 @@ public class FedoraToOCFLObjectIndexImplTest {
 
     @Test
     public void testSaveToIndex() throws Exception {
-        assertFalse(FEDORA_TO_OCFL_INDEX_FILE.exists());
+        assertFalse(fedoraToOcflIndexFile.exists());
 
         final FedoraToOCFLObjectIndexImpl index = new FedoraToOCFLObjectIndexImpl();
 
@@ -99,10 +102,10 @@ public class FedoraToOCFLObjectIndexImplTest {
         index.addMapping(RESOURCE_ID_2, ROOT_RESOURCE_ID, OCFL_ID);
         index.addMapping(RESOURCE_ID_3, RESOURCE_ID_3, OCFL_ID_RESOURCE_3);
 
-        assertTrue(FEDORA_TO_OCFL_INDEX_FILE.exists());
+        assertTrue(fedoraToOcflIndexFile.exists());
 
         final List<String> lines;
-        try (var l = Files.lines(FEDORA_TO_OCFL_INDEX_FILE.toPath())) {
+        try (var l = Files.lines(fedoraToOcflIndexFile.toPath())) {
             lines = l.collect(Collectors.toList());
         }
 
@@ -111,13 +114,13 @@ public class FedoraToOCFLObjectIndexImplTest {
 
     @Test
     public void testReadFromIndex() throws Exception {
-        assertFalse(FEDORA_TO_OCFL_INDEX_FILE.exists());
+        assertFalse(fedoraToOcflIndexFile.exists());
 
-        final BufferedWriter output = new BufferedWriter(new FileWriter(FEDORA_TO_OCFL_INDEX_FILE, true));
+        final BufferedWriter output = new BufferedWriter(new FileWriter(fedoraToOcflIndexFile, true));
         output.write(String.format("%s\t%s\t%s\n", RESOURCE_ID_2, ROOT_RESOURCE_ID, OCFL_ID));
         output.close();
 
-        assertTrue(FEDORA_TO_OCFL_INDEX_FILE.exists());
+        assertTrue(fedoraToOcflIndexFile.exists());
 
         final FedoraToOCFLObjectIndexImpl index = new FedoraToOCFLObjectIndexImpl();
         try {
@@ -140,9 +143,9 @@ public class FedoraToOCFLObjectIndexImplTest {
     }
 
     private void removeIndexMappingFile() {
-        if (FEDORA_TO_OCFL_INDEX_FILE.exists() &&
-                !FEDORA_TO_OCFL_INDEX_FILE.delete()) {
-            throw new RuntimeException("Could not delete file " + FEDORA_TO_OCFL_INDEX_FILE);
+        if (fedoraToOcflIndexFile.exists() &&
+                !fedoraToOcflIndexFile.delete()) {
+            throw new RuntimeException("Could not delete file " + fedoraToOcflIndexFile);
         }
     }
 }

@@ -17,7 +17,6 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.FEDORA_TO_OCFL_INDEX_FILE;
 import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.slf4j.Logger;
@@ -46,6 +45,8 @@ public class FedoraToOCFLObjectIndexImpl implements FedoraToOCFLObjectIndex {
 
     private Map<String, FedoraOCFLMapping> fedoraOCFLMappingMap = Collections.synchronizedMap(new HashMap<>());
 
+    private final File fedoraToOcflIndexFile;
+
     /**
      * Constructor.
      *
@@ -57,8 +58,9 @@ public class FedoraToOCFLObjectIndexImpl implements FedoraToOCFLObjectIndex {
      * @throws IOException If we can't access the file.
      */
     public FedoraToOCFLObjectIndexImpl() throws IOException {
-        if (FEDORA_TO_OCFL_INDEX_FILE.exists() && FEDORA_TO_OCFL_INDEX_FILE.canRead()) {
-            try (var lines = Files.lines(FEDORA_TO_OCFL_INDEX_FILE.toPath())) {
+        fedoraToOcflIndexFile = new OCFLConstants().getFedoraToOCFLIndexFile();
+        if (fedoraToOcflIndexFile.exists() && fedoraToOcflIndexFile.canRead()) {
+            try (var lines = Files.lines(fedoraToOcflIndexFile.toPath())) {
                lines.filter(l -> {
                     final String m = l.split("\t")[0];
                     return (!fedoraOCFLMappingMap.containsKey(m));
@@ -116,26 +118,26 @@ public class FedoraToOCFLObjectIndexImpl implements FedoraToOCFLObjectIndex {
      */
     private void writeMappingToDisk(final String fedoraId, final FedoraOCFLMapping fedoraOCFLMapping) {
         try {
-            if (!FEDORA_TO_OCFL_INDEX_FILE.exists()) {
-                final File dir = FEDORA_TO_OCFL_INDEX_FILE.getParentFile();
+            if (!fedoraToOcflIndexFile.exists()) {
+                final File dir = fedoraToOcflIndexFile.getParentFile();
                 if (!dir.exists()) {
                     dir.mkdirs();
                 }
             }
-            try (var fw = new FileWriter(FEDORA_TO_OCFL_INDEX_FILE, true); var output= new BufferedWriter(fw)) {
+            try (var fw = new FileWriter(fedoraToOcflIndexFile, true); var output= new BufferedWriter(fw)) {
                 output.write(String.format("%s\t%s\t%s\n", fedoraId, fedoraOCFLMapping.getRootObjectIdentifier(),
                         fedoraOCFLMapping.getOcflObjectId()));
             }
         } catch (IOException exception) {
-            LOGGER.warn("Unable to create/write on disk FedoraToOCFL Mapping at {}", FEDORA_TO_OCFL_INDEX_FILE);
+            LOGGER.warn("Unable to create/write on disk FedoraToOCFL Mapping at {}", fedoraToOcflIndexFile);
         }
     }
 
     @Override
     public void reset() {
         fedoraOCFLMappingMap.clear();
-        if (FEDORA_TO_OCFL_INDEX_FILE.exists()) {
-            FEDORA_TO_OCFL_INDEX_FILE.delete();
+        if (fedoraToOcflIndexFile.exists()) {
+            fedoraToOcflIndexFile.delete();
         }
     }
 }
