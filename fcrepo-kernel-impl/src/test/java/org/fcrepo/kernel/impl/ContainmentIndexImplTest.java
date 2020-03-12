@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.impl;
 
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.junit.After;
 import org.junit.Before;
@@ -36,6 +37,7 @@ import javax.inject.Inject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
@@ -286,7 +288,7 @@ public class ContainmentIndexImplTest {
         containmentIndex.addContainedBy(null, parent2, child1);
     }
 
-    @Test(expected = DuplicateKeyException.class)
+    @Test
     public void testContainedByTwoSameTransactionException() {
         stubObject("parent1");
         stubObject("parent2");
@@ -298,7 +300,20 @@ public class ContainmentIndexImplTest {
         containmentIndex.addContainedBy(transaction1, parent2, child1);
         assertEquals(0, containmentIndex.getContainedBy(null, parent1).count());
         assertEquals(0, containmentIndex.getContainedBy(null, parent2).count());
-        containmentIndex.commitTransaction(transaction1);
+        assertEquals(1, containmentIndex.getContainedBy(transaction1, parent1).count());
+        assertEquals(1, containmentIndex.getContainedBy(transaction1, parent2).count());
+        try {
+            containmentIndex.commitTransaction(transaction1);
+            // We should get an exception.
+            fail();
+        } catch (RepositoryRuntimeException e) {
+            // This was an expected exception. Now continue the test.
+        }
+        // This should be rolled back so the additions should still be in the transaction operation table.
+        assertEquals(0, containmentIndex.getContainedBy(null, parent1).count());
+        assertEquals(0, containmentIndex.getContainedBy(null, parent2).count());
+        assertEquals(1, containmentIndex.getContainedBy(transaction1, parent1).count());
+        assertEquals(1, containmentIndex.getContainedBy(transaction1, parent2).count());
     }
 
     @Test

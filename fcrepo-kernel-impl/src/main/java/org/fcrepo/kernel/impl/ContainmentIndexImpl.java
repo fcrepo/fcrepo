@@ -17,14 +17,19 @@
  */
 package org.fcrepo.kernel.impl;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.springframework.jdbc.BadSqlGrammarException;
+import org.slf4j.Logger;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -38,10 +43,15 @@ import java.util.stream.Stream;
 @Component
 public class ContainmentIndexImpl implements ContainmentIndex {
 
+    private static final Logger LOGGER = getLogger(ContainmentIndexImpl.class);
+
     @Inject
     private DataSource dataSource;
 
     private NamedParameterJdbcTemplate jdbcTemplate;
+
+    @Inject
+    private PlatformTransactionManager platformTransactionManager;
 
     private static final String RESOURCES_TABLE = "resources";
 
@@ -64,20 +74,21 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     /**
      * Holds the ID and its parent.
      */
-    private static final String RESOURCES_TABLE_DDL = "CREATE TABLE " + RESOURCES_TABLE + " (" +
+    private static final String RESOURCES_TABLE_DDL = "CREATE TABLE IF NOT EXISTS " + RESOURCES_TABLE + " (" +
             FEDORA_ID_COLUMN + " varchar PRIMARY KEY, " +
             PARENT_COLUMN + " varchar)";
 
     /**
      * Create an index to speed searches for children of a parent.
      */
-    private static final String RESOURCES_TABLE_INDEX_DDL = "CREATE INDEX " + RESOURCES_TABLE_IDX + " ON " +
-            RESOURCES_TABLE + " (" + PARENT_COLUMN + ")";
+    private static final String RESOURCES_TABLE_INDEX_DDL = "CREATE INDEX IF NOT EXISTS " + RESOURCES_TABLE_IDX +
+            " ON " + RESOURCES_TABLE + " (" + PARENT_COLUMN + ")";
 
     /**
      * Holds operations to add or delete records from the RESOURCES_TABLE.
      */
-    private static final String TRANSACTION_OPERATIONS_TABLE_DDL = "CREATE TABLE " + TRANSACTION_OPERATIONS_TABLE +
+    private static final String TRANSACTION_OPERATIONS_TABLE_DDL = "CREATE TABLE IF NOT EXISTS " +
+            TRANSACTION_OPERATIONS_TABLE +
             " (" + FEDORA_ID_COLUMN + " varchar, " +
             PARENT_COLUMN + " varchar, " +
             TRANSACTION_ID_COLUMN + " varchar, " +
@@ -86,14 +97,14 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     /**
      * Create an index to speed searches for records related to adding/excluding transaction records
      */
-    private static final String TRANSACTION_OPERATIONS_TABLE_INDEX_1_DDL = "CREATE INDEX " +
+    private static final String TRANSACTION_OPERATIONS_TABLE_INDEX_1_DDL = "CREATE INDEX IF NOT EXISTS " +
             TRANSACTION_OPERATIONS_TABLE_IDX_1 + " ON " + TRANSACTION_OPERATIONS_TABLE + " (" + PARENT_COLUMN + ", " +
             TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + ")";
 
     /**
      * Create an index to speed finding records related to a transaction.
      */
-    private static final String TRANSACTION_OPERATIONS_TABLE_INDEX_2_DDL = "CREATE INDEX " +
+    private static final String TRANSACTION_OPERATIONS_TABLE_INDEX_2_DDL = "CREATE INDEX IF NOT EXISTS " +
             TRANSACTION_OPERATIONS_TABLE_IDX_2 + " ON " + TRANSACTION_OPERATIONS_TABLE + " (" + TRANSACTION_ID_COLUMN +
             ")";
 
@@ -179,31 +190,11 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         jdbcTemplate = getNamedParameterJdbcTemplate();
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         // create the tables that don't already exist
-        try {
-            jdbcTemplate.update(RESOURCES_TABLE_DDL, parameterSource);
-        } catch (BadSqlGrammarException e) {
-            // Already exists, continue.
-        }
-        try {
-            jdbcTemplate.update(RESOURCES_TABLE_INDEX_DDL, parameterSource);
-        } catch (BadSqlGrammarException e) {
-            // Already exists, continue.
-        }
-        try {
-            jdbcTemplate.update(TRANSACTION_OPERATIONS_TABLE_DDL, parameterSource);
-        } catch (BadSqlGrammarException e) {
-            // Already exists, continue.
-        }
-        try {
-            jdbcTemplate.update(TRANSACTION_OPERATIONS_TABLE_INDEX_1_DDL, parameterSource);
-        } catch (BadSqlGrammarException e) {
-            // Already exists, continue.
-        }
-        try {
-            jdbcTemplate.update(TRANSACTION_OPERATIONS_TABLE_INDEX_2_DDL, parameterSource);
-        } catch (BadSqlGrammarException e) {
-            // Already exists, continue.
-        }
+        jdbcTemplate.update(RESOURCES_TABLE_DDL, parameterSource);
+        jdbcTemplate.update(RESOURCES_TABLE_INDEX_DDL, parameterSource);
+        jdbcTemplate.update(TRANSACTION_OPERATIONS_TABLE_DDL, parameterSource);
+        jdbcTemplate.update(TRANSACTION_OPERATIONS_TABLE_INDEX_1_DDL, parameterSource);
+        jdbcTemplate.update(TRANSACTION_OPERATIONS_TABLE_INDEX_2_DDL, parameterSource);
     }
 
     private NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
@@ -288,16 +279,23 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    @Transactional
     public void commitTransaction(final Transaction tx) {
         if (tx != null) {
             final String txId = tx.getId();
             final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
             parameterSource.addValue("transactionId", txId);
-
-            jdbcTemplate.update(COMMIT_ADD_RECORDS, parameterSource);
-            jdbcTemplate.update(COMMIT_DELETE_RECORDS, parameterSource);
-            jdbcTemplate.update(COMMIT_CLEANUP, parameterSource);
+            final DefaultTransactionDefinition paramTransactionDefinition = new DefaultTransactionDefinition();
+            final TransactionStatus status = platformTransactionManager.getTransaction(paramTransactionDefinition);
+            try {
+                jdbcTemplate.update(COMMIT_ADD_RECORDS, parameterSource);
+                jdbcTemplate.update(COMMIT_DELETE_RECORDS, parameterSource);
+                jdbcTemplate.update(COMMIT_CLEANUP, parameterSource);
+                platformTransactionManager.commit(status);
+            } catch (Exception e) {
+                platformTransactionManager.rollback(status);
+                LOGGER.warn("Unable to commit containment index transaction: {}", e.getMessage());
+                throw new RepositoryRuntimeException("Unable to commit containment index transaction", e);
+            }
         }
     }
 
