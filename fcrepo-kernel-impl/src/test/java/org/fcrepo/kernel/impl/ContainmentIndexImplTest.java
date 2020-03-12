@@ -34,6 +34,8 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import javax.inject.Inject;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
@@ -298,4 +300,49 @@ public class ContainmentIndexImplTest {
         assertEquals(0, containmentIndex.getContainedBy(null, parent2).count());
         containmentIndex.commitTransaction(transaction1);
     }
+
+    @Test
+    public void testExistsOutsideTransaction() {
+        stubObject("parent1");
+        stubObject("child1");
+        stubObject("transaction1");
+        assertFalse(containmentIndex.resourceExists(null, child1.getId()));
+        assertFalse(containmentIndex.resourceExists(transaction1.getId(), child1.getId()));
+        containmentIndex.addContainedBy(null, parent1, child1);
+        assertTrue(containmentIndex.resourceExists(null, child1.getId()));
+        assertTrue(containmentIndex.resourceExists(transaction1.getId(), child1.getId()));
+    }
+
+    @Test
+    public void testExistsInsideTransaction() {
+        stubObject("parent1");
+        stubObject("child1");
+        stubObject("transaction1");
+        stubObject("transaction2");
+        assertFalse(containmentIndex.resourceExists(null, child1.getId()));
+        assertFalse(containmentIndex.resourceExists(transaction1.getId(), child1.getId()));
+        assertFalse(containmentIndex.resourceExists(transaction2.getId(), child1.getId()));
+        // Only visible in the transaction.
+        containmentIndex.addContainedBy(transaction1, parent1, child1);
+        assertFalse(containmentIndex.resourceExists(null, child1.getId()));
+        assertTrue(containmentIndex.resourceExists(transaction1.getId(), child1.getId()));
+        assertFalse(containmentIndex.resourceExists(transaction2.getId(), child1.getId()));
+        // Rollback transaction.
+        containmentIndex.rollbackTransaction(transaction1);
+        assertFalse(containmentIndex.resourceExists(null, child1.getId()));
+        assertFalse(containmentIndex.resourceExists(transaction1.getId(), child1.getId()));
+        assertFalse(containmentIndex.resourceExists(transaction2.getId(), child1.getId()));
+        // Add again in transaction.
+        containmentIndex.addContainedBy(transaction1, parent1, child1);
+        assertFalse(containmentIndex.resourceExists(null, child1.getId()));
+        assertTrue(containmentIndex.resourceExists(transaction1.getId(), child1.getId()));
+        assertFalse(containmentIndex.resourceExists(transaction2.getId(), child1.getId()));
+        // Commit and visible everywhere.
+        containmentIndex.commitTransaction(transaction1);
+        assertTrue(containmentIndex.resourceExists(null, child1.getId()));
+        assertTrue(containmentIndex.resourceExists(transaction1.getId(), child1.getId()));
+        assertTrue(containmentIndex.resourceExists(transaction2.getId(), child1.getId()));
+    }
 }
+
+

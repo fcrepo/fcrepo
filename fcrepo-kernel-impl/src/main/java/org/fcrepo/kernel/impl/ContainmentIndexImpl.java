@@ -24,11 +24,11 @@ import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.sql.DataSource;
-import java.sql.Connection;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -41,7 +41,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     @Inject
     private DataSource dataSource;
 
-    private Connection conn;
+    private NamedParameterJdbcTemplate jdbcTemplate;
 
     private static final String RESOURCES_TABLE = "resources";
 
@@ -160,12 +160,23 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     private static final String COMMIT_CLEANUP = "DELETE FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " +
             TRANSACTION_ID_COLUMN + " = :transactionId";
 
+    private static final String RESOURCE_EXISTS = "SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE +
+            " WHERE " + FEDORA_ID_COLUMN + " = :child";
+
+    private static final String RESOURCE_EXISTS_ADDITIONS = "SELECT " + FEDORA_ID_COLUMN + " FROM "
+            + TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN
+            + " = :transactionId AND " + OPERATION_COLUMN + " = 'add'";
+
+    private static final String RESOURCE_EXISTS_DELETIONS = "SELECT " + FEDORA_ID_COLUMN + " FROM "
+            + TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN
+            + " = :transactionId AND " + OPERATION_COLUMN + " = 'delete'";
+
     /**
      * Connect to the database
      */
     @PostConstruct
     private void setup() {
-        final NamedParameterJdbcTemplate jdbcTemplate = getNamedParameterJdbcTemplate();
+        jdbcTemplate = getNamedParameterJdbcTemplate();
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         // create the tables that don't already exist
         try {
@@ -207,7 +218,6 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      * @return A stream of contained identifiers
      */
     private Stream<String> getChildren(final String fedoraId, final String transactionId) {
-        final NamedParameterJdbcTemplate jdbcTemplate = getNamedParameterJdbcTemplate();
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("parent", fedoraId);
 
@@ -234,13 +244,17 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     @Override
     public void addContainedBy(final Transaction tx, final FedoraResource parent, final FedoraResource child) {
-        final String txId = (tx != null) ? tx.getId() : null;
-        final NamedParameterJdbcTemplate jdbcTemplate = getNamedParameterJdbcTemplate();
+        final String txID = tx != null ? tx.getId() : null;
+        addContainedBy(txID, parent.getId(), child.getId());
+    }
+
+    @Override
+    public void addContainedBy(final String txID, final String parentID, final String childID) {
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-        parameterSource.addValue("parent", parent.getId());
-        parameterSource.addValue("child", child.getId());
-        if (txId != null) {
-            parameterSource.addValue("transactionId", txId);
+        parameterSource.addValue("parent", parentID);
+        parameterSource.addValue("child", childID);
+        if (txID != null) {
+            parameterSource.addValue("transactionId", txID);
             final boolean removedInTxn = !jdbcTemplate.queryForList(IS_CHILD_DELETED_IN_TRANSACTION, parameterSource)
                     .isEmpty();
             if (removedInTxn) {
@@ -256,7 +270,6 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     @Override
     public void removeContainedBy(final Transaction tx, final FedoraResource parent, final FedoraResource child) {
         final String txId = (tx != null) ? tx.getId() : null;
-        final NamedParameterJdbcTemplate jdbcTemplate = getNamedParameterJdbcTemplate();
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("parent", parent.getId());
         parameterSource.addValue("child", child.getId());
@@ -275,12 +288,13 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
+    @Transactional
     public void commitTransaction(final Transaction tx) {
         if (tx != null) {
             final String txId = tx.getId();
-            final NamedParameterJdbcTemplate jdbcTemplate = getNamedParameterJdbcTemplate();
             final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
             parameterSource.addValue("transactionId", txId);
+
             jdbcTemplate.update(COMMIT_ADD_RECORDS, parameterSource);
             jdbcTemplate.update(COMMIT_DELETE_RECORDS, parameterSource);
             jdbcTemplate.update(COMMIT_CLEANUP, parameterSource);
@@ -291,12 +305,29 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     public void rollbackTransaction(final Transaction tx) {
         if (tx != null) {
             final String txId = tx.getId();
-            final NamedParameterJdbcTemplate jdbcTemplate = getNamedParameterJdbcTemplate();
             final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
             parameterSource.addValue("transactionId", txId);
             jdbcTemplate.update(ROLLBACK_TRANSACTION, parameterSource);
         }
     }
+
+    @Override
+    public boolean resourceExists(final String txID, final String resourceID) {
+        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+        parameterSource.addValue("child", resourceID);
+        final boolean exists;
+        if (txID != null) {
+            parameterSource.addValue("transactionId", txID);
+            final String currentResourceQuery = RESOURCE_EXISTS +
+                    " UNION " + RESOURCE_EXISTS_ADDITIONS +
+                    " EXCEPT " + RESOURCE_EXISTS_DELETIONS;
+            exists = !jdbcTemplate.queryForList(currentResourceQuery, parameterSource, String.class).isEmpty();
+        } else {
+            exists = !jdbcTemplate.queryForList(RESOURCE_EXISTS, parameterSource, String.class).isEmpty();
+        }
+        return exists;
+    }
+
 
     /**
      * Get the data source backing this containment index
