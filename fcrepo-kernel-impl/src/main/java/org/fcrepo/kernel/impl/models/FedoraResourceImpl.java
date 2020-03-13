@@ -151,11 +151,13 @@ public class FedoraResourceImpl implements FedoraResource {
 
         for (var it = getTimeMap().getChildren().iterator(); it.hasNext();) {
             final var current = it.next();
+            // Negative if the memento is AFTER the requested datetime
+            // Positive if the memento is BEFORE the requested datetime
             final var diff = Duration.between(current.getMementoDatetime(), mementoDatetime).toSeconds();
 
-            if (match == null
-                    || (matchDiff < 0 && diff >= matchDiff)
-                    || (diff >= 0 && diff <= matchDiff)) {
+            if (match == null                               // Save the first memento examined
+                    || (matchDiff < 0 && diff >= matchDiff) // Match is AFTER requested && current is closer
+                    || (diff >= 0 && diff <= matchDiff)) {  // Current memento EQUAL/BEFORE request && closer than match
                 match = current;
                 matchDiff = diff;
             }
