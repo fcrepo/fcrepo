@@ -1,0 +1,12 @@
+version: '3.1'
+
+services:
+
+    fcrepo:
+        image: tomcat:8.5.51-jdk11-adoptopenjdk-openj9
+        container_name: fcrepo
+        ports: 
+            - 8080:8080
+        volumes: 
+            - ./fcrepo-webapp/target/fcrepo-webapp-6.0.0-SNAPSHOT.war:/usr/local/tomcat/webapps/fcrepo.war
+            - ./tomcat-users.xml:/usr/local/tomcat/conf/tomcat-users.xml

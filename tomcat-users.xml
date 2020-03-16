@@ -1,0 +1,7 @@
+<tomcat-users>
+  <role rolename="fedoraUser" />
+  <role rolename="fedoraAdmin" />
+  <user name="testuser" password="password1" roles="fedoraUser" />
+  <user name="adminuser" password="password2" roles="fedoraUser" />
+  <user name="fedoraAdmin" password="secret3" roles="fedoraAdmin" />
+</tomcat-users>
