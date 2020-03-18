@@ -37,4 +37,52 @@ public interface ContainmentIndex {
      * @return A stream of contained identifiers
      */
     Stream<String> getContainedBy(Transaction tx, FedoraResource fedoraResource);
+
+    /**
+     * Remove a contained by relation between the child resource and its parent.
+     *
+     * @param tx The transaction.  If no transaction, null is okay.
+     * @param parent The containing fedora resource
+     * @param child The contained fedora resource
+     */
+    void removeContainedBy(final Transaction tx, final FedoraResource parent, final FedoraResource child);
+
+    /**
+     * Add a contained by relation between the child resource and its parent.
+     *
+     * @param tx The transaction.  If no transaction, null is okay.
+     * @param parent The containing fedora resource
+     * @param child The contained fedora resource
+     */
+    void addContainedBy(final Transaction tx, final FedoraResource parent, final FedoraResource child);
+
+    /**
+     * Add a contained by relation between the child resource and its parent.
+     *
+     * @param txID The transaction ID.  If no transaction, null is okay.
+     * @param parentID The containing fedora resource ID.
+     * @param childID The contained fedora resource ID.
+     */
+    void addContainedBy(final String txID, final String parentID, final String childID);
+
+    /**
+     * Commit the changes made in the transaction.
+     * @param tx The transaction.
+     */
+    void commitTransaction(final Transaction tx);
+
+    /**
+     * Rollback the containment index changes in the transaction.
+     * @param tx The transaction.
+     */
+    void rollbackTransaction(final Transaction tx);
+
+    /**
+     * Check if the resourceID exists in the containment index. Which should mean it exists.
+     *
+     * @param txID The transaction ID or null if not transaction.
+     * @param resourceID The resource ID.
+     * @return True if it is in the index.
+     */
+    boolean resourceExists(final String txID, final String resourceID);
 }

@@ -136,6 +136,11 @@
       <artifactId>spring-web</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+    </dependency>
+
     <!-- AWS S3 client dependencies -->
     <dependency>
       <groupId>com.amazonaws</groupId>
@@ -254,12 +259,6 @@
       <groupId>javax</groupId>
       <artifactId>javaee-api</artifactId>
       <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-      <version>1.4.200</version>
     </dependency>
 
   </dependencies>

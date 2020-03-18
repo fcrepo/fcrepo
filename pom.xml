@@ -31,6 +31,7 @@
     <narayana-jta.version>5.9.0.Final</narayana-jta.version>
     <jetty.version>9.4.24.v20191120</jetty.version>
     <guava.version>28.1-jre</guava.version>
+    <h2database.version>1.4.200</h2database.version>
     <hk2.version>2.5.0-b62</hk2.version>
     <htmlunit.version>2.33</htmlunit.version>
     <httpclient.version>4.5.6</httpclient.version>
@@ -64,7 +65,7 @@
     <!-- test gear -->
     <awaitility.version>1.7.0</awaitility.version>
     <grizzly.version>2.4.3</grizzly.version>
-    <junit.version>4.12</junit.version>
+    <junit.version>4.13</junit.version>
     <system-rules.version>1.18.0</system-rules.version>
     <mockito.version>2.22.0</mockito.version>
     <wiremock.version>2.13.0</wiremock.version>
@@ -348,6 +349,17 @@
         </exclusions>
       </dependency>
       <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-jdbc</artifactId>
+        <version>${spring.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-lang3</artifactId>
         <version>${commons-lang.version}</version>
@@ -494,6 +506,11 @@
         <artifactId>awaitility</artifactId>
         <version>${awaitility.version}</version>
         <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.h2database</groupId>
+        <artifactId>h2</artifactId>
+        <version>${h2database.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
