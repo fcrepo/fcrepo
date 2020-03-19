@@ -18,10 +18,11 @@
 package org.fcrepo.kernel.impl.services;
 
 import org.apache.jena.graph.Triple;
+import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.TimeMap;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.ManagedPropertiesService;
-import org.fcrepo.kernel.api.utils.FedoraResourceIdConverter;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -46,7 +47,7 @@ public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {
     @Override
     public Stream<Triple> get(final FedoraResource resource) {
         final List<Triple> triples = new ArrayList<>();
-        final var subject = createURI(FedoraResourceIdConverter.resolveFedoraId(resource.getDescribedResource()));
+        final var subject = createURI(resolveId(resource.getDescribedResource()));
         triples.add(Triple.create(subject, CREATED_DATE.asNode(),
                 createLiteral(resource.getCreatedDate().toString())));
         triples.add(Triple.create(subject, LAST_MODIFIED_DATE.asNode(),
@@ -58,4 +59,12 @@ public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {
 
         return new DefaultRdfStream(subject, triples.stream());
     }
+
+    private String resolveId(final FedoraResource resource) {
+        if (resource instanceof TimeMap) {
+            return resource.getId() + "/" + FedoraTypes.FCR_VERSIONS;
+        }
+        return resource.getId();
+    }
+
 }
