@@ -667,8 +667,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
     private static void assertRdfOptionsHeaders(final HttpResponse httpResponse) {
         final List<String> methods = headerValues(httpResponse, "Allow");
         assertTrue("Should allow PATCH", methods.contains(HttpPatch.METHOD_NAME));
-        assertTrue("Should allow MOVE", methods.contains("MOVE"));
-        assertTrue("Should allow COPY", methods.contains("COPY"));
+        assertTrue("Should allow DELETE", methods.contains("DELETE"));
+        assertTrue("Should allow HEAD", methods.contains("HEAD"));
 
         final List<String> patchTypes = headerValues(httpResponse, "Accept-Patch");
         assertTrue("PATCH should support application/sparql-update", patchTypes.contains(contentTypeSPARQLUpdate));
