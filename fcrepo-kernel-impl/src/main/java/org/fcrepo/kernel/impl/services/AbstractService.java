@@ -118,10 +118,9 @@ public abstract class AbstractService {
         }
         String idIterator = fedoraId;
         while (idIterator.contains("/")) {
-            final String testParent = fedoraId.substring(0, idIterator.lastIndexOf("/"));
             idIterator = fedoraId.substring(0, idIterator.lastIndexOf("/"));
-            if (containmentIndex.resourceExists(txID, testParent)) {
-                return testParent;
+            if (containmentIndex.resourceExists(txID, idIterator)) {
+                return idIterator;
             }
         }
         return null;

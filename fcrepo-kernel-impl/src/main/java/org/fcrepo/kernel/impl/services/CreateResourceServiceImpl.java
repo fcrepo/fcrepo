@@ -19,6 +19,7 @@ package org.fcrepo.kernel.impl.services;
 
 import static java.util.Collections.emptyList;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_PAIR_TREE;
@@ -83,9 +84,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                         final Long contentSize, final List<String> linkHeaders, final Collection<URI> digest,
                         final InputStream requestBody, final ExternalContent externalContent) {
         final String[] parts = splitSlug(txId, ensurePrefix(fedoraId), slug);
-        // If we found an existing resource in the Slug, then that is our parent.
-        final String normalizedFedoraId = (parts[0] != null) ? addToIdentifier(ensurePrefix(fedoraId), parts[0]) :
-                    ensurePrefix(fedoraId);
+        final String normalizedFedoraId = parts[0];
         final String realSlug = parts[1];
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
         checkAclLinkHeader(linkHeaders);
@@ -147,9 +146,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
     public String perform(final String txId, final String userPrincipal, final String fedoraId, final String slug,
             final boolean isContained, final List<String> linkHeaders, final Model model) {
         final String[] parts = splitSlug(txId, ensurePrefix(fedoraId), slug);
-        // If we found an existing resource in the Slug, then that is our parent.
-        final String normalizedFedoraId = (parts[0] != null) ? addToIdentifier(ensurePrefix(fedoraId), parts[0]) :
-                ensurePrefix(fedoraId);
+        final String normalizedFedoraId = parts[0];
         final String realSlug = parts[1];
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
         checkAclLinkHeader(linkHeaders);
@@ -279,18 +276,22 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
      * @return Array with the parent and slug.
      */
     private String[] splitSlug(final String txID, final String parent, final String slug) {
+        final String[] response;
         if (slug != null && slug.contains("/")) {
-            String slugIterator = slug;
-            while (slugIterator.contains("/")) {
-                final String testParent = slug.substring(0, slugIterator.lastIndexOf("/"));
-                slugIterator = slug.substring(0, slugIterator.lastIndexOf("/"));
-                if (containmentIndex.resourceExists(txID, addToIdentifier(parent, testParent))) {
-                    final String[] response = { testParent, slug.substring(testParent.length() + 1) };
-                    return response;
-                }
+            final String fullPath = addToIdentifier(parent, slug);
+            final String newParent = findExistingAncestor(txID, fullPath);
+            if (newParent != null) {
+                // We found a parent so remove it from the slug.
+                final String newSlug = fullPath.replace(newParent + (newParent.endsWith("/") ? "" : "/"), "");
+                response = new String[]{newParent, newSlug};
+            } else {
+                // No parent found so we go back to root.
+                response = new String[]{FEDORA_ID_PREFIX, slug};
             }
+        } else {
+            // No slash so return what we received.
+            response = new String[]{parent, slug};
         }
-        final String[] response = { null, slug };
         return response;
     }
 }

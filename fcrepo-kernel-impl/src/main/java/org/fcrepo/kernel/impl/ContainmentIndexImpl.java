@@ -76,8 +76,8 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      * Holds the ID and its parent.
      */
     private static final String RESOURCES_TABLE_DDL = "CREATE TABLE IF NOT EXISTS " + RESOURCES_TABLE + " (" +
-            FEDORA_ID_COLUMN + " varchar(255) NOT NULL PRIMARY KEY, " +
-            PARENT_COLUMN + " varchar(255) NOT NULL)";
+            FEDORA_ID_COLUMN + " varchar(65535) NOT NULL PRIMARY KEY, " +
+            PARENT_COLUMN + " varchar(65535) NOT NULL)";
 
     /**
      * Create an index to speed searches for children of a parent.
@@ -90,8 +90,8 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      */
     private static final String TRANSACTION_OPERATIONS_TABLE_DDL = "CREATE TABLE IF NOT EXISTS " +
             TRANSACTION_OPERATIONS_TABLE +
-            " (" + FEDORA_ID_COLUMN + " varchar(255) NOT NULL, " +
-            PARENT_COLUMN + " varchar(255) NOT NULL, " +
+            " (" + FEDORA_ID_COLUMN + " varchar(65535) NOT NULL, " +
+            PARENT_COLUMN + " varchar(65535) NOT NULL, " +
             TRANSACTION_ID_COLUMN + " varchar(255) NOT NULL, " +
             OPERATION_COLUMN + " varchar(10) NOT NULL)";
 
