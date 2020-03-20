@@ -22,7 +22,6 @@ import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.rdf.model.ResourceFactory.createStatement;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.DEFAULT_INTERACTION_MODEL;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS_FULL;
@@ -33,6 +32,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_ACCESS_TO_CLASS;
 import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_ACCESS_TO_PROPERTY;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,6 +50,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.vocabulary.RDF;
+import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.exception.ACLAuthorizationConstraintViolationException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RequestWithAclLinkHeaderException;
@@ -73,6 +75,9 @@ public abstract class AbstractService {
     private static final Node WEBAC_ACCESS_TO_CLASS_URI = createURI(WEBAC_ACCESS_TO_CLASS);
 
     protected final List<Triple> serverManagedProperties = new ArrayList<>();
+
+    @Inject
+    protected ContainmentIndex containmentIndex;
 
     /**
      * Utility to determine the correct interaction model from elements of a request.
@@ -102,14 +107,21 @@ public abstract class AbstractService {
 
     /**
      * Find the closest ancestor using a Fedora ID.
+     * @param txID The current transaction or null if none.
      * @param fedoraId The fedora ID to check
      * @return The ancestor ID or null if root
      */
-    protected String findExistingAncestor(final String fedoraId) {
-        // Remove the ID prefix as it can include a /
-        final String removePrefix = fedoraId.substring(FEDORA_ID_PREFIX.length());
-        if (removePrefix.contains("/")) {
-            return FEDORA_ID_PREFIX + removePrefix.substring(0, removePrefix.lastIndexOf("/"));
+    protected String findExistingAncestor(final String txID, final String fedoraId) {
+        final String parent = containmentIndex.getContainedBy(txID, fedoraId);
+        if (parent != null) {
+            return parent;
+        }
+        String idIterator = fedoraId;
+        while (idIterator.contains("/")) {
+            idIterator = fedoraId.substring(0, idIterator.lastIndexOf("/"));
+            if (containmentIndex.resourceExists(txID, idIterator)) {
+                return idIterator;
+            }
         }
         return null;
     }

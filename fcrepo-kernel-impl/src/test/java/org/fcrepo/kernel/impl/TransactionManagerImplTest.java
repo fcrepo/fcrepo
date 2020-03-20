@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
+import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
 import org.fcrepo.persistence.api.PersistentStorageSession;
@@ -51,11 +52,15 @@ public class TransactionManagerImplTest {
     @Mock
     private PersistentStorageSession psSession;
 
+    @Mock
+    private ContainmentIndex containmentIndex;
+
     @Before
     public void setUp() {
         testTxManager = new TransactionManagerImpl();
         when(pssManager.getSession(any())).thenReturn(psSession);
         setField(testTxManager, "pSessionManager", pssManager);
+        setField(testTxManager, "containmentIndex", containmentIndex);
         testTx = (TransactionImpl) testTxManager.create();
     }
 

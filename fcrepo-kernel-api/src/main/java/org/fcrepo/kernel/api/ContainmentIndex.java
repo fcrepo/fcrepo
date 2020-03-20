@@ -36,25 +36,31 @@ public interface ContainmentIndex {
      * @param fedoraResource The containing fedora resource
      * @return A stream of contained identifiers
      */
-    Stream<String> getContainedBy(Transaction tx, FedoraResource fedoraResource);
+    Stream<String> getContains(Transaction tx, FedoraResource fedoraResource);
+
+    /**
+     * Return the ID of the containing resource for resourceID.
+     * @param txID The transaction. If no transaction, null is okay.
+     * @param resourceID The resource to find the containing resource.
+     * @return The id of the containing resource or null if none found.
+     */
+    String getContainedBy(String txID, final String resourceID);
 
     /**
      * Remove a contained by relation between the child resource and its parent.
      *
-     * @param tx The transaction.  If no transaction, null is okay.
-     * @param parent The containing fedora resource
-     * @param child The contained fedora resource
+     * @param txID The transaction ID.  If no transaction, null is okay.
+     * @param parentID The containing fedora resource ID.
+     * @param childID The contained fedora resource ID.
      */
-    void removeContainedBy(final Transaction tx, final FedoraResource parent, final FedoraResource child);
+    void removeContainedBy(final String txID, final String parentID, final String childID);
 
     /**
-     * Add a contained by relation between the child resource and its parent.
-     *
-     * @param tx The transaction.  If no transaction, null is okay.
-     * @param parent The containing fedora resource
-     * @param child The contained fedora resource
+     * Remove all relationships to the specified resource.
+     * @param txID The transaction ID. If no transaction, null is okay.
+     * @param resourceID The ID of resource to remove.
      */
-    void addContainedBy(final Transaction tx, final FedoraResource parent, final FedoraResource child);
+    void removeResource(final String txID, final String resourceID);
 
     /**
      * Add a contained by relation between the child resource and its parent.

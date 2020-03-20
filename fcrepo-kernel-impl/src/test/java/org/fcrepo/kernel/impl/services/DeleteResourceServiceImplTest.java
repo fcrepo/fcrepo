@@ -29,6 +29,7 @@ import org.fcrepo.kernel.impl.operations.DeleteResourceOperation;
 import org.fcrepo.kernel.impl.operations.DeleteResourceOperationFactoryImpl;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,25 +37,28 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.MockitoAnnotations;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.util.List;
-import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
+
+import javax.inject.Inject;
 
 /**
  * DeleteResourceServiceTest
  *
  * @author dbernstein
  */
-@RunWith(MockitoJUnitRunner.Strict.class)
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration("/containmentIndexTest.xml")
 public class DeleteResourceServiceImplTest {
 
     @Mock
@@ -63,7 +67,7 @@ public class DeleteResourceServiceImplTest {
     @Mock
     private PersistentStorageSession pSession;
 
-    @Mock
+    @Inject
     private ContainmentIndex containmentIndex;
 
     @Mock
@@ -101,10 +105,19 @@ public class DeleteResourceServiceImplTest {
 
     @Before
     public void setup() {
+        MockitoAnnotations.initMocks(this);
         when(tx.getId()).thenReturn(TX_ID);
         when(psManager.getSession(anyString())).thenReturn(pSession);
         final DeleteResourceOperationFactoryImpl factoryImpl = new DeleteResourceOperationFactoryImpl();
         setField(service, "deleteResourceFactory", factoryImpl);
+        setField(service, "containmentIndex", containmentIndex);
+    }
+
+    @After
+    public void cleanUp() {
+        containmentIndex.rollbackTransaction(tx);
+        containmentIndex.getContains(tx, container).forEach(c ->
+                containmentIndex.removeContainedBy(tx.getId(), container.getId(), c));
     }
 
     @Test
@@ -113,11 +126,8 @@ public class DeleteResourceServiceImplTest {
         when(container.isAcl()).thenReturn(false);
         when(container.getAcl()).thenReturn(null);
 
-        when(containmentIndex.getContainedBy(eq(tx), eq(container))).thenReturn(Stream.<String>builder().build());
-
         service.perform(tx, container);
         verifyResourceOperation(RESOURCE_ID, operationCaptor, pSession);
-        verify(containmentIndex).getContainedBy(eq(tx), eq(container));
     }
 
     @Test
@@ -131,10 +141,12 @@ public class DeleteResourceServiceImplTest {
         when(childContainer.getAcl()).thenReturn(null);
 
         when(resourceFactory.getResource(tx, CHILD_RESOURCE_ID)).thenReturn(childContainer);
-        when(containmentIndex.getContainedBy(eq(tx), eq(container))).thenReturn(Stream.<String>builder()
-                                                                                      .add(CHILD_RESOURCE_ID).build());
+        containmentIndex.addContainedBy(tx.getId(), container.getId(), childContainer.getId());
+
         when(container.isAcl()).thenReturn(false);
         when(container.getAcl()).thenReturn(null);
+
+        assertEquals(1, containmentIndex.getContains(tx, container).count());
         service.perform(tx, container);
 
         verify(pSession, times(2)).persist(operationCaptor.capture());
@@ -144,7 +156,7 @@ public class DeleteResourceServiceImplTest {
         assertEquals(CHILD_RESOURCE_ID, operations.get(0).getResourceId());
         assertEquals(RESOURCE_ID, operations.get(1).getResourceId());
 
-        verify(containmentIndex).getContainedBy(eq(tx), eq(container));
+        assertEquals(0, containmentIndex.getContains(tx, container).count());
     }
 
     private void verifyResourceOperation(final String resourceId,

@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.impl.services.functions;
 
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+
 /**
  * This class provides some utilities to help with working with Fedora Ids
  * @author whikloj
@@ -34,6 +36,18 @@ public final class FedoraIdUtils {
      */
     public static String addToIdentifier(final String oldId, final String newIdPart) {
         return oldId + (oldId.endsWith("/") ? "" : "/") + newIdPart;
+    }
+
+    /**
+     * Ensure the ID has the info:fedora/ prefix.
+     * @param id the identifier, if null assume repository root (info:fedora/)
+     * @return the identifier with the info:fedora/ prefix.
+     */
+    public static String ensurePrefix(final String id) {
+        if (id == null) {
+            return FEDORA_ID_PREFIX;
+        }
+        return id.startsWith(FEDORA_ID_PREFIX) ? id : FEDORA_ID_PREFIX + id;
     }
 
     /**

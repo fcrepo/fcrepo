@@ -19,6 +19,7 @@ package org.fcrepo.kernel.impl;
 
 import static java.util.UUID.randomUUID;
 
+import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
@@ -39,6 +40,9 @@ import javax.inject.Inject;
 public class TransactionManagerImpl implements TransactionManager {
 
     private final HashMap<String, Transaction> transactions;
+
+    @Inject
+    private ContainmentIndex containmentIndex;
 
     @Inject
     private PersistentStorageSessionManager pSessionManager;
@@ -78,5 +82,9 @@ public class TransactionManagerImpl implements TransactionManager {
 
     protected PersistentStorageSessionManager getPersistentStorageSessionManager() {
         return pSessionManager;
+    }
+
+    protected ContainmentIndex getContainmentIndex() {
+        return containmentIndex;
     }
 }

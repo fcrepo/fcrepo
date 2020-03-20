@@ -28,6 +28,7 @@ import static org.mockito.Mockito.when;
 import java.time.Duration;
 import java.time.Instant;
 
+import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
 import org.fcrepo.persistence.api.PersistentStorageSession;
@@ -60,10 +61,14 @@ public class TransactionImplTest {
     @Mock
     private PersistentStorageSession psSession;
 
+    @Mock
+    private ContainmentIndex containmentIndex;
+
     @Before
     public void setUp() {
         when(pssManager.getSession("123")).thenReturn(psSession);
         when(txManager.getPersistentStorageSessionManager()).thenReturn(pssManager);
+        when(txManager.getContainmentIndex()).thenReturn(containmentIndex);
         testTx = new TransactionImpl("123", txManager);
     }
 

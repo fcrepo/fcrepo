@@ -19,12 +19,14 @@ package org.fcrepo.kernel.impl.services;
 
 import static java.util.Collections.emptyList;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_PAIR_TREE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 import static org.fcrepo.kernel.impl.services.functions.FedoraIdUtils.addToIdentifier;
+import static org.fcrepo.kernel.impl.services.functions.FedoraIdUtils.ensurePrefix;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 import java.io.InputStream;
@@ -81,14 +83,18 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                         final boolean isContained, final String contentType, final String filename,
                         final Long contentSize, final List<String> linkHeaders, final Collection<URI> digest,
                         final InputStream requestBody, final ExternalContent externalContent) {
+        final String[] parts = splitSlug(txId, ensurePrefix(fedoraId), slug);
+        final String normalizedFedoraId = parts[0];
+        final String realSlug = parts[1];
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
         checkAclLinkHeader(linkHeaders);
         // If we are PUTting then fedoraId is the path, we need to locate a containment parent if exists.
         // Otherwise we use fedoraId and create a resource contained in it.
-        final String parentId = isContained ? fedoraId : findExistingAncestor(fedoraId);
-        checkParent(pSession, parentId);
+        final String parentId = isContained ? normalizedFedoraId : findExistingAncestor(txId, normalizedFedoraId);
+        checkParent(txId, pSession, parentId);
 
-        final String fullPath = isContained ? getResourcePath(pSession, fedoraId, slug) : fedoraId;
+        final String fullPath = isContained ? getResourcePath(txId, pSession, normalizedFedoraId, realSlug) :
+                normalizedFedoraId;
 
         // Populate the description for the new binary
         createDescription(pSession, userPrincipal, fullPath);
@@ -115,6 +121,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
         try {
             pSession.persist(createOp);
+            addToContainmentIndex(txId, parentId, fullPath);
             return fullPath;
         } catch (final PersistentStorageException exc) {
             throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
@@ -138,13 +145,17 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
     @Override
     public String perform(final String txId, final String userPrincipal, final String fedoraId, final String slug,
             final boolean isContained, final List<String> linkHeaders, final Model model) {
+        final String[] parts = splitSlug(txId, ensurePrefix(fedoraId), slug);
+        final String normalizedFedoraId = parts[0];
+        final String realSlug = parts[1];
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
         checkAclLinkHeader(linkHeaders);
         // If we are PUTting then fedoraId is the path, we need to locate a containment parent if exists.
         // Otherwise we use fedoraId and create a resource contained in it.
-        final String parentId = isContained ? fedoraId : findExistingAncestor(fedoraId);
-        checkParent(pSession, parentId);
-        final String fullPath = isContained ? getResourcePath(pSession, fedoraId, slug) : fedoraId;
+        final String parentId = isContained ? normalizedFedoraId : findExistingAncestor(txId, normalizedFedoraId);
+        checkParent(txId, pSession, parentId);
+        final String fullPath = isContained ? getResourcePath(txId, pSession, normalizedFedoraId, realSlug) :
+                normalizedFedoraId;
 
         final List<String> rdfTypes = isEmpty(linkHeaders) ? emptyList() : getTypes(linkHeaders);
         final String interactionModel = determineInteractionModel(rdfTypes, true,
@@ -161,6 +172,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
         try {
             pSession.persist(createOp);
+            addToContainmentIndex(txId, parentId, fullPath);
             return fullPath;
         } catch (final PersistentStorageException exc) {
             throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
@@ -171,16 +183,18 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
     /**
      * Check the parent to contain the new resource exists and can have a child.
      *
+     * @param txId the transaction ID or null if no transaction.
      * @param pSession a persistence session.
      * @param fedoraId Id of parent or null if root.
      */
-    private void checkParent(final PersistentStorageSession pSession, final String fedoraId)
+    private void checkParent(final String txId, final PersistentStorageSession pSession, final String fedoraId)
         throws RepositoryRuntimeException {
 
         if (fedoraId != null) {
             final ResourceHeaders parent;
             try {
                 // Make sure the parent exists.
+                final boolean parentExists = containmentIndex.resourceExists(txId, fedoraId);
                 // TODO: object existence check could be from an index. Review later.
                 parent = pSession.getHeaders(fedoraId, null);
             } catch (final PersistentItemNotFoundException exc) {
@@ -205,33 +219,23 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
     /**
      * Get the path of a new child with or without a slug.
+     * @param txId a transaction id or null.
      * @param pSession a persistent storage session.
      * @param fedoraId the current parent's identifier.
      * @param slug a provided slug or null
      * @return the new identifier.
      */
-    private String getResourcePath(final PersistentStorageSession pSession, final String fedoraId, final String slug)
+    private String getResourcePath(final String txId, final PersistentStorageSession pSession, final String fedoraId,
+                                   final String slug)
         throws RepositoryRuntimeException {
 
-        final String finalSlug;
-        if (slug == null) {
-            finalSlug = this.minter.get();
+        final String fullTestPath = addToIdentifier(fedoraId, slug);
+        if (slug == null || containmentIndex.resourceExists(txId, fullTestPath)) {
+            // Resource with slug name exists already, so we need to generate a new path.
+            return addToIdentifier(fedoraId, this.minter.get());
         } else {
-            final var joinedId = addToIdentifier(fedoraId, slug);
-            try {
-                // TODO: object existence check could be from an index. Review later.
-                pSession.getHeaders(joinedId, null);
-                // Resource with slug name exists already, so we need to generate a new path.
-                finalSlug = this.minter.get();
-            } catch (final PersistentItemNotFoundException exc) {
-                // Doesn't already exist so the slug is fine.
-                return joinedId;
-            } catch (final PersistentStorageException exc) {
-                throw new RepositoryRuntimeException(String.format("Failed to find storage headers for %s", fedoraId),
-                    exc);
-            }
+            return addToIdentifier(fedoraId, slug);
         }
-        return addToIdentifier(fedoraId, finalSlug);
     }
 
     /**
@@ -252,5 +256,42 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
      */
     private List<Link> getLinkHeaders(final List<String> headers) {
         return headers == null ? null : headers.stream().map(p -> Link.valueOf(p)).collect(Collectors.toList());
+    }
+
+    /**
+     * Add this pairing to the containment index.
+     * @param txId The transaction ID or null if no transaction.
+     * @param parentId The parent ID or null if repository root.
+     * @param id The child ID.
+     */
+    private void addToContainmentIndex(final String txId, final String parentId, final String id) {
+        containmentIndex.addContainedBy(txId, ensurePrefix(parentId), ensurePrefix(id));
+    }
+
+    /**
+     * If the Slug has a forward slash then check that part of it is not an existing resource.
+     * @param txID The current transaction id.
+     * @param parent The fedora ID passed in with the slug.
+     * @param slug The slug.
+     * @return Array with the parent and slug.
+     */
+    private String[] splitSlug(final String txID, final String parent, final String slug) {
+        final String[] response;
+        if (slug != null && slug.contains("/")) {
+            final String fullPath = addToIdentifier(parent, slug);
+            final String newParent = findExistingAncestor(txID, fullPath);
+            if (newParent != null) {
+                // We found a parent so remove it from the slug.
+                final String newSlug = fullPath.replace(newParent + (newParent.endsWith("/") ? "" : "/"), "");
+                response = new String[]{newParent, newSlug};
+            } else {
+                // No parent found so we go back to root.
+                response = new String[]{FEDORA_ID_PREFIX, slug};
+            }
+        } else {
+            // No slash so return what we received.
+            response = new String[]{parent, slug};
+        }
+        return response;
     }
 }
