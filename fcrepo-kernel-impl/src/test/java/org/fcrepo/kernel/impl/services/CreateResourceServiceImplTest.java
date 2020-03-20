@@ -162,7 +162,7 @@ public class CreateResourceServiceImplTest {
 
     private static final Collection<URI> DIGESTS = singleton(URI.create("urn:sha1:12345abced"));
 
-    private static final List<String> cleanup_list = new ArrayList<>() ;
+    private static final List<String> cleanupList = new ArrayList<>() ;
 
 
     @Before
@@ -180,17 +180,17 @@ public class CreateResourceServiceImplTest {
         when(extContent.getContentType()).thenReturn(EXTERNAL_CONTENT_TYPE);
         when(transaction.getId()).thenReturn(TX_ID);
         // Always try to clean up root.
-        cleanup_list.add(FEDORA_ID_PREFIX);
+        cleanupList.add(FEDORA_ID_PREFIX);
     }
 
     @After
     public void cleanUp() {
-        cleanup_list.forEach(parentID -> {
+        cleanupList.forEach(parentID -> {
             when(fedoraResource.getId()).thenReturn(parentID);
             containmentIndex.getContains(transaction, fedoraResource).forEach(c ->
                     containmentIndex.removeContainedBy(TX_ID, parentID, c));
         });
-        cleanup_list.removeAll(cleanup_list);
+        cleanupList.removeAll(cleanupList);
     }
 
     @Test(expected = ItemNotFoundException.class)
@@ -218,7 +218,7 @@ public class CreateResourceServiceImplTest {
         when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
         createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null, FILENAME, CONTENT_SIZE, null,
                 DIGESTS, null, null);
-        cleanup_list.add(fedoraId);
+        cleanupList.add(fedoraId);
         when(fedoraResource.getId()).thenReturn(fedoraId);
         assertEquals(1, containmentIndex.getContains(transaction, fedoraResource).count());
     }
@@ -268,7 +268,7 @@ public class CreateResourceServiceImplTest {
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         final String newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null, model);
-        cleanup_list.add(fedoraId);
+        cleanupList.add(fedoraId);
         verify(psSession).persist(operationCaptor.capture());
         final String persistedId = operationCaptor.getValue().getResourceId();
         assertNotEquals(fedoraId, persistedId);
@@ -301,7 +301,7 @@ public class CreateResourceServiceImplTest {
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         final String newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, CONTENT_TYPE,
                 FILENAME, CONTENT_SIZE, null, DIGESTS, null, null);
-        cleanup_list.add(fedoraId);
+        cleanupList.add(fedoraId);
         verify(psSession, times(2)).persist(operationCaptor.capture());
         final List<ResourceOperation> operations = operationCaptor.getAllValues();
         final var operation = getOperation(operations, CreateNonRdfSourceOperation.class);
@@ -348,7 +348,7 @@ public class CreateResourceServiceImplTest {
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         final String newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, null,
                 model);
-        cleanup_list.add(fedoraId);
+        cleanupList.add(fedoraId);
         verify(psSession).persist(operationCaptor.capture());
         final var operation = (CreateRdfSourceOperation) operationCaptor.getValue();
         final String persistedId = operation.getResourceId();
@@ -384,7 +384,7 @@ public class CreateResourceServiceImplTest {
         try {
             System.setProperty(SERVER_MANAGED_PROPERTIES_MODE, "relaxed");
             newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, null, model);
-            cleanup_list.add(fedoraId);
+            cleanupList.add(fedoraId);
         } finally {
             System.clearProperty(SERVER_MANAGED_PROPERTIES_MODE);
         }
@@ -416,7 +416,7 @@ public class CreateResourceServiceImplTest {
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         final String newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true,
                 CONTENT_TYPE, FILENAME, CONTENT_SIZE, null, DIGESTS, null, null);
-        cleanup_list.add(FEDORA_ID_PREFIX + fedoraId);
+        cleanupList.add(FEDORA_ID_PREFIX + fedoraId);
         verify(psSession, times(2)).persist(operationCaptor.capture());
         final List<ResourceOperation> operations = operationCaptor.getAllValues();
         final var operation = getOperation(operations, CreateNonRdfSourceOperation.class);
@@ -443,7 +443,7 @@ public class CreateResourceServiceImplTest {
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         final String newID = createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, null,
                 model);
-        cleanup_list.add(fedoraId);
+        cleanupList.add(fedoraId);
         verify(psSession).persist(operationCaptor.capture());
         final var operation = (CreateRdfSourceOperation) operationCaptor.getValue();
         assertEquals(childId, operation.getResourceId());
@@ -458,12 +458,10 @@ public class CreateResourceServiceImplTest {
         final String fedoraId = ensurePrefix(UUID.randomUUID().toString());
         final var childId = addToIdentifier(fedoraId, "testSlug");
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
-        //containmentIndex.addContainedBy(null, ensurePrefix(fedoraId));
-        //when(psSession.getHeaders(ensurePrefix(childId), null)).thenThrow(PersistentItemNotFoundException.class);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, null, FILENAME, CONTENT_SIZE,
                 null, DIGESTS, null, null);
-        cleanup_list.add(fedoraId);
+        cleanupList.add(fedoraId);
         verify(psSession, times(2)).persist(operationCaptor.capture());
         final List<ResourceOperation> operations = operationCaptor.getAllValues();
         final var operation = getOperation(operations, CreateNonRdfSourceOperation.class);
@@ -501,7 +499,7 @@ public class CreateResourceServiceImplTest {
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null, FILENAME, CONTENT_SIZE, null,
                 DIGESTS, null, extContent);
-        cleanup_list.add(fedoraId);
+        cleanupList.add(fedoraId);
         verify(psSession, times(2)).persist(operationCaptor.capture());
         final List<ResourceOperation> operations = operationCaptor.getAllValues();
         final var operation = getOperation(operations, CreateNonRdfSourceOperation.class);
@@ -520,7 +518,7 @@ public class CreateResourceServiceImplTest {
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, CONTENT_TYPE, FILENAME,
                 CONTENT_SIZE, null, DIGESTS, null, extContent);
-        cleanup_list.add(fedoraId);
+        cleanupList.add(fedoraId);
         verify(psSession, times(2)).persist(operationCaptor.capture());
         final List<ResourceOperation> operations = operationCaptor.getAllValues();
         final var operation = getOperation(operations, CreateNonRdfSourceOperation.class);
@@ -546,7 +544,7 @@ public class CreateResourceServiceImplTest {
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, "testSlug", true, null, FILENAME, CONTENT_SIZE,
                 null, DIGESTS, null, extContent);
-        cleanup_list.add(fedoraId);
+        cleanupList.add(fedoraId);
         verify(psSession, times(2)).persist(operationCaptor.capture());
         final List<ResourceOperation> operations = operationCaptor.getAllValues();
         final var operation = getOperation(operations, CreateNonRdfSourceOperation.class);

@@ -35,7 +35,7 @@ public interface ContainmentTriplesService {
      * Retrieve the containment triples.
      *
      * @param tx The transaction or null if none.
-     * @param resource The fedora resource
+     * @param resource The fedora container resource in which children resources are contained.
      * @return A stream of containment triples for the resource.
      */
     Stream<Triple> get(Transaction tx, FedoraResource resource);

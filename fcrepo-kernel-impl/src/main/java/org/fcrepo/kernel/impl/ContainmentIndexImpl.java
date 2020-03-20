@@ -356,7 +356,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
                             jdbcTemplate.update(COMMIT_CLEANUP, parameterSource);
                         } catch (Exception e) {
                             status.setRollbackOnly();
-                            LOGGER.warn("Unable to commit containment index transaction: {}", e.getMessage());
+                            LOGGER.warn("Unable to commit containment index transaction {}: {}", txId, e.getMessage());
                             throw new RepositoryRuntimeException("Unable to commit containment index transaction", e);
                         }
                     }
