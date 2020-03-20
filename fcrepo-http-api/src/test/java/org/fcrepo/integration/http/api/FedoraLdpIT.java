@@ -2274,7 +2274,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testGetObjectGraph() throws IOException {
         logger.trace("Entering testGetObjectGraph()...");
         final String location = getLocation(postObjMethod());
@@ -2295,7 +2294,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void verifyFullSetOfRdfTypes() throws IOException {
         logger.trace("Entering verifyFullSetOfRdfTypes()...");
         final String id = getRandomUniqueId();
