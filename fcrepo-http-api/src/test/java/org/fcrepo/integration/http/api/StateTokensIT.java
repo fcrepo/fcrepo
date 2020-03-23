@@ -125,7 +125,6 @@ public class StateTokensIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testGetHasStateTokenNonRDFSource() throws IOException {
         final String id = getRandomUniqueId();
@@ -141,7 +140,6 @@ public class StateTokensIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testHeadHasStateTokenNonRDFSource() throws IOException {
         final String id = getRandomUniqueId();
