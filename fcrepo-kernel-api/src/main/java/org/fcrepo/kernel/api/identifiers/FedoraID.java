@@ -186,7 +186,7 @@ public class FedoraID {
         if (processID.contains(FCR_ACL)) {
             final String[] aclSplits = processID.split("/" + FCR_ACL);
             if (aclSplits.length > 1) {
-                throw new InvalidResourceIdentifierException(String.format("Path not found %s", externalPath));
+                throw new InvalidResourceIdentifierException(String.format("Path is invalid: %s", externalPath));
             }
             this.isAcl = true;
             processID = aclSplits[0];
