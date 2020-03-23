@@ -24,6 +24,10 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
 
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
+
+import org.fcrepo.kernel.api.exception.InvalidMementoPathException;
+import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 
 /**
  * Class to store contextual information about a Fedora ID.
@@ -41,7 +45,8 @@ public class FedoraID {
     private boolean isMemento = false;
     private boolean isTimemap = false;
     private Instant mementoDatetime;
-    private String mementoDatetime_str;
+    private String mementoDatetimeStr;
+    private String externalPath;
 
     /**
      * Basic constructor.
@@ -53,6 +58,13 @@ public class FedoraID {
             throw new IllegalArgumentException(String.format("ID must begin with %s", FEDORA_ID_PREFIX));
         }
         this.fullId = fullId;
+        if (!this.fullId.equals(FEDORA_ID_PREFIX)) {
+            // Only strip trailing slashes the ID is more than the info:fedora/ prefix.
+            this.fullId = this.fullId.replaceAll("/+$", "");
+        }
+        // Carry the path of the request for any exceptions.
+        this.externalPath = fullId.substring(FEDORA_ID_PREFIX.length());
+
         processIdentifier();
     }
 
@@ -141,7 +153,7 @@ public class FedoraID {
      * @return The yyyymmddhhiiss memento datetime or null if not a Memento.
      */
     public String getMementoString() {
-        return mementoDatetime_str;
+        return mementoDatetimeStr;
     }
 
     /**
@@ -155,6 +167,10 @@ public class FedoraID {
         // The fourth group for allows ACL.
         // The fifth group allows for any hashed suffixes.
         // ".*?(/" + FCR_METADATA + ")?(/" + FCR_VERSIONS + "(/\\d{14})?)?(/" + FCR_ACL + ")?(\\#\\S+)?$");
+        if (this.fullId.contains("//")) {
+            throw new InvalidResourceIdentifierException(String.format("Path contains empty element! %s",
+                    externalPath));
+        }
         String processID = this.fullId;
         if (processID.equals(FEDORA_ID_PREFIX)) {
             this.isRepositoryRoot = true;
@@ -167,27 +183,45 @@ public class FedoraID {
             processID = processID.split("#")[0];
         }
         if (processID.contains(FCR_ACL)) {
+            final String[] aclSplits = processID.split("/" + FCR_ACL);
+            if (aclSplits.length > 1) {
+                throw new InvalidResourceIdentifierException(String.format("Path not found %s", externalPath));
+            }
             this.isAcl = true;
-            processID = processID.split(FCR_ACL)[0];
+            processID = aclSplits[0];
         }
         if (processID.contains(FCR_VERSIONS)) {
-            if (processID.split(FCR_VERSIONS).length == 2) {
-                final String afterVersion = processID.split(FCR_VERSIONS)[1];
+            final String[] versionSplits = processID.split( "/" + FCR_VERSIONS);
+            if (versionSplits.length == 2) {
+                final String afterVersion = versionSplits[1];
                 if (afterVersion.matches("/\\d{14}")) {
                     this.isMemento = true;
-                    this.mementoDatetime_str = afterVersion.substring(1);
-                    this.mementoDatetime = Instant.from(MEMENTO_LABEL_FORMATTER.parse(this.mementoDatetime_str));
-                } else {
+                    this.mementoDatetimeStr = afterVersion.substring(1);
+                    try {
+                        this.mementoDatetime = Instant.from(MEMENTO_LABEL_FORMATTER.parse(this.mementoDatetimeStr));
+                    } catch (DateTimeParseException e) {
+                        throw new InvalidMementoPathException(String.format("Invalid request for memento at %s",
+                                externalPath));
+                    }
+                } else if (afterVersion.equals("/")) {
+                    // Possible trailing slash?
                     this.isTimemap = true;
+                } else {
+                    throw new InvalidMementoPathException(String.format("Invalid request for memento at %s",
+                            externalPath));
                 }
             } else {
                 this.isTimemap = true;
             }
-            processID = processID.split(FCR_VERSIONS)[0];
+            processID = versionSplits[0];
         }
         if (processID.contains(FCR_METADATA)) {
+            final String[] metadataSplits = processID.split("/" + FCR_METADATA);
+            if (metadataSplits.length > 1) {
+                throw new InvalidResourceIdentifierException(String.format("Path is invalid: %s", externalPath));
+            }
             this.isNonRdfSourceDescription = true;
-            processID = processID.split(FCR_METADATA)[0];
+            processID = metadataSplits[0];
         }
         if (processID.endsWith("/")) {
             processID = processID.replaceAll("/+$", "");
