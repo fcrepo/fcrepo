@@ -69,7 +69,6 @@ import static org.apache.jena.vocabulary.DC_11.title;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
@@ -1729,13 +1728,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(
                 "Expected UNSUPPORTED MEDIA TYPE response when PUTing content to an object (as opposed to datastream)",
                 UNSUPPORTED_MEDIA_TYPE.getStatusCode(), getStatus(put));
-    }
-
-    @Test
-@Ignore
-    public void testInvalidNamespaceOnHeadReturnsCorrectContentType() throws IOException {
-        assertEquals("Expected " + TEXT_PLAIN_WITH_CHARSET,
-                TEXT_PLAIN_WITH_CHARSET, getContentType(headObjMethod("/fcr:accessroles"), Status.BAD_REQUEST));
     }
 
     @Test
