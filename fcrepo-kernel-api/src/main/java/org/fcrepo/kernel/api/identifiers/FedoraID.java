@@ -179,8 +179,9 @@ public class FedoraID {
             return;
         }
         if (processID.contains("#")) {
-            this.hashUri = processID.split("#")[1];
-            processID = processID.split("#")[0];
+            final String[] hashSplits = processID.split("#");
+            this.hashUri = hashSplits[1];
+            processID = hashSplits[0];
         }
         if (processID.contains(FCR_ACL)) {
             final String[] aclSplits = processID.split("/" + FCR_ACL);
