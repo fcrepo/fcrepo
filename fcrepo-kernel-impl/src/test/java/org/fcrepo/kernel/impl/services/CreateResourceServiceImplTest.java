@@ -64,7 +64,7 @@ import org.apache.jena.vocabulary.DC_11;
 import org.apache.jena.vocabulary.XSD;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
+import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RequestWithAclLinkHeaderException;
@@ -243,17 +243,15 @@ public class CreateResourceServiceImplTest {
         assertEquals(1, containmentIndex.getContains(transaction, fedoraResource).count());
     }
 
-    @Test(expected = CannotCreateResourceException.class)
+    @Test(expected = InteractionModelViolationException.class)
     public void testParentIsBinaryRdf() throws Exception {
         final String fedoraId = ensurePrefix(UUID.randomUUID().toString());
         when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, true, null, model);
-        when(fedoraResource.getId()).thenReturn(fedoraId);
-        assertEquals(1, containmentIndex.getContains(transaction, fedoraResource).count());
     }
 
-    @Test(expected = CannotCreateResourceException.class)
+    @Test(expected = InteractionModelViolationException.class)
     public void testParentIsBinaryBinary() throws Exception {
         final String fedoraId = ensurePrefix(UUID.randomUUID().toString());
         when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
@@ -483,7 +481,7 @@ public class CreateResourceServiceImplTest {
                 DIGESTS, null, extContent);
     }
 
-    @Test(expected = CannotCreateResourceException.class)
+    @Test(expected = InteractionModelViolationException.class)
     public void testParentIsExternal() throws Exception {
         final String fedoraId = ensurePrefix(UUID.randomUUID().toString());
         when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());

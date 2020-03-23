@@ -1405,9 +1405,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPutBinaryChildViolation() throws IOException {
         final String id = getRandomUniqueId();
+        createObject(id);
         createDatastream(id, "binary", "some-content");
 
         final String location = serverAddress + id + "/binary/xx";
