@@ -442,7 +442,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testHeadDefaultNonRDF() throws IOException {
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id, "text/plain", "<> a <http://example.com/Foo> .");
@@ -1748,6 +1747,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpPut put = putObjMethod(id);
         put.setEntity(new StringEntity(content));
         put.setHeader(CONTENT_TYPE, "text/plain");
+        put.setHeader("Link", RDF_SOURCE_LINK_HEADER);
         assertEquals("Expected BAD REQUEST response code when PUTing malformed RDF on an object",
                 BAD_REQUEST.getStatusCode(), getStatus(put));
     }
