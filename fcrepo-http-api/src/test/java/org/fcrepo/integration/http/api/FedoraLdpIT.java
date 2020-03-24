@@ -1747,7 +1747,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpPut put = putObjMethod(id);
         put.setEntity(new StringEntity(content));
         put.setHeader(CONTENT_TYPE, "text/plain");
-        put.setHeader("Link", RDF_SOURCE_LINK_HEADER);
         assertEquals("Expected BAD REQUEST response code when PUTing malformed RDF on an object",
                 BAD_REQUEST.getStatusCode(), getStatus(put));
     }
