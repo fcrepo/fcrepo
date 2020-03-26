@@ -153,6 +153,8 @@ public final class RdfLexicon {
             createProperty(LDP_NAMESPACE + "hasMemberRelation");
     public static final Property INSERTED_CONTENT_RELATION =
             createProperty(LDP_NAMESPACE + "insertedContentRelation");
+    public static final Property IS_MEMBER_OF_RELATION =
+            createProperty(LDP_NAMESPACE + "isMemberOfRelation");
     public static final Property CONTAINS =
         createProperty(LDP_NAMESPACE + "contains");
     public static final Property LDP_MEMBER =

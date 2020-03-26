@@ -421,10 +421,10 @@ public class FedoraLdp extends ContentExposingResource {
         boolean created = false;
 
         if ((resourceExists && resource() instanceof Binary) ||
-                isBinary(interactionModel,
+                (!resourceExists && isBinary(interactionModel,
                         providedContentType,
                         requestBodyStream != null && providedContentType != null,
-                        extContent != null)) {
+                        extContent != null))) {
             ensureArchivalGroupHeaderNotPresentForBinaries(links);
 
             final Collection<URI> checksums = parseDigestHeader(digest);

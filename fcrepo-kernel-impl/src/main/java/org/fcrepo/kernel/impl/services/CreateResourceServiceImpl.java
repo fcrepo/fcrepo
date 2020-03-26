@@ -41,6 +41,7 @@ import javax.ws.rs.core.Link;
 import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
+import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.ExternalContent;
@@ -194,8 +195,8 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
             final ResourceHeaders parent;
             try {
                 // Make sure the parent exists.
+                // TODO: object existence can be from the index, but we don't have interaction model. Should we add it?
                 final boolean parentExists = containmentIndex.resourceExists(txId, fedoraId);
-                // TODO: object existence check could be from an index. Review later.
                 parent = pSession.getHeaders(fedoraId, null);
             } catch (final PersistentItemNotFoundException exc) {
                 throw new ItemNotFoundException(String.format("Item %s was not found", fedoraId), exc);
@@ -207,7 +208,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
             final boolean isParentBinary = NON_RDF_SOURCE.toString().equals(parent.getInteractionModel());
             if (isParentBinary) {
                 // Binary is not a container, can't have children.
-                throw new CannotCreateResourceException("NonRdfSource resources cannot contain other resources");
+                throw new InteractionModelViolationException("NonRdfSource resources cannot contain other resources");
             }
             // TODO: Will this type still be needed?
             final boolean isPairTree = FEDORA_PAIR_TREE.toString().equals(parent.getInteractionModel());

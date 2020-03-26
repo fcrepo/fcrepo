@@ -69,7 +69,6 @@ import static org.apache.jena.vocabulary.DC_11.title;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
@@ -86,6 +85,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIME_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_ORIGINAL_NAME;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.IS_MEMBER_OF_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_MEMBER;
@@ -443,7 +443,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testHeadDefaultNonRDF() throws IOException {
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id, "text/plain", "<> a <http://example.com/Foo> .");
@@ -1405,9 +1404,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPutBinaryChildViolation() throws IOException {
         final String id = getRandomUniqueId();
+        createObject(id);
         createDatastream(id, "binary", "some-content");
 
         final String location = serverAddress + id + "/binary/xx";
@@ -1729,13 +1728,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(
                 "Expected UNSUPPORTED MEDIA TYPE response when PUTing content to an object (as opposed to datastream)",
                 UNSUPPORTED_MEDIA_TYPE.getStatusCode(), getStatus(put));
-    }
-
-    @Test
-@Ignore
-    public void testInvalidNamespaceOnHeadReturnsCorrectContentType() throws IOException {
-        assertEquals("Expected " + TEXT_PLAIN_WITH_CHARSET,
-                TEXT_PLAIN_WITH_CHARSET, getContentType(headObjMethod("/fcr:accessroles"), Status.BAD_REQUEST));
     }
 
     @Test
@@ -2274,7 +2266,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testGetObjectGraph() throws IOException {
         logger.trace("Entering testGetObjectGraph()...");
         final String location = getLocation(postObjMethod());
@@ -2295,7 +2286,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void verifyFullSetOfRdfTypes() throws IOException {
         logger.trace("Entering verifyFullSetOfRdfTypes()...");
         final String id = getRandomUniqueId();
@@ -3507,6 +3497,75 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertFalse("Expected NOT to have resource: " + graph, graph.contains(ANY,
                     createURI(container), createURI("info:some/relation"), createURI(resource)));
+        }
+    }
+
+    @Test
+@Ignore
+    public void testIndirectContainerInteractionMemberOf() throws IOException {
+        // Create resource (object)
+        final String resourceId = getRandomUniqueId();
+        final String resource;
+        try (final CloseableHttpResponse createResponse = createObject(resourceId)) {
+            resource = getLocation(createResponse);
+        }
+        // Create container (c0)
+        final String containerId = getRandomUniqueId();
+        final String container;
+        try (final CloseableHttpResponse createResponse = createObject(containerId)) {
+            container = getLocation(createResponse);
+        }
+        // Create indirect container (c0/members)
+        final String indirectContainerId = containerId + "/t";
+        final HttpPut putIndirect = putObjMethod(indirectContainerId);
+        putIndirect.setHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
+        final String indirectContainer;
+        try (final CloseableHttpResponse createResponse = execute(putIndirect)) {
+            indirectContainer = getLocation(createResponse);
+        }
+
+        // Add LDP properties to indirect container
+        final HttpPatch patch = patchObjMethod(indirectContainerId);
+        patch.addHeader("Content-Type", "application/sparql-update");
+        final String sparql = "INSERT DATA { "
+                + "<> <" + MEMBERSHIP_RESOURCE + "> <" + container + "> .\n"
+                + "<> <" + IS_MEMBER_OF_RELATION + "> <info:some/relation> .\n"
+                + "<> <" + LDP_NAMESPACE + "insertedContentRelation> <info:proxy/for> .\n"
+                + " }";
+        patch.setEntity(new StringEntity(sparql));
+        assertEquals("Expected patch to succeed", NO_CONTENT.getStatusCode(), getStatus(patch));
+
+        // Add indirect resource to indirect container
+        final HttpPost postIndirectResource = postObjMethod(indirectContainerId);
+        final String irRdf =
+                "<> <info:proxy/in>  <" + container + "> ;\n" +
+                        "   <info:proxy/for> <" + resource + "> .";
+        postIndirectResource.setEntity(new StringEntity(irRdf));
+        postIndirectResource.setHeader("Content-Type", "text/turtle");
+
+        final String indirectResource;
+        try (final CloseableHttpResponse postResponse = execute(postIndirectResource)) {
+            indirectResource = getLocation(postResponse);
+            assertEquals("Expected post to succeed", CREATED.getStatusCode(), getStatus(postResponse));
+        }
+        // Ensure resource has been updated with relationship... indirectly
+        try (final CloseableHttpResponse getResponse = execute(new HttpGet(resource));
+             final CloseableDataset dataset = getDataset(getResponse)) {
+                final DatasetGraph graph = dataset.asDatasetGraph();
+                assertTrue("Expected to have triple on resource: " + createURI("info:some/relation") + " <"
+                                + createURI(container) + ">, graph: " + graph.toString(),
+                    graph.contains(ANY, createURI(resource), createURI("info:some/relation"), createURI(container)));
+        }
+        // Remove indirect resource
+        assertEquals("Expected delete to succeed",
+                NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(indirectResource)));
+
+        // Ensure resource has been updated with relationship... indirectly
+        try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(resource));
+             final CloseableDataset dataset = getDataset(getResponse1)) {
+            final DatasetGraph graph1 = dataset.asDatasetGraph();
+            assertFalse("Expected NOT to have resource: " + graph1, graph1.contains(ANY,
+                    createURI(resource), createURI("info:some/relation"), createURI(container)));
         }
     }
 

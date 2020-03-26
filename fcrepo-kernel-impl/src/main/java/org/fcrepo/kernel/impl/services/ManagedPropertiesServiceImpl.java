@@ -17,6 +17,17 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import static org.apache.jena.datatypes.xsd.impl.XSDDateTimeType.XSDdateTime;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
+
 import org.apache.jena.graph.Triple;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -24,16 +35,6 @@ import org.fcrepo.kernel.api.models.TimeMap;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.ManagedPropertiesService;
 import org.springframework.stereotype.Component;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Stream;
-
-import static org.apache.jena.graph.NodeFactory.createLiteral;
-import static org.apache.jena.graph.NodeFactory.createURI;
-import static org.apache.jena.vocabulary.RDF.type;
-import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 
 /**
  * Retrieve the managed properties as triples
@@ -49,9 +50,9 @@ public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {
         final List<Triple> triples = new ArrayList<>();
         final var subject = createURI(resolveId(resource.getDescribedResource()));
         triples.add(Triple.create(subject, CREATED_DATE.asNode(),
-                createLiteral(resource.getCreatedDate().toString())));
+                createLiteral(resource.getCreatedDate().toString(), XSDdateTime)));
         triples.add(Triple.create(subject, LAST_MODIFIED_DATE.asNode(),
-                createLiteral(resource.getLastModifiedDate().toString())));
+                createLiteral(resource.getLastModifiedDate().toString(), XSDdateTime)));
 
         resource.getDescribedResource().getTypes().forEach(triple -> {
             triples.add(Triple.create(subject, type.asNode(), createURI(triple.toString())));

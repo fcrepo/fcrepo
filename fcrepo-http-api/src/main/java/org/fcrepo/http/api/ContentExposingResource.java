@@ -46,6 +46,10 @@ import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.apache.jena.riot.WebContent.ctSPARQLUpdate;
+import static org.apache.jena.riot.WebContent.ctTextCSV;
+import static org.apache.jena.riot.WebContent.ctTextPlain;
+import static org.apache.jena.riot.WebContent.matchContentType;
 import static org.fcrepo.http.api.FedoraVersioning.MEMENTO_DATETIME_HEADER;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
@@ -74,6 +78,7 @@ import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
 import static org.fcrepo.kernel.api.models.ExternalContent.REDIRECT;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
 
+import org.apache.jena.atlas.web.ContentType;
 import org.fcrepo.kernel.api.services.ContainmentTriplesService;
 import org.fcrepo.kernel.api.utils.FedoraResourceIdConverter;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -894,7 +899,14 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     protected static boolean isRdfContentType(final String contentTypeString) {
-        return contentTypeToLang(contentTypeString) != null;
+        final ContentType requestContentType = ContentType.create(contentTypeString);
+        if (requestContentType == null || matchContentType(requestContentType, ctTextPlain) ||
+                matchContentType(requestContentType, ctTextCSV)) {
+            // Text files and CSV files are not considered RDF to Fedora, though CSV is a valid
+            // RDF type to Jena (although deprecated).
+            return false;
+        }
+        return (contentTypeToLang(contentTypeString) != null) || matchContentType(requestContentType, ctSPARQLUpdate);
     }
 
 

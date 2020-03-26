@@ -253,20 +253,6 @@
       e.preventDefault();
   }
 
-  function updateAccessRoles(e)
-  {
-      const update_json = document.getElementById('rbacl_json').value;
-      const url = window.location + '/fcr:accessroles';
-      http('POST', url, [['Content-Type', 'application/json']], update_json, function(res) {
-          if (res.status == 204 || res.status == 201) {
-              window.location.reload(true);
-          } else {
-              ajaxErrorHandler(res, 'Error');
-          }
-      });
-      e.preventDefault();
-  }
-
   function ajaxErrorHandler(xhr, errorThrown) {
       document.getElementById('errorLabel').textContent = errorThrown || xhr.statusText;
       document.getElementById('errorText').textContent = xhr.responseText;
@@ -336,7 +322,6 @@
       listen('action_create_version', 'submit', createVersionSnapshot);
       listen('action_enable_version', 'submit', enableVersioning);
       listen('action_update_file', 'submit', updateFile);
-      listen('update_rbacl', 'submit', updateAccessRoles);
 
       const links = document.querySelectorAll('a[property][href*="' + location.host + '"],#childList a,.breadcrumb a,.version_link');
       for (var i = 0; i < links.length; ++i) {
