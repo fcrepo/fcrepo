@@ -28,17 +28,6 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 public final class FedoraIdUtils {
 
     /**
-     * Add a subpath to an existing identifier.
-     *
-     * @param oldId the old identifier
-     * @param newIdPart the new identifier part
-     * @return A combination of old and new.
-     */
-    public static String addToIdentifier(final String oldId, final String newIdPart) {
-        return oldId + (oldId.endsWith("/") ? "" : "/") + newIdPart;
-    }
-
-    /**
      * Ensure the ID has the info:fedora/ prefix.
      * @param id the identifier, if null assume repository root (info:fedora/)
      * @return the identifier with the info:fedora/ prefix.

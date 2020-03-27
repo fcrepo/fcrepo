@@ -58,6 +58,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URLDecoder;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Collection;
@@ -395,7 +396,7 @@ public class FedoraLdp extends ContentExposingResource {
         final String interactionModel = checkInteractionModel(links);
 
         final String externalUri = this.uriInfo.getRequestUri().toString();
-        String fedoraId = identifierConverter().toInternalId(externalUri);
+        final String fedoraId = identifierConverter().toInternalId(externalUri);
         final boolean resourceExists = doesResourceExist(transaction, fedoraId);
 
         if (resourceExists) {
@@ -449,18 +450,16 @@ public class FedoraLdp extends ContentExposingResource {
                                                contentSize,
                                                extContent);
             } else {
-                fedoraId = createResourceService.perform(transaction.getId(),
-                                                         getUserPrincipal(),
-                                                         fedoraId,
-                                                         null,
-                                                         false,
-                                                         contentType,
-                                                         originalFileName,
-                                                         contentSize,
-                                                         links,
-                                                         checksums,
-                                                         requestBodyStream,
-                                                         extContent);
+                createResourceService.perform(transaction.getId(),
+                                              getUserPrincipal(),
+                                              fedoraId,
+                                              contentType,
+                                              originalFileName,
+                                              contentSize,
+                                              links,
+                                              checksums,
+                                              requestBodyStream,
+                                              extContent);
                 created = true;
             }
         } else {
@@ -475,8 +474,7 @@ public class FedoraLdp extends ContentExposingResource {
                                                  contentType.toString(),
                                                  model);
             } else {
-                fedoraId = createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, null,
-                                              false, links, model);
+                createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, links, model);
                 created = true;
             }
         }
@@ -594,7 +592,7 @@ public class FedoraLdp extends ContentExposingResource {
         final String interactionModel = checkInteractionModel(links);
 
         final String fedoraId = identifierConverter().toInternalId(identifierConverter().toDomain(externalPath()));
-        final String newFedoraId;
+        final String newFedoraId = mintNewPid(fedoraId, slug);
         final var providedContentType = requestContentType != null ? requestContentType.toString() : null;
 
         if (isBinary(interactionModel,
@@ -614,28 +612,25 @@ public class FedoraLdp extends ContentExposingResource {
                 contentSize = contentDisposition.getSize();
             }
 
-            newFedoraId = createResourceService.perform(transaction.getId(),
-                                                        getUserPrincipal(),
-                                                        fedoraId,
-                                                        slug,
-                                                        true,
-                                                        contentType,
-                                                        originalFileName,
-                                                        contentSize,
-                                                        links,
-                                                        checksums,
-                                                        requestBodyStream,
-                                                        extContent);
+            createResourceService.perform(transaction.getId(),
+                                          getUserPrincipal(),
+                                          newFedoraId,
+                                          contentType,
+                                          originalFileName,
+                                          contentSize,
+                                          links,
+                                          checksums,
+                                          requestBodyStream,
+                                          extContent);
         } else {
             final var contentType = requestContentType != null ? requestContentType : DEFAULT_RDF_CONTENT_TYPE;
-            final Model model = httpRdfService.bodyToInternalModel(externalPath(), requestBodyStream,
+            final Model model = httpRdfService.bodyToInternalModel(newFedoraId, requestBodyStream,
                     contentType, identifierConverter());
-            newFedoraId = createResourceService.perform(transaction.getId(),
-                                                        getUserPrincipal(),
-                                                        fedoraId, slug,
-                                                        true,
-                                                        links,
-                                                        model);
+            createResourceService.perform(transaction.getId(),
+                                          getUserPrincipal(),
+                                          newFedoraId,
+                                          links,
+                                          model);
         }
         LOGGER.debug("Finished creating resource with path: {}", externalPath());
         transaction.commitIfShortLived();
@@ -816,6 +811,41 @@ public class FedoraLdp extends ContentExposingResource {
 
         LOGGER.info("Unable to handle {} request on a path containing {}. Path was: {}", request.getMethod(),
             FedoraTypes.FCR_VERSIONS, externalPath);
+    }
+
+    private String mintNewPid(final String fedoraId, final String slug) {
+        final String pid;
+
+        if (!isBlank(slug)) {
+            pid = slug;
+        } else if (pidMinter != null) {
+            pid = pidMinter.get();
+        } else {
+            pid = defaultPidMinter.get();
+        }
+
+        String fullTestPath = addToIdentifier(fedoraId, pid);
+        fullTestPath = URLDecoder.decode(fullTestPath, UTF_8);
+
+        if (doesResourceExist(transaction, fullTestPath)) {
+            LOGGER.trace("Resource with path {} already exists; minting new path instead", fullTestPath);
+            return mintNewPid(fedoraId, null);
+        }
+
+        return fullTestPath;
+    }
+
+    /**
+     * TODO: Replace this functionality with FedoraId class.
+     *
+     * Add a subpath to an existing identifier.
+     *
+     * @param oldId the old identifier
+     * @param newIdPart the new identifier part
+     * @return A combination of old and new.
+     */
+    private String addToIdentifier(final String oldId, final String newIdPart) {
+        return oldId + (oldId.endsWith("/") ? "" : "/") + newIdPart;
     }
 
 }
