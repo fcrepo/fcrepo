@@ -36,6 +36,7 @@ import java.util.Collection;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraID;
 import org.fcrepo.kernel.api.models.ExternalContent;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
@@ -88,6 +89,8 @@ public class ReplaceBinariesServiceImplTest {
 
     private NonRdfSourceOperationFactory factory;
 
+    private FedoraID fedoraId = FedoraID.create(FEDORA_ID);
+
     @InjectMocks
     private ReplaceBinariesServiceImpl service;
 
@@ -106,7 +109,7 @@ public class ReplaceBinariesServiceImplTest {
         final String contentString = "This is some test data";
         final var stream = toInputStream(contentString, UTF_8);
 
-        service.perform(TX_ID, USER_PRINCIPAL, FEDORA_ID, FILENAME, MIME_TYPE, DIGESTS, stream, FILESIZE,
+        service.perform(TX_ID, USER_PRINCIPAL, fedoraId, FILENAME, MIME_TYPE, DIGESTS, stream, FILESIZE,
                 null);
         verify(pSession).persist(operationCaptor.capture());
         final NonRdfSourceOperation op = operationCaptor.getValue();
@@ -122,7 +125,7 @@ public class ReplaceBinariesServiceImplTest {
         when(externalContent.getURI()).thenReturn(uri);
         when(externalContent.getHandling()).thenReturn(COPY);
 
-        service.perform(TX_ID, USER_PRINCIPAL, FEDORA_ID, FILENAME, MIME_TYPE, DIGESTS, null, FILESIZE,
+        service.perform(TX_ID, USER_PRINCIPAL, fedoraId, FILENAME, MIME_TYPE, DIGESTS, null, FILESIZE,
                 externalContent);
         verify(pSession).persist(operationCaptor.capture());
         final NonRdfSourceOperation op = operationCaptor.getValue();
@@ -143,7 +146,7 @@ public class ReplaceBinariesServiceImplTest {
         when(externalContent.getHandling()).thenReturn(COPY);
         when(externalContent.getContentType()).thenReturn(MIME_TYPE);
 
-        service.perform(TX_ID, USER_PRINCIPAL, FEDORA_ID, FILENAME, "application/octet-stream",
+        service.perform(TX_ID, USER_PRINCIPAL, fedoraId, FILENAME, "application/octet-stream",
                 DIGESTS, null, FILESIZE, externalContent);
         verify(pSession).persist(operationCaptor.capture());
         final NonRdfSourceOperation op = operationCaptor.getValue();
@@ -163,7 +166,7 @@ public class ReplaceBinariesServiceImplTest {
 
         final var stream = toInputStream("Some content", UTF_8);
 
-        service.perform(TX_ID, USER_PRINCIPAL, FEDORA_ID, FILENAME, MIME_TYPE, DIGESTS, stream, FILESIZE,
+        service.perform(TX_ID, USER_PRINCIPAL, fedoraId, FILENAME, MIME_TYPE, DIGESTS, stream, FILESIZE,
                 null);
     }
 

@@ -17,17 +17,16 @@
  */
 package org.fcrepo.http.commons.api.rdf;
 
-import org.glassfish.jersey.uri.UriTemplate;
-import org.slf4j.Logger;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.ws.rs.core.UriBuilder;
+
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.glassfish.jersey.uri.UriTemplate;
+import org.slf4j.Logger;
 
 /**
  * Convert between HTTP URIs (LDP paths) and internal Fedora ID using a
@@ -43,28 +42,6 @@ public class HttpIdentifierConverter {
     private final UriBuilder uriBuilder;
 
     private final UriTemplate uriTemplate;
-
-    /**
-     * Things in a URL that we want to remove from the end of identifiers. Also removes everything after these.
-     */
-    private static final String[] FEDORA_STRIP_SUFFIX = {
-            "#",
-            "/" + FCR_VERSIONS,
-            "/" + FCR_ACL
-    };
-
-    /**
-     * Remove the various suffixes and anything after them.
-     */
-    private static String truncateSuffixes(final String uri) {
-        String internalUri = uri;
-        for (final String suffix : FEDORA_STRIP_SUFFIX) {
-            if (internalUri.contains(suffix)) {
-                internalUri = internalUri.split(suffix)[0];
-            }
-        }
-        return internalUri;
-    }
 
     private static String trimTrailingSlashes(final String string) {
         return string.replaceAll("/+$", "");
@@ -103,8 +80,7 @@ public class HttpIdentifierConverter {
         final String path = getPath(httpUri);
         if (path != null) {
 
-            // Take the URL and remove any hash uris, or fcr: endpoints.
-            final String fedoraId = trimTrailingSlashes(truncateSuffixes(path));
+            final String fedoraId = trimTrailingSlashes(path);
 
             return FEDORA_ID_PREFIX + fedoraId.replaceFirst("\\/", "");
         }

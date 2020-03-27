@@ -21,6 +21,7 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraID;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -90,7 +91,7 @@ public class DeleteResourceServiceImpl extends AbstractService implements Delete
             final Stream<String> children = containmentIndex.getContains(tx, fedoraResource);
             children.forEach(childResourceId -> {
                 try {
-                    final FedoraResource res = resourceFactory.getResource(tx, childResourceId);
+                    final FedoraResource res = resourceFactory.getResource(tx, FedoraID.create(childResourceId));
                     deleteDepthFirst(tx, pSession, res);
                 } catch (final PathNotFoundException ex) {
                     log.error("Path not found for {}: {}", fedoraId, ex.getMessage());

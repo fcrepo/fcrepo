@@ -23,6 +23,9 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import java.net.URLDecoder;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 
@@ -50,22 +53,43 @@ public class FedoraID {
 
     /**
      * Basic constructor.
-     * @param fullId The full identifier.
+     * @param fullId The full identifier or null if root.
      * @throws IllegalArgumentException If ID does not start with expected prefix.
      */
     public FedoraID(final String fullId) {
-        if (!fullId.startsWith(FEDORA_ID_PREFIX)) {
-            throw new IllegalArgumentException(String.format("ID must begin with %s", FEDORA_ID_PREFIX));
-        }
-        this.fullId = fullId;
+        this.fullId = ensurePrefix(fullId);
         if (!this.fullId.equals(FEDORA_ID_PREFIX)) {
             // Only strip trailing slashes the ID is more than the info:fedora/ prefix.
             this.fullId = this.fullId.replaceAll("/+$", "");
         }
         // Carry the path of the request for any exceptions.
-        this.externalPath = fullId.substring(FEDORA_ID_PREFIX.length());
+        this.externalPath = this.fullId.substring(FEDORA_ID_PREFIX.length());
 
         processIdentifier();
+    }
+
+    /**
+     * Basic constructor for repository root ID.
+     */
+    private FedoraID() {
+        this("");
+    }
+
+    /**
+     * Static create method
+     * @param fullId The ID to use for the FedoraID.
+     * @return The FedoraID.
+     */
+    public static FedoraID create(final String fullId) {
+        return new FedoraID(fullId);
+    }
+
+    /**
+     * Get a FedoraID for repository root.
+     * @return The FedoraID for repository root.
+     */
+    public static FedoraID getRoot() {
+        return new FedoraID();
     }
 
     /**
@@ -157,6 +181,56 @@ public class FedoraID {
     }
 
     /**
+     * Add a part onto this identifier.
+     * @param addition The additional string.
+     * @return new FedoraID for the new identifier.
+     */
+    public FedoraID addToResourceId(final String addition) {
+        return FedoraID.create(this.getResourceId() + (this.getResourceId().endsWith("/") ? "" : "/") + addition);
+    }
+
+    /**
+     * Add a part onto this identifier.
+     * @param addition The additional string.
+     * @return new FedoraID for the new identifier.
+     */
+    public FedoraID addToFullId(final String addition) {
+        return FedoraID.create(this.getFullId() + (this.getFullId().endsWith("/") ? "" : "/") + addition);
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (obj == this) {
+            return true;
+        }
+
+        if (!(obj instanceof FedoraID)) {
+            return false;
+        }
+
+        final var testObj = (FedoraID) obj;
+        return testObj.getFullId().equals(this.getFullId());
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) getFullId().hashCode();
+    }
+
+    /**
+     * Ensure the ID has the info:fedora/ prefix.
+     * @param id the identifier, if null assume repository root (info:fedora/)
+     * @return the identifier with the info:fedora/ prefix.
+     */
+    private static String ensurePrefix(final String id) {
+        if (id == null) {
+            return FEDORA_ID_PREFIX;
+        }
+        final String decodedId = URLDecoder.decode(id, UTF_8);
+        return decodedId.startsWith(FEDORA_ID_PREFIX) ? decodedId : FEDORA_ID_PREFIX + decodedId;
+    }
+
+    /**
      * Process the original ID into its parts without using a regular expression.
      */
     private void processIdentifier() {
@@ -222,7 +296,8 @@ public class FedoraID {
                 throw new InvalidResourceIdentifierException(String.format("Path is invalid: %s", externalPath));
             }
             this.isNonRdfSourceDescription = true;
-            processID = metadataSplits[0];
+            // Don't remove the fcr:metadata from the resource ID so we can get the metadata separately from the
+            // binary.
         }
         if (processID.endsWith("/")) {
             processID = processID.replaceAll("/+$", "");

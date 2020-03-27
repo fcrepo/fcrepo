@@ -17,10 +17,9 @@
  */
 package org.fcrepo.kernel.api.models;
 
-import java.time.Instant;
-
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.identifiers.FedoraID;
 
 /**
  * Interface to a factory to instantiate FedoraResources
@@ -33,46 +32,34 @@ public interface ResourceFactory {
     /**
      * Get a FedoraResource for existing resource without using a transaction.
      *
-     * @param identifier The path or identifier for the resource.
+     * @param fedoraID The path or identifier for the resource.
      * @return The resource.
      * @throws PathNotFoundException If the identifier cannot be found.
      */
-    public FedoraResource getResource(final String identifier)
+    public FedoraResource getResource(final FedoraID fedoraID)
             throws PathNotFoundException;
 
     /**
      * Get a FedoraResource for existing resource
      *
      * @param transaction The transaction this request is part of.
-     * @param identifier The path or identifier for the resource.
+     * @param fedoraID The identifier for the resource.
      * @return The resource.
      * @throws PathNotFoundException If the identifier cannot be found.
      */
-    public FedoraResource getResource(final Transaction transaction, final String identifier)
-            throws PathNotFoundException;
-
-    /**
-     * Get a FedoraResource for existing resource
-     *
-     * @param transaction The transaction this request is part of.
-     * @param identifier The path or identifier for the resource.
-     * @param version The version datetime or null for head.
-     * @return The resource.
-     * @throws PathNotFoundException If the identifier cannot be found.
-     */
-    public FedoraResource getResource(final Transaction transaction, final String identifier, final Instant version)
+    public FedoraResource getResource(final Transaction transaction, final FedoraID fedoraID)
             throws PathNotFoundException;
 
     /**
      * Get a resource as a particular type without a transaction
      *
      * @param <T> type for the resource
-     * @param identifier The path or identifier for the resource.
+     * @param fedoraID The identifier for the resource.
      * @param clazz class the resource will be cast to
      * @return The resource.
      * @throws PathNotFoundException If the identifier cannot be found.
      */
-    public <T extends FedoraResource> T getResource(final String identifier,
+    public <T extends FedoraResource> T getResource(final FedoraID fedoraID,
             final Class<T> clazz) throws PathNotFoundException;
 
     /**
@@ -80,34 +67,19 @@ public interface ResourceFactory {
      *
      * @param <T> type for the resource
      * @param transaction The transaction this request is part of.
-     * @param identifier The path or identifier for the resource.
-     * @param version The version datetime or null for head.
+     * @param fedoraID The identifier for the resource.
      * @param clazz class the resource will be cast to
      * @return The resource.
      * @throws PathNotFoundException If the identifier cannot be found.
      */
-    public <T extends FedoraResource> T getResource(final Transaction transaction, final String identifier,
-            final Instant version, final Class<T> clazz) throws PathNotFoundException;
-
-    /**
-     * Get a resource as a particular type
-     *
-     * @param <T> type for the resource
-     * @param transaction The transaction this request is part of.
-     * @param identifier The path or identifier for the resource.
-     * @param clazz class the resource will be cast to
-     * @return The resource.
-     * @throws PathNotFoundException If the identifier cannot be found.
-     */
-    public <T extends FedoraResource> T getResource(final Transaction transaction, final String identifier,
-            final Class<T> clazz) throws PathNotFoundException;
+    public <T extends FedoraResource> T getResource(final Transaction transaction, final FedoraID fedoraID,
+                                                    final Class<T> clazz) throws PathNotFoundException;
 
     /**
      * Check if a resource exists.
      * @param transaction The current transaction or null if read-only.
      * @param fedoraId The internal identifier
-     * @param version The version datetime or null for head.
      * @return True if the identifier resolves to a resource.
      */
-    public boolean doesResourceExist(final Transaction transaction, final String fedoraId, final Instant version);
+    public boolean doesResourceExist(final Transaction transaction, final FedoraID fedoraId);
 }

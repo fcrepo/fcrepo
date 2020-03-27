@@ -19,6 +19,7 @@ package org.fcrepo.kernel.impl;
 
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraID;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.junit.After;
 import org.junit.Before;
@@ -34,6 +35,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import javax.inject.Inject;
 
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -90,7 +92,7 @@ public class ContainmentIndexImplTest {
      */
     private void stubObject(final String id) {
         if (id_to_resource.containsKey(id)) {
-            when(id_to_resource.get(id).getId()).thenReturn(id);
+            when(id_to_resource.get(id).getId()).thenReturn(FEDORA_ID_PREFIX + id);
         } else if (id_to_transaction.containsKey(id)) {
             when(id_to_transaction.get(id).getId()).thenReturn(id);
         }
@@ -427,6 +429,36 @@ public class ContainmentIndexImplTest {
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
         assertNull(containmentIndex.getContainedBy(null, child1.getId()));
         assertEquals(0, containmentIndex.getContains(transaction1, parent1).count());
+    }
+
+    /**
+     * Ensure match the id without a trailing slash.
+     */
+    @Test
+    public void testResourceExistsFedoraIDNoTrailingSlash() {
+        stubObject("parent1");
+        stubObject("child1");
+        final FedoraID fedoraID = FedoraID.create(child1.getId());
+        containmentIndex.addContainedBy(null, parent1.getId(), child1.getId());
+        assertEquals(1, containmentIndex.getContains(null, parent1).count());
+        assertEquals(parent1.getId(), containmentIndex.getContainedBy(null, child1.getId()));
+        assertTrue(containmentIndex.resourceExists(null, child1.getId()));
+        assertTrue(containmentIndex.resourceExists(null, fedoraID));
+    }
+
+    /**
+     * Ensure match the id with a trailing slash.
+     */
+    @Test
+    public void testResourceExistsFedoraIDTrailingSlash() {
+        stubObject("parent1");
+        stubObject("child1");
+        final FedoraID fedoraID = FedoraID.create(child1.getId() + "/");
+        containmentIndex.addContainedBy(null, parent1.getId(), child1.getId());
+        assertEquals(1, containmentIndex.getContains(null, parent1).count());
+        assertEquals(parent1.getId(), containmentIndex.getContainedBy(null, child1.getId()));
+        assertTrue(containmentIndex.resourceExists(null, child1.getId()));
+        assertTrue(containmentIndex.resourceExists(null, fedoraID));
     }
 }
 

@@ -119,6 +119,7 @@ import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PreconditionException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
+import org.fcrepo.kernel.api.identifiers.FedoraID;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
@@ -225,6 +226,8 @@ public class FedoraLdpTest {
     @Mock
     private DeleteResourceService deleteResourceService;
 
+    private FedoraID fedoraID;
+
     private static final Logger log = getLogger(FedoraLdpTest.class);
 
 
@@ -285,10 +288,13 @@ public class FedoraLdpTest {
         when(mockServletContext.getContextPath()).thenReturn("/");
 
         when(prefer.getReturn()).thenReturn(preferTag);
-                doAnswer((Answer<HttpServletResponse>) invocation -> {
-                    mockResponse.addHeader("Preference-Applied", "return=representation");
-                    return null;
-                }).when(preferTag).addResponseHeaders(mockResponse);
+
+        doAnswer((Answer<HttpServletResponse>) invocation -> {
+            mockResponse.addHeader("Preference-Applied", "return=representation");
+            return null;
+        }).when(preferTag).addResponseHeaders(mockResponse);
+
+        fedoraID = FedoraID.create(mockContainer.getId());
     }
 
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) {
@@ -905,7 +911,7 @@ public class FedoraLdpTest {
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(replacePropertiesService).perform(eq(mockTransaction.getId()), anyString(), eq(mockContainer.getId()),
+        verify(replacePropertiesService).perform(eq(mockTransaction.getId()), anyString(), eq(fedoraID),
                 any(String.class),any(Model.class));
     }
 
@@ -940,7 +946,7 @@ public class FedoraLdpTest {
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
 
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
-        verify(replacePropertiesService).perform(eq(mockTransaction.getId()), anyString(), eq(mockObject.getId()),
+        verify(replacePropertiesService).perform(eq(mockTransaction.getId()), anyString(), eq(fedoraID),
                 any(String.class), any(Model.class));
     }
 
@@ -1041,11 +1047,10 @@ public class FedoraLdpTest {
     public void testCreateNewObjectWithRdf() throws MalformedRdfException,
            InvalidChecksumException, UnsupportedAlgorithmException {
         setResource(Container.class);
-        // when(mockContainerService.findOrCreate(mockTransaction, "/b", null)).thenReturn(mockContainer);
         final Response actual = testObj.createObject(null, NTRIPLES_TYPE, "b",
                 toInputStream("_:a <info:b> _:c .", UTF_8), null, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(replacePropertiesService).perform(eq(mockTransaction.getId()), anyString(), eq(mockContainer.getId()),
+        verify(replacePropertiesService).perform(eq(mockTransaction.getId()), anyString(), eq(fedoraID),
                 any(String.class), any(Model.class));
     }
 

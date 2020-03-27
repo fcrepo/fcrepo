@@ -19,6 +19,7 @@ package org.fcrepo.kernel.api;
 
 import java.util.stream.Stream;
 
+import org.fcrepo.kernel.api.identifiers.FedoraID;
 import org.fcrepo.kernel.api.models.FedoraResource;
 
 /**
@@ -91,4 +92,13 @@ public interface ContainmentIndex {
      * @return True if it is in the index.
      */
     boolean resourceExists(final String txID, final String resourceID);
+
+    /**
+     * Check if the resourceID exists in the containment index. Which should mean it exists.
+     *
+     * @param txID The transaction ID or null if not transaction.
+     * @param fedoraID The resource's FedoraID.
+     * @return True if it is in the index.
+     */
+    boolean resourceExists(final String txID, final FedoraID fedoraID);
 }

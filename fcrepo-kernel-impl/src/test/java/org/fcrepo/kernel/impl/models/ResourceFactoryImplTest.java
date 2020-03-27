@@ -18,6 +18,8 @@
 package org.fcrepo.kernel.impl.models;
 
 import static java.util.Arrays.asList;
+
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
@@ -32,16 +34,20 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
+import javax.inject.Inject;
+
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.UUID;
 
 import org.apache.jena.rdf.model.Resource;
+import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ResourceTypeException;
+import org.fcrepo.kernel.api.identifiers.FedoraID;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -51,17 +57,22 @@ import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.MockitoAnnotations;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
  * @author bbpennel
  *
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration("/containmentIndexTest.xml")
 public class ResourceFactoryImplTest {
 
     private final static Instant CREATED_DATE = Instant.parse("2019-11-12T10:00:30.0Z");
@@ -92,18 +103,35 @@ public class ResourceFactoryImplTest {
 
     private ResourceHeadersImpl resourceHeaders;
 
-    private ResourceFactoryImpl factory;
-
     private String fedoraId;
 
     private String sessionId;
 
+    private FedoraID mockFedoraID;
+
+    private String fedoraMementoId;
+
+    private FedoraID mockFedoraMementoID;
+
     @Mock
     private Transaction mockTx;
 
+    @Mock
+    private FedoraResource mockResource;
+
+    @Inject
+    private ContainmentIndex containmentIndex;
+
+    @InjectMocks
+    private ResourceFactoryImpl factory;
+
     @Before
     public void setup() throws Exception {
-        fedoraId = UUID.randomUUID().toString();
+        MockitoAnnotations.initMocks(this);
+        fedoraId = FEDORA_ID_PREFIX + UUID.randomUUID().toString();
+        mockFedoraID = FedoraID.create(fedoraId);
+        fedoraMementoId = fedoraId + "/fcr:versions/20000102120000";
+        mockFedoraMementoID = FedoraID.create(fedoraMementoId);
 
         sessionId = UUID.randomUUID().toString();
         when(mockTx.getId()).thenReturn(sessionId);
@@ -111,6 +139,7 @@ public class ResourceFactoryImplTest {
         factory = new ResourceFactoryImpl();
 
         setField(factory, "persistentStorageSessionManager", sessionManager);
+        setField(factory, "containmentIndex", containmentIndex);
 
         resourceHeaders = new ResourceHeadersImpl();
         resourceHeaders.setId(fedoraId);
@@ -121,32 +150,40 @@ public class ResourceFactoryImplTest {
         when(psSession.getHeaders(eq(fedoraId), nullable(Instant.class))).thenReturn(resourceHeaders);
     }
 
+    @After
+    public void cleanUp() {
+        when(mockResource.getId()).thenReturn(FEDORA_ID_PREFIX);
+        containmentIndex.rollbackTransaction(mockTx);
+        containmentIndex.getContains(null, mockResource).forEach(c ->
+                containmentIndex.removeContainedBy(null, FEDORA_ID_PREFIX, c));
+    }
+
     @Test(expected = PathNotFoundException.class)
     public void getResource_ObjectNotFound() throws Exception {
         when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
 
-        factory.getResource(fedoraId);
+        factory.getResource(mockFedoraID);
     }
 
     @Test(expected = ResourceTypeException.class)
     public void getResource_NoInteractionModel() throws Exception {
         resourceHeaders.setInteractionModel(null);
 
-        factory.getResource(fedoraId);
+        factory.getResource(mockFedoraID);
     }
 
     @Test(expected = ResourceTypeException.class)
     public void getResource_UnknownInteractionModel() throws Exception {
         resourceHeaders.setInteractionModel("http://example.com/mystery_stroop");
 
-        factory.getResource(fedoraId);
+        factory.getResource(mockFedoraID);
     }
 
     @Test
     public void getResource_BasicContainer() throws Exception {
         populateHeaders(resourceHeaders, BASIC_CONTAINER);
 
-        final var resc = factory.getResource(fedoraId);
+        final var resc = factory.getResource(mockFedoraID);
 
         assertTrue("Factory must return a container", resc instanceof Container);
         assertEquals(fedoraId, resc.getId());
@@ -159,7 +196,7 @@ public class ResourceFactoryImplTest {
     public void getResource_BasicContainer_WithParent() throws Exception {
         populateHeaders(resourceHeaders, BASIC_CONTAINER);
 
-        final var parentId = UUID.randomUUID().toString();
+        final var parentId = FEDORA_ID_PREFIX + UUID.randomUUID().toString();
         resourceHeaders.setParent(parentId);
 
         final var parentHeaders = new ResourceHeadersImpl();
@@ -168,7 +205,7 @@ public class ResourceFactoryImplTest {
 
         when(psSession.getHeaders(parentId, null)).thenReturn(parentHeaders);
 
-        final var resc = factory.getResource(mockTx, fedoraId);
+        final var resc = factory.getResource(mockTx, mockFedoraID);
 
         assertTrue("Factory must return a container", resc instanceof Container);
         assertEquals(fedoraId, resc.getId());
@@ -184,7 +221,7 @@ public class ResourceFactoryImplTest {
     public void getResource_BasicContainer_InTransaction() throws Exception {
         populateHeaders(resourceHeaders, BASIC_CONTAINER);
 
-        final var resc = factory.getResource(mockTx, fedoraId);
+        final var resc = factory.getResource(mockTx, mockFedoraID);
 
         assertTrue("Factory must return a container", resc instanceof Container);
         assertEquals(fedoraId, resc.getId());
@@ -197,7 +234,7 @@ public class ResourceFactoryImplTest {
     public void getResource_BasicContainer_Cast() throws Exception {
         populateHeaders(resourceHeaders, BASIC_CONTAINER);
 
-        final var resc = factory.getResource(fedoraId, Container.class);
+        final var resc = factory.getResource(mockFedoraID, Container.class);
 
         assertTrue("Factory must return a container", resc instanceof Container);
         assertEquals(fedoraId, resc.getId());
@@ -210,7 +247,7 @@ public class ResourceFactoryImplTest {
     public void getResource_BasicContainer_Cast_InTransaction() throws Exception {
         populateHeaders(resourceHeaders, BASIC_CONTAINER);
 
-        final var resc = factory.getResource(mockTx, fedoraId, Container.class);
+        final var resc = factory.getResource(mockTx, mockFedoraID, Container.class);
 
         assertTrue("Factory must return a container", resc instanceof Container);
         assertEquals(fedoraId, resc.getId());
@@ -223,7 +260,7 @@ public class ResourceFactoryImplTest {
     public void getResource_DirectContainer() throws Exception {
         populateHeaders(resourceHeaders, DIRECT_CONTAINER);
 
-        final var resc = factory.getResource(fedoraId);
+        final var resc = factory.getResource(mockFedoraID);
 
         assertTrue("Factory must return a container", resc instanceof Container);
         assertEquals(fedoraId, resc.getId());
@@ -234,7 +271,7 @@ public class ResourceFactoryImplTest {
     public void getResource_IndirectContainer() throws Exception {
         populateHeaders(resourceHeaders, INDIRECT_CONTAINER);
 
-        final var resc = factory.getResource(fedoraId);
+        final var resc = factory.getResource(mockFedoraID);
 
         assertTrue("Factory must return a container", resc instanceof Container);
         assertEquals(fedoraId, resc.getId());
@@ -246,7 +283,7 @@ public class ResourceFactoryImplTest {
         populateHeaders(resourceHeaders, NON_RDF_SOURCE);
         populateInternalBinaryHeaders(resourceHeaders);
 
-        final var resc = factory.getResource(fedoraId);
+        final var resc = factory.getResource(mockFedoraID);
 
         assertTrue("Factory must return a container", resc instanceof Binary);
         assertEquals(fedoraId, resc.getId());
@@ -261,7 +298,7 @@ public class ResourceFactoryImplTest {
         populateHeaders(resourceHeaders, NON_RDF_SOURCE);
         populateInternalBinaryHeaders(resourceHeaders);
 
-        factory.getResource(fedoraId);
+        factory.getResource(mockFedoraID);
     }
 
     @Test
@@ -272,7 +309,7 @@ public class ResourceFactoryImplTest {
         resourceHeaders.setExternalUrl(externalUrl);
         resourceHeaders.setExternalHandling(PROXY);
 
-        final var resc = factory.getResource(fedoraId);
+        final var resc = factory.getResource(mockFedoraID);
 
         assertTrue("Factory must return a container", resc instanceof Binary);
         assertEquals(fedoraId, resc.getId());
@@ -285,40 +322,48 @@ public class ResourceFactoryImplTest {
 
     @Test
     public void doesResourceExists_Exists_WithSession() throws Exception {
-        final boolean answer = factory.doesResourceExist(mockTx, fedoraId, null);
+        containmentIndex.addContainedBy(mockTx.getId(), FEDORA_ID_PREFIX, fedoraId);
+        final boolean answer = factory.doesResourceExist(mockTx, mockFedoraID);
         assertTrue(answer);
     }
 
     @Test
     public void doesResourceExists_Exists_WithoutSession() throws Exception {
-        final boolean answer = factory.doesResourceExist(null, fedoraId, null);
+        containmentIndex.addContainedBy(null, FEDORA_ID_PREFIX, fedoraId);
+        final boolean answer = factory.doesResourceExist(null, mockFedoraID);
         assertTrue(answer);
     }
 
     @Test
     public void doesResourceExist_DoesntExist_WithSession() throws Exception {
-        when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
-        final boolean answer = factory.doesResourceExist(mockTx, fedoraId, null);
+        final boolean answer = factory.doesResourceExist(mockTx, mockFedoraID);
         assertFalse(answer);
     }
 
     @Test
     public void doesResourceExist_DoesntExist_WithoutSession() throws Exception {
-        when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
-        final boolean answer = factory.doesResourceExist(null, fedoraId, null);
+        final boolean answer = factory.doesResourceExist(null, mockFedoraID);
         assertFalse(answer);
     }
 
+    /**
+     * Only Mementos go to the persistence layer.
+     */
     @Test(expected = RepositoryRuntimeException.class)
     public void doesResourceExist_Exception_WithSession() throws Exception {
-        when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentSessionClosedException.class);
-        factory.doesResourceExist(mockTx, fedoraId, null);
+        when(psSession.getHeaders(mockFedoraMementoID.getResourceId(), mockFedoraMementoID.getMementoInstant()))
+                .thenThrow(PersistentSessionClosedException.class);
+        factory.doesResourceExist(mockTx, mockFedoraMementoID);
     }
 
+    /**
+     * Only Mementos go to the persistence layer.
+     */
     @Test(expected = RepositoryRuntimeException.class)
     public void doesResourceExist_Exception_WithoutSession() throws Exception {
-        when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentSessionClosedException.class);
-        factory.doesResourceExist(null, fedoraId, null);
+        when(psSession.getHeaders(mockFedoraMementoID.getResourceId(), mockFedoraMementoID.getMementoInstant()))
+                .thenThrow(PersistentSessionClosedException.class);
+        factory.doesResourceExist(null, mockFedoraMementoID);
     }
 
     private void assertStateFieldsMatches(final FedoraResource resc) {

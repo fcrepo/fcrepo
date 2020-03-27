@@ -1411,7 +1411,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore("bug creating resources with text/plain https://jira.lyrasis.org/browse/FCREPO-3246")
     @Test
     public void testGetLDPNRMementoHeaders() throws Exception {
         createVersionedBinary(id, "text/plain", "This is some versioned content");
@@ -1436,7 +1435,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
      * Verify binary description timemap RDF representation can be retrieved with and without
      * accompanying binary memento
      */
-    @Ignore("descriptions aren't returned")
     @Test
     public void testFcrepo2792() throws Exception {
         // 1. Create versioned resource

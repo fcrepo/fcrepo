@@ -24,6 +24,7 @@ import javax.inject.Inject;
 import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraID;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
@@ -48,24 +49,24 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
     @Override
     public void perform(final String txId,
                         final String userPrincipal,
-                        final String fedoraId,
+                        final FedoraID fedoraId,
                         final String contentType,
                         final Model inputModel) throws MalformedRdfException {
         try {
             final PersistentStorageSession pSession = this.psManager.getSession(txId);
 
-            hasRestrictedPath(fedoraId);
+            hasRestrictedPath(fedoraId.getFullId());
 
             ensureValidMemberRelation(inputModel);
 
-            ensureValidACLAuthorization(fedoraId, inputModel);
+            ensureValidACLAuthorization(fedoraId.getFullId(), inputModel);
 
             checkForSmtsLdpTypes(inputModel);
 
-            final ResourceOperation updateOp = factory.updateBuilder(fedoraId)
+            final ResourceOperation updateOp = factory.updateBuilder(fedoraId.getFullId())
                 .relaxedProperties(inputModel)
                 .userPrincipal(userPrincipal)
-                .triples(fromModel(inputModel.createResource(fedoraId).asNode(), inputModel))
+                .triples(fromModel(inputModel.createResource(fedoraId.getFullId()).asNode(), inputModel))
                 .build();
 
             pSession.persist(updateOp);

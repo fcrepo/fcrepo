@@ -40,9 +40,11 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_DEFAULT_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_NAMESPACE_VALUE;
 import static org.fcrepo.http.api.FedoraAcl.getDefaultAcl;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraID;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -86,8 +88,6 @@ public class WebACRolesProvider {
 
     private static final Logger LOGGER = getLogger(WebACRolesProvider.class);
 
-    private static final String FEDORA_INTERNAL_PREFIX = "info:fedora";
-
     private static final org.apache.jena.graph.Node RDF_TYPE_NODE = createURI(RDF_NAMESPACE + "type");
     private static final org.apache.jena.graph.Node VCARD_GROUP_NODE = createURI(VCARD_GROUP_VALUE);
     private static final org.apache.jena.graph.Node VCARD_MEMBER_NODE = createURI(VCARD_MEMBER_VALUE);
@@ -119,7 +119,7 @@ public class WebACRolesProvider {
 
         // Construct a list of acceptable acl:accessTo values for the target resource.
         final List<String> resourcePaths = new ArrayList<>();
-        resourcePaths.add(FEDORA_INTERNAL_PREFIX + resource.getDescribedResource().getPath());
+        resourcePaths.add(resource.getDescribedResource().getId());
 
         // Construct a list of acceptable acl:accessToClass values for the target resource.
         final List<URI> rdfTypes = resource.getDescription().getTypes();
@@ -128,9 +128,9 @@ public class WebACRolesProvider {
         // if present and if different than the target resource.
         effectiveAcl
             .map(aclHandle -> aclHandle.resource)
-            .filter(effectiveResource -> !effectiveResource.getPath().equals(resource.getPath()))
+            .filter(effectiveResource -> !effectiveResource.getId().equals(resource.getId()))
             .ifPresent(effectiveResource -> {
-                resourcePaths.add(FEDORA_INTERNAL_PREFIX + effectiveResource.getPath());
+                resourcePaths.add(effectiveResource.getId());
                 rdfTypes.addAll(effectiveResource.getTypes());
             });
 
@@ -141,7 +141,7 @@ public class WebACRolesProvider {
         // created to match any acl:accessTo values that are part of the getDefaultAuthorization.
         // This is not relevant if an effectiveAcl is present.
         if (!effectiveAcl.isPresent()) {
-            resourcePaths.addAll(getAllPathAncestors(resource.getPath()));
+            resourcePaths.addAll(getAllPathAncestors(resource.getId()));
         }
 
         // Create a function to check acl:accessTo, scoped to the given resourcePaths
@@ -192,9 +192,9 @@ public class WebACRolesProvider {
      * In this case, that would be a list of "/a/b/c", "/a/b", "/a" and "/".
      */
     private static List<String> getAllPathAncestors(final String path) {
-        final List<String> segments = asList(path.split("/"));
+        final List<String> segments = asList(path.replace(FEDORA_ID_PREFIX, "/").split("/"));
         return range(1, segments.size())
-                .mapToObj(frameSize -> FEDORA_INTERNAL_PREFIX + "/" + String.join("/", segments.subList(1, frameSize)))
+                .mapToObj(frameSize -> FEDORA_ID_PREFIX + String.join("/", segments.subList(1, frameSize)))
                 .collect(toList());
     }
 
@@ -223,7 +223,7 @@ public class WebACRolesProvider {
         final IdentifierConverter<Resource, FedoraResource> translator = null;
 
         final List<String> members = agentGroups.stream().flatMap(agentGroup -> {
-            if (agentGroup.startsWith(FEDORA_INTERNAL_PREFIX)) {
+            if (agentGroup.startsWith(FEDORA_ID_PREFIX)) {
                 //strip off trailing hash.
                 final int hashIndex = agentGroup.indexOf("#");
                 final String agentGroupNoHash = hashIndex > 0 ?
@@ -231,9 +231,8 @@ public class WebACRolesProvider {
                                          agentGroup;
                 final String hashedSuffix = hashIndex > 0 ? agentGroup.substring(hashIndex) : null;
                 try {
-                    final FedoraResource resource = resourceFactory.getResource(
-                            transaction, agentGroupNoHash.substring(FEDORA_INTERNAL_PREFIX.length()));
-
+                    final FedoraID fedoraId = FedoraID.create(agentGroupNoHash);
+                    final FedoraResource resource = resourceFactory.getResource(transaction, fedoraId);
                     return getAgentMembers(translator, resource, hashedSuffix);
                 } catch (PathNotFoundException e) {
                     throw new PathNotFoundRuntimeException(e);

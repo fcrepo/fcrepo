@@ -28,6 +28,7 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraID;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
@@ -43,21 +44,21 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl {
     /**
      * Construct a description resource
      *
-     * @param id internal identifier
+     * @param fedoraID internal identifier
      * @param tx transaction
      * @param pSessionManager session manager
      * @param resourceFactory resource factory
      */
-    public NonRdfSourceDescriptionImpl(final String id,
+    public NonRdfSourceDescriptionImpl(final FedoraID fedoraID,
             final Transaction tx,
             final PersistentStorageSessionManager pSessionManager,
             final ResourceFactory resourceFactory) {
-        super(id, tx, pSessionManager, resourceFactory);
+        super(fedoraID, tx, pSessionManager, resourceFactory);
     }
 
     @Override
     public FedoraResource getDescribedResource() {
-        final String describedId = this.getId().replaceAll("/" + FCR_METADATA + "$", "");
+        final FedoraID describedId = FedoraID.create(this.getId().replace("/" + FCR_METADATA, ""));
         try {
             return this.resourceFactory.getResource(tx, describedId);
         } catch (PathNotFoundException e) {

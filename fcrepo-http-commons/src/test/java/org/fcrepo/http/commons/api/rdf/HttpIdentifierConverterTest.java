@@ -20,6 +20,7 @@ package org.fcrepo.http.commons.api.rdf;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -137,113 +138,122 @@ public class HttpIdentifierConverterTest {
 
     @Test
     public void testFirstLevelWithAcl() {
-        final String baseUid = getUniqueId();
-        final String baseUrl = uriBase + "/" + baseUid;
-        final String testUri = baseUrl + "/" + FCR_ACL;
-        final String fedoraId = converter.toInternalId(testUri);
-        assertEquals("info:fedora/" + baseUid, fedoraId);
-        final String httpUri = converter.toExternalId(fedoraId);
-        assertEquals(baseUrl, httpUri);
+        final String testUri = getUniqueId() + "/" + FCR_ACL;
+        final String external = uriBase + "/" + testUri;
+        final String internal = FEDORA_ID_PREFIX + testUri;
+        final String fedoraId = converter.toInternalId(external);
+        assertEquals(internal, fedoraId);
+        final String httpUri = converter.toExternalId(internal);
+        assertEquals(external, httpUri);
     }
 
     @Test
     public void testFirstLevelWithMetadata() {
         final String baseUid = getUniqueId();
-        final String baseUrl = uriBase + "/" + baseUid;
-        final String testUri = baseUrl + "/" + FCR_METADATA;
-        final String fedoraId = converter.toInternalId(testUri);
-        assertEquals("info:fedora/" + baseUid + "/" + FCR_METADATA, fedoraId);
-        final String httpUri = converter.toExternalId(fedoraId);
-        assertEquals(testUri, httpUri);
+        final String testUri = baseUid + "/" + FCR_METADATA;
+        final String external = uriBase + "/" + testUri;
+        final String internal = FEDORA_ID_PREFIX + testUri;
+        final String fedoraId = converter.toInternalId(external);
+        assertEquals(internal, fedoraId);
+        final String httpUri = converter.toExternalId(internal);
+        assertEquals(external, httpUri);
     }
 
     @Test
     public void testFirstLevelWithVersions() {
         final String baseUid = getUniqueId();
-        final String baseUrl = uriBase + "/" + baseUid;
-        final String testUri = baseUrl + "/" + FCR_VERSIONS;
-        final String fedoraId = converter.toInternalId(testUri);
-        assertEquals("info:fedora/" + baseUid, fedoraId);
-        final String httpUri = converter.toExternalId(fedoraId);
-        assertEquals(baseUrl, httpUri);
+        final String testUri = baseUid + "/" + FCR_VERSIONS;
+        final String external = uriBase + "/" + testUri;
+        final String internal = FEDORA_ID_PREFIX + testUri;
+        final String fedoraId = converter.toInternalId(external);
+        assertEquals(internal, fedoraId);
+        final String httpUri = converter.toExternalId(internal);
+        assertEquals(external, httpUri);
     }
 
     @Test
     public void testFirstLevelWithMemento() {
         final String memento = "20190926133245";
         final String baseUid = getUniqueId();
-        final String baseUrl = uriBase + "/" + baseUid;
-        final String testUri = baseUrl + "/" + FCR_VERSIONS + "/" + memento;
-        final String fedoraId = converter.toInternalId(testUri);
-        assertEquals("info:fedora/" + baseUid, fedoraId);
-        final String httpUri = converter.toExternalId(fedoraId);
-        assertEquals(baseUrl, httpUri);
+        final String testUri = baseUid + "/" + FCR_VERSIONS + "/" + memento;
+        final String external = uriBase + "/" + testUri;
+        final String internal = FEDORA_ID_PREFIX + testUri;
+        final String fedoraId = converter.toInternalId(external);
+        assertEquals(internal, fedoraId);
+        final String httpUri = converter.toExternalId(internal);
+        assertEquals(external, httpUri);
     }
 
     @Test
     public void testSecondLevel() {
-        final String baseUid = getUniqueId() + "/" + getUniqueId();
-        final String testUri = uriBase + "/" + baseUid;
-        final String fedoraId = converter.toInternalId(testUri);
-        assertEquals("info:fedora/" + baseUid, fedoraId);
-        final String httpUri = converter.toExternalId(fedoraId);
-        assertEquals(testUri, httpUri);
+        final String testUri = getUniqueId() + "/" + getUniqueId();
+        final String external = uriBase + "/" + testUri;
+        final String internal = FEDORA_ID_PREFIX + testUri;
+        final String fedoraId = converter.toInternalId(external);
+        assertEquals(internal, fedoraId);
+        final String httpUri = converter.toExternalId(internal);
+        assertEquals(external, httpUri);
     }
 
     @Test
     public void testSecondLevelWithAcl() {
         final String baseUid = getUniqueId() + "/" + getUniqueId();
-        final String baseUrl = uriBase + "/" + baseUid;
-        final String testUri = baseUrl + "/" + FCR_ACL;
-        final String fedoraId = converter.toInternalId(testUri);
-        assertEquals("info:fedora/" + baseUid, fedoraId);
-        final String httpUri = converter.toExternalId(fedoraId);
-        assertEquals(baseUrl, httpUri);
+        final String testUri = baseUid + "/" + FCR_ACL;
+        final String external = uriBase + "/" + testUri;
+        final String internal = FEDORA_ID_PREFIX + testUri;
+        final String fedoraId = converter.toInternalId(external);
+        assertEquals(internal, fedoraId);
+        final String httpUri = converter.toExternalId(internal);
+        assertEquals(external, httpUri);
     }
 
     @Test
     public void testSecondLevelWithMetadata() {
         final String baseUid = getUniqueId() + "/" + getUniqueId();
-        final String baseUrl = uriBase + "/" + baseUid;
-        final String testUri = baseUrl + "/" + FCR_METADATA;
-        final String fedoraId = converter.toInternalId(testUri);
-        assertEquals("info:fedora/" + baseUid + "/" + FCR_METADATA, fedoraId);
-        final String httpUri = converter.toExternalId(fedoraId);
-        assertEquals(testUri, httpUri);
+        final String testUri = baseUid + "/" + FCR_METADATA;
+        final String external = uriBase + "/" + testUri;
+        final String internal = FEDORA_ID_PREFIX + testUri;
+        final String fedoraId = converter.toInternalId(external);
+        assertEquals(internal, fedoraId);
+        final String httpUri = converter.toExternalId(internal);
+        assertEquals(external, httpUri);
     }
 
     @Test
     public void testSecondLevelWithVersions() {
         final String baseUid = getUniqueId() + "/" + getUniqueId();
-        final String baseUrl = uriBase + "/" + baseUid;
-        final String testUri = baseUrl + "/" + FCR_VERSIONS;
-        final String fedoraId = converter.toInternalId(testUri);
-        assertEquals("info:fedora/" + baseUid, fedoraId);
-        final String httpUri = converter.toExternalId(fedoraId);
-        assertEquals(baseUrl, httpUri);
+        final String testUri = baseUid + "/" + FCR_VERSIONS;
+        final String external = uriBase + "/" + testUri;
+        final String internal = FEDORA_ID_PREFIX + testUri;
+        final String fedoraId = converter.toInternalId(external);
+        assertEquals(internal, fedoraId);
+        final String httpUri = converter.toExternalId(internal);
+        assertEquals(external, httpUri);
     }
 
     @Test
     public void testSecondLevelWithMemento() {
         final String memento = "20190926133245";
         final String baseUid = getUniqueId() + "/" + getUniqueId();
-        final String baseUrl = uriBase + "/" + baseUid;
-        final String testUri = baseUrl + "/" + FCR_VERSIONS + "/" + memento;
-        final String fedoraId = converter.toInternalId(testUri);
-        assertEquals("info:fedora/" + baseUid, fedoraId);
-        final String httpUri = converter.toExternalId(fedoraId);
-        assertEquals(baseUrl, httpUri);
+        final String testUri = baseUid + "/" + FCR_VERSIONS + "/" + memento;
+        final String external = uriBase + "/" + testUri;
+        final String internal = FEDORA_ID_PREFIX + testUri;
+        final String fedoraId = converter.toInternalId(external);
+        assertEquals(internal, fedoraId);
+        final String httpUri = converter.toExternalId(internal);
+        assertEquals(external, httpUri);
     }
 
     @Test
     public void testItemWithDoubleAcl() {
         final String baseUid = getUniqueId();
-        final String baseUrl = uriBase + "/" + baseUid;
-        final String testUri = baseUrl + "/" + FCR_ACL + "/" + FCR_ACL;
-        final String fedoraId = converter.toInternalId(testUri);
-        assertEquals("info:fedora/" + baseUid, fedoraId);
-        final String httpUri = converter.toExternalId(fedoraId);
-        assertEquals(baseUrl, httpUri);
+        final String testUri = baseUid + "/" + FCR_ACL + "/" + FCR_ACL;
+        final String external = uriBase + "/" + testUri;
+        final String internal = FEDORA_ID_PREFIX + testUri;
+        final String fedoraId = converter.toInternalId(external);
+        assertEquals(internal, fedoraId);
+        final String httpUri = converter.toExternalId(internal);
+        assertEquals(external, httpUri);
     }
 
     /**

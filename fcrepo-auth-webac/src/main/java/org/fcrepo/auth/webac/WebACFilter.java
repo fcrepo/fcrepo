@@ -48,6 +48,7 @@ import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraID;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
@@ -265,7 +266,7 @@ public class WebACFilter extends RequestContextFilter {
 
     private FedoraResource resource(final HttpServletRequest servletRequest, final String path) {
         try {
-            return this.resourceFactory.getResource(transaction(servletRequest), path);
+            return this.resourceFactory.getResource(transaction(servletRequest), FedoraID.create(path));
         } catch (PathNotFoundException e) {
             return null;
         }

@@ -20,6 +20,7 @@ package org.fcrepo.kernel.impl.services;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraID;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
@@ -43,6 +44,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.util.List;
 
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.times;
@@ -97,10 +99,14 @@ public class DeleteResourceServiceImplTest {
     @InjectMocks
     private DeleteResourceServiceImpl service;
 
-    private static final String RESOURCE_ID = "test-resource";
-    private static final String CHILD_RESOURCE_ID = "test-resource-child";
-    private static final String RESOURCE_DESCRIPTION_ID = "test-resource-description";
-    private static final String RESOURCE_ACL_ID = "test-resource-acl";
+    private static final String RESOURCE_ID =  FEDORA_ID_PREFIX + "test-resource";
+    private static final FedoraID RESOURCE_FEDORA_ID = FedoraID.create(RESOURCE_ID);
+    private static final String CHILD_RESOURCE_ID = FEDORA_ID_PREFIX + "test-resource-child";
+    private static final FedoraID CHILD_RESOURCE_FEDORA_ID = FedoraID.create(CHILD_RESOURCE_ID);
+    private static final String RESOURCE_DESCRIPTION_ID = FEDORA_ID_PREFIX + "test-resource-description";
+    private static final FedoraID RESOURCE_DESCRIPTION_FEDORA_ID = FedoraID.create(RESOURCE_DESCRIPTION_ID);
+    private static final String RESOURCE_ACL_ID = FEDORA_ID_PREFIX + "test-resource-acl";
+    private static final FedoraID RESOURCE_ACL_FEDORA_ID = FedoraID.create(RESOURCE_ACL_ID);
     private static final String TX_ID = "tx-1234";
 
     @Before
@@ -127,12 +133,11 @@ public class DeleteResourceServiceImplTest {
         when(container.getAcl()).thenReturn(null);
 
         service.perform(tx, container);
-        verifyResourceOperation(RESOURCE_ID, operationCaptor, pSession);
+        verifyResourceOperation(RESOURCE_FEDORA_ID, operationCaptor, pSession);
     }
 
     @Test
     public void testRecursiveDelete() throws Exception {
-        when(container.getId()).thenReturn(RESOURCE_ID);
         when(container.getId()).thenReturn(RESOURCE_ID);
         when(container.isAcl()).thenReturn(false);
         when(container.getAcl()).thenReturn(null);
@@ -140,7 +145,7 @@ public class DeleteResourceServiceImplTest {
         when(childContainer.isAcl()).thenReturn(false);
         when(childContainer.getAcl()).thenReturn(null);
 
-        when(resourceFactory.getResource(tx, CHILD_RESOURCE_ID)).thenReturn(childContainer);
+        when(resourceFactory.getResource(tx, CHILD_RESOURCE_FEDORA_ID)).thenReturn(childContainer);
         containmentIndex.addContainedBy(tx.getId(), container.getId(), childContainer.getId());
 
         when(container.isAcl()).thenReturn(false);
@@ -159,12 +164,12 @@ public class DeleteResourceServiceImplTest {
         assertEquals(0, containmentIndex.getContains(tx, container).count());
     }
 
-    private void verifyResourceOperation(final String resourceId,
+    private void verifyResourceOperation(final FedoraID fedoraID,
                                          final ArgumentCaptor<DeleteResourceOperation> captor,
                                          final PersistentStorageSession pSession) throws Exception {
         verify(pSession).persist(captor.capture());
         final DeleteResourceOperation containerOperation = captor.getValue();
-        assertEquals(resourceId, containerOperation.getResourceId());
+        assertEquals(fedoraID.getFullId(), containerOperation.getResourceId());
     }
 
     @Test
@@ -172,7 +177,7 @@ public class DeleteResourceServiceImplTest {
         when(acl.getId()).thenReturn(RESOURCE_ACL_ID);
         when(acl.isAcl()).thenReturn(true);
         service.perform(tx, acl);
-        verifyResourceOperation(RESOURCE_ACL_ID, operationCaptor, pSession);
+        verifyResourceOperation(RESOURCE_ACL_FEDORA_ID, operationCaptor, pSession);
     }
 
     @Test(expected = RepositoryRuntimeException.class)
@@ -199,6 +204,5 @@ public class DeleteResourceServiceImplTest {
         assertEquals(RESOURCE_DESCRIPTION_ID, operations.get(0).getResourceId());
         assertEquals(RESOURCE_ACL_ID, operations.get(1).getResourceId());
         assertEquals(RESOURCE_ID, operations.get(2).getResourceId());
-
     }
 }

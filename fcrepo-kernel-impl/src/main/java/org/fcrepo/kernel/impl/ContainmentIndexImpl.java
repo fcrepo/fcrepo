@@ -17,11 +17,13 @@
  */
 package org.fcrepo.kernel.impl;
 
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraID;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.slf4j.Logger;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -378,6 +380,10 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     @Override
     public boolean resourceExists(final String txID, final String resourceID) {
         LOGGER.debug("Checking if {} exists in transaction {}", resourceID, txID);
+        if (resourceID.equals(FEDORA_ID_PREFIX)) {
+            // Root always exists.
+            return true;
+        }
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("child", resourceID);
         final boolean exists;
@@ -391,6 +397,11 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             exists = !jdbcTemplate.queryForList(RESOURCE_EXISTS, parameterSource, String.class).isEmpty();
         }
         return exists;
+    }
+
+    @Override
+    public boolean resourceExists(final String txID, final FedoraID fedoraID) {
+        return resourceExists(txID, fedoraID.getFullId());
     }
 
     /**

@@ -20,27 +20,23 @@ package org.fcrepo.http.api;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Resource;
-// import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.exception.InvalidMementoPathException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.TombstoneException;
+import org.fcrepo.kernel.api.identifiers.FedoraID;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.Tombstone;
-import org.fcrepo.kernel.api.services.VersionService;
 import org.slf4j.Logger;
 
 import java.net.URI;
 import java.security.Principal;
-import java.time.Instant;
-import java.time.format.DateTimeParseException;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.ws.rs.core.Context;
@@ -98,7 +94,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
         return identifierConverter;
     }
 
-    protected FedoraResource getFedoraResource(final String fedoraId) throws PathNotFoundException {
+    protected FedoraResource getFedoraResource(final FedoraID fedoraId) throws PathNotFoundException {
         return this.resourceFactory.getResource(fedoraId);
     }
 
@@ -110,7 +106,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
      * @param fedoraId identifier of the resource
      * @return the requested FedoraResource
      */
-    protected FedoraResource getFedoraResource(final Transaction transaction, final String fedoraId) {
+    protected FedoraResource getFedoraResource(final Transaction transaction, final FedoraID fedoraId) {
         try {
             if (transaction.isCommitted()) {
                 return getFedoraResource(fedoraId);
@@ -127,8 +123,8 @@ abstract public class FedoraBaseResource extends AbstractResource {
      * @param fedoraId identifier of the object to check
      * @return Returns true if an object with the provided id exists
      */
-    protected boolean doesResourceExist(final Transaction transaction, final String fedoraId) {
-        return resourceFactory.doesResourceExist(transaction, fedoraId, null);
+    protected boolean doesResourceExist(final Transaction transaction, final FedoraID fedoraId) {
+        return resourceFactory.doesResourceExist(transaction, fedoraId);
     }
 
     /**
@@ -148,11 +144,11 @@ abstract public class FedoraBaseResource extends AbstractResource {
      */
     @VisibleForTesting
     public FedoraResource getResourceFromPath(final String externalPath) {
-        final String fedoraId = identifierConverter().toInternalId(identifierConverter().toDomain(externalPath));
-        final Instant memento = extractMemento(externalPath);
+        final FedoraID fedoraId = FedoraID.create(identifierConverter().toInternalId(identifierConverter()
+                .toDomain(externalPath)));
 
         try {
-            final FedoraResource fedoraResource = resourceFactory.getResource(transaction, fedoraId, memento);
+            final FedoraResource fedoraResource = resourceFactory.getResource(transaction, fedoraId);
 
             if (fedoraResource instanceof Tombstone) {
                 final String resourceURI = TRAILING_SLASH_REGEX.matcher(externalPath).replaceAll("");
@@ -206,18 +202,6 @@ abstract public class FedoraBaseResource extends AbstractResource {
             return uriInfo.getBaseUriBuilder().uri(propBaseUri).toString();
         }
         return "";
-    }
-
-    private Instant extractMemento(final String externalPath) {
-        final var matcher = MEMENTO_PATH_PATTERN.matcher(externalPath);
-        if (matcher.matches()) {
-            try {
-                return Instant.from(VersionService.MEMENTO_LABEL_FORMATTER.parse(matcher.group(1)));
-            } catch (DateTimeParseException e) {
-                throw new InvalidMementoPathException("Invalid versioning request with path: " + externalPath, e);
-            }
-        }
-        return null;
     }
 
     protected String getUserPrincipal() {

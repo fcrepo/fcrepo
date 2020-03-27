@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.identifiers.FedoraID;
 
 /**
  * A resource in a Fedora repository.
@@ -40,6 +41,12 @@ public interface FedoraResource {
      * @return the fedora identifier
      */
     String getId();
+
+    /**
+     * Get the FedoraID for this resource.
+     * @return the FedoraID identifier.
+     */
+    FedoraID getFedoraId();
 
     /**
      * Get the resource which contains this resource.
