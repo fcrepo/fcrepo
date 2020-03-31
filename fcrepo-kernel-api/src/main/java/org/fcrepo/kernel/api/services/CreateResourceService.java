@@ -37,9 +37,7 @@ public interface CreateResourceService {
      *
      * @param txId The transaction ID for the request.
      * @param userPrincipal the principal of the user performing the service
-     * @param fedoraId The internal identifier of the parent.
-     * @param slug The Slug header or null if none.
-     * @param isContained The new resource is contained by fedoraId (ie. POST).
+     * @param fedoraId The internal identifier of the resource.
      * @param contentType The content-type header or null if none.
      * @param filename The original filename of the binary
      * @param contentSize The size of the content stream
@@ -47,10 +45,8 @@ public interface CreateResourceService {
      * @param digest The binary digest or null if none.
      * @param requestBody The request body or null if none.
      * @param externalContent The external content handler or null if none.
-     *
-     * @return The identifier of the created resource.
      */
-    String perform(String txId, String userPrincipal, String fedoraId, String slug, boolean isContained,
+    void perform(String txId, String userPrincipal, String fedoraId,
             String contentType, String filename, Long contentSize, List<String> linkHeaders,
             Collection<URI> digest, InputStream requestBody, ExternalContent externalContent);
 
@@ -59,15 +55,11 @@ public interface CreateResourceService {
      *
      * @param txId The transaction ID for the request.
      * @param userPrincipal the principal of the user performing the service
-     * @param fedoraId The internal identifier of the parent.
-     * @param slug The Slug header or null if none.
-     * @param isContained The new resource is contained by fedoraId (ie. POST).
+     * @param fedoraId The internal identifier of the resource
      * @param linkHeaders The original LINK headers or null if none.
      * @param model The request body RDF as a Model
-     *
-     * @return The identifier of the created resource.
      */
-    String perform(String txId, String userPrincipal, String fedoraId, String slug, boolean isContained,
+    void perform(String txId, String userPrincipal, String fedoraId,
             List<String> linkHeaders, Model model);
 
 }

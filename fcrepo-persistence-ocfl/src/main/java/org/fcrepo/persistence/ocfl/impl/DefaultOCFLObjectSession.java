@@ -28,6 +28,7 @@ import edu.wisc.library.ocfl.api.model.VersionDetails;
 import edu.wisc.library.ocfl.api.model.VersionId;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
@@ -43,6 +44,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -101,7 +105,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     public DefaultOCFLObjectSession(final String objectIdentifier, final Path stagingPath,
             final MutableOcflRepository ocflRepository, final CommitOption commitOption) {
         this.objectIdentifier = objectIdentifier;
-        this.stagingPath = stagingPath.resolve(objectIdentifier);
+        this.stagingPath = stagingPath.resolve(encode(objectIdentifier));
         this.ocflRepository = ocflRepository;
         this.commitOption = commitOption;
         this.deletePaths = new HashSet<>();
@@ -110,18 +114,34 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         this.created = Instant.now();
     }
 
+    private String encode(final String value) {
+        if (SystemUtils.IS_OS_WINDOWS) {
+            return URLEncoder.encode(value, StandardCharsets.UTF_8);
+        }
+        return value;
+    }
+
+    private String decode(final String value) {
+        if (SystemUtils.IS_OS_WINDOWS) {
+            return URLDecoder.decode(value, StandardCharsets.UTF_8);
+        }
+        return value;
+    }
+
     /**
      * {@inheritDoc}
      */
     @Override
     public synchronized WriteOutcome write(final String subpath, final InputStream stream)
             throws PersistentStorageException {
+        final var encodedSubpath = encode(subpath);
+
         // Check that the staging path exists now that we are writing.
         if (!this.stagingPath.toFile().exists()) {
             this.stagingPath.toFile().mkdirs();
         }
         // Determine the staging path for the incoming content
-        final var stagedPath = resolveStagedPath(subpath);
+        final var stagedPath = resolveStagedPath(encodedSubpath);
         try {
             assertSessionOpen();
 
@@ -154,7 +174,9 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     public synchronized void delete(final String subpath) throws PersistentStorageException {
         assertSessionOpen();
 
-        final var stagedPath = resolveStagedPath(subpath);
+        final var encodedSubpath = encode(subpath);
+
+        final var stagedPath = resolveStagedPath(encodedSubpath);
         final var hasStagedChanges = hasStagedChanges(stagedPath);
 
         // If the subpath exists in the staging path for this session, then delete from there
@@ -168,8 +190,8 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         }
 
         // for file that existed before this session, queue up its deletion for commit time
-        if (!newInSession(subpath)) {
-            deletePaths.add(subpath);
+        if (!newInSession(encodedSubpath)) {
+            deletePaths.add(encodedSubpath);
         } else if (!hasStagedChanges) {
             // File is neither in the staged or exists in the head version, so file cannot be found for deletion
             if (objectDeleted && isStagingEmpty()) {
@@ -210,7 +232,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         }
     }
 
-    private boolean newInSession(final String subpath) {
+    private boolean newInSession(final String encodedSubpath) {
         // If the object was deleted in this session, then content can only be new
         if (objectDeleted) {
             return true;
@@ -221,7 +243,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         }
         // determine if this subpath exists in the OCFL object
         return !ocflRepository.getObject(ObjectVersionId.head(objectIdentifier))
-                .containsFile(subpath);
+                .containsFile(encodedSubpath);
     }
 
     /**
@@ -231,7 +253,9 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     public InputStream read(final String subpath) throws PersistentStorageException {
         assertSessionOpen();
 
-        final var stagedPath = resolveStagedPath(subpath);
+        final var encodedSubpath = encode(subpath);
+
+        final var stagedPath = resolveStagedPath(encodedSubpath);
 
         if (hasStagedChanges(stagedPath)) {
             // prioritize read of the staged version of the file
@@ -268,10 +292,12 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
     private InputStream readVersion(final String subpath, final ObjectVersionId version)
             throws PersistentItemNotFoundException {
+        final var encodedSubpath = encode(subpath);
+
         try {
             // read the head version of the file from the ocfl object
             final var file = ocflRepository.getObject(version)
-                    .getFile(subpath);
+                    .getFile(encodedSubpath);
             if (file == null) {
                 throw new PersistentItemNotFoundException(format("Could not find %s within object %s version %s",
                         subpath, objectIdentifier, version.getVersionId()));
@@ -456,10 +482,12 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
         assertSessionOpen();
 
+        final var encodedSubpath = encode(subpath);
+
         try {
             final var headDesc = ocflRepository.describeVersion(ObjectVersionId.head(objectIdentifier));
 
-            return ocflRepository.fileChangeHistory(objectIdentifier, subpath).getFileChanges().stream()
+            return ocflRepository.fileChangeHistory(objectIdentifier, encodedSubpath).getFileChanges().stream()
                     .filter(change -> change.getChangeType() == FileChangeType.UPDATE)
                     // do not include changes that were made in the mutable head
                     .filter(change -> !(headDesc.isMutable() && headDesc.getVersionId().equals(change.getVersionId())))
@@ -482,8 +510,9 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         assertSessionOpen();
 
         return this.ocflRepository.describeVersion(ObjectVersionId.head(this.objectIdentifier))
-                .getFiles()
-                .stream().map(FileDetails::getPath);
+                .getFiles().stream()
+                .map(FileDetails::getPath)
+                .map(this::decode);
     }
 
     @Override
@@ -511,8 +540,8 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         return !ocflRepository.containsObject(objectIdentifier);
     }
 
-    private Path resolveStagedPath(final String subpath) {
-        return stagingPath.resolve(subpath);
+    private Path resolveStagedPath(final String encodedSubpath) {
+        return stagingPath.resolve(encodedSubpath);
     }
 
     private void assertSessionOpen() throws PersistentSessionClosedException {
