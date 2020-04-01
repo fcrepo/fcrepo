@@ -194,8 +194,7 @@ public class FedoraID {
      * @return new FedoraID for the new identifier.
      */
     public FedoraID addToResourceId(final String... addition) {
-        final var newId = idBuilder(this.getResourceId(), addition);
-        return new FedoraID(newId);
+        return FedoraID.create(this.getResourceId(), addition);
     }
 
     /**
@@ -204,8 +203,7 @@ public class FedoraID {
      * @return new FedoraID for the new identifier.
      */
     public FedoraID addToFullId(final String... addition) {
-        final var newId = idBuilder(this.getFullId(), addition);
-        return new FedoraID(newId);
+        return FedoraID.create(this.getFullId(), addition);
     }
 
     @Override
