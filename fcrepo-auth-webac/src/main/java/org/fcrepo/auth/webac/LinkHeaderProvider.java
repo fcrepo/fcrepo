@@ -25,7 +25,6 @@ import org.fcrepo.http.commons.api.UriAwareHttpHeaderFactory;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
-import org.fcrepo.kernel.api.identifiers.FedoraID;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
@@ -71,7 +70,7 @@ public class LinkHeaderProvider implements UriAwareHttpHeaderFactory {
         WebACRolesProvider.getEffectiveAcl(resource, false).ifPresent(acls -> {
             // If the Acl is present we need to use the internal session to get its URI
             try {
-                resourceFactory.getResource(transaction, FedoraID.create(acls.resource.getFedoraId().getFullId()))
+                resourceFactory.getResource(transaction, acls.resource.getFedoraId())
                 .getTriples()
                 .collect(toModel()).listObjectsOfProperty(createProperty(WEBAC_ACCESS_CONTROL_VALUE))
                 .forEachRemaining(linkObj -> {
