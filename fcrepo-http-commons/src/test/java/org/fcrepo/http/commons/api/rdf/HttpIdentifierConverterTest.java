@@ -257,6 +257,20 @@ public class HttpIdentifierConverterTest {
     }
 
     /**
+     * We decode on the way in, but don't re-encode on the way back out. This is the same as Fedora 5.1.0
+     */
+    @Test
+    public void testWithEncodedColon() {
+        final String externalOriginal = uriBase + "/some%3Atest";
+        final String internal = FEDORA_ID_PREFIX + "some:test";
+        final String externalNew = uriBase + "/some:test";
+        final String fedoraId = converter.toInternalId(externalOriginal);
+        assertEquals(internal, fedoraId);
+        final String httpUri = converter.toExternalId(internal);
+        assertEquals(externalNew, httpUri);
+    }
+
+    /**
      * Utility function to get a UUID.
      * @return a UUID.
      */

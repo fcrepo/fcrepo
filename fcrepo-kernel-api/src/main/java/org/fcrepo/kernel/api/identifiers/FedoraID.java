@@ -23,17 +23,31 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
-import java.net.URLDecoder;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.fcrepo.kernel.api.exception.InvalidMementoPathException;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 
 /**
  * Class to store contextual information about a Fedora ID.
+ *
+ * Differentiates between the original ID of the request and the actual resource we are operating on.
+ *
+ * Resource Id : the shortened ID of the base resource, mostly needed to access the correct persistence object.
+ * fullId : the full ID from the request, used in most cases.
+ *
+ * So a fullId of info:fedora/object1/another/fcr:versions/20000101121212 has an id of info:fedora/object1/another
+ *
+ * The only caveat is fcr:metadata which currently requires that its id contains the fcr:metadata ending.
+ * ie.
+ * A fullId of info:fedora/object1/another/fcr:metadata/fcr:versions/20000101121212 has an id of
+ * info:fedora/object1/another/fcr:metadata
+ *
  * @author whikloj
  * @since 6.0.0
  */
@@ -56,7 +70,7 @@ public class FedoraID {
      * @param fullId The full identifier or null if root.
      * @throws IllegalArgumentException If ID does not start with expected prefix.
      */
-    public FedoraID(final String fullId) {
+    private FedoraID(final String fullId) {
         this.fullId = ensurePrefix(fullId);
         if (!this.fullId.equals(FEDORA_ID_PREFIX)) {
             // Only strip trailing slashes the ID is more than the info:fedora/ prefix.
@@ -69,19 +83,13 @@ public class FedoraID {
     }
 
     /**
-     * Basic constructor for repository root ID.
-     */
-    private FedoraID() {
-        this("");
-    }
-
-    /**
      * Static create method
      * @param fullId The ID to use for the FedoraID.
      * @return The FedoraID.
      */
-    public static FedoraID create(final String fullId) {
-        return new FedoraID(fullId);
+    public static FedoraID create(final String fullId, final String... additions) {
+        final var newId = idBuilder(fullId, additions);
+        return new FedoraID(newId);
     }
 
     /**
@@ -89,7 +97,7 @@ public class FedoraID {
      * @return The FedoraID for repository root.
      */
     public static FedoraID getRoot() {
-        return new FedoraID();
+        return new FedoraID(null);
     }
 
     /**
@@ -181,21 +189,23 @@ public class FedoraID {
     }
 
     /**
-     * Add a part onto this identifier.
-     * @param addition The additional string.
+     * Create a new FedoraID using the resource ID as the base
+     * @param addition One or more additional strings.
      * @return new FedoraID for the new identifier.
      */
-    public FedoraID addToResourceId(final String addition) {
-        return FedoraID.create(this.getResourceId() + (this.getResourceId().endsWith("/") ? "" : "/") + addition);
+    public FedoraID addToResourceId(final String... addition) {
+        final var newId = idBuilder(this.getResourceId(), addition);
+        return new FedoraID(newId);
     }
 
     /**
-     * Add a part onto this identifier.
-     * @param addition The additional string.
+     * Create a new FedoraID using the full ID as the base.
+     * @param addition One or more additional strings.
      * @return new FedoraID for the new identifier.
      */
-    public FedoraID addToFullId(final String addition) {
-        return FedoraID.create(this.getFullId() + (this.getFullId().endsWith("/") ? "" : "/") + addition);
+    public FedoraID addToFullId(final String... addition) {
+        final var newId = idBuilder(this.getFullId(), addition);
+        return new FedoraID(newId);
     }
 
     @Override
@@ -209,12 +219,45 @@ public class FedoraID {
         }
 
         final var testObj = (FedoraID) obj;
-        return testObj.getFullId().equals(this.getFullId());
+        return Objects.equals(testObj.getFullId(), this.getFullId());
     }
 
     @Override
     public int hashCode() {
-        return (int) getFullId().hashCode();
+        return getFullId().hashCode();
+    }
+
+    /**
+     * Takes one or more strings and combines them with /s
+     * @param firstPart The first part of the id, if blank return a zero length string.
+     * @param parts Zero or more additional string.
+     * @return A string of all parts with combined with /s
+     */
+    private static String idBuilder(final String firstPart, final String... parts) {
+        if (firstPart == null) {
+            return "";
+        }
+        final String[] allParts = Stream.of(new String[]{firstPart}, parts).flatMap(Stream::of).toArray(String[]::new);
+        return idBuilder(allParts);
+    }
+
+    /**
+     * Concatenates all the parts with slashes
+     * @param parts array of strings
+     * @return the concatenated string.
+     */
+    private static String idBuilder(final String... parts) {
+        if (parts != null && parts.length > 0) {
+            final String id = Arrays.stream(parts).map(s -> s.startsWith("/") ? s.substring(1) : s)
+                    .map(s -> s.endsWith("/") ? s.substring(0, s.length() -1 ) : s)
+                    .collect(Collectors.joining("/"));
+            if (id.equals("info:fedora")) {
+                // We may have ended up with FEDORA_ID_PREFIX without its ending slash
+                return FEDORA_ID_PREFIX;
+            }
+            return id;
+        }
+        return "";
     }
 
     /**
@@ -226,8 +269,7 @@ public class FedoraID {
         if (id == null) {
             return FEDORA_ID_PREFIX;
         }
-        final String decodedId = URLDecoder.decode(id, UTF_8);
-        return decodedId.startsWith(FEDORA_ID_PREFIX) ? decodedId : FEDORA_ID_PREFIX + decodedId;
+        return id.startsWith(FEDORA_ID_PREFIX) ? id : FEDORA_ID_PREFIX + id;
     }
 
     /**
@@ -274,7 +316,7 @@ public class FedoraID {
                     this.mementoDatetimeStr = afterVersion.substring(1);
                     try {
                         this.mementoDatetime = Instant.from(MEMENTO_LABEL_FORMATTER.parse(this.mementoDatetimeStr));
-                    } catch (DateTimeParseException e) {
+                    } catch (final DateTimeParseException e) {
                         throw new InvalidMementoPathException(String.format("Invalid request for memento at %s",
                                 externalPath));
                     }

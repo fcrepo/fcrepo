@@ -120,7 +120,7 @@ public abstract class AbstractService {
         }
         final String parent = containmentIndex.getContainedBy(txID, fedoraId.getFullId());
         if (parent != null) {
-            return new FedoraID(parent);
+            return FedoraID.create(parent);
         }
         String idIterator = fedoraId.getFullId();
         while (idIterator.contains("/")) {

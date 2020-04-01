@@ -20,8 +20,11 @@ package org.fcrepo.http.commons.api.rdf;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import javax.ws.rs.core.UriBuilder;
 
+import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -79,8 +82,8 @@ public class HttpIdentifierConverter {
 
         final String path = getPath(httpUri);
         if (path != null) {
-
-            final String fedoraId = trimTrailingSlashes(path);
+            final String decodedPath = URLDecoder.decode(path, UTF_8);
+            final String fedoraId = trimTrailingSlashes(decodedPath);
 
             return FEDORA_ID_PREFIX + fedoraId.replaceFirst("\\/", "");
         }

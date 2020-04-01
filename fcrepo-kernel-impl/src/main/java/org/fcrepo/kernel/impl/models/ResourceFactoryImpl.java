@@ -100,7 +100,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
         final FedoraID actualId;
         if (fedoraId.isDescription()) {
             // Descriptions are actually part of the binary, so use its ID.
-            actualId = FedoraID.create(fedoraId.getFullId().replace("/" + FCR_METADATA, ""));
+            actualId = FedoraID.create(fedoraId.getResourceId().replace("/" + FCR_METADATA, ""));
         } else {
             actualId = fedoraId;
         }

@@ -47,8 +47,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -149,12 +147,12 @@ public class TimeMapImplTest {
 
         final var mementos = new ArrayList<FedoraResource>();
 
-        for (var version : versions) {
+        for (final var version : versions) {
             final var memento = createMemento(id, version);
             mementos.add(memento);
-            final FedoraID mementoID = FedoraID.create(id).addToFullId(FCR_VERSIONS + "/" + instantStr(version));
+            final FedoraID mementoID = FedoraID.create(id, FCR_VERSIONS, instantStr(version));
             when(memento.getFedoraId()).thenReturn(mementoID);
-            when(resourceFactory.getResource(isNull(), eq(mementoID))).thenReturn(memento);
+            when(resourceFactory.getResource(null, mementoID)).thenReturn(memento);
         }
         return mementos;
     }

@@ -61,7 +61,7 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl {
         final FedoraID describedId = FedoraID.create(this.getId().replace("/" + FCR_METADATA, ""));
         try {
             return this.resourceFactory.getResource(tx, describedId);
-        } catch (PathNotFoundException e) {
+        } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
         }
     }

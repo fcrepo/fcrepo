@@ -19,6 +19,7 @@ package org.fcrepo.kernel.impl.models;
 
 import static java.util.Arrays.asList;
 
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
@@ -285,7 +286,7 @@ public class ResourceFactoryImplTest {
 
         final var resc = factory.getResource(mockFedoraID);
 
-        assertTrue("Factory must return a container", resc instanceof Binary);
+        assertTrue("Factory must return a binary", resc instanceof Binary);
         assertEquals(fedoraId, resc.getId());
         assertStateFieldsMatches(resc);
         assertBinaryFieldsMatch(resc);
@@ -321,16 +322,36 @@ public class ResourceFactoryImplTest {
     }
 
     @Test
-    public void doesResourceExists_Exists_WithSession() throws Exception {
+    public void doesResourceExist_Exists_WithSession() throws Exception {
         containmentIndex.addContainedBy(mockTx.getId(), FEDORA_ID_PREFIX, fedoraId);
-        final boolean answer = factory.doesResourceExist(mockTx, mockFedoraID);
+        final boolean answerIn = factory.doesResourceExist(mockTx, mockFedoraID);
+        assertTrue(answerIn);
+        final boolean answerOut = factory.doesResourceExist(null, mockFedoraID);
+        assertFalse(answerOut);
+    }
+
+    @Test
+    public void doesResourceExist_Exists_Description_WithSession() {
+        containmentIndex.addContainedBy(mockTx.getId(), FEDORA_ID_PREFIX, fedoraId);
+        final FedoraID descId = mockFedoraID.addToResourceId(FCR_METADATA);
+        final boolean answerIn = factory.doesResourceExist(mockTx, descId);
+        assertTrue(answerIn);
+        final boolean answerOut = factory.doesResourceExist(null, descId);
+        assertFalse(answerOut);
+    }
+
+    @Test
+    public void doesResourceExist_Exists_WithoutSession() throws Exception {
+        containmentIndex.addContainedBy(null, FEDORA_ID_PREFIX, fedoraId);
+        final boolean answer = factory.doesResourceExist(null, mockFedoraID);
         assertTrue(answer);
     }
 
     @Test
-    public void doesResourceExists_Exists_WithoutSession() throws Exception {
+    public void doesResourceExist_Exists_Description_WithoutSession() {
         containmentIndex.addContainedBy(null, FEDORA_ID_PREFIX, fedoraId);
-        final boolean answer = factory.doesResourceExist(null, mockFedoraID);
+        final FedoraID descId = mockFedoraID.addToResourceId(FCR_METADATA);
+        final boolean answer = factory.doesResourceExist(null, descId);
         assertTrue(answer);
     }
 
@@ -341,8 +362,22 @@ public class ResourceFactoryImplTest {
     }
 
     @Test
+    public void doesResourceExist_DoesntExists_Description_WithSession() {
+        final FedoraID descId = mockFedoraID.addToResourceId(FCR_METADATA);
+        final boolean answer = factory.doesResourceExist(mockTx, descId);
+        assertFalse(answer);
+    }
+
+    @Test
     public void doesResourceExist_DoesntExist_WithoutSession() throws Exception {
         final boolean answer = factory.doesResourceExist(null, mockFedoraID);
+        assertFalse(answer);
+    }
+
+    @Test
+    public void doesResourceExist_DoesntExists_Description_WithoutSession() {
+        final FedoraID descId = mockFedoraID.addToResourceId(FCR_METADATA);
+        final boolean answer = factory.doesResourceExist(null, descId);
         assertFalse(answer);
     }
 
