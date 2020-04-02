@@ -76,7 +76,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
@@ -767,7 +766,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testGetNonRDFSourceDescription() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", "some content");
@@ -775,6 +773,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String location = serverAddress + id + "/x";
         try (final CloseableHttpResponse response = execute(getDSDescMethod(id, "x"));
                 final CloseableDataset dataset = getDataset(response)) {
+            checkForLinkHeader(response, location, "describes");
             checkForLinkHeader(response, location + "/" + FCR_ACL, "acl");
             final DatasetGraph graph = dataset.asDatasetGraph();
             final Node correctDSSubject = createURI(serverAddress + id + "/x");
@@ -785,8 +784,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
             graph.find().forEachRemaining(quad -> {
                 assertEquals("Found a triple with incorrect subject!", correctDSSubject, quad.getSubject());
             });
-            assertTrue(graph.contains(ANY, ANY, DESCRIBED_BY.asNode(),
-                    createURI(serverAddress + id + "/x/fcr:metadata")));
         }
     }
 
