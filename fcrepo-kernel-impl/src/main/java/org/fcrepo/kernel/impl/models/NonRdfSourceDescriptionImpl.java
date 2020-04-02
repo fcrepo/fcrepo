@@ -29,6 +29,7 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
@@ -38,7 +39,7 @@ import org.fcrepo.persistence.api.PersistentStorageSessionManager;
  *
  * @author bbpennel
  */
-public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl {
+public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements NonRdfSourceDescription {
 
     /**
      * Construct a description resource
