@@ -42,7 +42,7 @@
     <dependency.plugin.version>3.1.1</dependency.plugin.version>
     <deploy.plugin.version>2.8.2</deploy.plugin.version>
     <doxia-markdown.plugin.version>1.8</doxia-markdown.plugin.version>
-    <failsafe.plugin.version>2.22.1</failsafe.plugin.version>
+    <failsafe.plugin.version>3.0.0-M4</failsafe.plugin.version>
     <fcrepo-build-tools.version>5.0.0</fcrepo-build-tools.version>
     <github-site.plugin.version>0.12</github-site.plugin.version>
     <gpg.plugin.version>1.6</gpg.plugin.version>
