@@ -26,7 +26,7 @@ import org.fcrepo.persistence.ocfl.impl.FedoraToOCFLObjectIndexImpl;
 import org.fcrepo.persistence.ocfl.impl.FedoraToOCFLObjectIndexUtilImpl;
 import org.fcrepo.persistence.ocfl.impl.OCFLPersistenceConfig;
 import org.fcrepo.persistence.ocfl.impl.OCFLPersistentSessionManager;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -35,8 +35,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
+import java.io.IOException;
+
 import static java.lang.System.getProperty;
-import static java.lang.System.setProperty;
+import static javax.ws.rs.core.Response.Status.OK;
+
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.OCFL_STORAGE_ROOT_DIR_KEY;
 import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.OCFL_WORK_DIR_KEY;
 
@@ -44,7 +48,7 @@ import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.OCFL_WORK_DIR_KEY;
  * @author awooods
  * @since 2020-03-04
  */
-public class RebuildIT {
+public class RebuildIT extends AbstractResourceIT {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RebuildIT.class);
 
@@ -58,23 +62,15 @@ public class RebuildIT {
         // Save the pre-test System Property values
         origStorageRootDir = getProperty(OCFL_STORAGE_ROOT_DIR_KEY);
         origWorkDir = getProperty(OCFL_WORK_DIR_KEY);
-
-        setProperty(OCFL_STORAGE_ROOT_DIR_KEY, "target/test-classes/test-rebuild-ocfl/ocfl-root");
-        setProperty(OCFL_WORK_DIR_KEY, "target/test-classes/test-rebuild-ocfl/ocfl-work");
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        // Restore pre-test System Property values
-        setProperty(OCFL_STORAGE_ROOT_DIR_KEY, origStorageRootDir);
-        setProperty(OCFL_WORK_DIR_KEY, origWorkDir);
     }
 
     @Before
-    public void setUp() {
-        final AnnotationConfigApplicationContext ctx =
-                new AnnotationConfigApplicationContext(OCFLPersistenceConfig.class);
+    public void setUp() throws Exception {
+        System.setProperty(OCFL_STORAGE_ROOT_DIR_KEY, "target/test-classes/test-rebuild-ocfl/ocfl-root");
+        System.setProperty(OCFL_WORK_DIR_KEY, "target/test-classes/test-rebuild-ocfl/ocfl-work");
 
+        final AnnotationConfigApplicationContext ctx = new
+                AnnotationConfigApplicationContext(OCFLPersistenceConfig.class);
         // RepositoryInitializer.initialize() happens as a part of the object's construction.
         ctx.register(RepositoryInitializer.class,
                 OCFLPersistentSessionManager.class,
@@ -84,7 +80,20 @@ public class RebuildIT {
                 OCFLPersistenceConfig.class,
                 FedoraToOCFLObjectIndexImpl.class);
 
+        containerWrapper.stop();
+        containerWrapper.start();
+
         ocflRepository = ctx.getBean(OcflRepository.class);
+
+    }
+
+    @After
+    public void cleanUp() throws Exception {
+        // Restore pre-test System Property values
+        System.setProperty(OCFL_STORAGE_ROOT_DIR_KEY, origStorageRootDir);
+        System.setProperty(OCFL_WORK_DIR_KEY, origWorkDir);
+        containerWrapper.stop();
+        containerWrapper.start();
     }
 
     /**
@@ -97,18 +106,27 @@ public class RebuildIT {
      * The test verifies that these objects exist in the rebuilt repository.
      */
     @Test
-    public void testRebuild() {
+    public void testRebuild() throws IOException {
 
         // Optional debugging
         if (LOGGER.isDebugEnabled()) {
             ocflRepository.listObjectIds().forEach(id -> LOGGER.debug("Object id: {}", id));
         }
 
+        // Test directly against the underlying OCFL repository
         Assert.assertEquals(4, ocflRepository.listObjectIds().count());
         Assert.assertTrue("Should contain object with id: binary", ocflRepository.containsObject("binary"));
         Assert.assertTrue("Should contain object with id: test", ocflRepository.containsObject("test"));
         Assert.assertTrue("Should contain object with id: test_child", ocflRepository.containsObject("test_child"));
         Assert.assertFalse("Should NOT contain object with id: junk", ocflRepository.containsObject("junk"));
+
+        // Test against the Fedora API
+        Assert.assertEquals(OK.getStatusCode(), getStatus(getObjMethod("")));
+        Assert.assertEquals(OK.getStatusCode(), getStatus(getObjMethod("test")));
+        Assert.assertEquals(OK.getStatusCode(), getStatus(getObjMethod("test/child")));
+        Assert.assertEquals(OK.getStatusCode(), getStatus(getObjMethod("binary")));
+        Assert.assertEquals(OK.getStatusCode(), getStatus(getObjMethod("binary/" + FCR_METADATA)));
+
     }
 
 }

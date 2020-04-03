@@ -122,6 +122,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                     descId.getFullId(),
                     FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI
                 ).userPrincipal(userPrincipal)
+                .parentId(binaryId.getFullId())
                 .build();
         try {
             pSession.persist(createOp);
