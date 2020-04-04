@@ -175,6 +175,15 @@ public class HttpIdentifierConverter {
     }
 
     /**
+     * Function to convert from the external path of a URI to the internal ID.
+     * @param externalPath the path part of the external URI.
+     * @return the internal ID.
+     */
+    public String pathToInternalId(final String externalPath) {
+        return toInternalId(toDomain(externalPath));
+    }
+
+    /**
      * Split the path off the URI.
      *
      * @param httpUri the incoming URI.

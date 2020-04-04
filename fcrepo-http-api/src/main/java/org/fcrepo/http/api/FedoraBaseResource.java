@@ -140,8 +140,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
      */
     @VisibleForTesting
     public FedoraResource getResourceFromPath(final String externalPath) {
-        final FedoraID fedoraId = FedoraID.create(identifierConverter().toInternalId(identifierConverter()
-                .toDomain(externalPath)));
+        final FedoraID fedoraId = FedoraID.create(identifierConverter().pathToInternalId(externalPath));
 
         try {
             final FedoraResource fedoraResource = resourceFactory.getResource(transaction, fedoraId);

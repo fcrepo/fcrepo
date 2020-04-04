@@ -396,7 +396,7 @@ public class FedoraLdp extends ContentExposingResource {
         final String interactionModel = checkInteractionModel(links);
 
         final String externalUri = identifierConverter().toDomain(externalPath());
-        final FedoraID fedoraId = FedoraID.create(identifierConverter().toInternalId(externalUri));
+        final FedoraID fedoraId = FedoraID.create(identifierConverter().pathToInternalId(externalPath()));
         final boolean resourceExists = doesResourceExist(transaction, fedoraId);
 
         if (resourceExists) {
@@ -591,7 +591,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String interactionModel = checkInteractionModel(links);
 
-        final String fedoraUri = identifierConverter().toInternalId(identifierConverter().toDomain(externalPath()));
+        final String fedoraUri = identifierConverter().pathToInternalId(externalPath());
         final FedoraID fedoraId = FedoraID.create(fedoraUri);
         final FedoraID newFedoraId = mintNewPid(fedoraId, slug);
         final var providedContentType = requestContentType != null ? requestContentType.toString() : null;

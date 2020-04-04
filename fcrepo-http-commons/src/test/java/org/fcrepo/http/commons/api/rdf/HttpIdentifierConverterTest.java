@@ -270,6 +270,38 @@ public class HttpIdentifierConverterTest {
         assertEquals(externalNew, httpUri);
     }
 
+
+    @Test
+    public void testBlankPathToId() {
+        final String testUri = "";
+        final String fedoraUri = converter.pathToInternalId(testUri);
+        assertEquals(FEDORA_ID_PREFIX, fedoraUri);
+    }
+
+    @Test
+    public void testSinglePathToId() {
+        final String externalOriginal = "/object";
+        final String internal = FEDORA_ID_PREFIX + "object";
+        final String id = converter.pathToInternalId(externalOriginal);
+        assertEquals(internal, id);
+        // Without leading slash
+        final String externalOriginal2 = "object";
+        final String id2 = converter.pathToInternalId(externalOriginal2);
+        assertEquals(internal, id2);
+    }
+
+    @Test
+    public void testDoublePathToId() {
+        final String externalOriginal = "/object/child";
+        final String internal = FEDORA_ID_PREFIX + "object/child";
+        final String id = converter.pathToInternalId(externalOriginal);
+        assertEquals(internal, id);
+        // Without leading slash
+        final String externalOriginal2 = "object/child";
+        final String id2 = converter.pathToInternalId(externalOriginal2);
+        assertEquals(internal, id2);
+    }
+
     /**
      * Utility function to get a UUID.
      * @return a UUID.
