@@ -115,7 +115,7 @@ public abstract class AbstractResourceIT {
     protected static final String NON_RDF_SOURCE_LINK_HEADER = "<" + NON_RDF_SOURCE.getURI() + ">;rel=\"type\"";
 
     @Inject
-    protected ContainerWrapper containerWrapper;
+    private ContainerWrapper containerWrapper;
 
     @Before
     public void setLogger() {

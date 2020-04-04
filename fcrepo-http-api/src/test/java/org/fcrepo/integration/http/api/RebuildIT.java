@@ -76,8 +76,8 @@ public class RebuildIT extends AbstractResourceIT {
 
     @Before
     public void setUp() {
-        final AnnotationConfigApplicationContext ctx = new
-                AnnotationConfigApplicationContext(OCFLPersistenceConfig.class);
+        final AnnotationConfigApplicationContext ctx =
+                new AnnotationConfigApplicationContext(OCFLPersistenceConfig.class);
         // RepositoryInitializer.initialize() happens as a part of the object's construction.
         ctx.register(RepositoryInitializer.class,
                 OCFLPersistentSessionManager.class,
