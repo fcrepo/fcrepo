@@ -118,7 +118,7 @@ public abstract class AbstractService {
             // If we are root then we are the top.
             return fedoraId;
         }
-        final String parent = containmentIndex.getContainedBy(txID, fedoraId.getFullId());
+        final String parent = containmentIndex.getContainedBy(txID, fedoraId);
         if (parent != null) {
             return FedoraID.create(parent);
         }

@@ -139,7 +139,7 @@ public class FedoraAcl extends ContentExposingResource {
 
         aclResource = webacAclService.findOrCreate(transaction, path);
         created = aclResource.isNew();
-        final FedoraID aclId = FedoraID.create(aclResource.getId());
+        final FedoraID aclId = aclResource.getFedoraId();
 
         final MediaType contentType =
             requestContentType == null ? RDFMediaType.TURTLE_TYPE : valueOf(getSimpleContentType(requestContentType));

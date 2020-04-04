@@ -226,6 +226,6 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
      * @param id The child ID.
      */
     private void addToContainmentIndex(final String txId, final FedoraID parentId, final FedoraID id) {
-        containmentIndex.addContainedBy(txId, parentId.getFullId(), id.getFullId());
+        containmentIndex.addContainedBy(txId, parentId, id);
     }
 }

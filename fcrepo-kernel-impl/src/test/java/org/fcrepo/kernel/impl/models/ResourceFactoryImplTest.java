@@ -108,6 +108,8 @@ public class ResourceFactoryImplTest {
 
     private String sessionId;
 
+    private FedoraID rootId = FedoraID.getRoot();
+
     private FedoraID mockFedoraID;
 
     private String fedoraMementoId;
@@ -154,9 +156,10 @@ public class ResourceFactoryImplTest {
     @After
     public void cleanUp() {
         when(mockResource.getId()).thenReturn(FEDORA_ID_PREFIX);
+        when(mockResource.getFedoraId()).thenReturn(mockFedoraID);
         containmentIndex.rollbackTransaction(mockTx);
         containmentIndex.getContains(null, mockResource).forEach(c ->
-                containmentIndex.removeContainedBy(null, FEDORA_ID_PREFIX, c));
+                containmentIndex.removeContainedBy(null, rootId, FedoraID.create(c)));
     }
 
     @Test(expected = PathNotFoundException.class)
@@ -323,7 +326,7 @@ public class ResourceFactoryImplTest {
 
     @Test
     public void doesResourceExist_Exists_WithSession() throws Exception {
-        containmentIndex.addContainedBy(mockTx.getId(), FEDORA_ID_PREFIX, fedoraId);
+        containmentIndex.addContainedBy(mockTx.getId(), rootId, mockFedoraID);
         final boolean answerIn = factory.doesResourceExist(mockTx, mockFedoraID);
         assertTrue(answerIn);
         final boolean answerOut = factory.doesResourceExist(null, mockFedoraID);
@@ -332,7 +335,7 @@ public class ResourceFactoryImplTest {
 
     @Test
     public void doesResourceExist_Exists_Description_WithSession() {
-        containmentIndex.addContainedBy(mockTx.getId(), FEDORA_ID_PREFIX, fedoraId);
+        containmentIndex.addContainedBy(mockTx.getId(), rootId, mockFedoraID);
         final FedoraID descId = mockFedoraID.addToResourceId(FCR_METADATA);
         final boolean answerIn = factory.doesResourceExist(mockTx, descId);
         assertTrue(answerIn);
@@ -342,14 +345,14 @@ public class ResourceFactoryImplTest {
 
     @Test
     public void doesResourceExist_Exists_WithoutSession() throws Exception {
-        containmentIndex.addContainedBy(null, FEDORA_ID_PREFIX, fedoraId);
+        containmentIndex.addContainedBy(null, rootId, mockFedoraID);
         final boolean answer = factory.doesResourceExist(null, mockFedoraID);
         assertTrue(answer);
     }
 
     @Test
     public void doesResourceExist_Exists_Description_WithoutSession() {
-        containmentIndex.addContainedBy(null, FEDORA_ID_PREFIX, fedoraId);
+        containmentIndex.addContainedBy(null, rootId, mockFedoraID);
         final FedoraID descId = mockFedoraID.addToResourceId(FCR_METADATA);
         final boolean answer = factory.doesResourceExist(null, descId);
         assertTrue(answer);

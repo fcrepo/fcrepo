@@ -23,7 +23,6 @@ import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
-import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
@@ -59,9 +58,6 @@ abstract public class FedoraBaseResource extends AbstractResource {
     static final String JMS_BASEURL_PROP = "fcrepo.jms.baseUrl";
 
     private static final Pattern TRAILING_SLASH_REGEX = Pattern.compile("/+$");
-
-    // Note: This pattern is intentionally loose, matching invalid memento strings, for error handling purposes
-    private static final Pattern MEMENTO_PATH_PATTERN = Pattern.compile(".*/" + FedoraTypes.FCR_VERSIONS + "/(.*)$");
 
     @Inject
     protected Transaction transaction;

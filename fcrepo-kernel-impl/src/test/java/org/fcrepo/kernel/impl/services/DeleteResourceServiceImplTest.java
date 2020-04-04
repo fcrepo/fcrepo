@@ -117,18 +117,18 @@ public class DeleteResourceServiceImplTest {
         final DeleteResourceOperationFactoryImpl factoryImpl = new DeleteResourceOperationFactoryImpl();
         setField(service, "deleteResourceFactory", factoryImpl);
         setField(service, "containmentIndex", containmentIndex);
+        when(container.getFedoraId()).thenReturn(RESOURCE_FEDORA_ID);
     }
 
     @After
     public void cleanUp() {
         containmentIndex.rollbackTransaction(tx);
         containmentIndex.getContains(tx, container).forEach(c ->
-                containmentIndex.removeContainedBy(tx.getId(), container.getId(), c));
+                containmentIndex.removeContainedBy(tx.getId(), container.getFedoraId(), FedoraID.create(c)));
     }
 
     @Test
     public void testContainerDelete() throws Exception {
-        when(container.getId()).thenReturn(RESOURCE_ID);
         when(container.isAcl()).thenReturn(false);
         when(container.getAcl()).thenReturn(null);
 
@@ -138,15 +138,14 @@ public class DeleteResourceServiceImplTest {
 
     @Test
     public void testRecursiveDelete() throws Exception {
-        when(container.getId()).thenReturn(RESOURCE_ID);
         when(container.isAcl()).thenReturn(false);
         when(container.getAcl()).thenReturn(null);
-        when(childContainer.getId()).thenReturn(CHILD_RESOURCE_ID);
+        when(childContainer.getFedoraId()).thenReturn(CHILD_RESOURCE_FEDORA_ID);
         when(childContainer.isAcl()).thenReturn(false);
         when(childContainer.getAcl()).thenReturn(null);
 
         when(resourceFactory.getResource(tx, CHILD_RESOURCE_FEDORA_ID)).thenReturn(childContainer);
-        containmentIndex.addContainedBy(tx.getId(), container.getId(), childContainer.getId());
+        containmentIndex.addContainedBy(tx.getId(), container.getFedoraId(), childContainer.getFedoraId());
 
         when(container.isAcl()).thenReturn(false);
         when(container.getAcl()).thenReturn(null);
@@ -174,7 +173,7 @@ public class DeleteResourceServiceImplTest {
 
     @Test
     public void testAclDelete() throws Exception {
-        when(acl.getId()).thenReturn(RESOURCE_ACL_ID);
+        when(acl.getFedoraId()).thenReturn(RESOURCE_ACL_FEDORA_ID);
         when(acl.isAcl()).thenReturn(true);
         service.perform(tx, acl);
         verifyResourceOperation(RESOURCE_ACL_FEDORA_ID, operationCaptor, pSession);
@@ -182,18 +181,18 @@ public class DeleteResourceServiceImplTest {
 
     @Test(expected = RepositoryRuntimeException.class)
     public void testBinaryDescriptionDelete() throws Exception {
-        when(binaryDesc.getId()).thenReturn(RESOURCE_DESCRIPTION_ID);
+        when(binaryDesc.getFedoraId()).thenReturn(RESOURCE_DESCRIPTION_FEDORA_ID);
         service.perform(tx, binaryDesc);
     }
 
     @Test
     public void testBinaryDeleteWithAcl() throws Exception {
-        when(binary.getId()).thenReturn(RESOURCE_ID);
+        when(binary.getFedoraId()).thenReturn(RESOURCE_FEDORA_ID);
         when(binary.isAcl()).thenReturn(false);
         when(binary.getDescribedResource()).thenReturn(binaryDesc);
-        when(binaryDesc.getId()).thenReturn(RESOURCE_DESCRIPTION_ID);
+        when(binaryDesc.getFedoraId()).thenReturn(RESOURCE_DESCRIPTION_FEDORA_ID);
         when(binary.getAcl()).thenReturn(acl);
-        when(acl.getId()).thenReturn(RESOURCE_ACL_ID);
+        when(acl.getFedoraId()).thenReturn(RESOURCE_ACL_FEDORA_ID);
 
         service.perform(tx, binary);
 
