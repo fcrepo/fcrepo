@@ -56,7 +56,7 @@ public class ContainerWrapper implements ApplicationContextAware {
 
     private static final Logger logger = getLogger(ContainerWrapper.class);
 
-    @Value("#{${fcrepo.dynamic.test.port} ?: 8080}")
+    @Value("${fcrepo.dynamic.test.port:8080}")
     private int port;
 
     private HttpServer server;
