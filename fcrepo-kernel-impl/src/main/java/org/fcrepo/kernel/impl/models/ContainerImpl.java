@@ -30,7 +30,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.identifiers.FedoraID;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
@@ -53,7 +53,7 @@ public class ContainerImpl extends FedoraResourceImpl implements Container {
      * @param pSessionManager session manager
      * @param resourceFactory resource factory
      */
-    public ContainerImpl(final FedoraID fedoraID, final Transaction tx,
+    public ContainerImpl(final FedoraId fedoraID, final Transaction tx,
                          final PersistentStorageSessionManager pSessionManager, final ResourceFactory resourceFactory) {
         super(fedoraID, tx, pSessionManager, resourceFactory);
     }

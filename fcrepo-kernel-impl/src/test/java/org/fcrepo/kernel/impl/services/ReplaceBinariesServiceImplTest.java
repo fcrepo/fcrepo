@@ -36,7 +36,7 @@ import java.util.Collection;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.identifiers.FedoraID;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ExternalContent;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
@@ -89,7 +89,7 @@ public class ReplaceBinariesServiceImplTest {
 
     private NonRdfSourceOperationFactory factory;
 
-    private FedoraID fedoraId = FedoraID.create(FEDORA_ID);
+    private FedoraId fedoraId = FedoraId.create(FEDORA_ID);
 
     @InjectMocks
     private ReplaceBinariesServiceImpl service;

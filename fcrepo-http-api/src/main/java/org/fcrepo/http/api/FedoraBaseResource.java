@@ -27,7 +27,7 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.TombstoneException;
-import org.fcrepo.kernel.api.identifiers.FedoraID;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
@@ -90,7 +90,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
         return identifierConverter;
     }
 
-    protected FedoraResource getFedoraResource(final FedoraID fedoraId) throws PathNotFoundException {
+    protected FedoraResource getFedoraResource(final FedoraId fedoraId) throws PathNotFoundException {
         return this.resourceFactory.getResource(fedoraId);
     }
 
@@ -102,7 +102,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
      * @param fedoraId identifier of the resource
      * @return the requested FedoraResource
      */
-    protected FedoraResource getFedoraResource(final Transaction transaction, final FedoraID fedoraId) {
+    protected FedoraResource getFedoraResource(final Transaction transaction, final FedoraId fedoraId) {
         try {
             if (transaction.isCommitted()) {
                 return getFedoraResource(fedoraId);
@@ -119,7 +119,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
      * @param fedoraId identifier of the object to check
      * @return Returns true if an object with the provided id exists
      */
-    protected boolean doesResourceExist(final Transaction transaction, final FedoraID fedoraId) {
+    protected boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId) {
         return resourceFactory.doesResourceExist(transaction, fedoraId);
     }
 
@@ -140,7 +140,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
      */
     @VisibleForTesting
     public FedoraResource getResourceFromPath(final String externalPath) {
-        final FedoraID fedoraId = FedoraID.create(identifierConverter().pathToInternalId(externalPath));
+        final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath);
 
         try {
             final FedoraResource fedoraResource = resourceFactory.getResource(transaction, fedoraId);

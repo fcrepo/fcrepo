@@ -31,7 +31,7 @@ import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.identifiers.FedoraID;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.ExternalContent;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -69,7 +69,7 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
      * @param pSessionManager session manager
      * @param resourceFactory resource factory
      */
-    public BinaryImpl(final FedoraID fedoraID, final Transaction tx,
+    public BinaryImpl(final FedoraId fedoraID, final Transaction tx,
                       final PersistentStorageSessionManager pSessionManager, final ResourceFactory resourceFactory) {
         super(fedoraID, tx, pSessionManager, resourceFactory);
     }
@@ -137,7 +137,7 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
     @Override
     public FedoraResource getDescription() {
         try {
-            final FedoraID descId = getFedoraId().addToResourceId(FCR_METADATA);
+            final FedoraId descId = getFedoraId().addToResourceId(FCR_METADATA);
             if (this.isMemento()) {
                 return resourceFactory.getResource(tx, descId.addToFullId(FCR_VERSIONS,
                         this.getMementoDateTimeAsUriString()));

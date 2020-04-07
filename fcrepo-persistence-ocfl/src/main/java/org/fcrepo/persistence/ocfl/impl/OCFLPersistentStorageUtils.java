@@ -343,6 +343,8 @@ public class OCFLPersistentStorageUtils {
         if (fedoraIdentifier.indexOf(FEDORA_ID_PREFIX) == 0) {
             bareFedoraIdentifier = fedoraIdentifier.substring(FEDORA_ID_PREFIX.length());
         }
+        // strip any leading slashes
+        bareFedoraIdentifier = bareFedoraIdentifier.replaceFirst("\\/", "");
 
         //ensure no accidental collisions with the root ocfl identifier
         if (bareFedoraIdentifier.equals(DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID)) {

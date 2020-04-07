@@ -34,7 +34,7 @@ import org.apache.jena.vocabulary.DC;
 import org.fcrepo.kernel.api.RdfCollectors;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.identifiers.FedoraID;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.impl.operations.RdfSourceOperationFactoryImpl;
@@ -105,7 +105,7 @@ public class ReplacePropertiesServiceImplTest {
         final Model model = ModelFactory.createDefaultModel();
         RDFDataMgr.read(model, IOUtils.toInputStream(RDF, "UTF-8"), Lang.NTRIPLES);
 
-        final FedoraID fedoraID = FedoraID.create(resource.getId());
+        final FedoraId fedoraID = FedoraId.create(resource.getId());
 
         service.perform(tx.getId(), USER_PRINCIPAL, fedoraID, CONTENT_TYPE, model);
         verify(pSession).persist(operationCaptor.capture());

@@ -20,7 +20,7 @@ package org.fcrepo.kernel.impl.services;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.identifiers.FedoraID;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
@@ -100,13 +100,13 @@ public class DeleteResourceServiceImplTest {
     private DeleteResourceServiceImpl service;
 
     private static final String RESOURCE_ID =  FEDORA_ID_PREFIX + "test-resource";
-    private static final FedoraID RESOURCE_FEDORA_ID = FedoraID.create(RESOURCE_ID);
+    private static final FedoraId RESOURCE_FEDORA_ID = FedoraId.create(RESOURCE_ID);
     private static final String CHILD_RESOURCE_ID = FEDORA_ID_PREFIX + "test-resource-child";
-    private static final FedoraID CHILD_RESOURCE_FEDORA_ID = FedoraID.create(CHILD_RESOURCE_ID);
+    private static final FedoraId CHILD_RESOURCE_FEDORA_ID = FedoraId.create(CHILD_RESOURCE_ID);
     private static final String RESOURCE_DESCRIPTION_ID = FEDORA_ID_PREFIX + "test-resource-description";
-    private static final FedoraID RESOURCE_DESCRIPTION_FEDORA_ID = FedoraID.create(RESOURCE_DESCRIPTION_ID);
+    private static final FedoraId RESOURCE_DESCRIPTION_FEDORA_ID = FedoraId.create(RESOURCE_DESCRIPTION_ID);
     private static final String RESOURCE_ACL_ID = FEDORA_ID_PREFIX + "test-resource-acl";
-    private static final FedoraID RESOURCE_ACL_FEDORA_ID = FedoraID.create(RESOURCE_ACL_ID);
+    private static final FedoraId RESOURCE_ACL_FEDORA_ID = FedoraId.create(RESOURCE_ACL_ID);
     private static final String TX_ID = "tx-1234";
 
     @Before
@@ -124,7 +124,7 @@ public class DeleteResourceServiceImplTest {
     public void cleanUp() {
         containmentIndex.rollbackTransaction(tx);
         containmentIndex.getContains(tx, container).forEach(c ->
-                containmentIndex.removeContainedBy(tx.getId(), container.getFedoraId(), FedoraID.create(c)));
+                containmentIndex.removeContainedBy(tx.getId(), container.getFedoraId(), FedoraId.create(c)));
     }
 
     @Test
@@ -163,7 +163,7 @@ public class DeleteResourceServiceImplTest {
         assertEquals(0, containmentIndex.getContains(tx, container).count());
     }
 
-    private void verifyResourceOperation(final FedoraID fedoraID,
+    private void verifyResourceOperation(final FedoraId fedoraID,
                                          final ArgumentCaptor<DeleteResourceOperation> captor,
                                          final PersistentStorageSession pSession) throws Exception {
         verify(pSession).persist(captor.capture());

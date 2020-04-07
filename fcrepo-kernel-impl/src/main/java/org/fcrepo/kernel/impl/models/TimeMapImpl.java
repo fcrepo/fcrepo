@@ -34,7 +34,7 @@ import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.identifiers.FedoraID;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.TimeMap;
@@ -130,11 +130,11 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
     }
 
     /**
-     * Get a FedoraID for a memento with the specified version datetime.
+     * Get a FedoraId for a memento with the specified version datetime.
      * @param version The instant datetime.
-     * @return the new FedoraID for the current TimeMap and the version.
+     * @return the new FedoraId for the current TimeMap and the version.
      */
-    private FedoraID getInstantFedoraId(final Instant version) {
+    private FedoraId getInstantFedoraId(final Instant version) {
         final String versionTime = MEMENTO_LABEL_FORMATTER.format(version);
         return getFedoraId().addToFullId(versionTime);
     }

@@ -19,7 +19,7 @@ package org.fcrepo.kernel.impl;
 
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.identifiers.FedoraID;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.junit.After;
 import org.junit.Before;
@@ -91,7 +91,7 @@ public class ContainmentIndexImplTest {
      */
     private void stubObject(final String id) {
         if (id_to_resource.containsKey(id)) {
-            final FedoraID fID = FedoraID.create(id);
+            final FedoraId fID = FedoraId.create(id);
             when(id_to_resource.get(id).getFedoraId()).thenReturn(fID);
         } else if (id_to_transaction.containsKey(id)) {
             when(id_to_transaction.get(id).getId()).thenReturn(id);
@@ -105,11 +105,11 @@ public class ContainmentIndexImplTest {
         containmentIndex.rollbackTransaction(transaction2);
         // Remove all parent's children
         containmentIndex.getContains(null, parent1).forEach(t ->
-                containmentIndex.removeContainedBy(null, parent1.getFedoraId(), FedoraID.create(t)));
+                containmentIndex.removeContainedBy(null, parent1.getFedoraId(), FedoraId.create(t)));
         if (parent2.getFedoraId() != null) {
             // Remove all parent2's children
             containmentIndex.getContains(null, parent2).forEach(
-                    t -> containmentIndex.removeContainedBy(null, parent2.getFedoraId(), FedoraID.create(t)));
+                    t -> containmentIndex.removeContainedBy(null, parent2.getFedoraId(), FedoraId.create(t)));
         }
     }
 
@@ -466,7 +466,7 @@ public class ContainmentIndexImplTest {
     public void testResourceExistsFedoraIDNoTrailingSlash() {
         stubObject("parent1");
         stubObject("child1");
-        final FedoraID fedoraID = FedoraID.create(child1.getId());
+        final FedoraId fedoraID = FedoraId.create(child1.getId());
         containmentIndex.addContainedBy(null, parent1.getFedoraId(), child1.getFedoraId());
         assertEquals(1, containmentIndex.getContains(null, parent1).count());
         assertEquals(parent1.getFedoraId().getFullId(),
@@ -482,7 +482,7 @@ public class ContainmentIndexImplTest {
     public void testResourceExistsFedoraIDTrailingSlash() {
         stubObject("parent1");
         stubObject("child1");
-        final FedoraID fedoraID = FedoraID.create(child1.getFedoraId().getFullId() + "/");
+        final FedoraId fedoraID = FedoraId.create(child1.getFedoraId().getFullId() + "/");
         containmentIndex.addContainedBy(null, parent1.getFedoraId(), child1.getFedoraId());
         assertEquals(1, containmentIndex.getContains(null, parent1).count());
         assertEquals(parent1.getFedoraId().getFullId(),

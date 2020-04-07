@@ -172,8 +172,8 @@ abstract class AbstractPersister implements Persister {
                 throw new RepositoryRuntimeException(ex);
             }
 
-            //get the previous path segment including the trailing slash
-            final String parentId = cleanedResourceId.substring(0, cleanedResourceId.lastIndexOf('/') + 1);
+            //get the previous path segment not including the trailing slash
+            final String parentId = cleanedResourceId.substring(0, cleanedResourceId.lastIndexOf('/'));
             return findArchivalGroupInAncestry(parentId, session);
     }
 

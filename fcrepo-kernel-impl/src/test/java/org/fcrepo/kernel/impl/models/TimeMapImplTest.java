@@ -28,7 +28,7 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
-import org.fcrepo.kernel.api.identifiers.FedoraID;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.services.VersionService;
@@ -150,7 +150,7 @@ public class TimeMapImplTest {
         for (final var version : versions) {
             final var memento = createMemento(id, version);
             mementos.add(memento);
-            final FedoraID mementoID = FedoraID.create(id, FCR_VERSIONS, instantStr(version));
+            final FedoraId mementoID = FedoraId.create(id, FCR_VERSIONS, instantStr(version));
             when(memento.getFedoraId()).thenReturn(mementoID);
             when(resourceFactory.getResource(null, mementoID)).thenReturn(memento);
         }
@@ -182,7 +182,7 @@ public class TimeMapImplTest {
     }
 
     private FedoraResource createParent(final String id) {
-        final var fedoraId = FedoraID.create(id);
+        final var fedoraId = FedoraId.create(id);
         final var parent = new ContainerImpl(fedoraId, null, sessionManager, resourceFactory);
 
         parent.setCreatedBy("createdBy");

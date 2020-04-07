@@ -44,7 +44,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
-import org.fcrepo.kernel.api.identifiers.FedoraID;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -192,9 +192,12 @@ public class WebACRolesProvider {
      * In this case, that would be a list of "/a/b/c", "/a/b", "/a" and "/".
      */
     private static List<String> getAllPathAncestors(final String path) {
-        final List<String> segments = asList(path.replace(FEDORA_ID_PREFIX, "/").split("/"));
+        final List<String> segments = asList(path.replace(FEDORA_ID_PREFIX, "").split("/"));
         return range(1, segments.size())
-                .mapToObj(frameSize -> FEDORA_ID_PREFIX + String.join("/", segments.subList(1, frameSize)))
+                .mapToObj(frameSize -> {
+                    final var subpath = String.join("/", segments.subList(1, frameSize));
+                    return FEDORA_ID_PREFIX + (!subpath.isBlank() ? "/" : "") + subpath;
+                })
                 .collect(toList());
     }
 
@@ -231,7 +234,7 @@ public class WebACRolesProvider {
                                          agentGroup;
                 final String hashedSuffix = hashIndex > 0 ? agentGroup.substring(hashIndex) : null;
                 try {
-                    final FedoraID fedoraId = FedoraID.create(agentGroupNoHash);
+                    final FedoraId fedoraId = FedoraId.create(agentGroupNoHash);
                     final FedoraResource resource = resourceFactory.getResource(transaction, fedoraId);
                     return getAgentMembers(translator, resource, hashedSuffix);
                 } catch (PathNotFoundException e) {

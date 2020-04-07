@@ -51,7 +51,7 @@ import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
  * @author whikloj
  * @since 6.0.0
  */
-public class FedoraID {
+public class FedoraId {
 
     private String id;
     private String fullId;
@@ -70,12 +70,9 @@ public class FedoraID {
      * @param fullId The full identifier or null if root.
      * @throws IllegalArgumentException If ID does not start with expected prefix.
      */
-    private FedoraID(final String fullId) {
+    private FedoraId(final String fullId) {
         this.fullId = ensurePrefix(fullId);
-        if (!this.fullId.equals(FEDORA_ID_PREFIX)) {
-            // Only strip trailing slashes the ID is more than the info:fedora/ prefix.
-            this.fullId = this.fullId.replaceAll("/+$", "");
-        }
+        this.fullId = this.fullId.replaceAll("/+$", "");
         // Carry the path of the request for any exceptions.
         this.externalPath = this.fullId.substring(FEDORA_ID_PREFIX.length());
 
@@ -84,20 +81,20 @@ public class FedoraID {
 
     /**
      * Static create method
-     * @param fullId The ID to use for the FedoraID.
-     * @return The FedoraID.
+     * @param fullId The ID to use for the FedoraId.
+     * @return The FedoraId.
      */
-    public static FedoraID create(final String fullId, final String... additions) {
+    public static FedoraId create(final String fullId, final String... additions) {
         final var newId = idBuilder(fullId, additions);
-        return new FedoraID(newId);
+        return new FedoraId(newId);
     }
 
     /**
-     * Get a FedoraID for repository root.
-     * @return The FedoraID for repository root.
+     * Get a FedoraId for repository root.
+     * @return The FedoraId for repository root.
      */
-    public static FedoraID getRoot() {
-        return new FedoraID(null);
+    public static FedoraId getRepositoryRootId() {
+        return new FedoraId(null);
     }
 
     /**
@@ -189,21 +186,32 @@ public class FedoraID {
     }
 
     /**
-     * Create a new FedoraID using the resource ID as the base
-     * @param addition One or more additional strings.
-     * @return new FedoraID for the new identifier.
+     * Descriptions are needed to retrieve from the persistence, but otherwise is just an addendum to the binary.
+     * @return The description ID or null if not a description.
      */
-    public FedoraID addToResourceId(final String... addition) {
-        return FedoraID.create(this.getResourceId(), addition);
+    public String getDescriptionId() {
+        if (isDescription()) {
+            return getResourceId() + "/" + FCR_METADATA;
+        }
+        return null;
     }
 
     /**
-     * Create a new FedoraID using the full ID as the base.
+     * Create a new FedoraId using the resource ID as the base
      * @param addition One or more additional strings.
-     * @return new FedoraID for the new identifier.
+     * @return new FedoraId for the new identifier.
      */
-    public FedoraID addToFullId(final String... addition) {
-        return FedoraID.create(this.getFullId(), addition);
+    public FedoraId addToResourceId(final String... addition) {
+        return FedoraId.create(this.getResourceId(), addition);
+    }
+
+    /**
+     * Create a new FedoraId using the full ID as the base.
+     * @param addition One or more additional strings.
+     * @return new FedoraId for the new identifier.
+     */
+    public FedoraId addToFullId(final String... addition) {
+        return FedoraId.create(this.getFullId(), addition);
     }
 
     @Override
@@ -212,17 +220,22 @@ public class FedoraID {
             return true;
         }
 
-        if (!(obj instanceof FedoraID)) {
+        if (!(obj instanceof FedoraId)) {
             return false;
         }
 
-        final var testObj = (FedoraID) obj;
+        final var testObj = (FedoraId) obj;
         return Objects.equals(testObj.getFullId(), this.getFullId());
     }
 
     @Override
     public int hashCode() {
         return getFullId().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return getFullId();
     }
 
     /**
@@ -249,10 +262,6 @@ public class FedoraID {
             final String id = Arrays.stream(parts).map(s -> s.startsWith("/") ? s.substring(1) : s)
                     .map(s -> s.endsWith("/") ? s.substring(0, s.length() -1 ) : s)
                     .collect(Collectors.joining("/"));
-            if (id.equals("info:fedora")) {
-                // We may have ended up with FEDORA_ID_PREFIX without its ending slash
-                return FEDORA_ID_PREFIX;
-            }
             return id;
         }
         return "";
@@ -267,7 +276,7 @@ public class FedoraID {
         if (id == null) {
             return FEDORA_ID_PREFIX;
         }
-        return id.startsWith(FEDORA_ID_PREFIX) ? id : FEDORA_ID_PREFIX + id;
+        return id.startsWith(FEDORA_ID_PREFIX) ? id : FEDORA_ID_PREFIX + "/" + id;
     }
 
     /**
@@ -336,8 +345,7 @@ public class FedoraID {
                 throw new InvalidResourceIdentifierException(String.format("Path is invalid: %s", externalPath));
             }
             this.isNonRdfSourceDescription = true;
-            // Don't remove the fcr:metadata from the resource ID so we can get the metadata separately from the
-            // binary.
+            processID = metadataSplits[0];
         }
         if (processID.endsWith("/")) {
             processID = processID.replaceAll("/+$", "");

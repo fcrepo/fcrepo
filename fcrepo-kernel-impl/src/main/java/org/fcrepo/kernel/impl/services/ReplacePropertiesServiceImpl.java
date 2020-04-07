@@ -24,7 +24,7 @@ import javax.inject.Inject;
 import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.identifiers.FedoraID;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
@@ -49,7 +49,7 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
     @Override
     public void perform(final String txId,
                         final String userPrincipal,
-                        final FedoraID fedoraId,
+                        final FedoraId fedoraId,
                         final String contentType,
                         final Model inputModel) throws MalformedRdfException {
         try {

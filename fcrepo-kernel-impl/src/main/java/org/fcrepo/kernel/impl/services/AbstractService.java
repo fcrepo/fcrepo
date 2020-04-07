@@ -57,7 +57,7 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RequestWithAclLinkHeaderException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
-import org.fcrepo.kernel.api.identifiers.FedoraID;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.slf4j.Logger;
 
 
@@ -111,30 +111,29 @@ public abstract class AbstractService {
      * Find the closest ancestor using a Fedora ID.
      * @param txID The current transaction or null if none.
      * @param fedoraId The fedora ID to check
-     * @return The ancestor or root FedoraID object.
+     * @return The ancestor or root FedoraId object.
      */
-    protected FedoraID findExistingAncestor(final String txID, final FedoraID fedoraId) {
+    protected FedoraId findExistingAncestor(final String txID, final FedoraId fedoraId) {
         if (fedoraId.isRepositoryRoot()) {
             // If we are root then we are the top.
             return fedoraId;
         }
         final String parent = containmentIndex.getContainedBy(txID, fedoraId);
         if (parent != null) {
-            return FedoraID.create(parent);
+            return FedoraId.create(parent);
         }
         String idIterator = fedoraId.getFullId();
         while (idIterator.contains("/")) {
             idIterator = fedoraId.getResourceId().substring(0, idIterator.lastIndexOf("/"));
-            if (idIterator.equals(FEDORA_ID_PREFIX.substring(0, FEDORA_ID_PREFIX.length()-1))) {
-                // If we just made info:fedora then we are at root.
-                return FedoraID.getRoot();
+            if (idIterator.equals(FEDORA_ID_PREFIX)) {
+                return FedoraId.getRepositoryRootId();
             }
-            final FedoraID testID = FedoraID.create(idIterator);
+            final FedoraId testID = FedoraId.create(idIterator);
             if (containmentIndex.resourceExists(txID, testID)) {
                 return testID;
             }
         }
-        return FedoraID.getRoot();
+        return FedoraId.getRepositoryRootId();
     }
 
     /**

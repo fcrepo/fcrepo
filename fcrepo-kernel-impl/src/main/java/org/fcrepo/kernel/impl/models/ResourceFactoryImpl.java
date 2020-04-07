@@ -22,7 +22,7 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ResourceTypeException;
-import org.fcrepo.kernel.api.identifiers.FedoraID;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
@@ -37,7 +37,6 @@ import org.springframework.stereotype.Component;
 import javax.inject.Inject;
 import java.time.Instant;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
@@ -64,13 +63,13 @@ public class ResourceFactoryImpl implements ResourceFactory {
     private ContainmentIndex containmentIndex;
 
     @Override
-    public FedoraResource getResource(final FedoraID fedoraID)
+    public FedoraResource getResource(final FedoraId fedoraID)
             throws PathNotFoundException {
         return getResource(null, fedoraID);
     }
 
     @Override
-    public FedoraResource getResource(final Transaction transaction, final FedoraID fedoraID)
+    public FedoraResource getResource(final Transaction transaction, final FedoraId fedoraID)
             throws PathNotFoundException {
         final FedoraResource resource = instantiateResource(transaction, fedoraID);
         if (fedoraID.isTimemap()) {
@@ -80,40 +79,34 @@ public class ResourceFactoryImpl implements ResourceFactory {
     }
 
     @Override
-    public <T extends FedoraResource> T getResource(final FedoraID identifier,
+    public <T extends FedoraResource> T getResource(final FedoraId identifier,
                                                     final Class<T> clazz) throws PathNotFoundException {
         return clazz.cast(getResource(null, identifier));
     }
 
     @Override
-    public <T extends FedoraResource> T getResource(final Transaction transaction, final FedoraID identifier,
+    public <T extends FedoraResource> T getResource(final Transaction transaction, final FedoraId identifier,
             final Class<T> clazz) throws PathNotFoundException {
         return clazz.cast(getResource(transaction, identifier));
     }
 
     @Override
-    public boolean doesResourceExist(final Transaction transaction, final FedoraID fedoraId) {
+    public boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId) {
         if (fedoraId.isRepositoryRoot()) {
             // Root always exists.
             return true;
         }
-        final FedoraID actualId;
-        if (fedoraId.isDescription()) {
-            // Descriptions are actually part of the binary, so use its ID.
-            actualId = FedoraID.create(fedoraId.getResourceId().replace("/" + FCR_METADATA, ""));
-        } else {
-            actualId = fedoraId;
-        }
-        if (!actualId.isMemento()) {
+        if (!fedoraId.isMemento()) {
             // containment index doesn't handle versions, so don't bother checking for them.
             final String transactionId = transaction == null ? null : transaction.getId();
-            return containmentIndex.resourceExists(transactionId, actualId);
+            return containmentIndex.resourceExists(transactionId, fedoraId);
         } else {
 
             final PersistentStorageSession psSession = getSession(transaction);
 
             try {
-                psSession.getHeaders(actualId.getResourceId(), actualId.getMementoInstant());
+                final String id = fedoraId.isDescription() ? fedoraId.getDescriptionId() : fedoraId.getResourceId();
+                psSession.getHeaders(id, fedoraId.getMementoInstant());
                 return true;
             } catch (final PersistentItemNotFoundException e) {
                 // Object doesn't exist.
@@ -165,19 +158,21 @@ public class ResourceFactoryImpl implements ResourceFactory {
      * @throws PathNotFoundException
      */
     private FedoraResource instantiateResource(final Transaction transaction,
-                                               final FedoraID identifier)
+                                               final FedoraId identifier)
             throws PathNotFoundException {
         try {
+            // For descriptions we need the fcr:metadata part so we get the description ID.
+            final String id = identifier.isDescription() ? identifier.getDescriptionId() : identifier.getResourceId();
             final var psSession = getSession(transaction);
             final Instant versionDateTime = identifier.isMemento() ? identifier.getMementoInstant() : null;
-            final var headers = psSession.getHeaders(identifier.getResourceId(), versionDateTime);
+            final var headers = psSession.getHeaders(id, versionDateTime);
 
             // Determine the appropriate class from headers
             final var createClass = getClassForTypes(headers);
 
             // Retrieve standard constructor
             final var constructor = createClass.getConstructor(
-                    FedoraID.class,
+                    FedoraId.class,
                     Transaction.class,
                     PersistentStorageSessionManager.class,
                     ResourceFactory.class);
@@ -187,7 +182,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
             populateResourceHeaders(rescImpl, headers, versionDateTime);
 
             return rescImpl;
-        } catch (SecurityException | ReflectiveOperationException e) {
+        } catch (final SecurityException | ReflectiveOperationException e) {
             throw new RepositoryRuntimeException("Unable to construct object", e);
         } catch (final PersistentItemNotFoundException e) {
             throw new PathNotFoundException(e);

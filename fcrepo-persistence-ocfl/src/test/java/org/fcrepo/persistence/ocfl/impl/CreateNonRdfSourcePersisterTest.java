@@ -218,7 +218,7 @@ public class CreateNonRdfSourcePersisterTest {
 
     @Test(expected = RepositoryRuntimeException.class)
     public void testPersistNewRootResource() throws Exception {
-        final String rootResourceId = FEDORA_ID_PREFIX + DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
+        final String rootResourceId = FEDORA_ID_PREFIX + "/" + DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
         final InputStream content = IOUtils.toInputStream(CONTENT_BODY, "UTF-8");
         when(nonRdfSourceOperation.getResourceId()).thenReturn(rootResourceId);
         when(nonRdfSourceOperation.getContentStream()).thenReturn(content);

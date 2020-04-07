@@ -41,7 +41,7 @@ import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
 import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.identifiers.FedoraID;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ExternalContent;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateNonRdfSourceOperationBuilder;
@@ -74,14 +74,14 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
     private NonRdfSourceOperationFactory nonRdfSourceOperationFactory;
 
     @Override
-    public void perform(final String txId, final String userPrincipal, final FedoraID fedoraId,
+    public void perform(final String txId, final String userPrincipal, final FedoraId fedoraId,
                           final String contentType, final String filename,
                           final Long contentSize, final List<String> linkHeaders, final Collection<URI> digest,
                           final InputStream requestBody, final ExternalContent externalContent) {
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
         checkAclLinkHeader(linkHeaders);
         // Locate a containment parent of fedoraId, if exists.
-        final FedoraID parentId = findExistingAncestor(txId, fedoraId);
+        final FedoraId parentId = findExistingAncestor(txId, fedoraId);
         checkParent(txId, pSession, parentId);
 
         // Populate the description for the new binary
@@ -116,7 +116,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
     }
 
     private void createDescription(final PersistentStorageSession pSession, final String userPrincipal,
-            final FedoraID binaryId) {
+            final FedoraId binaryId) {
         final var descId = binaryId.addToFullId(FCR_METADATA);
         final var createOp = rdfSourceOperationFactory.createBuilder(
                     descId.getFullId(),
@@ -131,12 +131,12 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
     }
 
     @Override
-    public void perform(final String txId, final String userPrincipal, final FedoraID fedoraId,
+    public void perform(final String txId, final String userPrincipal, final FedoraId fedoraId,
             final List<String> linkHeaders, final Model model) {
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
         checkAclLinkHeader(linkHeaders);
         // Locate a containment parent of fedoraId, if exists.
-        final FedoraID parentId = findExistingAncestor(txId, fedoraId);
+        final FedoraId parentId = findExistingAncestor(txId, fedoraId);
         checkParent(txId, pSession, parentId);
 
         final List<String> rdfTypes = isEmpty(linkHeaders) ? emptyList() : getTypes(linkHeaders);
@@ -169,7 +169,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
      * @param pSession a persistence session.
      * @param fedoraId Id of parent.
      */
-    private void checkParent(final String txId, final PersistentStorageSession pSession, final FedoraID fedoraId)
+    private void checkParent(final String txId, final PersistentStorageSession pSession, final FedoraId fedoraId)
         throws RepositoryRuntimeException {
 
         if (fedoraId != null && !fedoraId.isRepositoryRoot()) {
@@ -225,7 +225,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
      * @param parentId The parent ID.
      * @param id The child ID.
      */
-    private void addToContainmentIndex(final String txId, final FedoraID parentId, final FedoraID id) {
+    private void addToContainmentIndex(final String txId, final FedoraId parentId, final FedoraId id) {
         containmentIndex.addContainedBy(txId, parentId, id);
     }
 }

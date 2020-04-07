@@ -21,7 +21,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
 
-import org.fcrepo.kernel.api.identifiers.FedoraID;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ExternalContent;
 
 /**
@@ -46,7 +46,7 @@ public interface ReplaceBinariesService {
      */
     void perform(String txId,
                  String userPrincipal,
-                 FedoraID fedoraId,
+                 FedoraId fedoraId,
                  String filename,
                  String contentType,
                  Collection<URI> digests,

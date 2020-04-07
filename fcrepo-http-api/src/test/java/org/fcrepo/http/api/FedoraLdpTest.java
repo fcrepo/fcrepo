@@ -119,7 +119,7 @@ import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PreconditionException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
-import org.fcrepo.kernel.api.identifiers.FedoraID;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
@@ -226,7 +226,7 @@ public class FedoraLdpTest {
     @Mock
     private DeleteResourceService deleteResourceService;
 
-    private FedoraID fedoraID;
+    private FedoraId fedoraID;
 
     private static final Logger log = getLogger(FedoraLdpTest.class);
 
@@ -294,7 +294,7 @@ public class FedoraLdpTest {
             return null;
         }).when(preferTag).addResponseHeaders(mockResponse);
 
-        fedoraID = FedoraID.create(mockContainer.getId());
+        fedoraID = FedoraId.create(mockContainer.getId());
     }
 
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) {

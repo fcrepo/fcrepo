@@ -18,7 +18,7 @@
 
 package org.fcrepo.kernel.impl.models;
 
-import org.fcrepo.kernel.api.identifiers.FedoraID;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.TimeMap;
@@ -54,14 +54,14 @@ public class FedoraResourceImplTest {
 
     private static final String ID = "info:fedora/test";
 
-    private static final FedoraID FEDORA_ID = FedoraID.create(ID);
+    private static final FedoraId FEDORA_ID = FedoraId.create(ID);
 
     @Test
     public void findMementoWhenOnlyOneAndBeforeSearch() {
         final var resource = resourceWithMockedTimeMap();
         expectMementos("20200309172117");
         final var match = resource.findMementoByDatetime(instant("20200309172118"));
-        assertEquals(FEDORA_ID_PREFIX + "0", match.getId());
+        assertEquals(FEDORA_ID_PREFIX + "/0", match.getId());
     }
 
     @Test
@@ -69,7 +69,7 @@ public class FedoraResourceImplTest {
         final var resource = resourceWithMockedTimeMap();
         expectMementos("20200309172117", "20200309172118", "20200309172119");
         final var match = resource.findMementoByDatetime(instant("20200309172118"));
-        assertEquals(FEDORA_ID_PREFIX + "1", match.getId());
+        assertEquals(FEDORA_ID_PREFIX + "/1", match.getId());
     }
 
     @Test
@@ -77,7 +77,7 @@ public class FedoraResourceImplTest {
         final var resource = resourceWithMockedTimeMap();
         expectMementos("20200309172116", "20200309172117", "20200309172119");
         final var match = resource.findMementoByDatetime(instant("20200309172118"));
-        assertEquals(FEDORA_ID_PREFIX + "1", match.getId());
+        assertEquals(FEDORA_ID_PREFIX + "/1", match.getId());
     }
 
     @Test
@@ -85,7 +85,7 @@ public class FedoraResourceImplTest {
         final var resource = resourceWithMockedTimeMap();
         expectMementos("20200309172117", "20200309172117", "20200309172117");
         final var match = resource.findMementoByDatetime(instant("20200309172118"));
-        assertEquals(FEDORA_ID_PREFIX + "2", match.getId());
+        assertEquals(FEDORA_ID_PREFIX + "/2", match.getId());
     }
 
     @Test
@@ -93,7 +93,7 @@ public class FedoraResourceImplTest {
         final var resource = resourceWithMockedTimeMap();
         expectMementos("20200309172119", "20200309172120", "20200309172121");
         final var match = resource.findMementoByDatetime(instant("20200309172118"));
-        assertEquals(FEDORA_ID_PREFIX + "0", match.getId());
+        assertEquals(FEDORA_ID_PREFIX + "/0", match.getId());
     }
 
     @Test
@@ -120,7 +120,7 @@ public class FedoraResourceImplTest {
 
     private FedoraResource memento(final String id, final Instant instant) {
         final String mementoTime = VersionService.MEMENTO_LABEL_FORMATTER.format(instant);
-        final FedoraID fedoraID = FedoraID.create(id).addToFullId(FCR_VERSIONS + "/" + mementoTime);
+        final FedoraId fedoraID = FedoraId.create(id).addToFullId(FCR_VERSIONS + "/" + mementoTime);
         final var memento = new FedoraResourceImpl(fedoraID, null, sessionManager, resourceFactory);
         memento.setIsMemento(true);
         memento.setMementoDatetime(instant);

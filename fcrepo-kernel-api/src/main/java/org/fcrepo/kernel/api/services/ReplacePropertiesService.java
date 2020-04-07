@@ -19,7 +19,7 @@ package org.fcrepo.kernel.api.services;
 
 import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
-import org.fcrepo.kernel.api.identifiers.FedoraID;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 /**
  * @author peichman
@@ -40,7 +40,7 @@ public interface ReplacePropertiesService {
      */
     void perform(String txId,
                 String userPrincipal,
-                FedoraID fedoraId,
+                FedoraId fedoraId,
                 String contentType,
                 Model inputModel) throws MalformedRdfException;
 }

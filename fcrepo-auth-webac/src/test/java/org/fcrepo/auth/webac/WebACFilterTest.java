@@ -33,7 +33,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 
 import org.fcrepo.kernel.api.TransactionManager;
-import org.fcrepo.kernel.api.identifiers.FedoraID;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
@@ -160,10 +160,10 @@ public class WebACFilterTest {
 
         when(mockTransactionManager.get("tx-id")).thenReturn(mockTransaction);
 
-        when(mockResourceFactory.getResource(mockTransaction, FedoraID.create(testChildPath.substring(1))))
+        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(testChildPath.substring(1))))
                 .thenReturn(null);
 
-        when(mockResourceFactory.getResource(mockTransaction, FedoraID.getRoot())).thenReturn(mockRoot);
+        when(mockResourceFactory.getResource(mockTransaction, FedoraId.getRepositoryRootId())).thenReturn(mockRoot);
         when(mockContainer.getContainer()).thenReturn(mockRoot);
         when(mockChildContainer.getContainer()).thenReturn(mockContainer);
 
@@ -181,15 +181,15 @@ public class WebACFilterTest {
     }
 
     private void setupContainerResource() throws Exception {
-        when(mockResourceFactory.getResource(mockTransaction, FedoraID.create(testPath.substring(1))))
+        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(testPath.substring(1))))
                 .thenReturn(mockContainer);
-        when(mockResourceFactory.getResource(mockTransaction, FedoraID.create(testChildPath.substring(1))))
+        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(testChildPath.substring(1))))
                 .thenReturn(mockChildContainer);
         when(mockBinary.hasType(FEDORA_BINARY)).thenReturn(false);
     }
 
     private void setupBinaryResource() throws Exception {
-        when(mockResourceFactory.getResource(mockTransaction, FedoraID.create(testPath.substring(1))))
+        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(testPath.substring(1))))
                 .thenReturn(mockBinary);
         when(mockBinary.hasType(FEDORA_BINARY)).thenReturn(true);
     }

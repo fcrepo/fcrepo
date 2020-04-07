@@ -19,7 +19,7 @@ package org.fcrepo.kernel.api.models;
 
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
-import org.fcrepo.kernel.api.identifiers.FedoraID;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 /**
  * Interface to a factory to instantiate FedoraResources
@@ -36,7 +36,7 @@ public interface ResourceFactory {
      * @return The resource.
      * @throws PathNotFoundException If the identifier cannot be found.
      */
-    public FedoraResource getResource(final FedoraID fedoraID)
+    public FedoraResource getResource(final FedoraId fedoraID)
             throws PathNotFoundException;
 
     /**
@@ -47,7 +47,7 @@ public interface ResourceFactory {
      * @return The resource.
      * @throws PathNotFoundException If the identifier cannot be found.
      */
-    public FedoraResource getResource(final Transaction transaction, final FedoraID fedoraID)
+    public FedoraResource getResource(final Transaction transaction, final FedoraId fedoraID)
             throws PathNotFoundException;
 
     /**
@@ -59,7 +59,7 @@ public interface ResourceFactory {
      * @return The resource.
      * @throws PathNotFoundException If the identifier cannot be found.
      */
-    public <T extends FedoraResource> T getResource(final FedoraID fedoraID,
+    public <T extends FedoraResource> T getResource(final FedoraId fedoraID,
             final Class<T> clazz) throws PathNotFoundException;
 
     /**
@@ -72,7 +72,7 @@ public interface ResourceFactory {
      * @return The resource.
      * @throws PathNotFoundException If the identifier cannot be found.
      */
-    public <T extends FedoraResource> T getResource(final Transaction transaction, final FedoraID fedoraID,
+    public <T extends FedoraResource> T getResource(final Transaction transaction, final FedoraId fedoraID,
                                                     final Class<T> clazz) throws PathNotFoundException;
 
     /**
@@ -81,5 +81,5 @@ public interface ResourceFactory {
      * @param fedoraId The internal identifier
      * @return True if the identifier resolves to a resource.
      */
-    public boolean doesResourceExist(final Transaction transaction, final FedoraID fedoraId);
+    public boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId);
 }

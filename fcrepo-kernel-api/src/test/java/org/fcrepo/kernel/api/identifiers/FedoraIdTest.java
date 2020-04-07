@@ -24,6 +24,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
@@ -35,73 +36,73 @@ import org.fcrepo.kernel.api.exception.InvalidMementoPathException;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.junit.Test;
 
-public class FedoraIDTest {
+public class FedoraIdTest {
 
     @Test
     public void testMissingPrefix() throws Exception {
-        final FedoraID fedoraID = FedoraID.create("this-is-a-test/ok");
-        final String testID = FEDORA_ID_PREFIX + "this-is-a-test/ok";
+        final FedoraId fedoraID = FedoraId.create("this-is-a-test/ok");
+        final String testID = FEDORA_ID_PREFIX + "/this-is-a-test/ok";
         assertResource(fedoraID, "NORMAL", testID, testID);
     }
 
     @Test
     public void testRepositoryRoot() throws Exception {
-        final FedoraID fedoraID = FedoraID.create(FEDORA_ID_PREFIX);
+        final FedoraId fedoraID = FedoraId.create(FEDORA_ID_PREFIX);
         assertResource(fedoraID, "ROOT", FEDORA_ID_PREFIX, FEDORA_ID_PREFIX);
     }
 
     @Test
     public void testNormal() throws Exception {
-        final String testID = FEDORA_ID_PREFIX + "first-object";
-        final FedoraID fedoraID = FedoraID.create(testID);
+        final String testID = FEDORA_ID_PREFIX + "/first-object";
+        final FedoraId fedoraID = FedoraId.create(testID);
         assertResource(fedoraID, "NORMAL", testID, testID);
     }
 
     @Test(expected = InvalidResourceIdentifierException.class)
     public void testEmptyPath() throws Exception {
-        final String testID = FEDORA_ID_PREFIX + "first-object//second-object";
-        final FedoraID fedoraID = FedoraID.create(testID);
+        final String testID = FEDORA_ID_PREFIX + "/first-object//second-object";
+        final FedoraId fedoraID = FedoraId.create(testID);
     }
 
     @Test
     public void testNormalAcl() throws Exception {
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_ACL;
-        final FedoraID fedoraID = FedoraID.create(testID);
-        assertResource(fedoraID, "ACL", testID, FEDORA_ID_PREFIX + "first-object");
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_ACL;
+        final FedoraId fedoraID = FedoraId.create(testID);
+        assertResource(fedoraID, "ACL", testID, FEDORA_ID_PREFIX + "/first-object");
     }
 
     @Test(expected = InvalidResourceIdentifierException.class)
     public void testNormalAclException() throws Exception {
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_ACL + "/garbage";
-        final FedoraID fedoraID = FedoraID.create(testID);
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_ACL + "/garbage";
+        final FedoraId fedoraID = FedoraId.create(testID);
     }
 
     @Test
     public void testNormalDescription() throws Exception {
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_METADATA;
-        final FedoraID fedoraID = FedoraID.create(testID);
-        assertResource(fedoraID, "METADATA", testID, testID);
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA;
+        final FedoraId fedoraID = FedoraId.create(testID);
+        assertResource(fedoraID, "METADATA", testID, FEDORA_ID_PREFIX + "/first-object");
     }
 
     @Test(expected = InvalidResourceIdentifierException.class)
     public void testNormalDescriptionException() throws Exception {
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_METADATA + "/test-garbage";
-        final FedoraID fedoraID = FedoraID.create(testID);
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA + "/test-garbage";
+        final FedoraId fedoraID = FedoraId.create(testID);
     }
 
     @Test
     public void testNormalTimemap() throws Exception {
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_VERSIONS;
-        final FedoraID fedoraID = FedoraID.create(testID);
-        assertResource(fedoraID, "TIMEMAP", testID, FEDORA_ID_PREFIX + "first-object");
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_VERSIONS;
+        final FedoraId fedoraID = FedoraId.create(testID);
+        assertResource(fedoraID, "TIMEMAP", testID, FEDORA_ID_PREFIX + "/first-object");
     }
 
     @Test
     public void testNormalMemento() throws Exception {
         final String mementoString = "20001221010304";
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_VERSIONS + "/" + mementoString;
-        final FedoraID fedoraID = FedoraID.create(testID);
-        assertResource(fedoraID, "MEMENTO", testID, FEDORA_ID_PREFIX + "first-object");
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_VERSIONS + "/" + mementoString;
+        final FedoraId fedoraID = FedoraId.create(testID);
+        assertResource(fedoraID, "MEMENTO", testID, FEDORA_ID_PREFIX + "/first-object");
         assertEquals(mementoString, fedoraID.getMementoString());
         final Instant mementoInstant = Instant.from(MEMENTO_LABEL_FORMATTER.parse(mementoString));
         assertEquals(mementoInstant, fedoraID.getMementoInstant());
@@ -110,48 +111,47 @@ public class FedoraIDTest {
     @Test(expected = InvalidMementoPathException.class)
     public void testNormalMementoException() throws Exception {
         final String mementoString = "00001221010304";
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_VERSIONS + "/" + mementoString;
-        final FedoraID fedoraID = FedoraID.create(testID);
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_VERSIONS + "/" + mementoString;
+        final FedoraId fedoraID = FedoraId.create(testID);
     }
 
     @Test(expected = InvalidMementoPathException.class)
     public void testNormalMementoException2() throws Exception {
         final String mementoString = "other-text";
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_VERSIONS + "/" + mementoString;
-        final FedoraID fedoraID = FedoraID.create(testID);
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_VERSIONS + "/" + mementoString;
+        final FedoraId fedoraID = FedoraId.create(testID);
     }
 
     @Test
     public void testMetadataAcl() throws Exception {
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_METADATA + "/" + FCR_ACL;
-        final FedoraID fedoraID = FedoraID.create(testID);
-        assertResource(fedoraID, Arrays.asList("ACL", "METADATA"), testID, FEDORA_ID_PREFIX + "first-object/" +
-                FCR_METADATA);
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA + "/" + FCR_ACL;
+        final FedoraId fedoraID = FedoraId.create(testID);
+        assertResource(fedoraID, Arrays.asList("ACL", "METADATA"), testID, FEDORA_ID_PREFIX + "/first-object");
     }
 
 
     @Test(expected = InvalidResourceIdentifierException.class)
     public void testMetadataAclException() throws Exception {
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_METADATA + "/" + FCR_ACL + "/garbage";
-        final FedoraID fedoraID = FedoraID.create(testID);
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA + "/" + FCR_ACL + "/garbage";
+        final FedoraId fedoraID = FedoraId.create(testID);
     }
 
     @Test
     public void testMetadataTimemap() throws Exception {
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_METADATA + "/" + FCR_VERSIONS;
-        final FedoraID fedoraID = FedoraID.create(testID);
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA + "/" + FCR_VERSIONS;
+        final FedoraId fedoraID = FedoraId.create(testID);
         assertResource(fedoraID, Arrays.asList("METADATA", "TIMEMAP"), testID, FEDORA_ID_PREFIX +
-                "first-object/" + FCR_METADATA);
+                "/first-object");
     }
 
     @Test
     public void testMetadataMemento() throws Exception {
         final String mementoString = "20101109231256";
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_METADATA + "/" + FCR_VERSIONS + "/" +
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA + "/" + FCR_VERSIONS + "/" +
                 mementoString;
-        final FedoraID fedoraID = FedoraID.create(testID);
+        final FedoraId fedoraID = FedoraId.create(testID);
         assertResource(fedoraID, Arrays.asList("METADATA", "MEMENTO"), testID, FEDORA_ID_PREFIX +
-                "first-object/" + FCR_METADATA);
+                "/first-object");
         assertEquals(mementoString, fedoraID.getMementoString());
         final Instant mementoInstant = Instant.from(MEMENTO_LABEL_FORMATTER.parse(mementoString));
         assertEquals(mementoInstant, fedoraID.getMementoInstant());
@@ -160,66 +160,65 @@ public class FedoraIDTest {
 
     @Test
     public void testNormalWithHash() throws Exception {
-        final String testID = FEDORA_ID_PREFIX + "first-object#hashURI";
-        final FedoraID fedoraID = FedoraID.create(testID);
-        assertResource(fedoraID, "HASH", testID, FEDORA_ID_PREFIX + "first-object");
+        final String testID = FEDORA_ID_PREFIX + "/first-object#hashURI";
+        final FedoraId fedoraID = FedoraId.create(testID);
+        assertResource(fedoraID, "HASH", testID, FEDORA_ID_PREFIX + "/first-object");
         assertEquals("hashURI", fedoraID.getHashUri());
     }
 
     @Test
     public void testAclWithHash() throws Exception {
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_ACL + "#hashURI";
-        final FedoraID fedoraID = FedoraID.create(testID);
-        assertResource(fedoraID, Arrays.asList("HASH", "ACL"), testID, FEDORA_ID_PREFIX + "first-object");
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_ACL + "#hashURI";
+        final FedoraId fedoraID = FedoraId.create(testID);
+        assertResource(fedoraID, Arrays.asList("HASH", "ACL"), testID, FEDORA_ID_PREFIX + "/first-object");
         assertEquals("hashURI", fedoraID.getHashUri());
     }
 
 
     @Test(expected = InvalidResourceIdentifierException.class)
     public void testAclWithHashException() throws Exception {
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_ACL + "/garbage#hashURI";
-        final FedoraID fedoraID = FedoraID.create(testID);
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_ACL + "/garbage#hashURI";
+        final FedoraId fedoraID = FedoraId.create(testID);
     }
 
     @Test
     public void testMetadataWithHash() throws Exception {
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_METADATA + "#hashURI";
-        final FedoraID fedoraID = FedoraID.create(testID);
-        assertResource(fedoraID, Arrays.asList("HASH", "METADATA"), testID, FEDORA_ID_PREFIX + "first-object/" +
-                FCR_METADATA);
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA + "#hashURI";
+        final FedoraId fedoraID = FedoraId.create(testID);
+        assertResource(fedoraID, Arrays.asList("HASH", "METADATA"), testID, FEDORA_ID_PREFIX + "/first-object");
         assertEquals("hashURI", fedoraID.getHashUri());
     }
 
     @Test
     public void testMetadataAclWithHash() throws Exception {
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_METADATA + "/" + FCR_ACL + "#hashURI";
-        final FedoraID fedoraID = FedoraID.create(testID);
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA + "/" + FCR_ACL + "#hashURI";
+        final FedoraId fedoraID = FedoraId.create(testID);
         assertResource(fedoraID, Arrays.asList("HASH", "METADATA", "ACL"), testID, FEDORA_ID_PREFIX +
-                "first-object/" + FCR_METADATA);
+                "/first-object");
         assertEquals("hashURI", fedoraID.getHashUri());
     }
 
     @Test(expected = InvalidResourceIdentifierException.class)
     public void testMetadataAclWithHashException() throws Exception {
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_METADATA + "/" + FCR_ACL + "/garbage#hashURI";
-        final FedoraID fedoraID = FedoraID.create(testID);
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA + "/" + FCR_ACL + "/garbage#hashURI";
+        final FedoraId fedoraID = FedoraId.create(testID);
     }
 
     @Test
     public void testTimemapWithHash() throws Exception {
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_VERSIONS + "#hashURI";
-        final FedoraID fedoraID = FedoraID.create(testID);
-        assertResource(fedoraID, Arrays.asList("HASH", "TIMEMAP"), testID, FEDORA_ID_PREFIX + "first-object");
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_VERSIONS + "#hashURI";
+        final FedoraId fedoraID = FedoraId.create(testID);
+        assertResource(fedoraID, Arrays.asList("HASH", "TIMEMAP"), testID, FEDORA_ID_PREFIX + "/first-object");
         assertEquals("hashURI", fedoraID.getHashUri());
     }
 
     @Test
     public void testMementoWithHash() throws Exception {
         final String mementoString = "20101109231256";
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_VERSIONS + "/" +
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_VERSIONS + "/" +
                 mementoString + "#hashURI";
-        final FedoraID fedoraID = FedoraID.create(testID);
-        assertResource(fedoraID, Arrays.asList("HASH", "MEMENTO"), testID, FEDORA_ID_PREFIX + "first-object");
+        final FedoraId fedoraID = FedoraId.create(testID);
+        assertResource(fedoraID, Arrays.asList("HASH", "MEMENTO"), testID, FEDORA_ID_PREFIX + "/first-object");
         assertEquals("hashURI", fedoraID.getHashUri());
         assertEquals(mementoString, fedoraID.getMementoString());
         final Instant mementoInstant = Instant.from(MEMENTO_LABEL_FORMATTER.parse(mementoString));
@@ -229,34 +228,34 @@ public class FedoraIDTest {
     @Test(expected = InvalidMementoPathException.class)
     public void testMementoWithHashException() throws Exception {
         final String mementoString = "00001221010304";
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_VERSIONS + "/" + mementoString + "#hashURI";
-        final FedoraID fedoraID = FedoraID.create(testID);
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_VERSIONS + "/" + mementoString + "#hashURI";
+        final FedoraId fedoraID = FedoraId.create(testID);
     }
 
     @Test(expected = InvalidMementoPathException.class)
     public void testMementoWithHashException2() throws Exception {
         final String mementoString = "test-garbage";
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_VERSIONS + "/" + mementoString + "#hashURI";
-        final FedoraID fedoraID = FedoraID.create(testID);
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_VERSIONS + "/" + mementoString + "#hashURI";
+        final FedoraId fedoraID = FedoraId.create(testID);
     }
 
     @Test
     public void testMetadataTimemapWithHash() throws Exception {
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_METADATA + "/" + FCR_VERSIONS + "#hashURI";
-        final FedoraID fedoraID = FedoraID.create(testID);
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA + "/" + FCR_VERSIONS + "#hashURI";
+        final FedoraId fedoraID = FedoraId.create(testID);
         assertResource(fedoraID, Arrays.asList("HASH", "METADATA", "TIMEMAP"), testID, FEDORA_ID_PREFIX +
-                "first-object/" + FCR_METADATA);
+                "/first-object");
         assertEquals("hashURI", fedoraID.getHashUri());
     }
 
     @Test
     public void testMetadataMementoWithHash() throws Exception {
         final String mementoString = "20101109231256";
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_METADATA + "/" + FCR_VERSIONS + "/" +
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA + "/" + FCR_VERSIONS + "/" +
                 mementoString + "#hashURI";
-        final FedoraID fedoraID = FedoraID.create(testID);
+        final FedoraId fedoraID = FedoraId.create(testID);
         assertResource(fedoraID, Arrays.asList("HASH", "METADATA", "MEMENTO"), testID, FEDORA_ID_PREFIX +
-                "first-object/" + FCR_METADATA);
+                "/first-object");
         assertEquals("hashURI", fedoraID.getHashUri());
         assertEquals(mementoString, fedoraID.getMementoString());
         final Instant mementoInstant = Instant.from(MEMENTO_LABEL_FORMATTER.parse(mementoString));
@@ -266,86 +265,86 @@ public class FedoraIDTest {
     @Test(expected = InvalidMementoPathException.class)
     public void testMetadataMementoWithHashException() throws Exception {
         final String mementoString = "00001221010304";
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_METADATA + "/" + FCR_VERSIONS + "/" +
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA + "/" + FCR_VERSIONS + "/" +
                 mementoString + "#hashURI";
-        final FedoraID fedoraID = FedoraID.create(testID);
+        final FedoraId fedoraID = FedoraId.create(testID);
     }
 
     @Test(expected = InvalidMementoPathException.class)
     public void testMetadataMementoWithHashException1() throws Exception {
         final String mementoString = "test-garbage";
-        final String testID = FEDORA_ID_PREFIX + "first-object/" + FCR_METADATA + "/" + FCR_VERSIONS + "/" +
+        final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA + "/" + FCR_VERSIONS + "/" +
                 mementoString + "#hashURI";
-        final FedoraID fedoraID = FedoraID.create(testID);
+        final FedoraId fedoraID = FedoraId.create(testID);
     }
 
     @Test
     public void testCreateNull() {
-        final FedoraID fedoraID = FedoraID.create(null);
+        final FedoraId fedoraID = FedoraId.create(null);
         assertTrue(fedoraID.isRepositoryRoot());
         assertEquals(FEDORA_ID_PREFIX, fedoraID.getFullId());
     }
 
     @Test
     public void testCreateEmpty() {
-        final FedoraID fedoraID = FedoraID.create("");
+        final FedoraId fedoraID = FedoraId.create("");
         assertTrue(fedoraID.isRepositoryRoot());
         assertEquals(FEDORA_ID_PREFIX, fedoraID.getFullId());
     }
 
     @Test
     public void testStringConcatenation() {
-        final FedoraID fedoraID = FedoraID.create("object1", "object2", "object3");
-        assertEquals(FEDORA_ID_PREFIX + "object1/object2/object3", fedoraID.getFullId());
+        final FedoraId fedoraID = FedoraId.create("object1", "object2", "object3");
+        assertEquals(FEDORA_ID_PREFIX + "/object1/object2/object3", fedoraID.getFullId());
     }
 
     @Test
     public void testResourceIdAddition() {
-        final FedoraID fedoraID = FedoraID.create("core-object", FCR_VERSIONS);
-        final FedoraID fedoraID1 = fedoraID.addToResourceId(FCR_ACL);
-        assertEquals(FEDORA_ID_PREFIX + "core-object/" + FCR_ACL, fedoraID1.getFullId());
+        final FedoraId fedoraID = FedoraId.create("core-object", FCR_VERSIONS);
+        final FedoraId fedoraId1 = fedoraID.addToResourceId(FCR_ACL);
+        assertEquals(FEDORA_ID_PREFIX + "/core-object/" + FCR_ACL, fedoraId1.getFullId());
     }
 
     @Test
     public void testFullIdAddition() {
-        final FedoraID fedoraID = FedoraID.create("core-object", FCR_VERSIONS);
-        final FedoraID fedoraID1 = fedoraID.addToFullId("20200401101900");
-        assertEquals(FEDORA_ID_PREFIX + "core-object/" + FCR_VERSIONS + "/20200401101900", fedoraID1.getFullId());
+        final FedoraId fedoraID = FedoraId.create("core-object", FCR_VERSIONS);
+        final FedoraId fedoraId1 = fedoraID.addToFullId("20200401101900");
+        assertEquals(FEDORA_ID_PREFIX + "/core-object/" + FCR_VERSIONS + "/20200401101900", fedoraId1.getFullId());
     }
 
     @Test
-    public void testResourceIdAdditionMulitple() {
-        final FedoraID fedoraID = FedoraID.create("core-object", FCR_ACL);
-        final FedoraID fedoraID1 = fedoraID.addToResourceId(FCR_VERSIONS, "20200401110400");
-        assertEquals(FEDORA_ID_PREFIX + "core-object/" + FCR_VERSIONS + "/20200401110400", fedoraID1.getFullId());
+    public void testResourceIdAdditionMultiple() {
+        final FedoraId fedoraID = FedoraId.create("core-object", FCR_ACL);
+        final FedoraId fedoraId1 = fedoraID.addToResourceId(FCR_VERSIONS, "20200401110400");
+        assertEquals(FEDORA_ID_PREFIX + "/core-object/" + FCR_VERSIONS + "/20200401110400", fedoraId1.getFullId());
     }
 
     @Test
-    public void testFullIdAdditionMulitple() {
-        final FedoraID fedoraID = FedoraID.create("core-object");
-        final FedoraID fedoraID1 = fedoraID.addToFullId(FCR_VERSIONS, "20200401110400");
-        assertEquals(FEDORA_ID_PREFIX + "core-object/" + FCR_VERSIONS + "/20200401110400", fedoraID1.getFullId());
+    public void testFullIdAdditionMultiple() {
+        final FedoraId fedoraID = FedoraId.create("core-object");
+        final FedoraId fedoraId1 = fedoraID.addToFullId(FCR_VERSIONS, "20200401110400");
+        assertEquals(FEDORA_ID_PREFIX + "/core-object/" + FCR_VERSIONS + "/20200401110400", fedoraId1.getFullId());
     }
 
     /**
-     * Utility to test a FedoraID against expectations.
-     * @param fedoraID The FedoraID object to test.
+     * Utility to test a FedoraId against expectations.
+     * @param fedoraID The FedoraId object to test.
      * @param type A string type of "ROOT", "ACL", "METADATA", "TIMEMAP", "MEMENTO" and "HASH"
      * @param fullID The expected full ID.
      * @param shortID The expected short ID.
      */
-    private void assertResource(final FedoraID fedoraID, final String type, final String fullID, final String shortID) {
+    private void assertResource(final FedoraId fedoraID, final String type, final String fullID, final String shortID) {
         assertResource(fedoraID, Collections.singletonList(type), fullID, shortID);
     }
 
     /**
-     * Utility to test a FedoraID against expectations.
-     * @param fedoraID The FedoraID object to test.
+     * Utility to test a FedoraId against expectations.
+     * @param fedoraID The FedoraId object to test.
      * @param type A list of string type of "ROOT", "ACL", "METADATA", "TIMEMAP", "MEMENTO" and "HASH"
      * @param fullID The expected full ID.
      * @param shortID The expected short ID.
      */
-    private void assertResource(final FedoraID fedoraID, final List<String> type, final String fullID,
+    private void assertResource(final FedoraId fedoraID, final List<String> type, final String fullID,
                                 final String shortID) {
         if (type.contains("ROOT")) {
             assertTrue(fedoraID.isRepositoryRoot());
@@ -359,8 +358,10 @@ public class FedoraIDTest {
         }
         if (type.contains("METADATA")) {
             assertTrue(fedoraID.isDescription());
+            assertEquals(shortID + "/" + FCR_METADATA, fedoraID.getDescriptionId());
         } else {
             assertFalse(fedoraID.isDescription());
+            assertNull(fedoraID.getDescriptionId());
         }
         if (type.contains("HASH")) {
             assertTrue(fedoraID.isHashUri());

@@ -26,7 +26,7 @@ import java.util.Collection;
 import javax.inject.Inject;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.identifiers.FedoraID;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ExternalContent;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
@@ -53,7 +53,7 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
     @Override
     public void perform(final String txId,
                         final String userPrincipal,
-                        final FedoraID fedoraId,
+                        final FedoraId fedoraId,
                         final String filename,
                         final String contentType,
                         final Collection<URI> digests,

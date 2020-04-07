@@ -104,7 +104,7 @@ import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
-import org.fcrepo.kernel.api.identifiers.FedoraID;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.ExternalContent;
@@ -395,8 +395,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String interactionModel = checkInteractionModel(links);
 
-        final String externalUri = identifierConverter().toDomain(externalPath());
-        final FedoraID fedoraId = FedoraID.create(identifierConverter().pathToInternalId(externalPath()));
+        final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath());
         final boolean resourceExists = doesResourceExist(transaction, fedoraId);
 
         if (resourceExists) {
@@ -464,7 +463,7 @@ public class FedoraLdp extends ContentExposingResource {
             }
         } else {
             final var contentType = requestContentType != null ? requestContentType : DEFAULT_RDF_CONTENT_TYPE;
-            final Model model = httpRdfService.bodyToInternalModel(externalUri, requestBodyStream,
+            final Model model = httpRdfService.bodyToInternalModel(fedoraId.getFullId(), requestBodyStream,
                     contentType, identifierConverter());
 
             if (resourceExists) {
@@ -591,9 +590,8 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String interactionModel = checkInteractionModel(links);
 
-        final String fedoraUri = identifierConverter().pathToInternalId(externalPath());
-        final FedoraID fedoraId = FedoraID.create(fedoraUri);
-        final FedoraID newFedoraId = mintNewPid(fedoraId, slug);
+        final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath());
+        final FedoraId newFedoraId = mintNewPid(fedoraId, slug);
         final var providedContentType = requestContentType != null ? requestContentType.toString() : null;
 
         if (isBinary(interactionModel,
@@ -814,7 +812,7 @@ public class FedoraLdp extends ContentExposingResource {
             FedoraTypes.FCR_VERSIONS, externalPath);
     }
 
-    private FedoraID mintNewPid(final FedoraID fedoraId, final String slug) {
+    private FedoraId mintNewPid(final FedoraId fedoraId, final String slug) {
         final String pid;
 
         if (!isBlank(slug)) {
@@ -825,10 +823,10 @@ public class FedoraLdp extends ContentExposingResource {
             pid = defaultPidMinter.get();
         }
 
-        final FedoraID fullTestPath = fedoraId.addToFullId(pid);
+        final FedoraId fullTestPath = fedoraId.addToFullId(pid);
 
         if (doesResourceExist(transaction, fullTestPath)) {
-            LOGGER.trace("Resource with path {} already exists; minting new path instead", fullTestPath.getFullId());
+            LOGGER.trace("Resource with path {} already exists; minting new path instead", fullTestPath);
             return mintNewPid(fedoraId, null);
         }
 

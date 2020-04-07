@@ -23,7 +23,7 @@ import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.identifiers.FedoraID;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
@@ -55,7 +55,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     protected final ResourceFactory resourceFactory;
 
-    private FedoraID fedoraID;
+    private FedoraId fedoraID;
 
     private String parentId;
 
@@ -80,7 +80,7 @@ public class FedoraResourceImpl implements FedoraResource {
     // The transaction this representation of the resource belongs to
     protected final Transaction tx;
 
-    protected FedoraResourceImpl(final FedoraID fedoraID,
+    protected FedoraResourceImpl(final FedoraId fedoraID,
                                  final Transaction tx,
                                  final PersistentStorageSessionManager pSessionManager,
                                  final ResourceFactory resourceFactory) {
@@ -117,8 +117,8 @@ public class FedoraResourceImpl implements FedoraResource {
     public FedoraResource getOriginalResource() {
         if (isMemento()) {
             try {
-                // We are in a memento so we need to create a FedoraID for just the original resource.
-                return resourceFactory.getResource(tx, FedoraID.create(getFedoraId().getResourceId()));
+                // We are in a memento so we need to create a FedoraId for just the original resource.
+                return resourceFactory.getResource(tx, FedoraId.create(getFedoraId().getResourceId()));
             } catch (PathNotFoundException e) {
                 throw new PathNotFoundRuntimeException(e);
             }
@@ -281,7 +281,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public FedoraResource getParent() throws PathNotFoundException {
-        return resourceFactory.getResource(FedoraID.create(parentId));
+        return resourceFactory.getResource(FedoraId.create(parentId));
     }
 
     @Override
@@ -295,7 +295,7 @@ public class FedoraResourceImpl implements FedoraResource {
     }
 
     @Override
-    public FedoraID getFedoraId() {
+    public FedoraId getFedoraId() {
         return this.fedoraID;
     }
 

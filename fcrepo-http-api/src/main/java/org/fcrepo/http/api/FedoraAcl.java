@@ -75,7 +75,7 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
-import org.fcrepo.kernel.api.identifiers.FedoraID;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.DeleteResourceService;
@@ -139,7 +139,7 @@ public class FedoraAcl extends ContentExposingResource {
 
         aclResource = webacAclService.findOrCreate(transaction, path);
         created = aclResource.isNew();
-        final FedoraID aclId = aclResource.getFedoraId();
+        final FedoraId aclId = aclResource.getFedoraId();
 
         final MediaType contentType =
             requestContentType == null ? RDFMediaType.TURTLE_TYPE : valueOf(getSimpleContentType(requestContentType));

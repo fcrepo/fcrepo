@@ -28,6 +28,7 @@ import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
 
@@ -85,7 +86,7 @@ public class HttpIdentifierConverter {
             final String decodedPath = URLDecoder.decode(path, UTF_8);
             final String fedoraId = trimTrailingSlashes(decodedPath);
 
-            return FEDORA_ID_PREFIX + fedoraId.replaceFirst("\\/", "");
+            return FEDORA_ID_PREFIX + fedoraId;
         }
         throw new IllegalArgumentException("Cannot translate NULL path");
     }
@@ -112,9 +113,10 @@ public class HttpIdentifierConverter {
     public String toExternalId(final String fedoraId) {
         LOGGER.debug("Translating Fedora ID {} to Http URI", fedoraId);
         if (inInternalDomain(fedoraId)) {
-            // If it starts with our prefix, strip the prefix and use it as the path
+            // If it starts with our prefix, strip the prefix and any leading slashes and use it as the path
             // part of the URI.
-            final String[] values = { fedoraId.substring(FEDORA_ID_PREFIX.length()) };
+            final String path = fedoraId.substring(FEDORA_ID_PREFIX.length()).replaceFirst("\\/", "");
+            final String[] values = { path };
             // Need to pass as Array or second arg is ignored. Second arg is DON'T encode slashes
             return uriBuilder().build(values, false).toString();
         }
@@ -175,12 +177,12 @@ public class HttpIdentifierConverter {
     }
 
     /**
-     * Function to convert from the external path of a URI to the internal ID.
+     * Function to convert from the external path of a URI to an internal FedoraId.
      * @param externalPath the path part of the external URI.
-     * @return the internal ID.
+     * @return the FedoraId.
      */
-    public String pathToInternalId(final String externalPath) {
-        return toInternalId(toDomain(externalPath));
+    public FedoraId pathToInternalId(final String externalPath) {
+        return FedoraId.create(toInternalId(toDomain(externalPath)));
     }
 
     /**
