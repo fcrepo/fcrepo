@@ -18,6 +18,7 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import static java.lang.String.format;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getSidecarSubpath;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveVersionId;
@@ -49,6 +50,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Phaser;
+import java.util.concurrent.TimeoutException;
 
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getRDFFileExtension;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getRdfStream;
@@ -65,6 +67,8 @@ import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.des
 public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OCFLPersistentStorageSession.class);
+
+    private static final long AWAIT_TIMEOUT = 30000l;
 
     /**
      * Externally generated id for the session.
@@ -333,7 +337,16 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
             //we must ensure that all persist operations are complete before we close any
             //ocfl object sessions. If the commit had been started then this synchronization step
             //will have already occurred and is thus unnecessary.
-            this.phaser.arriveAndAwaitAdvance();
+            synchronized (this.phaser) {
+                if (this.phaser.getRegisteredParties() > 0) {
+                    try {
+                        this.phaser.awaitAdvanceInterruptibly(0, AWAIT_TIMEOUT, MILLISECONDS);
+                    } catch (InterruptedException | TimeoutException e) {
+                        throw new PersistentStorageException(
+                                "Waiting for operations to complete took too long, rollback failed");
+                    }
+                }
+            }
         }
 
         //close any uncommitted sessions
