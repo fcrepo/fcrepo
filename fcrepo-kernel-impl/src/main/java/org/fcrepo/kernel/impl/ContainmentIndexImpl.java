@@ -386,7 +386,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     @Override
     public boolean resourceExists(final String txID, final FedoraId fedoraID) {
-        final String resourceID = fedoraID.isDescription() ? fedoraID.getResourceId() : fedoraID.getFullId();
+        final String resourceID = fedoraID.getResourceId();
         LOGGER.debug("Checking if {} exists in transaction {}", resourceID, txID);
         if (resourceID.equals(FEDORA_ID_PREFIX)) {
             // Root always exists.
