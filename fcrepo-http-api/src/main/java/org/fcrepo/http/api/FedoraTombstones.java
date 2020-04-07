@@ -39,7 +39,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 @Scope("request")
 @Path("/{path: .*}/fcr:tombstone")
-public class FedoraTombstones extends FedoraBaseResource {
+public class FedoraTombstones extends ContentExposingResource {
 
     private static final Logger LOGGER = getLogger(FedoraTombstones.class);
 
@@ -76,7 +76,13 @@ public class FedoraTombstones extends FedoraBaseResource {
         return noContent().build();
     }
 
+    @Override
     protected FedoraResource resource() {
         return translator().convert(translator().toDomain(externalPath));
+    }
+
+    @Override
+    protected String externalPath() {
+        return null;
     }
 }

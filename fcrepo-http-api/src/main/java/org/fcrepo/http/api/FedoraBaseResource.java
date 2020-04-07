@@ -17,31 +17,18 @@
  */
 package org.fcrepo.http.api;
 
-import com.google.common.annotations.VisibleForTesting;
-import org.apache.jena.graph.Node;
-import org.apache.jena.rdf.model.Resource;
 // import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
-import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
-import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.exception.InvalidMementoPathException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
-import org.fcrepo.kernel.api.exception.TombstoneException;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
-import org.fcrepo.kernel.api.models.Tombstone;
-import org.fcrepo.kernel.api.services.VersionService;
 import org.slf4j.Logger;
 
 import java.net.URI;
 import java.security.Principal;
-import java.time.Instant;
-import java.time.format.DateTimeParseException;
-import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
@@ -62,30 +49,11 @@ abstract public class FedoraBaseResource extends AbstractResource {
 
     static final String JMS_BASEURL_PROP = "fcrepo.jms.baseUrl";
 
-    private static final Pattern TRAILING_SLASH_REGEX = Pattern.compile("/+$");
-
-    // Note: This pattern is intentionally loose, matching invalid memento strings, for error handling purposes
-    private static final Pattern MEMENTO_PATH_PATTERN = Pattern.compile(".*/" + FedoraTypes.FCR_VERSIONS + "/(.*)$");
-
-    @Inject
-    protected Transaction transaction;
-
     @Context
     protected SecurityContext securityContext;
 
     @Inject
-    private ResourceFactory resourceFactory;
-
-    protected IdentifierConverter<Resource, FedoraResource> idTranslator;
-
-    protected IdentifierConverter<Resource, FedoraResource> translator() {
-        if (idTranslator == null) {
-            idTranslator = new HttpResourceConverter(transaction,
-                    uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));
-        }
-
-        return idTranslator;
-    }
+    protected ResourceFactory resourceFactory;
 
     protected HttpIdentifierConverter identifierConverter;
 
@@ -132,40 +100,6 @@ abstract public class FedoraBaseResource extends AbstractResource {
     }
 
     /**
-     * This is a helper method for using the idTranslator to convert this resource into an associated Jena Node.
-     *
-     * @param resource to be converted into a Jena Node
-     * @return the Jena node
-     */
-    protected Node asNode(final FedoraResource resource) {
-        return translator().reverse().convert(resource).asNode();
-    }
-
-    /**
-     * Get the FedoraResource for the resource at the external path
-     * @param externalPath the external path
-     * @return the fedora resource at the external path
-     */
-    @VisibleForTesting
-    public FedoraResource getResourceFromPath(final String externalPath) {
-        final String fedoraId = identifierConverter().toInternalId(identifierConverter().toDomain(externalPath));
-        final Instant memento = extractMemento(externalPath);
-
-        try {
-            final FedoraResource fedoraResource = resourceFactory.getResource(transaction, fedoraId, memento);
-
-            if (fedoraResource instanceof Tombstone) {
-                final String resourceURI = TRAILING_SLASH_REGEX.matcher(externalPath).replaceAll("");
-                throw new TombstoneException(fedoraResource, resourceURI + "/fcr:tombstone");
-            }
-
-            return fedoraResource;
-        } catch (final PathNotFoundException exc) {
-            throw new PathNotFoundRuntimeException(exc);
-        }
-    }
-
-    /**
      * Set the baseURL for JMS events.
      * @param uriInfo the uri info
      * @param headers HTTP headers
@@ -206,18 +140,6 @@ abstract public class FedoraBaseResource extends AbstractResource {
             return uriInfo.getBaseUriBuilder().uri(propBaseUri).toString();
         }
         return "";
-    }
-
-    private Instant extractMemento(final String externalPath) {
-        final var matcher = MEMENTO_PATH_PATTERN.matcher(externalPath);
-        if (matcher.matches()) {
-            try {
-                return Instant.from(VersionService.MEMENTO_LABEL_FORMATTER.parse(matcher.group(1)));
-            } catch (DateTimeParseException e) {
-                throw new InvalidMementoPathException("Invalid versioning request with path: " + externalPath, e);
-            }
-        }
-        return null;
     }
 
     protected String getUserPrincipal() {
