@@ -19,16 +19,17 @@ package org.fcrepo.kernel.impl;
 
 import static java.util.UUID.randomUUID;
 
-import org.fcrepo.kernel.api.ContainmentIndex;
-import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.TransactionManager;
-import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
-import org.fcrepo.persistence.api.PersistentStorageSessionManager;
-import org.springframework.stereotype.Component;
-
 import java.util.HashMap;
 
 import javax.inject.Inject;
+
+import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.TransactionExpiredException;
+import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.springframework.stereotype.Component;
 
 
 /**
@@ -48,7 +49,7 @@ public class TransactionManagerImpl implements TransactionManager {
     private PersistentStorageSessionManager pSessionManager;
 
     TransactionManagerImpl() {
-        transactions = new HashMap();
+        transactions = new HashMap<>();
     }
 
     // TODO Add a timer to periadically rollback and cleanup expired transaction?
@@ -71,12 +72,12 @@ public class TransactionManagerImpl implements TransactionManager {
             if (transaction.hasExpired()) {
                 transaction.rollback();
                 transactions.remove(transactionId);
-                throw new TransactionRuntimeException("Transaction with transactionId: " + transactionId +
+                throw new TransactionExpiredException("Transaction with transactionId: " + transactionId +
                     " expired at " + transaction.getExpires() + "!");
             }
             return transaction;
         } else {
-            throw new TransactionRuntimeException("No Transaction found with transactionId: " + transactionId);
+            throw new TransactionNotFoundException("No Transaction found with transactionId: " + transactionId);
         }
     }
 

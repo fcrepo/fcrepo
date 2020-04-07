@@ -23,21 +23,33 @@ import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_EXPIRES_HEADER;
+import static org.fcrepo.http.commons.session.TransactionConstants.EXPIRES_RFC_1123_FORMATTER;
+import static org.fcrepo.http.commons.session.TransactionConstants.TX_COMMIT_REL;
+import static org.fcrepo.http.commons.session.TransactionConstants.TX_COMMIT_SUFFIX;
+import static org.fcrepo.http.commons.session.TransactionConstants.TX_PREFIX;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.TransactionExpiredException;
+import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -58,6 +70,56 @@ public class Transactions extends FedoraBaseResource {
     @Inject
     private TransactionManager txManager;
 
+    @Inject
+    private Provider<Transaction> txProvider;
+
+    /**
+     * Get the status of an existing transaction
+     *
+     * @param txId id of the transaction
+     * @return 204 no content if status retrieved, 410 gone if transaction doesn't exist.
+     */
+    @GET
+    @Path("{transactionId}")
+    public Response getTransactionStatus(@PathParam("transactionId") final String txId) {
+        return transactionStatus(txId, false);
+    }
+
+    /**
+     * Refresh an existing transaction
+     *
+     * @param txId id of the transaction
+     * @return 204 no content if successfully refreshed, 410 gone if transaction doesn't exist.
+     */
+    @POST
+    @Path("{transactionId}")
+    public Response refreshTransaction(@PathParam("transactionId") final String txId) {
+        return transactionStatus(txId, true);
+    }
+
+    private Response transactionStatus(final String txId, final boolean refresh) {
+        // Retrieve the tx provided via the path
+        final Transaction tx;
+        try {
+            tx = txManager.get(txId);
+        } catch (final TransactionNotFoundException e) {
+            return Response.status(Status.GONE).build();
+        } catch (final TransactionExpiredException e) {
+            return Response.status(Status.GONE).entity(e.getMessage()).build();
+        }
+
+        if (refresh) {
+            tx.refresh();
+            LOGGER.info("Refreshed transaction '{}'", tx.getId());
+        } else {
+            LOGGER.info("Checking transaction status'{}'", tx.getId());
+        }
+
+        return Response.status(Status.NO_CONTENT)
+                .header(ATOMIC_EXPIRES_HEADER, EXPIRES_RFC_1123_FORMATTER.format(tx.getExpires()))
+                .build();
+    }
+
     /**
      * Create a new transaction resource and add it to the registry
      *
@@ -66,14 +128,19 @@ public class Transactions extends FedoraBaseResource {
      */
     @POST
     public Response createTransaction() throws URISyntaxException {
-        // TransactionProvider would have already created a transaction
-        // Just, set short-lived to false
-        transaction.setShortLived(false);
-        LOGGER.info("Created transaction '{}'", transaction.getId());
+        final Transaction tx = txProvider.get();
+        tx.setShortLived(false);
 
-        final Response.ResponseBuilder res = created(
-                new URI(translator().toDomain("/tx:" + transaction.getId()).toString()));
-        res.expires(from(transaction.getExpires()));
+        LOGGER.info("Created transaction '{}'", tx.getId());
+        final var externalId = identifierConverter()
+                .toExternalId(FEDORA_ID_PREFIX + TX_PREFIX + tx.getId());
+        final var res = created(new URI(externalId));
+        res.expires(from(tx.getExpires()));
+
+        final var commitUri = URI.create(externalId + TX_COMMIT_SUFFIX);
+        final var commitLink = Link.fromUri(commitUri).rel(TX_COMMIT_REL).build();
+        res.links(commitLink);
+
         return res.build();
     }
 
@@ -84,19 +151,20 @@ public class Transactions extends FedoraBaseResource {
      * @return 204
      */
     @PUT
-    @Path("/fcr:tx/{transactionId}/commit")
+    @Path("{transactionId}/commit")
     public Response commit(@PathParam("transactionId") final String txId) {
         try {
             final Transaction transaction = txManager.get(txId);
-            LOGGER.info("Commit transaction '{}'", transaction.getId());
+            LOGGER.info("Committing transaction '{}'", transaction.getId());
             transaction.commit();
             return noContent().build();
-        } catch(Exception e) {
-            if (e.getMessage().matches("No Transaction found with transactionId")) {
-                return status(BAD_REQUEST).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
-            } else {
-                throw new RuntimeException(e);
-            }
+        } catch (final TransactionNotFoundException e) {
+            return Response.status(Status.BAD_REQUEST).build();
+        } catch (final TransactionExpiredException e) {
+            return Response.status(Status.BAD_REQUEST)
+                    .entity(e.getMessage())
+                    .type(TEXT_PLAIN_WITH_CHARSET)
+                    .build();
         }
     }
 
@@ -114,7 +182,7 @@ public class Transactions extends FedoraBaseResource {
             LOGGER.info("Rollback transaction '{}'", transaction.getId());
             transaction.rollback();
             return noContent().build();
-        } catch(Exception e) {
+        } catch(final Exception e) {
             if (e.getMessage().matches("No Transaction found with transactionId")) {
                 return status(BAD_REQUEST).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
             } else {

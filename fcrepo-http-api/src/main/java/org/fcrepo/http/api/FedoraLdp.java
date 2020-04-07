@@ -680,6 +680,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         }
         addExternalContentHeaders(resource);
+        addTransactionHeaders();
     }
 
     @Override

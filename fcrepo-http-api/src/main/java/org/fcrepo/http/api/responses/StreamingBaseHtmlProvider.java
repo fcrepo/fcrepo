@@ -25,7 +25,7 @@ import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.sparql.util.graph.GraphUtils.multiValueURI;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
-import static org.fcrepo.http.commons.session.TransactionProvider.ATOMIC_ID_HEADER;
+import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;

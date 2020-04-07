@@ -17,7 +17,7 @@
  */
 package org.fcrepo.kernel.impl;
 
-
+import static java.time.Duration.ofMillis;
 import static java.time.Duration.ofMinutes;
 
 import java.time.Duration;
@@ -38,6 +38,8 @@ import org.slf4j.LoggerFactory;
  * @author mohideen
  */
 public class TransactionImpl implements Transaction {
+
+    public static final String TIMEOUT_SYSTEM_PROPERTY = "fcrepo.session.timeout";
 
     private static final Logger log = LoggerFactory.getLogger(TransactionImpl.class);
 
@@ -163,9 +165,14 @@ public class TransactionImpl implements Transaction {
     }
 
     private Duration timeout() {
-        // TODO Get the user configured timeout?
-        // Otherwise, use the default timeout
-        return DEFAULT_TIMEOUT;
+        // Get the configured timeout
+        final String timeoutProperty = System.getProperty(TIMEOUT_SYSTEM_PROPERTY);
+        if (timeoutProperty != null) {
+            return ofMillis(Long.parseLong(timeoutProperty));
+        } else {
+            // Otherwise, use the default timeout
+            return DEFAULT_TIMEOUT;
+        }
     }
 
     private PersistentStorageSession getPersistentSession() {

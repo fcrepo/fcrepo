@@ -32,6 +32,7 @@ import javax.ws.rs.core.SecurityContext;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -73,7 +74,7 @@ public class TransactionsTest {
         when(mockTxManager.create()).thenReturn(mockTransaction);
         when(mockTxManager.get("tx:123")).thenReturn(mockTransaction);
         when(mockTxManager.get(AdditionalMatchers.not(ArgumentMatchers.eq("tx:123"))))
-            .thenThrow(new RuntimeException("No Transaction found with transactionId"));
+            .thenThrow(new TransactionNotFoundException("No Transaction found with transactionId"));
         when(mockTransaction.getId()).thenReturn("123");
         when(mockTransaction.getExpires()).thenReturn(now().plusSeconds(100));
         setField(testObj, "txManager", mockTxManager);
