@@ -24,8 +24,8 @@ import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * OCFL implementation of PersistentStorageSessionManager
@@ -51,7 +51,7 @@ public class OCFLPersistentSessionManager implements PersistentStorageSessionMan
      * Default constructor
      */
     public OCFLPersistentSessionManager() {
-        this.sessionMap = new HashMap<>();
+        this.sessionMap = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -61,23 +61,20 @@ public class OCFLPersistentSessionManager implements PersistentStorageSessionMan
             throw new IllegalArgumentException("session id must be non-null");
         }
 
-        final PersistentStorageSession session = sessionMap.get(sessionId);
-
-        if (session != null) {
-            return session;
-        }
-
-        final PersistentStorageSession newSession = new OCFLPersistentStorageSession(sessionId,
+        return sessionMap.computeIfAbsent(sessionId, key -> new OCFLPersistentStorageSession(
+                key,
                 fedoraOcflIndex,
-                objectSessionFactory);
-        sessionMap.put(sessionId, newSession);
-        return newSession;
+                objectSessionFactory));
     }
 
     @Override
     public PersistentStorageSession getReadOnlySession() {
         if (this.readOnlySession == null) {
-            this.readOnlySession = new OCFLPersistentStorageSession(fedoraOcflIndex, objectSessionFactory);
+            synchronized (this) {
+                if (this.readOnlySession == null) {
+                    this.readOnlySession = new OCFLPersistentStorageSession(fedoraOcflIndex, objectSessionFactory);
+                }
+            }
         }
         return this.readOnlySession;
     }
