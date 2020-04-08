@@ -20,7 +20,9 @@ package org.fcrepo.http.api;
 // import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
+import org.fcrepo.http.commons.session.TransactionProvider;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -30,6 +32,7 @@ import org.slf4j.Logger;
 import java.net.URI;
 import java.security.Principal;
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.SecurityContext;
@@ -54,6 +57,15 @@ abstract public class FedoraBaseResource extends AbstractResource {
 
     @Inject
     protected ResourceFactory resourceFactory;
+
+    @Context protected HttpServletRequest servletRequest;
+
+    @Inject
+    protected TransactionManager txManager;
+
+    private TransactionProvider txProvider;
+
+    private Transaction transaction;
 
     protected HttpIdentifierConverter identifierConverter;
 
@@ -145,5 +157,13 @@ abstract public class FedoraBaseResource extends AbstractResource {
     protected String getUserPrincipal() {
         final Principal p = securityContext.getUserPrincipal();
         return p == null ? null : p.getName();
+    }
+
+    protected Transaction transaction() {
+        if (transaction == null) {
+            txProvider = new TransactionProvider(txManager, servletRequest);
+            transaction = txProvider.provide();
+        }
+        return transaction;
     }
 }

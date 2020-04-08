@@ -24,15 +24,11 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.ext.Provider;
-
 import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.glassfish.hk2.api.Factory;
-import org.glassfish.jersey.process.internal.RequestScoped;
 import org.slf4j.Logger;
 
 /**
@@ -40,27 +36,25 @@ import org.slf4j.Logger;
  *
  * @author awoods
  */
-@Provider
-@RequestScoped
 public class TransactionProvider implements Factory<Transaction> {
+
+    private static final Logger LOGGER = getLogger(TransactionProvider.class);
 
     public static final Pattern TX_ID_PATTERN = Pattern.compile(".*/" + TX_PREFIX + "([0-9a-f\\-]+)$");
 
-    @Inject
-    private TransactionManager txManager;
+    private final TransactionManager txManager;
 
     private final HttpServletRequest request;
 
     /**
      * Create a new transaction provider for a request
+     * @param txManager the transaction manager
      * @param request the request
      */
-    @Inject
-    public TransactionProvider(final HttpServletRequest request) {
+    public TransactionProvider(final TransactionManager txManager, final HttpServletRequest request) {
+        this.txManager = txManager;
         this.request = request;
     }
-
-    private static final Logger LOGGER = getLogger(TransactionProvider.class);
 
     @Override
     public Transaction provide() {

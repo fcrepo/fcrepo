@@ -136,6 +136,8 @@ public class FedoraAcl extends ContentExposingResource {
         final String path = toPath(translator(), externalPath);
         LOGGER.info("PUT acl resource '{}'", externalPath);
 
+        final var transaction = transaction();
+
         aclResource = webacAclService.findOrCreate(transaction, path);
         created = aclResource.isNew();
 
@@ -199,7 +201,7 @@ public class FedoraAcl extends ContentExposingResource {
                 throw new BadRequestException("SPARQL-UPDATE requests must have content!");
             }
 
-            evaluateRequestPreconditions(request, servletResponse, aclResource, transaction);
+            evaluateRequestPreconditions(request, servletResponse, aclResource, transaction());
 
             try (final RdfStream resourceTriples =
                      aclResource.isNew() ? new DefaultRdfStream(asNode(aclResource)) :
@@ -207,9 +209,9 @@ public class FedoraAcl extends ContentExposingResource {
                 LOGGER.info("PATCH for '{}'", externalPath);
                 patchResourcewithSparql(aclResource, requestBody, resourceTriples);
             }
-            transaction.commit();
+            transaction().commit();
 
-            addCacheControlHeaders(servletResponse, aclResource, transaction);
+            addCacheControlHeaders(servletResponse, aclResource, transaction());
 
             return noContent().build();
         } catch (final IllegalArgumentException iae) {
@@ -263,7 +265,7 @@ public class FedoraAcl extends ContentExposingResource {
             throw new ItemNotFoundException(String.format("No ACL found at %s", externalPath));
         }
 
-        checkCacheControlHeaders(request, servletResponse, aclResource, transaction);
+        checkCacheControlHeaders(request, servletResponse, aclResource, transaction());
 
         LOGGER.info("GET resource '{}'", externalPath);
         addResourceHttpHeaders(aclResource);
@@ -284,9 +286,9 @@ public class FedoraAcl extends ContentExposingResource {
 
         final FedoraResource aclResource = resource().getAcl();
         if (aclResource != null) {
-            deleteResourceService.perform(transaction, aclResource);
+            deleteResourceService.perform(transaction(), aclResource);
         }
-        transaction.commit();
+        transaction().commit();
 
         if (aclResource == null) {
             if (resource().hasType(FEDORA_REPOSITORY_ROOT)) {

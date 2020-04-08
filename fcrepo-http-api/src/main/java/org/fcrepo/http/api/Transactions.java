@@ -32,8 +32,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -45,10 +43,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TransactionExpiredException;
 import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
-import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -66,12 +63,6 @@ public class Transactions extends FedoraBaseResource {
 
     private static final Logger LOGGER = getLogger(Transactions.class);
 
-    @Inject
-    private TransactionManager txManager;
-
-    @Inject
-    private Provider<Transaction> txProvider;
-
     /**
      * Get the status of an existing transaction
      *
@@ -86,7 +77,7 @@ public class Transactions extends FedoraBaseResource {
         try {
             tx = txManager.get(txId);
         } catch (final TransactionNotFoundException e) {
-            return Response.status(Status.GONE).build();
+            return Response.status(Status.NOT_FOUND).build();
         } catch (final TransactionExpiredException e) {
             return Response.status(Status.GONE)
                     .entity(e.getMessage())
@@ -114,8 +105,12 @@ public class Transactions extends FedoraBaseResource {
         final Transaction tx;
         try {
             tx = txManager.get(txId);
-        } catch (final TransactionRuntimeException e) {
-            return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
+        } catch (final TransactionNotFoundException e) {
+            return Response.status(Status.NOT_FOUND).build();
+        } catch (final TransactionExpiredException e) {
+            return Response.status(Status.GONE)
+                    .entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET)
+                    .build();
         }
 
         tx.refresh();
@@ -134,7 +129,7 @@ public class Transactions extends FedoraBaseResource {
      */
     @POST
     public Response createTransaction() throws URISyntaxException {
-        final Transaction tx = txProvider.get();
+        final Transaction tx = transaction();
         tx.setShortLived(false);
 
         LOGGER.info("Created transaction '{}'", tx.getId());
@@ -163,11 +158,18 @@ public class Transactions extends FedoraBaseResource {
             final Transaction transaction = txManager.get(txId);
             LOGGER.info("Committing transaction '{}'", transaction.getId());
             transaction.commit();
+            // Inform the manager that this tx has been committed
+            txManager.transactionCommitted(txId);
             return noContent().build();
         } catch (final TransactionNotFoundException e) {
-            return Response.status(Status.BAD_REQUEST).build();
+            return Response.status(Status.NOT_FOUND).build();
         } catch (final TransactionExpiredException e) {
-            return Response.status(Status.BAD_REQUEST)
+            return Response.status(Status.GONE)
+                    .entity(e.getMessage())
+                    .type(TEXT_PLAIN_WITH_CHARSET)
+                    .build();
+        } catch (final RepositoryRuntimeException e) {
+            return Response.status(Status.CONFLICT)
                     .entity(e.getMessage())
                     .type(TEXT_PLAIN_WITH_CHARSET)
                     .build();

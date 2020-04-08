@@ -22,6 +22,7 @@ import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_EXPIRE
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,15 +31,18 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 import java.net.URISyntaxException;
 import java.security.Principal;
 
-import javax.inject.Provider;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.TransactionExpiredException;
 import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.AdditionalMatchers;
@@ -69,7 +73,7 @@ public class TransactionsTest {
     private HttpIdentifierConverter mockIdConverter;
 
     @Mock
-    private Provider<Transaction> mockTxProvider;
+    private HttpServletRequest mockRequest;
 
     @Mock
     private Principal mockPrincipal;
@@ -92,9 +96,8 @@ public class TransactionsTest {
 
     @Test
     public void shouldStartANewTransaction() throws URISyntaxException {
-        when(mockTxProvider.get()).thenReturn(mockTransaction);
         setField(testObj, "identifierConverter", mockIdConverter);
-        setField(testObj, "txProvider", mockTxProvider);
+        setField(testObj, "servletRequest", mockRequest);
 
         when(mockIdConverter.toExternalId(anyString())).thenReturn(VALID_TX_URI);
 
@@ -113,9 +116,17 @@ public class TransactionsTest {
     @Test
     public void shouldErrorIfCommitNonExistingTransactionId() {
         final Response response = testObj.commit("tx:404");
-        assertEquals(400, response.getStatus());
+        assertEquals(404, response.getStatus());
     }
 
+    @Test
+    public void shouldErrorIfCommitFails() {
+        doThrow(new RepositoryRuntimeException("Oops")).when(mockTransaction).commit();
+        final Response response = testObj.commit(VALID_TX_ID);
+        assertEquals(409, response.getStatus());
+    }
+
+    @Ignore
     @Test
     public void shouldRollBackATransaction() {
         final Response response = testObj.rollback(VALID_TX_ID);
@@ -123,10 +134,11 @@ public class TransactionsTest {
         verify(mockTransaction).rollback();
     }
 
+    @Ignore
     @Test
     public void shouldErrorIfRollbackNonExistingTransactionId() {
         final Response rollback = testObj.rollback("tx:404");
-        assertEquals(400, rollback.getStatus());
+        assertEquals(404, rollback.getStatus());
     }
 
     @Test
@@ -140,7 +152,16 @@ public class TransactionsTest {
     @Test
     public void shouldErrorIfRefreshNonExistentTx() {
         final Response response = testObj.refreshTransaction("tx:404");
-        assertEquals(400, response.getStatus());
+        assertEquals(404, response.getStatus());
+        verify(mockTransaction, never()).refresh();
+    }
+
+    @Test
+    public void shouldErrorIfRefreshExpiredTx() {
+        when(mockTxManager.get(VALID_TX_ID))
+                .thenThrow(new TransactionExpiredException("Transaction expired"));
+        final Response response = testObj.refreshTransaction(VALID_TX_ID);
+        assertEquals(410, response.getStatus());
         verify(mockTransaction, never()).refresh();
     }
 
@@ -155,6 +176,14 @@ public class TransactionsTest {
     @Test
     public void shouldErrorIfGetStatusNonExistentTx() {
         final Response response = testObj.getTransactionStatus("tx:404");
+        assertEquals(404, response.getStatus());
+    }
+
+    @Test
+    public void shouldErrorIfGetStatusExpired() {
+        when(mockTxManager.get(VALID_TX_ID))
+                .thenThrow(new TransactionExpiredException("Transaction expired"));
+        final Response response = testObj.getTransactionStatus(VALID_TX_ID);
         assertEquals(410, response.getStatus());
     }
 }

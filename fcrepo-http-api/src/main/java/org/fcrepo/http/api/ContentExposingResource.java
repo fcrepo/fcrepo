@@ -241,9 +241,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     @Inject
     protected ContainmentTriplesService containmentTriplesService;
 
-    @Inject
-    protected Transaction transaction;
-
     protected abstract String externalPath();
 
     protected static final Splitter.MapSplitter RFC3230_SPLITTER =
@@ -336,9 +333,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             // containment triples about this resource
             if (ldpPreferences.prefersContainment()) {
                 if (limit == -1) {
-                    streams.add(this.containmentTriplesService.get(transaction, resource));
+                    streams.add(this.containmentTriplesService.get(transaction(), resource));
                 } else {
-                    streams.add(this.containmentTriplesService.get(transaction, resource).limit(limit));
+                    streams.add(this.containmentTriplesService.get(transaction(), resource).limit(limit));
                 }
             }
 
@@ -604,9 +601,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     protected void addTransactionHeaders() {
-        if (transaction != null && !transaction.isShortLived()) {
+        final var tx = transaction();
+        if (tx != null && !tx.isShortLived()) {
             final var externalId = identifierConverter()
-                    .toExternalId(FEDORA_ID_PREFIX + TX_PREFIX + transaction.getId());
+                    .toExternalId(FEDORA_ID_PREFIX + TX_PREFIX + tx.getId());
             servletResponse.addHeader(ATOMIC_ID_HEADER, externalId);
         }
     }
@@ -700,7 +698,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             servletResponse.addHeader(LINK, buildLink(RDF_SOURCE.getURI(), "type"));
         }
         if (httpHeaderInject != null) {
-            httpHeaderInject.addHttpHeaderToResponseStream(transaction, servletResponse, uriInfo, resource);
+            httpHeaderInject.addHttpHeaderToResponseStream(transaction(), servletResponse, uriInfo, resource);
         }
 
         addLinkAndOptionsHttpHeaders(resource);
@@ -889,7 +887,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      */
     @SuppressWarnings("resource")
     protected Response createUpdateResponse(final FedoraResource resource, final boolean created) {
-        addCacheControlHeaders(servletResponse, resource, transaction);
+        addCacheControlHeaders(servletResponse, resource, transaction());
         addResourceLinkHeaders(resource, created);
         addExternalContentHeaders(resource);
         addAclHeader(resource);
@@ -943,7 +941,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected void patchResourcewithSparql(final FedoraResource resource,
             final String requestBody,
             final RdfStream resourceTriples) {
-        updatePropertiesService.updateProperties(transaction.getId(),
+        updatePropertiesService.updateProperties(transaction().getId(),
                                                  getUserPrincipal(),
                                                  resource.getId(),
                                                  requestBody, resourceTriples);
@@ -1075,7 +1073,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected IdentifierConverter<Resource, FedoraResource> translator() {
         if (idTranslator == null) {
-            idTranslator = new HttpResourceConverter(transaction,
+            idTranslator = new HttpResourceConverter(transaction(),
                     uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));
         }
 
@@ -1103,7 +1101,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final Instant memento = extractMemento(externalPath);
 
         try {
-            final FedoraResource fedoraResource = resourceFactory.getResource(transaction, fedoraId, memento);
+            final FedoraResource fedoraResource = resourceFactory.getResource(transaction(), fedoraId, memento);
 
             if (fedoraResource instanceof Tombstone) {
                 final String resourceURI = TRAILING_SLASH_REGEX.matcher(externalPath).replaceAll("");

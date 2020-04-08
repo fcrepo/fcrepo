@@ -194,7 +194,7 @@ public class FedoraLdp extends ContentExposingResource {
             return getMemento(datetimeHeader, resource());
         }
 
-        checkCacheControlHeaders(request, servletResponse, resource(), transaction);
+        checkCacheControlHeaders(request, servletResponse, resource(), transaction());
 
         addResourceHttpHeaders(resource());
 
@@ -261,7 +261,7 @@ public class FedoraLdp extends ContentExposingResource {
             return getMemento(datetimeHeader, resource());
         }
 
-        checkCacheControlHeaders(request, servletResponse, resource(), transaction);
+        checkCacheControlHeaders(request, servletResponse, resource(), transaction());
 
         final ImmutableList<MediaType> acceptableMediaTypes = ImmutableList.copyOf(headers
                 .getAcceptableMediaTypes());
@@ -345,12 +345,12 @@ public class FedoraLdp extends ContentExposingResource {
                 METHOD_NOT_ALLOWED);
         }
 
-        evaluateRequestPreconditions(request, servletResponse, resource(), transaction);
+        evaluateRequestPreconditions(request, servletResponse, resource(), transaction());
 
         LOGGER.info("Delete resource '{}'", externalPath);
 
-        deleteResourceService.perform(transaction, resource());
-        transaction.commitIfShortLived();
+        deleteResourceService.perform(transaction(), resource());
+        transaction().commitIfShortLived();
         return noContent().build();
     }
 
@@ -381,6 +381,8 @@ public class FedoraLdp extends ContentExposingResource {
                    PathNotFoundException {
 
         hasRestrictedPath(externalPath);
+
+        final var transaction = transaction();
 
         final List<String> links = unpackLinks(rawLinks);
 
@@ -499,6 +501,8 @@ public class FedoraLdp extends ContentExposingResource {
             throws IOException {
         hasRestrictedPath(externalPath);
 
+        final var transaction = transaction();
+
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
             handleRequestDisallowedOnMemento();
 
@@ -577,6 +581,8 @@ public class FedoraLdp extends ContentExposingResource {
                                  @HeaderParam(LINK) final List<String> rawLinks,
                                  @HeaderParam("Digest") final String digest)
             throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException {
+
+        final var transaction = transaction();
 
         final List<String> links = unpackLinks(rawLinks);
 
@@ -669,7 +675,7 @@ public class FedoraLdp extends ContentExposingResource {
     protected void addResourceHttpHeaders(final FedoraResource resource) {
         super.addResourceHttpHeaders(resource);
 
-        if (!transaction.isShortLived()) {
+        if (!transaction().isShortLived()) {
             final String canonical = translator().reverse()
                     .convert(resource)
                     .toString()
@@ -828,7 +834,7 @@ public class FedoraLdp extends ContentExposingResource {
         String fullTestPath = addToIdentifier(fedoraId, pid);
         fullTestPath = URLDecoder.decode(fullTestPath, UTF_8);
 
-        if (doesResourceExist(transaction, fullTestPath)) {
+        if (doesResourceExist(transaction(), fullTestPath)) {
             LOGGER.trace("Resource with path {} already exists; minting new path instead", fullTestPath);
             return mintNewPid(fedoraId, null);
         }

@@ -26,17 +26,23 @@ public interface TransactionManager {
 
     /**
      * Create a new fedora transaction
-     * 
+     *
      * @return {@link Transaction} The new fedora transaction
      */
     Transaction create();
 
     /**
      * Get an existing fedora transaction
-     * 
+     *
      * @param transactionId the id of the transaction to be returned
      * @return {@link Transaction} the fedora transaction associated with the provided id
      */
     Transaction get(String transactionId);
 
+    /**
+     * Inform manager that the specified transaction has been committed
+     *
+     * @param transactionId id of the transaction
+     */
+    void transactionCommitted(String transactionId);
 }

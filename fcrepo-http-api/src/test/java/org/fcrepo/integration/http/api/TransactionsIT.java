@@ -22,7 +22,6 @@ import static java.lang.Thread.sleep;
 import static java.time.Duration.ofMinutes;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -104,7 +103,7 @@ public class TransactionsIT extends AbstractResourceIT {
     @Test
     public void testRequestsInTransactionThatDoestExist() {
         /* create a tx */
-        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(new HttpPost(serverAddress + "fcr:tx/123idontexist")));
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(new HttpPost(serverAddress + "fcr:tx/123idontexist")));
     }
 
     @Test
@@ -458,6 +457,20 @@ public class TransactionsIT extends AbstractResourceIT {
         /* commit that transaction */
         assertNotEquals("Transaction is not atomic with regards to the object!",
                 NO_CONTENT.getStatusCode(), getStatus(new HttpPost(deleterTxLocation + "/fcr:tx/fcr:commit")));
+    }
+
+    @Test
+    public void testRequestResourceInvalidTx() throws Exception {
+        /* create a tx */
+        final String txLocation = createTransaction();
+
+        // Commit tx
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation + TX_COMMIT_SUFFIX)));
+
+        // Attempt to create object inside completed tx
+        final HttpPost postNew = new HttpPost(serverAddress);
+        postNew.addHeader(ATOMIC_ID_HEADER, txLocation);
+        assertEquals(Status.CONFLICT.getStatusCode(), getStatus(postNew));
     }
 
     private void verifyProperty(final String assertionMessage, final String pid, final String txId,

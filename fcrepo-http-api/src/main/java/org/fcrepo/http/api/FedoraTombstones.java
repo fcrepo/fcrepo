@@ -71,8 +71,8 @@ public class FedoraTombstones extends ContentExposingResource {
     @DELETE
     public Response delete() {
         LOGGER.info("Delete tombstone: {}", resource());
-        deleteResourceService.perform(transaction, resource());
-        transaction.commitIfShortLived();
+        deleteResourceService.perform(transaction(), resource());
+        transaction().commitIfShortLived();
         return noContent().build();
     }
 

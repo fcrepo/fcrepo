@@ -81,6 +81,11 @@ public class TransactionManagerImpl implements TransactionManager {
         }
     }
 
+    @Override
+    public void transactionCommitted(final String transactionId) {
+        transactions.remove(transactionId);
+    }
+
     protected PersistentStorageSessionManager getPersistentStorageSessionManager() {
         return pSessionManager;
     }
@@ -88,4 +93,5 @@ public class TransactionManagerImpl implements TransactionManager {
     protected ContainmentIndex getContainmentIndex() {
         return containmentIndex;
     }
+
 }

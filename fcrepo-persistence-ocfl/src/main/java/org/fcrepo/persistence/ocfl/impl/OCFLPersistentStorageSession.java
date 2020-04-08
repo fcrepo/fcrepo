@@ -87,10 +87,10 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     private State state = State.COMMIT_NOT_STARTED;
 
-    private OCFLObjectSessionFactory objectSessionFactory;
+    private final OCFLObjectSessionFactory objectSessionFactory;
 
     private static Comparator<OCFLObjectSession> CREATION_TIME_ORDER =
-            (OCFLObjectSession o1, OCFLObjectSession o2)->o1.getCreated().compareTo(o2.getCreated());
+            (final OCFLObjectSession o1, final OCFLObjectSession o2)->o1.getCreated().compareTo(o2.getCreated());
 
 
     private enum State {
@@ -212,7 +212,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     private FedoraOCFLMapping getFedoraOCFLMapping(final String identifier) throws PersistentStorageException {
         try {
             return fedoraOcflIndex.getMapping(identifier);
-        } catch (FedoraOCFLMappingNotFoundException e) {
+        } catch (final FedoraOCFLMappingNotFoundException e) {
             throw new PersistentItemNotFoundException(e.getMessage());
         }
     }
@@ -274,7 +274,11 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         this.state = State.COMMIT_STARTED;
         LOGGER.debug("Starting commit.");
 
-        phaser.arriveAndAwaitAdvance();
+        synchronized (this.phaser) {
+            if (this.phaser.getRegisteredParties() > 0) {
+                this.phaser.awaitAdvance(0);
+            }
+        }
 
         LOGGER.debug("All persisters are complete");
 
