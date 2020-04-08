@@ -173,12 +173,14 @@ public class FedoraVersioning extends ContentExposingResource {
         final FedoraResource theTimeMap = resource().getTimeMap();
         checkCacheControlHeaders(request, servletResponse, theTimeMap, transaction());
 
-        LOGGER.debug("GET resource '{}'", externalPath);
+        LOGGER.debug("GET resource '{}'", externalPath());
 
         addResourceHttpHeaders(theTimeMap);
 
         if (acceptValue != null && acceptValue.equalsIgnoreCase(APPLICATION_LINK_FORMAT)) {
-            final URI parentUri = getUri(resource());
+            final String extUrl = identifierConverter().toDomain(externalPath());
+
+            final URI parentUri = URI.create(extUrl);
             final List<Link> versionLinks = new ArrayList<>();
             versionLinks.add(Link.fromUri(parentUri).rel("original").build());
             versionLinks.add(Link.fromUri(parentUri).rel("timegate").build());

@@ -18,6 +18,7 @@
 
 package org.fcrepo.kernel.impl.models;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.TimeMap;
@@ -31,6 +32,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.time.Instant;
 import java.util.ArrayList;
 
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.doReturn;
@@ -51,49 +54,51 @@ public class FedoraResourceImplTest {
 
     private static final String ID = "info:fedora/test";
 
+    private static final FedoraId FEDORA_ID = FedoraId.create(ID);
+
     @Test
     public void findMementoWhenOnlyOneAndBeforeSearch() {
-        final var resource = resourceWithMockedTimeMap(ID);
+        final var resource = resourceWithMockedTimeMap();
         expectMementos("20200309172117");
         final var match = resource.findMementoByDatetime(instant("20200309172118"));
-        assertEquals("0", match.getId());
+        assertEquals(FEDORA_ID_PREFIX + "/0", match.getId());
     }
 
     @Test
     public void findClosestMementoWhenMultiple() {
-        final var resource = resourceWithMockedTimeMap(ID);
+        final var resource = resourceWithMockedTimeMap();
         expectMementos("20200309172117", "20200309172118", "20200309172119");
         final var match = resource.findMementoByDatetime(instant("20200309172118"));
-        assertEquals("1", match.getId());
+        assertEquals(FEDORA_ID_PREFIX + "/1", match.getId());
     }
 
     @Test
     public void findClosestMementoWhenMultipleNoneExact() {
-        final var resource = resourceWithMockedTimeMap(ID);
+        final var resource = resourceWithMockedTimeMap();
         expectMementos("20200309172116", "20200309172117", "20200309172119");
         final var match = resource.findMementoByDatetime(instant("20200309172118"));
-        assertEquals("1", match.getId());
+        assertEquals(FEDORA_ID_PREFIX + "/1", match.getId());
     }
 
     @Test
     public void findClosestMementoMultipleSameSecond() {
-        final var resource = resourceWithMockedTimeMap(ID);
+        final var resource = resourceWithMockedTimeMap();
         expectMementos("20200309172117", "20200309172117", "20200309172117");
         final var match = resource.findMementoByDatetime(instant("20200309172118"));
-        assertEquals("2", match.getId());
+        assertEquals(FEDORA_ID_PREFIX + "/2", match.getId());
     }
 
     @Test
     public void findMementoWhenNonBeforeSearch() {
-        final var resource = resourceWithMockedTimeMap(ID);
+        final var resource = resourceWithMockedTimeMap();
         expectMementos("20200309172119", "20200309172120", "20200309172121");
         final var match = resource.findMementoByDatetime(instant("20200309172118"));
-        assertEquals("0", match.getId());
+        assertEquals(FEDORA_ID_PREFIX + "/0", match.getId());
     }
 
     @Test
     public void findNoMementoWhenThereAreNone() {
-        final var resource = resourceWithMockedTimeMap(ID);
+        final var resource = resourceWithMockedTimeMap();
         expectMementos();
         final var match = resource.findMementoByDatetime(instant("20200309172118"));
         assertNull("Should not find a memento", match);
@@ -107,14 +112,16 @@ public class FedoraResourceImplTest {
         when(timeMap.getChildren()).thenReturn(mementos.stream());
     }
 
-    private FedoraResource resourceWithMockedTimeMap(final String id) {
-        final var resource = spy(new FedoraResourceImpl(id, null, sessionManager, resourceFactory));
+    private FedoraResource resourceWithMockedTimeMap() {
+        final var resource = spy(new FedoraResourceImpl(FEDORA_ID, null, sessionManager, resourceFactory));
         doReturn(timeMap).when(resource).getTimeMap();
         return resource;
     }
 
     private FedoraResource memento(final String id, final Instant instant) {
-        final var memento = new FedoraResourceImpl(id, null, sessionManager, resourceFactory);
+        final String mementoTime = VersionService.MEMENTO_LABEL_FORMATTER.format(instant);
+        final FedoraId fedoraID = FedoraId.create(id, FCR_VERSIONS, mementoTime);
+        final var memento = new FedoraResourceImpl(fedoraID, null, sessionManager, resourceFactory);
         memento.setIsMemento(true);
         memento.setMementoDatetime(instant);
         return memento;

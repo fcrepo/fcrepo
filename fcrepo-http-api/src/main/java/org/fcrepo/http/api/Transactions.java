@@ -134,7 +134,7 @@ public class Transactions extends FedoraBaseResource {
 
         LOGGER.info("Created transaction '{}'", tx.getId());
         final var externalId = identifierConverter()
-                .toExternalId(FEDORA_ID_PREFIX + TX_PREFIX + tx.getId());
+                .toExternalId(FEDORA_ID_PREFIX + "/" + TX_PREFIX + tx.getId());
         final var res = created(new URI(externalId));
         res.expires(from(tx.getExpires()));
 

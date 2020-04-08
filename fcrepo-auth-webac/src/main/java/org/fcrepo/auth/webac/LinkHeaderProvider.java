@@ -70,7 +70,7 @@ public class LinkHeaderProvider implements UriAwareHttpHeaderFactory {
         WebACRolesProvider.getEffectiveAcl(resource, false).ifPresent(acls -> {
             // If the Acl is present we need to use the internal session to get its URI
             try {
-                resourceFactory.getResource(transaction, acls.resource.getPath())
+                resourceFactory.getResource(transaction, acls.resource.getFedoraId())
                 .getTriples()
                 .collect(toModel()).listObjectsOfProperty(createProperty(WEBAC_ACCESS_CONTROL_VALUE))
                 .forEachRemaining(linkObj -> {

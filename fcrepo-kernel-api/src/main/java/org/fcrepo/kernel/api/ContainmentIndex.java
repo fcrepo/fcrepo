@@ -19,6 +19,7 @@ package org.fcrepo.kernel.api;
 
 import java.util.stream.Stream;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 
 /**
@@ -41,35 +42,35 @@ public interface ContainmentIndex {
     /**
      * Return the ID of the containing resource for resourceID.
      * @param txID The transaction. If no transaction, null is okay.
-     * @param resourceID The resource to find the containing resource.
+     * @param resource The FedoraId of the resource to find the containing resource for.
      * @return The id of the containing resource or null if none found.
      */
-    String getContainedBy(String txID, final String resourceID);
+    String getContainedBy(String txID, final FedoraId resource);
 
     /**
      * Remove a contained by relation between the child resource and its parent.
      *
      * @param txID The transaction ID.  If no transaction, null is okay.
-     * @param parentID The containing fedora resource ID.
-     * @param childID The contained fedora resource ID.
+     * @param parent The containing resource fedoraID.
+     * @param child The contained resource fedoraID.
      */
-    void removeContainedBy(final String txID, final String parentID, final String childID);
+    void removeContainedBy(final String txID, final FedoraId parent, final FedoraId child);
 
     /**
      * Remove all relationships to the specified resource.
      * @param txID The transaction ID. If no transaction, null is okay.
-     * @param resourceID The ID of resource to remove.
+     * @param resource The FedoraId of resource to remove.
      */
-    void removeResource(final String txID, final String resourceID);
+    void removeResource(final String txID, final FedoraId resource);
 
     /**
      * Add a contained by relation between the child resource and its parent.
      *
      * @param txID The transaction ID.  If no transaction, null is okay.
-     * @param parentID The containing fedora resource ID.
-     * @param childID The contained fedora resource ID.
+     * @param parent The containing resource fedoraID.
+     * @param child The contained resource fedoraID.
      */
-    void addContainedBy(final String txID, final String parentID, final String childID);
+    void addContainedBy(final String txID, final FedoraId parent, final FedoraId child);
 
     /**
      * Commit the changes made in the transaction.
@@ -87,8 +88,8 @@ public interface ContainmentIndex {
      * Check if the resourceID exists in the containment index. Which should mean it exists.
      *
      * @param txID The transaction ID or null if not transaction.
-     * @param resourceID The resource ID.
+     * @param fedoraID The resource's FedoraId.
      * @return True if it is in the index.
      */
-    boolean resourceExists(final String txID, final String resourceID);
+    boolean resourceExists(final String txID, final FedoraId fedoraID);
 }

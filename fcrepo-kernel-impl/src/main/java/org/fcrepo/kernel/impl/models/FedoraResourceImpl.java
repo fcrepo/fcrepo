@@ -23,6 +23,7 @@ import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
@@ -41,6 +42,7 @@ import java.util.stream.Stream;
 import static java.net.URI.create;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
+import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
 
 /**
  * Implementation of a Fedora resource, containing functionality common to the more concrete resource implementations.
@@ -53,7 +55,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     protected final ResourceFactory resourceFactory;
 
-    private final String id;
+    private FedoraId fedoraID;
 
     private String parentId;
 
@@ -78,11 +80,11 @@ public class FedoraResourceImpl implements FedoraResource {
     // The transaction this representation of the resource belongs to
     protected final Transaction tx;
 
-    protected FedoraResourceImpl(final String id,
-            final Transaction tx,
-            final PersistentStorageSessionManager pSessionManager,
-            final ResourceFactory resourceFactory) {
-        this.id = id;
+    protected FedoraResourceImpl(final FedoraId fedoraID,
+                                 final Transaction tx,
+                                 final PersistentStorageSessionManager pSessionManager,
+                                 final ResourceFactory resourceFactory) {
+        this.fedoraID = fedoraID;
         this.tx = tx;
         this.pSessionManager = pSessionManager;
         this.resourceFactory = resourceFactory;
@@ -90,7 +92,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public String getId() {
-        return id;
+        return this.fedoraID.getResourceId();
     }
 
     @Override
@@ -115,7 +117,8 @@ public class FedoraResourceImpl implements FedoraResource {
     public FedoraResource getOriginalResource() {
         if (isMemento()) {
             try {
-                return resourceFactory.getResource(tx, getId());
+                // We are in a memento so we need to create a FedoraId for just the original resource.
+                return resourceFactory.getResource(tx, FedoraId.create(getFedoraId().getResourceId()));
             } catch (PathNotFoundException e) {
                 throw new PathNotFoundRuntimeException(e);
             }
@@ -125,6 +128,9 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public FedoraResource getTimeMap() {
+        if (this.isMemento) {
+            return new TimeMapImpl(this.getOriginalResource(), tx, pSessionManager, resourceFactory);
+        }
         return new TimeMapImpl(this, tx, pSessionManager, resourceFactory);
     }
 
@@ -223,9 +229,9 @@ public class FedoraResourceImpl implements FedoraResource {
     @Override
     public RdfStream getTriples() {
         try {
-            final var triples = getSession().getTriples(id, getMementoDatetime());
+            final var triples = getSession().getTriples(getId(), getMementoDatetime());
 
-            return new DefaultRdfStream(createURI(id), triples);
+            return new DefaultRdfStream(createURI(getId()), triples);
         } catch (final PersistentItemNotFoundException e) {
             throw new ItemNotFoundException("Unable to retrieve triples for " + getId(), e);
         } catch (final PersistentStorageException e) {
@@ -275,7 +281,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public FedoraResource getParent() throws PathNotFoundException {
-        return resourceFactory.getResource(parentId);
+        return resourceFactory.getResource(FedoraId.create(parentId));
     }
 
     @Override
@@ -286,6 +292,11 @@ public class FedoraResourceImpl implements FedoraResource {
     @Override
     public String getLastModifiedBy() {
         return lastModifiedBy;
+    }
+
+    @Override
+    public FedoraId getFedoraId() {
+        return this.fedoraID;
     }
 
     /**
@@ -356,5 +367,13 @@ public class FedoraResourceImpl implements FedoraResource {
      */
     public void setIsMemento(final boolean isMemento) {
         this.isMemento = isMemento;
+    }
+
+    /**
+     * Get the Memento Instant as YYYYMMDDHHIISS string.
+     * @return The string.
+     */
+    protected String getMementoDateTimeAsUriString() {
+        return MEMENTO_LABEL_FORMATTER.format(getMementoDatetime());
     }
 }

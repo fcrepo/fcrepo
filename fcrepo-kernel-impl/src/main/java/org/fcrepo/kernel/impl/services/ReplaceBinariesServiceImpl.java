@@ -26,6 +26,7 @@ import java.util.Collection;
 import javax.inject.Inject;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ExternalContent;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
@@ -52,7 +53,7 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
     @Override
     public void perform(final String txId,
                         final String userPrincipal,
-                        final String fedoraId,
+                        final FedoraId fedoraId,
                         final String filename,
                         final String contentType,
                         final Collection<URI> digests,
@@ -62,14 +63,14 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
         try {
             final PersistentStorageSession pSession = this.psManager.getSession(txId);
 
-            hasRestrictedPath(fedoraId);
+            hasRestrictedPath(fedoraId.getFullId());
 
             String mimeType = contentType;
             final NonRdfSourceOperationBuilder builder;
             if (externalContent == null) {
-                builder = factory.updateInternalBinaryBuilder(fedoraId, contentBody);
+                builder = factory.updateInternalBinaryBuilder(fedoraId.getFullId(), contentBody);
             } else {
-                builder = factory.updateExternalBinaryBuilder(fedoraId,
+                builder = factory.updateExternalBinaryBuilder(fedoraId.getFullId(),
                         externalContent.getHandling(),
                         externalContent.getURI());
 

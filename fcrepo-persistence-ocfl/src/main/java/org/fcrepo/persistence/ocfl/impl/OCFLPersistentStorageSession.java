@@ -176,14 +176,8 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
 
     OCFLObjectSession findOrCreateSession(final String ocflId) {
-        final OCFLObjectSession sessionObj = this.sessionMap.get(ocflId);
-        if (sessionObj != null) {
-            return sessionObj;
-        }
-
-        final OCFLObjectSession newSession = this.objectSessionFactory.create(ocflId, getId());
-        sessionMap.put(ocflId, newSession);
-        return newSession;
+        return this.sessionMap.computeIfAbsent(ocflId,
+                key -> this.objectSessionFactory.create(key, getId()));
     }
 
     @Override

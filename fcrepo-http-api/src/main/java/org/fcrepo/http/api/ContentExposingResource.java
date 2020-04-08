@@ -83,7 +83,6 @@ import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FOR
 
 import org.apache.jena.atlas.web.ContentType;
 import org.fcrepo.kernel.api.services.ContainmentTriplesService;
-import org.fcrepo.kernel.api.utils.FedoraResourceIdConverter;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -92,7 +91,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -139,7 +137,6 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
-import org.fcrepo.kernel.api.exception.InvalidMementoPathException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.PreconditionException;
@@ -147,6 +144,7 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
@@ -160,7 +158,6 @@ import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
 import org.fcrepo.kernel.api.services.ManagedPropertiesService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
-import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM;
@@ -446,7 +443,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected URI getUri(final FedoraResource resource) {
         try {
             final String uri = identifierConverter()
-                    .toExternalId(FedoraResourceIdConverter.resolveFedoraId(resource));
+                    .toExternalId(resource.getFedoraId().getFullId());
             return new URI(uri);
         } catch (final URISyntaxException e) {
             throw new BadRequestException(e);
@@ -604,7 +601,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final var tx = transaction();
         if (tx != null && !tx.isShortLived()) {
             final var externalId = identifierConverter()
-                    .toExternalId(FEDORA_ID_PREFIX + TX_PREFIX + tx.getId());
+                    .toExternalId(FEDORA_ID_PREFIX + "/" + TX_PREFIX + tx.getId());
             servletResponse.addHeader(ATOMIC_ID_HEADER, externalId);
         }
     }
@@ -1097,11 +1094,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      */
     @VisibleForTesting
     public FedoraResource getResourceFromPath(final String externalPath) {
-        final String fedoraId = identifierConverter().toInternalId(identifierConverter().toDomain(externalPath));
-        final Instant memento = extractMemento(externalPath);
+        final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath);
 
         try {
-            final FedoraResource fedoraResource = resourceFactory.getResource(transaction(), fedoraId, memento);
+            final FedoraResource fedoraResource = resourceFactory.getResource(transaction(), fedoraId);
 
             if (fedoraResource instanceof Tombstone) {
                 final String resourceURI = TRAILING_SLASH_REGEX.matcher(externalPath).replaceAll("");
@@ -1112,17 +1108,5 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         } catch (final PathNotFoundException exc) {
             throw new PathNotFoundRuntimeException(exc);
         }
-    }
-
-    private Instant extractMemento(final String externalPath) {
-        final var matcher = MEMENTO_PATH_PATTERN.matcher(externalPath);
-        if (matcher.matches()) {
-            try {
-                return Instant.from(VersionService.MEMENTO_LABEL_FORMATTER.parse(matcher.group(1)));
-            } catch (final DateTimeParseException e) {
-                throw new InvalidMementoPathException("Invalid versioning request with path: " + externalPath, e);
-            }
-        }
-        return null;
     }
 }

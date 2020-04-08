@@ -17,17 +17,20 @@
  */
 package org.fcrepo.http.commons.api.rdf;
 
-import org.glassfish.jersey.uri.UriTemplate;
-import org.slf4j.Logger;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import javax.ws.rs.core.UriBuilder;
+
+import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.glassfish.jersey.uri.UriTemplate;
+import org.slf4j.Logger;
 
 /**
  * Convert between HTTP URIs (LDP paths) and internal Fedora ID using a
@@ -43,28 +46,6 @@ public class HttpIdentifierConverter {
     private final UriBuilder uriBuilder;
 
     private final UriTemplate uriTemplate;
-
-    /**
-     * Things in a URL that we want to remove from the end of identifiers. Also removes everything after these.
-     */
-    private static final String[] FEDORA_STRIP_SUFFIX = {
-            "#",
-            "/" + FCR_VERSIONS,
-            "/" + FCR_ACL
-    };
-
-    /**
-     * Remove the various suffixes and anything after them.
-     */
-    private static String truncateSuffixes(final String uri) {
-        String internalUri = uri;
-        for (final String suffix : FEDORA_STRIP_SUFFIX) {
-            if (internalUri.contains(suffix)) {
-                internalUri = internalUri.split(suffix)[0];
-            }
-        }
-        return internalUri;
-    }
 
     private static String trimTrailingSlashes(final String string) {
         return string.replaceAll("/+$", "");
@@ -102,11 +83,10 @@ public class HttpIdentifierConverter {
 
         final String path = getPath(httpUri);
         if (path != null) {
+            final String decodedPath = URLDecoder.decode(path, UTF_8);
+            final String fedoraId = trimTrailingSlashes(decodedPath);
 
-            // Take the URL and remove any hash uris, or fcr: endpoints.
-            final String fedoraId = trimTrailingSlashes(truncateSuffixes(path));
-
-            return FEDORA_ID_PREFIX + fedoraId.replaceFirst("\\/", "");
+            return FEDORA_ID_PREFIX + fedoraId;
         }
         throw new IllegalArgumentException("Cannot translate NULL path");
     }
@@ -133,9 +113,10 @@ public class HttpIdentifierConverter {
     public String toExternalId(final String fedoraId) {
         LOGGER.debug("Translating Fedora ID {} to Http URI", fedoraId);
         if (inInternalDomain(fedoraId)) {
-            // If it starts with our prefix, strip the prefix and use it as the path
+            // If it starts with our prefix, strip the prefix and any leading slashes and use it as the path
             // part of the URI.
-            final String[] values = { fedoraId.substring(FEDORA_ID_PREFIX.length()) };
+            final String path = fedoraId.substring(FEDORA_ID_PREFIX.length()).replaceFirst("\\/", "");
+            final String[] values = { path };
             // Need to pass as Array or second arg is ignored. Second arg is DON'T encode slashes
             return uriBuilder().build(values, false).toString();
         }
@@ -193,6 +174,15 @@ public class HttpIdentifierConverter {
 
         }
         return uri.build().toString();
+    }
+
+    /**
+     * Function to convert from the external path of a URI to an internal FedoraId.
+     * @param externalPath the path part of the external URI.
+     * @return the FedoraId.
+     */
+    public FedoraId pathToInternalId(final String externalPath) {
+        return FedoraId.create(toInternalId(toDomain(externalPath)));
     }
 
     /**

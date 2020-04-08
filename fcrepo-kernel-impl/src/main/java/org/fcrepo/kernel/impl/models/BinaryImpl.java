@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.impl.models;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
 
 import java.io.InputStream;
@@ -30,6 +31,7 @@ import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.ExternalContent;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -62,14 +64,14 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
     /**
      * Construct the binary
      *
-     * @param id fedora identifier
+     * @param fedoraID fedora identifier
      * @param tx transaction
      * @param pSessionManager session manager
      * @param resourceFactory resource factory
      */
-    public BinaryImpl(final String id, final Transaction tx, final PersistentStorageSessionManager pSessionManager,
-            final ResourceFactory resourceFactory) {
-        super(id, tx, pSessionManager, resourceFactory);
+    public BinaryImpl(final FedoraId fedoraID, final Transaction tx,
+                      final PersistentStorageSessionManager pSessionManager, final ResourceFactory resourceFactory) {
+        super(fedoraID, tx, pSessionManager, resourceFactory);
     }
 
     @Override
@@ -135,7 +137,11 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
     @Override
     public FedoraResource getDescription() {
         try {
-            final var descId = getId() + "/" + FCR_METADATA;
+            final FedoraId descId = getFedoraId().resolve("/" + FCR_METADATA);
+            if (this.isMemento()) {
+                return resourceFactory.getResource(tx, descId.resolve(FCR_VERSIONS,
+                        this.getMementoDateTimeAsUriString()));
+            }
             return resourceFactory.getResource(tx, descId);
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);

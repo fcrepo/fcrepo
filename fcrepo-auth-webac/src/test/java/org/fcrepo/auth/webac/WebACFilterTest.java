@@ -33,6 +33,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 
 import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
@@ -159,9 +160,10 @@ public class WebACFilterTest {
 
         when(mockTransactionManager.get("tx-id")).thenReturn(mockTransaction);
 
-        when(mockResourceFactory.getResource(mockTransaction, testChildPath)).thenReturn(null);
+        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(testChildPath)))
+                .thenReturn(null);
 
-        when(mockResourceFactory.getResource(mockTransaction, "/")).thenReturn(mockRoot);
+        when(mockResourceFactory.getResource(mockTransaction, FedoraId.getRepositoryRootId())).thenReturn(mockRoot);
         when(mockContainer.getContainer()).thenReturn(mockRoot);
         when(mockChildContainer.getContainer()).thenReturn(mockContainer);
 
@@ -179,13 +181,16 @@ public class WebACFilterTest {
     }
 
     private void setupContainerResource() throws Exception {
-        when(mockResourceFactory.getResource(mockTransaction, testPath)).thenReturn(mockContainer);
-        when(mockResourceFactory.getResource(mockTransaction, testChildPath)).thenReturn(mockChildContainer);
+        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(testPath)))
+                .thenReturn(mockContainer);
+        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(testChildPath)))
+                .thenReturn(mockChildContainer);
         when(mockBinary.hasType(FEDORA_BINARY)).thenReturn(false);
     }
 
     private void setupBinaryResource() throws Exception {
-        when(mockResourceFactory.getResource(mockTransaction, testPath)).thenReturn(mockBinary);
+        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(testPath)))
+                .thenReturn(mockBinary);
         when(mockBinary.hasType(FEDORA_BINARY)).thenReturn(true);
     }
 

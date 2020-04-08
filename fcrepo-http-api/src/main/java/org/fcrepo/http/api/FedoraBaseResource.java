@@ -17,7 +17,6 @@
  */
 package org.fcrepo.http.api;
 
-// import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.http.commons.session.TransactionProvider;
@@ -27,6 +26,7 @@ import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.slf4j.Logger;
 
 import java.net.URI;
@@ -78,7 +78,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
         return identifierConverter;
     }
 
-    protected FedoraResource getFedoraResource(final String fedoraId) throws PathNotFoundException {
+    protected FedoraResource getFedoraResource(final FedoraId fedoraId) throws PathNotFoundException {
         return this.resourceFactory.getResource(fedoraId);
     }
 
@@ -90,7 +90,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
      * @param fedoraId identifier of the resource
      * @return the requested FedoraResource
      */
-    protected FedoraResource getFedoraResource(final Transaction transaction, final String fedoraId) {
+    protected FedoraResource getFedoraResource(final Transaction transaction, final FedoraId fedoraId) {
         try {
             if (transaction.isCommitted()) {
                 return getFedoraResource(fedoraId);
@@ -107,8 +107,8 @@ abstract public class FedoraBaseResource extends AbstractResource {
      * @param fedoraId identifier of the object to check
      * @return Returns true if an object with the provided id exists
      */
-    protected boolean doesResourceExist(final Transaction transaction, final String fedoraId) {
-        return resourceFactory.doesResourceExist(transaction, fedoraId, null);
+    protected boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId) {
+        return resourceFactory.doesResourceExist(transaction, fedoraId);
     }
 
     /**

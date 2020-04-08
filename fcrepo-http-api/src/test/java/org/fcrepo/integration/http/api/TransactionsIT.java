@@ -175,10 +175,8 @@ public class TransactionsIT extends AbstractResourceIT {
     @Test
     public void testTransactionKeepAlive() throws IOException {
         /* create a tx */
-        try (final CloseableHttpResponse response = execute(new HttpPost(serverAddress + "fcr:tx"))) {
-            assertEquals(CREATED.getStatusCode(), getStatus(response));
-            assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPost(getLocation(response))));
-        }
+        final String txLocation = createTransaction();
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPost(txLocation)));
     }
 
     @Test
