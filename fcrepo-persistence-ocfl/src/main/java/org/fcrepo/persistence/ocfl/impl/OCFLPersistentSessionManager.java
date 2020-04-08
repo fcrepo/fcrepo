@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class OCFLPersistentSessionManager implements PersistentStorageSessionManager {
 
-    private PersistentStorageSession readOnlySession;
+    private volatile PersistentStorageSession readOnlySession;
 
     private Map<String, PersistentStorageSession> sessionMap;
 
@@ -69,13 +69,18 @@ public class OCFLPersistentSessionManager implements PersistentStorageSessionMan
 
     @Override
     public PersistentStorageSession getReadOnlySession() {
-        if (this.readOnlySession == null) {
+        var localSession = this.readOnlySession;
+
+        if (localSession == null) {
             synchronized (this) {
-                if (this.readOnlySession == null) {
+                localSession = this.readOnlySession;
+                if (localSession == null) {
                     this.readOnlySession = new OCFLPersistentStorageSession(fedoraOcflIndex, objectSessionFactory);
+                    localSession = this.readOnlySession;
                 }
             }
         }
-        return this.readOnlySession;
+
+        return localSession;
     }
 }
