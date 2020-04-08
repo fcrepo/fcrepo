@@ -17,6 +17,9 @@
  */
 package org.fcrepo.kernel.impl.models;
 
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
+
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;
@@ -31,11 +34,11 @@ import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.TimeMap;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.kernel.api.utils.FedoraResourceIdConverter;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -58,7 +61,7 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
             final Transaction tx,
             final PersistentStorageSessionManager pSessionManager,
             final ResourceFactory resourceFactory) {
-        super(originalResource.getId(), tx, pSessionManager, resourceFactory);
+        super(originalResource.getFedoraId().resolve(FCR_VERSIONS), tx, pSessionManager, resourceFactory);
 
         this.originalResource = originalResource;
         setCreatedBy(originalResource.getCreatedBy());
@@ -87,8 +90,8 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
     public Stream<FedoraResource> getChildren(final Boolean recursive) {
         return getVersions().stream().map(version -> {
             try {
-                return resourceFactory.getResource(tx, getId(), version);
-            } catch (PathNotFoundException e) {
+                return resourceFactory.getResource(tx, getInstantFedoraId(version));
+            } catch (final PathNotFoundException e) {
                 throw new PathNotFoundRuntimeException(e);
             }
         });
@@ -123,8 +126,17 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
     }
 
     private Resource asResource(final FedoraResource fedoraResource) {
-        return org.apache.jena.rdf.model.ResourceFactory.createResource(
-                FedoraResourceIdConverter.resolveFedoraId(fedoraResource));
+        return org.apache.jena.rdf.model.ResourceFactory.createResource(fedoraResource.getFedoraId().getFullId());
+    }
+
+    /**
+     * Get a FedoraId for a memento with the specified version datetime.
+     * @param version The instant datetime.
+     * @return the new FedoraId for the current TimeMap and the version.
+     */
+    private FedoraId getInstantFedoraId(final Instant version) {
+        final String versionTime = MEMENTO_LABEL_FORMATTER.format(version);
+        return getFedoraId().resolve(versionTime);
     }
 
 }

@@ -18,7 +18,6 @@
 package org.fcrepo.kernel.impl.models;
 
 import static org.apache.jena.graph.NodeFactory.createURI;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 
 import java.util.stream.Stream;
 
@@ -28,6 +27,7 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.ResourceFactory;
@@ -44,24 +44,30 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
     /**
      * Construct a description resource
      *
-     * @param id internal identifier
+     * @param fedoraID internal identifier
      * @param tx transaction
      * @param pSessionManager session manager
      * @param resourceFactory resource factory
      */
-    public NonRdfSourceDescriptionImpl(final String id,
+    public NonRdfSourceDescriptionImpl(final FedoraId fedoraID,
             final Transaction tx,
             final PersistentStorageSessionManager pSessionManager,
             final ResourceFactory resourceFactory) {
-        super(id, tx, pSessionManager, resourceFactory);
+        super(fedoraID, tx, pSessionManager, resourceFactory);
+    }
+
+    @Override
+    public String getId() {
+        return getFedoraId().getDescriptionId();
     }
 
     @Override
     public FedoraResource getDescribedResource() {
-        final String describedId = this.getId().replaceAll("/" + FCR_METADATA + "$", "");
+        // Get a FedoraId for the binary
+        final FedoraId describedId = FedoraId.create(this.getFedoraId().getResourceId());
         try {
             return this.resourceFactory.getResource(tx, describedId);
-        } catch (PathNotFoundException e) {
+        } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
         }
     }

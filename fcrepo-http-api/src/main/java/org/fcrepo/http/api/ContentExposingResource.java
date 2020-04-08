@@ -80,7 +80,6 @@ import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FOR
 
 import org.apache.jena.atlas.web.ContentType;
 import org.fcrepo.kernel.api.services.ContainmentTriplesService;
-import org.fcrepo.kernel.api.utils.FedoraResourceIdConverter;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -428,7 +427,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected URI getUri(final FedoraResource resource) {
         try {
             final String uri = identifierConverter()
-                    .toExternalId(FedoraResourceIdConverter.resolveFedoraId(resource));
+                    .toExternalId(resource.getFedoraId().getFullId());
             return new URI(uri);
         } catch (final URISyntaxException e) {
             throw new BadRequestException(e);

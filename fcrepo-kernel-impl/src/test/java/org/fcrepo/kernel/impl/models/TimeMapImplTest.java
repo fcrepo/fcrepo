@@ -28,13 +28,16 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.services.VersionService;
-import org.fcrepo.kernel.api.utils.FedoraResourceIdConverter;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
@@ -43,6 +46,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -59,7 +63,7 @@ public class TimeMapImplTest {
     @Mock
     private ResourceFactory resourceFactory;
 
-    private final String defaultId = "fedora:info/resource";
+    private final String defaultId = FEDORA_ID_PREFIX + "resource";
 
     private TimeMapImpl timeMap;
 
@@ -72,7 +76,7 @@ public class TimeMapImplTest {
 
     @Test
     public void copyParentPropsWhenCreatingTimeMap() {
-        final var parent = createParent("fedora:info/id");
+        final var parent = createParent(FEDORA_ID_PREFIX + "id");
         final var timeMap = new TimeMapImpl(parent, null, sessionManager, resourceFactory);
 
         assertEquals(parent.getId(), timeMap.getId());
@@ -143,21 +147,26 @@ public class TimeMapImplTest {
 
         final var mementos = new ArrayList<FedoraResource>();
 
-        for (var version : versions) {
+        for (final var version : versions) {
             final var memento = createMemento(id, version);
             mementos.add(memento);
-            when(resourceFactory.getResource(null, id, version)).thenReturn(memento);
+            final FedoraId mementoID = FedoraId.create(id, FCR_VERSIONS, instantStr(version));
+            when(memento.getFedoraId()).thenReturn(mementoID);
+            when(resourceFactory.getResource(null, mementoID)).thenReturn(memento);
         }
-
         return mementos;
     }
 
     private Node node(final FedoraResource memento) {
-        return NodeFactory.createURI(FedoraResourceIdConverter.resolveFedoraId(memento));
+        return NodeFactory.createURI(memento.getFedoraId().getFullId());
     }
 
     private Instant instant(final String instantStr) {
         return Instant.from(VersionService.MEMENTO_LABEL_FORMATTER.parse(instantStr));
+    }
+
+    private String instantStr(final Instant instant) {
+        return VersionService.MEMENTO_LABEL_FORMATTER.format(instant);
     }
 
     private FedoraResource createMemento(final String id, final Instant version) {
@@ -173,7 +182,8 @@ public class TimeMapImplTest {
     }
 
     private FedoraResource createParent(final String id) {
-        final var parent = new ContainerImpl(id, null, sessionManager, resourceFactory);
+        final var fedoraId = FedoraId.create(id);
+        final var parent = new ContainerImpl(fedoraId, null, sessionManager, resourceFactory);
 
         parent.setCreatedBy("createdBy");
         parent.setCreatedDate(Instant.now());

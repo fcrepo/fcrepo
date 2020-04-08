@@ -11,5 +11,5 @@
    rdfs:comment "By default, all non-Admin agents (foaf:Agent) only have read access (acl:Read) to the respository" ;
    acl:agentClass foaf:Agent ;
    acl:mode acl:Read ;
-   acl:accessTo <info:fedora/> ;
-   acl:default <info:fedora/> .
+   acl:accessTo <info:fedora> ;
+   acl:default <info:fedora> .

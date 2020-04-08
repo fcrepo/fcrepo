@@ -304,7 +304,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     public void testCreateVersion() throws Exception {
         createVersionedContainer(id);
 
-        final String mementoUri = createContainerMementoWithBody(subjectUri);
+        final String mementoUri = createLDPRSMementoWithExistingBody(id);
         assertMementoUri(mementoUri, subjectUri);
 
         try (final CloseableDataset dataset = getDataset(new HttpGet(mementoUri))) {
@@ -326,11 +326,9 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createMethod.addHeader(CONTENT_TYPE, N3);
         createMethod.setEntity(new StringEntity("<#test> <info:test#label> \"foo\""));
 
-        try (final CloseableHttpResponse response = execute(createMethod)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
-        }
+        assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(createMethod));
 
-        final String mementoUri = createContainerMementoWithBody(subjectUri);
+        final String mementoUri = createLDPRSMementoWithExistingBody(id);
         assertMementoUri(mementoUri, subjectUri);
 
         try (final CloseableDataset dataset = getDataset(new HttpGet(mementoUri))) {
@@ -1411,7 +1409,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore("bug creating resources with text/plain https://jira.lyrasis.org/browse/FCREPO-3246")
     @Test
     public void testGetLDPNRMementoHeaders() throws Exception {
         createVersionedBinary(id, "text/plain", "This is some versioned content");
@@ -1436,7 +1433,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
      * Verify binary description timemap RDF representation can be retrieved with and without
      * accompanying binary memento
      */
-    @Ignore("descriptions aren't returned")
     @Test
     public void testFcrepo2792() throws Exception {
         // 1. Create versioned resource
@@ -1704,8 +1700,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     private String createContainerMementoWithBody(final String subjectUri)
             throws Exception {
 
-        final var body = createContainerMementoBodyContent(subjectUri, N3);
-        createVersionedContainer(subjectUri, body);
         return createMemento(subjectUri);
     }
 

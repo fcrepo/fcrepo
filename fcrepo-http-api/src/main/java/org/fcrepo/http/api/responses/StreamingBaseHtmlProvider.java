@@ -74,6 +74,7 @@ import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
@@ -219,14 +220,12 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
      * @return FedoraResource if exists or null
      */
     private FedoraResource getResourceFromSubject(final String subjectUri) {
-
+        final FedoraId fedoraID = FedoraId.create(identifierConverter().toInternalId(subjectUri));
         try {
             if (transaction() == null) {
-                return resourceFactory.getResource(
-                        identifierConverter().toInternalId(subjectUri));
+                return resourceFactory.getResource(fedoraID);
             } else {
-                return resourceFactory.getResource(transaction(),
-                        identifierConverter().toInternalId(subjectUri));
+                return resourceFactory.getResource(transaction(), fedoraID);
             }
         } catch (final PathNotFoundException e) {
             throw new RepositoryRuntimeException(e);

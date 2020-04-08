@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.api.services;
 
 import org.apache.jena.rdf.model.Model;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ExternalContent;
 
 import java.io.InputStream;
@@ -46,7 +47,7 @@ public interface CreateResourceService {
      * @param requestBody The request body or null if none.
      * @param externalContent The external content handler or null if none.
      */
-    void perform(String txId, String userPrincipal, String fedoraId,
+    void perform(String txId, String userPrincipal, FedoraId fedoraId,
             String contentType, String filename, Long contentSize, List<String> linkHeaders,
             Collection<URI> digest, InputStream requestBody, ExternalContent externalContent);
 
@@ -59,7 +60,7 @@ public interface CreateResourceService {
      * @param linkHeaders The original LINK headers or null if none.
      * @param model The request body RDF as a Model
      */
-    void perform(String txId, String userPrincipal, String fedoraId,
+    void perform(String txId, String userPrincipal, FedoraId fedoraId,
             List<String> linkHeaders, Model model);
 
 }

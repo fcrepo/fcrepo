@@ -58,7 +58,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URLDecoder;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Collection;
@@ -105,6 +104,7 @@ import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.ExternalContent;
@@ -395,8 +395,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String interactionModel = checkInteractionModel(links);
 
-        final String externalUri = this.uriInfo.getRequestUri().toString();
-        final String fedoraId = identifierConverter().toInternalId(externalUri);
+        final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath());
         final boolean resourceExists = doesResourceExist(transaction, fedoraId);
 
         if (resourceExists) {
@@ -464,7 +463,7 @@ public class FedoraLdp extends ContentExposingResource {
             }
         } else {
             final var contentType = requestContentType != null ? requestContentType : DEFAULT_RDF_CONTENT_TYPE;
-            final Model model = httpRdfService.bodyToInternalModel(externalUri, requestBodyStream,
+            final Model model = httpRdfService.bodyToInternalModel(fedoraId.getFullId(), requestBodyStream,
                     contentType, identifierConverter());
 
             if (resourceExists) {
@@ -591,8 +590,8 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String interactionModel = checkInteractionModel(links);
 
-        final String fedoraId = identifierConverter().toInternalId(identifierConverter().toDomain(externalPath()));
-        final String newFedoraId = mintNewPid(fedoraId, slug);
+        final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath());
+        final FedoraId newFedoraId = mintNewPid(fedoraId, slug);
         final var providedContentType = requestContentType != null ? requestContentType.toString() : null;
 
         if (isBinary(interactionModel,
@@ -624,7 +623,7 @@ public class FedoraLdp extends ContentExposingResource {
                                           extContent);
         } else {
             final var contentType = requestContentType != null ? requestContentType : DEFAULT_RDF_CONTENT_TYPE;
-            final Model model = httpRdfService.bodyToInternalModel(newFedoraId, requestBodyStream,
+            final Model model = httpRdfService.bodyToInternalModel(newFedoraId.getFullId(), requestBodyStream,
                     contentType, identifierConverter());
             createResourceService.perform(transaction.getId(),
                                           getUserPrincipal(),
@@ -813,7 +812,7 @@ public class FedoraLdp extends ContentExposingResource {
             FedoraTypes.FCR_VERSIONS, externalPath);
     }
 
-    private String mintNewPid(final String fedoraId, final String slug) {
+    private FedoraId mintNewPid(final FedoraId fedoraId, final String slug) {
         final String pid;
 
         if (!isBlank(slug)) {
@@ -824,8 +823,7 @@ public class FedoraLdp extends ContentExposingResource {
             pid = defaultPidMinter.get();
         }
 
-        String fullTestPath = addToIdentifier(fedoraId, pid);
-        fullTestPath = URLDecoder.decode(fullTestPath, UTF_8);
+        final FedoraId fullTestPath = fedoraId.resolve(pid);
 
         if (doesResourceExist(transaction, fullTestPath)) {
             LOGGER.trace("Resource with path {} already exists; minting new path instead", fullTestPath);
@@ -833,19 +831,6 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         return fullTestPath;
-    }
-
-    /**
-     * TODO: Replace this functionality with FedoraId class.
-     *
-     * Add a subpath to an existing identifier.
-     *
-     * @param oldId the old identifier
-     * @param newIdPart the new identifier part
-     * @return A combination of old and new.
-     */
-    private String addToIdentifier(final String oldId, final String newIdPart) {
-        return oldId + (oldId.endsWith("/") ? "" : "/") + newIdPart;
     }
 
 }

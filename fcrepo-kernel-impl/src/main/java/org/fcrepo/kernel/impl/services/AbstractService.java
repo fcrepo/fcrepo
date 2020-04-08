@@ -22,6 +22,7 @@ import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.rdf.model.ResourceFactory.createStatement;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.DEFAULT_INTERACTION_MODEL;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS_FULL;
@@ -56,6 +57,7 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RequestWithAclLinkHeaderException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.slf4j.Logger;
 
 
@@ -109,21 +111,29 @@ public abstract class AbstractService {
      * Find the closest ancestor using a Fedora ID.
      * @param txID The current transaction or null if none.
      * @param fedoraId The fedora ID to check
-     * @return The ancestor ID or null if root
+     * @return The ancestor or root FedoraId object.
      */
-    protected String findExistingAncestor(final String txID, final String fedoraId) {
+    protected FedoraId findExistingAncestor(final String txID, final FedoraId fedoraId) {
+        if (fedoraId.isRepositoryRoot()) {
+            // If we are root then we are the top.
+            return fedoraId;
+        }
         final String parent = containmentIndex.getContainedBy(txID, fedoraId);
         if (parent != null) {
-            return parent;
+            return FedoraId.create(parent);
         }
-        String idIterator = fedoraId;
+        String idIterator = fedoraId.getFullId();
         while (idIterator.contains("/")) {
-            idIterator = fedoraId.substring(0, idIterator.lastIndexOf("/"));
-            if (containmentIndex.resourceExists(txID, idIterator)) {
-                return idIterator;
+            idIterator = fedoraId.getResourceId().substring(0, idIterator.lastIndexOf("/"));
+            if (idIterator.equals(FEDORA_ID_PREFIX)) {
+                return FedoraId.getRepositoryRootId();
+            }
+            final FedoraId testID = FedoraId.create(idIterator);
+            if (containmentIndex.resourceExists(txID, testID)) {
+                return testID;
             }
         }
-        return null;
+        return FedoraId.getRepositoryRootId();
     }
 
     /**
