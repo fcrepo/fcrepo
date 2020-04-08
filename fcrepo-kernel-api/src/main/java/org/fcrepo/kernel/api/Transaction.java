@@ -96,4 +96,16 @@ public interface Transaction {
      */
     void refresh();
 
+    /**
+     * Sets the baseUri on the transaction
+     * @param baseUri the baseUri of the requests
+     */
+    void setBaseUri(String baseUri);
+
+    /**
+     * Sets the user-agent on the transaction
+     * @param userAgent the request's user-agent
+     */
+    void setUserAgent(String userAgent);
+
 }

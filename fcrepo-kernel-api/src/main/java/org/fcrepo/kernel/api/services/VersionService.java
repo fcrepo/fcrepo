@@ -23,6 +23,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 /**
  * Service for creating versions of resources
@@ -48,9 +49,9 @@ public interface VersionService {
      * Explicitly creates a version for the resource at the path provided.
      *
      * @param transaction the transaction in which the resource resides
-     * @param resourceId the internal resource id
+     * @param fedoraId the internal resource id
      * @param userPrincipal the user principal
      */
-    void createVersion(Transaction transaction, String resourceId, String userPrincipal);
+    void createVersion(Transaction transaction, FedoraId fedoraId, String userPrincipal);
 
 }

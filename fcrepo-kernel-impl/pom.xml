@@ -85,6 +85,11 @@
       <artifactId>h2</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-all</artifactId>
+      <scope>test</scope>
+    </dependency>
 
     <!-- This dependency is for compile-time: it keeps this module independent 
       of any given choice of JAX-RS implementation. It must be _after_ the test 

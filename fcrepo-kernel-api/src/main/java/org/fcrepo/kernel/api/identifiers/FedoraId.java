@@ -165,6 +165,14 @@ public class FedoraId {
     }
 
     /**
+     * Return the original full ID without the info:fedora prefix.
+     * @return the full id path part
+     */
+    public String getFullIdPath() {
+        return pathOnly;
+    }
+
+    /**
      * Return the Memento datetime as Instant.
      * @return The datetime or null if not a memento.
      */

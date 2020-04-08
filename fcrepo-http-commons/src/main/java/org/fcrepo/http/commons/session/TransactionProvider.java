@@ -21,14 +21,17 @@ import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEA
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_PREFIX;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.net.URI;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.glassfish.hk2.api.Factory;
+import org.glassfish.jersey.uri.internal.JerseyUriBuilder;
 import org.slf4j.Logger;
 
 /**
@@ -40,20 +43,27 @@ public class TransactionProvider implements Factory<Transaction> {
 
     private static final Logger LOGGER = getLogger(TransactionProvider.class);
 
+    static final String JMS_BASEURL_PROP = "fcrepo.jms.baseUrl";
+
     public static final Pattern TX_ID_PATTERN = Pattern.compile(".*/" + TX_PREFIX + "([0-9a-f\\-]+)$");
 
     private final TransactionManager txManager;
 
     private final HttpServletRequest request;
 
+    private final URI baseUri;
+
     /**
      * Create a new transaction provider for a request
      * @param txManager the transaction manager
      * @param request the request
+     * @param baseUri base uri for the application
      */
-    public TransactionProvider(final TransactionManager txManager, final HttpServletRequest request) {
+    public TransactionProvider(final TransactionManager txManager, final HttpServletRequest request,
+                               final URI baseUri) {
         this.txManager = txManager;
         this.request = request;
+        this.baseUri = baseUri;
     }
 
     @Override
@@ -101,7 +111,37 @@ public class TransactionProvider implements Factory<Transaction> {
         if (!StringUtils.isEmpty(txId)) {
             return txManager.get(txId);
         } else {
-            return txManager.create();
+            final var transaction = txManager.create();
+            transaction.setUserAgent(request.getHeader("user-agent"));
+            transaction.setBaseUri(resolveBaseUri());
+            return transaction;
         }
     }
+
+    private String resolveBaseUri() {
+        final String baseURL = getBaseUrlProperty();
+        if (baseURL.length() > 0) {
+            return baseURL;
+        }
+        return baseUri.toString();
+    }
+
+    /**
+     * Produce a baseURL for JMS events using the system property fcrepo.jms.baseUrl of the form http[s]://host[:port],
+     * if it exists.
+     *
+     * @return String the base Url
+     */
+    private String getBaseUrlProperty() {
+        final String propBaseURL = System.getProperty(JMS_BASEURL_PROP, "");
+        if (propBaseURL.length() > 0 && propBaseURL.startsWith("http")) {
+            final URI propBaseUri = URI.create(propBaseURL);
+            if (propBaseUri.getPort() < 0) {
+                return JerseyUriBuilder.fromUri(baseUri).port(-1).uri(propBaseUri).toString();
+            }
+            return JerseyUriBuilder.fromUri(baseUri).uri(propBaseUri).toString();
+        }
+        return "";
+    }
+
 }

@@ -38,6 +38,7 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ExternalContent;
+import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
@@ -76,6 +77,9 @@ public class ReplaceBinariesServiceImplTest {
     private final Collection<URI> DIGESTS = asList(URI.create("urn:sha1:1234abcd"), URI.create("urn:md5:zyxw9876"));
 
     @Mock
+    private EventAccumulator eventAccumulator;
+
+    @Mock
     private Transaction tx;
 
     @Mock
@@ -101,6 +105,7 @@ public class ReplaceBinariesServiceImplTest {
     public void setup() {
         factory = new NonRdfSourceOperationFactoryImpl();
         setField(service, "factory", factory);
+        service.eventAccumulator = eventAccumulator;
         when(psManager.getSession(anyString())).thenReturn(pSession);
     }
 

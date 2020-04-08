@@ -26,6 +26,7 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
+import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.junit.Before;
@@ -55,12 +56,16 @@ public class TransactionManagerImplTest {
     @Mock
     private ContainmentIndex containmentIndex;
 
+    @Mock
+    private EventAccumulator eventAccumulator;
+
     @Before
     public void setUp() {
         testTxManager = new TransactionManagerImpl();
         when(pssManager.getSession(any())).thenReturn(psSession);
         setField(testTxManager, "pSessionManager", pssManager);
         setField(testTxManager, "containmentIndex", containmentIndex);
+        setField(testTxManager, "eventAccumulator", eventAccumulator);
         testTx = (TransactionImpl) testTxManager.create();
     }
 

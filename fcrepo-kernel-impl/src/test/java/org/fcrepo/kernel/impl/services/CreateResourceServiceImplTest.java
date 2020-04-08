@@ -68,6 +68,7 @@ import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ExternalContent;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.kernel.api.operations.CreateRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
@@ -133,6 +134,9 @@ public class CreateResourceServiceImplTest {
     @Captor
     private ArgumentCaptor<ResourceOperation> operationCaptor;
 
+    @Mock
+    private EventAccumulator eventAccumulator;
+
     @InjectMocks
     private CreateResourceServiceImpl createResourceService;
 
@@ -166,6 +170,7 @@ public class CreateResourceServiceImplTest {
         nonRdfSourceOperationFactory = new NonRdfSourceOperationFactoryImpl();
         setField(createResourceService, "nonRdfSourceOperationFactory", nonRdfSourceOperationFactory);
         setField(createResourceService, "containmentIndex", containmentIndex);
+        createResourceService.eventAccumulator = eventAccumulator;
         when(psManager.getSession(ArgumentMatchers.any())).thenReturn(psSession);
         when(extContent.getURL()).thenReturn(EXTERNAL_URL);
         when(extContent.getHandling()).thenReturn(ExternalContent.PROXY);

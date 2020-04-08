@@ -28,12 +28,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.Transaction;
@@ -70,6 +72,9 @@ public class TransactionsTest {
     private TransactionManager mockTxManager;
 
     @Mock
+    private UriInfo mockUriInfo;
+
+    @Mock
     private HttpIdentifierConverter mockIdConverter;
 
     @Mock
@@ -82,7 +87,7 @@ public class TransactionsTest {
     private SecurityContext mockSecurityContext;
 
     @Before
-    public void setUp() {
+    public void setUp() throws URISyntaxException {
         testObj = new Transactions();
         mockTransaction.setShortLived(false);
         when(mockTxManager.create()).thenReturn(mockTransaction);
@@ -91,7 +96,11 @@ public class TransactionsTest {
             .thenThrow(new TransactionNotFoundException("No Transaction found with transactionId"));
         when(mockTransaction.getId()).thenReturn("123");
         when(mockTransaction.getExpires()).thenReturn(now().plusSeconds(100));
+
+        when(mockUriInfo.getBaseUri()).thenReturn(new URI("http://localhost/rest"));
+
         setField(testObj, "txManager", mockTxManager);
+        setField(testObj, "uriInfo", mockUriInfo);
     }
 
     @Test

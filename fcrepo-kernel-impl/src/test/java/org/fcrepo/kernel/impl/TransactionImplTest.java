@@ -31,6 +31,7 @@ import java.time.Instant;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
+import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -64,11 +65,15 @@ public class TransactionImplTest {
     @Mock
     private ContainmentIndex containmentIndex;
 
+    @Mock
+    private EventAccumulator eventAccumulator;
+
     @Before
     public void setUp() {
         when(pssManager.getSession("123")).thenReturn(psSession);
         when(txManager.getPersistentStorageSessionManager()).thenReturn(pssManager);
         when(txManager.getContainmentIndex()).thenReturn(containmentIndex);
+        when(txManager.getEventAccumulator()).thenReturn(eventAccumulator);
         testTx = new TransactionImpl("123", txManager);
     }
 

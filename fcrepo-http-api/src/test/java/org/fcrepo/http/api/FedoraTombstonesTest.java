@@ -72,7 +72,7 @@ public class FedoraTombstonesTest {
         doReturn(mockResource).when(testObj).resource();
         final Response actual = testObj.delete();
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
-        verify(deleteResourceService).perform(mockTransaction, mockResource);
+        verify(deleteResourceService).perform(mockTransaction, mockResource, null);
         verify(mockTransaction).commitIfShortLived();
     }
 }
