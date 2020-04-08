@@ -126,6 +126,8 @@ public class ResourceHeaderSerializationUtilsTest {
         assertEquals(MODIFIED_DATE, resultHeaders.getLastModifiedDate().toString());
         assertEquals(CREATED_DATE, resultHeaders.getCreatedDate().toString());
         assertTrue(resultHeaders.isArchivalGroup());
+        assertTrue(resultHeaders.isObjectRoot());
+
     }
 
     @Test
@@ -136,9 +138,10 @@ public class ResourceHeaderSerializationUtilsTest {
         headers.setLastModifiedDate(Instant.parse(MODIFIED_DATE));
         headers.setCreatedBy(USER_PRINCIPAL);
         headers.setCreatedDate(Instant.parse(CREATED_DATE));
-
+        headers.setObjectRoot(true);
         populateBinaryHeaders(headers, MIMETYPE, FILENAME, FILESIZE, DIGESTS);
         populateExternalBinaryHeaders(headers, EXTERNAL_URL, EXTERNAL_HANDLING);
+
 
         final var headerStream = serializeHeaders(headers);
 
@@ -160,6 +163,6 @@ public class ResourceHeaderSerializationUtilsTest {
         assertEquals(EXTERNAL_URL, resultHeaders.getExternalUrl());
         assertEquals(EXTERNAL_HANDLING, resultHeaders.getExternalHandling());
         assertFalse(resultHeaders.isArchivalGroup());
-
+        assertTrue(resultHeaders.isObjectRoot());
     }
 }

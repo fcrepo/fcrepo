@@ -19,11 +19,12 @@ package org.fcrepo.integration.http.api;
 
 
 import edu.wisc.library.ocfl.api.OcflRepository;
+import org.apache.http.client.methods.HttpGet;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.kernel.impl.operations.RdfSourceOperationFactoryImpl;
 import org.fcrepo.persistence.ocfl.RepositoryInitializer;
 import org.fcrepo.persistence.ocfl.impl.DefaultOCFLObjectSessionFactory;
 import org.fcrepo.persistence.ocfl.impl.FedoraToOCFLObjectIndexImpl;
-import org.fcrepo.persistence.ocfl.impl.FedoraToOCFLObjectIndexUtilImpl;
 import org.fcrepo.persistence.ocfl.impl.OCFLPersistenceConfig;
 import org.fcrepo.persistence.ocfl.impl.OCFLPersistentSessionManager;
 import org.junit.AfterClass;
@@ -36,12 +37,22 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.test.annotation.DirtiesContext;
 
+import java.util.List;
+
 import static java.lang.System.getProperty;
+import static java.text.MessageFormat.format;
+import static java.util.Arrays.asList;
 import static javax.ws.rs.core.Response.Status.OK;
 
+import static org.apache.jena.graph.Node.ANY;
+import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.OCFL_STORAGE_ROOT_DIR_KEY;
 import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.OCFL_WORK_DIR_KEY;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.springframework.test.util.AssertionErrors.assertTrue;
 
 /**
  * @author awooods
@@ -53,7 +64,6 @@ public class RebuildIT extends AbstractResourceIT {
     private static final Logger LOGGER = LoggerFactory.getLogger(RebuildIT.class);
 
     private OcflRepository ocflRepository;
-
     private static String origStorageRootDir;
     private static String origWorkDir;
 
@@ -82,7 +92,6 @@ public class RebuildIT extends AbstractResourceIT {
         ctx.register(RepositoryInitializer.class,
                 OCFLPersistentSessionManager.class,
                 RdfSourceOperationFactoryImpl.class,
-                FedoraToOCFLObjectIndexUtilImpl.class,
                 DefaultOCFLObjectSessionFactory.class,
                 OCFLPersistenceConfig.class,
                 FedoraToOCFLObjectIndexImpl.class);
@@ -91,7 +100,7 @@ public class RebuildIT extends AbstractResourceIT {
     }
 
     /**
-     * This test rebuilds from a knows set of OCFL content.
+     * This test rebuilds from a known set of OCFL content.
      * The OCFL storage root contains the following four resources:
      * - root
      * - /binary
@@ -108,22 +117,55 @@ public class RebuildIT extends AbstractResourceIT {
             ocflRepository.listObjectIds().forEach(id -> LOGGER.debug("Object id: {}", id));
         }
 
-        // Test directly against the underlying OCFL repository
-        Assert.assertEquals(4, ocflRepository.listObjectIds().count());
-        Assert.assertTrue("Should contain object with id: binary", ocflRepository.containsObject("binary"));
-        Assert.assertTrue("Should contain object with id: test", ocflRepository.containsObject("test"));
-        Assert.assertTrue("Should contain object with id: test_child", ocflRepository.containsObject("test_child"));
-        Assert.assertFalse("Should NOT contain object with id: junk", ocflRepository.containsObject("junk"));
+        assertEquals(7, ocflRepository.listObjectIds().count());
+        assertTrue("Should contain object with id: binary", ocflRepository.containsObject("binary"));
+        assertTrue("Should contain object with id: test", ocflRepository.containsObject("test"));
+        assertTrue("Should contain object with id: test_child", ocflRepository.containsObject("test_child"));
+        assertFalse("Should NOT contain object with id: junk", ocflRepository.containsObject("junk"));
     }
 
     @Test
-    public void testRebuildWebapp() {
+    public void testRebuildWebapp() throws Exception {
         // Test against the Fedora API
-        Assert.assertEquals(OK.getStatusCode(), getStatus(getObjMethod("")));
-        Assert.assertEquals(OK.getStatusCode(), getStatus(getObjMethod("test")));
-        Assert.assertEquals(OK.getStatusCode(), getStatus(getObjMethod("test/child")));
-        Assert.assertEquals(OK.getStatusCode(), getStatus(getObjMethod("binary")));
-        Assert.assertEquals(OK.getStatusCode(), getStatus(getObjMethod("binary/" + FCR_METADATA)));
+        assertEquals(OK.getStatusCode(), getStatus(getObjMethod("")));
+        assertEquals(OK.getStatusCode(), getStatus(getObjMethod("test")));
+        assertEquals(OK.getStatusCode(), getStatus(getObjMethod("binary")));
+        assertEquals(OK.getStatusCode(), getStatus(getObjMethod("binary/" + FCR_METADATA)));
+        assertEquals(OK.getStatusCode(), getStatus(getObjMethod("archival-group")));
+        assertEquals(OK.getStatusCode(), getStatus(getObjMethod("archival-group/binary")));
+        assertEquals(OK.getStatusCode(), getStatus(getObjMethod("archival-group/container")));
+        assertEquals(OK.getStatusCode(), getStatus(getObjMethod("test/child")));
+        assertEquals(OK.getStatusCode(), getStatus(getObjMethod("test/nested-archival-group")));
+        assertEquals(OK.getStatusCode(), getStatus(getObjMethod("test/nested-binary")));
+
+        //verify containment relationships
+        verifyContainment("", asList("binary", "archival-group", "test"));
+        verifyContainment("archival-group", asList("binary", "container"));
+        verifyContainment("test", asList("child", "nested-archival-group", "nested-binary"));
+    }
+
+    private void verifyContainment(final String parent, final List<String> children) throws Exception {
+        final var containsNode = createURI(LDP_NAMESPACE + "contains");
+        final var subjectUri = serverAddress + parent;
+        final var subjectNode = createURI(subjectUri);
+        try (final CloseableDataset dataset = getDataset(new HttpGet(subjectUri))) {
+            final var graph = dataset.asDatasetGraph();
+            if (LOGGER.isDebugEnabled()) {
+                graph.listGraphNodes().forEachRemaining(gn -> {
+                    LOGGER.debug("Node = " + gn.toString());
+                });
+            }
+
+            for (final String child : children) {
+                final var childNode = createURI(subjectUri + (subjectUri.endsWith("/") ? "" : "/") + child);
+                Assert.assertTrue(format("Triple not found: {0}, {1}, {2}", subjectUri,
+                 containsNode, childNode),
+                        graph.contains(ANY,
+                        subjectNode,
+                        containsNode,
+                        childNode));
+            }
+        }
     }
 
 }

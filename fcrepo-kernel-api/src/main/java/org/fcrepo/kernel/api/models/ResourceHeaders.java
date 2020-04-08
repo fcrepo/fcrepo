@@ -131,4 +131,10 @@ public interface ResourceHeaders {
      * @return Archival Group status
      */
     boolean isArchivalGroup();
+
+    /**
+     * Determine whether a resource is the object root
+     * @return
+     */
+    boolean isObjectRoot();
 }

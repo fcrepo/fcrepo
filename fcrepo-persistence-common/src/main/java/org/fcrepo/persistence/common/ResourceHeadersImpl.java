@@ -60,6 +60,8 @@ public class ResourceHeadersImpl implements ResourceHeaders {
 
     private boolean archivalGroup;
 
+    private boolean objectRoot;
+
     @Override
     public String getId() {
         return id;
@@ -239,5 +241,20 @@ public class ResourceHeadersImpl implements ResourceHeaders {
     @Override
     public boolean isArchivalGroup() {
         return archivalGroup;
+    }
+
+    /**
+     *
+     * @param flag
+     */
+    public void setObjectRoot(final boolean flag) { this.objectRoot = flag; }
+
+    @Override
+    public boolean isObjectRoot() {
+        if(isArchivalGroup()) {
+            return true;
+        } else {
+            return objectRoot;
+        }
     }
 }
