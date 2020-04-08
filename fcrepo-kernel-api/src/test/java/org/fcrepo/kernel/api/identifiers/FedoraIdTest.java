@@ -326,6 +326,19 @@ public class FedoraIdTest {
                 fedoraId1.getFullId());
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testResolveBlank() {
+        final FedoraId fedoraId = FedoraId.create("core-object");
+        fedoraId.resolve();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testResolveEmptyString() {
+        final FedoraId fedoraId = FedoraId.create("core-object");
+        fedoraId.resolve("");
+    }
+
+
     /**
      * Utility to test a FedoraId against expectations.
      * @param fedoraID The FedoraId object to test.

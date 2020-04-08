@@ -17,7 +17,6 @@
  */
 package org.fcrepo.kernel.impl;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.fcrepo.kernel.api.ContainmentIndex;
@@ -388,7 +387,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     public boolean resourceExists(final String txID, final FedoraId fedoraID) {
         final String resourceID = fedoraID.getResourceId();
         LOGGER.debug("Checking if {} exists in transaction {}", resourceID, txID);
-        if (resourceID.equals(FEDORA_ID_PREFIX)) {
+        if (fedoraID.isRepositoryRoot()) {
             // Root always exists.
             return true;
         }
