@@ -117,7 +117,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
     private void createDescription(final PersistentStorageSession pSession, final String userPrincipal,
             final FedoraId binaryId) {
-        final var descId = binaryId.addToFullId(FCR_METADATA);
+        final var descId = binaryId.resolve("/" + FCR_METADATA);
         final var createOp = rdfSourceOperationFactory.createBuilder(
                     descId.getFullId(),
                     FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI

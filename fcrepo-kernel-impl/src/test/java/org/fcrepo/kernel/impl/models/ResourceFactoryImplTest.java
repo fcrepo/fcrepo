@@ -157,8 +157,7 @@ public class ResourceFactoryImplTest {
 
     @After
     public void cleanUp() {
-        when(mockResource.getId()).thenReturn(FEDORA_ID_PREFIX);
-        when(mockResource.getFedoraId()).thenReturn(fedoraId);
+        when(mockResource.getFedoraId()).thenReturn(rootId);
         containmentIndex.rollbackTransaction(mockTx);
         containmentIndex.getContains(null, mockResource).forEach(c ->
                 containmentIndex.removeContainedBy(null, rootId, FedoraId.create(c)));
@@ -352,7 +351,7 @@ public class ResourceFactoryImplTest {
     @Test
     public void doesResourceExist_Exists_Description_WithSession() {
         containmentIndex.addContainedBy(mockTx.getId(), rootId, fedoraId);
-        final FedoraId descId = fedoraId.addToResourceId(FCR_METADATA);
+        final FedoraId descId = fedoraId.resolve("/" + FCR_METADATA);
         final boolean answerIn = factory.doesResourceExist(mockTx, descId);
         assertTrue(answerIn);
         final boolean answerOut = factory.doesResourceExist(null, descId);
@@ -369,7 +368,7 @@ public class ResourceFactoryImplTest {
     @Test
     public void doesResourceExist_Exists_Description_WithoutSession() {
         containmentIndex.addContainedBy(null, rootId, fedoraId);
-        final FedoraId descId = fedoraId.addToResourceId(FCR_METADATA);
+        final FedoraId descId = fedoraId.resolve("/" + FCR_METADATA);
         final boolean answer = factory.doesResourceExist(null, descId);
         assertTrue(answer);
     }
@@ -382,7 +381,7 @@ public class ResourceFactoryImplTest {
 
     @Test
     public void doesResourceExist_DoesntExists_Description_WithSession() {
-        final FedoraId descId = fedoraId.addToResourceId(FCR_METADATA);
+        final FedoraId descId = fedoraId.resolve("/" + FCR_METADATA);
         final boolean answer = factory.doesResourceExist(mockTx, descId);
         assertFalse(answer);
     }
@@ -395,7 +394,7 @@ public class ResourceFactoryImplTest {
 
     @Test
     public void doesResourceExist_DoesntExists_Description_WithoutSession() {
-        final FedoraId descId = fedoraId.addToResourceId(FCR_METADATA);
+        final FedoraId descId = fedoraId.resolve("/" + FCR_METADATA);
         final boolean answer = factory.doesResourceExist(null, descId);
         assertFalse(answer);
     }

@@ -160,7 +160,7 @@ public class WebACFilterTest {
 
         when(mockTransactionManager.get("tx-id")).thenReturn(mockTransaction);
 
-        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(testChildPath.substring(1))))
+        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(testChildPath)))
                 .thenReturn(null);
 
         when(mockResourceFactory.getResource(mockTransaction, FedoraId.getRepositoryRootId())).thenReturn(mockRoot);
@@ -181,15 +181,15 @@ public class WebACFilterTest {
     }
 
     private void setupContainerResource() throws Exception {
-        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(testPath.substring(1))))
+        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(testPath)))
                 .thenReturn(mockContainer);
-        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(testChildPath.substring(1))))
+        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(testChildPath)))
                 .thenReturn(mockChildContainer);
         when(mockBinary.hasType(FEDORA_BINARY)).thenReturn(false);
     }
 
     private void setupBinaryResource() throws Exception {
-        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(testPath.substring(1))))
+        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(testPath)))
                 .thenReturn(mockBinary);
         when(mockBinary.hasType(FEDORA_BINARY)).thenReturn(true);
     }

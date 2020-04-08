@@ -204,7 +204,7 @@ public class WebACRolesProviderTest {
         final String acl = "/acls/01/acl.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(acl.substring(1))))
+        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(acl)))
                 .thenReturn(mockAclResource);
         when(mockAclResource.getId()).thenReturn(addPrefix(acl));
         when(mockResource.getId()).thenReturn(addPrefix(accessTo));
@@ -230,7 +230,7 @@ public class WebACRolesProviderTest {
         final String acl = "/acls/01/acl.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(acl.substring(1)))).thenReturn(
+        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(acl))).thenReturn(
                 mockAclResource);
         when(mockAclResource.getId()).thenReturn(addPrefix(acl));
         when(mockResource.getId()).thenReturn(addPrefix(accessTo));
@@ -275,7 +275,7 @@ public class WebACRolesProviderTest {
         final String acl = "/acls/03/acl.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(acl.substring(1)))).thenReturn(
+        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(acl))).thenReturn(
                 mockAclResource);
         when(mockAclResource.getId()).thenReturn(addPrefix(acl));
         when(mockResource.getId()).thenReturn(addPrefix(accessTo));
@@ -300,7 +300,7 @@ public class WebACRolesProviderTest {
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
         when(mockAclResource.isAcl()).thenReturn(true);
-        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(acl.substring(1)))).thenReturn(
+        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(acl))).thenReturn(
                 mockAclResource);
         when(mockAclResource.getId()).thenReturn(addPrefix(acl));
         when(mockResource.getId()).thenReturn(addPrefix(accessTo));
@@ -322,7 +322,7 @@ public class WebACRolesProviderTest {
         final String acl = "/acls/03/foaf-agent.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(acl.substring(1))))
+        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(acl)))
                 .thenReturn(mockAclResource);
         when(mockAclResource.getId()).thenReturn(addPrefix(acl));
         when(mockAclResource.isAcl()).thenReturn(true);
@@ -347,7 +347,7 @@ public class WebACRolesProviderTest {
         final String acl = "/acls/03/authenticated-agent.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(acl.substring(1)))).thenReturn(
+        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(acl))).thenReturn(
                 mockAclResource);
         when(mockAclResource.getId()).thenReturn(addPrefix(acl));
         when(mockAclResource.isAcl()).thenReturn(true);
@@ -372,7 +372,7 @@ public class WebACRolesProviderTest {
         final String acl = "/acls/04/acl.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(acl.substring(1)))).thenReturn(
+        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(acl))).thenReturn(
                 mockAclResource);
         when(mockAclResource.getId()).thenReturn(addPrefix(acl));
         when(mockAclResource.isAcl()).thenReturn(true);

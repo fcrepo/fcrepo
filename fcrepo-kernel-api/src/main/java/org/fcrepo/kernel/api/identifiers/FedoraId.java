@@ -43,11 +43,6 @@ import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
  *
  * So a fullId of info:fedora/object1/another/fcr:versions/20000101121212 has an id of info:fedora/object1/another
  *
- * The only caveat is fcr:metadata which currently requires that its id contains the fcr:metadata ending.
- * ie.
- * A fullId of info:fedora/object1/another/fcr:metadata/fcr:versions/20000101121212 has an id of
- * info:fedora/object1/another/fcr:metadata
- *
  * @author whikloj
  * @since 6.0.0
  */
@@ -197,20 +192,26 @@ public class FedoraId {
     }
 
     /**
-     * Create a new FedoraId using the resource ID as the base
-     * @param addition One or more additional strings.
-     * @return new FedoraId for the new identifier.
+     * Resolve the string or strings against this ID to create a new one.
+     *
+     * A string starting with a slash (/) will resolve from the resource ID, a string not starting with a slash
+     * will resolve against the full ID.
+     *
+     * {@code
+     *     final FedoraId descId = FedoraId.create("info:fedora/object1/child/fcr:metadata");
+     *     final var binaryTimemap = descId.resolve("/" + FCR_VERSIONS); // info:fedora/object1/child/fcr:versions
+     *     final var descTimemap = descId.resolve(FCR_VERSIONS); // info:fedora/object1/child/fcr:metadata/fcr:versions
+     * }
+     * @param addition the string or strings to add to the ID.
+     * @return a new FedoraId instance
      */
-    public FedoraId addToResourceId(final String... addition) {
-        return FedoraId.create(this.getResourceId(), addition);
-    }
-
-    /**
-     * Create a new FedoraId using the full ID as the base.
-     * @param addition One or more additional strings.
-     * @return new FedoraId for the new identifier.
-     */
-    public FedoraId addToFullId(final String... addition) {
+    public FedoraId resolve(final String... addition) {
+        if (addition == null || addition.length == 0 || addition[0].isBlank()) {
+            throw new IllegalArgumentException("You must provide at least one string to resolve");
+        }
+        if (addition[0].startsWith("/")) {
+            return FedoraId.create(this.getResourceId(), addition);
+        }
         return FedoraId.create(this.getFullId(), addition);
     }
 

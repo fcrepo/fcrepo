@@ -194,7 +194,7 @@ public class CreateResourceServiceImplTest {
     @Test
     public void testNoParentRdf() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
-        final FedoraId childId = fedoraId.addToFullId("child");
+        final FedoraId childId = fedoraId.resolve("child");
         when(psSession.getHeaders(fedoraId.getFullId(), null)).thenThrow(PersistentItemNotFoundException.class);
         createResourceService.perform(TX_ID, USER_PRINCIPAL, childId, null, model);
     }
@@ -205,7 +205,7 @@ public class CreateResourceServiceImplTest {
     @Test(expected = InteractionModelViolationException.class)
     public void testParentIsBinaryRdf() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
-        final FedoraId childId = fedoraId.addToFullId("child");
+        final FedoraId childId = fedoraId.resolve("child");
         containmentIndex.addContainedBy(TX_ID, rootId, fedoraId);
         when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         when(psSession.getHeaders(fedoraId.getFullId(), null)).thenReturn(resourceHeaders);
@@ -218,7 +218,7 @@ public class CreateResourceServiceImplTest {
     @Test(expected = InteractionModelViolationException.class)
     public void testParentIsBinary() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
-        final FedoraId childId = fedoraId.addToFullId("child");
+        final FedoraId childId = fedoraId.resolve("child");
         containmentIndex.addContainedBy(TX_ID, rootId, fedoraId);
         when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         when(psSession.getHeaders(fedoraId.getFullId(), null)).thenReturn(resourceHeaders);
@@ -233,7 +233,7 @@ public class CreateResourceServiceImplTest {
     @Test(expected = InteractionModelViolationException.class)
     public void testParentIsExternal() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
-        final FedoraId childId = fedoraId.addToFullId("child");
+        final FedoraId childId = fedoraId.resolve("child");
         containmentIndex.addContainedBy(TX_ID, rootId, fedoraId);
         when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         when(psSession.getHeaders(fedoraId.getFullId(), null)).thenReturn(resourceHeaders);
@@ -247,7 +247,7 @@ public class CreateResourceServiceImplTest {
     @Test
     public void testParentIsRdf() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
-        final FedoraId childId = fedoraId.addToFullId("child");
+        final FedoraId childId = fedoraId.resolve("child");
         containmentIndex.addContainedBy(TX_ID, rootId, fedoraId);
         when(psSession.getHeaders(fedoraId.getFullId(), null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
@@ -267,7 +267,7 @@ public class CreateResourceServiceImplTest {
     @Test
     public void testParentIsRdfBinary() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
-        final FedoraId childId = fedoraId.addToFullId("child");
+        final FedoraId childId = fedoraId.resolve("child");
         containmentIndex.addContainedBy(TX_ID, rootId, fedoraId);
         when(psSession.getHeaders(fedoraId.getFullId(), null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
@@ -295,7 +295,7 @@ public class CreateResourceServiceImplTest {
         final var lastModifiedDate = Instant.parse("2019-11-12T14:11:05.0Z");
         final String relaxedUser = "relaxedUser";
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
-        final FedoraId childId = fedoraId.addToFullId("testSlug");
+        final FedoraId childId = fedoraId.resolve("testSlug");
         containmentIndex.addContainedBy(TX_ID, rootId, fedoraId);
 
         final var resc = model.getResource(childId.getFullId());
@@ -340,7 +340,7 @@ public class CreateResourceServiceImplTest {
     @Test
     public void testWithBinary() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
-        final FedoraId childId = fedoraId.addToFullId("testSlug");
+        final FedoraId childId = fedoraId.resolve("testSlug");
         containmentIndex.addContainedBy(null, fedoraId, childId);
         when(psSession.getHeaders(fedoraId.getFullId(), null)).thenReturn(resourceHeaders);
         when(psSession.getHeaders(childId.getFullId(), null)).thenReturn(resourceHeaders);

@@ -137,9 +137,9 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
     @Override
     public FedoraResource getDescription() {
         try {
-            final FedoraId descId = getFedoraId().addToResourceId(FCR_METADATA);
+            final FedoraId descId = getFedoraId().resolve("/" + FCR_METADATA);
             if (this.isMemento()) {
-                return resourceFactory.getResource(tx, descId.addToFullId(FCR_VERSIONS,
+                return resourceFactory.getResource(tx, descId.resolve(FCR_VERSIONS,
                         this.getMementoDateTimeAsUriString()));
             }
             return resourceFactory.getResource(tx, descId);

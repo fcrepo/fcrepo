@@ -24,7 +24,6 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
@@ -301,29 +300,30 @@ public class FedoraIdTest {
     @Test
     public void testResourceIdAddition() {
         final FedoraId fedoraID = FedoraId.create("core-object", FCR_VERSIONS);
-        final FedoraId fedoraId1 = fedoraID.addToResourceId(FCR_ACL);
+        final FedoraId fedoraId1 = fedoraID.resolve("/" + FCR_ACL);
         assertEquals(FEDORA_ID_PREFIX + "/core-object/" + FCR_ACL, fedoraId1.getFullId());
     }
 
     @Test
     public void testFullIdAddition() {
         final FedoraId fedoraID = FedoraId.create("core-object", FCR_VERSIONS);
-        final FedoraId fedoraId1 = fedoraID.addToFullId("20200401101900");
+        final FedoraId fedoraId1 = fedoraID.resolve("20200401101900");
         assertEquals(FEDORA_ID_PREFIX + "/core-object/" + FCR_VERSIONS + "/20200401101900", fedoraId1.getFullId());
     }
 
     @Test
     public void testResourceIdAdditionMultiple() {
         final FedoraId fedoraID = FedoraId.create("core-object", FCR_ACL);
-        final FedoraId fedoraId1 = fedoraID.addToResourceId(FCR_VERSIONS, "20200401110400");
+        final FedoraId fedoraId1 = fedoraID.resolve("/" + FCR_VERSIONS, "20200401110400");
         assertEquals(FEDORA_ID_PREFIX + "/core-object/" + FCR_VERSIONS + "/20200401110400", fedoraId1.getFullId());
     }
 
     @Test
     public void testFullIdAdditionMultiple() {
-        final FedoraId fedoraID = FedoraId.create("core-object");
-        final FedoraId fedoraId1 = fedoraID.addToFullId(FCR_VERSIONS, "20200401110400");
-        assertEquals(FEDORA_ID_PREFIX + "/core-object/" + FCR_VERSIONS + "/20200401110400", fedoraId1.getFullId());
+        final FedoraId fedoraID = FedoraId.create("core-object", FCR_METADATA);
+        final FedoraId fedoraId1 = fedoraID.resolve(FCR_VERSIONS, "20200401110400");
+        assertEquals(FEDORA_ID_PREFIX + "/core-object/" + FCR_METADATA + "/" + FCR_VERSIONS + "/20200401110400",
+                fedoraId1.getFullId());
     }
 
     /**
@@ -358,10 +358,8 @@ public class FedoraIdTest {
         }
         if (type.contains("METADATA")) {
             assertTrue(fedoraID.isDescription());
-            assertEquals(shortID + "/" + FCR_METADATA, fedoraID.getDescriptionId());
         } else {
             assertFalse(fedoraID.isDescription());
-            assertNull(fedoraID.getDescriptionId());
         }
         if (type.contains("HASH")) {
             assertTrue(fedoraID.isHashUri());

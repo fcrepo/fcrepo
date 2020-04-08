@@ -61,7 +61,7 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
             final Transaction tx,
             final PersistentStorageSessionManager pSessionManager,
             final ResourceFactory resourceFactory) {
-        super(originalResource.getFedoraId().addToFullId(FCR_VERSIONS), tx, pSessionManager, resourceFactory);
+        super(originalResource.getFedoraId().resolve(FCR_VERSIONS), tx, pSessionManager, resourceFactory);
 
         this.originalResource = originalResource;
         setCreatedBy(originalResource.getCreatedBy());
@@ -136,7 +136,7 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
      */
     private FedoraId getInstantFedoraId(final Instant version) {
         final String versionTime = MEMENTO_LABEL_FORMATTER.format(version);
-        return getFedoraId().addToFullId(versionTime);
+        return getFedoraId().resolve(versionTime);
     }
 
 }

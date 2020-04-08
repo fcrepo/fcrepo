@@ -823,7 +823,7 @@ public class FedoraLdp extends ContentExposingResource {
             pid = defaultPidMinter.get();
         }
 
-        final FedoraId fullTestPath = fedoraId.addToFullId(pid);
+        final FedoraId fullTestPath = fedoraId.resolve(pid);
 
         if (doesResourceExist(transaction, fullTestPath)) {
             LOGGER.trace("Resource with path {} already exists; minting new path instead", fullTestPath);

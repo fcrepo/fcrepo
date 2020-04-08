@@ -120,7 +120,7 @@ public class FedoraResourceImplTest {
 
     private FedoraResource memento(final String id, final Instant instant) {
         final String mementoTime = VersionService.MEMENTO_LABEL_FORMATTER.format(instant);
-        final FedoraId fedoraID = FedoraId.create(id).addToFullId(FCR_VERSIONS + "/" + mementoTime);
+        final FedoraId fedoraID = FedoraId.create(id, FCR_VERSIONS, mementoTime);
         final var memento = new FedoraResourceImpl(fedoraID, null, sessionManager, resourceFactory);
         memento.setIsMemento(true);
         memento.setMementoDatetime(instant);
