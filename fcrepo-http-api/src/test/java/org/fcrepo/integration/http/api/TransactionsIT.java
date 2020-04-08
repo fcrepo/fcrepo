@@ -22,6 +22,7 @@ import static java.lang.Thread.sleep;
 import static java.time.Duration.ofMinutes;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -103,7 +104,7 @@ public class TransactionsIT extends AbstractResourceIT {
     @Test
     public void testRequestsInTransactionThatDoestExist() {
         /* create a tx */
-        assertEquals(Status.BAD_REQUEST.getStatusCode(), getStatus(new HttpPost(serverAddress + "fcr:tx/123idontexist")));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(new HttpPost(serverAddress + "fcr:tx/123idontexist")));
     }
 
     @Test
