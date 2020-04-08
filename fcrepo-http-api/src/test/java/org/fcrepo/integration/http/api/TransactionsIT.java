@@ -103,7 +103,7 @@ public class TransactionsIT extends AbstractResourceIT {
     @Test
     public void testRequestsInTransactionThatDoestExist() {
         /* create a tx */
-        assertEquals(GONE.getStatusCode(), getStatus(new HttpPost(serverAddress + "fcr:tx/123idontexist")));
+        assertEquals(Status.BAD_REQUEST.getStatusCode(), getStatus(new HttpPost(serverAddress + "fcr:tx/123idontexist")));
     }
 
     @Test

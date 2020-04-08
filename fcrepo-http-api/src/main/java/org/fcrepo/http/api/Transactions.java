@@ -20,8 +20,6 @@ package org.fcrepo.http.api;
 import static java.util.Date.from;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
-import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_EXPIRES_HEADER;
 import static org.fcrepo.http.commons.session.TransactionConstants.EXPIRES_RFC_1123_FORMATTER;
@@ -50,6 +48,7 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.TransactionExpiredException;
 import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
+import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -82,7 +81,24 @@ public class Transactions extends FedoraBaseResource {
     @GET
     @Path("{transactionId}")
     public Response getTransactionStatus(@PathParam("transactionId") final String txId) {
-        return transactionStatus(txId, false);
+        // Retrieve the tx provided via the path
+        final Transaction tx;
+        try {
+            tx = txManager.get(txId);
+        } catch (final TransactionNotFoundException e) {
+            return Response.status(Status.GONE).build();
+        } catch (final TransactionExpiredException e) {
+            return Response.status(Status.GONE)
+                    .entity(e.getMessage())
+                    .type(TEXT_PLAIN_WITH_CHARSET)
+                    .build();
+        }
+
+        LOGGER.info("Checking transaction status'{}'", tx.getId());
+
+        return Response.status(Status.NO_CONTENT)
+                .header(ATOMIC_EXPIRES_HEADER, EXPIRES_RFC_1123_FORMATTER.format(tx.getExpires()))
+                .build();
     }
 
     /**
@@ -94,26 +110,16 @@ public class Transactions extends FedoraBaseResource {
     @POST
     @Path("{transactionId}")
     public Response refreshTransaction(@PathParam("transactionId") final String txId) {
-        return transactionStatus(txId, true);
-    }
-
-    private Response transactionStatus(final String txId, final boolean refresh) {
         // Retrieve the tx provided via the path
         final Transaction tx;
         try {
             tx = txManager.get(txId);
-        } catch (final TransactionNotFoundException e) {
-            return Response.status(Status.GONE).build();
-        } catch (final TransactionExpiredException e) {
-            return Response.status(Status.GONE).entity(e.getMessage()).build();
+        } catch (final TransactionRuntimeException e) {
+            return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
         }
 
-        if (refresh) {
-            tx.refresh();
-            LOGGER.info("Refreshed transaction '{}'", tx.getId());
-        } else {
-            LOGGER.info("Checking transaction status'{}'", tx.getId());
-        }
+        tx.refresh();
+        LOGGER.info("Refreshed transaction '{}'", tx.getId());
 
         return Response.status(Status.NO_CONTENT)
                 .header(ATOMIC_EXPIRES_HEADER, EXPIRES_RFC_1123_FORMATTER.format(tx.getExpires()))
@@ -184,7 +190,7 @@ public class Transactions extends FedoraBaseResource {
             return noContent().build();
         } catch(final Exception e) {
             if (e.getMessage().matches("No Transaction found with transactionId")) {
-                return status(BAD_REQUEST).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
+                return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
             } else {
                 throw new RuntimeException(e);
             }

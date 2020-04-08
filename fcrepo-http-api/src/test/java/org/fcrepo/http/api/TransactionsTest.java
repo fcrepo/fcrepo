@@ -18,7 +18,11 @@
 package org.fcrepo.http.api;
 
 import static java.time.Instant.now;
+import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_EXPIRES_HEADER;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
@@ -26,15 +30,15 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 import java.net.URISyntaxException;
 import java.security.Principal;
 
+import javax.inject.Provider;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
-import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.AdditionalMatchers;
@@ -50,6 +54,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class TransactionsTest {
 
+    private static final String VALID_TX_ID = "123";
+    private static final String VALID_TX_URI = "http://example.com/fcr:tx/123";
+
     private Transactions testObj;
 
     @Mock
@@ -59,7 +66,10 @@ public class TransactionsTest {
     private TransactionManager mockTxManager;
 
     @Mock
-    private HttpResourceConverter mockTranslator;
+    private HttpIdentifierConverter mockIdConverter;
+
+    @Mock
+    private Provider<Transaction> mockTxProvider;
 
     @Mock
     private Principal mockPrincipal;
@@ -72,28 +82,30 @@ public class TransactionsTest {
         testObj = new Transactions();
         mockTransaction.setShortLived(false);
         when(mockTxManager.create()).thenReturn(mockTransaction);
-        when(mockTxManager.get("tx:123")).thenReturn(mockTransaction);
-        when(mockTxManager.get(AdditionalMatchers.not(ArgumentMatchers.eq("tx:123"))))
+        when(mockTxManager.get(VALID_TX_ID)).thenReturn(mockTransaction);
+        when(mockTxManager.get(AdditionalMatchers.not(ArgumentMatchers.eq(VALID_TX_ID))))
             .thenThrow(new TransactionNotFoundException("No Transaction found with transactionId"));
         when(mockTransaction.getId()).thenReturn("123");
         when(mockTransaction.getExpires()).thenReturn(now().plusSeconds(100));
         setField(testObj, "txManager", mockTxManager);
     }
 
-    @Ignore // TODO Enable after HttpResourceConvertor.toDomain is implemented
     @Test
     public void shouldStartANewTransaction() throws URISyntaxException {
-        setField(testObj, "transaction", mockTransaction);
-        setField(testObj, "idTranslator", mockTranslator);
+        when(mockTxProvider.get()).thenReturn(mockTransaction);
+        setField(testObj, "identifierConverter", mockIdConverter);
+        setField(testObj, "txProvider", mockTxProvider);
+
+        when(mockIdConverter.toExternalId(anyString())).thenReturn(VALID_TX_URI);
+
         final Response response = testObj.createTransaction();
-        verify(mockTxManager).create();
         assertEquals(201, response.getStatus());
-        assertEquals("/tx:123", response.getHeaderString("Location"));
+        assertEquals(VALID_TX_URI, response.getHeaderString("Location"));
     }
 
     @Test
     public void shouldCommitATransaction() {
-        final Response response = testObj.commit("tx:123");
+        final Response response = testObj.commit(VALID_TX_ID);
         assertEquals(204, response.getStatus());
         verify(mockTransaction).commit();
     }
@@ -106,7 +118,7 @@ public class TransactionsTest {
 
     @Test
     public void shouldRollBackATransaction() {
-        final Response response = testObj.rollback("tx:123");
+        final Response response = testObj.rollback(VALID_TX_ID);
         assertEquals(204, response.getStatus());
         verify(mockTransaction).rollback();
     }
@@ -117,4 +129,32 @@ public class TransactionsTest {
         assertEquals(400, rollback.getStatus());
     }
 
+    @Test
+    public void shouldRefreshATransaction() {
+        final Response response = testObj.refreshTransaction(VALID_TX_ID);
+        assertEquals(204, response.getStatus());
+        assertNotNull(response.getHeaderString(ATOMIC_EXPIRES_HEADER));
+        verify(mockTransaction).refresh();
+    }
+
+    @Test
+    public void shouldErrorIfRefreshNonExistentTx() {
+        final Response response = testObj.refreshTransaction("tx:404");
+        assertEquals(400, response.getStatus());
+        verify(mockTransaction, never()).refresh();
+    }
+
+    @Test
+    public void shouldGetTransactionStatus() {
+        final Response response = testObj.getTransactionStatus(VALID_TX_ID);
+        assertEquals(204, response.getStatus());
+        assertNotNull(response.getHeaderString(ATOMIC_EXPIRES_HEADER));
+        verify(mockTransaction, never()).refresh();
+    }
+
+    @Test
+    public void shouldErrorIfGetStatusNonExistentTx() {
+        final Response response = testObj.getTransactionStatus("tx:404");
+        assertEquals(410, response.getStatus());
+    }
 }
