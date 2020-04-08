@@ -58,7 +58,7 @@ public class FedoraId {
     private boolean isTimemap = false;
     private Instant mementoDatetime;
     private String mementoDatetimeStr;
-    private String externalPath;
+    private String pathOnly;
 
     /**
      * Basic constructor.
@@ -69,18 +69,18 @@ public class FedoraId {
         this.fullId = ensurePrefix(fullId);
         this.fullId = this.fullId.replaceAll("/+$", "");
         // Carry the path of the request for any exceptions.
-        this.externalPath = this.fullId.substring(FEDORA_ID_PREFIX.length());
+        this.pathOnly = this.fullId.substring(FEDORA_ID_PREFIX.length());
 
         processIdentifier();
     }
 
     /**
      * Static create method
-     * @param fullId The ID to use for the FedoraId.
+     * @param additions One or more strings to build an ID.
      * @return The FedoraId.
      */
-    public static FedoraId create(final String fullId, final String... additions) {
-        final var newId = idBuilder(fullId, additions);
+    public static FedoraId create(final String... additions) {
+        final var newId = idBuilder(additions);
         return new FedoraId(newId);
     }
 
@@ -209,10 +209,13 @@ public class FedoraId {
         if (addition == null || addition.length == 0 || addition[0].isBlank()) {
             throw new IllegalArgumentException("You must provide at least one string to resolve");
         }
+        final String[] parts;
         if (addition[0].startsWith("/")) {
-            return FedoraId.create(this.getResourceId(), addition);
+            parts = Stream.of(new String[]{this.getResourceId()}, addition).flatMap(Stream::of).toArray(String[]::new);
+            return FedoraId.create(parts);
         }
-        return FedoraId.create(this.getFullId(), addition);
+        parts = Stream.of(new String[]{this.getFullId()}, addition).flatMap(Stream::of).toArray(String[]::new);
+        return FedoraId.create(parts);
     }
 
     @Override
@@ -240,27 +243,14 @@ public class FedoraId {
     }
 
     /**
-     * Takes one or more strings and combines them with /s
-     * @param firstPart The first part of the id, if blank return a zero length string.
-     * @param parts Zero or more additional string.
-     * @return A string of all parts with combined with /s
-     */
-    private static String idBuilder(final String firstPart, final String... parts) {
-        if (firstPart == null) {
-            return "";
-        }
-        final String[] allParts = Stream.of(new String[]{firstPart}, parts).flatMap(Stream::of).toArray(String[]::new);
-        return idBuilder(allParts);
-    }
-
-    /**
      * Concatenates all the parts with slashes
      * @param parts array of strings
      * @return the concatenated string.
      */
     private static String idBuilder(final String... parts) {
         if (parts != null && parts.length > 0) {
-            final String id = Arrays.stream(parts).map(s -> s.startsWith("/") ? s.substring(1) : s)
+            final String id = Arrays.stream(parts).filter(Objects::nonNull)
+                    .map(s -> s.startsWith("/") ? s.substring(1) : s)
                     .map(s -> s.endsWith("/") ? s.substring(0, s.length() -1 ) : s)
                     .collect(Collectors.joining("/"));
             return id;
@@ -292,8 +282,7 @@ public class FedoraId {
         // The fifth group allows for any hashed suffixes.
         // ".*?(/" + FCR_METADATA + ")?(/" + FCR_VERSIONS + "(/\\d{14})?)?(/" + FCR_ACL + ")?(\\#\\S+)?$");
         if (this.fullId.contains("//")) {
-            throw new InvalidResourceIdentifierException(String.format("Path contains empty element! %s",
-                    externalPath));
+            throw new InvalidResourceIdentifierException(String.format("Path contains empty element! %s", pathOnly));
         }
         String processID = this.fullId;
         if (processID.equals(FEDORA_ID_PREFIX)) {
@@ -310,7 +299,7 @@ public class FedoraId {
         if (processID.contains(FCR_ACL)) {
             final String[] aclSplits = processID.split("/" + FCR_ACL);
             if (aclSplits.length > 1) {
-                throw new InvalidResourceIdentifierException(String.format("Path is invalid: %s", externalPath));
+                throw new InvalidResourceIdentifierException(String.format("Path is invalid: %s", pathOnly));
             }
             this.isAcl = true;
             processID = aclSplits[0];
@@ -326,14 +315,13 @@ public class FedoraId {
                         this.mementoDatetime = Instant.from(MEMENTO_LABEL_FORMATTER.parse(this.mementoDatetimeStr));
                     } catch (final DateTimeParseException e) {
                         throw new InvalidMementoPathException(String.format("Invalid request for memento at %s",
-                                externalPath));
+                                pathOnly));
                     }
                 } else if (afterVersion.equals("/")) {
                     // Possible trailing slash?
                     this.isTimemap = true;
                 } else {
-                    throw new InvalidMementoPathException(String.format("Invalid request for memento at %s",
-                            externalPath));
+                    throw new InvalidMementoPathException(String.format("Invalid request for memento at %s", pathOnly));
                 }
             } else {
                 this.isTimemap = true;
@@ -343,7 +331,7 @@ public class FedoraId {
         if (processID.contains(FCR_METADATA)) {
             final String[] metadataSplits = processID.split("/" + FCR_METADATA);
             if (metadataSplits.length > 1) {
-                throw new InvalidResourceIdentifierException(String.format("Path is invalid: %s", externalPath));
+                throw new InvalidResourceIdentifierException(String.format("Path is invalid: %s", pathOnly));
             }
             this.isNonRdfSourceDescription = true;
             processID = metadataSplits[0];

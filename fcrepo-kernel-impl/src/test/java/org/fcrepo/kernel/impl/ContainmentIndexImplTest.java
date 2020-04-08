@@ -86,7 +86,7 @@ public class ContainmentIndexImplTest {
     }
 
     /**
-     * Utility method to make it easier to stub the getId() method and avoid MockitoHints.
+     * Utility method to make it easier to stub the getFedoraId() method and avoid MockitoHints.
      * @param id The resource|transaction ID/name
      */
     private void stubObject(final String id) {
@@ -466,7 +466,7 @@ public class ContainmentIndexImplTest {
     public void testResourceExistsFedoraIDNoTrailingSlash() {
         stubObject("parent1");
         stubObject("child1");
-        final FedoraId fedoraID = FedoraId.create(child1.getId());
+        final FedoraId fedoraID = FedoraId.create(child1.getFedoraId().getFullId());
         containmentIndex.addContainedBy(null, parent1.getFedoraId(), child1.getFedoraId());
         assertEquals(1, containmentIndex.getContains(null, parent1).count());
         assertEquals(parent1.getFedoraId().getFullId(),
