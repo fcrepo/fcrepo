@@ -18,18 +18,18 @@
 package org.fcrepo.kernel.api.exception;
 
 /**
- * Exception indicating that the requested transaction has expired
+ * Exception indicating that the requested transaction has been closed
  *
  * @author bbpennel
  */
-public class TransactionExpiredException extends TransactionRuntimeException {
+public class TransactionClosedException extends TransactionRuntimeException {
     private static final long serialVersionUID = 1L;
     /**
      * Ordinary constructor.
      *
      * @param msg the message
      */
-    public TransactionExpiredException(final String msg) {
+    public TransactionClosedException(final String msg) {
         super(msg);
     }
 
@@ -38,7 +38,7 @@ public class TransactionExpiredException extends TransactionRuntimeException {
      *
      * @param rootCause the root cause
      */
-    public TransactionExpiredException(final Throwable rootCause) {
+    public TransactionClosedException(final Throwable rootCause) {
         super(rootCause);
     }
 
@@ -49,7 +49,7 @@ public class TransactionExpiredException extends TransactionRuntimeException {
      * @param msg the message
      * @param rootCause the root cause
      */
-    public TransactionExpiredException(final String msg, final Throwable rootCause) {
+    public TransactionClosedException(final String msg, final Throwable rootCause) {
         super(msg, rootCause);
     }
 }

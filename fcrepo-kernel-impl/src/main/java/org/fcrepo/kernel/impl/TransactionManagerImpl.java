@@ -26,7 +26,7 @@ import javax.inject.Inject;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
-import org.fcrepo.kernel.api.exception.TransactionExpiredException;
+import org.fcrepo.kernel.api.exception.TransactionClosedException;
 import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.springframework.stereotype.Component;
@@ -72,18 +72,21 @@ public class TransactionManagerImpl implements TransactionManager {
             if (transaction.hasExpired()) {
                 transaction.rollback();
                 transactions.remove(transactionId);
-                throw new TransactionExpiredException("Transaction with transactionId: " + transactionId +
+                throw new TransactionClosedException("Transaction with transactionId: " + transactionId +
                     " expired at " + transaction.getExpires() + "!");
+            }
+            if (transaction.isCommitted()) {
+                throw new TransactionClosedException("Transaction with transactionId: " + transactionId +
+                        " has already been committed.");
+            }
+            if (transaction.isRolledBack()) {
+                throw new TransactionClosedException("Transaction with transactionId: " + transactionId +
+                        " has already been rolled back.");
             }
             return transaction;
         } else {
             throw new TransactionNotFoundException("No Transaction found with transactionId: " + transactionId);
         }
-    }
-
-    @Override
-    public void transactionCommitted(final String transactionId) {
-        transactions.remove(transactionId);
     }
 
     protected PersistentStorageSessionManager getPersistentStorageSessionManager() {

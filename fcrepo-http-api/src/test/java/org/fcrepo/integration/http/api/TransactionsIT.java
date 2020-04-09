@@ -22,6 +22,7 @@ import static java.lang.Thread.sleep;
 import static java.time.Duration.ofMinutes;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -141,35 +142,39 @@ public class TransactionsIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testCreateDoStuffAndRollbackTransaction() throws IOException {
         /* create a tx */
-        final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
-
-        final String txLocation;
-        try (final CloseableHttpResponse response = execute(createTx)) {
-            assertEquals(CREATED.getStatusCode(), getStatus(response));
-            txLocation = getLocation(response);
-        }
+        final String txLocation = createTransaction();
 
         /* create a new object inside the tx */
-        final HttpPost postNew = new HttpPost(txLocation);
-        final String id = getRandomUniqueId();
-        postNew.addHeader("Slug", id);
+        final String newLocation;
+        final HttpPost postNew = new HttpPost(serverAddress);
+        postNew.addHeader(ATOMIC_ID_HEADER, txLocation);
         try (CloseableHttpResponse resp = execute(postNew)) {
             assertEquals(CREATED.getStatusCode(), getStatus(resp));
+            newLocation = getLocation(resp);
         }
+
         /* fetch the created tx from the endpoint */
-        try (final CloseableDataset dataset = getDataset(new HttpGet(txLocation + "/" + id))) {
-            assertTrue(dataset.asDatasetGraph().contains(ANY, createURI(txLocation + "/" + id), ANY, ANY));
+        try (final CloseableDataset dataset = getDataset(addTxTo(new HttpGet(newLocation), txLocation))) {
+            assertTrue(dataset.asDatasetGraph().contains(ANY, createURI(newLocation), ANY, ANY));
         }
         /* fetch the created tx from the endpoint */
         assertEquals("Expected to not find our object within the scope of the transaction",
-                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(serverAddress + "/" + id)));
+                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(newLocation)));
 
         /* and rollback */
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPost(txLocation + "/fcr:tx/fcr:rollback")));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(txLocation)));
+
+        assertEquals("Rolled back transaction should be gone",
+                GONE.getStatusCode(), getStatus(new HttpGet(txLocation)));
+
+        assertEquals("Expected to not find our object after rollback",
+                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(newLocation)));
+
+        assertEquals("Expected to not find our object in transaction after rollback",
+                CONFLICT.getStatusCode(), getStatus(addTxTo(new HttpGet(newLocation), txLocation)));
     }
 
     @Test
@@ -213,6 +218,9 @@ public class TransactionsIT extends AbstractResourceIT {
             assertTrue("Expected to  find our object after the transaction was committed",
                     dataset.asDatasetGraph().contains(ANY, createURI(datasetLoc), ANY, ANY));
         }
+
+        assertEquals("Expect conflict when trying to retrieve from committed transaction",
+                CONFLICT.getStatusCode(), getStatus(addTxTo(new HttpGet(datasetLoc), txLocation)));
     }
 
     private void assertHasAtomicId(final String txId, final CloseableHttpResponse resp) {

@@ -44,7 +44,7 @@ import javax.ws.rs.core.Response.Status;
 
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.exception.TransactionExpiredException;
+import org.fcrepo.kernel.api.exception.TransactionClosedException;
 import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -78,7 +78,7 @@ public class Transactions extends FedoraBaseResource {
             tx = txManager.get(txId);
         } catch (final TransactionNotFoundException e) {
             return Response.status(Status.NOT_FOUND).build();
-        } catch (final TransactionExpiredException e) {
+        } catch (final TransactionClosedException e) {
             return Response.status(Status.GONE)
                     .entity(e.getMessage())
                     .type(TEXT_PLAIN_WITH_CHARSET)
@@ -107,7 +107,7 @@ public class Transactions extends FedoraBaseResource {
             tx = txManager.get(txId);
         } catch (final TransactionNotFoundException e) {
             return Response.status(Status.NOT_FOUND).build();
-        } catch (final TransactionExpiredException e) {
+        } catch (final TransactionClosedException e) {
             return Response.status(Status.GONE)
                     .entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET)
                     .build();
@@ -158,12 +158,10 @@ public class Transactions extends FedoraBaseResource {
             final Transaction transaction = txManager.get(txId);
             LOGGER.info("Committing transaction '{}'", transaction.getId());
             transaction.commit();
-            // Inform the manager that this tx has been committed
-            txManager.transactionCommitted(txId);
             return noContent().build();
         } catch (final TransactionNotFoundException e) {
             return Response.status(Status.NOT_FOUND).build();
-        } catch (final TransactionExpiredException e) {
+        } catch (final TransactionClosedException e) {
             return Response.status(Status.GONE)
                     .entity(e.getMessage())
                     .type(TEXT_PLAIN_WITH_CHARSET)
@@ -183,19 +181,25 @@ public class Transactions extends FedoraBaseResource {
      * @return 204
      */
     @DELETE
-    @Path("/fcr:tx/{transactionId}")
+    @Path("{transactionId}")
     public Response rollback(@PathParam("transactionId") final String txId) {
         try {
             final Transaction transaction = txManager.get(txId);
             LOGGER.info("Rollback transaction '{}'", transaction.getId());
             transaction.rollback();
             return noContent().build();
-        } catch(final Exception e) {
-            if (e.getMessage().matches("No Transaction found with transactionId")) {
-                return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
-            } else {
-                throw new RuntimeException(e);
-            }
+        } catch (final TransactionNotFoundException e) {
+            return Response.status(Status.NOT_FOUND).build();
+        } catch (final TransactionClosedException e) {
+            return Response.status(Status.GONE)
+                    .entity(e.getMessage())
+                    .type(TEXT_PLAIN_WITH_CHARSET)
+                    .build();
+        } catch (final RepositoryRuntimeException e) {
+            return Response.status(Status.CONFLICT)
+                    .entity(e.getMessage())
+                    .type(TEXT_PLAIN_WITH_CHARSET)
+                    .build();
         }
     }
 

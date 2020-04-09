@@ -39,10 +39,9 @@ import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.exception.TransactionExpiredException;
+import org.fcrepo.kernel.api.exception.TransactionClosedException;
 import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.AdditionalMatchers;
@@ -114,6 +113,14 @@ public class TransactionsTest {
     }
 
     @Test
+    public void shouldErrorIfCommitClosedTransaction() {
+        when(mockTxManager.get(VALID_TX_ID))
+                .thenThrow(new TransactionClosedException("Transaction closed"));
+        final Response rollback = testObj.commit(VALID_TX_ID);
+        assertEquals(410, rollback.getStatus());
+    }
+
+    @Test
     public void shouldErrorIfCommitNonExistingTransactionId() {
         final Response response = testObj.commit("tx:404");
         assertEquals(404, response.getStatus());
@@ -126,7 +133,6 @@ public class TransactionsTest {
         assertEquals(409, response.getStatus());
     }
 
-    @Ignore
     @Test
     public void shouldRollBackATransaction() {
         final Response response = testObj.rollback(VALID_TX_ID);
@@ -134,11 +140,26 @@ public class TransactionsTest {
         verify(mockTransaction).rollback();
     }
 
-    @Ignore
     @Test
     public void shouldErrorIfRollbackNonExistingTransactionId() {
         final Response rollback = testObj.rollback("tx:404");
         assertEquals(404, rollback.getStatus());
+    }
+
+    @Test
+    public void shouldErrorIfRollbackClosedTransaction() {
+        when(mockTxManager.get(VALID_TX_ID))
+                .thenThrow(new TransactionClosedException("Transaction closed"));
+        final Response rollback = testObj.rollback(VALID_TX_ID);
+        assertEquals(410, rollback.getStatus());
+    }
+
+    @Test
+    public void shouldErrorIfRollbackFails() {
+        when(mockTxManager.get(VALID_TX_ID))
+                .thenThrow(new RepositoryRuntimeException("Rollback failed"));
+        final Response rollback = testObj.rollback(VALID_TX_ID);
+        assertEquals(409, rollback.getStatus());
     }
 
     @Test
@@ -159,7 +180,7 @@ public class TransactionsTest {
     @Test
     public void shouldErrorIfRefreshExpiredTx() {
         when(mockTxManager.get(VALID_TX_ID))
-                .thenThrow(new TransactionExpiredException("Transaction expired"));
+                .thenThrow(new TransactionClosedException("Transaction expired"));
         final Response response = testObj.refreshTransaction(VALID_TX_ID);
         assertEquals(410, response.getStatus());
         verify(mockTransaction, never()).refresh();
@@ -182,7 +203,7 @@ public class TransactionsTest {
     @Test
     public void shouldErrorIfGetStatusExpired() {
         when(mockTxManager.get(VALID_TX_ID))
-                .thenThrow(new TransactionExpiredException("Transaction expired"));
+                .thenThrow(new TransactionClosedException("Transaction expired"));
         final Response response = testObj.getTransactionStatus(VALID_TX_ID);
         assertEquals(410, response.getStatus());
     }
