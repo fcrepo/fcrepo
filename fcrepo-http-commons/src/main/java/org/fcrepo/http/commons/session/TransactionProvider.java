@@ -21,6 +21,7 @@ import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEA
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_PREFIX;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.net.URI;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,6 +29,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
 import org.glassfish.hk2.api.Factory;
 import org.slf4j.Logger;
 
@@ -40,25 +42,27 @@ public class TransactionProvider implements Factory<Transaction> {
 
     private static final Logger LOGGER = getLogger(TransactionProvider.class);
 
-    public static final Pattern TX_ID_PATTERN = Pattern.compile(".*/" + TX_PREFIX + "([0-9a-f\\-]+)$");
-
     private final TransactionManager txManager;
 
     private final HttpServletRequest request;
+
+    private final Pattern txIdPattern;
 
     /**
      * Create a new transaction provider for a request
      * @param txManager the transaction manager
      * @param request the request
      */
-    public TransactionProvider(final TransactionManager txManager, final HttpServletRequest request) {
+    public TransactionProvider(final TransactionManager txManager, final HttpServletRequest request,
+            final URI baseUri) {
         this.txManager = txManager;
         this.request = request;
+        this.txIdPattern = Pattern.compile("(^|" + baseUri + TX_PREFIX + ")([0-9a-f\\-]+)$");
     }
 
     @Override
     public Transaction provide() {
-        final Transaction transaction = getTransactionForRequest(request);
+        final Transaction transaction = getTransactionForRequest();
         if (!transaction.isShortLived()) {
             transaction.refresh();
         }
@@ -82,7 +86,7 @@ public class TransactionProvider implements Factory<Transaction> {
      * @param request the request object
      * @return the transaction for the request
      */
-    public Transaction getTransactionForRequest(final HttpServletRequest request) {
+    public Transaction getTransactionForRequest() {
         String txId = null;
         // Transaction id either comes from header or is the path
         String txUri = request.getHeader(ATOMIC_ID_HEADER);
@@ -92,9 +96,11 @@ public class TransactionProvider implements Factory<Transaction> {
 
         // Pull the id portion out of the tx uri
         if (!StringUtils.isEmpty(txUri)) {
-            final Matcher txMatcher = TX_ID_PATTERN.matcher(txUri);
+            final Matcher txMatcher = txIdPattern.matcher(txUri);
             if (txMatcher.matches()) {
-                txId = txMatcher.group(1);
+                txId = txMatcher.group(2);
+            } else {
+                throw new TransactionRuntimeException("Invalid transaction id");
             }
         }
 
