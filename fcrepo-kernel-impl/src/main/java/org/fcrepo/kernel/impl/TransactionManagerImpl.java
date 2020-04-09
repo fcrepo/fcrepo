@@ -19,7 +19,8 @@ package org.fcrepo.kernel.impl;
 
 import static java.util.UUID.randomUUID;
 
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.inject.Inject;
 
@@ -30,6 +31,7 @@ import org.fcrepo.kernel.api.exception.TransactionClosedException;
 import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
@@ -40,7 +42,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class TransactionManagerImpl implements TransactionManager {
 
-    private final HashMap<String, Transaction> transactions;
+    private final Map<String, Transaction> transactions;
 
     @Inject
     private ContainmentIndex containmentIndex;
@@ -52,10 +54,32 @@ public class TransactionManagerImpl implements TransactionManager {
     private EventAccumulator eventAccumulator;
 
     TransactionManagerImpl() {
-        transactions = new HashMap<>();
+        transactions = new ConcurrentHashMap<>();
     }
 
-    // TODO Add a timer to periodically rollback and cleanup expired transaction?
+    /**
+     * Periodically scan for closed transactions for cleanup
+     */
+    @Scheduled(fixedDelayString = "#{systemProperties['fcrepo.session.timeout'] ?: 180000}")
+    public void cleanupClosedTransactions() {
+        final var txIt = transactions.entrySet().iterator();
+        while (txIt.hasNext()) {
+            final var txEntry = txIt.next();
+            final var tx = txEntry.getValue();
+
+            // Cleanup if transaction is closed and past its expiration time
+            if (tx.isCommitted() || tx.isRolledBack()) {
+                if (tx.hasExpired()) {
+                    txIt.remove();
+                }
+            } else if (tx.hasExpired()) {
+                // If the tx has expired but is not already closed, then rollback
+                // but don't immediately remove it from the list of transactions
+                // so that the rolled back status can be checked
+                tx.rollback();
+            }
+        }
+    }
 
     @Override
     public synchronized Transaction create() {
@@ -74,7 +98,6 @@ public class TransactionManagerImpl implements TransactionManager {
             final Transaction transaction = transactions.get(transactionId);
             if (transaction.hasExpired()) {
                 transaction.rollback();
-                transactions.remove(transactionId);
                 throw new TransactionClosedException("Transaction with transactionId: " + transactionId +
                     " expired at " + transaction.getExpires() + "!");
             }

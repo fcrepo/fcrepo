@@ -19,16 +19,20 @@ package org.fcrepo.kernel.impl;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import org.fcrepo.kernel.api.ContainmentIndex;
-import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.TransactionClosedException;
+import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
 import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,7 +49,7 @@ public class TransactionManagerImplTest {
 
     private TransactionImpl testTx;
 
-    private TransactionManager testTxManager;
+    private TransactionManagerImpl testTxManager;
 
     @Mock
     private PersistentStorageSessionManager pssManager;
@@ -69,6 +73,11 @@ public class TransactionManagerImplTest {
         testTx = (TransactionImpl) testTxManager.create();
     }
 
+    @After
+    public void cleanup() {
+        System.clearProperty(TransactionImpl.TIMEOUT_SYSTEM_PROPERTY);
+    }
+
     @Test
     public void testCreateTransaction() {
         testTx = (TransactionImpl) testTxManager.create();
@@ -88,8 +97,108 @@ public class TransactionManagerImplTest {
     }
 
     @Test(expected = TransactionRuntimeException.class)
-    public void testGetExpiredTransaction() {
+    public void testGetExpiredTransaction() throws Exception {
         testTx.expire();
-        testTxManager.get(testTx.getId());
+        try {
+            testTxManager.get(testTx.getId());
+        } finally {
+            // Make sure rollback is triggered
+            verify(psSession).rollback();
+        }
+    }
+
+    @Test
+    public void testCleanupClosedTransactions() {
+        System.setProperty(TransactionImpl.TIMEOUT_SYSTEM_PROPERTY, "10000");
+
+        final var commitTx = testTxManager.create();
+        commitTx.commit();
+        final var continuingTx = testTxManager.create();
+        final var rollbackTx = testTxManager.create();
+        rollbackTx.rollback();
+
+        // verify that transactions retrievable before cleanup
+        try {
+            testTxManager.get(commitTx.getId());
+            fail("Transaction must be committed");
+        } catch(final TransactionClosedException e) {
+            //expected
+        }
+        try {
+            testTxManager.get(rollbackTx.getId());
+            fail("Transaction must be rolled back");
+        } catch(final TransactionClosedException e) {
+            //expected
+        }
+
+        assertNotNull("Continuing transaction must be present",
+                testTxManager.get(continuingTx.getId()));
+
+        testTxManager.cleanupClosedTransactions();
+
+        // Verify that the closed transactions are stick around since they haven't expired yet
+        try {
+            testTxManager.get(commitTx.getId());
+            fail("Transaction must be present but committed");
+        } catch(final TransactionClosedException e) {
+            //expected
+        }
+        try {
+            testTxManager.get(rollbackTx.getId());
+            fail("Transaction must be present but rolled back");
+        } catch(final TransactionClosedException e) {
+            //expected
+        }
+
+        // Force expiration of the closed transactions, rather than waiting for it
+        commitTx.expire();
+        rollbackTx.expire();
+        testTxManager.cleanupClosedTransactions();
+
+        // verify that closed transactions cleanedup
+        try {
+            testTxManager.get(commitTx.getId());
+            fail("Committed transaction was not cleaned up");
+        } catch (final TransactionNotFoundException e) {
+            //expected
+        }
+        try {
+            testTxManager.get(rollbackTx.getId());
+            fail("Rolled back transaction was not cleaned up");
+        } catch (final TransactionNotFoundException e) {
+            //expected
+        }
+
+        assertNotNull("Continuing transaction must be present",
+                testTxManager.get(continuingTx.getId()));
+    }
+
+    // Check that the scheduled cleanup process rolls back expired transactions, but leaves
+    // them around until the next cleanup call so that they can be queried.
+    @Test
+    public void testCleanupExpiringTransaction() throws Exception {
+        System.setProperty(TransactionImpl.TIMEOUT_SYSTEM_PROPERTY, "0");
+
+        final var expiringTx = testTxManager.create();
+
+        testTxManager.cleanupClosedTransactions();
+
+        try {
+            testTxManager.get(expiringTx.getId());
+            fail("Transaction must be expired");
+        } catch(final TransactionClosedException e) {
+            //expected
+        }
+
+        verify(psSession).rollback();
+
+        testTxManager.cleanupClosedTransactions();
+
+        try {
+            testTxManager.get(expiringTx.getId());
+            fail("Expired transaction was not cleaned up");
+        } catch (final TransactionNotFoundException e) {
+            //expected
+        }
     }
 }
