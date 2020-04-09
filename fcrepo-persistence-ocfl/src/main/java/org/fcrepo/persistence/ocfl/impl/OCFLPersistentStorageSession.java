@@ -18,6 +18,7 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import static java.lang.String.format;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getSidecarSubpath;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveVersionId;
@@ -49,6 +50,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Phaser;
+import java.util.concurrent.TimeoutException;
 
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getRDFFileExtension;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getRdfStream;
@@ -65,6 +67,8 @@ import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.des
 public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OCFLPersistentStorageSession.class);
+
+    private static final long AWAIT_TIMEOUT = 30000l;
 
     /**
      * Externally generated id for the session.
@@ -83,10 +87,10 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     private State state = State.COMMIT_NOT_STARTED;
 
-    private OCFLObjectSessionFactory objectSessionFactory;
+    private final OCFLObjectSessionFactory objectSessionFactory;
 
     private static Comparator<OCFLObjectSession> CREATION_TIME_ORDER =
-            (OCFLObjectSession o1, OCFLObjectSession o2)->o1.getCreated().compareTo(o2.getCreated());
+            (final OCFLObjectSession o1, final OCFLObjectSession o2)->o1.getCreated().compareTo(o2.getCreated());
 
 
     private enum State {
@@ -202,7 +206,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     private FedoraOCFLMapping getFedoraOCFLMapping(final String identifier) throws PersistentStorageException {
         try {
             return fedoraOcflIndex.getMapping(identifier);
-        } catch (FedoraOCFLMappingNotFoundException e) {
+        } catch (final FedoraOCFLMappingNotFoundException e) {
             throw new PersistentItemNotFoundException(e.getMessage());
         }
     }
@@ -264,7 +268,11 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         this.state = State.COMMIT_STARTED;
         LOGGER.debug("Starting commit.");
 
-        phaser.arriveAndAwaitAdvance();
+        synchronized (this.phaser) {
+            if (this.phaser.getRegisteredParties() > 0) {
+                this.phaser.awaitAdvance(0);
+            }
+        }
 
         LOGGER.debug("All persisters are complete");
 
@@ -327,7 +335,16 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
             //we must ensure that all persist operations are complete before we close any
             //ocfl object sessions. If the commit had been started then this synchronization step
             //will have already occurred and is thus unnecessary.
-            this.phaser.arriveAndAwaitAdvance();
+            synchronized (this.phaser) {
+                if (this.phaser.getRegisteredParties() > 0) {
+                    try {
+                        this.phaser.awaitAdvanceInterruptibly(0, AWAIT_TIMEOUT, MILLISECONDS);
+                    } catch (InterruptedException | TimeoutException e) {
+                        throw new PersistentStorageException(
+                                "Waiting for operations to complete took too long, rollback failed");
+                    }
+                }
+            }
         }
 
         //close any uncommitted sessions

@@ -17,15 +17,10 @@
  */
 package org.fcrepo.http.commons;
 
-import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.http.commons.session.TransactionProvider;
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.logging.LoggingFeature;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.process.internal.RequestScoped;
-
 import java.util.logging.Logger;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -44,22 +39,11 @@ public class FedoraApplication extends ResourceConfig {
     public FedoraApplication() {
         super();
         packages("org.fcrepo");
-        register(new FactoryBinder());
         register(MultiPartFeature.class);
         register(JacksonFeature.class);
 
         if (LOGGER.isDebugEnabled()) {
             register(new LoggingFeature(Logger.getLogger(LoggingFeature.class.getName())));
-        }
-    }
-
-    static class FactoryBinder extends AbstractBinder {
-
-        @Override
-        protected void configure() {
-            bindFactory(TransactionProvider.class)
-                    .to(Transaction.class)
-                    .in(RequestScoped.class);
         }
     }
 }

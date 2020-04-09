@@ -57,8 +57,11 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
+import static org.fcrepo.http.commons.session.TransactionConstants.TX_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
@@ -94,6 +97,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -114,9 +118,12 @@ import javax.ws.rs.core.Response;
 
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.api.services.HttpRdfService;
 import org.fcrepo.http.commons.api.HttpHeaderInjector;
+import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.domain.MultiPrefer;
 import org.fcrepo.http.commons.domain.PreferTag;
@@ -124,21 +131,27 @@ import org.fcrepo.http.commons.domain.Range;
 import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
+import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.PreconditionException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
+import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.TimeMap;
+import org.fcrepo.kernel.api.models.Tombstone;
 import org.fcrepo.kernel.api.models.WebacAcl;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
@@ -177,6 +190,11 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     static final String ACCEPT_EXTERNAL_CONTENT = "Accept-External-Content-Handling";
 
     static final String HTTP_HEADER_ACCEPT_PATCH = "Accept-Patch";
+
+    private static final Pattern TRAILING_SLASH_REGEX = Pattern.compile("/+$");
+
+    // Note: This pattern is intentionally loose, matching invalid memento strings, for error handling purposes
+    private static final Pattern MEMENTO_PATH_PATTERN = Pattern.compile(".*/" + FedoraTypes.FCR_VERSIONS + "/(.*)$");
 
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;
@@ -219,8 +237,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     @Inject
     protected ContainmentTriplesService containmentTriplesService;
-
-
 
     protected abstract String externalPath();
 
@@ -314,9 +330,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             // containment triples about this resource
             if (ldpPreferences.prefersContainment()) {
                 if (limit == -1) {
-                    streams.add(this.containmentTriplesService.get(transaction, resource));
+                    streams.add(this.containmentTriplesService.get(transaction(), resource));
                 } else {
-                    streams.add(this.containmentTriplesService.get(transaction, resource).limit(limit));
+                    streams.add(this.containmentTriplesService.get(transaction(), resource).limit(limit));
                 }
             }
 
@@ -581,6 +597,15 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         servletResponse.addHeader("Allow", options);
     }
 
+    protected void addTransactionHeaders() {
+        final var tx = transaction();
+        if (tx != null && !tx.isShortLived()) {
+            final var externalId = identifierConverter()
+                    .toExternalId(FEDORA_ID_PREFIX + "/" + TX_PREFIX + tx.getId());
+            servletResponse.addHeader(ATOMIC_ID_HEADER, externalId);
+        }
+    }
+
     /**
      * Utility function for building a Link.
      *
@@ -670,7 +695,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             servletResponse.addHeader(LINK, buildLink(RDF_SOURCE.getURI(), "type"));
         }
         if (httpHeaderInject != null) {
-            httpHeaderInject.addHttpHeaderToResponseStream(transaction, servletResponse, uriInfo, resource);
+            httpHeaderInject.addHttpHeaderToResponseStream(transaction(), servletResponse, uriInfo, resource);
         }
 
         addLinkAndOptionsHttpHeaders(resource);
@@ -859,11 +884,12 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      */
     @SuppressWarnings("resource")
     protected Response createUpdateResponse(final FedoraResource resource, final boolean created) {
-        addCacheControlHeaders(servletResponse, resource, transaction);
+        addCacheControlHeaders(servletResponse, resource, transaction());
         addResourceLinkHeaders(resource, created);
         addExternalContentHeaders(resource);
         addAclHeader(resource);
         addMementoHeaders(resource);
+        addTransactionHeaders();
 
         if (!created) {
             return noContent().build();
@@ -912,7 +938,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected void patchResourcewithSparql(final FedoraResource resource,
             final String requestBody,
             final RdfStream resourceTriples) {
-        updatePropertiesService.updateProperties(transaction.getId(),
+        updatePropertiesService.updateProperties(transaction().getId(),
                                                  getUserPrincipal(),
                                                  resource.getId(),
                                                  requestBody, resourceTriples);
@@ -1037,6 +1063,50 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             throw (RuntimeException) rootThrowable;
         } else {
             throw new RepositoryRuntimeException(rootThrowable);
+        }
+    }
+
+    protected IdentifierConverter<Resource, FedoraResource> idTranslator;
+
+    protected IdentifierConverter<Resource, FedoraResource> translator() {
+        if (idTranslator == null) {
+            idTranslator = new HttpResourceConverter(transaction(),
+                    uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));
+        }
+
+        return idTranslator;
+    }
+
+    /**
+     * This is a helper method for using the idTranslator to convert this resource into an associated Jena Node.
+     *
+     * @param resource to be converted into a Jena Node
+     * @return the Jena node
+     */
+    protected Node asNode(final FedoraResource resource) {
+        return translator().reverse().convert(resource).asNode();
+    }
+
+    /**
+     * Get the FedoraResource for the resource at the external path
+     * @param externalPath the external path
+     * @return the fedora resource at the external path
+     */
+    @VisibleForTesting
+    public FedoraResource getResourceFromPath(final String externalPath) {
+        final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath);
+
+        try {
+            final FedoraResource fedoraResource = resourceFactory.getResource(transaction(), fedoraId);
+
+            if (fedoraResource instanceof Tombstone) {
+                final String resourceURI = TRAILING_SLASH_REGEX.matcher(externalPath).replaceAll("");
+                throw new TombstoneException(fedoraResource, resourceURI + "/fcr:tombstone");
+            }
+
+            return fedoraResource;
+        } catch (final PathNotFoundException exc) {
+            throw new PathNotFoundRuntimeException(exc);
         }
     }
 }

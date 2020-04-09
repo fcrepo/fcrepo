@@ -125,6 +125,8 @@ public class FedoraVersioning extends ContentExposingResource {
             throw new BadRequestException("date-time header is no longer supported on versioning.");
         }
 
+        final var transaction = transaction();
+
         if (!transaction.isShortLived()) {
             throw new BadRequestException("Version creation is not allowed within transactions.");
         }
@@ -169,7 +171,7 @@ public class FedoraVersioning extends ContentExposingResource {
     public Response getVersionList(@HeaderParam("Accept") final String acceptValue) throws IOException {
 
         final FedoraResource theTimeMap = resource().getTimeMap();
-        checkCacheControlHeaders(request, servletResponse, theTimeMap, transaction);
+        checkCacheControlHeaders(request, servletResponse, theTimeMap, transaction());
 
         LOGGER.debug("GET resource '{}'", externalPath());
 

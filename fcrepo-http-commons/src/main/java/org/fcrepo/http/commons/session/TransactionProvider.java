@@ -17,16 +17,18 @@
  */
 package org.fcrepo.http.commons.session;
 
+import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
+import static org.fcrepo.http.commons.session.TransactionConstants.TX_PREFIX;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.ext.Provider;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import javax.servlet.http.HttpServletRequest;
+import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.glassfish.hk2.api.Factory;
-import org.glassfish.jersey.process.internal.RequestScoped;
 import org.slf4j.Logger;
 
 /**
@@ -34,27 +36,25 @@ import org.slf4j.Logger;
  *
  * @author awoods
  */
-@Provider
-@RequestScoped
 public class TransactionProvider implements Factory<Transaction> {
 
-    @Inject
-    private TransactionManager txManager;
+    private static final Logger LOGGER = getLogger(TransactionProvider.class);
+
+    public static final Pattern TX_ID_PATTERN = Pattern.compile(".*/" + TX_PREFIX + "([0-9a-f\\-]+)$");
+
+    private final TransactionManager txManager;
 
     private final HttpServletRequest request;
 
-    public static final String ATOMIC_ID_HEADER = "Atomic-ID";
-
     /**
      * Create a new transaction provider for a request
+     * @param txManager the transaction manager
      * @param request the request
      */
-    @Inject
-    public TransactionProvider(final HttpServletRequest request) {
+    public TransactionProvider(final TransactionManager txManager, final HttpServletRequest request) {
+        this.txManager = txManager;
         this.request = request;
     }
-
-    private static final Logger LOGGER = getLogger(TransactionProvider.class);
 
     @Override
     public Transaction provide() {
@@ -78,16 +78,30 @@ public class TransactionProvider implements Factory<Transaction> {
      * Returns the transaction for the Request. If the request has ATOMIC_ID_HEADER header,
      * the transaction corresponding to that ID is returned, otherwise, a new transaction is
      * created.
-     * 
+     *
      * @param request the request object
      * @return the transaction for the request
      */
     public Transaction getTransactionForRequest(final HttpServletRequest request) {
-        final String txId = request.getHeader(ATOMIC_ID_HEADER);
-        if (txId != null && !txId.isEmpty()) {
-           return txManager.get(txId);
+        String txId = null;
+        // Transaction id either comes from header or is the path
+        String txUri = request.getHeader(ATOMIC_ID_HEADER);
+        if (StringUtils.isEmpty(txUri)) {
+            txUri = request.getPathInfo();
+        }
+
+        // Pull the id portion out of the tx uri
+        if (!StringUtils.isEmpty(txUri)) {
+            final Matcher txMatcher = TX_ID_PATTERN.matcher(txUri);
+            if (txMatcher.matches()) {
+                txId = txMatcher.group(1);
+            }
+        }
+
+        if (!StringUtils.isEmpty(txId)) {
+            return txManager.get(txId);
         } else {
-           return txManager.create();
+            return txManager.create();
         }
     }
 }

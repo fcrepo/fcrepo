@@ -17,7 +17,7 @@
  */
 package org.fcrepo.kernel.impl;
 
-
+import static java.time.Duration.ofMillis;
 import static java.time.Duration.ofMinutes;
 
 import java.time.Duration;
@@ -26,6 +26,7 @@ import java.time.Instant;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.TransactionExpiredException;
 import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -38,6 +39,8 @@ import org.slf4j.LoggerFactory;
  * @author mohideen
  */
 public class TransactionImpl implements Transaction {
+
+    public static final String TIMEOUT_SYSTEM_PROPERTY = "fcrepo.session.timeout";
 
     private static final Logger log = LoggerFactory.getLogger(TransactionImpl.class);
 
@@ -163,9 +166,14 @@ public class TransactionImpl implements Transaction {
     }
 
     private Duration timeout() {
-        // TODO Get the user configured timeout?
-        // Otherwise, use the default timeout
-        return DEFAULT_TIMEOUT;
+        // Get the configured timeout
+        final String timeoutProperty = System.getProperty(TIMEOUT_SYSTEM_PROPERTY);
+        if (timeoutProperty != null) {
+            return ofMillis(Long.parseLong(timeoutProperty));
+        } else {
+            // Otherwise, use the default timeout
+            return DEFAULT_TIMEOUT;
+        }
     }
 
     private PersistentStorageSession getPersistentSession() {
@@ -174,7 +182,7 @@ public class TransactionImpl implements Transaction {
 
     private void failIfExpired() {
         if (hasExpired()) {
-            throw new TransactionRuntimeException("Transaction with transactionId: " + id + " expired!");
+            throw new TransactionExpiredException("Transaction with transactionId: " + id + " expired!");
         }
     }
 

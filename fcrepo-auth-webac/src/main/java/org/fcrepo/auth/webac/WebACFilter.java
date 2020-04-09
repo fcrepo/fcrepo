@@ -92,7 +92,7 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_CONTROL;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
 import static org.fcrepo.auth.webac.WebACAuthorizingRealm.URIS_TO_AUTHORIZE;
-import static org.fcrepo.http.commons.session.TransactionProvider.ATOMIC_ID_HEADER;
+import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;

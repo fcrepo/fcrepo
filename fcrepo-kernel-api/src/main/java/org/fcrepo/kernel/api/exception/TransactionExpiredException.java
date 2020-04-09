@@ -15,34 +15,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api;
+package org.fcrepo.kernel.api.exception;
 
 /**
- * The Fedora Transaction Manager abstraction
+ * Exception indicating that the requested transaction has expired
  *
- * @author mohideen
+ * @author bbpennel
  */
-public interface TransactionManager {
+public class TransactionExpiredException extends TransactionRuntimeException {
+    private static final long serialVersionUID = 1L;
+    /**
+     * Ordinary constructor.
+     *
+     * @param msg the message
+     */
+    public TransactionExpiredException(final String msg) {
+        super(msg);
+    }
 
     /**
-     * Create a new fedora transaction
+     * Ordinary constructor.
      *
-     * @return {@link Transaction} The new fedora transaction
+     * @param rootCause the root cause
      */
-    Transaction create();
+    public TransactionExpiredException(final Throwable rootCause) {
+        super(rootCause);
+    }
+
 
     /**
-     * Get an existing fedora transaction
+     * Ordinary constructor.
      *
-     * @param transactionId the id of the transaction to be returned
-     * @return {@link Transaction} the fedora transaction associated with the provided id
+     * @param msg the message
+     * @param rootCause the root cause
      */
-    Transaction get(String transactionId);
-
-    /**
-     * Inform manager that the specified transaction has been committed
-     *
-     * @param transactionId id of the transaction
-     */
-    void transactionCommitted(String transactionId);
+    public TransactionExpiredException(final String msg, final Throwable rootCause) {
+        super(msg, rootCause);
+    }
 }
