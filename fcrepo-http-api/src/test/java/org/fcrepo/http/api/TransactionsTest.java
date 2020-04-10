@@ -34,6 +34,7 @@ import java.security.Principal;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.Transaction;
@@ -80,6 +81,9 @@ public class TransactionsTest {
     @Mock
     private SecurityContext mockSecurityContext;
 
+    @Mock
+    private UriInfo mockUriInfo;
+
     @Before
     public void setUp() {
         testObj = new Transactions();
@@ -91,6 +95,7 @@ public class TransactionsTest {
         when(mockTransaction.getId()).thenReturn("123");
         when(mockTransaction.getExpires()).thenReturn(now().plusSeconds(100));
         setField(testObj, "txManager", mockTxManager);
+        setField(testObj, "uriInfo", mockUriInfo);
     }
 
     @Test
