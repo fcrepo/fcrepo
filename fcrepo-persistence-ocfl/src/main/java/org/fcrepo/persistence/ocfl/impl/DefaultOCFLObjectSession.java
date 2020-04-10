@@ -53,6 +53,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -116,7 +117,15 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
     private String encode(final String value) {
         if (SystemUtils.IS_OS_WINDOWS) {
-            return URLEncoder.encode(value, StandardCharsets.UTF_8);
+            final String encoded;
+            if (value.contains("/")) {
+                encoded = Arrays.stream(value.split("/")).map(s -> URLEncoder.encode(s, StandardCharsets.UTF_8))
+                        .collect(Collectors.joining("/"));
+            } else {
+                encoded = URLEncoder.encode(value, StandardCharsets.UTF_8);
+            }
+            log.debug("Encoding {} to {}", value, encoded);
+            return encoded;
         }
         return value;
     }

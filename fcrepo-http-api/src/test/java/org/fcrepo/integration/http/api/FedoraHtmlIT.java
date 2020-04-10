@@ -104,7 +104,7 @@ public class FedoraHtmlIT extends AbstractResourceIT {
         method.addHeader(ACCEPT, "text/html");
         try (final CloseableHttpResponse response = execute(method)) {
             final String html = EntityUtils.toString(response.getEntity());
-            assertTrue(contains(html, "class=\"fcrepo_root\""));
+            assertTrue(html, contains(html, "class=\"fcrepo_root\""));
         }
     }
 
