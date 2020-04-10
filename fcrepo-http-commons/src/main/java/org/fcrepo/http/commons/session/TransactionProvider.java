@@ -52,6 +52,7 @@ public class TransactionProvider implements Factory<Transaction> {
      * Create a new transaction provider for a request
      * @param txManager the transaction manager
      * @param request the request
+     * @param baseUri base uri for the application
      */
     public TransactionProvider(final TransactionManager txManager, final HttpServletRequest request,
             final URI baseUri) {
@@ -83,24 +84,26 @@ public class TransactionProvider implements Factory<Transaction> {
      * the transaction corresponding to that ID is returned, otherwise, a new transaction is
      * created.
      *
-     * @param request the request object
      * @return the transaction for the request
      */
     public Transaction getTransactionForRequest() {
         String txId = null;
         // Transaction id either comes from header or is the path
         String txUri = request.getHeader(ATOMIC_ID_HEADER);
-        if (StringUtils.isEmpty(txUri)) {
-            txUri = request.getPathInfo();
-        }
-
-        // Pull the id portion out of the tx uri
         if (!StringUtils.isEmpty(txUri)) {
             final Matcher txMatcher = txIdPattern.matcher(txUri);
             if (txMatcher.matches()) {
                 txId = txMatcher.group(2);
             } else {
                 throw new TransactionRuntimeException("Invalid transaction id");
+            }
+        } else {
+            txUri = request.getPathInfo();
+            if (txUri != null) {
+                final Matcher txMatcher = txIdPattern.matcher(txUri);
+                if (txMatcher.matches()) {
+                    txId = txMatcher.group(2);
+                }
             }
         }
 

@@ -38,6 +38,7 @@ import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEA
 import static org.fcrepo.http.commons.session.TransactionConstants.EXPIRES_RFC_1123_FORMATTER;
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_COMMIT_REL;
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_COMMIT_SUFFIX;
+import static org.fcrepo.http.commons.session.TransactionConstants.TX_ENDPOINT_REL;
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_PREFIX;
 import static org.fcrepo.kernel.impl.TransactionImpl.TIMEOUT_SYSTEM_PROPERTY;
 import static org.junit.Assert.assertEquals;
@@ -81,6 +82,15 @@ public class TransactionsIT extends AbstractResourceIT {
     public static final String DEFAULT_TIMEOUT = Long.toString(ofMinutes(3).toMillis());
 
     public static final Pattern TX_ID_PATTERN = Pattern.compile(".+/" + TX_PREFIX + "([0-9a-f\\-]+)$");
+
+    @Test
+    public void testRootHasTxEndpoint() throws Exception {
+        final var getRoot = new HttpGet(serverAddress);
+        try (final CloseableHttpResponse response = execute(getRoot)) {
+            final String txEndpointUri = serverAddress + TX_PREFIX;
+            checkForLinkHeader(response, txEndpointUri, TX_ENDPOINT_REL);
+        }
+    }
 
     @Test
     public void testCreateTransaction() throws IOException {
