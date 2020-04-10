@@ -122,7 +122,7 @@ public class DeleteResourceServiceImplTest {
         final DeleteResourceOperationFactoryImpl factoryImpl = new DeleteResourceOperationFactoryImpl();
         setField(service, "deleteResourceFactory", factoryImpl);
         setField(service, "containmentIndex", containmentIndex);
-        service.eventAccumulator = eventAccumulator;
+        setField(service, "eventAccumulator", eventAccumulator);
         when(container.getFedoraId()).thenReturn(RESOURCE_FEDORA_ID);
     }
 

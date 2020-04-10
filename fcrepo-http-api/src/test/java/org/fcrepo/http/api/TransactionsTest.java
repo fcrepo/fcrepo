@@ -87,7 +87,7 @@ public class TransactionsTest {
     private SecurityContext mockSecurityContext;
 
     @Before
-    public void setUp() throws URISyntaxException {
+    public void setUp() {
         testObj = new Transactions();
         mockTransaction.setShortLived(false);
         when(mockTxManager.create()).thenReturn(mockTransaction);
@@ -97,7 +97,7 @@ public class TransactionsTest {
         when(mockTransaction.getId()).thenReturn("123");
         when(mockTransaction.getExpires()).thenReturn(now().plusSeconds(100));
 
-        when(mockUriInfo.getBaseUri()).thenReturn(new URI("http://localhost/rest"));
+        when(mockUriInfo.getBaseUri()).thenReturn(URI.create("http://localhost/rest"));
 
         setField(testObj, "txManager", mockTxManager);
         setField(testObj, "uriInfo", mockUriInfo);

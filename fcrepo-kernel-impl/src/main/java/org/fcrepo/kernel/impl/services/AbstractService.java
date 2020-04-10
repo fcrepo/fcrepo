@@ -84,7 +84,7 @@ public abstract class AbstractService {
     protected ContainmentIndex containmentIndex;
 
     @Inject
-    protected EventAccumulator eventAccumulator;
+    private EventAccumulator eventAccumulator;
 
     /**
      * Utility to determine the correct interaction model from elements of a request.

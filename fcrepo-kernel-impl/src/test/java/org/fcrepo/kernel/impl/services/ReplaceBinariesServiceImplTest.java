@@ -105,7 +105,7 @@ public class ReplaceBinariesServiceImplTest {
     public void setup() {
         factory = new NonRdfSourceOperationFactoryImpl();
         setField(service, "factory", factory);
-        service.eventAccumulator = eventAccumulator;
+        setField(service, "eventAccumulator", eventAccumulator);
         when(psManager.getSession(anyString())).thenReturn(pSession);
     }
 

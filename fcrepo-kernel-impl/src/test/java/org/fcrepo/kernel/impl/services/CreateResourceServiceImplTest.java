@@ -170,7 +170,7 @@ public class CreateResourceServiceImplTest {
         nonRdfSourceOperationFactory = new NonRdfSourceOperationFactoryImpl();
         setField(createResourceService, "nonRdfSourceOperationFactory", nonRdfSourceOperationFactory);
         setField(createResourceService, "containmentIndex", containmentIndex);
-        createResourceService.eventAccumulator = eventAccumulator;
+        setField(createResourceService, "eventAccumulator", eventAccumulator);
         when(psManager.getSession(ArgumentMatchers.any())).thenReturn(psSession);
         when(extContent.getURL()).thenReturn(EXTERNAL_URL);
         when(extContent.getHandling()).thenReturn(ExternalContent.PROXY);

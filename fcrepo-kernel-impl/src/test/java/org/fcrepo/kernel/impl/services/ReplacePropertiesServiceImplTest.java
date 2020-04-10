@@ -99,7 +99,7 @@ public class ReplacePropertiesServiceImplTest {
     public void setup() {
         factory = new RdfSourceOperationFactoryImpl();
         setField(service, "factory", factory);
-        service.eventAccumulator = eventAccumulator;
+        setField(service, "eventAccumulator", eventAccumulator);
         when(tx.getId()).thenReturn(TX_ID);
         when(psManager.getSession(anyString())).thenReturn(pSession);
         when(resource.getId()).thenReturn(FEDORA_ID);

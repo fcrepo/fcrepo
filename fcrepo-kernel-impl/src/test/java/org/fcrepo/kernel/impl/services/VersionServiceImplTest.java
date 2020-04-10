@@ -36,6 +36,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 @RunWith(MockitoJUnitRunner.class)
 public class VersionServiceImplTest {
@@ -59,7 +60,7 @@ public class VersionServiceImplTest {
     @Before
     public void setup() {
         service = new VersionServiceImpl();
-        service.eventAccumulator = eventAccumulator;
+        setField(service, "eventAccumulator", eventAccumulator);
         service.setPsManager(psManager);
         service.setVersionOperationFactory(new VersionResourceOperationFactoryImpl());
 

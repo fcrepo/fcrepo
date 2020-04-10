@@ -73,9 +73,6 @@ import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_DELETION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_MODIFICATION;
 import static org.slf4j.LoggerFactory.getLogger;
 
-// import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
-// import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
-
 /**
  * <p>
  * AbstractJmsIT class.
