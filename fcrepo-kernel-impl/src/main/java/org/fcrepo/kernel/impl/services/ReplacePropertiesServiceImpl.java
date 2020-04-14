@@ -18,9 +18,6 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
-
-import javax.inject.Inject;
 import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -32,6 +29,10 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
+
+import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 
 /**
  * This class mediates update operations between the kernel and persistent storage layers
@@ -70,6 +71,7 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
                 .build();
 
             pSession.persist(updateOp);
+            recordEvent(txId, fedoraId, updateOp);
         } catch (final PersistentStorageException ex) {
             throw new RepositoryRuntimeException(String.format("failed to replace resource %s",
                   fedoraId), ex);

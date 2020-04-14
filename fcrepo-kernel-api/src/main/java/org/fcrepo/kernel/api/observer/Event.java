@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.api.observer;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+
 import java.net.URI;
 import java.time.Instant;
 import java.util.Map;
@@ -30,6 +32,11 @@ import java.util.Set;
  * @since Feb 19, 2013
  */
 public interface Event {
+
+    /**
+     * @return the FedoraId of the resource associated with this event.
+     */
+    FedoraId getFedoraId();
 
     /**
      * @return the event types associated with this event.

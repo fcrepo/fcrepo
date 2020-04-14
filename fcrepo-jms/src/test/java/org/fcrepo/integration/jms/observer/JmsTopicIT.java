@@ -20,7 +20,6 @@ package org.fcrepo.integration.jms.observer;
 import javax.jms.Destination;
 import javax.jms.JMSException;
 
-import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
@@ -33,7 +32,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
  *
  * @author acoburn
  */
-@Ignore //TODO Fix these tests
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({ "/spring-test/jms-topic.xml", "/spring-test/fcrepo-config.xml",
     "/spring-test/eventing.xml" })

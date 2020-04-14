@@ -110,6 +110,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         try {
             pSession.persist(createOp);
             addToContainmentIndex(txId, parentId, fedoraId);
+            recordEvent(txId, fedoraId, createOp);
         } catch (final PersistentStorageException exc) {
             throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
         }
@@ -152,11 +153,13 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                 .triples(stream)
                 .relaxedProperties(model)
                 .archivalGroup(rdfTypes.contains(ARCHIVAL_GROUP.getURI()))
+                .userPrincipal(userPrincipal)
                 .build();
 
         try {
             pSession.persist(createOp);
             addToContainmentIndex(txId, parentId, fedoraId);
+            recordEvent(txId, fedoraId, createOp);
         } catch (final PersistentStorageException exc) {
             throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
         }

@@ -20,6 +20,7 @@ package org.fcrepo.kernel.impl.services;
 import com.google.common.annotations.VisibleForTesting;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.VersionResourceOperationFactory;
 import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
@@ -43,17 +44,18 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     private VersionResourceOperationFactory versionOperationFactory;
 
     @Override
-    public void createVersion(final Transaction transaction, final String resourceId, final String userPrincipal) {
+    public void createVersion(final Transaction transaction, final FedoraId fedoraId, final String userPrincipal) {
         final var session = psManager.getSession(transaction.getId());
-        final var operation = versionOperationFactory.createBuilder(resourceId)
+        final var operation = versionOperationFactory.createBuilder(fedoraId.getResourceId())
                 .userPrincipal(userPrincipal)
                 .build();
 
         try {
             session.persist(operation);
+            recordEvent(transaction.getId(), fedoraId, operation);
         } catch (PersistentStorageException e) {
             throw new RepositoryRuntimeException(String.format("Failed to create new version of %s",
-                    resourceId), e);
+                    fedoraId.getResourceId()), e);
         }
     }
 

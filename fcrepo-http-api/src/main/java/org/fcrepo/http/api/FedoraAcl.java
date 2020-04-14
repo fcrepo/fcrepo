@@ -288,7 +288,7 @@ public class FedoraAcl extends ContentExposingResource {
 
         final FedoraResource aclResource = resource().getAcl();
         if (aclResource != null) {
-            deleteResourceService.perform(transaction(), aclResource);
+            deleteResourceService.perform(transaction(), aclResource, getUserPrincipal());
         }
         transaction().commit();
 

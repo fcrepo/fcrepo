@@ -28,6 +28,7 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TransactionExpiredException;
 import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
+import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.slf4j.Logger;
@@ -58,7 +59,11 @@ public class TransactionImpl implements Transaction {
 
     private boolean rolledback = false;
 
-    private boolean commited = false;
+    private boolean committed = false;
+
+    private String baseUri;
+
+    private String userAgent;
 
     protected TransactionImpl(final String id, final TransactionManagerImpl txManager) {
         if (id == null || id.isEmpty()) {
@@ -73,14 +78,15 @@ public class TransactionImpl implements Transaction {
     public synchronized void commit() {
         failIfExpired();
         failIfRolledback();
-        if (this.commited) {
+        if (this.committed) {
             return;
         }
         try {
             log.debug("Committing transaction {}", id);
             this.getPersistentSession().commit();
             this.getContainmentIndex().commitTransaction(this);
-            this.commited = true;
+            this.getEventAccumulator().emitEvents(id, baseUri, userAgent);
+            this.committed = true;
         } catch (final PersistentStorageException ex) {
             // Rollback on commit failure
             rollback();
@@ -90,7 +96,7 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public synchronized boolean isCommitted() {
-        return commited;
+        return committed;
     }
 
     @Override
@@ -104,6 +110,7 @@ public class TransactionImpl implements Transaction {
             this.rolledback = true;
             this.getPersistentSession().rollback();
             this.getContainmentIndex().rollbackTransaction(this);
+            this.getEventAccumulator().clearEvents(id);
         } catch (final PersistentStorageException ex) {
             throw new RepositoryRuntimeException("failed to rollback transaction " + id, ex);
         }
@@ -165,6 +172,16 @@ public class TransactionImpl implements Transaction {
         updateExpiry(timeout());
     }
 
+    @Override
+    public void setBaseUri(final String baseUri) {
+        this.baseUri = baseUri;
+    }
+
+    @Override
+    public void setUserAgent(final String userAgent) {
+        this.userAgent = userAgent;
+    }
+
     private Duration timeout() {
         // Get the configured timeout
         final String timeoutProperty = System.getProperty(TIMEOUT_SYSTEM_PROPERTY);
@@ -187,7 +204,7 @@ public class TransactionImpl implements Transaction {
     }
 
     private void failIfCommited() {
-        if (this.commited) {
+        if (this.committed) {
             throw new TransactionRuntimeException("Transaction with transactionId: " + id + " is already committed!");
         }
     }
@@ -201,4 +218,9 @@ public class TransactionImpl implements Transaction {
     private ContainmentIndex getContainmentIndex() {
         return this.txManager.getContainmentIndex();
     }
+
+    private EventAccumulator getEventAccumulator() {
+        return this.txManager.getEventAccumulator();
+    }
+
 }

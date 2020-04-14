@@ -26,6 +26,7 @@ import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.WebacAcl;
+import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.kernel.impl.operations.DeleteResourceOperation;
 import org.fcrepo.kernel.impl.operations.DeleteResourceOperationFactoryImpl;
 import org.fcrepo.persistence.api.PersistentStorageSession;
@@ -42,6 +43,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import javax.inject.Inject;
 import java.util.List;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
@@ -52,8 +54,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
-import javax.inject.Inject;
-
 /**
  * DeleteResourceServiceTest
  *
@@ -63,8 +63,13 @@ import javax.inject.Inject;
 @ContextConfiguration("/containmentIndexTest.xml")
 public class DeleteResourceServiceImplTest {
 
+    private static final String USER = "fedoraAdmin";
+
     @Mock
     private Transaction tx;
+
+    @Mock
+    private EventAccumulator eventAccumulator;
 
     @Mock
     private PersistentStorageSession pSession;
@@ -117,6 +122,7 @@ public class DeleteResourceServiceImplTest {
         final DeleteResourceOperationFactoryImpl factoryImpl = new DeleteResourceOperationFactoryImpl();
         setField(service, "deleteResourceFactory", factoryImpl);
         setField(service, "containmentIndex", containmentIndex);
+        setField(service, "eventAccumulator", eventAccumulator);
         when(container.getFedoraId()).thenReturn(RESOURCE_FEDORA_ID);
     }
 
@@ -132,7 +138,7 @@ public class DeleteResourceServiceImplTest {
         when(container.isAcl()).thenReturn(false);
         when(container.getAcl()).thenReturn(null);
 
-        service.perform(tx, container);
+        service.perform(tx, container, USER);
         verifyResourceOperation(RESOURCE_FEDORA_ID, operationCaptor, pSession);
     }
 
@@ -151,7 +157,7 @@ public class DeleteResourceServiceImplTest {
         when(container.getAcl()).thenReturn(null);
 
         assertEquals(1, containmentIndex.getContains(tx, container).count());
-        service.perform(tx, container);
+        service.perform(tx, container, USER);
 
         verify(pSession, times(2)).persist(operationCaptor.capture());
         final List<DeleteResourceOperation> operations = operationCaptor.getAllValues();
@@ -175,14 +181,14 @@ public class DeleteResourceServiceImplTest {
     public void testAclDelete() throws Exception {
         when(acl.getFedoraId()).thenReturn(RESOURCE_ACL_FEDORA_ID);
         when(acl.isAcl()).thenReturn(true);
-        service.perform(tx, acl);
+        service.perform(tx, acl, USER);
         verifyResourceOperation(RESOURCE_ACL_FEDORA_ID, operationCaptor, pSession);
     }
 
     @Test(expected = RepositoryRuntimeException.class)
     public void testBinaryDescriptionDelete() throws Exception {
         when(binaryDesc.getFedoraId()).thenReturn(RESOURCE_DESCRIPTION_FEDORA_ID);
-        service.perform(tx, binaryDesc);
+        service.perform(tx, binaryDesc, USER);
     }
 
     @Test
@@ -194,7 +200,7 @@ public class DeleteResourceServiceImplTest {
         when(binary.getAcl()).thenReturn(acl);
         when(acl.getFedoraId()).thenReturn(RESOURCE_ACL_FEDORA_ID);
 
-        service.perform(tx, binary);
+        service.perform(tx, binary, USER);
 
         verify(pSession, times(3)).persist(operationCaptor.capture());
         final List<DeleteResourceOperation> operations = operationCaptor.getAllValues();

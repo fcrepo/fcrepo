@@ -17,30 +17,15 @@
  */
 package org.fcrepo.http.api;
 
-import static javax.ws.rs.core.Response.ok;
-import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_LINK_FORMAT;
-import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
-import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
-import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.io.IOException;
-import java.net.URI;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.google.common.annotations.VisibleForTesting;
+import org.fcrepo.http.commons.responses.HtmlTemplate;
+import org.fcrepo.http.commons.responses.LinkFormatStream;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
@@ -57,17 +42,30 @@ import javax.ws.rs.core.Link.Builder;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.net.URI;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
-import org.fcrepo.http.commons.responses.HtmlTemplate;
-import org.fcrepo.http.commons.responses.LinkFormatStream;
-import org.fcrepo.kernel.api.exception.InvalidChecksumException;
-import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.models.FedoraResource;
-import org.slf4j.Logger;
-import org.springframework.context.annotation.Scope;
-
-import com.google.common.annotations.VisibleForTesting;
+import static javax.ws.rs.core.Response.ok;
+import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_LINK_FORMAT;
+import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author cabeer
@@ -136,7 +134,7 @@ public class FedoraVersioning extends ContentExposingResource {
         try {
             LOGGER.debug("Request to create version for <{}>", externalPath);
 
-            versionService.createVersion(transaction, resource.getId(), getUserPrincipal());
+            versionService.createVersion(transaction, resource.getFedoraId(), getUserPrincipal());
 
             // need to commit the transaction before loading the memento otherwise it won't exist
             transaction.commitIfShortLived();

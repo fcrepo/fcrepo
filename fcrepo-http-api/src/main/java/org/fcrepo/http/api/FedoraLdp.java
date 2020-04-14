@@ -349,7 +349,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         LOGGER.info("Delete resource '{}'", externalPath);
 
-        deleteResourceService.perform(transaction(), resource());
+        deleteResourceService.perform(transaction(), resource(), getUserPrincipal());
         transaction().commitIfShortLived();
         return noContent().build();
     }

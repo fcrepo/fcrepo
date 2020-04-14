@@ -58,6 +58,8 @@ import org.fcrepo.kernel.api.exception.RequestWithAclLinkHeaderException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.observer.EventAccumulator;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.slf4j.Logger;
 
 
@@ -80,6 +82,9 @@ public abstract class AbstractService {
 
     @Inject
     protected ContainmentIndex containmentIndex;
+
+    @Inject
+    private EventAccumulator eventAccumulator;
 
     /**
      * Utility to determine the correct interaction model from elements of a request.
@@ -243,6 +248,10 @@ public abstract class AbstractService {
                 inputModel.add(createDefaultAccessToStatement(subject.toString()));
             }
         });
+    }
+
+    protected void recordEvent(final String transactionId, final FedoraId fedoraId, final ResourceOperation operation) {
+        this.eventAccumulator.recordEventForOperation(transactionId, fedoraId, operation);
     }
 
     /**
