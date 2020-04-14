@@ -36,7 +36,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.lang.String.format;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.isSidecarSubpath;
 
@@ -73,7 +72,6 @@ public class IndexBuilderImpl implements IndexBuilder {
         fedoraToOCFLObjectIndex.reset();
         final var transaction = transactionManager.create();
         final var txId = transaction.getId();
-        final var rootFedoraId = FEDORA_ID_PREFIX;
         LOGGER.info("Resetting ContaintmentIndex...");
         LOGGER.info("ContainmentIndex reset.");
         LOGGER.debug("Reading object ids...");
@@ -94,18 +92,18 @@ public class IndexBuilderImpl implements IndexBuilder {
                             //we're only interested in sidecar subpaths
                             try {
                                 final var headers = deserializeHeaders(objSession.read(subpath));
-                                final var fedoraId = headers.getId();
-                                fedoraIds.add(fedoraId);
+                                final var fedoraId = FedoraId.create(headers.getId());
+                                fedoraIds.add(fedoraId.getFullId());
                                 if (headers.isArchivalGroup() || headers.isObjectRoot()) {
                                     rootId.set(headers.getId());
                                 }
 
-                                if (!fedoraId.equals(rootFedoraId)) {
+                                if (!fedoraId.isRepositoryRoot()) {
                                     var parentId = headers.getParent();
 
                                     if (parentId == null) {
                                         if (headers.isObjectRoot()) {
-                                            parentId = FEDORA_ID_PREFIX;
+                                            parentId = FedoraId.getRepositoryRootId().getFullId();
                                         }
                                     }
 
