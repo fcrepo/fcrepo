@@ -18,7 +18,6 @@
 package org.fcrepo.http.api;
 
 import static com.google.common.base.Predicates.containsPattern;
-import static java.net.URI.create;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
@@ -39,7 +38,6 @@ import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.http.api.ContentExposingResource.buildLink;
 import static org.fcrepo.http.api.ContentExposingResource.getSimpleContentType;
-import static org.fcrepo.http.api.FedoraBaseResource.JMS_BASEURL_PROP;
 import static org.fcrepo.http.api.FedoraLdp.HTTP_HEADER_ACCEPT_PATCH;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES_TYPE;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
@@ -56,7 +54,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
-// import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -99,7 +96,6 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.graph.Triple;
@@ -131,8 +127,6 @@ import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.TimeMapService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
-import org.glassfish.jersey.internal.PropertiesDelegate;
-import org.glassfish.jersey.server.ContainerRequest;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -872,7 +866,7 @@ public class FedoraLdpTest {
         when(mockRequest.getMethod()).thenReturn("PATCH");
         final Response actual = testObj.deleteObject();
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
-        verify(deleteResourceService).perform(mockTransaction, fedoraResource);
+        verify(deleteResourceService).perform(eq(mockTransaction), eq(fedoraResource), anyString());
     }
 
     @Test
@@ -1215,157 +1209,6 @@ public class FedoraLdpTest {
         final MediaType mediaType = new MediaType("text", "plain", ImmutableMap.of("charset", "UTF-8"));
         final MediaType sanitizedMediaType = MediaType.valueOf(getSimpleContentType(mediaType));
         assertEquals("text/plain", sanitizedMediaType.toString());
-    }
-
-    /**
-     * Demonstrates that when the {@link FedoraBaseResource#JMS_BASEURL_PROP fcrepo.jms.baseUrl} system property is not
-     * set, the url used for JMS messages is the same as the base url found in the {@code UriInfo}.
-     * <p>
-     * Implementation note: this test requires a concrete instance of {@link UriInfo}, because it is the interaction of
-     * {@code javax.ws.rs.core.UriBuilder} and {@code FedoraBaseResource} that is being tested.
-     * </p>
-     */
-    @Test
-    public void testJmsBaseUrlDefault() {
-        // Obtain a concrete instance of UriInfo
-        final URI baseUri = create("http://localhost/fcrepo");
-        final URI requestUri = create("http://localhost/fcrepo/foo");
-        final ContainerRequest req = new ContainerRequest(baseUri, requestUri, "GET", mock(SecurityContext.class),
-                mock(PropertiesDelegate.class));
-        final UriInfo info = spy(req.getUriInfo());
-
-        final String expectedBaseUrl = baseUri.toString();
-
-        testObj.setUpJMSInfo(info, mockHeaders);
-
-        // verify(mockTransaction).addSessionData(BASE_URL, expectedBaseUrl);
-        verify(info, times(0)).getBaseUriBuilder();
-        verify(info).getBaseUri();
-    }
-
-    /**
-     * Demonstrates that the host supplied by the {@link FedoraBaseResource#JMS_BASEURL_PROP fcrepo.jms.baseUrl} system
-     * property is used as the as the base url for JMS messages, and not the base url found in {@code UriInfo}.
-     * <p>
-     * Note: the path from the request is preserved, the host from the fcrepo.jms.baseUrl is used
-     * </p>
-     * <p>
-     * Implementation note: this test requires a concrete instance of {@link UriInfo}, because it is the interaction of
-     * {@code javax.ws.rs.core.UriBuilder} and {@code FedoraBaseResource} that is being tested.
-     * </p>
-     */
-    @Test
-    public void testJmsBaseUrlOverrideHost() {
-        // Obtain a concrete implementation of UriInfo
-        final URI baseUri = create("http://localhost/fcrepo");
-        final URI requestUri = create("http://localhost/fcrepo/foo");
-        final ContainerRequest req = new ContainerRequest(baseUri, requestUri, "GET", mock(SecurityContext.class),
-                mock(PropertiesDelegate.class));
-        final UriInfo info = spy(req.getUriInfo());
-
-        final String baseUrl = "http://example.org";
-        final String expectedBaseUrl = baseUrl + baseUri.getPath();
-        System.setProperty(JMS_BASEURL_PROP, baseUrl);
-
-        testObj.setUpJMSInfo(info, mockHeaders);
-
-        // verify(mockTransaction).addSessionData(BASE_URL, expectedBaseUrl);
-        verify(info).getBaseUriBuilder();
-        System.clearProperty(JMS_BASEURL_PROP);
-    }
-
-    /**
-     * Demonstrates that the host and port supplied by the {@link FedoraBaseResource#JMS_BASEURL_PROP
-     * fcrepo.jms.baseUrl} system property is used as the as the base url for JMS messages, and not the base url found
-     * in {@code UriInfo}.
-     * <p>
-     * Note: the path from the request is preserved, but the host and port from the request is overridden by the values
-     * from fcrepo.jms.baseUrl
-     * </p>
-     * <p>
-     * Implementation note: this test requires a concrete instance of {@link UriInfo}, because it is the interaction of
-     * {@code javax.ws.rs.core.UriBuilder} and {@code FedoraBaseResource} that is being tested.
-     * </p>
-     */
-    @Test
-    public void testJmsBaseUrlOverrideHostAndPort() {
-        // Obtain a concrete implementation of UriInfo
-        final URI baseUri = create("http://localhost/fcrepo");
-        final URI requestUri = create("http://localhost/fcrepo/foo");
-        final ContainerRequest req = new ContainerRequest(baseUri, requestUri, "GET", mock(SecurityContext.class),
-                mock(PropertiesDelegate.class));
-        final UriInfo info = spy(req.getUriInfo());
-
-        final String baseUrl = "http://example.org:9090";
-        final String expectedBaseUrl = baseUrl + baseUri.getPath();
-        System.setProperty(JMS_BASEURL_PROP, baseUrl);
-
-        testObj.setUpJMSInfo(info, mockHeaders);
-
-        // verify(mockTransaction).addSessionData(BASE_URL, expectedBaseUrl);
-        verify(info).getBaseUriBuilder();
-        System.clearProperty(JMS_BASEURL_PROP);
-    }
-
-    /**
-     * Demonstrates that the url supplied by the {@link FedoraBaseResource#JMS_BASEURL_PROP fcrepo.jms.baseUrl} system
-     * property is used as the as the base url for JMS messages, and not the base url found in {@code UriInfo}.
-     * <p>
-     * Note: the host and path from the request is overridden by the values from fcrepo.jms.baseUrl
-     * </p>
-     * <p>
-     * Implementation note: this test requires a concrete instance of {@link UriInfo}, because it is the interaction of
-     * {@code javax.ws.rs.core.UriBuilder} and {@code FedoraBaseResource} that is being tested.
-     * </p>
-     */
-    @Test
-    public void testJmsBaseUrlOverrideUrl() {
-        // Obtain a concrete implementation of UriInfo
-        final URI baseUri = create("http://localhost/fcrepo");
-        final URI requestUri = create("http://localhost/fcrepo/foo");
-        final ContainerRequest req = new ContainerRequest(baseUri, requestUri, "GET", mock(SecurityContext.class),
-                mock(PropertiesDelegate.class));
-        final UriInfo info = spy(req.getUriInfo());
-
-        final String expectedBaseUrl = "http://example.org/fcrepo/rest";
-        System.setProperty(JMS_BASEURL_PROP, expectedBaseUrl);
-
-        testObj.setUpJMSInfo(info, mockHeaders);
-
-        // verify(mockTransaction).addSessionData(BASE_URL, expectedBaseUrl);
-        verify(info).getBaseUriBuilder();
-        System.clearProperty(JMS_BASEURL_PROP);
-    }
-
-    /**
-     * Demonstrates that when the the base url in {@code UriInfo} contains a port number, and the base url defined by
-     * {@link FedoraBaseResource#JMS_BASEURL_PROP fcrepo.jms.baseUrl} does <em>not</em> contain a port number, that the
-     * base url for JMS messages does not contain a port number.
-     * <p>
-     * Note: the host, port, and path from the request is overridden by values from fcrepo.jms.baseUrl
-     * </p>
-     * <p>
-     * Implementation note: this test requires a concrete instance of {@link UriInfo}, because it is the interaction of
-     * {@code javax.ws.rs.core.UriBuilder} and {@code FedoraBaseResource} that is being tested.
-     * </p>
-     */
-    @Test
-    public void testJmsBaseUrlOverrideRequestUrlWithPort8080() {
-        // Obtain a concrete implementation of UriInfo
-        final URI baseUri = create("http://localhost:8080/fcrepo/rest");
-        final URI reqUri = create("http://localhost:8080/fcrepo/rest/foo");
-        final ContainerRequest req = new ContainerRequest(baseUri, reqUri, "GET", mock(SecurityContext.class),
-                mock(PropertiesDelegate.class));
-        final UriInfo info = spy(req.getUriInfo());
-
-        final String expectedBaseUrl = "http://example.org/fcrepo/rest/";
-        System.setProperty(JMS_BASEURL_PROP, expectedBaseUrl);
-
-        testObj.setUpJMSInfo(info, mockHeaders);
-
-        // verify(mockTransaction).addSessionData(BASE_URL, expectedBaseUrl);
-        verify(info).getBaseUriBuilder();
-        System.clearProperty(JMS_BASEURL_PROP);
     }
 
 }

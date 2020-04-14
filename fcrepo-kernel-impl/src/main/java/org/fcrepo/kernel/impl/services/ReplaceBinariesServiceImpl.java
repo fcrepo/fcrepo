@@ -17,14 +17,6 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static java.lang.String.format;
-
-import java.io.InputStream;
-import java.net.URI;
-import java.util.Collection;
-
-import javax.inject.Inject;
-
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ExternalContent;
@@ -35,6 +27,13 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Collection;
+
+import static java.lang.String.format;
 
 /**
  * Implementation of a service for replacing/updating binary resources
@@ -87,6 +86,7 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
             final var replaceOp = builder.build();
 
             pSession.persist(replaceOp);
+            recordEvent(txId, fedoraId, replaceOp);
         } catch (final PersistentStorageException ex) {
             throw new RepositoryRuntimeException(format("failed to replace binary %s",
                   fedoraId), ex);

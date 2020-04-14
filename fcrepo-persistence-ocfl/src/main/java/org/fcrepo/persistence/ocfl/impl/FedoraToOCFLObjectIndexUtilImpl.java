@@ -29,9 +29,12 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.lang.String.format;
+
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.isSidecarSubpath;
 
@@ -80,8 +83,11 @@ public class FedoraToOCFLObjectIndexUtilImpl implements FedoraToOCFLObjectIndexU
                                 fedoraIds.add(headers.getId());
                                 if (headers.isArchivalGroup()) {
                                     rootId.set(headers.getId());
+                                } else if (Objects.equals(headers.getInteractionModel(),
+                                        FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI)) {
+                                    rootId.set(headers.getParent());
                                 }
-                            } catch (PersistentStorageException e) {
+                            } catch (final PersistentStorageException e) {
                                 throw new RepositoryRuntimeException(format("fedora-to-ocfl index rebuild failed: %s",
                                         e.getMessage()), e);
                             }

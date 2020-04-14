@@ -28,9 +28,9 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.TransactionClosedException;
 import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
+import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.springframework.stereotype.Component;
-
 
 /**
  * The Fedora Transaction Manager implementation
@@ -48,11 +48,14 @@ public class TransactionManagerImpl implements TransactionManager {
     @Inject
     private PersistentStorageSessionManager pSessionManager;
 
+    @Inject
+    private EventAccumulator eventAccumulator;
+
     TransactionManagerImpl() {
         transactions = new HashMap<>();
     }
 
-    // TODO Add a timer to periadically rollback and cleanup expired transaction?
+    // TODO Add a timer to periodically rollback and cleanup expired transaction?
 
     @Override
     public synchronized Transaction create() {
@@ -95,6 +98,10 @@ public class TransactionManagerImpl implements TransactionManager {
 
     protected ContainmentIndex getContainmentIndex() {
         return containmentIndex;
+    }
+
+    protected EventAccumulator getEventAccumulator() {
+        return eventAccumulator;
     }
 
 }

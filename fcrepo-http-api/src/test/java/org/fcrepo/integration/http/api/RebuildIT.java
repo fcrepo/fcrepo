@@ -34,9 +34,12 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.test.annotation.DirtiesContext;
 
 import static java.lang.System.getProperty;
-import static java.lang.System.setProperty;
+import static javax.ws.rs.core.Response.Status.OK;
+
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.OCFL_STORAGE_ROOT_DIR_KEY;
 import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.OCFL_WORK_DIR_KEY;
 
@@ -44,7 +47,8 @@ import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.OCFL_WORK_DIR_KEY;
  * @author awooods
  * @since 2020-03-04
  */
-public class RebuildIT {
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+public class RebuildIT extends AbstractResourceIT {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RebuildIT.class);
 
@@ -59,22 +63,21 @@ public class RebuildIT {
         origStorageRootDir = getProperty(OCFL_STORAGE_ROOT_DIR_KEY);
         origWorkDir = getProperty(OCFL_WORK_DIR_KEY);
 
-        setProperty(OCFL_STORAGE_ROOT_DIR_KEY, "target/test-classes/test-rebuild-ocfl/ocfl-root");
-        setProperty(OCFL_WORK_DIR_KEY, "target/test-classes/test-rebuild-ocfl/ocfl-work");
+        System.setProperty(OCFL_STORAGE_ROOT_DIR_KEY, "target/test-classes/test-rebuild-ocfl/ocfl-root");
+        System.setProperty(OCFL_WORK_DIR_KEY, "target/test-classes/test-rebuild-ocfl/ocfl-work");
     }
 
     @AfterClass
     public static void afterClass() {
         // Restore pre-test System Property values
-        setProperty(OCFL_STORAGE_ROOT_DIR_KEY, origStorageRootDir);
-        setProperty(OCFL_WORK_DIR_KEY, origWorkDir);
+        System.setProperty(OCFL_STORAGE_ROOT_DIR_KEY, origStorageRootDir);
+        System.setProperty(OCFL_WORK_DIR_KEY, origWorkDir);
     }
 
     @Before
     public void setUp() {
         final AnnotationConfigApplicationContext ctx =
                 new AnnotationConfigApplicationContext(OCFLPersistenceConfig.class);
-
         // RepositoryInitializer.initialize() happens as a part of the object's construction.
         ctx.register(RepositoryInitializer.class,
                 OCFLPersistentSessionManager.class,
@@ -90,25 +93,37 @@ public class RebuildIT {
     /**
      * This test rebuilds from a knows set of OCFL content.
      * The OCFL storage root contains the following four resources:
-     * - binary
-     * - test
-     * - test_child
+     * - root
+     * - /binary
+     * - /test
+     * - /test/child
      *
      * The test verifies that these objects exist in the rebuilt repository.
      */
     @Test
-    public void testRebuild() {
+    public void testRebuildOCFL() {
 
         // Optional debugging
         if (LOGGER.isDebugEnabled()) {
             ocflRepository.listObjectIds().forEach(id -> LOGGER.debug("Object id: {}", id));
         }
 
+        // Test directly against the underlying OCFL repository
         Assert.assertEquals(4, ocflRepository.listObjectIds().count());
         Assert.assertTrue("Should contain object with id: binary", ocflRepository.containsObject("binary"));
         Assert.assertTrue("Should contain object with id: test", ocflRepository.containsObject("test"));
         Assert.assertTrue("Should contain object with id: test_child", ocflRepository.containsObject("test_child"));
         Assert.assertFalse("Should NOT contain object with id: junk", ocflRepository.containsObject("junk"));
+    }
+
+    @Test
+    public void testRebuildWebapp() {
+        // Test against the Fedora API
+        Assert.assertEquals(OK.getStatusCode(), getStatus(getObjMethod("")));
+        Assert.assertEquals(OK.getStatusCode(), getStatus(getObjMethod("test")));
+        Assert.assertEquals(OK.getStatusCode(), getStatus(getObjMethod("test/child")));
+        Assert.assertEquals(OK.getStatusCode(), getStatus(getObjMethod("binary")));
+        Assert.assertEquals(OK.getStatusCode(), getStatus(getObjMethod("binary/" + FCR_METADATA)));
     }
 
 }

@@ -28,6 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 
@@ -70,6 +71,9 @@ public class TransactionsTest {
     private TransactionManager mockTxManager;
 
     @Mock
+    private UriInfo mockUriInfo;
+
+    @Mock
     private HttpIdentifierConverter mockIdConverter;
 
     @Mock
@@ -81,9 +85,6 @@ public class TransactionsTest {
     @Mock
     private SecurityContext mockSecurityContext;
 
-    @Mock
-    private UriInfo mockUriInfo;
-
     @Before
     public void setUp() {
         testObj = new Transactions();
@@ -94,6 +95,9 @@ public class TransactionsTest {
             .thenThrow(new TransactionNotFoundException("No Transaction found with transactionId"));
         when(mockTransaction.getId()).thenReturn("123");
         when(mockTransaction.getExpires()).thenReturn(now().plusSeconds(100));
+
+        when(mockUriInfo.getBaseUri()).thenReturn(URI.create("http://localhost/rest"));
+
         setField(testObj, "txManager", mockTxManager);
         setField(testObj, "uriInfo", mockUriInfo);
     }

@@ -102,7 +102,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
@@ -243,14 +242,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected static final Splitter.MapSplitter RFC3230_SPLITTER =
         Splitter.on(',').omitEmptyStrings().trimResults().withKeyValueSeparator(Splitter.on('=').limit(2));
-
-    /**
-     * Run these actions after initializing this resource
-     */
-    @PostConstruct
-    public void postConstruct() {
-        setUpJMSInfo(uriInfo, headers);
-    }
 
     /**
      * This method returns an HTTP response with content body appropriate to the following arguments.

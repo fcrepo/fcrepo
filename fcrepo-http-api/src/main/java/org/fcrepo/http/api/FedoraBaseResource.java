@@ -29,17 +29,12 @@ import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.slf4j.Logger;
 
-import java.net.URI;
 import java.security.Principal;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.SecurityContext;
-import javax.ws.rs.core.UriInfo;
 
-// import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
-// import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -49,8 +44,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 abstract public class FedoraBaseResource extends AbstractResource {
 
     private static final Logger LOGGER = getLogger(FedoraBaseResource.class);
-
-    static final String JMS_BASEURL_PROP = "fcrepo.jms.baseUrl";
 
     @Context
     protected SecurityContext securityContext;
@@ -109,49 +102,6 @@ abstract public class FedoraBaseResource extends AbstractResource {
      */
     protected boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId) {
         return resourceFactory.doesResourceExist(transaction, fedoraId);
-    }
-
-    /**
-     * Set the baseURL for JMS events.
-     * @param uriInfo the uri info
-     * @param headers HTTP headers
-     **/
-    protected void setUpJMSInfo(final UriInfo uriInfo, final HttpHeaders headers) {
-        try {
-            String baseURL = getBaseUrlProperty(uriInfo);
-            if (baseURL.length() == 0) {
-                baseURL = uriInfo.getBaseUri().toString();
-            }
-            LOGGER.debug("setting baseURL = " + baseURL);
-            // TODO determine if this data can be stored in the Transaction
-            // or if it would be necessary for the persistence layer
-
-            // session.getFedoraSession().addSessionData(BASE_URL, baseURL);
-            // if (!StringUtils.isBlank(headers.getHeaderString("user-agent"))) {
-            //     session.getFedoraSession().addSessionData(USER_AGENT, headers.getHeaderString("user-agent"));
-            // }
-        } catch (final Exception ex) {
-            LOGGER.warn("Error setting baseURL", ex);
-        }
-    }
-
-    /**
-     * Produce a baseURL for JMS events using the system property fcrepo.jms.baseUrl of the form http[s]://host[:port],
-     * if it exists.
-     *
-     * @param uriInfo used to build the base url
-     * @return String the base Url
-     */
-    private String getBaseUrlProperty(final UriInfo uriInfo) {
-        final String propBaseURL = System.getProperty(JMS_BASEURL_PROP, "");
-        if (propBaseURL.length() > 0 && propBaseURL.startsWith("http")) {
-            final URI propBaseUri = URI.create(propBaseURL);
-            if (propBaseUri.getPort() < 0) {
-                return uriInfo.getBaseUriBuilder().port(-1).uri(propBaseUri).toString();
-            }
-            return uriInfo.getBaseUriBuilder().uri(propBaseUri).toString();
-        }
-        return "";
     }
 
     protected String getUserPrincipal() {

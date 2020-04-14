@@ -19,6 +19,8 @@
 package org.fcrepo.kernel.impl.services;
 
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.impl.operations.VersionResourceOperationFactoryImpl;
 import org.fcrepo.persistence.api.PersistentStorageSession;
@@ -34,11 +36,15 @@ import org.mockito.junit.MockitoJUnitRunner;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 @RunWith(MockitoJUnitRunner.class)
 public class VersionServiceImplTest {
 
     private VersionServiceImpl service;
+
+    @Mock
+    private EventAccumulator eventAccumulator;
 
     @Mock
     private PersistentStorageSessionManager psManager;
@@ -54,6 +60,7 @@ public class VersionServiceImplTest {
     @Before
     public void setup() {
         service = new VersionServiceImpl();
+        setField(service, "eventAccumulator", eventAccumulator);
         service.setPsManager(psManager);
         service.setVersionOperationFactory(new VersionResourceOperationFactoryImpl());
 
@@ -63,16 +70,16 @@ public class VersionServiceImplTest {
 
     @Test
     public void createPersistOperation() throws PersistentStorageException {
-        final var resourceId = "info:fedora/test";
+        final var fedoraId = FedoraId.create("info:fedora/test");
         final var user = "me";
 
-        service.createVersion(transaction, resourceId, user);
+        service.createVersion(transaction, fedoraId, user);
 
         final var captor = ArgumentCaptor.forClass(ResourceOperation.class);
         verify(session).persist(captor.capture());
         final var captured = captor.getValue();
 
-        assertEquals(resourceId, captured.getResourceId());
+        assertEquals(fedoraId.getResourceId(), captured.getResourceId());
         assertEquals(user, captured.getUserPrincipal());
     }
 
