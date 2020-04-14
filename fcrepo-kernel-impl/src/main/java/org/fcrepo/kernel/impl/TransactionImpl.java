@@ -26,8 +26,7 @@ import java.time.Instant;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.exception.TransactionExpiredException;
-import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
+import org.fcrepo.kernel.api.exception.TransactionClosedException;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -117,6 +116,11 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
+    public synchronized boolean isRolledBack() {
+        return rolledback;
+    }
+
+    @Override
     public String getId() {
         return id;
     }
@@ -199,19 +203,19 @@ public class TransactionImpl implements Transaction {
 
     private void failIfExpired() {
         if (hasExpired()) {
-            throw new TransactionExpiredException("Transaction with transactionId: " + id + " expired!");
+            throw new TransactionClosedException("Transaction with transactionId: " + id + " expired!");
         }
     }
 
     private void failIfCommited() {
         if (this.committed) {
-            throw new TransactionRuntimeException("Transaction with transactionId: " + id + " is already committed!");
+            throw new TransactionClosedException("Transaction with transactionId: " + id + " is already committed!");
         }
     }
 
     private void failIfRolledback() {
         if (this.rolledback) {
-            throw new TransactionRuntimeException("Transaction with transactionId: " + id + " is already rolledback!");
+            throw new TransactionClosedException("Transaction with transactionId: " + id + " is already rolledback!");
         }
     }
 

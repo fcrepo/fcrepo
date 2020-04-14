@@ -30,6 +30,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.jersey.uri.internal.JerseyUriBuilder;
 import org.slf4j.Logger;
@@ -45,11 +46,11 @@ public class TransactionProvider implements Factory<Transaction> {
 
     static final String JMS_BASEURL_PROP = "fcrepo.jms.baseUrl";
 
-    public static final Pattern TX_ID_PATTERN = Pattern.compile(".*/" + TX_PREFIX + "([0-9a-f\\-]+)$");
-
     private final TransactionManager txManager;
 
     private final HttpServletRequest request;
+
+    private final Pattern txIdPattern;
 
     private final URI baseUri;
 
@@ -60,15 +61,16 @@ public class TransactionProvider implements Factory<Transaction> {
      * @param baseUri base uri for the application
      */
     public TransactionProvider(final TransactionManager txManager, final HttpServletRequest request,
-                               final URI baseUri) {
+            final URI baseUri) {
         this.txManager = txManager;
         this.request = request;
+        this.txIdPattern = Pattern.compile("(^|" + baseUri + TX_PREFIX + ")([0-9a-f\\-]+)$");
         this.baseUri = baseUri;
     }
 
     @Override
     public Transaction provide() {
-        final Transaction transaction = getTransactionForRequest(request);
+        final Transaction transaction = getTransactionForRequest();
         if (!transaction.isShortLived()) {
             transaction.refresh();
         }
@@ -89,22 +91,26 @@ public class TransactionProvider implements Factory<Transaction> {
      * the transaction corresponding to that ID is returned, otherwise, a new transaction is
      * created.
      *
-     * @param request the request object
      * @return the transaction for the request
      */
-    public Transaction getTransactionForRequest(final HttpServletRequest request) {
+    public Transaction getTransactionForRequest() {
         String txId = null;
         // Transaction id either comes from header or is the path
         String txUri = request.getHeader(ATOMIC_ID_HEADER);
-        if (StringUtils.isEmpty(txUri)) {
-            txUri = request.getPathInfo();
-        }
-
-        // Pull the id portion out of the tx uri
         if (!StringUtils.isEmpty(txUri)) {
-            final Matcher txMatcher = TX_ID_PATTERN.matcher(txUri);
+            final Matcher txMatcher = txIdPattern.matcher(txUri);
             if (txMatcher.matches()) {
-                txId = txMatcher.group(1);
+                txId = txMatcher.group(2);
+            } else {
+                throw new TransactionRuntimeException("Invalid transaction id");
+            }
+        } else {
+            txUri = request.getPathInfo();
+            if (txUri != null) {
+                final Matcher txMatcher = txIdPattern.matcher(txUri);
+                if (txMatcher.matches()) {
+                    txId = txMatcher.group(2);
+                }
             }
         }
 

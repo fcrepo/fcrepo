@@ -58,6 +58,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
+import static org.fcrepo.http.commons.session.TransactionConstants.TX_ENDPOINT_REL;
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
@@ -588,12 +589,18 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         servletResponse.addHeader("Allow", options);
     }
 
-    protected void addTransactionHeaders() {
+    protected void addTransactionHeaders(final FedoraResource resource) {
         final var tx = transaction();
         if (tx != null && !tx.isShortLived()) {
             final var externalId = identifierConverter()
                     .toExternalId(FEDORA_ID_PREFIX + "/" + TX_PREFIX + tx.getId());
             servletResponse.addHeader(ATOMIC_ID_HEADER, externalId);
+        }
+        if (resource.getFedoraId().isRepositoryRoot()) {
+            final var txEndpointUri = identifierConverter()
+                    .toExternalId(FEDORA_ID_PREFIX + "/" + TX_PREFIX);
+            final Link link = Link.fromUri(txEndpointUri).rel(TX_ENDPOINT_REL).build();
+            servletResponse.addHeader(LINK, link.toString());
         }
     }
 
@@ -880,7 +887,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         addExternalContentHeaders(resource);
         addAclHeader(resource);
         addMementoHeaders(resource);
-        addTransactionHeaders();
+        addTransactionHeaders(resource);
 
         if (!created) {
             return noContent().build();

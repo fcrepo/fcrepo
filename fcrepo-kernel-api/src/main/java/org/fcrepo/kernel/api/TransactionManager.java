@@ -38,11 +38,4 @@ public interface TransactionManager {
      * @return {@link Transaction} the fedora transaction associated with the provided id
      */
     Transaction get(String transactionId);
-
-    /**
-     * Inform manager that the specified transaction has been committed
-     *
-     * @param transactionId id of the transaction
-     */
-    void transactionCommitted(String transactionId);
 }

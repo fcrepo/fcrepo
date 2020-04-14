@@ -22,6 +22,7 @@ import static java.lang.Thread.sleep;
 import static java.time.Duration.ofMinutes;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -37,8 +38,9 @@ import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEA
 import static org.fcrepo.http.commons.session.TransactionConstants.EXPIRES_RFC_1123_FORMATTER;
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_COMMIT_REL;
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_COMMIT_SUFFIX;
+import static org.fcrepo.http.commons.session.TransactionConstants.TX_ENDPOINT_REL;
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_PREFIX;
-import static org.fcrepo.http.commons.session.TransactionProvider.TX_ID_PATTERN;
+import static org.fcrepo.kernel.impl.TransactionImpl.TIMEOUT_SYSTEM_PROPERTY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -48,7 +50,10 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.time.format.DateTimeParseException;
+import java.util.UUID;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import javax.ws.rs.core.Response.Status;
 
 import org.apache.http.Header;
@@ -74,9 +79,18 @@ public class TransactionsIT extends AbstractResourceIT {
 
     public static final long REAP_INTERVAL = 1000;
 
-    public static final String TIMEOUT_SYSTEM_PROPERTY = "fcrepo.session.timeout";
-
     public static final String DEFAULT_TIMEOUT = Long.toString(ofMinutes(3).toMillis());
+
+    public static final Pattern TX_ID_PATTERN = Pattern.compile(".+/" + TX_PREFIX + "([0-9a-f\\-]+)$");
+
+    @Test
+    public void testRootHasTxEndpoint() throws Exception {
+        final var getRoot = new HttpGet(serverAddress);
+        try (final CloseableHttpResponse response = execute(getRoot)) {
+            final String txEndpointUri = serverAddress + TX_PREFIX;
+            checkForLinkHeader(response, txEndpointUri, TX_ENDPOINT_REL);
+        }
+    }
 
     @Test
     public void testCreateTransaction() throws IOException {
@@ -126,8 +140,7 @@ public class TransactionsIT extends AbstractResourceIT {
         try {
             assertEquals("Transaction did not expire", GONE.getStatusCode(), getStatus(new HttpGet(location)));
         } finally {
-            System.setProperty(TIMEOUT_SYSTEM_PROPERTY, DEFAULT_TIMEOUT);
-            System.clearProperty("fcrepo.transactions.timeout");
+            System.clearProperty(TIMEOUT_SYSTEM_PROPERTY);
         }
     }
 
@@ -141,35 +154,39 @@ public class TransactionsIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testCreateDoStuffAndRollbackTransaction() throws IOException {
         /* create a tx */
-        final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
-
-        final String txLocation;
-        try (final CloseableHttpResponse response = execute(createTx)) {
-            assertEquals(CREATED.getStatusCode(), getStatus(response));
-            txLocation = getLocation(response);
-        }
+        final String txLocation = createTransaction();
 
         /* create a new object inside the tx */
-        final HttpPost postNew = new HttpPost(txLocation);
-        final String id = getRandomUniqueId();
-        postNew.addHeader("Slug", id);
+        final String newLocation;
+        final HttpPost postNew = new HttpPost(serverAddress);
+        postNew.addHeader(ATOMIC_ID_HEADER, txLocation);
         try (CloseableHttpResponse resp = execute(postNew)) {
             assertEquals(CREATED.getStatusCode(), getStatus(resp));
+            newLocation = getLocation(resp);
         }
+
         /* fetch the created tx from the endpoint */
-        try (final CloseableDataset dataset = getDataset(new HttpGet(txLocation + "/" + id))) {
-            assertTrue(dataset.asDatasetGraph().contains(ANY, createURI(txLocation + "/" + id), ANY, ANY));
+        try (final CloseableDataset dataset = getDataset(addTxTo(new HttpGet(newLocation), txLocation))) {
+            assertTrue(dataset.asDatasetGraph().contains(ANY, createURI(newLocation), ANY, ANY));
         }
         /* fetch the created tx from the endpoint */
         assertEquals("Expected to not find our object within the scope of the transaction",
-                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(serverAddress + "/" + id)));
+                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(newLocation)));
 
         /* and rollback */
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPost(txLocation + "/fcr:tx/fcr:rollback")));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(txLocation)));
+
+        assertEquals("Rolled back transaction should be gone",
+                GONE.getStatusCode(), getStatus(new HttpGet(txLocation)));
+
+        assertEquals("Expected to not find our object after rollback",
+                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(newLocation)));
+
+        assertEquals("Expected to not find our object in transaction after rollback",
+                CONFLICT.getStatusCode(), getStatus(addTxTo(new HttpGet(newLocation), txLocation)));
     }
 
     @Test
@@ -213,6 +230,9 @@ public class TransactionsIT extends AbstractResourceIT {
             assertTrue("Expected to  find our object after the transaction was committed",
                     dataset.asDatasetGraph().contains(ANY, createURI(datasetLoc), ANY, ANY));
         }
+
+        assertEquals("Expect conflict when trying to retrieve from committed transaction",
+                CONFLICT.getStatusCode(), getStatus(addTxTo(new HttpGet(datasetLoc), txLocation)));
     }
 
     private void assertHasAtomicId(final String txId, final CloseableHttpResponse resp) {
@@ -468,6 +488,37 @@ public class TransactionsIT extends AbstractResourceIT {
         // Attempt to create object inside completed tx
         final HttpPost postNew = new HttpPost(serverAddress);
         postNew.addHeader(ATOMIC_ID_HEADER, txLocation);
+        assertEquals(Status.CONFLICT.getStatusCode(), getStatus(postNew));
+    }
+
+    @Test
+    public void testRequestWithBareTxUuid() throws Exception {
+        final String txLocation = createTransaction();
+        final String uuid = txLocation.substring(txLocation.lastIndexOf("/") + 1);
+
+        final String newLocation;
+        // Attempt to create object in tx using just the uuid
+        final HttpPost postNew = addTxTo(new HttpPost(serverAddress), uuid);
+        try (CloseableHttpResponse resp = execute(postNew)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(resp));
+            newLocation = getLocation(resp);
+        }
+
+        // Retrieve in tx using uuid
+        assertEquals(OK.getStatusCode(), getStatus(addTxTo(new HttpGet(newLocation), uuid)));
+
+        // Commit tx
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation + TX_COMMIT_SUFFIX)));
+
+        // Retrieve outside of tx
+        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(newLocation)));
+    }
+
+    @Test
+    public void testRequestWitMadeUpTxUuid() throws Exception {
+        // Attempt to create object inside completed tx
+        final HttpPost postNew = new HttpPost(serverAddress);
+        postNew.addHeader(ATOMIC_ID_HEADER, UUID.randomUUID().toString());
         assertEquals(Status.CONFLICT.getStatusCode(), getStatus(postNew));
     }
 

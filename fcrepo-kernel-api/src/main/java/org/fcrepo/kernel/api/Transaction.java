@@ -48,6 +48,11 @@ public interface Transaction {
     void rollback();
 
     /**
+     * @return true if this transaction has been rolled back
+     */
+    boolean isRolledBack();
+
+    /**
      * Get the transaction id
      *
      * @return the transaction id.
