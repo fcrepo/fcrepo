@@ -40,7 +40,10 @@ import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.des
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.isSidecarSubpath;
 
 /**
- * An implementation of {@link IndexBuilder}
+ * An implementation of {@link IndexBuilder}.  This implementation rebuilds the following indexable state derived
+ * from the underlying OCFL directory:
+ * 1) the link between a {@link org.fcrepo.kernel.api.identifiers.FedoraId} and an OCFL object identifier
+ * 2) the containment relationships bewteen {@link org.fcrepo.kernel.api.identifiers.FedoraId}s
  *
  * @author dbernstein
  * @since 6.0.0
@@ -72,8 +75,6 @@ public class IndexBuilderImpl implements IndexBuilder {
         fedoraToOCFLObjectIndex.reset();
         final var transaction = transactionManager.create();
         final var txId = transaction.getId();
-        LOGGER.info("Resetting ContaintmentIndex...");
-        LOGGER.info("ContainmentIndex reset.");
         LOGGER.debug("Reading object ids...");
 
         try (final var ocflIds = ocflRepository.listObjectIds()) {

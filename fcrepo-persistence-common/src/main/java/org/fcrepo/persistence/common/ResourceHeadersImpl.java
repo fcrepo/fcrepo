@@ -244,14 +244,15 @@ public class ResourceHeadersImpl implements ResourceHeaders {
     }
 
     /**
-     *
-     * @param flag
+     * @param flag boolean flag
      */
-    public void setObjectRoot(final boolean flag) { this.objectRoot = flag; }
+    public void setObjectRoot(final boolean flag) {
+        this.objectRoot = flag;
+    }
 
     @Override
     public boolean isObjectRoot() {
-        if(isArchivalGroup()) {
+        if (isArchivalGroup()) {
             return true;
         } else {
             return objectRoot;

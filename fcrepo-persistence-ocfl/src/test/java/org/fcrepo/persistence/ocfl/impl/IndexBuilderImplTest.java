@@ -115,18 +115,18 @@ public class IndexBuilderImplTest {
 
         session.commit();
 
-        assertIndexContains("resource1", resource1);
-        assertIndexContains("resource1", resource2);
+        assertHasOcflId("resource1", resource1);
+        assertHasOcflId("resource1", resource2);
 
         index.reset();
 
-        assertIndexDoesNotContain(resource1);
-        assertIndexDoesNotContain(resource2);
+        assertDoesNotHaveOcflId(resource1);
+        assertDoesNotHaveOcflId(resource2);
 
         indexBuilder.rebuild();
 
-        assertIndexContains("resource1", resource1);
-        assertIndexContains("resource1", resource2);
+        assertHasOcflId("resource1", resource1);
+        assertHasOcflId("resource1", resource2);
 
         verify(transaction).getId();
         verify(transactionManager).create();
@@ -144,18 +144,18 @@ public class IndexBuilderImplTest {
 
         session.commit();
 
-        assertIndexContains("resource1", resource1);
-        assertIndexContains("resource1_resource2", resource2);
+        assertHasOcflId("resource1", resource1);
+        assertHasOcflId("resource1_resource2", resource2);
 
         index.reset();
 
-        assertIndexDoesNotContain(resource1);
-        assertIndexDoesNotContain(resource2);
+        assertDoesNotHaveOcflId(resource1);
+        assertDoesNotHaveOcflId(resource2);
 
         indexBuilder.rebuild();
 
-        assertIndexContains("resource1", resource1);
-        assertIndexContains("resource1_resource2", resource2);
+        assertHasOcflId("resource1", resource1);
+        assertHasOcflId("resource1_resource2", resource2);
 
         verify(transaction).getId();
         verify(transactionManager).create();
@@ -164,7 +164,7 @@ public class IndexBuilderImplTest {
         verify(containmentIndex).commitTransaction(transaction);
     }
 
-    private void assertIndexDoesNotContain(final FedoraId resourceId) {
+    private void assertDoesNotHaveOcflId(final FedoraId resourceId) {
         try {
             index.getMapping(resourceId.getResourceId());
             fail(resourceId + " should not exist in index");
@@ -173,7 +173,7 @@ public class IndexBuilderImplTest {
         }
     }
 
-    private void assertIndexContains(final String expectedOcflId, final FedoraId resourceId)
+    private void assertHasOcflId(final String expectedOcflId, final FedoraId resourceId)
             throws FedoraOCFLMappingNotFoundException {
         assertEquals(expectedOcflId, index.getMapping(resourceId.getResourceId()).getOcflObjectId());
     }

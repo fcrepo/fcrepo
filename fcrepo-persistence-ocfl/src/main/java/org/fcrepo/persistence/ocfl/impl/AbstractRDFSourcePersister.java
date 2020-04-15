@@ -105,7 +105,6 @@ abstract class AbstractRDFSourcePersister extends AbstractPersister {
                     createOperation.getInteractionModel());
             touchCreationHeaders(headers, operation.getUserPrincipal(), timeWritten);
             headers.setArchivalGroup(createOperation.isArchivalGroup());
-            headers.setParent(createOperation.getParentId());
             headers.setObjectRoot(objectRoot);
 
         } else {

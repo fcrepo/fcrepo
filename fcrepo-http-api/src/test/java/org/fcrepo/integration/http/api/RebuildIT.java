@@ -48,6 +48,7 @@ import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.persistence.ocfl.api.OCFLPersistenceConstants.DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
 import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.OCFL_STORAGE_ROOT_DIR_KEY;
 import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.OCFL_WORK_DIR_KEY;
 import static org.junit.Assert.assertEquals;
@@ -118,9 +119,21 @@ public class RebuildIT extends AbstractResourceIT {
         }
 
         assertEquals(7, ocflRepository.listObjectIds().count());
+        assertTrue("Should contain object with id: " + DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID,
+                ocflRepository.containsObject(DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID));
         assertTrue("Should contain object with id: binary", ocflRepository.containsObject("binary"));
         assertTrue("Should contain object with id: test", ocflRepository.containsObject("test"));
         assertTrue("Should contain object with id: test_child", ocflRepository.containsObject("test_child"));
+        assertTrue("Should contain object with id: archival-group", ocflRepository.containsObject("archival-group"));
+        assertTrue("Should contain object with id: test_nested-archival-group", ocflRepository.containsObject(
+                "test_nested-archival-group"));
+        assertTrue("Should contain object with id: test_nested-binary", ocflRepository.containsObject(
+                "test_nested-binary"));
+
+        assertFalse("Should NOT contain object with id: archival-group_binary", ocflRepository.containsObject(
+                "archival-group_container"));
+        assertFalse("Should NOT contain object with id: archival-group_container", ocflRepository.containsObject(
+                "archival-group_binary"));
         assertFalse("Should NOT contain object with id: junk", ocflRepository.containsObject("junk"));
     }
 
