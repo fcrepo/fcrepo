@@ -21,7 +21,6 @@ import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 import java.net.URI;
 import java.time.Instant;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -59,6 +58,17 @@ public interface Event {
     String getUserID();
 
     /**
+     * Get the user URI associated with this event.
+     * @return user URI
+     */
+    URI getUserURI();
+
+    /**
+     * @return The user-agent associated to the request
+     */
+    String getUserAgent();
+
+    /**
      * @return the date of this event.
      */
     Instant getDate();
@@ -70,14 +80,8 @@ public interface Event {
     String getEventID();
 
     /**
-     * Get auxiliary information about the event
-     * @return Event information as a Map
+     * @return The originating request's baseUrl
      */
-    Map<String, String> getInfo();
+    String getBaseUrl();
 
-    /**
-     * Get the user URI associated with this event.
-     * @return user URI
-     */
-    URI getUserURI();
 }

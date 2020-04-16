@@ -24,7 +24,6 @@ import org.fcrepo.kernel.api.observer.EventType;
 
 import java.net.URI;
 import java.time.Instant;
-import java.util.Map;
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -41,9 +40,9 @@ public class EventImpl implements Event {
     private final Set<String> resourceTypes;
     private final String userID;
     private final URI userURI;
+    private final String userAgent;
+    private final String baseUrl;
     private final Instant date;
-    // TODO I think this should go away and baseUrl and userAgent should be proper fields
-    private final Map<String, String> info;
 
     /**
      * Create a new FedoraEvent
@@ -53,21 +52,25 @@ public class EventImpl implements Event {
      * @param resourceTypes the rdf types of the corresponding resource
      * @param userID the acting user for this event
      * @param userURI the uri of the acting user for this event
+     * @param userAgent the user-agent associated with the request
+     * @param baseUrl the originating request's baseUrl
      * @param date the timestamp for this event
-     * @param info supplementary information
      */
     public EventImpl(final FedoraId fedoraId, final Set<EventType> types,
                      final Set<String> resourceTypes, final String userID,
-                     final URI userURI, final Instant date,
-                     final Map<String, String> info) {
+                     final URI userURI, final String userAgent, final String baseUrl,
+                     final Instant date) {
         this.eventId = "urn:uuid:" + randomUUID().toString();
         this.fedoraId = checkNotNull(fedoraId, "fedoraId cannot be null");
         this.types = Set.copyOf(checkNotNull(types, "types cannot be null"));
         this.resourceTypes = Set.copyOf(checkNotNull(resourceTypes, "resourceTypes cannot be null"));
         this.userID = userID;
         this.userURI = userURI;
+        this.userAgent = userAgent;
+        checkNotNull(baseUrl, "baseUrl cannot be null");
+        // baseUrl is expected to not have a trailing slash
+        this.baseUrl = baseUrl.replaceAll("/+$", "");
         this.date = checkNotNull(date, "date cannot be null");
-        this.info = Map.copyOf(checkNotNull(info, "info cannot be null"));
     }
 
     @Override
@@ -106,13 +109,18 @@ public class EventImpl implements Event {
     }
 
     @Override
-    public Map<String, String> getInfo() {
-        return info;
+    public URI getUserURI() {
+        return userURI;
     }
 
     @Override
-    public URI getUserURI() {
-        return userURI;
+    public String getUserAgent() {
+        return userAgent;
+    }
+
+    @Override
+    public String getBaseUrl() {
+        return baseUrl;
     }
 
     @Override
@@ -124,8 +132,9 @@ public class EventImpl implements Event {
                 ", resourceTypes=" + resourceTypes +
                 ", userID='" + userID + '\'' +
                 ", userURI=" + userURI +
+                ", userAgent=" + userAgent +
+                ", baseUrl=" + baseUrl +
                 ", date=" + date +
-                ", info=" + info +
                 '}';
     }
 

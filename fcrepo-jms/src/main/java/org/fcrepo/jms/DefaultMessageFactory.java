@@ -19,8 +19,6 @@ package org.fcrepo.jms;
 
 import static java.lang.String.join;
 import static java.util.stream.Collectors.joining;
-import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
-import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Set;
@@ -74,14 +72,10 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
         final Message message = jmsSession.createTextMessage(body);
 
         message.setLongProperty(TIMESTAMP_HEADER_NAME, event.getDate().toEpochMilli());
+        message.setStringProperty(BASE_URL_HEADER_NAME, event.getBaseUrl());
 
-        if (event.getInfo().containsKey(BASE_URL)) {
-            message.setStringProperty(BASE_URL_HEADER_NAME, event.getInfo().get(BASE_URL));
-        } else {
-            LOGGER.warn("Could not extract baseUrl from Event!");
-        }
-        if (event.getInfo().containsKey(USER_AGENT)) {
-            message.setStringProperty(USER_AGENT_HEADER_NAME, event.getInfo().get(USER_AGENT));
+        if (event.getUserAgent() != null) {
+            message.setStringProperty(USER_AGENT_HEADER_NAME, event.getUserAgent());
         }
 
         message.setStringProperty(IDENTIFIER_HEADER_NAME, event.getPath());

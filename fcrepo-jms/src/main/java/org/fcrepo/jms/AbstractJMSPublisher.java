@@ -29,6 +29,7 @@ import javax.jms.Message;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 
+import com.google.common.eventbus.AllowConcurrentEvents;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.fcrepo.kernel.api.observer.Event;
 import org.slf4j.Logger;
@@ -73,6 +74,7 @@ abstract class AbstractJMSPublisher {
      * @throws JMSException if JMS exception occurred
      */
     @Subscribe
+    @AllowConcurrentEvents
     public void publishJCREvent(final Event event) throws JMSException {
         LOGGER.debug("Received an event from the internal bus.");
         final Message tm =

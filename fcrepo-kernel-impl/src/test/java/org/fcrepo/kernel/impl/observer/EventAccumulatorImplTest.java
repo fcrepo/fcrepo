@@ -25,7 +25,6 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.observer.Event;
 import org.fcrepo.kernel.api.observer.EventType;
-import org.fcrepo.kernel.api.observer.OptionalValues;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.impl.operations.DeleteResourceOperationFactoryImpl;
 import org.fcrepo.kernel.impl.operations.RdfSourceOperationFactoryImpl;
@@ -341,9 +340,9 @@ public class EventAccumulatorImplTest {
                     return false;
                 } else if (! Objects.equals(item.getResourceTypes(), resourceTypes)) {
                     return false;
-                } else if (! Objects.equals(item.getInfo().get(OptionalValues.BASE_URL), baseUrl)) {
+                } else if (! Objects.equals(item.getBaseUrl(), baseUrl)) {
                     return false;
-                } else if (! Objects.equals(item.getInfo().get(OptionalValues.USER_AGENT), userAgent)) {
+                } else if (! Objects.equals(item.getUserAgent(), userAgent)) {
                     return false;
                 }
                 return true;

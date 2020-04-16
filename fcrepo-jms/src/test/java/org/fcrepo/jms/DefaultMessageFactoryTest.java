@@ -28,15 +28,11 @@ import static org.fcrepo.jms.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
 import static org.fcrepo.jms.DefaultMessageFactory.USER_AGENT_HEADER_NAME;
 import static org.fcrepo.jms.DefaultMessageFactory.USER_HEADER_NAME;
 import static org.fcrepo.jms.DefaultMessageFactory.EVENT_ID_HEADER_NAME;
-import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
-import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 import javax.jms.JMSException;
@@ -93,14 +89,9 @@ public class DefaultMessageFactoryTest {
     private Message doTestBuildMessage(final String baseUrl, final String userAgent, final String id)
             throws JMSException {
         final Long testDate = 46647758568747L;
-        final Map<String, String> info = new HashMap<>();
-        if (baseUrl != null) {
-            info.put(BASE_URL, baseUrl);
-        }
-        if (userAgent != null) {
-            info.put(USER_AGENT, userAgent);
-        }
-        when(mockEvent.getInfo()).thenReturn(info);
+
+        when(mockEvent.getBaseUrl()).thenReturn(baseUrl);
+        when(mockEvent.getUserAgent()).thenReturn(userAgent);
         when(mockEvent.getDate()).thenReturn(ofEpochMilli(testDate));
         final String testUser = "testUser";
         when(mockEvent.getUserID()).thenReturn(testUser);

@@ -21,7 +21,6 @@ package org.fcrepo.kernel.impl.observer;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.observer.Event;
 import org.fcrepo.kernel.api.observer.EventType;
-import org.fcrepo.kernel.api.observer.OptionalValues;
 import org.fcrepo.kernel.impl.operations.DeleteResourceOperationFactoryImpl;
 import org.fcrepo.kernel.impl.operations.NonRdfSourceOperationFactoryImpl;
 import org.fcrepo.kernel.impl.operations.RdfSourceOperationFactoryImpl;
@@ -42,6 +41,7 @@ public class ResourceOperationEventBuilderTest {
 
     private static final FedoraId FEDORA_ID = FedoraId.create("/test");
     private static final String USER = "user1";
+    private static final String BASE_URL = "http://locahost/rest";
 
     @Test
     public void buildCreateEventFromCreateRdfOperation() {
@@ -50,7 +50,9 @@ public class ResourceOperationEventBuilderTest {
                 .userPrincipal(USER)
                 .build();
 
-        final var event = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, operation).build();
+        final var event = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, operation)
+                .withBaseUrl(BASE_URL)
+                .build();
 
         assertDefaultEvent(event, EventType.RESOURCE_CREATION);
     }
@@ -64,7 +66,9 @@ public class ResourceOperationEventBuilderTest {
                 .userPrincipal(user)
                 .build();
 
-        final var event = ResourceOperationEventBuilder.fromResourceOperation(fedoraId, operation).build();
+        final var event = ResourceOperationEventBuilder.fromResourceOperation(fedoraId, operation)
+                .withBaseUrl(BASE_URL)
+                .build();
 
         assertEquals(fedoraId, event.getFedoraId());
         assertEquals(fedoraId.getFullIdPath(), event.getPath());
@@ -80,7 +84,9 @@ public class ResourceOperationEventBuilderTest {
                 .userPrincipal(USER)
                 .build();
 
-        final var event = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, operation).build();
+        final var event = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, operation)
+                .withBaseUrl(BASE_URL)
+                .build();
 
         assertDefaultEvent(event, EventType.RESOURCE_MODIFICATION);
     }
@@ -91,7 +97,9 @@ public class ResourceOperationEventBuilderTest {
                 .userPrincipal(USER)
                 .build();
 
-        final var event = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, operation).build();
+        final var event = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, operation)
+                .withBaseUrl(BASE_URL)
+                .build();
 
         assertDefaultEvent(event, EventType.RESOURCE_DELETION);
     }
@@ -102,7 +110,9 @@ public class ResourceOperationEventBuilderTest {
                 .userPrincipal(USER)
                 .build();
 
-        final var event = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, operation).build();
+        final var event = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, operation)
+                .withBaseUrl(BASE_URL)
+                .build();
 
         assertDefaultEvent(event, EventType.RESOURCE_MODIFICATION);
     }
@@ -114,7 +124,9 @@ public class ResourceOperationEventBuilderTest {
                 .userPrincipal(USER)
                 .build();
 
-        final var event = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, operation).build();
+        final var event = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, operation)
+                .withBaseUrl(BASE_URL)
+                .build();
 
         assertDefaultEvent(event, EventType.RESOURCE_MODIFICATION);
     }
@@ -126,14 +138,16 @@ public class ResourceOperationEventBuilderTest {
                 .userPrincipal(USER)
                 .build();
 
-        final var createEventBuilder = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, createOperation);
+        final var createEventBuilder = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, createOperation)
+                .withBaseUrl(BASE_URL);
 
         final var updateOperation = new NonRdfSourceOperationFactoryImpl()
                 .updateInternalBinaryBuilder(FEDORA_ID.getResourceId(), new ByteArrayInputStream(new byte[]{}))
                 .userPrincipal(USER)
                 .build();
 
-        final var updateEventBuilder = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, updateOperation);
+        final var updateEventBuilder = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, updateOperation)
+                .withBaseUrl(BASE_URL);
         final var updateEvent = updateEventBuilder.build();
 
         final var merged = createEventBuilder.merge(updateEventBuilder).build();
@@ -162,8 +176,8 @@ public class ResourceOperationEventBuilderTest {
                 .withResourceTypes(resourceTypes)
                 .build();
 
-        assertEquals(baseUrl, event.getInfo().get(OptionalValues.BASE_URL));
-        assertEquals(userAgent, event.getInfo().get(OptionalValues.USER_AGENT));
+        assertEquals(baseUrl, event.getBaseUrl());
+        assertEquals(userAgent, event.getUserAgent());
         assertEquals(resourceTypes, event.getResourceTypes());
     }
 

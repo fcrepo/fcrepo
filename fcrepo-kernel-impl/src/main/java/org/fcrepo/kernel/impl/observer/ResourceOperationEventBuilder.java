@@ -21,15 +21,12 @@ package org.fcrepo.kernel.impl.observer;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.observer.Event;
 import org.fcrepo.kernel.api.observer.EventType;
-import org.fcrepo.kernel.api.observer.OptionalValues;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.impl.util.UserUtil;
 
 import java.net.URI;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -42,8 +39,9 @@ public class ResourceOperationEventBuilder implements EventBuilder {
     private Set<EventType> types;
     private Set<String> resourceTypes;
     private String userID;
+    private String userAgent;
+    private String baseUrl;
     private Instant date;
-    private Map<String, String> info;
 
     /**
      * Creates a new EventBuilder based on an ResourceOperation
@@ -61,7 +59,6 @@ public class ResourceOperationEventBuilder implements EventBuilder {
         builder.userID = operation.getUserPrincipal();
         builder.types = new HashSet<>();
         builder.types.add(mapOperationToEventType(operation));
-        builder.info = new HashMap<>();
         return builder;
     }
 
@@ -106,7 +103,6 @@ public class ResourceOperationEventBuilder implements EventBuilder {
 
         this.types.addAll(otherCast.types);
         this.resourceTypes.addAll(otherCast.resourceTypes);
-        this.info.putAll(otherCast.info);
 
         if (this.date.isBefore(otherCast.date)) {
             this.date = otherCast.date;
@@ -123,23 +119,13 @@ public class ResourceOperationEventBuilder implements EventBuilder {
 
     @Override
     public EventBuilder withBaseUrl(final String baseUrl) {
-        if (baseUrl == null) {
-            this.info.remove(OptionalValues.BASE_URL);
-        } else {
-            // baseUrl is expected to not have a trailing slash
-            this.info.put(OptionalValues.BASE_URL,
-                    baseUrl.replaceAll("/+$", ""));
-        }
+        this.baseUrl = baseUrl;
         return this;
     }
 
     @Override
     public EventBuilder withUserAgent(final String userAgent) {
-        if (userAgent == null) {
-            this.info.remove(OptionalValues.USER_AGENT);
-        } else {
-            this.info.put(OptionalValues.USER_AGENT, userAgent);
-        }
+        this.userAgent = userAgent;
         return this;
     }
 
@@ -149,7 +135,7 @@ public class ResourceOperationEventBuilder implements EventBuilder {
         if (userID != null) {
             userUri = UserUtil.getUserURI(userID);
         }
-        return new EventImpl(fedoraId, types, resourceTypes, userID, userUri, date, info);
+        return new EventImpl(fedoraId, types, resourceTypes, userID, userUri, userAgent, baseUrl, date);
     }
 
     @Override
@@ -159,8 +145,9 @@ public class ResourceOperationEventBuilder implements EventBuilder {
                 ", types=" + types +
                 ", resourceTypes=" + resourceTypes +
                 ", userID='" + userID + '\'' +
+                ", userAgent='" + userAgent + '\'' +
+                ", baseUrl='" + baseUrl + '\'' +
                 ", date=" + date +
-                ", info=" + info +
                 '}';
     }
 
