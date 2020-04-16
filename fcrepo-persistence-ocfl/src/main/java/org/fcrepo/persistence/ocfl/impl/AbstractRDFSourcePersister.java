@@ -76,7 +76,7 @@ abstract class AbstractRDFSourcePersister extends AbstractPersister {
         final var outcome = writeRDF(session, rdfSourceOp.getTriples(), resolvedSubpath);
 
         // Write resource headers
-        final var headers = populateHeaders(session, resolvedSubpath, rdfSourceOp, outcome);
+        final var headers = populateHeaders(session, resolvedSubpath, rdfSourceOp, outcome, subpath == "");
         writeHeaders(session, headers, resolvedSubpath);
     }
 
@@ -88,11 +88,13 @@ abstract class AbstractRDFSourcePersister extends AbstractPersister {
      * @param subpath the subpath of the file
      * @param operation the operation being persisted
      * @param outcome outcome of persisting the RDF file
+     * @param objectRoot indicates this is the object root
      * @return populated resource headers
      * @throws PersistentStorageException if unexpectedly unable to retrieve existing object headers
      */
     private ResourceHeaders populateHeaders(final OCFLObjectSession objSession, final String subpath,
-            final RdfSourceOperation operation, final WriteOutcome outcome) throws PersistentStorageException {
+                                            final RdfSourceOperation operation, final WriteOutcome outcome,
+                                            final boolean objectRoot) throws PersistentStorageException {
 
         final ResourceHeadersImpl headers;
         final var timeWritten = outcome.getTimeWritten();
@@ -103,6 +105,7 @@ abstract class AbstractRDFSourcePersister extends AbstractPersister {
                     createOperation.getInteractionModel());
             touchCreationHeaders(headers, operation.getUserPrincipal(), timeWritten);
             headers.setArchivalGroup(createOperation.isArchivalGroup());
+            headers.setObjectRoot(objectRoot);
 
         } else {
             headers = (ResourceHeadersImpl) readHeaders(objSession, subpath);

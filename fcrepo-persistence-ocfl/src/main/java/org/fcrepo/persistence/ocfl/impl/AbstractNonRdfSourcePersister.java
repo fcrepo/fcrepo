@@ -108,7 +108,8 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
         }
 
         // Write resource headers
-        final var headers = populateHeaders(objectSession, subpath, nonRdfSourceOperation, outcome);
+        final var headers = populateHeaders(objectSession, subpath, nonRdfSourceOperation, outcome,
+                fedoraSubpath == "");
         writeHeaders(objectSession, headers, subpath);
     }
 
@@ -120,11 +121,13 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
      * @param subpath the subpath of the file
      * @param op the operation being persisted
      * @param writeOutcome outcome of persisting the original file
+     * @param objectRoot flag indicating whether or not subpath represents the object root resource
      * @return populated resource headers
      * @throws PersistentStorageException if unexpectedly unable to retrieve existing object headers
      */
     private ResourceHeaders populateHeaders(final OCFLObjectSession objSession, final String subpath,
-            final NonRdfSourceOperation op, final WriteOutcome writeOutcome) throws PersistentStorageException {
+                                            final NonRdfSourceOperation op, final WriteOutcome writeOutcome,
+                                            final boolean objectRoot) throws PersistentStorageException {
 
         final ResourceHeadersImpl headers;
         final var timeWritten = writeOutcome != null ? writeOutcome.getTimeWritten() : null;
@@ -133,6 +136,7 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
             headers = newResourceHeaders(createOperation.getParentId(),
                     op.getResourceId(),
                     NON_RDF_SOURCE.toString());
+            headers.setObjectRoot(objectRoot);
             touchCreationHeaders(headers, op.getUserPrincipal(), timeWritten);
         } else {
             headers = (ResourceHeadersImpl) readHeaders(objSession, subpath);
@@ -145,6 +149,7 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
                 op.getFilename(),
                 contentSize,
                 op.getContentDigests());
+
         if (forExternalBinary(op)) {
             populateExternalBinaryHeaders(headers, op.getContentUri().toString(),
                     op.getExternalHandling());
