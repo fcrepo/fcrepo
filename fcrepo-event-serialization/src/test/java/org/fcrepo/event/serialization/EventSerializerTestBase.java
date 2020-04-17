@@ -25,17 +25,13 @@ import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.ACTIVITY_STREAMS_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.PROV_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
-import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -84,9 +80,6 @@ public class EventSerializerTestBase {
         resourceTypeSet.add(REPOSITORY_NAMESPACE + "Resource");
         resourceTypeSet.add(REPOSITORY_NAMESPACE + "Container");
         resourceTypeSet.add("http://example.com/SampleType");
-        final Map<String, String> auxInfo = new HashMap<>();
-        auxInfo.put(BASE_URL, baseUrl);
-        auxInfo.put(USER_AGENT, softwareAgent);
 
         when(mockEvent.getTypes()).thenReturn(typeSet);
         when(mockEvent.getResourceTypes()).thenReturn(resourceTypeSet);
@@ -96,7 +89,8 @@ public class EventSerializerTestBase {
 
         when(mockEvent.getDate()).thenReturn(timestamp);
         when(mockEvent.getEventID()).thenReturn(eventResourceId);
-        when(mockEvent.getInfo()).thenReturn(auxInfo);
+        when(mockEvent.getUserAgent()).thenReturn(softwareAgent);
+        when(mockEvent.getBaseUrl()).thenReturn(baseUrl);
     }
 
     protected void testModel(final Model model) {

@@ -19,7 +19,6 @@ package org.fcrepo.event.serialization;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
-import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
 
 import java.io.ByteArrayInputStream;
 
@@ -42,7 +41,7 @@ public interface EventSerializer {
         final EventSerializer serializer = new JsonLDSerializer();
         final String json = serializer.serialize(evt);
         final Model model = createDefaultModel();
-        final String baseUrl = evt.getInfo().get(BASE_URL);
+        final String baseUrl = evt.getBaseUrl();
         model.read(new ByteArrayInputStream(json.getBytes(UTF_8)), baseUrl + evt.getPath(), "JSON-LD");
         return model;
     }

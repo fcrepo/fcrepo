@@ -21,8 +21,6 @@ package org.fcrepo.event.serialization;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.fcrepo.kernel.api.RdfLexicon.PROV_NAMESPACE;
-import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
-import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.time.Instant;
@@ -163,7 +161,7 @@ class JsonLDEventMessage {
      */
     public static JsonLDEventMessage from(final Event evt) {
 
-        final String baseUrl = evt.getInfo().get(BASE_URL);
+        final String baseUrl = evt.getBaseUrl();
 
         // build objectId
         final String objectId = baseUrl + evt.getPath();
@@ -186,7 +184,7 @@ class JsonLDEventMessage {
         // build actors list
         final List<Actor> actor = new ArrayList<>();
         actor.add(new Person(evt.getUserURI().toString(), singletonList("Person")));
-        final String softwareAgent = evt.getInfo().get(USER_AGENT);
+        final String softwareAgent = evt.getUserAgent();
         if (softwareAgent != null) {
             actor.add(new Application(softwareAgent, singletonList("Application")));
         }
