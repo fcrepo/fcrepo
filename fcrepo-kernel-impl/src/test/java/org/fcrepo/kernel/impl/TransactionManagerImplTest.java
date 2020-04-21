@@ -181,6 +181,8 @@ public class TransactionManagerImplTest {
 
         final var expiringTx = testTxManager.create();
 
+        Thread.sleep(100);
+
         testTxManager.cleanupClosedTransactions();
 
         try {
