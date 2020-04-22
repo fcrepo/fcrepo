@@ -155,6 +155,16 @@ public class OCFLPersistentStorageUtils {
     }
 
     /**
+     * Simple function to centralize adding (or not adding the RDF extension).
+     * @param subPath the current subpath
+     * @param isRdf whether the subpath is for a RDF resource.
+     * @return The subpath with the correct file extension (if applicable).
+     */
+    public static String resolveExtensions(final String subPath, final boolean isRdf) {
+        return subPath + (isRdf ? getRDFFileExtension() : "");
+    }
+
+    /**
      * Returns the RDF topic to be returned for a given resource identifier
      * For example:  passing info:fedora/resource1/fcr:metadata would return
      *  info:fedora/resource1 since  info:fedora/resource1 would be the expected
@@ -190,7 +200,7 @@ public class OCFLPersistentStorageUtils {
             streamRDF.finish();
 
             final var is = new ByteArrayInputStream(os.toByteArray());
-            final var outcome = session.write(subpath + getRDFFileExtension(), is);
+            final var outcome = session.write(resolveExtensions(subpath, true), is);
             log.debug("wrote {} to {}", subpath, session);
             return outcome;
         } catch (final IOException ex) {

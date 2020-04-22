@@ -17,9 +17,13 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.DELETE;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.relativizeSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveExtensions;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveOCFLSubpath;
+
+import java.util.Objects;
 
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -53,7 +57,11 @@ class DeleteResourcePersister extends AbstractPersister {
         } else {
             final var relativeSubPath = relativizeSubpath(fedoraResourceRoot, operation.getResourceId());
             final var ocflSubPath = resolveOCFLSubpath(fedoraResourceRoot, relativeSubPath);
-            objectSession.delete(ocflSubPath);
+            final var headers = readHeaders(objectSession, ocflSubPath);
+            final var filePath = resolveExtensions(ocflSubPath,
+                    !Objects.equals(NON_RDF_SOURCE.toString(), headers.getInteractionModel())
+            );
+            objectSession.delete(filePath);
         }
     }
 }
