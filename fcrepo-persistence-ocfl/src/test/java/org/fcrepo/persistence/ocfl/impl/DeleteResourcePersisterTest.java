@@ -18,12 +18,13 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.fcrepo.kernel.api.operations.RdfSourceOperation;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -65,14 +66,29 @@ public class DeleteResourcePersisterTest {
 
     @Before
     public void setup() throws Exception {
-        operation = mock(RdfSourceOperation.class);
+        operation = mock(ResourceOperation.class);
         persister = new DeleteResourcePersister(this.index);
 
         when(psSession.findOrCreateSession(anyString())).thenReturn(session);
     }
 
     @Test
-    public void testDeleteSubPath() throws Exception {
+    public void testDeleteSubPathBinary() throws Exception {
+        final String header_string1 = "{\"parent\":\"info:fedora/an-ocfl-object\",\"id\":" +
+                "\"info:fedora/an-ocfl-object/some-subpath\",\"lastModifiedDate\":\"2020-04-14T03:42:00.765231Z\"," +
+                "\"interactionModel\":\"http://www.w3.org/ns/ldp#NonRDFSource\",\"createdDate\":" +
+                "\"2020-04-14T03:42:00.765231Z\",\"stateToken\":\"6763672ED325A4B632B450545518B34B\"," +
+                "\"archivalGroup\":false,\"objectRoot\":false}";
+        final InputStream header_stream1 = new ByteArrayInputStream(header_string1.getBytes());
+        final String header_string2 = "{\"parent\":\"info:fedora/an-ocfl-object/sub-path\",\"id\":" +
+                "\"info:fedora/an-ocfl-object/some-subpath-desc\",\"lastModifiedDate\":" +
+                "\"2020-04-14T03:42:00.765231Z\",\"interactionModel\":" +
+                "\"http://fedora.info/definitions/v4/repository#NonRdfSourceDescription\"," +
+                "\"createdDate\":\"2020-04-14T03:42:00.765231Z\",\"stateToken\":\"6763672ED325A4B632B450545518B34B\"," +
+                "\"archivalGroup\":false,\"objectRoot\":false}";
+        final InputStream header_stream2 = new ByteArrayInputStream(header_string2.getBytes());
+        when(session.read(".fcrepo/some-subpath.json")).thenReturn(header_stream1);
+        when(session.read(".fcrepo/some-subpath-description.json")).thenReturn(header_stream2);
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
         when(mapping.getRootObjectIdentifier()).thenReturn("info:fedora/an-ocfl-object");
         when(operation.getResourceId()).thenReturn("info:fedora/an-ocfl-object/some-subpath");
@@ -81,13 +97,32 @@ public class DeleteResourcePersisterTest {
         verify(session).delete("some-subpath");
     }
 
-    @Test(expected = PersistentStorageException.class)
-    public void testDeleteSubPathDoesNotExist() throws Exception {
+    @Test
+    public void testDeleteSubPathRdf() throws Exception {
+        final String header_string = "{\"parent\":\"info:fedora/an-ocfl-object\",\"id\":" +
+                "\"info:fedora/an-ocfl-object/some-subpath\",\"lastModifiedDate\":\"2020-04-14T03:42:00.765231Z\"," +
+                "\"interactionModel\":\"http://www.w3.org/ns/ldp#BasicContainer\",\"createdDate\":" +
+                "\"2020-04-14T03:42:00.765231Z\",\"stateToken\":\"6763672ED325A4B632B450545518B34B\"," +
+                "\"archivalGroup\":false,\"objectRoot\":false}";
+        final InputStream header_stream = new ByteArrayInputStream(header_string.getBytes());
+        when(session.read(".fcrepo/some-subpath.json")).thenReturn(header_stream);
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
         when(mapping.getRootObjectIdentifier()).thenReturn("info:fedora/an-ocfl-object");
         when(operation.getResourceId()).thenReturn("info:fedora/an-ocfl-object/some-subpath");
         when(index.getMapping(anyString())).thenReturn(mapping);
-        doThrow(new PersistentStorageException("error")).when(session).delete("some-subpath");
+        persister.persist(psSession, operation);
+        verify(session).delete("some-subpath.nt");
+    }
+
+    @Test(expected = PersistentStorageException.class)
+    public void testDeleteSubPathDoesNotExist() throws Exception {
+        when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
+        when(mapping.getRootObjectIdentifier()).thenReturn("info:fedora/an-ocfl-object");
+        when(index.getMapping(anyString())).thenReturn(mapping);
+        when(operation.getResourceId()).thenReturn("info:fedora/an-ocfl-object/some-subpath");
+        when(session.read(".fcrepo/some-subpath.json")).thenThrow(
+                new PersistentStorageException("error")
+        );
         persister.persist(psSession, operation);
     }
 
@@ -101,7 +136,6 @@ public class DeleteResourcePersisterTest {
         persister.persist(psSession, operation);
         verify(session).delete("some-subpath");
     }
-
 
     @Test
     public void testDeleteFullObject() throws Exception {

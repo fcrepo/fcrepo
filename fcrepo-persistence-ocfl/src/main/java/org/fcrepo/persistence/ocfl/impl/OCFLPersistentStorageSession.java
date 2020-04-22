@@ -20,9 +20,14 @@ package org.fcrepo.persistence.ocfl.impl;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
+import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getSidecarSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveExtensions;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveVersionId;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getBinaryStream;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getRdfStream;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resovleOCFLSubpathFromResourceId;
 
 import java.io.InputStream;
 import java.time.Instant;
@@ -44,7 +49,6 @@ import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.fcrepo.persistence.ocfl.api.Persister;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resovleOCFLSubpathFromResourceId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,11 +56,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeoutException;
 
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getRDFFileExtension;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getRdfStream;
 
-import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
-import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
 
 /**
  * OCFL Persistent Storage class.
@@ -220,7 +220,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         final var rootIdentifier = mapping.getRootObjectIdentifier();
         final var objSession = findOrCreateSession(mapping.getOcflObjectId());
         final var ocflSubpath = resovleOCFLSubpathFromResourceId(rootIdentifier, identifier);
-        final var filePath = ocflSubpath + getRDFFileExtension();
+        final var filePath = resolveExtensions(ocflSubpath, true);
         return getRdfStream(identifier, objSession, filePath, version);
     }
 
@@ -233,12 +233,12 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
         // Find the subpath if it's a child of an AG
         if (!mapping.getRootObjectIdentifier().equals(fedoraIdentifier)) {
-            subpath = resovleOCFLSubpathFromResourceId(mapping.getRootObjectIdentifier(), fedoraIdentifier);
 
             final var headers = getHeaders(fedoraIdentifier, null);
-            if (!NON_RDF_SOURCE.getURI().equals(headers.getInteractionModel())) {
-                subpath += getRDFFileExtension();
-            }
+            subpath = resolveExtensions(
+                    resovleOCFLSubpathFromResourceId(mapping.getRootObjectIdentifier(), fedoraIdentifier),
+                    !NON_RDF_SOURCE.getURI().equals(headers.getInteractionModel())
+            );
         }
 
         return OCFLPersistentStorageUtils.listVersions(objSession, subpath);
@@ -339,7 +339,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
                 if (this.phaser.getRegisteredParties() > 0) {
                     try {
                         this.phaser.awaitAdvanceInterruptibly(0, AWAIT_TIMEOUT, MILLISECONDS);
-                    } catch (InterruptedException | TimeoutException e) {
+                    } catch (final InterruptedException | TimeoutException e) {
                         throw new PersistentStorageException(
                                 "Waiting for operations to complete took too long, rollback failed");
                     }
