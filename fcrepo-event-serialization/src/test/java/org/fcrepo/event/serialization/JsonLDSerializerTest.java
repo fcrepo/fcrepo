@@ -18,23 +18,23 @@
 
 package org.fcrepo.event.serialization;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
-import static org.fcrepo.kernel.api.RdfLexicon.PROV_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.jena.rdf.model.Model;
+import org.fcrepo.kernel.api.observer.EventType;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.jena.rdf.model.Model;
-import org.fcrepo.kernel.api.observer.EventType;
-import org.junit.Test;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.fcrepo.kernel.api.RdfLexicon.PROV_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * <p>
@@ -58,11 +58,17 @@ public class JsonLDSerializerTest extends EventSerializerTestBase {
 
     @Test
     public void testJsonSerializationAsJson() throws IOException {
-        testJsonSerializationAsJson(path, path);
+        mockEvent(path);
+        testJsonSerializationAsJson(path, getAgentURI());
     }
 
-    private void testJsonSerializationAsJson(final String inputPath, final String outputPath) throws IOException {
-        mockEvent(inputPath);
+    @Test
+    public void testJsonSerializationAsJsonWithNullUser() throws IOException {
+        mockEventNullUser(path);
+        testJsonSerializationAsJson(path, "null");
+    }
+
+    private void testJsonSerializationAsJson(final String outputPath, final String user) throws IOException {
         final EventSerializer serializer = new JsonLDSerializer();
         final String json = serializer.serialize(mockEvent);
 
@@ -79,7 +85,7 @@ public class JsonLDSerializerTest extends EventSerializerTestBase {
         assertEquals(eventResourceId, node.get("id").textValue());
         assertEquals(EventType.RESOURCE_MODIFICATION.getName(), node.get("name").textValue());
         assertEquals(EventType.RESOURCE_MODIFICATION.getTypeAbbreviated(), node.get("type").get(0).asText());
-        assertEquals(getAgentIRI(), node.get("actor").get(0).get("id").asText());
+        assertEquals(user, node.get("actor").get(0).get("id").asText());
         assertEquals("Person", node.get("actor").get(0).get("type").get(0).asText());
         assertEquals(softwareAgent, node.get("actor").get(1).get("name").asText());
         assertEquals("Application", node.get("actor").get(1).get("type").get(0).asText());

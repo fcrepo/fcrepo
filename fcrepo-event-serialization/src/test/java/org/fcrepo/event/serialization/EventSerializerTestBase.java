@@ -73,7 +73,7 @@ public class EventSerializerTestBase {
 
     protected final String softwareAgent = "fcrepo-java-client";
 
-    protected void mockEvent(final String path) {
+    private void mockEventCommon(final String path) {
         final Set<EventType> typeSet = new HashSet<>();
         typeSet.add(EventType.RESOURCE_MODIFICATION);
         final Set<String> resourceTypeSet = new HashSet<>();
@@ -85,12 +85,24 @@ public class EventSerializerTestBase {
         when(mockEvent.getResourceTypes()).thenReturn(resourceTypeSet);
         when(mockEvent.getPath()).thenReturn(path);
         when(mockEvent.getUserID()).thenReturn(username);
-        when(mockEvent.getUserURI()).thenReturn(URI.create(getAgentIRI()));
+        when(mockEvent.getUserURI()).thenReturn(URI.create(getAgentURI()));
 
         when(mockEvent.getDate()).thenReturn(timestamp);
         when(mockEvent.getEventID()).thenReturn(eventResourceId);
         when(mockEvent.getUserAgent()).thenReturn(softwareAgent);
         when(mockEvent.getBaseUrl()).thenReturn(baseUrl);
+    }
+
+    protected void mockEvent(final String path) {
+        mockEventCommon(path);
+        when(mockEvent.getUserID()).thenReturn(username);
+        when(mockEvent.getUserURI()).thenReturn(URI.create(getAgentURI()));
+    }
+
+    protected void mockEventNullUser(final String path) {
+        mockEventCommon(path);
+        when(mockEvent.getUserID()).thenReturn(null);
+        when(mockEvent.getUserURI()).thenReturn(null);
     }
 
     protected void testModel(final Model model) {
@@ -117,7 +129,7 @@ public class EventSerializerTestBase {
                     final Resource r = statement.getResource();
                     if (r.hasProperty(type, createResource(ACTIVITY_STREAMS_NAMESPACE + "Person"))) {
                         assertTrue(r.hasProperty(type, createResource(ACTIVITY_STREAMS_NAMESPACE + "Person")));
-                        assertEquals(getAgentIRI(), r.toString());
+                        assertEquals(getAgentURI(), r.toString());
                     } else {
                         assertTrue(r.hasProperty(type, createResource(ACTIVITY_STREAMS_NAMESPACE + "Application")));
                         assertTrue(r.hasProperty(createProperty(ACTIVITY_STREAMS_NAMESPACE + "name"), softwareAgent));
@@ -136,7 +148,7 @@ public class EventSerializerTestBase {
         assertEquals(1, eventName.get());
     }
 
-    protected String getAgentIRI() {
+    protected String getAgentURI() {
         return userAgentBaseUri + username;
     }
 }
