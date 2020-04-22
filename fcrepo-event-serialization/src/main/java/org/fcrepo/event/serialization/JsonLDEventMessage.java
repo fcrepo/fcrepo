@@ -27,6 +27,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import org.fcrepo.kernel.api.observer.Event;
 
@@ -183,7 +184,7 @@ class JsonLDEventMessage {
 
         // build actors list
         final List<Actor> actor = new ArrayList<>();
-        actor.add(new Person(evt.getUserURI().toString(), singletonList("Person")));
+        actor.add(new Person(Objects.toString(evt.getUserURI()), singletonList("Person")));
         final String softwareAgent = evt.getUserAgent();
         if (softwareAgent != null) {
             actor.add(new Application(softwareAgent, singletonList("Application")));
