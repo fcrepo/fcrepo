@@ -69,6 +69,7 @@ import static org.apache.jena.vocabulary.DC_11.title;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
@@ -902,7 +903,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testDeleteObject() {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -911,7 +911,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testDeleteContainerWithDepthHeaderSet() {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -959,7 +958,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testTrailingSlashTombstoneLink() throws IOException {
         final String id = getRandomUniqueId();
         final URI expectedTombstone = URI.create(serverAddress + id + "/fcr:tombstone");
@@ -2153,7 +2151,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testDeleteDatastream() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -2163,7 +2160,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testDeleteBinaryDescription() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id, NON_RDF_SOURCE_LINK_HEADER);
@@ -2220,13 +2216,20 @@ public class FedoraLdpIT extends AbstractResourceIT {
      */
     private void binaryStatus(final String id, final Status status) throws IOException {
         final HttpHead headBinary = headObjMethod(id);
+        final var tombstoneUri = serverAddress + id + "/" + FCR_TOMBSTONE;
         try (final CloseableHttpResponse response = execute(headBinary)) {
             assertEquals(status.getStatusCode(), getStatus(response));
+            if (status.equals(GONE)) {
+                checkForLinkHeader(response, tombstoneUri, "hasTombstone");
+            }
         }
 
         final HttpHead headBinaryDesc = headObjMethod(id + "/" + FCR_METADATA);
         try (final CloseableHttpResponse response = execute(headBinaryDesc)) {
             assertEquals(status.getStatusCode(), getStatus(response));
+            if (status.equals(GONE)) {
+                checkForLinkHeader(response, tombstoneUri, "hasTombstone");
+            }
         }
     }
 
