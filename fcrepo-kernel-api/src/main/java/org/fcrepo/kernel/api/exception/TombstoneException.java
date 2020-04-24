@@ -17,9 +17,9 @@
  */
 package org.fcrepo.kernel.api.exception;
 
+import static java.time.ZoneOffset.UTC;
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
 
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
@@ -38,7 +38,7 @@ public class TombstoneException extends RepositoryRuntimeException {
 
     private final String uri;
 
-    private static DateTimeFormatter isoFormatter = ISO_INSTANT.withZone(ZoneId.of("UTC"));
+    private static DateTimeFormatter isoFormatter = ISO_INSTANT.withZone(UTC);
 
     /**
      * Construct a new tombstone exception for a resource

@@ -17,9 +17,9 @@
  */
 package org.fcrepo.kernel.api.services;
 
+import static java.time.ZoneOffset.UTC;
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 import org.fcrepo.kernel.api.Transaction;
@@ -38,12 +38,12 @@ public interface VersionService {
      * To format a datetime for use as a Memento path.
      */
     DateTimeFormatter MEMENTO_LABEL_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
-            .withZone(ZoneId.of("UTC"));
+            .withZone(UTC);
 
     /**
      * To format a datetime as RFC-1123 with correct timezone.
      */
-    DateTimeFormatter MEMENTO_RFC_1123_FORMATTER = RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
+    DateTimeFormatter MEMENTO_RFC_1123_FORMATTER = RFC_1123_DATE_TIME.withZone(UTC);
 
     /**
      * Explicitly creates a version for the resource at the path provided.

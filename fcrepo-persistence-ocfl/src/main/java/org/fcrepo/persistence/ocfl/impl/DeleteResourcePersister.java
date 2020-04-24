@@ -63,7 +63,7 @@ class DeleteResourcePersister extends AbstractPersister {
                         p -> deletePathWrapped(p, objectSession));
             } catch (final PersistentStorageRuntimeException exc) {
                 // Rethrow the exception as a checked exception
-                throw new PersistentStorageException(exc.getCause().getMessage());
+                throw new PersistentStorageException(exc);
             }
         } else {
             final var relativeSubPath = relativizeSubpath(fedoraResourceRoot, operation.getResourceId());
