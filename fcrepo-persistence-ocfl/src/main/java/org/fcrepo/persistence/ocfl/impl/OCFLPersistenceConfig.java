@@ -20,6 +20,12 @@ package org.fcrepo.persistence.ocfl.impl;
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+
+import javax.sql.DataSource;
+
+import java.io.File;
 
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.createRepository;
 
@@ -41,5 +47,26 @@ public class OCFLPersistenceConfig {
     public MutableOcflRepository repository() {
         final OCFLConstants constants = new OCFLConstants();
         return createRepository(constants.getStorageRootDir(), constants.getWorkDir());
+    }
+
+    @Bean
+    public OCFLConstants ocflConstants(){
+        return new OCFLConstants();
+    }
+
+    @Bean
+    public DataSource dataSource(final OCFLConstants ocflConstants) {
+        final var dataSource = new DriverManagerDataSource();
+        final var workDir = ocflConstants.getWorkDir().getAbsolutePath();
+        dataSource.setUrl("jdbc:h2:" + workDir + File.separator + "containment.idx;FILE_LOCK=SOCKET");
+        dataSource.setDriverClassName("org.h2.jdbcx.JdbcDataSource");
+        return dataSource;
+    }
+
+    @Bean
+    public DataSourceTransactionManager txManager(final DataSource dataSource) {
+        final var txManager = new DataSourceTransactionManager();
+        txManager.setDataSource(dataSource);
+        return txManager;
     }
 }

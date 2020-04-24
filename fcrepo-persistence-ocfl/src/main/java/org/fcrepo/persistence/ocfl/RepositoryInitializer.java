@@ -62,6 +62,9 @@ public class RepositoryInitializer {
     @Inject
     private IndexBuilder indexBuilder;
 
+    @Inject
+    private OCFLConstants ocflConstants;
+
     /**
      * Initializes the repository
      */
@@ -71,7 +74,7 @@ public class RepositoryInitializer {
         final PersistentStorageSession session = this.sessionManager.getSession("initializationSession" +
                                                                                  System.currentTimeMillis());
 
-        final File fedoraToOcflIndexFile = new OCFLConstants().getFedoraToOCFLIndexFile();
+        final File fedoraToOcflIndexFile = this.ocflConstants.getFedoraToOCFLIndexFile();
         if (!fedoraToOcflIndexFile.exists()) {
             LOGGER.info("The Fedora to OCFL Index not found at {}. Rebuilding...", fedoraToOcflIndexFile);
             indexBuilder.rebuild();
