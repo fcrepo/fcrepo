@@ -75,6 +75,7 @@ class DeleteResourcePersister extends AbstractPersister {
             final boolean isRdf = !Objects.equals(NON_RDF_SOURCE.toString(), headers.getInteractionModel());
             final var filePath = resolveExtensions(ocflSubPath, isRdf);
             deletePath(filePath, objectSession, headers, user, deleteTime);
+            // TODO: Delete the ACL at some point - https://jira.lyrasis.org/browse/FCREPO-3288
             if (!isRdf) {
                 // Delete the description too.
                 final var descPath = resolveExtensions(ocflSubPath + "-description", true);
@@ -91,6 +92,7 @@ class DeleteResourcePersister extends AbstractPersister {
     private void deletePath(final String path, final OCFLObjectSession session, final String user,
                             final Instant deleteTime) throws PersistentStorageException {
         // readHeaders and writeHeaders need the subpath where as delete needs the file name. So remove any extensions.
+        // TODO: See https://jira.lyrasis.org/browse/FCREPO-3287
         final var no_extension = (path.contains(".") ? path.substring(0, path.indexOf(".")) : path);
         final var headers = (ResourceHeadersImpl) readHeaders(session, no_extension);
         deletePath(path, session, headers, user, deleteTime);
@@ -110,6 +112,7 @@ class DeleteResourcePersister extends AbstractPersister {
         headers.setDeleted(true);
         ResourceHeaderUtils.touchModificationHeaders(headers, user, deleteTime);
         // readHeaders and writeHeaders need the subpath where as delete needs the file name. So remove any extensions.
+        // TODO: See https://jira.lyrasis.org/browse/FCREPO-3287
         final var no_extension = (path.contains(".") ? path.substring(0, path.indexOf(".")) : path);
         writeHeaders(session, headers, no_extension);
     }
