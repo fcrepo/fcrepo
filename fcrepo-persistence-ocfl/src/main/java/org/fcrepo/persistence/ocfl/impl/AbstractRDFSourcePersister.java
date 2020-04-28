@@ -76,7 +76,7 @@ abstract class AbstractRDFSourcePersister extends AbstractPersister {
         final var outcome = writeRDF(session, rdfSourceOp.getTriples(), resolvedSubpath);
 
         // Write resource headers
-        final var headers = populateHeaders(session, resolvedSubpath, rdfSourceOp, outcome, subpath == "");
+        final var headers = populateHeaders(session, resolvedSubpath, rdfSourceOp, outcome, subpath.isEmpty());
         writeHeaders(session, headers, resolvedSubpath);
     }
 

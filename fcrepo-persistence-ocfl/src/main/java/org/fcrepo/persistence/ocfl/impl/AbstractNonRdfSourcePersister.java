@@ -109,7 +109,7 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
 
         // Write resource headers
         final var headers = populateHeaders(objectSession, subpath, nonRdfSourceOperation, outcome,
-                fedoraSubpath == "");
+                fedoraSubpath.isEmpty());
         writeHeaders(objectSession, headers, subpath);
     }
 
