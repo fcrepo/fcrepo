@@ -151,8 +151,7 @@ public class FedoraAcl extends ContentExposingResource {
             final Model model = httpRdfService.bodyToInternalModel(externalPath() + "/fcr:acl",
                     requestBodyStream, requestContentType, identifierConverter());
 
-            replacePropertiesService.perform(transaction.getId(), getUserPrincipal(), aclId,
-                requestContentType.toString(), model);
+            replacePropertiesService.perform(transaction.getId(), getUserPrincipal(), aclId, model);
         } else {
             throw new BadRequestException("Content-Type (" + requestContentType + ") is invalid. Try text/turtle " +
                                           "or other RDF compatible type.");
@@ -205,12 +204,8 @@ public class FedoraAcl extends ContentExposingResource {
 
             evaluateRequestPreconditions(request, servletResponse, aclResource, transaction());
 
-            try (final RdfStream resourceTriples =
-                     aclResource.isNew() ? new DefaultRdfStream(asNode(aclResource)) :
-                     getResourceTriples(aclResource)) {
-                LOGGER.info("PATCH for '{}'", externalPath);
-                patchResourcewithSparql(aclResource, requestBody, resourceTriples);
-            }
+            LOGGER.info("PATCH for '{}'", externalPath);
+            patchResourcewithSparql(aclResource, requestBody);
             transaction().commit();
 
             addCacheControlHeaders(servletResponse, aclResource, transaction());

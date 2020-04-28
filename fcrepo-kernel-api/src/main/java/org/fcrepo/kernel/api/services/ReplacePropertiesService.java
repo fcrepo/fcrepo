@@ -34,13 +34,11 @@ public interface ReplacePropertiesService {
      * @param txId the Transaction Id
      * @param userPrincipal the user performing the service
      * @param fedoraId the internal Id of the fedora resource to update
-     * @param contentType the original triples
      * @param inputModel the model built from the body of the request
      * @throws MalformedRdfException if malformed rdf exception occurred
      */
     void perform(String txId,
                 String userPrincipal,
                 FedoraId fedoraId,
-                String contentType,
                 Model inputModel) throws MalformedRdfException;
 }

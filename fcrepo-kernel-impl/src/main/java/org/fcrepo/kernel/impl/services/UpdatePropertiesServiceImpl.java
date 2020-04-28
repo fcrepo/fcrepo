@@ -18,16 +18,25 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import org.apache.commons.lang3.NotImplementedException;
-import org.fcrepo.kernel.api.RdfStream;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.update.UpdateAction;
+import org.apache.jena.update.UpdateFactory;
+import org.apache.jena.update.UpdateRequest;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
+import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
-import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
+
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 
 /**
  * This class implements the update properties operation.
@@ -38,18 +47,27 @@ import javax.inject.Inject;
 public class UpdatePropertiesServiceImpl extends AbstractService implements UpdatePropertiesService {
 
     @Inject
-    private PersistentStorageSessionManager psManager;
+    private ReplacePropertiesService replacePropertiesService;
 
     @Inject
-    private RdfSourceOperationFactory factory;
-
+    private PersistentStorageSessionManager persistentStorageSessionManager;
 
     @Override
     public void updateProperties(final String txId, final String userPrincipal,
-                                 final String fedoraId, final String sparqlUpdateStatement,
-                                 final RdfStream originalTriples) throws MalformedRdfException, AccessDeniedException {
+                                 final FedoraId fedoraId, final String sparqlUpdateStatement)
+            throws MalformedRdfException, AccessDeniedException {
+        try {
+            final var psession = persistentStorageSessionManager.getSession(txId);
+            final var triples = psession.getTriples(fedoraId.getFullId(), null);
+            final Model model = triples.collect(toModel());
+            final UpdateRequest request = UpdateFactory.create(sparqlUpdateStatement, fedoraId.getFullId());
+            UpdateAction.execute(request, model);
+            replacePropertiesService.perform(txId, userPrincipal, fedoraId, model);
+        } catch (final PersistentItemNotFoundException ex) {
+            throw new ItemNotFoundException(ex);
+        } catch (final PersistentStorageException ex) {
+            throw new RepositoryRuntimeException(ex);
+        }
 
-        //TODO implement me
-        throw new NotImplementedException("To be implemented");
     }
 }

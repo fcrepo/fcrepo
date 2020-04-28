@@ -93,7 +93,6 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.kernel.api.FedoraTypes;
-import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
@@ -110,7 +109,6 @@ import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.ExternalContent;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.CreateResourceService;
 import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.fcrepo.kernel.api.services.FixityService;
@@ -472,7 +470,6 @@ public class FedoraLdp extends ContentExposingResource {
                 replacePropertiesService.perform(transaction.getId(),
                                                  getUserPrincipal(),
                                                  fedoraId,
-                                                 contentType.toString(),
                                                  model);
             } else {
                 createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, links, model);
@@ -524,11 +521,8 @@ public class FedoraLdp extends ContentExposingResource {
 
             evaluateRequestPreconditions(request, servletResponse, resource(), transaction);
 
-            try (final RdfStream resourceTriples =
-                    resource().isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples(resource())) {
-                LOGGER.info("PATCH for '{}'", externalPath);
-                patchResourcewithSparql(resource(), requestBody, resourceTriples);
-            }
+            LOGGER.info("PATCH for '{}'", externalPath);
+            patchResourcewithSparql(resource(), requestBody);
             transaction.commitIfShortLived();
 
             addCacheControlHeaders(servletResponse, resource(), transaction);

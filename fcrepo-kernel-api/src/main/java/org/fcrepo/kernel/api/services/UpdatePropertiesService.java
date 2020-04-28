@@ -17,9 +17,9 @@
  */
 package org.fcrepo.kernel.api.services;
 
-import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 /**
  * @author peichman
@@ -34,13 +34,11 @@ public interface UpdatePropertiesService {
    * @param userPrincipal the user performing the service
    * @param fedoraId the internal Id of the fedora resource to update
    * @param sparqlUpdateStatement sparql update statement
-   * @param originalTriples original triples
    * @throws MalformedRdfException if malformed rdf exception occurred
    * @throws AccessDeniedException if access denied in updating properties
    */
   void updateProperties(final String txId,
                         final String userPrincipal,
-                        final String fedoraId,
-                        final String sparqlUpdateStatement,
-                        final RdfStream originalTriples) throws MalformedRdfException, AccessDeniedException;
+                        final FedoraId fedoraId,
+                        final String sparqlUpdateStatement) throws MalformedRdfException, AccessDeniedException;
 }
