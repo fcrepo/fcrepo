@@ -97,7 +97,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -134,7 +133,6 @@ import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
@@ -423,14 +421,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                     .build();
 
         }
-
-    private RdfStream getTriples(final FedoraResource resource, final Set<? extends TripleCategory> x) {
-        return null;
-    }
-
-    private RdfStream getTriples(final FedoraResource resource, final TripleCategory x) {
-        return null;
-    }
 
     protected URI getUri(final FedoraResource resource) {
         try {
@@ -937,7 +927,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             final String requestBody) {
         updatePropertiesService.updateProperties(transaction().getId(),
                                                  getUserPrincipal(),
-                                                 FedoraId.create(resource.getId()),
+                                                 resource.getFedoraId(),
                                                  requestBody);
     }
 
