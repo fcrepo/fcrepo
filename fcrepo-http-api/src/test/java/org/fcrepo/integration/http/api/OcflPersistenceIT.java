@@ -19,7 +19,7 @@ package org.fcrepo.integration.http.api;
 
 import static org.slf4j.LoggerFactory.getLogger;
 import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 
@@ -64,8 +64,7 @@ public class OcflPersistenceIT extends AbstractResourceIT {
         final HttpDelete deleteChild = new HttpDelete(childLocation);
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteChild));
 
-        // TODO: Should be GONE once FCREPO-3033 is resolved
         final HttpGet getChildAgain = new HttpGet(childLocation);
-        assertEquals(NOT_FOUND.getStatusCode(), getStatus(getChildAgain));
+        assertEquals(GONE.getStatusCode(), getStatus(getChildAgain));
     }
 }

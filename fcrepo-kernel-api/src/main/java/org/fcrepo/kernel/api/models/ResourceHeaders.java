@@ -137,4 +137,11 @@ public interface ResourceHeaders {
      * @return
      */
     boolean isObjectRoot();
+
+    /**
+     * Determine if the resource is now a tombstone.
+     * @return Deleted status.
+     */
+    boolean isDeleted();
+
 }

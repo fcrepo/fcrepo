@@ -167,6 +167,14 @@ public class ResourceFactoryImpl implements ResourceFactory {
             final Instant versionDateTime = identifier.isMemento() ? identifier.getMementoInstant() : null;
             final var headers = psSession.getHeaders(id, versionDateTime);
 
+            if (headers.isDeleted()) {
+                final var rootId = FedoraId.create(identifier.getResourceId());
+                final var tombstone = new TombstoneImpl(rootId, transaction, persistentStorageSessionManager,
+                        this);
+                tombstone.setLastModifiedDate(headers.getLastModifiedDate());
+                return tombstone;
+            }
+
             // Determine the appropriate class from headers
             final var createClass = getClassForTypes(headers);
 

@@ -60,6 +60,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_ENDPOINT_REL;
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_PREFIX;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
@@ -1098,8 +1099,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             final FedoraResource fedoraResource = resourceFactory.getResource(transaction(), fedoraId);
 
             if (fedoraResource instanceof Tombstone) {
-                final String resourceURI = TRAILING_SLASH_REGEX.matcher(externalPath).replaceAll("");
-                throw new TombstoneException(fedoraResource, resourceURI + "/fcr:tombstone");
+                final String tombstoneUri = identifierConverter().toExternalId(
+                            fedoraResource.getFedoraId().resolve(FCR_TOMBSTONE).getFullId()
+                    );
+                throw new TombstoneException(fedoraResource, tombstoneUri);
             }
 
             return fedoraResource;

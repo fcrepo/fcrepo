@@ -15,45 +15,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.persistence.api.exceptions;
+package org.fcrepo.kernel.impl.models;
+
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.Tombstone;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 
 /**
- * Generic exception for things PersistentStorage related.
- *
- * @author whikloj
- * @since 2019-09-20
+ * Tombstone class
  */
-public class PersistentStorageException extends Exception {
+public class TombstoneImpl extends FedoraResourceImpl implements Tombstone {
 
-    /**
-     * version UID.
-     */
-    private static final long serialVersionUID = -1L;
 
-    /**
-     * Constructor.
-     *
-     * @param msg the message
-     */
-    public PersistentStorageException(final String msg) {
-        super(msg);
-    }
-
-    /**
-     * Constructor
-     *
-     * @param msg message
-     * @param e cause
-     */
-    public PersistentStorageException(final String msg, final Throwable e) {
-        super(msg, e);
-    }
-
-    /**
-     * Constructor
-     * @param e cause
-     */
-    public PersistentStorageException(final Throwable e) {
-        super(e);
+    protected TombstoneImpl(final FedoraId fedoraID, final Transaction tx,
+                            final PersistentStorageSessionManager pSessionManager,
+                            final ResourceFactory resourceFactory) {
+        super(fedoraID, tx, pSessionManager, resourceFactory);
     }
 }

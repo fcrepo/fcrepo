@@ -62,6 +62,8 @@ public class ResourceHeadersImpl implements ResourceHeaders {
 
     private boolean objectRoot;
 
+    private boolean deleted;
+
     @Override
     public String getId() {
         return id;
@@ -257,5 +259,18 @@ public class ResourceHeadersImpl implements ResourceHeaders {
         } else {
             return objectRoot;
         }
+    }
+
+    /**
+     * Set deleted status flag.
+     * @param deleted true if deleted (a tombstone).
+     */
+    public void setDeleted(final boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    @Override
+    public boolean isDeleted() {
+        return deleted;
     }
 }

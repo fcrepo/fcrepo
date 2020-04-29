@@ -17,43 +17,21 @@
  */
 package org.fcrepo.persistence.api.exceptions;
 
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+
 /**
- * Generic exception for things PersistentStorage related.
- *
- * @author whikloj
- * @since 2019-09-20
+ * Wrapper class to allow using things that throw PersistentStorageExceptions in lambda functions.
  */
-public class PersistentStorageException extends Exception {
-
-    /**
-     * version UID.
-     */
-    private static final long serialVersionUID = -1L;
-
-    /**
-     * Constructor.
-     *
-     * @param msg the message
-     */
-    public PersistentStorageException(final String msg) {
+public class PersistentStorageRuntimeException extends RepositoryRuntimeException {
+    public PersistentStorageRuntimeException(final String msg) {
         super(msg);
     }
 
-    /**
-     * Constructor
-     *
-     * @param msg message
-     * @param e cause
-     */
-    public PersistentStorageException(final String msg, final Throwable e) {
-        super(msg, e);
+    public PersistentStorageRuntimeException(final Throwable rootCause) {
+        super(rootCause);
     }
 
-    /**
-     * Constructor
-     * @param e cause
-     */
-    public PersistentStorageException(final Throwable e) {
-        super(e);
+    public PersistentStorageRuntimeException(final String msg, final Throwable rootCause) {
+        super(msg, rootCause);
     }
 }
