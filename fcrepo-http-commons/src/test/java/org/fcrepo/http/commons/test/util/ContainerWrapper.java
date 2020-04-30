@@ -78,8 +78,8 @@ public class ContainerWrapper implements ApplicationContextAware {
 
     private int resolvePort() {
         /*
-         This nonsense is necessary, rather than using @Value(${fcrepo.dynamic.test.port:8080}) because Intellij is smart
-         enough to attempt to set fcrepo.dynamic.test.port based on the pom but too dumb to run the
+         This nonsense is necessary, rather than using @Value(${fcrepo.dynamic.test.port:8080}) because Intellij is
+          smart enough to attempt to set fcrepo.dynamic.test.port based on the pom but too dumb to run the
          build-helper-maven-plugin plugin that actually determines its value. As a result, it's populated with an empty
          value rather than null, and Spring will only default null property values.
          */
