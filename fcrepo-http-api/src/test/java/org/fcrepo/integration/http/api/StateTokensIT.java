@@ -103,7 +103,6 @@ public class StateTokensIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testLdpcvGetHasStateTokenRDFSource() throws IOException {
         final String id = getRandomUniqueId();
@@ -114,7 +113,6 @@ public class StateTokensIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testLdpcvHeadHasStateTokenRDFSource() throws IOException {
         final String id = getRandomUniqueId();
@@ -189,7 +187,6 @@ public class StateTokensIT extends AbstractResourceIT {
 
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testPatchWithStateTokenOnRDFSource() throws IOException {
         final String id = getRandomUniqueId();
