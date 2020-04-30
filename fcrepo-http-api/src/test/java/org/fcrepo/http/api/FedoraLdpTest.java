@@ -62,6 +62,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -906,7 +907,7 @@ public class FedoraLdpTest {
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(replacePropertiesService).perform(eq(mockTransaction.getId()), anyString(), eq(fedoraID),
-                any(String.class),any(Model.class));
+                any(Model.class));
     }
 
     @Test
@@ -941,7 +942,7 @@ public class FedoraLdpTest {
 
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
         verify(replacePropertiesService).perform(eq(mockTransaction.getId()), anyString(), eq(fedoraID),
-                any(String.class), any(Model.class));
+                any(Model.class));
     }
 
     @Test(expected = ClientErrorException.class)
@@ -1034,7 +1035,7 @@ public class FedoraLdpTest {
                 MediaType.valueOf(contentTypeSPARQLUpdate), "b", toInputStream("x", UTF_8), null, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(updatePropertiesService).updateProperties(
-                anyString(), anyString(), anyString(), eq("x"), any(RdfStream.class));
+                anyString(), anyString(), isA(FedoraId.class), eq("x"));
     }
 
     @Test
@@ -1045,7 +1046,7 @@ public class FedoraLdpTest {
                 toInputStream("_:a <info:b> _:c .", UTF_8), null, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(replacePropertiesService).perform(eq(mockTransaction.getId()), anyString(), eq(fedoraID),
-                any(String.class), any(Model.class));
+               any(Model.class));
     }
 
 

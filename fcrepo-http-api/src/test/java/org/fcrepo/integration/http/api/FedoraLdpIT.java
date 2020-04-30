@@ -993,7 +993,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testUpdateObjectGraph() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -1007,7 +1006,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testDeleteMultipleMultiValuedProperties() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -1087,7 +1085,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
      * @throws IOException in case of IOException
      */
     @Test
-@Ignore
     public void testPatchBinaryDescription() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", "some content");
@@ -1107,7 +1104,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
      * @throws IOException on error
      */
     @Test
-@Ignore
     public void testPatchBinaryDescriptionWithBinaryProperties() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", "some content");
@@ -1129,7 +1125,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPatchBinaryNameAndType() throws IOException {
         final String pid = getRandomUniqueId();
 
@@ -3026,19 +3021,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     createURI(subjectURI), createURI("info:test#date"), createLiteral("1953?",
                         getInstance().getSafeTypeByName("http://id.loc.gov/datatypes/edtf/EDTF"))));
         }
-    }
-
-    @Test
-    // TODO there is no actual use of the JCR namespace in this test-- what is it testing?
-            public
-            void testUpdateWithSparqlQueryJcrNS() throws IOException {
-        final String subjectURI = getLocation(postObjMethod());
-        final HttpPatch updateObjectGraphMethod = new HttpPatch(subjectURI);
-        updateObjectGraphMethod.addHeader(CONTENT_TYPE, "application/sparql-update");
-        updateObjectGraphMethod.setEntity(new StringEntity("PREFIX fcr: <http://xmlns.com/my-fcr/> "
-                + "INSERT { <" + subjectURI + "> <info:test#label> \"asdfg\" } WHERE {}"));
-        assertNotEquals("Got updated response with jcr namspace prefix!\n",
-                NO_CONTENT.getStatusCode(), getStatus(updateObjectGraphMethod));
     }
 
     @Test

@@ -51,7 +51,6 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
     public void perform(final String txId,
                         final String userPrincipal,
                         final FedoraId fedoraId,
-                        final String contentType,
                         final Model inputModel) throws MalformedRdfException {
         try {
             final PersistentStorageSession pSession = this.psManager.getSession(txId);

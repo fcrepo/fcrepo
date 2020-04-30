@@ -89,8 +89,6 @@ public class ReplacePropertiesServiceImplTest {
 
     private static final String FEDORA_ID = "info:fedora/resource1";
     private static final String TX_ID = "tx-1234";
-    private static final String CONTENT_TYPE = "text/turtle";
-
     private static final String RDF =
             "<" + FEDORA_ID + "> <" + DC.getURI() + "title> 'fancy title' .\n" +
             "<" + FEDORA_ID + "> <" + DC.getURI() + "title> 'another fancy title' .";
@@ -112,7 +110,7 @@ public class ReplacePropertiesServiceImplTest {
 
         final FedoraId fedoraID = FedoraId.create(resource.getId());
 
-        service.perform(tx.getId(), USER_PRINCIPAL, fedoraID, CONTENT_TYPE, model);
+        service.perform(tx.getId(), USER_PRINCIPAL, fedoraID, model);
         verify(pSession).persist(operationCaptor.capture());
         assertEquals(FEDORA_ID, operationCaptor.getValue().getResourceId());
         final RdfStream stream = operationCaptor.getValue().getTriples();
