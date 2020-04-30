@@ -17,6 +17,7 @@
  */
 package org.fcrepo.auth.integration;
 
+import com.google.common.base.Strings;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -31,6 +32,9 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.io.IOException;
+import java.util.Objects;
+
+import static java.lang.Integer.parseInt;
 
 /**
  * <p>Abstract AbstractResourceIT class.</p>
@@ -48,8 +52,8 @@ public abstract class AbstractResourceIT {
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
-    private static final int SERVER_PORT = Integer.parseInt(System
-            .getProperty("fcrepo.dynamic.test.port", "8080"));
+    private static final int SERVER_PORT = parseInt(Objects.requireNonNullElse(
+            Strings.emptyToNull(System.getProperty("fcrepo.dynamic.test.port")), "8080"));
 
     private static final String HOSTNAME = "localhost";
 
