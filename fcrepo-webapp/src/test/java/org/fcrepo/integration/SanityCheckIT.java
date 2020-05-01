@@ -30,7 +30,9 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Objects;
 
+import com.google.common.base.Strings;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.client.CredentialsProvider;
@@ -63,7 +65,8 @@ public class SanityCheckIT {
      * The server port of the application, set as system property by
      * maven-failsafe-plugin.
      */
-    private static final String SERVER_PORT = System.getProperty("fcrepo.dynamic.test.port");
+    private static final String SERVER_PORT = Objects.requireNonNullElse(
+            Strings.emptyToNull(System.getProperty("fcrepo.dynamic.test.port")), "8080");
 
     /**
     * The context path of the application (including the leading "/"), set as

@@ -67,7 +67,6 @@
     <jacoco.out.it.file>jacoco-it.exec</jacoco.out.it.file>
     <sonar.jacoco.reportPath>${jacoco.outputDir}/${jacoco.out.unit.file}</sonar.jacoco.reportPath>
     <sonar.jacoco.itReportPath>${jacoco.outputDir}/${jacoco.out.it.file}</sonar.jacoco.itReportPath>
-    <fcrepo.dynamic.test.port>8080</fcrepo.dynamic.test.port>
   </properties>
 
   <build>

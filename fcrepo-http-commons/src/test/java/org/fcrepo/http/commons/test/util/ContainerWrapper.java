@@ -28,6 +28,7 @@ import javax.annotation.PreDestroy;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 
+import com.google.common.base.Strings;
 import org.fcrepo.http.commons.webxml.WebAppConfig;
 import org.fcrepo.http.commons.webxml.bind.ContextParam;
 import org.fcrepo.http.commons.webxml.bind.Filter;
@@ -56,8 +57,10 @@ public class ContainerWrapper implements ApplicationContextAware {
 
     private static final Logger logger = getLogger(ContainerWrapper.class);
 
-    @Value("${fcrepo.dynamic.test.port:8080}")
-    private int port;
+    private static final int DEFAULT_PORT = 8080;
+
+    @Value("${fcrepo.dynamic.test.port:" + DEFAULT_PORT + "}")
+    private String port;
 
     private HttpServer server;
 
@@ -70,7 +73,20 @@ public class ContainerWrapper implements ApplicationContextAware {
     }
 
     public void setPort(final int port) {
-        this.port = port;
+        this.port = Integer.toString(port);
+    }
+
+    private int resolvePort() {
+        /*
+         This nonsense is necessary, rather than using @Value(${fcrepo.dynamic.test.port:8080}) because Intellij is
+          smart enough to attempt to set fcrepo.dynamic.test.port based on the pom but too dumb to run the
+         build-helper-maven-plugin plugin that actually determines its value. As a result, it's populated with an empty
+         value rather than null, and Spring will only default null property values.
+         */
+        if (Strings.isNullOrEmpty(port)) {
+            return DEFAULT_PORT;
+        }
+        return Integer.parseInt(port);
     }
 
     @PostConstruct
@@ -82,7 +98,7 @@ public class ContainerWrapper implements ApplicationContextAware {
                 (WebAppConfig) u.unmarshal(getClass().getResource(
                         this.configLocation));
 
-        final URI uri = URI.create("http://localhost:" + port);
+        final URI uri = URI.create("http://localhost:" + resolvePort());
 
         server = createHttpServer(uri);
 

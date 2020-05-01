@@ -21,12 +21,15 @@ import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.parseInt;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.google.common.base.Strings;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.junit.Before;
 import org.slf4j.Logger;
+
+import java.util.Objects;
 
 /**
  * Base class for ITs
@@ -45,8 +48,8 @@ public abstract class AbstractResourceIT {
         logger = getLogger(this.getClass());
     }
 
-    private static final int SERVER_PORT = parseInt(System.getProperty(
-            "fcrepo.dynamic.test.port", "8080"));
+    private static final int SERVER_PORT = parseInt(Objects.requireNonNullElse(
+            Strings.emptyToNull(System.getProperty("fcrepo.dynamic.test.port")), "8080"));
 
     private static final String CONTEXT_PATH = System
             .getProperty("fcrepo.test.context.path");
