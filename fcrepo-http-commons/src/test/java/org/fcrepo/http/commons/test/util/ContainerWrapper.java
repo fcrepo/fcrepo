@@ -59,7 +59,7 @@ public class ContainerWrapper implements ApplicationContextAware {
 
     private static final int DEFAULT_PORT = 8080;
 
-    @Value("${fcrepo.dynamic.test.port}")
+    @Value("${fcrepo.dynamic.test.port:" + DEFAULT_PORT + "}")
     private String port;
 
     private HttpServer server;
