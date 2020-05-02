@@ -25,7 +25,6 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.QueryParseException;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFReader;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
@@ -41,15 +40,14 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
-import org.fcrepo.http.api.FedoraLdp;
-import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.TransactionClosedException;
+import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.slf4j.Logger;
@@ -63,7 +61,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriBuilder;
+
 import java.io.IOException;
 import java.net.URI;
 import java.security.Principal;
@@ -71,6 +69,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -91,13 +91,15 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_APPEND;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_CONTROL;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
+import static org.fcrepo.auth.webac.URIConstants.identifierConverter;
 import static org.fcrepo.auth.webac.WebACAuthorizingRealm.URIS_TO_AUTHORIZE;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -134,20 +136,14 @@ public class WebACFilter extends RequestContextFilter {
     @Inject
     private TransactionManager transactionManager;
 
-    private static Set<URI> directOrIndirect = new HashSet<>();
+    private static Set<URI> directOrIndirect = Set.of(INDIRECT_CONTAINER, DIRECT_CONTAINER).stream()
+            .map(Resource::toString).map(URI::create).collect(Collectors.toSet());
 
-    private static Set<String> rdfContentTypes = new HashSet<>();
+    private static Set<String> rdfContentTypes = Set.of(contentTypeTurtle, contentTypeJSONLD, contentTypeN3,
+            contentTypeRDFXML, contentTypeNTriples);
 
-    static {
-        directOrIndirect.add(URI.create(INDIRECT_CONTAINER.toString()));
-        directOrIndirect.add(URI.create(DIRECT_CONTAINER.toString()));
-
-        rdfContentTypes.add(contentTypeTurtle);
-        rdfContentTypes.add(contentTypeJSONLD);
-        rdfContentTypes.add(contentTypeN3);
-        rdfContentTypes.add(contentTypeRDFXML);
-        rdfContentTypes.add(contentTypeNTriples);
-    }
+    private static Predicate<FedoraResource> isBinaryOrDescription = r -> r.getTypes().stream().map(URI::toString)
+            .anyMatch(t -> t.equals(NON_RDF_SOURCE.toString()) || t.equals(FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI));
 
     /**
      * Add URIs to collect permissions information for.
@@ -165,12 +161,11 @@ public class WebACFilter extends RequestContextFilter {
         targetURIs.add(uri);
     }
 
-
     @Override
     protected void doFilterInternal(final HttpServletRequest request, final HttpServletResponse response,
                                     final FilterChain chain) throws ServletException, IOException {
         final Subject currentUser = SecurityUtils.getSubject();
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
+        HttpServletRequest httpRequest = request;
         if (isSparqlUpdate(httpRequest) || isRdfRequest(httpRequest)) {
             // If this is a sparql request or contains RDF.
             httpRequest = new CachedHttpRequest(httpRequest);
@@ -188,13 +183,13 @@ public class WebACFilter extends RequestContextFilter {
                 // non-admins are subject to permission checks
                 if (!isAuthorized(currentUser, httpRequest)) {
                     // if the user is not authorized, set response to forbidden
-                    ((HttpServletResponse) response).sendError(SC_FORBIDDEN);
+                    response.sendError(SC_FORBIDDEN);
                     return;
                 }
             } else {
                 log.debug("User has no recognized servlet container role");
                 // missing a container role, return forbidden
-                ((HttpServletResponse) response).sendError(SC_FORBIDDEN);
+                response.sendError(SC_FORBIDDEN);
                 return;
             }
         } else {
@@ -202,7 +197,7 @@ public class WebACFilter extends RequestContextFilter {
             // anonymous users are subject to permission checks
             if (!isAuthorized(getFoafAgentSubject(), httpRequest)) {
                 // if anonymous user is not authorized, set response to forbidden
-                ((HttpServletResponse) response).sendError(SC_FORBIDDEN);
+                response.sendError(SC_FORBIDDEN);
                 return;
             }
         }
@@ -218,29 +213,16 @@ public class WebACFilter extends RequestContextFilter {
         return FOAF_AGENT_SUBJECT;
     }
 
-    @Override
-    public void destroy() {
-        // this method intentionally left empty
-    }
-
     private Transaction transaction(final HttpServletRequest request) {
-        return transactionManager.get(request.getHeader(ATOMIC_ID_HEADER));
-    }
-
-    private String getBaseURL(final HttpServletRequest servletRequest) {
-        final String url = servletRequest.getRequestURL().toString();
-        // the base URL will be the request URL if there is no path info
-        String baseURL = url;
-
-        // strip out the path info, if it exists
-        final String pathInfo = servletRequest.getPathInfo();
-        if (pathInfo != null) {
-            final int loc = url.lastIndexOf(pathInfo);
-            baseURL = url.substring(0, loc);
+        final String txId = request.getHeader(ATOMIC_ID_HEADER);
+        if (txId == null) {
+            return null;
         }
-
-        log.debug("Base URL determined from servlet request is {}", baseURL);
-        return baseURL;
+        try {
+            return transactionManager.get(txId);
+        } catch (final TransactionClosedException | TransactionNotFoundException e) {
+            return null;
+        }
     }
 
     private String getContainerUrl(final HttpServletRequest servletRequest) {
@@ -264,29 +246,21 @@ public class WebACFilter extends RequestContextFilter {
         return resource(servletRequest, getRepoPath(servletRequest));
     }
 
-    private FedoraResource resource(final HttpServletRequest servletRequest, final String path) {
+    private FedoraResource resource(final HttpServletRequest servletRequest, final FedoraId resourceId) {
         try {
-            return this.resourceFactory.getResource(transaction(servletRequest), FedoraId.create(path));
-        } catch (PathNotFoundException e) {
+            return this.resourceFactory.getResource(transaction(servletRequest), resourceId);
+        } catch (final PathNotFoundException e) {
             return null;
         }
     }
 
-    private IdentifierConverter<Resource, FedoraResource> translator(final HttpServletRequest servletRequest) {
-        final UriBuilder uriBuilder = UriBuilder.fromUri(getBaseURL(servletRequest)).path(FedoraLdp.class);
-        return new HttpResourceConverter(transaction(servletRequest), uriBuilder);
-    }
-
-    private String getRepoPath(final HttpServletRequest servletRequest) {
+    private FedoraId getRepoPath(final HttpServletRequest servletRequest) {
         final String httpURI = servletRequest.getRequestURL().toString();
         return getRepoPath(servletRequest, httpURI);
     }
 
-    private String getRepoPath(final HttpServletRequest servletRequest, final String httpURI) {
-        final Resource resource = ModelFactory.createDefaultModel().createResource(httpURI);
-        final String repoPath = translator(servletRequest).asString(resource);
-        log.debug("Converted request URI {} to repo path {}", httpURI, repoPath);
-        return repoPath;
+    private FedoraId getRepoPath(final HttpServletRequest request, final String httpURI) {
+        return FedoraId.create(identifierConverter(request).toInternalId(httpURI));
     }
 
     private boolean isAuthorized(final Subject currentUser, final HttpServletRequest httpRequest) throws IOException {
@@ -367,7 +341,7 @@ public class WebACFilter extends RequestContextFilter {
                 return true;
             }
             if (resource != null) {
-                if (resource.hasType(FEDORA_BINARY)) {
+                if (isBinaryOrDescription.test(resource)) {
                     // LDP-NR
                     // user without the acl:Write permission cannot POST to binaries
                     log.debug("POST prohibited to binary resource without {} permission", toWrite);
@@ -488,7 +462,7 @@ public class WebACFilter extends RequestContextFilter {
      * @return whether the content-type matches.
      */
     private boolean isRdfRequest(final HttpServletRequest request) {
-        return rdfContentTypes.contains(request.getContentType());
+        return request.getContentType() != null && rdfContentTypes.contains(request.getContentType());
     }
 
     /**
@@ -505,11 +479,11 @@ public class WebACFilter extends RequestContextFilter {
     /**
      * Is the current resource a direct or indirect container
      *
-     * @param resource
-     * @return
+     * @param resource the resource to check
+     * @return whether it is a direct or indirect container.
      */
     private boolean isResourceIndirectOrDirect(final FedoraResource resource) {
-        return resource.getTypes().stream().anyMatch(l -> directOrIndirect.contains(l));
+        return resource != null && resource.getTypes().stream().anyMatch(l -> directOrIndirect.contains(l));
     }
 
     /**
@@ -682,4 +656,5 @@ public class WebACFilter extends RequestContextFilter {
                 .map(Triple::getObject).map(Node::getURI)
                 .findFirst().map(URI::create).orElse(null);
     }
+
 }

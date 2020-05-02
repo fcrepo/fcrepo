@@ -82,4 +82,12 @@ public interface ResourceFactory {
      * @return True if the identifier resolves to a resource.
      */
     public boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId);
+
+    /**
+     * Get the containing resource ID (if exists).
+     * @param transaction The current transaction or null if read-only.
+     * @param resourceId The internal identifer
+     * @return The string id of the containing resource or null if none.
+     */
+    public String getContainerId(final Transaction transaction, final FedoraId resourceId);
 }

@@ -41,6 +41,7 @@ import java.util.stream.Stream;
 
 import static java.net.URI.create;
 import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
 
@@ -109,8 +110,15 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public FedoraResource getContainer() {
-        // TODO Auto-generated method stub
-        return null;
+        final String containerId = resourceFactory.getContainerId(tx, fedoraID);
+        if (containerId == null) {
+            return null;
+        }
+        try {
+            return resourceFactory.getResource(tx, FedoraId.create(containerId));
+        } catch (final PathNotFoundException exc) {
+            return null;
+        }
     }
 
     @Override
@@ -119,7 +127,7 @@ public class FedoraResourceImpl implements FedoraResource {
             try {
                 // We are in a memento so we need to create a FedoraId for just the original resource.
                 return resourceFactory.getResource(tx, FedoraId.create(getFedoraId().getResourceId()));
-            } catch (PathNotFoundException e) {
+            } catch (final PathNotFoundException e) {
                 throw new PathNotFoundRuntimeException(e);
             }
         }
@@ -128,10 +136,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public FedoraResource getTimeMap() {
-        if (this.isMemento) {
-            return new TimeMapImpl(this.getOriginalResource(), tx, pSessionManager, resourceFactory);
-        }
-        return new TimeMapImpl(this, tx, pSessionManager, resourceFactory);
+        return new TimeMapImpl(this.getOriginalResource(), tx, pSessionManager, resourceFactory);
     }
 
     @Override
@@ -146,7 +151,6 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public boolean isAcl() {
-        // TODO Auto-generated method stub
         return false;
     }
 
@@ -155,7 +159,7 @@ public class FedoraResourceImpl implements FedoraResource {
         FedoraResource match = null;
         long matchDiff = 0;
 
-        for (var it = getTimeMap().getChildren().iterator(); it.hasNext();) {
+        for (final var it = getTimeMap().getChildren().iterator(); it.hasNext();) {
             final var current = it.next();
             // Negative if the memento is AFTER the requested datetime
             // Positive if the memento is BEFORE the requested datetime
@@ -174,8 +178,15 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public FedoraResource getAcl() {
-        // TODO Auto-generated method stub
-        return null;
+        if (isAcl()) {
+            return this;
+        }
+        try {
+            final var aclId = fedoraID.resolve("/" + FCR_ACL);
+            return resourceFactory.getResource(tx, aclId);
+        } catch (final PathNotFoundException e) {
+            return null;
+        }
     }
 
     @Override

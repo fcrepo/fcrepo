@@ -405,7 +405,7 @@ public class WebACRolesProvider {
                 }
             }
 
-            if (resource.getAcl() == null) {
+            if (resource.getContainer() == null) {
                 LOGGER.debug("No ACLs defined on this node or in parent hierarchy");
                 return Optional.empty();
             } else {

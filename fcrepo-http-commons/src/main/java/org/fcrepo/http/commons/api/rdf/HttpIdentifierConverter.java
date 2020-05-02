@@ -204,6 +204,8 @@ public class HttpIdentifierConverter {
             return "/" + values.get("path");
         } else if (isRootWithoutTrailingSlash(httpUri)) {
             return "/";
+        } else if (httpUri.startsWith("info:/rest")) {
+            return mapInternalRestUri(httpUri);
         }
         return null;
     }
@@ -219,6 +221,26 @@ public class HttpIdentifierConverter {
 
         return uriTemplate.match(httpUri + "/", values) && values.containsKey("path") &&
             values.get("path").isEmpty();
+    }
+
+    /**
+     * Takes internal URIs starting with info:/rest and makes full URLs to convert. These URIs come when RDF contains
+     * a URI like </rest/someResource>. This gets converted to info:/rest/someResource as it is a URI but with no
+     * scheme.
+     * @param httpUri the partial URI
+     * @return the path part of the url
+     */
+    private String mapInternalRestUri(final String httpUri) {
+        // This uri started with </rest...> and is an internal URI.
+        if (httpUri.startsWith("info:/rest")) {
+            String realpath = httpUri.substring(10);
+            if (realpath.startsWith("/")) {
+                realpath = realpath.substring(1);
+            }
+            final String fullUri = uriBuilder.build(realpath).toString();
+            return getPath(fullUri);
+        }
+        return null;
     }
 
 }

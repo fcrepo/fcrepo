@@ -19,6 +19,7 @@ package org.fcrepo.integration.auth.webac;
 
 import static java.util.Arrays.stream;
 import static javax.ws.rs.core.Response.Status.CREATED;
+
 import static org.apache.http.HttpStatus.SC_FORBIDDEN;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
@@ -29,6 +30,7 @@ import static org.fcrepo.auth.webac.WebACRolesProvider.USER_AGENT_BASE_URI_PROPE
 import static org.fcrepo.http.api.FedoraAcl.ROOT_AUTHORIZATION_PROPERTY;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -40,7 +42,6 @@ import java.util.Optional;
 import javax.ws.rs.core.Link;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HeaderElement;
 import org.apache.http.HttpEntity;
@@ -59,6 +60,10 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.AbstractHttpMessage;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.integration.http.api.AbstractResourceIT;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -72,7 +77,6 @@ import org.slf4j.LoggerFactory;
  * @author whikloj
  * @since September 4, 2015
  */
-@Ignore //TODO Fix these tests
 public class WebACRecipesIT extends AbstractResourceIT {
 
     private static final Logger logger = LoggerFactory.getLogger(WebACRecipesIT.class);
@@ -116,9 +120,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         request.setHeader("Content-Type", "text/turtle");
 
         try (final CloseableHttpResponse response = execute(request)) {
-            assertEquals(
-                "Didn't get a CREATED response!: " + IOUtils.toString(response.getEntity().getContent(), "UTF-8"),
-                CREATED.getStatusCode(), getStatus(response));
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
             return response;
         }
 
@@ -179,6 +181,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
     @Test
     public void scenario1() throws IOException {
         final String testObj = ingestObj("/rest/webacl_box1");
+
         final String acl1 = ingestAcl("fedoraAdmin", "/acls/01/acl.ttl",
                                       testObj + "/fcr:acl");
         final String aclLink = Link.fromUri(acl1).rel("acl").build().toString();
@@ -342,6 +345,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestPatch3));
     }
 
+    @Ignore("Not getting all rdf:types back to match on accessToClass - FCREPO-3279")
     @Test
     public void scenario5() throws IOException {
         final String idPublic = "/rest/mixedCollection/publicObj";
@@ -378,6 +382,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         assertEquals(HttpStatus.SC_OK, getStatus(requestGet4));
     }
 
+    @Ignore("Content-type with charset causes it to be a binary - FCREPO-3312")
     @Test
     public void scenario9() throws IOException {
         final String idPublic = "/rest/anotherCollection/publicObj";
@@ -443,6 +448,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         setAuth(requestPatch, "user18");
         requestPatch.setHeader("Content-type", "application/sparql-update");
         requestPatch.setEntity(new StringEntity("INSERT { <> <" + title.getURI() + "> \"Test title\" . } WHERE {}"));
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestPatch));
 
         logger.debug("user18 can't delete (no ACL): {}", id);
         final HttpDelete requestDelete = deleteObjMethod(id);
@@ -705,28 +711,11 @@ public class WebACRecipesIT extends AbstractResourceIT {
         assertEquals(HttpStatus.SC_OK, getStatus(requestGet2));
     }
 
+    @Ignore("Access to class - FCREPO-3279")
     @Test
-    @Ignore("FAILING")
-    public void testAccessToHashResource() throws IOException {
-        final String id = "/rest/some/parent#hash-resource";
-        final String testObj = ingestObj(id);
-        ingestAcl("fedoraAdmin", "/acls/08/acl.ttl", testObj + "/fcr:acl");
-
-        logger.debug("Anonymous can't read");
-        final HttpGet requestGet1 = getObjMethod(id);
-        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet1));
-
-        logger.debug("Can username 'user08' read {}", testObj);
-        final HttpGet requestGet2 = getObjMethod(id);
-        setAuth(requestGet2, "user08");
-        assertEquals(HttpStatus.SC_OK, getStatus(requestGet2));
-    }
-
-    @Test
-    @Ignore ("Until implemented with Memento")
     public void testAccessToVersionedResources() throws IOException {
         final String idVersion = "/rest/versionResource";
-        ingestObj(idVersion);
+        final String idVersionUri = ingestObj(idVersion);
 
         final HttpPatch requestPatch1 = patchObjMethod(idVersion);
         setAuth(requestPatch1, "fedoraAdmin");
@@ -735,7 +724,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
                 new StringEntity("PREFIX pcdm: <http://pcdm.org/models#> INSERT { <> a pcdm:Object } WHERE {}"));
         assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(requestPatch1));
 
-        ingestAcl("fedoraAdmin", "/acls/10/acl.ttl", idVersion + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/10/acl.ttl", idVersionUri + "/fcr:acl");
 
         final HttpGet requestGet1 = getObjMethod(idVersion);
         setAuth(requestGet1, "user10");
@@ -805,28 +794,30 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore ("Until implemented with Memento")
-
     public void testAccessByUriToVersionedResources() throws IOException {
-        final String idVersion = "/rest/versionResourceUri";
-        ingestObj(idVersion);
+        final String idVersionPath = "rest/versionResourceUri";
+        final String idVersionResource = ingestObj(idVersionPath);
 
-        ingestAcl("fedoraAdmin", "/acls/12/acl.ttl", idVersion + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/12/acl.ttl", idVersionResource + "/fcr:acl");
 
-        final HttpGet requestGet1 = getObjMethod(idVersion);
+        final HttpGet requestGet1 = getObjMethod(idVersionPath);
         setAuth(requestGet1, "user12");
         assertEquals("testuser can't read object", HttpStatus.SC_OK, getStatus(requestGet1));
 
-        final HttpPost requestPost1 = postObjMethod(idVersion + "/fcr:versions");
-        requestPost1.addHeader("Slug", "v0");
+        final HttpPost requestPost1 = postObjMethod(idVersionPath + "/fcr:versions");
         setAuth(requestPost1, "user12");
-        assertEquals("Unable to create a new version", HttpStatus.SC_CREATED, getStatus(requestPost1));
+        final String mementoLocation;
+        try (final CloseableHttpResponse response = execute(requestPost1)) {
+            assertEquals("Unable to create a new version", HttpStatus.SC_CREATED, getStatus(response));
+            mementoLocation = getLocation(response);
+        }
 
-        final HttpGet requestGet2 = getObjMethod(idVersion);
+        final HttpGet requestGet2 = new HttpGet(mementoLocation);
         setAuth(requestGet2, "user12");
         assertEquals("testuser can't read versioned object", HttpStatus.SC_OK, getStatus(requestGet2));
     }
 
+    @Ignore("Not getting all rdf:types back to match on accessToClass - FCREPO-3279")
     @Test
     public void testAgentAsUri() throws IOException {
         final String id = "/rest/" + getRandomUniqueId();
@@ -1305,6 +1296,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore("Not getting all rdf:types back to match on accessToClass - FCREPO-3279")
     @Test
     public void testCreateAclWithAccessToClassForBinary() throws Exception {
         final String id = getRandomUniqueId();
@@ -1341,6 +1333,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         assertEquals(HttpStatus.SC_OK, getStatus(headDesc2));
     }
 
+    @Ignore("Until FCREPO-3310 and FCREPO-3311 are resolved")
     @Test
     public void testIndirectRelationshipForbidden() throws IOException {
         final String targetResource = "/rest/" + getRandomUniqueId();
@@ -1464,8 +1457,24 @@ public class WebACRecipesIT extends AbstractResourceIT {
         // Patch the indirect to the readonly target as admin
         final HttpPatch patchAsAdmin = new HttpPatch(indirectUri);
         setAuth(patchAsAdmin, "fedoraAdmin");
-        patchAsAdmin.setEntity(new StringEntity(patch_insert_relation, sparqlContentType));
+        patchAsAdmin.setEntity(new StringEntity(patch_text, sparqlContentType));
         assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(patchAsAdmin));
+
+        // Ensure the patching happened.
+        final HttpGet verifyGet = new HttpGet(indirectUri);
+        setAuth(verifyGet, "fedoraAdmin");
+        try (final CloseableHttpResponse response = execute(verifyGet)) {
+            final CloseableDataset dataset = getDataset(response);
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue("Can't find " + targetUri + " in graph",
+                    graph.contains(
+                            Node.ANY,
+                            NodeFactory.createURI(indirectUri),
+                            MEMBERSHIP_RESOURCE.asNode(),
+                            NodeFactory.createURI(targetUri)
+                    )
+            );
+        }
 
         // Try to POST a child as user
         final HttpPost postChild = new HttpPost(indirectUri);
@@ -1623,6 +1632,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
 
     }
 
+    @Ignore("Until FCREPO-3310 and FCREPO-3311 are resolved")
     @Test
     public void testDirectRelationshipForbidden() throws IOException {
         final String targetResource = "/rest/" + getRandomUniqueId();
@@ -1739,8 +1749,24 @@ public class WebACRecipesIT extends AbstractResourceIT {
         // Patch the indirect to the readonly target as admin
         final HttpPatch patchAsAdmin = new HttpPatch(directUri);
         setAuth(patchAsAdmin, "fedoraAdmin");
-        patchAsAdmin.setEntity(new StringEntity(patch_insert_relation, sparqlContentType));
+        patchAsAdmin.setEntity(new StringEntity(patch_text, sparqlContentType));
         assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(patchAsAdmin));
+
+        // Ensure the patching happened.
+        final HttpGet verifyGet = new HttpGet(directUri);
+        setAuth(verifyGet, "fedoraAdmin");
+        try (final CloseableHttpResponse response = execute(verifyGet)) {
+            final CloseableDataset dataset = getDataset(response);
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue("Can't find " + targetUri + " in graph",
+                    graph.contains(
+                        Node.ANY,
+                        NodeFactory.createURI(directUri),
+                        MEMBERSHIP_RESOURCE.asNode(),
+                        NodeFactory.createURI(targetUri)
+                    )
+            );
+        }
 
         // Try to POST a child as user
         final HttpPost postChild = new HttpPost(directUri);

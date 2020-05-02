@@ -27,17 +27,21 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_APPEND;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_CONTROL;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
+import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
-
-import org.fcrepo.kernel.api.TransactionManager;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.ResourceFactory;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
+
+import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceFactory;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -71,6 +75,8 @@ import org.springframework.mock.web.MockHttpServletResponse;
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class WebACFilterTest {
 
+    private static final String transactionId = "tx-id";
+
     private static final String baseURL = "http://localhost";
 
     private static final String testPath = "/testUri";
@@ -84,6 +90,10 @@ public class WebACFilterTest {
     private static final URI testAclURI = URI.create(baseURL + testAclPath);
 
     private static final URI testChildURI = URI.create(baseURL + testChildPath);
+
+    private static final FedoraId testId = FedoraId.create(testPath);
+
+    private static final FedoraId testChildId = FedoraId.create(testChildPath);
 
     @Mock
     private SecurityManager mockSecurityManager;
@@ -150,6 +160,8 @@ public class WebACFilterTest {
         // so the request URI and path info are the same
         request.setPathInfo(testPath);
         request.setRequestURI(testPath);
+        request.setContentType(null);
+        request.addHeader(ATOMIC_ID_HEADER, transactionId);
 
         setField(webacFilter, "transactionManager", mockTransactionManager);
 
@@ -158,9 +170,9 @@ public class WebACFilterTest {
         mockBinary = Mockito.mock(Binary.class);
         mockRoot = Mockito.mock(Container.class);
 
-        when(mockTransactionManager.get("tx-id")).thenReturn(mockTransaction);
+        when(mockTransactionManager.get(transactionId)).thenReturn(mockTransaction);
 
-        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(testChildPath)))
+        when(mockResourceFactory.getResource(mockTransaction, testChildId))
                 .thenReturn(null);
 
         when(mockResourceFactory.getResource(mockTransaction, FedoraId.getRepositoryRootId())).thenReturn(mockRoot);
@@ -181,15 +193,15 @@ public class WebACFilterTest {
     }
 
     private void setupContainerResource() throws Exception {
-        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(testPath)))
+        when(mockResourceFactory.getResource(mockTransaction, testId))
                 .thenReturn(mockContainer);
-        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(testChildPath)))
+        when(mockResourceFactory.getResource(mockTransaction, testChildId))
                 .thenReturn(mockChildContainer);
         when(mockBinary.hasType(FEDORA_BINARY)).thenReturn(false);
     }
 
     private void setupBinaryResource() throws Exception {
-        when(mockResourceFactory.getResource(mockTransaction, FedoraId.create(testPath)))
+        when(mockResourceFactory.getResource(mockTransaction, testId))
                 .thenReturn(mockBinary);
         when(mockBinary.hasType(FEDORA_BINARY)).thenReturn(true);
     }
@@ -412,7 +424,6 @@ public class WebACFilterTest {
         assertEquals(SC_FORBIDDEN, response.getStatus());
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testAuthUserNoPermsDelete() throws Exception {
         setupAuthUserNoPerms();
@@ -477,7 +488,6 @@ public class WebACFilterTest {
         assertEquals(SC_FORBIDDEN, response.getStatus());
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testAuthUserReadOnlyDelete() throws Exception {
         setupAuthUserReadOnly();
@@ -497,7 +507,6 @@ public class WebACFilterTest {
         assertEquals(SC_FORBIDDEN, response.getStatus());
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testAuthUserReadAppendPatchSparqlNoContent() throws Exception {
         setupAuthUserReadAppend();
@@ -720,6 +729,7 @@ public class WebACFilterTest {
     public void testAuthUserAppendPutNewChild() throws Exception {
         setupAuthUserAppendOnly();
         // PUT => 200
+        when(mockResourceFactory.getResource(any(), eq(testChildId))).thenThrow(PathNotFoundException.class);
         request.setRequestURI(testChildPath);
         request.setPathInfo(testChildPath);
         request.setMethod("PUT");

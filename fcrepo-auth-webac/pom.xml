@@ -54,6 +54,18 @@
     </dependency>
 
     <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-http-api</artifactId>
+      <version>6.0.0-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-persistence-api</artifactId>
+      <version>6.0.0-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.jena</groupId>
       <artifactId>jena-core</artifactId>
     </dependency>
@@ -71,6 +83,11 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>javax.annotation</groupId>
+      <artifactId>javax.annotation-api</artifactId>
     </dependency>
 
     <!-- test gear -->
@@ -164,17 +181,31 @@
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-http-api</artifactId>
       <version>6.0.0-SNAPSHOT</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-http-api</artifactId>
-      <version>6.0.0-SNAPSHOT</version>
       <scope>test</scope>
       <type>test-jar</type>
     </dependency>
 
-	<dependency>
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-kernel-impl</artifactId>
+      <version>6.0.0-SNAPSHOT</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-persistence-ocfl</artifactId>
+      <version>6.0.0-SNAPSHOT</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.shiro</groupId>
       <artifactId>shiro-core</artifactId>
       <version>${shiro.version}</version>
