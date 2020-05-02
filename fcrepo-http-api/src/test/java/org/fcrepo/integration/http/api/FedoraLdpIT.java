@@ -721,7 +721,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testCheckGetAclResourceHeaders() throws IOException {
         final String aclUri = createAcl();
 
@@ -4434,7 +4433,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPostCreateNonRDFSourceWithAcl() throws IOException {
         final String aclURI = createAcl();
         final String subjectURI = getRandomUniqueId();
@@ -4447,8 +4445,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         checkResponseForMethodWithAcl(createMethod);
     }
 
-@Test
-@Ignore
+    @Test
     public void testPostCreateRDFSourceWithAcl() throws IOException {
         final String aclURI = createAcl();
         final String subjectURI = getRandomUniqueId();
@@ -4462,7 +4459,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
 }
 
     @Test
-@Ignore
     public void testPutCreateNonRDFSourceWithAcl() throws IOException {
         final String aclURI = createAcl();
         final String subjectURI = serverAddress + getRandomUniqueId();
@@ -4475,7 +4471,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPutCreateRDFSourceWithAcl() throws IOException {
         final String aclURI = createAcl();
         final String subjectURI = serverAddress + getRandomUniqueId();

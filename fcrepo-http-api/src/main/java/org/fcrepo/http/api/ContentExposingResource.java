@@ -154,6 +154,8 @@ import org.fcrepo.kernel.api.models.Tombstone;
 import org.fcrepo.kernel.api.models.WebacAcl;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
+import org.fcrepo.kernel.api.services.CreateResourceService;
+import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.fcrepo.kernel.api.services.ManagedPropertiesService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
@@ -221,6 +223,12 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     @Inject
     protected RdfNamespaceRegistry namespaceRegistry;
+
+    @Inject
+    protected CreateResourceService createResourceService;
+
+    @Inject
+    protected DeleteResourceService deleteResourceService;
 
     @Inject
     protected ReplacePropertiesService replacePropertiesService;

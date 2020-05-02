@@ -109,8 +109,6 @@ import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.ExternalContent;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.api.services.CreateResourceService;
-import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.fcrepo.kernel.api.services.FixityService;
 import org.fcrepo.kernel.api.services.ReplaceBinariesService;
 import org.fcrepo.kernel.api.utils.ContentDigest;
@@ -148,12 +146,6 @@ public class FedoraLdp extends ContentExposingResource {
 
     @Inject
     private FedoraHttpConfiguration httpConfiguration;
-
-    @Inject
-    private CreateResourceService createResourceService;
-
-    @Inject
-    private DeleteResourceService deleteResourceService;
 
     @Inject
     protected ReplaceBinariesService replaceBinariesService;

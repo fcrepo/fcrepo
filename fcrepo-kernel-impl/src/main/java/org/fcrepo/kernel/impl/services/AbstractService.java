@@ -218,10 +218,9 @@ public abstract class AbstractService {
      * - Throws an exception if an authorization has both accessTo and accessToClass
      * - Adds a default accessTo target if an authorization has neither accessTo nor accessToClass
      *
-     * @param fedoraId the fedora Id
      * @param inputModel to be checked and updated
      */
-    protected void ensureValidACLAuthorization(final String fedoraId, final Model inputModel) {
+    protected void ensureValidACLAuthorization(final Model inputModel) {
 
         // TODO -- check ACL first
 
@@ -241,7 +240,7 @@ public abstract class AbstractService {
                 throw new ACLAuthorizationConstraintViolationException(
                     String.format(
                             "Using both accessTo and accessToClass within " +
-                                    "a single Authorization is not allowed: {0}.",
+                                    "a single Authorization is not allowed: %s.",
                             subject.toString().substring(subject.toString().lastIndexOf("#"))));
             } else if (!(graph.contains(subject, WEBAC_ACCESS_TO_URI, Node.ANY) ||
                     graph.contains(subject, WEBAC_ACCESS_TO_CLASS_URI, Node.ANY))) {

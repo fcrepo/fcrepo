@@ -53,7 +53,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
@@ -76,7 +75,6 @@ public class FedoraAclIT extends AbstractResourceIT {
         subjectUri = serverAddress + id;
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testCreateAclWithoutBody() throws Exception {
         createObjectAndClose(id);
@@ -91,7 +89,6 @@ public class FedoraAclIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testCreateAclOnAclResource() throws Exception {
         createObjectAndClose(id);
@@ -111,7 +108,6 @@ public class FedoraAclIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testCreateAclOnBinary() throws Exception {
         createDatastream(id, "x", "some content");
@@ -134,7 +130,6 @@ public class FedoraAclIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testPatchAcl() throws Exception {
         createObjectAndClose(id);
@@ -156,7 +151,6 @@ public class FedoraAclIT extends AbstractResourceIT {
 
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testCreateAndRetrieveAcl() throws Exception {
         createObjectAndClose(id);
@@ -175,7 +169,6 @@ public class FedoraAclIT extends AbstractResourceIT {
 
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testPutACLBadRdf() throws IOException {
         createObjectAndClose(id);
@@ -186,7 +179,6 @@ public class FedoraAclIT extends AbstractResourceIT {
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(put));
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testDeleteAcl() throws Exception {
         createObjectAndClose(id);
@@ -219,11 +211,10 @@ public class FedoraAclIT extends AbstractResourceIT {
 
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testGetDefaultRootAcl() throws Exception {
         final String rootAclUri = serverAddress + FCR_ACL;
-        final String rootFedoraUri = "info:fedora/";
+        final String rootFedoraUri = serverAddress;
         final String authzUri = rootFedoraUri + FCR_ACL + "#authz";
         try (final CloseableDataset dataset = getDataset(new HttpGet(rootAclUri))) {
             final DatasetGraph graph = dataset.asDatasetGraph();
@@ -249,7 +240,6 @@ public class FedoraAclIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testDeleteDefaultRootAcl() {
         final String rootAclUri = serverAddress + FCR_ACL;
@@ -257,7 +247,6 @@ public class FedoraAclIT extends AbstractResourceIT {
                 CONFLICT.getStatusCode(), getStatus(new HttpDelete(rootAclUri)));
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testPatchDefaultRootAcl() {
         final String rootAclUri = serverAddress + FCR_ACL;
@@ -265,7 +254,6 @@ public class FedoraAclIT extends AbstractResourceIT {
                 CONFLICT.getStatusCode(), getStatus(new HttpPatch(rootAclUri)));
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testGetUserDefinedDefaultRootAcl() throws Exception {
         System.setProperty(ROOT_AUTHORIZATION_PROPERTY, "./target/test-classes/test-root-authorization.ttl");
@@ -284,7 +272,6 @@ public class FedoraAclIT extends AbstractResourceIT {
             }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testAddModifyDeleteUserDefinedDefaultRootAcl() throws Exception {
         final String rootAclUri = serverAddress + FCR_ACL;
@@ -316,7 +303,6 @@ public class FedoraAclIT extends AbstractResourceIT {
                 NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(rootAclUri)));
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testCreateAclWithBody() throws Exception {
         createObjectAndClose(id);
@@ -352,7 +338,6 @@ public class FedoraAclIT extends AbstractResourceIT {
 
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testCreateAclWithoutAccessToSetsDefaultTarget() throws Exception {
         createObjectAndClose(id);
@@ -387,7 +372,6 @@ public class FedoraAclIT extends AbstractResourceIT {
 
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testCreateAclWithAccessTo() throws Exception {
         createObjectAndClose(id);
@@ -433,7 +417,6 @@ public class FedoraAclIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testCreateAclWithAccessToClass() throws Exception {
         createObjectAndClose(id);
@@ -479,7 +462,6 @@ public class FedoraAclIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testCreateAclWithBothAccessToandAccessToClassIsNotAllowed() throws Exception {
         createObjectAndClose(id);
