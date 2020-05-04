@@ -27,7 +27,6 @@ import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMAT
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -54,7 +53,6 @@ public class FedoraId {
 
     private String resourceId;
     private String fullId;
-    private String parentId;
     private String hashUri;
     private boolean isRepositoryRoot = false;
     private boolean isNonRdfSourceDescription = false;
@@ -65,13 +63,8 @@ public class FedoraId {
     private String mementoDatetimeStr;
     private String pathOnly;
 
-    private final static Set<String> extensions = new HashSet<>();
-    static {
-        extensions.add(FCR_TOMBSTONE);
-        extensions.add(FCR_METADATA);
-        extensions.add(FCR_ACL);
-        extensions.add(FCR_VERSIONS);
-    }
+    private final static Set<Pattern> extensions = Set.of(FCR_TOMBSTONE, FCR_METADATA, FCR_ACL, FCR_VERSIONS)
+            .stream().map(Pattern::compile).collect(Collectors.toSet());
 
     /**
      * Basic constructor.
@@ -382,12 +375,9 @@ public class FedoraId {
             throw new InvalidResourceIdentifierException(String.format("Path is invalid: %s", pathOnly));
         }
         // Ensure we don't have 2 of any of the extensions, ie. info:fedora/object/fcr:acl/fcr:acl, etc.
-        for (final String extension : extensions) {
-            if (this.fullId.contains(extension)) {
-                final Pattern extPattern = Pattern.compile(extension);
-                if (extPattern.matcher(this.fullId).results().count() > 1) {
-                    throw new InvalidResourceIdentifierException(String.format("Path is invalid: %s", pathOnly));
-                }
+        for (final Pattern extension : extensions) {
+            if (extension.matcher(this.fullId).results().count() > 1) {
+                throw new InvalidResourceIdentifierException(String.format("Path is invalid: %s", pathOnly));
             }
         }
     }

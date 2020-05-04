@@ -148,7 +148,7 @@ public class FedoraAcl extends ContentExposingResource {
             throw new BadRequestException("Content-Type (" + requestContentType + ") is invalid. Try text/turtle " +
                                           "or other RDF compatible type.");
         }
-        transaction().commit();
+        transaction().commitIfShortLived();
 
         final FedoraResource aclResource = getFedoraResource(transaction(), aclId);
         addCacheControlHeaders(servletResponse, aclResource, transaction());
@@ -201,7 +201,7 @@ public class FedoraAcl extends ContentExposingResource {
 
             LOGGER.info("PATCH for '{}'", externalPath);
             patchResourcewithSparql(aclResource, requestBody);
-            transaction().commit();
+            transaction().commitIfShortLived();
 
             addCacheControlHeaders(servletResponse, aclResource, transaction());
 
@@ -293,7 +293,7 @@ public class FedoraAcl extends ContentExposingResource {
             }
             throw new PathNotFoundRuntimeException(exc);
         } finally {
-            transaction().commit();
+            transaction().commitIfShortLived();
         }
         return noContent().build();
     }

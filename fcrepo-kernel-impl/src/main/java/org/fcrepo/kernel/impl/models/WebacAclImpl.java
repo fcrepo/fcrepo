@@ -17,7 +17,6 @@
  */
 package org.fcrepo.kernel.impl.models;
 
-import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
@@ -46,17 +45,12 @@ public class WebacAclImpl extends ContainerImpl implements WebacAcl {
 
     @Override
     public FedoraResource getDescribedResource() {
-        final var originalId = FedoraId.create(getFedoraId().getResourceId());
+        final var originalId = FedoraId.create(getFedoraId().getContainingId());
         try {
             return resourceFactory.getResource(tx, originalId);
         } catch (final PathNotFoundException exc) {
             throw new PathNotFoundRuntimeException(exc);
         }
-    }
-
-    @Override
-    public RdfStream getTriples() {
-        return super.getTriples();
     }
 
     @Override
