@@ -49,7 +49,7 @@
     <install.plugin.version>2.5.2</install.plugin.version>
     <jacoco.plugin.version>0.8.2</jacoco.plugin.version>
     <jar.plugin.version>3.1.0</jar.plugin.version>
-    <javadoc.plugin.version>3.0.1</javadoc.plugin.version>
+    <javadoc.plugin.version>3.2.0</javadoc.plugin.version>
     <jxr.plugin.version>3.0.0</jxr.plugin.version>
     <license.plugin.version>3.0</license.plugin.version>
     <project-info-reports.plugin.version>3.0.0</project-info-reports.plugin.version>
@@ -110,6 +110,7 @@
             <linksource>true</linksource>
             <quiet>true</quiet>
             <source>${project.java.source}</source>
+            <detectOfflineLinks>false</detectOfflineLinks>
           </configuration>
           <executions>
             <execution>
