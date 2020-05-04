@@ -19,6 +19,7 @@ package org.fcrepo.kernel.api.identifiers;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
@@ -27,6 +28,8 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -48,7 +51,7 @@ import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
  */
 public class FedoraId {
 
-    private String id;
+    private String resourceId;
     private String fullId;
     private String hashUri;
     private boolean isRepositoryRoot = false;
@@ -60,6 +63,9 @@ public class FedoraId {
     private String mementoDatetimeStr;
     private String pathOnly;
 
+    private final static Set<Pattern> extensions = Set.of(FCR_TOMBSTONE, FCR_METADATA, FCR_ACL, FCR_VERSIONS)
+            .stream().map(Pattern::compile).collect(Collectors.toSet());
+
     /**
      * Basic constructor.
      * @param fullId The full identifier or null if root.
@@ -70,7 +76,7 @@ public class FedoraId {
         this.fullId = this.fullId.replaceAll("/+$", "");
         // Carry the path of the request for any exceptions.
         this.pathOnly = this.fullId.substring(FEDORA_ID_PREFIX.length());
-
+        checkForInvalidPath();
         processIdentifier();
     }
 
@@ -149,11 +155,25 @@ public class FedoraId {
     }
 
     /**
-     * Return the ID of the base resource for this request.
+     * Return the ID of the base resource that exists as a separate resource.
      * @return the shorten id.
      */
     public String getResourceId() {
-        return id;
+        if (isNonRdfSourceDescription) {
+            return resourceId + "/" + FCR_METADATA;
+        } else if (isAcl) {
+            return resourceId + "/" + FCR_ACL;
+        }
+        return resourceId;
+    }
+
+    /**
+     * For elements that exist as separate resources but also are lifecycle tied to a resource (fcr:acl and
+     * fcr:metadata), return the ID of the "containing" resource.
+     * @return the containing resource id.
+     */
+    public String getContainingId() {
+        return resourceId;
     }
 
     /**
@@ -189,17 +209,6 @@ public class FedoraId {
     }
 
     /**
-     * Descriptions are needed to retrieve from the persistence, but otherwise is just an addendum to the binary.
-     * @return The description ID or null if not a description.
-     */
-    public String getDescriptionId() {
-        if (isDescription()) {
-            return getResourceId() + "/" + FCR_METADATA;
-        }
-        return null;
-    }
-
-    /**
      * Resolve the string or strings against this ID to create a new one.
      *
      * A string starting with a slash (/) will resolve from the resource ID, a string not starting with a slash
@@ -219,7 +228,8 @@ public class FedoraId {
         }
         final String[] parts;
         if (addition[0].startsWith("/")) {
-            parts = Stream.of(new String[]{this.getResourceId()}, addition).flatMap(Stream::of).toArray(String[]::new);
+            parts = Stream.of(new String[]{this.getContainingId()}, addition).flatMap(Stream::of)
+                    .toArray(String[]::new);
             return FedoraId.create(parts);
         }
         parts = Stream.of(new String[]{this.getFullId()}, addition).flatMap(Stream::of).toArray(String[]::new);
@@ -295,7 +305,7 @@ public class FedoraId {
         String processID = this.fullId;
         if (processID.equals(FEDORA_ID_PREFIX)) {
             this.isRepositoryRoot = true;
-            this.id = this.fullId;
+            this.resourceId = this.fullId;
             // Root has no other possible endpoints, so short circuit out.
             return;
         }
@@ -347,6 +357,28 @@ public class FedoraId {
         if (processID.endsWith("/")) {
             processID = processID.replaceAll("/+$", "");
         }
-        this.id = processID;
+        this.resourceId = processID;
+    }
+
+    /**
+     * Check for obvious path errors.
+     */
+    private void checkForInvalidPath() {
+        // Check for combinations of endpoints not allowed.
+        if (
+            // ID contains fcr:acl or fcr:tombstone AND fcr:metadata or fcr:versions
+            ((this.fullId.contains(FCR_ACL) || this.fullId.contains(FCR_TOMBSTONE)) &&
+                (this.fullId.contains(FCR_METADATA) || this.fullId.contains(FCR_VERSIONS))) ||
+            // or ID contains fcr:acl AND fcr:tombstone
+            (this.fullId.contains(FCR_TOMBSTONE) && this.fullId.contains(FCR_ACL))
+        ) {
+            throw new InvalidResourceIdentifierException(String.format("Path is invalid: %s", pathOnly));
+        }
+        // Ensure we don't have 2 of any of the extensions, ie. info:fedora/object/fcr:acl/fcr:acl, etc.
+        for (final Pattern extension : extensions) {
+            if (extension.matcher(this.fullId).results().count() > 1) {
+                throw new InvalidResourceIdentifierException(String.format("Path is invalid: %s", pathOnly));
+            }
+        }
     }
 }

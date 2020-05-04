@@ -59,7 +59,7 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
 
             ensureValidMemberRelation(inputModel);
 
-            ensureValidACLAuthorization(fedoraId.getFullId(), inputModel);
+            ensureValidACLAuthorization(inputModel);
 
             checkForSmtsLdpTypes(inputModel);
 

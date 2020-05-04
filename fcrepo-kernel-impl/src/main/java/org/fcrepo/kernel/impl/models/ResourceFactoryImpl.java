@@ -40,6 +40,7 @@ import java.time.Instant;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_WEBAC_ACL_URI;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -96,8 +97,9 @@ public class ResourceFactoryImpl implements ResourceFactory {
             // Root always exists.
             return true;
         }
-        if (!fedoraId.isMemento()) {
-            // containment index doesn't handle versions, so don't bother checking for them.
+        if (!(fedoraId.isMemento() || fedoraId.isAcl())) {
+            // containment index doesn't handle versions and only tells us if the resource (not acl) is there,
+            // so don't bother checking for them.
             final String transactionId = transaction == null ? null : transaction.getId();
             return containmentIndex.resourceExists(transactionId, fedoraId);
         } else {
@@ -105,9 +107,10 @@ public class ResourceFactoryImpl implements ResourceFactory {
             final PersistentStorageSession psSession = getSession(transaction);
 
             try {
-                final String id = fedoraId.isDescription() ? fedoraId.getDescriptionId() : fedoraId.getResourceId();
-                psSession.getHeaders(id, fedoraId.getMementoInstant());
-                return true;
+                // Resource ID for metadata or ACL contains their individual endopoints (ie. fcr:metadata, fcr:acl)
+                final String id = fedoraId.getResourceId();
+                final ResourceHeaders headers = psSession.getHeaders(id, fedoraId.getMementoInstant());
+                return !headers.isDeleted();
             } catch (final PersistentItemNotFoundException e) {
                 // Object doesn't exist.
                 return false;
@@ -145,6 +148,9 @@ public class ResourceFactoryImpl implements ResourceFactory {
         if (FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI.equals(ixModel)) {
             return NonRdfSourceDescriptionImpl.class;
         }
+        if (FEDORA_WEBAC_ACL_URI.equals(ixModel)) {
+            return WebacAclImpl.class;
+        }
         // TODO add the rest of the types
         throw new ResourceTypeException("Could not identify the resource type for interaction model " + ixModel);
     }
@@ -161,14 +167,14 @@ public class ResourceFactoryImpl implements ResourceFactory {
                                                final FedoraId identifier)
             throws PathNotFoundException {
         try {
-            // For descriptions we need the fcr:metadata part so we get the description ID.
-            final String id = identifier.isDescription() ? identifier.getDescriptionId() : identifier.getResourceId();
+            // For descriptions and ACLs we need the actual endpoint.
+            final String id = identifier.getResourceId();
             final var psSession = getSession(transaction);
             final Instant versionDateTime = identifier.isMemento() ? identifier.getMementoInstant() : null;
             final var headers = psSession.getHeaders(id, versionDateTime);
 
             if (headers.isDeleted()) {
-                final var rootId = FedoraId.create(identifier.getResourceId());
+                final var rootId = FedoraId.create(identifier.getContainingId());
                 final var tombstone = new TombstoneImpl(rootId, transaction, persistentStorageSessionManager,
                         this);
                 tombstone.setLastModifiedDate(headers.getLastModifiedDate());

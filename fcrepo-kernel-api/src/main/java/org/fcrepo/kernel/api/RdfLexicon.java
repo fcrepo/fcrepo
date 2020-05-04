@@ -42,6 +42,8 @@ public final class RdfLexicon {
     **/
     public static final String REPOSITORY_NAMESPACE = "http://fedora.info/definitions/v4/repository#";
 
+    public static final String REPOSITORY_WEBAC_NAMESPACE = "http://fedora.info/definitions/v4/webac#";
+
     public static final String FCREPO_API_NAMESPACE = "http://fedora.info/definitions/fcrepo#";
 
     public static final String ACTIVITY_STREAMS_NAMESPACE = "https://www.w3.org/ns/activitystreams#";
@@ -217,6 +219,8 @@ public final class RdfLexicon {
     public static final String WEBAC_ACCESS_TO_CLASS = WEBAC_NAMESPACE_VALUE + "accessToClass";
 
     public static final Property WEBAC_ACCESS_TO_PROPERTY = createProperty(WEBAC_ACCESS_TO);
+
+    public static final String FEDORA_WEBAC_ACL_URI = REPOSITORY_WEBAC_NAMESPACE + "Acl";
 
     // Properties which are managed by the server but are not from managed namespaces
     private static final Set<Property> serverManagedProperties;

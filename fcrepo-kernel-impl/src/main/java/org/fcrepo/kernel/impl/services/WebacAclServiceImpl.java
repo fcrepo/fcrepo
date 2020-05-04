@@ -17,9 +17,27 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_WEBAC_ACL_URI;
+import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
+
+import javax.inject.Inject;
+
+import org.apache.jena.rdf.model.Model;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.WebacAcl;
+import org.fcrepo.kernel.api.operations.RdfSourceOperation;
+import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.api.services.WebacAclService;
+import org.fcrepo.kernel.impl.models.WebacAclImpl;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.springframework.stereotype.Component;
 
 /**
@@ -30,18 +48,46 @@ import org.springframework.stereotype.Component;
 @Component
 public class WebacAclServiceImpl extends AbstractService implements WebacAclService {
 
+    @Inject
+    private PersistentStorageSessionManager psManager;
+
+    @Inject
+    private ResourceFactory resourceFactory;
+
+    @Inject
+    private RdfSourceOperationFactory rdfSourceOperationFactory;
+
     @Override
-    public boolean exists(final Transaction transaction, final String path) {
-        return false;
+    public WebacAcl find(final Transaction transaction, final FedoraId fedoraId) {
+        try {
+            return resourceFactory.getResource(transaction, fedoraId, WebacAclImpl.class);
+        } catch (final PathNotFoundException exc) {
+            throw new PathNotFoundRuntimeException(exc);
+        }
     }
 
     @Override
-    public WebacAcl find(final Transaction transaction, final String path) {
-        return null;
+    public void create(final Transaction transaction, final FedoraId fedoraId, final String userPrincipal,
+                                 final Model model) {
+        final PersistentStorageSession pSession = this.psManager.getSession(transaction.getId());
+
+        ensureValidACLAuthorization(model);
+
+        final RdfStream stream = fromModel(model.getResource(fedoraId.getFullId()).asNode(), model);
+
+        final RdfSourceOperation createOp = rdfSourceOperationFactory
+                .createBuilder(fedoraId.getResourceId(), FEDORA_WEBAC_ACL_URI)
+                .parentId(fedoraId.getContainingId())
+                .triples(stream)
+                .relaxedProperties(model)
+                .userPrincipal(userPrincipal)
+                .build();
+        try {
+            pSession.persist(createOp);
+            recordEvent(transaction.getId(), fedoraId, createOp);
+        } catch (final PersistentStorageException exc) {
+            throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
+        }
     }
 
-    @Override
-    public WebacAcl findOrCreate(final Transaction transaction, final String path) {
-        return null;
-    }
 }

@@ -38,7 +38,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -46,6 +45,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
@@ -74,11 +74,12 @@ import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.WebacAcl;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.fcrepo.kernel.api.services.WebacAclService;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -105,9 +106,6 @@ public class FedoraAcl extends ContentExposingResource {
     @PathParam("path") protected String externalPath;
 
     @Inject
-    private DeleteResourceService deleteResourceService;
-
-    @Inject
     private WebacAclService webacAclService;
 
     /**
@@ -130,37 +128,32 @@ public class FedoraAcl extends ContentExposingResource {
         if (resource().isAcl() || resource().isMemento()) {
             throw new BadRequestException("ACL resource creation is not allowed for resource " + resource().getId());
         }
+        LOGGER.info("PUT acl resource '{}'", externalPath());
 
-        final boolean created;
-        final FedoraResource aclResource;
-
-        final String path = toPath(translator(), externalPath);
-        LOGGER.info("PUT acl resource '{}'", externalPath);
-
-        final var transaction = transaction();
-
-        aclResource = webacAclService.findOrCreate(transaction, path);
-        created = aclResource.isNew();
-        final FedoraId aclId = aclResource.getFedoraId();
+        final FedoraId aclId = identifierConverter().pathToInternalId(externalPath()).resolve(FCR_ACL);
+        final boolean exists = resourceFactory.doesResourceExist(transaction(), aclId);
 
         final MediaType contentType =
             requestContentType == null ? RDFMediaType.TURTLE_TYPE : valueOf(getSimpleContentType(requestContentType));
         if (isRdfContentType(contentType.toString())) {
 
-            // TODO: confirm this is correct logic for ACL's
-            final Model model = httpRdfService.bodyToInternalModel(externalPath() + "/fcr:acl",
-                    requestBodyStream, requestContentType, identifierConverter());
-
-            replacePropertiesService.perform(transaction.getId(), getUserPrincipal(), aclId, model);
+            final Model model = httpRdfService.bodyToInternalModel(aclId.getFullId(),
+                    requestBodyStream, contentType, identifierConverter());
+            if (exists) {
+                replacePropertiesService.perform(transaction().getId(), getUserPrincipal(), aclId, model);
+            } else {
+                webacAclService.create(transaction(), aclId, getUserPrincipal(), model);
+            }
         } else {
             throw new BadRequestException("Content-Type (" + requestContentType + ") is invalid. Try text/turtle " +
                                           "or other RDF compatible type.");
         }
-        transaction.commit();
+        transaction().commitIfShortLived();
 
-        addCacheControlHeaders(servletResponse, aclResource, transaction);
+        final FedoraResource aclResource = getFedoraResource(transaction(), aclId);
+        addCacheControlHeaders(servletResponse, aclResource, transaction());
         final URI location = getUri(aclResource);
-        if (created) {
+        if (!exists) {
             return created(location).build();
         } else {
             return noContent().location(location).build();
@@ -184,15 +177,17 @@ public class FedoraAcl extends ContentExposingResource {
             throw new BadRequestException("SPARQL-UPDATE requests must have content!");
         }
 
-        final FedoraResource aclResource = resource().getAcl();
-
-        if (aclResource == null) {
-            if (resource().hasType(FEDORA_REPOSITORY_ROOT)) {
+        final FedoraId originalId = identifierConverter().pathToInternalId(externalPath());
+        final FedoraId aclId = originalId.resolve(FCR_ACL);
+        final FedoraResource aclResource;
+        try {
+             aclResource = resourceFactory.getResource(transaction(), aclId);
+        } catch (final PathNotFoundException exc) {
+            if (originalId.isRepositoryRoot()) {
                 throw new ClientErrorException("The default root ACL is system generated and cannot be modified. " +
                         "To override the default root ACL you must PUT a user-defined ACL to this endpoint.",
                         CONFLICT);
             }
-
             throw new ItemNotFoundException("not found");
         }
 
@@ -206,7 +201,7 @@ public class FedoraAcl extends ContentExposingResource {
 
             LOGGER.info("PATCH for '{}'", externalPath);
             patchResourcewithSparql(aclResource, requestBody);
-            transaction().commit();
+            transaction().commitIfShortLived();
 
             addCacheControlHeaders(servletResponse, aclResource, transaction());
 
@@ -243,25 +238,29 @@ public class FedoraAcl extends ContentExposingResource {
     public Response getResource()
             throws IOException, ItemNotFoundException {
 
-        LOGGER.info("GET resource '{}'", externalPath);
+        LOGGER.info("GET resource '{}'", externalPath());
 
-        final FedoraResource aclResource = resource().getAcl();
+        final FedoraId originalId = identifierConverter().pathToInternalId(externalPath());
+        final FedoraId aclId = originalId.resolve(FCR_ACL);
+        final boolean exists = resourceFactory.doesResourceExist(transaction(), aclId);
 
-        if (aclResource == null) {
-            if (resource().hasType(FEDORA_REPOSITORY_ROOT)) {
-                final String resourceUri = getUri(resource()).toString();
-                final String aclUri = resourceUri + (resourceUri.endsWith("/") ? "" : "/") + FCR_ACL;
+        if (!exists) {
+            if (originalId.isRepositoryRoot()) {
+                final String aclUri = identifierConverter().toExternalId(aclId.getFullId());
 
                 final RdfStream defaultRdfStream = DefaultRdfStream.fromModel(createResource(aclUri).asNode(),
                     getDefaultAcl(aclUri));
-                final RdfNamespacedStream output = new RdfNamespacedStream(defaultRdfStream,
-                    namespaceRegistry.getNamespaces());
+                final RdfStream rdfStream = httpRdfService.bodyToExternalStream(aclUri,
+                        defaultRdfStream, identifierConverter());
+                final var output = new RdfNamespacedStream(
+                        rdfStream, namespaceRegistry.getNamespaces());
                 return ok(output).build();
             }
 
             throw new ItemNotFoundException(String.format("No ACL found at %s", externalPath));
         }
 
+        final WebacAcl aclResource = webacAclService.find(transaction(), aclId);
         checkCacheControlHeaders(request, servletResponse, aclResource, transaction());
 
         LOGGER.info("GET resource '{}'", externalPath);
@@ -281,24 +280,22 @@ public class FedoraAcl extends ContentExposingResource {
         hasRestrictedPath(externalPath);
         LOGGER.info("Delete resource '{}'", externalPath);
 
-        final FedoraResource aclResource = resource().getAcl();
-        if (aclResource != null) {
+        final FedoraId originalId = identifierConverter().pathToInternalId(externalPath());
+        final FedoraId aclId = originalId.resolve(FCR_ACL);
+        try {
+            final var aclResource = resourceFactory.getResource(transaction(), aclId);
             deleteResourceService.perform(transaction(), aclResource, getUserPrincipal());
-        }
-        transaction().commit();
-
-        if (aclResource == null) {
-            if (resource().hasType(FEDORA_REPOSITORY_ROOT)) {
+        } catch (final PathNotFoundException exc) {
+            if (originalId.isRepositoryRoot()) {
                 throw new ClientErrorException("The default root ACL is system generated and cannot be deleted. " +
                         "To override the default root ACL you must PUT a user-defined ACL to this endpoint.",
                         CONFLICT);
             }
-
-            throw new ItemNotFoundException("not found");
+            throw new PathNotFoundRuntimeException(exc);
+        } finally {
+            transaction().commitIfShortLived();
         }
-
         return noContent().build();
-
     }
 
     /**

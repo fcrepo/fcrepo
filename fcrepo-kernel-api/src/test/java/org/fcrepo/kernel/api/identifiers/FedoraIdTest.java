@@ -121,11 +121,10 @@ public class FedoraIdTest {
         final FedoraId fedoraID = FedoraId.create(testID);
     }
 
-    @Test
+    @Test(expected = InvalidResourceIdentifierException.class)
     public void testMetadataAcl() throws Exception {
         final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA + "/" + FCR_ACL;
         final FedoraId fedoraID = FedoraId.create(testID);
-        assertResource(fedoraID, Arrays.asList("ACL", "METADATA"), testID, FEDORA_ID_PREFIX + "/first-object");
     }
 
 
@@ -188,7 +187,7 @@ public class FedoraIdTest {
         assertEquals("hashURI", fedoraID.getHashUri());
     }
 
-    @Test
+    @Test(expected = InvalidResourceIdentifierException.class)
     public void testMetadataAclWithHash() throws Exception {
         final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA + "/" + FCR_ACL + "#hashURI";
         final FedoraId fedoraID = FedoraId.create(testID);
@@ -338,6 +337,11 @@ public class FedoraIdTest {
         fedoraId.resolve("");
     }
 
+    @Test(expected = InvalidResourceIdentifierException.class)
+    public void testDoubleAcl() {
+        final FedoraId fedoraId = FedoraId.create("core-object/" + FCR_ACL).resolve(FCR_ACL);
+    }
+
 
     /**
      * Utility to test a FedoraId against expectations.
@@ -390,6 +394,6 @@ public class FedoraIdTest {
             assertFalse(fedoraID.isTimemap());
         }
         assertEquals(fullID, fedoraID.getFullId());
-        assertEquals(shortID, fedoraID.getResourceId());
+        assertEquals(shortID, fedoraID.getContainingId());
     }
 }

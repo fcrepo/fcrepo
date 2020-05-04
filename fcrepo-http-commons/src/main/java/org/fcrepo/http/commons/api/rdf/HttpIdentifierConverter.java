@@ -116,9 +116,15 @@ public class HttpIdentifierConverter {
             // If it starts with our prefix, strip the prefix and any leading slashes and use it as the path
             // part of the URI.
             final String path = fedoraId.substring(FEDORA_ID_PREFIX.length()).replaceFirst("\\/", "");
-            final String[] values = { path };
-            // Need to pass as Array or second arg is ignored. Second arg is DON'T encode slashes
-            return uriBuilder().build(values, false).toString();
+            final UriBuilder uri = uriBuilder();
+            if (path.contains("#")) {
+                final String[] split = path.split("#", 2);
+                uri.resolveTemplate("path", split[0], false);
+                uri.fragment(split[1]);
+            } else {
+                uri.resolveTemplate("path", path, false);
+            }
+            return uri.build().toString();
         }
         throw new IllegalArgumentException("Cannot translate IDs without our prefix");
     }

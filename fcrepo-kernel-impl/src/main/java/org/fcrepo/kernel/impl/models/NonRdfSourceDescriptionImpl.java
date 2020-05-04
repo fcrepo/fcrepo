@@ -58,13 +58,13 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
 
     @Override
     public String getId() {
-        return getFedoraId().getDescriptionId();
+        return getFedoraId().getResourceId();
     }
 
     @Override
     public FedoraResource getDescribedResource() {
         // Get a FedoraId for the binary
-        final FedoraId describedId = FedoraId.create(this.getFedoraId().getResourceId());
+        final FedoraId describedId = FedoraId.create(this.getFedoraId().getContainingId());
         try {
             return this.resourceFactory.getResource(tx, describedId);
         } catch (final PathNotFoundException e) {
