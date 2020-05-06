@@ -16,6 +16,7 @@
     <osgi.import.packages>
         org.fcrepo.http.commons.*,
         org.fcrepo.kernel.api.*,
+        org.fcrepo.search.api.*,
 
         javax.annotation,
         javax.inject,
@@ -55,6 +56,18 @@
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-kernel-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-search-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-search-impl</artifactId>
       <version>${project.version}</version>
     </dependency>
 
