@@ -26,15 +26,6 @@ before_install:
  - if [ ! -z "$GPG_SECRET_KEYS" ]; then echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import; fi
  - if [ ! -z "$GPG_OWNERTRUST" ]; then echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust; fi
 
-deploy:
-  -
-    provider: script
-    script: .travis/deploy.sh
-    skip_cleanup: true
-    on:
-      repo: fcrepo4/fcrepo4
-      branch: master
-
 # Default installation command is 
 # mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
 # this is what we test as our build phase so skip it here.
@@ -58,6 +49,15 @@ before_script:
     
 script:
  - ./mvnw --settings .travis/settings.xml -Dgpg.skip -Dfcrepo.streaming.parallel=true install -B -V
+
+deploy:
+ -
+   provider: script
+   script: .travis/deploy.sh
+   skip_cleanup: true
+   on:
+     repo: fcrepo4/fcrepo4
+     branch: master
 
 notifications:
   irc: "irc.freenode.org#fcrepo"
