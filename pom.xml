@@ -76,7 +76,6 @@
     <!-- default properties that can be altered on the command line -->
     <fcrepo.test.context.path />
   </properties>
-
   <modules>
     <module>fcrepo-kernel-api</module>
     <module>fcrepo-kernel-impl</module>
