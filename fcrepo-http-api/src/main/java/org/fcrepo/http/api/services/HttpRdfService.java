@@ -177,7 +177,13 @@ public class HttpRdfService {
             return null;
         }
 
-        final Lang format = contentTypeToLang(contentType.toString());
+        // The 'contentTypeToLang()' method will not accept 'charset' parameters
+        String contentTypeWithoutCharset = contentType.toString();
+        if (contentType.getParameters().containsKey("charset")) {
+            contentTypeWithoutCharset = contentType.getType() + "/" + contentType.getSubtype();
+        }
+
+        final Lang format = contentTypeToLang(contentTypeWithoutCharset);
         try {
             final Model inputModel = createDefaultModel();
             inputModel.read(requestBodyStream, extResourceId, format.getName().toUpperCase());

@@ -705,6 +705,18 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testCreateContainerWithCharset() throws IOException {
+        final String id = getRandomUniqueId();
+
+        final HttpPut put = putObjMethod(id, "text/turtle; charset=ISO-8859-1", "<> <http://test.org/title> 'hello'");
+        put.setHeader(LINK, BASIC_CONTAINER_LINK_HEADER);
+        try (final CloseableHttpResponse response = execute(put)) {
+            assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
+
+        }
+    }
+
+    @Test
     public void testGetRDFSourceWithPreferMinimal() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
