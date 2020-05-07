@@ -496,7 +496,6 @@ public class OCFLPersistentStorageSessionTest {
     public void rollbackFailsWhenAlreadyCommitted() throws Exception {
         mockMappingAndIndex(mintOCFLObjectId(RESOURCE_ID), RESOURCE_ID, ROOT_OBJECT_ID, mapping);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
-        objectSessionFactory.setAutoVersioningEnabled(true);
 
         final PersistentStorageSession session1 = createSession(index, objectSessionFactory);
         //persist the operation
