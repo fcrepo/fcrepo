@@ -52,6 +52,7 @@
     <javadoc.plugin.version>3.2.0</javadoc.plugin.version>
     <jxr.plugin.version>3.0.0</jxr.plugin.version>
     <license.plugin.version>3.0</license.plugin.version>
+    <nexus-staging.plugin.version>1.6.8</nexus-staging.plugin.version>
     <project-info-reports.plugin.version>3.0.0</project-info-reports.plugin.version>
     <release.plugin.version>2.5.2</release.plugin.version>
     <remote-resources.plugin.version>1.5</remote-resources.plugin.version>
@@ -371,7 +372,7 @@
             <execution>
               <id>attach-sources</id>
               <goals>
-                <goal>jar</goal>
+                <goal>jar-no-fork</goal>
               </goals>
             </execution>
           </executions>
@@ -381,6 +382,17 @@
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
           <version>${jacoco.plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.sonatype.plugins</groupId>
+          <artifactId>nexus-staging-maven-plugin</artifactId>
+          <version>${nexus-staging.plugin.version}</version>
+          <extensions>true</extensions>
+          <configuration>
+            <serverId>sonatype-nexus-snapshots</serverId>
+            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>
