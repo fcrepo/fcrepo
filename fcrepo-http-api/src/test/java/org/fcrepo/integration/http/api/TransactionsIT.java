@@ -37,7 +37,6 @@ import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_EXPIRE
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.fcrepo.http.commons.session.TransactionConstants.EXPIRES_RFC_1123_FORMATTER;
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_COMMIT_REL;
-import static org.fcrepo.http.commons.session.TransactionConstants.TX_COMMIT_SUFFIX;
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_ENDPOINT_REL;
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_PREFIX;
 import static org.fcrepo.kernel.impl.TransactionImpl.TIMEOUT_SYSTEM_PROPERTY;
@@ -107,7 +106,7 @@ public class TransactionsIT extends AbstractResourceIT {
             assertNotNull("Expected Location header to send us to root node path within the transaction",
                     txId);
 
-            final String commitUri = serverAddress + TX_PREFIX + txId + TX_COMMIT_SUFFIX;
+            final String commitUri = serverAddress + TX_PREFIX + txId;
             checkForLinkHeader(response, commitUri, TX_COMMIT_REL);
 
             assertHeaderIsRfc1123Date(response, "Expires");
@@ -223,7 +222,7 @@ public class TransactionsIT extends AbstractResourceIT {
         assertEquals("Expected to not find our object within the scope of the transaction",
                 NOT_FOUND.getStatusCode(), getStatus(new HttpGet(datasetLoc)));
         /* and commit */
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation + TX_COMMIT_SUFFIX)));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation)));
 
         /* fetch the object-in-tx outside of the tx after it has been committed */
         try (CloseableDataset dataset = getDataset(new HttpGet(datasetLoc))) {
@@ -285,7 +284,7 @@ public class TransactionsIT extends AbstractResourceIT {
         }
 
         /* commit */
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation + TX_COMMIT_SUFFIX)));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation)));
 
         /* it must exist after commit */
         try (final CloseableDataset dataset = getDataset(new HttpGet(serverAddress + objectInTxCommit))) {
@@ -428,7 +427,7 @@ public class TransactionsIT extends AbstractResourceIT {
         }
 
         // Commit the transaction containing deletion
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation + TX_COMMIT_SUFFIX)));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation)));
     }
 
     /**
@@ -483,7 +482,7 @@ public class TransactionsIT extends AbstractResourceIT {
         final String txLocation = createTransaction();
 
         // Commit tx
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation + TX_COMMIT_SUFFIX)));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation)));
 
         // Attempt to create object inside completed tx
         final HttpPost postNew = new HttpPost(serverAddress);
@@ -508,7 +507,7 @@ public class TransactionsIT extends AbstractResourceIT {
         assertEquals(OK.getStatusCode(), getStatus(addTxTo(new HttpGet(newLocation), uuid)));
 
         // Commit tx
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation + TX_COMMIT_SUFFIX)));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation)));
 
         // Retrieve outside of tx
         assertEquals(OK.getStatusCode(), getStatus(new HttpGet(newLocation)));
