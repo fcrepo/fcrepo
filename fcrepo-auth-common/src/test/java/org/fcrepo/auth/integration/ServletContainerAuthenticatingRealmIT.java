@@ -24,7 +24,6 @@ import java.io.IOException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.message.AbstractHttpMessage;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -45,7 +44,6 @@ public class ServletContainerAuthenticatingRealmIT extends AbstractResourceIT {
         method.setHeader("Authorization", basic);
     }
 
-    @Ignore //TODO Fix this test
    @Test
     public void testUserWithoutRoles() throws IOException {
         // make sure this doesn't cause Shiro to explode
