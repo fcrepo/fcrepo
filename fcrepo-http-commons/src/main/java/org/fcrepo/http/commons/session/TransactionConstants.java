@@ -47,7 +47,5 @@ public class TransactionConstants {
 
     public static final String TX_COMMIT_REL = TX_NS + "commitEndpoint";
 
-    public static final String TX_COMMIT_SUFFIX = "/commit";
-
     public static final DateTimeFormatter EXPIRES_RFC_1123_FORMATTER = RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
 }

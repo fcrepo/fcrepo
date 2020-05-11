@@ -24,7 +24,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSE
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_EXPIRES_HEADER;
 import static org.fcrepo.http.commons.session.TransactionConstants.EXPIRES_RFC_1123_FORMATTER;
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_COMMIT_REL;
-import static org.fcrepo.http.commons.session.TransactionConstants.TX_COMMIT_SUFFIX;
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_PREFIX;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -138,7 +137,7 @@ public class Transactions extends FedoraBaseResource {
         final var res = created(new URI(externalId));
         res.expires(from(tx.getExpires()));
 
-        final var commitUri = URI.create(externalId + TX_COMMIT_SUFFIX);
+        final var commitUri = URI.create(externalId);
         final var commitLink = Link.fromUri(commitUri).rel(TX_COMMIT_REL).build();
         res.links(commitLink);
 
@@ -152,7 +151,7 @@ public class Transactions extends FedoraBaseResource {
      * @return 204
      */
     @PUT
-    @Path("{transactionId}/commit")
+    @Path("{transactionId}")
     public Response commit(@PathParam("transactionId") final String txId) {
         try {
             final Transaction transaction = txManager.get(txId);
