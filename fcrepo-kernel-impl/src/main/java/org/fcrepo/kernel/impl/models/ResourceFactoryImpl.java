@@ -127,9 +127,17 @@ public class ResourceFactoryImpl implements ResourceFactory {
     }
 
     @Override
-    public String getContainerId(final Transaction transaction, final FedoraId resourceId) {
+    public FedoraResource getContainer(final Transaction transaction, final FedoraId resourceId) {
         final String txId = (transaction == null ? null : transaction.getId());
-        return containmentIndex.getContainedBy(txId, resourceId);
+        final String containerId = containmentIndex.getContainedBy(txId, resourceId);
+        if (containerId == null) {
+            return null;
+        }
+        try {
+            return getResource(transaction, FedoraId.create(containerId));
+        } catch (final PathNotFoundException exc) {
+            return null;
+        }
     }
 
     /**

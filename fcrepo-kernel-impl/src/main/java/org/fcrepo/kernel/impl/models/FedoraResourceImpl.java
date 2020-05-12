@@ -110,15 +110,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public FedoraResource getContainer() {
-        final String containerId = resourceFactory.getContainerId(tx, fedoraID);
-        if (containerId == null) {
-            return null;
-        }
-        try {
-            return resourceFactory.getResource(tx, FedoraId.create(containerId));
-        } catch (final PathNotFoundException exc) {
-            return null;
-        }
+        return resourceFactory.getContainer(tx, fedoraID);
     }
 
     @Override

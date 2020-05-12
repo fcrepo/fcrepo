@@ -47,6 +47,7 @@ import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrincipal;
+import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
@@ -85,6 +86,9 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
 
     @Inject
     private ResourceFactory resourceFactory;
+
+    @Inject
+    private ContainmentIndex containmentIndex;
 
     private Transaction transaction() {
         final String txId = request.getHeader(ATOMIC_ID_HEADER);
@@ -231,25 +235,22 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     }
 
     private FedoraResource getResourceOrParentFromPath(final FedoraId fedoraId) {
-        FedoraResource resource = null;
-        log.debug("Attempting to get FedoraResource for {}", fedoraId.getFullIdPath());
         try {
-            resource = resource(fedoraId);
-            log.debug("Got FedoraResource for {}", fedoraId.getFullIdPath());
-        } catch (final PathNotFoundException e) {
-            log.debug("Path {} does not exist", fedoraId.getFullIdPath());
-            // go up the path looking for a node that exists
-            if (fedoraId.getFullId().length() > 1) {
-                final int lastSlash = fedoraId.getFullId().lastIndexOf("/");
-                final int end = lastSlash > 0 ? lastSlash : lastSlash + 1;
-                resource = getResourceOrParentFromPath(FedoraId.create(fedoraId.getFullId().substring(0, end)));
+            log.debug("Testing FedoraResource for {}", fedoraId.getFullIdPath());
+            return this.resourceFactory.getResource(transaction(), fedoraId);
+        } catch (final PathNotFoundException exc) {
+            log.debug("Resource {} not found getting container", fedoraId.getFullIdPath());
+            final String txID = transaction() == null ? null : transaction().getId();
+            final FedoraId containerId = containmentIndex.getContainerIdByPath(txID, fedoraId);
+            log.debug("Attempting to get FedoraResource for {}", fedoraId.getFullIdPath());
+            try {
+                log.debug("Got FedoraResource for {}", containerId.getFullIdPath());
+                return this.resourceFactory.getResource(transaction(), containerId);
+            } catch (final PathNotFoundException exc2) {
+                log.debug("Path {} does not exist, but we should never end up here.", containerId.getFullIdPath());
+                return null;
             }
         }
-        return resource;
-    }
-
-    private FedoraResource resource(final FedoraId resourceId) throws PathNotFoundException {
-        return this.resourceFactory.getResource(transaction(), resourceId);
     }
 
 }

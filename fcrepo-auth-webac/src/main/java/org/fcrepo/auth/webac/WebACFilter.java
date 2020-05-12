@@ -69,7 +69,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -141,9 +140,6 @@ public class WebACFilter extends RequestContextFilter {
 
     private static Set<String> rdfContentTypes = Set.of(contentTypeTurtle, contentTypeJSONLD, contentTypeN3,
             contentTypeRDFXML, contentTypeNTriples);
-
-    private static Predicate<FedoraResource> isBinaryOrDescription = r -> r.getTypes().stream().map(URI::toString)
-            .anyMatch(t -> t.equals(NON_RDF_SOURCE.toString()) || t.equals(FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI));
 
     /**
      * Add URIs to collect permissions information for.
@@ -341,7 +337,7 @@ public class WebACFilter extends RequestContextFilter {
                 return true;
             }
             if (resource != null) {
-                if (isBinaryOrDescription.test(resource)) {
+                if (isBinaryOrDescription(resource)) {
                     // LDP-NR
                     // user without the acl:Write permission cannot POST to binaries
                     log.debug("POST prohibited to binary resource without {} permission", toWrite);
@@ -655,6 +651,16 @@ public class WebACFilter extends RequestContextFilter {
                         .isURI())
                 .map(Triple::getObject).map(Node::getURI)
                 .findFirst().map(URI::create).orElse(null);
+    }
+
+    /**
+     * Determine if the resource is a binary or a binary description.
+     * @param resource the fedora resource to check
+     * @return true if a binary or binary description.
+     */
+    private static boolean isBinaryOrDescription(final FedoraResource resource) {
+        return resource.getTypes().stream().map(URI::toString)
+                .anyMatch(t -> t.equals(NON_RDF_SOURCE.toString()) || t.equals(FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI));
     }
 
 }
