@@ -62,8 +62,8 @@ In addition, there are weekly [technical calls](https://wiki.duraspace.org/displ
 ## Building and running Fedora from source
 
 System Requirements
-* Java 8 or Java 11
-* Maven 3
+* Java 11
+* Maven 3.6.3
 
 ```bash
 $ git clone https://github.com/fcrepo4/fcrepo4.git
@@ -80,8 +80,11 @@ http://localhost:8080/fcrepo/rest.
 
 There are two convenient methods for *testing* the Fedora application by launching it directly from the command line.
 
-One option is to use the "one click" application, which comes with an embedded Jetty servlet. This can be started by
-either double-clicking on the jar file or by running the following command:
+One option is to use the "one click" application, which comes with an embedded Jetty servlet. This can be optionally built by running:
+
+    mvn install -pl fcrepo-webapp -P one-click
+
+and can be started by either double-clicking on the jar file or by running the following command:
 
     java -jar ./fcrepo-webapp/target/fcrepo-webapp-<version>-jetty-console.jar
 
