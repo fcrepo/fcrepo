@@ -20,23 +20,24 @@ package org.fcrepo.search.api;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
+ * A data structure representing the pagination information associated with a {@link org.fcrepo.search.api.SearchResult}
  * @author dbernstein
  */
 public class PaginationInfo {
     @JsonProperty
-    int totalResultCount = 100;
+    int totalResultCount = 0;
 
     @JsonProperty
-    int startIndex = 1;
+    int startIndex = -1;
 
     @JsonProperty
-    int endIndex = 10;
+    int endIndex = -1;
 
     @JsonProperty
-    int page = 1;
+    int page = -1;
 
     @JsonProperty
-    int pageCount = 10;
+    int pageCount = 0;
 
     @JsonProperty
     int pageSize = 10;

@@ -24,6 +24,7 @@ import org.fcrepo.search.api.SearchResult;
 import org.junit.Test;
 
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.junit.Assert.assertEquals;
@@ -47,12 +48,12 @@ public class FedoraSearchIT extends AbstractResourceIT {
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
             assertNotNull(result);
             assertNotNull(result.getPagination());
-            assertEquals(0, result.getResults().size());
+            assertEquals(0, result.getItems().size());
         }
     }
 
     private String encode(final String value) throws Exception {
-        return URLEncoder.encode(value, "UTF-8");
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 
     private String doubleEncode(final String value) throws Exception {

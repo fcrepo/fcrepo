@@ -17,42 +17,23 @@
  */
 package org.fcrepo.search.api;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 /**
- * This class holds the search result data for a single page.
+ * An exception that indicates that the syntax of the query
+ * is invalid and therefore cannot be parsed.
+ *
  * @author dbernstein
  */
-public class SearchResult {
-    @JsonProperty
-    private PaginationInfo pagination = new PaginationInfo();
-    @JsonProperty
-    private List<Map<String, Object>> items = new ArrayList();
+public class InvalidQueryException extends Exception {
+
+    private static final long serialVersionUID = 1L;
 
     /**
-     * Default constructor
+     * Basic constructor
+     *
+     * @param msg The text of the exception.
      */
-    public SearchResult() {
-
+    public InvalidQueryException(final String msg) {
+        super(msg);
     }
 
-    /**
-     * The pagination information.
-     * @return The pagination info
-     */
-    public PaginationInfo getPagination() {
-        return this.pagination;
-    }
-
-    /**
-     * The list of items returned by the search operation associated with the page indicated by the pagination info.
-     * @return The list of items
-     */
-    public List<Map<String, Object>> getItems() {
-        return this.items;
-    }
 }

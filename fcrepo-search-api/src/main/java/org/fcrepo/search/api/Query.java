@@ -17,42 +17,25 @@
  */
 package org.fcrepo.search.api;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 /**
- * This class holds the search result data for a single page.
+ * A data structure representing a search query.
  * @author dbernstein
  */
-public class SearchResult {
-    @JsonProperty
-    private PaginationInfo pagination = new PaginationInfo();
-    @JsonProperty
-    private List<Map<String, Object>> items = new ArrayList();
-
+public class Query{
     /**
      * Default constructor
      */
-    public SearchResult() {
+    private Query() {
 
     }
 
     /**
-     * The pagination information.
-     * @return The pagination info
+     * Parses the url decoded value of the query parameter passed by the
+     * http layer into a {@link Query}.
+     * @param queryStr The url decoded value of the query parameter.
+     * @return the parsed {@link Query} object.
      */
-    public PaginationInfo getPagination() {
-        return this.pagination;
-    }
-
-    /**
-     * The list of items returned by the search operation associated with the page indicated by the pagination info.
-     * @return The list of items
-     */
-    public List<Map<String, Object>> getItems() {
-        return this.items;
+    public static Query parse(final String queryStr) throws InvalidQueryException {
+        return new Query();
     }
 }

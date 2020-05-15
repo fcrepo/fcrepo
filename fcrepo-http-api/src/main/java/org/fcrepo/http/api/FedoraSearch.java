@@ -20,6 +20,8 @@ package org.fcrepo.http.api;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.search.api.SearchParameters;
 import org.fcrepo.search.api.SearchService;
+import org.fcrepo.search.api.Query;
+import org.fcrepo.search.api.InvalidQueryException;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -69,7 +71,7 @@ public class FedoraSearch extends FedoraBaseResource {
 
     /**
      * Perform simple search on the repository
-     *
+     * @param query The query parameter
      * @return A response object with the search results
      * @throws IOException                   if IO exception occurred
      * @throws UnsupportedAlgorithmException if unsupported digest algorithm occurred
@@ -78,8 +80,10 @@ public class FedoraSearch extends FedoraBaseResource {
     @Produces({APPLICATION_JSON + ";qs=1.0",
             TEXT_PLAIN_WITH_CHARSET})
     public Response doSearch(@QueryParam(value="query") final String query)
-            throws IOException, UnsupportedAlgorithmException {
-        final var params = new SearchParameters(query);
+            throws InvalidQueryException, IOException, UnsupportedAlgorithmException {
+
+        final Query searchQuery = Query.parse(query);
+        final var params = new SearchParameters(searchQuery);
         final Response.ResponseBuilder builder = ok();
         builder.entity(this.service.doSearch(params));
         return builder.build();

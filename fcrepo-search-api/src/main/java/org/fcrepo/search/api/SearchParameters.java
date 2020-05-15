@@ -19,8 +19,17 @@ package org.fcrepo.search.api;
 
 /**
  * A pojo encapsulating the parameters of a search
+ *
+ * @author dbernstein
  */
 public class SearchParameters {
-    public SearchParameters(final String query) {
+
+    private Query query;
+    /**
+     * Constructor
+     * @param query The query portion of the search
+     */
+    public SearchParameters(final Query query) {
+        this.query = query;
     }
 }
