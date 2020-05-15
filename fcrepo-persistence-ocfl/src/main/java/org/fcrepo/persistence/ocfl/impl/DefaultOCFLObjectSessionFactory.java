@@ -47,9 +47,9 @@ public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultOCFLObjectSessionFactory.class);
 
     /**
-     * Controls whether or changes are committed to new OCFL versions or to a mutable HEAD
+     * Controls whether changes are committed to new OCFL versions or to a mutable HEAD
      */
-    @Value("${fcrepo.autoversioning.enabled:false}")
+    @Value("${fcrepo.autoversioning.enabled:true}")
     private boolean autoVersioningEnabled;
 
     private File ocflStagingDir;

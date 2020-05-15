@@ -185,66 +185,51 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     @Test
     public void getTimeMapForContainerWithSingleVersion() throws Exception {
-        objectSessionFactory.setAutoVersioningEnabled(true);
-        try {
-            createVersionedContainer(id);
-            verifyTimemapResponse(subjectUri, id, now());
-        } finally {
-            objectSessionFactory.setAutoVersioningEnabled(false);
-        }
+        createVersionedContainer(id);
+        verifyTimemapResponse(subjectUri, id, now());
     }
 
     @Test
     public void getTimeMapFromBinaryWithMultipleVersions() throws Exception {
-        objectSessionFactory.setAutoVersioningEnabled(true);
-        try {
-            final var v1 = now();
-            createVersionedBinary(id, OCTET_STREAM_TYPE, "v1");
-            TimeUnit.SECONDS.sleep(1);
+        final var v1 = now();
+        createVersionedBinary(id, OCTET_STREAM_TYPE, "v1");
+        TimeUnit.SECONDS.sleep(1);
 
-            final var v2 = now();
-            putVersionedBinary(id, OCTET_STREAM_TYPE, "v2", true);
-            TimeUnit.SECONDS.sleep(1);
+        final var v2 = now();
+        putVersionedBinary(id, OCTET_STREAM_TYPE, "v2", true);
+        TimeUnit.SECONDS.sleep(1);
 
-            final var v3 = now();
-            putVersionedBinary(id, OCTET_STREAM_TYPE, "v3", true);
-            TimeUnit.SECONDS.sleep(1);
+        final var v3 = now();
+        putVersionedBinary(id, OCTET_STREAM_TYPE, "v3", true);
+        TimeUnit.SECONDS.sleep(1);
 
-            verifyTimemapResponse(subjectUri, id, new String[]{v1, v2, v3}, v1, v3);
-        } finally {
-            objectSessionFactory.setAutoVersioningEnabled(false);
-        }
+        verifyTimemapResponse(subjectUri, id, new String[]{v1, v2, v3}, v1, v3);
     }
 
     @Test
     public void getTimeMapFromAgWithChildrenWithDifferentVersions() throws Exception {
-        objectSessionFactory.setAutoVersioningEnabled(true);
-        try {
-            final var childId1 = id + "/child1";
-            final var childId2 = id + "/child2";
+        final var childId1 = id + "/child1";
+        final var childId2 = id + "/child2";
 
-            final var v1 = now();
-            createVersionedArchivalGroup(id);
-            TimeUnit.SECONDS.sleep(1);
+        final var v1 = now();
+        createVersionedArchivalGroup(id);
+        TimeUnit.SECONDS.sleep(1);
 
-            final var v2 = now();
-            putVersionedBinary(childId1, OCTET_STREAM_TYPE, "v2", false);
-            TimeUnit.SECONDS.sleep(1);
+        final var v2 = now();
+        putVersionedBinary(childId1, OCTET_STREAM_TYPE, "v2", false);
+        TimeUnit.SECONDS.sleep(1);
 
-            final var v3 = now();
-            putVersionedBinary(childId2, OCTET_STREAM_TYPE, "v3", false);
-            TimeUnit.SECONDS.sleep(1);
+        final var v3 = now();
+        putVersionedBinary(childId2, OCTET_STREAM_TYPE, "v3", false);
+        TimeUnit.SECONDS.sleep(1);
 
-            final var v4 = now();
-            putVersionedBinary(childId1, OCTET_STREAM_TYPE, "v4", true);
-            TimeUnit.SECONDS.sleep(1);
+        final var v4 = now();
+        putVersionedBinary(childId1, OCTET_STREAM_TYPE, "v4", true);
+        TimeUnit.SECONDS.sleep(1);
 
-            verifyTimemapResponse(subjectUri, id, new String[]{v1, v2, v3, v4}, v1, v4);
-            verifyTimemapResponse(subjectUri + "/child1", childId1, new String[]{v2, v4}, v2, v4);
-            verifyTimemapResponse(subjectUri + "/child2", childId2, v3);
-        } finally {
-            objectSessionFactory.setAutoVersioningEnabled(false);
-        }
+        verifyTimemapResponse(subjectUri, id, new String[]{v1, v2, v3, v4}, v1, v4);
+        verifyTimemapResponse(subjectUri + "/child1", childId1, new String[]{v2, v4}, v2, v4);
+        verifyTimemapResponse(subjectUri + "/child2", childId2, v3);
     }
 
     @Test
@@ -697,9 +682,15 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     @Test
     public void testGetTimeMapResponseForBinary() throws Exception {
-        createVersionedBinary(id);
+        objectSessionFactory.setAutoVersioningEnabled(false);
+        try {
 
-        verifyTimemapResponse(subjectUri, id);
+            createVersionedBinary(id);
+
+            verifyTimemapResponse(subjectUri, id);
+        } finally {
+            objectSessionFactory.setAutoVersioningEnabled(true);
+        }
     }
 
     @Test
@@ -717,12 +708,18 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     @Test
     public void testGetTimeMapResponseForBinaryDescription() throws Exception {
-        createVersionedBinary(id);
+        objectSessionFactory.setAutoVersioningEnabled(false);
 
-        final String descriptionUri = subjectUri + "/fcr:metadata";
-        final String descriptionId = id + "/fcr:metadata";
+        try {
+            createVersionedBinary(id);
 
-        verifyTimemapResponse(descriptionUri, descriptionId);
+            final String descriptionUri = subjectUri + "/fcr:metadata";
+            final String descriptionId = id + "/fcr:metadata";
+
+            verifyTimemapResponse(descriptionUri, descriptionId);
+        } finally {
+            objectSessionFactory.setAutoVersioningEnabled(true);
+        }
     }
 
     /**
@@ -1231,51 +1228,60 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     @Test
     public void testDatetimeNegotiationNoMementos() throws Exception {
+        objectSessionFactory.setAutoVersioningEnabled(false);
         final CloseableHttpClient customClient = createClient(true);
+        try {
+            createVersionedContainer(id);
+            final String requestDatetime =
+                    MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-01-12T00:00:00Z", Instant::from));
+            final HttpGet getMemento = getObjMethod(id);
+            getMemento.addHeader(ACCEPT_DATETIME, requestDatetime);
 
-        createVersionedContainer(id);
-        final String requestDatetime =
-            MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-01-12T00:00:00Z", Instant::from));
-        final HttpGet getMemento = getObjMethod(id);
-        getMemento.addHeader(ACCEPT_DATETIME, requestDatetime);
-
-        try (final CloseableHttpResponse response = customClient.execute(getMemento)) {
-            assertEquals("Did not get NOT_ACCEPTABLE response", NOT_ACCEPTABLE.getStatusCode(), getStatus(response));
-            assertNull("Did not expect a Location header", response.getFirstHeader(LOCATION));
-            assertNotEquals("Did not get Content-Length > 0", 0, response.getFirstHeader(CONTENT_LENGTH).getValue());
+            try (final CloseableHttpResponse response = customClient.execute(getMemento)) {
+                assertEquals("Didn't get NOT_ACCEPTABLE response", NOT_ACCEPTABLE.getStatusCode(), getStatus(response));
+                assertNull("Didn't expect a Location header", response.getFirstHeader(LOCATION));
+                assertNotEquals("Didn't get Content-Length > 0", 0, response.getFirstHeader(CONTENT_LENGTH).getValue());
+            }
+        } finally {
+            objectSessionFactory.setAutoVersioningEnabled(true);
         }
     }
 
 
     @Test
     public void testGetWithDateTimeNegotiation() throws Exception {
+        objectSessionFactory.setAutoVersioningEnabled(false);
         final CloseableHttpClient customClient = createClient(true);
         final String mementoDateTime =
             MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-08-29T15:47:50Z", Instant::from));
 
-        createVersionedContainer(id);
+        try {
+            createVersionedContainer(id);
 
-        // Status 406: Get absent memento with datetime negotiation.
-        final HttpGet getMethod1 = getObjMethod(id);
-        getMethod1.setHeader(ACCEPT_DATETIME, mementoDateTime);
-        assertEquals("Didn't get status 406 on absent memento!",
-            NOT_ACCEPTABLE.getStatusCode(), getStatus(customClient.execute(getMethod1)));
+            // Status 406: Get absent memento with datetime negotiation.
+            final HttpGet getMethod1 = getObjMethod(id);
+            getMethod1.setHeader(ACCEPT_DATETIME, mementoDateTime);
+            assertEquals("Didn't get status 406 on absent memento!",
+                    NOT_ACCEPTABLE.getStatusCode(), getStatus(customClient.execute(getMethod1)));
 
-        // Create memento
-        final String mementoUri = createLDPRSMementoWithExistingBody(id);
+            // Create memento
+            final String mementoUri = createLDPRSMementoWithExistingBody(id);
 
-        // Status 302: GET memento with datetime negotiation
-        final HttpGet getMethod2 = getObjMethod(id);
-        getMethod2.setHeader(ACCEPT_DATETIME, mementoDateTime);
-        assertEquals("Expected memento is NOT found: " + mementoUri, FOUND.getStatusCode(),
-                getStatus(customClient.execute(getMethod2)));
+            // Status 302: GET memento with datetime negotiation
+            final HttpGet getMethod2 = getObjMethod(id);
+            getMethod2.setHeader(ACCEPT_DATETIME, mementoDateTime);
+            assertEquals("Expected memento is NOT found: " + mementoUri, FOUND.getStatusCode(),
+                    getStatus(customClient.execute(getMethod2)));
 
-        // Status 400: Get memento with bad Accept-Datetime header value
-        final String badDataTime = "Wed, 29 Aug 2017 15:47:50 GMT"; // should be TUE, 29 Aug 2017 15:47:50 GMT
-        final HttpGet getMethod3 = getObjMethod(id);
-        getMethod3.setHeader(ACCEPT_DATETIME, badDataTime);
-        assertEquals("Didn't get status 400 on bad Accept-Datetime value!",
-            BAD_REQUEST.getStatusCode(), getStatus(customClient.execute(getMethod3)));
+            // Status 400: Get memento with bad Accept-Datetime header value
+            final String badDataTime = "Wed, 29 Aug 2017 15:47:50 GMT"; // should be TUE, 29 Aug 2017 15:47:50 GMT
+            final HttpGet getMethod3 = getObjMethod(id);
+            getMethod3.setHeader(ACCEPT_DATETIME, badDataTime);
+            assertEquals("Didn't get status 400 on bad Accept-Datetime value!",
+                    BAD_REQUEST.getStatusCode(), getStatus(customClient.execute(getMethod3)));
+        } finally {
+            objectSessionFactory.setAutoVersioningEnabled(true);
+        }
     }
 
     @Ignore("fixity not implemented")

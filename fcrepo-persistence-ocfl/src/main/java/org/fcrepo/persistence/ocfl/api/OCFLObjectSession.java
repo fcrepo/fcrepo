@@ -81,8 +81,8 @@ public interface OCFLObjectSession {
 
     /**
      * Overrides the default {@link CommitOption} to use when the session is committed. By default, is
-     * {@link CommitOption#UNVERSIONED} when fcrepo.autoversioning.enabled is false,
-     * and {@link CommitOption#NEW_VERSION} when it is true
+     * {@link CommitOption#NEW_VERSION} when fcrepo.autoversioning.enabled is true,
+     * and {@link CommitOption#UNVERSIONED} when it is false
      *
      * @param commitOption the commit option
      */
