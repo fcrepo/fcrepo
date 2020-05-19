@@ -75,7 +75,6 @@ class DeleteResourcePersister extends AbstractPersister {
             final boolean isRdf = !Objects.equals(NON_RDF_SOURCE.toString(), headers.getInteractionModel());
             final var filePath = resolveExtensions(ocflSubPath, isRdf);
             deletePath(filePath, objectSession, headers, user, deleteTime);
-            // TODO: Delete the ACL at some point - https://jira.lyrasis.org/browse/FCREPO-3288
             if (!isRdf) {
                 // Delete the description too.
                 final var descPath = resolveExtensions(ocflSubPath + "-description", true);

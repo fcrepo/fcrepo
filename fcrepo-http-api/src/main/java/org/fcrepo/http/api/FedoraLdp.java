@@ -502,7 +502,8 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         if (resource() instanceof Binary) {
-            throw new BadRequestException(resource().getPath() + " is not a valid object to receive a PATCH");
+            throw new BadRequestException(resource().getFedoraId().getFullIdPath() +
+                    " is not a valid object to receive a PATCH");
         }
 
         try {

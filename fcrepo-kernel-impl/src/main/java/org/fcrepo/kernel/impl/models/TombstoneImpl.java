@@ -19,6 +19,7 @@ package org.fcrepo.kernel.impl.models;
 
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.Tombstone;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
@@ -28,10 +29,17 @@ import org.fcrepo.persistence.api.PersistentStorageSessionManager;
  */
 public class TombstoneImpl extends FedoraResourceImpl implements Tombstone {
 
+    private FedoraResource originalResource;
 
     protected TombstoneImpl(final FedoraId fedoraID, final Transaction tx,
                             final PersistentStorageSessionManager pSessionManager,
-                            final ResourceFactory resourceFactory) {
+                            final ResourceFactory resourceFactory, final FedoraResource original) {
         super(fedoraID, tx, pSessionManager, resourceFactory);
+        this.originalResource = original;
+    }
+
+    @Override
+    public FedoraResource getDeletedObject() {
+        return originalResource;
     }
 }

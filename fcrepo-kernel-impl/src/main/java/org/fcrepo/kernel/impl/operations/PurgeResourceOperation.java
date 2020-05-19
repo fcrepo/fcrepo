@@ -15,14 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.operations;
+package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.operations.ResourceOperationType;
 
 /**
- * Specifies the type of modification action represented by a resource operation.
+ * Purge resource operation
  *
- * @author bbpennel
+ * @author whikloj
+ * @since 6.0.0
  */
-public enum ResourceOperationType {
-    UPDATE, CREATE, DELETE, PURGE
+public class PurgeResourceOperation extends AbstractResourceOperation {
+
+    protected PurgeResourceOperation(final String rescId) {
+        super(rescId);
+    }
+
+    @Override
+    public ResourceOperationType getType() {
+        return ResourceOperationType.PURGE;
+    }
 }

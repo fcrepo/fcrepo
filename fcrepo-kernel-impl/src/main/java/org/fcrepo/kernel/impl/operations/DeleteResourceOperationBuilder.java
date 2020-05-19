@@ -25,11 +25,8 @@ import org.fcrepo.kernel.api.operations.ResourceOperationBuilder;
  *
  * @author bbpennel
  */
-public class DeleteResourceOperationBuilder implements ResourceOperationBuilder {
-
-    private String rescId;
-
-    private String userPrincipal;
+public class DeleteResourceOperationBuilder extends AbstractResourceOperationBuilder
+        implements ResourceOperationBuilder {
 
     /**
      * Construct the builder
@@ -37,13 +34,7 @@ public class DeleteResourceOperationBuilder implements ResourceOperationBuilder 
      * @param rescId identifier of the resource to delete
      */
     public DeleteResourceOperationBuilder(final String rescId) {
-        this.rescId = rescId;
-    }
-
-    @Override
-    public DeleteResourceOperationBuilder userPrincipal(final String userPrincipal) {
-        this.userPrincipal = userPrincipal;
-        return this;
+        super(rescId);
     }
 
     @Override

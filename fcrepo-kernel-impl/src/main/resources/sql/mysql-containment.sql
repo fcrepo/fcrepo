@@ -4,14 +4,15 @@
 -- Holds the ID and its parent.
 CREATE TABLE IF NOT EXISTS resources (
     fedora_id  varchar(503) NOT NULL PRIMARY KEY,
-    parent varchar(503) NOT NULL
+    parent varchar(503) NOT NULL,
+    is_deleted boolean NOT NULL DEFAULT(FALSE)
 );
 
 -- Create an index to speed searches for children of a parent.
 SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
     WHERE table_name = 'resources' AND index_name = 'resources_idx' AND table_schema = database());
 SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
-    'CREATE INDEX resources_idx ON resources (parent)');
+    'CREATE INDEX resources_idx ON resources (parent, is_deleted)');
 PREPARE stmt FROM @sqlstmt;
 EXECUTE stmt;
 

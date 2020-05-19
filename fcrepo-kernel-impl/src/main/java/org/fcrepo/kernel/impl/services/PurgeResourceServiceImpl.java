@@ -17,50 +17,49 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import javax.inject.Inject;
+
+import java.util.stream.Stream;
+
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.operations.DeleteResourceOperationFactory;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
-import org.fcrepo.kernel.api.services.DeleteResourceService;
+import org.fcrepo.kernel.api.services.PurgeResourceService;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
-import java.util.stream.Stream;
-
 /**
- * This class mediates delete operations between the kernel and persistent storage layers
- *
- * @author dbernstein
+ * Implementation of purge resource service.
+ * @author whikloj
+ * @since 6.0.0
  */
 @Component
-public class DeleteResourceServiceImpl extends AbstractDeleteResourceService implements DeleteResourceService {
+public class PurgeResourceServiceImpl extends AbstractDeleteResourceService implements PurgeResourceService {
 
-    private final static Logger log = LoggerFactory.getLogger(DeleteResourceService.class);
+    private final static Logger log = LoggerFactory.getLogger(PurgeResourceServiceImpl.class);
 
     @Inject
     private DeleteResourceOperationFactory deleteResourceFactory;
 
     @Override
     protected Stream<String> getContained(final Transaction tx, final FedoraResource resource) {
-        return containmentIndex.getContains(tx, resource);
+        return containmentIndex.getContainsDeleted(tx, resource);
     }
 
     @Override
-    protected void doAction(final Transaction tx, final PersistentStorageSession pSession,
-                            final FedoraId fedoraId, final String userPrincipal)
-            throws PersistentStorageException {
-        log.debug("starting delete of {}", fedoraId.getFullId());
-        final ResourceOperation deleteOp = deleteResourceFactory.deleteBuilder(fedoraId.getFullId())
+    protected void doAction(final Transaction tx, final PersistentStorageSession pSession, final FedoraId resourceId,
+                  final String userPrincipal) throws PersistentStorageException {
+        log.debug("starting purge of {}", resourceId.getFullId());
+        final ResourceOperation purgeOp = deleteResourceFactory.purgeBuilder(resourceId.getFullId())
                 .userPrincipal(userPrincipal)
                 .build();
-        pSession.persist(deleteOp);
-        containmentIndex.removeResource(tx.getId(), fedoraId);
-        recordEvent(tx.getId(), fedoraId, deleteOp);
-        log.debug("deleted {}", fedoraId.getFullId());
+        pSession.persist(purgeOp);
+        recordEvent(tx.getId(), resourceId, purgeOp);
+        log.debug("purged {}", resourceId.getFullId());
     }
 }

@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.impl.operations;
 
 import org.fcrepo.kernel.api.operations.DeleteResourceOperationFactory;
+import org.fcrepo.kernel.api.operations.ResourceOperationBuilder;
 import org.springframework.stereotype.Component;
 
 /**
@@ -31,6 +32,11 @@ public class DeleteResourceOperationFactoryImpl implements DeleteResourceOperati
     @Override
     public DeleteResourceOperationBuilder deleteBuilder(final String rescId) {
         return new DeleteResourceOperationBuilder(rescId);
+    }
+
+    @Override
+    public ResourceOperationBuilder purgeBuilder(final String rescId) {
+        return new PurgeResourceOperationBuilder(rescId);
     }
 
 }

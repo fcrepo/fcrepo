@@ -32,4 +32,12 @@ public interface DeleteResourceOperationFactory extends ResourceOperationFactory
      * @return new builder
      */
     ResourceOperationBuilder deleteBuilder(String rescId);
+
+    /**
+     * Get a builder for an operation to purge a deleted resource.
+     *
+     * @param rescId id of the resource to purge
+     * @return new builder
+     */
+    ResourceOperationBuilder purgeBuilder(String rescId);
 }

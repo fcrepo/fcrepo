@@ -18,8 +18,11 @@
 package org.fcrepo.http.api;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.services.DeleteResourceService;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.Tombstone;
+import org.fcrepo.kernel.api.services.PurgeResourceService;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -46,7 +49,7 @@ public class FedoraTombstones extends ContentExposingResource {
     @PathParam("path") protected String externalPath;
 
     @Inject
-    private DeleteResourceService deleteResourceService;
+    private PurgeResourceService purgeResourceService;
 
     /**
      * Default JAX-RS entry point
@@ -56,7 +59,7 @@ public class FedoraTombstones extends ContentExposingResource {
     }
 
     /**
-     * Create a new FedoraNodes instance for a given path
+     * Create a new FedoraTombstones instance for a given path
      * @param externalPath the external path
      */
     @VisibleForTesting
@@ -70,19 +73,27 @@ public class FedoraTombstones extends ContentExposingResource {
      */
     @DELETE
     public Response delete() {
-        LOGGER.info("Delete tombstone: {}", resource());
-        deleteResourceService.perform(transaction(), resource(), getUserPrincipal());
+        final Tombstone resource = resource();
+        LOGGER.info("Delete tombstone: {}", resource);
+        purgeResourceService.perform(transaction(), resource.getDeletedObject(), getUserPrincipal());
         transaction().commitIfShortLived();
         return noContent().build();
     }
 
     @Override
-    protected FedoraResource resource() {
-        return translator().convert(translator().toDomain(externalPath));
+    protected Tombstone resource() {
+        final FedoraId resourceId = identifierConverter().pathToInternalId(externalPath);
+        try {
+            final Tombstone resource = resourceFactory.getResource(transaction(), resourceId, Tombstone.class);
+            return resource;
+        } catch (final PathNotFoundException e) {
+            throw new PathNotFoundRuntimeException(e);
+        }
     }
 
     @Override
     protected String externalPath() {
         return null;
     }
+
 }

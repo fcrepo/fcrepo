@@ -15,14 +15,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.operations;
+package org.fcrepo.kernel.api.services;
 
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.models.FedoraResource;
 
 /**
- * Specifies the type of modification action represented by a resource operation.
+ * Service to permanently remove a resource from the repository.
  *
- * @author bbpennel
+ * @author whikloj
  */
-public enum ResourceOperationType {
-    UPDATE, CREATE, DELETE, PURGE
+public interface PurgeResourceService {
+    /**
+     * Purges the specified resource
+     *
+     * @param tx the transaction associated with the operation
+     * @param fedoraResource The Fedora resource to delete
+     * @param userPrincipal the principal of the user performing the operation
+     */
+    void perform(final Transaction tx, final FedoraResource fedoraResource, final String userPrincipal);
 }

@@ -943,9 +943,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testDeleteHierarchy() {
         final String id = getRandomUniqueId();
+        createObjectAndClose(id);
         createObjectAndClose(id + "/foo");
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteObjMethod(id)));
         assertDeleted(id);
@@ -953,7 +953,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testDeleteObjectAndTombstone() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);

@@ -22,4 +22,10 @@ package org.fcrepo.kernel.api.models;
  * @since 10/16/14
  */
 public interface Tombstone extends FedoraResource {
+
+    /**
+     * Return the object this tombstone is for.
+     * @return the original deleted resource.
+     */
+    public FedoraResource getDeletedObject();
 }

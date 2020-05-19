@@ -307,10 +307,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         if (returnPreference.getValue().equals("minimal")) {
             streams.add(resource.getTriples());
-            //streams.add(getTriples(resource, MINIMAL));
             if (ldpPreferences.prefersServerManaged())  {
                 streams.add(this.managedPropertiesService.get(resource));
-                //TOOD Implement minimal return preference
+                //TODO Implement minimal return preference (https://jira.lyrasis.org/browse/FCREPO-3334)
                 //streams.add(getTriples(resource, MINIMAL));
             }
         } else {

@@ -113,23 +113,24 @@ public class HttpRdfService {
 
         while (stmtIterator.hasNext()) {
             final Statement stmt = stmtIterator.nextStatement();
-            final String originalSubj = stmt.getSubject().getURI();
-            final String subj = idTranslator.inExternalDomain(originalSubj) ?
-                idTranslator.toInternalId(originalSubj) : originalSubj;
+            if (stmt.getSubject().isURIResource()) {
+                final String originalSubj = stmt.getSubject().getURI();
+                final String subj = idTranslator.inExternalDomain(originalSubj) ?
+                        idTranslator.toInternalId(originalSubj) : originalSubj;
 
-            RDFNode obj = stmt.getObject();
-            if (stmt.getObject().isResource()) {
-                final String objString = stmt.getObject().asResource().getURI();
-                if (idTranslator.inExternalDomain(objString)) {
-                    obj = model.getResource(idTranslator.toInternalId(objString));
+                RDFNode obj = stmt.getObject();
+                if (stmt.getObject().isResource()) {
+                    final String objString = stmt.getObject().asResource().getURI();
+                    if (idTranslator.inExternalDomain(objString)) {
+                        obj = model.getResource(idTranslator.toInternalId(objString));
+                    }
                 }
-            }
 
-            if (!subj.equals(originalSubj) || !obj.equals(stmt.getObject())) {
-                insertStatements.add(new StatementImpl(model.getResource(subj),
-                    stmt.getPredicate(), obj));
+                if (!subj.equals(originalSubj) || !obj.equals(stmt.getObject())) {
+                    insertStatements.add(new StatementImpl(model.getResource(subj), stmt.getPredicate(), obj));
 
-                stmtIterator.remove();
+                    stmtIterator.remove();
+                }
             }
         }
 

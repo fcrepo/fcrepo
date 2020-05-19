@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.api;
 
+import javax.annotation.Nonnull;
+
 import java.util.stream.Stream;
 
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -40,6 +42,16 @@ public interface ContainmentIndex {
     Stream<String> getContains(Transaction tx, FedoraResource fedoraResource);
 
     /**
+     * Return a stream of fedora identifiers contained by the specified fedora resource that have deleted
+     * relationships.
+     *
+     * @param tx The transaction.  If no transaction, null is okay.
+     * @param fedoraResource The containing fedora resource
+     * @return A stream of contained identifiers
+     */
+    Stream<String> getContainsDeleted(Transaction tx, FedoraResource fedoraResource);
+
+    /**
      * Return the ID of the containing resource for resourceID.
      * @param txID The transaction. If no transaction, null is okay.
      * @param resource The FedoraId of the resource to find the containing resource for.
@@ -48,29 +60,47 @@ public interface ContainmentIndex {
     String getContainedBy(String txID, final FedoraId resource);
 
     /**
-     * Remove a contained by relation between the child resource and its parent.
+     * Mark a contained by relation between the child resource and its parent as deleted.
      *
-     * @param txID The transaction ID.  If no transaction, null is okay.
+     * @param txID The transaction ID.
      * @param parent The containing resource fedoraID.
      * @param child The contained resource fedoraID.
      */
-    void removeContainedBy(final String txID, final FedoraId parent, final FedoraId child);
+    void removeContainedBy(@Nonnull final String txID, final FedoraId parent, final FedoraId child);
 
     /**
-     * Remove all relationships to the specified resource.
-     * @param txID The transaction ID. If no transaction, null is okay.
+     * Mark all relationships to the specified resource as deleted.
+     *
+     * @param txID The transaction ID.
      * @param resource The FedoraId of resource to remove.
      */
-    void removeResource(final String txID, final FedoraId resource);
+    void removeResource(@Nonnull final String txID, final FedoraId resource);
+
+    /**
+     * Remove a contained by relation between the child resource and its parent.
+     *
+     * @param txID The transaction ID.
+     * @param parent The containing resource fedoraID.
+     * @param child The contained resource fedoraID.
+     */
+    void purgeContainedBy(@Nonnull final String txID, final FedoraId parent, final FedoraId child);
+
+    /**
+     * Remove all relationships to the specified resource as deleted.
+     *
+     * @param txID The transaction ID.
+     * @param resource The FedoraId of resource to remove.
+     */
+    void purgeResource(@Nonnull final String txID, final FedoraId resource);
 
     /**
      * Add a contained by relation between the child resource and its parent.
      *
-     * @param txID The transaction ID.  If no transaction, null is okay.
+     * @param txID The transaction ID.
      * @param parent The containing resource fedoraID.
      * @param child The contained resource fedoraID.
      */
-    void addContainedBy(final String txID, final FedoraId parent, final FedoraId child);
+    void addContainedBy(@Nonnull final String txID, final FedoraId parent, final FedoraId child);
 
     /**
      * Commit the changes made in the transaction.

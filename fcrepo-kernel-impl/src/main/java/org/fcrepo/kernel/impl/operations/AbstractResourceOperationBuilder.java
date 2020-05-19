@@ -15,14 +15,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.operations;
+package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.operations.ResourceOperationBuilder;
 
 /**
- * Specifies the type of modification action represented by a resource operation.
- *
- * @author bbpennel
+ * Base resource operation builder to share class fields and userPrincipal method.
+ * @author whikloj
  */
-public enum ResourceOperationType {
-    UPDATE, CREATE, DELETE, PURGE
+abstract public class AbstractResourceOperationBuilder implements ResourceOperationBuilder {
+
+    protected String rescId;
+
+    protected String userPrincipal;
+
+    /**
+     * Constructor.
+     * @param rescId the resource identifier.
+     */
+    public AbstractResourceOperationBuilder(final String rescId) {
+        this.rescId = rescId;
+    }
+
+    @Override
+    public ResourceOperationBuilder userPrincipal(final String userPrincipal) {
+        this.userPrincipal = userPrincipal;
+        return this;
+    }
+
 }
