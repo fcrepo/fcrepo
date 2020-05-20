@@ -23,7 +23,7 @@ import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_AUTHENTICATED_AGENT_VALUE;
 import static org.fcrepo.auth.common.HttpHeaderPrincipalProvider.HttpHeaderPrincipal;
 import static org.fcrepo.auth.common.DelegateHeaderPrincipalProvider.DelegatedHeaderPrincipal;
-import static org.fcrepo.auth.webac.URIConstants.identifierConverter;
+import static org.fcrepo.auth.webac.WebACFilter.identifierConverter;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.slf4j.LoggerFactory.getLogger;
 

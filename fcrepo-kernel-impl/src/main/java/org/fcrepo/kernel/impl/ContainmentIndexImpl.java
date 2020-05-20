@@ -418,13 +418,13 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         if (parent != null) {
             return FedoraId.create(parent);
         }
-        String idIterator = fedoraId.getFullId();
-        while (idIterator.contains("/")) {
-            idIterator = fedoraId.getResourceId().substring(0, idIterator.lastIndexOf("/"));
-            if (idIterator.equals(FEDORA_ID_PREFIX)) {
+        String fullId = fedoraId.getFullId();
+        while (fullId.contains("/")) {
+            fullId = fedoraId.getResourceId().substring(0, fullId.lastIndexOf("/"));
+            if (fullId.equals(FEDORA_ID_PREFIX)) {
                 return FedoraId.getRepositoryRootId();
             }
-            final FedoraId testID = FedoraId.create(idIterator);
+            final FedoraId testID = FedoraId.create(fullId);
             if (resourceExists(txID, testID)) {
                 return testID;
             }

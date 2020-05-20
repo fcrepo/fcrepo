@@ -17,11 +17,6 @@
  */
 package org.fcrepo.auth.webac;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.UriBuilder;
-
-import org.fcrepo.http.api.FedoraLdp;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.RdfLexicon;
 
 import java.net.URI;
@@ -159,20 +154,6 @@ final public class URIConstants {
      * vCard member
      */
     public static final String VCARD_MEMBER_VALUE = VCARD_NAMESPACE_VALUE + "hasMember";
-
-    public static HttpIdentifierConverter identifierConverter(final HttpServletRequest request) {
-        final String host = request.getScheme() + "://" + request.getServerName() +
-                (request.getServerPort() != 80 ? ":" + request.getServerPort() : "");
-        final String requestUrl = request.getRequestURL().toString();
-        final String contextPath = request.getContextPath() + request.getServletPath();
-        final String baseUri;
-        if (contextPath.length() == 0) {
-            baseUri = host;
-        } else {
-            baseUri = requestUrl.split(contextPath)[0] + contextPath;
-        }
-        return new HttpIdentifierConverter(UriBuilder.fromUri(baseUri).path(FedoraLdp.class));
-    }
 
     private URIConstants() {
     }

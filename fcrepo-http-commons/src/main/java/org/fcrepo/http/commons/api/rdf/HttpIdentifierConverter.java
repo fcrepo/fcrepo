@@ -232,8 +232,9 @@ public class HttpIdentifierConverter {
      */
     private String mapInternalRestUri(final String httpUri) {
         // This uri started with </rest...> and is an internal URI.
-        if (httpUri.startsWith("info:/rest")) {
-            String realpath = httpUri.substring(10);
+        final String internalRestString = internalIdPrefix() + "/rest";
+        if (httpUri.startsWith(internalRestString)) {
+            String realpath = httpUri.substring(internalRestString.length());
             if (realpath.startsWith("/")) {
                 realpath = realpath.substring(1);
             }
@@ -241,6 +242,18 @@ public class HttpIdentifierConverter {
             return getPath(fullUri);
         }
         return null;
+    }
+
+    /**
+     * Figure out what identifier you get when providing a absolute URL without hostname.
+     * @return the identifier.
+     */
+    private String internalIdPrefix() {
+        String internalPrefix = FEDORA_ID_PREFIX;
+        if (internalPrefix.contains(":")) {
+            internalPrefix = internalPrefix.substring(0, internalPrefix.indexOf(":") + 1);
+        }
+        return internalPrefix;
     }
 
 }

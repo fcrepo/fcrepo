@@ -40,6 +40,7 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
@@ -61,6 +62,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriBuilder;
 
 import java.io.IOException;
 import java.net.URI;
@@ -90,7 +92,6 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_APPEND;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_CONTROL;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
-import static org.fcrepo.auth.webac.URIConstants.identifierConverter;
 import static org.fcrepo.auth.webac.WebACAuthorizingRealm.URIS_TO_AUTHORIZE;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
@@ -140,6 +141,25 @@ public class WebACFilter extends RequestContextFilter {
 
     private static Set<String> rdfContentTypes = Set.of(contentTypeTurtle, contentTypeJSONLD, contentTypeN3,
             contentTypeRDFXML, contentTypeNTriples);
+
+    /**
+     * Generate a HttpIdentifierConverter from the request URL.
+     * @param request the servlet request.
+     * @return a converter.
+     */
+    public static HttpIdentifierConverter identifierConverter(final HttpServletRequest request) {
+        final String host = request.getScheme() + "://" + request.getServerName() +
+                (request.getServerPort() != 80 ? ":" + request.getServerPort() : "");
+        final String requestUrl = request.getRequestURL().toString();
+        final String contextPath = request.getContextPath() + request.getServletPath();
+        final String baseUri;
+        if (contextPath.length() == 0) {
+            baseUri = host;
+        } else {
+            baseUri = requestUrl.split(contextPath)[0] + contextPath;
+        }
+        return new HttpIdentifierConverter(UriBuilder.fromUri(baseUri).path("/{path: .*}"));
+    }
 
     /**
      * Add URIs to collect permissions information for.
@@ -235,11 +255,11 @@ public class WebACFilter extends RequestContextFilter {
             return resource(servletRequest).getContainer();
         }
         final String parentURI = getContainerUrl(servletRequest);
-        return resource(servletRequest, getRepoPath(servletRequest, parentURI));
+        return resource(servletRequest, getIdFromRequest(servletRequest, parentURI));
     }
 
     private FedoraResource resource(final HttpServletRequest servletRequest) {
-        return resource(servletRequest, getRepoPath(servletRequest));
+        return resource(servletRequest, getIdFromRequest(servletRequest));
     }
 
     private FedoraResource resource(final HttpServletRequest servletRequest, final FedoraId resourceId) {
@@ -250,12 +270,12 @@ public class WebACFilter extends RequestContextFilter {
         }
     }
 
-    private FedoraId getRepoPath(final HttpServletRequest servletRequest) {
+    private FedoraId getIdFromRequest(final HttpServletRequest servletRequest) {
         final String httpURI = servletRequest.getRequestURL().toString();
-        return getRepoPath(servletRequest, httpURI);
+        return getIdFromRequest(servletRequest, httpURI);
     }
 
-    private FedoraId getRepoPath(final HttpServletRequest request, final String httpURI) {
+    private FedoraId getIdFromRequest(final HttpServletRequest request, final String httpURI) {
         return FedoraId.create(identifierConverter(request).toInternalId(httpURI));
     }
 

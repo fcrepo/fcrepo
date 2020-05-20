@@ -20,6 +20,7 @@ package org.fcrepo.integration.auth.webac;
 import static java.util.Arrays.stream;
 import static javax.ws.rs.core.Response.Status.CREATED;
 
+import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_FORBIDDEN;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
@@ -28,6 +29,7 @@ import static org.apache.jena.vocabulary.DC_11.title;
 import static org.fcrepo.auth.webac.WebACRolesProvider.GROUP_AGENT_BASE_URI_PROPERTY;
 import static org.fcrepo.auth.webac.WebACRolesProvider.USER_AGENT_BASE_URI_PROPERTY;
 import static org.fcrepo.http.api.FedoraAcl.ROOT_AUTHORIZATION_PROPERTY;
+import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
@@ -39,6 +41,8 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.regex.Pattern;
+
 import javax.ws.rs.core.Link;
 
 import org.apache.commons.codec.binary.Base64;
@@ -65,6 +69,7 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.integration.http.api.AbstractResourceIT;
+import org.glassfish.grizzly.utils.Charsets;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -1921,13 +1926,103 @@ public class WebACRecipesIT extends AbstractResourceIT {
         testCanWrite(writeableResource, username);
     }
 
+    @Ignore("Application and servlet filter not sharing transaction manager - FCREPO-3316")
+    @Test
+    public void testSameInTransaction() throws Exception {
+        final String targetResource = "/rest/" + getRandomUniqueId();
+        final String username = "user28";
+        // Make a basic container.
+        final String targetUri = ingestObj(targetResource);
+        final String readwriteString = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                "<#readauthz> a acl:Authorization ;\n" +
+                "   acl:agent \"" + username + "\" ;\n" +
+                "   acl:mode acl:Read, acl:Write ;\n" +
+                "   acl:accessTo <" + targetResource + "> .";
+        // Allow user28 to read and write this object.
+        ingestAclString(targetUri, readwriteString, "fedoraAdmin");
+        // Test that user28 can read target resource.
+        final HttpGet getAllowed1 = getObjMethod(targetResource);
+        setAuth(getAllowed1, username);
+        assertEquals(HttpStatus.SC_OK, getStatus(getAllowed1));
+        // Test that user28 can patch target resource.
+        final HttpPatch patchAllowed1 = patchObjMethod(targetResource);
+        final String patchString = "prefix dc: <http://purl.org/dc/elements/1.1/> INSERT { <> dc:title " +
+            "\"new title\" } WHERE {}";
+        final StringEntity patchEntity = new StringEntity(patchString, Charsets.UTF8_CHARSET);
+        patchAllowed1.setEntity(patchEntity);
+        patchAllowed1.setHeader(CONTENT_TYPE, "application/sparql-update");
+        setAuth(patchAllowed1, username);
+        assertEquals(SC_NO_CONTENT, getStatus(patchAllowed1));
+        // Test that user28 can post to target resource.
+        final HttpPost postAllowed1 = postObjMethod(targetResource);
+        setAuth(postAllowed1, username);
+        final String childResource;
+        try (final CloseableHttpResponse response = execute(postAllowed1)) {
+            assertEquals(SC_CREATED, getStatus(postAllowed1));
+            childResource = getLocation(response);
+        }
+        // Test that user28 cannot patch the child resource (ACL is not acl:default).
+        final HttpPatch patchDisallowed1 = new HttpPatch(childResource);
+        patchDisallowed1.setEntity(patchEntity);
+        patchDisallowed1.setHeader(CONTENT_TYPE, "application/sparql-update");
+        setAuth(patchDisallowed1, username);
+        assertEquals(SC_FORBIDDEN, getStatus(patchDisallowed1));
+        // Test that user28 cannot post to a child resource.
+        final HttpPost postDisallowed1 = new HttpPost(childResource);
+        setAuth(postDisallowed1, username);
+        assertEquals(SC_FORBIDDEN, getStatus(postDisallowed1));
+        // Test another user cannot access the target resource.
+        final HttpGet getDisallowed1 = getObjMethod(targetResource);
+        setAuth(getDisallowed1, "user400");
+        assertEquals(SC_FORBIDDEN, getStatus(getDisallowed1));
+        // Get the transaction endpoint.
+        final HttpGet getTransactionEndpoint = getObjMethod("/rest");
+        setAuth(getTransactionEndpoint, "fedoraAdmin");
+        final String transactionEndpoint;
+        final Pattern linkHeaderMatcher = Pattern.compile("<([^>]+)>");
+        try (final CloseableHttpResponse response = execute(getTransactionEndpoint)) {
+            final var linkheaders = getLinkHeaders(response);
+            transactionEndpoint = linkheaders.stream()
+                    .filter(t -> t.contains("http://fedora.info/definitions/v4/transaction#endpoint"))
+                    .map(t -> {
+                        final var matches = linkHeaderMatcher.matcher(t);
+                        matches.find();
+                        return matches.group(1);
+                    })
+                    .findFirst()
+                    .orElseThrow(Exception::new);
+        }
+        // Create a transaction.
+        final HttpPost postTransaction = new HttpPost(transactionEndpoint);
+        setAuth(postTransaction, "fedoraAdmin");
+        final String transactionId;
+        try (final CloseableHttpResponse response = execute(postTransaction)) {
+            assertEquals(SC_CREATED, getStatus(response));
+            transactionId = getLocation(response);
+        }
+        // Test user28 can post to  target resource in a transaction.
+        final HttpPost postChildInTx = postObjMethod(targetResource);
+        setAuth(postChildInTx, username);
+        postChildInTx.setHeader(ATOMIC_ID_HEADER, transactionId);
+        final String txChild;
+        try (final CloseableHttpResponse response = execute(postChildInTx)) {
+            assertEquals(SC_CREATED, getStatus(response));
+            txChild = getLocation(response);
+        }
+        // Test user28 cannot post to the child in a transaction.
+        final HttpPost postDisallowed2 = new HttpPost(txChild);
+        setAuth(postDisallowed2, username);
+        postDisallowed2.setHeader(ATOMIC_ID_HEADER, transactionId);
+        assertEquals(SC_FORBIDDEN, getStatus(postDisallowed2));
+    }
+
     /**
      * Utility function to ingest a ACL from a string.
      *
      * @param resourcePath Path to the resource if doesn't end with "/fcr:acl" it is added.
      * @param acl the text/turtle ACL as a string
      * @param username user to ingest as
-     * @return
+     * @return the response from the ACL ingest.
      * @throws IOException on StringEntity encoding or client execute
      */
     private HttpResponse ingestAclString(final String resourcePath, final String acl, final String username)
