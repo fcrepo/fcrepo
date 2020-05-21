@@ -1,0 +1,60 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.fcrepo</groupId>
+    <artifactId>fcrepo</artifactId>
+    <version>6.0.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>fcrepo-search-impl</artifactId>
+  <name>Fedora Repository Search Impl</name>
+  <description>Fedora Repository Default Search API Implementation</description>
+  <packaging>bundle</packaging>
+
+  <properties>
+    <osgi.import.packages>
+      javax.inject,
+      *
+    </osgi.import.packages>
+    <osgi.export.packages>
+      org.fcrepo.search.impl.*;version=${project.version}
+    </osgi.export.packages>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-search-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+    </dependency>
+
+    <!-- test gear -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>
