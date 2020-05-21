@@ -51,7 +51,6 @@ import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDID;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDNCName;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDNMTOKEN;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDName;
-import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDQName;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDanyURI;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDbase64Binary;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDdate;
@@ -139,7 +138,7 @@ public class ValueConverterTest {
                 {createTypedLiteral("some:uri", XSDanyURI)},
                 {createTypedLiteral("tokenize this", XSDtoken)},
                 {createTypedLiteral("name", XSDName)},
-                {createTypedLiteral("qname", XSDQName)},
+                // Not supported any more by Jena {createTypedLiteral("qname", XSDQName)},
                 {createTypedLiteral("en-us", XSDlanguage)},
                 {createTypedLiteral("name", XSDNMTOKEN)},
                 {createTypedLiteral("some-id", XSDID)},

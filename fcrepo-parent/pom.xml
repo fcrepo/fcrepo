@@ -4,7 +4,7 @@
 
   <groupId>org.fcrepo</groupId>
   <artifactId>fcrepo-parent</artifactId>
-  <version>4.7.5</version>
+  <version>4.7.6-SNAPSHOT</version>
   <name>Fedora Commons 4 :: Parent POM</name>
   <description>Parent POM for Fedora Commons Projects</description>
   <url>http://fedorarepository.org</url>
@@ -57,7 +57,7 @@
     <scm-provider-gitexe.plugin.version>1.9.4</scm-provider-gitexe.plugin.version>
     <site.plugin.version>3.4</site.plugin.version>
     <source.plugin.version>2.4</source.plugin.version>
-    <surefire.plugin.version>2.18.1</surefire.plugin.version>
+    <surefire.plugin.version>2.22.0</surefire.plugin.version>
     <versions.plugin.version>2.1</versions.plugin.version>
     <!-- jacoco and sonar configuration -->
     <jacoco.outputDir>${project.build.directory}</jacoco.outputDir>
@@ -615,7 +615,7 @@
     <connection>scm:git:git://github.com/${project_organization}/${project_name}.git</connection>
     <developerConnection>scm:git:git@github.com:${project_organization}/${project_name}.git</developerConnection>
     <url>https://github.com/${project_organization}/${project_name}</url>
-    <tag>fcrepo-4.7.5</tag>
+    <tag>HEAD</tag>
   </scm>
 
 </project>

@@ -2,7 +2,7 @@
   <parent>
     <artifactId>fcrepo</artifactId>
     <groupId>org.fcrepo</groupId>
-    <version>4.7.5</version>
+    <version>4.7.6-SNAPSHOT</version>
     <relativePath>../..</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
@@ -76,7 +76,7 @@
       <dependency>
         <groupId>commons-codec</groupId>
         <artifactId>commons-codec</artifactId>
-        <version>1.6</version>
+	<version>${commons-codec.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
