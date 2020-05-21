@@ -749,6 +749,25 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testPatchUnmodifiedSince() throws Exception {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+
+        final String location = serverAddress + id;
+        final HttpPatch updateObjectGraphMethod = patchObjMethod(id);
+        updateObjectGraphMethod.addHeader(CONTENT_TYPE, "application/sparql-update");
+        updateObjectGraphMethod.setEntity(new StringEntity("INSERT { " +
+                "<" + location + "> <http://example.org/foo> \"test updated title\" } WHERE {}"));
+        updateObjectGraphMethod.addHeader("If-Unmodified-Since", "Wed, 21 Oct 1955 07:28:00 GMT");
+        assertEquals(PRECONDITION_FAILED.getStatusCode(), getStatus(updateObjectGraphMethod));
+
+        try (final CloseableDataset dataset = getDataset(new HttpGet(location))) {
+            final DatasetGraph graphStore = dataset.asDatasetGraph();
+            assertFalse(graphStore.contains(ANY, createURI(location), createURI("http://example.org/foo"), ANY));
+        }
+    }
+
+    @Test
     public void testReplaceGraph() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
