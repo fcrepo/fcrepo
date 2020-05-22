@@ -92,4 +92,12 @@ public interface ContainmentIndex {
      * @return True if it is in the index.
      */
     boolean resourceExists(final String txID, final FedoraId fedoraID);
+
+    /**
+     * Find the ID for the container of the provided resource by iterating up the path until you find a real resource.
+     * @param txID The transaction ID or null if no transaction.
+     * @param fedoraId The resource's ID.
+     * @return The container ID.
+     */
+    FedoraId getContainerIdByPath(final String txID, final FedoraId fedoraId);
 }

@@ -15,13 +15,7 @@
 
   <bean name="authenticationProvider" class="org.fcrepo.auth.common.ShiroAuthenticationProvider"/>
 
-  <bean name="accessRolesProvider" class="org.fcrepo.auth.webac.WebACRolesProvider"/>
-
   <bean id="connectionManager" class="org.apache.http.impl.conn.PoolingHttpClientConnectionManager"/>
-  
-  <!-- Context that houses JAX-RS Resources that compose the API
-      as well as some utility gear. -->
-  <bean class="org.fcrepo.kernel.api.TransactionManager"/>
 
   <!-- Identifier translation chain -->
   <util:list id="translationChain" value-type="org.fcrepo.kernel.api.identifiers.InternalIdentifierConverter">
@@ -83,6 +77,21 @@
   </bean>
   
   <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>
+
+  <!-- supports event management, including the internal
+  event bus (fedoraInternalEventBus) -->
+  <!-- Fedora's lightweight internal event bus. Currently memory-resident.-->
+  <bean name="fedoraInternalEventBus" class="com.google.common.eventbus.EventBus"/>
+
+  <!-- Containment Index DB -->
+  <bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+    <property name="dataSource" ref="containmentIndexDataSource" />
+  </bean>
+
+  <bean id="containmentIndexDataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+    <property name="driverClassName" value="org.h2.jdbcx.JdbcDataSource" />
+    <property name="url" value="jdbc:h2:mem:index;DB_CLOSE_DELAY=-1" />
+  </bean>
 
 </beans>
   

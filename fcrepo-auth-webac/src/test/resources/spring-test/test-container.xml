@@ -13,7 +13,6 @@
   </bean>
   
   <bean id="containerWrapper" class="org.fcrepo.http.commons.test.util.ContainerWrapper" init-method="start" destroy-method="stop" >
-    <property name="port" value="${fcrepo.dynamic.test.port:8080}"/>
     <property name="configLocation" value="classpath:web.xml" />
   </bean>
   

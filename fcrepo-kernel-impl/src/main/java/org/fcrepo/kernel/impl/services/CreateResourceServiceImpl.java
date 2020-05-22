@@ -81,7 +81,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
         checkAclLinkHeader(linkHeaders);
         // Locate a containment parent of fedoraId, if exists.
-        final FedoraId parentId = findExistingAncestor(txId, fedoraId);
+        final FedoraId parentId = containmentIndex.getContainerIdByPath(txId, fedoraId);
         checkParent(txId, pSession, parentId);
 
         // Populate the description for the new binary
@@ -138,7 +138,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
         checkAclLinkHeader(linkHeaders);
         // Locate a containment parent of fedoraId, if exists.
-        final FedoraId parentId = findExistingAncestor(txId, fedoraId);
+        final FedoraId parentId = containmentIndex.getContainerIdByPath(txId, fedoraId);
         checkParent(txId, pSession, parentId);
 
         final List<String> rdfTypes = isEmpty(linkHeaders) ? emptyList() : getTypes(linkHeaders);

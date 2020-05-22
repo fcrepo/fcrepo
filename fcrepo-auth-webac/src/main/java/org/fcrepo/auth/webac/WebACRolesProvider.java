@@ -103,15 +103,6 @@ public class WebACRolesProvider {
      * @return a set of roles for each principal
      */
     public Map<String, Collection<String>> getRoles(final FedoraResource resource, final Transaction transaction) {
-        return getAgentRoles(resource, transaction);
-    }
-
-    /**
-     *  For a given FedoraResource, get a mapping of acl:agent values to acl:mode values and
-     *  for foaf:Agent and acl:AuthenticatedAgent include the acl:agentClass value to acl:mode.
-     */
-    private Map<String, Collection<String>> getAgentRoles(final FedoraResource resource,
-                                                          final Transaction transaction) {
         LOGGER.debug("Getting agent roles for: {}", resource.getPath());
 
         // Get the effective ACL by searching the target node and any ancestors.
@@ -237,7 +228,7 @@ public class WebACRolesProvider {
                     final FedoraId fedoraId = FedoraId.create(agentGroupNoHash);
                     final FedoraResource resource = resourceFactory.getResource(transaction, fedoraId);
                     return getAgentMembers(translator, resource, hashedSuffix);
-                } catch (PathNotFoundException e) {
+                } catch (final PathNotFoundException e) {
                     throw new PathNotFoundRuntimeException(e);
                 }
             } else if (agentGroup.equals(FOAF_AGENT_VALUE)) {
@@ -405,7 +396,7 @@ public class WebACRolesProvider {
                 }
             }
 
-            if (resource.getAcl() == null) {
+            if (resource.getContainer() == null) {
                 LOGGER.debug("No ACLs defined on this node or in parent hierarchy");
                 return Optional.empty();
             } else {

@@ -38,6 +38,7 @@
     <httpmime.version>4.5.6</httpmime.version>
     <httpcore.version>4.4.10</httpcore.version>
     <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
+    <javax.annotation.version>1.3.2</javax.annotation.version>
     <javaee-api.version>8.0</javaee-api.version>
     <javaee.xml.version>2.3.1</javaee.xml.version>
     <jaxb.core.version>2.3.0.1</jaxb.core.version>
@@ -125,6 +126,11 @@
         <artifactId>jaxb-impl</artifactId>
         <version>${jaxb.impl.version}</version>
 	  </dependency>
+      <dependency>
+        <groupId>javax.annotation</groupId>
+        <artifactId>javax.annotation-api</artifactId>
+        <version>${javax.annotation.version}</version>
+      </dependency>
       <dependency>
         <groupId>org.glassfish.jersey.core</groupId>
         <artifactId>jersey-common</artifactId>

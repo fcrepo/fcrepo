@@ -72,11 +72,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
     @Override
     public FedoraResource getResource(final Transaction transaction, final FedoraId fedoraID)
             throws PathNotFoundException {
-        final FedoraResource resource = instantiateResource(transaction, fedoraID);
-        if (fedoraID.isTimemap()) {
-            return resource.getTimeMap();
-        }
-        return resource;
+        return instantiateResource(transaction, fedoraID);
     }
 
     @Override
@@ -127,6 +123,20 @@ public class ResourceFactoryImpl implements ResourceFactory {
                     }
                 }
             }
+        }
+    }
+
+    @Override
+    public FedoraResource getContainer(final Transaction transaction, final FedoraId resourceId) {
+        final String txId = (transaction == null ? null : transaction.getId());
+        final String containerId = containmentIndex.getContainedBy(txId, resourceId);
+        if (containerId == null) {
+            return null;
+        }
+        try {
+            return getResource(transaction, FedoraId.create(containerId));
+        } catch (final PathNotFoundException exc) {
+            return null;
         }
     }
 
@@ -191,10 +201,18 @@ public class ResourceFactoryImpl implements ResourceFactory {
                     PersistentStorageSessionManager.class,
                     ResourceFactory.class);
 
-            final var rescImpl = constructor.newInstance(identifier, transaction,
+            // If identifier is to a TimeMap we need to avoid creating a original resource with a Timemap FedoraId
+            final var instantiationId = identifier.isTimemap() ?
+                    FedoraId.create(identifier.getResourceId()) : identifier;
+
+            final var rescImpl = constructor.newInstance(instantiationId, transaction,
                     persistentStorageSessionManager, this);
             populateResourceHeaders(rescImpl, headers, versionDateTime);
 
+            // If identifier is a TimeMap, now we can return the virtual resource.
+            if (identifier.isTimemap()) {
+                return rescImpl.getTimeMap();
+            }
             return rescImpl;
         } catch (final SecurityException | ReflectiveOperationException e) {
             throw new RepositoryRuntimeException("Unable to construct object", e);

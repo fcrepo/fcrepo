@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl;
 
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.fcrepo.kernel.api.ContainmentIndex;
@@ -405,6 +406,30 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             exists = !jdbcTemplate.queryForList(RESOURCE_EXISTS, parameterSource, String.class).isEmpty();
         }
         return exists;
+    }
+
+    @Override
+    public FedoraId getContainerIdByPath(final String txID, final FedoraId fedoraId) {
+        if (fedoraId.isRepositoryRoot()) {
+            // If we are root then we are the top.
+            return fedoraId;
+        }
+        final String parent = getContainedBy(txID, fedoraId);
+        if (parent != null) {
+            return FedoraId.create(parent);
+        }
+        String fullId = fedoraId.getFullId();
+        while (fullId.contains("/")) {
+            fullId = fedoraId.getResourceId().substring(0, fullId.lastIndexOf("/"));
+            if (fullId.equals(FEDORA_ID_PREFIX)) {
+                return FedoraId.getRepositoryRootId();
+            }
+            final FedoraId testID = FedoraId.create(fullId);
+            if (resourceExists(txID, testID)) {
+                return testID;
+            }
+        }
+        return FedoraId.getRepositoryRootId();
     }
 
     /**

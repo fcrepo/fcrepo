@@ -122,7 +122,6 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.api.services.HttpRdfService;
-import org.fcrepo.http.commons.api.HttpHeaderInjector;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.domain.MultiPrefer;
@@ -204,10 +203,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     @Inject
     @Optional
     private HttpTripleUtil httpTripleUtil;
-
-    @Inject
-    @Optional
-    private HttpHeaderInjector httpHeaderInject;
 
     @BeanParam
     protected MultiPrefer prefer;
@@ -690,9 +685,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             }
         } else {
             servletResponse.addHeader(LINK, buildLink(RDF_SOURCE.getURI(), "type"));
-        }
-        if (httpHeaderInject != null) {
-            httpHeaderInject.addHttpHeaderToResponseStream(transaction(), servletResponse, uriInfo, resource);
         }
 
         addLinkAndOptionsHttpHeaders(resource);

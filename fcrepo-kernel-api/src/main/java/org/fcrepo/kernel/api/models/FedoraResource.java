@@ -87,8 +87,8 @@ public interface FedoraResource {
     FedoraResource getContainer();
 
     /**
-     * Get the Original Resource for which this resource is a memento. If this resource is not a memento,
-     * then it is the original.
+     * Get the Original Resource for which this resource is a memento or timemap for. If this resource is not a
+     * memento or timemap, then it is the original.
      *
      * @return the original resource for this
      */

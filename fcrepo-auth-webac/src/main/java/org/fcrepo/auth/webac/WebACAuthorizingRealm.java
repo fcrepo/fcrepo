@@ -23,6 +23,7 @@ import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_AUTHENTICATED_AGENT_VALUE;
 import static org.fcrepo.auth.common.HttpHeaderPrincipalProvider.HttpHeaderPrincipal;
 import static org.fcrepo.auth.common.DelegateHeaderPrincipalProvider.DelegatedHeaderPrincipal;
+import static org.fcrepo.auth.webac.WebACFilter.identifierConverter;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -36,12 +37,8 @@ import java.util.Set;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
 
 import org.apache.http.auth.BasicUserPrincipal;
-import org.apache.jena.rdf.model.Resource;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -50,15 +47,16 @@ import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrincipal;
-import org.fcrepo.http.api.FedoraLdp;
-import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
+import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
-import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryConfigurationException;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.exception.TransactionClosedException;
+import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.slf4j.Logger;
 /**
  * Authorization-only realm that performs authorization checks using WebAC ACLs stored in a Fedora repository. It
@@ -86,26 +84,23 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     @Inject
     private TransactionManager transactionManager;
 
+    @Inject
+    private ResourceFactory resourceFactory;
+
+    @Inject
+    private ContainmentIndex containmentIndex;
+
     private Transaction transaction() {
-        return transactionManager.get(request.getHeader(ATOMIC_ID_HEADER));
-    }
-
-    private IdentifierConverter<Resource, FedoraResource> idTranslator;
-
-    private IdentifierConverter<Resource, FedoraResource> translator() {
-        if (idTranslator == null) {
-            idTranslator = new HttpResourceConverter(transaction(), UriBuilder.fromResource(FedoraLdp.class));
+        final String txId = request.getHeader(ATOMIC_ID_HEADER);
+        if (txId == null) {
+            return null;
         }
-
-        return idTranslator;
+        try {
+            return transactionManager.get(txId);
+        } catch (final TransactionClosedException | TransactionNotFoundException e) {
+            return null;
+        }
     }
-
-    /**
-     * Useful for constructing URLs
-     */
-    @Context
-    private UriInfo uriInfo;
-
 
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(final PrincipalCollection principals) {
@@ -141,12 +136,18 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
                 new HashMap<URI, Map<String, Collection<String>>>();
         final String contextPath = request.getContextPath() + request.getServletPath();
         for (final URI uri : targetURIs) {
-            String path = uri.getPath();
-            if (path.startsWith(contextPath)) {
-                path = path.replaceFirst(contextPath, "");
+            if (identifierConverter(request).inInternalDomain(uri.toString())) {
+                final FedoraId id = FedoraId.create(uri.toString());
+                log.debug("Getting roles for id {}", id.getFullId());
+                rolesForURI.put(uri, getRolesForId(id));
+            } else {
+                String path = uri.getPath();
+                if (path.startsWith(contextPath)) {
+                    path = path.replaceFirst(contextPath, "");
+                }
+                log.debug("Getting roles for path {}", path);
+                rolesForURI.put(uri, getRolesForPath(path));
             }
-            log.debug("Getting roles for path {}", path);
-            rolesForURI.put(uri, getRolesForPath(path));
         }
 
         for (final Object o : principals.asList()) {
@@ -183,10 +184,13 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     }
 
     private Map<String, Collection<String>> getRolesForPath(final String path) {
+        final FedoraId id = identifierConverter(request).pathToInternalId(path);
+        return getRolesForId(id);
+    }
 
+    private Map<String, Collection<String>> getRolesForId(final FedoraId id) {
         Map<String, Collection<String>> roles = null;
-        final FedoraResource fedoraResource = getResourceOrParentFromPath(path);
-
+        final FedoraResource fedoraResource = getResourceOrParentFromPath(id);
         if (fedoraResource != null) {
             // check ACL for the request URI and get a mapping of agent => modes
             roles = rolesProvider.getRoles(fedoraResource, transaction());
@@ -230,24 +234,23 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
         return false;
     }
 
-    private FedoraResource getResourceOrParentFromPath(final String path) {
-        FedoraResource resource = null;
-        log.debug("Attempting to get FedoraResource for {}", path);
+    private FedoraResource getResourceOrParentFromPath(final FedoraId fedoraId) {
         try {
-            resource = translator().convert(translator().toDomain(path));
-            log.debug("Got FedoraResource for {}", path);
-        } catch (final RepositoryRuntimeException e) {
-            if (e.getCause() instanceof PathNotFoundRuntimeException) {
-                log.debug("Path {} does not exist", path);
-                // go up the path looking for a node that exists
-                if (path.length() > 1) {
-                    final int lastSlash = path.lastIndexOf("/");
-                    final int end = lastSlash > 0 ? lastSlash : lastSlash + 1;
-                    resource = getResourceOrParentFromPath(path.substring(0, end));
-                }
+            log.debug("Testing FedoraResource for {}", fedoraId.getFullIdPath());
+            return this.resourceFactory.getResource(transaction(), fedoraId);
+        } catch (final PathNotFoundException exc) {
+            log.debug("Resource {} not found getting container", fedoraId.getFullIdPath());
+            final String txID = transaction() == null ? null : transaction().getId();
+            final FedoraId containerId = containmentIndex.getContainerIdByPath(txID, fedoraId);
+            log.debug("Attempting to get FedoraResource for {}", fedoraId.getFullIdPath());
+            try {
+                log.debug("Got FedoraResource for {}", containerId.getFullIdPath());
+                return this.resourceFactory.getResource(transaction(), containerId);
+            } catch (final PathNotFoundException exc2) {
+                log.debug("Path {} does not exist, but we should never end up here.", containerId.getFullIdPath());
+                return null;
             }
         }
-        return resource;
     }
 
 }
