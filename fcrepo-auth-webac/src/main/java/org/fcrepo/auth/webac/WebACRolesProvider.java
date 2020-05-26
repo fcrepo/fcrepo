@@ -45,6 +45,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -55,6 +56,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -69,6 +71,7 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.TimeMap;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -396,12 +399,20 @@ public class WebACRolesProvider {
                 }
             }
 
-            if (resource.getContainer() == null) {
+            FedoraResource container = resource.getContainer();
+            // The resource is not ldp:contained by anything, so checked its described resource.
+            if (container == null && (resource instanceof NonRdfSourceDescription || resource instanceof TimeMap)) {
+                final var described = resource.getDescribedResource();
+                if (!Objects.equals(resource, described)) {
+                    container = described;
+                }
+            }
+            if (container == null) {
                 LOGGER.debug("No ACLs defined on this node or in parent hierarchy");
                 return Optional.empty();
             } else {
                 LOGGER.trace("Checking parent resource for ACL. No ACL found at {}", resource.getPath());
-                return getEffectiveAcl(resource.getContainer(), true);
+                return getEffectiveAcl(container, true);
             }
         } catch (final RepositoryException ex) {
             LOGGER.debug("Exception finding effective ACL: {}", ex.getMessage());

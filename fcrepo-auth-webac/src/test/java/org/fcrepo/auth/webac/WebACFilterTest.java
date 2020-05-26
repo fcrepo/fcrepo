@@ -75,9 +75,11 @@ import org.springframework.mock.web.MockHttpServletResponse;
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class WebACFilterTest {
 
-    private static final String transactionId = "tx-id";
-
     private static final String baseURL = "http://localhost";
+
+    private static final String transactionId = "abc-def";
+
+    private static final String transactionUri = baseURL + "/fcr:tx/" + transactionId;
 
     private static final String testPath = "/testUri";
 
@@ -161,7 +163,7 @@ public class WebACFilterTest {
         request.setPathInfo(testPath);
         request.setRequestURI(testPath);
         request.setContentType(null);
-        request.addHeader(ATOMIC_ID_HEADER, transactionId);
+        request.addHeader(ATOMIC_ID_HEADER, transactionUri);
 
         setField(webacFilter, "transactionManager", mockTransactionManager);
 

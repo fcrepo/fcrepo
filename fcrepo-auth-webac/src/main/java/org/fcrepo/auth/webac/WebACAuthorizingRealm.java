@@ -23,6 +23,7 @@ import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_AUTHENTICATED_AGENT_VALUE;
 import static org.fcrepo.auth.common.HttpHeaderPrincipalProvider.HttpHeaderPrincipal;
 import static org.fcrepo.auth.common.DelegateHeaderPrincipalProvider.DelegatedHeaderPrincipal;
+import static org.fcrepo.auth.webac.WebACFilter.getBaseUri;
 import static org.fcrepo.auth.webac.WebACFilter.identifierConverter;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -47,13 +48,12 @@ import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrincipal;
+import org.fcrepo.http.commons.session.TransactionProvider;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryConfigurationException;
-import org.fcrepo.kernel.api.exception.TransactionClosedException;
-import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
@@ -95,11 +95,8 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
         if (txId == null) {
             return null;
         }
-        try {
-            return transactionManager.get(txId);
-        } catch (final TransactionClosedException | TransactionNotFoundException e) {
-            return null;
-        }
+        final var txProvider = new TransactionProvider(transactionManager, request, getBaseUri(request));
+        return txProvider.provide();
     }
 
     @Override

@@ -30,6 +30,7 @@ import static org.fcrepo.auth.webac.WebACRolesProvider.GROUP_AGENT_BASE_URI_PROP
 import static org.fcrepo.auth.webac.WebACRolesProvider.USER_AGENT_BASE_URI_PROPERTY;
 import static org.fcrepo.http.api.FedoraAcl.ROOT_AUTHORIZATION_PROPERTY;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
@@ -1926,7 +1927,6 @@ public class WebACRecipesIT extends AbstractResourceIT {
         testCanWrite(writeableResource, username);
     }
 
-    @Ignore("Application and servlet filter not sharing transaction manager - FCREPO-3316")
     @Test
     public void testSameInTransaction() throws Exception {
         final String targetResource = "/rest/" + getRandomUniqueId();
@@ -2015,6 +2015,90 @@ public class WebACRecipesIT extends AbstractResourceIT {
         postDisallowed2.setHeader(ATOMIC_ID_HEADER, transactionId);
         assertEquals(SC_FORBIDDEN, getStatus(postDisallowed2));
     }
+
+    @Test
+    public void testBinaryAndDescriptionAllowed() throws Exception {
+        final String targetResource = "/rest/" + getRandomUniqueId();
+        final String username = "user88";
+        // Make a basic container.
+        final String targetUri = ingestObj(targetResource);
+        final String readwriteString = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                "<#readauthz> a acl:Authorization ;\n" +
+                "   acl:agent \"" + username + "\" ;\n" +
+                "   acl:mode acl:Read, acl:Write ;\n" +
+                "   acl:default <" + targetResource + "> ;" +
+                "   acl:accessTo <" + targetResource + "> .";
+        // Allow user to read and write this object.
+        ingestAclString(targetUri, readwriteString, "fedoraAdmin");
+        // user creates a binary
+        final HttpPost newBinary = postObjMethod(targetResource);
+        setAuth(newBinary, username);
+        newBinary.setHeader(CONTENT_TYPE, "text/plain");
+        final StringEntity stringData = new StringEntity("This is some data", Charsets.UTF8_CHARSET);
+        newBinary.setEntity(stringData);
+        final String binaryLocation;
+        try (final CloseableHttpResponse response = execute(newBinary)) {
+            assertEquals(SC_CREATED, getStatus(response));
+            binaryLocation = getLocation(response);
+        }
+        // Try PUTting a new binary
+        final HttpPut putAgain = new HttpPut(binaryLocation);
+        setAuth(putAgain, username);
+        putAgain.setHeader(CONTENT_TYPE, "text/plain");
+        final StringEntity newStringData = new StringEntity("Some other data", Charsets.UTF8_CHARSET);
+        putAgain.setEntity(newStringData);
+        assertEquals(SC_NO_CONTENT, getStatus(putAgain));
+        // Try PUTting to binary description
+        final HttpPut putDesc = new HttpPut(binaryLocation + "/" + FCR_METADATA);
+        setAuth(putDesc, username);
+        putDesc.setHeader(CONTENT_TYPE, "text/turtle");
+        final StringEntity putDescData = new StringEntity("<> <http://purl.org/dc/elements/1.1/title> \"Some title\".",
+                Charsets.UTF8_CHARSET);
+        putDesc.setEntity(putDescData);
+        assertEquals(SC_NO_CONTENT, getStatus(putDesc));
+        // Check the title
+        assertPredicateValue(binaryLocation + "/" + FCR_METADATA, "http://purl.org/dc/elements/1.1/title",
+                "Some title");
+        // Try PATCHing to binary description
+        final HttpPatch patchDesc = new HttpPatch(binaryLocation + "/" + FCR_METADATA);
+        setAuth(patchDesc, username);
+        patchDesc.setHeader(CONTENT_TYPE, "application/sparql-update");
+        final StringEntity patchDescData = new StringEntity("PREFIX dc: <http://purl.org/dc/elements/1.1/> " +
+                "DELETE { <> dc:title ?o } INSERT { <> dc:title \"Some different title\" } WHERE { <> dc:title ?o }",
+                Charsets.UTF8_CHARSET);
+        patchDesc.setEntity(patchDescData);
+        assertEquals(SC_NO_CONTENT, getStatus(patchDesc));
+        // Check the title
+        assertPredicateValue(binaryLocation + "/" + FCR_METADATA, "http://purl.org/dc/elements/1.1/title",
+                "Some different title");
+
+    }
+
+    /**
+     * Check the graph has the predicate with the value.
+     * @param targetUri Full URI of the resource to check.
+     * @param predicateUri Full URI of the predicate to check.
+     * @param predicateValue Literal value to look for.
+     * @throws Exception if problems performing the GET.
+     */
+    private void assertPredicateValue(final String targetUri, final String predicateUri, final String predicateValue)
+            throws Exception {
+        final HttpGet verifyGet = new HttpGet(targetUri);
+        setAuth(verifyGet, "fedoraAdmin");
+        try (final CloseableHttpResponse response = execute(verifyGet)) {
+            final CloseableDataset dataset = getDataset(response);
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue("Can't find " + predicateValue + " for predicate " + predicateUri + " in graph",
+                    graph.contains(
+                            Node.ANY,
+                            Node.ANY,
+                            NodeFactory.createURI(predicateUri),
+                            NodeFactory.createLiteral(predicateValue)
+                    )
+            );
+        }
+    }
+
 
     /**
      * Utility function to ingest a ACL from a string.

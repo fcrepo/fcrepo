@@ -41,13 +41,12 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
+import org.fcrepo.http.commons.session.TransactionProvider;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.exception.TransactionClosedException;
-import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
@@ -148,17 +147,27 @@ public class WebACFilter extends RequestContextFilter {
      * @return a converter.
      */
     public static HttpIdentifierConverter identifierConverter(final HttpServletRequest request) {
+        final var uriBuild = UriBuilder.fromUri(getBaseUri(request)).path("/{path: .*}");
+        return new HttpIdentifierConverter(uriBuild);
+    }
+
+    /**
+     * Calculate a base Uri for this request.
+     * @param request the incoming request
+     * @return the URI
+     */
+    public static URI getBaseUri(final HttpServletRequest request) {
         final String host = request.getScheme() + "://" + request.getServerName() +
-                (request.getServerPort() != 80 ? ":" + request.getServerPort() : "");
+                (request.getServerPort() != 80 ? ":" + request.getServerPort() : "") + "/";
         final String requestUrl = request.getRequestURL().toString();
         final String contextPath = request.getContextPath() + request.getServletPath();
         final String baseUri;
         if (contextPath.length() == 0) {
             baseUri = host;
         } else {
-            baseUri = requestUrl.split(contextPath)[0] + contextPath;
+            baseUri = requestUrl.split(contextPath)[0] + contextPath + "/";
         }
-        return new HttpIdentifierConverter(UriBuilder.fromUri(baseUri).path("/{path: .*}"));
+        return URI.create(baseUri);
     }
 
     /**
@@ -234,11 +243,8 @@ public class WebACFilter extends RequestContextFilter {
         if (txId == null) {
             return null;
         }
-        try {
-            return transactionManager.get(txId);
-        } catch (final TransactionClosedException | TransactionNotFoundException e) {
-            return null;
-        }
+        final var txProvider = new TransactionProvider(transactionManager, request, getBaseUri(request));
+        return txProvider.provide();
     }
 
     private String getContainerUrl(final HttpServletRequest servletRequest) {
