@@ -88,6 +88,10 @@ and can be started by either double-clicking on the jar file or by running the f
 
     java -jar ./fcrepo-webapp/target/fcrepo-webapp-<version>-jetty-console.jar
 
+By default, three required OCFL directories (storage, staging, and work) are created in the tmp directory. The location of the tmp directory varies by system environment, but it can be found in the output log when you first start the one-click application. You can change the default location by passing in arguments when starting the one-click, e.g.:
+
+    java -Dfcrepo.ocfl.storage.root.dir=ocfl/store -Dfcrepo.ocfl.staging.dir=ocfl/stage -Dfcrepo.ocfl.work.dir=ocfl/work -jar fcrepo-webapp-6.0.0-SNAPSHOT-jetty-console.jar
+
 An alternative is use the maven command: `mvn jetty:run`
 
 ```
