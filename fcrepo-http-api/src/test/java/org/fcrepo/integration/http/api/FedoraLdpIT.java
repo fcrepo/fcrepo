@@ -163,6 +163,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
@@ -2998,7 +2999,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 " <info:test#date> \"1953?\"^^<http://id.loc.gov/datatypes/edtf/EDTF> }" +
                 " WHERE {}"));
         executeAndClose(updateObjectGraphMethod);
-        try (CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
+        try (final CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertTrue("Didn't find a triple we thought we added.", graph.contains(ANY,
                     createURI(subjectURI), createURI("info:test#label"), createLiteral("foo")));
@@ -3022,7 +3023,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
             assertTrue("Didn't find ETag header!", response.containsHeader("ETag"));
         }
-        try (CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
+        try (final CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertFalse("Found a triple we thought we deleted.", graph.contains(ANY,
                     createURI(subjectURI), createURI("info:test#label"), createLiteral("foo")));
@@ -4540,7 +4541,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         patch.setEntity(new StringEntity("INSERT { <> a <" + MEMENTO_TYPE + "> . } WHERE {} "));
 
-        try (CloseableHttpResponse response = execute(patch)) {
+        try (final CloseableHttpResponse response = execute(patch)) {
             assertEquals("Must not be able to INSERT  \"<>  a <" + MEMENTO_TYPE + ">\"",
                          CONFLICT.getStatusCode(), getStatus(patch));
         }
@@ -4588,7 +4589,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         patch.setEntity(new StringEntity(
             "INSERT { <>  <" + MEMENTO_NAMESPACE + "mementoDatetime" +
             "> \"Thu, 21 Jan 2010 00:09:40 GMT\". } WHERE {}"));
-        try (CloseableHttpResponse response = execute(patch)) {
+        try (final CloseableHttpResponse response = execute(patch)) {
             assertEquals("Must not be able to PATCH RDF that contains a memento namespace predicate",
                          CONFLICT.getStatusCode(), getStatus(response));
         }
@@ -4612,7 +4613,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 "INSERT { <> ldp:membershipResource <" + subjectURI + "> ;\n" +
                     "ldp:hasMemberRelation fedora:createdBy ;\n" +
                     "ldp:insertedContentRelation ore:proxyFor. } WHERE {}"));
-        try (CloseableHttpResponse response = execute(patch)) {
+        try (final CloseableHttpResponse response = execute(patch)) {
             assertEquals("Must not be able to PATCH IndirectContainer updating Server Managed triples",
                          CONFLICT.getStatusCode(), getStatus(response));
         }
@@ -4746,6 +4747,32 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // Check id/dsid/fcr:metadata
         doGetIdAndVersions(id + "/" + dsid + "/" + FCR_METADATA);
 
+    }
+
+    @Test
+    public void testContentTypeWithCharset() throws Exception {
+        final String uuid = getRandomUniqueId();
+        final HttpPost postMethod = postObjMethod();
+        postMethod.setHeader("Slug", uuid);
+        postMethod.setHeader(CONTENT_TYPE, "text/turtle;charset=utf-8");
+        final HttpEntity body = new StringEntity("@prefix acl: <http://www.w3.org/ns/auth/acl#>.\n" +
+                "@prefix vcard: <http://www.w3.org/2006/vcard/ns#>.\n" +
+                "<> a vcard:Group;\n" +
+                "  vcard:hasMember  \"someUser\".");
+        postMethod.setEntity(body);
+        assertEquals(CREATED.getStatusCode(), getStatus(postMethod));
+
+        final HttpGet getMethod = getObjMethod(uuid);
+        try (final CloseableHttpResponse response = execute(getMethod)) {
+            final Dataset dataset = getDataset(response);
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            checkForLinkHeader(response, BASIC_CONTAINER.toString(), "type");
+            assertTrue(graph.contains(
+                    ANY,
+                    ANY,
+                    NodeFactory.createURI("http://www.w3.org/2006/vcard/ns#hasMember"),
+                    NodeFactory.createLiteral("someUser")));
+        }
     }
 
 }

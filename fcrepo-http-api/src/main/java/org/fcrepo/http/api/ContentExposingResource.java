@@ -29,7 +29,6 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static javax.ws.rs.core.Response.created;
@@ -909,7 +908,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected static String getSimpleContentType(final MediaType requestContentType) {
         return requestContentType != null ?
                 requestContentType.getType() + "/" + requestContentType.getSubtype()
-                : APPLICATION_OCTET_STREAM_TYPE.toString();
+                : null;
     }
 
     protected static boolean isRdfContentType(final String contentTypeString) {
