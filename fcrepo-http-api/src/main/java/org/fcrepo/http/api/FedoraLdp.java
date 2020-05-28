@@ -408,7 +408,7 @@ public class FedoraLdp extends ContentExposingResource {
         // TODO: Refactor to check preconditions
         //evaluateRequestPreconditions(request, servletResponse, resource, transaction);
 
-        final var providedContentType = requestContentType != null ? requestContentType.toString() : null;
+        final var providedContentType = getSimpleContentType(requestContentType);
 
         boolean created = false;
 
@@ -584,7 +584,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath());
         final FedoraId newFedoraId = mintNewPid(fedoraId, slug);
-        final var providedContentType = requestContentType != null ? requestContentType.toString() : null;
+        final var providedContentType = getSimpleContentType(requestContentType);
 
         if (isBinary(interactionModel,
                      providedContentType,
