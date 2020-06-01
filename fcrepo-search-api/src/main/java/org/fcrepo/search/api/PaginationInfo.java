@@ -21,24 +21,44 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * A data structure representing the pagination information associated with a {@link org.fcrepo.search.api.SearchResult}
+ *
  * @author dbernstein
  */
 public class PaginationInfo {
     @JsonProperty
-    int totalResultCount = 0;
-
+    private int offset = -1;
     @JsonProperty
-    int startIndex = -1;
+    private int maxResults = -1;
 
-    @JsonProperty
-    int endIndex = -1;
+    /**
+     * Default constructor
+     */
+    public PaginationInfo() {}
 
-    @JsonProperty
-    int page = -1;
+    /**
+     * Constructor
+     *
+     * @param maxResults max results asked off
+     * @param offset     offset of the first result item
+     */
+    public PaginationInfo(final int maxResults, final int offset) {
+        this.maxResults = maxResults;
+        this.offset = offset;
+    }
 
-    @JsonProperty
-    int pageCount = 0;
+    /**
+     * The max results of the original query
+     * @return
+     */
+    public int getMaxResults() {
+        return maxResults;
+    }
 
-    @JsonProperty
-    int pageSize = 10;
+    /**
+     * The offset specified by original query
+     * @return
+     */
+    public int getOffset() {
+        return offset;
+    }
 }

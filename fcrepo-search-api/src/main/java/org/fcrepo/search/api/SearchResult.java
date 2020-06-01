@@ -19,7 +19,6 @@ package org.fcrepo.search.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -29,15 +28,25 @@ import java.util.Map;
  */
 public class SearchResult {
     @JsonProperty
-    private PaginationInfo pagination = new PaginationInfo();
+    private PaginationInfo pagination;
     @JsonProperty
-    private List<Map<String, Object>> items = new ArrayList();
+    private List<Map<String, Object>> items;
 
     /**
-     * Default constructor
+     * Default Constructor
      */
-    public SearchResult() {
-
+    public SearchResult() {}
+    /**
+     * Constructor
+     *
+     * @param items      The individual search result items
+     * @param pagination The pagination info
+     */
+    public SearchResult(final List<Map<String, Object>> items, final PaginationInfo pagination) {
+        assert items != null;
+        assert pagination != null;
+        this.items = items;
+        this.pagination = pagination;
     }
 
     /**
