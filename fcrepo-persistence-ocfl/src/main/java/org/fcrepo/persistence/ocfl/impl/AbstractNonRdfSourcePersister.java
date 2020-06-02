@@ -95,7 +95,8 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
             } else {
                 multiDigestWrapper = new MultiDigestInputStreamWrapper(
                         nonRdfSourceOperation.getContentStream(),
-                        nonRdfSourceOperation.getContentDigests());
+                        nonRdfSourceOperation.getContentDigests(),
+                        null);
                 contentStream = multiDigestWrapper.getInputStream();
             }
 
