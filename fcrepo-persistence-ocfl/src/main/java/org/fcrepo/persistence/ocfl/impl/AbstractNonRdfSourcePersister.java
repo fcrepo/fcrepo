@@ -143,11 +143,12 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
         touchModificationHeaders(headers, op.getUserPrincipal(), timeWritten);
 
         final var contentSize = getContentSize(op, writeOutcome);
+        final var digests = writeOutcome == null ? op.getContentDigests() : writeOutcome.getDigests();
 
         populateBinaryHeaders(headers, op.getMimeType(),
                 op.getFilename(),
                 contentSize,
-                writeOutcome.getDigests());
+                digests);
 
         if (forExternalBinary(op)) {
             populateExternalBinaryHeaders(headers, op.getContentUri().toString(),

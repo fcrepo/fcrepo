@@ -241,6 +241,7 @@ public class CreateNonRdfSourcePersisterTest {
         final InputStream content = IOUtils.toInputStream(CONTENT_BODY, UTF_8);
 
         when(nonRdfSourceOperation.getContentDigests()).thenReturn(asList(CONTENT_SHA1_URI));
+        when(writeOutcome.getDigests()).thenReturn(asList(CONTENT_SHA1_URI));
 
         when(nonRdfSourceOperation.getContentStream()).thenReturn(content);
         when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel())
