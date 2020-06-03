@@ -24,7 +24,10 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
 
@@ -38,20 +41,39 @@ public final class ContentDigest {
 
     private static final Logger LOGGER = getLogger(ContentDigest.class);
 
+    private final static String DEFAULT_DIGEST_ALGORITHM_PROPERTY = "fcrepo.persistence.defaultDigestAlgorithm";
+    public final static DIGEST_ALGORITHM DEFAULT_DIGEST_ALGORITHM;
+
+    static {
+        // Establish the default digest algorithm for fedora, defaulting to SHA1
+        DEFAULT_DIGEST_ALGORITHM = DIGEST_ALGORITHM.fromAlgorithm(
+                System.getProperty(DEFAULT_DIGEST_ALGORITHM_PROPERTY, DIGEST_ALGORITHM.SHA512.algorithm));
+
+        // Throw error if the configured default digest is not known to fedora
+        if (DIGEST_ALGORITHM.MISSING.equals(DEFAULT_DIGEST_ALGORITHM)) {
+            throw new IllegalArgumentException("Invalid " + DEFAULT_DIGEST_ALGORITHM_PROPERTY
+                    + " property configured: " + System.getProperty(DEFAULT_DIGEST_ALGORITHM_PROPERTY));
+        }
+    }
+
     public enum DIGEST_ALGORITHM {
-        SHA1("SHA", "urn:sha1"),
-        SHA256("SHA-256", "urn:sha-256"),
-        SHA512("SHA-512", "urn:sha-512"),
-        SHA512256("SHA-512/256", "urn:sha-512/256"),
+        SHA1("SHA", "urn:sha1", "sha-1", "sha1"),
+        SHA256("SHA-256", "urn:sha-256", "sha256"),
+        SHA512("SHA-512", "urn:sha-512", "sha512"),
+        SHA512256("SHA-512/256", "urn:sha-512/256", "sha512/256"),
         MD5("MD5", "urn:md5"),
         MISSING("NONE", "missing");
 
         final public String algorithm;
         final private String scheme;
+        final private Set<String> aliases;
 
-        DIGEST_ALGORITHM(final String alg, final String scheme) {
+        DIGEST_ALGORITHM(final String alg, final String scheme, final String... aliases) {
             this.algorithm = alg;
             this.scheme = scheme;
+            this.aliases = Arrays.stream(ArrayUtils.add(aliases, algorithm))
+                    .map(String::toLowerCase)
+                    .collect(Collectors.toSet());
         }
 
         /**
@@ -78,6 +100,20 @@ public final class ContentDigest {
         }
 
         /**
+         * Return enum value for the provided algorithm
+         *
+         * @param alg algorithm name to seek
+         * @return enum value associated with the algorithm name, or missing if not found
+         */
+        public static DIGEST_ALGORITHM fromAlgorithm(final String alg) {
+            final String seek = alg.toLowerCase();
+            return Arrays.stream(values())
+                    .filter(value -> value.aliases.contains(seek))
+                    .findFirst()
+                    .orElse(MISSING);
+        }
+
+        /**
          * Return true if the provided algorithm is included in this enum
          *
          * @param alg to test
@@ -85,6 +121,13 @@ public final class ContentDigest {
          */
         public static boolean isSupportedAlgorithm(final String alg) {
             return !getScheme(alg).equals(MISSING.scheme);
+        }
+
+        /**
+         * @return the aliases
+         */
+        public Set<String> getAliases() {
+            return aliases;
         }
     }
 

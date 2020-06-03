@@ -21,6 +21,7 @@ import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import edu.wisc.library.ocfl.api.OcflObjectUpdater;
 import edu.wisc.library.ocfl.api.exception.NotFoundException;
 import edu.wisc.library.ocfl.api.model.CommitInfo;
+import edu.wisc.library.ocfl.api.model.DigestAlgorithm;
 import edu.wisc.library.ocfl.api.model.FileChangeType;
 import edu.wisc.library.ocfl.api.model.FileDetails;
 import edu.wisc.library.ocfl.api.model.ObjectVersionId;
@@ -29,6 +30,9 @@ import edu.wisc.library.ocfl.api.model.VersionId;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
+import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
+import org.fcrepo.kernel.api.utils.ContentDigest;
+import org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM;
 import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
@@ -78,10 +82,10 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
     private static final Logger log = LoggerFactory.getLogger(DefaultOCFLObjectSession.class);
 
-    private String objectIdentifier;
+    private final String objectIdentifier;
 
     // Path where changes to the OCFL object in this session are staged
-    private Path stagingPath;
+    private final Path stagingPath;
 
     private Set<String> deletePaths;
 
@@ -90,11 +94,11 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     // Indicates that the session has been committed or closed, and may not be written to
     private boolean sessionClosed;
 
-    private MutableOcflRepository ocflRepository;
+    private final MutableOcflRepository ocflRepository;
 
     private CommitOption commitOption;
 
-    private Instant created;
+    private final Instant created;
     /**
      * Instantiate an OCFL object session
      *
@@ -571,6 +575,20 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
     private Instant toMementoInstant(final OffsetDateTime timestamp) {
         return timestamp.toInstant().truncatedTo(ChronoUnit.SECONDS);
+    }
+
+    @Override
+    public DIGEST_ALGORITHM getObjectDigestAlgorithm() {
+        if (isNewObject()) {
+            return ContentDigest.DEFAULT_DIGEST_ALGORITHM;
+        }
+        final DigestAlgorithm ocflAlg = ocflRepository.describeObject(this.objectIdentifier).getDigestAlgorithm();
+        final DIGEST_ALGORITHM fcrepoAlg = DIGEST_ALGORITHM.fromAlgorithm(ocflAlg.getJavaStandardName());
+        if (DIGEST_ALGORITHM.MISSING.equals(fcrepoAlg)) {
+            throw new UnsupportedAlgorithmException(String.format("OCFL object %s specifies a digest algorithm "
+                    + "which is not supported by Fedora: %s", objectIdentifier, ocflAlg.getJavaStandardName()));
+        }
+        return fcrepoAlg;
     }
 
 }

@@ -49,8 +49,10 @@ import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM;
 import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.common.FileWriteOutcome;
 import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.junit.Before;
@@ -82,7 +84,7 @@ public class CreateNonRdfSourcePersisterTest {
     private FedoraToOCFLObjectIndex index;
 
     @Mock
-    private WriteOutcome writeOutcome;
+    private FileWriteOutcome writeOutcome;
 
     @Captor
     private ArgumentCaptor<InputStream> userContentCaptor;
@@ -124,6 +126,7 @@ public class CreateNonRdfSourcePersisterTest {
         when(mapping.getRootObjectIdentifier()).thenReturn(ROOT_RESOURCE_ID);
 
         when(session.write(anyString(), any(InputStream.class))).thenReturn(writeOutcome);
+        when(session.getObjectDigestAlgorithm()).thenReturn(DIGEST_ALGORITHM.SHA1);
 
         nonRdfSourceOperation = mock(NonRdfSourceOperation.class, withSettings().extraInterfaces(
                 CreateResourceOperation.class));

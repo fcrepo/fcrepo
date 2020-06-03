@@ -28,7 +28,7 @@ import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchModificatio
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.relativizeSubpath;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveOCFLSubpath;
 
-import java.io.InputStream;
+import java.util.Arrays;
 
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
@@ -37,12 +37,14 @@ import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.common.FileWriteOutcome;
 import org.fcrepo.persistence.common.MultiDigestInputStreamWrapper;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
 import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.CollectionUtils;
 
 /**
  * This class implements the persistence of a NonRDFSource
@@ -82,30 +84,26 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
         // write user content
         final var nonRdfSourceOperation = (NonRdfSourceOperation) operation;
 
-        final WriteOutcome outcome;
+        final FileWriteOutcome outcome;
         if (forExternalBinary(nonRdfSourceOperation)) {
             outcome = null;
         } else {
-            // if transmission digests provided, wrap inputstream to calculate for incoming data
-            final var digests = nonRdfSourceOperation.getContentDigests();
-            MultiDigestInputStreamWrapper multiDigestWrapper = null;
-            final InputStream contentStream;
-            if (digests == null || digests.isEmpty()) {
-                contentStream = nonRdfSourceOperation.getContentStream();
-            } else {
-                multiDigestWrapper = new MultiDigestInputStreamWrapper(
-                        nonRdfSourceOperation.getContentStream(),
-                        nonRdfSourceOperation.getContentDigests(),
-                        null);
-                contentStream = multiDigestWrapper.getInputStream();
-            }
+            final var providedDigests = nonRdfSourceOperation.getContentDigests();
+            // Wrap binary stream in digest computing wrapper, requesting
+            final var multiDigestWrapper = new MultiDigestInputStreamWrapper(
+                    nonRdfSourceOperation.getContentStream(),
+                    providedDigests,
+                    Arrays.asList(objectSession.getObjectDigestAlgorithm()));
+            final var contentStream = multiDigestWrapper.getInputStream();
 
-            outcome = objectSession.write(subpath, contentStream);
+            outcome = (FileWriteOutcome) objectSession.write(subpath, contentStream);
 
             // Verify that the content matches the provided digests
-            if (multiDigestWrapper != null) {
+            if (!CollectionUtils.isEmpty(providedDigests)) {
                 multiDigestWrapper.checkFixity();
             }
+            // Store the computed and verified digests in the write outcome
+            outcome.setDigests(multiDigestWrapper.getDigests());
         }
 
         // Write resource headers
@@ -149,7 +147,7 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
         populateBinaryHeaders(headers, op.getMimeType(),
                 op.getFilename(),
                 contentSize,
-                op.getContentDigests());
+                writeOutcome.getDigests());
 
         if (forExternalBinary(op)) {
             populateExternalBinaryHeaders(headers, op.getContentUri().toString(),
