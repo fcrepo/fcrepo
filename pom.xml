@@ -59,8 +59,9 @@
     <xml-apis.version>1.4.01</xml-apis.version>
     <velocity.version>1.7</velocity.version>
     <!-- JCBC dependencies -->
-    <postgresql.version>42.2.5</postgresql.version>
-    <mysql.version>5.1.46</mysql.version>
+    <postgresql.version>42.2.12</postgresql.version>
+    <mysql.version>8.0.20</mysql.version>
+    <mariadb.version>2.6.0</mariadb.version>
     <!-- AWS S3 dependencies -->
     <aws.client.version>1.11.413</aws.client.version>
     <!-- test gear -->
@@ -424,15 +425,9 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>org.apache.commons</groupId>
-        <artifactId>commons-dbcp2</artifactId>
-        <version>2.1.1</version>
-        <exclusions>
-          <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-          </exclusion>
-        </exclusions>
+        <groupId>com.mchange</groupId>
+        <artifactId>c3p0</artifactId>
+        <version>0.9.5.5</version>
       </dependency>
       <!-- test gear -->
       <dependency>
