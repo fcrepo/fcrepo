@@ -85,7 +85,7 @@ abstract public class AbstractDeleteResourceService extends AbstractService {
      * @param userPrincipal the user performing the action.
      * @throws PersistentStorageException any problems accessing the underlying storage.
      */
-    protected void deleteDepthFirst(final Transaction tx, final PersistentStorageSession pSession,
+    private void deleteDepthFirst(final Transaction tx, final PersistentStorageSession pSession,
                                   final FedoraResource fedoraResource, final String userPrincipal)
             throws PersistentStorageException {
 

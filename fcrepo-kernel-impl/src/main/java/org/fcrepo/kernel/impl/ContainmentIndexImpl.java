@@ -247,7 +247,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      */
     private static final String PARENT_EXISTS = "SELECT " + PARENT_COLUMN + " FROM " + RESOURCES_TABLE +
             " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + IS_DELETED_COLUMN + " = FALSE";
-
+    
     /*
      * Get the parent ID for this resource from the operations table for an 'add' operation in this transaction, but
      * exclude any 'delete' operations for this resource in this transaction.
@@ -442,26 +442,6 @@ public class ContainmentIndexImpl implements ContainmentIndex {
                 parameterSource.addValue("parent", parent);
                 jdbcTemplate.update(DELETE_CHILD_IN_TRANSACTION, parameterSource);
             }
-        }
-    }
-
-    @Override
-    public void purgeResource(@Nonnull final String txID, final FedoraId resource) {
-        final String resourceID = resource.getFullId();
-        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-        parameterSource.addValue("child", resourceID);
-        parameterSource.addValue("transactionId", txID);
-        final String parent = getContainedBy(txID, resource);
-        final boolean deletedInTxn = !jdbcTemplate.queryForList(IS_CHILD_DELETED_IN_TRANSACTION, parameterSource)
-                .isEmpty();
-        if (deletedInTxn) {
-            jdbcTemplate.update(UNDO_DELETE_CHILD_IN_TRANSACTION, parameterSource);
-        }
-        if (parent != null) {
-            LOGGER.debug("Removing containment relationship between parent ({}) and child ({})", parent,
-                    resourceID);
-            parameterSource.addValue("parent", parent);
-            jdbcTemplate.update(PURGE_CHILD_IN_TRANSACTION, parameterSource);
         }
     }
 

@@ -131,6 +131,8 @@ public class HttpRdfService {
 
                     stmtIterator.remove();
                 }
+            } else {
+                log.debug("Subject is not a URI resource, skipping");
             }
         }
 

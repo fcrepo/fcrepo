@@ -28,11 +28,16 @@ import org.springframework.context.annotation.Scope;
 
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.OPTIONS;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
 import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.HttpHeaders.ALLOW;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -80,12 +85,33 @@ public class FedoraTombstones extends ContentExposingResource {
         return noContent().build();
     }
 
+    /*
+     * These methods are disallowed, but need to exist here or the path gets caught by the FedoraLdp path matcher.
+     */
+    @GET
+    public Response get() {
+        return methodNotAllowed();
+    }
+
+    @POST
+    public Response post() {
+        return methodNotAllowed();
+    }
+    @PUT
+    public Response put() {
+        return methodNotAllowed();
+    }
+
+    @OPTIONS
+    public Response options() {
+        return Response.ok().header(ALLOW, "DELETE").build();
+    }
+
     @Override
     protected Tombstone resource() {
         final FedoraId resourceId = identifierConverter().pathToInternalId(externalPath);
         try {
-            final Tombstone resource = resourceFactory.getResource(transaction(), resourceId, Tombstone.class);
-            return resource;
+            return resourceFactory.getResource(transaction(), resourceId, Tombstone.class);
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
         }
@@ -96,4 +122,7 @@ public class FedoraTombstones extends ContentExposingResource {
         return null;
     }
 
+    private Response methodNotAllowed() {
+        return Response.status(Response.Status.METHOD_NOT_ALLOWED).header(ALLOW, "DELETE").build();
+    }
 }

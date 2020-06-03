@@ -29,9 +29,9 @@ public interface PurgeResourceService {
     /**
      * Purges the specified resource
      *
-     * @param tx the transaction associated with the operation
-     * @param fedoraResource The Fedora resource to delete
-     * @param userPrincipal the principal of the user performing the operation
+     * @param tx the transaction associated with the operation.
+     * @param fedoraResource The Fedora resource to purge.
+     * @param userPrincipal the principal of the user performing the operation.
      */
     void perform(final Transaction tx, final FedoraResource fedoraResource, final String userPrincipal);
 }

@@ -37,7 +37,6 @@ import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -950,47 +949,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteObjMethod(id)));
         assertDeleted(id);
         assertDeleted(id + "/foo");
-    }
-
-    @Test
-    public void testDeleteObjectAndTombstone() throws IOException {
-        final String id = getRandomUniqueId();
-        createObjectAndClose(id);
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(serverAddress + id)));
-        assertDeleted(id);
-        final HttpGet httpGet = getObjMethod(id);
-        final Link tombstone;
-        try (final CloseableHttpResponse response = execute(httpGet)) {
-            tombstone = Link.valueOf(response.getFirstHeader(LINK).getValue());
-        }
-        assertEquals("hasTombstone", tombstone.getRel());
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(tombstone.getUri())));
-        assertEquals(NOT_FOUND.getStatusCode(), getStatus(httpGet));
-    }
-
-    @Test
-    public void testTrailingSlashTombstoneLink() throws IOException {
-        final String id = getRandomUniqueId();
-        final URI expectedTombstone = URI.create(serverAddress + id + "/fcr:tombstone");
-        createObjectAndClose(id);
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(serverAddress + id)));
-        assertDeleted(id);
-        final HttpGet get1 = getObjMethod(id);
-        final Link tombstone;
-        try (final CloseableHttpResponse response = execute(get1)) {
-            tombstone = Link.valueOf(response.getFirstHeader(LINK).getValue());
-        }
-        assertEquals("hasTombstone", tombstone.getRel());
-        assertEquals(expectedTombstone, tombstone.getUri());
-        // Now with a trailing slash
-        final HttpGet get2 = getObjMethod(id + "/");
-        final Link tombstone2;
-        try (final CloseableHttpResponse response = execute(get2)) {
-            tombstone2 = Link.valueOf(response.getFirstHeader(LINK).getValue());
-        }
-        assertEquals("hasTombstone", tombstone2.getRel());
-        assertEquals(expectedTombstone, tombstone2.getUri());
-
     }
 
     @Test

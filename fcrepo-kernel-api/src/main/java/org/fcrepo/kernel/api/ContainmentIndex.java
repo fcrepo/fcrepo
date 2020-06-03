@@ -86,14 +86,6 @@ public interface ContainmentIndex {
     void purgeContainedBy(@Nonnull final String txID, final FedoraId parent, final FedoraId child);
 
     /**
-     * Remove all relationships to the specified resource as deleted.
-     *
-     * @param txID The transaction ID.
-     * @param resource The FedoraId of resource to remove.
-     */
-    void purgeResource(@Nonnull final String txID, final FedoraId resource);
-
-    /**
      * Add a contained by relation between the child resource and its parent.
      *
      * @param txID The transaction ID.

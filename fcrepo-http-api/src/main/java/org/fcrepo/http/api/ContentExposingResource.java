@@ -1088,7 +1088,14 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         try {
             final FedoraResource fedoraResource = resourceFactory.getResource(transaction(), fedoraId);
 
-            if (fedoraResource instanceof Tombstone) {
+            final FedoraResource originalResource;
+            if (fedoraId.isMemento()) {
+                 originalResource = fedoraResource.getOriginalResource();
+            } else {
+                originalResource = fedoraResource;
+            }
+
+            if (originalResource instanceof Tombstone) {
                 final String tombstoneUri = identifierConverter().toExternalId(
                             fedoraResource.getFedoraId().resolve(FCR_TOMBSTONE).getFullId()
                     );

@@ -243,12 +243,7 @@ public class FedoraLdpTest {
     @Mock
     private Principal principal;
 
-    private HttpRdfService httpRdfService;
-
-    private FedoraId fedoraID;
-
     private static final Logger log = getLogger(FedoraLdpTest.class);
-
 
     @Before
     public void setUp() {
@@ -256,7 +251,7 @@ public class FedoraLdpTest {
 
         mockResponse = new MockHttpServletResponse();
 
-        httpRdfService = new HttpRdfService();
+        final HttpRdfService httpRdfService = new HttpRdfService();
 
         setField(testObj, "request", mockRequest);
         setField(testObj, "servletResponse", mockResponse);
@@ -322,7 +317,6 @@ public class FedoraLdpTest {
             return null;
         }).when(preferTag).addResponseHeaders(mockResponse);
 
-        fedoraID = FedoraId.create(mockContainer.getId());
     }
 
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) {
@@ -360,7 +354,6 @@ public class FedoraLdpTest {
         when(containmentTriplesService.get(any(), eq(mockResource))).thenAnswer(containmentAnswer);
 
         doReturn(mockResource).when(testObj).resource();
-        when(mockResource.getPath()).thenReturn(path);
         when(mockResource.getFedoraId()).thenReturn(FedoraId.create(path));
         when(mockResource.getEtagValue()).thenReturn("");
         when(mockResource.getStateToken()).thenReturn("");
@@ -819,7 +812,7 @@ public class FedoraLdpTest {
         assertShouldBeAnLDPNonRDFSource();
         assertShouldNotAdvertiseAcceptPatchFlavors();
         assertShouldContainLinkToBinaryDescription();
-        assertTrue(IOUtils.toString((InputStream) actual.getEntity(), UTF_8).equals("xyz"));
+        assertEquals("xyz", IOUtils.toString((InputStream) actual.getEntity(), UTF_8));
     }
 
     private void assertShouldBeAnLDPNonRDFSource() {
@@ -876,7 +869,6 @@ public class FedoraLdpTest {
     }
 
     @Test
-    @SuppressWarnings({"resource", "unchecked"})
     public void testGetWithBinaryDescription()
             throws IOException, UnsupportedAlgorithmException {
 
@@ -1191,7 +1183,6 @@ public class FedoraLdpTest {
     public void testCreateNewBinaryWithChecksumSHA() throws MalformedRdfException,
            InvalidChecksumException, IOException, UnsupportedAlgorithmException, PathNotFoundException {
 
-        //setResource(Container.class);
         final var finalId = pathId.resolve("b");
         when(resourceFactory.getResource(any(), eq(finalId))).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
@@ -1220,7 +1211,6 @@ public class FedoraLdpTest {
     public void testCreateNewBinaryWithChecksumSHA256() throws MalformedRdfException,
         InvalidChecksumException, IOException, UnsupportedAlgorithmException, PathNotFoundException {
 
-        //setResource(Container.class);
         final var finalId = pathId.resolve("b");
         when(resourceFactory.getResource(any(), eq(finalId))).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
@@ -1249,7 +1239,6 @@ public class FedoraLdpTest {
     public void testCreateNewBinaryWithChecksumMD5() throws MalformedRdfException,
             InvalidChecksumException, IOException, UnsupportedAlgorithmException, PathNotFoundException {
 
-        //setResource(Container.class);
         final var finalId = pathId.resolve("b");
         when(resourceFactory.getResource(any(), eq(finalId))).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
@@ -1278,7 +1267,6 @@ public class FedoraLdpTest {
     public void testCreateNewBinaryWithChecksumSHAandMD5() throws MalformedRdfException,
            InvalidChecksumException, IOException, UnsupportedAlgorithmException, PathNotFoundException {
 
-        //setResource(Container.class);
         final var finalId = pathId.resolve("b");
         when(resourceFactory.getResource(any(), eq(finalId))).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
