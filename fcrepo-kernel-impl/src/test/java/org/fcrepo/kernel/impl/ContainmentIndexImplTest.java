@@ -190,7 +190,7 @@ public class ContainmentIndexImplTest {
         assertEquals(0, containmentIndex.getContains(transaction1, parent1).count());
         assertEquals(0, containmentIndex.getContainsDeleted(null, parent1).count());
         assertEquals(0, containmentIndex.getContainsDeleted(transaction1, parent1).count());
-        containmentIndex.purgeContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
+        containmentIndex.purgeResource(transaction1.getId(), child1.getFedoraId());
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
         assertEquals(0, containmentIndex.getContains(transaction1, parent1).count());
         assertEquals(0, containmentIndex.getContainsDeleted(null, parent1).count());
@@ -216,7 +216,7 @@ public class ContainmentIndexImplTest {
         assertEquals(0, containmentIndex.getContains(transaction1, parent1).count());
         assertEquals(1, containmentIndex.getContainsDeleted(null, parent1).count());
         assertEquals(1, containmentIndex.getContainsDeleted(transaction1, parent1).count());
-        containmentIndex.purgeContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
+        containmentIndex.purgeResource(transaction1.getId(), child1.getFedoraId());
         containmentIndex.commitTransaction(transaction1);
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
         assertEquals(0, containmentIndex.getContains(transaction1, parent1).count());

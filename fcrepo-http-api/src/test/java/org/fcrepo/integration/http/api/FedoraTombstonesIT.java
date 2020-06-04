@@ -17,9 +17,11 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
 import static org.junit.Assert.assertEquals;
 
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
@@ -126,5 +128,75 @@ public class FedoraTombstonesIT extends AbstractResourceIT {
 
         final HttpDelete deleteTombstone = new HttpDelete(tombstoneUri.getUri());
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteTombstone));
+    }
+
+    @Test
+    public void testPurgingGrandchildren() throws Exception {
+        final HttpPost post = postObjMethod();
+        post.setHeader(LINK, "<http://fedora.info/definitions/v4/repository#ArchivalGroup>;rel=\"type\"");
+        final String agPath;
+        try (final CloseableHttpResponse response = execute(post)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            agPath = getLocation(response);
+        }
+
+        final HttpGet get1 = new HttpGet(agPath);
+        assertEquals(OK.getStatusCode(), getStatus(get1));
+
+        final HttpPost postChild = new HttpPost(agPath);
+        final String childPath;
+        try (final CloseableHttpResponse response = execute(postChild)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            childPath = getLocation(response);
+        }
+
+        final HttpGet get2 = new HttpGet(childPath);
+        assertEquals(OK.getStatusCode(), getStatus(get2));
+
+        final HttpPost postGrandChild = new HttpPost(childPath);
+        final String grandchildPath;
+        try (final CloseableHttpResponse response = execute(postGrandChild)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            grandchildPath = getLocation(response);
+        }
+
+        final HttpGet get3 = new HttpGet(grandchildPath);
+        assertEquals(OK.getStatusCode(), getStatus(get3));
+
+        final HttpDelete deleteChild = new HttpDelete(childPath);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteChild));
+
+        final HttpGet get4 = new HttpGet(childPath);
+        assertEquals(GONE.getStatusCode(), getStatus(get4));
+
+        final HttpGet get5 = new HttpGet(grandchildPath);
+        assertEquals(GONE.getStatusCode(), getStatus(get5));
+
+        final HttpDelete purgeGrandchild = new HttpDelete(grandchildPath + "/" + FCR_TOMBSTONE);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(purgeGrandchild));
+
+        final HttpGet get6 = new HttpGet(grandchildPath);
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(get6));
+
+        final HttpDelete purgeChild = new HttpDelete(childPath + "/" + FCR_TOMBSTONE);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(purgeChild));
+
+        final HttpGet get7 = new HttpGet(agPath);
+        assertEquals(OK.getStatusCode(), getStatus(get7));
+
+        final HttpDelete purgeBeforeDelete = new HttpDelete(agPath + "/" + FCR_TOMBSTONE);
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(purgeBeforeDelete));
+
+        final HttpDelete deleteAg = new HttpDelete(agPath);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteAg));
+
+        final HttpGet get8 = new HttpGet(agPath);
+        assertEquals(GONE.getStatusCode(), getStatus(get8));
+
+        final HttpDelete finalPurge  = new HttpDelete(agPath + "/" + FCR_TOMBSTONE);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(finalPurge));
+
+        final HttpGet finalGet = new HttpGet(agPath);
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(finalGet));
     }
 }

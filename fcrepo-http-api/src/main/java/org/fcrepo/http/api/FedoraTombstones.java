@@ -21,6 +21,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.Tombstone;
 import org.fcrepo.kernel.api.services.PurgeResourceService;
 import org.slf4j.Logger;
@@ -78,9 +79,14 @@ public class FedoraTombstones extends ContentExposingResource {
      */
     @DELETE
     public Response delete() {
-        final Tombstone resource = resource();
+        final FedoraResource resource = resource();
+        if (!(resource instanceof Tombstone)) {
+            // If the resource is not deleted there is no tombstone.
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        final Tombstone tombstone = (Tombstone) resource;
         LOGGER.info("Delete tombstone: {}", resource);
-        purgeResourceService.perform(transaction(), resource.getDeletedObject(), getUserPrincipal());
+        purgeResourceService.perform(transaction(), tombstone.getDeletedObject(), getUserPrincipal());
         transaction().commitIfShortLived();
         return noContent().build();
     }
@@ -108,10 +114,10 @@ public class FedoraTombstones extends ContentExposingResource {
     }
 
     @Override
-    protected Tombstone resource() {
+    protected FedoraResource resource() {
         final FedoraId resourceId = identifierConverter().pathToInternalId(externalPath);
         try {
-            return resourceFactory.getResource(transaction(), resourceId, Tombstone.class);
+            return resourceFactory.getResource(transaction(), resourceId);
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
         }

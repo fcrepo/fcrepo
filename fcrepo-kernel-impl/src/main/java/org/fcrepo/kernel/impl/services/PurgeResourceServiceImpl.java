@@ -59,6 +59,7 @@ public class PurgeResourceServiceImpl extends AbstractDeleteResourceService impl
                 .userPrincipal(userPrincipal)
                 .build();
         pSession.persist(purgeOp);
+        containmentIndex.purgeResource(tx.getId(), resourceId);
         recordEvent(tx.getId(), resourceId, purgeOp);
         log.debug("purged {}", resourceId.getFullId());
     }

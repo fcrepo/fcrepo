@@ -34,6 +34,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
@@ -93,7 +94,7 @@ public class FedoraTombstonesTest {
         setField(testObj, "request", mockRequest);
         setField(testObj, "context", mockServletContext);
 
-        when(resourceFactory.getResource(any(), eq(fedoraId), eq(Tombstone.class))).thenReturn(mockTombstone);
+        when(resourceFactory.getResource(any(), eq(fedoraId))).thenReturn(mockTombstone);
         when(mockTombstone.getDeletedObject()).thenReturn(mockDeletedObj);
     }
 
@@ -103,5 +104,15 @@ public class FedoraTombstonesTest {
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
         verify(purgeResourceService).perform(mockTransaction, mockDeletedObj, null);
         verify(mockTransaction).commitIfShortLived();
+    }
+
+    /**
+     * If a resource is not deleted, it doesn't return a TombstoneImpl so the fcr:tombstone URI should return 404.
+     */
+    @Test
+    public void testNotYetDeleted() throws Exception {
+        when(resourceFactory.getResource(any(), eq(fedoraId))).thenReturn(mockDeletedObj);
+        final Response actual = testObj.delete();
+        assertEquals(NOT_FOUND.getStatusCode(), actual.getStatus());
     }
 }

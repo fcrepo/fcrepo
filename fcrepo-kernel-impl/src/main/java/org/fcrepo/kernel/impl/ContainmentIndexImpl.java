@@ -84,7 +84,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     /*
      * Select children of a parent from resources table and from the transaction table with an 'add' operation,
-     * but exclude any records that also exist in the transaction table with a 'delete' operation.
+     * but exclude any records that also exist in the transaction table with a 'delete' or 'purge' operation.
      */
     private static final String SELECT_CHILDREN_IN_TRANSACTION = "SELECT x." + FEDORA_ID_COLUMN + " FROM" +
             " (SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :parent" +
@@ -94,7 +94,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             " WHERE NOT EXISTS " +
             " (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE +
             " WHERE " + PARENT_COLUMN + " = :parent AND " + FEDORA_ID_COLUMN + " = x." + FEDORA_ID_COLUMN +
-            " AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " = 'delete')";
+            " AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " IN ('delete', 'purge'))";
 
     /*
      * Select all children of a resource that are marked for deletion.
@@ -115,15 +115,6 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             "(SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN + " = :parent AND " +
             FEDORA_ID_COLUMN + " = x." + FEDORA_ID_COLUMN + " AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
             OPERATION_COLUMN + " = 'delete')";
-
-    /*
-     * Select children of a resource purged in a non-committed transaction.
-     */
-    private static final String SELECT_PURGED_CHILDREN = "SELECT " + FEDORA_ID_COLUMN +
-            " FROM " + TRANSACTION_OPERATIONS_TABLE +
-            " WHERE " + PARENT_COLUMN + " = :parent AND " +
-            TRANSACTION_ID_COLUMN + " = :transactionId AND " +
-            OPERATION_COLUMN + " = 'purge'";
 
     /*
      * Insert a parent child relationship to the transaction operation table.
@@ -154,10 +145,10 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             " ) VALUES (:parent, :child, :transactionId, 'purge')";
 
     /*
-     * Remove a mark as deleted row from the transaction operation table for this parent child relationship.
+     * Remove a mark as deleted row from the transaction operation table for this child relationship (no parent).
      */
-    private static final String UNDO_DELETE_CHILD_IN_TRANSACTION = "DELETE FROM " + TRANSACTION_OPERATIONS_TABLE +
-            " WHERE " + PARENT_COLUMN + " = :parent AND " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN
+    private static final String UNDO_DELETE_CHILD_IN_TRANSACTION_NO_PARENT = "DELETE FROM " +
+            TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN
             + " = :transactionId AND " + OPERATION_COLUMN + " = 'delete'";
 
     /*
@@ -175,10 +166,10 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             " AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " = 'add'";
 
     /*
-     * Is this parent child relationship being marked for deletion in this transaction?
+     * Is this child's relationship being marked for deletion in this transaction (no parent)?
      */
-    private static final String IS_CHILD_DELETED_IN_TRANSACTION = "SELECT TRUE FROM " + TRANSACTION_OPERATIONS_TABLE +
-            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + PARENT_COLUMN + " = :parent" +
+    private static final String IS_CHILD_DELETED_IN_TRANSACTION_NO_PARENT = "SELECT TRUE FROM " +
+            TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child " +
             " AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " = 'delete'";
 
     /*
@@ -258,9 +249,27 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +
             " AND " + OPERATION_COLUMN + " = 'add') x" +
             " WHERE NOT EXISTS " +
-            " (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE+
+            " (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE +
             " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +
             " AND " + OPERATION_COLUMN + " = 'delete')";
+
+    /*
+     * Get the parent ID for this resource from the main table if deleted.
+     */
+    private static final String PARENT_EXISTS_DELETED = "SELECT " + PARENT_COLUMN + " FROM " + RESOURCES_TABLE +
+            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + IS_DELETED_COLUMN + " = TRUE";
+
+    /*
+     * Get the parent ID for this resource from main table and the operations table for a 'delete' operation in this
+     * transaction, excluding any 'add' operations for this resource in this transaction.
+     */
+    private static final String PARENT_EXISTS_DELETED_IN_TRANSACTION = "SELECT x." + PARENT_COLUMN + " FROM" +
+            " (SELECT " + PARENT_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :childId" +
+            " UNION SELECT " + PARENT_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN +
+            " = :child AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " = 'delete') x" +
+            " WHERE NOT EXISTS " +
+            " (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :childId AND " +
+            TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " = 'add')";
 
     /*
      * Does this resource exist in the transaction operation table for an 'add' record.
@@ -408,23 +417,6 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    public void purgeContainedBy(@Nonnull final String txID, final FedoraId parent, final FedoraId child) {
-        final String parentID = parent.getFullId();
-        final String childID = child.getFullId();
-        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-        parameterSource.addValue("parent", parentID);
-        parameterSource.addValue("child", childID);
-        parameterSource.addValue("transactionId", txID);
-        final boolean deletedInTxn = !jdbcTemplate.queryForList(IS_CHILD_DELETED_IN_TRANSACTION, parameterSource)
-                .isEmpty();
-        if (deletedInTxn) {
-            jdbcTemplate.update(UNDO_DELETE_CHILD_IN_TRANSACTION, parameterSource);
-        }
-        // We don't need to do both the delete and the purge, so just do the purge.
-        jdbcTemplate.update(PURGE_CHILD_IN_TRANSACTION, parameterSource);
-    }
-
-    @Override
     public void removeResource(@Nonnull final String txID, final FedoraId resource) {
         final String resourceID = resource.getFullId();
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
@@ -443,6 +435,45 @@ public class ContainmentIndexImpl implements ContainmentIndex {
                 jdbcTemplate.update(DELETE_CHILD_IN_TRANSACTION, parameterSource);
             }
         }
+    }
+
+    @Override
+    public void purgeResource(@Nonnull final String txID, final FedoraId resource) {
+        final String resourceID = resource.getFullId();
+        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+        parameterSource.addValue("child", resourceID);
+        parameterSource.addValue("transactionId", txID);
+        final String parent = getContainedByDeleted(txID, resource);
+        final boolean deletedInTxn = !jdbcTemplate.queryForList(IS_CHILD_DELETED_IN_TRANSACTION_NO_PARENT,
+                parameterSource).isEmpty();
+        if (deletedInTxn) {
+            jdbcTemplate.update(UNDO_DELETE_CHILD_IN_TRANSACTION_NO_PARENT, parameterSource);
+        }
+        if (parent != null) {
+            LOGGER.debug("Removing containment relationship between parent ({}) and child ({})", parent, resourceID);
+            parameterSource.addValue("parent", parent);
+            jdbcTemplate.update(PURGE_CHILD_IN_TRANSACTION, parameterSource);
+        }
+    }
+
+    /**
+     * Find parent for a resource using a deleted containment relationship.
+     * @param txID the transaction id.
+     * @param resource the child resource id.
+     * @return the parent id.
+     */
+    private String getContainedByDeleted(final String txID, final FedoraId resource) {
+        final String resourceID = resource.getFullId();
+        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+        parameterSource.addValue("child", resourceID);
+        final List<String> parentID;
+        if (txID != null) {
+            parameterSource.addValue("transactionId", txID);
+            parentID = jdbcTemplate.queryForList(PARENT_EXISTS_DELETED_IN_TRANSACTION, parameterSource, String.class);
+        } else {
+            parentID = jdbcTemplate.queryForList(PARENT_EXISTS_DELETED, parameterSource, String.class);
+        }
+        return parentID.stream().findFirst().orElse(null);
     }
 
     @Override
