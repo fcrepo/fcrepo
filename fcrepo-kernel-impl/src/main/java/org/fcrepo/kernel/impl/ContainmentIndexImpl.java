@@ -17,17 +17,17 @@
  */
 package org.fcrepo.kernel.impl;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.slf4j.Logger;
+import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.datasource.init.DatabasePopulatorUtils;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
@@ -37,8 +37,13 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.sql.DataSource;
+import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
+
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author peichman
@@ -58,73 +63,28 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     private static final String RESOURCES_TABLE = "resources";
 
-    private static final String RESOURCES_TABLE_IDX = "resources_idx";
+    private static final String TRANSACTION_OPERATIONS_TABLE = "transaction_operations";
 
-    private static final String TRANSACTION_OPERATIONS_TABLE = "transactionOperations";
-
-    private static final String TRANSACTION_OPERATIONS_TABLE_IDX_1 = "transactionOperations_idx1";
-
-    private static final String TRANSACTION_OPERATIONS_TABLE_IDX_2 = "transactionOperations_idx2";
-
-    private static final String FEDORA_ID_COLUMN = "fedoraId";
+    private static final String FEDORA_ID_COLUMN = "fedora_id";
 
     private static final String PARENT_COLUMN = "parent";
 
-    private static final String TRANSACTION_ID_COLUMN = "transactionId";
+    private static final String TRANSACTION_ID_COLUMN = "transaction_id";
 
     private static final String OPERATION_COLUMN = "operation";
-
-    /**
-     * Holds the ID and its parent.
-     */
-    private static final String RESOURCES_TABLE_DDL = "CREATE TABLE IF NOT EXISTS " + RESOURCES_TABLE + " (" +
-            FEDORA_ID_COLUMN + " varchar(65535) NOT NULL PRIMARY KEY, " +
-            PARENT_COLUMN + " varchar(65535) NOT NULL)";
-
-    /**
-     * Create an index to speed searches for children of a parent.
-     */
-    private static final String RESOURCES_TABLE_INDEX_DDL = "CREATE INDEX IF NOT EXISTS " + RESOURCES_TABLE_IDX +
-            " ON " + RESOURCES_TABLE + " (" + PARENT_COLUMN + ")";
-
-    /**
-     * Holds operations to add or delete records from the RESOURCES_TABLE.
-     */
-    private static final String TRANSACTION_OPERATIONS_TABLE_DDL = "CREATE TABLE IF NOT EXISTS " +
-            TRANSACTION_OPERATIONS_TABLE +
-            " (" + FEDORA_ID_COLUMN + " varchar(65535) NOT NULL, " +
-            PARENT_COLUMN + " varchar(65535) NOT NULL, " +
-            TRANSACTION_ID_COLUMN + " varchar(255) NOT NULL, " +
-            OPERATION_COLUMN + " varchar(10) NOT NULL)";
-
-    /**
-     * Create an index to speed searches for records related to adding/excluding transaction records
-     */
-    private static final String TRANSACTION_OPERATIONS_TABLE_INDEX_1_DDL = "CREATE INDEX IF NOT EXISTS " +
-            TRANSACTION_OPERATIONS_TABLE_IDX_1 + " ON " + TRANSACTION_OPERATIONS_TABLE + " (" + PARENT_COLUMN + ", " +
-            TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + ")";
-
-    /**
-     * Create an index to speed finding records related to a transaction.
-     */
-    private static final String TRANSACTION_OPERATIONS_TABLE_INDEX_2_DDL = "CREATE INDEX IF NOT EXISTS " +
-            TRANSACTION_OPERATIONS_TABLE_IDX_2 + " ON " + TRANSACTION_OPERATIONS_TABLE + " (" + TRANSACTION_ID_COLUMN +
-            ")";
 
     private static final String SELECT_CHILDREN = "SELECT " + FEDORA_ID_COLUMN +
             " FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :parent";
 
-    private static final String SELECT_ADDED_CHILDREN = "SELECT " + FEDORA_ID_COLUMN +
-            " FROM " + TRANSACTION_OPERATIONS_TABLE +
-            " WHERE " + PARENT_COLUMN + " = :parent AND " +
-            TRANSACTION_ID_COLUMN + " = :transactionId AND " +
-            OPERATION_COLUMN + " = 'add'";
-
-    private static final String SELECT_DELETED_CHILDREN = "SELECT " + FEDORA_ID_COLUMN +
-            " FROM " + TRANSACTION_OPERATIONS_TABLE +
-            " WHERE " + PARENT_COLUMN + " = :parent AND " +
-            TRANSACTION_ID_COLUMN + " = :transactionId AND " +
-            OPERATION_COLUMN + " = 'delete'";
+    private static final String SELECT_CHILDREN_IN_TRANSACTION = "SELECT x." + FEDORA_ID_COLUMN + " FROM" +
+            " (SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :parent" +
+            " UNION SELECT " + FEDORA_ID_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE +
+            " WHERE " + PARENT_COLUMN + " = :parent AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +
+            " AND " + OPERATION_COLUMN + " = 'add') x" +
+            " WHERE NOT EXISTS " +
+            " (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE +
+            " WHERE " + PARENT_COLUMN + " = :parent AND " + FEDORA_ID_COLUMN + " = x." + FEDORA_ID_COLUMN +
+            " AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " = 'delete')";
 
     private static final String INSERT_CHILD = "INSERT INTO " + RESOURCES_TABLE +
             " (" + FEDORA_ID_COLUMN + ", " + PARENT_COLUMN + ") VALUES (:child, :parent)";
@@ -157,7 +117,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             " AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " = 'delete'";
 
     private static final String ROLLBACK_TRANSACTION = "DELETE FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " +
-            " transactionId = :transactionId";
+            TRANSACTION_ID_COLUMN + " = :transactionId";
 
     private static final String COMMIT_ADD_RECORDS = "INSERT INTO " + RESOURCES_TABLE + " ( " + FEDORA_ID_COLUMN + ", "
             + PARENT_COLUMN + " ) SELECT " + FEDORA_ID_COLUMN + ", " + PARENT_COLUMN + " FROM " +
@@ -177,24 +137,28 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     private static final String RESOURCE_EXISTS = "SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE +
             " WHERE " + FEDORA_ID_COLUMN + " = :child";
 
-    private static final String RESOURCE_EXISTS_ADDITIONS = "SELECT " + FEDORA_ID_COLUMN + " FROM "
-            + TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN
-            + " = :transactionId AND " + OPERATION_COLUMN + " = 'add'";
-
-    private static final String RESOURCE_EXISTS_DELETIONS = "SELECT " + FEDORA_ID_COLUMN + " FROM "
-            + TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN
-            + " = :transactionId AND " + OPERATION_COLUMN + " = 'delete'";
+    private static final String RESOURCE_EXISTS_IN_TRANSACTION = "SELECT " + FEDORA_ID_COLUMN + " FROM" +
+            " (SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child" +
+            " UNION SELECT " + FEDORA_ID_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE +
+            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +
+            " AND " + OPERATION_COLUMN + " = 'add') x" +
+            " WHERE NOT EXISTS " +
+            " (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE +
+            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +
+            " AND " + OPERATION_COLUMN + " = 'delete')";
 
     private static final String PARENT_EXISTS = "SELECT " + PARENT_COLUMN + " FROM " + RESOURCES_TABLE +
             " WHERE " + FEDORA_ID_COLUMN + " = :child";
 
-    private static final String PARENT_EXISTS_ADDITIONS = "SELECT " + PARENT_COLUMN + " FROM "
-            + TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN
-            + " = :transactionId AND " + OPERATION_COLUMN + " = 'add'";
-
-    private static final String PARENT_EXISTS_DELETIONS = "SELECT " + PARENT_COLUMN + " FROM "
-            + TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN
-            + " = :transactionId AND " + OPERATION_COLUMN + " = 'delete'";
+    private static final String PARENT_EXISTS_IN_TRANSACTION= "SELECT x." + PARENT_COLUMN + " FROM" +
+            " (SELECT " + PARENT_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child" +
+            " UNION SELECT " + PARENT_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE +
+            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +
+            " AND " + OPERATION_COLUMN + " = 'add') x" +
+            " WHERE NOT EXISTS " +
+            " (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE+
+            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +
+            " AND " + OPERATION_COLUMN + " = 'delete')";
 
     private static final String DELETE_ALL_RESOURCE = "DELETE FROM " + RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN +
             " = :child";
@@ -207,19 +171,39 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN
             + " = :transactionId AND " + OPERATION_COLUMN + " = 'add'";
 
+    private static final Map<String, String> DDL_MAP = Map.of(
+            "MySQL", "sql/mysql-containment.sql",
+            "H2", "sql/default-containment.sql",
+            "PostgreSQL", "sql/default-containment.sql",
+            "MariaDB", "sql/default-containment.sql"
+    );
+
     /**
      * Connect to the database
      */
     @PostConstruct
     private void setup() {
         jdbcTemplate = getNamedParameterJdbcTemplate();
-        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-        // create the tables that don't already exist
-        jdbcTemplate.update(RESOURCES_TABLE_DDL, parameterSource);
-        jdbcTemplate.update(RESOURCES_TABLE_INDEX_DDL, parameterSource);
-        jdbcTemplate.update(TRANSACTION_OPERATIONS_TABLE_DDL, parameterSource);
-        jdbcTemplate.update(TRANSACTION_OPERATIONS_TABLE_INDEX_1_DDL, parameterSource);
-        jdbcTemplate.update(TRANSACTION_OPERATIONS_TABLE_INDEX_2_DDL, parameterSource);
+
+        final var ddl = lookupDdl();
+        LOGGER.info("Applying ddl: {}", ddl);
+        DatabasePopulatorUtils.execute(
+                new ResourceDatabasePopulator(new DefaultResourceLoader().getResource("classpath:" + ddl)),
+                dataSource);
+    }
+
+    private String lookupDdl() {
+        try (var connection = dataSource.getConnection()) {
+            final var productName = connection.getMetaData().getDatabaseProductName();
+            LOGGER.debug("Identified database as: {}", productName);
+            final var ddl = DDL_MAP.get(productName);
+            if (ddl == null) {
+                throw new IllegalStateException("Unknown database platform: " + productName);
+            }
+            return ddl;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
@@ -242,10 +226,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         if (transactionId != null) {
             // we are in a transaction
             parameterSource.addValue("transactionId", transactionId);
-            final String currentChildrenQuery = SELECT_CHILDREN +
-                    " UNION " + SELECT_ADDED_CHILDREN +
-                    " EXCEPT " + SELECT_DELETED_CHILDREN;
-            children = jdbcTemplate.queryForList(currentChildrenQuery, parameterSource, String.class);
+            children = jdbcTemplate.queryForList(SELECT_CHILDREN_IN_TRANSACTION, parameterSource, String.class);
         } else {
             // not in a transaction
             children = jdbcTemplate.queryForList(SELECT_CHILDREN, parameterSource, String.class);
@@ -269,10 +250,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         final List<String> parentID;
         if (txID != null) {
             parameterSource.addValue("transactionId", txID);
-            final String currentResourceQuery = PARENT_EXISTS +
-                    " UNION " + PARENT_EXISTS_ADDITIONS +
-                    " EXCEPT " + PARENT_EXISTS_DELETIONS;
-            parentID = jdbcTemplate.queryForList(currentResourceQuery, parameterSource, String.class);
+            parentID = jdbcTemplate.queryForList(PARENT_EXISTS_IN_TRANSACTION, parameterSource, String.class);
         } else {
             parentID = jdbcTemplate.queryForList(PARENT_EXISTS, parameterSource, String.class);
         }
@@ -398,10 +376,8 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         final boolean exists;
         if (txID != null) {
             parameterSource.addValue("transactionId", txID);
-            final String currentResourceQuery = RESOURCE_EXISTS +
-                    " UNION " + RESOURCE_EXISTS_ADDITIONS +
-                    " EXCEPT " + RESOURCE_EXISTS_DELETIONS;
-            exists = !jdbcTemplate.queryForList(currentResourceQuery, parameterSource, String.class).isEmpty();
+            exists = !jdbcTemplate.queryForList(RESOURCE_EXISTS_IN_TRANSACTION, parameterSource, String.class)
+                    .isEmpty();
         } else {
             exists = !jdbcTemplate.queryForList(RESOURCE_EXISTS, parameterSource, String.class).isEmpty();
         }
