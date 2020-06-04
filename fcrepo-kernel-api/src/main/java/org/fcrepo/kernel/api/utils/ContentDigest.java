@@ -45,7 +45,7 @@ public final class ContentDigest {
     public final static DIGEST_ALGORITHM DEFAULT_DIGEST_ALGORITHM;
 
     static {
-        // Establish the default digest algorithm for fedora, defaulting to SHA1
+        // Establish the default digest algorithm for fedora, defaulting to SHA512
         DEFAULT_DIGEST_ALGORITHM = DIGEST_ALGORITHM.fromAlgorithm(
                 System.getProperty(DEFAULT_DIGEST_ALGORITHM_PROPERTY, DIGEST_ALGORITHM.SHA512.algorithm));
 

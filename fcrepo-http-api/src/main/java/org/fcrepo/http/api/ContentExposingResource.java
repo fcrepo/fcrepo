@@ -98,6 +98,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -1012,16 +1013,18 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected static Collection<URI> parseDigestHeader(final String digest) throws UnsupportedAlgorithmException {
         try {
             final var digestPairs = RFC3230_SPLITTER.split(nullToEmpty(digest));
-            final var allSupportedAlgorithms = digestPairs.keySet().stream()
-                    .allMatch(DIGEST_ALGORITHM::isSupportedAlgorithm);
+            final var unsupportedAlgs = digestPairs.keySet().stream()
+                    .filter(Predicate.not(DIGEST_ALGORITHM::isSupportedAlgorithm))
+                    .collect(Collectors.toSet());
 
             // If you have one or more digests that are all valid or no digests.
-            if (digestPairs.isEmpty() || allSupportedAlgorithms) {
+            if (digestPairs.isEmpty() || unsupportedAlgs.isEmpty()) {
                 return digestPairs.entrySet().stream()
                     .map(entry -> ContentDigest.asURI(entry.getKey(), entry.getValue()))
                     .collect(toSet());
             } else {
-                throw new UnsupportedAlgorithmException(String.format("Unsupported Digest Algorithim: %1$s", digest));
+                throw new UnsupportedAlgorithmException(String.format("Unsupported Digest Algorithm%1$s: %2$s",
+                        unsupportedAlgs.size() > 1 ? 's' : "", String.join(",", unsupportedAlgs)));
             }
         } catch (final IllegalArgumentException e) {
             throw new ClientErrorException("Invalid Digest header: " + digest + "\n", BAD_REQUEST);
