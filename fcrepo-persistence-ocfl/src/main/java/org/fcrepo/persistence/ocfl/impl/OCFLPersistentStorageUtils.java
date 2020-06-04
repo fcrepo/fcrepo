@@ -17,10 +17,15 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import edu.wisc.library.ocfl.api.DigestAlgorithmRegistry;
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
+import edu.wisc.library.ocfl.api.model.DigestAlgorithm;
+import edu.wisc.library.ocfl.core.OcflConfig;
 import edu.wisc.library.ocfl.core.OcflRepositoryBuilder;
 import edu.wisc.library.ocfl.core.extension.layout.config.DefaultLayoutConfig;
 import edu.wisc.library.ocfl.core.storage.filesystem.FileSystemOcflStorage;
+
+import org.apache.http.impl.auth.UnsupportedDigestAlgorithmException;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
@@ -29,6 +34,7 @@ import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -383,9 +389,20 @@ public class OCFLPersistentStorageUtils {
         ocflWorkDir.mkdirs();
 
         log.info("Fedora OCFL persistence directories:\n- {}\n- {}", ocflStorageRootDir, ocflWorkDir);
+        final var defaultFcrepoAlg = ContentDigest.DEFAULT_DIGEST_ALGORITHM;
+        final DigestAlgorithm ocflDigestAlg = defaultFcrepoAlg.getAliases().stream()
+            .map(alias -> DigestAlgorithmRegistry.getAlgorithm(alias))
+            .filter(alg -> alg != null)
+            .findFirst()
+            .orElseThrow(() -> new UnsupportedDigestAlgorithmException(
+                    "Unable to map Fedora default digest algorithm " + defaultFcrepoAlg + " into OCFL"));
+
+        final OcflConfig config = new OcflConfig();
+        config.setDefaultDigestAlgorithm(ocflDigestAlg);
 
         return new OcflRepositoryBuilder()
                 .layoutConfig(DefaultLayoutConfig.nTupleHashConfig())
+                .ocflConfig(config)
                 .storage((FileSystemOcflStorage.builder().repositoryRoot(ocflStorageRootDir.toPath()).build()))
                 .workDir(ocflWorkDir.toPath())
                 .buildMutable();

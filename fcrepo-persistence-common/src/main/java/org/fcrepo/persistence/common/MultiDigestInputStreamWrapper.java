@@ -22,6 +22,7 @@ import static org.apache.commons.codec.binary.Hex.encodeHexString;
 import static org.apache.commons.lang3.StringUtils.substringAfterLast;
 import static org.fcrepo.kernel.api.utils.ContentDigest.getAlgorithm;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.security.DigestInputStream;
@@ -29,10 +30,15 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
+import org.fcrepo.kernel.api.utils.ContentDigest;
+import org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM;
 
 /**
  * Wrapper for an InputStream that allows for the computation and evaluation
@@ -42,29 +48,44 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
  */
 public class MultiDigestInputStreamWrapper {
 
-    private InputStream sourceStream;
+    private final InputStream sourceStream;
 
-    private Map<String, String> algToDigest;
+    private final Map<String, String> algToDigest;
 
-    private Map<String, DigestInputStream> algToDigestStream;
+    private final Map<String, DigestInputStream> algToDigestStream;
 
     private boolean streamRetrieved;
+
+    private Map<String, String> computedDigests;
 
     /**
      * Construct a MultiDigestInputStreamWrapper
      *
      * @param sourceStream the original source input stream
      * @param digests collection of digests for the input stream
+     * @param wantDigests list of additional digest algorithms to compute for the input stream
      */
-    public MultiDigestInputStreamWrapper(final InputStream sourceStream, final Collection<URI> digests) {
+    public MultiDigestInputStreamWrapper(final InputStream sourceStream, final Collection<URI> digests,
+            final Collection<DIGEST_ALGORITHM> wantDigests) {
         this.sourceStream = sourceStream;
         algToDigest = new HashMap<>();
         algToDigestStream = new HashMap<>();
 
-        for (final URI digestUri : digests) {
-            final String algorithm = getAlgorithm(digestUri);
-            final String hash = substringAfterLast(digestUri.toString(), ":");
-            algToDigest.put(algorithm, hash);
+        if (digests != null) {
+            for (final URI digestUri : digests) {
+                final String algorithm = getAlgorithm(digestUri);
+                final String hash = substringAfterLast(digestUri.toString(), ":");
+                algToDigest.put(algorithm, hash);
+            }
+        }
+
+        // Merge the list of wanted digest algorithms with set of provided digests
+        if (wantDigests != null) {
+            for (final DIGEST_ALGORITHM wantDigest : wantDigests) {
+                if (!algToDigest.containsKey(wantDigest.algorithm)) {
+                    algToDigest.put(wantDigest.algorithm, null);
+                }
+            }
         }
     }
 
@@ -82,7 +103,7 @@ public class MultiDigestInputStreamWrapper {
                 digestStream = new DigestInputStream(
                         digestStream, MessageDigest.getInstance(algorithm));
             } catch (final NoSuchAlgorithmException e) {
-                throw new RepositoryRuntimeException(e);
+                throw new UnsupportedAlgorithmException("Unsupported digest algorithm: " + algorithm, e);
             }
 
             algToDigestStream.put(algorithm, (DigestInputStream) digestStream);
@@ -94,22 +115,63 @@ public class MultiDigestInputStreamWrapper {
      * After consuming the inputstream, verify that all of the computed digests
      * matched the provided digests.
      *
+     * Note: the wrapped InputStream will be consumed if it has not already been read.
+     *
      * @throws InvalidChecksumException thrown if any of the digests did not match
      */
     public void checkFixity() throws InvalidChecksumException {
-        if (!streamRetrieved) {
-            throw new RepositoryRuntimeException("Cannot check fixity before stream has been read");
-        }
-        for (final var entry: algToDigestStream.entrySet()) {
-            final String algorithm = entry.getKey();
-            final String originalDigest = algToDigest.get(algorithm);
-            final String computed = encodeHexString(entry.getValue().getMessageDigest().digest());
+        calculateDigests();
+
+        algToDigest.forEach((algorithm, originalDigest) -> {
+            // Skip any algorithms which were calculated but no digest was provided for verification
+            if (originalDigest == null) {
+                return;
+            }
+            final String computed = computedDigests.get(algorithm);
 
             if (!originalDigest.equalsIgnoreCase(computed)) {
                 throw new InvalidChecksumException(format(
                         "Checksum mismatch, computed %s digest %s did not match expected value %s",
                         algorithm, computed, originalDigest));
             }
+        });
+
+    }
+
+    /**
+     * Returns the list of digests calculated for the wrapped InputStream
+     *
+     * Note: the wrapped InputStream will be consumed if it has not already been read.
+     *
+     * @return list of digests calculated from the wrapped InputStream, in URN format.
+     */
+    public List<URI> getDigests() {
+        calculateDigests();
+
+        return computedDigests.entrySet().stream()
+                .map(e -> ContentDigest.asURI(e.getKey(), e.getValue()))
+                .collect(Collectors.toList());
+    }
+
+    private void calculateDigests() {
+        if (computedDigests != null) {
+            return;
         }
+
+        if (!streamRetrieved) {
+            // Stream not previously consumed, consume it now in order to calculate digests
+            try (final InputStream is = getInputStream()) {
+                while (is.read() != -1) {
+                }
+            } catch (final IOException e) {
+                throw new RepositoryRuntimeException("Failed to read content stream while calculating digests", e);
+            }
+        }
+
+        computedDigests = new HashMap<>();
+        algToDigestStream.forEach((algorithm, digestStream) -> {
+            final String computed = encodeHexString(digestStream.getMessageDigest().digest());
+            computedDigests.put(algorithm, computed);
+        });
     }
 }

@@ -18,6 +18,7 @@
 
 package org.fcrepo.persistence.ocfl.api;
 
+import org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM;
 import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -149,4 +150,10 @@ public interface OCFLObjectSession {
      */
     Stream<String> listHeadSubpaths() throws PersistentStorageException;
 
+    /**
+     * Get the digest algorithm used by the OCFL object which is the subject of this session
+     *
+     * @return the digest algorithm used by the OCFL object
+     */
+    DIGEST_ALGORITHM getObjectDigestAlgorithm();
 }

@@ -24,7 +24,7 @@ package org.fcrepo.kernel.api.exception;
  * @author harring
  * @since 2017-09-12
  */
-public class UnsupportedAlgorithmException extends Exception {
+public class UnsupportedAlgorithmException extends RepositoryRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
@@ -36,4 +36,13 @@ public class UnsupportedAlgorithmException extends Exception {
         super(message);
     }
 
+    /**
+     * Ordinary constructor.
+     *
+     * @param message the message
+     * @param rootCause the root cause
+     */
+    public UnsupportedAlgorithmException(final String message, final Throwable rootCause) {
+        super(message, rootCause);
+    }
 }

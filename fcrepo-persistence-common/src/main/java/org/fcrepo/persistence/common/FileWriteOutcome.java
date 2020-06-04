@@ -37,7 +37,7 @@ import org.fcrepo.persistence.api.WriteOutcome;
  */
 public class FileWriteOutcome implements WriteOutcome {
 
-    private Path filePath;
+    private final Path filePath;
 
     private Collection<URI> digests;
 
@@ -71,5 +71,14 @@ public class FileWriteOutcome implements WriteOutcome {
     @Override
     public Collection<URI> getDigests() {
         return digests;
+    }
+
+    /**
+     * Set the digests for the file written
+     *
+     * @param digests
+     */
+    public void setDigests(final Collection<URI> digests) {
+        this.digests = digests;
     }
 }
