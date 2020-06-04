@@ -186,6 +186,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         jdbcTemplate = getNamedParameterJdbcTemplate();
 
         final var ddl = lookupDdl();
+        LOGGER.info("Applying ddl: {}", ddl);
         DatabasePopulatorUtils.execute(
                 new ResourceDatabasePopulator(new DefaultResourceLoader().getResource("classpath:" + ddl)),
                 dataSource);
@@ -194,6 +195,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     private String lookupDdl() {
         try (var connection = dataSource.getConnection()) {
             final var productName = connection.getMetaData().getDatabaseProductName();
+            LOGGER.debug("Identified database as: {}", productName);
             final var ddl = DDL_MAP.get(productName);
             if (ddl == null) {
                 throw new IllegalStateException("Unknown database platform: " + productName);

@@ -19,6 +19,8 @@
 package org.fcrepo.webapp.config;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,6 +32,8 @@ import java.util.Map;
 
 @Configuration
 public class DatabaseConfig {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseConfig.class);
 
     // FIXME The default location should be changed https://jira.lyrasis.org/browse/FCREPO-3337
     @Value("${fcrepo.db.url:jdbc:h2:${java.io.tmpdir}/fcrepo-h2;FILE_LOCK=SOCKET}")
@@ -50,8 +54,12 @@ public class DatabaseConfig {
 
     @Bean
     public DataSource dataSource() throws PropertyVetoException {
+        final var driver = identifyDbDriver();
+
+        LOGGER.debug("Using database driver: {}", driver);
+
         final var dataSource = new ComboPooledDataSource();
-        dataSource.setDriverClass(identifyDbDriver());
+        dataSource.setDriverClass(driver);
         dataSource.setJdbcUrl(dbUrl);
         dataSource.setUser(dbUser);
         dataSource.setPassword(dbPassword);
