@@ -48,7 +48,8 @@ before_script:
    fi
     
 script:
- - ./mvnw --settings .travis/settings.xml -Dgpg.skip -Dfcrepo.streaming.parallel=true install -B -V
+ - ./mvnw --settings .travis/settings.xml -Dgpg.skip -Dfcrepo.streaming.parallel=true install -DskipTests -B -V
+ - ./mvnw --settings .travis/settings.xml -Dgpg.skip -Dfcrepo.streaming.parallel=true verify -pl fcrepo-persistence-ocfl -B -V
 
 deploy:
  -
