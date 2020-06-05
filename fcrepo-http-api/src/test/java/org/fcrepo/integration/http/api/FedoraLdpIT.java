@@ -507,7 +507,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testHeadDatastreamWithWantDigest() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", TEST_BINARY_CONTENT);
@@ -525,7 +524,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testHeadDatastreamWithWantDigestMultiple() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", TEST_BINARY_CONTENT);
@@ -546,7 +544,22 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
+    public void testHeadDatastreamWithWantDigestMultipleOneUnsupported() throws IOException {
+        final String id = getRandomUniqueId();
+        createDatastream(id, "x", TEST_BINARY_CONTENT);
+
+        final HttpHead headObjMethod = headObjMethod(id + "/x");
+        headObjMethod.addHeader(WANT_DIGEST, "md5, Indigestion");
+        try (final CloseableHttpResponse response = execute(headObjMethod)) {
+            assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertEquals(1, response.getHeaders(DIGEST).length);
+            final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
+            assertTrue("MD5 fixity checksum doesn't match",
+                    digesterHeaderValue.contains(TEST_MD5_DIGEST_HEADER_VALUE));
+        }
+    }
+
+    @Test
     public void testHeadDatastreamWithWantDigestSha256() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", TEST_BINARY_CONTENT);
@@ -801,7 +814,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testGetNonRDFSourceWithWantDigest() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", TEST_BINARY_CONTENT);
@@ -821,7 +833,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testGetNonRDFSourceWithWantDigestMultiple() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", TEST_BINARY_CONTENT);
@@ -4377,7 +4388,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testDigestConsistency() throws IOException {
         final String id = getRandomUniqueId();
         executeAndClose(putDSMethod(id, "binary1", "some test content"));

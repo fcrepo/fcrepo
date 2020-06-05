@@ -704,7 +704,7 @@ public class FedoraLdp extends ContentExposingResource {
                     "Unsupported digest algorithm provided in 'Want-Digest' header: " + wantDigest);
         }
 
-        final Collection<URI> checksumResults = fixityService.checkFixity(binary, preferredDigests);
+        final Collection<URI> checksumResults = fixityService.getFixity(binary, preferredDigests);
         return checksumResults.stream().map(uri -> uri.toString().replaceFirst("urn:", "")
                 .replaceFirst(":", "=").replaceFirst("sha1=", "sha=")).collect(Collectors.joining(","));
     }

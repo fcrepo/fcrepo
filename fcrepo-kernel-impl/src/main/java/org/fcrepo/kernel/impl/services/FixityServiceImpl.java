@@ -17,14 +17,16 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.services.FixityService;
+import org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM;
+import org.fcrepo.persistence.common.MultiDigestInputStreamWrapper;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 /**
  * Implementation of {@link org.fcrepo.kernel.api.services.FixityService}
@@ -34,13 +36,16 @@ import java.util.Collection;
 @Component
 public class FixityServiceImpl extends AbstractService implements FixityService {
     @Override
-    public RdfStream getFixity(final Binary binary) {
-        return null;
-    }
+    public Collection<URI> getFixity(final Binary binary, final Collection<String> algorithms)
+            throws UnsupportedAlgorithmException {
+        final var digestAlgs = algorithms.stream()
+                .map(DIGEST_ALGORITHM::fromAlgorithm)
+                .collect(Collectors.toList());
 
-    @Override
-    public RdfStream getFixity(final Binary binary, final URI contentDigest, final long size) {
-        return null;
+        final MultiDigestInputStreamWrapper digestWrapper = new MultiDigestInputStreamWrapper(
+                binary.getContent(), null, digestAlgs);
+
+        return digestWrapper.getDigests();
     }
 
     @Override
