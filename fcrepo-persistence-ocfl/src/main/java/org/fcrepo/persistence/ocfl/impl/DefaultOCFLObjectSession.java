@@ -20,6 +20,7 @@ package org.fcrepo.persistence.ocfl.impl;
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import edu.wisc.library.ocfl.api.OcflObjectUpdater;
 import edu.wisc.library.ocfl.api.OcflOption;
+import edu.wisc.library.ocfl.api.exception.FixityCheckException;
 import edu.wisc.library.ocfl.api.exception.NotFoundException;
 import edu.wisc.library.ocfl.api.model.CommitInfo;
 import edu.wisc.library.ocfl.api.model.DigestAlgorithm;
@@ -39,6 +40,7 @@ import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageRuntimeException;
 import org.fcrepo.persistence.common.FileWriteOutcome;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.OCFLVersion;
@@ -60,8 +62,10 @@ import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -100,6 +104,8 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
     private CommitOption commitOption;
 
+    private final Map<String, String> subpathToDigest;
+
     private final Instant created;
     /**
      * Instantiate an OCFL object session
@@ -119,6 +125,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         this.objectDeleted = false;
         this.sessionClosed = false;
         this.created = Instant.now();
+        this.subpathToDigest = new HashMap<>();
     }
 
     private String encode(final String value) {
@@ -177,6 +184,11 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
                 log.error("Failed to close inputstream while writing {}", subpath, e);
             }
         }
+    }
+
+    @Override
+    public void registerTransmissionDigest(final String subpath, final String digest) {
+        subpathToDigest.put(subpath, digest);
     }
 
     /**
@@ -462,21 +474,29 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
                 return;
             }
 
-            // Add all the non-sidecar files to the ocfl object, providing digests
-            final var fileVisitor = new OcflContentStagingFileVisitor(stagingPath, updater,
-                    fcrepoDigestAlg, ocflDigestAlg, ocflOptions);
             try {
-                Files.walkFileTree(stagingPath, fileVisitor);
+                Files.walk(stagingPath)
+                    .filter(Files::isRegularFile)
+                    .forEach(filePath -> {
+                        // relativize the path
+                        final var subpath = stagingPath.relativize(filePath).toString();
+
+                        // add path
+                        updater.addPath(filePath, subpath, ocflOptions);
+
+                        // find digest value for it, and add fixity if present
+                        final var digest = subpathToDigest.get(subpath);
+                        if (digest != null) {
+                            try {
+                                updater.addFileFixity(subpath, ocflDigestAlg, digest);
+                            } catch (final FixityCheckException e) {
+                                throw new PersistentStorageRuntimeException("Transmission of file " + filePath
+                                        + " failed due to fixity check failure: " + e.getMessage());
+                            }
+                        }
+                    });
             } catch (final IOException e) {
                 log.error("Failed to read staging path {}", stagingPath, e);
-            }
-
-            // Add the sidecar files
-            final Path sidecarPath = stagingPath.resolve(OCFLPersistentStorageUtils.INTERNAL_FEDORA_DIRECTORY);
-            if (Files.exists(sidecarPath)) {
-                updater.addPath(sidecarPath,
-                        OCFLPersistentStorageUtils.INTERNAL_FEDORA_DIRECTORY,
-                        ocflOptions);
             }
         };
     }
