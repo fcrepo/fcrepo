@@ -398,8 +398,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
         if (NEW_VERSION.equals(commitOption)) {
             // perform commit to new version
-            ocflRepository.stageChanges(ObjectVersionId.head(objectIdentifier), null, commitChangeUpdater);
-            return ocflRepository.commitStagedChanges(objectIdentifier, commitInfo)
+            return ocflRepository.updateObject(ObjectVersionId.head(objectIdentifier), commitInfo, commitChangeUpdater)
                     .getVersionId().toString();
         } else {
             // perform commit to head version
