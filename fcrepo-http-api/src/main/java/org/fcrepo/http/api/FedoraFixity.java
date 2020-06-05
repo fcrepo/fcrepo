@@ -101,11 +101,14 @@ public class FedoraFixity extends ContentExposingResource {
         final Link.Builder rdfSourceLink = Link.fromUri(LDP_NAMESPACE + "RDFSource").rel("type");
         servletResponse.addHeader(LINK, rdfSourceLink.build().toString());
 
+        // TODO implement fixity check and generate response
+        fixityService.checkFixity((Binary)resource(), null);
+
         LOGGER.info("Get fixity for '{}'", externalPath);
         return new RdfNamespacedStream(
             new DefaultRdfStream(
                 asNode(resource()),
-                fixityService.getFixity((Binary)resource())
+                null
             ),
             namespaceRegistry.getNamespaces()
         );

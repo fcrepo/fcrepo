@@ -17,31 +17,24 @@
  */
 package org.fcrepo.kernel.api.services;
 
-import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.Binary;
 
 import java.net.URI;
 import java.util.Collection;
 
+/**
+ * Service which calculates and compares digests for binary objects
+ */
 public interface FixityService {
-
   /**
-   * Get the fixity of this binary compared to metadata stored in the repository
-   * @param binary the binary resource to get fixity for
-   * @return the fixity of this binary compared to metadata stored in the repository
+   * Calculate the requested set of digests for the provided binary
+   * @param binary the binary resource to
+   * @param algorithms set of digest algorithms to calculate
+   * @return list of calculated digests
+   * @throws UnsupportedAlgorithmException if unsupported digest algorithms were provided
    */
-  RdfStream getFixity(Binary binary);
-
-  /**
-   * Get the fixity of this binary in a given repository's binary store.
-   * @param binary the binary resource to compare
-   * @param contentDigest the checksum to compare against
-   * @param size the expected size of the binary
-   * @return the fixity of the binary
-   */
-  RdfStream getFixity(Binary binary, URI contentDigest, long size);
-
+  Collection<URI> getFixity(Binary binary, Collection<String> algorithms) throws UnsupportedAlgorithmException;
 
   /**
    * Digest this binary with the digest algorithms provided
