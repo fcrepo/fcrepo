@@ -88,6 +88,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      */
     private static final String SELECT_CHILDREN_IN_TRANSACTION = "SELECT x." + FEDORA_ID_COLUMN + " FROM" +
             " (SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :parent" +
+            " AND " + IS_DELETED_COLUMN + " = FALSE" +
             " UNION SELECT " + FEDORA_ID_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE +
             " WHERE " + PARENT_COLUMN + " = :parent AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +
             " AND " + OPERATION_COLUMN + " = 'add') x" +
@@ -103,18 +104,19 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             " FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :parent AND " + IS_DELETED_COLUMN + " = TRUE";
 
     /*
-     * Select children of a resource plus children 'add'ed in the non-committed transaction, but excluding any
-     * 'delete'd in the non-committed transaction.
+     * Select children of a resource plus children 'delete'd in the non-committed transaction, but excluding any
+     * 'add'ed in the non-committed transaction.
      */
     private static final String SELECT_DELETED_CHILDREN_IN_TRANSACTION = "SELECT x." + FEDORA_ID_COLUMN +
-            " FROM " + TRANSACTION_OPERATIONS_TABLE + "(SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE +
-            " WHERE " + PARENT_COLUMN + " = :parent UNION SELECT " + FEDORA_ID_COLUMN + " FROM " +
-            TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN + " = :parent AND " + TRANSACTION_ID_COLUMN +
-            " = :transactionId AND " + OPERATION_COLUMN + " = 'add') x" +
+            " FROM (SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE +
+            " WHERE " + PARENT_COLUMN + " = :parent AND " + IS_DELETED_COLUMN + " = TRUE UNION" +
+            " SELECT " + FEDORA_ID_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " +
+            PARENT_COLUMN + " = :parent AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
+            OPERATION_COLUMN + " = 'delete') x" +
             " WHERE NOT EXISTS " +
             "(SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN + " = :parent AND " +
             FEDORA_ID_COLUMN + " = x." + FEDORA_ID_COLUMN + " AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
-            OPERATION_COLUMN + " = 'delete')";
+            OPERATION_COLUMN + " = 'add')";
 
     /*
      * Insert a parent child relationship to the transaction operation table.
@@ -238,7 +240,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      */
     private static final String PARENT_EXISTS = "SELECT " + PARENT_COLUMN + " FROM " + RESOURCES_TABLE +
             " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + IS_DELETED_COLUMN + " = FALSE";
-    
+
     /*
      * Get the parent ID for this resource from the operations table for an 'add' operation in this transaction, but
      * exclude any 'delete' operations for this resource in this transaction.
@@ -264,11 +266,11 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      * transaction, excluding any 'add' operations for this resource in this transaction.
      */
     private static final String PARENT_EXISTS_DELETED_IN_TRANSACTION = "SELECT x." + PARENT_COLUMN + " FROM" +
-            " (SELECT " + PARENT_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :childId" +
+            " (SELECT " + PARENT_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child" +
             " UNION SELECT " + PARENT_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN +
             " = :child AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " = 'delete') x" +
             " WHERE NOT EXISTS " +
-            " (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :childId AND " +
+            " (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child AND " +
             TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " = 'add')";
 
     /*
@@ -394,9 +396,8 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         if (purgedInTxn) {
             // We purged it, but are re-adding it so remove the purge operation.
             jdbcTemplate.update(UNDO_PURGE_CHILD_IN_TRANSACTION, parameterSource);
-        } else {
-            jdbcTemplate.update(INSERT_CHILD_IN_TRANSACTION, parameterSource);
         }
+        jdbcTemplate.update(INSERT_CHILD_IN_TRANSACTION, parameterSource);
     }
 
     @Override
