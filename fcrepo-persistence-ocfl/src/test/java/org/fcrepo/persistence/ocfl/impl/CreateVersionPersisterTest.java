@@ -24,7 +24,7 @@ import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.api.exceptions.PersistentItemConflictException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
-import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,7 +40,7 @@ public class CreateVersionPersisterTest {
 
     private CreateVersionPersister persister;
 
-    private FedoraToOCFLObjectIndex index;
+    private FedoraToOcflObjectIndex index;
 
     @Mock
     private OCFLPersistentStorageSession session;

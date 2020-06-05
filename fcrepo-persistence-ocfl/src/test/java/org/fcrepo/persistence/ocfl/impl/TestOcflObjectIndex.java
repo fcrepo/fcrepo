@@ -18,7 +18,7 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
-import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,9 +27,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * An simple in-memory implementation of the {@link FedoraToOCFLObjectIndex} used for testing
+ * An simple in-memory implementation of the {@link FedoraToOcflObjectIndex} used for testing
  */
-public class TestOcflObjectIndex implements FedoraToOCFLObjectIndex {
+public class TestOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     private static Logger LOGGER = LoggerFactory.getLogger(TestOcflObjectIndex.class);
 
@@ -65,6 +65,11 @@ public class TestOcflObjectIndex implements FedoraToOCFLObjectIndex {
 
         LOGGER.debug("added mapping {} for {}", mapping, fedoraResourceIdentifier);
         return mapping;
+    }
+
+    @Override
+    public void removeMapping(final String fedoraResourceIdentifier) {
+        fedoraOCFLMappingMap.remove(fedoraResourceIdentifier);
     }
 
     @Override

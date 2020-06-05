@@ -34,7 +34,6 @@ public final class OCFLConstants {
     private static final String OCFL_STAGING_DIR_KEY = "fcrepo.ocfl.staging.dir";
     public static final String OCFL_STORAGE_ROOT_DIR_KEY = "fcrepo.ocfl.storage.root.dir";
     public static final String OCFL_WORK_DIR_KEY = "fcrepo.ocfl.work.dir";
-    private static final String FEDORA_TO_OCFL_INDEX_FILENAME = "fedoraToOcflIndex.tsv";
 
     /**
      * Return the system property key path as file or a file of the temporary directory + "system property key"
@@ -75,11 +74,4 @@ public final class OCFLConstants {
         return resolveDir(OCFL_WORK_DIR_KEY);
     }
 
-    /**
-     * Fedora to OCFL index file
-     * @return Fedora to OCFL index file
-     */
-    public File getFedoraToOCFLIndexFile() {
-        return new File(getWorkDir() + File.separator +  FEDORA_TO_OCFL_INDEX_FILENAME);
-    }
 }

@@ -21,7 +21,7 @@ import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +42,7 @@ class CreateNonRdfSourcePersister extends AbstractNonRdfSourcePersister {
     /**
      * Constructor
      */
-    protected CreateNonRdfSourcePersister(final FedoraToOCFLObjectIndex index) {
+    protected CreateNonRdfSourcePersister(final FedoraToOcflObjectIndex index) {
         super(NonRdfSourceOperation.class, CREATE, index);
     }
 

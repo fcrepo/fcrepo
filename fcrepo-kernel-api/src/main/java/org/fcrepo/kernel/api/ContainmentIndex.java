@@ -121,4 +121,10 @@ public interface ContainmentIndex {
      * @return The container ID.
      */
     FedoraId getContainerIdByPath(final String txID, final FedoraId fedoraId);
+
+    /**
+     * Truncates the containment index. This should only be called when rebuilding the index.
+     */
+    void reset();
+
 }

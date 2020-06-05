@@ -22,7 +22,7 @@ import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentItemConflictException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +44,7 @@ class CreateRDFSourcePersister extends AbstractRDFSourcePersister {
      * Constructor
      * @param index The FedoraToOCFLObjectIndex
      */
-    protected CreateRDFSourcePersister(final FedoraToOCFLObjectIndex index) {
+    protected CreateRDFSourcePersister(final FedoraToOcflObjectIndex index) {
         super(RdfSourceOperation.class, CREATE, index);
     }
 

@@ -21,12 +21,7 @@ package org.fcrepo.integration.http.api;
 import edu.wisc.library.ocfl.api.OcflRepository;
 import org.apache.http.client.methods.HttpGet;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
-import org.fcrepo.kernel.impl.operations.RdfSourceOperationFactoryImpl;
-import org.fcrepo.persistence.ocfl.RepositoryInitializer;
-import org.fcrepo.persistence.ocfl.impl.DefaultOCFLObjectSessionFactory;
-import org.fcrepo.persistence.ocfl.impl.FedoraToOCFLObjectIndexImpl;
-import org.fcrepo.persistence.ocfl.impl.OCFLPersistenceConfig;
-import org.fcrepo.persistence.ocfl.impl.OCFLPersistentSessionManager;
+import org.fcrepo.persistence.ocfl.api.IndexBuilder;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -34,7 +29,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.List;
@@ -43,7 +37,6 @@ import static java.lang.System.getProperty;
 import static java.text.MessageFormat.format;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.Response.Status.OK;
-
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
@@ -64,9 +57,12 @@ public class RebuildIT extends AbstractResourceIT {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RebuildIT.class);
 
-    private OcflRepository ocflRepository;
     private static String origStorageRootDir;
     private static String origWorkDir;
+
+    private OcflRepository ocflRepository;
+
+    private IndexBuilder indexBuilder;
 
     @BeforeClass
     public static void beforeClass() {
@@ -87,17 +83,9 @@ public class RebuildIT extends AbstractResourceIT {
 
     @Before
     public void setUp() {
-        final AnnotationConfigApplicationContext ctx =
-                new AnnotationConfigApplicationContext(OCFLPersistenceConfig.class);
-        // RepositoryInitializer.initialize() happens as a part of the object's construction.
-        ctx.register(RepositoryInitializer.class,
-                OCFLPersistentSessionManager.class,
-                RdfSourceOperationFactoryImpl.class,
-                DefaultOCFLObjectSessionFactory.class,
-                OCFLPersistenceConfig.class,
-                FedoraToOCFLObjectIndexImpl.class);
-
-        ocflRepository = ctx.getBean(OcflRepository.class);
+        ocflRepository = getBean(OcflRepository.class);
+        indexBuilder = getBean(IndexBuilder.class);
+        indexBuilder.rebuild();
     }
 
     /**

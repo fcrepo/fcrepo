@@ -66,7 +66,7 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
-import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.junit.Before;
@@ -90,7 +90,7 @@ public class OCFLPersistentStorageSessionTest {
     private OCFLPersistentStorageSession session;
 
     @Mock
-    private FedoraToOCFLObjectIndex index;
+    private FedoraToOcflObjectIndex index;
 
     @Mock
     private FedoraOCFLMapping mapping;
@@ -163,7 +163,7 @@ public class OCFLPersistentStorageSessionTest {
         when(objectSession2.write(anyString(), any(InputStream.class))).thenReturn(writeOutcome);
     }
 
-    private OCFLPersistentStorageSession createSession(final FedoraToOCFLObjectIndex index,
+    private OCFLPersistentStorageSession createSession(final FedoraToOcflObjectIndex index,
                                                        final OCFLObjectSessionFactory objectSessionFactory) {
         return new OCFLPersistentStorageSession(new Random().nextLong() + "", index, objectSessionFactory);
     }

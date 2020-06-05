@@ -45,7 +45,7 @@ import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
-import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.fcrepo.persistence.ocfl.api.Persister;
@@ -75,7 +75,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
      */
     private final String sessionId;
 
-    private final FedoraToOCFLObjectIndex fedoraOcflIndex;
+    private final FedoraToOcflObjectIndex fedoraOcflIndex;
 
     private final Map<String, OCFLObjectSession> sessionMap;
 
@@ -111,7 +111,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
      * @param fedoraOcflIndex      the index
      * @param objectSessionFactory the session factory
      */
-    protected OCFLPersistentStorageSession(final String sessionId, final FedoraToOCFLObjectIndex fedoraOcflIndex,
+    protected OCFLPersistentStorageSession(final String sessionId, final FedoraToOcflObjectIndex fedoraOcflIndex,
                                            final OCFLObjectSessionFactory objectSessionFactory) {
         this.sessionId = sessionId;
         this.fedoraOcflIndex = fedoraOcflIndex;
@@ -135,7 +135,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
      * @param fedoraOcflIndex      the index
      * @param objectSessionFactory the session factory
      */
-    protected OCFLPersistentStorageSession(final FedoraToOCFLObjectIndex fedoraOcflIndex,
+    protected OCFLPersistentStorageSession(final FedoraToOcflObjectIndex fedoraOcflIndex,
                                            final OCFLObjectSessionFactory objectSessionFactory) {
         this(null, fedoraOcflIndex, objectSessionFactory);
     }

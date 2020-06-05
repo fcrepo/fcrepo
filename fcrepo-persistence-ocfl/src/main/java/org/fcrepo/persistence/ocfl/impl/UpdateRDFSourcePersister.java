@@ -20,7 +20,7 @@ package org.fcrepo.persistence.ocfl.impl;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +41,7 @@ class UpdateRDFSourcePersister extends AbstractRDFSourcePersister {
      * Constructor
      * @param index The FedoraToOCFLObjectIndex
      */
-    protected UpdateRDFSourcePersister(final FedoraToOCFLObjectIndex index) {
+    protected UpdateRDFSourcePersister(final FedoraToOcflObjectIndex index) {
         super(RdfSourceOperation.class, UPDATE, index);
     }
 

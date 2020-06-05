@@ -25,7 +25,7 @@ import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
-import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +53,7 @@ abstract class AbstractRDFSourcePersister extends AbstractPersister {
      */
     protected AbstractRDFSourcePersister(final Class<? extends ResourceOperation> resourceOperation,
                                final ResourceOperationType resourceOperationType,
-                               final FedoraToOCFLObjectIndex index) {
+                               final FedoraToOcflObjectIndex index) {
         super(resourceOperation, resourceOperationType, index);
     }
 

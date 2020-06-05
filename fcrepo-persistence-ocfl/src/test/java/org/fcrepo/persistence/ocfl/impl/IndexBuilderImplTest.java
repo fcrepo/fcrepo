@@ -28,7 +28,7 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
-import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.IndexBuilder;
 import org.junit.Before;
 import org.junit.Test;
@@ -59,7 +59,7 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 public class IndexBuilderImplTest {
 
     private PersistentStorageSessionManager sessionManager;
-    private FedoraToOCFLObjectIndex index;
+    private FedoraToOcflObjectIndex index;
     private IndexBuilder indexBuilder;
 
     @Mock
@@ -85,7 +85,7 @@ public class IndexBuilderImplTest {
 
         final var repository = createRepository(repoDir, workDir);
 
-        index = new FedoraToOCFLObjectIndexImpl();
+        index = new TestOcflObjectIndex();
         index.reset();
 
         final var ocflObjectSessionFactory = new DefaultOCFLObjectSessionFactory(staging);
@@ -123,7 +123,7 @@ public class IndexBuilderImplTest {
         assertDoesNotHaveOcflId(resource1);
         assertDoesNotHaveOcflId(resource2);
 
-        indexBuilder.rebuild();
+        indexBuilder.rebuildIfNecessary();
 
         assertHasOcflId("resource1", resource1);
         assertHasOcflId("resource1", resource2);
@@ -152,7 +152,7 @@ public class IndexBuilderImplTest {
         assertDoesNotHaveOcflId(resource1);
         assertDoesNotHaveOcflId(resource2);
 
-        indexBuilder.rebuild();
+        indexBuilder.rebuildIfNecessary();
 
         assertHasOcflId("resource1", resource1);
         assertHasOcflId("resource1_resource2", resource2);

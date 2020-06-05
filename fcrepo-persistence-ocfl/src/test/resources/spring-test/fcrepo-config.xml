@@ -14,7 +14,7 @@
   <context:annotation-config/>
   <context:property-placeholder />
   <context:component-scan base-package="org.fcrepo.persistence.ocfl.impl"/>
-  <context:component-scan base-package="org.fcrepo.kernel.impl.operations"/>
+  <context:component-scan base-package="org.fcrepo.kernel.impl.operations" />
   
   <bean id="containmentIndex" class="org.mockito.Mockito" factory-method="mock">
     <constructor-arg value="org.fcrepo.kernel.api.ContainmentIndex" />
@@ -22,6 +22,11 @@
   
   <bean id="transactionManager" class="org.mockito.Mockito" factory-method="mock">
     <constructor-arg value="org.fcrepo.kernel.api.TransactionManager" />
+  </bean>
+
+  <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+    <property name="driverClassName" value="org.h2.jdbcx.JdbcDataSource" />
+    <property name="url" value="jdbc:h2:mem:index;DB_CLOSE_DELAY=-1" />
   </bean>
 
 </beans>
