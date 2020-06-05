@@ -29,6 +29,8 @@ import edu.wisc.library.ocfl.api.model.FileDetails;
 import edu.wisc.library.ocfl.api.model.ObjectVersionId;
 import edu.wisc.library.ocfl.api.model.VersionDetails;
 import edu.wisc.library.ocfl.api.model.VersionId;
+import edu.wisc.library.ocfl.core.util.FileUtil;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -479,7 +481,8 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
                     .filter(Files::isRegularFile)
                     .forEach(filePath -> {
                         // relativize the path
-                        final var subpath = stagingPath.relativize(filePath).toString();
+                        final var relativePath = stagingPath.relativize(filePath);
+                        final var subpath = FileUtil.pathToStringStandardSeparator(relativePath);
 
                         // add path
                         updater.addPath(filePath, subpath, ocflOptions);
