@@ -19,6 +19,7 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import edu.wisc.library.ocfl.api.OcflObjectUpdater;
+import edu.wisc.library.ocfl.api.OcflOption;
 import edu.wisc.library.ocfl.api.exception.NotFoundException;
 import edu.wisc.library.ocfl.api.model.CommitInfo;
 import edu.wisc.library.ocfl.api.model.DigestAlgorithm;
@@ -71,6 +72,7 @@ import static edu.wisc.library.ocfl.api.OcflOption.MOVE_SOURCE;
 import static edu.wisc.library.ocfl.api.OcflOption.OVERWRITE;
 import static java.lang.String.format;
 import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.translateFedoraDigestToOcfl;
 
 /**
  * Default implementation of an OCFL object session, which stages changes to the
@@ -392,23 +394,21 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
             throw new PersistentStorageException("Cannot create empty OCFL object " + objectIdentifier);
         }
 
+        final Consumer<OcflObjectUpdater> commitChangeUpdater = constructCommitUpdater(false);
+
         if (NEW_VERSION.equals(commitOption)) {
             // perform commit to new version
-            return ocflRepository.putObject(ObjectVersionId.head(objectIdentifier),
-                    stagingPath,
-                    commitInfo,
-                    MOVE_SOURCE)
-                    .getVersionId()
-                    .toString();
+            ocflRepository.stageChanges(ObjectVersionId.head(objectIdentifier), null, commitChangeUpdater);
+            return ocflRepository.commitStagedChanges(objectIdentifier, commitInfo)
+                    .getVersionId().toString();
         } else {
             // perform commit to head version
-            return ocflRepository.stageChanges(ObjectVersionId.head(objectIdentifier), commitInfo, updater -> {
-                updater.addPath(stagingPath, "", MOVE_SOURCE);
-            }).getVersionId().toString();
+            return ocflRepository.stageChanges(ObjectVersionId.head(objectIdentifier), commitInfo, commitChangeUpdater)
+                    .getVersionId().toString();
         }
     }
 
-    private String commitUpdates(final CommitOption commitOption) {
+    private String commitUpdates(final CommitOption commitOption) throws PersistentStorageException {
         // Nothing to do if there are no staged files, no deletes, and not committing the mutable HEAD
         if (isStagingEmpty() && deletePaths.isEmpty() &&
                 !(commitOption == NEW_VERSION && ocflRepository.hasStagedChanges(objectIdentifier))) {
@@ -417,12 +417,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         }
 
         // Updater which pushes all updated files and then performs queued deletes
-        final Consumer<OcflObjectUpdater> commitChangeUpdater = updater -> {
-            if (!isStagingEmpty()) {
-                updater.addPath(stagingPath, "", MOVE_SOURCE, OVERWRITE);
-            }
-            deletePaths.forEach(updater::removeFile);
-        };
+        final Consumer<OcflObjectUpdater> commitChangeUpdater = constructCommitUpdater(true);
 
         if (NEW_VERSION.equals(commitOption)) {
             // check if a mutable head exists for this object
@@ -447,6 +442,44 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
                     commitChangeUpdater)
                     .getVersionId().toString();
         }
+    }
+
+    private Consumer<OcflObjectUpdater> constructCommitUpdater(final boolean updatingObject) {
+        final DIGEST_ALGORITHM fcrepoDigestAlg = getObjectDigestAlgorithm();
+        final DigestAlgorithm ocflDigestAlg = translateFedoraDigestToOcfl(fcrepoDigestAlg);
+        final OcflOption[] ocflOptions;
+        if (updatingObject) {
+            ocflOptions = new OcflOption[] { MOVE_SOURCE, OVERWRITE };
+        } else {
+            ocflOptions = new OcflOption[] { MOVE_SOURCE };
+        }
+
+
+        return updater -> {
+            if (updatingObject) {
+                deletePaths.forEach(updater::removeFile);
+            }
+            if (isStagingEmpty()) {
+                return;
+            }
+
+            // Add all the non-sidecar files to the ocfl object, providing digests
+            final var fileVisitor = new OcflContentStagingFileVisitor(stagingPath, updater,
+                    fcrepoDigestAlg, ocflDigestAlg, ocflOptions);
+            try {
+                Files.walkFileTree(stagingPath, fileVisitor);
+            } catch (final IOException e) {
+                log.error("Failed to read staging path {}", stagingPath, e);
+            }
+
+            // Add the sidecar files
+            final Path sidecarPath = stagingPath.resolve(OCFLPersistentStorageUtils.INTERNAL_FEDORA_DIRECTORY);
+            if (Files.exists(sidecarPath)) {
+                updater.addPath(sidecarPath,
+                        OCFLPersistentStorageUtils.INTERNAL_FEDORA_DIRECTORY,
+                        ocflOptions);
+            }
+        };
     }
 
     /**

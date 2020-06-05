@@ -35,6 +35,7 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.ContentDigest;
+import org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM;
 import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -81,7 +82,7 @@ public class OCFLPersistentStorageUtils {
      * The directory within an OCFL Object's content directory that contains
      * information managed by Fedora.
      */
-    private static final String INTERNAL_FEDORA_DIRECTORY = ".fcrepo";
+    public static final String INTERNAL_FEDORA_DIRECTORY = ".fcrepo";
     /**
      * The default RDF on disk format
      * TODO Make this value configurable
@@ -390,12 +391,11 @@ public class OCFLPersistentStorageUtils {
 
         log.info("Fedora OCFL persistence directories:\n- {}\n- {}", ocflStorageRootDir, ocflWorkDir);
         final var defaultFcrepoAlg = ContentDigest.DEFAULT_DIGEST_ALGORITHM;
-        final DigestAlgorithm ocflDigestAlg = defaultFcrepoAlg.getAliases().stream()
-            .map(alias -> DigestAlgorithmRegistry.getAlgorithm(alias))
-            .filter(alg -> alg != null)
-            .findFirst()
-            .orElseThrow(() -> new UnsupportedDigestAlgorithmException(
-                    "Unable to map Fedora default digest algorithm " + defaultFcrepoAlg + " into OCFL"));
+        final DigestAlgorithm ocflDigestAlg = translateFedoraDigestToOcfl(defaultFcrepoAlg);
+        if (ocflDigestAlg == null) {
+            new UnsupportedDigestAlgorithmException(
+                    "Unable to map Fedora default digest algorithm " + defaultFcrepoAlg + " into OCFL");
+        }
 
         final OcflConfig config = new OcflConfig();
         config.setDefaultDigestAlgorithm(ocflDigestAlg);
@@ -408,4 +408,17 @@ public class OCFLPersistentStorageUtils {
                 .buildMutable();
     }
 
+    /**
+     * Translates the provided fedora digest algorithm enum into a OCFL client digest algorithm
+     *
+     * @param fcrepoAlg fedora digest algorithm
+     * @return OCFL client DigestAlgorithm, or null if no match could be made
+     */
+    public static DigestAlgorithm translateFedoraDigestToOcfl(final DIGEST_ALGORITHM fcrepoAlg) {
+        return fcrepoAlg.getAliases().stream()
+                .map(alias -> DigestAlgorithmRegistry.getAlgorithm(alias))
+                .filter(alg -> alg != null)
+                .findFirst()
+                .orElse(null);
+    }
 }

@@ -110,7 +110,7 @@ public class DefaultOCFLObjectSessionTest {
         session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
         final String versionId = commit(NEW_VERSION);
 
-        assertEquals("v1", versionId);
+        assertEquals("v2", versionId);
         assertNoMutableHead(OBJ_ID);
         assertFileInHeadVersion(OBJ_ID, FILE1_SUBPATH, FILE_CONTENT1);
     }
@@ -131,7 +131,7 @@ public class DefaultOCFLObjectSessionTest {
         session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT2));
         final String versionId = commit(NEW_VERSION);
 
-        assertEquals("v1", versionId);
+        assertEquals("v2", versionId);
         assertNoMutableHead(OBJ_ID);
         assertFileInHeadVersion(OBJ_ID, FILE1_SUBPATH, FILE_CONTENT2);
     }
@@ -245,7 +245,7 @@ public class DefaultOCFLObjectSessionTest {
         session2.write(FILE1_SUBPATH, fileStream(FILE_CONTENT2));
 
         assertStreamMatches(FILE_CONTENT2, session2.read(FILE1_SUBPATH));
-        assertStreamMatches(FILE_CONTENT1, session2.read(FILE1_SUBPATH, "v1"));
+        assertStreamMatches(FILE_CONTENT1, session2.read(FILE1_SUBPATH, "v2"));
     }
 
     @Test
@@ -268,13 +268,13 @@ public class DefaultOCFLObjectSessionTest {
 
         final var session2 = makeNewSession();
         // Try a path that doesn't exist
-        session2.read(FILE2_SUBPATH, "v1");
+        session2.read(FILE2_SUBPATH, "v2");
     }
 
     @Test(expected = PersistentItemNotFoundException.class)
     public void read_FromVersion_ObjectNotExist() throws Exception {
         // No object created
-        session.read(FILE2_SUBPATH, "v1");
+        session.read(FILE2_SUBPATH, "v2");
     }
 
     @Test(expected = PersistentItemNotFoundException.class)
@@ -374,7 +374,7 @@ public class DefaultOCFLObjectSessionTest {
         commit(session2, NEW_VERSION);
 
         assertFileNotInHeadVersion(OBJ_ID, FILE1_SUBPATH);
-        assertFileInVersion(OBJ_ID, "v1", FILE1_SUBPATH, FILE_CONTENT1);
+        assertFileInVersion(OBJ_ID, "v2", FILE1_SUBPATH, FILE_CONTENT1);
     }
 
     @Test
@@ -388,7 +388,7 @@ public class DefaultOCFLObjectSessionTest {
         commit(session2, NEW_VERSION);
 
         assertFileNotInHeadVersion(OBJ_ID, FILE1_SUBPATH);
-        assertFileInVersion(OBJ_ID, "v1", FILE1_SUBPATH, FILE_CONTENT1);
+        assertFileInVersion(OBJ_ID, "v2", FILE1_SUBPATH, FILE_CONTENT1);
     }
 
     @Test
@@ -402,7 +402,7 @@ public class DefaultOCFLObjectSessionTest {
         commit(session2, UNVERSIONED);
 
         assertFileNotInHeadVersion(OBJ_ID, FILE1_SUBPATH);
-        assertFileNotInVersion(OBJ_ID, "v1", FILE1_SUBPATH);
+        assertFileNotInVersion(OBJ_ID, "v2", FILE1_SUBPATH);
     }
 
     @Test(expected = PersistentItemNotFoundException.class)
@@ -417,7 +417,7 @@ public class DefaultOCFLObjectSessionTest {
         commit(session2, NEW_VERSION);
 
         assertFileNotInHeadVersion(OBJ_ID, FILE1_SUBPATH);
-        assertFileNotInVersion(OBJ_ID, "v1", FILE1_SUBPATH);
+        assertFileNotInVersion(OBJ_ID, "v2", FILE1_SUBPATH);
     }
 
     @Test
@@ -533,7 +533,7 @@ public class DefaultOCFLObjectSessionTest {
 
         final var session2 = makeNewSession();
         session2.deleteObject();
-        session2.read(FILE1_SUBPATH, "v1");
+        session2.read(FILE1_SUBPATH, "v2");
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -557,9 +557,9 @@ public class DefaultOCFLObjectSessionTest {
 
         final ObjectDetails objDetails = ocflRepository.describeObject(OBJ_ID);
         final var versionMap = objDetails.getVersionMap();
-        assertEquals("One versions should exist", 1, versionMap.size());
+        assertEquals("Two versions should exist", 2, versionMap.size());
 
-        assertFileInVersion(OBJ_ID, "v1", FILE1_SUBPATH, FILE_CONTENT1);
+        assertFileInVersion(OBJ_ID, "v2", FILE1_SUBPATH, FILE_CONTENT1);
     }
 
     @Test
@@ -648,9 +648,9 @@ public class DefaultOCFLObjectSessionTest {
         final List<OCFLVersion> versions = session3.listVersions();
         session3.close();
 
-        assertEquals("First version in list is not \"v1\"", "v1", versions.get(0).getOcflVersionId());
-        assertEquals("Second version in list is not \"v2\"", "v2", versions.get(1).getOcflVersionId());
-        assertEquals("There should be exactly two versions",2, versions.size());
+        assertEquals("First version in list is not \"v2\"", "v2", versions.get(0).getOcflVersionId());
+        assertEquals("Second version in list is not \"v3\"", "v3", versions.get(1).getOcflVersionId());
+        assertEquals("There should be exactly two versions", 2, versions.size());
     }
 
     @Test
@@ -706,15 +706,15 @@ public class DefaultOCFLObjectSessionTest {
 
         assertThat(file1Versions.stream()
                 .map(OCFLVersion::getOcflVersionId)
-                .collect(Collectors.toList()), contains("v1"));
+                .collect(Collectors.toList()), contains("v2"));
 
         assertThat(file2Versions.stream()
                 .map(OCFLVersion::getOcflVersionId)
-                .collect(Collectors.toList()), contains("v1", "v2"));
+                .collect(Collectors.toList()), contains("v2", "v3"));
 
         assertThat(allVersions.stream()
                 .map(OCFLVersion::getOcflVersionId)
-                .collect(Collectors.toList()), contains("v1", "v2", "v3"));
+                .collect(Collectors.toList()), contains("v2", "v3", "v4"));
     }
 
     @Test
@@ -745,15 +745,15 @@ public class DefaultOCFLObjectSessionTest {
 
         assertThat(file1Versions.stream()
                 .map(OCFLVersion::getOcflVersionId)
-                .collect(Collectors.toList()), contains("v1"));
+                .collect(Collectors.toList()), contains("v2"));
 
         assertThat(file2Versions.stream()
                 .map(OCFLVersion::getOcflVersionId)
-                .collect(Collectors.toList()), contains("v1"));
+                .collect(Collectors.toList()), contains("v2"));
 
         assertThat(allVersions.stream()
                 .map(OCFLVersion::getOcflVersionId)
-                .collect(Collectors.toList()), contains("v1"));
+                .collect(Collectors.toList()), contains("v2"));
     }
 
     @Test
@@ -768,7 +768,7 @@ public class DefaultOCFLObjectSessionTest {
         try {
             session3.listVersions("bogus");
             fail("listVersions should have thrown an exception");
-        } catch (PersistentItemNotFoundException e) {
+        } catch (final PersistentItemNotFoundException e) {
             assertThat(e.getMessage(), containsString("subpath bogus was not found"));
         } finally {
             session3.close();
@@ -804,10 +804,10 @@ public class DefaultOCFLObjectSessionTest {
         session2.write(FILE2_SUBPATH, fileStream(FILE_CONTENT2));
         commit(session1, NEW_VERSION);
         commit(session2, NEW_VERSION);
-        assertFileInVersion(obj1ID, "v1", FILE1_SUBPATH, FILE_CONTENT1);
-        assertFileNotInVersion(obj1ID, "v1", FILE2_SUBPATH);
-        assertFileInVersion(obj2ID, "v1", FILE2_SUBPATH, FILE_CONTENT2);
-        assertFileNotInVersion(obj2ID, "v1", FILE1_SUBPATH);
+        assertFileInVersion(obj1ID, "v2", FILE1_SUBPATH, FILE_CONTENT1);
+        assertFileNotInVersion(obj1ID, "v2", FILE2_SUBPATH);
+        assertFileInVersion(obj2ID, "v2", FILE2_SUBPATH, FILE_CONTENT2);
+        assertFileNotInVersion(obj2ID, "v2", FILE1_SUBPATH);
     }
 
     private static InputStream fileStream(final String content) {
@@ -817,9 +817,11 @@ public class DefaultOCFLObjectSessionTest {
     private void assertOnlyFirstVersionExists() {
         final ObjectDetails objDetails = ocflRepository.describeObject(OBJ_ID);
         final var versionMap = objDetails.getVersionMap();
-        assertEquals("Only a single version should remain", 1, versionMap.size());
-        assertTrue("First version must be present",
+        assertEquals("Only object creation and initial versions should remain", 2, versionMap.size());
+        assertTrue("Creation version must be present",
                 versionMap.containsKey(VersionId.fromString("v1")));
+        assertTrue("Initial version must be present",
+                versionMap.containsKey(VersionId.fromString("v2")));
     }
 
     private void assertFileInHeadVersion(final String objId, final String subpath, final String content) {
