@@ -82,7 +82,7 @@ public class OCFLPersistentStorageUtils {
      * The directory within an OCFL Object's content directory that contains
      * information managed by Fedora.
      */
-    public static final String INTERNAL_FEDORA_DIRECTORY = ".fcrepo";
+    private static final String INTERNAL_FEDORA_DIRECTORY = ".fcrepo";
     /**
      * The default RDF on disk format
      * TODO Make this value configurable
