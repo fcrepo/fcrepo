@@ -56,6 +56,7 @@ public class DatabaseConfig {
     public DataSource dataSource() throws PropertyVetoException {
         final var driver = identifyDbDriver();
 
+        LOGGER.debug("JDBC URL: {}", dbUrl);
         LOGGER.debug("Using database driver: {}", driver);
 
         final var dataSource = new ComboPooledDataSource();
