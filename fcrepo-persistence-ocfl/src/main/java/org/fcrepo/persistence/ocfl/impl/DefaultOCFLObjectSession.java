@@ -58,6 +58,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -476,31 +477,17 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
                 return;
             }
 
-            try {
-                Files.walk(stagingPath)
-                    .filter(Files::isRegularFile)
-                    .forEach(filePath -> {
-                        // relativize the path
-                        final var relativePath = stagingPath.relativize(filePath);
-                        final var subpath = FileUtil.pathToStringStandardSeparator(relativePath);
+            updater.addPath(stagingPath, ocflOptions);
 
-                        // add path
-                        updater.addPath(filePath, subpath, ocflOptions);
-
-                        // find digest value for it, and add fixity if present
-                        final var digest = subpathToDigest.get(subpath);
-                        if (digest != null) {
-                            try {
-                                updater.addFileFixity(subpath, ocflDigestAlg, digest);
-                            } catch (final FixityCheckException e) {
-                                throw new PersistentStorageRuntimeException("Transmission of file " + filePath
-                                        + " failed due to fixity check failure: " + e.getMessage());
-                            }
-                        }
-                    });
-            } catch (final IOException e) {
-                log.error("Failed to read staging path {}", stagingPath, e);
-            }
+            subpathToDigest.forEach((subpath, digest) -> {
+                final String normalizedPath = FileUtil.pathToStringStandardSeparator(Paths.get(subpath));
+                try {
+                    updater.addFileFixity(normalizedPath, ocflDigestAlg, digest);
+                } catch (final FixityCheckException e) {
+                    throw new PersistentStorageRuntimeException("Transmission of file " + subpath
+                            + " failed due to fixity check failure: " + e.getMessage());
+                }
+            });
         };
     }
 

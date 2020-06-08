@@ -28,7 +28,7 @@ import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchModificatio
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.relativizeSubpath;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveOCFLSubpath;
 
-import java.util.Arrays;
+import java.util.List;
 
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
@@ -90,11 +90,12 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
         } else {
             final var transmissionDigestAlg = objectSession.getObjectDigestAlgorithm();
             final var providedDigests = nonRdfSourceOperation.getContentDigests();
+
             // Wrap binary stream in digest computing wrapper, requesting
             final var multiDigestWrapper = new MultiDigestInputStreamWrapper(
                     nonRdfSourceOperation.getContentStream(),
                     providedDigests,
-                    Arrays.asList(transmissionDigestAlg));
+                    List.of(transmissionDigestAlg));
             final var contentStream = multiDigestWrapper.getInputStream();
 
             outcome = (FileWriteOutcome) objectSession.write(subpath, contentStream);
