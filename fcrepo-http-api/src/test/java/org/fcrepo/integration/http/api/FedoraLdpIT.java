@@ -37,7 +37,6 @@ import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -507,7 +506,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testHeadDatastreamWithWantDigest() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", TEST_BINARY_CONTENT);
@@ -525,7 +523,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testHeadDatastreamWithWantDigestMultiple() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", TEST_BINARY_CONTENT);
@@ -546,7 +543,22 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
+    public void testHeadDatastreamWithWantDigestMultipleOneUnsupported() throws IOException {
+        final String id = getRandomUniqueId();
+        createDatastream(id, "x", TEST_BINARY_CONTENT);
+
+        final HttpHead headObjMethod = headObjMethod(id + "/x");
+        headObjMethod.addHeader(WANT_DIGEST, "md5, Indigestion");
+        try (final CloseableHttpResponse response = execute(headObjMethod)) {
+            assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertEquals(1, response.getHeaders(DIGEST).length);
+            final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
+            assertTrue("MD5 fixity checksum doesn't match",
+                    digesterHeaderValue.contains(TEST_MD5_DIGEST_HEADER_VALUE));
+        }
+    }
+
+    @Test
     public void testHeadDatastreamWithWantDigestSha256() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", TEST_BINARY_CONTENT);
@@ -801,7 +813,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testGetNonRDFSourceWithWantDigest() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", TEST_BINARY_CONTENT);
@@ -821,7 +832,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testGetNonRDFSourceWithWantDigestMultiple() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", TEST_BINARY_CONTENT);
@@ -943,55 +953,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testDeleteHierarchy() {
         final String id = getRandomUniqueId();
+        createObjectAndClose(id);
         createObjectAndClose(id + "/foo");
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteObjMethod(id)));
         assertDeleted(id);
         assertDeleted(id + "/foo");
-    }
-
-    @Test
-@Ignore
-    public void testDeleteObjectAndTombstone() throws IOException {
-        final String id = getRandomUniqueId();
-        createObjectAndClose(id);
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(serverAddress + id)));
-        assertDeleted(id);
-        final HttpGet httpGet = getObjMethod(id);
-        final Link tombstone;
-        try (final CloseableHttpResponse response = execute(httpGet)) {
-            tombstone = Link.valueOf(response.getFirstHeader(LINK).getValue());
-        }
-        assertEquals("hasTombstone", tombstone.getRel());
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(tombstone.getUri())));
-        assertEquals(NOT_FOUND.getStatusCode(), getStatus(httpGet));
-    }
-
-    @Test
-    public void testTrailingSlashTombstoneLink() throws IOException {
-        final String id = getRandomUniqueId();
-        final URI expectedTombstone = URI.create(serverAddress + id + "/fcr:tombstone");
-        createObjectAndClose(id);
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(serverAddress + id)));
-        assertDeleted(id);
-        final HttpGet get1 = getObjMethod(id);
-        final Link tombstone;
-        try (final CloseableHttpResponse response = execute(get1)) {
-            tombstone = Link.valueOf(response.getFirstHeader(LINK).getValue());
-        }
-        assertEquals("hasTombstone", tombstone.getRel());
-        assertEquals(expectedTombstone, tombstone.getUri());
-        // Now with a trailing slash
-        final HttpGet get2 = getObjMethod(id + "/");
-        final Link tombstone2;
-        try (final CloseableHttpResponse response = execute(get2)) {
-            tombstone2 = Link.valueOf(response.getFirstHeader(LINK).getValue());
-        }
-        assertEquals("hasTombstone", tombstone2.getRel());
-        assertEquals(expectedTombstone, tombstone2.getUri());
-
     }
 
     @Test
@@ -4377,7 +4345,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testDigestConsistency() throws IOException {
         final String id = getRandomUniqueId();
         executeAndClose(putDSMethod(id, "binary1", "some test content"));

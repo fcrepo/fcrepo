@@ -307,10 +307,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         if (returnPreference.getValue().equals("minimal")) {
             streams.add(resource.getTriples());
-            //streams.add(getTriples(resource, MINIMAL));
             if (ldpPreferences.prefersServerManaged())  {
                 streams.add(this.managedPropertiesService.get(resource));
-                //TOOD Implement minimal return preference
+                //TODO Implement minimal return preference (https://jira.lyrasis.org/browse/FCREPO-3334)
                 //streams.add(getTriples(resource, MINIMAL));
             }
         } else {
@@ -1089,9 +1088,16 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         try {
             final FedoraResource fedoraResource = resourceFactory.getResource(transaction(), fedoraId);
 
-            if (fedoraResource instanceof Tombstone) {
+            final FedoraResource originalResource;
+            if (fedoraId.isMemento()) {
+                originalResource = fedoraResource.getOriginalResource();
+            } else {
+                originalResource = fedoraResource;
+            }
+
+            if (originalResource instanceof Tombstone) {
                 final String tombstoneUri = identifierConverter().toExternalId(
-                            fedoraResource.getFedoraId().resolve(FCR_TOMBSTONE).getFullId()
+                            originalResource.getFedoraId().resolve(FCR_TOMBSTONE).getFullId()
                     );
                 throw new TombstoneException(fedoraResource, tombstoneUri);
             }

@@ -183,14 +183,6 @@ public class ResourceFactoryImpl implements ResourceFactory {
             final Instant versionDateTime = identifier.isMemento() ? identifier.getMementoInstant() : null;
             final var headers = psSession.getHeaders(id, versionDateTime);
 
-            if (headers.isDeleted()) {
-                final var rootId = FedoraId.create(identifier.getContainingId());
-                final var tombstone = new TombstoneImpl(rootId, transaction, persistentStorageSessionManager,
-                        this);
-                tombstone.setLastModifiedDate(headers.getLastModifiedDate());
-                return tombstone;
-            }
-
             // Determine the appropriate class from headers
             final var createClass = getClassForTypes(headers);
 
@@ -209,8 +201,14 @@ public class ResourceFactoryImpl implements ResourceFactory {
                     persistentStorageSessionManager, this);
             populateResourceHeaders(rescImpl, headers, versionDateTime);
 
-            // If identifier is a TimeMap, now we can return the virtual resource.
-            if (identifier.isTimemap()) {
+            if (headers.isDeleted()) {
+                final var rootId = FedoraId.create(identifier.getContainingId());
+                final var tombstone = new TombstoneImpl(rootId, transaction, persistentStorageSessionManager,
+                        this, rescImpl);
+                tombstone.setLastModifiedDate(headers.getLastModifiedDate());
+                return tombstone;
+            } else if (identifier.isTimemap()) {
+                // If identifier is a TimeMap, now we can return the virtual resource.
                 return rescImpl.getTimeMap();
             }
             return rescImpl;

@@ -346,7 +346,8 @@ public class CreateResourceServiceImplTest {
     public void testWithBinary() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("testSlug");
-        containmentIndex.addContainedBy(null, fedoraId, childId);
+        containmentIndex.addContainedBy(TX_ID, fedoraId, childId);
+        containmentIndex.commitTransaction(transaction);
         when(psSession.getHeaders(fedoraId.getFullId(), null)).thenReturn(resourceHeaders);
         when(psSession.getHeaders(childId.getFullId(), null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());

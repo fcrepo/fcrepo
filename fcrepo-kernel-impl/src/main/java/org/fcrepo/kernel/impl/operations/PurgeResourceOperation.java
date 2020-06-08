@@ -15,37 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.persistence.ocfl.impl;
+package org.fcrepo.kernel.impl.operations;
 
-import edu.wisc.library.ocfl.api.MutableOcflRepository;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.createRepository;
+import org.fcrepo.kernel.api.operations.ResourceOperationType;
 
 /**
- * A Configuration for OCFL dependencies
+ * Purge resource operation
  *
- * @author dbernstein
+ * @author whikloj
  * @since 6.0.0
  */
+public class PurgeResourceOperation extends AbstractResourceOperation {
 
-@Configuration
-public class OCFLPersistenceConfig {
-
-    /**
-     * Create an OCFL Repository
-     * @return the repository
-     */
-    @Bean
-    public MutableOcflRepository repository() {
-        final OCFLConstants constants = new OCFLConstants();
-        return createRepository(constants.getStorageRootDir(), constants.getWorkDir());
+    protected PurgeResourceOperation(final String rescId) {
+        super(rescId);
     }
 
-    @Bean
-    public OCFLConstants ocflConstants(){
-        return new OCFLConstants();
+    @Override
+    public ResourceOperationType getType() {
+        return ResourceOperationType.PURGE;
     }
-
 }

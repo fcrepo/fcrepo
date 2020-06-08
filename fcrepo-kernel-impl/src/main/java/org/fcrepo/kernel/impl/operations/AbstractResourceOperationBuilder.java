@@ -15,37 +15,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.persistence.ocfl.impl;
+package org.fcrepo.kernel.impl.operations;
 
-import edu.wisc.library.ocfl.api.MutableOcflRepository;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.createRepository;
+import org.fcrepo.kernel.api.operations.ResourceOperationBuilder;
 
 /**
- * A Configuration for OCFL dependencies
- *
- * @author dbernstein
- * @since 6.0.0
+ * Base resource operation builder to share class fields and userPrincipal method.
+ * @author whikloj
  */
+abstract public class AbstractResourceOperationBuilder implements ResourceOperationBuilder {
 
-@Configuration
-public class OCFLPersistenceConfig {
+    protected String rescId;
+
+    protected String userPrincipal;
 
     /**
-     * Create an OCFL Repository
-     * @return the repository
+     * Constructor.
+     * @param rescId the resource identifier.
      */
-    @Bean
-    public MutableOcflRepository repository() {
-        final OCFLConstants constants = new OCFLConstants();
-        return createRepository(constants.getStorageRootDir(), constants.getWorkDir());
+    public AbstractResourceOperationBuilder(final String rescId) {
+        this.rescId = rescId;
     }
 
-    @Bean
-    public OCFLConstants ocflConstants(){
-        return new OCFLConstants();
+    @Override
+    public ResourceOperationBuilder userPrincipal(final String userPrincipal) {
+        this.userPrincipal = userPrincipal;
+        return this;
     }
 
 }

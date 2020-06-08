@@ -27,6 +27,7 @@ import static javax.ws.rs.core.HttpHeaders.LOCATION;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.FOUND;
+import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -108,6 +109,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.apache.jena.graph.Node;
+import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
@@ -1635,6 +1637,48 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(versionPost)) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
         }
+    }
+
+    @Test
+    public void testDeletedResourceMementosAreInaccessible() throws Exception {
+        final String id = getRandomUniqueId();
+        // Make a container (by default they are auto-versioned)
+        createVersionedContainer(id);
+
+        // Make sure the container exists
+        final HttpGet getMethod = getObjMethod(id);
+        assertEquals(OK.getStatusCode(), getStatus(getMethod));
+
+        // Get the timemap and all the ldp:contains (which are the mementos)
+        final HttpGet getTimemap = getObjMethod(id + "/" + FCR_VERSIONS);
+        final List<String> mementos = new ArrayList<>();
+        try (final CloseableHttpResponse response = execute(getTimemap)) {
+            final Dataset data = getDataset(response);
+            final DatasetGraph graph = data.asDatasetGraph();
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final var contains = graph.find(Node.ANY, Node.ANY, CONTAINS.asNode(), Node.ANY);
+            while (contains.hasNext()) {
+                final var memento = contains.next();
+                mementos.add(memento.getObject().getURI());
+            }
+        }
+        // There should be only one memento
+        assertEquals(1, mementos.size());
+        // Get the memento
+        final HttpGet getMemento = new HttpGet(mementos.get(0));
+        assertEquals(OK.getStatusCode(), getStatus(getMemento));
+        // Delete the original container.
+        final HttpDelete deleteContainer = deleteObjMethod(id);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteContainer));
+        // Check it is gone
+        final HttpGet getDeletedContainer = getObjMethod(id);
+        assertEquals(GONE.getStatusCode(), getStatus(getDeletedContainer));
+        // Check the timemap is GONE
+        final HttpGet getDeletedTimemap = getObjMethod(id + "/" + FCR_VERSIONS);
+        assertEquals(GONE.getStatusCode(), getStatus(getDeletedTimemap));
+        // Check the memento is GONE
+        final HttpGet getDeletedMemento = new HttpGet(mementos.get(0));
+        assertEquals(GONE.getStatusCode(), getStatus(getDeletedMemento));
     }
 
     private void createVersionedExternalBinaryMemento(final String rescId, final String handling,
