@@ -15,14 +15,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.operations;
+package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.operations.ResourceOperationBuilder;
 
 /**
- * Specifies the type of modification action represented by a resource operation.
+ * Builder for operations to purge a resource
  *
- * @author bbpennel
+ * @author whikloj
  */
-public enum ResourceOperationType {
-    UPDATE, CREATE, DELETE, PURGE
+public class PurgeResourceOperationBuilder extends AbstractResourceOperationBuilder
+        implements ResourceOperationBuilder {
+
+    /**
+     * Construct the builder
+     *
+     * @param rescId identifier of the resource to delete
+     */
+    public PurgeResourceOperationBuilder(final String rescId) {
+        super(rescId);
+    }
+
+    @Override
+    public PurgeResourceOperation build() {
+        final var operation = new PurgeResourceOperation(rescId);
+        operation.setUserPrincipal(userPrincipal);
+        return operation;
+    }
 }

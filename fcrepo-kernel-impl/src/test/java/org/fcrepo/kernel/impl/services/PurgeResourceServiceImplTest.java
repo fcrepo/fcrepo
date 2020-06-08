@@ -17,6 +17,18 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
+
+import javax.inject.Inject;
+
+import java.util.List;
+
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -27,11 +39,10 @@ import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.WebacAcl;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
-import org.fcrepo.kernel.impl.operations.DeleteResourceOperation;
 import org.fcrepo.kernel.impl.operations.DeleteResourceOperationFactoryImpl;
+import org.fcrepo.kernel.impl.operations.PurgeResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,26 +54,17 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import javax.inject.Inject;
-import java.util.List;
-import java.util.UUID;
-
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
-
 /**
- * DeleteResourceServiceTest
+ * PurgeResourceServiceTest
+ *
+ * Copy of DeleteResourceServiceTest
  *
  * @author dbernstein
+ * @author whikloj
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration("/containmentIndexTest.xml")
-public class DeleteResourceServiceImplTest {
+public class PurgeResourceServiceImplTest {
 
     private static final String USER = "fedoraAdmin";
 
@@ -100,10 +102,10 @@ public class DeleteResourceServiceImplTest {
     private NonRdfSourceDescription binaryDesc;
 
     @Captor
-    private ArgumentCaptor<DeleteResourceOperation> operationCaptor;
+    private ArgumentCaptor<PurgeResourceOperation> operationCaptor;
 
     @InjectMocks
-    private DeleteResourceServiceImpl service;
+    private PurgeResourceServiceImpl service;
 
     private static final String RESOURCE_ID =  FEDORA_ID_PREFIX + "test-resource";
     private static final FedoraId RESOURCE_FEDORA_ID = FedoraId.create(RESOURCE_ID);
@@ -113,12 +115,12 @@ public class DeleteResourceServiceImplTest {
     private static final FedoraId RESOURCE_DESCRIPTION_FEDORA_ID = FedoraId.create(RESOURCE_DESCRIPTION_ID);
     private static final String RESOURCE_ACL_ID = FEDORA_ID_PREFIX + "test-resource-acl";
     private static final FedoraId RESOURCE_ACL_FEDORA_ID = FedoraId.create(RESOURCE_ACL_ID);
+    private static final String TX_ID = "tx-1234";
 
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        final String txId = UUID.randomUUID().toString();
-        when(tx.getId()).thenReturn(txId);
+        when(tx.getId()).thenReturn(TX_ID);
         when(psManager.getSession(anyString())).thenReturn(pSession);
         final DeleteResourceOperationFactoryImpl factoryImpl = new DeleteResourceOperationFactoryImpl();
         setField(service, "deleteResourceFactory", factoryImpl);
@@ -127,26 +129,17 @@ public class DeleteResourceServiceImplTest {
         when(container.getFedoraId()).thenReturn(RESOURCE_FEDORA_ID);
     }
 
-    @After
-    public void cleanUp() {
-        containmentIndex.rollbackTransaction(tx);
-        containmentIndex.getContains(null, container).forEach(c ->
-                containmentIndex.removeContainedBy(tx.getId(), container.getFedoraId(), FedoraId.create(c)));
-        containmentIndex.commitTransaction(tx);
-    }
-
     @Test
-    public void testContainerDelete() throws Exception {
+    public void testContainerPurge() throws Exception {
         when(container.isAcl()).thenReturn(false);
         when(container.getAcl()).thenReturn(null);
 
         service.perform(tx, container, USER);
-        containmentIndex.commitTransaction(tx);
         verifyResourceOperation(RESOURCE_FEDORA_ID, operationCaptor, pSession);
     }
 
     @Test
-    public void testRecursiveDelete() throws Exception {
+    public void testRecursivePurge() throws Exception {
         when(container.isAcl()).thenReturn(false);
         when(container.getAcl()).thenReturn(null);
         when(childContainer.getFedoraId()).thenReturn(CHILD_RESOURCE_FEDORA_ID);
@@ -155,15 +148,16 @@ public class DeleteResourceServiceImplTest {
 
         when(resourceFactory.getResource(tx, CHILD_RESOURCE_FEDORA_ID)).thenReturn(childContainer);
         containmentIndex.addContainedBy(tx.getId(), container.getFedoraId(), childContainer.getFedoraId());
+        containmentIndex.commitTransaction(tx);
+        containmentIndex.removeContainedBy(tx.getId(), container.getFedoraId(), childContainer.getFedoraId());
 
         when(container.isAcl()).thenReturn(false);
         when(container.getAcl()).thenReturn(null);
 
-        assertEquals(1, containmentIndex.getContains(tx, container).count());
         service.perform(tx, container, USER);
 
         verify(pSession, times(2)).persist(operationCaptor.capture());
-        final List<DeleteResourceOperation> operations = operationCaptor.getAllValues();
+        final List<PurgeResourceOperation> operations = operationCaptor.getAllValues();
         assertEquals(2, operations.size());
 
         assertEquals(CHILD_RESOURCE_ID, operations.get(0).getResourceId());
@@ -173,15 +167,15 @@ public class DeleteResourceServiceImplTest {
     }
 
     private void verifyResourceOperation(final FedoraId fedoraID,
-                                         final ArgumentCaptor<DeleteResourceOperation> captor,
+                                         final ArgumentCaptor<PurgeResourceOperation> captor,
                                          final PersistentStorageSession pSession) throws Exception {
         verify(pSession).persist(captor.capture());
-        final DeleteResourceOperation containerOperation = captor.getValue();
+        final PurgeResourceOperation containerOperation = captor.getValue();
         assertEquals(fedoraID.getFullId(), containerOperation.getResourceId());
     }
 
     @Test
-    public void testAclDelete() throws Exception {
+    public void testAclPurge() throws Exception {
         when(acl.getFedoraId()).thenReturn(RESOURCE_ACL_FEDORA_ID);
         when(acl.isAcl()).thenReturn(true);
         service.perform(tx, acl, USER);
@@ -189,13 +183,13 @@ public class DeleteResourceServiceImplTest {
     }
 
     @Test(expected = RepositoryRuntimeException.class)
-    public void testBinaryDescriptionDelete() throws Exception {
+    public void testBinaryDescriptionPurge() throws Exception {
         when(binaryDesc.getFedoraId()).thenReturn(RESOURCE_DESCRIPTION_FEDORA_ID);
         service.perform(tx, binaryDesc, USER);
     }
 
     @Test
-    public void testBinaryDeleteWithAcl() throws Exception {
+    public void testBinaryPurgeWithAcl() throws Exception {
         when(binary.getFedoraId()).thenReturn(RESOURCE_FEDORA_ID);
         when(binary.isAcl()).thenReturn(false);
         when(binary.getDescribedResource()).thenReturn(binaryDesc);
@@ -206,7 +200,7 @@ public class DeleteResourceServiceImplTest {
         service.perform(tx, binary, USER);
 
         verify(pSession, times(3)).persist(operationCaptor.capture());
-        final List<DeleteResourceOperation> operations = operationCaptor.getAllValues();
+        final List<PurgeResourceOperation> operations = operationCaptor.getAllValues();
         assertEquals(3, operations.size());
 
         assertEquals(RESOURCE_DESCRIPTION_ID, operations.get(0).getResourceId());

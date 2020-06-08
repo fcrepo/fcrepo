@@ -125,6 +125,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         persisterList.add(new UpdateNonRdfSourcePersister(this.fedoraOcflIndex));
         persisterList.add(new DeleteResourcePersister(this.fedoraOcflIndex));
         persisterList.add(new CreateVersionPersister(this.fedoraOcflIndex));
+        persisterList.add(new PurgeResourcePersister(this.fedoraOcflIndex));
 
     }
 

@@ -31,7 +31,8 @@ public enum EventType {
     RESOURCE_DELETION("delete resource", "Delete"),
     RESOURCE_MODIFICATION("update resource", "Update"),
     RESOURCE_RELOCATION("move resource", "Move"),
-    INBOUND_REFERENCE("refer to resource", "Follow");
+    INBOUND_REFERENCE("refer to resource", "Follow"),
+    RESOURCE_PURGE("remove resource tombstone", "Purge");
 
     private final String eventName;
     private final String eventType;
