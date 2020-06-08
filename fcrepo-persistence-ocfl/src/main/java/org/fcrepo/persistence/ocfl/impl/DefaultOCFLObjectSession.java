@@ -191,7 +191,8 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
     @Override
     public void registerTransmissionDigest(final String subpath, final String digest) {
-        subpathToDigest.put(subpath, digest);
+        final var encodedSubpath = encode(subpath);
+        subpathToDigest.put(encodedSubpath, digest);
     }
 
     /**
