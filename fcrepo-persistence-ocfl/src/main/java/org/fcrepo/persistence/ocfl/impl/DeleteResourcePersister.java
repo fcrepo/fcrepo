@@ -32,7 +32,7 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageRuntimeException;
 import org.fcrepo.persistence.common.ResourceHeaderUtils;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
-import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +45,7 @@ class DeleteResourcePersister extends AbstractPersister {
 
     private static final Logger log = LoggerFactory.getLogger(DeleteResourcePersister.class);
 
-    protected DeleteResourcePersister(final FedoraToOCFLObjectIndex fedoraOcflIndex) {
+    protected DeleteResourcePersister(final FedoraToOcflObjectIndex fedoraOcflIndex) {
         super(ResourceOperation.class, DELETE, fedoraOcflIndex);
     }
 

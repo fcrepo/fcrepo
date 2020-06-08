@@ -34,7 +34,7 @@ import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
-import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.Persister;
 
@@ -57,11 +57,11 @@ abstract class AbstractPersister implements Persister {
      * to determine which operations the persister knows how to handle.
      */
     private final ResourceOperationType resourceOperationType;
-    protected final FedoraToOCFLObjectIndex index;
+    protected final FedoraToOcflObjectIndex index;
 
     protected AbstractPersister(final Class<? extends ResourceOperation> resourceOperationClass,
                       final ResourceOperationType resourceOperationType,
-                      final FedoraToOCFLObjectIndex index) {
+                      final FedoraToOcflObjectIndex index) {
         this.resourceOperationClass = resourceOperationClass;
         this.resourceOperationType = resourceOperationType;
         this.index = index;

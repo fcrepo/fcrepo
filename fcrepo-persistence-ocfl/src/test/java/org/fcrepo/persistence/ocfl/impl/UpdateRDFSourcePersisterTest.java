@@ -55,7 +55,7 @@ import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.persistence.api.WriteOutcome;
-import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.junit.Before;
 import org.junit.Test;
@@ -90,7 +90,7 @@ public class UpdateRDFSourcePersisterTest {
     private FedoraOCFLMapping mapping;
 
     @Mock
-    private FedoraToOCFLObjectIndex index;
+    private FedoraToOcflObjectIndex index;
 
     @Mock
     private OCFLPersistentStorageSession psSession;

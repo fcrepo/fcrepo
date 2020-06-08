@@ -29,8 +29,14 @@ package org.fcrepo.persistence.ocfl.api;
 public interface IndexBuilder {
 
     /**
-     * Rebuild the index.
+     * Rebuilds the index only when the existing index is not populated.
      */
-    public void rebuild();
+    void rebuildIfNecessary();
+
+    /**
+     * Rebuilds the index from the OCFL repository regardless of the index's current state
+     */
+    void rebuild();
+
 }
 

@@ -23,7 +23,8 @@ import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
+import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.IndexBuilder;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.slf4j.Logger;
@@ -51,13 +52,13 @@ import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.isSide
 @Component
 public class IndexBuilderImpl implements IndexBuilder {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(IndexBuilderImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(IndexBuilderImpl.class);
 
     @Inject
     private OCFLObjectSessionFactory objectSessionFactory;
 
     @Inject
-    private FedoraToOCFLObjectIndex fedoraToOCFLObjectIndex;
+    private FedoraToOcflObjectIndex fedoraToOCFLObjectIndex;
 
     @Inject
     private ContainmentIndex containmentIndex;
@@ -69,10 +70,21 @@ public class IndexBuilderImpl implements IndexBuilder {
     private OcflRepository ocflRepository;
 
     @Override
-    public void rebuild() {
+    public void rebuildIfNecessary() {
+        if (shouldRebuild()) {
+            rebuild();
+        } else {
+            LOGGER.debug("No index rebuild necessary");
+        }
+    }
 
+    @Override
+    public void rebuild() {
         LOGGER.info("Initiating index rebuild.");
+
         fedoraToOCFLObjectIndex.reset();
+        containmentIndex.reset();
+
         final var transaction = transactionManager.create();
         final var txId = transaction.getId();
         LOGGER.debug("Reading object ids...");
@@ -145,4 +157,30 @@ public class IndexBuilderImpl implements IndexBuilder {
         containmentIndex.commitTransaction(transaction);
         LOGGER.info("Index rebuild complete");
     }
+
+    private boolean shouldRebuild() {
+        final var repoContainsObjects = repoContainsObjects();
+        final var repoRootMappingExists = repoRootMappingExists();
+        final var repoRootContainmentExists = repoRootContainmentExists();
+
+        return (repoContainsObjects && (!repoRootMappingExists || !repoRootContainmentExists)
+                || (!repoContainsObjects && (repoRootMappingExists || repoRootContainmentExists)));
+    }
+
+    private boolean repoRootMappingExists() {
+        try {
+            return fedoraToOCFLObjectIndex.getMapping(FedoraId.getRepositoryRootId().getFullId()) != null;
+        } catch (FedoraOCFLMappingNotFoundException e) {
+            return false;
+        }
+    }
+
+    private boolean repoRootContainmentExists() {
+        return containmentIndex.resourceExists(null, FedoraId.getRepositoryRootId());
+    }
+
+    private boolean repoContainsObjects() {
+        return ocflRepository.listObjectIds().findFirst().isPresent();
+    }
+
 }

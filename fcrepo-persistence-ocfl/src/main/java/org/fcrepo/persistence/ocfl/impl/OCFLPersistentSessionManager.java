@@ -19,7 +19,7 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
-import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.springframework.stereotype.Component;
 
@@ -45,7 +45,7 @@ public class OCFLPersistentSessionManager implements PersistentStorageSessionMan
     private OCFLObjectSessionFactory objectSessionFactory;
 
     @Inject
-    private FedoraToOCFLObjectIndex fedoraOcflIndex;
+    private FedoraToOcflObjectIndex fedoraOcflIndex;
 
     /**
      * Default constructor

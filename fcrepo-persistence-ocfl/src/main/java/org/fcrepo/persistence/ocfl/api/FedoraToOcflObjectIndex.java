@@ -23,7 +23,7 @@ import org.fcrepo.persistence.ocfl.impl.FedoraOCFLMapping;
  * @author dbernstein
  * @since 6.0.0
  */
-public interface FedoraToOCFLObjectIndex {
+public interface FedoraToOcflObjectIndex {
 
     /**
      * Retrieve identification information for the OCFL object which either contains, or is identified by,
@@ -50,12 +50,20 @@ public interface FedoraToOCFLObjectIndex {
      * @param ocflObjectId             The ocfl object id
      * @return  The newly created mapping
      */
-    public FedoraOCFLMapping addMapping(final String fedoraResourceIdentifier, final String fedoraRootObjectIdentifier,
+    FedoraOCFLMapping addMapping(final String fedoraResourceIdentifier, final String fedoraRootObjectIdentifier,
                            final String ocflObjectId);
+
+    /**
+     * Removes a mapping
+     *
+     * @param fedoraResourceIdentifier The fedora resource to remove the mapping for
+     */
+    void removeMapping(final String fedoraResourceIdentifier);
 
     /**
      * Remove all persistent state associated with the index.
      */
-    public void reset();
+    void reset();
+
 }
 

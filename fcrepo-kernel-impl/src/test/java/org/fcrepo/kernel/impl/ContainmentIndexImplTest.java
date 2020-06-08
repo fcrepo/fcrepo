@@ -33,6 +33,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import javax.inject.Inject;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -41,8 +43,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -546,6 +546,22 @@ public class ContainmentIndexImplTest {
         assertTrue(containmentIndex.resourceExists(null, child1.getFedoraId()));
         assertTrue(containmentIndex.resourceExists(null, fedoraID));
     }
+
+    @Test
+    public void clearIndexWhenReset() {
+        stubObject("parent1");
+        stubObject("child1");
+        stubObject("transaction1");
+
+        containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
+
+        assertTrue(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId()));
+
+        containmentIndex.reset();
+
+        assertFalse(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId()));
+    }
+
 }
 
 

@@ -24,7 +24,7 @@ import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.api.exceptions.PersistentItemConflictException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +36,7 @@ public class CreateVersionPersister extends AbstractPersister {
 
     private static final Logger LOG = LoggerFactory.getLogger(CreateVersionPersister.class);
 
-    protected CreateVersionPersister(final FedoraToOCFLObjectIndex index) {
+    protected CreateVersionPersister(final FedoraToOcflObjectIndex index) {
         super(CreateVersionResourceOperation.class, ResourceOperationType.UPDATE, index);
     }
 
