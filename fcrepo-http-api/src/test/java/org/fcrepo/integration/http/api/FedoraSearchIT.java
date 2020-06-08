@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.OK;
-import static org.fcrepo.search.api.Condition.Field.fedora_id;
+import static org.fcrepo.search.api.Condition.Field.FEDORA_ID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -43,6 +43,9 @@ import static org.junit.Assert.assertTrue;
  */
 public class FedoraSearchIT extends AbstractResourceIT {
 
+    private String getSearchEndpoint() {
+        return serverAddress + "fcr:search?";
+    }
 
     private List<String> createResources(final int count) throws IOException {
         return createResources(getRandomUniqueId(), count);
@@ -51,9 +54,9 @@ public class FedoraSearchIT extends AbstractResourceIT {
     private List<String> createResources(final String prefix, final int count) throws IOException {
         final var resources = new ArrayList<String>();
         for (int i = 0; i < count; i++) {
-            final var response = createObject(prefix + "-" + String.format("%05d", i));
-            resources.add(getLocation(response));
-            response.close();
+            try (final CloseableHttpResponse response = createObject(prefix + "-" + String.format("%05d", i))) {
+                resources.add(getLocation(response));
+            }
         }
         return resources;
     }
@@ -61,7 +64,7 @@ public class FedoraSearchIT extends AbstractResourceIT {
     @Test
     public void testSearchAllResources() throws Exception {
         final var resources = createResources(3);
-        final var condition = fedora_id + "=*";
+        final var condition = FEDORA_ID + "=*";
         final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition);
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
@@ -77,10 +80,6 @@ public class FedoraSearchIT extends AbstractResourceIT {
         }
     }
 
-    private String getSearchEndpoint() {
-        return serverAddress + "fcr:search?";
-    }
-
     @Test
     public void testWildcardMatchingOnPartialFedoraId() throws Exception {
         final var id = getRandomUniqueId();
@@ -90,7 +89,7 @@ public class FedoraSearchIT extends AbstractResourceIT {
         // try all valid prefix formulations
         final var prefixes = new String[]{id, "/" + id, urlPrefix, "info:fedora/" + id};
         for (String prefix : prefixes) {
-            final var condition = fedora_id + "=" + prefix + "*";
+            final var condition = FEDORA_ID + "=" + prefix + "*";
             final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition);
             try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
                 assertEquals(OK.getStatusCode(), getStatus(response));
@@ -112,7 +111,7 @@ public class FedoraSearchIT extends AbstractResourceIT {
         final var prefix = getRandomUniqueId();
         final int count = 3;
         final var resources = createResources(prefix, count);
-        final var condition = fedora_id + "=" + prefix + "*";
+        final var condition = FEDORA_ID + "=" + prefix + "*";
         final var maxResults = 1;
         final String searchUrl =
                 getSearchEndpoint() + "condition=" + encode(condition) + "&max_results=" + maxResults + "&offset=2";
@@ -129,7 +128,7 @@ public class FedoraSearchIT extends AbstractResourceIT {
 
     @Test
     public void testSearchNoMatchingFedoraIds() throws Exception {
-        final var condition = fedora_id + "=" + serverAddress + "this-should-not-match-any-fedora-id";
+        final var condition = FEDORA_ID + "=" + serverAddress + "this-should-not-match-any-fedora-id";
         final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition);
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
@@ -150,7 +149,7 @@ public class FedoraSearchIT extends AbstractResourceIT {
         }
     }
 
-    private String encode(final String value) throws Exception {
+    private String encode(final String value) {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 }

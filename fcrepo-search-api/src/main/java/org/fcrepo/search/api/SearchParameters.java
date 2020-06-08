@@ -17,7 +17,6 @@
  */
 package org.fcrepo.search.api;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -27,11 +26,11 @@ import java.util.List;
  */
 public class SearchParameters {
 
-    private List<Condition> conditions;
+    private final List<Condition> conditions;
 
-    private int offset = 0;
+    private final int offset;
 
-    private int maxResults = 100;
+    private final int maxResults;
 
     /**
      * Constructoor
@@ -40,7 +39,7 @@ public class SearchParameters {
      * @param maxResults The max results
      * @param offset     The offset
      */
-    public SearchParameters(final ArrayList<Condition> conditions, final int maxResults, final int offset) {
+    public SearchParameters(final List<Condition> conditions, final int maxResults, final int offset) {
         this.conditions = conditions;
         this.maxResults = maxResults;
         this.offset = offset;

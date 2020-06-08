@@ -19,7 +19,7 @@ package org.fcrepo.http.api;
 
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.search.api.Condition;
-import org.fcrepo.search.api.InvalidQueryException;
+import org.fcrepo.search.api.InvalidConditionExpressionException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.fcrepo.search.api.Condition.Field.fedora_id;
+import static org.fcrepo.search.api.Condition.Field.FEDORA_ID;
 import static org.fcrepo.search.api.Condition.Operator.EQ;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -57,12 +57,12 @@ public class FedoraSearchTest {
     }
 
     @Test
-    public void testValidConditionsForFedoraId() throws InvalidQueryException {
+    public void testValidConditionsForFedoraId() throws InvalidConditionExpressionException {
         final var conditions = new ArrayList<String>();
         final var objects = new String[]{"test", "/test", uriBase + "/test", FEDORA_ID_PREFIX + "/test"};
         for (String object : objects) {
             for (Condition.Operator operator : Condition.Operator.values()) {
-                conditions.add(fedora_id.name().toLowerCase() + operator.getStringValue() + object);
+                conditions.add(FEDORA_ID.name().toLowerCase() + operator.getStringValue() + object);
             }
         }
 
@@ -74,7 +74,7 @@ public class FedoraSearchTest {
                     con.getObject());
         }
 
-        verifyEquals(FedoraSearch.parse("fedora_id=*", converter), fedora_id, EQ, "*");
+        verifyEquals(FedoraSearch.parse("fedora_id=*", converter), FEDORA_ID, EQ, "*");
     }
 
     private void verifyEquals(final Condition condition, final Condition.Field field, final Condition.Operator op,
@@ -85,10 +85,10 @@ public class FedoraSearchTest {
     }
 
     @Test
-    public void testValidConditionsNonFedoraId() throws InvalidQueryException {
+    public void testValidConditionsNonFedoraId() throws InvalidConditionExpressionException {
         final var conditions = new ArrayList<String>();
         final var object = "test";
-        Arrays.stream(Condition.Field.values()).filter(x -> !x.equals(fedora_id)).forEach(field -> {
+        Arrays.stream(Condition.Field.values()).filter(x -> !x.equals(FEDORA_ID)).forEach(field -> {
             for (Condition.Operator operator : Condition.Operator.values()) {
                 conditions.add(field.name().toLowerCase() + operator.getStringValue() + object);
             }

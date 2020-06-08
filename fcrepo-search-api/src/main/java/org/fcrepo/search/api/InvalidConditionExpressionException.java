@@ -18,12 +18,12 @@
 package org.fcrepo.search.api;
 
 /**
- * An exception that the set of parameters  defining the search  query
- * is invalid and therefore cannot be processed.
+ * An exception that indicates that the syntax of the condition expression
+ * is invalid and therefore cannot be parsed.
  *
  * @author dbernstein
  */
-public class InvalidQueryException extends Exception {
+public class InvalidConditionExpressionException extends Exception {
 
     private static final long serialVersionUID = 1L;
 
@@ -32,7 +32,7 @@ public class InvalidQueryException extends Exception {
      *
      * @param msg The text of the exception.
      */
-    public InvalidQueryException(final String msg) {
+    public InvalidConditionExpressionException(final String msg) {
         super(msg);
     }
 

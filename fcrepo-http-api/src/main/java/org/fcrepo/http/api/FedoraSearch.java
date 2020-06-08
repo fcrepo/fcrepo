@@ -19,6 +19,7 @@ package org.fcrepo.http.api;
 
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.search.api.Condition;
+import org.fcrepo.search.api.InvalidConditionExpressionException;
 import org.fcrepo.search.api.InvalidQueryException;
 import org.fcrepo.search.api.SearchParameters;
 import org.fcrepo.search.api.SearchResult;
@@ -37,7 +38,6 @@ import javax.ws.rs.core.Response;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.ok;
@@ -94,14 +94,14 @@ public class FedoraSearch extends FedoraBaseResource {
 
             builder.entity(translatedResults);
             return builder.build();
-        } catch (final InvalidQueryException ex) {
+        } catch (final InvalidConditionExpressionException | InvalidQueryException ex) {
             throw new BadRequestException(ex);
         }
     }
 
     private SearchResult translateResults(final SearchResult result) {
         result.getItems().forEach(item -> {
-            final var key = Condition.Field.fedora_id.toString();
+            final var key = Condition.Field.FEDORA_ID.toString();
             final var fedoraId = item.get(key);
             if (fedoraId != null) {
                 item.put(key, identifierConverter().toExternalId(fedoraId.toString()));
@@ -114,30 +114,27 @@ public class FedoraSearch extends FedoraBaseResource {
      * Parses the url decoded value of a single parameter passed by the
      * http layer into a {@link Condition}.
      *
-     * @param conditionStr The url decoded value of the query parameter.
+     * @param expression The url decoded value of the condition parameter.
      * @return the parsed {@link Condition} object.
      */
-    protected static Condition parse(final String conditionStr, final HttpIdentifierConverter converter)
-            throws InvalidQueryException {
-        final var p = Pattern.compile("([a-zA-Z0-9_]+)([><=]|<=|>=)([^><=].*)");
-        final var m = p.matcher(conditionStr);
-        if (m.matches()) {
-            final var field = Condition.Field.valueOf(m.group(1).toLowerCase());
-            var object = m.group(3);
-            if (field.equals(Condition.Field.fedora_id)) {
-                if (!object.startsWith(FEDORA_ID_PREFIX) && isExternalUrl(object)) {
-                    object = converter.toInternalId(object);
-                } else if (object.startsWith("/")) {
-                    object = FEDORA_ID_PREFIX + object;
-                } else if (!object.startsWith(FEDORA_ID_PREFIX) && !object.equals("*")) {
-                    object = FEDORA_ID_PREFIX + "/" + object;
-                }
+    protected static Condition parse(final String expression, final HttpIdentifierConverter converter)
+            throws InvalidConditionExpressionException {
+        final Condition condition = Condition.fromExpression(expression);
+        if (condition.getField().equals(Condition.Field.FEDORA_ID)) {
+            //convert the object value to an internal identifier stem where appropriate
+            final var object = condition.getObject();
+            final var field = condition.getField();
+            final var operator = condition.getOperator();
+            if (!object.startsWith(FEDORA_ID_PREFIX) && isExternalUrl(object)) {
+                return Condition.fromEnums(field, operator, converter.toInternalId(object));
+            } else if (object.startsWith("/")) {
+                return Condition.fromEnums(field, operator, FEDORA_ID_PREFIX + object);
+            } else if (!object.startsWith(FEDORA_ID_PREFIX) && !object.equals("*")) {
+                return Condition.fromEnums(field, operator, FEDORA_ID_PREFIX + "/" + object);
             }
-            return new Condition(field, Condition.Operator.fromString(m.group(2)), object);
         }
 
-        final String errorMessage = "The condition \"" + conditionStr + "\" is not valid.";
-        throw new InvalidQueryException(errorMessage);
+        return condition;
     }
 
     private static boolean isExternalUrl(final String str) {

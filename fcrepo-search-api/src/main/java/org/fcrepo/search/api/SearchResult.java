@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * This class holds the search result data for a single page.
  * @author dbernstein
@@ -43,8 +45,8 @@ public class SearchResult {
      * @param pagination The pagination info
      */
     public SearchResult(final List<Map<String, Object>> items, final PaginationInfo pagination) {
-        assert items != null;
-        assert pagination != null;
+        checkNotNull(items, "items cannot be null");
+        checkNotNull(pagination, "pagination cannot be null");
         this.items = items;
         this.pagination = pagination;
     }

@@ -35,6 +35,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static org.fcrepo.kernel.impl.ContainmentIndexImpl.FEDORA_ID_COLUMN;
+import static org.fcrepo.kernel.impl.ContainmentIndexImpl.RESOURCES_TABLE;
+
 /**
  * An implementation of the {@link org.fcrepo.search.api.SearchService}
  *
@@ -42,7 +45,6 @@ import java.util.Map;
  */
 @Component
 public class SearchServiceImpl implements SearchService {
-    private static final String FEDORA_ID_DB_COLUMN = "fedora_id";
 
     @Inject
     private DataSource dataSource;
@@ -70,36 +72,34 @@ public class SearchServiceImpl implements SearchService {
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         final var whereClauses = new ArrayList<String>();
         for (Condition condition : parameters.getConditions()) {
-            if (condition.getField().equals(Condition.Field.fedora_id) &&
+            if (condition.getField().equals(Condition.Field.FEDORA_ID) &&
                     condition.getOperator().equals(Condition.Operator.EQ)) {
                 var object = condition.getObject();
                 if (!object.equals("*")) {
                     if (object.contains("*")) {
                         object = object.replace("*", "%");
-                        whereClauses.add(FEDORA_ID_DB_COLUMN + " like '" + object + "'");
+                        whereClauses.add(FEDORA_ID_COLUMN + " like '" + object + "'");
                     } else {
-                        whereClauses.add(FEDORA_ID_DB_COLUMN + " = '" + object + "'");
+                        whereClauses.add(FEDORA_ID_COLUMN + " = '" + object + "'");
                     }
                 }
             } else {
-                throw new InvalidQueryException("Condition not supported: " +
-                        condition.getField() +
-                        condition.getOperator().getStringValue() +
-                        condition.getObject());
+                throw new InvalidQueryException("Condition not supported: \"" + condition + "\"");
             }
         }
 
-        final var sql = new StringBuffer("select " + FEDORA_ID_DB_COLUMN + " from resources");
+        final var sql = new StringBuilder("select " + FEDORA_ID_COLUMN + " from " + RESOURCES_TABLE);
+
         if (!whereClauses.isEmpty()) {
             sql.append(" where ");
-            for (int x = 0; x < whereClauses.size(); x++) {
-                if (x > 0) {
+            for (var it = whereClauses.iterator(); it.hasNext(); ) {
+                sql.append(it.next());
+                if (it.hasNext()) {
                     sql.append(" and ");
                 }
-                sql.append(whereClauses.get(x));
             }
         }
-        sql.append(" order by " + FEDORA_ID_DB_COLUMN);
+        sql.append(" order by " + FEDORA_ID_COLUMN);
         sql.append(" limit :limit offset :offset");
         parameterSource.addValue("limit", parameters.getMaxResults());
         parameterSource.addValue("offset", parameters.getOffset());

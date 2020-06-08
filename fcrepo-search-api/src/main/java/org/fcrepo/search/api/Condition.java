@@ -17,31 +17,14 @@
  */
 package org.fcrepo.search.api;
 
+import java.util.regex.Pattern;
+
 /**
  * A data structure representing a search condition.
  *
  * @author dbernstein
  */
 public class Condition {
-    /**
-     * Default constructor
-     *
-     * @param field    The search field (condition subject)
-     * @param operator The operator (condition predicate)
-     * @param object   The object (condition object)
-     */
-    public Condition(final Field field, final Operator operator, final String object) {
-        this.field = field;
-        this.operator = operator;
-        this.object = object;
-    }
-
-
-
-    private Field field;
-    private Operator operator;
-    private String object;
-
     public enum Operator {
         LTE("<="),
         GTE(">="),
@@ -59,7 +42,7 @@ public class Condition {
             return this.value;
         }
 
-        public static final Operator fromString(final String str) {
+        public static Operator fromString(final String str) {
             for (Operator o : Operator.values()) {
                 if (o.value.equals(str)) {
                     return o;
@@ -71,8 +54,53 @@ public class Condition {
 
     }
 
+    public enum Field {
+        FEDORA_ID,
+        MIMETYPE,
+        FIELD,
+        MODIFIED,
+        CREATED,
+        CREATOR;
+
+        @Override
+        public String toString() {
+            return super.toString().toLowerCase();
+        }
+
+        public static Field fromString(final String fieldStr) {
+            return Field.valueOf(fieldStr.toUpperCase());
+        }
+    }
+
+    /* A regex for parsing the volue of a "condition" query  parameter which follows the format
+     * [field_name][operation][object]
+     * The field name is composed of at least one character and can contain alpha number characters and underscores.
+     * The operation can equal "=", "<", ">", "<=" or ">="
+     * The object can be anything but cannot start with >, <, and =.
+     */
+    final static Pattern CONDITION_REGEX = Pattern.compile("([a-zA-Z0-9_]+)([><=]|<=|>=)([^><=].*)");
+
+
+    private Field field;
+    private Operator operator;
+    private String object;
+
+    /**
+     * Internal constructor
+     *
+     * @param field    The search field (condition subject)
+     * @param operator The operator (condition predicate)
+     * @param object   The object (condition object)
+     */
+    private Condition(final Field field, final Operator operator, final String object) {
+        this.field = field;
+        this.operator = operator;
+        this.object = object;
+    }
+
     /**
      * Field accessor
+     *
      * @return the field
      */
     public Field getField() {
@@ -95,21 +123,30 @@ public class Condition {
         return object;
     }
 
-    public enum Field {
-        fedora_id,
-        mimetype,
-        size,
-        modified,
-        created,
-        creator;
-    }
-
     @Override
     public String toString() {
-        return "Condition{" +
-                "field=" + field +
-                ", operator=" + operator +
-                ", object='" + object + '\'' +
-                '}';
+        return this.field.toString().toLowerCase() + operator + object;
+    }
+
+    /**
+     * Parses a string expression into a Condition object.
+     * @param expression The condition as a string expression.
+     * @return The condition
+     * @throws InvalidConditionExpressionException
+     */
+    public static Condition fromExpression(final String expression) throws InvalidConditionExpressionException {
+        final var m = CONDITION_REGEX.matcher(expression);
+        if (m.matches()) {
+            final var field = Field.fromString(m.group(1));
+            final var operation = Operator.fromString(m.group(2));
+            final var object = m.group(3);
+            return fromEnums(field, operation, object);
+        }
+
+        throw new InvalidConditionExpressionException(expression);
+    }
+
+    public static Condition fromEnums(final Field field, final Operator operator, final String expression) {
+        return new Condition(field, operator, expression);
     }
 }
