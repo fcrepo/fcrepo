@@ -29,7 +29,7 @@ import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
-import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,7 +57,7 @@ public class PurgeResourcePersisterTest {
     private ResourceOperation operation;
 
     @Mock
-    private FedoraToOCFLObjectIndex index;
+    private FedoraToOcflObjectIndex index;
 
     @Mock
     private OCFLPersistentStorageSession psSession;

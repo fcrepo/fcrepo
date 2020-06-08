@@ -551,14 +551,15 @@ public class ContainmentIndexImplTest {
     public void clearIndexWhenReset() {
         stubObject("parent1");
         stubObject("child1");
+        stubObject("transaction1");
 
-        containmentIndex.addContainedBy(null, parent1.getFedoraId(), child1.getFedoraId());
+        containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
 
-        assertTrue(containmentIndex.resourceExists(null, child1.getFedoraId()));
+        assertTrue(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId()));
 
         containmentIndex.reset();
 
-        assertFalse(containmentIndex.resourceExists(null, child1.getFedoraId()));
+        assertFalse(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId()));
     }
 
 }

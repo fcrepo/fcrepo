@@ -28,7 +28,7 @@ import java.util.Objects;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
-import org.fcrepo.persistence.ocfl.api.FedoraToOCFLObjectIndex;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +41,7 @@ class PurgeResourcePersister extends AbstractPersister {
 
     private static final Logger log = LoggerFactory.getLogger(PurgeResourcePersister.class);
 
-    protected PurgeResourcePersister(final FedoraToOCFLObjectIndex fedoraOcflIndex) {
+    protected PurgeResourcePersister(final FedoraToOcflObjectIndex fedoraOcflIndex) {
         super(ResourceOperation.class, PURGE, fedoraOcflIndex);
     }
 
