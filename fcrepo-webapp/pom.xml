@@ -357,6 +357,11 @@
             <configuration>
               <properties>
                 <property>
+                  <name>fcrepo.db.url</name>
+                  <value>jdbc:h2:mem:fcrepo</value>
+                </property>
+
+                <property>
                   <name>fcrepo.dynamic.jms.port</name>
                   <value>${fcrepo.dynamic.jms.port}</value>
                 </property>
