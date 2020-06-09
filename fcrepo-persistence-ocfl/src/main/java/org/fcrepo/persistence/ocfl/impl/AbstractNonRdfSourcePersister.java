@@ -28,7 +28,7 @@ import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchModificatio
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.relativizeSubpath;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveOCFLSubpath;
 
-import java.util.Arrays;
+import java.util.List;
 
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
@@ -88,12 +88,14 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
         if (forExternalBinary(nonRdfSourceOperation)) {
             outcome = null;
         } else {
+            final var transmissionDigestAlg = objectSession.getObjectDigestAlgorithm();
             final var providedDigests = nonRdfSourceOperation.getContentDigests();
+
             // Wrap binary stream in digest computing wrapper, requesting
             final var multiDigestWrapper = new MultiDigestInputStreamWrapper(
                     nonRdfSourceOperation.getContentStream(),
                     providedDigests,
-                    Arrays.asList(objectSession.getObjectDigestAlgorithm()));
+                    List.of(transmissionDigestAlg));
             final var contentStream = multiDigestWrapper.getInputStream();
 
             outcome = (FileWriteOutcome) objectSession.write(subpath, contentStream);
@@ -104,6 +106,9 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
             }
             // Store the computed and verified digests in the write outcome
             outcome.setDigests(multiDigestWrapper.getDigests());
+
+            // Register the transmission digest for this file
+            objectSession.registerTransmissionDigest(subpath, multiDigestWrapper.getDigest(transmissionDigestAlg));
         }
 
         // Write resource headers

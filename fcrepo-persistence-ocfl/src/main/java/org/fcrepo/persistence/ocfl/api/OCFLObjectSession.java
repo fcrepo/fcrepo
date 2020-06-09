@@ -46,6 +46,15 @@ public interface OCFLObjectSession {
     WriteOutcome write(String subpath, InputStream stream) throws PersistentStorageException;
 
     /**
+     * Register a transmission digest for the specified subpath, where the digest is of
+     * the same algorithm as is used by the object this session pertains to.
+     *
+     * @param subpath path of the file relative to a version of an ocfl object
+     * @param digest content-addressing digest of the file
+     */
+    void registerTransmissionDigest(String subpath, String digest);
+
+    /**
      * Delete a file from this ocfl object.
      *
      * @param subpath path of the file relative to a version of an ocfl object

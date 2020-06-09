@@ -26,18 +26,26 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.File;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.operations.DeleteResourceOperationFactory;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.ocfl.impl.OCFLConstants;
 import org.fcrepo.persistence.ocfl.impl.OCFLPersistentSessionManager;
 import org.junit.Before;
 import org.junit.Test;
@@ -317,6 +325,30 @@ public class NonRdfSourcesPersistenceIT {
         assertEquals(rescId, headers.getId());
         assertTrue("Headers must indicate object deleted", headers.isDeleted());
         assertEquals(NON_RDF_SOURCE.getURI(), headers.getInteractionModel());
+    }
+
+    @Test
+    public void createInternalNonRdfResourceTransmissionFixityToOcflFailure() throws Exception {
+        final var op = nonRdfSourceOpFactory.createInternalBinaryBuilder(
+                    rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
+                .filename("test.txt")
+                .mimeType("text/plain")
+                .build();
+
+        storageSession.persist(op);
+
+        // Modify the file after staging to simulate a transmission error
+        final File ocflStagingDir = new OCFLConstants().getStagingDir();
+        final String rawId = StringUtils.substringAfterLast(rescId, "/");
+        final Path stagedFile = Paths.get(ocflStagingDir.toString(), storageSession.getId(), rawId, rawId);
+        Files.write(stagedFile, "oops".getBytes(), StandardOpenOption.APPEND);
+
+        try {
+            storageSession.commit();
+            fail("Expected commit to fail to due fixity failure");
+        } catch (final PersistentStorageException e) {
+            assertTrue(e.getMessage().matches(".*due to fixity check failure.*"));
+        }
     }
 
     private void assertContentPersisted(final String expectedContent, final PersistentStorageSession session,

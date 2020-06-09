@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
@@ -151,6 +152,22 @@ public class MultiDigestInputStreamWrapper {
         return computedDigests.entrySet().stream()
                 .map(e -> ContentDigest.asURI(e.getKey(), e.getValue()))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Get the digest calculated for the provided algorithm
+     *
+     * @param alg algorithm of the digest to retrieve
+     * @return the calculated digest, or null if no digest of that type was calculated
+     */
+    public String getDigest(final DIGEST_ALGORITHM alg) {
+        calculateDigests();
+
+        return computedDigests.entrySet().stream()
+                .filter(entry -> alg.algorithm.equals(entry.getKey()))
+                .map(Entry::getValue)
+                .findFirst()
+                .orElse(null);
     }
 
     private void calculateDigests() {

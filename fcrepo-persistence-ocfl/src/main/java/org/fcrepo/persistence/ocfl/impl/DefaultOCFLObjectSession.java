@@ -19,6 +19,8 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import edu.wisc.library.ocfl.api.OcflObjectUpdater;
+import edu.wisc.library.ocfl.api.OcflOption;
+import edu.wisc.library.ocfl.api.exception.FixityCheckException;
 import edu.wisc.library.ocfl.api.exception.NotFoundException;
 import edu.wisc.library.ocfl.api.model.CommitInfo;
 import edu.wisc.library.ocfl.api.model.DigestAlgorithm;
@@ -27,6 +29,8 @@ import edu.wisc.library.ocfl.api.model.FileDetails;
 import edu.wisc.library.ocfl.api.model.ObjectVersionId;
 import edu.wisc.library.ocfl.api.model.VersionDetails;
 import edu.wisc.library.ocfl.api.model.VersionId;
+import edu.wisc.library.ocfl.core.util.FileUtil;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -38,6 +42,7 @@ import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageRuntimeException;
 import org.fcrepo.persistence.common.FileWriteOutcome;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.OCFLVersion;
@@ -53,14 +58,17 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -71,6 +79,7 @@ import static edu.wisc.library.ocfl.api.OcflOption.MOVE_SOURCE;
 import static edu.wisc.library.ocfl.api.OcflOption.OVERWRITE;
 import static java.lang.String.format;
 import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.translateFedoraDigestToOcfl;
 
 /**
  * Default implementation of an OCFL object session, which stages changes to the
@@ -98,6 +107,8 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
     private CommitOption commitOption;
 
+    private final Map<String, String> subpathToDigest;
+
     private final Instant created;
     /**
      * Instantiate an OCFL object session
@@ -117,6 +128,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         this.objectDeleted = false;
         this.sessionClosed = false;
         this.created = Instant.now();
+        this.subpathToDigest = new HashMap<>();
     }
 
     private String encode(final String value) {
@@ -175,6 +187,12 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
                 log.error("Failed to close inputstream while writing {}", subpath, e);
             }
         }
+    }
+
+    @Override
+    public void registerTransmissionDigest(final String subpath, final String digest) {
+        final var encodedSubpath = encode(subpath);
+        subpathToDigest.put(encodedSubpath, digest);
     }
 
     /**
@@ -392,23 +410,20 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
             throw new PersistentStorageException("Cannot create empty OCFL object " + objectIdentifier);
         }
 
+        final Consumer<OcflObjectUpdater> commitChangeUpdater = constructCommitUpdater(false);
+
         if (NEW_VERSION.equals(commitOption)) {
             // perform commit to new version
-            return ocflRepository.putObject(ObjectVersionId.head(objectIdentifier),
-                    stagingPath,
-                    commitInfo,
-                    MOVE_SOURCE)
-                    .getVersionId()
-                    .toString();
+            return ocflRepository.updateObject(ObjectVersionId.head(objectIdentifier), commitInfo, commitChangeUpdater)
+                    .getVersionId().toString();
         } else {
             // perform commit to head version
-            return ocflRepository.stageChanges(ObjectVersionId.head(objectIdentifier), commitInfo, updater -> {
-                updater.addPath(stagingPath, "", MOVE_SOURCE);
-            }).getVersionId().toString();
+            return ocflRepository.stageChanges(ObjectVersionId.head(objectIdentifier), commitInfo, commitChangeUpdater)
+                    .getVersionId().toString();
         }
     }
 
-    private String commitUpdates(final CommitOption commitOption) {
+    private String commitUpdates(final CommitOption commitOption) throws PersistentStorageException {
         // Nothing to do if there are no staged files, no deletes, and not committing the mutable HEAD
         if (isStagingEmpty() && deletePaths.isEmpty() &&
                 !(commitOption == NEW_VERSION && ocflRepository.hasStagedChanges(objectIdentifier))) {
@@ -417,12 +432,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         }
 
         // Updater which pushes all updated files and then performs queued deletes
-        final Consumer<OcflObjectUpdater> commitChangeUpdater = updater -> {
-            if (!isStagingEmpty()) {
-                updater.addPath(stagingPath, "", MOVE_SOURCE, OVERWRITE);
-            }
-            deletePaths.forEach(updater::removeFile);
-        };
+        final Consumer<OcflObjectUpdater> commitChangeUpdater = constructCommitUpdater(true);
 
         if (NEW_VERSION.equals(commitOption)) {
             // check if a mutable head exists for this object
@@ -447,6 +457,39 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
                     commitChangeUpdater)
                     .getVersionId().toString();
         }
+    }
+
+    private Consumer<OcflObjectUpdater> constructCommitUpdater(final boolean updatingObject) {
+        final DIGEST_ALGORITHM fcrepoDigestAlg = getObjectDigestAlgorithm();
+        final DigestAlgorithm ocflDigestAlg = translateFedoraDigestToOcfl(fcrepoDigestAlg);
+        final OcflOption[] ocflOptions;
+        if (updatingObject) {
+            ocflOptions = new OcflOption[] { MOVE_SOURCE, OVERWRITE };
+        } else {
+            ocflOptions = new OcflOption[] { MOVE_SOURCE };
+        }
+
+
+        return updater -> {
+            if (updatingObject) {
+                deletePaths.forEach(updater::removeFile);
+            }
+            if (isStagingEmpty()) {
+                return;
+            }
+
+            updater.addPath(stagingPath, ocflOptions);
+
+            subpathToDigest.forEach((subpath, digest) -> {
+                final String normalizedPath = FileUtil.pathToStringStandardSeparator(Paths.get(subpath));
+                try {
+                    updater.addFileFixity(normalizedPath, ocflDigestAlg, digest);
+                } catch (final FixityCheckException e) {
+                    throw new PersistentStorageRuntimeException("Transmission of file " + subpath
+                            + " failed due to fixity check failure: " + e.getMessage());
+                }
+            });
+        };
     }
 
     /**
