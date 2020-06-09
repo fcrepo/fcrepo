@@ -117,10 +117,6 @@
                     <value>${fcrepo.dynamic.stomp.port}</value>
                   </systemProperty>
                   <systemProperty>
-                    <name>fcrepo.modeshape.configuration</name>
-                    <value>classpath:/config/file-simple/repository.json</value>
-                  </systemProperty>
-                  <systemProperty>
                     <name>fcrepo.http.ldp.putRequiresIfMatch</name>
                     <value>true</value>
                   </systemProperty>
