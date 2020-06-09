@@ -140,9 +140,9 @@ public class OCFLPersistentStorageSessionTest {
 
     @Before
     public void setUp() throws Exception {
-        final var stagingDir = tempFolder.newFolder("ocfl-staging");
-        final var repoDir = tempFolder.newFolder("ocfl-repo");
-        final var workDir = tempFolder.newFolder("ocfl-work");
+        final var stagingDir = tempFolder.newFolder("ocfl-staging").toPath();
+        final var repoDir = tempFolder.newFolder("ocfl-repo").toPath();
+        final var workDir = tempFolder.newFolder("ocfl-work").toPath();
         this.timestep = new MonotonicInstant();
 
         final var repository = createRepository(repoDir, workDir);

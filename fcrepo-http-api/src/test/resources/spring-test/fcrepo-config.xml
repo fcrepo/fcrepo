@@ -16,7 +16,7 @@
   <!-- Context that supports the actual ModeShape JCR itself -->
 
   <context:annotation-config/>
-  <context:property-placeholder />
+  <context:property-placeholder location="classpath:application.properties" />
   <context:component-scan base-package="org.fcrepo"/>
 
   <bean id="connectionManager" class="org.apache.http.impl.conn.PoolingHttpClientConnectionManager"/>

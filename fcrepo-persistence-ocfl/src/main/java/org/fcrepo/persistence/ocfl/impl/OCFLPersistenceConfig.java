@@ -18,8 +18,13 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
+import org.fcrepo.config.OcflPropsConfig;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import javax.inject.Inject;
+
+import java.io.IOException;
 
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.createRepository;
 
@@ -33,19 +38,16 @@ import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.create
 @Configuration
 public class OCFLPersistenceConfig {
 
+    @Inject
+    private OcflPropsConfig ocflPropsConfig;
+
     /**
      * Create an OCFL Repository
      * @return the repository
      */
     @Bean
-    public MutableOcflRepository repository() {
-        final OCFLConstants constants = new OCFLConstants();
-        return createRepository(constants.getStorageRootDir(), constants.getWorkDir());
-    }
-
-    @Bean
-    public OCFLConstants ocflConstants(){
-        return new OCFLConstants();
+    public MutableOcflRepository repository() throws IOException {
+        return createRepository(ocflPropsConfig.getOcflRepoRoot(), ocflPropsConfig.getOcflTemp());
     }
 
 }

@@ -20,7 +20,10 @@ package org.fcrepo.persistence.ocfl.impl;
 import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
 import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
 
-import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
@@ -30,6 +33,7 @@ import edu.wisc.library.ocfl.api.MutableOcflRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -52,39 +56,36 @@ public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory
     @Value("${fcrepo.autoversioning.enabled:true}")
     private boolean autoVersioningEnabled;
 
-    private File ocflStagingDir;
+    private final Path ocflStagingDir;
 
     @Inject
     private MutableOcflRepository ocflRepository;
-
-    /**
-     * Default Constructor.  You can set the ocfl staging, storage root, and work directories by setting the following
-     * system properties: fcrepo.ocfl.staging.dir, fcrepo.ocfl.storage.root.dir, and  fcrepo.ocfl.work.dir.  If these
-     * are not set, default directories will be created in java.io.tmpdir.
-     */
-    public DefaultOCFLObjectSessionFactory() {
-        this(new OCFLConstants().getStagingDir());
-    }
 
     /**
      * Constructor
      *
      * @param ocflStagingDir     The OCFL staging directory
      */
-    public DefaultOCFLObjectSessionFactory(final File ocflStagingDir) {
+    @Autowired
+    public DefaultOCFLObjectSessionFactory(
+            @Value("#{ocflPropsConfig.fedoraOcflStaging}")
+            final Path ocflStagingDir) {
         LOGGER.info("Fedora OCFL persistence staging directory:\n- {}",
                 ocflStagingDir);
 
-        ocflStagingDir.mkdirs();
-        this.ocflStagingDir = ocflStagingDir;
+        try {
+            this.ocflStagingDir = Files.createDirectories(ocflStagingDir);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     @Override
     public OCFLObjectSession create(final String ocflId, final String persistentStorageSessionId) {
 
-        final File stagingDirectory = new File(this.ocflStagingDir,
+        final Path stagingDirectory = this.ocflStagingDir.resolve(
                 persistentStorageSessionId == null ? "read-only" : persistentStorageSessionId);
-        return new DefaultOCFLObjectSession(ocflId, stagingDirectory.toPath(),
+        return new DefaultOCFLObjectSession(ocflId, stagingDirectory,
                 this.ocflRepository, defaultCommitOption());
     }
 

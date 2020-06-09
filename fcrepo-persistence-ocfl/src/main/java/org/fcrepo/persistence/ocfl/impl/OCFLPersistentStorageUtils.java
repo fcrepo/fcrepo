@@ -46,9 +46,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
@@ -385,15 +386,16 @@ public class OCFLPersistentStorageUtils {
      * @param ocflWorkDir The ocfl work directory
      * @return the repository
      */
-    public static MutableOcflRepository createRepository(final File ocflStorageRootDir, final File ocflWorkDir) {
-        ocflStorageRootDir.mkdirs();
-        ocflWorkDir.mkdirs();
+    public static MutableOcflRepository createRepository(final Path ocflStorageRootDir, final Path ocflWorkDir)
+            throws IOException {
+        Files.createDirectories(ocflStorageRootDir);
+        Files.createDirectories(ocflWorkDir);
 
         log.info("Fedora OCFL persistence directories:\n- {}\n- {}", ocflStorageRootDir, ocflWorkDir);
         final var defaultFcrepoAlg = ContentDigest.DEFAULT_DIGEST_ALGORITHM;
         final DigestAlgorithm ocflDigestAlg = translateFedoraDigestToOcfl(defaultFcrepoAlg);
         if (ocflDigestAlg == null) {
-            new UnsupportedDigestAlgorithmException(
+            throw new UnsupportedDigestAlgorithmException(
                     "Unable to map Fedora default digest algorithm " + defaultFcrepoAlg + " into OCFL");
         }
 
@@ -403,8 +405,8 @@ public class OCFLPersistentStorageUtils {
         return new OcflRepositoryBuilder()
                 .layoutConfig(DefaultLayoutConfig.nTupleHashConfig())
                 .ocflConfig(config)
-                .storage((FileSystemOcflStorage.builder().repositoryRoot(ocflStorageRootDir.toPath()).build()))
-                .workDir(ocflWorkDir.toPath())
+                .storage((FileSystemOcflStorage.builder().repositoryRoot(ocflStorageRootDir).build()))
+                .workDir(ocflWorkDir)
                 .buildMutable();
     }
 
