@@ -17,10 +17,26 @@
  */
 package org.fcrepo.search.impl;
 
+import org.fcrepo.search.api.Condition;
+import org.fcrepo.search.api.InvalidQueryException;
+import org.fcrepo.search.api.PaginationInfo;
 import org.fcrepo.search.api.SearchParameters;
 import org.fcrepo.search.api.SearchResult;
 import org.fcrepo.search.api.SearchService;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.sql.DataSource;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import static org.fcrepo.kernel.impl.ContainmentIndexImpl.FEDORA_ID_COLUMN;
+import static org.fcrepo.kernel.impl.ContainmentIndexImpl.RESOURCES_TABLE;
 
 /**
  * An implementation of the {@link org.fcrepo.search.api.SearchService}
@@ -30,8 +46,65 @@ import org.springframework.stereotype.Component;
 @Component
 public class SearchServiceImpl implements SearchService {
 
+    @Inject
+    private DataSource dataSource;
+
+    private NamedParameterJdbcTemplate jdbcTemplate;
+
+    @Inject
+    private PlatformTransactionManager platformTransactionManager;
+
+    /**
+     * Connect to the database
+     */
+    @PostConstruct
+    private void setup() {
+        jdbcTemplate = getNamedParameterJdbcTemplate();
+    }
+
+    private NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
+        return new NamedParameterJdbcTemplate(this.dataSource);
+    }
+
     @Override
-    public SearchResult doSearch(final SearchParameters parameters) {
-        return new SearchResult();
+    public SearchResult doSearch(final SearchParameters parameters) throws InvalidQueryException {
+        //translate parameters into a SQL query
+        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+        final var whereClauses = new ArrayList<String>();
+        for (Condition condition : parameters.getConditions()) {
+            if (condition.getField().equals(Condition.Field.FEDORA_ID) &&
+                    condition.getOperator().equals(Condition.Operator.EQ)) {
+                var object = condition.getObject();
+                if (!object.equals("*")) {
+                    if (object.contains("*")) {
+                        object = object.replace("*", "%");
+                        whereClauses.add(FEDORA_ID_COLUMN + " like '" + object + "'");
+                    } else {
+                        whereClauses.add(FEDORA_ID_COLUMN + " = '" + object + "'");
+                    }
+                }
+            } else {
+                throw new InvalidQueryException("Condition not supported: \"" + condition + "\"");
+            }
+        }
+
+        final var sql = new StringBuilder("select " + FEDORA_ID_COLUMN + " from " + RESOURCES_TABLE);
+
+        if (!whereClauses.isEmpty()) {
+            sql.append(" where ");
+            for (var it = whereClauses.iterator(); it.hasNext(); ) {
+                sql.append(it.next());
+                if (it.hasNext()) {
+                    sql.append(" and ");
+                }
+            }
+        }
+        sql.append(" order by " + FEDORA_ID_COLUMN);
+        sql.append(" limit :limit offset :offset");
+        parameterSource.addValue("limit", parameters.getMaxResults());
+        parameterSource.addValue("offset", parameters.getOffset());
+        final List<Map<String, Object>> items = jdbcTemplate.queryForList(sql.toString(), parameterSource);
+        final var pagination = new PaginationInfo(parameters.getMaxResults(), parameters.getOffset());
+        return new SearchResult(items, pagination);
     }
 }

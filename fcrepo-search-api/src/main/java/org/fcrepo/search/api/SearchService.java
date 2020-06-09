@@ -25,8 +25,9 @@ public interface SearchService {
 
     /**
      * Performs a search based on the parameters and returns the result.
+     *
      * @param parameters The parameters defining the search
      * @return The result of the search
      */
-    SearchResult doSearch(SearchParameters parameters);
+    SearchResult doSearch(SearchParameters parameters) throws InvalidQueryException;
 }

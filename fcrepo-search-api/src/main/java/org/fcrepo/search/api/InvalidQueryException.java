@@ -18,8 +18,8 @@
 package org.fcrepo.search.api;
 
 /**
- * An exception that indicates that the syntax of the query
- * is invalid and therefore cannot be parsed.
+ * An exception that the set of parameters  defining the search  query
+ * is invalid and therefore cannot be processed.
  *
  * @author dbernstein
  */

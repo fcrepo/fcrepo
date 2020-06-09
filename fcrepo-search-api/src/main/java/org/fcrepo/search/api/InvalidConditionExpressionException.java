@@ -18,24 +18,22 @@
 package org.fcrepo.search.api;
 
 /**
- * A data structure representing a search query.
+ * An exception that indicates that the syntax of the condition expression
+ * is invalid and therefore cannot be parsed.
+ *
  * @author dbernstein
  */
-public class Query{
-    /**
-     * Default constructor
-     */
-    private Query() {
+public class InvalidConditionExpressionException extends Exception {
 
-    }
+    private static final long serialVersionUID = 1L;
 
     /**
-     * Parses the url decoded value of the query parameter passed by the
-     * http layer into a {@link Query}.
-     * @param queryStr The url decoded value of the query parameter.
-     * @return the parsed {@link Query} object.
+     * Basic constructor
+     *
+     * @param msg The text of the exception.
      */
-    public static Query parse(final String queryStr) throws InvalidQueryException {
-        return new Query();
+    public InvalidConditionExpressionException(final String msg) {
+        super(msg);
     }
+
 }

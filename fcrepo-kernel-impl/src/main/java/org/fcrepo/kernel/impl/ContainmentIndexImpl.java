@@ -63,11 +63,11 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     @Inject
     private PlatformTransactionManager platformTransactionManager;
 
-    private static final String RESOURCES_TABLE = "resources";
+    public static final String RESOURCES_TABLE = "resources";
 
     private static final String TRANSACTION_OPERATIONS_TABLE = "transaction_operations";
 
-    private static final String FEDORA_ID_COLUMN = "fedora_id";
+    public static final String FEDORA_ID_COLUMN = "fedora_id";
 
     private static final String PARENT_COLUMN = "parent";
 

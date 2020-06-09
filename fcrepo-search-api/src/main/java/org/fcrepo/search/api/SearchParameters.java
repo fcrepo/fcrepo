@@ -17,6 +17,8 @@
  */
 package org.fcrepo.search.api;
 
+import java.util.List;
+
 /**
  * A pojo encapsulating the parameters of a search
  *
@@ -24,12 +26,49 @@ package org.fcrepo.search.api;
  */
 public class SearchParameters {
 
-    private Query query;
+    private final List<Condition> conditions;
+
+    private final int offset;
+
+    private final int maxResults;
+
     /**
-     * Constructor
-     * @param query The query portion of the search
+     * Constructoor
+     *
+     * @param conditions The conditions
+     * @param maxResults The max results
+     * @param offset     The offset
      */
-    public SearchParameters(final Query query) {
-        this.query = query;
+    public SearchParameters(final List<Condition> conditions, final int maxResults, final int offset) {
+        this.conditions = conditions;
+        this.maxResults = maxResults;
+        this.offset = offset;
+    }
+
+    /**
+     * The offset (zero-based)
+     *
+     * @return
+     */
+    public int getOffset() {
+        return offset;
+    }
+
+    /**
+     * The max number of results to return
+     *
+     * @return
+     */
+    public int getMaxResults() {
+        return maxResults;
+    }
+
+    /**
+     * The conditions limiting the search
+     *
+     * @return
+     */
+    public List<Condition> getConditions() {
+        return conditions;
     }
 }
