@@ -30,15 +30,20 @@ import java.nio.file.Path;
 
 /**
  * General Fedora properties
+ *
+ * @author pwinckles
+ * @since 6.0.0
  */
 @Configuration
 public class FedoraPropsConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FedoraPropsConfig.class);
 
+    public static final String FCREPO_HOME = "fcrepo.home";
+
     private static final String DATA_DIR = "data";
 
-    @Value("${fcrepo.home:fcrepo}")
+    @Value("${" + FCREPO_HOME + ":fcrepo}")
     private Path fedoraHome;
 
     @Value("#{fedoraPropsConfig.fedoraHome.resolve('" + DATA_DIR + "')}")
@@ -46,9 +51,14 @@ public class FedoraPropsConfig {
 
     @PostConstruct
     private void postConstruct() throws IOException {
-        LOGGER.debug("Fedora home: {}", fedoraHome);
+        LOGGER.info("Fedora home: {}", fedoraHome);
         LOGGER.debug("Fedora home data: {}", fedoraData);
-        Files.createDirectories(fedoraHome);
+        try {
+            Files.createDirectories(fedoraHome);
+        } catch (IOException e) {
+            throw new IOException(String.format("Failed to create Fedora home directory at %s." +
+                    " Fedora home can be configured by setting the %s property.", fedoraHome, FCREPO_HOME), e);
+        }
         Files.createDirectories(fedoraData);
     }
 

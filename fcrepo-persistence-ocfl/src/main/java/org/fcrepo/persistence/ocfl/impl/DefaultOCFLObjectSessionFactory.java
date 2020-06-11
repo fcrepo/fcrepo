@@ -70,7 +70,7 @@ public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory
     public DefaultOCFLObjectSessionFactory(
             @Value("#{ocflPropsConfig.fedoraOcflStaging}")
             final Path ocflStagingDir) {
-        LOGGER.info("Fedora OCFL persistence staging directory:\n- {}",
+        LOGGER.debug("Fedora OCFL persistence staging directory:\n- {}",
                 ocflStagingDir);
 
         try {

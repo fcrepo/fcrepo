@@ -30,30 +30,37 @@ import java.nio.file.Path;
 
 /**
  * Fedora's OCFL related configuration properties
+ *
+ * @author pwinckles
+ * @since 6.0.0
  */
 @Configuration
 public class OcflPropsConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OcflPropsConfig.class);
 
+    public static final String FCREPO_OCFL_STAGING = "fcrepo.ocfl.staging";
+    public static final String FCREPO_OCFL_ROOT = "fcrepo.ocfl.root";
+    public static final String FCREPO_OCFL_TEMP = "fcrepo.ocfl.temp";
+
     private static final String OCFL_STAGING = "staging";
     private static final String OCFL_ROOT = "ocfl-root";
     private static final String OCFL_TEMP = "ocfl-temp";
 
-    @Value("${fcrepo.ocfl.staging:#{fedoraPropsConfig.fedoraData.resolve('" + OCFL_STAGING + "')}}")
+    @Value("${" + FCREPO_OCFL_STAGING + ":#{fedoraPropsConfig.fedoraData.resolve('" + OCFL_STAGING + "')}}")
     private Path fedoraOcflStaging;
 
-    @Value("${fcrepo.ocfl.root:#{fedoraPropsConfig.fedoraData.resolve('" + OCFL_ROOT + "')}}")
+    @Value("${" + FCREPO_OCFL_ROOT + ":#{fedoraPropsConfig.fedoraData.resolve('" + OCFL_ROOT + "')}}")
     private Path ocflRepoRoot;
 
-    @Value("${fcrepo.ocfl.temp:#{fedoraPropsConfig.fedoraData.resolve('" + OCFL_TEMP + "')}}")
+    @Value("${" + FCREPO_OCFL_TEMP + ":#{fedoraPropsConfig.fedoraData.resolve('" + OCFL_TEMP + "')}}")
     private Path ocflTemp;
 
     @PostConstruct
     private void postConstruct() throws IOException {
-        LOGGER.debug("Fedora staging: {}", fedoraOcflStaging);
-        LOGGER.debug("Fedora OCFL root: {}", ocflRepoRoot);
-        LOGGER.debug("Fedora OCFL temp: {}", ocflTemp);
+        LOGGER.info("Fedora staging: {}", fedoraOcflStaging);
+        LOGGER.info("Fedora OCFL root: {}", ocflRepoRoot);
+        LOGGER.info("Fedora OCFL temp: {}", ocflTemp);
         Files.createDirectories(fedoraOcflStaging);
         Files.createDirectories(ocflRepoRoot);
         Files.createDirectories(ocflTemp);

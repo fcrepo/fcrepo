@@ -20,6 +20,7 @@ package org.fcrepo.integration.http.api;
 
 import edu.wisc.library.ocfl.api.OcflRepository;
 import org.apache.http.client.methods.HttpGet;
+import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.persistence.ocfl.api.IndexBuilder;
 import org.junit.AfterClass;
@@ -54,20 +55,18 @@ public class RebuildIT extends AbstractResourceIT {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RebuildIT.class);
 
-    private static final String OCFL_ROOT_PROP = "fcrepo.ocfl.root";
-
     private OcflRepository ocflRepository;
 
     private IndexBuilder indexBuilder;
 
     @BeforeClass
     public static void beforeClass() {
-        System.setProperty(OCFL_ROOT_PROP, "target/test-classes/test-rebuild-ocfl/ocfl-root");
+        System.setProperty(OcflPropsConfig.FCREPO_OCFL_ROOT, "target/test-classes/test-rebuild-ocfl/ocfl-root");
     }
 
     @AfterClass
     public static void afterClass() {
-        System.clearProperty(OCFL_ROOT_PROP);
+        System.clearProperty(OcflPropsConfig.FCREPO_OCFL_ROOT);
     }
 
     @Before

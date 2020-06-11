@@ -391,7 +391,7 @@ public class OCFLPersistentStorageUtils {
         Files.createDirectories(ocflStorageRootDir);
         Files.createDirectories(ocflWorkDir);
 
-        log.info("Fedora OCFL persistence directories:\n- {}\n- {}", ocflStorageRootDir, ocflWorkDir);
+        log.debug("Fedora OCFL persistence directories:\n- {}\n- {}", ocflStorageRootDir, ocflWorkDir);
         final var defaultFcrepoAlg = ContentDigest.DEFAULT_DIGEST_ALGORITHM;
         final DigestAlgorithm ocflDigestAlg = translateFedoraDigestToOcfl(defaultFcrepoAlg);
         if (ocflDigestAlg == null) {
