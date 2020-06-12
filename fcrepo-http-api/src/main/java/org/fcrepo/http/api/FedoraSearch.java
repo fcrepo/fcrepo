@@ -21,9 +21,9 @@ import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.search.api.Condition;
 import org.fcrepo.search.api.InvalidConditionExpressionException;
 import org.fcrepo.search.api.InvalidQueryException;
+import org.fcrepo.search.api.SearchIndex;
 import org.fcrepo.search.api.SearchParameters;
 import org.fcrepo.search.api.SearchResult;
-import org.fcrepo.search.api.SearchService;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -37,6 +37,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -57,7 +58,7 @@ public class FedoraSearch extends FedoraBaseResource {
     private static final Logger LOGGER = getLogger(FedoraSearch.class);
 
     @Inject
-    private SearchService service;
+    private SearchIndex service;
 
     /**
      * Default JAX-RS entry point
@@ -78,6 +79,7 @@ public class FedoraSearch extends FedoraBaseResource {
     @Produces({APPLICATION_JSON + ";qs=1.0",
             TEXT_PLAIN_WITH_CHARSET})
     public Response doSearch(@QueryParam(value = "condition") final List<String> conditions,
+                             @QueryParam(value = "fields") final String fields,
                              @DefaultValue("100") @QueryParam("max_results") final int maxResults,
                              @DefaultValue("0") @QueryParam("offset") final int offset) {
 
@@ -87,7 +89,22 @@ public class FedoraSearch extends FedoraBaseResource {
                 final var parsedCondition = parse(condition, identifierConverter());
                 conditionList.add(parsedCondition);
             }
-            final var params = new SearchParameters(conditionList, maxResults, offset);
+
+            List<Condition.Field> parsedFields = null;
+            if (fields == null || fields.trim().length() == 0 || fields.equals("*")) {
+                parsedFields = Arrays.asList(Condition.Field.values());
+            } else {
+                parsedFields = new ArrayList<>();
+                for (String field : fields.split(",")) {
+                    try {
+                        parsedFields.add(Condition.Field.fromString(field));
+                    } catch (Exception e) {
+                        throw new InvalidQueryException("The field \"" + field + "\" is not a valid output field.");
+                    }
+                }
+            }
+
+            final var params = new SearchParameters(parsedFields, conditionList, maxResults, offset);
             final Response.ResponseBuilder builder = ok();
             final var result = this.service.doSearch(params);
             final var translatedResults = translateResults(result);
@@ -95,7 +112,7 @@ public class FedoraSearch extends FedoraBaseResource {
             builder.entity(translatedResults);
             return builder.build();
         } catch (final InvalidConditionExpressionException | InvalidQueryException ex) {
-            throw new BadRequestException(ex);
+            throw new BadRequestException(ex.getMessage(), ex);
         }
     }
 

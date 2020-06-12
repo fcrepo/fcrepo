@@ -17,11 +17,31 @@
  */
 package org.fcrepo.search.api;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+
+import java.time.Instant;
+
 /**
- * An interface defining search operations
+ * An interface defining search index management operations
+ *
  * @author dbernstein
  */
-public interface SearchService {
+public interface SearchIndex {
+
+    /**
+     * @param fedoraId
+     * @param created
+     * @param modified
+     * @param size
+     * @param mimetype
+     */
+    void addUpdateIndex(final FedoraId fedoraId, final Instant created, final Instant modified,
+                        final Long size, final String mimetype);
+
+    /**
+     * @param fedoraId
+     */
+    void removeFromIndex(FedoraId fedoraId);
 
     /**
      * Performs a search based on the parameters and returns the result.
@@ -30,4 +50,9 @@ public interface SearchService {
      * @return The result of the search
      */
     SearchResult doSearch(SearchParameters parameters) throws InvalidQueryException;
+
+    /**
+     * Remove all persistent state associated with the index.
+     */
+    void reset();
 }

@@ -20,6 +20,10 @@
   <bean id="containmentIndex" class="org.mockito.Mockito" factory-method="mock">
     <constructor-arg value="org.fcrepo.kernel.api.ContainmentIndex" />
   </bean>
+
+  <bean id="searchIndex" class="org.mockito.Mockito" factory-method="mock">
+    <constructor-arg value="org.fcrepo.search.api.SearchIndex" />
+  </bean>
   
   <bean id="transactionManager" class="org.mockito.Mockito" factory-method="mock">
     <constructor-arg value="org.fcrepo.kernel.api.TransactionManager" />

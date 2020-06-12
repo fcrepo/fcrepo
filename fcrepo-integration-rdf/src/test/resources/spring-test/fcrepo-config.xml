@@ -14,7 +14,7 @@
   <!-- Master context for the test application. -->
   
   <context:property-placeholder />
-  <context:annotation-config/>
+  <context:annotation-config />
 
   <bean id="connectionManager" class="org.apache.http.impl.conn.PoolingHttpClientConnectionManager"/>
   

@@ -55,6 +55,11 @@
       <artifactId>fcrepo-configs</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-search-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     
     <dependency>
       <groupId>edu.wisc.library.ocfl</groupId>

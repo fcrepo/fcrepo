@@ -27,6 +27,7 @@ import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.IndexBuilder;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
+import org.fcrepo.search.api.SearchIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -36,7 +37,6 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.lang.String.format;
-
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.isSidecarSubpath;
 
@@ -64,10 +64,16 @@ public class IndexBuilderImpl implements IndexBuilder {
     private ContainmentIndex containmentIndex;
 
     @Inject
+    private SearchIndex searchIndex;
+
+    @Inject
     private TransactionManager transactionManager;
 
     @Inject
     private OcflRepository ocflRepository;
+
+    public IndexBuilderImpl() {
+    }
 
     @Override
     public void rebuildIfNecessary() {
@@ -84,6 +90,8 @@ public class IndexBuilderImpl implements IndexBuilder {
 
         fedoraToOCFLObjectIndex.reset();
         containmentIndex.reset();
+        searchIndex.reset();
+
 
         final var transaction = transactionManager.create();
         final var txId = transaction.getId();
@@ -125,6 +133,12 @@ public class IndexBuilderImpl implements IndexBuilder {
                                                 FedoraId.create(headers.getId()));
                                     }
                                 }
+
+                                searchIndex.addUpdateIndex(fedoraId,
+                                        headers.getCreatedDate(),
+                                        headers.getLastModifiedDate(),
+                                        headers.getContentSize(),
+                                        headers.getMimeType());
 
                             } catch (PersistentStorageException e) {
                                 throw new RepositoryRuntimeException(format("fedora-to-ocfl index rebuild failed: %s",
