@@ -199,7 +199,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     private static final Node DC_IDENTIFIER = DC_11.identifier.asNode();
 
-    private static final String LDP_RESOURCE_LINK_HEADER = "<" + LDP_NAMESPACE + "Resource>;rel=\"type\"";
+    private static final String LDP_RESOURCE_LINK_HEADER = "<" + LDP_NAMESPACE + "Resource>; rel=\"type\"";
 
     private static final Node rdfType = type.asNode();
 
@@ -207,16 +207,16 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     private static final Resource PCDM_FILE_TYPE = createResource("http://pcdm.org/models#File");
 
-    private static final String CONTAINER_LINK_HEADER = "<" + CONTAINER.getURI() + ">;rel=\"type\"";
+    private static final String CONTAINER_LINK_HEADER = "<" + CONTAINER.getURI() + ">; rel=\"type\"";
 
-    private static final String BASIC_CONTAINER_LINK_HEADER = "<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\"";
-    private static final String DIRECT_CONTAINER_LINK_HEADER = "<" + DIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
-    private static final String INDIRECT_CONTAINER_LINK_HEADER = "<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
-    private static final String ARCHIVAL_GROUP_LINK_HEADER = "<" + ARCHIVAL_GROUP.getURI() + ">;rel=\"type\"";
+    private static final String BASIC_CONTAINER_LINK_HEADER = "<" + BASIC_CONTAINER.getURI() + ">; rel=\"type\"";
+    private static final String DIRECT_CONTAINER_LINK_HEADER = "<" + DIRECT_CONTAINER.getURI() + ">; rel=\"type\"";
+    private static final String INDIRECT_CONTAINER_LINK_HEADER = "<" + INDIRECT_CONTAINER.getURI() + ">; rel=\"type\"";
+    private static final String ARCHIVAL_GROUP_LINK_HEADER = "<" + ARCHIVAL_GROUP.getURI() + ">; rel=\"type\"";
 
-    private static final String RESOURCE_LINK_HEADER = "<" + RESOURCE.getURI() + ">;rel=\"type\"";
-    private static final String RDF_SOURCE_LINK_HEADER = "<" + RDF_SOURCE.getURI() + ">;rel=\"type\"";
-    private static final String NON_RDF_SOURCE_LINK_HEADER = "<" + NON_RDF_SOURCE.getURI() + ">;rel=\"type\"";
+    private static final String RESOURCE_LINK_HEADER = "<" + RESOURCE.getURI() + ">; rel=\"type\"";
+    private static final String RDF_SOURCE_LINK_HEADER = "<" + RDF_SOURCE.getURI() + ">; rel=\"type\"";
+    private static final String NON_RDF_SOURCE_LINK_HEADER = "<" + NON_RDF_SOURCE.getURI() + ">; rel=\"type\"";
     private static final String VERSIONED_RESOURCE_LINK_HEADER = "<" + VERSIONED_RESOURCE.getURI() + ">; rel=\"type\"";
 
     private static final String TEST_ACTIVATION_PROPERTY = "RUN_TEST_CREATE_MANY";
@@ -629,7 +629,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testOptionsBinaryMetadata() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", null);
@@ -642,7 +641,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testOptionsBinaryMetadataWithUriEncoding() throws Exception {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", null);
@@ -870,7 +868,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testGetRDFSourceWithUserTypes() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -879,7 +876,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testGetNonRDFSourceAndDescriptionWithUserTypes() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "ds", "sample-content");

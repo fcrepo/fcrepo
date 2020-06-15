@@ -185,7 +185,21 @@ public interface FedoraResource {
     boolean hasType(final String type);
 
     /**
-     * Get the RDF:type values for this resource
+     * Get only the user provided types from their RDF.
+     * @return a list of types from the user provided RDF.
+     */
+    List<URI> getUserTypes();
+
+    /**
+     * Get only the system defined types from their RDF.
+     * @param forRdf whether we only want types for displaying in a RDF body.
+     * @return a list of types from the user provided RDF.
+     */
+    List<URI> getSystemTypes(final boolean forRdf);
+
+    /**
+     * Get the RDF:type values for this resource, this is usually the combination of getUserTypes and
+     * getSystemTypes(false) to get ALL the types.
      * @return a list of types for this resource
      */
     List<URI> getTypes();

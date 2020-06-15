@@ -47,6 +47,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -92,9 +93,12 @@ public class TimeMapImplTest {
 
     @Test
     public void shouldHaveTimeMapTypes() {
-        assertThat(timeMap.getTypes(), contains(
+        assertTrue(timeMap.getTypes().containsAll(
+                List.of(
                 URI.create(RdfLexicon.TIME_MAP.getURI()),
-                URI.create(RdfLexicon.VERSIONING_TIMEMAP.getURI())));
+                URI.create(RdfLexicon.VERSIONING_TIMEMAP.getURI())
+                ))
+        );
     }
 
     @Test
@@ -106,8 +110,8 @@ public class TimeMapImplTest {
 
         final var children = timeMap.getChildren();
 
-        assertThat(children.map(FedoraResource::getMementoDatetime)
-                .collect(Collectors.toList()), contains(version1, version2));
+        assertTrue(children.map(FedoraResource::getMementoDatetime)
+                .collect(Collectors.toList()).containsAll(List.of(version1, version2)));
     }
 
     @Test

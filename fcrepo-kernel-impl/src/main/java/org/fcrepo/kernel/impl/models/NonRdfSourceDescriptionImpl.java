@@ -18,7 +18,10 @@
 package org.fcrepo.kernel.impl.models;
 
 import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 
+import java.net.URI;
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.apache.jena.graph.Node;
@@ -70,6 +73,14 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
         }
+    }
+
+    @Override
+    public List<URI> getSystemTypes(final boolean forRdf) {
+        final var types = super.getSystemTypes(forRdf);
+        // NonRdfSource gets the ldp:Resource and adds ldp:RDFSource types.
+        types.add(URI.create(RDF_SOURCE.getURI()));
+        return types;
     }
 
     @Override
