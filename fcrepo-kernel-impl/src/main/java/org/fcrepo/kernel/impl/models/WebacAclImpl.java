@@ -44,7 +44,7 @@ public class WebacAclImpl extends ContainerImpl implements WebacAcl {
     }
 
     @Override
-    public FedoraResource getDescribedResource() {
+    public FedoraResource getContainer() {
         final var originalId = FedoraId.create(getFedoraId().getContainingId());
         try {
             return resourceFactory.getResource(tx, originalId);

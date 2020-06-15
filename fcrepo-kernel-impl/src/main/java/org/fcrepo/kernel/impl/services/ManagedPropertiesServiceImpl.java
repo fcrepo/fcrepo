@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import org.apache.jena.graph.Triple;
-import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.TimeMap;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
@@ -54,7 +53,7 @@ public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {
         triples.add(Triple.create(subject, LAST_MODIFIED_DATE.asNode(),
                 createLiteral(resource.getLastModifiedDate().toString(), XSDdateTime)));
 
-        resource.getDescribedResource().getTypes().forEach(triple -> {
+        resource.getDescribedResource().getSystemTypes(true).forEach(triple -> {
             triples.add(Triple.create(subject, type.asNode(), createURI(triple.toString())));
         });
 
@@ -63,7 +62,7 @@ public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {
 
     private String resolveId(final FedoraResource resource) {
         if (resource instanceof TimeMap) {
-            return resource.getId() + "/" + FedoraTypes.FCR_VERSIONS;
+            return resource.getFedoraId().getFullId();
         }
         return resource.getId();
     }

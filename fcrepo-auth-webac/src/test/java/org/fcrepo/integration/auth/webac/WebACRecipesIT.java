@@ -351,7 +351,6 @@ public class WebACRecipesIT extends AbstractResourceIT {
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestPatch3));
     }
 
-    @Ignore("Not getting all rdf:types back to match on accessToClass - FCREPO-3279")
     @Test
     public void scenario5() throws IOException {
         final String idPublic = "/rest/mixedCollection/publicObj";
@@ -717,7 +716,6 @@ public class WebACRecipesIT extends AbstractResourceIT {
         assertEquals(HttpStatus.SC_OK, getStatus(requestGet2));
     }
 
-    @Ignore("Access to class - FCREPO-3279")
     @Test
     public void testAccessToVersionedResources() throws IOException {
         final String idVersion = "/rest/versionResource";
@@ -737,7 +735,6 @@ public class WebACRecipesIT extends AbstractResourceIT {
         assertEquals("user10 can't read object", HttpStatus.SC_OK, getStatus(requestGet1));
 
         final HttpPost requestPost1 = postObjMethod(idVersion + "/fcr:versions");
-        requestPost1.addHeader("Slug", "v0");
         setAuth(requestPost1, "fedoraAdmin");
         assertEquals("Unable to create a new version", HttpStatus.SC_CREATED, getStatus(requestPost1));
 
@@ -823,7 +820,6 @@ public class WebACRecipesIT extends AbstractResourceIT {
         assertEquals("testuser can't read versioned object", HttpStatus.SC_OK, getStatus(requestGet2));
     }
 
-    @Ignore("Not getting all rdf:types back to match on accessToClass - FCREPO-3279")
     @Test
     public void testAgentAsUri() throws IOException {
         final String id = "/rest/" + getRandomUniqueId();
@@ -1302,7 +1298,6 @@ public class WebACRecipesIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore("Not getting all rdf:types back to match on accessToClass - FCREPO-3279")
     @Test
     public void testCreateAclWithAccessToClassForBinary() throws Exception {
         final String id = getRandomUniqueId();

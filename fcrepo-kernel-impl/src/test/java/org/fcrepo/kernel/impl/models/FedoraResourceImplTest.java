@@ -18,27 +18,46 @@
 
 package org.fcrepo.kernel.impl.models;
 
+import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.models.TimeMap;
 import org.fcrepo.kernel.api.services.VersionService;
+import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.List;
 
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
+import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
+
+import static java.net.URI.create;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class FedoraResourceImplTest {
@@ -51,6 +70,12 @@ public class FedoraResourceImplTest {
 
     @Mock
     private ResourceFactory resourceFactory;
+
+    @Mock
+    private PersistentStorageSession psSession;
+
+    @Mock
+    private ResourceHeaders headers;
 
     private static final String ID = "info:fedora/test";
 
@@ -102,6 +127,76 @@ public class FedoraResourceImplTest {
         expectMementos();
         final var match = resource.findMementoByDatetime(instant("20200309172118"));
         assertNull("Should not find a memento", match);
+    }
+
+    @Test
+    public void testTypesRdfSource() throws Exception {
+        final var subject = createResource(ID);
+        final String exampleType = "http://example.org/customType";
+        final Model userModel = createDefaultModel();
+        userModel.add(subject, type, createResource(exampleType));
+        final var userStream = fromModel(subject.asNode(), userModel);
+        when(sessionManager.getReadOnlySession()).thenReturn(psSession);
+        when(psSession.getHeaders(eq(FEDORA_ID.getResourceId()),any())).thenReturn(headers);
+        when(headers.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
+        when(headers.isArchivalGroup()).thenReturn(false);
+        when(psSession.getTriples(eq(FEDORA_ID.getResourceId()), any())).thenReturn(userStream);
+
+        final List<URI> expectedTypes = List.of(
+                create(exampleType),
+                create(BASIC_CONTAINER.toString()),
+                create(RESOURCE.toString()),
+                create(VERSIONED_RESOURCE.getURI()),
+                create(VERSIONING_TIMEGATE_TYPE)
+        );
+
+        final var resource = new FedoraResourceImpl(FEDORA_ID, null, sessionManager, resourceFactory);
+        final var resourceTypes = resource.getTypes();
+
+        // Initial lengths are the same
+        assertEquals(expectedTypes.size(), resourceTypes.size());
+        // Only keep the types in the expected list.
+        resourceTypes.retainAll(expectedTypes);
+        // Lengths are still the same.
+        assertEquals(expectedTypes.size(), resourceTypes.size());
+    }
+
+    @Test
+    public void testTypesNonRdfSource() throws Exception {
+        final var descriptionFedoraId = FEDORA_ID.resolve(FCR_METADATA);
+        final var subject = createResource(ID);
+        final String exampleType = "http://example.org/customType";
+        final Model userModel = createDefaultModel();
+        userModel.add(subject, type, createResource(exampleType));
+        final var userStream = fromModel(subject.asNode(), userModel);
+
+        final var description = new NonRdfSourceDescriptionImpl(descriptionFedoraId, null, sessionManager,
+                resourceFactory);
+
+        when(resourceFactory.getResource(any(), eq(descriptionFedoraId))).thenReturn(description);
+        when(sessionManager.getReadOnlySession()).thenReturn(psSession);
+        when(psSession.getHeaders(eq(FEDORA_ID.getResourceId()),any())).thenReturn(headers);
+        when(headers.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
+        when(headers.isArchivalGroup()).thenReturn(false);
+        when(psSession.getTriples(eq(descriptionFedoraId.getResourceId()), any())).thenReturn(userStream);
+
+        final List<URI> expectedTypes = List.of(
+                create(exampleType),
+                create(NON_RDF_SOURCE.toString()),
+                create(RESOURCE.toString()),
+                create(VERSIONED_RESOURCE.getURI()),
+                create(VERSIONING_TIMEGATE_TYPE)
+        );
+
+        final var resource = new BinaryImpl(FEDORA_ID, null, sessionManager, resourceFactory);
+        final var resourceTypes = resource.getTypes();
+
+        // Initial lengths are the same
+        assertEquals(expectedTypes.size(), resourceTypes.size());
+        // Only keep the types in the expected list.
+        resourceTypes.retainAll(expectedTypes);
+        // Lengths are still the same.
+        assertEquals(expectedTypes.size(), resourceTypes.size());
     }
 
     private void expectMementos(final String... instants) {

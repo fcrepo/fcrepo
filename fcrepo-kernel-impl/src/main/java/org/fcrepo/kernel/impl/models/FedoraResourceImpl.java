@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.models;
 
+import org.apache.jena.graph.Triple;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
@@ -40,9 +41,16 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static java.net.URI.create;
+import static java.util.stream.Collectors.toList;
+
 import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
+import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
 
 /**
@@ -212,29 +220,59 @@ public class FedoraResourceImpl implements FedoraResource {
     public List<URI> getTypes() {
         if (types == null) {
             types = new ArrayList<>();
-            try {
-                final var headers = getSession().getHeaders(getId(), getMementoDatetime());
-                types.add(create(headers.getInteractionModel()));
+            types.addAll(getSystemTypes(false));
+            types.addAll(getUserTypes());
+        }
+        return types;
+    }
+
+    @Override
+    public List<URI> getSystemTypes(final boolean forRdf) {
+        try {
+            final List<URI> types = new ArrayList<>();
+            final var headers = getSession().getHeaders(getId(), getMementoDatetime());
+            types.add(create(headers.getInteractionModel()));
+            // ldp:Resource is on all resources
+            types.add(create(RESOURCE.toString()));
+            if (!forRdf) {
+                // These types are not exposed as RDF triples.
                 if (headers.isArchivalGroup()) {
                     types.add(create(ARCHIVAL_GROUP.getURI()));
                 }
-            } catch (final PersistentItemNotFoundException e) {
-                throw new ItemNotFoundException("Unable to retrieve headers for " + getId(), e);
-            } catch (final PersistentStorageException e) {
-                throw new RepositoryRuntimeException(e);
+                if (isMemento) {
+                    types.add(create(MEMENTO_TYPE));
+                } else if (isOriginalResource()) {
+                    types.addAll(List.of(create(VERSIONED_RESOURCE.getURI()), create(VERSIONING_TIMEGATE_TYPE)));
+                }
             }
-
+            return types;
+        } catch (final PersistentItemNotFoundException e) {
+            throw new ItemNotFoundException("Unable to retrieve headers for " + getId(), e);
+        } catch (final PersistentStorageException e) {
+            throw new RepositoryRuntimeException(e);
         }
+    }
 
-        return types;
+    @Override
+    public List<URI> getUserTypes() {
+        try {
+            final var triples = getSession().getTriples(getDescription().getId(), getMementoDatetime());
+            return triples.filter(t -> t.predicateMatches(type.asNode())).map(Triple::getObject)
+                    .map(t -> URI.create(t.toString())).collect(toList());
+        } catch (final PersistentItemNotFoundException e) {
+            throw new ItemNotFoundException("Unable to retrieve triples for " + getId(), e);
+        } catch (final PersistentStorageException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     @Override
     public RdfStream getTriples() {
         try {
+            final var subject = createURI(getId());
             final var triples = getSession().getTriples(getId(), getMementoDatetime());
 
-            return new DefaultRdfStream(createURI(getId()), triples);
+            return new DefaultRdfStream(subject, triples);
         } catch (final PersistentItemNotFoundException e) {
             throw new ItemNotFoundException("Unable to retrieve triples for " + getId(), e);
         } catch (final PersistentStorageException e) {

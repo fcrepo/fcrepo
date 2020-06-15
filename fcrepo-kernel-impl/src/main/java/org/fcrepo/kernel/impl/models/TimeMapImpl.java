@@ -18,11 +18,17 @@
 package org.fcrepo.kernel.impl.models;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
+
+import static java.net.URI.create;
 
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
@@ -48,10 +54,24 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
  */
 public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
 
-    private static final List<URI> TYPES = List.of(
-            URI.create(RdfLexicon.TIME_MAP.getURI()),
-            URI.create(RdfLexicon.VERSIONING_TIMEMAP.getURI())
+    /**
+     * Types of this class that should be displayed
+     */
+    private static final List<URI> HEADER_AND_RDF_TYPES = List.of(
+            create(RESOURCE.getURI()),
+            create(CONTAINER.getURI()),
+            create(RDF_SOURCE.getURI())
     );
+
+    /**
+     * Above types but also types not to be displayed in RDF bodies.
+     */
+    private static final List<URI> HEADER_ONLY_TYPES = Stream.concat(HEADER_AND_RDF_TYPES.stream(),
+            List.of(
+                create(RdfLexicon.TIME_MAP.getURI()),
+                create(RdfLexicon.VERSIONING_TIMEMAP.getURI())
+            ).stream()
+    ).collect(Collectors.toList());
 
     private final FedoraResource originalResource;
     private List<Instant> versions;
@@ -71,7 +91,6 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
         setParentId(originalResource.getId());
         setEtag(originalResource.getEtagValue());
         setStateToken(originalResource.getStateToken());
-        setTypes(TYPES);
     }
 
     @Override
@@ -84,6 +103,21 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
             model.add(new StatementImpl(timeMapResource, RdfLexicon.CONTAINS, child));
         });
         return DefaultRdfStream.fromModel(timeMapResource.asNode(), model);
+    }
+
+    @Override
+    public List<URI> getSystemTypes(final boolean forRdf) {
+        // TimeMaps don't have an on-disk representation so don't call super.getSystemTypes().
+        if (forRdf) {
+            return HEADER_AND_RDF_TYPES;
+        }
+        return HEADER_ONLY_TYPES;
+    }
+
+    @Override
+    public List<URI> getUserTypes() {
+        // TimeMaps don't have user triples.
+        return List.of();
     }
 
     @Override

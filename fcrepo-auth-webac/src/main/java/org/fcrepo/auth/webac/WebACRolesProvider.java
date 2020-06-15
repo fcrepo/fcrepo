@@ -72,6 +72,7 @@ import org.fcrepo.kernel.api.exception.RepositoryException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.TimeMap;
+import org.fcrepo.kernel.api.models.WebacAcl;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -113,7 +114,12 @@ public class WebACRolesProvider {
 
         // Construct a list of acceptable acl:accessTo values for the target resource.
         final List<String> resourcePaths = new ArrayList<>();
-        resourcePaths.add(resource.getDescribedResource().getId());
+        if (resource instanceof WebacAcl) {
+            // ACLs don't describe their resource, but we still want the container which is the resource.
+            resourcePaths.add(resource.getContainer().getId());
+        } else {
+            resourcePaths.add(resource.getDescribedResource().getId());
+        }
 
         // Construct a list of acceptable acl:accessToClass values for the target resource.
         final List<URI> rdfTypes = resource.getDescription().getTypes();

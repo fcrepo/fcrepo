@@ -17,24 +17,19 @@
  */
 package org.fcrepo.kernel.impl.models;
 
-import static org.apache.jena.graph.NodeFactory.createURI;
-import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 
-import java.util.stream.Stream;
+import java.net.URI;
+import java.util.List;
 
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
-import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
-import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 
 
@@ -64,14 +59,11 @@ public class ContainerImpl extends FedoraResourceImpl implements Container {
     }
 
     @Override
-    public RdfStream getTriples() {
-        final Node subject = createURI(getId());
-        final Stream<Triple> extra_triples = Stream.of(
-                Triple.create(subject, type.asNode(), RDF_SOURCE.asNode()),
-                Triple.create(subject, type.asNode(), CONTAINER.asNode()),
-                Triple.create(subject, type.asNode(), FEDORA_CONTAINER.asNode()),
-                Triple.create(subject, type.asNode(), FEDORA_RESOURCE.asNode())
-        );
-        return new DefaultRdfStream(createURI(getId()), Stream.concat(super.getTriples(), extra_triples));
+    public List<URI> getSystemTypes(final boolean forRdf) {
+        final var types = super.getSystemTypes(forRdf);
+        types.addAll(List.of(URI.create(RDF_SOURCE.toString()), URI.create(CONTAINER.toString()),
+                URI.create(FEDORA_CONTAINER.toString()), URI.create(FEDORA_RESOURCE.toString())));
+        return types;
     }
+
 }

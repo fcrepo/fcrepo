@@ -42,7 +42,6 @@ import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
 import static javax.ws.rs.core.Variant.mediaTypes;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
-import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.riot.WebContent.ctSPARQLUpdate;
@@ -60,23 +59,8 @@ import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEA
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_ENDPOINT_REL;
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_PREFIX;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
-import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
-import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
-import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
-import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.models.ExternalContent.COPY;
 import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
 import static org.fcrepo.kernel.api.models.ExternalContent.REDIRECT;
@@ -305,15 +289,14 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         final List<Stream<Triple>> streams = new ArrayList<>();
 
+        streams.add(resource.getTriples());
         if (returnPreference.getValue().equals("minimal")) {
-            streams.add(resource.getTriples());
             if (ldpPreferences.prefersServerManaged())  {
                 streams.add(this.managedPropertiesService.get(resource));
                 //TODO Implement minimal return preference (https://jira.lyrasis.org/browse/FCREPO-3334)
                 //streams.add(getTriples(resource, MINIMAL));
             }
         } else {
-            streams.add(resource.getTriples());
 
             // Additional server-managed triples about this resource
             if (ldpPreferences.prefersServerManaged()) {
@@ -465,7 +448,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                         .format(mementoInstant.atZone(ZoneOffset.UTC));
                 servletResponse.addHeader(MEMENTO_DATETIME_HEADER, mementoDatetime);
             }
-            servletResponse.addHeader(LINK, buildLink(MEMENTO_TYPE, "type"));
         }
     }
 
@@ -519,32 +501,13 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 servletResponse.addHeader(LINK, buildLink(originalUri, "timegate"));
                 servletResponse.addHeader(LINK, buildLink(originalUri, "original"));
                 servletResponse.addHeader(LINK, buildLink(timemapUri, "timemap"));
-
-                if (isOriginal) {
-                    servletResponse.addHeader(LINK, buildLink(VERSIONED_RESOURCE.getURI(), "type"));
-                    servletResponse.addHeader(LINK, buildLink(VERSIONING_TIMEGATE_TYPE, "type"));
-                } else if (resource instanceof TimeMap) {
-                    servletResponse.addHeader(LINK, buildLink(VERSIONING_TIMEMAP_TYPE, "type"));
-                }
             } catch (final PathNotFoundRuntimeException e) {
                 LOGGER.debug("TimeMap not found for {}, resource not versioned", getUri(resource));
             }
         }
-
-        // Add user-provided types as Link headers... when a description exists
-        final FedoraResource resourceDescription = resource.getDescription();
-        if (resourceDescription != null) {
-            for (final URI typeURI : resourceDescription.getTypes()) {
-
-                // Get namespace of type
-                final String type = typeURI.toString();
-                final String namespace = createURI(type).getNameSpace();
-
-                // Omit server-managed types, as they are added elsewhere
-                if (!isManagedNamespace.test(namespace)) {
-                    servletResponse.addHeader(LINK, buildLink(type, "type"));
-                }
-            }
+        // Add all system and user types as Link headers.
+        for (final var type : resource.getTypes()) {
+            servletResponse.addHeader(LINK, buildLink(type, "type"));
         }
     }
 
@@ -660,30 +623,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             }
             servletResponse.addHeader("Accept-Ranges", "bytes");
             servletResponse.addHeader(CONTENT_DISPOSITION, contentDisposition.toString());
-        }
-
-        servletResponse.addHeader(LINK, "<" + LDP_NAMESPACE + "Resource>;rel=\"type\"");
-
-        if (resource instanceof Binary) {
-            servletResponse.addHeader(LINK, "<" + LDP_NAMESPACE + "NonRDFSource>;rel=\"type\"");
-        } else if (resource instanceof Container || resource instanceof TimeMap) {
-            if (resource.hasType(ARCHIVAL_GROUP.getURI())) {
-                servletResponse.addHeader(LINK, "<" + ARCHIVAL_GROUP.getURI() + ">;rel=\"type\"");
-            }
-
-            servletResponse.addHeader(LINK, "<" + CONTAINER.getURI() + ">;rel=\"type\"");
-            servletResponse.addHeader(LINK, buildLink(RDF_SOURCE.getURI(), "type"));
-            if (resource.hasType(LDP_BASIC_CONTAINER)) {
-                servletResponse.addHeader(LINK, "<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\"");
-            } else if (resource.hasType(LDP_DIRECT_CONTAINER)) {
-                servletResponse.addHeader(LINK, "<" + DIRECT_CONTAINER.getURI() + ">;rel=\"type\"");
-            } else if (resource.hasType(LDP_INDIRECT_CONTAINER)) {
-                servletResponse.addHeader(LINK, "<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\"");
-            } else {
-                servletResponse.addHeader(LINK, "<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\"");
-            }
-        } else {
-            servletResponse.addHeader(LINK, buildLink(RDF_SOURCE.getURI(), "type"));
         }
 
         addLinkAndOptionsHttpHeaders(resource);
