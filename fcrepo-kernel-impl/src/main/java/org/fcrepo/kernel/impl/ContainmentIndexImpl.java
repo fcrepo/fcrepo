@@ -391,6 +391,9 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         final String parentID = parent.getFullId();
         final String childID = child.getFullId();
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+
+        LOGGER.debug("Adding: parent: {}, child: {}, in txn: {}", parentID, childID, txID);
+
         parameterSource.addValue("parent", parentID);
         parameterSource.addValue("child", childID);
         parameterSource.addValue("transactionId", txID);

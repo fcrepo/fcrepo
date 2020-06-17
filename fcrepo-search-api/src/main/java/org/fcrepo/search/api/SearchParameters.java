@@ -17,6 +17,8 @@
  */
 package org.fcrepo.search.api;
 
+import com.google.common.base.MoreObjects;
+
 import java.util.List;
 
 /**
@@ -70,5 +72,14 @@ public class SearchParameters {
      */
     public List<Condition> getConditions() {
         return conditions;
+    }
+
+    @Override
+    public String toString() {
+        final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this);
+        helper.add("conditions", conditions);
+        helper.add("maxResults", maxResults);
+        helper.add("offset", offset);
+        return helper.toString();
     }
 }
