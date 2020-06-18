@@ -23,6 +23,7 @@ import org.fcrepo.search.api.PaginationInfo;
 import org.fcrepo.search.api.SearchParameters;
 import org.fcrepo.search.api.SearchResult;
 import org.fcrepo.search.api.SearchService;
+import org.slf4j.Logger;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -37,6 +38,7 @@ import java.util.Map;
 
 import static org.fcrepo.kernel.impl.ContainmentIndexImpl.FEDORA_ID_COLUMN;
 import static org.fcrepo.kernel.impl.ContainmentIndexImpl.RESOURCES_TABLE;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * An implementation of the {@link org.fcrepo.search.api.SearchService}
@@ -45,6 +47,8 @@ import static org.fcrepo.kernel.impl.ContainmentIndexImpl.RESOURCES_TABLE;
  */
 @Component
 public class SearchServiceImpl implements SearchService {
+
+    private static final Logger LOGGER = getLogger(SearchServiceImpl.class);
 
     @Inject
     private DataSource dataSource;
@@ -105,6 +109,8 @@ public class SearchServiceImpl implements SearchService {
         parameterSource.addValue("offset", parameters.getOffset());
         final List<Map<String, Object>> items = jdbcTemplate.queryForList(sql.toString(), parameterSource);
         final var pagination = new PaginationInfo(parameters.getMaxResults(), parameters.getOffset());
+
+        LOGGER.debug("Search query with parameters: {} - {}", sql, parameters);
         return new SearchResult(items, pagination);
     }
 }

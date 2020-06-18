@@ -65,19 +65,44 @@ public class FedoraSearchIT extends AbstractResourceIT {
     public void testSearchAllResources() throws Exception {
         final var resources = createResources(3);
         final var condition = FEDORA_ID + "=*";
-        final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition);
+        List<String> notFound = resources;
+
+        final int maxResults = 10;
+        int offset = 0;
+
+        // Loop until all resources are found
+        // - Failure case: loop dies with assertion for non-zero results in 'doSearchAllResources()'
+        while (!notFound.isEmpty()) {
+            notFound = doSearchAllResources(notFound, condition, maxResults, offset);
+            offset += maxResults;
+        }
+    }
+
+    private List<String> doSearchAllResources(final List<String> resources,
+                                              final String condition,
+                                              final int maxResults,
+                                              final int offset) throws IOException {
+        final String searchUrl = getSearchEndpoint()
+                + "condition=" + encode(condition) + "&max_results=" + maxResults + "&offset=" + offset;
+
+        final List<String> notFound = new ArrayList<>();
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final ObjectMapper objectMapper = new ObjectMapper();
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
             assertNotNull(result);
             assertNotNull(result.getPagination());
-            assertTrue(result.getItems().size() >= 3);
+            assertTrue("Items not found! " + resources, result.getItems().size() > 0);
             final var resultingFedoraIds =
                     result.getItems().stream().map(x -> x.get("fedora_id")).collect(Collectors.toList());
-            assertTrue("results must contain all newly created resources",
-                    resultingFedoraIds.containsAll(resources));
+
+            resources.forEach(r -> {
+                if (!resultingFedoraIds.contains(r)) {
+                    notFound.add(r);
+                }
+            });
         }
+        return notFound;
     }
 
     @Test
