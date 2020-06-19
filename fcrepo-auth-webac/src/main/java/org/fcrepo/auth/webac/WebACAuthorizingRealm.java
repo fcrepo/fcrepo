@@ -201,13 +201,15 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
             for (final URI uri : rolesForURI.keySet()) {
                 log.debug("Adding permissions gathered for URI {}", uri);
                 final Map<String, Collection<String>> roles = rolesForURI.get(uri);
-                final Collection<String> modesForUser = roles.get(agentName);
-                if (modesForUser != null) {
-                    // add WebACPermission instance for each mode in the Authorization
-                    for (final String mode : modesForUser) {
-                        final WebACPermission perm = new WebACPermission(URI.create(mode), uri);
-                        authzInfo.addObjectPermission(perm);
-                        log.debug("Added permission {}", perm);
+                if (roles != null) {
+                    final Collection<String> modesForUser = roles.get(agentName);
+                    if (modesForUser != null) {
+                        // add WebACPermission instance for each mode in the Authorization
+                        for (final String mode : modesForUser) {
+                            final WebACPermission perm = new WebACPermission(URI.create(mode), uri);
+                            authzInfo.addObjectPermission(perm);
+                            log.debug("Added permission {}", perm);
+                        }
                     }
                 }
             }
