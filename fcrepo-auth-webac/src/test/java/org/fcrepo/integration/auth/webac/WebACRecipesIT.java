@@ -18,7 +18,11 @@
 package org.fcrepo.integration.auth.webac;
 
 import static java.util.Arrays.stream;
+
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.FORBIDDEN;
+import static javax.ws.rs.core.Response.Status.OK;
 
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_FORBIDDEN;
@@ -2067,6 +2071,70 @@ public class WebACRecipesIT extends AbstractResourceIT {
         assertPredicateValue(binaryLocation + "/" + FCR_METADATA, "http://purl.org/dc/elements/1.1/title",
                 "Some different title");
 
+    }
+
+    @Test
+    public void testRequestWithEmptyPath() throws Exception {
+        final String username = "testUser92";
+        final String parent = getRandomUniqueId();
+        final HttpPost postParent = postObjMethod();
+        postParent.setHeader("Slug", parent);
+        setAuth(postParent, "fedoraAdmin");
+        final String parentUri;
+        try (final CloseableHttpResponse response = execute(postParent)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            parentUri = getLocation(response);
+        }
+        // Make parent only accessible to fedoraAdmin
+        final String parentAcl = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                "<#readauthz> a acl:Authorization ;\n" +
+                "   acl:agent \"fedoraAdmin\" ;\n" +
+                "   acl:mode acl:Read, acl:Write ;\n" +
+                "   acl:accessTo <" + parentUri + "> .";
+        ingestAclString(parentUri, parentAcl, "fedoraAdmin");
+        // Admin can see parent
+        final HttpGet getAdminParent = getObjMethod(parent);
+        setAuth(getAdminParent, "fedoraAdmin");
+        assertEquals(OK.getStatusCode(), getStatus(getAdminParent));
+        final HttpGet getParent = getObjMethod(parent);
+        setAuth(getParent, username);
+        // testUser92 cannot see parent.
+        assertEquals(FORBIDDEN.getStatusCode(), getStatus(getParent));
+
+        final String child = getRandomUniqueId();
+        final HttpPost postChild = postObjMethod(parent);
+        postChild.setHeader("Slug", child);
+        setAuth(postChild, "fedoraAdmin");
+        final String childUri;
+        try (final CloseableHttpResponse response = execute(postChild)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            childUri = getLocation(response);
+        }
+        // Make child accessible to testUser92
+        final String childAcl = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                "<#readauthz> a acl:Authorization ;\n" +
+                "   acl:agent \"" + username + "\" ;\n" +
+                "   acl:mode acl:Read, acl:Write ;\n" +
+                "   acl:accessTo <" + childUri + "> .";
+        ingestAclString(childUri, childAcl, "fedoraAdmin");
+        // Admin can see child.
+        final HttpGet getAdminChild = getObjMethod(parent + "/" + child);
+        setAuth(getAdminChild, "fedoraAdmin");
+        assertEquals(OK.getStatusCode(), getStatus(getAdminChild));
+
+        // testUser92 can see child.
+        final HttpGet getChild = getObjMethod(parent + "/" + child);
+        setAuth(getChild, username);
+        assertEquals(OK.getStatusCode(), getStatus(getChild));
+
+        // Admin bypasses ACL resolution gets 409.
+        final HttpGet getAdminRequest = getObjMethod(parent + "//" + child);
+        setAuth(getAdminRequest, "fedoraAdmin");
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(getAdminRequest));
+        // User
+        final HttpGet getUserRequest = getObjMethod(parent + "//" + child);
+        setAuth(getUserRequest, username);
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(getUserRequest));
     }
 
     /**

@@ -44,6 +44,7 @@ import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.http.commons.session.TransactionProvider;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -75,6 +76,8 @@ import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toList;
+
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
@@ -194,6 +197,13 @@ public class WebACFilter extends RequestContextFilter {
         if (isSparqlUpdate(httpRequest) || isRdfRequest(httpRequest)) {
             // If this is a sparql request or contains RDF.
             httpRequest = new CachedHttpRequest(httpRequest);
+        }
+
+        try {
+            FedoraId.create(identifierConverter(httpRequest).toInternalId(httpRequest.getRequestURL().toString()));
+        } catch (final InvalidResourceIdentifierException e) {
+            response.sendError(SC_BAD_REQUEST,
+                    String.format("Path contains empty element! %s", httpRequest.getRequestURI()));
         }
 
         // add the request URI to the list of URIs to retrieve the ACLs for
