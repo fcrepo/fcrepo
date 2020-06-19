@@ -10,7 +10,7 @@
 
   <context:annotation-config />
 
-  <context:property-placeholder />
+  <context:property-placeholder location="classpath:application.properties"/>
 
   <context:component-scan base-package="org.fcrepo" />
 

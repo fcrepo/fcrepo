@@ -20,6 +20,7 @@ package org.fcrepo.integration.http.api;
 
 import edu.wisc.library.ocfl.api.OcflRepository;
 import org.apache.http.client.methods.HttpGet;
+import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.persistence.ocfl.api.IndexBuilder;
 import org.junit.AfterClass;
@@ -33,7 +34,6 @@ import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.List;
 
-import static java.lang.System.getProperty;
 import static java.text.MessageFormat.format;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -42,8 +42,6 @@ import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.persistence.ocfl.api.OCFLPersistenceConstants.DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
-import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.OCFL_STORAGE_ROOT_DIR_KEY;
-import static org.fcrepo.persistence.ocfl.impl.OCFLConstants.OCFL_WORK_DIR_KEY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.springframework.test.util.AssertionErrors.assertTrue;
@@ -57,28 +55,18 @@ public class RebuildIT extends AbstractResourceIT {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RebuildIT.class);
 
-    private static String origStorageRootDir;
-    private static String origWorkDir;
-
     private OcflRepository ocflRepository;
 
     private IndexBuilder indexBuilder;
 
     @BeforeClass
     public static void beforeClass() {
-        // Save the pre-test System Property values
-        origStorageRootDir = getProperty(OCFL_STORAGE_ROOT_DIR_KEY);
-        origWorkDir = getProperty(OCFL_WORK_DIR_KEY);
-
-        System.setProperty(OCFL_STORAGE_ROOT_DIR_KEY, "target/test-classes/test-rebuild-ocfl/ocfl-root");
-        System.setProperty(OCFL_WORK_DIR_KEY, "target/test-classes/test-rebuild-ocfl/ocfl-work");
+        System.setProperty(OcflPropsConfig.FCREPO_OCFL_ROOT, "target/test-classes/test-rebuild-ocfl/ocfl-root");
     }
 
     @AfterClass
     public static void afterClass() {
-        // Restore pre-test System Property values
-        System.setProperty(OCFL_STORAGE_ROOT_DIR_KEY, origStorageRootDir);
-        System.setProperty(OCFL_WORK_DIR_KEY, origWorkDir);
+        System.clearProperty(OcflPropsConfig.FCREPO_OCFL_ROOT);
     }
 
     @Before

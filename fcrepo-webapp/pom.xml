@@ -54,7 +54,6 @@
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-configs</artifactId>
       <version>${project.version}</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.fcrepo</groupId>
@@ -271,9 +270,6 @@
       <resource>
         <directory>src/main/resources</directory>
       </resource>
-      <resource>
-        <directory>${project.build.directory}/maven-shared-archive-resources</directory>
-      </resource>
     </resources>
     <testResources>
       <testResource>
@@ -282,23 +278,6 @@
       </testResource>
     </testResources>
     <plugins>
-      <plugin>
-        <artifactId>maven-remote-resources-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>process-remote-resources</id>
-            <phase>generate-resources</phase>
-            <goals>
-              <goal>process</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <resourceBundles>
-            <resourceBundle>org.fcrepo:fcrepo-configs:${project.version}</resourceBundle>
-          </resourceBundles>
-        </configuration>
-      </plugin>
       <plugin>
         <artifactId>maven-war-plugin</artifactId>
         <configuration>
@@ -362,11 +341,6 @@
             <configuration>
               <properties>
                 <property>
-                  <name>fcrepo.db.url</name>
-                  <value>jdbc:h2:mem:fcrepo</value>
-                </property>
-
-                <property>
                   <name>fcrepo.dynamic.jms.port</name>
                   <value>${fcrepo.dynamic.jms.port}</value>
                 </property>
@@ -375,6 +349,11 @@
                   <name>fcrepo.dynamic.stomp.port</name>
                   <value>${fcrepo.dynamic.stomp.port}</value>
                 </property>
+
+                <systemProperty>
+                  <name>fcrepo.home</name>
+                  <value>${project.build.directory}/fcrepo-home</value>
+                </systemProperty>
 
                 <property>
                   <name>integration-test</name>
@@ -397,6 +376,10 @@
           </webApp>
           <jettyXml>${project.build.directory}/test-classes/jetty-test.xml</jettyXml>
           <systemProperties>
+            <systemProperty>
+              <name>fcrepo.home</name>
+              <value>${project.build.directory}/fcrepo-home</value>
+            </systemProperty>
           </systemProperties>
 
         </configuration>
@@ -430,23 +413,10 @@
                   <name>integration-test</name>
                   <value>true</value>
                 </systemProperty>
+
                 <systemProperty>
-                  <name>
-                    fcrepo.ocfl.staging.dir
-                  </name>
-                  <value>${project.build.directory}/ocfl-staging</value>
-                </systemProperty>
-                <systemProperty>
-                  <name>
-                    fcrepo.ocfl.storage.root.dir
-                  </name>
-                  <value>${project.build.directory}/ocfl-root</value>
-                </systemProperty>
-                <systemProperty>
-                  <name>
-                    fcrepo.ocfl.work.dir
-                  </name>
-                  <value>${project.build.directory}/ocfl-work</value>
+                  <name>fcrepo.home</name>
+                  <value>${project.build.directory}/fcrepo-home</value>
                 </systemProperty>
 
                 <systemProperty>

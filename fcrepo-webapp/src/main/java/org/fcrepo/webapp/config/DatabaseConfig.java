@@ -35,8 +35,11 @@ public class DatabaseConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseConfig.class);
 
-    // FIXME The default location should be changed https://jira.lyrasis.org/browse/FCREPO-3337
-    @Value("${fcrepo.db.url:jdbc:h2:${java.io.tmpdir}/fcrepo-h2;FILE_LOCK=SOCKET}")
+    private static final String H2_FILE = "fcrepo-h2";
+
+    @Value("${fcrepo.db.url:#{'jdbc:h2:'" +
+            " + fedoraPropsConfig.fedoraData.resolve('" + H2_FILE + "').toAbsolutePath().toString()" +
+            " + ';FILE_LOCK=SOCKET'}}")
     private String dbUrl;
 
     @Value("${fcrepo.db.user:}")

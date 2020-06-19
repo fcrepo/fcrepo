@@ -12,7 +12,8 @@
     http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
   <context:annotation-config/>
-  <context:property-placeholder />
+  <context:property-placeholder location="classpath:application.properties"/>
+  <context:component-scan base-package="org.fcrepo.config"/>
   <context:component-scan base-package="org.fcrepo.persistence.ocfl.impl"/>
   <context:component-scan base-package="org.fcrepo.kernel.impl.operations" />
   

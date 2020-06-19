@@ -37,8 +37,8 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 
 import static java.lang.System.currentTimeMillis;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
@@ -77,11 +77,11 @@ public class IndexBuilderImplTest {
 
     @Before
     public void setup() throws IOException {
-        final var targetDir = new File("target");
-        final var dataDir = new File(targetDir, "test-fcrepo-data-" + currentTimeMillis());
-        final var repoDir = new File(dataDir,"ocfl-repo");
-        final var workDir = new File(dataDir,"ocfl-work");
-        final var staging = new File(dataDir,"ocfl-staging");
+        final var targetDir = Paths.get("target");
+        final var dataDir = targetDir.resolve("test-fcrepo-data-" + currentTimeMillis());
+        final var repoDir = dataDir.resolve("ocfl-repo");
+        final var workDir = dataDir.resolve("ocfl-work");
+        final var staging = dataDir.resolve("ocfl-staging");
 
         final var repository = createRepository(repoDir, workDir);
 
