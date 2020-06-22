@@ -20,6 +20,7 @@
 package org.fcrepo.search.impl;
 
 import com.google.common.collect.Sets;
+import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import org.fcrepo.kernel.api.models.ResourceFactory;
@@ -67,25 +68,23 @@ public class SearchIndexUpdater {
             RESOURCE_DELETION);
 
     @Subscribe
+    @AllowConcurrentEvents
     public void onEvent(final Event event) {
-        LOGGER.info("event={}", event);
+        LOGGER.debug("event={}", event);
         try {
+            final var fedoraId = event.getFedoraId();
             final var types = event.getTypes();
-            for (EventType et : types) {
-                final var fedoraId = event.getFedoraId();
-                if (RESOURCE_CREATION.equals(et) || RESOURCE_MODIFICATION.equals(et)) {
-                    final var session = persistentStorageSessionManager.getReadOnlySession();
-                    final var headers = session.getHeaders(fedoraId.getFullId(), null);
-                    this.searchIndex.addUpdateIndex(fedoraId, headers.getCreatedDate(), headers.getLastModifiedDate(),
-                            headers.getContentSize(), headers.getMimeType());
-                } else if (RESOURCE_DELETION.equals(et)) {
-                    this.searchIndex.removeFromIndex(fedoraId);
-                }
+            if (types.contains(RESOURCE_DELETION) && !resourceFactory.doesResourceExist(null, fedoraId)) {
+                this.searchIndex.removeFromIndex(fedoraId);
+            } else if (types.contains(RESOURCE_CREATION) || types.contains(RESOURCE_MODIFICATION)) {
+                final var session = persistentStorageSessionManager.getReadOnlySession();
+                final var headers = session.getHeaders(fedoraId.getFullId(), null);
+                this.searchIndex.addUpdateIndex(fedoraId, headers.getCreatedDate(), headers.getLastModifiedDate(),
+                        headers.getContentSize(), headers.getMimeType());
             }
         } catch (final PersistentStorageException e) {
             LOGGER.error("Failed to handle event: " + event, e);
         }
-
     }
 
     /**

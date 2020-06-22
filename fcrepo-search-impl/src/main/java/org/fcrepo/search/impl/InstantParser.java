@@ -18,7 +18,7 @@
 package org.fcrepo.search.impl;
 
 import java.time.Instant;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
@@ -42,7 +42,7 @@ public class InstantParser {
         VALID_DATE_FORMATS.add(ISO_DATE_TIME);
         VALID_DATE_FORMATS.add(ISO_OFFSET_DATE_TIME);
         VALID_DATE_FORMATS.add(RFC_1123_DATE_TIME);
-        final var zoneId = ZoneId.of("UTC");
+        final var zoneId = ZoneOffset.UTC;
         VALID_DATE_FORMATS.add(new DateTimeFormatterBuilder().appendPattern("yyyy-MM-dd")
                 .parseDefaulting(ChronoField.NANO_OF_DAY, 0).toFormatter().withZone(zoneId));
         VALID_DATE_FORMATS.add(new DateTimeFormatterBuilder().appendPattern("yyyyMMdd")

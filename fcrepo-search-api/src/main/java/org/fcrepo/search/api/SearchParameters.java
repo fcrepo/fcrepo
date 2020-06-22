@@ -92,6 +92,7 @@ public class SearchParameters {
         helper.add("conditions", conditions);
         helper.add("maxResults", maxResults);
         helper.add("offset", offset);
+        helper.add("fields", fields);
         return helper.toString();
     }
 }

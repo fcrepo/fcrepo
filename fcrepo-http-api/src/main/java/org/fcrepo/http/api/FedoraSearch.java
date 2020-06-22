@@ -17,6 +17,7 @@
  */
 package org.fcrepo.http.api;
 
+import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.search.api.Condition;
 import org.fcrepo.search.api.InvalidConditionExpressionException;
@@ -91,7 +92,7 @@ public class FedoraSearch extends FedoraBaseResource {
             }
 
             List<Condition.Field> parsedFields = null;
-            if (fields == null || fields.trim().length() == 0 || fields.equals("*")) {
+            if (StringUtils.isBlank(fields) || fields.equals("*")) {
                 parsedFields = Arrays.asList(Condition.Field.values());
             } else {
                 parsedFields = new ArrayList<>();

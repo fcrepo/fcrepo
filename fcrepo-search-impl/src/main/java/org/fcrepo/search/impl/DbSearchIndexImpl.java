@@ -28,6 +28,7 @@ import org.fcrepo.search.api.SearchResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -56,6 +57,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
+import static org.fcrepo.search.api.Condition.Field.FEDORA_ID;
 
 
 /**
@@ -82,7 +84,7 @@ public class DbSearchIndexImpl implements SearchIndex {
      */
     @PostConstruct
     public void setup() {
-        LOGGER.info("Applying ddl: {}", DDL);
+        LOGGER.debug("Applying ddl: {}", DDL);
         DatabasePopulatorUtils.execute(
                 new ResourceDatabasePopulator(new DefaultResourceLoader().getResource("classpath:" + DDL)),
                 this.dataSource);
@@ -104,15 +106,17 @@ public class DbSearchIndexImpl implements SearchIndex {
             final var field = condition.getField();
             final var operation = condition.getOperator();
             var object = condition.getObject();
-            if (field.equals(Condition.Field.FEDORA_ID) &&
+            if (field.equals(FEDORA_ID) &&
                     condition.getOperator().equals(Condition.Operator.EQ)) {
                 if (!object.equals("*")) {
+                    final var fedoraIdParam = "fedoraId";
                     if (object.contains("*")) {
                         object = object.replace("*", "%");
-                        whereClauses.add(Condition.Field.FEDORA_ID + " like '" + object + "'");
+                        whereClauses.add(FEDORA_ID + " like :" + fedoraIdParam);
                     } else {
-                        whereClauses.add(Condition.Field.FEDORA_ID + " = '" + object + "'");
+                        whereClauses.add(FEDORA_ID + " = :" + fedoraIdParam);
                     }
+                    parameterSource.addValue(fedoraIdParam, object);
                 }
             } else if (field.equals(Condition.Field.CREATED) || field.equals(Condition.Field.MODIFIED)) {
                 //parse date
@@ -143,7 +147,7 @@ public class DbSearchIndexImpl implements SearchIndex {
                 }
             }
         }
-        sql.append(" ORDER BY " + Condition.Field.FEDORA_ID);
+        sql.append(" ORDER BY " + FEDORA_ID);
         sql.append(" LIMIT :limit OFFSET :offset");
         parameterSource.addValue("limit", parameters.getMaxResults());
         parameterSource.addValue("offset", parameters.getOffset());
@@ -174,31 +178,32 @@ public class DbSearchIndexImpl implements SearchIndex {
                                final Long size, final String mimetype) {
         final var fullId = fedoraId.getFullId();
         final var selectParams = new MapSqlParameterSource();
-        selectParams.addValue("fedora_id", fullId);
-        final var result = jdbcTemplate.queryForList("SELECT fedora_id FROM " + SIMPLE_SEARCH_TABLE +
-                        " WHERE fedora_id = :fedora_id",
-                selectParams);
+        final var fedoraIdParam = FEDORA_ID.toString();
+        selectParams.addValue(fedoraIdParam, fullId);
+        final var result = jdbcTemplate.queryForList("SELECT " + FEDORA_ID + " FROM " + SIMPLE_SEARCH_TABLE +
+                        " WHERE " + FEDORA_ID + " = :" + fedoraIdParam, selectParams);
 
         final var txId = UUID.randomUUID().toString();
         executeInDbTransaction(txId, status -> {
             try {
 
                 final var params = new MapSqlParameterSource();
-                params.addValue("fedora_id", fullId);
-                params.addValue("modified", modified);
-
+                params.addValue( fedoraIdParam, fullId);
+                final var modifiedParam = "modified";
+                params.addValue(modifiedParam, modified);
+                final String sql;
                 if (result.size() > 0) {
                     //update
-                    final var sql = "UPDATE " + SIMPLE_SEARCH_TABLE +
-                            " SET modified=:modified  WHERE fedora_id = :fedora_id;";
+                    sql = "UPDATE " + SIMPLE_SEARCH_TABLE +
+                            " SET modified=:" + modifiedParam + " WHERE fedora_id = :" + fedoraIdParam + ";";
                     jdbcTemplate.update(sql, params);
                 } else {
-                    params.addValue("created", created);
-
-                    final var sql = "INSERT INTO " + SIMPLE_SEARCH_TABLE + " (fedora_id, modified, created) " +
-                            "VALUES(:fedora_id, :modified, :created)";
-                    jdbcTemplate.update(sql, params);
+                    final var createdParam = "created";
+                    params.addValue(createdParam, created);
+                    sql = "INSERT INTO " + SIMPLE_SEARCH_TABLE + " (fedora_id, modified, created) " +
+                            "VALUES(:" + fedoraIdParam + ", :" + modifiedParam + ", :" + createdParam + ")";
                 }
+                jdbcTemplate.update(sql, params);
                 return null;
             } catch (Exception e) {
                 status.setRollbackOnly();
@@ -209,20 +214,14 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     @Override
     public void removeFromIndex(final FedoraId fedoraId) {
-        final var txId = UUID.randomUUID().toString();
-        executeInDbTransaction(txId, status -> {
-            try {
-                final var params = new MapSqlParameterSource();
-                params.addValue("fedora_id", fedoraId.getFullId());
-                final var sql = "DELETE FROM " + SIMPLE_SEARCH_TABLE + " WHERE fedora_id = :fedora_id;";
-                jdbcTemplate.update(sql, params);
-                return null;
-            } catch (Exception e) {
-                status.setRollbackOnly();
-                throw new RepositoryRuntimeException("Failed to delete search index entry for " +
-                        fedoraId.getFullId(), e);
-            }
-        });
+        try {
+            final var params = new MapSqlParameterSource();
+            params.addValue("fedora_id", fedoraId.getFullId());
+            final var sql = "DELETE FROM " + SIMPLE_SEARCH_TABLE + " WHERE fedora_id = :fedora_id;";
+            jdbcTemplate.update(sql, params);
+        } catch (DataAccessException ex) {
+            throw new RepositoryRuntimeException("Failed to delete search index entry for " + fedoraId.getFullId());
+        }
     }
 
     private <T> T executeInDbTransaction(final String txId, final TransactionCallback<T> callback) {

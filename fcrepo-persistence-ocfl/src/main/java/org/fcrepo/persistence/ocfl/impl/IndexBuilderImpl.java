@@ -72,9 +72,6 @@ public class IndexBuilderImpl implements IndexBuilder {
     @Inject
     private OcflRepository ocflRepository;
 
-    public IndexBuilderImpl() {
-    }
-
     @Override
     public void rebuildIfNecessary() {
         if (shouldRebuild()) {
