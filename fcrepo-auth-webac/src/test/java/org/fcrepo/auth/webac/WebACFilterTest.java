@@ -18,6 +18,8 @@
 package org.fcrepo.auth.webac;
 
 import static java.util.stream.Stream.of;
+
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
@@ -796,6 +798,37 @@ public class WebACFilterTest {
         request.setMethod("DELETE");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+
+    @Test
+    public void testUserEmptyPath1() throws ServletException, IOException {
+        setupAuthUserReadOnly();
+        request.setMethod("GET");
+        request.setContextPath("/");
+        request.setRequestURI("testUri//testChild");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_BAD_REQUEST, response.getStatus());
+    }
+
+    @Test
+    public void testUserEmptyPath2() throws ServletException, IOException {
+        setupAuthUserReadOnly();
+        request.setMethod("GET");
+        request.setContextPath("/");
+        request.setRequestURI("/testUri/testChild");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_BAD_REQUEST, response.getStatus());
+    }
+
+    @Test
+    public void testUserEmptyPath3() throws ServletException, IOException {
+        setupAuthUserReadOnly();
+        request.setMethod("GET");
+        request.setContextPath("/");
+        request.setRequestURI("testUri/testChild//");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_BAD_REQUEST, response.getStatus());
     }
 
     @After

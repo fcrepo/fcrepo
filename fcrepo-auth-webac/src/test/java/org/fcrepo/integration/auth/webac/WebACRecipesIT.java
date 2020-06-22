@@ -1951,10 +1951,15 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final HttpGet getAdminRequest = getObjMethod(parent + "//" + child);
         setAuth(getAdminRequest, "fedoraAdmin");
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(getAdminRequest));
-        // User can't access the URL (because the path is not correct).
+        // Bad request, empty path in the middle.
         final HttpGet getUserRequest = getObjMethod(parent + "//" + child);
         setAuth(getUserRequest, username);
-        assertEquals(FORBIDDEN.getStatusCode(), getStatus(getUserRequest));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(getUserRequest));
+        // Bad request, empty path at the end.
+        final HttpGet getUserRequest2 = getObjMethod(parent + "/" + child + "//");
+        setAuth(getUserRequest2, username);
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(getUserRequest2));
+        // On the front side extra slashes seem to get stripped off, so no testing here.
     }
 
     /**
