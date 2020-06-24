@@ -21,6 +21,8 @@ package org.fcrepo.auth.webac;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.EnumSet.of;
 import static java.util.stream.Collectors.toList;
+
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
@@ -49,6 +51,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.net.URI;
 import java.security.Principal;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -186,6 +189,12 @@ public class WebACFilter implements Filter {
             httpRequest = new CachedHttpRequest(httpRequest);
         }
 
+        if (hasEmptyPathSegments(httpRequest)) {
+            ((HttpServletResponse) response).sendError(SC_BAD_REQUEST,
+                    String.format("Path contains empty element! %s", httpRequest.getRequestURI()));
+            return;
+        }
+
         // add the request URI to the list of URIs to retrieve the ACLs for
         addURIToAuthorize(httpRequest, URI.create(httpRequest.getRequestURL().toString()));
 
@@ -238,6 +247,31 @@ public class WebACFilter implements Filter {
             session = sessionFactory.getInternalSession();
         }
         return session;
+    }
+
+    /**
+     * Parse the requested URI to look for empty path segments (ie. two consecutive slashes, http://localhost//context)
+     * @param httpRequest the request.
+     * @return true if there is empty path segments.
+     */
+    private boolean hasEmptyPathSegments(final HttpServletRequest httpRequest) {
+        final String requestPath = httpRequest.getContextPath() + httpRequest.getServletPath() +
+                httpRequest.getRequestURI();
+        final String finalTestPath;
+        if (requestPath.startsWith("/") && requestPath.endsWith("/") && requestPath.length() > 1) {
+            finalTestPath = requestPath.substring(1, requestPath.length() - 1);
+        } else if (requestPath.startsWith("/")) {
+            finalTestPath = requestPath.substring(1);
+        } else if (requestPath.endsWith("/")) {
+            finalTestPath = requestPath.substring(0, requestPath.length() - 1);
+        } else {
+            finalTestPath = requestPath;
+        }
+        if (finalTestPath.contains("/")) {
+            final String[] paths = finalTestPath.split("/", -1);
+            return Arrays.stream(paths).anyMatch(String::isEmpty);
+        }
+        return false;
     }
 
     private String getBaseURL(final HttpServletRequest servletRequest) {
