@@ -230,8 +230,6 @@ public class FedoraSearchIT extends AbstractResourceIT {
                     SearchResult.class);
             assertEquals("expected no results", 0,
                     result.getItems().size());
-            result.getItems().stream().map(x -> x.get("fedora_id"))
-                    .forEach(x -> assertTrue(x.toString().equals(fedoraId)));
         }
         //no results for resources modified after tomorrow
         searchUrl =
@@ -243,8 +241,6 @@ public class FedoraSearchIT extends AbstractResourceIT {
                     SearchResult.class);
             assertEquals("expected no results", 0,
                     result.getItems().size());
-            result.getItems().stream().map(x -> x.get("fedora_id"))
-                    .forEach(x -> assertTrue(x.toString().equals(fedoraId)));
         }
 
         // ensure that greater than now returns a result
