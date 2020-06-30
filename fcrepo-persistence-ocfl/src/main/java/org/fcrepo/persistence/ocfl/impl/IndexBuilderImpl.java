@@ -131,11 +131,7 @@ public class IndexBuilderImpl implements IndexBuilder {
                                     }
                                 }
 
-                                searchIndex.addUpdateIndex(fedoraId,
-                                        headers.getCreatedDate(),
-                                        headers.getLastModifiedDate(),
-                                        headers.getContentSize(),
-                                        headers.getMimeType());
+                                searchIndex.addUpdateIndex(headers);
 
                             } catch (PersistentStorageException e) {
                                 throw new RepositoryRuntimeException(format("fedora-to-ocfl index rebuild failed: %s",

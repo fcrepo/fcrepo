@@ -19,6 +19,7 @@ package org.fcrepo.search.impl;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.search.api.Condition;
 import org.fcrepo.search.api.InvalidQueryException;
 import org.fcrepo.search.api.PaginationInfo;
@@ -174,9 +175,8 @@ public class DbSearchIndexImpl implements SearchIndex {
     }
 
     @Override
-    public void addUpdateIndex(final FedoraId fedoraId, final Instant created, final Instant modified,
-                               final Long size, final String mimetype) {
-        final var fullId = fedoraId.getFullId();
+    public void addUpdateIndex(final ResourceHeaders resourceHeaders) {
+        final var fullId = resourceHeaders.getId();
         final var selectParams = new MapSqlParameterSource();
         final var fedoraIdParam = FEDORA_ID.toString();
         selectParams.addValue(fedoraIdParam, fullId);
@@ -190,7 +190,7 @@ public class DbSearchIndexImpl implements SearchIndex {
                 final var params = new MapSqlParameterSource();
                 params.addValue( fedoraIdParam, fullId);
                 final var modifiedParam = "modified";
-                params.addValue(modifiedParam, modified);
+                params.addValue(modifiedParam, new Timestamp(resourceHeaders.getLastModifiedDate().toEpochMilli()));
                 final String sql;
                 if (result.size() > 0) {
                     //update
@@ -199,7 +199,8 @@ public class DbSearchIndexImpl implements SearchIndex {
                     jdbcTemplate.update(sql, params);
                 } else {
                     final var createdParam = "created";
-                    params.addValue(createdParam, created);
+                    ;
+                    params.addValue(createdParam, new Timestamp(resourceHeaders.getCreatedDate().toEpochMilli()));
                     sql = "INSERT INTO " + SIMPLE_SEARCH_TABLE + " (fedora_id, modified, created) " +
                             "VALUES(:" + fedoraIdParam + ", :" + modifiedParam + ", :" + createdParam + ")";
                 }

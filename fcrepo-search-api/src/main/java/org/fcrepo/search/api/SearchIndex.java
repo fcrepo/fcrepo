@@ -18,8 +18,7 @@
 package org.fcrepo.search.api;
 
 import org.fcrepo.kernel.api.identifiers.FedoraId;
-
-import java.time.Instant;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
 
 /**
  * An interface defining search index management operations
@@ -29,17 +28,15 @@ import java.time.Instant;
 public interface SearchIndex {
 
     /**
-     * @param fedoraId
-     * @param created
-     * @param modified
-     * @param size
-     * @param mimetype
+     * Adds or updates the index with the resource header information.
+     * @param resourceHeaders The resource headers associated with the resource
+
      */
-    void addUpdateIndex(final FedoraId fedoraId, final Instant created, final Instant modified,
-                        final Long size, final String mimetype);
+    void addUpdateIndex(ResourceHeaders resourceHeaders);
 
     /**
-     * @param fedoraId
+     * Removes indexed fields associated with the specified Fedora ID
+     * @param fedoraId The Fedora ID
      */
     void removeFromIndex(FedoraId fedoraId);
 

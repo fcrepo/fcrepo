@@ -21,6 +21,7 @@ import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
@@ -40,17 +41,15 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.time.Instant;
 
 import static java.lang.System.currentTimeMillis;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.createRepository;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
@@ -142,10 +141,7 @@ public class IndexBuilderImplTest {
         verify(containmentIndex).addContainedBy(transaction.getId(), FedoraId.getRepositoryRootId(), resource1);
         verify(containmentIndex).addContainedBy(transaction.getId(), resource1, resource2);
         verify(containmentIndex).commitTransaction(transaction);
-        verify(searchIndex).addUpdateIndex(eq(resource1), isA(Instant.class), isA(Instant.class),  any(),
-                any());
-        verify(searchIndex).addUpdateIndex(eq(resource2), isA(Instant.class), isA(Instant.class),  isA(Long.class),
-                isA(String.class));
+        verify(searchIndex, times(2)).addUpdateIndex(isA(ResourceHeaders.class));
     }
 
     @Test
@@ -175,10 +171,7 @@ public class IndexBuilderImplTest {
         verify(containmentIndex).addContainedBy(transaction.getId(), FedoraId.getRepositoryRootId(), resource1);
         verify(containmentIndex).addContainedBy(transaction.getId(), resource1, resource2);
         verify(containmentIndex).commitTransaction(transaction);
-        verify(searchIndex).addUpdateIndex(eq(resource1), isA(Instant.class), isA(Instant.class),  any(),
-                any());
-        verify(searchIndex).addUpdateIndex(eq(resource2), isA(Instant.class), isA(Instant.class),  isA(Long.class),
-                isA(String.class));
+        verify(searchIndex, times(2)).addUpdateIndex(isA(ResourceHeaders.class));
     }
 
     private void assertDoesNotHaveOcflId(final FedoraId resourceId) {

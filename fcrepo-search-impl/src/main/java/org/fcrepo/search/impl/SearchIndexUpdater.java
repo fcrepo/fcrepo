@@ -79,8 +79,7 @@ public class SearchIndexUpdater {
             } else if (types.contains(RESOURCE_CREATION) || types.contains(RESOURCE_MODIFICATION)) {
                 final var session = persistentStorageSessionManager.getReadOnlySession();
                 final var headers = session.getHeaders(fedoraId.getFullId(), null);
-                this.searchIndex.addUpdateIndex(fedoraId, headers.getCreatedDate(), headers.getLastModifiedDate(),
-                        headers.getContentSize(), headers.getMimeType());
+                this.searchIndex.addUpdateIndex(headers);
             }
         } catch (final PersistentStorageException e) {
             LOGGER.error("Failed to handle event: " + event, e);
