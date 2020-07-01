@@ -199,15 +199,18 @@ public class WebACFilter extends RequestContextFilter {
             httpRequest = new CachedHttpRequest(httpRequest);
         }
 
+        final String requestUrl = httpRequest.getRequestURL().toString();
         try {
-            FedoraId.create(identifierConverter(httpRequest).toInternalId(httpRequest.getRequestURL().toString()));
+            FedoraId.create(identifierConverter(httpRequest).toInternalId(requestUrl));
         } catch (final InvalidResourceIdentifierException e) {
             response.sendError(SC_BAD_REQUEST,
                     String.format("Path contains empty element! %s", httpRequest.getRequestURI()));
+        } catch (final IllegalArgumentException e) {
+            // No Fedora request path provided, so just continue along.
         }
 
         // add the request URI to the list of URIs to retrieve the ACLs for
-        addURIToAuthorize(httpRequest, URI.create(httpRequest.getRequestURL().toString()));
+        addURIToAuthorize(httpRequest, URI.create(requestUrl));
 
         if (currentUser.isAuthenticated()) {
             log.debug("User is authenticated");
