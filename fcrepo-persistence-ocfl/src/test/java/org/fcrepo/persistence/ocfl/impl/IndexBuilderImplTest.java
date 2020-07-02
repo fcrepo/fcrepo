@@ -21,6 +21,7 @@ import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
@@ -30,6 +31,7 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.IndexBuilder;
+import org.fcrepo.search.api.SearchIndex;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,7 +47,9 @@ import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.createRepository;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
@@ -70,6 +74,9 @@ public class IndexBuilderImplTest {
 
     @Mock
     private ContainmentIndex containmentIndex;
+
+    @Mock
+    private SearchIndex searchIndex;
 
     private final String session1Id = "session1";
     private final FedoraId resource1 = FedoraId.create("info:fedora/resource1");
@@ -101,6 +108,7 @@ public class IndexBuilderImplTest {
         setField(indexBuilder, "objectSessionFactory", ocflObjectSessionFactory);
         setField(indexBuilder, "containmentIndex", containmentIndex);
         setField(indexBuilder, "transactionManager", transactionManager);
+        setField(indexBuilder, "searchIndex", searchIndex);
 
         when(transaction.getId()).thenReturn("tx-id");
         when(transactionManager.create()).thenReturn(transaction);
@@ -133,6 +141,7 @@ public class IndexBuilderImplTest {
         verify(containmentIndex).addContainedBy(transaction.getId(), FedoraId.getRepositoryRootId(), resource1);
         verify(containmentIndex).addContainedBy(transaction.getId(), resource1, resource2);
         verify(containmentIndex).commitTransaction(transaction);
+        verify(searchIndex, times(2)).addUpdateIndex(isA(ResourceHeaders.class));
     }
 
     @Test
@@ -162,6 +171,7 @@ public class IndexBuilderImplTest {
         verify(containmentIndex).addContainedBy(transaction.getId(), FedoraId.getRepositoryRootId(), resource1);
         verify(containmentIndex).addContainedBy(transaction.getId(), resource1, resource2);
         verify(containmentIndex).commitTransaction(transaction);
+        verify(searchIndex, times(2)).addUpdateIndex(isA(ResourceHeaders.class));
     }
 
     private void assertDoesNotHaveOcflId(final FedoraId resourceId) {

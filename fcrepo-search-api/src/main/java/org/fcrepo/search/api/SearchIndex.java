@@ -17,11 +17,28 @@
  */
 package org.fcrepo.search.api;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
+
 /**
- * An interface defining search operations
+ * An interface defining search index management operations
+ *
  * @author dbernstein
  */
-public interface SearchService {
+public interface SearchIndex {
+
+    /**
+     * Adds or updates the index with the resource header information.
+     * @param resourceHeaders The resource headers associated with the resource
+
+     */
+    void addUpdateIndex(ResourceHeaders resourceHeaders);
+
+    /**
+     * Removes indexed fields associated with the specified Fedora ID
+     * @param fedoraId The Fedora ID
+     */
+    void removeFromIndex(FedoraId fedoraId);
 
     /**
      * Performs a search based on the parameters and returns the result.
@@ -30,4 +47,9 @@ public interface SearchService {
      * @return The result of the search
      */
     SearchResult doSearch(SearchParameters parameters) throws InvalidQueryException;
+
+    /**
+     * Remove all persistent state associated with the index.
+     */
+    void reset();
 }

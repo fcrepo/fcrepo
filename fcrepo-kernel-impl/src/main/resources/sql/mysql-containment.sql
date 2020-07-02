@@ -41,3 +41,4 @@ SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
     'CREATE INDEX transaction_operations_idx2 ON transaction_operations (transaction_id)');
 PREPARE stmt FROM @sqlstmt;
 EXECUTE stmt;
+

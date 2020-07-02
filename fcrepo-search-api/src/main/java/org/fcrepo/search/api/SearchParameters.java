@@ -30,18 +30,22 @@ public class SearchParameters {
 
     private final List<Condition> conditions;
 
+    private final List<Condition.Field> fields;
+
     private final int offset;
 
     private final int maxResults;
 
     /**
      * Constructoor
-     *
+     * @param fields The fields to be returned in the results
      * @param conditions The conditions
      * @param maxResults The max results
      * @param offset     The offset
      */
-    public SearchParameters(final List<Condition> conditions, final int maxResults, final int offset) {
+    public SearchParameters(final List<Condition.Field> fields, final List<Condition> conditions, final int maxResults,
+                            final int offset) {
+        this.fields = fields;
         this.conditions = conditions;
         this.maxResults = maxResults;
         this.offset = offset;
@@ -74,12 +78,21 @@ public class SearchParameters {
         return conditions;
     }
 
+    /**
+     * Returns the list of fields to display in the results.
+     * @return
+     */
+    public List<Condition.Field> getFields() {
+        return fields;
+    }
+
     @Override
     public String toString() {
         final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this);
         helper.add("conditions", conditions);
         helper.add("maxResults", maxResults);
         helper.add("offset", offset);
+        helper.add("fields", fields);
         return helper.toString();
     }
 }

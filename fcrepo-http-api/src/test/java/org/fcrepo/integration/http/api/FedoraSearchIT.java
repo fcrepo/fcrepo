@@ -19,21 +19,33 @@ package org.fcrepo.integration.http.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.entity.StringEntity;
 import org.fcrepo.search.api.SearchResult;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.fcrepo.search.api.Condition.Field.CREATED;
 import static org.fcrepo.search.api.Condition.Field.FEDORA_ID;
+import static org.fcrepo.search.api.Condition.Field.MODIFIED;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -112,7 +124,7 @@ public class FedoraSearchIT extends AbstractResourceIT {
         createResources(id, count);
         final var urlPrefix = serverAddress + id;
         // try all valid prefix formulations
-        final var prefixes = new String[]{id, "/" + id, urlPrefix, "info:fedora/" + id};
+        final var prefixes = new String[]{id, "/" + id, urlPrefix, FEDORA_ID_PREFIX + "/" + id};
         for (String prefix : prefixes) {
             final var condition = FEDORA_ID + "=" + prefix + "*";
             final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition);
@@ -124,11 +136,180 @@ public class FedoraSearchIT extends AbstractResourceIT {
                 assertEquals("expected " + count + " items where condition = " + condition, count,
                         result.getItems().size());
 
-                result.getItems().stream().map(x -> x.get("fedora_id"))
+                result.getItems().stream().map(x -> x.get(FEDORA_ID.toString()))
                         .forEach(x -> assertTrue(x.toString().startsWith(urlPrefix)));
             }
         }
+    }
 
+    @Test
+    public void testUpdateSearchIndexOnResourceUpdate() throws Exception {
+        final var resourceId = createResources(1).get(0);
+        final var condition = FEDORA_ID + "=" + resourceId;
+        final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition);
+        String modified = null;
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
+                    SearchResult.class);
+            assertEquals("expected 1 item where condition = " + condition, 1,
+                    result.getItems().size());
+            modified = result.getItems().get(0).get(MODIFIED.toString()).toString();
+        }
+
+        final var patch = new HttpPatch(resourceId);
+        patch.setHeader("Content-Type", "application/sparql-update");
+        patch.setEntity(new StringEntity("insert data { <> <http://example/blah> \"Blah\". }"));
+        try (final CloseableHttpResponse response = execute(patch)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+        }
+
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
+                    SearchResult.class);
+            assertEquals("expected 1 item where condition = " + condition, 1,
+                    result.getItems().size());
+            final var newModified = result.getItems().get(0).get(MODIFIED.toString()).toString();
+            assertNotEquals("Modified date should have changed  but it did not.", modified, newModified);
+        }
+    }
+
+    @Test
+    public void testUpdateSearchIndexOnResourceDelete() throws Exception {
+        final var resourceId = createResources(1).get(0);
+        final var condition = FEDORA_ID + "=" + resourceId;
+        final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition);
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
+                    SearchResult.class);
+            assertEquals("expected 1 item where condition = " + condition, 1,
+                    result.getItems().size());
+        }
+
+        final var httpDelete = new HttpDelete(resourceId);
+        try (final CloseableHttpResponse response = execute(httpDelete)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+        }
+
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
+                    SearchResult.class);
+            assertEquals("expected 0 items where condition = " + condition, 0,
+                    result.getItems().size());
+        }
+    }
+
+    public void testModifiedGreaterAndLessThan() throws Exception {
+        final var id = getRandomUniqueId();
+        final int count = 1;
+        final var instant = Instant.now();
+        final var now = instant.toString();
+        final var tomorrow = instant.plus(Duration.ofDays(1)).toString();
+        createResources(id, count);
+        final var fedoraId = FEDORA_ID_PREFIX + "/" + id;
+        final var fedoraIdCondition = FEDORA_ID + "=" + fedoraId;
+        final var lessThanNow = MODIFIED + "<" + now;
+        final var greaterThanNow = MODIFIED + ">" + now;
+        final var lessThanTomorrow = MODIFIED + "<" + tomorrow;
+        final var greaterThanTomorrow = MODIFIED + ">" + tomorrow;
+
+        //no results for resources modified before now
+        String searchUrl =
+                getSearchEndpoint() + "condition=" + encode(fedoraIdCondition) + "&" + lessThanNow;
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
+                    SearchResult.class);
+            assertEquals("expected no results", 0,
+                    result.getItems().size());
+        }
+        //no results for resources modified after tomorrow
+        searchUrl =
+                getSearchEndpoint() + "condition=" + encode(fedoraIdCondition) + "&" + greaterThanTomorrow;
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
+                    SearchResult.class);
+            assertEquals("expected no results", 0,
+                    result.getItems().size());
+        }
+
+        // ensure that greater than now returns a result
+        searchUrl = getSearchEndpoint() + "condition=" + encode(fedoraIdCondition) + "&" + greaterThanNow;
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
+                    SearchResult.class);
+            assertEquals("expected " + count + " results", count,
+                    result.getItems().size());
+
+            result.getItems().stream().map(x -> x.get("fedora_id"))
+                    .forEach(x -> assertTrue(x.toString().equals(fedoraId)));
+        }
+
+        // ensure that less than tomorrow returns a result
+        searchUrl = getSearchEndpoint() + "condition=" + encode(fedoraIdCondition) + "&" + lessThanTomorrow;
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
+                    SearchResult.class);
+            assertEquals("expected " + count + " results", count,
+                    result.getItems().size());
+
+            result.getItems().stream().map(x -> x.get("fedora_id"))
+                    .forEach(x -> assertTrue(x.toString().equals(fedoraId)));
+        }
+
+        // ensure that between now and tomorrow returns a result.
+        searchUrl = getSearchEndpoint() + "condition=" + encode(fedoraIdCondition) + "&" + greaterThanNow +
+                "&" + lessThanTomorrow;
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
+                    SearchResult.class);
+            assertEquals("expected " + count + " results ", count,
+                    result.getItems().size());
+            result.getItems().stream().map(x -> x.get("fedora_id"))
+                    .forEach(x -> assertTrue(x.toString().equals(fedoraId)));
+        }
+
+    }
+
+    @Test
+    public void testFieldsReturnsOnlySpecifiedFields() throws Exception {
+        final var id = getRandomUniqueId();
+        final var count = 1;
+        final var resources = createResources(id, count);
+        final var fields = Arrays.asList(FEDORA_ID, CREATED).stream()
+                .map(x -> x.toString()).collect(Collectors.toList());
+        final String searchUrl =
+                getSearchEndpoint() + "condition=" + encode("fedora_id=" + id + "*") + "&fields=" + String.join(",",
+                        fields);
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
+            final var items = result.getItems();
+            assertEquals("expected " + count + " items", count, items.size());
+            for (Map<String, Object> item : items) {
+                assertEquals("expected " + fields.size() + " fields returned", fields.size(), item.size());
+                for (String field : fields) {
+                    assertTrue("Result does not contain expected field: " + field, item.containsKey(field));
+                }
+            }
+        }
     }
 
     @Test
