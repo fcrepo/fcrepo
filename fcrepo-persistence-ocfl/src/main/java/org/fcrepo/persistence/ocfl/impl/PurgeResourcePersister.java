@@ -56,6 +56,7 @@ class PurgeResourcePersister extends AbstractPersister {
         if (fedoraResourceRoot.equals(resourceId)) {
             // We are at the root of the object, so remove the entire OCFL object.
             objectSession.deleteObject();
+            index.removeMapping(resourceId);
         } else {
             final var relativeSubPath = relativizeSubpath(fedoraResourceRoot, operation.getResourceId());
             final var ocflSubPath = resolveOCFLSubpath(fedoraResourceRoot, relativeSubPath);
@@ -63,6 +64,7 @@ class PurgeResourcePersister extends AbstractPersister {
             final var sidecar = getSidecarSubpath(ocflSubPath);
             final boolean isRdf = !Objects.equals(NON_RDF_SOURCE.toString(), headers.getInteractionModel());
             purgePath(sidecar, objectSession);
+            index.removeMapping(resourceId);
             if (!isRdf) {
                 // Delete the description sidecar file too.
                 final var descSidecar = getSidecarSubpath(ocflSubPath + "-description");
