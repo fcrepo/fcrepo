@@ -99,11 +99,13 @@ public class UpdateNonRdfSourcePersisterTest {
 
     private UpdateNonRdfSourcePersister persister;
 
+    private static final String SESSION_ID = "SOME-SESSION-ID";
+
     @Before
     public void setUp() throws Exception {
         when(mapping.getOcflObjectId()).thenReturn("object-id");
         when(mapping.getRootObjectIdentifier()).thenReturn(ROOT_RESOURCE_ID);
-
+        when(psSession.getId()).thenReturn(SESSION_ID);
         when(session.write(anyString(), any(InputStream.class))).thenReturn(writeOutcome);
         when(session.getObjectDigestAlgorithm()).thenReturn(DIGEST_ALGORITHM.SHA1);
 
@@ -115,14 +117,14 @@ public class UpdateNonRdfSourcePersisterTest {
 
         when(writeOutcome.getContentSize()).thenReturn(LOCAL_CONTENT_SIZE);
         when(psSession.findOrCreateSession(anyString())).thenReturn(session);
-        when(index.getMapping(anyString())).thenReturn(mapping);
+        when(index.getMapping(eq(SESSION_ID), anyString())).thenReturn(mapping);
         when(nonRdfSourceOperation.getType()).thenReturn(UPDATE);
 
 
         persister = new UpdateNonRdfSourcePersister(index);
 
         when(psSession.findOrCreateSession(anyString())).thenReturn(session);
-        when(index.getMapping(anyString())).thenReturn(mapping);
+        when(index.getMapping(eq(SESSION_ID), anyString())).thenReturn(mapping);
 
     }
 

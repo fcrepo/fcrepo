@@ -83,7 +83,7 @@ import org.mockito.stubbing.Answer;
  *
  * @author dbernstein
  */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class OCFLPersistentStorageSessionTest {
 
     private OCFLPersistentStorageSession session;
@@ -187,7 +187,7 @@ public class OCFLPersistentStorageSessionTest {
     private void mockMappingAndIndex(final String ocflObjectId, final String resourceId, final String rootObjectId,
                                      final FedoraOCFLMapping mapping) throws FedoraOCFLMappingNotFoundException {
         mockMapping(ocflObjectId, rootObjectId, mapping);
-        when(index.getMapping(resourceId)).thenReturn(mapping);
+        when(index.getMapping(anyString(), eq(resourceId))).thenReturn(mapping);
     }
 
     private void mockMapping(final String ocflObjectId, final String rootObjectId, final FedoraOCFLMapping mapping) {
@@ -632,7 +632,8 @@ public class OCFLPersistentStorageSessionTest {
 
         mockMapping(OCFL_RESOURCE_ID, ROOT_OBJECT_ID, mapping);
         final var mappingCount = new AtomicInteger(0);
-        when(index.getMapping(RESOURCE_ID)).thenAnswer((Answer<FedoraOCFLMapping>) invocationOnMock -> {
+        when(index.getMapping(anyString(), eq(RESOURCE_ID))).thenAnswer((Answer<FedoraOCFLMapping>) invocationOnMock ->
+        {
             final var current = mappingCount.getAndIncrement();
             if (current == 0) {
                 throw new FedoraOCFLMappingNotFoundException("");
@@ -645,7 +646,7 @@ public class OCFLPersistentStorageSessionTest {
         session.commit();
 
         final var childId = RESOURCE_ID + "/child";
-        when(index.getMapping(childId)).thenReturn(mapping);
+        when(index.getMapping(anyString(), eq(childId))).thenReturn(mapping);
 
         final String title = "title";
         final var dcTitleTriple = Triple.create(resourceUri, DC.title.asNode(), createLiteral(title));

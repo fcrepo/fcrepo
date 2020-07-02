@@ -177,7 +177,7 @@ public class IndexBuilderImplTest {
 
     private void assertDoesNotHaveOcflId(final FedoraId resourceId) {
         try {
-            index.getMapping(resourceId.getResourceId());
+            index.getMapping(null, resourceId.getResourceId());
             fail(resourceId + " should not exist in index");
         } catch (final FedoraOCFLMappingNotFoundException e) {
             //do nothing - expected
@@ -187,7 +187,7 @@ public class IndexBuilderImplTest {
     private void assertHasOcflId(final String expectedOcflId, final FedoraId resourceId)
             throws FedoraOCFLMappingNotFoundException {
         assertEquals(FedoraTypes.FEDORA_ID_PREFIX + "/" + expectedOcflId,
-                index.getMapping(resourceId.getResourceId()).getOcflObjectId());
+                index.getMapping(null, resourceId.getResourceId()).getOcflObjectId());
     }
 
     private void createResource(final PersistentStorageSession session,

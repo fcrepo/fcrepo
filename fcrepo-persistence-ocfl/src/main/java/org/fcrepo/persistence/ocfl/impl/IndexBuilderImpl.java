@@ -133,7 +133,7 @@ public class IndexBuilderImpl implements IndexBuilder {
 
                                 searchIndex.addUpdateIndex(headers);
 
-                            } catch (PersistentStorageException e) {
+                            } catch (final PersistentStorageException e) {
                                 throw new RepositoryRuntimeException(format("fedora-to-ocfl index rebuild failed: %s",
                                         e.getMessage()), e);
                             }
@@ -150,7 +150,7 @@ public class IndexBuilderImpl implements IndexBuilder {
                         if (rootFedoraIdentifier == null) {
                             rootFedoraIdentifier = fedoraIdentifier;
                         }
-                        fedoraToOCFLObjectIndex.addMapping(fedoraIdentifier, rootFedoraIdentifier, ocflId);
+                        fedoraToOCFLObjectIndex.addMapping(txId, fedoraIdentifier, rootFedoraIdentifier, ocflId);
                         LOGGER.debug("Rebuilt fedora-to-ocfl object index entry for {}", fedoraIdentifier);
                     });
 
@@ -162,6 +162,7 @@ public class IndexBuilderImpl implements IndexBuilder {
         }
 
         containmentIndex.commitTransaction(transaction);
+        fedoraToOCFLObjectIndex.commit(txId);
         LOGGER.info("Index rebuild complete");
     }
 
@@ -176,8 +177,8 @@ public class IndexBuilderImpl implements IndexBuilder {
 
     private boolean repoRootMappingExists() {
         try {
-            return fedoraToOCFLObjectIndex.getMapping(FedoraId.getRepositoryRootId().getFullId()) != null;
-        } catch (FedoraOCFLMappingNotFoundException e) {
+            return fedoraToOCFLObjectIndex.getMapping(null, FedoraId.getRepositoryRootId().getFullId()) != null;
+        } catch (final FedoraOCFLMappingNotFoundException e) {
             return false;
         }
     }

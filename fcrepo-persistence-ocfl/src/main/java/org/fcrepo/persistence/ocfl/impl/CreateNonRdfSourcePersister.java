@@ -55,6 +55,6 @@ class CreateNonRdfSourcePersister extends AbstractNonRdfSourcePersister {
         final String ocflId = mapToOcflId(rootObjectId);
         final OCFLObjectSession ocflObjectSession = session.findOrCreateSession(ocflId);
         persistNonRDFSource(operation, ocflObjectSession, rootObjectId.getContainingId());
-        index.addMapping(resourceId, rootObjectId.getContainingId(), ocflId);
+        index.addMapping(session.getId(), resourceId, rootObjectId.getContainingId(), ocflId);
     }
 }

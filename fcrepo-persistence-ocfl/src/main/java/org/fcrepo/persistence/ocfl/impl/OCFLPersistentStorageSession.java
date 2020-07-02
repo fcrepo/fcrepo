@@ -206,7 +206,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     private FedoraOCFLMapping getFedoraOCFLMapping(final String identifier) throws PersistentStorageException {
         try {
-            return fedoraOcflIndex.getMapping(identifier);
+            return fedoraOcflIndex.getMapping(sessionId, identifier);
         } catch (final FedoraOCFLMappingNotFoundException e) {
             throw new PersistentItemNotFoundException(e.getMessage());
         }
@@ -305,7 +305,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
                 objectSession.commit();
                 sessionsToRollback.add(objectSession);
             }
-
+            fedoraOcflIndex.commit(sessionId);
             state = State.COMMITTED;
             LOGGER.info("Successfully committed {}", this);
         } catch (final Exception e) {
@@ -381,6 +381,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
                 throw new PersistentStorageException(builder.toString());
             }
         }
+        fedoraOcflIndex.rollback(sessionId);
         this.state = State.ROLLED_BACK;
         LOGGER.info("rolled back successfully.");
 
