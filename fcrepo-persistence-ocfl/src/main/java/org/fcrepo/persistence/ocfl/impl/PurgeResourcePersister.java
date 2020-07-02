@@ -48,7 +48,7 @@ class PurgeResourcePersister extends AbstractPersister {
     @Override
     public void persist(final OCFLPersistentStorageSession session, final ResourceOperation operation)
             throws PersistentStorageException {
-        final var mapping = getMapping(operation.getResourceId());
+        final var mapping = getMapping(session.getId(), operation.getResourceId());
         final var fedoraResourceRoot = mapping.getRootObjectIdentifier();
         final var resourceId = operation.getResourceId();
         final var objectSession = session.findOrCreateSession(mapping.getOcflObjectId());
@@ -64,6 +64,7 @@ class PurgeResourcePersister extends AbstractPersister {
             final boolean isRdf = !Objects.equals(NON_RDF_SOURCE.toString(), headers.getInteractionModel());
             purgePath(sidecar, objectSession);
         }
+        index.removeMapping(session.getId(), resourceId);
     }
 
     /**

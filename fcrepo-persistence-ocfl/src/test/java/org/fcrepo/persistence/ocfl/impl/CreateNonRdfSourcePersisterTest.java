@@ -117,6 +117,8 @@ public class CreateNonRdfSourcePersisterTest {
 
     private CreateNonRdfSourcePersister persister;
 
+    private static final String SESSION_ID = "SOME-SESSION-ID";
+
     @Before
     public void setUp() throws Exception {
         when(mapping.getOcflObjectId()).thenReturn("object-id");
@@ -135,13 +137,14 @@ public class CreateNonRdfSourcePersisterTest {
 
         when(psSession.getHeaders(((CreateResourceOperation) nonRdfSourceOperation).getParentId(), null))
                 .thenReturn(headers);
+        when(psSession.getId()).thenReturn(SESSION_ID);
 
         when(writeOutcome.getContentSize()).thenReturn(LOCAL_CONTENT_SIZE);
 
         persister = new CreateNonRdfSourcePersister(index);
 
         when(psSession.findOrCreateSession(anyString())).thenReturn(session);
-        when(index.getMapping(anyString())).thenReturn(mapping);
+        when(index.getMapping(eq(SESSION_ID), anyString())).thenReturn(mapping);
 
     }
 

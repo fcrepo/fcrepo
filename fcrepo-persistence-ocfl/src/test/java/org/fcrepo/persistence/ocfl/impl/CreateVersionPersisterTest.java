@@ -104,7 +104,7 @@ public class CreateVersionPersisterTest {
     }
 
     private OCFLObjectSession addMapping(final String resourceId, final String ocflId) {
-        index.addMapping(resourceId, resourceId, ocflId);
+        index.addMapping("not-used", resourceId, resourceId, ocflId);
         final var objectSession = mock(OCFLObjectSession.class);
         when(session.findOrCreateSession(ocflId)).thenReturn(objectSession);
         return objectSession;

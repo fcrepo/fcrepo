@@ -210,7 +210,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     private FedoraOCFLMapping getFedoraOCFLMapping(final String identifier) throws PersistentStorageException {
         try {
-            return fedoraOcflIndex.getMapping(identifier);
+            return fedoraOcflIndex.getMapping(sessionId, identifier);
         } catch (final FedoraOCFLMappingNotFoundException e) {
             throw new PersistentItemNotFoundException(e.getMessage());
         }
@@ -321,6 +321,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
                 session.commit();
                 sessionsToRollback.put(id, session);
                 session.close();
+                fedoraOcflIndex.commit(sessionId);
             } catch (Exception e) {
                 this.state = State.COMMIT_FAILED;
                 throw new PersistentStorageException(String.format("Failed to commit object <%s> in session <%s>",
@@ -403,6 +404,14 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
             session.close();
         }
+
+        try {
+            fedoraOcflIndex.rollback(sessionId);
+        } catch (Exception e) {
+            rollbackFailures.add(String.format("Failed to rollback OCFL index updates in transaction <%s>: %s",
+                    sessionId, e.getMessage()));
+        }
+
         //throw an exception if any sessions could not be rolled back.
         if (rollbackFailures.size() > 0) {
             state = State.ROLLBACK_FAILED;

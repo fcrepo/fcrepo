@@ -17,6 +17,8 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import javax.annotation.Nonnull;
+
 import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.slf4j.Logger;
@@ -36,7 +38,7 @@ public class TestOcflObjectIndex implements FedoraToOcflObjectIndex {
     private Map<String, FedoraOCFLMapping> fedoraOCFLMappingMap = Collections.synchronizedMap(new HashMap<>());
 
     @Override
-    public FedoraOCFLMapping getMapping(final String fedoraResourceIdentifier)
+    public FedoraOCFLMapping getMapping(final String transactionId, final String fedoraResourceIdentifier)
             throws FedoraOCFLMappingNotFoundException {
 
         LOGGER.debug("getting {}", fedoraResourceIdentifier);
@@ -49,7 +51,8 @@ public class TestOcflObjectIndex implements FedoraToOcflObjectIndex {
     }
 
     @Override
-    public FedoraOCFLMapping addMapping(final String fedoraResourceIdentifier,
+    public FedoraOCFLMapping addMapping(@Nonnull final String transactionId,
+                                        final String fedoraResourceIdentifier,
                                         final String fedoraRootObjectResourceId,
                                         final String ocflObjectId) {
         FedoraOCFLMapping mapping = fedoraOCFLMappingMap.get(fedoraRootObjectResourceId);
@@ -68,13 +71,23 @@ public class TestOcflObjectIndex implements FedoraToOcflObjectIndex {
     }
 
     @Override
-    public void removeMapping(final String fedoraResourceIdentifier) {
+    public void removeMapping(@Nonnull final String transactionId, final String fedoraResourceIdentifier) {
         fedoraOCFLMappingMap.remove(fedoraResourceIdentifier);
     }
 
     @Override
     public void reset() {
         fedoraOCFLMappingMap.clear();
+    }
+
+    @Override
+    public void commit(@Nonnull final String sessionId) {
+
+    }
+
+    @Override
+    public void rollback(@Nonnull final String sessionId) {
+
     }
 
 }

@@ -74,6 +74,6 @@ class CreateRDFSourcePersister extends AbstractRDFSourcePersister {
         final String ocflObjectId = mapToOcflId(rootObjectId);
         final OCFLObjectSession ocflObjectSession = session.findOrCreateSession(ocflObjectId);
         persistRDF(ocflObjectSession, operation, rootObjectId.getBaseId());
-        index.addMapping(resourceId, rootObjectId.getBaseId(), ocflObjectId);
+        index.addMapping(session.getId(), resourceId, rootObjectId.getBaseId(), ocflObjectId);
     }
 }

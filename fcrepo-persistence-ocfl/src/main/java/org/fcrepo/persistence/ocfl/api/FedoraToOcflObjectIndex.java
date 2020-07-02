@@ -17,6 +17,8 @@
  */
 package org.fcrepo.persistence.ocfl.api;
 
+import javax.annotation.Nonnull;
+
 import org.fcrepo.persistence.ocfl.impl.FedoraOCFLMapping;
 
 /**
@@ -36,34 +38,52 @@ public interface FedoraToOcflObjectIndex {
      * Contrast this  with an Archival Group example:  if you pass in "my/archival-group/binary/fcr:metadata" the
      * resource returned in the mapping would be "my/archival-group".
      *
+     * @param sessionId id of the current session, or null for read-only.
      * @param fedoraResourceIdentifier the fedora resource identifier
      * @return the mapping
      * @throws FedoraOCFLMappingNotFoundException when no mapping exists for the specified identifier.
      */
-    FedoraOCFLMapping getMapping(final String fedoraResourceIdentifier) throws FedoraOCFLMappingNotFoundException;
+    FedoraOCFLMapping getMapping(final String sessionId, final String fedoraResourceIdentifier) throws
+            FedoraOCFLMappingNotFoundException;
 
     /**
      * Adds a mapping to the index
      *
+     * @param sessionId id of the current session.
      * @param fedoraResourceIdentifier The fedora resource
      * @param fedoraRootObjectIdentifier   The identifier of the root fedora object resource
      * @param ocflObjectId             The ocfl object id
      * @return  The newly created mapping
      */
-    FedoraOCFLMapping addMapping(final String fedoraResourceIdentifier, final String fedoraRootObjectIdentifier,
-                           final String ocflObjectId);
+    FedoraOCFLMapping addMapping(@Nonnull String sessionId, final String fedoraResourceIdentifier,
+                                 final String fedoraRootObjectIdentifier,  final String ocflObjectId);
 
     /**
      * Removes a mapping
      *
+     * @param sessionId id of the current session.
      * @param fedoraResourceIdentifier The fedora resource to remove the mapping for
      */
-    void removeMapping(final String fedoraResourceIdentifier);
+    void removeMapping(@Nonnull final String sessionId, final String fedoraResourceIdentifier);
 
     /**
      * Remove all persistent state associated with the index.
      */
     void reset();
+
+    /**
+     * Commit mapping changes for the session.
+     *
+     * @param sessionId id of the session to commit.
+     */
+    void commit(@Nonnull final String sessionId);
+
+    /**
+     * Rollback mapping changes for the session.
+     *
+     * @param sessionId id of the session to rollback.
+     */
+    void rollback(@Nonnull final String sessionId);
 
 }
 
