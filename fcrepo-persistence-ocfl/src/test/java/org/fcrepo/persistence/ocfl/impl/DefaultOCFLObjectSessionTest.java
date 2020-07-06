@@ -36,6 +36,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
 import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
@@ -328,12 +330,12 @@ public class DefaultOCFLObjectSessionTest {
         session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
 
         assertEquals(1, stagingPath.toFile().listFiles().length);
-        assertEquals(1, stagingPath.resolve(OBJ_ID).toFile().listFiles().length);
+        assertEquals(1, stagingPath.resolve(objectDir(OBJ_ID)).toFile().listFiles().length);
 
         session.delete(FILE1_SUBPATH);
 
         assertEquals(1, stagingPath.toFile().listFiles().length);
-        assertEquals(0, stagingPath.resolve(OBJ_ID).toFile().listFiles().length);
+        assertEquals(0, stagingPath.resolve(objectDir(OBJ_ID)).toFile().listFiles().length);
     }
 
     @Test
@@ -873,6 +875,10 @@ public class DefaultOCFLObjectSessionTest {
             throws PersistentStorageException {
         session.setCommitOption(option);
         return session.commit();
+    }
+
+    private String objectDir(final String objectId) {
+        return DigestUtils.sha256Hex(objectId);
     }
 
 }

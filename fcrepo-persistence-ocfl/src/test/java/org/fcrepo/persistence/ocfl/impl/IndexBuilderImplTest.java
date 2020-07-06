@@ -18,6 +18,7 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -154,7 +155,7 @@ public class IndexBuilderImplTest {
         session.commit();
 
         assertHasOcflId("resource1", resource1);
-        assertHasOcflId("resource1_resource2", resource2);
+        assertHasOcflId("resource1/resource2", resource2);
 
         index.reset();
 
@@ -164,7 +165,7 @@ public class IndexBuilderImplTest {
         indexBuilder.rebuildIfNecessary();
 
         assertHasOcflId("resource1", resource1);
-        assertHasOcflId("resource1_resource2", resource2);
+        assertHasOcflId("resource1/resource2", resource2);
 
         verify(transaction).getId();
         verify(transactionManager).create();
@@ -185,7 +186,8 @@ public class IndexBuilderImplTest {
 
     private void assertHasOcflId(final String expectedOcflId, final FedoraId resourceId)
             throws FedoraOCFLMappingNotFoundException {
-        assertEquals(expectedOcflId, index.getMapping(resourceId.getResourceId()).getOcflObjectId());
+        assertEquals(FedoraTypes.FEDORA_ID_PREFIX + "/" + expectedOcflId,
+                index.getMapping(resourceId.getResourceId()).getOcflObjectId());
     }
 
     private void createResource(final PersistentStorageSession session,

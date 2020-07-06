@@ -30,7 +30,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.List;
 
@@ -50,7 +49,6 @@ import static org.springframework.test.util.AssertionErrors.assertTrue;
  * @author awooods
  * @since 2020-03-04
  */
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 public class RebuildIT extends AbstractResourceIT {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RebuildIT.class);

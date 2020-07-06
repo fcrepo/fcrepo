@@ -17,58 +17,11 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static java.lang.Integer.MAX_VALUE;
-import static java.lang.Integer.parseInt;
-import static java.util.Arrays.stream;
-import static java.util.UUID.randomUUID;
-import static java.util.stream.Collectors.toList;
-import static javax.ws.rs.core.HttpHeaders.ACCEPT;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
-import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
-import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.GONE;
-import static javax.ws.rs.core.Response.Status.NO_CONTENT;
-import static javax.ws.rs.core.Response.Status.OK;
-import static org.apache.commons.lang3.StringUtils.isNotEmpty;
-import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
-import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
-import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
-import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
-import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
-import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
-import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import javax.inject.Inject;
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.Response.Status;
-import javax.xml.bind.DatatypeConverter;
-
 import com.google.common.base.Strings;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
+import org.apache.http.NoHttpResponseException;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
@@ -98,8 +51,59 @@ import org.fcrepo.http.commons.test.util.ContainerWrapper;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import javax.inject.Inject;
+import javax.ws.rs.core.Link;
+import javax.ws.rs.core.Response.Status;
+import javax.xml.bind.DatatypeConverter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+
+import static java.lang.Integer.MAX_VALUE;
+import static java.lang.Integer.parseInt;
+import static java.util.Arrays.stream;
+import static java.util.UUID.randomUUID;
+import static java.util.stream.Collectors.toList;
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.LINK;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.GONE;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.OK;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * <p>Abstract AbstractResourceIT class.</p>
@@ -109,6 +113,9 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration("/spring-test/test-container.xml")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@TestExecutionListeners(listeners = { ClearDbTestExecutionListener.class },
+        mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public abstract class AbstractResourceIT {
 
     protected static Logger logger;
@@ -214,7 +221,17 @@ public abstract class AbstractResourceIT {
      */
     protected static CloseableHttpResponse execute(final HttpUriRequest req) throws IOException {
         logger.debug("Executing: " + req.getMethod() + " to " + req.getURI());
-        return client.execute(req);
+        try {
+            return client.execute(req);
+        } catch (NoHttpResponseException e) {
+            // sometimes the server is slow starting up -- retry once
+            try {
+                TimeUnit.SECONDS.sleep(2);
+                return client.execute(req);
+            } catch (InterruptedException e2) {
+                throw new RuntimeException(e2);
+            }
+        }
     }
 
     /**
