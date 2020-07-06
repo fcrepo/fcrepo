@@ -83,26 +83,15 @@ public class DeleteResourcePersisterTest {
             "\"2020-04-14T03:42:00.765231Z\",\"stateToken\":\"6763672ED325A4B632B450545518B34B\"," +
             "\"archivalGroup\":false,\"objectRoot\":false}";
         final InputStream header_stream1 = new ByteArrayInputStream(header_string1.getBytes());
-        final String header_string2 = "{\"parent\":\"info:fedora/an-ocfl-object/sub-path\",\"id\":" +
-            "\"info:fedora/an-ocfl-object/some-subpath-desc\",\"lastModifiedDate\":" +
-            "\"2020-04-14T03:42:00.765231Z\",\"interactionModel\":" +
-            "\"http://fedora.info/definitions/v4/repository#NonRdfSourceDescription\"," +
-            "\"createdDate\":\"2020-04-14T03:42:00.765231Z\",\"stateToken\":\"6763672ED325A4B632B450545518B34B\"," +
-            "\"archivalGroup\":false,\"objectRoot\":false}";
-        final InputStream header_stream2 = new ByteArrayInputStream(header_string2.getBytes());
         when(session.read(".fcrepo/some-subpath.json")).thenReturn(header_stream1);
-        when(session.read(".fcrepo/some-subpath-description.json")).thenReturn(header_stream2);
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
         when(mapping.getRootObjectIdentifier()).thenReturn("info:fedora/an-ocfl-object");
         when(operation.getResourceId()).thenReturn("info:fedora/an-ocfl-object/some-subpath");
         when(index.getMapping(anyString())).thenReturn(mapping);
         persister.persist(psSession, operation);
         verify(session).delete("some-subpath");
-        verify(session).delete("some-subpath-description.nt");
         verify(session).read(".fcrepo/some-subpath.json");
         verify(session).write(eq(".fcrepo/some-subpath.json"), any());
-        verify(session).read(".fcrepo/some-subpath-description.json");
-        verify(session).write(eq(".fcrepo/some-subpath-description.json"), any());
     }
 
     @Test

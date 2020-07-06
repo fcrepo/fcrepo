@@ -106,8 +106,8 @@ abstract public class AbstractDeleteResourceService extends AbstractService {
                 }
             });
         } else if (fedoraResource instanceof Binary) {
-            //delete/purge described resource if binary
-            doAction(tx, pSession, fedoraResource.getDescribedResource().getFedoraId(), userPrincipal);
+            //delete/purge the description resource if binary
+            doAction(tx, pSession, fedoraResource.getDescription().getFedoraId(), userPrincipal);
         }
 
         //delete/purge the acl if this is not the acl
