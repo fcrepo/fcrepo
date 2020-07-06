@@ -26,6 +26,7 @@ import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolv
 
 import java.time.Instant;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -62,8 +63,12 @@ class DeleteResourcePersister extends AbstractPersister {
         if (fedoraResourceRoot.equals(resourceId)) {
             // We are at the root of the object, so delete all the data files.
             try {
-                objectSession.listHeadSubpaths().filter(p -> !isSidecarSubpath(p)).forEach(
+                final Stream<String> files = objectSession.listHeadSubpaths();
+                files.filter(p -> !isSidecarSubpath(p)).forEach(
                         p -> deletePathWrapped(p, objectSession, user, deleteTime));
+            } catch (final PersistentStorageException exc) {
+                // This means the object has no versions (only staged), so just delete the whole thing immediately
+                objectSession.deleteObject();
             } catch (final PersistentStorageRuntimeException exc) {
                 // Rethrow the exception as a checked exception
                 throw new PersistentStorageException(exc);
@@ -108,7 +113,9 @@ class DeleteResourcePersister extends AbstractPersister {
         // readHeaders and writeHeaders need the subpath where as delete needs the file name. So remove any extensions.
         // TODO: See https://jira.lyrasis.org/browse/FCREPO-3287
         final var no_extension = (path.contains(".") ? path.substring(0, path.indexOf(".")) : path);
-        writeHeaders(session, headers, no_extension);
+        if (!session.newInSession(path)) {
+            writeHeaders(session, headers, no_extension);
+        }
     }
 
     /**

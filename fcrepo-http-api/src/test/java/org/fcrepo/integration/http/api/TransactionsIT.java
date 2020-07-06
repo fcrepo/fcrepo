@@ -129,7 +129,7 @@ public class TransactionsIT extends AbstractResourceIT {
         /* create a tx */
         final String location = createTransaction();
 
-        try (CloseableHttpResponse resp = execute(new HttpGet(location))) {
+        try (final CloseableHttpResponse resp = execute(new HttpGet(location))) {
             assertEquals(Status.NO_CONTENT.getStatusCode(), getStatus(resp));
             assertHeaderIsRfc1123Date(resp, ATOMIC_EXPIRES_HEADER);
             consume(resp.getEntity());
@@ -162,7 +162,7 @@ public class TransactionsIT extends AbstractResourceIT {
         final String newLocation;
         final HttpPost postNew = new HttpPost(serverAddress);
         postNew.addHeader(ATOMIC_ID_HEADER, txLocation);
-        try (CloseableHttpResponse resp = execute(postNew)) {
+        try (final CloseableHttpResponse resp = execute(postNew)) {
             assertEquals(CREATED.getStatusCode(), getStatus(resp));
             newLocation = getLocation(resp);
         }
@@ -204,7 +204,7 @@ public class TransactionsIT extends AbstractResourceIT {
         postNew.addHeader(ATOMIC_ID_HEADER, txLocation);
 
         final String datasetLoc;
-        try (CloseableHttpResponse resp = execute(postNew)) {
+        try (final CloseableHttpResponse resp = execute(postNew)) {
             assertEquals(CREATED.getStatusCode(), resp.getStatusLine().getStatusCode());
             assertHasAtomicId(txLocation, resp);
             datasetLoc = getLocation(resp);
@@ -213,7 +213,7 @@ public class TransactionsIT extends AbstractResourceIT {
         // Retrieve the object inside of the transaction
         final HttpGet getRequest = new HttpGet(datasetLoc);
         getRequest.addHeader(ATOMIC_ID_HEADER, txLocation);
-        try (CloseableDataset dataset = getDataset(getRequest)) {
+        try (final CloseableDataset dataset = getDataset(getRequest)) {
             assertTrue(dataset.asDatasetGraph().contains(ANY,
                         createURI(datasetLoc), ANY, ANY));
         }
@@ -225,7 +225,7 @@ public class TransactionsIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation)));
 
         /* fetch the object-in-tx outside of the tx after it has been committed */
-        try (CloseableDataset dataset = getDataset(new HttpGet(datasetLoc))) {
+        try (final CloseableDataset dataset = getDataset(new HttpGet(datasetLoc))) {
             assertTrue("Expected to  find our object after the transaction was committed",
                     dataset.asDatasetGraph().contains(ANY, createURI(datasetLoc), ANY, ANY));
         }
@@ -257,7 +257,7 @@ public class TransactionsIT extends AbstractResourceIT {
 
         final HttpPost postNew = addTxTo(new HttpPost(serverAddress), txLocation);
         final String newObjectLocation;
-        try (CloseableHttpResponse resp = execute(postNew)) {
+        try (final CloseableHttpResponse resp = execute(postNew)) {
             assertEquals(CREATED.getStatusCode(), getStatus(resp));
             assertHasAtomicId(txLocation, resp);
             newObjectLocation = getLocation(resp);
@@ -498,7 +498,7 @@ public class TransactionsIT extends AbstractResourceIT {
         final String newLocation;
         // Attempt to create object in tx using just the uuid
         final HttpPost postNew = addTxTo(new HttpPost(serverAddress), uuid);
-        try (CloseableHttpResponse resp = execute(postNew)) {
+        try (final CloseableHttpResponse resp = execute(postNew)) {
             assertEquals(CREATED.getStatusCode(), getStatus(resp));
             newLocation = getLocation(resp);
         }
@@ -519,6 +519,107 @@ public class TransactionsIT extends AbstractResourceIT {
         final HttpPost postNew = new HttpPost(serverAddress);
         postNew.addHeader(ATOMIC_ID_HEADER, UUID.randomUUID().toString());
         assertEquals(Status.CONFLICT.getStatusCode(), getStatus(postNew));
+    }
+
+    /**
+     * Test creating and deleting an object in a single transaction.
+     * @throws Exception http client might throw an exception.
+     */
+    @Test
+    public void testCreateAndDeleteInSingleTransaction() throws Exception {
+        final String txLocation = createTransaction();
+        final HttpPost post = postObjMethod();
+        addTxTo(post, txLocation);
+        final String containerUri;
+        try (final CloseableHttpResponse response = execute(post)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            containerUri = getLocation(response);
+        }
+        final HttpDelete delete = new HttpDelete(containerUri);
+        addTxTo(delete, txLocation);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(delete));
+
+        // Container was never committed, so we get a 404 instead of 410.
+        final HttpGet getContainer = new HttpGet(containerUri);
+        addTxTo(getContainer, txLocation);
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(getContainer));
+    }
+
+    /**
+     * Test creating an AG and child container in a transaction and deleting the child container.
+     * @throws Exception http client might throw an exception.
+     */
+    @Test
+    public void testCreateAndDeleteInSingleTransactionSubPathFull() throws Exception {
+        final String txLocation = createTransaction();
+        final HttpPost httpPost = postObjMethod();
+        addTxTo(httpPost, txLocation);
+        httpPost.setHeader("Link", "<http://fedora.info/definitions/v4/repository#ArchivalGroup>;rel=\"type\"");
+        final String parent;
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            parent = getLocation(response);
+        }
+        final HttpGet parentGet = new HttpGet(parent);
+        addTxTo(parentGet, txLocation);
+        assertEquals(OK.getStatusCode(), getStatus(parentGet));
+
+        final HttpPost postChild = new HttpPost(parent);
+        addTxTo(postChild, txLocation);
+        final String id;
+        try (final CloseableHttpResponse response = execute(postChild)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            id = getLocation(response);
+        }
+
+        final HttpGet childGet = new HttpGet(id);
+        addTxTo(childGet, txLocation);
+        assertEquals(OK.getStatusCode(), getStatus(childGet));
+
+        final HttpDelete delete = new HttpDelete(id);
+        addTxTo(delete, txLocation);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(delete));
+
+        final HttpGet childGet2 = new HttpGet(id);
+        addTxTo(childGet2, txLocation);
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(childGet2));
+    }
+
+
+    /**
+     * Test creating an AG. Then create a child container and delete it in the same transaction.
+     * @throws Exception http client might throw an exception.
+     */
+    @Test
+    public void testCreateAndDeleteInSingleTransactionSubPathPartial() throws Exception {
+        final HttpPost httpPost = postObjMethod();
+        httpPost.setHeader("Link", "<http://fedora.info/definitions/v4/repository#ArchivalGroup>;rel=\"type\"");
+        final String parent;
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            parent = getLocation(response);
+        }
+        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(parent)));
+
+        final String txLocation = createTransaction();
+        final HttpPost postChild = new HttpPost(parent);
+        addTxTo(postChild, txLocation);
+        final String id;
+        try (final CloseableHttpResponse response = execute(postChild)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            id = getLocation(response);
+        }
+        final HttpGet getChild = new HttpGet(id);
+        addTxTo(getChild, txLocation);
+        assertEquals(OK.getStatusCode(), getStatus(getChild));
+
+        final HttpDelete delete = new HttpDelete(id);
+        addTxTo(delete, txLocation);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(delete));
+
+        final HttpGet childGet2 = new HttpGet(id);
+        addTxTo(childGet2, txLocation);
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(childGet2));
     }
 
     private void verifyProperty(final String assertionMessage, final String pid, final String txId,

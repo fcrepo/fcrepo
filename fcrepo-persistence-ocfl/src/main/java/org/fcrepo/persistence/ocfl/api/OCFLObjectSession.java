@@ -165,4 +165,12 @@ public interface OCFLObjectSession {
      * @return the digest algorithm used by the OCFL object
      */
     DIGEST_ALGORITHM getObjectDigestAlgorithm();
+
+    /**
+     * Determine if the subpath is new to this session (has no versions committed).
+     *
+     * @param subpath the subpath to the resource.
+     * @return true if this subpath has never been committed.
+     */
+    boolean newInSession(final String subpath);
 }

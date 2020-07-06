@@ -221,7 +221,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         }
 
         // for file that existed before this session, queue up its deletion for commit time
-        if (!newInSession(encodedSubpath)) {
+        if (!newInSession(subpath)) {
             deletePaths.add(encodedSubpath);
         } else if (!hasStagedChanges) {
             // File is neither in the staged or exists in the head version, so file cannot be found for deletion
@@ -263,7 +263,11 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         }
     }
 
-    private boolean newInSession(final String encodedSubpath) {
+    @Override
+    public boolean newInSession(final String subpath) {
+
+        final var encodedSubpath = encode(subpath);
+
         // If the object was deleted in this session, then content can only be new
         if (objectDeleted) {
             return true;
@@ -564,11 +568,15 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     @Override
     public Stream<String> listHeadSubpaths() throws PersistentStorageException {
         assertSessionOpen();
-
-        return this.ocflRepository.describeVersion(ObjectVersionId.head(this.objectIdentifier))
-                .getFiles().stream()
-                .map(FileDetails::getPath)
-                .map(this::decode);
+        try {
+            return this.ocflRepository.describeVersion(ObjectVersionId.head(this.objectIdentifier))
+                    .getFiles()
+                    .stream()
+                    .map(FileDetails::getPath)
+                    .map(this::decode);
+        } catch (final NotFoundException exc) {
+            throw new PersistentStorageException(exc);
+        }
     }
 
     @Override
