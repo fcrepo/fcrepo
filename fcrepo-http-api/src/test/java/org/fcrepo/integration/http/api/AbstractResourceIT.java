@@ -51,9 +51,7 @@ import org.fcrepo.http.commons.test.util.ContainerWrapper;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import javax.inject.Inject;
@@ -113,9 +111,6 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration("/spring-test/test-container.xml")
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
-@TestExecutionListeners(listeners = { ClearDbTestExecutionListener.class },
-        mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public abstract class AbstractResourceIT {
 
     protected static Logger logger;

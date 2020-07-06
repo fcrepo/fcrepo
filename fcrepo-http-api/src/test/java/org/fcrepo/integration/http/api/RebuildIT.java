@@ -20,16 +20,13 @@ package org.fcrepo.integration.http.api;
 
 import edu.wisc.library.ocfl.api.OcflRepository;
 import org.apache.http.client.methods.HttpGet;
-import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
-import org.fcrepo.persistence.ocfl.api.IndexBuilder;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.test.context.TestExecutionListeners;
 
 import java.util.List;
 
@@ -49,29 +46,17 @@ import static org.springframework.test.util.AssertionErrors.assertTrue;
  * @author awooods
  * @since 2020-03-04
  */
+@TestExecutionListeners(listeners = { RebuildTestExecutionListener.class },
+        mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class RebuildIT extends AbstractResourceIT {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RebuildIT.class);
 
     private OcflRepository ocflRepository;
 
-    private IndexBuilder indexBuilder;
-
-    @BeforeClass
-    public static void beforeClass() {
-        System.setProperty(OcflPropsConfig.FCREPO_OCFL_ROOT, "target/test-classes/test-rebuild-ocfl/ocfl-root");
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        System.clearProperty(OcflPropsConfig.FCREPO_OCFL_ROOT);
-    }
-
     @Before
     public void setUp() {
         ocflRepository = getBean(OcflRepository.class);
-        indexBuilder = getBean(IndexBuilder.class);
-        indexBuilder.rebuild();
     }
 
     /**

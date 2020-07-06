@@ -17,24 +17,37 @@
  */
 package org.fcrepo.integration.http.api;
 
+import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.http.commons.test.util.ContainerWrapper;
+import org.springframework.test.annotation.DirtiesContext.HierarchyMode;
 import org.springframework.test.context.TestContext;
 import org.springframework.test.context.support.AbstractTestExecutionListener;
 
 import javax.sql.DataSource;
 
 /**
- * Clears out the h2 db so that it doesn't affect other tests
+ * Isolate RebuildIT from the rest of the IT contexts.
  *
  * @author pwinckles
  */
-public class ClearDbTestExecutionListener extends AbstractTestExecutionListener {
+public class RebuildTestExecutionListener extends AbstractTestExecutionListener {
+
+    @Override
+    public void beforeTestClass(final TestContext testContext) throws Exception {
+        cleanDb(testContext);
+        System.setProperty(OcflPropsConfig.FCREPO_OCFL_ROOT, "target/test-classes/test-rebuild-ocfl/ocfl-root");
+        testContext.markApplicationContextDirty(HierarchyMode.EXHAUSTIVE);
+    }
 
     @Override
     public void afterTestClass(final TestContext testContext) throws Exception {
-        final var containerWrapper = testContext.getApplicationContext()
-                .getBean(ContainerWrapper.class);
-        final var dataSource = containerWrapper.getSpringAppContext().getBean(DataSource.class);
+        cleanDb(testContext);
+        System.clearProperty(OcflPropsConfig.FCREPO_OCFL_ROOT);
+        testContext.markApplicationContextDirty(HierarchyMode.EXHAUSTIVE);
+    }
+
+    private void cleanDb(final TestContext testContext) throws Exception {
+        final var dataSource = getBean(testContext, DataSource.class);
 
         try (var conn = dataSource.getConnection()) {
             try (var queryStmt = conn.prepareStatement(
@@ -50,4 +63,11 @@ public class ClearDbTestExecutionListener extends AbstractTestExecutionListener 
             }
         }
     }
+
+    private <T> T getBean(final TestContext testContext, final Class<T> clazz) {
+        final var containerWrapper = testContext.getApplicationContext()
+                .getBean(ContainerWrapper.class);
+        return containerWrapper.getSpringAppContext().getBean(clazz);
+    }
+
 }
