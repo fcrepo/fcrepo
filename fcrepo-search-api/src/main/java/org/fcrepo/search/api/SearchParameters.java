@@ -36,19 +36,28 @@ public class SearchParameters {
 
     private final int maxResults;
 
+    private final Condition.Field orderBy;
+
+    private final String order;
+
     /**
      * Constructoor
-     * @param fields The fields to be returned in the results
+     *
+     * @param fields     The fields to be returned in the results
      * @param conditions The conditions
      * @param maxResults The max results
      * @param offset     The offset
+     * @param orderBy    The field by which to order the results
+     * @param order      The order: ie "asc" or "desc"
      */
     public SearchParameters(final List<Condition.Field> fields, final List<Condition> conditions, final int maxResults,
-                            final int offset) {
+                            final int offset, final Condition.Field orderBy, final String order) {
         this.fields = fields;
         this.conditions = conditions;
         this.maxResults = maxResults;
         this.offset = offset;
+        this.orderBy = orderBy;
+        this.order = order;
     }
 
     /**
@@ -80,10 +89,29 @@ public class SearchParameters {
 
     /**
      * Returns the list of fields to display in the results.
+     *
      * @return
      */
     public List<Condition.Field> getFields() {
         return fields;
+    }
+
+    /**
+     * Returns the field by which to order the results.
+     *
+     * @return
+     */
+    public Condition.Field getOrderBy() {
+        return orderBy;
+    }
+
+    /**
+     * Returns the order direction (asc or desc) of the results.
+     *
+     * @return
+     */
+    public String getOrder() {
+        return order;
     }
 
     @Override
@@ -93,6 +121,8 @@ public class SearchParameters {
         helper.add("maxResults", maxResults);
         helper.add("offset", offset);
         helper.add("fields", fields);
+        helper.add("orderBy", orderBy);
+        helper.add("order", order);
         return helper.toString();
     }
 }

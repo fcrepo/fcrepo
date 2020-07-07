@@ -82,7 +82,10 @@ public class FedoraSearch extends FedoraBaseResource {
     public Response doSearch(@QueryParam(value = "condition") final List<String> conditions,
                              @QueryParam(value = "fields") final String fields,
                              @DefaultValue("100") @QueryParam("max_results") final int maxResults,
-                             @DefaultValue("0") @QueryParam("offset") final int offset) {
+                             @DefaultValue("0") @QueryParam("offset") final int offset,
+                             @DefaultValue("asc") @QueryParam("order") final String order,
+                             @DefaultValue("fedora_id") @QueryParam("order_by") final String orderBy
+    ) {
 
         try {
             final var conditionList = new ArrayList<Condition>();
@@ -105,7 +108,21 @@ public class FedoraSearch extends FedoraBaseResource {
                 }
             }
 
-            final var params = new SearchParameters(parsedFields, conditionList, maxResults, offset);
+            final Condition.Field orderByField;
+            try {
+                orderByField = Condition.Field.fromString(orderBy);
+            } catch (final Exception e) {
+                throw new InvalidQueryException("The order_by field must contain a valid value such as " +
+                        StringUtils.join(Condition.Field.values()));
+            }
+
+            if (!(order.equalsIgnoreCase("asc") || order.equalsIgnoreCase("desc"))) {
+                throw new InvalidQueryException("The order field is invalid:  valid values are \"asc\" and \"desc\"" +
+                        StringUtils.join(Condition.Field.values()));
+            }
+
+            final var params = new SearchParameters(parsedFields, conditionList, maxResults, offset, orderByField,
+                    order);
             final Response.ResponseBuilder builder = ok();
             final var result = this.service.doSearch(params);
             final var translatedResults = translateResults(result);

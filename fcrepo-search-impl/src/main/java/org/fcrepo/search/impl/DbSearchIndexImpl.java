@@ -171,7 +171,7 @@ public class DbSearchIndexImpl implements SearchIndex {
                 }
             }
         }
-        sql.append(" ORDER BY " + FEDORA_ID);
+        sql.append(" ORDER BY " +  parameters.getOrderBy() + " " + parameters.getOrder());
         sql.append(" LIMIT :limit OFFSET :offset");
         parameterSource.addValue("limit", parameters.getMaxResults());
         parameterSource.addValue("offset", parameters.getOffset());

@@ -435,6 +435,52 @@ public class FedoraSearchIT extends AbstractResourceIT {
         }
     }
 
+    @Test
+    public void testDefaultOrdering() throws Exception {
+        final var prefix = getRandomUniqueId();
+        final var resources = createResources(prefix, 3);
+        final var condition = FEDORA_ID + "=" + prefix + "*";
+        final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition) +
+                "&order_by=fedora_id&order=asc";
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
+            assertEquals(resources, result.getItems().stream()
+                    .map(x -> x.get("fedora_id")).collect(Collectors.toList()));
+        }
+    }
+
+    @Test
+    public void testOrderByMimetypeDesc() throws Exception {
+        final var resourceId = getRandomUniqueId();
+        createObjectAndClose(resourceId);
+        final var resourceA = resourceId + "/a-video";
+        final var resourceB = resourceId + "/b-image";
+        final var resourceC = resourceId + "/c-text";
+
+        assertEquals(201, getStatus(putObjMethod(resourceA, "video/mp4",
+                "video")));
+        assertEquals(201, getStatus(putObjMethod(resourceB, "image/jpg",
+                "image")));
+        assertEquals(201, getStatus(putObjMethod(resourceC, "text/plain",
+                "text")));
+
+        final var resources =
+                Arrays.asList(resourceA, resourceC, resourceB).stream().map(x -> serverAddress + x)
+                        .collect(Collectors.toList());
+        final var condition = FEDORA_ID + "=" + resourceId + "/*";
+        final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition) +
+                "&order_by=mime_type&order=desc";
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
+            assertEquals(resources, result.getItems().stream()
+                    .map(x -> x.get("fedora_id")).collect(Collectors.toList()));
+        }
+    }
+
     private String encode(final String value) {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
