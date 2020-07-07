@@ -48,7 +48,7 @@ public class PurgeResourceServiceImpl extends AbstractDeleteResourceService impl
 
     @Override
     protected Stream<String> getContained(final Transaction tx, final FedoraResource resource) {
-        return containmentIndex.getContainsDeleted(tx, resource);
+        return containmentIndex.getContainsDeleted(txId(tx), resource);
     }
 
     @Override
@@ -63,4 +63,9 @@ public class PurgeResourceServiceImpl extends AbstractDeleteResourceService impl
         recordEvent(tx.getId(), resourceId, purgeOp);
         log.debug("purged {}", resourceId.getFullId());
     }
+
+    private String txId(final Transaction tx) {
+        return tx == null ? null : tx.getId();
+    }
+
 }

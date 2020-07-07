@@ -17,12 +17,11 @@
  */
 package org.fcrepo.kernel.api;
 
-import javax.annotation.Nonnull;
-
-import java.util.stream.Stream;
-
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
+
+import javax.annotation.Nonnull;
+import java.util.stream.Stream;
 
 /**
  * An interface for retrieving resource IDs by their containment relationships.
@@ -39,7 +38,7 @@ public interface ContainmentIndex {
      * @param fedoraResource The containing fedora resource
      * @return A stream of contained identifiers
      */
-    Stream<String> getContains(Transaction tx, FedoraResource fedoraResource);
+    Stream<String> getContains(String tx, FedoraResource fedoraResource);
 
     /**
      * Return a stream of fedora identifiers contained by the specified fedora resource that have deleted
@@ -49,7 +48,7 @@ public interface ContainmentIndex {
      * @param fedoraResource The containing fedora resource
      * @return A stream of contained identifiers
      */
-    Stream<String> getContainsDeleted(Transaction tx, FedoraResource fedoraResource);
+    Stream<String> getContainsDeleted(String tx, FedoraResource fedoraResource);
 
     /**
      * Return the ID of the containing resource for resourceID.
@@ -95,15 +94,15 @@ public interface ContainmentIndex {
 
     /**
      * Commit the changes made in the transaction.
-     * @param tx The transaction.
+     * @param txId The transaction id.
      */
-    void commitTransaction(final Transaction tx);
+    void commitTransaction(final String txId);
 
     /**
      * Rollback the containment index changes in the transaction.
-     * @param tx The transaction.
+     * @param txId The transaction id.
      */
-    void rollbackTransaction(final Transaction tx);
+    void rollbackTransaction(final String txId);
 
     /**
      * Check if the resourceID exists in the containment index. Which should mean it exists.

@@ -24,7 +24,6 @@ import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
 import java.io.InputStream;
-import java.time.Instant;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -33,7 +32,7 @@ import java.util.stream.Stream;
  *
  * @author bbpennel
  */
-public interface OCFLObjectSession {
+public interface OCFLObjectSession extends AutoCloseable {
 
     /**
      * Write the provided content to specified subpath.
@@ -120,10 +119,8 @@ public interface OCFLObjectSession {
 
     /**
      * Close this session without committing changes.
-     *
-     * @throws PersistentStorageException if unable to close the session.
      */
-    void close() throws PersistentStorageException;
+    void close();
 
     /**
      * Return the list of immutable versions associated with this OCFL Object in chronological order.
@@ -143,12 +140,6 @@ public interface OCFLObjectSession {
      *                                    or for some other reason.
      */
     List<OCFLVersion> listVersions(String subpath) throws PersistentStorageException;
-
-    /**
-     * The instant at which the session was created.
-     * @return
-     */
-    Instant getCreated();
 
     /**
      * Lists the subpaths associated with the HEAD (ie the latest committed state)
@@ -182,4 +173,5 @@ public interface OCFLObjectSession {
      * @return true if this OCFL object is being deleted or has not been persisted yet.
      */
     boolean isNewInSession();
+
 }

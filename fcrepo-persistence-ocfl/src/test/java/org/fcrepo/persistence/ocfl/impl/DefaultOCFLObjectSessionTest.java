@@ -19,17 +19,26 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import edu.wisc.library.ocfl.api.OcflObjectVersion;
-import static edu.wisc.library.ocfl.api.OcflOption.MOVE_SOURCE;
 import edu.wisc.library.ocfl.api.model.ObjectDetails;
 import edu.wisc.library.ocfl.api.model.ObjectVersionId;
 import edu.wisc.library.ocfl.api.model.VersionId;
 import edu.wisc.library.ocfl.core.OcflRepositoryBuilder;
 import edu.wisc.library.ocfl.core.extension.layout.config.DefaultLayoutConfig;
 import edu.wisc.library.ocfl.core.storage.filesystem.FileSystemOcflStorage;
+import org.apache.commons.io.IOUtils;
+import org.fcrepo.persistence.api.CommitOption;
+import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.ocfl.api.OCFLVersion;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import static java.lang.String.format;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -37,16 +46,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.io.IOUtils;
+import static edu.wisc.library.ocfl.api.OcflOption.MOVE_SOURCE;
+import static java.lang.String.format;
 import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
 import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
-
-import org.fcrepo.persistence.api.CommitOption;
-import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
-import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
-import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.ocfl.api.OCFLVersion;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
@@ -54,10 +57,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * @author bbpennel
@@ -102,7 +101,7 @@ public class DefaultOCFLObjectSessionTest {
 
     private DefaultOCFLObjectSession makeNewSession() throws Exception {
         if (stagingPath == null || !stagingPath.toFile().exists()) {
-            stagingPath = tempFolder.newFolder("obj1-staging").toPath();
+            stagingPath = tempFolder.newFolder(OBJ_ID).toPath();
         }
         return new DefaultOCFLObjectSession(OBJ_ID, stagingPath, ocflRepository, UNVERSIONED);
     }
@@ -330,12 +329,10 @@ public class DefaultOCFLObjectSessionTest {
         session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
 
         assertEquals(1, stagingPath.toFile().listFiles().length);
-        assertEquals(1, stagingPath.resolve(objectDir(OBJ_ID)).toFile().listFiles().length);
 
         session.delete(FILE1_SUBPATH);
 
-        assertEquals(1, stagingPath.toFile().listFiles().length);
-        assertEquals(0, stagingPath.resolve(objectDir(OBJ_ID)).toFile().listFiles().length);
+        assertEquals(0, stagingPath.toFile().listFiles().length);
     }
 
     @Test
@@ -801,7 +798,8 @@ public class DefaultOCFLObjectSessionTest {
         final String obj1ID = UUID.randomUUID().toString();
         final String obj2ID = UUID.randomUUID().toString();
         final var session1 = new DefaultOCFLObjectSession(obj1ID, stagingPath, ocflRepository, UNVERSIONED);
-        final var session2 = new DefaultOCFLObjectSession(obj2ID, stagingPath, ocflRepository, UNVERSIONED);
+        final var session2 = new DefaultOCFLObjectSession(obj2ID, tempFolder.newFolder(obj2ID).toPath(),
+                ocflRepository, UNVERSIONED);
         session1.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
         session2.write(FILE2_SUBPATH, fileStream(FILE_CONTENT2));
         commit(session1, NEW_VERSION);
@@ -875,10 +873,6 @@ public class DefaultOCFLObjectSessionTest {
             throws PersistentStorageException {
         session.setCommitOption(option);
         return session.commit();
-    }
-
-    private String objectDir(final String objectId) {
-        return DigestUtils.sha256Hex(objectId);
     }
 
 }

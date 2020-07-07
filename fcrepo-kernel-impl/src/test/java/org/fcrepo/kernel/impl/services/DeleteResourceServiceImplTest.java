@@ -129,10 +129,10 @@ public class DeleteResourceServiceImplTest {
 
     @After
     public void cleanUp() {
-        containmentIndex.rollbackTransaction(tx);
+        containmentIndex.rollbackTransaction(tx.getId());
         containmentIndex.getContains(null, container).forEach(c ->
                 containmentIndex.removeContainedBy(tx.getId(), container.getFedoraId(), FedoraId.create(c)));
-        containmentIndex.commitTransaction(tx);
+        containmentIndex.commitTransaction(tx.getId());
     }
 
     @Test
@@ -141,7 +141,7 @@ public class DeleteResourceServiceImplTest {
         when(container.getAcl()).thenReturn(null);
 
         service.perform(tx, container, USER);
-        containmentIndex.commitTransaction(tx);
+        containmentIndex.commitTransaction(tx.getId());
         verifyResourceOperation(RESOURCE_FEDORA_ID, operationCaptor, pSession);
     }
 
@@ -159,7 +159,7 @@ public class DeleteResourceServiceImplTest {
         when(container.isAcl()).thenReturn(false);
         when(container.getAcl()).thenReturn(null);
 
-        assertEquals(1, containmentIndex.getContains(tx, container).count());
+        assertEquals(1, containmentIndex.getContains(tx.getId(), container).count());
         service.perform(tx, container, USER);
 
         verify(pSession, times(2)).persist(operationCaptor.capture());
@@ -169,7 +169,7 @@ public class DeleteResourceServiceImplTest {
         assertEquals(CHILD_RESOURCE_ID, operations.get(0).getResourceId());
         assertEquals(RESOURCE_ID, operations.get(1).getResourceId());
 
-        assertEquals(0, containmentIndex.getContains(tx, container).count());
+        assertEquals(0, containmentIndex.getContains(tx.getId(), container).count());
     }
 
     private void verifyResourceOperation(final FedoraId fedoraID,

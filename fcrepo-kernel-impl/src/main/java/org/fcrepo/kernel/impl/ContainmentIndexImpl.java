@@ -18,7 +18,6 @@
 package org.fcrepo.kernel.impl;
 
 import org.fcrepo.kernel.api.ContainmentIndex;
-import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -330,44 +329,42 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    public Stream<String> getContains(final Transaction tx, final FedoraResource fedoraResource) {
-        final String transactionId = (tx != null) ? tx.getId() : null;
+    public Stream<String> getContains(final String txId, final FedoraResource fedoraResource) {
         final String resourceId = fedoraResource.getFedoraId().getFullId();
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("parent", resourceId);
 
         final List<String> children;
-        if (transactionId != null) {
+        if (txId != null) {
             // we are in a transaction
-            parameterSource.addValue("transactionId", transactionId);
+            parameterSource.addValue("transactionId", txId);
             children = jdbcTemplate.queryForList(SELECT_CHILDREN_IN_TRANSACTION, parameterSource, String.class);
         } else {
             // not in a transaction
             children = jdbcTemplate.queryForList(SELECT_CHILDREN, parameterSource, String.class);
         }
-        LOGGER.debug("getContains for {} in transaction {} found {} children", resourceId, transactionId,
-                children.size());
+        LOGGER.debug("getContains for {} in transaction {} found {} children",
+                resourceId, txId, children.size());
         return children.stream();
     }
 
     @Override
-    public Stream<String> getContainsDeleted(final Transaction tx, final FedoraResource fedoraResource) {
-        final String transactionId = (tx != null) ? tx.getId() : null;
+    public Stream<String> getContainsDeleted(final String txId, final FedoraResource fedoraResource) {
         final String resourceId = fedoraResource.getFedoraId().getFullId();
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("parent", resourceId);
 
         final List<String> children;
-        if (transactionId != null) {
+        if (txId != null) {
             // we are in a transaction
-            parameterSource.addValue("transactionId", transactionId);
+            parameterSource.addValue("transactionId", txId);
             children = jdbcTemplate.queryForList(SELECT_DELETED_CHILDREN_IN_TRANSACTION, parameterSource, String.class);
         } else {
             // not in a transaction
             children = jdbcTemplate.queryForList(SELECT_DELETED_CHILDREN, parameterSource, String.class);
         }
-        LOGGER.debug("getContainsDeleted for {} in transaction {} found {} children", resourceId, transactionId,
-                children.size());
+        LOGGER.debug("getContainsDeleted for {} in transaction {} found {} children",
+                resourceId, txId, children.size());
         return children.stream();
     }
 
@@ -484,9 +481,8 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    public void commitTransaction(final Transaction tx) {
-        if (tx != null) {
-            final String txId = tx.getId();
+    public void commitTransaction(final String txId) {
+        if (txId != null) {
             executeInDbTransaction(txId, status -> {
                 try {
                     final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
@@ -507,9 +503,8 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    public void rollbackTransaction(final Transaction tx) {
-        if (tx != null) {
-            final String txId = tx.getId();
+    public void rollbackTransaction(final String txId) {
+        if (txId != null) {
             final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
             parameterSource.addValue("transactionId", txId);
             jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, parameterSource);

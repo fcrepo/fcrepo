@@ -17,27 +17,24 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
-import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
+import edu.wisc.library.ocfl.api.MutableOcflRepository;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.fcrepo.persistence.api.CommitOption;
+import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
+import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.fcrepo.persistence.api.CommitOption;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
-
-import edu.wisc.library.ocfl.api.MutableOcflRepository;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
-import javax.inject.Inject;
+import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
+import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
 
 /**
  * A default implemenntation of the {@link org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory} interface.
@@ -56,36 +53,13 @@ public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory
     @Value("${fcrepo.autoversioning.enabled:true}")
     private boolean autoVersioningEnabled;
 
-    private final Path ocflStagingDir;
-
     @Inject
     private MutableOcflRepository ocflRepository;
 
-    /**
-     * Constructor
-     *
-     * @param ocflStagingDir     The OCFL staging directory
-     */
-    @Autowired
-    public DefaultOCFLObjectSessionFactory(
-            @Value("#{ocflPropsConfig.fedoraOcflStaging}")
-            final Path ocflStagingDir) {
-        LOGGER.debug("Fedora OCFL persistence staging directory:\n- {}",
-                ocflStagingDir);
-
-        try {
-            this.ocflStagingDir = Files.createDirectories(ocflStagingDir);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
     @Override
-    public OCFLObjectSession create(final String ocflId, final String persistentStorageSessionId) {
-
-        final Path stagingDirectory = this.ocflStagingDir.resolve(
-                persistentStorageSessionId == null ? "read-only" : persistentStorageSessionId);
-        return new DefaultOCFLObjectSession(ocflId, stagingDirectory,
+    public OCFLObjectSession create(final String ocflId,
+                                    final Path sessionStagingDir) {
+        return new DefaultOCFLObjectSession(ocflId, createStagingDir(sessionStagingDir, ocflId),
                 this.ocflRepository, defaultCommitOption());
     }
 
@@ -103,6 +77,15 @@ public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory
      */
     public void setAutoVersioningEnabled(final boolean autoVersioningEnabled) {
         this.autoVersioningEnabled = autoVersioningEnabled;
+    }
+
+    private Path createStagingDir(final Path sessionStaging, final String objectIdentifier) {
+        final var digest = DigestUtils.sha256Hex(objectIdentifier);
+        try {
+            return Files.createDirectories(sessionStaging.resolve(digest));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
 }

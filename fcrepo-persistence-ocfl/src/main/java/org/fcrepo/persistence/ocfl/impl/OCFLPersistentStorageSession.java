@@ -17,26 +17,7 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static java.lang.String.format;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
-import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getSidecarSubpath;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveExtensions;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveVersionId;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getBinaryStream;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getRdfStream;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resovleOCFLSubpathFromResourceId;
-
-import java.io.InputStream;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-
+import org.apache.commons.io.FileUtils;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
@@ -52,9 +33,29 @@ import org.fcrepo.persistence.ocfl.api.Persister;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeoutException;
+
+import static java.lang.String.format;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
+import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getBinaryStream;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getRdfStream;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getSidecarSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveExtensions;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveVersionId;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resovleOCFLSubpathFromResourceId;
 
 
 
@@ -68,7 +69,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OCFLPersistentStorageSession.class);
 
-    private static final long AWAIT_TIMEOUT = 30000l;
+    private static final long AWAIT_TIMEOUT = 30000L;
 
     /**
      * Externally generated id for the session.
@@ -79,19 +80,17 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     private final Map<String, OCFLObjectSession> sessionMap;
 
+    private Map<String, OCFLObjectSession> sessionsToRollback;
+
     private final Phaser phaser = new Phaser();
 
     private final List<Persister> persisterList = new ArrayList<>();
-
-    private List<OCFLObjectSession> sessionsToRollback = new ArrayList<>();
 
     private State state = State.COMMIT_NOT_STARTED;
 
     private final OCFLObjectSessionFactory objectSessionFactory;
 
-    private static Comparator<OCFLObjectSession> CREATION_TIME_ORDER =
-            (final OCFLObjectSession o1, final OCFLObjectSession o2)->o1.getCreated().compareTo(o2.getCreated());
-
+    private final Path sessionStagingDir;
 
     private enum State {
         COMMIT_NOT_STARTED,
@@ -112,11 +111,14 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
      * @param objectSessionFactory the session factory
      */
     protected OCFLPersistentStorageSession(final String sessionId, final FedoraToOcflObjectIndex fedoraOcflIndex,
+                                           final Path sessionStagingDir,
                                            final OCFLObjectSessionFactory objectSessionFactory) {
         this.sessionId = sessionId;
         this.fedoraOcflIndex = fedoraOcflIndex;
         this.objectSessionFactory = objectSessionFactory;
         this.sessionMap = new ConcurrentHashMap<>();
+        this.sessionsToRollback = new HashMap<>();
+        this.sessionStagingDir = sessionStagingDir;
 
         //load the persister list if empty
         persisterList.add(new CreateRDFSourcePersister(this.fedoraOcflIndex));
@@ -136,8 +138,9 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
      * @param objectSessionFactory the session factory
      */
     protected OCFLPersistentStorageSession(final FedoraToOcflObjectIndex fedoraOcflIndex,
+                                           final Path sessionStagingDir,
                                            final OCFLObjectSessionFactory objectSessionFactory) {
-        this(null, fedoraOcflIndex, objectSessionFactory);
+        this(null, fedoraOcflIndex, sessionStagingDir, objectSessionFactory);
     }
 
     @Override
@@ -178,7 +181,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     OCFLObjectSession findOrCreateSession(final String ocflId) {
         return this.sessionMap.computeIfAbsent(ocflId,
-                key -> this.objectSessionFactory.create(key, getId()));
+                key -> this.objectSessionFactory.create(key, sessionStagingDir));
     }
 
     @Override
@@ -267,7 +270,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         }
 
         this.state = State.COMMIT_STARTED;
-        LOGGER.debug("Starting commit.");
+        LOGGER.debug("Starting storage session {} commit", sessionId);
 
         synchronized (this.phaser) {
             if (this.phaser.getRegisteredParties() > 0) {
@@ -275,43 +278,56 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
             }
         }
 
-        LOGGER.debug("All persisters are complete");
+        LOGGER.debug("All persisters are complete in session {}", sessionId);
 
-        //prepare session for commit
-        final List<OCFLObjectSession> sessions = new ArrayList<>(this.sessionMap.values());
+        // order map for testing
+        final var sessions = new TreeMap<>(sessionMap);
 
-        //order in order of session creation time. (supports testing)
-        Collections.sort(sessions, CREATION_TIME_ORDER);
+        prepareObjectSessions(sessions);
+        commitObjectSessions(sessions);
 
-        try {
-            LOGGER.debug("Preparing commit...");
+        cleanupStagingDir();
 
-            for (final OCFLObjectSession objectSession : sessions) {
-                objectSession.prepare();
+        LOGGER.debug("Committed storage session {}", sessionId);
+    }
+
+    private void prepareObjectSessions(final Map<String, OCFLObjectSession> sessions)
+            throws PersistentStorageException {
+        LOGGER.debug("Preparing commit session {}", sessionId);
+
+        for (final var entry : sessions.entrySet()) {
+            try {
+                entry.getValue().prepare();
+            } catch (Exception e) {
+                this.state = State.PREPARE_FAILED;
+                throw new PersistentStorageException(
+                        String.format("Storage session <%s> failed to prepare object <%s> for commit.",
+                                sessionId, entry.getKey()), e);
             }
+        }
+    }
 
-            LOGGER.debug("Prepare succeeded.");
-        } catch (final Exception e) {
-            this.state = State.PREPARE_FAILED;
-            throw new PersistentStorageException("Commit failed due to : " + e.getMessage(), e);
+    private void commitObjectSessions(final Map<String, OCFLObjectSession> sessions)
+            throws PersistentStorageException {
+        LOGGER.debug("Committing session {}", sessionId);
+
+        this.sessionsToRollback = new HashMap<>(sessionMap.size());
+
+        for (final var entry : sessions.entrySet()) {
+            final var id = entry.getKey();
+            final var session = entry.getValue();
+            try {
+                session.commit();
+                sessionsToRollback.put(id, session);
+                session.close();
+            } catch (Exception e) {
+                this.state = State.COMMIT_FAILED;
+                throw new PersistentStorageException(String.format("Failed to commit object <%s> in session <%s>",
+                        id, sessionId), e);
+            }
         }
 
-        try {
-            this.sessionsToRollback = new ArrayList<>(sessions.size());
-
-
-            //perform commit
-            for (final OCFLObjectSession objectSession : sessions) {
-                objectSession.commit();
-                sessionsToRollback.add(objectSession);
-            }
-
-            state = State.COMMITTED;
-            LOGGER.info("Successfully committed {}", this);
-        } catch (final Exception e) {
-            this.state = State.COMMIT_FAILED;
-            throw new PersistentStorageException("Commit failed due to : " + e.getMessage(), e);
-        }
+        state = State.COMMITTED;
     }
 
     @Override
@@ -329,7 +345,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         final boolean commitWasStarted = this.state != State.COMMIT_NOT_STARTED;
 
         this.state = State.ROLLING_BACK;
-        LOGGER.info("rolling back...");
+        LOGGER.info("Rolling back storage session {}", sessionId);
 
         if (!commitWasStarted) {
             //if the commit had not been started at the time this method was invoked
@@ -348,42 +364,58 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
             }
         }
 
-        //close any uncommitted sessions
-        final List<OCFLObjectSession> uncommittedSessions = new ArrayList<>(this.sessionMap.values());
-        uncommittedSessions.removeAll(sessionsToRollback);
-        for (final OCFLObjectSession obj : uncommittedSessions) {
-            obj.close();
-        }
+        closeUncommittedSessions();
 
         if (commitWasStarted) {
-
-            // rollback committed sessions
-            //for each committed session, rollback if possible
-            final List<String> rollbackFailures = new ArrayList<>(this.sessionsToRollback.size());
-            for (final var cs : this.sessionsToRollback) {
-                if (cs.getCommitOption() == NEW_VERSION) {
-                    //TODO rollback to previous OCFL version
-                    //add any failure messages here.
-                    rollbackFailures.add(format("rollback of previously committed versions is not yet supported", cs));
-                } else {
-                    rollbackFailures.add(format("%s was already committed to the unversioned head", cs));
-                }
-            }
-            //throw an exception if any sessions could not be rolled back.
-            if (rollbackFailures.size() > 0) {
-                state = State.ROLLBACK_FAILED;
-                final StringBuilder builder = new StringBuilder();
-                builder.append("Unable to rollback successfully due to the following reasons: \n");
-                for (final String failures : rollbackFailures) {
-                    builder.append("        " + failures + "\n");
-                }
-
-                throw new PersistentStorageException(builder.toString());
-            }
+            rollbackCommittedSessions();
         }
-        this.state = State.ROLLED_BACK;
-        LOGGER.info("rolled back successfully.");
 
+        cleanupStagingDir();
+
+        this.state = State.ROLLED_BACK;
+        LOGGER.debug("Successfully rolled back storage session {}", sessionId);
+    }
+
+    private void closeUncommittedSessions() {
+        this.sessionMap.entrySet().stream()
+                .filter(entry -> !sessionsToRollback.containsKey(entry.getKey()))
+                .map(Map.Entry::getValue)
+                .forEach(OCFLObjectSession::close);
+    }
+
+    private void rollbackCommittedSessions() throws PersistentStorageException {
+        final List<String> rollbackFailures = new ArrayList<>(this.sessionsToRollback.size());
+
+        for (final var entry : this.sessionsToRollback.entrySet()) {
+            final var id = entry.getKey();
+            final var session = entry.getValue();
+
+            if (session.getCommitOption() == NEW_VERSION) {
+                //TODO rollback to previous OCFL version this is supported in ocfl-java 0.0.4-SNAPSHOT
+                rollbackFailures.add(
+                        String.format("Cannot rollback object <%s>." +
+                                " Rollback to previous version not yet implemented.", id));
+            } else {
+                rollbackFailures.add(String.format("Cannot rollback object <%s>." +
+                        " It was already committed to the mutable head", id));
+            }
+
+            session.close();
+        }
+        //throw an exception if any sessions could not be rolled back.
+        if (rollbackFailures.size() > 0) {
+            state = State.ROLLBACK_FAILED;
+            final StringBuilder builder = new StringBuilder()
+                    .append("Unable to rollback storage session ")
+                    .append(sessionId)
+                    .append(" completely due to the following errors: \n");
+
+            for (final String failures : rollbackFailures) {
+                builder.append("\t").append(failures).append("\n");
+            }
+
+            throw new PersistentStorageException(builder.toString());
+        }
     }
 
     /**
@@ -401,6 +433,12 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     private void actionNeedsWrite() throws PersistentStorageException {
         if (isReadOnly()) {
             throw new PersistentStorageException("Session is read-only");
+        }
+    }
+
+    private void cleanupStagingDir() {
+        if (!FileUtils.deleteQuietly(sessionStagingDir.toFile())) {
+            LOGGER.warn("Failed to cleanup session staging directory at " + sessionStagingDir);
         }
     }
 

@@ -30,7 +30,6 @@ import edu.wisc.library.ocfl.api.model.ObjectVersionId;
 import edu.wisc.library.ocfl.api.model.VersionDetails;
 import edu.wisc.library.ocfl.api.model.VersionId;
 import edu.wisc.library.ocfl.core.util.FileUtil;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -53,7 +52,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -92,6 +90,9 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
     private static final Logger log = LoggerFactory.getLogger(DefaultOCFLObjectSession.class);
 
+    private static final Comparator<VersionDetails> VERSION_COMPARATOR =
+            Comparator.comparing(VersionDetails::getVersionId);
+
     private final String objectIdentifier;
 
     // Path where changes to the OCFL object in this session are staged
@@ -110,7 +111,6 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
     private final Map<String, String> subpathToDigest;
 
-    private final Instant created;
     /**
      * Instantiate an OCFL object session
      *
@@ -122,24 +122,13 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     public DefaultOCFLObjectSession(final String objectIdentifier, final Path stagingPath,
             final MutableOcflRepository ocflRepository, final CommitOption commitOption) {
         this.objectIdentifier = objectIdentifier;
-        this.stagingPath = stagingPath.resolve(createStagingDirectory(stagingPath, objectIdentifier));
-        log.debug("OCFL object <{}> is staging files at <{}>", objectIdentifier, stagingPath);
+        this.stagingPath = stagingPath;
         this.ocflRepository = ocflRepository;
         this.commitOption = commitOption;
         this.deletePaths = new HashSet<>();
         this.objectDeleted = false;
         this.sessionClosed = false;
-        this.created = Instant.now();
         this.subpathToDigest = new HashMap<>();
-    }
-
-    private static Path createStagingDirectory(final Path sessionStaging, final String objectIdentifier) {
-        final var digest = DigestUtils.sha256Hex(objectIdentifier);
-        try {
-            return Files.createDirectories(sessionStaging.resolve(digest));
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 
     private String encode(final String value) {
@@ -522,7 +511,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
      * Close the session and perform cleanup.
      */
     @Override
-    public synchronized void close() throws PersistentStorageException {
+    public synchronized void close() {
         sessionClosed = true;
 
         if (!FileUtils.deleteQuietly(stagingPath.toFile())) {
@@ -598,19 +587,6 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
                     .map(this::decode);
         } catch (final NotFoundException exc) {
             return Stream.empty();
-        }
-    }
-
-    @Override
-    public Instant getCreated() {
-        return this.created;
-    }
-    private static final VersionComparator VERSION_COMPARATOR = new VersionComparator();
-
-    private static class VersionComparator implements Comparator<VersionDetails> {
-        @Override
-        public int compare(final VersionDetails a, final VersionDetails b) {
-            return a.getVersionId().compareTo(b.getVersionId());
         }
     }
 

@@ -17,12 +17,6 @@
  */
 package org.fcrepo.kernel.impl;
 
-import static java.time.Duration.ofMillis;
-import static java.time.Duration.ofMinutes;
-
-import java.time.Duration;
-import java.time.Instant;
-
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -32,6 +26,13 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.concurrent.Callable;
+
+import static java.time.Duration.ofMillis;
+import static java.time.Duration.ofMinutes;
 
 /**
  * The Fedora Transaction implementation
@@ -83,13 +84,13 @@ public class TransactionImpl implements Transaction {
         try {
             log.debug("Committing transaction {}", id);
             this.getPersistentSession().commit();
-            this.getContainmentIndex().commitTransaction(this);
+            this.getContainmentIndex().commitTransaction(id);
             this.getEventAccumulator().emitEvents(id, baseUri, userAgent);
             this.committed = true;
         } catch (final PersistentStorageException ex) {
             // Rollback on commit failure
             rollback();
-            throw new RepositoryRuntimeException("failed to commit transaction " + id, ex);
+            throw new RepositoryRuntimeException("Failed to commit transaction " + id, ex);
         }
     }
 
@@ -100,19 +101,25 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public synchronized void rollback() {
-        failIfCommited();
+        failIfCommitted();
         if (this.rolledback) {
             return;
         }
-        try {
-            log.debug("Rolling back transaction {}", id);
-            this.rolledback = true;
+        log.info("Rolling back transaction {}", id);
+        this.rolledback = true;
+
+        execQuietly("Failed to rollback storage in transaction " + id, () -> {
             this.getPersistentSession().rollback();
-            this.getContainmentIndex().rollbackTransaction(this);
+            return null;
+        });
+        execQuietly("Failed to rollback index in transaction " + id, () -> {
+            this.getContainmentIndex().rollbackTransaction(id);
+            return null;
+        });
+        execQuietly("Failed to rollback events in transaction " + id, () -> {
             this.getEventAccumulator().clearEvents(id);
-        } catch (final PersistentStorageException ex) {
-            throw new RepositoryRuntimeException("failed to rollback transaction " + id, ex);
-        }
+            return null;
+        });
     }
 
     @Override
@@ -153,7 +160,7 @@ public class TransactionImpl implements Transaction {
     @Override
     public synchronized Instant updateExpiry(final Duration amountToAdd) {
         failIfExpired();
-        failIfCommited();
+        failIfCommitted();
         failIfRolledback();
         this.expiration = this.expiration.plus(amountToAdd);
         return this.expiration;
@@ -207,7 +214,7 @@ public class TransactionImpl implements Transaction {
         }
     }
 
-    private void failIfCommited() {
+    private void failIfCommitted() {
         if (this.committed) {
             throw new TransactionClosedException("Transaction with transactionId: " + id + " is already committed!");
         }
@@ -216,6 +223,20 @@ public class TransactionImpl implements Transaction {
     private void failIfRolledback() {
         if (this.rolledback) {
             throw new TransactionClosedException("Transaction with transactionId: " + id + " is already rolledback!");
+        }
+    }
+
+    /**
+     * Executes the closure, capturing all exceptions, and logging them as errors.
+     *
+     * @param failureMessage what to print if the closure fails
+     * @param callable closure to execute
+     */
+    private void execQuietly(final String failureMessage, final Callable<Void> callable) {
+        try {
+            callable.call();
+        } catch (Exception e) {
+            log.error(failureMessage, e);
         }
     }
 

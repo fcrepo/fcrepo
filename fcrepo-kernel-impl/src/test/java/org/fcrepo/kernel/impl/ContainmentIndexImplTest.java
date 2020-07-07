@@ -103,8 +103,8 @@ public class ContainmentIndexImplTest {
     @After
     public void cleanUp() {
         // Rollback any in-process transactions.
-        containmentIndex.rollbackTransaction(transaction1);
-        containmentIndex.rollbackTransaction(transaction2);
+        containmentIndex.rollbackTransaction(transaction1.getId());
+        containmentIndex.rollbackTransaction(transaction2.getId());
     }
 
     @Test
@@ -114,15 +114,15 @@ public class ContainmentIndexImplTest {
         stubObject("transaction1");
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
         containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
-        assertEquals(1, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent1).count());
         assertEquals(child1.getFedoraId().getFullId(),
-                containmentIndex.getContains(transaction1, parent1).findFirst().get());
+                containmentIndex.getContains(transaction1.getId(), parent1).findFirst().get());
         assertEquals(parent1.getFedoraId().getFullId(),
                 containmentIndex.getContainedBy(transaction1.getId(), child1.getFedoraId()));
         // outside of the transaction, the containment shouldn't show up
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
         containmentIndex.removeContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
-        assertEquals(0, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(0, containmentIndex.getContains(transaction1.getId(), parent1).count());
         assertNull(containmentIndex.getContainedBy(transaction1.getId(), child1.getFedoraId()));
     }
 
@@ -132,19 +132,19 @@ public class ContainmentIndexImplTest {
         stubObject("child1");
         stubObject("transaction1");
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
-        assertEquals(0, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(0, containmentIndex.getContains(transaction1.getId(), parent1).count());
         assertEquals(0, containmentIndex.getContainsDeleted(null, parent1).count());
-        assertEquals(0, containmentIndex.getContainsDeleted(transaction1, parent1).count());
+        assertEquals(0, containmentIndex.getContainsDeleted(transaction1.getId(), parent1).count());
         assertNull(containmentIndex.getContainedBy(transaction1.getId(), child1.getFedoraId()));
         containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
-        assertEquals(1, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent1).count());
         assertEquals(parent1.getFedoraId().getFullId(),
                 containmentIndex.getContainedBy(transaction1.getId(), child1.getFedoraId()));
         containmentIndex.removeContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
-        assertEquals(0, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(0, containmentIndex.getContains(transaction1.getId(), parent1).count());
         assertNull(containmentIndex.getContainedBy(transaction1.getId(), child1.getFedoraId()));
         assertEquals(0, containmentIndex.getContainsDeleted(null, parent1).count());
-        assertEquals(0, containmentIndex.getContainsDeleted(transaction1, parent1).count());
+        assertEquals(0, containmentIndex.getContainsDeleted(transaction1.getId(), parent1).count());
     }
 
     @Test
@@ -153,24 +153,24 @@ public class ContainmentIndexImplTest {
         stubObject("child1");
         stubObject("transaction1");
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
-        assertEquals(0, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(0, containmentIndex.getContains(transaction1.getId(), parent1).count());
         assertEquals(0, containmentIndex.getContainsDeleted(null, parent1).count());
-        assertEquals(0, containmentIndex.getContainsDeleted(transaction1, parent1).count());
+        assertEquals(0, containmentIndex.getContainsDeleted(transaction1.getId(), parent1).count());
         assertNull(containmentIndex.getContainedBy(transaction1.getId(), child1.getFedoraId()));
         containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
-        assertEquals(1, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent1).count());
         assertEquals(parent1.getFedoraId().getFullId(),
                 containmentIndex.getContainedBy(transaction1.getId(), child1.getFedoraId()));
-        containmentIndex.commitTransaction(transaction1);
+        containmentIndex.commitTransaction(transaction1.getId());
         assertEquals(1, containmentIndex.getContains(null, parent1).count());
         containmentIndex.removeContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
         assertEquals(0, containmentIndex.getContainsDeleted(null, parent1).count());
-        assertEquals(1, containmentIndex.getContainsDeleted(transaction1, parent1).count());
-        assertEquals(0, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(1, containmentIndex.getContainsDeleted(transaction1.getId(), parent1).count());
+        assertEquals(0, containmentIndex.getContains(transaction1.getId(), parent1).count());
         assertNull(containmentIndex.getContainedBy(transaction1.getId(), child1.getFedoraId()));
-        containmentIndex.commitTransaction(transaction1);
+        containmentIndex.commitTransaction(transaction1.getId());
         assertEquals(1, containmentIndex.getContainsDeleted(null, parent1).count());
-        assertEquals(1, containmentIndex.getContainsDeleted(transaction1, parent1).count());
+        assertEquals(1, containmentIndex.getContainsDeleted(transaction1.getId(), parent1).count());
     }
 
     @Test
@@ -179,22 +179,22 @@ public class ContainmentIndexImplTest {
         stubObject("child1");
         stubObject("transaction1");
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
-        assertEquals(0, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(0, containmentIndex.getContains(transaction1.getId(), parent1).count());
         assertEquals(0, containmentIndex.getContainsDeleted(null, parent1).count());
         assertNull(containmentIndex.getContainedBy(transaction1.getId(), child1.getFedoraId()));
         containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
-        assertEquals(1, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent1).count());
         containmentIndex.removeContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
-        assertEquals(0, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(0, containmentIndex.getContains(transaction1.getId(), parent1).count());
         assertEquals(0, containmentIndex.getContainsDeleted(null, parent1).count());
-        assertEquals(0, containmentIndex.getContainsDeleted(transaction1, parent1).count());
+        assertEquals(0, containmentIndex.getContainsDeleted(transaction1.getId(), parent1).count());
         containmentIndex.purgeResource(transaction1.getId(), child1.getFedoraId());
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
-        assertEquals(0, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(0, containmentIndex.getContains(transaction1.getId(), parent1).count());
         assertEquals(0, containmentIndex.getContainsDeleted(null, parent1).count());
-        assertEquals(0, containmentIndex.getContainsDeleted(transaction1, parent1).count());
+        assertEquals(0, containmentIndex.getContainsDeleted(transaction1.getId(), parent1).count());
     }
 
     @Test
@@ -203,25 +203,25 @@ public class ContainmentIndexImplTest {
         stubObject("child1");
         stubObject("transaction1");
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
-        assertEquals(0, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(0, containmentIndex.getContains(transaction1.getId(), parent1).count());
         assertEquals(0, containmentIndex.getContainsDeleted(null, parent1).count());
         assertNull(containmentIndex.getContainedBy(transaction1.getId(), child1.getFedoraId()));
         containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
-        containmentIndex.commitTransaction(transaction1);
+        containmentIndex.commitTransaction(transaction1.getId());
         assertEquals(1, containmentIndex.getContains(null, parent1).count());
-        assertEquals(1, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent1).count());
         containmentIndex.removeContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
-        containmentIndex.commitTransaction(transaction1);
+        containmentIndex.commitTransaction(transaction1.getId());
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
-        assertEquals(0, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(0, containmentIndex.getContains(transaction1.getId(), parent1).count());
         assertEquals(1, containmentIndex.getContainsDeleted(null, parent1).count());
-        assertEquals(1, containmentIndex.getContainsDeleted(transaction1, parent1).count());
+        assertEquals(1, containmentIndex.getContainsDeleted(transaction1.getId(), parent1).count());
         containmentIndex.purgeResource(transaction1.getId(), child1.getFedoraId());
-        containmentIndex.commitTransaction(transaction1);
+        containmentIndex.commitTransaction(transaction1.getId());
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
-        assertEquals(0, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(0, containmentIndex.getContains(transaction1.getId(), parent1).count());
         assertEquals(0, containmentIndex.getContainsDeleted(null, parent1).count());
-        assertEquals(0, containmentIndex.getContainsDeleted(transaction1, parent1).count());
+        assertEquals(0, containmentIndex.getContainsDeleted(transaction1.getId(), parent1).count());
     }
 
     @Test
@@ -230,20 +230,20 @@ public class ContainmentIndexImplTest {
         stubObject("child1");
         stubObject("transaction1");
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
-        assertEquals(0, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(0, containmentIndex.getContains(transaction1.getId(), parent1).count());
         assertNull(containmentIndex.getContainedBy(null, child1.getFedoraId()));
         assertNull(containmentIndex.getContainedBy(transaction1.getId(), child1.getFedoraId()));
         containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
-        assertEquals(1, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent1).count());
         assertEquals(child1.getFedoraId().getFullId(),
-                containmentIndex.getContains(transaction1, parent1).findFirst().get());
+                containmentIndex.getContains(transaction1.getId(), parent1).findFirst().get());
         assertNull(containmentIndex.getContainedBy(null, child1.getFedoraId()));
         assertEquals(parent1.getFedoraId().getFullId(),
                 containmentIndex.getContainedBy(transaction1.getId(), child1.getFedoraId()));
-        containmentIndex.rollbackTransaction(transaction1);
+        containmentIndex.rollbackTransaction(transaction1.getId());
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
-        assertEquals(0, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(0, containmentIndex.getContains(transaction1.getId(), parent1).count());
         assertNull(containmentIndex.getContainedBy(null, child1.getFedoraId()));
         assertNull(containmentIndex.getContainedBy(transaction1.getId(), child1.getFedoraId()));
     }
@@ -254,24 +254,24 @@ public class ContainmentIndexImplTest {
         stubObject("child2");
         stubObject("transaction1");
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
-        assertEquals(0, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(0, containmentIndex.getContains(transaction1.getId(), parent1).count());
         containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), child2.getFedoraId());
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
-        assertEquals(1, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent1).count());
         assertEquals(child2.getFedoraId().getFullId(),
-                containmentIndex.getContains(transaction1, parent1).findFirst().get());
+                containmentIndex.getContains(transaction1.getId(), parent1).findFirst().get());
         assertEquals(parent1.getFedoraId().getFullId(),
                 containmentIndex.getContainedBy(transaction1.getId(), child2.getFedoraId()));
         assertNull(containmentIndex.getContainedBy(null, child2.getFedoraId()));
-        containmentIndex.commitTransaction(transaction1);
+        containmentIndex.commitTransaction(transaction1.getId());
         assertEquals(1, containmentIndex.getContains(null, parent1).count());
-        assertEquals(1, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent1).count());
         assertEquals(child2.getFedoraId().getFullId(),
                 containmentIndex.getContains(null, parent1).findFirst().get());
         assertEquals(parent1.getFedoraId().getFullId(),
                 containmentIndex.getContainedBy(transaction1.getId(), child2.getFedoraId()));
         assertEquals(child2.getFedoraId().getFullId(),
-                containmentIndex.getContains(transaction1, parent1).findFirst().get());
+                containmentIndex.getContains(transaction1.getId(), parent1).findFirst().get());
         assertEquals(parent1.getFedoraId().getFullId(),
                 containmentIndex.getContainedBy(null, child2.getFedoraId()));
     }
@@ -285,7 +285,7 @@ public class ContainmentIndexImplTest {
         stubObject("transaction2");
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
         containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
-        containmentIndex.commitTransaction(transaction1);
+        containmentIndex.commitTransaction(transaction1.getId());
         assertEquals(1, containmentIndex.getContains(null, parent1).count());
         assertEquals(child1.getFedoraId().getFullId(),
                 containmentIndex.getContains(null, parent1).findFirst().get());
@@ -296,22 +296,22 @@ public class ContainmentIndexImplTest {
         assertEquals(child1.getFedoraId().getFullId(),
                 containmentIndex.getContains(null, parent1).findFirst().get());
         // Still the same in a different transaction
-        assertEquals(1, containmentIndex.getContains(transaction2, parent1).count());
+        assertEquals(1, containmentIndex.getContains(transaction2.getId(), parent1).count());
         assertEquals(child1.getFedoraId().getFullId(),
-                containmentIndex.getContains(transaction2, parent1).findFirst().get());
+                containmentIndex.getContains(transaction2.getId(), parent1).findFirst().get());
         // Inside it has changed
-        assertEquals(1, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent1).count());
         assertEquals(child2.getFedoraId().getFullId(),
-                containmentIndex.getContains(transaction1, parent1).findFirst().get());
-        containmentIndex.commitTransaction(transaction1);
+                containmentIndex.getContains(transaction1.getId(), parent1).findFirst().get());
+        containmentIndex.commitTransaction(transaction1.getId());
         // After commit() it is the same outside transactions.
         assertEquals(1, containmentIndex.getContains(null, parent1).count());
         assertEquals(child2.getFedoraId().getFullId(),
                 containmentIndex.getContains(null, parent1).findFirst().get());
         // And now the same in a different transaction
-        assertEquals(1, containmentIndex.getContains(transaction2, parent1).count());
+        assertEquals(1, containmentIndex.getContains(transaction2.getId(), parent1).count());
         assertEquals(child2.getFedoraId().getFullId(),
-                containmentIndex.getContains(transaction2, parent1).findFirst().get());
+                containmentIndex.getContains(transaction2.getId(), parent1).findFirst().get());
     }
 
     @Test
@@ -324,24 +324,24 @@ public class ContainmentIndexImplTest {
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
         containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
         containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), child2.getFedoraId());
-        containmentIndex.commitTransaction(transaction1);
+        containmentIndex.commitTransaction(transaction1.getId());
         assertEquals(2, containmentIndex.getContains(null, parent1).count());
         // Delete one object in separate transactions.
         containmentIndex.removeContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
         containmentIndex.removeContainedBy(transaction2.getId(), parent1.getFedoraId(), child2.getFedoraId());
-        assertEquals(1, containmentIndex.getContains(transaction1, parent1).count());
-        assertEquals(1, containmentIndex.getContains(transaction2, parent1).count());
-        containmentIndex.commitTransaction(transaction1);
+        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent1).count());
+        assertEquals(1, containmentIndex.getContains(transaction2.getId(), parent1).count());
+        containmentIndex.commitTransaction(transaction1.getId());
         // Now only one record was removed
         assertEquals(1, containmentIndex.getContains(null, parent1).count());
-        assertEquals(1, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent1).count());
         // Except in the second transaction as it should now have 0
-        assertEquals(0, containmentIndex.getContains(transaction2, parent1).count());
-        containmentIndex.commitTransaction(transaction2);
+        assertEquals(0, containmentIndex.getContains(transaction2.getId(), parent1).count());
+        containmentIndex.commitTransaction(transaction2.getId());
         // Now all are gone
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
-        assertEquals(0, containmentIndex.getContains(transaction1, parent1).count());
-        assertEquals(0, containmentIndex.getContains(transaction2, parent1).count());
+        assertEquals(0, containmentIndex.getContains(transaction1.getId(), parent1).count());
+        assertEquals(0, containmentIndex.getContains(transaction2.getId(), parent1).count());
     }
 
     @Test
@@ -354,23 +354,23 @@ public class ContainmentIndexImplTest {
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
         containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
         containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), child2.getFedoraId());
-        containmentIndex.commitTransaction(transaction1);
+        containmentIndex.commitTransaction(transaction1.getId());
         assertEquals(2, containmentIndex.getContains(null, parent1).count());
         // Delete one object in separate transactions.
         containmentIndex.removeContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
         containmentIndex.removeContainedBy(transaction2.getId(), parent1.getFedoraId(), child1.getFedoraId());
-        assertEquals(1, containmentIndex.getContains(transaction1, parent1).count());
-        assertEquals(1, containmentIndex.getContains(transaction2, parent1).count());
-        containmentIndex.commitTransaction(transaction1);
+        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent1).count());
+        assertEquals(1, containmentIndex.getContains(transaction2.getId(), parent1).count());
+        containmentIndex.commitTransaction(transaction1.getId());
         // Now only one record was removed
         assertEquals(1, containmentIndex.getContains(null, parent1).count());
-        assertEquals(1, containmentIndex.getContains(transaction1, parent1).count());
-        assertEquals(1, containmentIndex.getContains(transaction2, parent1).count());
-        containmentIndex.commitTransaction(transaction2);
+        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent1).count());
+        assertEquals(1, containmentIndex.getContains(transaction2.getId(), parent1).count());
+        containmentIndex.commitTransaction(transaction2.getId());
         // No change as the first transaction already committed.
         assertEquals(1, containmentIndex.getContains(null, parent1).count());
-        assertEquals(1, containmentIndex.getContains(transaction1, parent1).count());
-        assertEquals(1, containmentIndex.getContains(transaction2, parent1).count());
+        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent1).count());
+        assertEquals(1, containmentIndex.getContains(transaction2.getId(), parent1).count());
     }
 
     @Test
@@ -385,10 +385,10 @@ public class ContainmentIndexImplTest {
         containmentIndex.addContainedBy(transaction1.getId(), parent2.getFedoraId(), child1.getFedoraId());
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
         assertEquals(0, containmentIndex.getContains(null, parent2).count());
-        assertEquals(1, containmentIndex.getContains(transaction1, parent1).count());
-        assertEquals(1, containmentIndex.getContains(transaction1, parent2).count());
+        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent1).count());
+        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent2).count());
         try {
-            containmentIndex.commitTransaction(transaction1);
+            containmentIndex.commitTransaction(transaction1.getId());
             // We should get an exception.
             fail();
         } catch (final RepositoryRuntimeException e) {
@@ -397,8 +397,8 @@ public class ContainmentIndexImplTest {
         // This should be rolled back so the additions should still be in the transaction operation table.
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
         assertEquals(0, containmentIndex.getContains(null, parent2).count());
-        assertEquals(1, containmentIndex.getContains(transaction1, parent1).count());
-        assertEquals(1, containmentIndex.getContains(transaction1, parent2).count());
+        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent1).count());
+        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent2).count());
     }
 
     @Test
@@ -410,7 +410,7 @@ public class ContainmentIndexImplTest {
         assertFalse(containmentIndex.resourceExists(null, child1.getFedoraId()));
         assertFalse(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId()));
         containmentIndex.addContainedBy(transaction2.getId(), parent1.getFedoraId(), child1.getFedoraId());
-        containmentIndex.commitTransaction(transaction2);
+        containmentIndex.commitTransaction(transaction2.getId());
         assertTrue(containmentIndex.resourceExists(null, child1.getFedoraId()));
         assertTrue(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId()));
     }
@@ -430,7 +430,7 @@ public class ContainmentIndexImplTest {
         assertTrue(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId()));
         assertFalse(containmentIndex.resourceExists(transaction2.getId(), child1.getFedoraId()));
         // Rollback transaction.
-        containmentIndex.rollbackTransaction(transaction1);
+        containmentIndex.rollbackTransaction(transaction1.getId());
         assertFalse(containmentIndex.resourceExists(null, child1.getFedoraId()));
         assertFalse(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId()));
         assertFalse(containmentIndex.resourceExists(transaction2.getId(), child1.getFedoraId()));
@@ -440,7 +440,7 @@ public class ContainmentIndexImplTest {
         assertTrue(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId()));
         assertFalse(containmentIndex.resourceExists(transaction2.getId(), child1.getFedoraId()));
         // Commit and visible everywhere.
-        containmentIndex.commitTransaction(transaction1);
+        containmentIndex.commitTransaction(transaction1.getId());
         assertTrue(containmentIndex.resourceExists(null, child1.getFedoraId()));
         assertTrue(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId()));
         assertTrue(containmentIndex.resourceExists(transaction2.getId(), child1.getFedoraId()));
@@ -452,12 +452,12 @@ public class ContainmentIndexImplTest {
         stubObject("child1");
         stubObject("transaction1");
         containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
-        containmentIndex.commitTransaction(transaction1);
+        containmentIndex.commitTransaction(transaction1.getId());
         assertEquals(1, containmentIndex.getContains(null, parent1).count());
         assertEquals(parent1.getFedoraId().getFullId(),
                 containmentIndex.getContainedBy(null, child1.getFedoraId()));
         containmentIndex.removeResource(transaction1.getId(), child1.getFedoraId());
-        containmentIndex.commitTransaction(transaction1);
+        containmentIndex.commitTransaction(transaction1.getId());
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
         assertNull(containmentIndex.getContainedBy(null, child1.getFedoraId()));
     }
@@ -471,21 +471,21 @@ public class ContainmentIndexImplTest {
         stubObject("transaction2");
         assertNull(containmentIndex.getContainedBy(null, child1.getFedoraId()));
         containmentIndex.addContainedBy(transaction2.getId(), parent1.getFedoraId(), child1.getFedoraId());
-        containmentIndex.commitTransaction(transaction2);
+        containmentIndex.commitTransaction(transaction2.getId());
         containmentIndex.addContainedBy(transaction1.getId(), parent2.getFedoraId(), child1.getFedoraId());
         assertEquals(1, containmentIndex.getContains(null, parent1).count());
         assertEquals(parent1.getFedoraId().getFullId(),
                 containmentIndex.getContainedBy(null, child1.getFedoraId()));
-        assertEquals(1, containmentIndex.getContains(transaction1, parent2).count());
+        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent2).count());
         assertEquals(child1.getFedoraId().getFullId(),
-                containmentIndex.getContains(transaction1, parent2).findFirst().get());
+                containmentIndex.getContains(transaction1.getId(), parent2).findFirst().get());
         containmentIndex.removeResource(transaction2.getId(), child1.getFedoraId());
-        containmentIndex.commitTransaction(transaction2);
+        containmentIndex.commitTransaction(transaction2.getId());
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
         assertNull(containmentIndex.getContainedBy(null, child1.getFedoraId()));
-        assertEquals(1, containmentIndex.getContains(transaction1, parent2).count());
+        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent2).count());
         assertEquals(child1.getFedoraId().getFullId(),
-                containmentIndex.getContains(transaction1, parent2).findFirst().get());
+                containmentIndex.getContains(transaction1.getId(), parent2).findFirst().get());
     }
 
     @Test
@@ -496,7 +496,7 @@ public class ContainmentIndexImplTest {
         stubObject("transaction1");
         stubObject("transaction2");
         containmentIndex.addContainedBy(transaction2.getId(), parent1.getFedoraId(), child1.getFedoraId());
-        containmentIndex.commitTransaction(transaction2);
+        containmentIndex.commitTransaction(transaction2.getId());
         assertEquals(1, containmentIndex.getContains(null, parent1).count());
         assertEquals(parent1.getFedoraId().getFullId(),
                 containmentIndex.getContainedBy(null, child1.getFedoraId()));
@@ -504,11 +504,11 @@ public class ContainmentIndexImplTest {
         assertEquals(1, containmentIndex.getContains(null, parent1).count());
         assertEquals(parent1.getFedoraId().getFullId(),
                 containmentIndex.getContainedBy(null, child1.getFedoraId()));
-        assertEquals(0, containmentIndex.getContains(transaction1, parent1).count());
-        containmentIndex.commitTransaction(transaction1);
+        assertEquals(0, containmentIndex.getContains(transaction1.getId(), parent1).count());
+        containmentIndex.commitTransaction(transaction1.getId());
         assertEquals(0, containmentIndex.getContains(null, parent1).count());
         assertNull(containmentIndex.getContainedBy(null, child1.getFedoraId()));
-        assertEquals(0, containmentIndex.getContains(transaction1, parent1).count());
+        assertEquals(0, containmentIndex.getContains(transaction1.getId(), parent1).count());
     }
 
     /**
@@ -521,7 +521,7 @@ public class ContainmentIndexImplTest {
         stubObject("transaction1");
         final FedoraId fedoraID = FedoraId.create(child1.getFedoraId().getFullId());
         containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
-        containmentIndex.commitTransaction(transaction1);
+        containmentIndex.commitTransaction(transaction1.getId());
         assertEquals(1, containmentIndex.getContains(null, parent1).count());
         assertEquals(parent1.getFedoraId().getFullId(),
                 containmentIndex.getContainedBy(null, child1.getFedoraId()));
@@ -539,7 +539,7 @@ public class ContainmentIndexImplTest {
         stubObject("transaction1");
         final FedoraId fedoraID = FedoraId.create(child1.getFedoraId().getFullId() + "/");
         containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
-        containmentIndex.commitTransaction(transaction1);
+        containmentIndex.commitTransaction(transaction1.getId());
         assertEquals(1, containmentIndex.getContains(null, parent1).count());
         assertEquals(parent1.getFedoraId().getFullId(),
                 containmentIndex.getContainedBy(null, child1.getFedoraId()));
