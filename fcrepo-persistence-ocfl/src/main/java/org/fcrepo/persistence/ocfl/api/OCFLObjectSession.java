@@ -175,4 +175,11 @@ public interface OCFLObjectSession {
      * persisted.
      */
     boolean isNewInSession(final String subpath);
+
+    /**
+     * Determine if the object does/will not exist.
+     *
+     * @return true if this OCFL object is being deleted or has not been persisted yet.
+     */
+    boolean isNewInSession();
 }

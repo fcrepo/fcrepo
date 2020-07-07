@@ -268,17 +268,26 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
         final var encodedSubpath = encode(subpath);
 
+        if (isNewInSession()) {
+            return true;
+        }
+
+        // determine if this subpath exists in the OCFL object
+        return !ocflRepository.getObject(ObjectVersionId.head(objectIdentifier))
+                .containsFile(encodedSubpath);
+    }
+
+    @Override
+    public boolean isNewInSession() {
         // If the object was deleted in this session, then content can only be new
         if (objectDeleted) {
             return true;
         }
-        // If the object isn't created yet, then there is no history for the subpath
+        // If the object isn't created yet, then the object must be new.
         if (!ocflRepository.containsObject(objectIdentifier)) {
             return true;
         }
-        // determine if this subpath exists in the OCFL object
-        return !ocflRepository.getObject(ObjectVersionId.head(objectIdentifier))
-                .containsFile(encodedSubpath);
+        return false;
     }
 
     /**
@@ -575,7 +584,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
                     .map(FileDetails::getPath)
                     .map(this::decode);
         } catch (final NotFoundException exc) {
-            throw new PersistentStorageException(exc);
+            return Stream.empty();
         }
     }
 

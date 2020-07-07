@@ -26,7 +26,6 @@ import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolv
 
 import java.time.Instant;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -63,12 +62,13 @@ class DeleteResourcePersister extends AbstractPersister {
         if (fedoraResourceRoot.equals(resourceId)) {
             // We are at the root of the object, so delete all the data files.
             try {
-                final Stream<String> files = objectSession.listHeadSubpaths();
-                files.filter(p -> !isSidecarSubpath(p)).forEach(
-                        p -> deletePathWrapped(p, objectSession, user, deleteTime));
-            } catch (final PersistentStorageException exc) {
-                // This means the object has no versions (only staged), so just delete the whole thing immediately
-                objectSession.deleteObject();
+                if (objectSession.isNewInSession()) {
+                    // This means the object has no versions (only staged), so just delete the whole thing immediately
+                    objectSession.deleteObject();
+                } else {
+                    objectSession.listHeadSubpaths().filter(p -> !isSidecarSubpath(p))
+                            .forEach(p -> deletePathWrapped(p, objectSession, user, deleteTime));
+                }
             } catch (final PersistentStorageRuntimeException exc) {
                 // Rethrow the exception as a checked exception
                 throw new PersistentStorageException(exc);
