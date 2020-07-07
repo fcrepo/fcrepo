@@ -58,7 +58,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
+import static org.fcrepo.search.api.Condition.Field.CONTENT_SIZE;
 import static org.fcrepo.search.api.Condition.Field.FEDORA_ID;
+import static org.fcrepo.search.api.Condition.Field.MIME_TYPE;
 
 
 /**
@@ -107,17 +109,17 @@ public class DbSearchIndexImpl implements SearchIndex {
             final var field = condition.getField();
             final var operation = condition.getOperator();
             var object = condition.getObject();
-            if (field.equals(FEDORA_ID) &&
+            if ((field.equals(FEDORA_ID) || field.equals(MIME_TYPE)) &&
                     condition.getOperator().equals(Condition.Operator.EQ)) {
                 if (!object.equals("*")) {
-                    final var fedoraIdParam = "fedoraId";
+                    final var paramName = "param" + paramCount++;
                     if (object.contains("*")) {
                         object = object.replace("*", "%");
-                        whereClauses.add(FEDORA_ID + " like :" + fedoraIdParam);
+                        whereClauses.add(field + " like :" + paramName);
                     } else {
-                        whereClauses.add(FEDORA_ID + " = :" + fedoraIdParam);
+                        whereClauses.add(field + " = :" + paramName);
                     }
-                    parameterSource.addValue(fedoraIdParam, object);
+                    parameterSource.addValue(paramName, object);
                 }
             } else if (field.equals(Condition.Field.CREATED) || field.equals(Condition.Field.MODIFIED)) {
                 //parse date
@@ -127,6 +129,15 @@ public class DbSearchIndexImpl implements SearchIndex {
                     whereClauses.add(field + " " + operation.getStringValue() +
                             " :" + paramName);
                     parameterSource.addValue(paramName, new Date(instant.toEpochMilli()), Types.TIMESTAMP);
+                } catch (Exception ex) {
+                    throw new InvalidQueryException(ex.getMessage());
+                }
+            } else if (field.equals(CONTENT_SIZE)) {
+                try {
+                    final var paramName = "param" + paramCount++;
+                    whereClauses.add(field + " " + operation.getStringValue() +
+                            " :" + paramName);
+                    parameterSource.addValue(paramName, Long.parseLong(object), Types.INTEGER);
                 } catch (Exception ex) {
                     throw new InvalidQueryException(ex.getMessage());
                 }
@@ -188,21 +199,26 @@ public class DbSearchIndexImpl implements SearchIndex {
             try {
 
                 final var params = new MapSqlParameterSource();
-                params.addValue( fedoraIdParam, fullId);
+                params.addValue(fedoraIdParam, fullId);
                 final var modifiedParam = "modified";
+                final var contentSizeParam = "content_size";
+                final var mimetypeParam = "mime_type";
                 params.addValue(modifiedParam, new Timestamp(resourceHeaders.getLastModifiedDate().toEpochMilli()));
+                params.addValue(mimetypeParam, resourceHeaders.getMimeType());
+                params.addValue(contentSizeParam, resourceHeaders.getContentSize());
                 final String sql;
                 if (result.size() > 0) {
                     //update
                     sql = "UPDATE " + SIMPLE_SEARCH_TABLE +
-                            " SET modified=:" + modifiedParam + " WHERE fedora_id = :" + fedoraIdParam + ";";
+                            " SET modified=:" + modifiedParam + ", content_size=:" + contentSizeParam + ", " +
+                            "mime_type=:" + mimetypeParam + " WHERE fedora_id = :" + fedoraIdParam + ";";
                     jdbcTemplate.update(sql, params);
                 } else {
                     final var createdParam = "created";
-                    ;
                     params.addValue(createdParam, new Timestamp(resourceHeaders.getCreatedDate().toEpochMilli()));
-                    sql = "INSERT INTO " + SIMPLE_SEARCH_TABLE + " (fedora_id, modified, created) " +
-                            "VALUES(:" + fedoraIdParam + ", :" + modifiedParam + ", :" + createdParam + ")";
+                    sql = "INSERT INTO " + SIMPLE_SEARCH_TABLE + " (fedora_id, modified, created, content_size, " +
+                            "mime_type) VALUES(:" + fedoraIdParam + ", :" + modifiedParam + ", :" + createdParam + ", :"
+                            + contentSizeParam + ", :" + mimetypeParam + ")";
                 }
                 jdbcTemplate.update(sql, params);
                 return null;
