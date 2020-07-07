@@ -221,7 +221,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         }
 
         // for file that existed before this session, queue up its deletion for commit time
-        if (!newInSession(subpath)) {
+        if (!isNewInSession(subpath)) {
             deletePaths.add(encodedSubpath);
         } else if (!hasStagedChanges) {
             // File is neither in the staged or exists in the head version, so file cannot be found for deletion
@@ -264,7 +264,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     }
 
     @Override
-    public boolean newInSession(final String subpath) {
+    public boolean isNewInSession(final String subpath) {
 
         final var encodedSubpath = encode(subpath);
 

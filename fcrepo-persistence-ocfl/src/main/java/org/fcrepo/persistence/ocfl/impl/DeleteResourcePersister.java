@@ -113,7 +113,7 @@ class DeleteResourcePersister extends AbstractPersister {
         // readHeaders and writeHeaders need the subpath where as delete needs the file name. So remove any extensions.
         // TODO: See https://jira.lyrasis.org/browse/FCREPO-3287
         final var no_extension = (path.contains(".") ? path.substring(0, path.indexOf(".")) : path);
-        if (!session.newInSession(path)) {
+        if (!session.isNewInSession(path)) {
             writeHeaders(session, headers, no_extension);
         }
     }

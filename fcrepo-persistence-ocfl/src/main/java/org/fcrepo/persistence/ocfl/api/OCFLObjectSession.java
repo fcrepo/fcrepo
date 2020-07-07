@@ -167,10 +167,12 @@ public interface OCFLObjectSession {
     DIGEST_ALGORITHM getObjectDigestAlgorithm();
 
     /**
-     * Determine if the subpath is new to this session (has no versions committed).
+     * Determine if the subpath does/will not exist in the HEAD of this object.
      *
      * @param subpath the subpath to the resource.
-     * @return true if this subpath has never been committed.
+     *
+     * @return true if this OCFL object is being deleted or has not been persisted yet or if this subpath has not been
+     * persisted.
      */
-    boolean newInSession(final String subpath);
+    boolean isNewInSession(final String subpath);
 }
