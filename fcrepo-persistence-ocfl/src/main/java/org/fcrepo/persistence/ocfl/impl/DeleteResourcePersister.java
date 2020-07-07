@@ -62,8 +62,13 @@ class DeleteResourcePersister extends AbstractPersister {
         if (fedoraResourceRoot.equals(resourceId)) {
             // We are at the root of the object, so delete all the data files.
             try {
-                objectSession.listHeadSubpaths().filter(p -> !isSidecarSubpath(p)).forEach(
-                        p -> deletePathWrapped(p, objectSession, user, deleteTime));
+                if (objectSession.isNewInSession()) {
+                    // This means the object has no versions (only staged), so just delete the whole thing immediately
+                    objectSession.deleteObject();
+                } else {
+                    objectSession.listHeadSubpaths().filter(p -> !isSidecarSubpath(p))
+                            .forEach(p -> deletePathWrapped(p, objectSession, user, deleteTime));
+                }
             } catch (final PersistentStorageRuntimeException exc) {
                 // Rethrow the exception as a checked exception
                 throw new PersistentStorageException(exc);
@@ -75,11 +80,6 @@ class DeleteResourcePersister extends AbstractPersister {
             final boolean isRdf = !Objects.equals(NON_RDF_SOURCE.toString(), headers.getInteractionModel());
             final var filePath = resolveExtensions(ocflSubPath, isRdf);
             deletePath(filePath, objectSession, headers, user, deleteTime);
-            if (!isRdf) {
-                // Delete the description too.
-                final var descPath = resolveExtensions(ocflSubPath + "-description", true);
-                deletePath(descPath, objectSession, user, deleteTime);
-            }
         }
     }
 
@@ -113,7 +113,9 @@ class DeleteResourcePersister extends AbstractPersister {
         // readHeaders and writeHeaders need the subpath where as delete needs the file name. So remove any extensions.
         // TODO: See https://jira.lyrasis.org/browse/FCREPO-3287
         final var no_extension = (path.contains(".") ? path.substring(0, path.indexOf(".")) : path);
-        writeHeaders(session, headers, no_extension);
+        if (!session.isNewInSession(path)) {
+            writeHeaders(session, headers, no_extension);
+        }
     }
 
     /**

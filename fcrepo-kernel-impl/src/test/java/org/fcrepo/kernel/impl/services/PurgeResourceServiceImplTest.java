@@ -192,7 +192,7 @@ public class PurgeResourceServiceImplTest {
     public void testBinaryPurgeWithAcl() throws Exception {
         when(binary.getFedoraId()).thenReturn(RESOURCE_FEDORA_ID);
         when(binary.isAcl()).thenReturn(false);
-        when(binary.getDescribedResource()).thenReturn(binaryDesc);
+        when(binary.getDescription()).thenReturn(binaryDesc);
         when(binaryDesc.getFedoraId()).thenReturn(RESOURCE_DESCRIPTION_FEDORA_ID);
         when(binary.getAcl()).thenReturn(acl);
         when(acl.getFedoraId()).thenReturn(RESOURCE_ACL_FEDORA_ID);

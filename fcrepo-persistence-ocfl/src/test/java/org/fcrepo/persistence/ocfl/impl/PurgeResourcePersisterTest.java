@@ -88,7 +88,6 @@ public class PurgeResourcePersisterTest {
         persister.persist(psSession, operation);
         verify(session).read(".fcrepo/some-subpath.json");
         verify(session).delete(".fcrepo/some-subpath.json");
-        verify(session).delete(".fcrepo/some-subpath-description.json");
     }
 
     @Test

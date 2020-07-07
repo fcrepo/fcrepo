@@ -165,4 +165,21 @@ public interface OCFLObjectSession {
      * @return the digest algorithm used by the OCFL object
      */
     DIGEST_ALGORITHM getObjectDigestAlgorithm();
+
+    /**
+     * Determine if the subpath does/will not exist in the HEAD of this object.
+     *
+     * @param subpath the subpath to the resource.
+     *
+     * @return true if this OCFL object is being deleted or has not been persisted yet or if this subpath has not been
+     * persisted.
+     */
+    boolean isNewInSession(final String subpath);
+
+    /**
+     * Determine if the object does/will not exist.
+     *
+     * @return true if this OCFL object is being deleted or has not been persisted yet.
+     */
+    boolean isNewInSession();
 }
