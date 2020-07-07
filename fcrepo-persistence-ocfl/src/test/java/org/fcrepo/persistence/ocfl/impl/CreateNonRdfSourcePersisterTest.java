@@ -17,34 +17,8 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Arrays.asList;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
-import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.RESOURCE_HEADER_EXTENSION;
-import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
-import static org.fcrepo.persistence.ocfl.api.OCFLPersistenceConstants.DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getInternalFedoraDirectory;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.withSettings;
-
-import java.io.InputStream;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
@@ -64,6 +38,29 @@ import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
+
+import java.io.InputStream;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Arrays.asList;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
+import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.RESOURCE_HEADER_EXTENSION;
+import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getInternalFedoraDirectory;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 
 /**
  * @author dbernstein
@@ -210,20 +207,6 @@ public class CreateNonRdfSourcePersisterTest {
 
         final InputStream content = IOUtils.toInputStream(CONTENT_BODY, "UTF-8");
 
-        when(nonRdfSourceOperation.getContentStream()).thenReturn(content);
-        when(nonRdfSourceOperation.getContentSize()).thenReturn(99l);
-        when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel())
-                .thenReturn(NON_RDF_SOURCE.toString());
-        when(headers.isArchivalGroup()).thenReturn(false);
-
-        persister.persist(psSession, nonRdfSourceOperation);
-    }
-
-    @Test(expected = RepositoryRuntimeException.class)
-    public void testPersistNewRootResource() throws Exception {
-        final String rootResourceId = FEDORA_ID_PREFIX + "/" + DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
-        final InputStream content = IOUtils.toInputStream(CONTENT_BODY, "UTF-8");
-        when(nonRdfSourceOperation.getResourceId()).thenReturn(rootResourceId);
         when(nonRdfSourceOperation.getContentStream()).thenReturn(content);
         when(nonRdfSourceOperation.getContentSize()).thenReturn(99l);
         when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel())

@@ -30,7 +30,7 @@ import edu.wisc.library.ocfl.api.model.ObjectVersionId;
 import edu.wisc.library.ocfl.api.model.VersionDetails;
 import edu.wisc.library.ocfl.api.model.VersionId;
 import edu.wisc.library.ocfl.core.util.FileUtil;
-
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -53,6 +53,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -121,7 +122,8 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     public DefaultOCFLObjectSession(final String objectIdentifier, final Path stagingPath,
             final MutableOcflRepository ocflRepository, final CommitOption commitOption) {
         this.objectIdentifier = objectIdentifier;
-        this.stagingPath = stagingPath.resolve(encode(objectIdentifier));
+        this.stagingPath = stagingPath.resolve(createStagingDirectory(stagingPath, objectIdentifier));
+        log.debug("OCFL object <{}> is staging files at <{}>", objectIdentifier, stagingPath);
         this.ocflRepository = ocflRepository;
         this.commitOption = commitOption;
         this.deletePaths = new HashSet<>();
@@ -129,6 +131,15 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         this.sessionClosed = false;
         this.created = Instant.now();
         this.subpathToDigest = new HashMap<>();
+    }
+
+    private static Path createStagingDirectory(final Path sessionStaging, final String objectIdentifier) {
+        final var digest = DigestUtils.sha256Hex(objectIdentifier);
+        try {
+            return Files.createDirectories(sessionStaging.resolve(digest));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private String encode(final String value) {
@@ -514,7 +525,9 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     public synchronized void close() throws PersistentStorageException {
         sessionClosed = true;
 
-        cleanupStaging();
+        if (!FileUtils.deleteQuietly(stagingPath.toFile())) {
+            log.warn("Failed to delete staging directory: {}", stagingPath);
+        }
     }
 
     @Override

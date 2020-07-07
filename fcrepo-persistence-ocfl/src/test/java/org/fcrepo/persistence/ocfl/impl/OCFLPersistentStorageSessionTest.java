@@ -24,7 +24,6 @@ import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
 import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
 import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.createRepository;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.mintOCFLObjectId;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.junit.Assert.assertEquals;
@@ -116,9 +115,13 @@ public class OCFLPersistentStorageSessionTest {
 
     private static final String RESOURCE_ID = ROOT_OBJECT_ID;
 
+    private static final String OCFL_RESOURCE_ID = RESOURCE_ID;
+
     private static final String ROOT_OBJECT_ID_2 = "info:fedora/resource2";
 
     private static final String RESOURCE_ID2 = ROOT_OBJECT_ID_2;
+
+    private static final String OCFL_RESOURCE_ID2 = RESOURCE_ID2;
 
     private static final String USER_PRINCIPAL = "fedoraUser";
 
@@ -168,6 +171,19 @@ public class OCFLPersistentStorageSessionTest {
         return new OCFLPersistentStorageSession(new Random().nextLong() + "", index, objectSessionFactory);
     }
 
+    private void mockNoIndex(final String resourceId) throws FedoraOCFLMappingNotFoundException {
+        when(index.getMapping(resourceId)).thenThrow(new FedoraOCFLMappingNotFoundException(resourceId));
+    }
+
+    private void mockMappingAndIndexWithNoIndex(final String ocflObjectId, final String resourceId,
+                                                final String rootObjectId, final FedoraOCFLMapping mapping)
+            throws FedoraOCFLMappingNotFoundException {
+        mockMapping(ocflObjectId, rootObjectId, mapping);
+        when(index.getMapping(resourceId))
+                .thenThrow(new FedoraOCFLMappingNotFoundException(resourceId))
+                .thenReturn(mapping);
+    }
+
     private void mockMappingAndIndex(final String ocflObjectId, final String resourceId, final String rootObjectId,
                                      final FedoraOCFLMapping mapping) throws FedoraOCFLMappingNotFoundException {
         mockMapping(ocflObjectId, rootObjectId, mapping);
@@ -196,7 +212,7 @@ public class OCFLPersistentStorageSessionTest {
 
     @Test
     public void roundtripCreateContainerCreation() throws Exception {
-        mockMappingAndIndex(mintOCFLObjectId(RESOURCE_ID), RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+        mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
 
         final Node resourceUri = createURI(RESOURCE_ID);
 
@@ -250,7 +266,8 @@ public class OCFLPersistentStorageSessionTest {
     public void getTriplesOfBinaryDescription() throws Exception {
 
         final String descriptionResource = RESOURCE_ID + "/" + FedoraTypes.FCR_METADATA;
-        mockMappingAndIndex(mintOCFLObjectId(RESOURCE_ID), descriptionResource, ROOT_OBJECT_ID, mapping);
+        mockMappingAndIndexWithNoIndex(OCFL_RESOURCE_ID, descriptionResource, ROOT_OBJECT_ID, mapping);
+        mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
 
         final Node resourceUri = createURI(RESOURCE_ID);
 
@@ -279,7 +296,7 @@ public class OCFLPersistentStorageSessionTest {
 
     @Test
     public void persistFailsIfCommitAlreadyComplete() throws Exception {
-        mockMappingAndIndex(mintOCFLObjectId(RESOURCE_ID), RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+        mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
 
         //perform the create rdf operation
@@ -299,7 +316,7 @@ public class OCFLPersistentStorageSessionTest {
 
     @Test
     public void getTriplesFailsIfAlreadyCommitted() throws Exception {
-        mockMappingAndIndex(mintOCFLObjectId(RESOURCE_ID), RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+        mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
 
         //perform the create rdf operation
@@ -319,7 +336,7 @@ public class OCFLPersistentStorageSessionTest {
 
     @Test
     public void commitFailsIfAlreadyCommitted() throws Exception {
-        mockMappingAndIndex(mintOCFLObjectId(RESOURCE_ID), RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+        mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
 
         //perform the create rdf operation
@@ -339,7 +356,7 @@ public class OCFLPersistentStorageSessionTest {
 
     @Test
     public void verifyGetTriplesFailsAfterRollback() throws Exception {
-        mockMappingAndIndex(mintOCFLObjectId(RESOURCE_ID), RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+        mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
 
         //perform the create rdf operation
@@ -366,20 +383,18 @@ public class OCFLPersistentStorageSessionTest {
      */
     @Test(expected = PersistentStorageException.class)
     public void rollbackOnSessionWithCommitsToMutableHeadShouldFail() throws Exception {
-        final var ocflId1 = mintOCFLObjectId(RESOURCE_ID);
-        final var ocflId2 = mintOCFLObjectId(RESOURCE_ID2);
-        mockMappingAndIndex(ocflId1, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+        mockNoIndex(RESOURCE_ID);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
 
-        mockMappingAndIndex(ocflId2, RESOURCE_ID2, ROOT_OBJECT_ID_2, mapping2);
+        mockNoIndex(RESOURCE_ID2);
         mockResourceOperation(rdfSourceOperation2, RESOURCE_ID2);
 
         //mock success on commit for the first object session
-        when(mockSessionFactory.create(eq(ocflId1), anyString())).thenReturn(objectSession1);
+        when(mockSessionFactory.create(eq(OCFL_RESOURCE_ID), anyString())).thenReturn(objectSession1);
         when(objectSession1.commit()).thenReturn(Instant.now().toString());
         mockOCFLObjectSession(objectSession1, UNVERSIONED);
         //mock failure on commit for the second object session
-        when(mockSessionFactory.create(eq(ocflId2), anyString())).thenReturn(objectSession2);
+        when(mockSessionFactory.create(eq(OCFL_RESOURCE_ID2), anyString())).thenReturn(objectSession2);
         when(objectSession2.commit()).thenThrow(PersistentStorageException.class);
         mockOCFLObjectSession(objectSession2, UNVERSIONED);
 
@@ -411,8 +426,8 @@ public class OCFLPersistentStorageSessionTest {
 
     @Test
     public void getTriplesFailsIfCommitHasAlreadyStarted() throws Exception {
-        final var ocflId = mintOCFLObjectId(RESOURCE_ID);
-        mockMappingAndIndex(ocflId, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+        final var ocflId = OCFL_RESOURCE_ID;
+        mockNoIndex(RESOURCE_ID);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
 
         //mock success on commit for the first object session
@@ -461,12 +476,11 @@ public class OCFLPersistentStorageSessionTest {
 
     @Test
     public void rollbackSucceedsWhenPrepareFails() throws Exception {
-        final var ocflId = mintOCFLObjectId(RESOURCE_ID);
-        mockMappingAndIndex(ocflId, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+        mockNoIndex(RESOURCE_ID);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
 
         //mock success on commit for the first object session
-        when(mockSessionFactory.create(eq(ocflId), anyString())).thenReturn(objectSession1);
+        when(mockSessionFactory.create(eq(OCFL_RESOURCE_ID), anyString())).thenReturn(objectSession1);
         mockOCFLObjectSession(objectSession1, UNVERSIONED);
 
         //throw on prepare
@@ -494,7 +508,7 @@ public class OCFLPersistentStorageSessionTest {
 
     @Test(expected = PersistentStorageException.class)
     public void rollbackFailsWhenAlreadyCommitted() throws Exception {
-        mockMappingAndIndex(mintOCFLObjectId(RESOURCE_ID), RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+        mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
 
         final PersistentStorageSession session1 = createSession(index, objectSessionFactory);
@@ -512,7 +526,7 @@ public class OCFLPersistentStorageSessionTest {
 
     @Test(expected = PersistentStorageException.class)
     public void rollbackSucceedsOnUncommittedChanges() throws Exception {
-        mockMappingAndIndex(mintOCFLObjectId(RESOURCE_ID), RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+        mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
         final PersistentStorageSession session1 = createSession(index, this.objectSessionFactory);
 
@@ -531,10 +545,9 @@ public class OCFLPersistentStorageSessionTest {
 
     @Test(expected = PersistentStorageException.class)
     public void rollbackFailsWhenAlreadyRolledBack() throws Exception {
-        final String ocflId = mintOCFLObjectId(RESOURCE_ID);
-        mockMappingAndIndex(ocflId, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+        mockNoIndex(RESOURCE_ID);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
-        when(mockSessionFactory.create(eq(ocflId), anyString())).thenReturn(objectSession1);
+        when(mockSessionFactory.create(eq(OCFL_RESOURCE_ID), anyString())).thenReturn(objectSession1);
         doThrow(new PersistentStorageException("commit error")).when(objectSession1).commit();
         mockOCFLObjectSession(objectSession1, NEW_VERSION);
         final PersistentStorageSession session1 = createSession(index, mockSessionFactory);
@@ -579,7 +592,7 @@ public class OCFLPersistentStorageSessionTest {
     @Test
     public void getTriplesFromPreviousVersion() throws Exception {
         objectSessionFactory.setAutoVersioningEnabled(true);
-        mockMappingAndIndex(mintOCFLObjectId(RESOURCE_ID), RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+        mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
 
         final Node resourceUri = createURI(RESOURCE_ID);
 
@@ -617,7 +630,7 @@ public class OCFLPersistentStorageSessionTest {
         objectSessionFactory.setAutoVersioningEnabled(true);
         final Node resourceUri = createURI(RESOURCE_ID);
 
-        mockMapping(mintOCFLObjectId(RESOURCE_ID), ROOT_OBJECT_ID, mapping);
+        mockMapping(OCFL_RESOURCE_ID, ROOT_OBJECT_ID, mapping);
         final var mappingCount = new AtomicInteger(0);
         when(index.getMapping(RESOURCE_ID)).thenAnswer((Answer<FedoraOCFLMapping>) invocationOnMock -> {
             final var current = mappingCount.getAndIncrement();
@@ -658,7 +671,7 @@ public class OCFLPersistentStorageSessionTest {
 
     @Test
     public void getBinaryContent() throws Exception {
-        mockMappingAndIndex(mintOCFLObjectId(RESOURCE_ID), RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+        mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
 
         // create the binary
         final var binOperation = mockNonRdfSourceOperation(BINARY_CONTENT, USER_PRINCIPAL, RESOURCE_ID);
@@ -678,7 +691,7 @@ public class OCFLPersistentStorageSessionTest {
 
     @Test
     public void getBinaryContentFailsIfAlreadyCommitted() throws Exception {
-        mockMappingAndIndex(mintOCFLObjectId(RESOURCE_ID), RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+        mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
 
         // create the binary
         final var binOperation = mockNonRdfSourceOperation(BINARY_CONTENT, USER_PRINCIPAL, RESOURCE_ID);
@@ -701,7 +714,7 @@ public class OCFLPersistentStorageSessionTest {
     public void getBinaryContentVersion() throws Exception {
         objectSessionFactory.setAutoVersioningEnabled(true);
         // SEE getTriplesFromPreviousVersion
-        mockMappingAndIndex(mintOCFLObjectId(RESOURCE_ID), RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+        mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
 
         // create the binary
         final var binOperation = mockNonRdfSourceOperation(BINARY_CONTENT, USER_PRINCIPAL, RESOURCE_ID);
@@ -721,7 +734,7 @@ public class OCFLPersistentStorageSessionTest {
 
     @Test
     public void getBinaryContentUncommitted() throws Exception {
-        mockMappingAndIndex(mintOCFLObjectId(RESOURCE_ID), RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+        mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
 
         // create the binary
         final var binOperation = mockNonRdfSourceOperation(BINARY_CONTENT, USER_PRINCIPAL, RESOURCE_ID);

@@ -17,18 +17,9 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
-import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
-import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.serializeHeaders;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getSidecarSubpath;
-
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
-import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
@@ -37,6 +28,12 @@ import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.Persister;
+
+import java.util.Optional;
+
+import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
+import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.serializeHeaders;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getSidecarSubpath;
 
 /**
  * A base abstract persister class
@@ -114,56 +111,28 @@ abstract class AbstractPersister implements Persister {
 
     /**
      * Resolves the fedora root object identifier associated with the operation's resource identifier.
-     * @param operation The operation
+     * @param fedoraId The fedoraId of the resource the being acted on
      * @param session The OCFL persistent storage session.
      * @return The fedora root object identifier associated with the resource described by the operation.
      */
-    protected String resolveRootObjectId(final CreateResourceOperation operation,
+    protected FedoraId resolveRootObjectId(final FedoraId fedoraId,
                                        final OCFLPersistentStorageSession session) {
-
-        final var resourceId = operation.getResourceId();
-        //is resource or any parent an archival group?
-        final String startingResourceId;
-        if (operation.getType().equals(CREATE)) {
-            final var parentId = operation.getParentId();
-            if (parentId != null) {
-                startingResourceId = parentId;
-            } else if (FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI.equals(operation.getInteractionModel())) {
-                startingResourceId = resourceId.replace("/" + FCR_METADATA, "");
-            } else {
-                startingResourceId = null;
-            }
-        } else {
-            startingResourceId = resourceId;
-        }
-
-        final var archivalGroupId = startingResourceId == null ? null : findArchivalGroupInAncestry(startingResourceId,
-                session);
-
-        if (archivalGroupId != null) {
-            return archivalGroupId;
-        } else if (resourceId.endsWith("/" + FCR_METADATA) || resourceId.endsWith("/" + FCR_ACL)) {
-            return resourceId.substring(0, resourceId.lastIndexOf("/"));
-        } else {
-            return resourceId;
-        }
+        final var archivalGroupId = findArchivalGroupInAncestry(fedoraId, session);
+        return archivalGroupId.orElseGet(() -> FedoraId.create(fedoraId.getContainingId()));
     }
 
-    protected String findArchivalGroupInAncestry(final String resourceId, final OCFLPersistentStorageSession session) {
-            if (resourceId.endsWith(FEDORA_ID_PREFIX)) {
-                return null;
+    protected Optional<FedoraId> findArchivalGroupInAncestry(final FedoraId fedoraId,
+                                                             final OCFLPersistentStorageSession session) {
+            if (fedoraId.isRepositoryRoot()) {
+                return Optional.empty();
             }
 
-            //strip off trailing slash if exists
-            String cleanedResourceId = resourceId;
-            if (resourceId.endsWith("/")) {
-                cleanedResourceId = resourceId.substring(0, resourceId.length() - 1);
-            }
+            final var resourceId = fedoraId.getResourceId();
 
             try {
-                final var headers = session.getHeaders(cleanedResourceId, null);
-                if (headers.isArchivalGroup()) {
-                    return cleanedResourceId;
+                final var headers = session.getHeaders(resourceId, null);
+                if (headers != null && headers.isArchivalGroup()) {
+                    return Optional.of(fedoraId);
                 }
             } catch (final PersistentItemNotFoundException ex) {
                 //do nothing since there are cases where the resourceId will be the resource
@@ -173,8 +142,23 @@ abstract class AbstractPersister implements Persister {
             }
 
             //get the previous path segment not including the trailing slash
-            final String parentId = cleanedResourceId.substring(0, cleanedResourceId.lastIndexOf('/'));
-            return findArchivalGroupInAncestry(parentId, session);
+            final String parentId = resourceId.substring(0, resourceId.lastIndexOf('/'));
+            return findArchivalGroupInAncestry(FedoraId.create(parentId), session);
+    }
+
+    /**
+     * Maps the Fedor ID to an OCFL ID.
+     * @param fedoraId The fedora identifier for the root OCFL object
+     * @return The OCFL ID
+     */
+    protected String mapToOcflId(final FedoraId fedoraId) {
+        try {
+            final var mapping = index.getMapping(fedoraId.getContainingId());
+            return mapping.getOcflObjectId();
+        } catch (FedoraOCFLMappingNotFoundException e) {
+            // If the a mapping doesn't already exist, use a one-to-one Fedora ID to OCFL ID mapping
+            return fedoraId.getContainingId();
+        }
     }
 
 }

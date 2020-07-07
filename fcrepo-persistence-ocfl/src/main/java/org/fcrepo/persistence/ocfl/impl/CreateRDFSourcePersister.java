@@ -17,6 +17,7 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
@@ -28,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.mintOCFLObjectId;
 
 /**
  * This class implements the persistence of a new RDFSource
@@ -53,26 +53,27 @@ class CreateRDFSourcePersister extends AbstractRDFSourcePersister {
             throws PersistentStorageException {
 
         final var resourceId = operation.getResourceId();
+        final var fedoraId = FedoraId.create(resourceId);
         log.debug("persisting {} to {}", resourceId, session);
 
         final CreateResourceOperation createResourceOp = ((CreateResourceOperation)operation);
         final boolean archivalGroup = createResourceOp.isArchivalGroup();
 
-        final String rootObjectId;
+        final FedoraId rootObjectId;
         if (archivalGroup) {
             //if archival group, ensure that there are no archival group ancestors
-            if (findArchivalGroupInAncestry(resourceId, session) != null) {
+            if (findArchivalGroupInAncestry(fedoraId, session).isPresent()) {
                 throw new PersistentItemConflictException("Nesting an ArchivalGroup within an ArchivalGroup is not " +
                         "permitted");
             }
-            rootObjectId = resourceId;
+            rootObjectId = fedoraId;
         } else {
-            rootObjectId = resolveRootObjectId(createResourceOp, session);
+            rootObjectId = resolveRootObjectId(fedoraId, session);
         }
 
-        final String ocflObjectId = mintOCFLObjectId(rootObjectId);
+        final String ocflObjectId = mapToOcflId(rootObjectId);
         final OCFLObjectSession ocflObjectSession = session.findOrCreateSession(ocflObjectId);
-        persistRDF(ocflObjectSession, operation, rootObjectId);
-        index.addMapping(resourceId, rootObjectId, ocflObjectId);
+        persistRDF(ocflObjectSession, operation, rootObjectId.getContainingId());
+        index.addMapping(resourceId, rootObjectId.getContainingId(), ocflObjectId);
     }
 }

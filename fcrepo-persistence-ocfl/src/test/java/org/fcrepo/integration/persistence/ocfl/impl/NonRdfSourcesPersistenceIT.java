@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.config.OcflPropsConfig;
@@ -342,7 +343,8 @@ public class NonRdfSourcesPersistenceIT {
         // Modify the file after staging to simulate a transmission error
         final Path ocflStagingDir = ocflPropsConfig.getFedoraOcflStaging();
         final String rawId = StringUtils.substringAfterLast(rescId, "/");
-        final Path stagedFile = Paths.get(ocflStagingDir.toString(), storageSession.getId(), rawId, rawId);
+        final String digest = DigestUtils.sha256Hex(rescId);
+        final Path stagedFile = Paths.get(ocflStagingDir.toString(), storageSession.getId(), digest, rawId);
         Files.write(stagedFile, "oops".getBytes(), StandardOpenOption.APPEND);
 
         try {

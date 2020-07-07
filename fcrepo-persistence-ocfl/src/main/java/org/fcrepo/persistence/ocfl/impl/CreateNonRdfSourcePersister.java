@@ -17,7 +17,7 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import org.fcrepo.kernel.api.operations.CreateResourceOperation;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -27,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.mintOCFLObjectId;
 
 /**
  * This class implements the persistence of a new NonRDFSource
@@ -50,14 +49,12 @@ class CreateNonRdfSourcePersister extends AbstractNonRdfSourcePersister {
     public void persist(final OCFLPersistentStorageSession session, final ResourceOperation operation)
             throws PersistentStorageException {
         final var resourceId = operation.getResourceId();
+        final var fedoraId = FedoraId.create(resourceId);
         log.debug("persisting {} to {}", resourceId, session);
-        final CreateResourceOperation createResourceOp = ((CreateResourceOperation)operation);
-        final boolean archivalGroup = createResourceOp.isArchivalGroup();
-        final String rootObjectId = archivalGroup ? createResourceOp.getResourceId() :
-                resolveRootObjectId(createResourceOp, session);
-        final String ocflId = mintOCFLObjectId(rootObjectId);
+        final var rootObjectId = resolveRootObjectId(fedoraId, session);
+        final String ocflId = mapToOcflId(rootObjectId);
         final OCFLObjectSession ocflObjectSession = session.findOrCreateSession(ocflId);
-        persistNonRDFSource(operation, ocflObjectSession, rootObjectId);
-        index.addMapping(resourceId, rootObjectId, ocflId);
+        persistNonRDFSource(operation, ocflObjectSession, rootObjectId.getContainingId());
+        index.addMapping(resourceId, rootObjectId.getContainingId(), ocflId);
     }
 }

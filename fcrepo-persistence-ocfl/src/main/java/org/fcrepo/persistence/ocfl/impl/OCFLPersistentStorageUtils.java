@@ -32,7 +32,6 @@ import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.system.StreamRDF;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM;
@@ -347,37 +346,6 @@ public class OCFLPersistentStorageUtils {
      */
     public static String getInternalFedoraDirectory() {
         return INTERNAL_FEDORA_DIRECTORY + "/";
-    }
-
-
-    /**
-     * Mints an OCFL ID for the specified identifier
-     * @param fedoraIdentifier The fedora identifier for the root OCFL object
-     * @return The OCFL ID
-     */
-    public static String mintOCFLObjectId(final String fedoraIdentifier) {
-        //TODO make OCFL Object Id minting more configurable.
-        String bareFedoraIdentifier = fedoraIdentifier;
-        if (fedoraIdentifier.indexOf(FEDORA_ID_PREFIX) == 0) {
-            bareFedoraIdentifier = fedoraIdentifier.substring(FEDORA_ID_PREFIX.length());
-        }
-        // strip any leading slashes
-        bareFedoraIdentifier = bareFedoraIdentifier.replaceFirst("\\/", "");
-
-        //ensure no accidental collisions with the root ocfl identifier
-        if (bareFedoraIdentifier.equals(DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID)) {
-            throw new RepositoryRuntimeException(bareFedoraIdentifier + " is a reserved identifier");
-        }
-
-        bareFedoraIdentifier = bareFedoraIdentifier.replace("/", "_");
-
-        if (bareFedoraIdentifier.length() == 0) {
-            bareFedoraIdentifier = DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
-        }
-
-        log.debug("minted new ocfl object id:  {}", bareFedoraIdentifier);
-
-        return bareFedoraIdentifier;
     }
 
     /**
