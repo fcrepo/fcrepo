@@ -199,12 +199,12 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     /*
      * Mark deleted in the main table all rows from transaction operation table marked 'delete' for this transaction.
      */
-    private static final String COMMIT_DELETE_RECORDS = "UPDATE " + RESOURCES_TABLE + " r " +
-            "SET r." + IS_DELETED_COLUMN + " = TRUE WHERE EXISTS " +
-            "(SELECT * from " + TRANSACTION_OPERATIONS_TABLE + " t WHERE " +
-            "r." + FEDORA_ID_COLUMN + " = " + "t." + FEDORA_ID_COLUMN + " AND " +
+    private static final String COMMIT_DELETE_RECORDS = "UPDATE " + RESOURCES_TABLE +
+            " r SET " + IS_DELETED_COLUMN + " = TRUE WHERE EXISTS " +
+            "(SELECT TRUE FROM " + TRANSACTION_OPERATIONS_TABLE + " t WHERE " +
+            "t." + FEDORA_ID_COLUMN + " = r." + FEDORA_ID_COLUMN + " AND " +
             "t." + TRANSACTION_ID_COLUMN + " = :transactionId AND t." +  OPERATION_COLUMN + " = 'delete' AND " +
-            "r." + PARENT_COLUMN + " = t." + PARENT_COLUMN + ")";
+            "t." + PARENT_COLUMN + " = r." + PARENT_COLUMN + ")";
 
     /*
      * Remove from the main table all rows from transaction operation table marked 'purge' for this transaction.
