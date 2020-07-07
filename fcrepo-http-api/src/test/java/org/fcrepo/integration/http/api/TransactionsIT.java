@@ -39,6 +39,7 @@ import static org.fcrepo.http.commons.session.TransactionConstants.EXPIRES_RFC_1
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_COMMIT_REL;
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_ENDPOINT_REL;
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_PREFIX;
+import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.impl.TransactionImpl.TIMEOUT_SYSTEM_PROPERTY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -81,6 +82,8 @@ public class TransactionsIT extends AbstractResourceIT {
     public static final String DEFAULT_TIMEOUT = Long.toString(ofMinutes(3).toMillis());
 
     public static final Pattern TX_ID_PATTERN = Pattern.compile(".+/" + TX_PREFIX + "([0-9a-f\\-]+)$");
+
+    private static final String ARCHIVAL_GROUP_TYPE = "<" + ARCHIVAL_GROUP + ">;rel=\"type\"";
 
     @Test
     public void testRootHasTxEndpoint() throws Exception {
@@ -527,6 +530,7 @@ public class TransactionsIT extends AbstractResourceIT {
      */
     @Test
     public void testCreateAndDeleteInSingleTransaction() throws Exception {
+        // Do an RDF Container
         final String txLocation = createTransaction();
         final HttpPost post = postObjMethod();
         addTxTo(post, txLocation);
@@ -543,6 +547,24 @@ public class TransactionsIT extends AbstractResourceIT {
         final HttpGet getContainer = new HttpGet(containerUri);
         addTxTo(getContainer, txLocation);
         assertEquals(NOT_FOUND.getStatusCode(), getStatus(getContainer));
+
+        // Now do a binary
+        final HttpPost postBin = postObjMethod();
+        addTxTo(postBin, txLocation);
+        postBin.setEntity(new StringEntity("Some test text"));
+        final String binaryUri;
+        try (final CloseableHttpResponse response = execute(postBin)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            binaryUri = getLocation(response);
+        }
+        final HttpDelete deleteBin = new HttpDelete(binaryUri);
+        addTxTo(deleteBin, txLocation);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteBin));
+
+        // Container was never committed, so we get a 404 instead of 410.
+        final HttpGet getBinary = new HttpGet(binaryUri);
+        addTxTo(getBinary, txLocation);
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(getBinary));
     }
 
     /**
@@ -552,18 +574,21 @@ public class TransactionsIT extends AbstractResourceIT {
     @Test
     public void testCreateAndDeleteInSingleTransactionSubPathFull() throws Exception {
         final String txLocation = createTransaction();
+        // Create an Archival Group.
         final HttpPost httpPost = postObjMethod();
         addTxTo(httpPost, txLocation);
-        httpPost.setHeader("Link", "<http://fedora.info/definitions/v4/repository#ArchivalGroup>;rel=\"type\"");
+        httpPost.setHeader("Link", ARCHIVAL_GROUP_TYPE);
         final String parent;
         try (final CloseableHttpResponse response = execute(httpPost)) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
             parent = getLocation(response);
         }
+        // Test GET the parent.
         final HttpGet parentGet = new HttpGet(parent);
         addTxTo(parentGet, txLocation);
         assertEquals(OK.getStatusCode(), getStatus(parentGet));
 
+        // Create a container child of the AG.
         final HttpPost postChild = new HttpPost(parent);
         addTxTo(postChild, txLocation);
         final String id;
@@ -571,18 +596,39 @@ public class TransactionsIT extends AbstractResourceIT {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
             id = getLocation(response);
         }
+        // Test GET the child.
+        final HttpGet childGetContainer = new HttpGet(id);
+        addTxTo(childGetContainer, txLocation);
+        assertEquals(OK.getStatusCode(), getStatus(childGetContainer));
+        // Delete the child container.
+        final HttpDelete deleteContainer = new HttpDelete(id);
+        addTxTo(deleteContainer, txLocation);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteContainer));
+        // Test GET the child again.
+        final HttpGet childGetContainer2 = new HttpGet(id);
+        addTxTo(childGetContainer2, txLocation);
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(childGetContainer2));
 
-        final HttpGet childGet = new HttpGet(id);
-        addTxTo(childGet, txLocation);
-        assertEquals(OK.getStatusCode(), getStatus(childGet));
-
-        final HttpDelete delete = new HttpDelete(id);
-        addTxTo(delete, txLocation);
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(delete));
-
-        final HttpGet childGet2 = new HttpGet(id);
-        addTxTo(childGet2, txLocation);
-        assertEquals(NOT_FOUND.getStatusCode(), getStatus(childGet2));
+        // Create a binary child of the AG.
+        final HttpPost postBinary = new HttpPost(parent);
+        addTxTo(postBinary, txLocation);
+        final String binaryId;
+        try (final CloseableHttpResponse response = execute(postBinary)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            binaryId = getLocation(response);
+        }
+        // Test GET the child.
+        final HttpGet childGetBinary = new HttpGet(binaryId);
+        addTxTo(childGetBinary, txLocation);
+        assertEquals(OK.getStatusCode(), getStatus(childGetBinary));
+        // Delete the child container.
+        final HttpDelete deleteBinary = new HttpDelete(binaryId);
+        addTxTo(deleteBinary, txLocation);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteBinary));
+        // Test GET the child again.
+        final HttpGet childGetBinary2 = new HttpGet(binaryId);
+        addTxTo(childGetBinary2, txLocation);
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(childGetBinary2));
     }
 
 
@@ -592,8 +638,9 @@ public class TransactionsIT extends AbstractResourceIT {
      */
     @Test
     public void testCreateAndDeleteInSingleTransactionSubPathPartial() throws Exception {
+        // Create an Archival Group.
         final HttpPost httpPost = postObjMethod();
-        httpPost.setHeader("Link", "<http://fedora.info/definitions/v4/repository#ArchivalGroup>;rel=\"type\"");
+        httpPost.setHeader("Link", ARCHIVAL_GROUP_TYPE);
         final String parent;
         try (final CloseableHttpResponse response = execute(httpPost)) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
@@ -602,24 +649,48 @@ public class TransactionsIT extends AbstractResourceIT {
         assertEquals(OK.getStatusCode(), getStatus(new HttpGet(parent)));
 
         final String txLocation = createTransaction();
-        final HttpPost postChild = new HttpPost(parent);
-        addTxTo(postChild, txLocation);
-        final String id;
-        try (final CloseableHttpResponse response = execute(postChild)) {
+        // Create a child RDF container.
+        final HttpPost postContainer = new HttpPost(parent);
+        addTxTo(postContainer, txLocation);
+        final String containerId;
+        try (final CloseableHttpResponse response = execute(postContainer)) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
-            id = getLocation(response);
+            containerId = getLocation(response);
         }
-        final HttpGet getChild = new HttpGet(id);
-        addTxTo(getChild, txLocation);
-        assertEquals(OK.getStatusCode(), getStatus(getChild));
+        // Test GET the container.
+        final HttpGet getContainer = new HttpGet(containerId);
+        addTxTo(getContainer, txLocation);
+        assertEquals(OK.getStatusCode(), getStatus(getContainer));
+        // Delete the container.
+        final HttpDelete deleteContainer = new HttpDelete(containerId);
+        addTxTo(deleteContainer, txLocation);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteContainer));
+        // Test GET the container again.
+        final HttpGet childGetContainer2 = new HttpGet(containerId);
+        addTxTo(childGetContainer2, txLocation);
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(childGetContainer2));
 
-        final HttpDelete delete = new HttpDelete(id);
-        addTxTo(delete, txLocation);
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(delete));
-
-        final HttpGet childGet2 = new HttpGet(id);
-        addTxTo(childGet2, txLocation);
-        assertEquals(NOT_FOUND.getStatusCode(), getStatus(childGet2));
+        // Create a child binary.
+        final HttpPost postBinary = new HttpPost(parent);
+        addTxTo(postBinary, txLocation);
+        postBinary.setEntity(new StringEntity("Some test text"));
+        final String binaryId;
+        try (final CloseableHttpResponse response = execute(postBinary)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            binaryId = getLocation(response);
+        }
+        // Test GET the binary.
+        final HttpGet getBinary = new HttpGet(binaryId);
+        addTxTo(getBinary, txLocation);
+        assertEquals(OK.getStatusCode(), getStatus(getBinary));
+        // Delete the binary.
+        final HttpDelete deleteBinary = new HttpDelete(binaryId);
+        addTxTo(deleteBinary, txLocation);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteBinary));
+        // Test GET the binary again.
+        final HttpGet childGetBinary2 = new HttpGet(binaryId);
+        addTxTo(childGetBinary2, txLocation);
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(childGetBinary2));
     }
 
     private void verifyProperty(final String assertionMessage, final String pid, final String txId,
