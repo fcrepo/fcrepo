@@ -163,15 +163,6 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     );
 
     /*
-     * Add records to the mapping table that are to be added in this transaction.
-     */
-    private static final String COMMIT_ADD_RECORDS = "INSERT INTO " + MAPPING_TABLE + " ( " + FEDORA_ID_COLUMN + ", "
-            + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + " ) SELECT " + FEDORA_ID_COLUMN + ", " +
-            FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + " FROM " +
-            TRANSACTION_OPERATIONS_TABLE + " WHERE " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
-            OPERATION_COLUMN + " = 'add'";
-
-    /*
      * Delete records from the mapping table that are to be deleted in this transaction.
      */
     private static final String COMMIT_DELETE_RECORDS = "DELETE FROM " + MAPPING_TABLE + " WHERE " +
@@ -204,7 +195,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     private PlatformTransactionManager platformTransactionManager;
 
-    private String DATABASE_PRODUCT_NAME;
+    private String databaseProductName;
 
     public DbFedoraToOcflObjectIndex(@Autowired final DataSource dataSource) {
         this.dataSource = dataSource;
@@ -223,11 +214,11 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     private String lookupDdl() {
         try (final var connection = dataSource.getConnection()) {
-            DATABASE_PRODUCT_NAME = connection.getMetaData().getDatabaseProductName();
-            LOGGER.debug("Identified database as: {}", DATABASE_PRODUCT_NAME);
-            final var ddl = DDL_MAP.get(DATABASE_PRODUCT_NAME);
+            databaseProductName = connection.getMetaData().getDatabaseProductName();
+            LOGGER.debug("Identified database as: {}", databaseProductName);
+            final var ddl = DDL_MAP.get(databaseProductName);
             if (ddl == null) {
-                throw new IllegalStateException("Unknown database platform: " + DATABASE_PRODUCT_NAME);
+                throw new IllegalStateException("Unknown database platform: " + databaseProductName);
             }
             return ddl;
         } catch (final SQLException e) {
@@ -286,7 +277,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
         parameterSource.addValue("ocflId", ocflId);
         parameterSource.addValue("transactionId", transactionId);
         parameterSource.addValue("operation", operation);
-        jdbcTemplate.update(UPSERT_MAPPING_TX_MAP.get(DATABASE_PRODUCT_NAME), parameterSource);
+        jdbcTemplate.update(UPSERT_MAPPING_TX_MAP.get(databaseProductName), parameterSource);
     }
 
     @Override
@@ -310,7 +301,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
         executeInDbTransaction(sessionId, status -> {
             try {
                 jdbcTemplate.update(COMMIT_DELETE_RECORDS, map);
-                jdbcTemplate.update(COMMIT_ADD_MAPPING_MAP.get(DATABASE_PRODUCT_NAME), map);
+                jdbcTemplate.update(COMMIT_ADD_MAPPING_MAP.get(databaseProductName), map);
                 jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, map);
                 return null;
             } catch (final Exception e) {
