@@ -48,6 +48,7 @@ import static org.fcrepo.search.api.Condition.Field.CREATED;
 import static org.fcrepo.search.api.Condition.Field.FEDORA_ID;
 import static org.fcrepo.search.api.Condition.Field.MIME_TYPE;
 import static org.fcrepo.search.api.Condition.Field.MODIFIED;
+import static org.fcrepo.search.api.Condition.Field.OCFL_ID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -142,6 +143,35 @@ public class FedoraSearchIT extends AbstractResourceIT {
 
                 result.getItems().stream().map(x -> x.get(FEDORA_ID.toString()))
                         .forEach(x -> assertTrue(x.toString().startsWith(urlPrefix)));
+            }
+        }
+    }
+
+    @Test
+    public void testFindFedoraIdByOcflId() throws Exception {
+        final var id = getRandomUniqueId();
+        final int count = 1;
+        createResources(id, count);
+        final var condition = FEDORA_ID + "=" + id + "*";
+        final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition);
+        //retrieve the ocfl_id via the search api.
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
+                    SearchResult.class);
+            assertEquals("expected " + count + " items where condition = " + condition, count,
+                    result.getItems().size());
+            //requery using the ocfl_id in the conditional clause.
+            final var ocflId =
+                    result.getItems().stream().map(x -> x.get(OCFL_ID.toString())).findFirst().get().toString();
+            final String searchUrl2 = getSearchEndpoint() + "condition=" + encode("ocfl_id=" + ocflId);
+            try (final CloseableHttpResponse response2 = execute(new HttpGet(searchUrl2))) {
+                assertEquals(OK.getStatusCode(), getStatus(response2));
+                final SearchResult result2 = new ObjectMapper().readValue(response2.getEntity().getContent(),
+                        SearchResult.class);
+                assertEquals("expected " + count + " items", count, result2.getItems().size());
+
             }
         }
     }

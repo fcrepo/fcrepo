@@ -1,6 +1,7 @@
 -- simple search
 CREATE TABLE IF NOT EXISTS simple_search (
     fedora_id  varchar(503) NOT NULL PRIMARY KEY,
+    ocfl_id varchar(503) NOT NULL,
     created timestamp NOT NULL,
     modified timestamp NOT NULL,
     content_size bigint DEFAULT NULL,

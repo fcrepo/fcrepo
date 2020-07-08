@@ -20,6 +20,7 @@ package org.fcrepo.search.impl;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.search.api.Condition;
 import org.fcrepo.search.api.InvalidQueryException;
 import org.fcrepo.search.api.PaginationInfo;
@@ -60,6 +61,7 @@ import static java.time.format.DateTimeFormatter.ISO_INSTANT;
 import static org.fcrepo.search.api.Condition.Field.CONTENT_SIZE;
 import static org.fcrepo.search.api.Condition.Field.FEDORA_ID;
 import static org.fcrepo.search.api.Condition.Field.MIME_TYPE;
+import static org.fcrepo.search.api.Condition.Field.OCFL_ID;
 
 
 /**
@@ -77,8 +79,8 @@ public class DbSearchIndexImpl implements SearchIndex {
             "UPDATE simple_search SET modified = :modified, content_size = :content_size, mime_type =:mime_type " +
                     "WHERE fedora_id = :fedora_id;";
     private static final String INSERT_INTO_INDEX_SQL =
-            "INSERT INTO simple_search (fedora_id, modified, created, content_size, mime_type) VALUES" +
-            "(:fedora_id, :modified, :modified, :content_size, :mime_type)";
+            "INSERT INTO simple_search (fedora_id, modified, created, content_size, mime_type, ocfl_id) VALUES" +
+            "(:fedora_id, :modified, :modified, :content_size, :mime_type, :ocfl_id)";
     private static final String SELECT_BY_FEDORA_ID =
             "SELECT fedora_id FROM simple_search WHERE fedora_id = :fedora_id";
     private static final String FEDORA_ID_PARAM = "fedora_id";
@@ -86,6 +88,7 @@ public class DbSearchIndexImpl implements SearchIndex {
     private static final String CONTENT_SIZE_PARAM = "content_size";
     private static final String MIME_TYPE_PARAM = "mime_type";
     private static final String CREATED_PARAM = "created";
+    private static final String OCFL_ID_PARAM = "ocfl_id";
 
     @Inject
     private DataSource dataSource;
@@ -94,6 +97,9 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     @Inject
     private PlatformTransactionManager platformTransactionManager;
+
+    @Inject
+    private FedoraToOcflObjectIndex fedoraToOcflObjectIndex;
 
     /**
      * Setup database table and connection
@@ -122,7 +128,7 @@ public class DbSearchIndexImpl implements SearchIndex {
             final var field = condition.getField();
             final var operation = condition.getOperator();
             var object = condition.getObject();
-            if ((field.equals(FEDORA_ID) || field.equals(MIME_TYPE)) &&
+            if ((field.equals(FEDORA_ID) || field.equals(MIME_TYPE) || field.equals(OCFL_ID)) &&
                     condition.getOperator().equals(Condition.Operator.EQ)) {
                 if (!object.equals("*")) {
                     final var paramName = "param" + paramCount++;
@@ -221,6 +227,8 @@ public class DbSearchIndexImpl implements SearchIndex {
                     jdbcTemplate.update(UPDATE_INDEX_SQL, params);
                 } else {
                     params.addValue(CREATED_PARAM, new Timestamp(resourceHeaders.getCreatedDate().toEpochMilli()));
+                    final var ocflId = fedoraToOcflObjectIndex.getMapping(fullId).getOcflObjectId();
+                    params.addValue(OCFL_ID_PARAM, ocflId);
                     jdbcTemplate.update(INSERT_INTO_INDEX_SQL, params);
                 }
                 return null;

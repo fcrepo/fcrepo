@@ -48,6 +48,7 @@ public interface SearchIndex {
      */
     SearchResult doSearch(SearchParameters parameters) throws InvalidQueryException;
 
+
     /**
      * Remove all persistent state associated with the index.
      */
