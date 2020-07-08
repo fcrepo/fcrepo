@@ -149,15 +149,16 @@ abstract class AbstractPersister implements Persister {
     }
 
     /**
-     * Maps the Fedor ID to an OCFL ID.
+     * Maps the Fedora ID to an OCFL ID.
+     * @param sessionId The session ID.
      * @param fedoraId The fedora identifier for the root OCFL object
      * @return The OCFL ID
      */
-    protected String mapToOcflId(final FedoraId fedoraId) {
+    protected String mapToOcflId(final String sessionId, final FedoraId fedoraId) {
         try {
-            final var mapping = index.getMapping(fedoraId.getContainingId());
+            final var mapping = index.getMapping(sessionId, fedoraId.getContainingId());
             return mapping.getOcflObjectId();
-        } catch (FedoraOCFLMappingNotFoundException e) {
+        } catch (final FedoraOCFLMappingNotFoundException e) {
             // If the a mapping doesn't already exist, use a one-to-one Fedora ID to OCFL ID mapping
             return fedoraId.getContainingId();
         }
