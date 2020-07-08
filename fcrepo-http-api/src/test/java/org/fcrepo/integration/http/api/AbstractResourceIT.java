@@ -33,6 +33,7 @@ import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.StringEntity;
@@ -87,6 +88,7 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
@@ -536,6 +538,18 @@ public abstract class AbstractResourceIT {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
             return getLocation(response);
         }
+    }
+
+    /**
+     * Add a transaction id to a http request.
+     *
+     * @param req a http request object.
+     * @param txId the transaction id.
+     * @return the http request object with the transaction id added as a header.
+     */
+    protected <T extends HttpRequestBase> T addTxTo(final T req, final String txId) {
+        req.addHeader(ATOMIC_ID_HEADER, txId);
+        return req;
     }
 
     /**

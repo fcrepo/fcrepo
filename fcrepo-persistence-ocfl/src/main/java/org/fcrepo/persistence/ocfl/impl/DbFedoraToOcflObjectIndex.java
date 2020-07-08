@@ -40,6 +40,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.annotation.Nonnull;
 import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
+
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
@@ -53,7 +55,12 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DbFedoraToOcflObjectIndex.class);
 
-    private static final String DDL = "sql/default-ocfl-index.sql";
+    private static final Map<String, String> DDL_MAP = Map.of(
+            "MySQL", "sql/mysql-ocfl-index.sql",
+            "H2", "sql/default-ocfl-index.sql",
+            "PostgreSQL", "sql/default-ocfl-index.sql",
+            "MariaDB", "sql/default-ocfl-index.sql"
+    );
 
     private static final String MAPPING_TABLE = "ocfl_id_map";
 
@@ -94,31 +101,66 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     /*
      * Add an 'add' operation to the transaction table.
      */
-    private static final String INSERT_MAPPING = "INSERT INTO " + TRANSACTION_OPERATIONS_TABLE +
+    private static final String UPSERT_MAPPING_TX_POSTGRESQL = "INSERT INTO " + TRANSACTION_OPERATIONS_TABLE +
+            " ( " + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ", " +
+            TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + ") VALUES (:fedoraId, :fedoraRootId, :ocflId," +
+            " :transactionId, :operation) ON CONFLICT (" + FEDORA_ID_COLUMN + ", " + TRANSACTION_ID_COLUMN + ")" +
+            " DO UPDATE SET " + FEDORA_ROOT_ID_COLUMN + " = EXCLUDED." + FEDORA_ROOT_ID_COLUMN + ", " +
+            OCFL_ID_COLUMN + " = EXCLUDED." + OCFL_ID_COLUMN + ", " + OPERATION_COLUMN + " = EXCLUDED." +
+            OPERATION_COLUMN;
+
+    private static final String UPSERT_MAPPING_TX_MYSQL_MARIA = "INSERT INTO " + TRANSACTION_OPERATIONS_TABLE +
             " (" + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ", " +
             TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + ")" +
-            " VALUES (:fedoraId, :fedoraRootId, :ocflId, :transactionId, 'add')";
+            " VALUES (:fedoraId, :fedoraRootId, :ocflId, :transactionId, :operation) ON DUPLICATE KEY UPDATE " +
+            FEDORA_ROOT_ID_COLUMN + " = VALUES(" + FEDORA_ID_COLUMN + "), " + OCFL_ID_COLUMN + " = VALUES(" +
+            OCFL_ID_COLUMN + "), " + OPERATION_COLUMN + " = VALUES(" + OPERATION_COLUMN + ")";
 
-    /*
-     * Is there an add operation for the same mapping in the same transaction?
-     */
-    private static final String IS_MAPPING_ADDED_IN_TRANSACTION = "SELECT TRUE FROM " + TRANSACTION_OPERATIONS_TABLE +
-            " WHERE " + FEDORA_ID_COLUMN + " = :fedoraId AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
-            OPERATION_COLUMN + " = 'add'";
+    private static final String UPSERT_MAPPING_TX_H2 = "MERGE INTO " + TRANSACTION_OPERATIONS_TABLE +
+            " (" + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ", " +
+            TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + ")" +
+            " VALUES (:fedoraId, :fedoraRootId, :ocflId, :transactionId, :operation)";
 
-    /*
-     * Undo an add operation for the same mapping in the same transaction.
+    /**
+     * Map of database product to UPSERT into operations table SQL.
      */
-    private static final String UNDO_ADD_MAPPING_IN_TRANSACTION = "DELETE FROM " + TRANSACTION_OPERATIONS_TABLE +
-            " WHERE " + FEDORA_ID_COLUMN + " = :fedoraId AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
-            OPERATION_COLUMN + " = 'add'";
+    private static final Map<String, String> UPSERT_MAPPING_TX_MAP = Map.of(
+            "MySQL", UPSERT_MAPPING_TX_MYSQL_MARIA,
+            "H2", UPSERT_MAPPING_TX_H2,
+            "PostgreSQL", UPSERT_MAPPING_TX_POSTGRESQL,
+            "MariaDB", UPSERT_MAPPING_TX_MYSQL_MARIA
+    );
 
-    /*
-     * Add a delete operation to the transaction table.
+    private static final String COMMIT_ADD_MAPPING_POSTGRESQL = "INSERT INTO " + MAPPING_TABLE +
+            " ( " + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ") SELECT " +
+            FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + " FROM " +
+            TRANSACTION_OPERATIONS_TABLE + " WHERE " + OPERATION_COLUMN + " = 'add' AND " + TRANSACTION_ID_COLUMN +
+            " = :transactionId ON CONFLICT ( " +  FEDORA_ID_COLUMN + " )" +
+            " DO UPDATE SET " + FEDORA_ROOT_ID_COLUMN + " = EXCLUDED." + FEDORA_ROOT_ID_COLUMN + ", " +
+            OCFL_ID_COLUMN + " = EXCLUDED." + OCFL_ID_COLUMN;
+
+    private static final String COMMIT_ADD_MAPPING_MYSQL_MARIA = "INSERT INTO " + MAPPING_TABLE +
+            " (" + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ") SELECT " +
+            FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + " FROM " +
+            TRANSACTION_OPERATIONS_TABLE + " WHERE " + OPERATION_COLUMN + " = 'add' AND " + TRANSACTION_ID_COLUMN +
+            " = :transactionId ON DUPLICATE KEY UPDATE " +
+            FEDORA_ROOT_ID_COLUMN + " = VALUES(" + FEDORA_ID_COLUMN + "), " + OCFL_ID_COLUMN + " = VALUES(" +
+            OCFL_ID_COLUMN + ")";
+
+    private static final String COMMIT_ADD_MAPPING_H2 = "MERGE INTO " + MAPPING_TABLE +
+            " (" + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ")" +
+            " SELECT " + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + " FROM " +
+            TRANSACTION_OPERATIONS_TABLE + " WHERE " + OPERATION_COLUMN + " = 'add'";
+
+    /**
+     * Map of database product name to COMMIT to mapping table from operations table
      */
-    private static final String REMOVE_MAPPING = "INSERT INTO " + TRANSACTION_OPERATIONS_TABLE +
-            " (" + FEDORA_ID_COLUMN + ", " + TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + ")" +
-            " VALUES (:fedoraId, :transactionId, 'delete')";
+    private static final Map<String, String> COMMIT_ADD_MAPPING_MAP = Map.of(
+            "MySQL", COMMIT_ADD_MAPPING_MYSQL_MARIA,
+            "H2", COMMIT_ADD_MAPPING_H2,
+            "PostgreSQL", COMMIT_ADD_MAPPING_POSTGRESQL,
+            "MariaDB", COMMIT_ADD_MAPPING_MYSQL_MARIA
+    );
 
     /*
      * Add records to the mapping table that are to be added in this transaction.
@@ -137,23 +179,6 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
             TRANSACTION_ID_COLUMN + " = :transactionId AND " +  OPERATION_COLUMN + " = 'delete' AND " +
             MAPPING_TABLE + "." + FEDORA_ID_COLUMN + " = " + TRANSACTION_OPERATIONS_TABLE + "." + FEDORA_ID_COLUMN +
             ")";
-
-    /*
-     * Is there a mapping 'delete'd in this session?
-     */
-    private static final String IS_MAPPING_REMOVED_IN_TRANSACTION = "SELECT TRUE FROM " + TRANSACTION_OPERATIONS_TABLE +
-            " WHERE " + FEDORA_ID_COLUMN + " = :fedoraId AND " + FEDORA_ROOT_ID_COLUMN + " = :fedoraRootId AND " +
-            OCFL_ID_COLUMN + " = :ocflId AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN +
-            " = 'delete'";
-
-    /*
-     * Delete the mapping from the session table.
-     */
-    private static final String UNDO_REMOVE_MAPPING_IN_TRANSACTION = "DELETE FROM " + TRANSACTION_OPERATIONS_TABLE +
-            " WHERE " + FEDORA_ID_COLUMN + " = :fedoraId AND " + FEDORA_ROOT_ID_COLUMN + " = :fedoraRootId AND " +
-            OCFL_ID_COLUMN + " = :ocflId AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN +
-            " = 'delete'";
-
 
     private static final String TRUNCATE_MAPPINGS = "TRUNCATE TABLE " + MAPPING_TABLE;
 
@@ -179,6 +204,8 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     private PlatformTransactionManager platformTransactionManager;
 
+    private String DATABASE_PRODUCT_NAME;
+
     public DbFedoraToOcflObjectIndex(@Autowired final DataSource dataSource) {
         this.dataSource = dataSource;
         this.platformTransactionManager = new DataSourceTransactionManager(dataSource);
@@ -187,10 +214,25 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     @PostConstruct
     public void setup() {
-        LOGGER.info("Applying ddl: {}", DDL);
+        final var ddl = lookupDdl();
+        LOGGER.info("Applying ddl: {}", ddl);
         DatabasePopulatorUtils.execute(
-                new ResourceDatabasePopulator(new DefaultResourceLoader().getResource("classpath:" + DDL)),
+                new ResourceDatabasePopulator(new DefaultResourceLoader().getResource("classpath:" + ddl)),
                 dataSource);
+    }
+
+    private String lookupDdl() {
+        try (final var connection = dataSource.getConnection()) {
+            DATABASE_PRODUCT_NAME = connection.getMetaData().getDatabaseProductName();
+            LOGGER.debug("Identified database as: {}", DATABASE_PRODUCT_NAME);
+            final var ddl = DDL_MAP.get(DATABASE_PRODUCT_NAME);
+            if (ddl == null) {
+                throw new IllegalStateException("Unknown database platform: " + DATABASE_PRODUCT_NAME);
+            }
+            return ddl;
+        } catch (final SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -214,33 +256,37 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     @Override
     public FedoraOCFLMapping addMapping(@Nonnull final String transactionId, final String fedoraId,
                                         final String fedoraRootId, final String ocflId) {
-        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-        parameterSource.addValue("fedoraId", fedoraId);
-        parameterSource.addValue("fedoraRootId", fedoraRootId);
-        parameterSource.addValue("ocflId", ocflId);
-        parameterSource.addValue("transactionId", transactionId);
-        final boolean isRemovedInTx = !jdbcTemplate.queryForList(IS_MAPPING_REMOVED_IN_TRANSACTION, parameterSource)
-                .isEmpty();
-        if (isRemovedInTx) {
-            jdbcTemplate.update(UNDO_REMOVE_MAPPING_IN_TRANSACTION, parameterSource);
-        } else {
-            jdbcTemplate.update(INSERT_MAPPING, parameterSource);
-        }
+        upsert(transactionId, fedoraId, "add", fedoraRootId, ocflId);
         return new FedoraOCFLMapping(fedoraRootId, ocflId);
     }
 
     @Override
     public void removeMapping(@Nonnull final String transactionId, final String fedoraId) {
+        upsert(transactionId, fedoraId, "delete");
+    }
+
+    private void upsert(final String transactionId, final String fedoraId, final String operation) {
+        upsert(transactionId, fedoraId, operation, null, null);
+    }
+
+    /**
+     * Perform the upsert to the operations table.
+     *
+     * @param transactionId the transaction/session id.
+     * @param fedoraId the resource id.
+     * @param operation the operation we are performing (add or delete)
+     * @param fedoraRootId the fedora root id (for add only)
+     * @param ocflId the ocfl id (for add only).
+     */
+    private void upsert(final String transactionId, final String fedoraId, final String operation,
+                        final String fedoraRootId, final String ocflId) {
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("fedoraId", fedoraId);
+        parameterSource.addValue("fedoraRootId", fedoraRootId);
+        parameterSource.addValue("ocflId", ocflId);
         parameterSource.addValue("transactionId", transactionId);
-        final boolean isAddedInTx = !jdbcTemplate.queryForList(IS_MAPPING_ADDED_IN_TRANSACTION, parameterSource)
-                .isEmpty();
-        if (isAddedInTx) {
-            jdbcTemplate.update(UNDO_ADD_MAPPING_IN_TRANSACTION, parameterSource);
-        } else {
-            jdbcTemplate.update(REMOVE_MAPPING, parameterSource);
-        }
+        parameterSource.addValue("operation", operation);
+        jdbcTemplate.update(UPSERT_MAPPING_TX_MAP.get(DATABASE_PRODUCT_NAME), parameterSource);
     }
 
     @Override
@@ -264,7 +310,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
         executeInDbTransaction(sessionId, status -> {
             try {
                 jdbcTemplate.update(COMMIT_DELETE_RECORDS, map);
-                jdbcTemplate.update(COMMIT_ADD_RECORDS, map);
+                jdbcTemplate.update(COMMIT_ADD_MAPPING_MAP.get(DATABASE_PRODUCT_NAME), map);
                 jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, map);
                 return null;
             } catch (final Exception e) {

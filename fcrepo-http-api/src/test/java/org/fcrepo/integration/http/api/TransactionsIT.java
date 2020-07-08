@@ -64,7 +64,6 @@ import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.junit.Ignore;
@@ -304,74 +303,6 @@ public class TransactionsIT extends AbstractResourceIT {
                 getStatus(addTxTo(new HttpGet(newObjectLocation), txLocation)));
     }
 
-    /**
-     * Tests that transactions cannot be hijacked
-     *
-     * @throws IOException exception thrown during this function
-     */
-    @Ignore //TODO Fix this test
-    @Test
-    public void testTransactionHijackingNotPossible() throws IOException {
-
-        /* "fedoraAdmin" creates a transaction */
-        final String txLocation;
-        try (final CloseableHttpResponse response =
-                executeWithBasicAuth(new HttpPost(serverAddress + "fcr:tx"), "fedoraAdmin", "fedoraAdmin")) {
-            assertEquals("Status should be CREATED after creating a transaction with user fedoraAdmin",
-                    CREATED.getStatusCode(), getStatus(response));
-            txLocation = getLocation(response);
-        }
-        /* "fedoraUser" puts to "fedoraAdmin"'s transaction and fails */
-        try (final CloseableHttpResponse responseFedoraUser =
-                executeWithBasicAuth(new HttpPut(txLocation), "fedoraUser", "fedoraUser")) {
-            assertEquals("Status should be GONE because putting on a transaction of a different user is not allowed",
-                    GONE.getStatusCode(), getStatus(responseFedoraUser));
-        }
-        /* anonymous user puts to "fedoraAdmin"'s transaction and fails */
-        assertEquals("Status should be GONE because putting on a transaction of a different user is not allowed",
-                    GONE.getStatusCode(), getStatus(new HttpPut(txLocation)));
-
-        /* transaction is still intact and "fedoraAdmin" - the owner - can successfully put to it */
-        try (final CloseableHttpResponse responseFromPutToTx =
-                executeWithBasicAuth(
-                        new HttpPut(txLocation + "/" + getRandomUniqueId()), "fedoraAdmin", "fedoraAdmin")) {
-            assertEquals("Status should be CREATED after putting",
-                    CREATED.getStatusCode(), getStatus(responseFromPutToTx));
-        }
-    }
-
-    /**
-     * Tests that transactions cannot be hijacked, even if created by an anonymous user
-     *
-     * @throws IOException exception thrown during this function
-     */
-    @Ignore //TODO Fix this test
-    @Test
-    public void testTransactionHijackingNotPossibleAnoymous() throws IOException {
-
-        /* anonymous user creates a transaction */
-        final String txLocation = createTransaction();
-
-        /* fedoraAdmin attempts to puts to anonymous transaction and fails */
-        try (final CloseableHttpResponse responseFedoraAdmin =
-                executeWithBasicAuth(new HttpPut(txLocation), "fedoraAdmin", "fedoraAdmin")) {
-            assertEquals(
-                    "Status should be GONE because putting on a transaction of a different user is not permitted",
-                    GONE.getStatusCode(), getStatus(responseFedoraAdmin));
-        }
-
-        /* fedoraUser attempts to put to anonymous transaction and fails */
-        try (final CloseableHttpResponse responseFedoraUser =
-                executeWithBasicAuth(new HttpPut(txLocation), "fedoraUser", "fedoraUser")) {
-            assertEquals("Status should be GONE because putting on a transaction of a different user isn't permitted",
-                    GONE.getStatusCode(), getStatus(responseFedoraUser));
-        }
-
-        /* transaction is still intact and any anonymous user can successfully put to it */
-        assertEquals("Status should be CREATED after putting",
-                CREATED.getStatusCode(), getStatus(new HttpPut(txLocation + "/" + getRandomUniqueId())));
-    }
-
     /*
      *  Caching headers should now be present during transactions. They were not in previous modeshape based versions.
      */
@@ -396,11 +327,6 @@ public class TransactionsIT extends AbstractResourceIT {
             assertEquals("max-age=0 expected", "max-age=0", headers[1].getValue());
             consume(resp.getEntity());
         }
-    }
-
-    private <T extends HttpRequestBase> T addTxTo(final T req, final String txId) {
-        req.addHeader(ATOMIC_ID_HEADER, txId);
-        return req;
     }
 
     /**
