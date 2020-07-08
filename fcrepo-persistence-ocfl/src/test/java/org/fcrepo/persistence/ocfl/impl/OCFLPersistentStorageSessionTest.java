@@ -179,14 +179,14 @@ public class OCFLPersistentStorageSessionTest {
     }
 
     private void mockNoIndex(final String resourceId) throws FedoraOCFLMappingNotFoundException {
-        when(index.getMapping(resourceId)).thenThrow(new FedoraOCFLMappingNotFoundException(resourceId));
+        when(index.getMapping(any(), eq(resourceId))).thenThrow(new FedoraOCFLMappingNotFoundException(resourceId));
     }
 
     private void mockMappingAndIndexWithNoIndex(final String ocflObjectId, final String resourceId,
                                                 final String rootObjectId, final FedoraOCFLMapping mapping)
             throws FedoraOCFLMappingNotFoundException {
         mockMapping(ocflObjectId, rootObjectId, mapping);
-        when(index.getMapping(resourceId))
+        when(index.getMapping(any(), eq(resourceId)))
                 .thenThrow(new FedoraOCFLMappingNotFoundException(resourceId))
                 .thenReturn(mapping);
     }
