@@ -49,6 +49,7 @@ import static org.fcrepo.search.api.Condition.Field.CREATED;
 import static org.fcrepo.search.api.Condition.Field.FEDORA_ID;
 import static org.fcrepo.search.api.Condition.Field.MIME_TYPE;
 import static org.fcrepo.search.api.Condition.Field.MODIFIED;
+import static org.fcrepo.search.api.Condition.Field.RDF_TYPE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -308,6 +309,12 @@ public class FedoraSearchIT extends AbstractResourceIT {
         testFieldsReturnsOnlySpecifiedFields(Arrays.asList(CONTENT_SIZE));
     }
 
+    @Test
+    public void testFieldsReturnsRDFType() throws Exception {
+        testFieldsReturnsOnlySpecifiedFields(Arrays.asList(RDF_TYPE));
+    }
+
+
     private void testFieldsReturnsOnlySpecifiedFields(final List<Condition.Field> fieldList) throws Exception {
         final var id = getRandomUniqueId();
         final var count = 1;
@@ -497,6 +504,33 @@ public class FedoraSearchIT extends AbstractResourceIT {
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
             assertEquals(resources, result.getItems().stream()
                     .map(x -> x.get("fedora_id")).collect(Collectors.toList()));
+        }
+    }
+
+    @Test
+    public void testSearchByRdfSource() throws Exception {
+        final var resourceId = getRandomUniqueId();
+        createObjectAndClose(resourceId);
+        final var condition = FEDORA_ID + "=" + resourceId;
+        final var rdfTypeCondition = RDF_TYPE + "=*BasicContainer*";
+        final String searchUrl =
+                getSearchEndpoint() + "condition=" + encode(condition) + "&condition=" + encode(rdfTypeCondition);
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
+            assertEquals(1, result.getItems().size());
+        }
+
+        final String searchUrl2 =
+                getSearchEndpoint() + "condition=" + encode(condition) +
+                        "&condition=" + encode(rdfTypeCondition + "with-non-matching-suffix");
+
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl2))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
+            assertEquals(0, result.getItems().size());
         }
     }
 
