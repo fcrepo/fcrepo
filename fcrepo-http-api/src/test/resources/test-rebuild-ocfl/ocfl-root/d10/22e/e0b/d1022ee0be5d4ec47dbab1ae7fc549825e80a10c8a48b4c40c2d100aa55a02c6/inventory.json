@@ -1,0 +1,62 @@
+{
+  "id": "info:fedora/archival-group",
+  "type": "https://ocfl.io/1.0/spec/#inventory",
+  "digestAlgorithm": "sha512",
+  "head": "v1",
+  "contentDirectory": "content",
+  "fixity": {},
+  "manifest": {
+    "0331506a2bbc510deee7aaa4a529d04c646d770f36d329007d8af448ed8cba9a3a1f570f937d5a48898c2119de9082d85aebeeb025eee77cda41790176b101b7": [
+      "v1/content/.fcrepo/archival-group.json"
+    ],
+    "3d70e31978fae45b3fa359b0c857baaa6ae9db4522c838b6fb75821465c7b79d4b35b430b613f8d4fc32fe6a46a841992262d472687299bfb77a761e7a615e16": [
+      "v1/content/.fcrepo/container.json"
+    ],
+    "b9377e1cd2eb0ccb552a17fee15594cb6eef9c69908a9ec9f3707b0f1a8327dad7d440178a15a6fc4a147496c22ff3d4a1f4da0c362976290a7187e16c0f542c": [
+      "v1/content/.fcrepo/binary-description.json"
+    ],
+    "c8ba9fe79f0c29f92e60dec9817c5c32c9f950320bd535d1c99e65014daef3809e403143d7597d83567e0e0a021e9fa30a4230c77ba4fd36763b93ef7d32024b": [
+      "v1/content/.fcrepo/test.json"
+    ],
+    "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e": [
+      "v1/content/archival-group.nt"
+    ],
+    "e4591f4564b8baeef124e80a8ab9c584df39ec3e7315e8101ce150c340a04d0ebfeb82e852b682ad00364fea1ad0dc820b5ec630984838fbba9ee4e06d9dd205": [
+      "v1/content/.fcrepo/binary.json"
+    ],
+    "ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff": [
+      "v1/content/binary"
+    ]
+  },
+  "versions": {
+    "v1": {
+      "created": "2020-04-14T03:44:03Z",
+      "state": {
+        "0331506a2bbc510deee7aaa4a529d04c646d770f36d329007d8af448ed8cba9a3a1f570f937d5a48898c2119de9082d85aebeeb025eee77cda41790176b101b7": [
+          ".fcrepo/archival-group.json"
+        ],
+        "3d70e31978fae45b3fa359b0c857baaa6ae9db4522c838b6fb75821465c7b79d4b35b430b613f8d4fc32fe6a46a841992262d472687299bfb77a761e7a615e16": [
+          ".fcrepo/container.json"
+        ],
+        "b9377e1cd2eb0ccb552a17fee15594cb6eef9c69908a9ec9f3707b0f1a8327dad7d440178a15a6fc4a147496c22ff3d4a1f4da0c362976290a7187e16c0f542c": [
+          ".fcrepo/binary-description.json"
+        ],
+        "c8ba9fe79f0c29f92e60dec9817c5c32c9f950320bd535d1c99e65014daef3809e403143d7597d83567e0e0a021e9fa30a4230c77ba4fd36763b93ef7d32024b": [
+          ".fcrepo/test.json"
+        ],
+        "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e": [
+          "archival-group.nt",
+          "binary-description.nt",
+          "container.nt",
+          "test.nt"
+        ],
+        "e4591f4564b8baeef124e80a8ab9c584df39ec3e7315e8101ce150c340a04d0ebfeb82e852b682ad00364fea1ad0dc820b5ec630984838fbba9ee4e06d9dd205": [
+          ".fcrepo/binary.json"
+        ],
+        "ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff": [
+          "binary"
+        ]
+      }
+    }
+  }
+}

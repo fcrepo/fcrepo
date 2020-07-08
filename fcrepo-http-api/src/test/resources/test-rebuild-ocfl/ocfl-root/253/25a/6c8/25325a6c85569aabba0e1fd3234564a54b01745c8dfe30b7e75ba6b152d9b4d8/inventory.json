@@ -1,0 +1,42 @@
+{
+  "id": "info:fedora/test_nested-binary",
+  "type": "https://ocfl.io/1.0/spec/#inventory",
+  "digestAlgorithm": "sha512",
+  "head": "v1",
+  "contentDirectory": "content",
+  "fixity": {},
+  "manifest": {
+    "23b175001f9a3472281b572dce0ddb3813cc7977c9dea89ee29e845012cbb8e6871f83745a488169111594e83f6e6f8701ba2236a661067e50c5ff38bdb379ec": [
+      "v1/content/.fcrepo/nested-binary.json"
+    ],
+    "43c88bb65e389a082a88713a6ce09210ffeb3537d362fc3e40d4ebc5eeb6ac99d1577e547895ee2af199031d05166a1529db1b04692cbb340486b7c092b60d7f": [
+      "v1/content/.fcrepo/nested-binary-description.json"
+    ],
+    "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e": [
+      "v1/content/nested-binary-description.nt"
+    ],
+    "ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff": [
+      "v1/content/nested-binary"
+    ]
+  },
+  "versions": {
+    "v1": {
+      "created": "2020-04-14T03:46:17Z",
+      "message": "initial commit",
+      "state": {
+        "23b175001f9a3472281b572dce0ddb3813cc7977c9dea89ee29e845012cbb8e6871f83745a488169111594e83f6e6f8701ba2236a661067e50c5ff38bdb379ec": [
+          ".fcrepo/nested-binary.json"
+        ],
+        "43c88bb65e389a082a88713a6ce09210ffeb3537d362fc3e40d4ebc5eeb6ac99d1577e547895ee2af199031d05166a1529db1b04692cbb340486b7c092b60d7f": [
+          ".fcrepo/nested-binary-description.json"
+        ],
+        "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e": [
+          "nested-binary-description.nt"
+        ],
+        "ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff": [
+          "nested-binary"
+        ]
+      }
+    }
+  }
+}

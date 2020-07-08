@@ -22,7 +22,6 @@ import edu.wisc.library.ocfl.api.OcflObjectUpdater;
 import edu.wisc.library.ocfl.api.OcflOption;
 import edu.wisc.library.ocfl.api.exception.FixityCheckException;
 import edu.wisc.library.ocfl.api.exception.NotFoundException;
-import edu.wisc.library.ocfl.api.model.CommitInfo;
 import edu.wisc.library.ocfl.api.model.DigestAlgorithm;
 import edu.wisc.library.ocfl.api.model.FileChangeType;
 import edu.wisc.library.ocfl.api.model.FileDetails;
@@ -30,6 +29,8 @@ import edu.wisc.library.ocfl.api.model.ObjectVersionId;
 import edu.wisc.library.ocfl.api.model.VersionDetails;
 import edu.wisc.library.ocfl.api.model.VersionId;
 import edu.wisc.library.ocfl.core.util.FileUtil;
+import edu.wisc.library.ocfl.api.model.VersionInfo;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -52,12 +53,12 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -146,11 +147,10 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         return value;
     }
 
-    private String decode(final String value) {
-        if (SystemUtils.IS_OS_WINDOWS) {
-            return URLDecoder.decode(value, StandardCharsets.UTF_8);
-        }
-        return value;
+    private String windowsStagingPathToLogicalPath(final Path path) {
+        final var normalized = stagingPath.relativize(path).toString()
+                .replace("\\", "/");
+        return URLDecoder.decode(normalized, StandardCharsets.UTF_8);
     }
 
     /**
@@ -191,8 +191,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
     @Override
     public void registerTransmissionDigest(final String subpath, final String digest) {
-        final var encodedSubpath = encode(subpath);
-        subpathToDigest.put(encodedSubpath, digest);
+        subpathToDigest.put(subpath, digest);
     }
 
     /**
@@ -222,7 +221,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
         // for file that existed before this session, queue up its deletion for commit time
         if (!isNewInSession(subpath)) {
-            deletePaths.add(encodedSubpath);
+            deletePaths.add(subpath);
         } else if (!hasStagedChanges) {
             // File is neither in the staged or exists in the head version, so file cannot be found for deletion
             if (objectDeleted && isStagingEmpty()) {
@@ -265,16 +264,13 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
     @Override
     public boolean isNewInSession(final String subpath) {
-
-        final var encodedSubpath = encode(subpath);
-
         if (isNewInSession()) {
             return true;
         }
 
         // determine if this subpath exists in the OCFL object
         return !ocflRepository.getObject(ObjectVersionId.head(objectIdentifier))
-                .containsFile(encodedSubpath);
+                .containsFile(subpath);
     }
 
     @Override
@@ -336,12 +332,10 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
     private InputStream readVersion(final String subpath, final ObjectVersionId version)
             throws PersistentItemNotFoundException {
-        final var encodedSubpath = encode(subpath);
-
         try {
             // read the head version of the file from the ocfl object
             final var file = ocflRepository.getObject(version)
-                    .getFile(encodedSubpath);
+                    .getFile(subpath);
             if (file == null) {
                 throw new PersistentItemNotFoundException(format("Could not find %s within object %s version %s",
                         subpath, objectIdentifier, version.getVersionId()));
@@ -387,7 +381,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         assertSessionOpen();
 
         if (commitOption == null) {
-            throw new IllegalArgumentException("Invalid commit option provided: " + commitOption);
+            throw new IllegalArgumentException("Commit option must not be null");
         }
 
         // Close the session
@@ -416,7 +410,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     }
 
     private String commitNewObject(final CommitOption commitOption) throws PersistentStorageException {
-        final var commitInfo = new CommitInfo().setMessage("initial commit");
+        final var commitInfo = new VersionInfo().setMessage("initial commit");
 
         // Prevent creation of empty OCFL objects
         if (isStagingEmpty()) {
@@ -491,18 +485,32 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
                 return;
             }
 
-            updater.addPath(stagingPath, ocflOptions);
+            if (SystemUtils.IS_OS_WINDOWS) {
+                addDecodedPaths(updater, ocflOptions);
+            } else {
+                updater.addPath(stagingPath, ocflOptions);
+            }
 
             subpathToDigest.forEach((subpath, digest) -> {
-                final String normalizedPath = FileUtil.pathToStringStandardSeparator(Paths.get(subpath));
                 try {
-                    updater.addFileFixity(normalizedPath, ocflDigestAlg, digest);
+                    updater.addFileFixity(subpath, ocflDigestAlg, digest);
                 } catch (final FixityCheckException e) {
                     throw new PersistentStorageRuntimeException("Transmission of file " + subpath
                             + " failed due to fixity check failure: " + e.getMessage());
                 }
             });
         };
+    }
+
+    private void addDecodedPaths(final OcflObjectUpdater updater, final OcflOption... ocflOptions) {
+        try (var paths = Files.walk(stagingPath)) {
+            paths.filter(Files::isRegularFile).forEach(file -> {
+                final var logicalPath = windowsStagingPathToLogicalPath(file);
+                updater.addPath(file, logicalPath, ocflOptions);
+            });
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     /**
@@ -535,7 +543,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
                         return new OCFLVersionImpl()
                                 .setOcflObjectId(version.getObjectId())
                                 .setOcflVersionId(version.getVersionId().toString())
-                                .setCreatedBy(getCreatedBy(version.getCommitInfo()))
+                                .setCreatedBy(version.getVersionInfo().getUser().getName())
                                 .setCreated(toMementoInstant(version.getCreated()));
                     }).collect(Collectors.toList());
         } catch (final NotFoundException e) {
@@ -553,12 +561,10 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
         assertSessionOpen();
 
-        final var encodedSubpath = encode(subpath);
-
         try {
             final var headDesc = ocflRepository.describeVersion(ObjectVersionId.head(objectIdentifier));
 
-            return ocflRepository.fileChangeHistory(objectIdentifier, encodedSubpath).getFileChanges().stream()
+            return ocflRepository.fileChangeHistory(objectIdentifier, subpath).getFileChanges().stream()
                     .filter(change -> change.getChangeType() == FileChangeType.UPDATE)
                     // do not include changes that were made in the mutable head
                     .filter(change -> !(headDesc.isMutable() && headDesc.getVersionId().equals(change.getVersionId())))
@@ -566,7 +572,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
                         return new OCFLVersionImpl()
                                 .setOcflObjectId(objectIdentifier)
                                 .setOcflVersionId(change.getVersionId().toString())
-                                .setCreatedBy(getCreatedBy(change.getCommitInfo()))
+                                .setCreatedBy(change.getVersionInfo().getUser().getName())
                                 .setCreated(toMementoInstant(change.getTimestamp()));
                     }).collect(Collectors.toList());
         } catch (final NotFoundException e) {
@@ -583,8 +589,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
             return this.ocflRepository.describeVersion(ObjectVersionId.head(this.objectIdentifier))
                     .getFiles()
                     .stream()
-                    .map(FileDetails::getPath)
-                    .map(this::decode);
+                    .map(FileDetails::getPath);
         } catch (final NotFoundException exc) {
             return Stream.empty();
         }
@@ -610,16 +615,6 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         if (sessionClosed) {
             throw new PersistentSessionClosedException("Cannot perform operation, session is closed");
         }
-    }
-
-    private String getCreatedBy(final CommitInfo commitInfo) {
-        if (commitInfo != null) {
-            final var user = commitInfo.getUser();
-            if (user != null) {
-                return user.getName();
-            }
-        }
-        return null;
     }
 
     private Instant toMementoInstant(final OffsetDateTime timestamp) {

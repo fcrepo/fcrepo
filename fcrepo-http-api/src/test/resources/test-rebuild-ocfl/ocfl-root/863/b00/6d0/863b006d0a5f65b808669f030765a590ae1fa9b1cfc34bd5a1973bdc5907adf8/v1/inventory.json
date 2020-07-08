@@ -1,0 +1,30 @@
+{
+  "id": "info:fedora/test",
+  "type": "https://ocfl.io/1.0/spec/#inventory",
+  "digestAlgorithm": "sha512",
+  "head": "v1",
+  "contentDirectory": "content",
+  "fixity": {},
+  "manifest": {
+    "83cd2ef7255b32026881c33b8a87c6c56ca81a60b2c0d86454899ceb8980f7fa8bd8e15a8e9b137615eea60e471db7eff875b53334ecd64fe9c49c82697065f8": [
+      "v1/content/.fcrepo/test.json"
+    ],
+    "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e": [
+      "v1/content/test.nt"
+    ]
+  },
+  "versions": {
+    "v1": {
+      "created": "2020-04-14T03:42:00Z",
+      "message": "initial commit",
+      "state": {
+        "83cd2ef7255b32026881c33b8a87c6c56ca81a60b2c0d86454899ceb8980f7fa8bd8e15a8e9b137615eea60e471db7eff875b53334ecd64fe9c49c82697065f8": [
+          ".fcrepo/test.json"
+        ],
+        "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e": [
+          "test.nt"
+        ]
+      }
+    }
+  }
+}

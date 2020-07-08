@@ -22,9 +22,10 @@ import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import edu.wisc.library.ocfl.api.model.DigestAlgorithm;
 import edu.wisc.library.ocfl.core.OcflConfig;
 import edu.wisc.library.ocfl.core.OcflRepositoryBuilder;
-import edu.wisc.library.ocfl.core.extension.layout.config.DefaultLayoutConfig;
+import edu.wisc.library.ocfl.core.extension.storage.layout.config.HashedTruncatedNTupleConfig;
+import edu.wisc.library.ocfl.core.path.mapper.LogicalPathMappers;
 import edu.wisc.library.ocfl.core.storage.filesystem.FileSystemOcflStorage;
-
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.http.impl.auth.UnsupportedDigestAlgorithmException;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
@@ -367,12 +368,13 @@ public class OCFLPersistentStorageUtils {
                     "Unable to map Fedora default digest algorithm " + defaultFcrepoAlg + " into OCFL");
         }
 
-        final OcflConfig config = new OcflConfig();
-        config.setDefaultDigestAlgorithm(ocflDigestAlg);
+        final var logicalPathMapper = SystemUtils.IS_OS_WINDOWS ?
+                LogicalPathMappers.percentEncodingWindowsMapper() : LogicalPathMappers.percentEncodingLinuxMapper();
 
         return new OcflRepositoryBuilder()
-                .layoutConfig(DefaultLayoutConfig.nTupleHashConfig())
-                .ocflConfig(config)
+                .layoutConfig(new HashedTruncatedNTupleConfig())
+                .ocflConfig(new OcflConfig().setDefaultDigestAlgorithm(ocflDigestAlg))
+                .logicalPathMapper(logicalPathMapper)
                 .storage((FileSystemOcflStorage.builder().repositoryRoot(ocflStorageRootDir).build()))
                 .workDir(ocflWorkDir)
                 .buildMutable();

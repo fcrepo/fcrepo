@@ -1,0 +1,30 @@
+{
+  "id": "info:fedora/test_nested-archival-group",
+  "type": "https://ocfl.io/1.0/spec/#inventory",
+  "digestAlgorithm": "sha512",
+  "head": "v1",
+  "contentDirectory": "content",
+  "fixity": {},
+  "manifest": {
+    "5c3e325a3337cdbc02a1850f90e619a3e4556005d99afb54f6e9dc1f6e7a87d25fecb916c4f2907b4fc6eea7978bfe3b31d46ce3fcf3a41541411fef62da489e": [
+      "v1/content/.fcrepo/nested-archival-group.json"
+    ],
+    "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e": [
+      "v1/content/nested-archival-group.nt"
+    ]
+  },
+  "versions": {
+    "v1": {
+      "created": "2020-04-14T03:45:41Z",
+      "message": "initial commit",
+      "state": {
+        "5c3e325a3337cdbc02a1850f90e619a3e4556005d99afb54f6e9dc1f6e7a87d25fecb916c4f2907b4fc6eea7978bfe3b31d46ce3fcf3a41541411fef62da489e": [
+          ".fcrepo/nested-archival-group.json"
+        ],
+        "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e": [
+          "nested-archival-group.nt"
+        ]
+      }
+    }
+  }
+}

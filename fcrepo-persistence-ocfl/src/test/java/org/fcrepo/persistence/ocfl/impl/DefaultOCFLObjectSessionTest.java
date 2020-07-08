@@ -23,7 +23,7 @@ import edu.wisc.library.ocfl.api.model.ObjectDetails;
 import edu.wisc.library.ocfl.api.model.ObjectVersionId;
 import edu.wisc.library.ocfl.api.model.VersionId;
 import edu.wisc.library.ocfl.core.OcflRepositoryBuilder;
-import edu.wisc.library.ocfl.core.extension.layout.config.DefaultLayoutConfig;
+import edu.wisc.library.ocfl.core.extension.storage.layout.config.HashedTruncatedNTupleConfig;
 import edu.wisc.library.ocfl.core.storage.filesystem.FileSystemOcflStorage;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.persistence.api.CommitOption;
@@ -91,7 +91,7 @@ public class DefaultOCFLObjectSessionTest {
         final var workDir = tempFolder.newFolder("ocfl-work").toPath();
 
         ocflRepository = new OcflRepositoryBuilder()
-                .layoutConfig(DefaultLayoutConfig.flatPairTreeConfig())
+                .layoutConfig(new HashedTruncatedNTupleConfig())
                 .workDir(workDir)
                 .storage(FileSystemOcflStorage.builder().repositoryRoot(repoDir).build())
                 .buildMutable();

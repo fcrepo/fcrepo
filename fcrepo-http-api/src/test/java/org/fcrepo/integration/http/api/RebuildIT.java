@@ -21,6 +21,7 @@ package org.fcrepo.integration.http.api;
 import edu.wisc.library.ocfl.api.OcflRepository;
 import org.apache.http.client.methods.HttpGet;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.fcrepo.kernel.api.FedoraTypes;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,7 +38,6 @@ import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
-import static org.fcrepo.persistence.ocfl.api.OCFLPersistenceConstants.DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.springframework.test.util.AssertionErrors.assertTrue;
@@ -78,22 +78,18 @@ public class RebuildIT extends AbstractResourceIT {
         }
 
         assertEquals(7, ocflRepository.listObjectIds().count());
-        assertTrue("Should contain object with id: " + DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID,
-                ocflRepository.containsObject(DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID));
-        assertTrue("Should contain object with id: binary", ocflRepository.containsObject("binary"));
-        assertTrue("Should contain object with id: test", ocflRepository.containsObject("test"));
-        assertTrue("Should contain object with id: test_child", ocflRepository.containsObject("test_child"));
-        assertTrue("Should contain object with id: archival-group", ocflRepository.containsObject("archival-group"));
-        assertTrue("Should contain object with id: test_nested-archival-group", ocflRepository.containsObject(
-                "test_nested-archival-group"));
-        assertTrue("Should contain object with id: test_nested-binary", ocflRepository.containsObject(
-                "test_nested-binary"));
+        assertTrue("Should contain object with id: " + FedoraTypes.FEDORA_ID_PREFIX,
+                ocflRepository.containsObject(FedoraTypes.FEDORA_ID_PREFIX));
+        assertContains("binary");
+        assertContains("test");
+        assertContains("test_child");
+        assertContains("archival-group");
+        assertContains("test_nested-archival-group");
+        assertContains("test_nested-binary");
 
-        assertFalse("Should NOT contain object with id: archival-group_binary", ocflRepository.containsObject(
-                "archival-group_container"));
-        assertFalse("Should NOT contain object with id: archival-group_container", ocflRepository.containsObject(
-                "archival-group_binary"));
-        assertFalse("Should NOT contain object with id: junk", ocflRepository.containsObject("junk"));
+        assertNotContains("archival-group_binary");
+        assertNotContains("archival-group_container");
+        assertNotContains("junk");
     }
 
     @Test
@@ -138,6 +134,18 @@ public class RebuildIT extends AbstractResourceIT {
                         childNode));
             }
         }
+    }
+
+    private void assertContains(final String id) {
+        final var fedoraId = FedoraTypes.FEDORA_ID_PREFIX + "/" + id;
+        assertTrue("Should contain object with id: " + fedoraId,
+                ocflRepository.containsObject(fedoraId));
+    }
+
+    private void assertNotContains(final String id) {
+        final var fedoraId = FedoraTypes.FEDORA_ID_PREFIX + "/" + id;
+        assertFalse("Should NOT contain object with id: " + fedoraId,
+                ocflRepository.containsObject(fedoraId));
     }
 
 }
