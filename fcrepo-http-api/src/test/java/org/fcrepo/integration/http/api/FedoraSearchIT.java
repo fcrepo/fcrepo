@@ -23,6 +23,7 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.entity.StringEntity;
+import org.fcrepo.search.api.Condition;
 import org.fcrepo.search.api.SearchResult;
 import org.junit.Test;
 
@@ -41,8 +42,10 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.fcrepo.search.api.Condition.Field.CONTENT_SIZE;
 import static org.fcrepo.search.api.Condition.Field.CREATED;
 import static org.fcrepo.search.api.Condition.Field.FEDORA_ID;
+import static org.fcrepo.search.api.Condition.Field.MIME_TYPE;
 import static org.fcrepo.search.api.Condition.Field.MODIFIED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -284,15 +287,28 @@ public class FedoraSearchIT extends AbstractResourceIT {
             result.getItems().stream().map(x -> x.get("fedora_id"))
                     .forEach(x -> assertTrue(x.toString().equals(fedoraId)));
         }
-
     }
 
     @Test
-    public void testFieldsReturnsOnlySpecifiedFields() throws Exception {
+    public void testFieldsReturnsSpecifiedFields() throws Exception {
+        testFieldsReturnsOnlySpecifiedFields(Arrays.asList(FEDORA_ID, CREATED));
+    }
+
+    @Test
+    public void testFieldsReturnsMimeType() throws Exception {
+        testFieldsReturnsOnlySpecifiedFields(Arrays.asList(MIME_TYPE));
+    }
+
+    @Test
+    public void testFieldsReturnsContentSize() throws Exception {
+        testFieldsReturnsOnlySpecifiedFields(Arrays.asList(CONTENT_SIZE));
+    }
+
+    private void testFieldsReturnsOnlySpecifiedFields(final List<Condition.Field> fieldList) throws Exception {
         final var id = getRandomUniqueId();
         final var count = 1;
-        final var resources = createResources(id, count);
-        final var fields = Arrays.asList(FEDORA_ID, CREATED).stream()
+        createResources(id, count);
+        final var fields = fieldList.stream()
                 .map(x -> x.toString()).collect(Collectors.toList());
         final String searchUrl =
                 getSearchEndpoint() + "condition=" + encode("fedora_id=" + id + "*") + "&fields=" + String.join(",",
@@ -329,6 +345,70 @@ public class FedoraSearchIT extends AbstractResourceIT {
             final var returnedIds =
                     result.getItems().stream().map(x -> x.get("fedora_id")).collect(Collectors.toList());
             assertEquals(resources.get(2), returnedIds.get(0));
+        }
+    }
+
+    @Test
+    public void testSearchByContentSize() throws Exception {
+        final var resourceId = getRandomUniqueId();
+        createObjectAndClose(resourceId);
+        final var ds1 = "test";
+        createDatastream(resourceId, ds1, ds1);
+        final var ds2 = "test-longer-length";
+        createDatastream(resourceId, ds2, ds2);
+        final var condition = FEDORA_ID + "=" + resourceId + "*";
+        final var contentSizeCondition = CONTENT_SIZE + ">=" + ds1.getBytes().length;
+        final var contentSizeConditionLongerLength = CONTENT_SIZE + ">=" + ds2.getBytes().length;
+        final String searchUrl =
+                getSearchEndpoint() + "condition=" + encode(condition) + "&condition=" + encode(contentSizeCondition);
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
+            assertEquals(2, result.getItems().size());
+        }
+
+        final String searchUrl2 =
+                getSearchEndpoint() + "condition=" + encode(condition) +
+                        "&condition=" + encode(contentSizeConditionLongerLength);
+
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl2))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
+            assertEquals(1, result.getItems().size());
+        }
+    }
+
+    @Test
+    public void testSearchByMimeType() throws Exception {
+        final var resourceId = getRandomUniqueId();
+        createObjectAndClose(resourceId);
+        final var ds1 = "test";
+        createDatastream(resourceId, ds1, ds1);
+        final var condition = FEDORA_ID + "=" + resourceId + "*";
+        final var matchingMimetypeCondition = MIME_TYPE + "=text/plain";
+        final var nonMatchingMimetypeCondition = MIME_TYPE + "=image/jpg";
+        final String searchUrl =
+                getSearchEndpoint() + "condition=" + encode(condition) +
+                        "&condition=" + encode(matchingMimetypeCondition);
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
+
+            assertEquals(1, result.getItems().size());
+        }
+
+        final String searchUrl2 =
+                getSearchEndpoint() + "condition=" + encode(condition) +
+                        "&condition=" + encode(nonMatchingMimetypeCondition);
+
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl2))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
+            assertEquals(0, result.getItems().size());
         }
     }
 

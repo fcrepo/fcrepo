@@ -57,7 +57,9 @@ public class Condition {
     public enum Field {
         FEDORA_ID,
         MODIFIED,
-        CREATED;
+        CREATED,
+        CONTENT_SIZE,
+        MIME_TYPE;
 
         @Override
         public String toString() {
