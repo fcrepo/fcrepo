@@ -208,12 +208,11 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     /*
      * Remove from the main table all rows from transaction operation table marked 'purge' for this transaction.
      */
-    private static final String COMMIT_PURGE_RECORDS = "DELETE FROM " + RESOURCES_TABLE + " WHERE " +
-            "EXISTS (SELECT * FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " +
-            TRANSACTION_ID_COLUMN + " = :transactionId AND " +  OPERATION_COLUMN + " = 'purge' AND " +
-            RESOURCES_TABLE + "." + FEDORA_ID_COLUMN + " = " + TRANSACTION_OPERATIONS_TABLE + "." + FEDORA_ID_COLUMN +
-            " AND " + RESOURCES_TABLE + "." + PARENT_COLUMN + " = " + TRANSACTION_OPERATIONS_TABLE + "." +
-            PARENT_COLUMN + ")";
+    private static final String COMMIT_PURGE_RECORDS = "DELETE FROM " + RESOURCES_TABLE + " r WHERE " +
+            "EXISTS (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE + " t WHERE t." +
+            TRANSACTION_ID_COLUMN + " = :transactionId AND t." +  OPERATION_COLUMN + " = 'purge' AND" +
+            " t." + FEDORA_ID_COLUMN + " = r." + FEDORA_ID_COLUMN +
+            " AND t." + PARENT_COLUMN + " = r." + PARENT_COLUMN + ")";
 
     /*
      * Query if a resource exists in the main table and is not deleted.
@@ -225,7 +224,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      * Resource exists as a record in the transaction operations table with an 'add' operation and not also
      * exists as a 'delete' operation.
      */
-    private static final String RESOURCE_EXISTS_IN_TRANSACTION = "SELECT " + FEDORA_ID_COLUMN + " FROM" +
+    private static final String RESOURCE_EXISTS_IN_TRANSACTION = "SELECT x." + FEDORA_ID_COLUMN + " FROM" +
             " (SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child" +
             " UNION SELECT " + FEDORA_ID_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE +
             " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +
@@ -233,7 +232,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             " WHERE NOT EXISTS " +
             " (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE +
             " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +
-            " AND " + OPERATION_COLUMN + " = 'delete')";
+            " AND " + OPERATION_COLUMN + " IN ('delete', 'purge'))";
 
     /*
      * Get the parent ID for this resource from the main table if not deleted.

@@ -32,6 +32,7 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 
@@ -124,5 +125,50 @@ public class OcflPersistenceIT extends AbstractResourceIT {
 
         final HttpPut putObj = new HttpPut(id);
         assertEquals(CREATED.getStatusCode(), getStatus(putObj));
+    }
+
+
+    /*
+     * Tests upsert mapping in fedoraToOcflIndex
+     */
+    @Ignore("Needs upsert in containment index - https://jira.lyrasis.org/browse/FCREPO-3369")
+    @Test
+    public void testUpsertMappingOcflIndex() throws Exception {
+        // Create a container.
+        final HttpPost post = postObjMethod();
+        final String id;
+        try (final CloseableHttpResponse response = execute(post)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            id = getLocation(response);
+        }
+        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(id)));
+
+        final String txLocation = createTransaction();
+        // Inside a transaction delete the container.
+        final HttpDelete delete = new HttpDelete(id);
+        addTxTo(delete, txLocation);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(delete));
+        // Ensure the container is removed in the transaction.
+        final HttpGet getInside = new HttpGet(id);
+        addTxTo(getInside, txLocation);
+        assertEquals(GONE.getStatusCode(), getStatus(getInside));
+        // Inside a transaction delete the tombstone.
+        final HttpDelete deleteTomb = new HttpDelete(id + "/" + FCR_TOMBSTONE);
+        addTxTo(deleteTomb, txLocation);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteTomb));
+        // Ensure the container is totally removed in the transaction.
+        final HttpGet getInside2 = new HttpGet(id);
+        addTxTo(getInside2, txLocation);
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(getInside2));
+        // Inside the transaction put back the container.
+        final HttpPut putBack = new HttpPut(id);
+        addTxTo(putBack, txLocation);
+        assertEquals(CREATED.getStatusCode(), getStatus(putBack));
+        // Commit the transaction.
+        final HttpPut commitTx = new HttpPut(txLocation);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(commitTx));
+        // Verify you can still get the container.
+        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(id)));
+
     }
 }
