@@ -119,6 +119,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     private static final String UPSERT_MAPPING_TX_H2 = "MERGE INTO " + TRANSACTION_OPERATIONS_TABLE +
             " (" + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ", " +
             TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + ")" +
+            " KEY (" + FEDORA_ID_COLUMN + ", " + TRANSACTION_ID_COLUMN + ")" +
             " VALUES (:fedoraId, :fedoraRootId, :ocflId, :transactionId, :operation)";
 
     /**
