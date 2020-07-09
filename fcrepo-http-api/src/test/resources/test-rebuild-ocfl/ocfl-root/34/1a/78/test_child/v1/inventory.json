@@ -1,1 +1,0 @@
-{"id":"test_child","type":"https://ocfl.io/1.0/spec/#inventory","digestAlgorithm":"sha512","head":"v1","contentDirectory":"content","fixity":{},"manifest":{},"versions":{"v1":{"created":"2020-04-14T03:44:34Z","message":"Auto-generated empty object version.","user":{"name":"ocfl-java"},"state":{}}}}
