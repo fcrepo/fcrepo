@@ -19,6 +19,8 @@ package org.fcrepo.integration.http.api;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -73,8 +75,32 @@ public class OcflPersistenceIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testCreateDeletePurgeCreateWholeObject() throws Exception {
+    public void testCreateDeletePurgeCreateWholeObjectRdf() throws Exception {
         final HttpPost httpPost = postObjMethod();
+        final String id;
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            id = getLocation(response);
+        }
+        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(id)));
+
+        final HttpDelete deleteObj = new HttpDelete(id);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteObj));
+
+        final HttpDelete deleteTomb = new HttpDelete(id + "/" + FCR_TOMBSTONE);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteTomb));
+
+        final HttpGet getObj = new HttpGet(id);
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(getObj));
+
+        final HttpPut putObj = new HttpPut(id);
+        assertEquals(CREATED.getStatusCode(), getStatus(putObj));
+    }
+
+    @Test
+    public void testCreateDeletePurgeCreateWholeObjectBinary() throws Exception {
+        final HttpPost httpPost = postObjMethod();
+        httpPost.setHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         final String id;
         try (final CloseableHttpResponse response = execute(httpPost)) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
