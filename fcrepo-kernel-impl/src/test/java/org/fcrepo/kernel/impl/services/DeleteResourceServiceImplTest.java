@@ -205,12 +205,11 @@ public class DeleteResourceServiceImplTest {
 
         service.perform(tx, binary, USER);
 
-        verify(pSession, times(3)).persist(operationCaptor.capture());
+        verify(pSession, times(2)).persist(operationCaptor.capture());
         final List<DeleteResourceOperation> operations = operationCaptor.getAllValues();
-        assertEquals(3, operations.size());
+        assertEquals(2, operations.size());
 
-        assertEquals(RESOURCE_DESCRIPTION_ID, operations.get(0).getResourceId());
-        assertEquals(RESOURCE_ACL_ID, operations.get(1).getResourceId());
-        assertEquals(RESOURCE_ID, operations.get(2).getResourceId());
+        assertEquals(RESOURCE_ACL_ID, operations.get(0).getResourceId());
+        assertEquals(RESOURCE_ID, operations.get(1).getResourceId());
     }
 }

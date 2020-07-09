@@ -206,14 +206,6 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     @PostConstruct
     public void setup() {
-        final var ddl = lookupDdl();
-        LOGGER.info("Applying ddl: {}", ddl);
-        DatabasePopulatorUtils.execute(
-                new ResourceDatabasePopulator(new DefaultResourceLoader().getResource("classpath:" + ddl)),
-                dataSource);
-    }
-
-    private String lookupDdl() {
         try (final var connection = dataSource.getConnection()) {
             databaseProductName = connection.getMetaData().getDatabaseProductName();
             LOGGER.debug("Identified database as: {}", databaseProductName);
@@ -221,7 +213,10 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
             if (ddl == null) {
                 throw new IllegalStateException("Unknown database platform: " + databaseProductName);
             }
-            return ddl;
+            LOGGER.info("Applying ddl: {}", ddl);
+            DatabasePopulatorUtils.execute(
+                    new ResourceDatabasePopulator(new DefaultResourceLoader().getResource("classpath:" + ddl)),
+                    dataSource);
         } catch (final SQLException e) {
             throw new RuntimeException(e);
         }

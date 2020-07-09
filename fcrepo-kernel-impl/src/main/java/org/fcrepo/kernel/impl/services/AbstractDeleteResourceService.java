@@ -28,7 +28,6 @@ import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
@@ -105,9 +104,6 @@ abstract public class AbstractDeleteResourceService extends AbstractService {
                             ex);
                 }
             });
-        } else if (fedoraResource instanceof Binary) {
-            //delete/purge the description resource if binary
-            doAction(tx, pSession, fedoraResource.getDescription().getFedoraId(), userPrincipal);
         }
 
         //delete/purge the acl if this is not the acl
