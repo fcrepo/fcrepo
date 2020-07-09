@@ -80,11 +80,6 @@ class DeleteResourcePersister extends AbstractPersister {
             final boolean isRdf = !Objects.equals(NON_RDF_SOURCE.toString(), headers.getInteractionModel());
             final var filePath = resolveExtensions(ocflSubPath, isRdf);
             deletePath(filePath, objectSession, headers, user, deleteTime);
-            if (!isRdf) {
-                // Delete the description too.
-                final var descPath = resolveExtensions(ocflSubPath + "-description", true);
-                deletePath(descPath, objectSession, user, deleteTime);
-            }
         }
     }
 

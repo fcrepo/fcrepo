@@ -92,11 +92,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
             FEDORA_ID_COLUMN + " = :fedoraId" +
             " UNION SELECT " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE +
             " WHERE " + FEDORA_ID_COLUMN + " = :fedoraId AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +
-            " AND " + OPERATION_COLUMN + " = 'add') x" +
-            " WHERE NOT EXISTS " +
-            " (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE +
-            " WHERE " + FEDORA_ID_COLUMN + " = :fedoraId" +
-            " AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " = 'delete')";
+            " AND " + OPERATION_COLUMN + " = 'add') x";
 
     /*
      * Add an 'add' operation to the transaction table.

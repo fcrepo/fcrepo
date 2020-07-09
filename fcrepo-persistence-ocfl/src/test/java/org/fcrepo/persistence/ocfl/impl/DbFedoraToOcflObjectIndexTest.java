@@ -120,12 +120,8 @@ public class DbFedoraToOcflObjectIndexTest {
         // Should still appear to outside the transaction.
         assertEquals(mapping, index.getMapping(null, RESOURCE_ID_1));
 
-        try {
-            index.getMapping(sessId, RESOURCE_ID_1);
-            fail("expected exception");
-        } catch (final FedoraOCFLMappingNotFoundException e) {
-            // expected mapping to not exist
-        }
+        // Should also still appear inside the transaction or we can't access files on disk.
+        assertEquals(mapping, index.getMapping(sessId, RESOURCE_ID_1));
 
         index.commit(sessId);
 
