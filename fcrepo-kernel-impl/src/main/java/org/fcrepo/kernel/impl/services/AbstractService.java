@@ -51,6 +51,7 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.vocabulary.RDF;
 import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.ACLAuthorizationConstraintViolationException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RequestWithAclLinkHeaderException;
@@ -235,6 +236,10 @@ public abstract class AbstractService {
                         createResource(authSubject),
                         WEBAC_ACCESS_TO_PROPERTY,
                         createResource(currentResourcePath));
+    }
+
+    protected String txId(final Transaction tx) {
+        return tx == null ? null : tx.getId();
     }
 
 }

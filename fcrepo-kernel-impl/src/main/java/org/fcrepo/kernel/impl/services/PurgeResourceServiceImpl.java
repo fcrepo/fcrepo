@@ -17,10 +17,6 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import javax.inject.Inject;
-
-import java.util.stream.Stream;
-
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -32,6 +28,9 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
+import java.util.stream.Stream;
 
 /**
  * Implementation of purge resource service.
@@ -62,10 +61,6 @@ public class PurgeResourceServiceImpl extends AbstractDeleteResourceService impl
         containmentIndex.purgeResource(tx.getId(), resourceId);
         recordEvent(tx.getId(), resourceId, purgeOp);
         log.debug("purged {}", resourceId.getFullId());
-    }
-
-    private String txId(final Transaction tx) {
-        return tx == null ? null : tx.getId();
     }
 
 }

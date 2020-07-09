@@ -64,8 +64,4 @@ public class DeleteResourceServiceImpl extends AbstractDeleteResourceService imp
         log.debug("deleted {}", fedoraId.getFullId());
     }
 
-    private String txId(final Transaction tx) {
-        return tx == null ? null : tx.getId();
-    }
-
 }
