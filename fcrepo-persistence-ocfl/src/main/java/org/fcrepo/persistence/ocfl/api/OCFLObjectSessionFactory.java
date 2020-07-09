@@ -17,6 +17,8 @@
  */
 package org.fcrepo.persistence.ocfl.api;
 
+import java.nio.file.Path;
+
 /**
  * A factory interface for creating {@link org.fcrepo.persistence.ocfl.api.OCFLObjectSession}.
  * @author dbernstein
@@ -27,8 +29,9 @@ public interface OCFLObjectSessionFactory {
     /**
      * Create new session.
      * @param ocflId The OCFL Object identifier
-     * @param persistentStorageSessionId The id of the persistent storage session associated with this session.
+     * @param sessionStagingDir path to the staging directory for the storage session
      * @return The newly created session.
      */
-    OCFLObjectSession create(final String ocflId, final String persistentStorageSessionId);
+    OCFLObjectSession create(final String ocflId, final Path sessionStagingDir);
+
 }

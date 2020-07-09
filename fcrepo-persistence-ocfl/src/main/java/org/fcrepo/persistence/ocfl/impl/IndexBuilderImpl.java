@@ -18,22 +18,30 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import edu.wisc.library.ocfl.api.OcflRepository;
+import org.apache.commons.io.FileUtils;
 import org.fcrepo.kernel.api.ContainmentIndex;
-import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.IndexBuilder;
+import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.fcrepo.search.api.SearchIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.lang.String.format;
@@ -67,10 +75,10 @@ public class IndexBuilderImpl implements IndexBuilder {
     private SearchIndex searchIndex;
 
     @Inject
-    private TransactionManager transactionManager;
-
-    @Inject
     private OcflRepository ocflRepository;
+
+    @Value("#{ocflPropsConfig.fedoraOcflStaging}")
+    private Path sessionStagingRoot;
 
     @Override
     public void rebuildIfNecessary() {
@@ -81,88 +89,99 @@ public class IndexBuilderImpl implements IndexBuilder {
         }
     }
 
-    @Override
-    public void rebuild() {
+    private void rebuild() {
         LOGGER.info("Initiating index rebuild.");
 
         fedoraToOCFLObjectIndex.reset();
         containmentIndex.reset();
         searchIndex.reset();
 
+        final var txId = UUID.randomUUID().toString();
+        final var stagingDir = createStagingDir(txId);
 
-        final var transaction = transactionManager.create();
-        final var txId = transaction.getId();
-        LOGGER.debug("Reading object ids...");
+        try {
+            LOGGER.debug("Reading object ids...");
 
-        try (final var ocflIds = ocflRepository.listObjectIds()) {
-            ocflIds.forEach(ocflId -> {
-                LOGGER.debug("Reading {}", ocflId);
-                final var objSession = objectSessionFactory.create(ocflId, null);
+            try (final var ocflIds = ocflRepository.listObjectIds()) {
+                ocflIds.forEach(ocflId -> {
+                    LOGGER.debug("Reading {}", ocflId);
+                    try (final var session = objectSessionFactory.create(ocflId, stagingDir)) {
+                        indexOcflObject(ocflId, txId, session);
+                    }
+                });
+            }
 
-                //list all the subpaths
-                try (final var subpaths = objSession.listHeadSubpaths()) {
+            containmentIndex.commitTransaction(txId);
+            LOGGER.info("Index rebuild complete");
+        } catch (RuntimeException e) {
+            execQuietly("Failed to rollback db transaction " +txId, () -> {
+                containmentIndex.rollbackTransaction(txId);
+                return null;
+            });
+            throw e;
+        } finally {
+            cleanupStaging(stagingDir);
+        }
+    }
 
-                    final var rootId = new AtomicReference<String>();
-                    final var fedoraIds = new ArrayList<String>();
+    private void indexOcflObject(final String ocflId, final String txId, final OCFLObjectSession session) {
+        try (final var subpaths = session.listHeadSubpaths()) {
+            final var rootId = new AtomicReference<String>();
+            final var fedoraIds = new ArrayList<String>();
 
-                    subpaths.forEach(subpath -> {
-                        if (isSidecarSubpath(subpath)) {
-                            //we're only interested in sidecar subpaths
-                            try {
-                                final var headers = deserializeHeaders(objSession.read(subpath));
-                                final var fedoraId = FedoraId.create(headers.getId());
-                                fedoraIds.add(fedoraId.getFullId());
-                                if (headers.isArchivalGroup() || headers.isObjectRoot()) {
-                                    rootId.set(headers.getId());
+            subpaths.forEach(subpath -> {
+                if (isSidecarSubpath(subpath)) {
+                    //we're only interested in sidecar subpaths
+                    try {
+                        final var headers = deserializeHeaders(session.read(subpath));
+                        final var fedoraId = FedoraId.create(headers.getId());
+                        fedoraIds.add(fedoraId.getFullId());
+                        if (headers.isArchivalGroup() || headers.isObjectRoot()) {
+                            rootId.set(headers.getId());
+                        }
+
+                        if (!fedoraId.isRepositoryRoot()) {
+                            var parentId = headers.getParent();
+
+                            if (parentId == null) {
+                                if (headers.isObjectRoot()) {
+                                    parentId = FedoraId.getRepositoryRootId().getFullId();
                                 }
+                            }
 
-                                if (!fedoraId.isRepositoryRoot()) {
-                                    var parentId = headers.getParent();
-
-                                    if (parentId == null) {
-                                        if (headers.isObjectRoot()) {
-                                            parentId = FedoraId.getRepositoryRootId().getFullId();
-                                        }
-                                    }
-
-                                    if (parentId != null) {
-                                        this.containmentIndex.addContainedBy(txId, FedoraId.create(parentId),
-                                                FedoraId.create(headers.getId()));
-                                    }
-                                }
-
-                                searchIndex.addUpdateIndex(headers);
-
-                            } catch (PersistentStorageException e) {
-                                throw new RepositoryRuntimeException(format("fedora-to-ocfl index rebuild failed: %s",
-                                        e.getMessage()), e);
+                            if (parentId != null) {
+                                this.containmentIndex.addContainedBy(txId, FedoraId.create(parentId),
+                                        FedoraId.create(headers.getId()));
                             }
                         }
-                    });
 
-                    // if a resource is not an AG then there should only be a single resource per OCFL object
-                    if (fedoraIds.size() == 1 && rootId.get() == null) {
-                        rootId.set(fedoraIds.get(0));
+                        searchIndex.addUpdateIndex(headers);
+
+                    } catch (PersistentStorageException e) {
+                        throw new RepositoryRuntimeException(format("fedora-to-ocfl index rebuild failed: %s",
+                                e.getMessage()), e);
                     }
-
-                    fedoraIds.forEach(fedoraIdentifier -> {
-                        var rootFedoraIdentifier = rootId.get();
-                        if (rootFedoraIdentifier == null) {
-                            rootFedoraIdentifier = fedoraIdentifier;
-                        }
-                        fedoraToOCFLObjectIndex.addMapping(fedoraIdentifier, rootFedoraIdentifier, ocflId);
-                        LOGGER.debug("Rebuilt fedora-to-ocfl object index entry for {}", fedoraIdentifier);
-                    });
-
-                } catch (final PersistentStorageException e) {
-                    throw new RepositoryRuntimeException("Failed to rebuild fedora-to-ocfl index: " +
-                            e.getMessage(), e);
                 }
             });
-        }
 
-        containmentIndex.commitTransaction(transaction);
-        LOGGER.info("Index rebuild complete");
+            // if a resource is not an AG then there should only be a single resource per OCFL object
+            if (fedoraIds.size() == 1 && rootId.get() == null) {
+                rootId.set(fedoraIds.get(0));
+            }
+
+            fedoraIds.forEach(fedoraIdentifier -> {
+                var rootFedoraIdentifier = rootId.get();
+                if (rootFedoraIdentifier == null) {
+                    rootFedoraIdentifier = fedoraIdentifier;
+                }
+                fedoraToOCFLObjectIndex.addMapping(fedoraIdentifier, rootFedoraIdentifier, ocflId);
+                LOGGER.debug("Rebuilt fedora-to-ocfl object index entry for {}", fedoraIdentifier);
+            });
+
+        } catch (final PersistentStorageException e) {
+            throw new RepositoryRuntimeException("Failed to rebuild fedora-to-ocfl index: " +
+                    e.getMessage(), e);
+        }
     }
 
     private boolean shouldRebuild() {
@@ -188,6 +207,34 @@ public class IndexBuilderImpl implements IndexBuilder {
 
     private boolean repoContainsObjects() {
         return ocflRepository.listObjectIds().findFirst().isPresent();
+    }
+
+    private Path createStagingDir(final String txId) {
+        try {
+            return Files.createDirectories(sessionStagingRoot.resolve(txId));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private void cleanupStaging(final Path stagingDir) {
+        if (!FileUtils.deleteQuietly(stagingDir.toFile())) {
+            LOGGER.warn("Failed to cleanup staging directory: {}", stagingDir);
+        }
+    }
+
+    /**
+     * Executes the closure, capturing all exceptions, and logging them as errors.
+     *
+     * @param failureMessage what to print if the closure fails
+     * @param callable closure to execute
+     */
+    private void execQuietly(final String failureMessage, final Callable<Void> callable) {
+        try {
+            callable.call();
+        } catch (Exception e) {
+            LOGGER.error(failureMessage, e);
+        }
     }
 
 }

@@ -148,7 +148,7 @@ public class PurgeResourceServiceImplTest {
 
         when(resourceFactory.getResource(tx, CHILD_RESOURCE_FEDORA_ID)).thenReturn(childContainer);
         containmentIndex.addContainedBy(tx.getId(), container.getFedoraId(), childContainer.getFedoraId());
-        containmentIndex.commitTransaction(tx);
+        containmentIndex.commitTransaction(tx.getId());
         containmentIndex.removeContainedBy(tx.getId(), container.getFedoraId(), childContainer.getFedoraId());
 
         when(container.isAcl()).thenReturn(false);
@@ -163,7 +163,7 @@ public class PurgeResourceServiceImplTest {
         assertEquals(CHILD_RESOURCE_ID, operations.get(0).getResourceId());
         assertEquals(RESOURCE_ID, operations.get(1).getResourceId());
 
-        assertEquals(0, containmentIndex.getContains(tx, container).count());
+        assertEquals(0, containmentIndex.getContains(tx.getId(), container).count());
     }
 
     private void verifyResourceOperation(final FedoraId fedoraID,

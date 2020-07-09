@@ -17,12 +17,11 @@
  */
 package org.fcrepo.kernel.api;
 
-import javax.annotation.Nonnull;
-
-import java.util.stream.Stream;
-
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
+
+import javax.annotation.Nonnull;
+import java.util.stream.Stream;
 
 /**
  * An interface for retrieving resource IDs by their containment relationships.
@@ -35,25 +34,25 @@ public interface ContainmentIndex {
     /**
      * Return a stream of fedora identifiers contained by the specified fedora resource.
      *
-     * @param tx The transaction.  If no transaction, null is okay.
+     * @param txId The transaction id, or null if no transaction
      * @param fedoraResource The containing fedora resource
      * @return A stream of contained identifiers
      */
-    Stream<String> getContains(Transaction tx, FedoraResource fedoraResource);
+    Stream<String> getContains(String txId, FedoraResource fedoraResource);
 
     /**
      * Return a stream of fedora identifiers contained by the specified fedora resource that have deleted
      * relationships.
      *
-     * @param tx The transaction.  If no transaction, null is okay.
+     * @param txId The transaction id, or null if no transaction
      * @param fedoraResource The containing fedora resource
      * @return A stream of contained identifiers
      */
-    Stream<String> getContainsDeleted(Transaction tx, FedoraResource fedoraResource);
+    Stream<String> getContainsDeleted(String txId, FedoraResource fedoraResource);
 
     /**
      * Return the ID of the containing resource for resourceID.
-     * @param txID The transaction. If no transaction, null is okay.
+     * @param txID The transaction id, or null if no transaction
      * @param resource The FedoraId of the resource to find the containing resource for.
      * @return The id of the containing resource or null if none found.
      */
@@ -95,20 +94,20 @@ public interface ContainmentIndex {
 
     /**
      * Commit the changes made in the transaction.
-     * @param tx The transaction.
+     * @param txId The transaction id.
      */
-    void commitTransaction(final Transaction tx);
+    void commitTransaction(final String txId);
 
     /**
      * Rollback the containment index changes in the transaction.
-     * @param tx The transaction.
+     * @param txId The transaction id.
      */
-    void rollbackTransaction(final Transaction tx);
+    void rollbackTransaction(final String txId);
 
     /**
      * Check if the resourceID exists in the containment index. Which should mean it exists.
      *
-     * @param txID The transaction ID or null if not transaction.
+     * @param txID The transaction id, or null if no transaction
      * @param fedoraID The resource's FedoraId.
      * @return True if it is in the index.
      */
@@ -116,7 +115,7 @@ public interface ContainmentIndex {
 
     /**
      * Find the ID for the container of the provided resource by iterating up the path until you find a real resource.
-     * @param txID The transaction ID or null if no transaction.
+     * @param txID The transaction id, or null if no transaction
      * @param fedoraId The resource's ID.
      * @return The container ID.
      */

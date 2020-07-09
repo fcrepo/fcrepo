@@ -157,6 +157,27 @@ public class TransactionImplTest {
         verify(psSession).rollback();
     }
 
+    @Test
+    public void shouldRollbackAllWhenStorageThrowsException() throws Exception {
+        doThrow(new PersistentStorageException("storage")).when(psSession).rollback();
+        testTx.rollback();
+        verifyRollback();
+    }
+
+    @Test
+    public void shouldRollbackAllWhenContainmentThrowsException() throws Exception {
+        doThrow(new RuntimeException()).when(containmentIndex).rollbackTransaction(testTx.getId());
+        testTx.rollback();
+        verifyRollback();
+    }
+
+    @Test
+    public void shouldRollbackAllWhenEventsThrowsException() throws Exception {
+        doThrow(new RuntimeException()).when(eventAccumulator).clearEvents(testTx.getId());
+        testTx.rollback();
+        verifyRollback();
+    }
+
     @Test(expected = TransactionRuntimeException.class)
     public void testRollbackCommited() throws Exception {
         testTx.commit();
@@ -219,5 +240,11 @@ public class TransactionImplTest {
     @Test
     public void testNewTransactionNotExpired() {
         assertTrue(testTx.getExpires().isAfter(Instant.now()));
+    }
+
+    private void verifyRollback() throws PersistentStorageException {
+        verify(psSession).rollback();
+        verify(containmentIndex).rollbackTransaction(testTx.getId());
+        verify(eventAccumulator).clearEvents(testTx.getId());
     }
 }

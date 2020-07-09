@@ -78,7 +78,7 @@ public class ContainmentTriplesServiceImplTest {
 
     @After
     public void cleanUp() {
-        containmentIndex.getContains(transaction, parentResource).forEach(c ->
+        containmentIndex.getContains(transaction.getId(), parentResource).forEach(c ->
                 containmentIndex.removeContainedBy(transaction.getId(), parentResource.getFedoraId(),
                         FedoraId.create(c)));
     }
@@ -143,7 +143,7 @@ public class ContainmentTriplesServiceImplTest {
         final Model received = containmentTriplesService.get(transaction, parentResource).collect(toModel());
         matchModels(expectedModel, received);
         // Commit and ensure we can see the child.
-        containmentIndex.commitTransaction(transaction);
+        containmentIndex.commitTransaction(transaction.getId());
         final Model received2 = containmentTriplesService.get(null, parentResource).collect(toModel());
         matchModels(expectedModel, received2);
         // Now remove the child in a transaction, but verify we can still see it outside the transaction.
@@ -151,7 +151,7 @@ public class ContainmentTriplesServiceImplTest {
         final Model received3 = containmentTriplesService.get(null, parentResource).collect(toModel());
         matchModels(expectedModel, received3);
         // Now commit the transaction and ensure it disappears.
-        containmentIndex.commitTransaction(transaction2);
+        containmentIndex.commitTransaction(transaction2.getId());
         assertEquals(0, containmentTriplesService.get(null, parentResource).count());
     }
 

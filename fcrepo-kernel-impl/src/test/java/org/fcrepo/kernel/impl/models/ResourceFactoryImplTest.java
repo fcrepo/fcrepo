@@ -158,10 +158,10 @@ public class ResourceFactoryImplTest {
     @After
     public void cleanUp() {
         when(mockResource.getFedoraId()).thenReturn(rootId);
-        containmentIndex.rollbackTransaction(mockTx);
+        containmentIndex.rollbackTransaction(mockTx.getId());
         containmentIndex.getContains(null, mockResource).forEach(c ->
                 containmentIndex.removeContainedBy(mockTx.getId(), rootId, FedoraId.create(c)));
-        containmentIndex.commitTransaction(mockTx);
+        containmentIndex.commitTransaction(mockTx.getId());
     }
 
     @Test(expected = PathNotFoundException.class)
@@ -362,7 +362,7 @@ public class ResourceFactoryImplTest {
     @Test
     public void doesResourceExist_Exists_WithoutSession() throws Exception {
         containmentIndex.addContainedBy(mockTx.getId(), rootId, fedoraId);
-        containmentIndex.commitTransaction(mockTx);
+        containmentIndex.commitTransaction(mockTx.getId());
         final boolean answer = factory.doesResourceExist(null, fedoraId);
         assertTrue(answer);
     }
@@ -370,7 +370,7 @@ public class ResourceFactoryImplTest {
     @Test
     public void doesResourceExist_Exists_Description_WithoutSession() {
         containmentIndex.addContainedBy(mockTx.getId(), rootId, fedoraId);
-        containmentIndex.commitTransaction(mockTx);
+        containmentIndex.commitTransaction(mockTx.getId());
         final FedoraId descId = fedoraId.resolve("/" + FCR_METADATA);
         final boolean answer = factory.doesResourceExist(null, descId);
         assertTrue(answer);

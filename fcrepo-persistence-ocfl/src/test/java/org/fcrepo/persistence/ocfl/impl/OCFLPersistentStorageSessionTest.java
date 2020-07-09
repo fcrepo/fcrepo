@@ -17,37 +17,6 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
-import static org.apache.jena.graph.NodeFactory.createURI;
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
-import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
-import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.createRepository;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasItems;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.withSettings;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.time.Instant;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -77,6 +46,42 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
+import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
+import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.createRepository;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItems;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * Test class for {@link OCFLPersistentStorageSession}
@@ -133,23 +138,22 @@ public class OCFLPersistentStorageSessionTest {
 
     private static final String BINARY_CONTENT = "Some test content";
 
-    private MonotonicInstant timestep;
-
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
+
+    private Path stagingDir;
 
     @Mock
     private ResourceOperation unsupportedOperation;
 
     @Before
     public void setUp() throws Exception {
-        final var stagingDir = tempFolder.newFolder("ocfl-staging").toPath();
+        stagingDir = tempFolder.newFolder("ocfl-staging").toPath();
         final var repoDir = tempFolder.newFolder("ocfl-repo").toPath();
         final var workDir = tempFolder.newFolder("ocfl-work").toPath();
-        this.timestep = new MonotonicInstant();
 
         final var repository = createRepository(repoDir, workDir);
-        this.objectSessionFactory = new DefaultOCFLObjectSessionFactory(stagingDir);
+        this.objectSessionFactory = new DefaultOCFLObjectSessionFactory();
         setField(this.objectSessionFactory, "ocflRepository", repository);
         session = createSession(index, objectSessionFactory);
 
@@ -168,7 +172,10 @@ public class OCFLPersistentStorageSessionTest {
 
     private OCFLPersistentStorageSession createSession(final FedoraToOcflObjectIndex index,
                                                        final OCFLObjectSessionFactory objectSessionFactory) {
-        return new OCFLPersistentStorageSession(new Random().nextLong() + "", index, objectSessionFactory);
+        final var sessionId = UUID.randomUUID().toString();
+        return new OCFLPersistentStorageSession(sessionId, index,
+                stagingDir.resolve(sessionId),
+                objectSessionFactory);
     }
 
     private void mockNoIndex(final String resourceId) throws FedoraOCFLMappingNotFoundException {
@@ -390,11 +397,11 @@ public class OCFLPersistentStorageSessionTest {
         mockResourceOperation(rdfSourceOperation2, RESOURCE_ID2);
 
         //mock success on commit for the first object session
-        when(mockSessionFactory.create(eq(OCFL_RESOURCE_ID), anyString())).thenReturn(objectSession1);
+        when(mockSessionFactory.create(eq(OCFL_RESOURCE_ID), any())).thenReturn(objectSession1);
         when(objectSession1.commit()).thenReturn(Instant.now().toString());
         mockOCFLObjectSession(objectSession1, UNVERSIONED);
         //mock failure on commit for the second object session
-        when(mockSessionFactory.create(eq(OCFL_RESOURCE_ID2), anyString())).thenReturn(objectSession2);
+        when(mockSessionFactory.create(eq(OCFL_RESOURCE_ID2), any())).thenReturn(objectSession2);
         when(objectSession2.commit()).thenThrow(PersistentStorageException.class);
         mockOCFLObjectSession(objectSession2, UNVERSIONED);
 
@@ -406,7 +413,6 @@ public class OCFLPersistentStorageSessionTest {
         } catch (final PersistentStorageException e) {
             fail("Operations should not fail.");
         }
-
 
         //get triples should now fail because the session is effectively closed.
         try {
@@ -421,7 +427,6 @@ public class OCFLPersistentStorageSessionTest {
 
     private void mockOCFLObjectSession(final OCFLObjectSession objectSession, final CommitOption option) {
         objectSessionFactory.setAutoVersioningEnabled(option == NEW_VERSION);
-        when(objectSession.getCreated()).thenReturn(timestep.next());
     }
 
     @Test
@@ -431,7 +436,7 @@ public class OCFLPersistentStorageSessionTest {
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
 
         //mock success on commit for the first object session
-        when(mockSessionFactory.create(eq(ocflId), anyString())).thenReturn(objectSession1);
+        when(mockSessionFactory.create(eq(ocflId), any())).thenReturn(objectSession1);
         mockOCFLObjectSession(objectSession1, UNVERSIONED);
         //pause on commit for 1 second
         when(objectSession1.commit()).thenAnswer((Answer<String>) invocationOnMock -> {
@@ -480,7 +485,7 @@ public class OCFLPersistentStorageSessionTest {
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
 
         //mock success on commit for the first object session
-        when(mockSessionFactory.create(eq(OCFL_RESOURCE_ID), anyString())).thenReturn(objectSession1);
+        when(mockSessionFactory.create(eq(OCFL_RESOURCE_ID), any())).thenReturn(objectSession1);
         mockOCFLObjectSession(objectSession1, UNVERSIONED);
 
         //throw on prepare
@@ -547,7 +552,7 @@ public class OCFLPersistentStorageSessionTest {
     public void rollbackFailsWhenAlreadyRolledBack() throws Exception {
         mockNoIndex(RESOURCE_ID);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
-        when(mockSessionFactory.create(eq(OCFL_RESOURCE_ID), anyString())).thenReturn(objectSession1);
+        when(mockSessionFactory.create(eq(OCFL_RESOURCE_ID), any())).thenReturn(objectSession1);
         doThrow(new PersistentStorageException("commit error")).when(objectSession1).commit();
         mockOCFLObjectSession(objectSession1, NEW_VERSION);
         final PersistentStorageSession session1 = createSession(index, mockSessionFactory);
@@ -746,6 +751,46 @@ public class OCFLPersistentStorageSessionTest {
         final var result = IOUtils.toString(session.getBinaryContent(RESOURCE_ID, null), UTF_8);
 
         assertEquals(BINARY_CONTENT, result);
+    }
+
+    @Test
+    public void shouldRemoveStagingDirectoryOnCommitSuccess() throws Exception {
+        mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+
+        final Node resourceUri = createURI(RESOURCE_ID);
+
+        final String title = "my title";
+        final var dcTitleTriple = Triple.create(resourceUri, DC.title.asNode(), createLiteral(title));
+        final Stream<Triple> userTriples = Stream.of(dcTitleTriple);
+        final DefaultRdfStream userStream = new DefaultRdfStream(resourceUri, userTriples);
+        mockResourceOperation(rdfSourceOperation, userStream, USER_PRINCIPAL, RESOURCE_ID);
+        session.persist(rdfSourceOperation);
+
+        assertTrue("staging exists", Files.exists(stagingDir.resolve(session.getId())));
+
+        session.commit();
+
+        assertFalse("staging does not exist", Files.exists(stagingDir.resolve(session.getId())));
+    }
+
+    @Test
+    public void shouldRemoveStagingDirectoryOnCommitRollback() throws Exception {
+        mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+
+        final Node resourceUri = createURI(RESOURCE_ID);
+
+        final String title = "my title";
+        final var dcTitleTriple = Triple.create(resourceUri, DC.title.asNode(), createLiteral(title));
+        final Stream<Triple> userTriples = Stream.of(dcTitleTriple);
+        final DefaultRdfStream userStream = new DefaultRdfStream(resourceUri, userTriples);
+        mockResourceOperation(rdfSourceOperation, userStream, USER_PRINCIPAL, RESOURCE_ID);
+        session.persist(rdfSourceOperation);
+
+        assertTrue("staging exists", Files.exists(stagingDir.resolve(session.getId())));
+
+        session.rollback();
+
+        assertFalse("staging does not exist", Files.exists(stagingDir.resolve(session.getId())));
     }
 
     private NonRdfSourceOperation mockNonRdfSourceOperation(final String content,

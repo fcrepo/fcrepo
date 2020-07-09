@@ -71,7 +71,7 @@ public class EventAccumulatorImpl implements EventAccumulator {
 
     @Override
     public void emitEvents(final String transactionId, final String baseUrl, final String userAgent) {
-        LOG.info("Emitting events for transaction {}", transactionId);
+        LOG.debug("Emitting events for transaction {}", transactionId);
 
         final var eventMap = transactionEventMap.remove(transactionId);
 
@@ -100,7 +100,7 @@ public class EventAccumulatorImpl implements EventAccumulator {
 
     @Override
     public void clearEvents(final String transactionId) {
-        LOG.info("Clearing events for transaction {}", transactionId);
+        LOG.debug("Clearing events for transaction {}", transactionId);
         transactionEventMap.remove(transactionId);
     }
 

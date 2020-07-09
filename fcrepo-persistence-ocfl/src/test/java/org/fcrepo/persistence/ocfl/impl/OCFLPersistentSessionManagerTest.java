@@ -23,13 +23,17 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.io.IOException;
+
 import static java.util.UUID.randomUUID;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * Test class for {@link OCFLPersistentSessionManager}
@@ -39,7 +43,6 @@ import static java.util.UUID.randomUUID;
 @RunWith(MockitoJUnitRunner.class)
 public class OCFLPersistentSessionManagerTest {
 
-    @InjectMocks
     private OCFLPersistentSessionManager sessionManager;
 
     private PersistentStorageSession readWriteSession;
@@ -60,9 +63,15 @@ public class OCFLPersistentSessionManagerTest {
     @Mock
     private OCFLObjectSessionFactory objectSessionFactory;
 
+    @Rule
+    public TemporaryFolder tempFolder = new TemporaryFolder();
+
     @Before
-    public void setUp() {
+    public void setUp() throws IOException {
+        this.sessionManager = new OCFLPersistentSessionManager(tempFolder.newFolder().toPath());
         readWriteSession = this.sessionManager.getSession(testSessionId);
+        setField(sessionManager, "objectSessionFactory", objectSessionFactory);
+        setField(sessionManager, "fedoraOcflIndex", index);
         readOnlySession = this.sessionManager.getReadOnlySession();
     }
 

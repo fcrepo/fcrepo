@@ -17,13 +17,6 @@
  */
 package org.fcrepo.kernel.impl;
 
-import static java.util.UUID.randomUUID;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-import javax.inject.Inject;
-
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
@@ -31,8 +24,16 @@ import org.fcrepo.kernel.api.exception.TransactionClosedException;
 import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static java.util.UUID.randomUUID;
 
 /**
  * The Fedora Transaction Manager implementation
@@ -41,6 +42,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class TransactionManagerImpl implements TransactionManager {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TransactionManagerImpl.class);
 
     private final Map<String, Transaction> transactions;
 
@@ -62,6 +65,8 @@ public class TransactionManagerImpl implements TransactionManager {
      */
     @Scheduled(fixedDelayString = "#{systemProperties['fcrepo.session.timeout'] ?: 180000}")
     public void cleanupClosedTransactions() {
+        LOGGER.debug("Cleaning up expired transactions");
+
         final var txIt = transactions.entrySet().iterator();
         while (txIt.hasNext()) {
             final var txEntry = txIt.next();
@@ -73,10 +78,15 @@ public class TransactionManagerImpl implements TransactionManager {
                     txIt.remove();
                 }
             } else if (tx.hasExpired()) {
-                // If the tx has expired but is not already closed, then rollback
-                // but don't immediately remove it from the list of transactions
-                // so that the rolled back status can be checked
-                tx.rollback();
+                LOGGER.debug("Rolling back expired transaction {}", tx.getId());
+                try {
+                    // If the tx has expired but is not already closed, then rollback
+                    // but don't immediately remove it from the list of transactions
+                    // so that the rolled back status can be checked
+                    tx.rollback();
+                } catch (RuntimeException e) {
+                    LOGGER.error("Failed to rollback expired transaction {}", tx.getId(), e);
+                }
             }
         }
     }
