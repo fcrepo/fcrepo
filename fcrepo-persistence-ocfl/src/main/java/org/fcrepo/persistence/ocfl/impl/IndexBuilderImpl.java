@@ -89,8 +89,7 @@ public class IndexBuilderImpl implements IndexBuilder {
         }
     }
 
-    @Override
-    public void rebuild() {
+    private void rebuild() {
         LOGGER.info("Initiating index rebuild.");
 
         fedoraToOCFLObjectIndex.reset();
@@ -220,7 +219,7 @@ public class IndexBuilderImpl implements IndexBuilder {
 
     private void cleanupStaging(final Path stagingDir) {
         if (!FileUtils.deleteQuietly(stagingDir.toFile())) {
-            LOGGER.warn("Failed to cleanup staging directory: " + stagingDir);
+            LOGGER.warn("Failed to cleanup staging directory: {}", stagingDir);
         }
     }
 

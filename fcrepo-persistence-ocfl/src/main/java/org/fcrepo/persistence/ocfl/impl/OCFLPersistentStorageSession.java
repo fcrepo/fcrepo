@@ -438,7 +438,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     private void cleanupStagingDir() {
         if (!FileUtils.deleteQuietly(sessionStagingDir.toFile())) {
-            LOGGER.warn("Failed to cleanup session staging directory at " + sessionStagingDir);
+            LOGGER.warn("Failed to cleanup session staging directory at {}", sessionStagingDir);
         }
     }
 
