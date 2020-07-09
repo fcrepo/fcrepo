@@ -42,4 +42,9 @@ public class TombstoneImpl extends FedoraResourceImpl implements Tombstone {
     public FedoraResource getDeletedObject() {
         return originalResource;
     }
+
+    @Override
+    public FedoraId getFedoraId() {
+        return this.originalResource.getFedoraId();
+    }
 }

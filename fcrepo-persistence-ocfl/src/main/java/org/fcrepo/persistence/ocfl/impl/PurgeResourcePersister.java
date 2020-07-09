@@ -63,11 +63,6 @@ class PurgeResourcePersister extends AbstractPersister {
             final var sidecar = getSidecarSubpath(ocflSubPath);
             final boolean isRdf = !Objects.equals(NON_RDF_SOURCE.toString(), headers.getInteractionModel());
             purgePath(sidecar, objectSession);
-            if (!isRdf) {
-                // Delete the description sidecar file too.
-                final var descSidecar = getSidecarSubpath(ocflSubPath + "-description");
-                purgePath(descSidecar, objectSession);
-            }
         }
         index.removeMapping(session.getId(), resourceId);
     }

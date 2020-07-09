@@ -1035,8 +1035,13 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             }
 
             if (originalResource instanceof Tombstone) {
+                // If the original resource was a nonRdfSourceDescription, point to the binary instead.
+                final FedoraResource deletedObject = ((Tombstone) originalResource).getDeletedObject();
+                final String resolveAbsolute = ((deletedObject instanceof NonRdfSourceDescription) ? "/" : "") +
+                        FCR_TOMBSTONE;
                 final String tombstoneUri = identifierConverter().toExternalId(
-                            originalResource.getFedoraId().resolve(FCR_TOMBSTONE).getFullId()
+                            originalResource.getFedoraId().resolve(resolveAbsolute)
+                                    .getFullId()
                     );
                 throw new TombstoneException(fedoraResource, tombstoneUri);
             }
