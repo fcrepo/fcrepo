@@ -17,14 +17,6 @@
  */
 package org.fcrepo.kernel.impl.models;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
-
-import java.io.InputStream;
-import java.net.URI;
-import java.util.Collection;
-
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
@@ -40,6 +32,12 @@ import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Collection;
+
+import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
 
 
 /**
@@ -137,10 +135,9 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
     @Override
     public FedoraResource getDescription() {
         try {
-            final FedoraId descId = getFedoraId().resolve("/" + FCR_METADATA);
+            final FedoraId descId = getFedoraId().asDescription();
             if (this.isMemento()) {
-                return resourceFactory.getResource(tx, descId.resolve(FCR_VERSIONS,
-                        this.getMementoDateTimeAsUriString()));
+                return resourceFactory.getResource(tx, descId.asMemento(getMementoDatetime()));
             }
             return resourceFactory.getResource(tx, descId);
         } catch (final PathNotFoundException e) {

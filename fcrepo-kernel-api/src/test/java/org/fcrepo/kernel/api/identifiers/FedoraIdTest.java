@@ -17,23 +17,25 @@
  */
 package org.fcrepo.kernel.api.identifiers;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.fcrepo.kernel.api.FedoraTypes;
+import org.fcrepo.kernel.api.exception.InvalidMementoPathException;
+import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
+import org.junit.Test;
 
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.fcrepo.kernel.api.exception.InvalidMementoPathException;
-import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
-import org.junit.Test;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class FedoraIdTest {
 
@@ -60,7 +62,7 @@ public class FedoraIdTest {
     @Test(expected = InvalidResourceIdentifierException.class)
     public void testEmptyPath() throws Exception {
         final String testID = FEDORA_ID_PREFIX + "/first-object//second-object";
-        final FedoraId fedoraID = FedoraId.create(testID);
+        FedoraId.create(testID);
     }
 
     @Test
@@ -73,7 +75,7 @@ public class FedoraIdTest {
     @Test(expected = InvalidResourceIdentifierException.class)
     public void testNormalAclException() throws Exception {
         final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_ACL + "/garbage";
-        final FedoraId fedoraID = FedoraId.create(testID);
+        FedoraId.create(testID);
     }
 
     @Test
@@ -86,7 +88,7 @@ public class FedoraIdTest {
     @Test(expected = InvalidResourceIdentifierException.class)
     public void testNormalDescriptionException() throws Exception {
         final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA + "/test-garbage";
-        final FedoraId fedoraID = FedoraId.create(testID);
+        FedoraId.create(testID);
     }
 
     @Test
@@ -111,27 +113,27 @@ public class FedoraIdTest {
     public void testNormalMementoException() throws Exception {
         final String mementoString = "00001221010304";
         final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_VERSIONS + "/" + mementoString;
-        final FedoraId fedoraID = FedoraId.create(testID);
+        FedoraId.create(testID);
     }
 
     @Test(expected = InvalidMementoPathException.class)
     public void testNormalMementoException2() throws Exception {
         final String mementoString = "other-text";
         final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_VERSIONS + "/" + mementoString;
-        final FedoraId fedoraID = FedoraId.create(testID);
+        FedoraId.create(testID);
     }
 
     @Test(expected = InvalidResourceIdentifierException.class)
     public void testMetadataAcl() throws Exception {
         final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA + "/" + FCR_ACL;
-        final FedoraId fedoraID = FedoraId.create(testID);
+        FedoraId.create(testID);
     }
 
 
     @Test(expected = InvalidResourceIdentifierException.class)
     public void testMetadataAclException() throws Exception {
         final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA + "/" + FCR_ACL + "/garbage";
-        final FedoraId fedoraID = FedoraId.create(testID);
+        FedoraId.create(testID);
     }
 
     @Test
@@ -299,28 +301,28 @@ public class FedoraIdTest {
     @Test
     public void testResourceIdAddition() {
         final FedoraId fedoraID = FedoraId.create("core-object", FCR_VERSIONS);
-        final FedoraId fedoraId1 = fedoraID.resolve("/" + FCR_ACL);
+        final FedoraId fedoraId1 = fedoraID.asAcl();
         assertEquals(FEDORA_ID_PREFIX + "/core-object/" + FCR_ACL, fedoraId1.getFullId());
     }
 
     @Test
     public void testFullIdAddition() {
-        final FedoraId fedoraID = FedoraId.create("core-object", FCR_VERSIONS);
-        final FedoraId fedoraId1 = fedoraID.resolve("20200401101900");
+        final FedoraId fedoraID = FedoraId.create("core-object");
+        final FedoraId fedoraId1 = fedoraID.asMemento("20200401101900");
         assertEquals(FEDORA_ID_PREFIX + "/core-object/" + FCR_VERSIONS + "/20200401101900", fedoraId1.getFullId());
     }
 
     @Test
     public void testResourceIdAdditionMultiple() {
         final FedoraId fedoraID = FedoraId.create("core-object", FCR_ACL);
-        final FedoraId fedoraId1 = fedoraID.resolve("/" + FCR_VERSIONS, "20200401110400");
+        final FedoraId fedoraId1 = fedoraID.asMemento("20200401110400");
         assertEquals(FEDORA_ID_PREFIX + "/core-object/" + FCR_VERSIONS + "/20200401110400", fedoraId1.getFullId());
     }
 
     @Test
     public void testFullIdAdditionMultiple() {
         final FedoraId fedoraID = FedoraId.create("core-object", FCR_METADATA);
-        final FedoraId fedoraId1 = fedoraID.resolve(FCR_VERSIONS, "20200401110400");
+        final FedoraId fedoraId1 = fedoraID.asMemento("20200401110400");
         assertEquals(FEDORA_ID_PREFIX + "/core-object/" + FCR_METADATA + "/" + FCR_VERSIONS + "/20200401110400",
                 fedoraId1.getFullId());
     }
@@ -328,7 +330,7 @@ public class FedoraIdTest {
     @Test(expected = IllegalArgumentException.class)
     public void testResolveBlank() {
         final FedoraId fedoraId = FedoraId.create("core-object");
-        fedoraId.resolve();
+        fedoraId.resolve(null);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -339,9 +341,130 @@ public class FedoraIdTest {
 
     @Test(expected = InvalidResourceIdentifierException.class)
     public void testDoubleAcl() {
-        final FedoraId fedoraId = FedoraId.create("core-object/" + FCR_ACL).resolve(FCR_ACL);
+        FedoraId.create("core-object/" + FCR_ACL + "/" +FCR_ACL);
     }
 
+    @Test
+    public void testAsMemento() {
+        assertAsMemento("original/" + FCR_METADATA + "/" + FCR_VERSIONS,
+                "original/" + FCR_METADATA + "/" + FCR_VERSIONS + "/20200401101900");
+        assertAsMemento("original/" + FCR_METADATA + "#blah",
+                "original/" + FCR_METADATA + "/" + FCR_VERSIONS + "/20200401101900#blah");
+        assertAsMemento("original/" + FCR_VERSIONS,
+                "original/" + FCR_VERSIONS + "/20200401101900");
+        assertAsMemento("original/" + FCR_TOMBSTONE,
+                "original/" + FCR_VERSIONS + "/20200401101900");
+        assertAsMemento("original/" + FCR_ACL,
+                "original/" + FCR_VERSIONS + "/20200401101900");
+        assertAsMemento("original/" + FCR_VERSIONS + "/20200401101901",
+                "original/" + FCR_VERSIONS + "/20200401101901");
+        assertAsMemento("original/child",
+                "original/child/" + FCR_VERSIONS + "/20200401101900");
+        assertAsMemento("original/child#sad",
+                "original/child/" + FCR_VERSIONS + "/20200401101900#sad");
+    }
+
+    @Test
+    public void testAsTimemap() {
+        assertAsTimemap("original/" + FCR_METADATA + "/" + FCR_VERSIONS,
+                "original/" + FCR_METADATA + "/" + FCR_VERSIONS);
+        assertAsTimemap("original/" + FCR_METADATA + "#blah",
+                "original/" + FCR_METADATA + "/" + FCR_VERSIONS);
+        assertAsTimemap("original/" + FCR_METADATA + "/" + FCR_VERSIONS + "/20200401101901",
+                "original/" + FCR_METADATA + "/" + FCR_VERSIONS);
+        assertAsTimemap("original/" + FCR_VERSIONS,
+                "original/" + FCR_VERSIONS);
+        assertAsTimemap("original/" + FCR_TOMBSTONE,
+                "original/" + FCR_VERSIONS);
+        assertAsTimemap("original/" + FCR_ACL,
+                "original/" + FCR_VERSIONS);
+        assertAsTimemap("original/" + FCR_VERSIONS + "/20200401101900",
+                "original/" + FCR_VERSIONS);
+        assertAsTimemap("original/child",
+                "original/child/" + FCR_VERSIONS);
+        assertAsTimemap("original/child#sad",
+                "original/child/" + FCR_VERSIONS);
+    }
+
+    @Test
+    public void testAsDescription() {
+        assertAsDescription("original/" + FCR_METADATA + "/" + FCR_VERSIONS,
+                "original/" + FCR_METADATA + "/" + FCR_VERSIONS);
+        assertAsDescription("original/" + FCR_METADATA + "#blah",
+                "original/" + FCR_METADATA + "#blah");
+        assertAsDescription("original/" + FCR_METADATA + "/" + FCR_VERSIONS + "/20200401101901",
+                "original/" + FCR_METADATA + "/" + FCR_VERSIONS + "/20200401101901");
+        assertAsDescription("original/" + FCR_VERSIONS,
+                "original/" + FCR_METADATA + "/" + FCR_VERSIONS);
+        assertAsDescription("original/" + FCR_TOMBSTONE,
+                "original/" + FCR_METADATA);
+        assertAsDescription("original/" + FCR_ACL,
+                "original/" + FCR_METADATA);
+        assertAsDescription("original/" + FCR_VERSIONS + "/20200401101900",
+                "original/" + FCR_METADATA + "/" + FCR_VERSIONS + "/20200401101900");
+        assertAsDescription("original/child",
+                "original/child/" + FCR_METADATA);
+        assertAsDescription("original/child#sad",
+                "original/child/" + FCR_METADATA + "#sad");
+    }
+
+    @Test
+    public void testAsTombstone() {
+        final var tombstone = "original/" + FCR_TOMBSTONE;
+        assertAsTombstone("original/" + FCR_METADATA + "/" + FCR_VERSIONS, tombstone);
+        assertAsTombstone("original/" + FCR_METADATA + "#blah", tombstone);
+        assertAsTombstone("original/" + FCR_METADATA + "/" + FCR_VERSIONS + "/20200401101901", tombstone);
+        assertAsTombstone("original/" + FCR_VERSIONS, tombstone);
+        assertAsTombstone("original/" + FCR_TOMBSTONE, tombstone);
+        assertAsTombstone("original/" + FCR_ACL, tombstone);
+        assertAsTombstone("original/" + FCR_VERSIONS + "/20200401101900", tombstone);
+        assertAsTombstone("original/child", "original/child/" + FCR_TOMBSTONE);
+        assertAsTombstone("original/child#sad", "original/child/" + FCR_TOMBSTONE);
+    }
+
+    @Test
+    public void testAsAcl() {
+        final var acl = "original/" + FCR_ACL;
+        assertAsAcl("original/" + FCR_METADATA + "/" + FCR_VERSIONS, acl);
+        assertAsAcl("original/" + FCR_METADATA + "#blah", acl);
+        assertAsAcl("original/" + FCR_METADATA + "/" + FCR_VERSIONS + "/20200401101901", acl);
+        assertAsAcl("original/" + FCR_VERSIONS, acl);
+        assertAsAcl("original/" + FCR_TOMBSTONE, acl);
+        assertAsAcl("original/" + FCR_ACL, acl);
+        assertAsAcl("original/" + FCR_VERSIONS + "/20200401101900", acl);
+        assertAsAcl("original/child", "original/child/" + FCR_ACL);
+        assertAsAcl("original/child#sad", "original/child/" + FCR_ACL);
+    }
+
+    private void assertAsMemento(final String original, final String expected) {
+        final var id = FedoraId.create(original);
+        assertEquals(FedoraTypes.FEDORA_ID_PREFIX + "/" + expected,
+                id.asMemento("20200401101900").getFullId());
+    }
+
+    private void assertAsTimemap(final String original, final String expected) {
+        final var id = FedoraId.create(original);
+        assertEquals(FedoraTypes.FEDORA_ID_PREFIX + "/" + expected,
+                id.asTimemap().getFullId());
+    }
+
+    private void assertAsTombstone(final String original, final String expected) {
+        final var id = FedoraId.create(original);
+        assertEquals(FedoraTypes.FEDORA_ID_PREFIX + "/" + expected,
+                id.asTombstone().getFullId());
+    }
+
+    private void assertAsAcl(final String original, final String expected) {
+        final var id = FedoraId.create(original);
+        assertEquals(FedoraTypes.FEDORA_ID_PREFIX + "/" + expected,
+                id.asAcl().getFullId());
+    }
+
+    private void assertAsDescription(final String original, final String expected) {
+        final var id = FedoraId.create(original);
+        assertEquals(FedoraTypes.FEDORA_ID_PREFIX + "/" + expected,
+                id.asDescription().getFullId());
+    }
 
     /**
      * Utility to test a FedoraId against expectations.
@@ -394,6 +517,6 @@ public class FedoraIdTest {
             assertFalse(fedoraID.isTimemap());
         }
         assertEquals(fullID, fedoraID.getFullId());
-        assertEquals(shortID, fedoraID.getContainingId());
+        assertEquals(shortID, fedoraID.getBaseId());
     }
 }

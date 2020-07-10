@@ -42,16 +42,13 @@ import java.util.stream.Stream;
 
 import static java.net.URI.create;
 import static java.util.stream.Collectors.toList;
-
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.vocabulary.RDF.type;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
-import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
 
 /**
  * Implementation of a Fedora resource, containing functionality common to the more concrete resource implementations.
@@ -182,7 +179,7 @@ public class FedoraResourceImpl implements FedoraResource {
             return this;
         }
         try {
-            final var aclId = fedoraID.resolve("/" + FCR_ACL);
+            final var aclId = fedoraID.asAcl();
             return resourceFactory.getResource(tx, aclId);
         } catch (final PathNotFoundException e) {
             return null;
@@ -410,11 +407,4 @@ public class FedoraResourceImpl implements FedoraResource {
         this.isMemento = isMemento;
     }
 
-    /**
-     * Get the Memento Instant as YYYYMMDDHHIISS string.
-     * @return The string.
-     */
-    protected String getMementoDateTimeAsUriString() {
-        return MEMENTO_LABEL_FORMATTER.format(getMementoDatetime());
-    }
 }

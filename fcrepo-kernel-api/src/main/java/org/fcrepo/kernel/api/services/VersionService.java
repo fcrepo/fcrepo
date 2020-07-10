@@ -17,13 +17,13 @@
  */
 package org.fcrepo.kernel.api.services;
 
-import static java.time.ZoneOffset.UTC;
-import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 import java.time.format.DateTimeFormatter;
 
-import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
+import static java.time.ZoneOffset.UTC;
+import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 
 /**
  * Service for creating versions of resources

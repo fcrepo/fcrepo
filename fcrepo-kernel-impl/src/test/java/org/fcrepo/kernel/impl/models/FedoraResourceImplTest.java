@@ -37,10 +37,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.net.URI.create;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.vocabulary.RDF.type;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
@@ -56,8 +56,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
-
-import static java.net.URI.create;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class FedoraResourceImplTest {
@@ -163,7 +161,7 @@ public class FedoraResourceImplTest {
 
     @Test
     public void testTypesNonRdfSource() throws Exception {
-        final var descriptionFedoraId = FEDORA_ID.resolve(FCR_METADATA);
+        final var descriptionFedoraId = FEDORA_ID.asDescription();
         final var subject = createResource(ID);
         final String exampleType = "http://example.org/customType";
         final Model userModel = createDefaultModel();

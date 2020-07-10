@@ -17,12 +17,9 @@
  */
 package org.fcrepo.kernel.api.identifiers;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
+import org.apache.commons.lang3.StringUtils;
+import org.fcrepo.kernel.api.exception.InvalidMementoPathException;
+import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -31,10 +28,13 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import org.fcrepo.kernel.api.exception.InvalidMementoPathException;
-import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
 
 /**
  * Class to store contextual information about a Fedora ID.
@@ -51,17 +51,30 @@ import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
  */
 public class FedoraId {
 
-    private String resourceId;
-    private String fullId;
+    /**
+     * The Fedora ID with prefix and extensions. eg info:fedora/object1/another/fcr:versions/20000101121212
+     */
+    private final String fullId;
+
+    /**
+     * The Fedora ID with prefix but without extensions. eg info:fedora/object1/another
+     */
+    private final String baseId;
+
+    /**
+     * The Fedora ID without prefix but with extensions. eg /object1/another/fcr:versions/20000101121212
+     */
+    private final String fullPath;
+
     private String hashUri;
     private boolean isRepositoryRoot = false;
     private boolean isNonRdfSourceDescription = false;
     private boolean isAcl = false;
     private boolean isMemento = false;
     private boolean isTimemap = false;
+    private boolean isTombstone = false;
     private Instant mementoDatetime;
     private String mementoDatetimeStr;
-    private String pathOnly;
 
     private final static Set<Pattern> extensions = Set.of(FCR_TOMBSTONE, FCR_METADATA, FCR_ACL, FCR_VERSIONS)
             .stream().map(Pattern::compile).collect(Collectors.toSet());
@@ -72,12 +85,11 @@ public class FedoraId {
      * @throws IllegalArgumentException If ID does not start with expected prefix.
      */
     private FedoraId(final String fullId) {
-        this.fullId = ensurePrefix(fullId);
-        this.fullId = this.fullId.replaceAll("/+$", "");
+        this.fullId = ensurePrefix(fullId).replaceAll("/+$", "");
         // Carry the path of the request for any exceptions.
-        this.pathOnly = this.fullId.substring(FEDORA_ID_PREFIX.length());
+        this.fullPath = this.fullId.substring(FEDORA_ID_PREFIX.length());
         checkForInvalidPath();
-        processIdentifier();
+        this.baseId = processIdentifier();
     }
 
     /**
@@ -86,8 +98,7 @@ public class FedoraId {
      * @return The FedoraId.
      */
     public static FedoraId create(final String... additions) {
-        final var newId = idBuilder(additions);
-        return new FedoraId(newId);
+        return new FedoraId(idBuilder(additions));
     }
 
     /**
@@ -139,6 +150,14 @@ public class FedoraId {
     }
 
     /**
+     * Is the identifier for a tombstone
+     * @return true if id for the fcr:tombstone endpoint
+     */
+    public boolean isTombstone() {
+        return isTombstone;
+    }
+
+    /**
      * Is the identifier for a hash uri?
      * @return true if full id referenced a hash uri.
      */
@@ -155,25 +174,41 @@ public class FedoraId {
     }
 
     /**
-     * Return the ID of the base resource that exists as a separate resource.
-     * @return the shorten id.
+     * Returns the ID string for the physical resource the Fedora ID describes. In most cases, this ID is the same as
+     * the full resource ID. However, if the resource is a memento, timemap, or tombstone, then the ID returned here
+     * will be for the resource that contains it. Here are some examples:
+     *
+     * <ul>
+     *     <li>"info:fedora/object1/another/fcr:versions/20000101121212" =&gt; "info:fedora/object1/another"</li>
+     *     <li>"info:fedora/object1/another/fcr:metadata" =&gt; "info:fedora/object1/another/fcr:metadata"</li>
+     *     <li>"info:fedora/object1/another" =&gt; "info:fedora/object1/another"</li>
+     * </ul>
+     *
+     * @return the ID of the associated physical resource
      */
     public String getResourceId() {
         if (isNonRdfSourceDescription) {
-            return resourceId + "/" + FCR_METADATA;
+            return baseId + "/" + FCR_METADATA;
         } else if (isAcl) {
-            return resourceId + "/" + FCR_ACL;
+            return baseId + "/" + FCR_ACL;
         }
-        return resourceId;
+        return baseId;
     }
 
     /**
-     * For elements that exist as separate resources but also are lifecycle tied to a resource (fcr:acl and
-     * fcr:metadata), return the ID of the "containing" resource.
-     * @return the containing resource id.
+     * Returns the ID string for the base ID the Fedora ID describes. This value is the equivalent of the full ID
+     * with all extensions removed.
+     *
+     * <ul>
+     *     <li>"info:fedora/object1/another/fcr:versions/20000101121212" =&gt; "info:fedora/object1/another"</li>
+     *     <li>"info:fedora/object1/another/fcr:metadata" =&gt; "info:fedora/object1/another"</li>
+     *     <li>"info:fedora/object1/another" =&gt; "info:fedora/object1/another"</li>
+     * </ul>
+     *
+     * @return the ID of the associated base resource
      */
-    public String getContainingId() {
-        return resourceId;
+    public String getBaseId() {
+        return baseId;
     }
 
     /**
@@ -189,7 +224,7 @@ public class FedoraId {
      * @return the full id path part
      */
     public String getFullIdPath() {
-        return pathOnly;
+        return fullPath;
     }
 
     /**
@@ -209,31 +244,127 @@ public class FedoraId {
     }
 
     /**
-     * Resolve the string or strings against this ID to create a new one.
+     * Creates a new Fedora ID by joining the base ID of this Fedora ID with the specified string part. Any extensions
+     * that this Fedora ID contains are discarded. For example:
+     * <p>
+     * Resolving "child" against "info:fedora/object1/another/fcr:versions/20000101121212" yields
+     * "info:fedora/object1/another/child".
      *
-     * A string starting with a slash (/) will resolve from the resource ID, a string not starting with a slash
-     * will resolve against the full ID.
-     *
-     * {@code
-     *     final FedoraId descId = FedoraId.create("info:fedora/object1/child/fcr:metadata");
-     *     final var binaryTimemap = descId.resolve("/" + FCR_VERSIONS); // info:fedora/object1/child/fcr:versions
-     *     final var descTimemap = descId.resolve(FCR_VERSIONS); // info:fedora/object1/child/fcr:metadata/fcr:versions
-     * }
-     * @param addition the string or strings to add to the ID.
-     * @return a new FedoraId instance
+     * @param child the part to join
+     * @return new Fedora ID in the form baseId/child
      */
-    public FedoraId resolve(final String... addition) {
-        if (addition == null || addition.length == 0 || addition[0].isBlank()) {
-            throw new IllegalArgumentException("You must provide at least one string to resolve");
+    public FedoraId resolve(final String child) {
+        if (StringUtils.isBlank(child)) {
+            throw new IllegalArgumentException("Child cannot be blank");
         }
-        final String[] parts;
-        if (addition[0].startsWith("/")) {
-            parts = Stream.of(new String[]{this.getContainingId()}, addition).flatMap(Stream::of)
-                    .toArray(String[]::new);
-            return FedoraId.create(parts);
+        return FedoraId.create(baseId, child);
+    }
+
+    /**
+     * Creates a new Fedora ID based on this ID that points to an ACL resource. The base ID, full ID without extensions,
+     * is always used to construct an ACL ID. If this ID is already an ACL, then it returns itself.
+     *
+     * @return ACL resource ID
+     */
+    public FedoraId asAcl() {
+        if (isAcl()) {
+            return this;
         }
-        parts = Stream.of(new String[]{this.getFullId()}, addition).flatMap(Stream::of).toArray(String[]::new);
-        return FedoraId.create(parts);
+
+        return FedoraId.create(getBaseId(), FCR_ACL);
+    }
+
+    /**
+     * Creates a new Fedora ID based on this ID that points to a binary description resource. There is no guarantee that
+     * the binary description resource exists. If this ID is already a description, then it returns itself. Otherwise,
+     * it uses the base ID, without extensions, to construct the new ID. If this Fedora ID is a timemap or memento or
+     * a hash uri, then these extensions are applied to new description ID as well.
+     *
+     * @return description resource ID
+     */
+    public FedoraId asDescription() {
+        if (isDescription()) {
+            return this;
+        }
+
+        if (isTimemap()) {
+            return FedoraId.create(getBaseId(), FCR_METADATA, FCR_VERSIONS);
+        }
+
+        if (isMemento()) {
+            return FedoraId.create(getBaseId(), FCR_METADATA, FCR_VERSIONS, appendHashIfPresent(getMementoString()));
+        }
+
+        return FedoraId.create(getBaseId(), appendHashIfPresent(FCR_METADATA));
+    }
+
+    /**
+     * Creates a new Fedora ID based on this ID that points to a tombstone resource. If this ID is already a tombstone,
+     * then it returns itself. Otherwise, it uses the base ID, without extensions, to construct the new ID.
+     *
+     * @return tombstone resource ID
+     */
+    public FedoraId asTombstone() {
+        if (isTombstone()) {
+            return this;
+        }
+
+        return FedoraId.create(getBaseId(), FCR_TOMBSTONE);
+    }
+
+    /**
+     * Creates a new Fedora ID based on this ID that points to a timemap resource. If this ID is already a timemap,
+     * then it returns itself. Otherwise, it uses the base ID, without extensions, to construct the new ID. Unless
+     * this ID is a binary description, in which case the new ID is constructed using the full ID.
+     *
+     * @return timemap resource ID
+     */
+    public FedoraId asTimemap() {
+        if (isTimemap()) {
+            return this;
+        }
+
+        if (isDescription()) {
+            return FedoraId.create(getBaseId(), FCR_METADATA, FCR_VERSIONS);
+        }
+
+        return FedoraId.create(getBaseId(), FCR_VERSIONS);
+    }
+
+    /**
+     * Creates a new Fedora ID based on this ID that points to a memento resource. If this ID is already a memento,
+     * then it returns itself. If this ID is an ACL, tombstone, or timemap, then the new ID is constructed using this
+     * ID's base ID. Otherwise, the full ID is used.
+     *
+     * @param mementoInstant memento representation
+     * @return memento resource ID
+     */
+    public FedoraId asMemento(final Instant mementoInstant) {
+        return asMemento(MEMENTO_LABEL_FORMATTER.format(mementoInstant));
+    }
+
+    /**
+     * Creates a new Fedora ID based on this ID that points to a memento resource. If this ID is already a memento,
+     * then it returns itself. If this ID is an ACL, tombstone, or timemap, then the new ID is constructed using this
+     * ID's base ID. If this ID is a description, then the new ID is appended to the description ID.
+     *
+     * @param mementoString string memento representation
+     * @return memento resource ID
+     */
+    public FedoraId asMemento(final String mementoString) {
+        if (isMemento()) {
+            return this;
+        }
+
+        if (isDescription()) {
+            return FedoraId.create(getBaseId(), FCR_METADATA, FCR_VERSIONS, appendHashIfPresent(mementoString));
+        }
+
+        if (isAcl() || isTombstone() || isTimemap()) {
+            return FedoraId.create(getBaseId(), FCR_VERSIONS, mementoString);
+        }
+
+        return FedoraId.create(getBaseId(), FCR_VERSIONS, appendHashIfPresent(mementoString));
     }
 
     @Override
@@ -267,11 +398,10 @@ public class FedoraId {
      */
     private static String idBuilder(final String... parts) {
         if (parts != null && parts.length > 0) {
-            final String id = Arrays.stream(parts).filter(Objects::nonNull)
+            return Arrays.stream(parts).filter(Objects::nonNull)
                     .map(s -> s.startsWith("/") ? s.substring(1) : s)
                     .map(s -> s.endsWith("/") ? s.substring(0, s.length() -1 ) : s)
                     .collect(Collectors.joining("/"));
-            return id;
         }
         return "";
     }
@@ -291,7 +421,7 @@ public class FedoraId {
     /**
      * Process the original ID into its parts without using a regular expression.
      */
-    private void processIdentifier() {
+    private String processIdentifier() {
         // Regex pattern which decomposes a http resource uri into components
         // The first group determines if it is an fcr:metadata non-rdf source.
         // The second group determines if the path is for a memento or timemap.
@@ -300,31 +430,40 @@ public class FedoraId {
         // The fifth group allows for any hashed suffixes.
         // ".*?(/" + FCR_METADATA + ")?(/" + FCR_VERSIONS + "(/\\d{14})?)?(/" + FCR_ACL + ")?(\\#\\S+)?$");
         if (this.fullId.contains("//")) {
-            throw new InvalidResourceIdentifierException(String.format("Path contains empty element! %s", pathOnly));
+            throw new InvalidResourceIdentifierException(String.format("Path contains empty element! %s", fullPath));
         }
         String processID = this.fullId;
         if (processID.equals(FEDORA_ID_PREFIX)) {
             this.isRepositoryRoot = true;
-            this.resourceId = this.fullId;
-            // Root has no other possible endpoints, so short circuit out.
-            return;
+            return this.fullId;
         }
         if (processID.contains("#")) {
-            final String[] hashSplits = processID.split("#");
+            final String[] hashSplits = StringUtils.splitPreserveAllTokens(processID, "#");
+            if (hashSplits.length > 2) {
+                throw new InvalidResourceIdentifierException(String.format(
+                        "Path <%s> is invalid. It may not contain more than one #",
+                        fullPath));
+            }
             this.hashUri = hashSplits[1];
             processID = hashSplits[0];
         }
+        if (processID.contains(FCR_TOMBSTONE)) {
+            processID = removePart(processID, FCR_TOMBSTONE);
+            this.isTombstone = true;
+        }
         if (processID.contains(FCR_ACL)) {
-            final String[] aclSplits = processID.split("/" + FCR_ACL);
-            if (aclSplits.length > 1) {
-                throw new InvalidResourceIdentifierException(String.format("Path is invalid: %s", pathOnly));
-            }
+            processID = removePart(processID, FCR_ACL);
             this.isAcl = true;
-            processID = aclSplits[0];
         }
         if (processID.contains(FCR_VERSIONS)) {
-            final String[] versionSplits = processID.split( "/" + FCR_VERSIONS);
-            if (versionSplits.length == 2) {
+            final String[] versionSplits = split(processID, FCR_VERSIONS);
+            if (versionSplits.length > 2) {
+                throw new InvalidResourceIdentifierException(String.format(
+                        "Path <%s> is invalid. May not contain multiple %s parts.",
+                        fullPath, FCR_VERSIONS));
+            } else if (versionSplits.length == 2 && versionSplits[1].isEmpty()) {
+                this.isTimemap = true;
+            } else {
                 final String afterVersion = versionSplits[1];
                 if (afterVersion.matches("/\\d{14}")) {
                     this.isMemento = true;
@@ -333,31 +472,38 @@ public class FedoraId {
                         this.mementoDatetime = Instant.from(MEMENTO_LABEL_FORMATTER.parse(this.mementoDatetimeStr));
                     } catch (final DateTimeParseException e) {
                         throw new InvalidMementoPathException(String.format("Invalid request for memento at %s",
-                                pathOnly));
+                                fullPath));
                     }
                 } else if (afterVersion.equals("/")) {
                     // Possible trailing slash?
                     this.isTimemap = true;
                 } else {
-                    throw new InvalidMementoPathException(String.format("Invalid request for memento at %s", pathOnly));
+                    throw new InvalidMementoPathException(String.format("Invalid request for memento at %s", fullPath));
                 }
-            } else {
-                this.isTimemap = true;
             }
             processID = versionSplits[0];
         }
         if (processID.contains(FCR_METADATA)) {
-            final String[] metadataSplits = processID.split("/" + FCR_METADATA);
-            if (metadataSplits.length > 1) {
-                throw new InvalidResourceIdentifierException(String.format("Path is invalid: %s", pathOnly));
-            }
+            processID = removePart(processID, FCR_METADATA);
             this.isNonRdfSourceDescription = true;
-            processID = metadataSplits[0];
         }
         if (processID.endsWith("/")) {
             processID = processID.replaceAll("/+$", "");
         }
-        this.resourceId = processID;
+
+        return processID;
+    }
+
+    private String removePart(final String original, final String part) {
+        final String[] split = split(original, part);
+        if (split.length > 2 || (split.length == 2 && !split[1].isEmpty())) {
+            throw new InvalidResourceIdentifierException("Path is invalid:" + fullPath);
+        }
+        return split[0];
+    }
+
+    private String[] split(final String original, final String part) {
+        return StringUtils.splitByWholeSeparatorPreserveAllTokens(original, "/" + part);
     }
 
     /**
@@ -372,13 +518,21 @@ public class FedoraId {
             // or ID contains fcr:acl AND fcr:tombstone
             (this.fullId.contains(FCR_TOMBSTONE) && this.fullId.contains(FCR_ACL))
         ) {
-            throw new InvalidResourceIdentifierException(String.format("Path is invalid: %s", pathOnly));
+            throw new InvalidResourceIdentifierException(String.format("Path is invalid: %s", fullPath));
         }
         // Ensure we don't have 2 of any of the extensions, ie. info:fedora/object/fcr:acl/fcr:acl, etc.
         for (final Pattern extension : extensions) {
             if (extension.matcher(this.fullId).results().count() > 1) {
-                throw new InvalidResourceIdentifierException(String.format("Path is invalid: %s", pathOnly));
+                throw new InvalidResourceIdentifierException(String.format("Path is invalid: %s", fullPath));
             }
         }
     }
+
+    private String appendHashIfPresent(final String original) {
+        if (isHashUri()) {
+            return original + "#" + getHashUri();
+        }
+        return original;
+    }
+
 }

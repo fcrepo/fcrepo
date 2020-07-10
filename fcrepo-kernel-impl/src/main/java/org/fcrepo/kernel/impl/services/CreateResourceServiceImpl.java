@@ -17,24 +17,6 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static java.util.Collections.emptyList;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
-import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_PAIR_TREE;
-import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
-import static org.springframework.util.CollectionUtils.isEmpty;
-
-import java.io.InputStream;
-import java.net.URI;
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import javax.inject.Inject;
-import javax.ws.rs.core.Link;
-
 import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
@@ -55,6 +37,22 @@ import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
+import javax.ws.rs.core.Link;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static java.util.Collections.emptyList;
+import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_PAIR_TREE;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
+import static org.springframework.util.CollectionUtils.isEmpty;
 
 /**
  * Create a RdfSource resource.
@@ -118,7 +116,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
     private void createDescription(final PersistentStorageSession pSession, final String userPrincipal,
             final FedoraId binaryId) {
-        final var descId = binaryId.resolve("/" + FCR_METADATA);
+        final var descId = binaryId.asDescription();
         final var createOp = rdfSourceOperationFactory.createBuilder(
                     descId.getFullId(),
                     FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI
