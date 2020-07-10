@@ -78,6 +78,7 @@
     <fcrepo.test.context.path />
   </properties>
   <modules>
+    <module>fcrepo-common</module>
     <module>fcrepo-kernel-api</module>
     <module>fcrepo-kernel-impl</module>
     <module>fcrepo-webapp</module>

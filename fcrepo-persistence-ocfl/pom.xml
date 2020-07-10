@@ -57,6 +57,11 @@
     </dependency>
     <dependency>
       <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-search-api</artifactId>
       <version>${project.version}</version>
     </dependency>

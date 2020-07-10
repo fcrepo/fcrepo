@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.impl;
 
+import com.google.common.base.Preconditions;
+import org.fcrepo.common.db.DbPlatform;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -36,7 +38,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.sql.DataSource;
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -288,11 +289,11 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     private static final String TRUNCATE_TABLE = "TRUNCATE TABLE ";
 
-    private static final Map<String, String> DDL_MAP = Map.of(
-            "MySQL", "sql/mysql-containment.sql",
-            "H2", "sql/default-containment.sql",
-            "PostgreSQL", "sql/default-containment.sql",
-            "MariaDB", "sql/default-containment.sql"
+    private static final Map<DbPlatform, String> DDL_MAP = Map.of(
+            DbPlatform.MYSQL, "sql/mysql-containment.sql",
+            DbPlatform.H2, "sql/default-containment.sql",
+            DbPlatform.POSTGRESQL, "sql/default-containment.sql",
+            DbPlatform.MARIADB, "sql/default-containment.sql"
     );
 
     /**
@@ -302,25 +303,16 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     private void setup() {
         jdbcTemplate = getNamedParameterJdbcTemplate();
 
-        final var ddl = lookupDdl();
+        final var dbPlatform = DbPlatform.fromDataSource(dataSource);
+
+        Preconditions.checkArgument(DDL_MAP.containsKey(dbPlatform),
+                "Missing DDL mapping for %s", dbPlatform);
+
+        final var ddl = DDL_MAP.get(dbPlatform);
         LOGGER.info("Applying ddl: {}", ddl);
         DatabasePopulatorUtils.execute(
                 new ResourceDatabasePopulator(new DefaultResourceLoader().getResource("classpath:" + ddl)),
                 dataSource);
-    }
-
-    private String lookupDdl() {
-        try (final var connection = dataSource.getConnection()) {
-            final var productName = connection.getMetaData().getDatabaseProductName();
-            LOGGER.debug("Identified database as: {}", productName);
-            final var ddl = DDL_MAP.get(productName);
-            if (ddl == null) {
-                throw new IllegalStateException("Unknown database platform: " + productName);
-            }
-            return ddl;
-        } catch (final SQLException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     private NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {

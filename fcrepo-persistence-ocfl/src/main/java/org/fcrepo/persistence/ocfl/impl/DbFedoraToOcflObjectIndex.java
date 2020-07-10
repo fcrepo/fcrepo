@@ -18,6 +18,8 @@
 
 package org.fcrepo.persistence.ocfl.impl;
 
+import com.google.common.base.Preconditions;
+import org.fcrepo.common.db.DbPlatform;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
@@ -40,8 +42,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.annotation.Nonnull;
 import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
-
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
@@ -55,11 +55,11 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DbFedoraToOcflObjectIndex.class);
 
-    private static final Map<String, String> DDL_MAP = Map.of(
-            "MySQL", "sql/mysql-ocfl-index.sql",
-            "H2", "sql/default-ocfl-index.sql",
-            "PostgreSQL", "sql/default-ocfl-index.sql",
-            "MariaDB", "sql/default-ocfl-index.sql"
+    private static final Map<DbPlatform, String> DDL_MAP = Map.of(
+            DbPlatform.MYSQL, "sql/mysql-ocfl-index.sql",
+            DbPlatform.H2, "sql/default-ocfl-index.sql",
+            DbPlatform.POSTGRESQL, "sql/default-ocfl-index.sql",
+            DbPlatform.MARIADB, "sql/default-ocfl-index.sql"
     );
 
     private static final String MAPPING_TABLE = "ocfl_id_map";
@@ -121,11 +121,11 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     /**
      * Map of database product to UPSERT into operations table SQL.
      */
-    private static final Map<String, String> UPSERT_MAPPING_TX_MAP = Map.of(
-            "MySQL", UPSERT_MAPPING_TX_MYSQL_MARIA,
-            "H2", UPSERT_MAPPING_TX_H2,
-            "PostgreSQL", UPSERT_MAPPING_TX_POSTGRESQL,
-            "MariaDB", UPSERT_MAPPING_TX_MYSQL_MARIA
+    private static final Map<DbPlatform, String> UPSERT_MAPPING_TX_MAP = Map.of(
+            DbPlatform.MYSQL, UPSERT_MAPPING_TX_MYSQL_MARIA,
+            DbPlatform.H2, UPSERT_MAPPING_TX_H2,
+            DbPlatform.POSTGRESQL, UPSERT_MAPPING_TX_POSTGRESQL,
+            DbPlatform.MARIADB, UPSERT_MAPPING_TX_MYSQL_MARIA
     );
 
     private static final String COMMIT_ADD_MAPPING_POSTGRESQL = "INSERT INTO " + MAPPING_TABLE +
@@ -152,11 +152,11 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     /**
      * Map of database product name to COMMIT to mapping table from operations table
      */
-    private static final Map<String, String> COMMIT_ADD_MAPPING_MAP = Map.of(
-            "MySQL", COMMIT_ADD_MAPPING_MYSQL_MARIA,
-            "H2", COMMIT_ADD_MAPPING_H2,
-            "PostgreSQL", COMMIT_ADD_MAPPING_POSTGRESQL,
-            "MariaDB", COMMIT_ADD_MAPPING_MYSQL_MARIA
+    private static final Map<DbPlatform, String> COMMIT_ADD_MAPPING_MAP = Map.of(
+            DbPlatform.MYSQL, COMMIT_ADD_MAPPING_MYSQL_MARIA,
+            DbPlatform.H2, COMMIT_ADD_MAPPING_H2,
+            DbPlatform.POSTGRESQL, COMMIT_ADD_MAPPING_POSTGRESQL,
+            DbPlatform.MARIADB, COMMIT_ADD_MAPPING_MYSQL_MARIA
     );
 
     /*
@@ -192,7 +192,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     private PlatformTransactionManager platformTransactionManager;
 
-    private String databaseProductName;
+    private DbPlatform dbPlatform;
 
     public DbFedoraToOcflObjectIndex(@Autowired final DataSource dataSource) {
         this.dataSource = dataSource;
@@ -202,20 +202,20 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     @PostConstruct
     public void setup() {
-        try (final var connection = dataSource.getConnection()) {
-            databaseProductName = connection.getMetaData().getDatabaseProductName();
-            LOGGER.debug("Identified database as: {}", databaseProductName);
-            final var ddl = DDL_MAP.get(databaseProductName);
-            if (ddl == null) {
-                throw new IllegalStateException("Unknown database platform: " + databaseProductName);
-            }
-            LOGGER.info("Applying ddl: {}", ddl);
-            DatabasePopulatorUtils.execute(
-                    new ResourceDatabasePopulator(new DefaultResourceLoader().getResource("classpath:" + ddl)),
-                    dataSource);
-        } catch (final SQLException e) {
-            throw new RuntimeException(e);
-        }
+        dbPlatform = DbPlatform.fromDataSource(dataSource);
+
+        Preconditions.checkArgument(UPSERT_MAPPING_TX_MAP.containsKey(dbPlatform),
+                "Missing SQL mapping for %s", dbPlatform);
+        Preconditions.checkArgument(COMMIT_ADD_MAPPING_MAP.containsKey(dbPlatform),
+                "Missing SQL mapping for %s", dbPlatform);
+        Preconditions.checkArgument(DDL_MAP.containsKey(dbPlatform),
+                "Missing DDL mapping for %s", dbPlatform);
+
+        final var ddl = DDL_MAP.get(dbPlatform);
+        LOGGER.info("Applying ddl: {}", ddl);
+        DatabasePopulatorUtils.execute(
+                new ResourceDatabasePopulator(new DefaultResourceLoader().getResource("classpath:" + ddl)),
+                dataSource);
     }
 
     @Override
@@ -269,7 +269,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
         parameterSource.addValue("ocflId", ocflId);
         parameterSource.addValue("transactionId", transactionId);
         parameterSource.addValue("operation", operation);
-        jdbcTemplate.update(UPSERT_MAPPING_TX_MAP.get(databaseProductName), parameterSource);
+        jdbcTemplate.update(UPSERT_MAPPING_TX_MAP.get(dbPlatform), parameterSource);
     }
 
     @Override
@@ -293,7 +293,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
         executeInDbTransaction(sessionId, status -> {
             try {
                 jdbcTemplate.update(COMMIT_DELETE_RECORDS, map);
-                jdbcTemplate.update(COMMIT_ADD_MAPPING_MAP.get(databaseProductName), map);
+                jdbcTemplate.update(COMMIT_ADD_MAPPING_MAP.get(dbPlatform), map);
                 jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, map);
                 return null;
             } catch (final Exception e) {
