@@ -520,7 +520,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     public synchronized void close() {
         sessionClosed = true;
 
-        if (!FileUtils.deleteQuietly(stagingPath.toFile())) {
+        if (Files.exists(stagingPath) && !FileUtils.deleteQuietly(stagingPath.toFile())) {
             log.warn("Failed to delete staging directory: {}", stagingPath);
         }
     }
