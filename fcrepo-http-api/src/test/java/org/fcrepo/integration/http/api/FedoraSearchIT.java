@@ -34,6 +34,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -440,8 +441,23 @@ public class FedoraSearchIT extends AbstractResourceIT {
         final var prefix = getRandomUniqueId();
         final var resources = createResources(prefix, 3);
         final var condition = FEDORA_ID + "=" + prefix + "*";
-        final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition) +
-                "&order_by=fedora_id&order=asc";
+        final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition);
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
+            assertEquals(resources, result.getItems().stream()
+                    .map(x -> x.get("fedora_id")).collect(Collectors.toList()));
+        }
+    }
+
+    @Test
+    public void testDescOrdering() throws Exception {
+        final var prefix = getRandomUniqueId();
+        final var resources = createResources(prefix, 3);
+        Collections.reverse(resources);
+        final var condition = FEDORA_ID + "=" + prefix + "*";
+        final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition) + "&order=desc";
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final ObjectMapper objectMapper = new ObjectMapper();

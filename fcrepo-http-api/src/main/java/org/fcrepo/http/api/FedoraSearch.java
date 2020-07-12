@@ -84,8 +84,7 @@ public class FedoraSearch extends FedoraBaseResource {
                              @DefaultValue("100") @QueryParam("max_results") final int maxResults,
                              @DefaultValue("0") @QueryParam("offset") final int offset,
                              @DefaultValue("asc") @QueryParam("order") final String order,
-                             @DefaultValue("fedora_id") @QueryParam("order_by") final String orderBy
-    ) {
+                             @DefaultValue("fedora_id") @QueryParam("order_by") final String orderBy) {
 
         try {
             final var conditionList = new ArrayList<Condition>();
@@ -117,8 +116,7 @@ public class FedoraSearch extends FedoraBaseResource {
             }
 
             if (!(order.equalsIgnoreCase("asc") || order.equalsIgnoreCase("desc"))) {
-                throw new InvalidQueryException("The order field is invalid:  valid values are \"asc\" and \"desc\"" +
-                        StringUtils.join(Condition.Field.values()));
+                throw new InvalidQueryException("The order field is invalid:  valid values are \"asc\" and \"desc\"");
             }
 
             final var params = new SearchParameters(parsedFields, conditionList, maxResults, offset, orderByField,
