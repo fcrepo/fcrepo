@@ -112,7 +112,7 @@ public class FedoraSearch extends FedoraBaseResource {
                 orderByField = Condition.Field.fromString(orderBy);
             } catch (final Exception e) {
                 throw new InvalidQueryException("The order_by field must contain a valid value such as " +
-                        StringUtils.join(Condition.Field.values()));
+                        StringUtils.join(Condition.Field.values(), ","));
             }
 
             if (!(order.equalsIgnoreCase("asc") || order.equalsIgnoreCase("desc"))) {
