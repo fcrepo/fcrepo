@@ -57,7 +57,7 @@ deploy:
    skip_cleanup: true
    on:
      repo: fcrepo4/fcrepo4
-     branch: master 
+     branch: main 
      condition: $TRAVIS_OS_NAME = linux
 
 notifications:
