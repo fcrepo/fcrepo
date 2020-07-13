@@ -34,6 +34,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -432,6 +433,67 @@ public class FedoraSearchIT extends AbstractResourceIT {
         final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition);
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response));
+        }
+    }
+
+    @Test
+    public void testDefaultOrdering() throws Exception {
+        final var prefix = getRandomUniqueId();
+        final var resources = createResources(prefix, 3);
+        final var condition = FEDORA_ID + "=" + prefix + "*";
+        final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition);
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
+            assertEquals(resources, result.getItems().stream()
+                    .map(x -> x.get("fedora_id")).collect(Collectors.toList()));
+        }
+    }
+
+    @Test
+    public void testDescOrdering() throws Exception {
+        final var prefix = getRandomUniqueId();
+        final var resources = createResources(prefix, 3);
+        Collections.reverse(resources);
+        final var condition = FEDORA_ID + "=" + prefix + "*";
+        final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition) + "&order=desc";
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
+            assertEquals(resources, result.getItems().stream()
+                    .map(x -> x.get("fedora_id")).collect(Collectors.toList()));
+        }
+    }
+
+    @Test
+    public void testOrderByMimetypeDesc() throws Exception {
+        final var resourceId = getRandomUniqueId();
+        createObjectAndClose(resourceId);
+        final var resourceA = resourceId + "/a-video";
+        final var resourceB = resourceId + "/b-image";
+        final var resourceC = resourceId + "/c-text";
+
+        assertEquals(201, getStatus(putObjMethod(resourceA, "video/mp4",
+                "video")));
+        assertEquals(201, getStatus(putObjMethod(resourceB, "image/jpg",
+                "image")));
+        assertEquals(201, getStatus(putObjMethod(resourceC, "text/plain",
+                "text")));
+
+        final var resources =
+                Arrays.asList(resourceA, resourceC, resourceB).stream().map(x -> serverAddress + x)
+                        .collect(Collectors.toList());
+        final var condition = FEDORA_ID + "=" + resourceId + "/*";
+        final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition) +
+                "&order_by=mime_type&order=desc";
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final ObjectMapper objectMapper = new ObjectMapper();
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
+            assertEquals(resources, result.getItems().stream()
+                    .map(x -> x.get("fedora_id")).collect(Collectors.toList()));
         }
     }
 
