@@ -15,5 +15,5 @@ else
     cd ..
 
     echo "deploying to sonatype snapshot repo..."
-#    ./mvnw clean deploy --settings .travis/settings.xml -DskipTests=true -B -U
+    ./mvnw clean deploy --settings .travis/settings.xml -DskipTests=true -B -U
 fi
