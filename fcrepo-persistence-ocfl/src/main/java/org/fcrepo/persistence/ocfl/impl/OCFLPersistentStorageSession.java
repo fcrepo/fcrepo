@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -437,7 +438,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     }
 
     private void cleanupStagingDir() {
-        if (!FileUtils.deleteQuietly(sessionStagingDir.toFile())) {
+        if (Files.exists(sessionStagingDir) && !FileUtils.deleteQuietly(sessionStagingDir.toFile())) {
             LOGGER.warn("Failed to cleanup session staging directory at {}", sessionStagingDir);
         }
     }
