@@ -17,32 +17,6 @@
  */
 package org.fcrepo.kernel.impl.models;
 
-import static java.util.Arrays.asList;
-
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
-import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
-
-import javax.inject.Inject;
-
-import java.net.URI;
-import java.time.Instant;
-import java.util.Collection;
-import java.util.UUID;
-
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.fcrepo.kernel.api.ContainmentIndex;
@@ -69,6 +43,29 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import javax.inject.Inject;
+import java.net.URI;
+import java.time.Instant;
+import java.util.Collection;
+import java.util.UUID;
+
+import static java.util.Arrays.asList;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
+import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * @author bbpennel
@@ -352,7 +349,7 @@ public class ResourceFactoryImplTest {
     @Test
     public void doesResourceExist_Exists_Description_WithSession() {
         containmentIndex.addContainedBy(mockTx.getId(), rootId, fedoraId);
-        final FedoraId descId = fedoraId.resolve("/" + FCR_METADATA);
+        final FedoraId descId = fedoraId.asDescription();
         final boolean answerIn = factory.doesResourceExist(mockTx, descId);
         assertTrue(answerIn);
         final boolean answerOut = factory.doesResourceExist(null, descId);
@@ -371,7 +368,7 @@ public class ResourceFactoryImplTest {
     public void doesResourceExist_Exists_Description_WithoutSession() {
         containmentIndex.addContainedBy(mockTx.getId(), rootId, fedoraId);
         containmentIndex.commitTransaction(mockTx.getId());
-        final FedoraId descId = fedoraId.resolve("/" + FCR_METADATA);
+        final FedoraId descId = fedoraId.asDescription();
         final boolean answer = factory.doesResourceExist(null, descId);
         assertTrue(answer);
     }
@@ -384,7 +381,7 @@ public class ResourceFactoryImplTest {
 
     @Test
     public void doesResourceExist_DoesntExists_Description_WithSession() {
-        final FedoraId descId = fedoraId.resolve("/" + FCR_METADATA);
+        final FedoraId descId = fedoraId.asDescription();
         final boolean answer = factory.doesResourceExist(mockTx, descId);
         assertFalse(answer);
     }
@@ -397,7 +394,7 @@ public class ResourceFactoryImplTest {
 
     @Test
     public void doesResourceExist_DoesntExists_Description_WithoutSession() {
-        final FedoraId descId = fedoraId.resolve("/" + FCR_METADATA);
+        final FedoraId descId = fedoraId.asDescription();
         final boolean answer = factory.doesResourceExist(null, descId);
         assertFalse(answer);
     }

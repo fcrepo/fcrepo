@@ -118,7 +118,7 @@ abstract class AbstractPersister implements Persister {
     protected FedoraId resolveRootObjectId(final FedoraId fedoraId,
                                        final OCFLPersistentStorageSession session) {
         final var archivalGroupId = findArchivalGroupInAncestry(fedoraId, session);
-        return archivalGroupId.orElseGet(() -> FedoraId.create(fedoraId.getContainingId()));
+        return archivalGroupId.orElseGet(() -> FedoraId.create(fedoraId.getBaseId()));
     }
 
     protected Optional<FedoraId> findArchivalGroupInAncestry(final FedoraId fedoraId,
@@ -153,11 +153,11 @@ abstract class AbstractPersister implements Persister {
      */
     protected String mapToOcflId(final FedoraId fedoraId) {
         try {
-            final var mapping = index.getMapping(fedoraId.getContainingId());
+            final var mapping = index.getMapping(fedoraId.getBaseId());
             return mapping.getOcflObjectId();
         } catch (FedoraOCFLMappingNotFoundException e) {
             // If the a mapping doesn't already exist, use a one-to-one Fedora ID to OCFL ID mapping
-            return fedoraId.getContainingId();
+            return fedoraId.getBaseId();
         }
     }
 

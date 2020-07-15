@@ -202,7 +202,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
             populateResourceHeaders(rescImpl, headers, versionDateTime);
 
             if (headers.isDeleted()) {
-                final var rootId = FedoraId.create(identifier.getContainingId());
+                final var rootId = FedoraId.create(identifier.getBaseId());
                 final var tombstone = new TombstoneImpl(rootId, transaction, persistentStorageSessionManager,
                         this, rescImpl);
                 tombstone.setLastModifiedDate(headers.getLastModifiedDate());

@@ -17,53 +17,6 @@
  */
 package org.fcrepo.http.api;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.MediaType.valueOf;
-import static javax.ws.rs.core.Response.created;
-import static javax.ws.rs.core.Response.noContent;
-import static javax.ws.rs.core.Response.ok;
-import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
-import static org.apache.jena.rdf.model.ResourceFactory.createResource;
-import static org.apache.jena.riot.Lang.TTL;
-import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
-import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
-import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
-import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ClientErrorException;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
@@ -83,6 +36,51 @@ import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.WebacAclService;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
+
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ClientErrorException;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.MediaType.valueOf;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.ok;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.riot.Lang.TTL;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author lsitu
@@ -130,7 +128,7 @@ public class FedoraAcl extends ContentExposingResource {
         }
         LOGGER.info("PUT acl resource '{}'", externalPath());
 
-        final FedoraId aclId = identifierConverter().pathToInternalId(externalPath()).resolve(FCR_ACL);
+        final FedoraId aclId = identifierConverter().pathToInternalId(externalPath()).asAcl();
         final boolean exists = resourceFactory.doesResourceExist(transaction(), aclId);
 
         final MediaType contentType =
@@ -178,7 +176,7 @@ public class FedoraAcl extends ContentExposingResource {
         }
 
         final FedoraId originalId = identifierConverter().pathToInternalId(externalPath());
-        final FedoraId aclId = originalId.resolve(FCR_ACL);
+        final FedoraId aclId = originalId.asAcl();
         final FedoraResource aclResource;
         try {
              aclResource = resourceFactory.getResource(transaction(), aclId);
@@ -241,7 +239,7 @@ public class FedoraAcl extends ContentExposingResource {
         LOGGER.info("GET resource '{}'", externalPath());
 
         final FedoraId originalId = identifierConverter().pathToInternalId(externalPath());
-        final FedoraId aclId = originalId.resolve(FCR_ACL);
+        final FedoraId aclId = originalId.asAcl();
         final boolean exists = resourceFactory.doesResourceExist(transaction(), aclId);
 
         if (!exists) {
@@ -281,7 +279,7 @@ public class FedoraAcl extends ContentExposingResource {
         LOGGER.info("Delete resource '{}'", externalPath);
 
         final FedoraId originalId = identifierConverter().pathToInternalId(externalPath());
-        final FedoraId aclId = originalId.resolve(FCR_ACL);
+        final FedoraId aclId = originalId.asAcl();
         try {
             final var aclResource = resourceFactory.getResource(transaction(), aclId);
             deleteResourceService.perform(transaction(), aclResource, getUserPrincipal());

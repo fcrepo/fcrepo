@@ -17,19 +17,6 @@
  */
 package org.fcrepo.kernel.impl.models;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
-import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
-
-import static java.net.URI.create;
-
-import java.net.URI;
-import java.time.Instant;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.impl.StatementImpl;
@@ -48,6 +35,17 @@ import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+
+import java.net.URI;
+import java.time.Instant;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.net.URI.create;
+import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 
 /**
  * FedoraResource implementation that represents a Memento TimeMap of the base resource.
@@ -81,7 +79,7 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
             final Transaction tx,
             final PersistentStorageSessionManager pSessionManager,
             final ResourceFactory resourceFactory) {
-        super(originalResource.getFedoraId().resolve(FCR_VERSIONS), tx, pSessionManager, resourceFactory);
+        super(originalResource.getFedoraId().asTimemap(), tx, pSessionManager, resourceFactory);
 
         this.originalResource = originalResource;
         setCreatedBy(originalResource.getCreatedBy());
@@ -169,8 +167,7 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
      * @return the new FedoraId for the current TimeMap and the version.
      */
     private FedoraId getInstantFedoraId(final Instant version) {
-        final String versionTime = MEMENTO_LABEL_FORMATTER.format(version);
-        return getFedoraId().resolve(versionTime);
+        return getFedoraId().asMemento(version);
     }
 
 }

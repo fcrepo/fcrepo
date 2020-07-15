@@ -17,25 +17,6 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
-
-import static java.time.ZoneOffset.UTC;
-import static java.time.format.DateTimeFormatter.ISO_INSTANT;
-
-import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.Response.Status.GONE;
-
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.ext.ExceptionMapper;
-
-import java.time.Instant;
-
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -43,6 +24,21 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+
+import javax.ws.rs.core.Link;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.ext.ExceptionMapper;
+import java.time.Instant;
+
+import static java.time.ZoneOffset.UTC;
+import static java.time.format.DateTimeFormatter.ISO_INSTANT;
+import static javax.ws.rs.core.HttpHeaders.LINK;
+import static javax.ws.rs.core.Response.Status.GONE;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
  * @author cabeer
@@ -79,7 +75,7 @@ public class TombstoneExceptionMapperTest {
 
     @Test
     public void testExceptionWithUri() {
-        final String tombstone = idConverter.toExternalId(fedoraId.resolve(FCR_TOMBSTONE).getFullId());
+        final String tombstone = idConverter.toExternalId(fedoraId.asTombstone().getFullId());
         final Response response = testObj.toResponse(new TombstoneException(mockResource, tombstone));
         assertEquals(GONE.getStatusCode(), response.getStatus());
         assertTombstone(response, fedoraId.getFullIdPath(), tombstone);
