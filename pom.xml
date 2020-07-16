@@ -71,7 +71,8 @@
     <system-rules.version>1.18.0</system-rules.version>
     <mockito.version>2.22.0</mockito.version>
     <wiremock.version>2.13.0</wiremock.version>
-    <!-- fcrepo5-specific plugins -->
+    <!-- fcrepo-specific plugins -->
+    <security-versions.plugin.version>1.0.6</security-versions.plugin.version>
     <enforcer.plugin.version>3.0.0-M3</enforcer.plugin.version>
     <war.plugin.version>3.2.2</war.plugin.version>
     <!-- default properties that can be altered on the command line -->
@@ -680,6 +681,21 @@
 
       <plugin>
         <artifactId>maven-changelog-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <!-- Note this plugin does not fail the build if a vulnerability is found -->
+        <groupId>com.redhat.victims.maven</groupId>
+        <artifactId>security-versions</artifactId>
+        <version>${security-versions.plugin.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <phase>validate</phase>
+          </execution>
+        </executions>
       </plugin>
 
       <plugin>
