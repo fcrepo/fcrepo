@@ -19,7 +19,6 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.common.ResourceHeadersImpl;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.slf4j.Logger;
@@ -56,7 +55,6 @@ class PurgeResourcePersister extends AbstractPersister {
         } else {
             final var relativeSubPath = relativizeSubpath(fedoraResourceRoot, operation.getResourceId());
             final var ocflSubPath = resolveOCFLSubpath(fedoraResourceRoot, relativeSubPath);
-            final var headers = (ResourceHeadersImpl) readHeaders(objectSession, ocflSubPath);
             final var sidecar = getSidecarSubpath(ocflSubPath);
             purgePath(sidecar, objectSession);
         }

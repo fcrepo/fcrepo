@@ -27,5 +27,6 @@ public interface Tombstone extends FedoraResource {
      * Return the object this tombstone is for.
      * @return the original deleted resource.
      */
-    public FedoraResource getDeletedObject();
+    FedoraResource getDeletedObject();
+
 }

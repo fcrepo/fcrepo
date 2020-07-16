@@ -19,6 +19,7 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -89,7 +90,6 @@ public class PurgeResourcePersisterTest {
         when(operation.getResourceId()).thenReturn("info:fedora/an-ocfl-object/some-subpath");
         when(index.getMapping(eq(SESSION_ID), anyString())).thenReturn(mapping);
         persister.persist(psSession, operation);
-        verify(session).read(".fcrepo/some-subpath.json");
         verify(session).delete(".fcrepo/some-subpath.json");
     }
 
@@ -116,9 +116,8 @@ public class PurgeResourcePersisterTest {
         when(mapping.getRootObjectIdentifier()).thenReturn("info:fedora/an-ocfl-object");
         when(operation.getResourceId()).thenReturn("info:fedora/an-ocfl-object/some-subpath");
         when(index.getMapping(eq(SESSION_ID), anyString())).thenReturn(mapping);
-        when(session.read(".fcrepo/some-subpath.json")).thenThrow(
-                new PersistentStorageException("error")
-        );
+        doThrow(new PersistentStorageException("error"))
+            .when(session).delete(".fcrepo/some-subpath.json");
         persister.persist(psSession, operation);
     }
 

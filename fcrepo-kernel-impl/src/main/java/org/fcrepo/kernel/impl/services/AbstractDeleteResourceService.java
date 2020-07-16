@@ -33,6 +33,7 @@ import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.Tombstone;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -96,7 +97,11 @@ abstract public class AbstractDeleteResourceService extends AbstractService {
             children.forEach(childResourceId -> {
                 try {
                     final FedoraResource res = resourceFactory.getResource(tx, FedoraId.create(childResourceId));
-                    deleteDepthFirst(tx, pSession, res, userPrincipal);
+                    if (res instanceof Tombstone) {
+                        deleteDepthFirst(tx, pSession, ((Tombstone) res).getDeletedObject(), userPrincipal);
+                    } else {
+                        deleteDepthFirst(tx, pSession, res, userPrincipal);
+                    }
                 } catch (final PathNotFoundException ex) {
                     log.error("Path not found for {}: {}", fedoraId.getFullId(), ex.getMessage());
                     throw new PathNotFoundRuntimeException(ex);
