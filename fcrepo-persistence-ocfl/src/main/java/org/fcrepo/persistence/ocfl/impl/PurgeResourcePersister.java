@@ -20,14 +20,14 @@ package org.fcrepo.persistence.ocfl.impl;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
+import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.PURGE;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getSidecarSubpath;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.relativizeSubpath;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveOCFLSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.getSidecarSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.relativizeSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.resolveOCFLSubpath;
 
 /**
  * Purge Resource Persister
@@ -42,7 +42,7 @@ class PurgeResourcePersister extends AbstractPersister {
     }
 
     @Override
-    public void persist(final OCFLPersistentStorageSession session, final ResourceOperation operation)
+    public void persist(final OcflPersistentStorageSession session, final ResourceOperation operation)
             throws PersistentStorageException {
         final var mapping = getMapping(session.getId(), operation.getResourceId());
         final var fedoraResourceRoot = mapping.getRootObjectIdentifier();
@@ -67,7 +67,7 @@ class PurgeResourcePersister extends AbstractPersister {
      * @param session Session to delete the path in.
      * @throws PersistentStorageException if can't read, write or delete a file.
      */
-    private void purgePath(final String path, final OCFLObjectSession session) throws PersistentStorageException {
+    private void purgePath(final String path, final OcflObjectSession session) throws PersistentStorageException {
         session.delete(path);
     }
 

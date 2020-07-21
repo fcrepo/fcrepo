@@ -39,8 +39,8 @@ import org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM;
 import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
-import org.fcrepo.persistence.ocfl.api.OCFLVersion;
+import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
+import org.fcrepo.persistence.ocfl.api.OcflVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +64,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.RESOURCE_HEADER_EXTENSION;
-import static org.fcrepo.persistence.ocfl.api.OCFLPersistenceConstants.DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
+import static org.fcrepo.persistence.ocfl.api.OcflPersistenceConstants.DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
 
 /**
  * A set of utility functions for supporting OCFL persistence activities.
@@ -72,11 +72,11 @@ import static org.fcrepo.persistence.ocfl.api.OCFLPersistenceConstants.DEFAULT_R
  * @author dbernstein
  * @since 6.0.0
  */
-public class OCFLPersistentStorageUtils {
+public class OcflPersistentStorageUtils {
 
-    private static final Logger log = LoggerFactory.getLogger(OCFLPersistentStorageUtils.class);
+    private static final Logger log = LoggerFactory.getLogger(OcflPersistentStorageUtils.class);
 
-    private OCFLPersistentStorageUtils() {
+    private OcflPersistentStorageUtils() {
     }
 
     /**
@@ -197,7 +197,7 @@ public class OCFLPersistentStorageUtils {
      * @return the outcome of the write operation
      * @throws PersistentStorageException on write failure
      */
-    public static WriteOutcome writeRDF(final OCFLObjectSession session, final RdfStream triples, final String subpath)
+    public static WriteOutcome writeRDF(final OcflObjectSession session, final RdfStream triples, final String subpath)
             throws PersistentStorageException {
         try (final var os = new ByteArrayOutputStream()) {
             final StreamRDF streamRDF = getWriterStream(os, getRdfFormat());
@@ -216,7 +216,7 @@ public class OCFLPersistentStorageUtils {
         }
     }
 
-    private static InputStream readFile(final OCFLObjectSession objSession, final String subpath, final String version)
+    private static InputStream readFile(final OcflObjectSession objSession, final String subpath, final String version)
             throws PersistentStorageException {
         return version == null ? objSession.read(subpath) : objSession.read(subpath, version);
     }
@@ -230,7 +230,7 @@ public class OCFLPersistentStorageUtils {
      * @return the binary content stream
      * @throws PersistentStorageException If unable to read the specified binary stream.
      */
-    public static InputStream getBinaryStream(final OCFLObjectSession objSession,
+    public static InputStream getBinaryStream(final OcflObjectSession objSession,
             final String subpath, final Instant version) throws PersistentStorageException {
         final String versionId = resolveVersionId(objSession, version);
         return readFile(objSession, subpath, versionId);
@@ -247,7 +247,7 @@ public class OCFLPersistentStorageUtils {
      * @throws PersistentStorageException If unable to read the specified rdf stream.
      */
     public static RdfStream getRdfStream(final String identifier,
-                                         final OCFLObjectSession objSession,
+                                         final OcflObjectSession objSession,
                                          final String subpath,
                                          final Instant version) throws PersistentStorageException {
         final String versionId = resolveVersionId(objSession, version);
@@ -269,7 +269,7 @@ public class OCFLPersistentStorageUtils {
      * @return name of version
      * @throws PersistentStorageException thrown if version not found
      */
-    public static String resolveVersionId(final OCFLObjectSession objSession, final Instant version)
+    public static String resolveVersionId(final OcflObjectSession objSession, final Instant version)
             throws PersistentStorageException {
         if (version != null) {
             final var versions = objSession.listVersions();
@@ -278,7 +278,7 @@ public class OCFLPersistentStorageUtils {
             return versions.stream()
                     .filter(vd -> {
                         return vd.getCreated().equals(version);
-                    }).map(OCFLVersion::getOcflVersionId)
+                    }).map(OcflVersion::getOcflVersionId)
                     .findFirst()
                     .orElseThrow(() -> {
                         //otherwise throw an exception.
@@ -321,10 +321,10 @@ public class OCFLPersistentStorageUtils {
      * @return A list of Instant objects
      * @throws PersistentStorageException On read failure due to the session being closed or some other problem.
      */
-    public static List<Instant> listVersions(final OCFLObjectSession objSession, final String subpath)
+    public static List<Instant> listVersions(final OcflObjectSession objSession, final String subpath)
             throws PersistentStorageException {
         return  objSession.listVersions(subpath).stream()
-                .map(OCFLVersion::getCreated)
+                .map(OcflVersion::getCreated)
                 .collect(Collectors.toList());
     }
 

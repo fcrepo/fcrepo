@@ -42,8 +42,8 @@ import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageRuntimeException;
 import org.fcrepo.persistence.common.FileWriteOutcome;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
-import org.fcrepo.persistence.ocfl.api.OCFLVersion;
+import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
+import org.fcrepo.persistence.ocfl.api.OcflVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +77,7 @@ import static edu.wisc.library.ocfl.api.OcflOption.MOVE_SOURCE;
 import static edu.wisc.library.ocfl.api.OcflOption.OVERWRITE;
 import static java.lang.String.format;
 import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.translateFedoraDigestToOcfl;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.translateFedoraDigestToOcfl;
 
 /**
  * Default implementation of an OCFL object session, which stages changes to the
@@ -85,9 +85,9 @@ import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.transl
  *
  * @author bbpennel
  */
-public class DefaultOCFLObjectSession implements OCFLObjectSession {
+public class DefaultOcflObjectSession implements OcflObjectSession {
 
-    private static final Logger log = LoggerFactory.getLogger(DefaultOCFLObjectSession.class);
+    private static final Logger log = LoggerFactory.getLogger(DefaultOcflObjectSession.class);
 
     private static final Comparator<VersionDetails> VERSION_COMPARATOR =
             Comparator.comparing(VersionDetails::getVersionId);
@@ -118,8 +118,8 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
      * @param ocflRepository the OCFL repository in which the object is stored.
      * @param commitOption the commit option to use
      */
-    public DefaultOCFLObjectSession(final String objectIdentifier, final Path stagingPath,
-            final MutableOcflRepository ocflRepository, final CommitOption commitOption) {
+    public DefaultOcflObjectSession(final String objectIdentifier, final Path stagingPath,
+                                    final MutableOcflRepository ocflRepository, final CommitOption commitOption) {
         this.objectIdentifier = objectIdentifier;
         this.stagingPath = stagingPath;
         this.ocflRepository = ocflRepository;
@@ -526,7 +526,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     }
 
     @Override
-    public List<OCFLVersion> listVersions() throws PersistentStorageException {
+    public List<OcflVersion> listVersions() throws PersistentStorageException {
         assertSessionOpen();
         //get a list of all versions in the object.
         try {
@@ -538,7 +538,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
                     .filter(version -> !(VersionId.V1.equals(version.getVersionId()) && version.getFiles().isEmpty()))
                     .sorted(VERSION_COMPARATOR)
                     .map(version -> {
-                        return new OCFLVersionImpl()
+                        return new OcflVersionImpl()
                                 .setOcflObjectId(version.getObjectId())
                                 .setOcflVersionId(version.getVersionId().toString())
                                 .setCreatedBy(version.getVersionInfo().getUser().getName())
@@ -552,7 +552,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     }
 
     @Override
-    public List<OCFLVersion> listVersions(final String subpath) throws PersistentStorageException {
+    public List<OcflVersion> listVersions(final String subpath) throws PersistentStorageException {
         if (StringUtils.isBlank(subpath)) {
             return listVersions();
         }
@@ -567,7 +567,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
                     // do not include changes that were made in the mutable head
                     .filter(change -> !(headDesc.isMutable() && headDesc.getVersionId().equals(change.getVersionId())))
                     .map(change -> {
-                        return new OCFLVersionImpl()
+                        return new OcflVersionImpl()
                                 .setOcflObjectId(objectIdentifier)
                                 .setOcflVersionId(change.getVersionId().toString())
                                 .setCreatedBy(change.getVersionInfo().getUser().getName())

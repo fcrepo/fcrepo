@@ -26,7 +26,7 @@ import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
+import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,9 +34,9 @@ import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.newResourceHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchCreationHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchModificationHeaders;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.relativizeSubpath;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveOCFLSubpath;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.writeRDF;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.relativizeSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.resolveOCFLSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.writeRDF;
 
 /**
  * This class implements the persistence of a new RDFSource
@@ -44,16 +44,16 @@ import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.writeR
  * @author dbernstein
  * @since 6.0.0
  */
-abstract class AbstractRDFSourcePersister extends AbstractPersister {
+abstract class AbstractRdfSourcePersister extends AbstractPersister {
 
-    private static final Logger log = LoggerFactory.getLogger(AbstractRDFSourcePersister.class);
+    private static final Logger log = LoggerFactory.getLogger(AbstractRdfSourcePersister.class);
 
     /**
      * Constructor
      */
-    protected AbstractRDFSourcePersister(final Class<? extends ResourceOperation> resourceOperation,
-                               final ResourceOperationType resourceOperationType,
-                               final FedoraToOcflObjectIndex index) {
+    protected AbstractRdfSourcePersister(final Class<? extends ResourceOperation> resourceOperation,
+                                         final ResourceOperationType resourceOperationType,
+                                         final FedoraToOcflObjectIndex index) {
         super(resourceOperation, resourceOperationType, index);
     }
 
@@ -64,7 +64,7 @@ abstract class AbstractRDFSourcePersister extends AbstractPersister {
      * @param rootId The fedora root object identifier tha maps to the OCFL object root.
      * @throws PersistentStorageException
      */
-    protected void persistRDF(final OCFLObjectSession session, final ResourceOperation operation,
+    protected void persistRDF(final OcflObjectSession session, final ResourceOperation operation,
                               final String rootId) throws PersistentStorageException {
 
         final RdfSourceOperation rdfSourceOp = (RdfSourceOperation)operation;
@@ -92,7 +92,7 @@ abstract class AbstractRDFSourcePersister extends AbstractPersister {
      * @return populated resource headers
      * @throws PersistentStorageException if unexpectedly unable to retrieve existing object headers
      */
-    private ResourceHeaders populateHeaders(final OCFLObjectSession objSession, final String subpath,
+    private ResourceHeaders populateHeaders(final OcflObjectSession objSession, final String subpath,
                                             final RdfSourceOperation operation, final WriteOutcome outcome,
                                             final boolean objectRoot) throws PersistentStorageException {
 

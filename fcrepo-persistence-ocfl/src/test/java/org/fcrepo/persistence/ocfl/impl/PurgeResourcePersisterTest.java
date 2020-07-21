@@ -30,9 +30,9 @@ import java.io.InputStream;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
+import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
+import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,13 +47,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class PurgeResourcePersisterTest {
 
     @Mock
-    private FedoraOCFLMapping mapping;
+    private FedoraOcflMapping mapping;
 
     @Mock
     private PersistentStorageSession storageSession;
 
     @Mock
-    private OCFLObjectSession session;
+    private OcflObjectSession session;
 
     @Mock
     private ResourceOperation operation;
@@ -62,7 +62,7 @@ public class PurgeResourcePersisterTest {
     private FedoraToOcflObjectIndex index;
 
     @Mock
-    private OCFLPersistentStorageSession psSession;
+    private OcflPersistentStorageSession psSession;
 
     private PurgeResourcePersister persister;
 
@@ -126,7 +126,7 @@ public class PurgeResourcePersisterTest {
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
         when(mapping.getRootObjectIdentifier()).thenReturn("info:fedora/an-ocfl-object");
         when(operation.getResourceId()).thenReturn("info:fedora/an-ocfl-object");
-        when(index.getMapping(eq(SESSION_ID), anyString())).thenThrow(new FedoraOCFLMappingNotFoundException("error"));
+        when(index.getMapping(eq(SESSION_ID), anyString())).thenThrow(new FedoraOcflMappingNotFoundException("error"));
 
         persister.persist(psSession, operation);
         verify(session).delete("some-subpath");

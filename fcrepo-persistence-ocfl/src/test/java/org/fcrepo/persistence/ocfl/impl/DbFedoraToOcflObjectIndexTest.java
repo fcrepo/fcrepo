@@ -17,7 +17,7 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
+import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -67,9 +67,9 @@ public class DbFedoraToOcflObjectIndexTest {
         index.addMapping(sessId, RESOURCE_ID_2, ROOT_RESOURCE_ID, OCFL_ID);
         index.addMapping(sessId, RESOURCE_ID_3, RESOURCE_ID_3, OCFL_ID_RESOURCE_3);
 
-        final FedoraOCFLMapping mapping1 = index.getMapping(sessId, RESOURCE_ID_1);
-        final FedoraOCFLMapping mapping2 = index.getMapping(sessId, RESOURCE_ID_2);
-        final FedoraOCFLMapping mapping3 = index.getMapping(sessId, ROOT_RESOURCE_ID);
+        final FedoraOcflMapping mapping1 = index.getMapping(sessId, RESOURCE_ID_1);
+        final FedoraOcflMapping mapping2 = index.getMapping(sessId, RESOURCE_ID_2);
+        final FedoraOcflMapping mapping3 = index.getMapping(sessId, ROOT_RESOURCE_ID);
 
         assertEquals(mapping1, mapping2);
         assertEquals(mapping2, mapping3);
@@ -78,14 +78,14 @@ public class DbFedoraToOcflObjectIndexTest {
 
         index.commit(sessId);
 
-        final FedoraOCFLMapping mapping1_1 = index.getMapping(null, RESOURCE_ID_1);
-        final FedoraOCFLMapping mapping1_2 = index.getMapping(null, RESOURCE_ID_2);
-        final FedoraOCFLMapping mapping1_3 = index.getMapping(null, ROOT_RESOURCE_ID);
+        final FedoraOcflMapping mapping1_1 = index.getMapping(null, RESOURCE_ID_1);
+        final FedoraOcflMapping mapping1_2 = index.getMapping(null, RESOURCE_ID_2);
+        final FedoraOcflMapping mapping1_3 = index.getMapping(null, ROOT_RESOURCE_ID);
 
         assertEquals(mapping1_1, mapping1_2);
         assertEquals(mapping1_2, mapping1_3);
 
-        final FedoraOCFLMapping mapping4 = index.getMapping(null, RESOURCE_ID_3);
+        final FedoraOcflMapping mapping4 = index.getMapping(null, RESOURCE_ID_3);
         assertNotEquals(mapping4, mapping3);
 
         verifyMapping(mapping4, RESOURCE_ID_3, OCFL_ID_RESOURCE_3);
@@ -94,13 +94,13 @@ public class DbFedoraToOcflObjectIndexTest {
         assertEquals(OCFL_ID, mapping1.getOcflObjectId());
     }
 
-    @Test(expected = FedoraOCFLMappingNotFoundException.class)
+    @Test(expected = FedoraOcflMappingNotFoundException.class)
     public void testNotExists() throws Exception {
         index.getMapping(null, RESOURCE_ID_1);
     }
 
     @Test
-    public void removeIndexWhenExists() throws FedoraOCFLMappingNotFoundException {
+    public void removeIndexWhenExists() throws FedoraOcflMappingNotFoundException {
         final String sessId = UUID.randomUUID().toString();
         final var mapping = index.addMapping(sessId, RESOURCE_ID_1, RESOURCE_ID_1, OCFL_ID);
 
@@ -108,7 +108,7 @@ public class DbFedoraToOcflObjectIndexTest {
         try {
             index.getMapping(null, RESOURCE_ID_1);
             fail("This mapping should not be accessible to everyone yet.");
-        } catch (final FedoraOCFLMappingNotFoundException e) {
+        } catch (final FedoraOcflMappingNotFoundException e) {
             // This should happen and is okay.
         }
         index.commit(sessId);
@@ -129,7 +129,7 @@ public class DbFedoraToOcflObjectIndexTest {
             // No longer accessible to anyone.
             index.getMapping(null, RESOURCE_ID_1);
             fail("expected exception");
-        } catch (final FedoraOCFLMappingNotFoundException e) {
+        } catch (final FedoraOcflMappingNotFoundException e) {
             // expected mapping to not exist
         }
     }
@@ -143,7 +143,7 @@ public class DbFedoraToOcflObjectIndexTest {
         try {
             index.getMapping(null, RESOURCE_ID_1);
             fail("expected exception");
-        } catch (final FedoraOCFLMappingNotFoundException e) {
+        } catch (final FedoraOcflMappingNotFoundException e) {
             // expected mapping to not exist
         }
     }
@@ -153,14 +153,14 @@ public class DbFedoraToOcflObjectIndexTest {
         final String sessId = UUID.randomUUID().toString();
         index.addMapping(sessId, RESOURCE_ID_1, ROOT_RESOURCE_ID, OCFL_ID);
 
-        final FedoraOCFLMapping expected = new FedoraOCFLMapping(ROOT_RESOURCE_ID, OCFL_ID);
+        final FedoraOcflMapping expected = new FedoraOcflMapping(ROOT_RESOURCE_ID, OCFL_ID);
         assertEquals(expected, index.getMapping(sessId, RESOURCE_ID_1));
 
         try {
             // Not yet committed
             index.getMapping(null, RESOURCE_ID_1);
             fail();
-        } catch (final FedoraOCFLMappingNotFoundException e) {
+        } catch (final FedoraOcflMappingNotFoundException e) {
             // The exception is expected.
         }
 
@@ -169,12 +169,12 @@ public class DbFedoraToOcflObjectIndexTest {
         try {
             index.getMapping(sessId, RESOURCE_ID_1);
             fail();
-        } catch (final FedoraOCFLMappingNotFoundException e) {
+        } catch (final FedoraOcflMappingNotFoundException e) {
             // The exception is expected.
         }
     }
 
-    private void verifyMapping(final FedoraOCFLMapping mapping1, final String rootResourceId, final String ocflId) {
+    private void verifyMapping(final FedoraOcflMapping mapping1, final String rootResourceId, final String ocflId) {
         assertEquals(rootResourceId, mapping1.getRootObjectIdentifier());
         assertEquals(ocflId, mapping1.getOcflObjectId());
     }

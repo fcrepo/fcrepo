@@ -33,10 +33,10 @@ import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
+import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
+import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
+import org.fcrepo.persistence.ocfl.api.OcflObjectSessionFactory;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -65,7 +65,7 @@ import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
 import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.createRepository;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createRepository;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.junit.Assert.assertEquals;
@@ -84,37 +84,37 @@ import static org.mockito.Mockito.withSettings;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
- * Test class for {@link OCFLPersistentStorageSession}
+ * Test class for {@link OcflPersistentStorageSession}
  *
  * @author dbernstein
  */
 @RunWith(MockitoJUnitRunner.class)
-public class OCFLPersistentStorageSessionTest {
+public class OcflPersistentStorageSessionTest {
 
-    private OCFLPersistentStorageSession session;
+    private OcflPersistentStorageSession session;
 
     @Mock
     private FedoraToOcflObjectIndex index;
 
     @Mock
-    private FedoraOCFLMapping mapping;
+    private FedoraOcflMapping mapping;
 
     @Mock
-    private FedoraOCFLMapping mapping2;
+    private FedoraOcflMapping mapping2;
 
     @Mock
     private WriteOutcome writeOutcome;
 
     @Mock
-    private OCFLObjectSessionFactory mockSessionFactory;
+    private OcflObjectSessionFactory mockSessionFactory;
 
     @Mock
-    private OCFLObjectSession objectSession1;
+    private OcflObjectSession objectSession1;
 
     @Mock
-    private OCFLObjectSession objectSession2;
+    private OcflObjectSession objectSession2;
 
-    private DefaultOCFLObjectSessionFactory objectSessionFactory;
+    private DefaultOcflObjectSessionFactory objectSessionFactory;
 
     private static final String ROOT_OBJECT_ID = "info:fedora/resource1";
 
@@ -153,7 +153,7 @@ public class OCFLPersistentStorageSessionTest {
         final var workDir = tempFolder.newFolder("ocfl-work").toPath();
 
         final var repository = createRepository(repoDir, workDir);
-        this.objectSessionFactory = new DefaultOCFLObjectSessionFactory();
+        this.objectSessionFactory = new DefaultOcflObjectSessionFactory();
         setField(this.objectSessionFactory, "ocflRepository", repository);
         session = createSession(index, objectSessionFactory);
 
@@ -170,34 +170,34 @@ public class OCFLPersistentStorageSessionTest {
         when(objectSession2.write(anyString(), any(InputStream.class))).thenReturn(writeOutcome);
     }
 
-    private OCFLPersistentStorageSession createSession(final FedoraToOcflObjectIndex index,
-                                                       final OCFLObjectSessionFactory objectSessionFactory) {
+    private OcflPersistentStorageSession createSession(final FedoraToOcflObjectIndex index,
+                                                       final OcflObjectSessionFactory objectSessionFactory) {
         final var sessionId = UUID.randomUUID().toString();
-        return new OCFLPersistentStorageSession(sessionId, index,
+        return new OcflPersistentStorageSession(sessionId, index,
                 stagingDir.resolve(sessionId),
                 objectSessionFactory);
     }
 
-    private void mockNoIndex(final String resourceId) throws FedoraOCFLMappingNotFoundException {
-        when(index.getMapping(any(), eq(resourceId))).thenThrow(new FedoraOCFLMappingNotFoundException(resourceId));
+    private void mockNoIndex(final String resourceId) throws FedoraOcflMappingNotFoundException {
+        when(index.getMapping(any(), eq(resourceId))).thenThrow(new FedoraOcflMappingNotFoundException(resourceId));
     }
 
     private void mockMappingAndIndexWithNoIndex(final String ocflObjectId, final String resourceId,
-                                                final String rootObjectId, final FedoraOCFLMapping mapping)
-            throws FedoraOCFLMappingNotFoundException {
+                                                final String rootObjectId, final FedoraOcflMapping mapping)
+            throws FedoraOcflMappingNotFoundException {
         mockMapping(ocflObjectId, rootObjectId, mapping);
         when(index.getMapping(any(), eq(resourceId)))
-                .thenThrow(new FedoraOCFLMappingNotFoundException(resourceId))
+                .thenThrow(new FedoraOcflMappingNotFoundException(resourceId))
                 .thenReturn(mapping);
     }
 
     private void mockMappingAndIndex(final String ocflObjectId, final String resourceId, final String rootObjectId,
-                                     final FedoraOCFLMapping mapping) throws FedoraOCFLMappingNotFoundException {
+                                     final FedoraOcflMapping mapping) throws FedoraOcflMappingNotFoundException {
         mockMapping(ocflObjectId, rootObjectId, mapping);
         when(index.getMapping(anyString(), eq(resourceId))).thenReturn(mapping);
     }
 
-    private void mockMapping(final String ocflObjectId, final String rootObjectId, final FedoraOCFLMapping mapping) {
+    private void mockMapping(final String ocflObjectId, final String rootObjectId, final FedoraOcflMapping mapping) {
         when(mapping.getOcflObjectId()).thenReturn(ocflObjectId);
         when(mapping.getRootObjectIdentifier()).thenReturn(rootObjectId);
     }
@@ -251,7 +251,7 @@ public class OCFLPersistentStorageSessionTest {
         session.commit();
 
         //create a new session and verify that the state is the same
-        final OCFLPersistentStorageSession newSession = createSession(index, objectSessionFactory);
+        final OcflPersistentStorageSession newSession = createSession(index, objectSessionFactory);
 
         //verify get triples outside of the transaction
         retrievedUserStream = newSession.getTriples(RESOURCE_ID, null);
@@ -293,7 +293,7 @@ public class OCFLPersistentStorageSessionTest {
         session.commit();
 
         //create a new session and verify the returned rdf stream.
-        final OCFLPersistentStorageSession newSession = createSession(index, objectSessionFactory);
+        final OcflPersistentStorageSession newSession = createSession(index, objectSessionFactory);
 
         //verify get triples outside of the transaction
         final RdfStream retrievedUserStream = newSession.getTriples(descriptionResource, null);
@@ -425,7 +425,7 @@ public class OCFLPersistentStorageSessionTest {
         }
     }
 
-    private void mockOCFLObjectSession(final OCFLObjectSession objectSession, final CommitOption option) {
+    private void mockOCFLObjectSession(final OcflObjectSession objectSession, final CommitOption option) {
         objectSessionFactory.setAutoVersioningEnabled(option == NEW_VERSION);
     }
 
@@ -543,7 +543,7 @@ public class OCFLPersistentStorageSessionTest {
 
         }
         //verify that the resource cannot be found now (since it wasn't committed).
-        final OCFLPersistentStorageSession newSession = createSession(index, objectSessionFactory);
+        final OcflPersistentStorageSession newSession = createSession(index, objectSessionFactory);
         newSession.getTriples(RESOURCE_ID, null);
         fail("second session.getTriples(...) invocation should have failed.");
     }
@@ -617,7 +617,7 @@ public class OCFLPersistentStorageSessionTest {
 
 
         //create a new session and verify that the state is the same
-        final OCFLPersistentStorageSession newSession = createSession(index, objectSessionFactory);
+        final OcflPersistentStorageSession newSession = createSession(index, objectSessionFactory);
 
         //get the newly created version
         final List<Instant> versions = newSession.listVersions(RESOURCE_ID);
@@ -637,11 +637,11 @@ public class OCFLPersistentStorageSessionTest {
 
         mockMapping(OCFL_RESOURCE_ID, ROOT_OBJECT_ID, mapping);
         final var mappingCount = new AtomicInteger(0);
-        when(index.getMapping(anyString(), eq(RESOURCE_ID))).thenAnswer((Answer<FedoraOCFLMapping>) invocationOnMock ->
+        when(index.getMapping(anyString(), eq(RESOURCE_ID))).thenAnswer((Answer<FedoraOcflMapping>) invocationOnMock ->
         {
             final var current = mappingCount.getAndIncrement();
             if (current == 0) {
-                throw new FedoraOCFLMappingNotFoundException("");
+                throw new FedoraOcflMappingNotFoundException("");
             }
             return mapping;
         });

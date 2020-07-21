@@ -52,7 +52,7 @@ public class AbstractPersisterTest {
             }
 
             @Override
-            public void persist(final OCFLPersistentStorageSession session,
+            public void persist(final OcflPersistentStorageSession session,
                                 final ResourceOperation operation) {}
         }
 
@@ -69,7 +69,7 @@ public class AbstractPersisterTest {
             }
 
             @Override
-            public void persist(final OCFLPersistentStorageSession session,
+            public void persist(final OcflPersistentStorageSession session,
                                 final ResourceOperation operation) {}
         }
 
@@ -85,7 +85,7 @@ public class AbstractPersisterTest {
             }
 
             @Override
-            public void persist(final OCFLPersistentStorageSession session,
+            public void persist(final OcflPersistentStorageSession session,
                                 final ResourceOperation operation) {}
         }
 

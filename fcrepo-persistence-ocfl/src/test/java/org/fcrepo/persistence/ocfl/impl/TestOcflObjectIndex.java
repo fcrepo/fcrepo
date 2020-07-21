@@ -19,7 +19,7 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import javax.annotation.Nonnull;
 
-import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
+import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,30 +35,30 @@ public class TestOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     private static Logger LOGGER = LoggerFactory.getLogger(TestOcflObjectIndex.class);
 
-    private Map<String, FedoraOCFLMapping> fedoraOCFLMappingMap = Collections.synchronizedMap(new HashMap<>());
+    private Map<String, FedoraOcflMapping> fedoraOCFLMappingMap = Collections.synchronizedMap(new HashMap<>());
 
     @Override
-    public FedoraOCFLMapping getMapping(final String transactionId, final String fedoraResourceIdentifier)
-            throws FedoraOCFLMappingNotFoundException {
+    public FedoraOcflMapping getMapping(final String transactionId, final String fedoraResourceIdentifier)
+            throws FedoraOcflMappingNotFoundException {
 
         LOGGER.debug("getting {}", fedoraResourceIdentifier);
-        final FedoraOCFLMapping m = fedoraOCFLMappingMap.get(fedoraResourceIdentifier);
+        final FedoraOcflMapping m = fedoraOCFLMappingMap.get(fedoraResourceIdentifier);
         if (m == null) {
-            throw new FedoraOCFLMappingNotFoundException(fedoraResourceIdentifier);
+            throw new FedoraOcflMappingNotFoundException(fedoraResourceIdentifier);
         }
 
         return m;
     }
 
     @Override
-    public FedoraOCFLMapping addMapping(@Nonnull final String transactionId,
+    public FedoraOcflMapping addMapping(@Nonnull final String transactionId,
                                         final String fedoraResourceIdentifier,
                                         final String fedoraRootObjectResourceId,
                                         final String ocflObjectId) {
-        FedoraOCFLMapping mapping = fedoraOCFLMappingMap.get(fedoraRootObjectResourceId);
+        FedoraOcflMapping mapping = fedoraOCFLMappingMap.get(fedoraRootObjectResourceId);
 
         if (mapping == null) {
-            mapping = new FedoraOCFLMapping(fedoraRootObjectResourceId, ocflObjectId);
+            mapping = new FedoraOcflMapping(fedoraRootObjectResourceId, ocflObjectId);
             fedoraOCFLMappingMap.put(fedoraRootObjectResourceId, mapping);
         }
 

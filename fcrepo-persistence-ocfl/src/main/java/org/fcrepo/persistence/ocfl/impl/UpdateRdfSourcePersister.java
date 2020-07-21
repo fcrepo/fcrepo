@@ -21,7 +21,7 @@ import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
+import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,27 +33,27 @@ import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
  * @author dbernstein
  * @since 6.0.0
  */
-class UpdateRDFSourcePersister extends AbstractRDFSourcePersister {
+class UpdateRdfSourcePersister extends AbstractRdfSourcePersister {
 
-    private static final Logger log = LoggerFactory.getLogger(UpdateRDFSourcePersister.class);
+    private static final Logger log = LoggerFactory.getLogger(UpdateRdfSourcePersister.class);
 
     /**
      * Constructor
      * @param index The FedoraToOCFLObjectIndex
      */
-    protected UpdateRDFSourcePersister(final FedoraToOcflObjectIndex index) {
+    protected UpdateRdfSourcePersister(final FedoraToOcflObjectIndex index) {
         super(RdfSourceOperation.class, UPDATE, index);
     }
 
     @Override
-    public void persist(final OCFLPersistentStorageSession session, final ResourceOperation operation)
+    public void persist(final OcflPersistentStorageSession session, final ResourceOperation operation)
             throws PersistentStorageException {
         final var resourceId = operation.getResourceId();
         log.debug("persisting {} to {}", resourceId, session);
 
         final var fedoraOCFLMapping = getMapping(session.getId(), resourceId);
         final var ocflId = fedoraOCFLMapping.getOcflObjectId();
-        final OCFLObjectSession objSession = session.findOrCreateSession(ocflId);
+        final OcflObjectSession objSession = session.findOrCreateSession(ocflId);
         persistRDF(objSession, operation, fedoraOCFLMapping.getRootObjectIdentifier());
     }
 }

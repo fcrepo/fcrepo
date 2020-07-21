@@ -28,7 +28,7 @@ import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.FileWriteOutcome;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
+import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,7 +49,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.RESOURCE_HEADER_EXTENSION;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getInternalFedoraDirectory;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.getInternalFedoraDirectory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -72,10 +72,10 @@ public class CreateNonRdfSourcePersisterTest {
     private NonRdfSourceOperation nonRdfSourceOperation;
 
     @Mock
-    private OCFLObjectSession session;
+    private OcflObjectSession session;
 
     @Mock
-    private FedoraOCFLMapping mapping;
+    private FedoraOcflMapping mapping;
 
     @Mock
     private FedoraToOcflObjectIndex index;
@@ -93,7 +93,7 @@ public class CreateNonRdfSourcePersisterTest {
     private ResourceHeaders headers;
 
     @Mock
-    private OCFLPersistentStorageSession psSession;
+    private OcflPersistentStorageSession psSession;
 
     private static final String RESOURCE_ID = "info:fedora/parent/child";
 

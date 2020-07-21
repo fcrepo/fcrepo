@@ -25,8 +25,8 @@ import static org.fcrepo.persistence.common.ResourceHeaderUtils.populateBinaryHe
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.populateExternalBinaryHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchCreationHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchModificationHeaders;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.relativizeSubpath;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveOCFLSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.relativizeSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.resolveOCFLSubpath;
 
 import java.util.List;
 
@@ -41,7 +41,7 @@ import org.fcrepo.persistence.common.FileWriteOutcome;
 import org.fcrepo.persistence.common.MultiDigestInputStreamWrapper;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
+import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
@@ -75,7 +75,7 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
      * @throws PersistentStorageException thrown if writing fails
      */
     protected void persistNonRDFSource(final ResourceOperation operation,
-                                       final OCFLObjectSession objectSession, final String rootIdentifier)
+                                       final OcflObjectSession objectSession, final String rootIdentifier)
             throws PersistentStorageException {
         final var resourceId = operation.getResourceId();
         final var fedoraSubpath = relativizeSubpath(rootIdentifier, resourceId);
@@ -129,7 +129,7 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
      * @return populated resource headers
      * @throws PersistentStorageException if unexpectedly unable to retrieve existing object headers
      */
-    private ResourceHeaders populateHeaders(final OCFLObjectSession objSession, final String subpath,
+    private ResourceHeaders populateHeaders(final OcflObjectSession objSession, final String subpath,
                                             final NonRdfSourceOperation op, final WriteOutcome writeOutcome,
                                             final boolean objectRoot) throws PersistentStorageException {
 

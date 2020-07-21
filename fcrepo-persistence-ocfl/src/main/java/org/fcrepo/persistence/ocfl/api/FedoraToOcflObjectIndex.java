@@ -19,7 +19,7 @@ package org.fcrepo.persistence.ocfl.api;
 
 import javax.annotation.Nonnull;
 
-import org.fcrepo.persistence.ocfl.impl.FedoraOCFLMapping;
+import org.fcrepo.persistence.ocfl.impl.FedoraOcflMapping;
 
 /**
  * @author dbernstein
@@ -41,10 +41,10 @@ public interface FedoraToOcflObjectIndex {
      * @param sessionId id of the current session, or null for read-only.
      * @param fedoraResourceIdentifier the fedora resource identifier
      * @return the mapping
-     * @throws FedoraOCFLMappingNotFoundException when no mapping exists for the specified identifier.
+     * @throws FedoraOcflMappingNotFoundException when no mapping exists for the specified identifier.
      */
-    FedoraOCFLMapping getMapping(final String sessionId, final String fedoraResourceIdentifier) throws
-            FedoraOCFLMappingNotFoundException;
+    FedoraOcflMapping getMapping(final String sessionId, final String fedoraResourceIdentifier) throws
+            FedoraOcflMappingNotFoundException;
 
     /**
      * Adds a mapping to the index
@@ -55,8 +55,8 @@ public interface FedoraToOcflObjectIndex {
      * @param ocflObjectId             The ocfl object id
      * @return  The newly created mapping
      */
-    FedoraOCFLMapping addMapping(@Nonnull String sessionId, final String fedoraResourceIdentifier,
-                                 final String fedoraRootObjectIdentifier,  final String ocflObjectId);
+    FedoraOcflMapping addMapping(@Nonnull String sessionId, final String fedoraResourceIdentifier,
+                                 final String fedoraRootObjectIdentifier, final String ocflObjectId);
 
     /**
      * Removes a mapping

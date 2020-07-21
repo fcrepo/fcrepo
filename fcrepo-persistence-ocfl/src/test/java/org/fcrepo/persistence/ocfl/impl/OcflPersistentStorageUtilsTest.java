@@ -19,16 +19,16 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import org.junit.Test;
 
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.relativizeSubpath;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveOCFLSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.relativizeSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.resolveOCFLSubpath;
 import static org.junit.Assert.assertEquals;
 
 /**
- * Test class for {@link OCFLPersistentStorageUtils}
+ * Test class for {@link OcflPersistentStorageUtils}
  *
  * @author dbernstein
  */
-public class OCFLPersistentStorageUtilsTest {
+public class OcflPersistentStorageUtilsTest {
 
     @Test
     public void testRelativizeSubpathWhereRootEqualsResource() {

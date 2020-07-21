@@ -32,7 +32,7 @@ import java.util.stream.Stream;
  *
  * @author bbpennel
  */
-public interface OCFLObjectSession extends AutoCloseable {
+public interface OcflObjectSession extends AutoCloseable {
 
     /**
      * Write the provided content to specified subpath.
@@ -128,7 +128,7 @@ public interface OCFLObjectSession extends AutoCloseable {
      * @throws PersistentStorageException If the versions cannot be read due to the underlying session being closed
      *                                    or for some other reason.
      */
-    List<OCFLVersion> listVersions() throws PersistentStorageException;
+    List<OcflVersion> listVersions() throws PersistentStorageException;
 
     /**
      * Return the list of immutable versions associated with this OCFL Object subpath in chronological order. Only
@@ -139,7 +139,7 @@ public interface OCFLObjectSession extends AutoCloseable {
      * @throws PersistentStorageException If the versions cannot be read due to the underlying session being closed
      *                                    or for some other reason.
      */
-    List<OCFLVersion> listVersions(String subpath) throws PersistentStorageException;
+    List<OcflVersion> listVersions(String subpath) throws PersistentStorageException;
 
     /**
      * Lists the subpaths associated with the HEAD (ie the latest committed state)

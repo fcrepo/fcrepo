@@ -28,7 +28,7 @@ import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.ocfl.impl.OCFLPersistentSessionManager;
+import org.fcrepo.persistence.ocfl.impl.OcflPersistentSessionManager;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -75,7 +75,7 @@ public class NonRdfSourcesPersistenceIT {
             + "be89ce5246d1cb1d2f93a254cc15ff9a82809395");
 
     @Autowired
-    private OCFLPersistentSessionManager sessionManager;
+    private OcflPersistentSessionManager sessionManager;
 
     private PersistentStorageSession storageSession;
 

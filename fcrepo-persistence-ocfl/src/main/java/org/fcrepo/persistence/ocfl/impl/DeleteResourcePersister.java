@@ -19,10 +19,10 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.DELETE;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.isSidecarSubpath;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.relativizeSubpath;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveExtensions;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveOCFLSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.isSidecarSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.relativizeSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.resolveExtensions;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.resolveOCFLSubpath;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -33,7 +33,7 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageRuntimeException;
 import org.fcrepo.persistence.common.ResourceHeaderUtils;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
+import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +50,7 @@ class DeleteResourcePersister extends AbstractPersister {
     }
 
     @Override
-    public void persist(final OCFLPersistentStorageSession session, final ResourceOperation operation)
+    public void persist(final OcflPersistentStorageSession session, final ResourceOperation operation)
             throws PersistentStorageException {
         final var mapping = getMapping(session.getId(), operation.getResourceId());
         final var fedoraResourceRoot = mapping.getRootObjectIdentifier();
@@ -88,7 +88,7 @@ class DeleteResourcePersister extends AbstractPersister {
      * @param path Path to delete
      * @param session Session to delete the path in.
      */
-    private void deletePath(final String path, final OCFLObjectSession session, final String user,
+    private void deletePath(final String path, final OcflObjectSession session, final String user,
                             final Instant deleteTime) throws PersistentStorageException {
         // readHeaders and writeHeaders need the subpath where as delete needs the file name. So remove any extensions.
         // TODO: See https://jira.lyrasis.org/browse/FCREPO-3287
@@ -104,7 +104,7 @@ class DeleteResourcePersister extends AbstractPersister {
      * @param headers The headers for the file.
      * @throws PersistentStorageException if can't read, write or delete a file.
      */
-    private void deletePath(final String path, final OCFLObjectSession session, final ResourceHeadersImpl headers,
+    private void deletePath(final String path, final OcflObjectSession session, final ResourceHeadersImpl headers,
                             final String user, final Instant deleteTime)
         throws PersistentStorageException {
         session.delete(path);
@@ -123,7 +123,7 @@ class DeleteResourcePersister extends AbstractPersister {
      * @param path Path to delete.
      * @param session Session to delete the path in.
      */
-    private void deletePathWrapped(final String path, final OCFLObjectSession session, final String user,
+    private void deletePathWrapped(final String path, final OcflObjectSession session, final String user,
                                    final Instant deleteTime) {
         try {
             deletePath(path, session, user, deleteTime);

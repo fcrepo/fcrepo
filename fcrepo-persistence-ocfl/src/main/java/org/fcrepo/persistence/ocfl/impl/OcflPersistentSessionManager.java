@@ -20,7 +20,7 @@ package org.fcrepo.persistence.ocfl.impl;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
+import org.fcrepo.persistence.ocfl.api.OcflObjectSessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,16 +43,16 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 2019-09-20
  */
 @Component
-public class OCFLPersistentSessionManager implements PersistentStorageSessionManager {
+public class OcflPersistentSessionManager implements PersistentStorageSessionManager {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(OCFLPersistentSessionManager.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(OcflPersistentSessionManager.class);
 
     private volatile PersistentStorageSession readOnlySession;
 
     private Map<String, PersistentStorageSession> sessionMap;
 
     @Inject
-    private OCFLObjectSessionFactory objectSessionFactory;
+    private OcflObjectSessionFactory objectSessionFactory;
 
     @Inject
     private FedoraToOcflObjectIndex fedoraOcflIndex;
@@ -63,7 +63,7 @@ public class OCFLPersistentSessionManager implements PersistentStorageSessionMan
      * Default constructor
      */
     @Autowired
-    public OCFLPersistentSessionManager(@Value("#{ocflPropsConfig.fedoraOcflStaging}")
+    public OcflPersistentSessionManager(@Value("#{ocflPropsConfig.fedoraOcflStaging}")
                                         final Path sessionStagingRoot) {
         this.sessionMap = new ConcurrentHashMap<>();
 
@@ -82,7 +82,7 @@ public class OCFLPersistentSessionManager implements PersistentStorageSessionMan
             throw new IllegalArgumentException("session id must be non-null");
         }
 
-        return sessionMap.computeIfAbsent(sessionId, key -> new OCFLPersistentStorageSession(
+        return sessionMap.computeIfAbsent(sessionId, key -> new OcflPersistentStorageSession(
                 key,
                 fedoraOcflIndex,
                 createSessionStagingDir(sessionId),
@@ -97,7 +97,7 @@ public class OCFLPersistentSessionManager implements PersistentStorageSessionMan
             synchronized (this) {
                 localSession = this.readOnlySession;
                 if (localSession == null) {
-                    this.readOnlySession = new OCFLPersistentStorageSession(fedoraOcflIndex,
+                    this.readOnlySession = new OcflPersistentStorageSession(fedoraOcflIndex,
                             createSessionStagingDir(null), objectSessionFactory);
                     localSession = this.readOnlySession;
                 }
