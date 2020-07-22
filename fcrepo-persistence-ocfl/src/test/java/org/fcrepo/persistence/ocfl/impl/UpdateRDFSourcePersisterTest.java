@@ -116,7 +116,7 @@ public class UpdateRDFSourcePersisterTest {
         when(psSession.getId()).thenReturn(SESSION_ID);
         when(session.write(anyString(), any(InputStream.class))).thenReturn(writeOutcome);
         when(psSession.findOrCreateSession(anyString())).thenReturn(session);
-        when(index.getMapping(eq(SESSION_ID), anyString())).thenReturn(mapping);
+        when(index.getMapping(eq(SESSION_ID), any())).thenReturn(mapping);
         when(operation.getType()).thenReturn(UPDATE);
 
         persister = new UpdateRdfSourcePersister(this.index);
@@ -134,7 +134,7 @@ public class UpdateRDFSourcePersisterTest {
         final RdfStream userTriplesStream = constructTitleStream(RESOURCE_ID, TITLE);
 
         when(mapping.getOcflObjectId()).thenReturn("object-id");
-        when(mapping.getRootObjectIdentifier()).thenReturn(ROOT_RESOURCE_ID.getResourceId());
+        when(mapping.getRootObjectIdentifier()).thenReturn(ROOT_RESOURCE_ID);
 
         when(operation.getResourceId()).thenReturn(RESOURCE_ID);
         when(operation.getTriples()).thenReturn(userTriplesStream);

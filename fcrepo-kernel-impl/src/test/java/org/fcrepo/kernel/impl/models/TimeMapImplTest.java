@@ -64,7 +64,7 @@ public class TimeMapImplTest {
     @Mock
     private ResourceFactory resourceFactory;
 
-    private final String defaultId = FEDORA_ID_PREFIX + "resource";
+    private final String defaultId = FEDORA_ID_PREFIX + "/resource";
 
     private TimeMapImpl timeMap;
 
@@ -144,9 +144,9 @@ public class TimeMapImplTest {
     private List<FedoraResource> mockListVersions(final String id, final Instant... versions)
             throws PersistentStorageException, PathNotFoundException {
         if (versions.length == 0) {
-            when(session.listVersions(id)).thenReturn(Collections.emptyList());
+            when(session.listVersions(FedoraId.create(id))).thenReturn(Collections.emptyList());
         } else {
-            when(session.listVersions(id)).thenReturn(List.of(versions));
+            when(session.listVersions(FedoraId.create(id))).thenReturn(List.of(versions));
         }
 
         final var mementos = new ArrayList<FedoraResource>();

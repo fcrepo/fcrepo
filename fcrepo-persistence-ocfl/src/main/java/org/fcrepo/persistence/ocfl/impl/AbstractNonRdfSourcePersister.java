@@ -30,6 +30,7 @@ import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.resolv
 
 import java.util.List;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
@@ -75,11 +76,11 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
      * @throws PersistentStorageException thrown if writing fails
      */
     protected void persistNonRDFSource(final ResourceOperation operation,
-                                       final OcflObjectSession objectSession, final String rootIdentifier)
+                                       final OcflObjectSession objectSession, final FedoraId rootIdentifier)
             throws PersistentStorageException {
         final var resourceId = operation.getResourceId();
-        final var fedoraSubpath = relativizeSubpath(rootIdentifier, resourceId.getResourceId());
-        final var subpath = resolveOCFLSubpath(rootIdentifier, fedoraSubpath);
+        final var fedoraSubpath = relativizeSubpath(rootIdentifier.getResourceId(), resourceId.getResourceId());
+        final var subpath = resolveOCFLSubpath(rootIdentifier.getResourceId(), fedoraSubpath);
         log.debug("persisting ({}) to {}", resourceId, subpath);
         // write user content
         final var nonRdfSourceOperation = (NonRdfSourceOperation) operation;

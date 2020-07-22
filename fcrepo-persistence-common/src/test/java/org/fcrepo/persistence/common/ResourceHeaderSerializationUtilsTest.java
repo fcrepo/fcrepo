@@ -118,8 +118,8 @@ public class ResourceHeaderSerializationUtilsTest {
 
         final var resultHeaders = deserializeHeaders(headerStream);
 
-        assertEquals(PARENT_ID.getFullId(), resultHeaders.getParent());
-        assertEquals(RESOURCE_ID.getFullId(), resultHeaders.getId());
+        assertEquals(PARENT_ID, resultHeaders.getParent());
+        assertEquals(RESOURCE_ID, resultHeaders.getId());
         assertEquals(BASIC_CONTAINER.toString(), resultHeaders.getInteractionModel());
 
         assertEquals(USER_PRINCIPAL, resultHeaders.getCreatedBy());
@@ -148,8 +148,8 @@ public class ResourceHeaderSerializationUtilsTest {
 
         final var resultHeaders = deserializeHeaders(headerStream);
 
-        assertEquals(PARENT_ID.getFullId(), resultHeaders.getParent());
-        assertEquals(RESOURCE_ID.getFullId(), resultHeaders.getId());
+        assertEquals(PARENT_ID, resultHeaders.getParent());
+        assertEquals(RESOURCE_ID, resultHeaders.getId());
         assertEquals(NON_RDF_SOURCE.toString(), resultHeaders.getInteractionModel());
 
         assertEquals(USER_PRINCIPAL, resultHeaders.getCreatedBy());

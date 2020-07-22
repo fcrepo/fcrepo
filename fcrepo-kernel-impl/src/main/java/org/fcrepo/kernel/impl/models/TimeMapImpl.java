@@ -86,7 +86,7 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
         setCreatedDate(originalResource.getCreatedDate());
         setLastModifiedBy(originalResource.getLastModifiedBy());
         setLastModifiedDate(originalResource.getLastModifiedDate());
-        setParentId(originalResource.getId());
+        setParentId(originalResource.getFedoraId().asResourceId());
         setEtag(originalResource.getEtagValue());
         setStateToken(originalResource.getStateToken());
     }
@@ -147,7 +147,7 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
     private List<Instant> getVersions() {
         if (versions == null) {
             try {
-                versions = getSession().listVersions(getId());
+                versions = getSession().listVersions(getFedoraId().asResourceId());
             } catch (final PersistentItemNotFoundException e) {
                 throw new ItemNotFoundException("Unable to retrieve versions for " + getId(), e);
             } catch (final PersistentStorageException e) {

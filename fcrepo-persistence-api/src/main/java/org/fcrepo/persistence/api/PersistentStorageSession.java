@@ -22,6 +22,7 @@ import java.time.Instant;
 import java.util.List;
 
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -39,7 +40,7 @@ public interface PersistentStorageSession {
      *
      * @return the session id.
      */
-    public String getId();
+    String getId();
 
     /**
      * Perform a persistence operation on a resource
@@ -47,7 +48,7 @@ public interface PersistentStorageSession {
      * @param operation The persistence operation to perform
      * @throws PersistentStorageException Error persisting the resource.
      */
-    public void persist(final ResourceOperation operation)
+    void persist(final ResourceOperation operation)
             throws PersistentStorageException;
 
     /**
@@ -59,7 +60,7 @@ public interface PersistentStorageSession {
      * @return header information
      * @throws PersistentStorageException  Either a PersistentItemNotFoundException or PersistentSessionClosedException
      */
-    public ResourceHeaders getHeaders(final String identifier, final Instant version)
+    ResourceHeaders getHeaders(final FedoraId identifier, final Instant version)
             throws PersistentStorageException;
 
     /**
@@ -71,7 +72,7 @@ public interface PersistentStorageSession {
      * @return the triples as an RdfStream.
      * @throws PersistentStorageException  Either a PersistentItemNotFoundException or PersistentSessionClosedException
      */
-    public RdfStream getTriples(final String identifier, final Instant version)
+    RdfStream getTriples(final FedoraId identifier, final Instant version)
             throws PersistentStorageException;
 
     /**
@@ -83,7 +84,7 @@ public interface PersistentStorageSession {
      * @return the binary content.
      * @throws PersistentStorageException  Either a PersistentItemNotFoundException or PersistentSessionClosedException
      */
-    public InputStream getBinaryContent(final String identifier, final Instant version)
+    InputStream getBinaryContent(final FedoraId identifier, final Instant version)
             throws PersistentStorageException;
 
     /**
@@ -93,20 +94,20 @@ public interface PersistentStorageSession {
      * @return The list of instants that map to the underlying versions
      * @throws PersistentStorageException  Either a PersistentItemNotFoundException or PersistentSessionClosedException
      */
-    List<Instant> listVersions(final String identifier)
+    List<Instant> listVersions(final FedoraId identifier)
             throws PersistentStorageException;
 
     /**
      * Commits any changes in the current sesssion to persistent storage.
      * @throws PersistentStorageException Error during commit.
      */
-    public void commit() throws PersistentStorageException;
+    void commit() throws PersistentStorageException;
 
     /**
      * Rolls back any changes in the current session.
      *
      * @throws PersistentStorageException Error completing rollback.
      */
-    public void rollback() throws PersistentStorageException;
+    void rollback() throws PersistentStorageException;
 
 }

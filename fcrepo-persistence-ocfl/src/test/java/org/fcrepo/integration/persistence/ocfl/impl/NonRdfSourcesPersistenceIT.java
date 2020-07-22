@@ -115,8 +115,8 @@ public class NonRdfSourcesPersistenceIT {
         final var readSession = sessionManager.getReadOnlySession();
         assertContentPersisted(BINARY_CONTENT, readSession, rescId);
 
-        final var headers = readSession.getHeaders(rescId.getResourceId(), null);
-        assertEquals(rescId.getFullId(), headers.getId());
+        final var headers = readSession.getHeaders(rescId, null);
+        assertEquals(rescId, headers.getId());
         assertEquals(NON_RDF_SOURCE.getURI(), headers.getInteractionModel());
         assertEquals("test.txt", headers.getFilename());
         assertEquals("text/plain", headers.getMimeType());
@@ -141,8 +141,8 @@ public class NonRdfSourcesPersistenceIT {
         final var readSession = sessionManager.getReadOnlySession();
         assertContentPersisted(BINARY_CONTENT, readSession, rescId);
 
-        final var headers = readSession.getHeaders(rescId.getResourceId(), null);
-        assertEquals(rescId.getFullId(), headers.getId());
+        final var headers = readSession.getHeaders(rescId, null);
+        assertEquals(rescId, headers.getId());
         assertEquals(NON_RDF_SOURCE.getURI(), headers.getInteractionModel());
         assertEquals("text/plain", headers.getMimeType());
         assertEquals(BINARY_CONTENT.length(), headers.getContentSize().longValue());
@@ -166,8 +166,8 @@ public class NonRdfSourcesPersistenceIT {
 
         assertContentPersisted(BINARY_CONTENT, storageSession, rescId);
 
-        final var headers = storageSession.getHeaders(rescId.getResourceId(), null);
-        assertEquals(rescId.getFullId(), headers.getId());
+        final var headers = storageSession.getHeaders(rescId, null);
+        assertEquals(rescId, headers.getId());
         assertEquals(NON_RDF_SOURCE.getURI(), headers.getInteractionModel());
         assertEquals("text/plain", headers.getMimeType());
         assertEquals(BINARY_CONTENT.length(), headers.getContentSize().longValue());
@@ -221,8 +221,8 @@ public class NonRdfSourcesPersistenceIT {
         final var readSession = sessionManager.getReadOnlySession();
         assertContentPersisted(UPDATED_CONTENT, readSession, rescId);
 
-        final var headers = readSession.getHeaders(rescId.getResourceId(), null);
-        assertEquals(rescId.getFullId(), headers.getId());
+        final var headers = readSession.getHeaders(rescId, null);
+        assertEquals(rescId, headers.getId());
         assertEquals(NON_RDF_SOURCE.getURI(), headers.getInteractionModel());
         assertNull(headers.getFilename());
         assertEquals("text/plain", headers.getMimeType());
@@ -257,8 +257,8 @@ public class NonRdfSourcesPersistenceIT {
         final var readSession = sessionManager.getReadOnlySession();
         assertContentPersisted(BINARY_CONTENT, readSession, rescId);
 
-        final var headers = readSession.getHeaders(rescId.getResourceId(), null);
-        assertEquals(rescId.getFullId(), headers.getId());
+        final var headers = readSession.getHeaders(rescId, null);
+        assertEquals(rescId, headers.getId());
         assertEquals(NON_RDF_SOURCE.getURI(), headers.getInteractionModel());
         assertEquals("test.txt", headers.getFilename());
         assertEquals("text/plain", headers.getMimeType());
@@ -288,17 +288,17 @@ public class NonRdfSourcesPersistenceIT {
 
         final var readSession = sessionManager.getReadOnlySession();
         // Check the persisted AG details
-        final var agHeaders = readSession.getHeaders(rescId.getResourceId(), null);
-        assertEquals(rescId.getFullId(), agHeaders.getId());
-        assertEquals(FedoraId.getRepositoryRootId().getFullId(), agHeaders.getParent());
+        final var agHeaders = readSession.getHeaders(rescId, null);
+        assertEquals(rescId, agHeaders.getId());
+        assertEquals(FedoraId.getRepositoryRootId(), agHeaders.getParent());
         assertEquals(BASIC_CONTAINER.getURI(), agHeaders.getInteractionModel());
 
         // Check the binary details
         assertContentPersisted(BINARY_CONTENT, readSession, binId);
 
-        final var headers = readSession.getHeaders(binId.getResourceId(), null);
-        assertEquals(binId.getFullId(), headers.getId());
-        assertEquals(rescId.getFullId(), headers.getParent());
+        final var headers = readSession.getHeaders(binId, null);
+        assertEquals(binId, headers.getId());
+        assertEquals(rescId, headers.getParent());
         assertEquals(NON_RDF_SOURCE.getURI(), headers.getInteractionModel());
         assertEquals("text/plain", headers.getMimeType());
         assertEquals(BINARY_CONTENT.length(), headers.getContentSize().longValue());
@@ -328,14 +328,14 @@ public class NonRdfSourcesPersistenceIT {
 
         final var readSession = sessionManager.getReadOnlySession();
         try {
-            readSession.getBinaryContent(rescId.getResourceId(), null);
+            readSession.getBinaryContent(rescId, null);
             fail("Binary file must no longer exist");
         } catch (final PersistentItemNotFoundException e) {
             // expected
         }
 
-        final var headers = readSession.getHeaders(rescId.getResourceId(), null);
-        assertEquals(rescId.getFullId(), headers.getId());
+        final var headers = readSession.getHeaders(rescId, null);
+        assertEquals(rescId, headers.getId());
         assertTrue("Headers must indicate object deleted", headers.isDeleted());
         assertEquals(NON_RDF_SOURCE.getURI(), headers.getInteractionModel());
     }
@@ -369,7 +369,7 @@ public class NonRdfSourcesPersistenceIT {
 
     private void assertContentPersisted(final String expectedContent, final PersistentStorageSession session,
             final FedoraId rescId) throws Exception {
-        final var resultContent = session.getBinaryContent(rescId.getResourceId(), null);
+        final var resultContent = session.getBinaryContent(rescId, null);
         assertEquals("Binary content did not match expectations",
                 expectedContent, IOUtils.toString(resultContent, UTF_8));
     }

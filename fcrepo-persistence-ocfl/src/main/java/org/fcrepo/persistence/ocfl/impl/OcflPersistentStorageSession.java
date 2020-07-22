@@ -19,6 +19,7 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import org.apache.commons.io.FileUtils;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
@@ -186,7 +187,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
     }
 
     @Override
-    public ResourceHeaders getHeaders(final String identifier, final Instant version)
+    public ResourceHeaders getHeaders(final FedoraId identifier, final Instant version)
             throws PersistentStorageException {
 
         ensureCommitNotStarted();
@@ -194,7 +195,8 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         final FedoraOcflMapping mapping = getFedoraOcflMapping(identifier);
         final OcflObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
         final var rootIdentifier = mapping.getRootObjectIdentifier();
-        final var ocflSubpath = resovleOCFLSubpathFromResourceId(rootIdentifier, identifier);
+        final var ocflSubpath = resovleOCFLSubpathFromResourceId(rootIdentifier.getResourceId(),
+                identifier.getResourceId());
         final var sidecarSubpath = getSidecarSubpath(ocflSubpath);
 
         final InputStream headerStream;
@@ -208,7 +210,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         return deserializeHeaders(headerStream);
     }
 
-    private FedoraOcflMapping getFedoraOcflMapping(final String identifier) throws PersistentStorageException {
+    private FedoraOcflMapping getFedoraOcflMapping(final FedoraId identifier) throws PersistentStorageException {
         try {
             return fedoraOcflIndex.getMapping(sessionId, identifier);
         } catch (final FedoraOcflMappingNotFoundException e) {
@@ -217,20 +219,21 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
     }
 
     @Override
-    public RdfStream getTriples(final String identifier, final Instant version)
+    public RdfStream getTriples(final FedoraId identifier, final Instant version)
             throws PersistentStorageException {
         ensureCommitNotStarted();
 
         final var mapping = getFedoraOcflMapping(identifier);
         final var rootIdentifier = mapping.getRootObjectIdentifier();
         final var objSession = findOrCreateSession(mapping.getOcflObjectId());
-        final var ocflSubpath = resovleOCFLSubpathFromResourceId(rootIdentifier, identifier);
+        final var ocflSubpath = resovleOCFLSubpathFromResourceId(rootIdentifier.getResourceId(),
+                identifier.getResourceId());
         final var filePath = resolveExtensions(ocflSubpath, true);
         return getRdfStream(identifier, objSession, filePath, version);
     }
 
     @Override
-    public List<Instant> listVersions(final String fedoraIdentifier) throws PersistentStorageException {
+    public List<Instant> listVersions(final FedoraId fedoraIdentifier) throws PersistentStorageException {
         final var mapping = getFedoraOcflMapping(fedoraIdentifier);
         final var objSession = findOrCreateSession(mapping.getOcflObjectId());
 
@@ -241,7 +244,8 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
 
             final var headers = getHeaders(fedoraIdentifier, null);
             subpath = resolveExtensions(
-                    resovleOCFLSubpathFromResourceId(mapping.getRootObjectIdentifier(), fedoraIdentifier),
+                    resovleOCFLSubpathFromResourceId(mapping.getRootObjectIdentifier().getResourceId(),
+                            fedoraIdentifier.getResourceId()),
                     !NON_RDF_SOURCE.getURI().equals(headers.getInteractionModel())
             );
         }
@@ -250,14 +254,15 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
     }
 
     @Override
-    public InputStream getBinaryContent(final String identifier, final Instant version)
+    public InputStream getBinaryContent(final FedoraId identifier, final Instant version)
             throws PersistentStorageException {
         ensureCommitNotStarted();
 
         final var mapping = getFedoraOcflMapping(identifier);
         final var rootIdentifier = mapping.getRootObjectIdentifier();
         final var objSession = findOrCreateSession(mapping.getOcflObjectId());
-        final var ocflSubpath = resovleOCFLSubpathFromResourceId(rootIdentifier, identifier);
+        final var ocflSubpath = resovleOCFLSubpathFromResourceId(rootIdentifier.getResourceId(),
+                identifier.getResourceId());
 
         return getBinaryStream(objSession, ocflSubpath, version);
     }

@@ -78,7 +78,7 @@ public class SearchIndexUpdater {
                 this.searchIndex.removeFromIndex(fedoraId);
             } else if (types.contains(RESOURCE_CREATION) || types.contains(RESOURCE_MODIFICATION)) {
                 final var session = persistentStorageSessionManager.getReadOnlySession();
-                final var headers = session.getHeaders(fedoraId.getFullId(), null);
+                final var headers = session.getHeaders(fedoraId, null);
                 this.searchIndex.addUpdateIndex(headers);
             }
         } catch (final PersistentStorageException e) {

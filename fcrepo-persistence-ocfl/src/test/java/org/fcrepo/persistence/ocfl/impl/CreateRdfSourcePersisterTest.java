@@ -165,15 +165,15 @@ public class CreateRdfSourcePersisterTest {
         final var ocflId = "ocfl-id-1";
 
         final String sessionId = "some-id";
-        index.addMapping(sessionId, ROOT_RESOURCE_ID.getResourceId(), ROOT_RESOURCE_ID.getResourceId(), ocflId);
+        index.addMapping(sessionId, ROOT_RESOURCE_ID, ROOT_RESOURCE_ID, ocflId);
         index.commit(sessionId);
 
         when(operation.getResourceId()).thenReturn(RESOURCE_ID);
         when(((CreateResourceOperation) operation).getParentId()).thenReturn(FedoraId.getRepositoryRootId());
         when(((CreateResourceOperation) operation).getInteractionModel()).thenReturn(RDF_SOURCE.toString());
         when(operation.getTriples()).thenReturn(userTriplesStream);
-        when(psSession.getHeaders(RESOURCE_ID.getResourceId(), null)).thenReturn(null);
-        when(psSession.getHeaders(ROOT_RESOURCE_ID.getResourceId(), null)).thenReturn(parentHeaders);
+        when(psSession.getHeaders(RESOURCE_ID, null)).thenReturn(null);
+        when(psSession.getHeaders(ROOT_RESOURCE_ID, null)).thenReturn(parentHeaders);
 
         persister.persist(psSession, operation);
 
@@ -187,7 +187,7 @@ public class CreateRdfSourcePersisterTest {
         final var headers = retrievePersistedHeaders("child");
 
         assertEquals(RDF_SOURCE.toString(), headers.getInteractionModel());
-        assertEquals(ocflId, index.getMapping(null, RESOURCE_ID.getResourceId()).getOcflObjectId());
+        assertEquals(ocflId, index.getMapping(null, RESOURCE_ID).getOcflObjectId());
     }
 
     @Test

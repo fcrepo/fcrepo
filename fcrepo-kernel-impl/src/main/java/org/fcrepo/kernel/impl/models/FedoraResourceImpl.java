@@ -61,9 +61,9 @@ public class FedoraResourceImpl implements FedoraResource {
 
     protected final ResourceFactory resourceFactory;
 
-    private FedoraId fedoraID;
+    private FedoraId fedoraId;
 
-    private String parentId;
+    private FedoraId parentId;
 
     private List<URI> types;
 
@@ -86,11 +86,11 @@ public class FedoraResourceImpl implements FedoraResource {
     // The transaction this representation of the resource belongs to
     protected final Transaction tx;
 
-    protected FedoraResourceImpl(final FedoraId fedoraID,
+    protected FedoraResourceImpl(final FedoraId fedoraId,
                                  final Transaction tx,
                                  final PersistentStorageSessionManager pSessionManager,
                                  final ResourceFactory resourceFactory) {
-        this.fedoraID = fedoraID;
+        this.fedoraId = fedoraId;
         this.tx = tx;
         this.pSessionManager = pSessionManager;
         this.resourceFactory = resourceFactory;
@@ -98,7 +98,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public String getId() {
-        return this.fedoraID.getResourceId();
+        return this.fedoraId.getResourceId();
     }
 
     @Override
@@ -115,7 +115,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public FedoraResource getContainer() {
-        return resourceFactory.getContainer(tx, fedoraID);
+        return resourceFactory.getContainer(tx, fedoraId);
     }
 
     @Override
@@ -179,7 +179,7 @@ public class FedoraResourceImpl implements FedoraResource {
             return this;
         }
         try {
-            final var aclId = fedoraID.asAcl();
+            final var aclId = fedoraId.asAcl();
             return resourceFactory.getResource(tx, aclId);
         } catch (final PathNotFoundException e) {
             return null;
@@ -227,7 +227,7 @@ public class FedoraResourceImpl implements FedoraResource {
     public List<URI> getSystemTypes(final boolean forRdf) {
         try {
             final List<URI> types = new ArrayList<>();
-            final var headers = getSession().getHeaders(getId(), getMementoDatetime());
+            final var headers = getSession().getHeaders(getFedoraId().asResourceId(), getMementoDatetime());
             types.add(create(headers.getInteractionModel()));
             // ldp:Resource is on all resources
             types.add(create(RESOURCE.toString()));
@@ -253,7 +253,8 @@ public class FedoraResourceImpl implements FedoraResource {
     @Override
     public List<URI> getUserTypes() {
         try {
-            final var triples = getSession().getTriples(getDescription().getId(), getMementoDatetime());
+            final var triples = getSession().getTriples(getDescription().getFedoraId().asResourceId(),
+                    getMementoDatetime());
             return triples.filter(t -> t.predicateMatches(type.asNode())).map(Triple::getObject)
                     .map(t -> URI.create(t.toString())).collect(toList());
         } catch (final PersistentItemNotFoundException e) {
@@ -267,7 +268,7 @@ public class FedoraResourceImpl implements FedoraResource {
     public RdfStream getTriples() {
         try {
             final var subject = createURI(getId());
-            final var triples = getSession().getTriples(getId(), getMementoDatetime());
+            final var triples = getSession().getTriples(getFedoraId().asResourceId(), getMementoDatetime());
 
             return new DefaultRdfStream(subject, triples);
         } catch (final PersistentItemNotFoundException e) {
@@ -319,7 +320,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public FedoraResource getParent() throws PathNotFoundException {
-        return resourceFactory.getResource(FedoraId.create(parentId));
+        return resourceFactory.getResource(parentId);
     }
 
     @Override
@@ -334,13 +335,13 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public FedoraId getFedoraId() {
-        return this.fedoraID;
+        return this.fedoraId;
     }
 
     /**
      * @param parentId the parentId to set
      */
-    protected void setParentId(final String parentId) {
+    protected void setParentId(final FedoraId parentId) {
         this.parentId = parentId;
     }
 

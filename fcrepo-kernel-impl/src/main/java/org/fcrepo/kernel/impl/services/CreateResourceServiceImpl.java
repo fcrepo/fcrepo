@@ -180,7 +180,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                 // Make sure the parent exists.
                 // TODO: object existence can be from the index, but we don't have interaction model. Should we add it?
                 final boolean parentExists = containmentIndex.resourceExists(txId, fedoraId);
-                parent = pSession.getHeaders(fedoraId.getResourceId(), null);
+                parent = pSession.getHeaders(fedoraId.asResourceId(), null);
             } catch (final PersistentItemNotFoundException exc) {
                 throw new ItemNotFoundException(String.format("Item %s was not found", fedoraId), exc);
             } catch (final PersistentStorageException exc) {

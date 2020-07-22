@@ -21,6 +21,7 @@ package org.fcrepo.persistence.ocfl.impl;
 import com.google.common.base.Preconditions;
 import org.fcrepo.common.db.DbPlatform;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.slf4j.Logger;
@@ -182,7 +183,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
      * Row mapper for the Lookup queries.
      */
     private static final RowMapper<FedoraOcflMapping> GET_MAPPING_ROW_MAPPER = (resultSet, i) -> new FedoraOcflMapping(
-            resultSet.getString(1),
+            FedoraId.create(resultSet.getString(1)),
             resultSet.getString(2)
     );
 
@@ -219,11 +220,11 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     }
 
     @Override
-    public FedoraOcflMapping getMapping(final String transactionId, final String fedoraId)
+    public FedoraOcflMapping getMapping(final String transactionId, final FedoraId fedoraId)
             throws FedoraOcflMappingNotFoundException {
         try {
             final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-            parameterSource.addValue("fedoraId", fedoraId);
+            parameterSource.addValue("fedoraId", fedoraId.getResourceId());
             if (transactionId != null) {
                 parameterSource.addValue("transactionId", transactionId);
                 return jdbcTemplate.queryForObject(LOOKUP_MAPPING_IN_TRANSACTION, parameterSource,
@@ -237,18 +238,18 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     }
 
     @Override
-    public FedoraOcflMapping addMapping(@Nonnull final String transactionId, final String fedoraId,
-                                        final String fedoraRootId, final String ocflId) {
+    public FedoraOcflMapping addMapping(@Nonnull final String transactionId, final FedoraId fedoraId,
+                                        final FedoraId fedoraRootId, final String ocflId) {
         upsert(transactionId, fedoraId, "add", fedoraRootId, ocflId);
         return new FedoraOcflMapping(fedoraRootId, ocflId);
     }
 
     @Override
-    public void removeMapping(@Nonnull final String transactionId, final String fedoraId) {
+    public void removeMapping(@Nonnull final String transactionId, final FedoraId fedoraId) {
         upsert(transactionId, fedoraId, "delete");
     }
 
-    private void upsert(final String transactionId, final String fedoraId, final String operation) {
+    private void upsert(final String transactionId, final FedoraId fedoraId, final String operation) {
         upsert(transactionId, fedoraId, operation, null, null);
     }
 
@@ -261,11 +262,11 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
      * @param fedoraRootId the fedora root id (for add only)
      * @param ocflId the ocfl id (for add only).
      */
-    private void upsert(final String transactionId, final String fedoraId, final String operation,
-                        final String fedoraRootId, final String ocflId) {
+    private void upsert(final String transactionId, final FedoraId fedoraId, final String operation,
+                        final FedoraId fedoraRootId, final String ocflId) {
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-        parameterSource.addValue("fedoraId", fedoraId);
-        parameterSource.addValue("fedoraRootId", fedoraRootId);
+        parameterSource.addValue("fedoraId", fedoraId.getResourceId());
+        parameterSource.addValue("fedoraRootId", fedoraRootId == null ? null : fedoraRootId.getResourceId());
         parameterSource.addValue("ocflId", ocflId);
         parameterSource.addValue("transactionId", transactionId);
         parameterSource.addValue("operation", operation);

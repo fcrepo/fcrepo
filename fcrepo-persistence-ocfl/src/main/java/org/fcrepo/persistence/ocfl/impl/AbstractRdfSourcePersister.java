@@ -17,6 +17,7 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
@@ -65,13 +66,13 @@ abstract class AbstractRdfSourcePersister extends AbstractPersister {
      * @throws PersistentStorageException
      */
     protected void persistRDF(final OcflObjectSession session, final ResourceOperation operation,
-                              final String rootId) throws PersistentStorageException {
+                              final FedoraId rootId) throws PersistentStorageException {
 
         final RdfSourceOperation rdfSourceOp = (RdfSourceOperation)operation;
         log.debug("persisting RDFSource ({}) to OCFL", operation.getResourceId());
 
-        final String subpath = relativizeSubpath(rootId, operation.getResourceId().getResourceId());
-        final String resolvedSubpath = resolveOCFLSubpath(rootId, subpath);
+        final String subpath = relativizeSubpath(rootId.getResourceId(), operation.getResourceId().getResourceId());
+        final String resolvedSubpath = resolveOCFLSubpath(rootId.getResourceId(), subpath);
         //write user triples
         final var outcome = writeRDF(session, rdfSourceOp.getTriples(), resolvedSubpath);
 

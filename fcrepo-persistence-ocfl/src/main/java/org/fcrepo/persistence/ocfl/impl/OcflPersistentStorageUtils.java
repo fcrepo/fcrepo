@@ -33,6 +33,7 @@ import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.system.StreamRDF;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM;
@@ -180,9 +181,9 @@ public class OcflPersistentStorageUtils {
      * @param fedoraIdentifier The fedora identifier
      * @return The resolved topic
      */
-    public static  String resolveTopic(final String fedoraIdentifier) {
-        if (fedoraIdentifier.endsWith(FEDORA_METADATA_SUFFIX)) {
-            return fedoraIdentifier.substring(0, fedoraIdentifier.indexOf(FEDORA_METADATA_SUFFIX));
+    public static FedoraId resolveTopic(final FedoraId fedoraIdentifier) {
+        if (fedoraIdentifier.isDescription()) {
+            return FedoraId.create(fedoraIdentifier.getBaseId());
         } else {
             return fedoraIdentifier;
         }
@@ -246,7 +247,7 @@ public class OcflPersistentStorageUtils {
      * @return the RDF stream
      * @throws PersistentStorageException If unable to read the specified rdf stream.
      */
-    public static RdfStream getRdfStream(final String identifier,
+    public static RdfStream getRdfStream(final FedoraId identifier,
                                          final OcflObjectSession objSession,
                                          final String subpath,
                                          final Instant version) throws PersistentStorageException {
@@ -254,8 +255,8 @@ public class OcflPersistentStorageUtils {
         try (final InputStream is = readFile(objSession, subpath, versionId)) {
             final Model model = createDefaultModel();
             RDFDataMgr.read(model, is, DEFAULT_RDF_FORMAT.getLang());
-            final String topic = resolveTopic(identifier);
-            return DefaultRdfStream.fromModel(createURI(topic), model);
+            final FedoraId topic = resolveTopic(identifier);
+            return DefaultRdfStream.fromModel(createURI(topic.getFullId()), model);
         } catch (final IOException ex) {
             throw new PersistentStorageException(format("unable to read %s ;  version = %s", identifier, version), ex);
         }

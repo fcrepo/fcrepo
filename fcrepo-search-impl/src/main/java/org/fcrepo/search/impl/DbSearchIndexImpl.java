@@ -199,7 +199,7 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     @Override
     public void addUpdateIndex(final ResourceHeaders resourceHeaders) {
-        final var fullId = resourceHeaders.getId();
+        final var fullId = resourceHeaders.getId().getFullId();
         final var selectParams = new MapSqlParameterSource();
         selectParams.addValue(FEDORA_ID_PARAM, fullId);
         final var result =

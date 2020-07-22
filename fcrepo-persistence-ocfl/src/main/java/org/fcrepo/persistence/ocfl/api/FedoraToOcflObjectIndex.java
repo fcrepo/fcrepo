@@ -19,6 +19,7 @@ package org.fcrepo.persistence.ocfl.api;
 
 import javax.annotation.Nonnull;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.ocfl.impl.FedoraOcflMapping;
 
 /**
@@ -43,7 +44,7 @@ public interface FedoraToOcflObjectIndex {
      * @return the mapping
      * @throws FedoraOcflMappingNotFoundException when no mapping exists for the specified identifier.
      */
-    FedoraOcflMapping getMapping(final String sessionId, final String fedoraResourceIdentifier) throws
+    FedoraOcflMapping getMapping(final String sessionId, final FedoraId fedoraResourceIdentifier) throws
             FedoraOcflMappingNotFoundException;
 
     /**
@@ -55,8 +56,8 @@ public interface FedoraToOcflObjectIndex {
      * @param ocflObjectId             The ocfl object id
      * @return  The newly created mapping
      */
-    FedoraOcflMapping addMapping(@Nonnull String sessionId, final String fedoraResourceIdentifier,
-                                 final String fedoraRootObjectIdentifier, final String ocflObjectId);
+    FedoraOcflMapping addMapping(@Nonnull String sessionId, final FedoraId fedoraResourceIdentifier,
+                                 final FedoraId fedoraRootObjectIdentifier, final String ocflObjectId);
 
     /**
      * Removes a mapping
@@ -64,7 +65,7 @@ public interface FedoraToOcflObjectIndex {
      * @param sessionId id of the current session.
      * @param fedoraResourceIdentifier The fedora resource to remove the mapping for
      */
-    void removeMapping(@Nonnull final String sessionId, final String fedoraResourceIdentifier);
+    void removeMapping(@Nonnull final String sessionId, final FedoraId fedoraResourceIdentifier);
 
     /**
      * Remove all persistent state associated with the index.

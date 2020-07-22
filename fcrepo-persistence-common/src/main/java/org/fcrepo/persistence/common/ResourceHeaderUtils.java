@@ -49,8 +49,8 @@ public class ResourceHeaderUtils {
     public static ResourceHeadersImpl newResourceHeaders(final FedoraId parentId, final FedoraId fedoraId,
                                                          final String interactionModel) {
         final ResourceHeadersImpl headers = new ResourceHeadersImpl();
-        headers.setId(fedoraId.getFullId());
-        headers.setParent(parentId.getFullId());
+        headers.setId(fedoraId);
+        headers.setParent(parentId);
         headers.setInteractionModel(interactionModel);
 
         return headers;

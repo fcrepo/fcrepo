@@ -75,7 +75,7 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
     @Override
     public InputStream getContent() {
         try {
-            return getSession().getBinaryContent(getId(), getMementoDatetime());
+            return getSession().getBinaryContent(getFedoraId().asResourceId(), getMementoDatetime());
         } catch (final PersistentItemNotFoundException e) {
             throw new ItemNotFoundException("Unable to find content for " + getId()
                     + " version " + getMementoDatetime(), e);

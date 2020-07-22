@@ -40,7 +40,6 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
 import static org.apache.jena.graph.NodeFactory.createURI;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_ROOT;
 
@@ -74,25 +73,27 @@ public class RepositoryInitializer {
 
         indexBuilder.rebuildIfNecessary();
 
+        final var root = FedoraId.getRepositoryRootId();
+
         try {
             try {
-                session.getHeaders(FEDORA_ID_PREFIX, null);
+                session.getHeaders(root, null);
             } catch (PersistentItemNotFoundException e) {
-                LOGGER.info("Repository root ({}) not found. Creating...", FEDORA_ID_PREFIX);
+                LOGGER.info("Repository root ({}) not found. Creating...", root);
                 final Stream<Triple> repositoryRootTriples = Stream.of(
-                        new Triple(createURI(FEDORA_ID_PREFIX), RDF.type.asNode(), REPOSITORY_ROOT.asNode())
+                        new Triple(createURI(root.getFullId()), RDF.type.asNode(), REPOSITORY_ROOT.asNode())
                 );
 
-                final RdfStream repositoryRootStream = new DefaultRdfStream(createURI(FEDORA_ID_PREFIX),
+                final RdfStream repositoryRootStream = new DefaultRdfStream(createURI(root.getFullId()),
                         repositoryRootTriples);
-                final RdfSourceOperation operation = this.operationFactory.createBuilder(FedoraId.getRepositoryRootId(),
+                final RdfSourceOperation operation = this.operationFactory.createBuilder(root,
                         BASIC_CONTAINER.getURI())
-                        .parentId(FedoraId.getRepositoryRootId())
+                        .parentId(root)
                         .triples(repositoryRootStream).build();
 
                 session.persist(operation);
                 session.commit();
-                LOGGER.info("Successfully create repository root ({}).", FEDORA_ID_PREFIX);
+                LOGGER.info("Successfully create repository root ({}).", root);
             }
 
         } catch (PersistentStorageException ex) {
