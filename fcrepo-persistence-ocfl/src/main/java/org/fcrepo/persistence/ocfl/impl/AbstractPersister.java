@@ -97,14 +97,16 @@ abstract class AbstractPersister implements Persister {
 
     /**
      *
+     * @param transactionId The storage session/transaction identifier.
      * @param resourceId The fedora resource identifier
      * @return The associated mapping
      * @throws PersistentStorageException When no mapping is found.
      */
-    protected FedoraOCFLMapping getMapping(final String resourceId) throws PersistentStorageException {
+    protected FedoraOCFLMapping getMapping(final String transactionId, final String resourceId)
+            throws PersistentStorageException {
         try {
-            return this.index.getMapping(resourceId);
-        } catch (FedoraOCFLMappingNotFoundException e){
+            return this.index.getMapping(transactionId, resourceId);
+        } catch (final FedoraOCFLMappingNotFoundException e){
             throw new PersistentStorageException(e.getMessage());
         }
     }
@@ -147,15 +149,16 @@ abstract class AbstractPersister implements Persister {
     }
 
     /**
-     * Maps the Fedor ID to an OCFL ID.
+     * Maps the Fedora ID to an OCFL ID.
+     * @param sessionId The session ID.
      * @param fedoraId The fedora identifier for the root OCFL object
      * @return The OCFL ID
      */
-    protected String mapToOcflId(final FedoraId fedoraId) {
+    protected String mapToOcflId(final String sessionId, final FedoraId fedoraId) {
         try {
-            final var mapping = index.getMapping(fedoraId.getBaseId());
+            final var mapping = index.getMapping(sessionId, fedoraId.getBaseId());
             return mapping.getOcflObjectId();
-        } catch (FedoraOCFLMappingNotFoundException e) {
+        } catch (final FedoraOCFLMappingNotFoundException e) {
             // If the a mapping doesn't already exist, use a one-to-one Fedora ID to OCFL ID mapping
             return fedoraId.getBaseId();
         }

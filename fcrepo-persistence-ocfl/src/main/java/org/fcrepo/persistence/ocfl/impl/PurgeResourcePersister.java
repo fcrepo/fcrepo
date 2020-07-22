@@ -17,21 +17,17 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.PURGE;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getSidecarSubpath;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.relativizeSubpath;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveOCFLSubpath;
-
-import java.util.Objects;
-
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.common.ResourceHeadersImpl;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.PURGE;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getSidecarSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.relativizeSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.resolveOCFLSubpath;
 
 /**
  * Purge Resource Persister
@@ -48,7 +44,7 @@ class PurgeResourcePersister extends AbstractPersister {
     @Override
     public void persist(final OCFLPersistentStorageSession session, final ResourceOperation operation)
             throws PersistentStorageException {
-        final var mapping = getMapping(operation.getResourceId());
+        final var mapping = getMapping(session.getId(), operation.getResourceId());
         final var fedoraResourceRoot = mapping.getRootObjectIdentifier();
         final var resourceId = operation.getResourceId();
         final var objectSession = session.findOrCreateSession(mapping.getOcflObjectId());
@@ -59,11 +55,10 @@ class PurgeResourcePersister extends AbstractPersister {
         } else {
             final var relativeSubPath = relativizeSubpath(fedoraResourceRoot, operation.getResourceId());
             final var ocflSubPath = resolveOCFLSubpath(fedoraResourceRoot, relativeSubPath);
-            final var headers = (ResourceHeadersImpl) readHeaders(objectSession, ocflSubPath);
             final var sidecar = getSidecarSubpath(ocflSubPath);
-            final boolean isRdf = !Objects.equals(NON_RDF_SOURCE.toString(), headers.getInteractionModel());
             purgePath(sidecar, objectSession);
         }
+        index.removeMapping(session.getId(), resourceId);
     }
 
     /**

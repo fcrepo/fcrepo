@@ -85,7 +85,7 @@ public class FedoraTombstones extends ContentExposingResource {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
         final Tombstone tombstone = (Tombstone) resource;
-        LOGGER.info("Delete tombstone: {}", resource);
+        LOGGER.info("Delete tombstone: {}", resource.getFedoraId());
         purgeResourceService.perform(transaction(), tombstone.getDeletedObject(), getUserPrincipal());
         transaction().commitIfShortLived();
         return noContent().build();

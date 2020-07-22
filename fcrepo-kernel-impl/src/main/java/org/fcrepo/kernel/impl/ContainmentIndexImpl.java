@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.impl;
 
+import com.google.common.base.Preconditions;
+import org.fcrepo.common.db.DbPlatform;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -36,7 +38,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.sql.DataSource;
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -209,11 +210,10 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      * Remove from the main table all rows from transaction operation table marked 'purge' for this transaction.
      */
     private static final String COMMIT_PURGE_RECORDS = "DELETE FROM " + RESOURCES_TABLE + " WHERE " +
-            "EXISTS (SELECT * FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " +
-            TRANSACTION_ID_COLUMN + " = :transactionId AND " +  OPERATION_COLUMN + " = 'purge' AND " +
-            RESOURCES_TABLE + "." + FEDORA_ID_COLUMN + " = " + TRANSACTION_OPERATIONS_TABLE + "." + FEDORA_ID_COLUMN +
-            " AND " + RESOURCES_TABLE + "." + PARENT_COLUMN + " = " + TRANSACTION_OPERATIONS_TABLE + "." +
-            PARENT_COLUMN + ")";
+            "EXISTS (SELECT * FROM " + TRANSACTION_OPERATIONS_TABLE + " t WHERE t." +
+            TRANSACTION_ID_COLUMN + " = :transactionId AND t." +  OPERATION_COLUMN + " = 'purge' AND" +
+            " t." + FEDORA_ID_COLUMN + " = " + RESOURCES_TABLE + "." + FEDORA_ID_COLUMN +
+            " AND t." + PARENT_COLUMN + " = " + RESOURCES_TABLE + "." + PARENT_COLUMN + ")";
 
     /*
      * Query if a resource exists in the main table and is not deleted.
@@ -225,7 +225,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      * Resource exists as a record in the transaction operations table with an 'add' operation and not also
      * exists as a 'delete' operation.
      */
-    private static final String RESOURCE_EXISTS_IN_TRANSACTION = "SELECT " + FEDORA_ID_COLUMN + " FROM" +
+    private static final String RESOURCE_EXISTS_IN_TRANSACTION = "SELECT x." + FEDORA_ID_COLUMN + " FROM" +
             " (SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child" +
             " UNION SELECT " + FEDORA_ID_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE +
             " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +
@@ -233,7 +233,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             " WHERE NOT EXISTS " +
             " (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE +
             " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +
-            " AND " + OPERATION_COLUMN + " = 'delete')";
+            " AND " + OPERATION_COLUMN + " IN ('delete', 'purge'))";
 
     /*
      * Get the parent ID for this resource from the main table if not deleted.
@@ -289,11 +289,11 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     private static final String TRUNCATE_TABLE = "TRUNCATE TABLE ";
 
-    private static final Map<String, String> DDL_MAP = Map.of(
-            "MySQL", "sql/mysql-containment.sql",
-            "H2", "sql/default-containment.sql",
-            "PostgreSQL", "sql/default-containment.sql",
-            "MariaDB", "sql/default-containment.sql"
+    private static final Map<DbPlatform, String> DDL_MAP = Map.of(
+            DbPlatform.MYSQL, "sql/mysql-containment.sql",
+            DbPlatform.H2, "sql/default-containment.sql",
+            DbPlatform.POSTGRESQL, "sql/default-containment.sql",
+            DbPlatform.MARIADB, "sql/default-containment.sql"
     );
 
     /**
@@ -303,25 +303,16 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     private void setup() {
         jdbcTemplate = getNamedParameterJdbcTemplate();
 
-        final var ddl = lookupDdl();
+        final var dbPlatform = DbPlatform.fromDataSource(dataSource);
+
+        Preconditions.checkArgument(DDL_MAP.containsKey(dbPlatform),
+                "Missing DDL mapping for %s", dbPlatform);
+
+        final var ddl = DDL_MAP.get(dbPlatform);
         LOGGER.info("Applying ddl: {}", ddl);
         DatabasePopulatorUtils.execute(
                 new ResourceDatabasePopulator(new DefaultResourceLoader().getResource("classpath:" + ddl)),
                 dataSource);
-    }
-
-    private String lookupDdl() {
-        try (final var connection = dataSource.getConnection()) {
-            final var productName = connection.getMetaData().getDatabaseProductName();
-            LOGGER.debug("Identified database as: {}", productName);
-            final var ddl = DDL_MAP.get(productName);
-            if (ddl == null) {
-                throw new IllegalStateException("Unknown database platform: " + productName);
-            }
-            return ddl;
-        } catch (final SQLException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     private NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {

@@ -162,7 +162,9 @@ public class CreateRDFSourcePersisterTest {
 
         final var ocflId = "ocfl-id-1";
 
-        index.addMapping(ROOT_RESOURCE_ID, ROOT_RESOURCE_ID, ocflId);
+        final String sessionId = "some-id";
+        index.addMapping(sessionId, ROOT_RESOURCE_ID, ROOT_RESOURCE_ID, ocflId);
+        index.commit(sessionId);
 
         when(operation.getResourceId()).thenReturn(RESOURCE_ID);
         when(((CreateResourceOperation) operation).getInteractionModel()).thenReturn(RDF_SOURCE.toString());
@@ -182,7 +184,7 @@ public class CreateRDFSourcePersisterTest {
         final var headers = retrievePersistedHeaders("child");
 
         assertEquals(RDF_SOURCE.toString(), headers.getInteractionModel());
-        assertEquals(ocflId, index.getMapping(RESOURCE_ID).getOcflObjectId());
+        assertEquals(ocflId, index.getMapping(null, RESOURCE_ID).getOcflObjectId());
     }
 
     @Test

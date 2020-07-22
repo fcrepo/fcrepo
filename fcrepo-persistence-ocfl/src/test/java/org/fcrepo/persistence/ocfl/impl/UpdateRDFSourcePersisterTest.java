@@ -106,13 +106,16 @@ public class UpdateRDFSourcePersisterTest {
 
     private UpdateRDFSourcePersister persister;
 
+    private static final String SESSION_ID = "SOME-SESSION-ID";
+
     @Before
     public void setup() throws Exception {
         operation = mock(RdfSourceOperation.class);
 
+        when(psSession.getId()).thenReturn(SESSION_ID);
         when(session.write(anyString(), any(InputStream.class))).thenReturn(writeOutcome);
         when(psSession.findOrCreateSession(anyString())).thenReturn(session);
-        when(index.getMapping(anyString())).thenReturn(mapping);
+        when(index.getMapping(eq(SESSION_ID), anyString())).thenReturn(mapping);
         when(operation.getType()).thenReturn(UPDATE);
 
         persister = new UpdateRDFSourcePersister(this.index);
