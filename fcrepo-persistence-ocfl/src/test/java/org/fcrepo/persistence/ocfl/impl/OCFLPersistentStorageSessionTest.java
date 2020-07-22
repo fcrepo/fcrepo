@@ -88,7 +88,7 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
  *
  * @author dbernstein
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@RunWith(MockitoJUnitRunner.class)
 public class OCFLPersistentStorageSessionTest {
 
     private OCFLPersistentStorageSession session;
