@@ -17,16 +17,6 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.DELETE;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.isSidecarSubpath;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.relativizeSubpath;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.resolveExtensions;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.resolveOCFLSubpath;
-
-import java.time.Instant;
-import java.util.Objects;
-
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageRuntimeException;
@@ -36,6 +26,10 @@ import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.Instant;
+
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.DELETE;
 
 /**
  * Delete Resource Persister
@@ -66,7 +60,7 @@ class DeleteResourcePersister extends AbstractPersister {
                     // This means the object has no versions (only staged), so just delete the whole thing immediately
                     objectSession.deleteObject();
                 } else {
-                    objectSession.listHeadSubpaths().filter(p -> !isSidecarSubpath(p))
+                    objectSession.listHeadSubpaths().filter(PersistencePaths::isHeaderFile)
                             .forEach(p -> deletePathWrapped(p, objectSession, user, deleteTime));
                 }
             } catch (final PersistentStorageRuntimeException exc) {
@@ -74,28 +68,17 @@ class DeleteResourcePersister extends AbstractPersister {
                 throw new PersistentStorageException(exc);
             }
         } else {
-            final var relativeSubPath = relativizeSubpath(fedoraResourceRoot.getResourceId(),
-                    operation.getResourceId().getResourceId());
-            final var ocflSubPath = resolveOCFLSubpath(fedoraResourceRoot.getResourceId(), relativeSubPath);
-            final var headers = (ResourceHeadersImpl) readHeaders(objectSession, ocflSubPath);
-            final boolean isRdf = !Objects.equals(NON_RDF_SOURCE.toString(), headers.getInteractionModel());
-            final var filePath = resolveExtensions(ocflSubPath, isRdf);
-            deletePath(filePath, objectSession, headers, user, deleteTime);
+            final var headerPath = PersistencePaths.headerPath(fedoraResourceRoot, operation.getResourceId());
+            final var headers = (ResourceHeadersImpl) readHeaders(objectSession, headerPath);
+            final var contentPath = headers.getContentPath();
+            if (objectSession.isNewInSession(headers.getContentPath())) {
+                objectSession.delete(contentPath);
+                objectSession.delete(headerPath);
+                index.removeMapping(session.getId(), resourceId);
+            } else {
+                deletePath(contentPath, objectSession, headers, user, deleteTime, headerPath);
+            }
         }
-    }
-
-    /**
-     * Simple utility to delete a path's files and mark them as deleted in the headers file.
-     * @param path Path to delete
-     * @param session Session to delete the path in.
-     */
-    private void deletePath(final String path, final OcflObjectSession session, final String user,
-                            final Instant deleteTime) throws PersistentStorageException {
-        // readHeaders and writeHeaders need the subpath where as delete needs the file name. So remove any extensions.
-        // TODO: See https://jira.lyrasis.org/browse/FCREPO-3287
-        final var no_extension = (path.contains(".") ? path.substring(0, path.indexOf(".")) : path);
-        final var headers = (ResourceHeadersImpl) readHeaders(session, no_extension);
-        deletePath(path, session, headers, user, deleteTime);
     }
 
     /**
@@ -106,30 +89,37 @@ class DeleteResourcePersister extends AbstractPersister {
      * @throws PersistentStorageException if can't read, write or delete a file.
      */
     private void deletePath(final String path, final OcflObjectSession session, final ResourceHeadersImpl headers,
-                            final String user, final Instant deleteTime)
+                            final String user, final Instant deleteTime, final String headerPath)
         throws PersistentStorageException {
         session.delete(path);
         headers.setDeleted(true);
         ResourceHeaderUtils.touchModificationHeaders(headers, user, deleteTime);
-        // readHeaders and writeHeaders need the subpath where as delete needs the file name. So remove any extensions.
-        // TODO: See https://jira.lyrasis.org/browse/FCREPO-3287
-        final var no_extension = (path.contains(".") ? path.substring(0, path.indexOf(".")) : path);
-        if (!session.isNewInSession(path)) {
-            writeHeaders(session, headers, no_extension);
-        }
+        writeHeaders(session, headers, headerPath);
     }
 
     /**
      * Wrapper to use above function in a lambda.
-     * @param path Path to delete.
+     * @param headerPath Path to delete.
      * @param session Session to delete the path in.
      */
-    private void deletePathWrapped(final String path, final OcflObjectSession session, final String user,
+    private void deletePathWrapped(final String headerPath, final OcflObjectSession session, final String user,
                                    final Instant deleteTime) {
         try {
-            deletePath(path, session, user, deleteTime);
+            deletePath(headerPath, session, user, deleteTime);
         } catch (final PersistentStorageException exc) {
             throw new PersistentStorageRuntimeException(exc);
         }
     }
+
+    /**
+     * Simple utility to delete files and mark them as deleted in the headers file.
+     * @param headerPath Path to delete
+     * @param session Session to delete the path in.
+     */
+    private void deletePath(final String headerPath, final OcflObjectSession session, final String user,
+                            final Instant deleteTime) throws PersistentStorageException {
+        final var headers = (ResourceHeadersImpl) readHeaders(session, headerPath);
+        deletePath(headers.getContentPath(), session, headers, user, deleteTime, headerPath);
+    }
+
 }

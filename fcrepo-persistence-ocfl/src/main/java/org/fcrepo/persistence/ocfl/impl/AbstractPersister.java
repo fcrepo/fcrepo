@@ -33,7 +33,6 @@ import java.util.Optional;
 
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.serializeHeaders;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.getSidecarSubpath;
 
 /**
  * A base abstract persister class
@@ -68,26 +67,24 @@ abstract class AbstractPersister implements Persister {
      * Writes the resource headers to the sidecar file.
      * @param session The OCFL object session
      * @param headers The resource headers
-     * @param subpath The subpath of the resource whose headers you are writing
+     * @param headerPath The headerPath of the resource whose headers you are writing
      * @throws PersistentStorageException
      */
-    protected static void writeHeaders(final OcflObjectSession session, final ResourceHeaders headers,
-                                       final String subpath) throws PersistentStorageException {
-        final var headerStream = serializeHeaders(headers);
-        session.write(getSidecarSubpath(subpath), headerStream);
+    protected void writeHeaders(final OcflObjectSession session, final ResourceHeaders headers,
+                                       final String headerPath) throws PersistentStorageException {
+        session.write(headerPath, serializeHeaders(headers));
     }
 
     /**
-     * Reads the headers associated with the resource at specified subpath.
+     * Reads the headers associated with the resource at specified headerPath.
      * @param objSession The OCFL object session
-     * @param subpath The subpath of the resource whose headers you are reading
+     * @param headerPath The headerPath of the resource whose headers you are reading
      * @return The resource's headers object
      * @throws PersistentStorageException
      */
-    protected static ResourceHeaders readHeaders(final OcflObjectSession objSession, final String subpath)
+    protected ResourceHeaders readHeaders(final OcflObjectSession objSession, final String headerPath)
             throws PersistentStorageException {
-        final var headerStream = objSession.read(getSidecarSubpath(subpath));
-        return deserializeHeaders(headerStream);
+        return deserializeHeaders(objSession.read(headerPath));
     }
 
     @Override
@@ -120,7 +117,7 @@ abstract class AbstractPersister implements Persister {
     protected FedoraId resolveRootObjectId(final FedoraId fedoraId,
                                        final OcflPersistentStorageSession session) {
         final var archivalGroupId = findArchivalGroupInAncestry(fedoraId, session);
-        return archivalGroupId.orElseGet(() -> FedoraId.create(fedoraId.getBaseId()));
+        return archivalGroupId.orElseGet(fedoraId::asBaseId);
     }
 
     protected Optional<FedoraId> findArchivalGroupInAncestry(final FedoraId fedoraId,

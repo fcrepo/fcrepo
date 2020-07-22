@@ -84,7 +84,7 @@ public class DeleteResourcePersisterTest {
             "\"info:fedora/an-ocfl-object/some-subpath\",\"lastModifiedDate\":\"2020-04-14T03:42:00.765231Z\"," +
             "\"interactionModel\":\"http://www.w3.org/ns/ldp#NonRDFSource\",\"createdDate\":" +
             "\"2020-04-14T03:42:00.765231Z\",\"stateToken\":\"6763672ED325A4B632B450545518B34B\"," +
-            "\"archivalGroup\":false,\"objectRoot\":false}";
+            "\"archivalGroup\":false,\"objectRoot\":false,\"contentPath\":\"some-subpath\"}";
         final InputStream header_stream1 = new ByteArrayInputStream(header_string1.getBytes());
         when(session.read(".fcrepo/some-subpath.json")).thenReturn(header_stream1);
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
@@ -103,7 +103,7 @@ public class DeleteResourcePersisterTest {
             "\"info:fedora/an-ocfl-object/some-subpath\",\"lastModifiedDate\":\"2020-04-14T03:42:00.765231Z\"," +
             "\"interactionModel\":\"http://www.w3.org/ns/ldp#BasicContainer\",\"createdDate\":" +
             "\"2020-04-14T03:42:00.765231Z\",\"stateToken\":\"6763672ED325A4B632B450545518B34B\"," +
-            "\"archivalGroup\":false,\"objectRoot\":false}";
+            "\"archivalGroup\":false,\"objectRoot\":false,\"contentPath\":\"some-subpath.nt\"}";
         final InputStream header_stream = new ByteArrayInputStream(header_string.getBytes());
         when(session.read(".fcrepo/some-subpath.json")).thenReturn(header_stream);
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
@@ -146,7 +146,7 @@ public class DeleteResourcePersisterTest {
             "\"info:fedora/an-ocfl-object\",\"lastModifiedDate\":\"2020-04-14T03:42:00.765231Z\"," +
             "\"interactionModel\":\"http://www.w3.org/ns/ldp#BasicContainer\",\"createdDate\":" +
             "\"2020-04-14T03:42:00.765231Z\",\"stateToken\":\"6763672ED325A4B632B450545518B34B\"," +
-            "\"archivalGroup\":false,\"objectRoot\":true}";
+            "\"archivalGroup\":false,\"objectRoot\":true,\"contentPath\":\"some-ocfl-id.nt\"}";
         final InputStream rdf_header_stream = new ByteArrayInputStream(header_string.getBytes());
         when(session.listHeadSubpaths()).thenReturn(Stream.of("some-ocfl-id.nt", ".fcrepo/some-ocfl-id.json"));
         when(session.read(".fcrepo/some-ocfl-id.json")).thenReturn(rdf_header_stream);
@@ -167,14 +167,14 @@ public class DeleteResourcePersisterTest {
                 "\"info:fedora/an-ocfl-object\",\"lastModifiedDate\":\"2020-04-14T03:42:00.765231Z\"," +
                 "\"interactionModel\":\"http://www.w3.org/ns/ldp#NonRDFSource\",\"createdDate\":" +
                 "\"2020-04-14T03:42:00.765231Z\",\"stateToken\":\"6763672ED325A4B632B450545518B34B\"," +
-                "\"archivalGroup\":false,\"objectRoot\":true}";
+                "\"archivalGroup\":false,\"objectRoot\":true,\"contentPath\":\"some-ocfl-id\"}";
         final InputStream header_stream1 = new ByteArrayInputStream(header_string1.getBytes());
         final String header_string2 = "{\"parent\":\"info:fedora/an-ocfl-object/sub-path\",\"id\":" +
                 "\"info:fedora/an-ocfl-object/some-subpath-desc\",\"lastModifiedDate\":" +
                 "\"2020-04-14T03:42:00.765231Z\",\"interactionModel\":" +
                 "\"http://fedora.info/definitions/v4/repository#NonRdfSourceDescription\"," +
                 "\"createdDate\":\"2020-04-14T03:42:00.765231Z\",\"stateToken\":\"6763672ED325A4B632B450545518B34B\"," +
-                "\"archivalGroup\":false,\"objectRoot\":false}";
+                "\"archivalGroup\":false,\"objectRoot\":false,\"contentPath\":\"some-ocfl-id-description.nt\"}";
         final InputStream header_stream2 = new ByteArrayInputStream(header_string2.getBytes());
         when(session.listHeadSubpaths()).thenReturn(Stream.of("some-ocfl-id", ".fcrepo/some-ocfl-id.json",
                 "some-ocfl-id-description.nt", ".fcrepo/some-ocfl-id-description.json"));

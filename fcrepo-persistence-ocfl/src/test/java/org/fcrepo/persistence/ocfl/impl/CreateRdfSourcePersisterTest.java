@@ -51,10 +51,7 @@ import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
-import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.RESOURCE_HEADER_EXTENSION;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.getInternalFedoraDirectory;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.getRDFFileExtension;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -90,9 +87,6 @@ public class CreateRdfSourcePersisterTest {
 
     @Mock
     private OcflObjectSession session;
-
-    @Mock
-    private FedoraOcflMapping mapping;
 
     private FedoraToOcflObjectIndex index;
 
@@ -144,13 +138,13 @@ public class CreateRdfSourcePersisterTest {
         persister.persist(psSession, operation);
 
         //verify user triples
-        final Model userModel = retrievePersistedUserModel("child");
+        final Model userModel = retrievePersistedUserModel();
 
         assertTrue(userModel.contains(userModel.createResource(RESOURCE_ID.getResourceId()),
                 DC.title, TITLE));
 
         //verify server triples
-        final var headers = retrievePersistedHeaders("child");
+        final var headers = retrievePersistedHeaders();
 
         assertEquals(RDF_SOURCE.toString(), headers.getInteractionModel());
     }
@@ -178,13 +172,13 @@ public class CreateRdfSourcePersisterTest {
         persister.persist(psSession, operation);
 
         //verify user triples
-        final Model userModel = retrievePersistedUserModel("child");
+        final Model userModel = retrievePersistedUserModel(ROOT_RESOURCE_ID, RESOURCE_ID);
 
         assertTrue(userModel.contains(userModel.createResource(RESOURCE_ID.getResourceId()),
                 DC.title, TITLE));
 
         //verify server triples
-        final var headers = retrievePersistedHeaders("child");
+        final var headers = retrievePersistedHeaders(ROOT_RESOURCE_ID, RESOURCE_ID);
 
         assertEquals(RDF_SOURCE.toString(), headers.getInteractionModel());
         assertEquals(ocflId, index.getMapping(null, RESOURCE_ID).getOcflObjectId());
@@ -209,13 +203,13 @@ public class CreateRdfSourcePersisterTest {
         persister.persist(psSession, operation);
 
         // verify user triples
-        final Model userModel = retrievePersistedUserModel("child");
+        final Model userModel = retrievePersistedUserModel();
 
         assertTrue(userModel.contains(userModel.createResource(RESOURCE_ID.getResourceId()),
                 DC.title, TITLE));
 
         // verify server triples
-        final var resultHeaders = retrievePersistedHeaders("child");
+        final var resultHeaders = retrievePersistedHeaders();
 
         assertEquals(RDF_SOURCE.toString(), resultHeaders.getInteractionModel());
 
@@ -234,18 +228,28 @@ public class CreateRdfSourcePersisterTest {
         return new DefaultRdfStream(resourceUri, userTriples);
     }
 
-    private ResourceHeaders retrievePersistedHeaders(final String subpath) throws Exception {
-        verify(session).write(eq(getInternalFedoraDirectory() + subpath + RESOURCE_HEADER_EXTENSION),
+    private ResourceHeaders retrievePersistedHeaders() throws Exception {
+        return retrievePersistedHeaders(RESOURCE_ID, RESOURCE_ID);
+    }
+
+    private ResourceHeaders retrievePersistedHeaders(final FedoraId rootId,
+                                                     final FedoraId resourceId) throws Exception {
+        verify(session).write(eq(PersistencePaths.headerPath(rootId, resourceId)),
                 headersIsCaptor.capture());
         final var headersIs = headersIsCaptor.getValue();
         return deserializeHeaders(headersIs);
     }
 
-    private Model retrievePersistedUserModel(final String subpath) throws Exception {
-        verify(session).write(eq(subpath + getRDFFileExtension()), userTriplesIsCaptor.capture());
+    private Model retrievePersistedUserModel() throws Exception {
+        return retrievePersistedUserModel(RESOURCE_ID, RESOURCE_ID);
+    }
+
+    private Model retrievePersistedUserModel(final FedoraId rootId, final FedoraId resourceId) throws Exception {
+        verify(session).write(eq(PersistencePaths.rdfContentPath(rootId, resourceId)), userTriplesIsCaptor.capture());
         final InputStream userTriplesIs = userTriplesIsCaptor.getValue();
         final Model userModel = createDefaultModel();
         RDFDataMgr.read(userModel, userTriplesIs, Lang.NTRIPLES);
         return userModel;
     }
+
 }

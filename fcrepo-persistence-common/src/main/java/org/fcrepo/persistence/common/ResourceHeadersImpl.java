@@ -65,6 +65,8 @@ public class ResourceHeadersImpl implements ResourceHeaders {
 
     private boolean deleted;
 
+    private String contentPath;
+
     @Override
     public FedoraId getId() {
         return id;
@@ -274,4 +276,14 @@ public class ResourceHeadersImpl implements ResourceHeaders {
     public boolean isDeleted() {
         return deleted;
     }
+
+    @Override
+    public String getContentPath() {
+        return contentPath;
+    }
+
+    public void setContentPath(final String contentPath) {
+        this.contentPath = contentPath;
+    }
+
 }

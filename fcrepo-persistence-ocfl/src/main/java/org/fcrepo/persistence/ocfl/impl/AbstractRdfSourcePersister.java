@@ -31,12 +31,11 @@ import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.newResourceHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchCreationHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchModificationHeaders;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.relativizeSubpath;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.resolveOCFLSubpath;
 import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.writeRDF;
 
 /**
@@ -71,14 +70,16 @@ abstract class AbstractRdfSourcePersister extends AbstractPersister {
         final RdfSourceOperation rdfSourceOp = (RdfSourceOperation)operation;
         log.debug("persisting RDFSource ({}) to OCFL", operation.getResourceId());
 
-        final String subpath = relativizeSubpath(rootId.getResourceId(), operation.getResourceId().getResourceId());
-        final String resolvedSubpath = resolveOCFLSubpath(rootId.getResourceId(), subpath);
+        final var contentPath = resolveRdfContentPath(session, rootId, operation.getResourceId());
+        final var headerPath = PersistencePaths.headerPath(rootId, operation.getResourceId());
+
         //write user triples
-        final var outcome = writeRDF(session, rdfSourceOp.getTriples(), resolvedSubpath);
+        final var outcome = writeRDF(session, rdfSourceOp.getTriples(), contentPath);
 
         // Write resource headers
-        final var headers = populateHeaders(session, resolvedSubpath, rdfSourceOp, outcome, subpath.isEmpty());
-        writeHeaders(session, headers, resolvedSubpath);
+        final var headers = populateHeaders(session, headerPath, rdfSourceOp, outcome,
+                operation.getResourceId().equals(rootId), contentPath);
+        writeHeaders(session, headers, headerPath);
     }
 
     /**
@@ -86,16 +87,17 @@ abstract class AbstractRdfSourcePersister extends AbstractPersister {
      * operation, and merged with existing properties if appropriate.
      *
      * @param objSession the object session
-     * @param subpath the subpath of the file
+     * @param headerPath the headerPath of the file
      * @param operation the operation being persisted
      * @param outcome outcome of persisting the RDF file
      * @param objectRoot indicates this is the object root
      * @return populated resource headers
      * @throws PersistentStorageException if unexpectedly unable to retrieve existing object headers
      */
-    private ResourceHeaders populateHeaders(final OcflObjectSession objSession, final String subpath,
+    private ResourceHeaders populateHeaders(final OcflObjectSession objSession, final String headerPath,
                                             final RdfSourceOperation operation, final WriteOutcome outcome,
-                                            final boolean objectRoot) throws PersistentStorageException {
+                                            final boolean objectRoot, final String contentPath)
+            throws PersistentStorageException {
 
         final ResourceHeadersImpl headers;
         final var timeWritten = outcome.getTimeWritten();
@@ -107,9 +109,9 @@ abstract class AbstractRdfSourcePersister extends AbstractPersister {
             touchCreationHeaders(headers, operation.getUserPrincipal(), timeWritten);
             headers.setArchivalGroup(createOperation.isArchivalGroup());
             headers.setObjectRoot(objectRoot);
-
+            headers.setContentPath(contentPath);
         } else {
-            headers = (ResourceHeadersImpl) readHeaders(objSession, subpath);
+            headers = (ResourceHeadersImpl) readHeaders(objSession, headerPath);
         }
         touchModificationHeaders(headers, operation.getUserPrincipal(), timeWritten);
 
@@ -140,4 +142,22 @@ abstract class AbstractRdfSourcePersister extends AbstractPersister {
             headers.setCreatedDate(operation.getCreatedDate());
         }
     }
+
+    private String resolveRdfContentPath(final OcflObjectSession session,
+                                         final FedoraId rootId,
+                                         final FedoraId resourceId) throws PersistentStorageException {
+        final String contentPath;
+
+        if (resourceId.isAcl()) {
+            final var parentHeaders = readHeaders(session,
+                    PersistencePaths.headerPath(rootId, resourceId.asBaseId()));
+            final var isRdf = !NON_RDF_SOURCE.getURI().equals(parentHeaders.getInteractionModel());
+            contentPath = PersistencePaths.aclContentPath(isRdf, rootId, resourceId);
+        } else {
+            contentPath = PersistencePaths.rdfContentPath(rootId, resourceId);
+        }
+
+        return contentPath;
+    }
+
 }

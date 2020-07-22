@@ -25,9 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.PURGE;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.getSidecarSubpath;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.relativizeSubpath;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.resolveOCFLSubpath;
 
 /**
  * Purge Resource Persister
@@ -53,11 +50,8 @@ class PurgeResourcePersister extends AbstractPersister {
             // We are at the root of the object, so remove the entire OCFL object.
             objectSession.deleteObject();
         } else {
-            final var relativeSubPath = relativizeSubpath(fedoraResourceRoot.getResourceId(),
-                    operation.getResourceId().getResourceId());
-            final var ocflSubPath = resolveOCFLSubpath(fedoraResourceRoot.getResourceId(), relativeSubPath);
-            final var sidecar = getSidecarSubpath(ocflSubPath);
-            purgePath(sidecar, objectSession);
+            final var headerPath = PersistencePaths.headerPath(fedoraResourceRoot, resourceId);
+            purgePath(headerPath, objectSession);
         }
         index.removeMapping(session.getId(), resourceId.asResourceId());
     }

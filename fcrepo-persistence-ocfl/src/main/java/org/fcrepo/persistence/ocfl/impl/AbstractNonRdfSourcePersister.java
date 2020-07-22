@@ -25,8 +25,6 @@ import static org.fcrepo.persistence.common.ResourceHeaderUtils.populateBinaryHe
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.populateExternalBinaryHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchCreationHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchModificationHeaders;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.relativizeSubpath;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.resolveOCFLSubpath;
 
 import java.util.List;
 
@@ -79,9 +77,11 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
                                        final OcflObjectSession objectSession, final FedoraId rootIdentifier)
             throws PersistentStorageException {
         final var resourceId = operation.getResourceId();
-        final var fedoraSubpath = relativizeSubpath(rootIdentifier.getResourceId(), resourceId.getResourceId());
-        final var subpath = resolveOCFLSubpath(rootIdentifier.getResourceId(), fedoraSubpath);
-        log.debug("persisting ({}) to {}", resourceId, subpath);
+
+        final var contentPath = PersistencePaths.nonRdfContentPath(rootIdentifier, resourceId);
+        final var headerPath = PersistencePaths.headerPath(rootIdentifier, resourceId);
+
+        log.debug("persisting ({}) to {}", resourceId, contentPath);
         // write user content
         final var nonRdfSourceOperation = (NonRdfSourceOperation) operation;
 
@@ -99,7 +99,7 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
                     List.of(transmissionDigestAlg));
             final var contentStream = multiDigestWrapper.getInputStream();
 
-            outcome = (FileWriteOutcome) objectSession.write(subpath, contentStream);
+            outcome = (FileWriteOutcome) objectSession.write(contentPath, contentStream);
 
             // Verify that the content matches the provided digests
             if (!CollectionUtils.isEmpty(providedDigests)) {
@@ -109,13 +109,13 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
             outcome.setDigests(multiDigestWrapper.getDigests());
 
             // Register the transmission digest for this file
-            objectSession.registerTransmissionDigest(subpath, multiDigestWrapper.getDigest(transmissionDigestAlg));
+            objectSession.registerTransmissionDigest(contentPath, multiDigestWrapper.getDigest(transmissionDigestAlg));
         }
 
         // Write resource headers
-        final var headers = populateHeaders(objectSession, subpath, nonRdfSourceOperation, outcome,
-                fedoraSubpath.isEmpty());
-        writeHeaders(objectSession, headers, subpath);
+        final var headers = populateHeaders(objectSession, headerPath, nonRdfSourceOperation, outcome,
+                resourceId.equals(rootIdentifier), contentPath);
+        writeHeaders(objectSession, headers, headerPath);
     }
 
     /**
@@ -123,16 +123,17 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
      * operation, and merged with existing properties if appropriate.
      *
      * @param objSession the object session
-     * @param subpath the subpath of the file
+     * @param headerPath the headerPath of the file
      * @param op the operation being persisted
      * @param writeOutcome outcome of persisting the original file
-     * @param objectRoot flag indicating whether or not subpath represents the object root resource
+     * @param objectRoot flag indicating whether or not headerPath represents the object root resource
      * @return populated resource headers
      * @throws PersistentStorageException if unexpectedly unable to retrieve existing object headers
      */
-    private ResourceHeaders populateHeaders(final OcflObjectSession objSession, final String subpath,
+    private ResourceHeaders populateHeaders(final OcflObjectSession objSession, final String headerPath,
                                             final NonRdfSourceOperation op, final WriteOutcome writeOutcome,
-                                            final boolean objectRoot) throws PersistentStorageException {
+                                            final boolean objectRoot, final String contentPath)
+            throws PersistentStorageException {
 
         final ResourceHeadersImpl headers;
         final var timeWritten = writeOutcome != null ? writeOutcome.getTimeWritten() : null;
@@ -143,8 +144,9 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
                     NON_RDF_SOURCE.toString());
             headers.setObjectRoot(objectRoot);
             touchCreationHeaders(headers, op.getUserPrincipal(), timeWritten);
+            headers.setContentPath(contentPath);
         } else {
-            headers = (ResourceHeadersImpl) readHeaders(objSession, subpath);
+            headers = (ResourceHeadersImpl) readHeaders(objSession, headerPath);
         }
         touchModificationHeaders(headers, op.getUserPrincipal(), timeWritten);
 

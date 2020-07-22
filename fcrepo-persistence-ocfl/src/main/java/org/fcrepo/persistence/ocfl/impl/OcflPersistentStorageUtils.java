@@ -31,7 +31,6 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.system.StreamRDF;
-import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
@@ -61,11 +60,6 @@ import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.riot.RDFFormat.NTRIPLES;
 import static org.apache.jena.riot.system.StreamRDFWriter.getWriterStream;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.RESOURCE_HEADER_EXTENSION;
-import static org.fcrepo.persistence.ocfl.api.OcflPersistenceConstants.DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
 
 /**
  * A set of utility functions for supporting OCFL persistence activities.
@@ -81,97 +75,11 @@ public class OcflPersistentStorageUtils {
     }
 
     /**
-     * The directory within an OCFL Object's content directory that contains
-     * information managed by Fedora.
-     */
-    private static final String INTERNAL_FEDORA_DIRECTORY = ".fcrepo";
-    /**
      * The default RDF on disk format
      * TODO Make this value configurable
      */
 
     private static RDFFormat DEFAULT_RDF_FORMAT = NTRIPLES;
-
-    private static final String FEDORA_METADATA_SUFFIX = "/" + FedoraTypes.FCR_METADATA;
-
-    /**
-     * Maps a Fedora resource id to a subpath and then converts it into an OCFL subpath. This method
-     * is a wrapper around {@link #relativizeSubpath} and {@link #resolveOCFLSubpath}.
-     *
-     * @param rootFedoraObjectId The fedora root object identifier
-     * @param fedoraResourceId   The identifier of the resource whose subpath you wish to resolve.
-     * @return The resolved OCFL subpath
-     */
-    public static String resovleOCFLSubpathFromResourceId(final String rootFedoraObjectId,
-                                                          final String fedoraResourceId) {
-        final var fedoraSubpath = relativizeSubpath(rootFedoraObjectId, fedoraResourceId);
-        return resolveOCFLSubpath(rootFedoraObjectId, fedoraSubpath);
-    }
-
-    /**
-     * Returns the relative subpath of the resourceId based on the root object's resource id.
-     *
-     * @param rootObjectId The fedora root object identifier
-     * @param resourceId   The identifier of the resource whose subpath you wish to resolve.
-     * @return The resolved subpath
-     */
-    public static String relativizeSubpath(final String rootObjectId, final String resourceId) {
-        if (resourceId.equals(rootObjectId)) {
-            return "";
-        } else if (resourceId.startsWith(rootObjectId) && resourceId.charAt(rootObjectId.length()) == '/') {
-            return resourceId.substring(rootObjectId.length() + 1);
-        }
-
-        throw new IllegalArgumentException(format("resource (%s) is not prefixed by root object indentifier (%s)",
-                resourceId,
-                rootObjectId));
-    }
-
-    /**
-     * Returns the OCFL subpath for a given fedora subpath. This returned subpath
-     * does not include any added extensions. It is expected that the rootObjectId
-     * DOES NOT contain a trailing slash at this point.
-     *
-     * @param rootObjectId  The fedora object root identifier
-     * @param fedoraSubpath subpath of file within ocfl object
-     * @return The resolved OCFL subpath
-     */
-    public static  String resolveOCFLSubpath(final String rootObjectId, final String fedoraSubpath) {
-        final var lastPathSegment = rootObjectId.substring(rootObjectId.lastIndexOf("/") + 1);
-
-        String subPath;
-        if (FEDORA_ID_PREFIX.equals(rootObjectId) && "".equals(fedoraSubpath)) {
-            subPath = DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID;
-        } else if ("".equals(fedoraSubpath)) {
-            subPath = lastPathSegment;
-        } else if (fedoraSubpath.endsWith(FCR_ACL)) {
-            subPath = fedoraSubpath.replaceAll("/?" + FCR_ACL + "$", "-acl");
-            //prepend last path segment if acl of object root
-            if (fedoraSubpath.equals(FCR_ACL)) {
-                subPath = lastPathSegment + subPath;
-            }
-        } else if (fedoraSubpath.endsWith(FCR_METADATA)) {
-            subPath = fedoraSubpath.replaceAll("/?" + FCR_METADATA + "$", "-description");
-            //prepend last path segment if description of object root
-            if (fedoraSubpath.equals(FCR_METADATA)) {
-                subPath = lastPathSegment + subPath;
-            }
-        } else {
-            subPath = fedoraSubpath;
-        }
-
-        return subPath;
-    }
-
-    /**
-     * Simple function to centralize adding (or not adding the RDF extension).
-     * @param subPath the current subpath
-     * @param isRdf whether the subpath is for a RDF resource.
-     * @return The subpath with the correct file extension (if applicable).
-     */
-    public static String resolveExtensions(final String subPath, final boolean isRdf) {
-        return subPath + (isRdf ? getRDFFileExtension() : "");
-    }
 
     /**
      * Returns the RDF topic to be returned for a given resource identifier
@@ -183,22 +91,23 @@ public class OcflPersistentStorageUtils {
      */
     private static FedoraId resolveTopic(final FedoraId fedoraIdentifier) {
         if (fedoraIdentifier.isDescription()) {
-            return FedoraId.create(fedoraIdentifier.getBaseId());
+            return fedoraIdentifier.asBaseId();
         } else {
             return fedoraIdentifier;
         }
     }
 
     /**
-     * Writes an RDFStream to a subpath within an ocfl object.
+     * Writes an RDFStream to a contentPath within an ocfl object.
      *
      * @param session The object session
      * @param triples The triples
-     * @param subpath The subpath within the OCFL Object
+     * @param contentPath The contentPath within the OCFL Object
      * @return the outcome of the write operation
      * @throws PersistentStorageException on write failure
      */
-    public static WriteOutcome writeRDF(final OcflObjectSession session, final RdfStream triples, final String subpath)
+    public static WriteOutcome writeRDF(final OcflObjectSession session,
+                                        final RdfStream triples, final String contentPath)
             throws PersistentStorageException {
         try (final var os = new ByteArrayOutputStream()) {
             final StreamRDF streamRDF = getWriterStream(os, getRdfFormat());
@@ -209,11 +118,12 @@ public class OcflPersistentStorageUtils {
             streamRDF.finish();
 
             final var is = new ByteArrayInputStream(os.toByteArray());
-            final var outcome = session.write(resolveExtensions(subpath, true), is);
-            log.debug("wrote {} to {}", subpath, session);
+            final var outcome = session.write(contentPath, is);
+            log.debug("wrote {} to {}", contentPath, session);
             return outcome;
         } catch (final IOException ex) {
-            throw new PersistentStorageException(format("failed to write subpath %s in %s", subpath, session), ex);
+            throw new PersistentStorageException(
+                    format("failed to write contentPath %s in %s", contentPath, session), ex);
         }
     }
 
@@ -294,25 +204,6 @@ public class OcflPersistentStorageUtils {
     }
 
     /**
-     * Returns the subpath to the fedora metadata file associated with the specified subpath.
-     * @param subpath   The subpath to the ocfl resource whose metadata file (sidecar subpath) you wish to
-     *                  retrieve.
-     * @return The subpath to the (sidecar) metadata file.
-     */
-    public static String getSidecarSubpath(final String subpath) {
-        return getInternalFedoraDirectory() + subpath + RESOURCE_HEADER_EXTENSION;
-    }
-
-    /**
-     * Returns true of the subpath is a sidecar file
-     * @param subpath The subpath to be evaluated
-     * @return True if the subpath is a sidecar file.
-     */
-    public static boolean isSidecarSubpath(final String subpath) {
-        return subpath.startsWith(getInternalFedoraDirectory()) && subpath.endsWith(RESOURCE_HEADER_EXTENSION);
-    }
-
-    /**
      * A utility method that returns a list of  {@link java.time.Instant} objects representing immutable versions
      * accessible from the OCFL Object represented by the session.
      *
@@ -341,13 +232,6 @@ public class OcflPersistentStorageUtils {
      */
     public static String getRDFFileExtension() {
         return "." + DEFAULT_RDF_FORMAT.getLang().getFileExtensions().get(0);
-    }
-
-    /**
-     * @return The path ( including the final slash ) to the internal Fedora directory within an OCFL object.
-     */
-    public static String getInternalFedoraDirectory() {
-        return INTERNAL_FEDORA_DIRECTORY + "/";
     }
 
     /**
