@@ -284,19 +284,19 @@ public class EventAccumulatorImplTest {
     }
 
     private ResourceOperation createOp(final FedoraId fedoraId) {
-        return new RdfSourceOperationFactoryImpl().createBuilder(fedoraId.getResourceId(), RDF_SOURCE.toString())
+        return new RdfSourceOperationFactoryImpl().createBuilder(fedoraId, RDF_SOURCE.toString())
                 .userPrincipal(USER)
                 .build();
     }
 
     private ResourceOperation updateOp(final FedoraId fedoraId) {
-        return new RdfSourceOperationFactoryImpl().updateBuilder(fedoraId.getResourceId())
+        return new RdfSourceOperationFactoryImpl().updateBuilder(fedoraId)
                 .userPrincipal(USER)
                 .build();
     }
 
     private ResourceOperation deleteOp(final FedoraId fedoraId) {
-        return new DeleteResourceOperationFactoryImpl().deleteBuilder(fedoraId.getResourceId())
+        return new DeleteResourceOperationFactoryImpl().deleteBuilder(fedoraId)
                 .userPrincipal(USER)
                 .build();
     }

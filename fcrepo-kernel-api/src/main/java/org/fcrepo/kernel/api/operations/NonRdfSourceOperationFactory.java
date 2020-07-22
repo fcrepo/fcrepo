@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.api.operations;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+
 import java.io.InputStream;
 import java.net.URI;
 
@@ -35,7 +37,7 @@ public interface NonRdfSourceOperationFactory extends ResourceOperationFactory {
      * @param contentUri the URI of the external binary content
      * @return a new builder
      */
-    NonRdfSourceOperationBuilder updateExternalBinaryBuilder(String rescId, String handling, URI contentUri);
+    NonRdfSourceOperationBuilder updateExternalBinaryBuilder(FedoraId rescId, String handling, URI contentUri);
 
     /**
      * Get a builder for an internal binary update operation
@@ -44,7 +46,7 @@ public interface NonRdfSourceOperationFactory extends ResourceOperationFactory {
      * @param contentStream inputstream for the content of this binary
      * @return a new builder
      */
-    NonRdfSourceOperationBuilder updateInternalBinaryBuilder(String rescId, InputStream contentStream);
+    NonRdfSourceOperationBuilder updateInternalBinaryBuilder(FedoraId rescId, InputStream contentStream);
 
     /**
      * Get a builder for a external binary create operation
@@ -54,7 +56,7 @@ public interface NonRdfSourceOperationFactory extends ResourceOperationFactory {
      * @param contentUri the URI of the external binary content
      * @return a new builder
      */
-    CreateNonRdfSourceOperationBuilder createExternalBinaryBuilder(String rescId, String handling, URI contentUri);
+    CreateNonRdfSourceOperationBuilder createExternalBinaryBuilder(FedoraId rescId, String handling, URI contentUri);
 
     /**
      * Get a builder for an internal binary create operation
@@ -63,5 +65,5 @@ public interface NonRdfSourceOperationFactory extends ResourceOperationFactory {
      * @param contentStream inputstream for the content of this binary
      * @return a new builder
      */
-    CreateNonRdfSourceOperationBuilder createInternalBinaryBuilder(String rescId, InputStream contentStream);
+    CreateNonRdfSourceOperationBuilder createInternalBinaryBuilder(FedoraId rescId, InputStream contentStream);
 }

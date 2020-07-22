@@ -18,6 +18,7 @@
 
 package org.fcrepo.persistence.ocfl.impl;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateVersionResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.api.CommitOption;
@@ -113,7 +114,7 @@ public class CreateVersionPersisterTest {
     private CreateVersionResourceOperation operation(final String resourceId) {
         final var operation = mock(CreateVersionResourceOperation.class);
         when(operation.getType()).thenReturn(ResourceOperationType.UPDATE);
-        when(operation.getResourceId()).thenReturn(resourceId);
+        when(operation.getResourceId()).thenReturn(FedoraId.create(resourceId));
         return operation;
     }
 

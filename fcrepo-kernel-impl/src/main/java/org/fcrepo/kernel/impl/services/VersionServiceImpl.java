@@ -46,7 +46,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     @Override
     public void createVersion(final Transaction transaction, final FedoraId fedoraId, final String userPrincipal) {
         final var session = psManager.getSession(transaction.getId());
-        final var operation = versionOperationFactory.createBuilder(fedoraId.getResourceId())
+        final var operation = versionOperationFactory.createBuilder(fedoraId)
                 .userPrincipal(userPrincipal)
                 .build();
 

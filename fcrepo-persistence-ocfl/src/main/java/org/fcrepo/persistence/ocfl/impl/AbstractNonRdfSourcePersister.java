@@ -78,7 +78,7 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
                                        final OcflObjectSession objectSession, final String rootIdentifier)
             throws PersistentStorageException {
         final var resourceId = operation.getResourceId();
-        final var fedoraSubpath = relativizeSubpath(rootIdentifier, resourceId);
+        final var fedoraSubpath = relativizeSubpath(rootIdentifier, resourceId.getResourceId());
         final var subpath = resolveOCFLSubpath(rootIdentifier, fedoraSubpath);
         log.debug("persisting ({}) to {}", resourceId, subpath);
         // write user content

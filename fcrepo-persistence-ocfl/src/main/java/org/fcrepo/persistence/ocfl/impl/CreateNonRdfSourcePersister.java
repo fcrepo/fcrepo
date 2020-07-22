@@ -17,7 +17,6 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -49,12 +48,11 @@ class CreateNonRdfSourcePersister extends AbstractNonRdfSourcePersister {
     public void persist(final OcflPersistentStorageSession session, final ResourceOperation operation)
             throws PersistentStorageException {
         final var resourceId = operation.getResourceId();
-        final var fedoraId = FedoraId.create(resourceId);
         log.debug("persisting {} to {}", resourceId, session);
-        final var rootObjectId = resolveRootObjectId(fedoraId, session);
+        final var rootObjectId = resolveRootObjectId(resourceId, session);
         final String ocflId = mapToOcflId(session.getId(), rootObjectId);
         final OcflObjectSession ocflObjectSession = session.findOrCreateSession(ocflId);
         persistNonRDFSource(operation, ocflObjectSession, rootObjectId.getBaseId());
-        index.addMapping(session.getId(), resourceId, rootObjectId.getBaseId(), ocflId);
+        index.addMapping(session.getId(), resourceId.getResourceId(), rootObjectId.getBaseId(), ocflId);
     }
 }

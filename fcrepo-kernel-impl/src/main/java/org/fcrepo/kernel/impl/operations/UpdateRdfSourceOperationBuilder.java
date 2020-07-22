@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.impl.operations;
 
 import org.apache.jena.rdf.model.Model;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 
 /**
@@ -33,7 +34,7 @@ public class UpdateRdfSourceOperationBuilder extends AbstractRdfSourceOperationB
      *
      * @param resourceId the internal identifier.
      */
-    public UpdateRdfSourceOperationBuilder(final String resourceId) {
+    public UpdateRdfSourceOperationBuilder(final FedoraId resourceId) {
         super(resourceId, null);
     }
 

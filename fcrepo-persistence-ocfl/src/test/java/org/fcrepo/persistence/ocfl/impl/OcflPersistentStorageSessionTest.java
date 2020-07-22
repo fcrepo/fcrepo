@@ -23,6 +23,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.vocabulary.DC;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
@@ -205,7 +206,8 @@ public class OcflPersistentStorageSessionTest {
     private void mockResourceOperation(final RdfSourceOperation rdfSourceOperation, final RdfStream userStream,
                                        final String userPrincipal, final String resourceId) {
         when(rdfSourceOperation.getTriples()).thenReturn(userStream);
-        when(rdfSourceOperation.getResourceId()).thenReturn(resourceId);
+        when(rdfSourceOperation.getResourceId()).thenReturn(FedoraId.create(resourceId));
+        when(((CreateResourceOperation) rdfSourceOperation).getParentId()).thenReturn(FedoraId.getRepositoryRootId());
         when(rdfSourceOperation.getType()).thenReturn(CREATE);
         when(rdfSourceOperation.getUserPrincipal()).thenReturn(userPrincipal);
     }
@@ -660,7 +662,7 @@ public class OcflPersistentStorageSessionTest {
 
         final var session2 = createSession(index, objectSessionFactory);
         mockResourceOperation(rdfSourceOperation, userStream, USER_PRINCIPAL, childId);
-        when(((CreateResourceOperation) rdfSourceOperation).getParentId()).thenReturn(RESOURCE_ID);
+        when(((CreateResourceOperation) rdfSourceOperation).getParentId()).thenReturn(FedoraId.create(RESOURCE_ID));
 
         session2.persist(rdfSourceOperation);
         session2.commit();
@@ -802,7 +804,8 @@ public class OcflPersistentStorageSessionTest {
         final var contentStream = new ByteArrayInputStream(content.getBytes());
         when(binOperation.getContentStream()).thenReturn(contentStream);
         when(binOperation.getContentSize()).thenReturn((long) content.length());
-        when(binOperation.getResourceId()).thenReturn(resourceId);
+        when(binOperation.getResourceId()).thenReturn(FedoraId.create(resourceId));
+        when(((CreateResourceOperation) binOperation).getParentId()).thenReturn(FedoraId.getRepositoryRootId());
         when(binOperation.getType()).thenReturn(CREATE);
         when(binOperation.getUserPrincipal()).thenReturn(userPrincipal);
         return binOperation;

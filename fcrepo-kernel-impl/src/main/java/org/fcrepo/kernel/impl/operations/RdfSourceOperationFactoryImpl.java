@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateRdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
@@ -33,17 +34,17 @@ import org.springframework.stereotype.Component;
 public class RdfSourceOperationFactoryImpl implements RdfSourceOperationFactory {
 
     @Override
-    public CreateRdfSourceOperationBuilder createBuilder(final String rescId, final String interactionModel) {
+    public CreateRdfSourceOperationBuilder createBuilder(final FedoraId rescId, final String interactionModel) {
         return new CreateRdfSourceOperationBuilderImpl(rescId, interactionModel);
     }
 
     @Override
-    public RdfSourceOperationBuilder updateBuilder(final String rescId) {
+    public RdfSourceOperationBuilder updateBuilder(final FedoraId rescId) {
         return new UpdateRdfSourceOperationBuilder(rescId);
     }
 
     @Override
-    public ResourceOperationBuilder sparqlUpdateBuilder(final String rescId, final String updateQuery) {
+    public ResourceOperationBuilder sparqlUpdateBuilder(final FedoraId rescId, final String updateQuery) {
         // TODO Auto-generated method stub
         return null;
     }

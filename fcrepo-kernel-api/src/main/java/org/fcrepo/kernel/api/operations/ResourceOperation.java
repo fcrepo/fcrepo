@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.api.operations;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+
 /**
  * Operation for manipulating a resource
  *
@@ -29,7 +31,7 @@ public interface ResourceOperation {
      *
      * @return the ID.
      */
-    String getResourceId();
+    FedoraId getResourceId();
 
     /**
      * Returns the user principal performing this operation

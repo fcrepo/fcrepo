@@ -30,6 +30,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
 
 /**
@@ -46,7 +47,7 @@ public abstract class AbstractRdfSourceOperationBuilder implements RdfSourceOper
     /**
      * String of the resource ID.
      */
-    protected final String resourceId;
+    protected final FedoraId resourceId;
 
     /**
      * The interaction model of this resource, null in case of update.
@@ -66,7 +67,7 @@ public abstract class AbstractRdfSourceOperationBuilder implements RdfSourceOper
 
     protected Instant createdDate;
 
-    protected AbstractRdfSourceOperationBuilder(final String rescId, final String model) {
+    protected AbstractRdfSourceOperationBuilder(final FedoraId rescId, final String model) {
         resourceId = rescId;
         interactionModel = model;
     }
@@ -87,7 +88,7 @@ public abstract class AbstractRdfSourceOperationBuilder implements RdfSourceOper
     public RdfSourceOperationBuilder relaxedProperties(final Model model) {
         // Has no affect if the server is not in relaxed mode
         if (model != null && isRelaxed()) {
-            final var resc = model.getResource(resourceId);
+            final var resc = model.getResource(resourceId.getResourceId());
             final var createdDateVal = getPropertyAsInstant(resc, CREATED_DATE);
             if (createdDateVal != null) {
                 this.createdDate = createdDateVal;

@@ -18,6 +18,7 @@
 
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateVersionResourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationBuilder;
@@ -27,7 +28,7 @@ import org.fcrepo.kernel.api.operations.ResourceOperationBuilder;
  */
 public class CreateVersionResourceOperationBuilderImpl implements CreateVersionResourceOperationBuilder {
 
-    private final String resourceId;
+    private final FedoraId resourceId;
     private String userPrincipal;
 
     /**
@@ -35,7 +36,7 @@ public class CreateVersionResourceOperationBuilderImpl implements CreateVersionR
      *
      * @param resourceId the resource id
      */
-    public CreateVersionResourceOperationBuilderImpl(final String resourceId) {
+    public CreateVersionResourceOperationBuilderImpl(final FedoraId resourceId) {
         this.resourceId = resourceId;
     }
 

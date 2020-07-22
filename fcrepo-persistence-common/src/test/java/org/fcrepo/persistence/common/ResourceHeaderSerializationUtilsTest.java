@@ -35,6 +35,7 @@ import java.time.Instant;
 import java.util.Collection;
 
 import org.apache.commons.io.IOUtils;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.junit.Test;
 
@@ -44,9 +45,9 @@ import org.junit.Test;
  */
 public class ResourceHeaderSerializationUtilsTest {
 
-    private static final String PARENT_ID = "info:fedora/parent";
+    private static final FedoraId PARENT_ID = FedoraId.create("info:fedora/parent");
 
-    private static final String RESOURCE_ID = "info:fedora/resource";
+    private static final FedoraId RESOURCE_ID = FedoraId.create("info:fedora/resource");
 
     private static final String USER_PRINCIPAL = "someUser";
 
@@ -58,7 +59,7 @@ public class ResourceHeaderSerializationUtilsTest {
 
     private static final String FILENAME = "file.txt";
 
-    private static final Long FILESIZE = 3431l;
+    private static final Long FILESIZE = 3431L;
 
     private static final Collection<URI> DIGESTS = asList(URI.create("sha1:123456789"));
 
@@ -117,8 +118,8 @@ public class ResourceHeaderSerializationUtilsTest {
 
         final var resultHeaders = deserializeHeaders(headerStream);
 
-        assertEquals(PARENT_ID, resultHeaders.getParent());
-        assertEquals(RESOURCE_ID, resultHeaders.getId());
+        assertEquals(PARENT_ID.getFullId(), resultHeaders.getParent());
+        assertEquals(RESOURCE_ID.getFullId(), resultHeaders.getId());
         assertEquals(BASIC_CONTAINER.toString(), resultHeaders.getInteractionModel());
 
         assertEquals(USER_PRINCIPAL, resultHeaders.getCreatedBy());
@@ -147,8 +148,8 @@ public class ResourceHeaderSerializationUtilsTest {
 
         final var resultHeaders = deserializeHeaders(headerStream);
 
-        assertEquals(PARENT_ID, resultHeaders.getParent());
-        assertEquals(RESOURCE_ID, resultHeaders.getId());
+        assertEquals(PARENT_ID.getFullId(), resultHeaders.getParent());
+        assertEquals(RESOURCE_ID.getFullId(), resultHeaders.getId());
         assertEquals(NON_RDF_SOURCE.toString(), resultHeaders.getInteractionModel());
 
         assertEquals(USER_PRINCIPAL, resultHeaders.getCreatedBy());

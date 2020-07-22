@@ -22,6 +22,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.vocabulary.RDF;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
@@ -84,8 +85,10 @@ public class RepositoryInitializer {
 
                 final RdfStream repositoryRootStream = new DefaultRdfStream(createURI(FEDORA_ID_PREFIX),
                         repositoryRootTriples);
-                final RdfSourceOperation operation = this.operationFactory.createBuilder(FEDORA_ID_PREFIX,
-                        BASIC_CONTAINER.getURI()).parentId(FEDORA_ID_PREFIX).triples(repositoryRootStream).build();
+                final RdfSourceOperation operation = this.operationFactory.createBuilder(FedoraId.getRepositoryRootId(),
+                        BASIC_CONTAINER.getURI())
+                        .parentId(FedoraId.getRepositoryRootId())
+                        .triples(repositoryRootStream).build();
 
                 session.persist(operation);
                 session.commit();

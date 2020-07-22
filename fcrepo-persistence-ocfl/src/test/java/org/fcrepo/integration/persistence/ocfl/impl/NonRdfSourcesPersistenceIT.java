@@ -22,6 +22,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.DeleteResourceOperationFactory;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
@@ -89,7 +90,7 @@ public class NonRdfSourcesPersistenceIT {
     @Autowired
     private OcflPropsConfig ocflPropsConfig;
 
-    private String rescId;
+    private FedoraId rescId;
 
     @Before
     public void setup() {
@@ -104,6 +105,7 @@ public class NonRdfSourcesPersistenceIT {
                     rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
                 .filename("test.txt")
                 .mimeType("text/plain")
+                .parentId(FedoraId.getRepositoryRootId())
                 .build();
 
         storageSession.persist(op);
@@ -113,8 +115,8 @@ public class NonRdfSourcesPersistenceIT {
         final var readSession = sessionManager.getReadOnlySession();
         assertContentPersisted(BINARY_CONTENT, readSession, rescId);
 
-        final var headers = readSession.getHeaders(rescId, null);
-        assertEquals(rescId, headers.getId());
+        final var headers = readSession.getHeaders(rescId.getResourceId(), null);
+        assertEquals(rescId.getFullId(), headers.getId());
         assertEquals(NON_RDF_SOURCE.getURI(), headers.getInteractionModel());
         assertEquals("test.txt", headers.getFilename());
         assertEquals("text/plain", headers.getMimeType());
@@ -129,6 +131,7 @@ public class NonRdfSourcesPersistenceIT {
                     rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
                 .contentDigests(asList(CONTENT_SHA1, CONTENT_MD5))
                 .mimeType("text/plain")
+                .parentId(FedoraId.getRepositoryRootId())
                 .build();
 
         storageSession.persist(op);
@@ -138,8 +141,8 @@ public class NonRdfSourcesPersistenceIT {
         final var readSession = sessionManager.getReadOnlySession();
         assertContentPersisted(BINARY_CONTENT, readSession, rescId);
 
-        final var headers = readSession.getHeaders(rescId, null);
-        assertEquals(rescId, headers.getId());
+        final var headers = readSession.getHeaders(rescId.getResourceId(), null);
+        assertEquals(rescId.getFullId(), headers.getId());
         assertEquals(NON_RDF_SOURCE.getURI(), headers.getInteractionModel());
         assertEquals("text/plain", headers.getMimeType());
         assertEquals(BINARY_CONTENT.length(), headers.getContentSize().longValue());
@@ -156,14 +159,15 @@ public class NonRdfSourcesPersistenceIT {
         final var op = nonRdfSourceOpFactory.createInternalBinaryBuilder(
                     rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
                 .mimeType("text/plain")
+                .parentId(FedoraId.getRepositoryRootId())
                 .build();
 
         storageSession.persist(op);
 
         assertContentPersisted(BINARY_CONTENT, storageSession, rescId);
 
-        final var headers = storageSession.getHeaders(rescId, null);
-        assertEquals(rescId, headers.getId());
+        final var headers = storageSession.getHeaders(rescId.getResourceId(), null);
+        assertEquals(rescId.getFullId(), headers.getId());
         assertEquals(NON_RDF_SOURCE.getURI(), headers.getInteractionModel());
         assertEquals("text/plain", headers.getMimeType());
         assertEquals(BINARY_CONTENT.length(), headers.getContentSize().longValue());
@@ -200,6 +204,7 @@ public class NonRdfSourcesPersistenceIT {
                 .filename("test.txt")
                 .mimeType("text/plain")
                 .contentDigests(asList(CONTENT_SHA1))
+                .parentId(FedoraId.getRepositoryRootId())
                 .build();
 
         storageSession.persist(op);
@@ -216,8 +221,8 @@ public class NonRdfSourcesPersistenceIT {
         final var readSession = sessionManager.getReadOnlySession();
         assertContentPersisted(UPDATED_CONTENT, readSession, rescId);
 
-        final var headers = readSession.getHeaders(rescId, null);
-        assertEquals(rescId, headers.getId());
+        final var headers = readSession.getHeaders(rescId.getResourceId(), null);
+        assertEquals(rescId.getFullId(), headers.getId());
         assertEquals(NON_RDF_SOURCE.getURI(), headers.getInteractionModel());
         assertNull(headers.getFilename());
         assertEquals("text/plain", headers.getMimeType());
@@ -233,6 +238,7 @@ public class NonRdfSourcesPersistenceIT {
                 rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
             .filename("test.txt")
             .mimeType("text/plain")
+            .parentId(FedoraId.getRepositoryRootId())
             .build();
 
         storageSession.persist(op);
@@ -251,8 +257,8 @@ public class NonRdfSourcesPersistenceIT {
         final var readSession = sessionManager.getReadOnlySession();
         assertContentPersisted(BINARY_CONTENT, readSession, rescId);
 
-        final var headers = readSession.getHeaders(rescId, null);
-        assertEquals(rescId, headers.getId());
+        final var headers = readSession.getHeaders(rescId.getResourceId(), null);
+        assertEquals(rescId.getFullId(), headers.getId());
         assertEquals(NON_RDF_SOURCE.getURI(), headers.getInteractionModel());
         assertEquals("test.txt", headers.getFilename());
         assertEquals("text/plain", headers.getMimeType());
@@ -265,10 +271,11 @@ public class NonRdfSourcesPersistenceIT {
     public void createInternalNonRdfResourceInAG() throws Exception {
         final var agOp = rdfSourceOpFactory.createBuilder(rescId, BASIC_CONTAINER.getURI())
                 .archivalGroup(true)
+                .parentId(FedoraId.getRepositoryRootId())
                 .build();
         storageSession.persist(agOp);
 
-        final var binId = makeRescId(rescId);
+        final var binId = rescId.resolve(UUID.randomUUID().toString());
         final var op = nonRdfSourceOpFactory.createInternalBinaryBuilder(
                     binId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
                 .parentId(rescId)
@@ -281,17 +288,17 @@ public class NonRdfSourcesPersistenceIT {
 
         final var readSession = sessionManager.getReadOnlySession();
         // Check the persisted AG details
-        final var agHeaders = readSession.getHeaders(rescId, null);
-        assertEquals(rescId, agHeaders.getId());
-        assertNull(agHeaders.getParent());
+        final var agHeaders = readSession.getHeaders(rescId.getResourceId(), null);
+        assertEquals(rescId.getFullId(), agHeaders.getId());
+        assertEquals(FedoraId.getRepositoryRootId().getFullId(), agHeaders.getParent());
         assertEquals(BASIC_CONTAINER.getURI(), agHeaders.getInteractionModel());
 
         // Check the binary details
         assertContentPersisted(BINARY_CONTENT, readSession, binId);
 
-        final var headers = readSession.getHeaders(binId, null);
-        assertEquals(binId, headers.getId());
-        assertEquals(rescId, headers.getParent());
+        final var headers = readSession.getHeaders(binId.getResourceId(), null);
+        assertEquals(binId.getFullId(), headers.getId());
+        assertEquals(rescId.getFullId(), headers.getParent());
         assertEquals(NON_RDF_SOURCE.getURI(), headers.getInteractionModel());
         assertEquals("text/plain", headers.getMimeType());
         assertEquals(BINARY_CONTENT.length(), headers.getContentSize().longValue());
@@ -306,6 +313,7 @@ public class NonRdfSourcesPersistenceIT {
                 .filename("test.txt")
                 .mimeType("text/plain")
                 .contentDigests(asList(CONTENT_SHA1))
+                .parentId(FedoraId.getRepositoryRootId())
                 .build();
 
         storageSession.persist(op);
@@ -320,14 +328,14 @@ public class NonRdfSourcesPersistenceIT {
 
         final var readSession = sessionManager.getReadOnlySession();
         try {
-            readSession.getBinaryContent(rescId, null);
+            readSession.getBinaryContent(rescId.getResourceId(), null);
             fail("Binary file must no longer exist");
         } catch (final PersistentItemNotFoundException e) {
             // expected
         }
 
-        final var headers = readSession.getHeaders(rescId, null);
-        assertEquals(rescId, headers.getId());
+        final var headers = readSession.getHeaders(rescId.getResourceId(), null);
+        assertEquals(rescId.getFullId(), headers.getId());
         assertTrue("Headers must indicate object deleted", headers.isDeleted());
         assertEquals(NON_RDF_SOURCE.getURI(), headers.getInteractionModel());
     }
@@ -338,14 +346,15 @@ public class NonRdfSourcesPersistenceIT {
                     rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
                 .filename("test.txt")
                 .mimeType("text/plain")
+                .parentId(FedoraId.getRepositoryRootId())
                 .build();
 
         storageSession.persist(op);
 
         // Modify the file after staging to simulate a transmission error
         final Path ocflStagingDir = ocflPropsConfig.getFedoraOcflStaging();
-        final String rawId = StringUtils.substringAfterLast(rescId, "/");
-        final String digest = DigestUtils.sha256Hex(rescId);
+        final String rawId = StringUtils.substringAfterLast(rescId.getFullId(), "/");
+        final String digest = DigestUtils.sha256Hex(rescId.getFullId());
         final Path stagedFile = Paths.get(ocflStagingDir.toString(), storageSession.getId(), digest, rawId);
         Files.write(stagedFile, "oops".getBytes(), StandardOpenOption.APPEND);
 
@@ -359,8 +368,8 @@ public class NonRdfSourcesPersistenceIT {
     }
 
     private void assertContentPersisted(final String expectedContent, final PersistentStorageSession session,
-            final String rescId) throws Exception {
-        final var resultContent = session.getBinaryContent(rescId, null);
+            final FedoraId rescId) throws Exception {
+        final var resultContent = session.getBinaryContent(rescId.getResourceId(), null);
         assertEquals("Binary content did not match expectations",
                 expectedContent, IOUtils.toString(resultContent, UTF_8));
     }
@@ -370,12 +379,12 @@ public class NonRdfSourcesPersistenceIT {
         return sessionManager.getSession(sessionId);
     }
 
-    private String makeRescId(final String... parentIds) {
+    private FedoraId makeRescId(final String... parentIds) {
         String parents = "";
         if (parentIds != null && parentIds.length > 0) {
             parents = Arrays.stream(parentIds).map(p -> p.replace("info:fedora/", ""))
                     .collect(Collectors.joining("/", "", "/"));
         }
-        return "info:fedora/" + parents + UUID.randomUUID().toString();
+        return FedoraId.create( "info:fedora/" + parents + UUID.randomUUID().toString());
     }
 }

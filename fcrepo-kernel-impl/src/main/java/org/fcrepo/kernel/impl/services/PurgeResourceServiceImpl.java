@@ -54,7 +54,7 @@ public class PurgeResourceServiceImpl extends AbstractDeleteResourceService impl
     protected void doAction(final Transaction tx, final PersistentStorageSession pSession, final FedoraId resourceId,
                   final String userPrincipal) throws PersistentStorageException {
         log.debug("starting purge of {}", resourceId.getFullId());
-        final ResourceOperation purgeOp = deleteResourceFactory.purgeBuilder(resourceId.getFullId())
+        final ResourceOperation purgeOp = deleteResourceFactory.purgeBuilder(resourceId)
                 .userPrincipal(userPrincipal)
                 .build();
         pSession.persist(purgeOp);

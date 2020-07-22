@@ -17,6 +17,7 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
@@ -45,7 +46,7 @@ class PurgeResourcePersister extends AbstractPersister {
     public void persist(final OcflPersistentStorageSession session, final ResourceOperation operation)
             throws PersistentStorageException {
         final var mapping = getMapping(session.getId(), operation.getResourceId());
-        final var fedoraResourceRoot = mapping.getRootObjectIdentifier();
+        final var fedoraResourceRoot = FedoraId.create(mapping.getRootObjectIdentifier());
         final var resourceId = operation.getResourceId();
         final var objectSession = session.findOrCreateSession(mapping.getOcflObjectId());
         log.debug("Deleting {} from {}", resourceId, mapping.getOcflObjectId());
@@ -53,12 +54,13 @@ class PurgeResourcePersister extends AbstractPersister {
             // We are at the root of the object, so remove the entire OCFL object.
             objectSession.deleteObject();
         } else {
-            final var relativeSubPath = relativizeSubpath(fedoraResourceRoot, operation.getResourceId());
-            final var ocflSubPath = resolveOCFLSubpath(fedoraResourceRoot, relativeSubPath);
+            final var relativeSubPath = relativizeSubpath(fedoraResourceRoot.getResourceId(),
+                    operation.getResourceId().getResourceId());
+            final var ocflSubPath = resolveOCFLSubpath(fedoraResourceRoot.getResourceId(), relativeSubPath);
             final var sidecar = getSidecarSubpath(ocflSubPath);
             purgePath(sidecar, objectSession);
         }
-        index.removeMapping(session.getId(), resourceId);
+        index.removeMapping(session.getId(), resourceId.getResourceId());
     }
 
     /**

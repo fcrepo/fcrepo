@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
 
 /**
@@ -30,7 +31,7 @@ import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
  */
 public abstract class AbstractNonRdfSourceOperationBuilder implements NonRdfSourceOperationBuilder {
 
-    protected String resourceId;
+    protected FedoraId resourceId;
 
     protected InputStream content;
 
@@ -55,7 +56,7 @@ public abstract class AbstractNonRdfSourceOperationBuilder implements NonRdfSour
      * @param handling the external content handling type.
      * @param externalUri the external content URI.
      */
-    protected AbstractNonRdfSourceOperationBuilder(final String rescId, final String handling,
+    protected AbstractNonRdfSourceOperationBuilder(final FedoraId rescId, final String handling,
             final URI externalUri) {
         this.resourceId = rescId;
         this.externalURI = externalUri;
@@ -68,7 +69,7 @@ public abstract class AbstractNonRdfSourceOperationBuilder implements NonRdfSour
      * @param rescId the internal identifier.
      * @param stream the content stream.
      */
-    protected AbstractNonRdfSourceOperationBuilder(final String rescId, final InputStream stream) {
+    protected AbstractNonRdfSourceOperationBuilder(final FedoraId rescId, final InputStream stream) {
         this.resourceId = rescId;
         this.content = stream;
     }

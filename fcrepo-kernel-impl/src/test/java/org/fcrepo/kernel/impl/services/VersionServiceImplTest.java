@@ -79,7 +79,7 @@ public class VersionServiceImplTest {
         verify(session).persist(captor.capture());
         final var captured = captor.getValue();
 
-        assertEquals(fedoraId.getResourceId(), captured.getResourceId());
+        assertEquals(fedoraId, captured.getResourceId());
         assertEquals(user, captured.getUserPrincipal());
     }
 

@@ -102,10 +102,10 @@ abstract class AbstractPersister implements Persister {
      * @return The associated mapping
      * @throws PersistentStorageException When no mapping is found.
      */
-    protected FedoraOcflMapping getMapping(final String transactionId, final String resourceId)
+    protected FedoraOcflMapping getMapping(final String transactionId, final FedoraId resourceId)
             throws PersistentStorageException {
         try {
-            return this.index.getMapping(transactionId, resourceId);
+            return this.index.getMapping(transactionId, resourceId.getResourceId());
         } catch (final FedoraOcflMappingNotFoundException e){
             throw new PersistentStorageException(e.getMessage());
         }

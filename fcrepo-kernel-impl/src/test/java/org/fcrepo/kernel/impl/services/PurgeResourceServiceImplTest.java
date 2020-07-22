@@ -107,14 +107,11 @@ public class PurgeResourceServiceImplTest {
     @InjectMocks
     private PurgeResourceServiceImpl service;
 
-    private static final String RESOURCE_ID =  FEDORA_ID_PREFIX + "test-resource";
-    private static final FedoraId RESOURCE_FEDORA_ID = FedoraId.create(RESOURCE_ID);
-    private static final String CHILD_RESOURCE_ID = FEDORA_ID_PREFIX + "test-resource-child";
-    private static final FedoraId CHILD_RESOURCE_FEDORA_ID = FedoraId.create(CHILD_RESOURCE_ID);
-    private static final String RESOURCE_DESCRIPTION_ID = FEDORA_ID_PREFIX + "test-resource-description";
-    private static final FedoraId RESOURCE_DESCRIPTION_FEDORA_ID = FedoraId.create(RESOURCE_DESCRIPTION_ID);
-    private static final String RESOURCE_ACL_ID = FEDORA_ID_PREFIX + "test-resource-acl";
-    private static final FedoraId RESOURCE_ACL_FEDORA_ID = FedoraId.create(RESOURCE_ACL_ID);
+    private static final FedoraId RESOURCE_ID =  FedoraId.create(FEDORA_ID_PREFIX + "test-resource");
+    private static final FedoraId CHILD_RESOURCE_ID = FedoraId.create(FEDORA_ID_PREFIX + "test-resource-child");
+    private static final FedoraId RESOURCE_DESCRIPTION_ID =
+            FedoraId.create(FEDORA_ID_PREFIX + "test-resource-description");
+    private static final FedoraId RESOURCE_ACL_ID = FedoraId.create(FEDORA_ID_PREFIX + "test-resource-acl");
     private static final String TX_ID = "tx-1234";
 
     @Before
@@ -126,7 +123,7 @@ public class PurgeResourceServiceImplTest {
         setField(service, "deleteResourceFactory", factoryImpl);
         setField(service, "containmentIndex", containmentIndex);
         setField(service, "eventAccumulator", eventAccumulator);
-        when(container.getFedoraId()).thenReturn(RESOURCE_FEDORA_ID);
+        when(container.getFedoraId()).thenReturn(RESOURCE_ID);
     }
 
     @Test
@@ -135,18 +132,18 @@ public class PurgeResourceServiceImplTest {
         when(container.getAcl()).thenReturn(null);
 
         service.perform(tx, container, USER);
-        verifyResourceOperation(RESOURCE_FEDORA_ID, operationCaptor, pSession);
+        verifyResourceOperation(RESOURCE_ID, operationCaptor, pSession);
     }
 
     @Test
     public void testRecursivePurge() throws Exception {
         when(container.isAcl()).thenReturn(false);
         when(container.getAcl()).thenReturn(null);
-        when(childContainer.getFedoraId()).thenReturn(CHILD_RESOURCE_FEDORA_ID);
+        when(childContainer.getFedoraId()).thenReturn(CHILD_RESOURCE_ID);
         when(childContainer.isAcl()).thenReturn(false);
         when(childContainer.getAcl()).thenReturn(null);
 
-        when(resourceFactory.getResource(tx, CHILD_RESOURCE_FEDORA_ID)).thenReturn(childContainer);
+        when(resourceFactory.getResource(tx, CHILD_RESOURCE_ID)).thenReturn(childContainer);
         containmentIndex.addContainedBy(tx.getId(), container.getFedoraId(), childContainer.getFedoraId());
         containmentIndex.commitTransaction(tx.getId());
         containmentIndex.removeContainedBy(tx.getId(), container.getFedoraId(), childContainer.getFedoraId());
@@ -171,31 +168,31 @@ public class PurgeResourceServiceImplTest {
                                          final PersistentStorageSession pSession) throws Exception {
         verify(pSession).persist(captor.capture());
         final PurgeResourceOperation containerOperation = captor.getValue();
-        assertEquals(fedoraID.getFullId(), containerOperation.getResourceId());
+        assertEquals(fedoraID, containerOperation.getResourceId());
     }
 
     @Test
     public void testAclPurge() throws Exception {
-        when(acl.getFedoraId()).thenReturn(RESOURCE_ACL_FEDORA_ID);
+        when(acl.getFedoraId()).thenReturn(RESOURCE_ACL_ID);
         when(acl.isAcl()).thenReturn(true);
         service.perform(tx, acl, USER);
-        verifyResourceOperation(RESOURCE_ACL_FEDORA_ID, operationCaptor, pSession);
+        verifyResourceOperation(RESOURCE_ACL_ID, operationCaptor, pSession);
     }
 
     @Test(expected = RepositoryRuntimeException.class)
     public void testBinaryDescriptionPurge() throws Exception {
-        when(binaryDesc.getFedoraId()).thenReturn(RESOURCE_DESCRIPTION_FEDORA_ID);
+        when(binaryDesc.getFedoraId()).thenReturn(RESOURCE_DESCRIPTION_ID);
         service.perform(tx, binaryDesc, USER);
     }
 
     @Test
     public void testBinaryPurgeWithAcl() throws Exception {
-        when(binary.getFedoraId()).thenReturn(RESOURCE_FEDORA_ID);
+        when(binary.getFedoraId()).thenReturn(RESOURCE_ID);
         when(binary.isAcl()).thenReturn(false);
         when(binary.getDescription()).thenReturn(binaryDesc);
-        when(binaryDesc.getFedoraId()).thenReturn(RESOURCE_DESCRIPTION_FEDORA_ID);
+        when(binaryDesc.getFedoraId()).thenReturn(RESOURCE_DESCRIPTION_ID);
         when(binary.getAcl()).thenReturn(acl);
-        when(acl.getFedoraId()).thenReturn(RESOURCE_ACL_FEDORA_ID);
+        when(acl.getFedoraId()).thenReturn(RESOURCE_ACL_ID);
 
         service.perform(tx, binary, USER);
 

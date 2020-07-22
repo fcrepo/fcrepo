@@ -27,6 +27,7 @@ import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.resolv
 import java.time.Instant;
 import java.util.Objects;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageRuntimeException;
@@ -53,7 +54,7 @@ class DeleteResourcePersister extends AbstractPersister {
     public void persist(final OcflPersistentStorageSession session, final ResourceOperation operation)
             throws PersistentStorageException {
         final var mapping = getMapping(session.getId(), operation.getResourceId());
-        final var fedoraResourceRoot = mapping.getRootObjectIdentifier();
+        final var fedoraResourceRoot = FedoraId.create(mapping.getRootObjectIdentifier());
         final var resourceId = operation.getResourceId();
         final var objectSession = session.findOrCreateSession(mapping.getOcflObjectId());
         final var user = operation.getUserPrincipal();
@@ -74,8 +75,9 @@ class DeleteResourcePersister extends AbstractPersister {
                 throw new PersistentStorageException(exc);
             }
         } else {
-            final var relativeSubPath = relativizeSubpath(fedoraResourceRoot, operation.getResourceId());
-            final var ocflSubPath = resolveOCFLSubpath(fedoraResourceRoot, relativeSubPath);
+            final var relativeSubPath = relativizeSubpath(fedoraResourceRoot.getResourceId(),
+                    operation.getResourceId().getResourceId());
+            final var ocflSubPath = resolveOCFLSubpath(fedoraResourceRoot.getResourceId(), relativeSubPath);
             final var headers = (ResourceHeadersImpl) readHeaders(objectSession, ocflSubPath);
             final boolean isRdf = !Objects.equals(NON_RDF_SOURCE.toString(), headers.getInteractionModel());
             final var filePath = resolveExtensions(ocflSubPath, isRdf);

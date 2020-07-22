@@ -19,6 +19,7 @@ package org.fcrepo.kernel.impl.operations;
 
 import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.CreateRdfSourceOperationBuilder;
 
@@ -30,7 +31,7 @@ import org.fcrepo.kernel.api.operations.CreateRdfSourceOperationBuilder;
 public class CreateRdfSourceOperationBuilderImpl extends AbstractRdfSourceOperationBuilder implements
         CreateRdfSourceOperationBuilder {
 
-    private String parentId;
+    private FedoraId parentId;
 
     private boolean archivalGroup = false;
     /**
@@ -39,7 +40,7 @@ public class CreateRdfSourceOperationBuilderImpl extends AbstractRdfSourceOperat
      * @param resourceId the internal identifier.
      * @param interactionModel interaction model
      */
-    public CreateRdfSourceOperationBuilderImpl(final String resourceId, final String interactionModel) {
+    public CreateRdfSourceOperationBuilderImpl(final FedoraId resourceId, final String interactionModel) {
         super(resourceId, interactionModel);
     }
 
@@ -69,7 +70,7 @@ public class CreateRdfSourceOperationBuilderImpl extends AbstractRdfSourceOperat
     }
 
     @Override
-    public CreateRdfSourceOperationBuilder parentId(final String parentId) {
+    public CreateRdfSourceOperationBuilder parentId(final FedoraId parentId) {
         this.parentId = parentId;
         return this;
     }

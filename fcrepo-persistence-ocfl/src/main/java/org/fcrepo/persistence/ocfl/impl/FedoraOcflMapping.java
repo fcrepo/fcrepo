@@ -27,8 +27,8 @@ import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToStrin
  * @author dbernstein
  */
 public class FedoraOcflMapping {
-    private String rootObjectIdentifier;
-    private String ocflObjectId;
+    private final String rootObjectIdentifier;
+    private final String ocflObjectId;
 
     /**
      * Default constructor

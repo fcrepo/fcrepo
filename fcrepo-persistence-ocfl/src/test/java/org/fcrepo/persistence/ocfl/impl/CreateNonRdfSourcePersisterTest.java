@@ -19,6 +19,7 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
@@ -95,9 +96,9 @@ public class CreateNonRdfSourcePersisterTest {
     @Mock
     private OcflPersistentStorageSession psSession;
 
-    private static final String RESOURCE_ID = "info:fedora/parent/child";
+    private static final FedoraId RESOURCE_ID = FedoraId.create("info:fedora/parent/child");
 
-    private static final String ROOT_RESOURCE_ID = "info:fedora/parent";
+    private static final FedoraId ROOT_RESOURCE_ID = FedoraId.create("info:fedora/parent");
 
     private static final String USER_PRINCIPAL = "fedoraUser";
 
@@ -113,7 +114,7 @@ public class CreateNonRdfSourcePersisterTest {
 
     private static final String EXTERNAL_HANDLING = "proxy";
 
-    private static final Long EXTERNAL_CONTENT_SIZE = 526632l;
+    private static final Long EXTERNAL_CONTENT_SIZE = 526632L;
 
     private CreateNonRdfSourcePersister persister;
 
@@ -122,7 +123,7 @@ public class CreateNonRdfSourcePersisterTest {
     @Before
     public void setUp() throws Exception {
         when(mapping.getOcflObjectId()).thenReturn("object-id");
-        when(mapping.getRootObjectIdentifier()).thenReturn(ROOT_RESOURCE_ID);
+        when(mapping.getRootObjectIdentifier()).thenReturn(ROOT_RESOURCE_ID.getFullId());
 
         when(session.write(anyString(), any(InputStream.class))).thenReturn(writeOutcome);
         when(session.getObjectDigestAlgorithm()).thenReturn(DIGEST_ALGORITHM.SHA1);
@@ -135,7 +136,7 @@ public class CreateNonRdfSourcePersisterTest {
         when(nonRdfSourceOperation.getType()).thenReturn(CREATE);
         when(((CreateResourceOperation)nonRdfSourceOperation).getParentId()).thenReturn(ROOT_RESOURCE_ID);
 
-        when(psSession.getHeaders(((CreateResourceOperation) nonRdfSourceOperation).getParentId(), null))
+        when(psSession.getHeaders(((CreateResourceOperation) nonRdfSourceOperation).getParentId().getFullId(), null))
                 .thenReturn(headers);
         when(psSession.getId()).thenReturn(SESSION_ID);
 
@@ -211,7 +212,7 @@ public class CreateNonRdfSourcePersisterTest {
         final InputStream content = IOUtils.toInputStream(CONTENT_BODY, "UTF-8");
 
         when(nonRdfSourceOperation.getContentStream()).thenReturn(content);
-        when(nonRdfSourceOperation.getContentSize()).thenReturn(99l);
+        when(nonRdfSourceOperation.getContentSize()).thenReturn(99L);
         when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel())
                 .thenReturn(NON_RDF_SOURCE.toString());
         when(headers.isArchivalGroup()).thenReturn(false);

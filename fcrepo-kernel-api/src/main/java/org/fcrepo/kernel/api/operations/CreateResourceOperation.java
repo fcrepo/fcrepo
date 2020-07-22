@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.api.operations;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 
 /**
@@ -31,7 +33,7 @@ public interface CreateResourceOperation extends ResourceOperation {
      *
      * @return identifer of parent
      */
-    String getParentId();
+    FedoraId getParentId();
 
     /**
      * Get the interaction model of the resource being created

@@ -18,6 +18,8 @@
 package org.fcrepo.kernel.impl.operations;
 
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.DELETE;
+
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 
 
@@ -28,7 +30,7 @@ import org.fcrepo.kernel.api.operations.ResourceOperationType;
  */
 public class DeleteResourceOperation extends AbstractResourceOperation {
 
-    protected DeleteResourceOperation(final String rescId) {
+    protected DeleteResourceOperation(final FedoraId rescId) {
         super(rescId);
     }
 

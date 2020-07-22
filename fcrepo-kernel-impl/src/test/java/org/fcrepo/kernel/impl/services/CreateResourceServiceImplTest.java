@@ -148,7 +148,7 @@ public class CreateResourceServiceImplTest {
 
     private static final String CONTENT_TYPE = "text/html";
 
-    private static final Long CONTENT_SIZE = 100l;
+    private static final Long CONTENT_SIZE = 100L;
 
     private static final String EXTERNAL_URL = "http://example.org/rest/object";
 
@@ -259,9 +259,9 @@ public class CreateResourceServiceImplTest {
         createResourceService.perform(TX_ID, USER_PRINCIPAL, childId, null, model);
         cleanupList.add(fedoraId);
         verify(psSession).persist(operationCaptor.capture());
-        final String persistedId = operationCaptor.getValue().getResourceId();
+        final FedoraId persistedId = operationCaptor.getValue().getResourceId();
         assertNotEquals(fedoraId, persistedId);
-        assertTrue(persistedId.startsWith(fedoraId.getFullId()));
+        assertTrue(persistedId.getFullId().startsWith(fedoraId.getFullId()));
         when(fedoraResource.getFedoraId()).thenReturn(fedoraId);
         assertEquals(1, containmentIndex.getContains(transaction.getId(), fedoraResource).count());
     }
@@ -282,11 +282,11 @@ public class CreateResourceServiceImplTest {
         verify(psSession, times(2)).persist(operationCaptor.capture());
         final List<ResourceOperation> operations = operationCaptor.getAllValues();
         final var operation = getOperation(operations, CreateNonRdfSourceOperation.class);
-        final String persistedId = operation.getResourceId();
+        final FedoraId persistedId = operation.getResourceId();
         assertNotEquals(fedoraId, persistedId);
-        assertTrue(persistedId.startsWith(fedoraId.getFullId()));
+        assertTrue(persistedId.getFullId().startsWith(fedoraId.getFullId()));
         assertBinaryPropertiesPresent(operation);
-        assertEquals(fedoraId.getFullId(), operation.getParentId());
+        assertEquals(fedoraId, operation.getParentId());
         when(fedoraResource.getFedoraId()).thenReturn(fedoraId);
         assertEquals(1, containmentIndex.getContains(transaction.getId(), fedoraResource).count());
     }
@@ -324,10 +324,10 @@ public class CreateResourceServiceImplTest {
         verify(psSession).persist(operationCaptor.capture());
 
         final var operation = operationCaptor.getValue();
-        final String persistedId = operation.getResourceId();
+        final FedoraId persistedId = operation.getResourceId();
         assertNotEquals(fedoraId, persistedId);
-        assertTrue(persistedId.startsWith(fedoraId.getFullId()));
-        assertEquals(persistedId, childId.getFullId());
+        assertTrue(persistedId.getFullId().startsWith(fedoraId.getFullId()));
+        assertEquals(persistedId, childId);
 
         final var rdfOp = (RdfSourceOperation) operation;
         assertEquals(relaxedUser, rdfOp.getCreatedBy());
@@ -357,15 +357,15 @@ public class CreateResourceServiceImplTest {
         verify(psSession, times(2)).persist(operationCaptor.capture());
         final List<ResourceOperation> operations = operationCaptor.getAllValues();
         final var operation = getOperation(operations, CreateNonRdfSourceOperation.class);
-        final String persistedId = operation.getResourceId();
+        final FedoraId persistedId = operation.getResourceId();
         assertNotEquals(fedoraId.getFullId(), persistedId);
-        assertEquals(childId.getFullId(), persistedId);
-        assertTrue(persistedId.startsWith(fedoraId.getFullId()));
+        assertEquals(childId, persistedId);
+        assertTrue(persistedId.getFullId().startsWith(fedoraId.getFullId()));
         assertBinaryPropertiesPresent(operation);
-        assertEquals(fedoraId.getFullId(), operation.getParentId());
+        assertEquals(fedoraId, operation.getParentId());
 
         final var descOperation = getOperation(operations, CreateRdfSourceOperation.class);
-        assertEquals(persistedId + "/fcr:metadata", descOperation.getResourceId());
+        assertEquals(persistedId.asDescription(), descOperation.getResourceId());
         when(fedoraResource.getFedoraId()).thenReturn(fedoraId);
         assertEquals(1, containmentIndex.getContains(transaction.getId(), fedoraResource).count());
     }

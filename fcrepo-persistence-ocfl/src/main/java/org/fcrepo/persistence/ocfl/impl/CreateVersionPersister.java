@@ -18,7 +18,6 @@
 
 package org.fcrepo.persistence.ocfl.impl;
 
-import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateVersionResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
@@ -46,12 +45,11 @@ public class CreateVersionPersister extends AbstractPersister {
             throws PersistentStorageException {
 
         final var resourceId = operation.getResourceId();
-        final var fedoraId = FedoraId.create(resourceId);
         LOG.debug("creating new version of <{}> in session <{}>", resourceId, session);
 
-        final var archivalGroupId = findArchivalGroupInAncestry(fedoraId, session);
+        final var archivalGroupId = findArchivalGroupInAncestry(resourceId, session);
 
-        if (archivalGroupId.isPresent() && !archivalGroupId.get().equals(fedoraId)) {
+        if (archivalGroupId.isPresent() && !archivalGroupId.get().equals(resourceId)) {
             throw new PersistentItemConflictException(
                     String.format("Resource <%s> is contained in Archival Group <%s> and cannot be versioned directly."
                             + " Version the Archival Group instead.", resourceId, archivalGroupId));

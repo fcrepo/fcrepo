@@ -18,6 +18,7 @@
 package org.fcrepo.persistence.common;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 import java.net.URI;
 import java.time.Instant;
@@ -45,11 +46,11 @@ public class ResourceHeaderUtils {
      * @param interactionModel interaction model of the resource
      * @return new resource headers object
      */
-    public static ResourceHeadersImpl newResourceHeaders(final String parentId, final String fedoraId,
-            final String interactionModel) {
+    public static ResourceHeadersImpl newResourceHeaders(final FedoraId parentId, final FedoraId fedoraId,
+                                                         final String interactionModel) {
         final ResourceHeadersImpl headers = new ResourceHeadersImpl();
-        headers.setId(fedoraId);
-        headers.setParent(parentId);
+        headers.setId(fedoraId.getFullId());
+        headers.setParent(parentId.getFullId());
         headers.setInteractionModel(interactionModel);
 
         return headers;

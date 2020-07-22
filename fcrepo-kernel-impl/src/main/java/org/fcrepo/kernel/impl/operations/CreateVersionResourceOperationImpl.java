@@ -18,6 +18,7 @@
 
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateVersionResourceOperation;
 
 /**
@@ -26,7 +27,7 @@ import org.fcrepo.kernel.api.operations.CreateVersionResourceOperation;
 public class CreateVersionResourceOperationImpl extends AbstractResourceOperation
         implements CreateVersionResourceOperation {
 
-    protected CreateVersionResourceOperationImpl(final String rescId) {
+    protected CreateVersionResourceOperationImpl(final FedoraId rescId) {
         super(rescId);
     }
 

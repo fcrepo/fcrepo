@@ -41,6 +41,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.IOUtils;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
@@ -87,9 +88,9 @@ public class UpdateNonRdfSourcePersisterTest {
     @Mock
     private OcflPersistentStorageSession psSession;
 
-    private static final String RESOURCE_ID = "info:fedora/parent/child";
+    private static final FedoraId RESOURCE_ID = FedoraId.create("info:fedora/parent/child");
 
-    private static final String ROOT_RESOURCE_ID = "info:fedora/parent";
+    private static final FedoraId ROOT_RESOURCE_ID = FedoraId.create("info:fedora/parent");
 
     private static final String USER_PRINCIPAL = "fedoraUser";
 
@@ -104,7 +105,7 @@ public class UpdateNonRdfSourcePersisterTest {
     @Before
     public void setUp() throws Exception {
         when(mapping.getOcflObjectId()).thenReturn("object-id");
-        when(mapping.getRootObjectIdentifier()).thenReturn(ROOT_RESOURCE_ID);
+        when(mapping.getRootObjectIdentifier()).thenReturn(ROOT_RESOURCE_ID.getFullId());
         when(psSession.getId()).thenReturn(SESSION_ID);
         when(session.write(anyString(), any(InputStream.class))).thenReturn(writeOutcome);
         when(session.getObjectDigestAlgorithm()).thenReturn(DIGEST_ALGORITHM.SHA1);
