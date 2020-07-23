@@ -191,7 +191,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
 
         ensureCommitNotStarted();
 
-        final FedoraOcflMapping mapping = getFedoraOCFLMapping(identifier);
+        final FedoraOcflMapping mapping = getFedoraOcflMapping(identifier);
         final OcflObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
         final var rootIdentifier = mapping.getRootObjectIdentifier();
         final var ocflSubpath = resovleOCFLSubpathFromResourceId(rootIdentifier, identifier);
@@ -208,7 +208,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         return deserializeHeaders(headerStream);
     }
 
-    private FedoraOcflMapping getFedoraOCFLMapping(final String identifier) throws PersistentStorageException {
+    private FedoraOcflMapping getFedoraOcflMapping(final String identifier) throws PersistentStorageException {
         try {
             return fedoraOcflIndex.getMapping(sessionId, identifier);
         } catch (final FedoraOcflMappingNotFoundException e) {
@@ -221,7 +221,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
             throws PersistentStorageException {
         ensureCommitNotStarted();
 
-        final var mapping = getFedoraOCFLMapping(identifier);
+        final var mapping = getFedoraOcflMapping(identifier);
         final var rootIdentifier = mapping.getRootObjectIdentifier();
         final var objSession = findOrCreateSession(mapping.getOcflObjectId());
         final var ocflSubpath = resovleOCFLSubpathFromResourceId(rootIdentifier, identifier);
@@ -231,7 +231,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
 
     @Override
     public List<Instant> listVersions(final String fedoraIdentifier) throws PersistentStorageException {
-        final var mapping = getFedoraOCFLMapping(fedoraIdentifier);
+        final var mapping = getFedoraOcflMapping(fedoraIdentifier);
         final var objSession = findOrCreateSession(mapping.getOcflObjectId());
 
         String subpath = null;
@@ -254,7 +254,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
             throws PersistentStorageException {
         ensureCommitNotStarted();
 
-        final var mapping = getFedoraOCFLMapping(identifier);
+        final var mapping = getFedoraOcflMapping(identifier);
         final var rootIdentifier = mapping.getRootObjectIdentifier();
         final var objSession = findOrCreateSession(mapping.getOcflObjectId());
         final var ocflSubpath = resovleOCFLSubpathFromResourceId(rootIdentifier, identifier);
@@ -454,7 +454,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
 
     @Override
     public String toString() {
-        return "OCFLPersistentStorageSession{" +
+        return "OcflPersistentStorageSession{" +
                 "sessionId='" + sessionId + '\'' +
                 ", state=" + state +
                 '}';

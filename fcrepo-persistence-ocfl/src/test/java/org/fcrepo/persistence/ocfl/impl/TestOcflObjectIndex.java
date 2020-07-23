@@ -35,14 +35,14 @@ public class TestOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     private static Logger LOGGER = LoggerFactory.getLogger(TestOcflObjectIndex.class);
 
-    private Map<String, FedoraOcflMapping> fedoraOCFLMappingMap = Collections.synchronizedMap(new HashMap<>());
+    private Map<String, FedoraOcflMapping> fedoraOcflMappingMap = Collections.synchronizedMap(new HashMap<>());
 
     @Override
     public FedoraOcflMapping getMapping(final String transactionId, final String fedoraResourceIdentifier)
             throws FedoraOcflMappingNotFoundException {
 
         LOGGER.debug("getting {}", fedoraResourceIdentifier);
-        final FedoraOcflMapping m = fedoraOCFLMappingMap.get(fedoraResourceIdentifier);
+        final FedoraOcflMapping m = fedoraOcflMappingMap.get(fedoraResourceIdentifier);
         if (m == null) {
             throw new FedoraOcflMappingNotFoundException(fedoraResourceIdentifier);
         }
@@ -55,15 +55,15 @@ public class TestOcflObjectIndex implements FedoraToOcflObjectIndex {
                                         final String fedoraResourceIdentifier,
                                         final String fedoraRootObjectResourceId,
                                         final String ocflObjectId) {
-        FedoraOcflMapping mapping = fedoraOCFLMappingMap.get(fedoraRootObjectResourceId);
+        FedoraOcflMapping mapping = fedoraOcflMappingMap.get(fedoraRootObjectResourceId);
 
         if (mapping == null) {
             mapping = new FedoraOcflMapping(fedoraRootObjectResourceId, ocflObjectId);
-            fedoraOCFLMappingMap.put(fedoraRootObjectResourceId, mapping);
+            fedoraOcflMappingMap.put(fedoraRootObjectResourceId, mapping);
         }
 
         if (!fedoraResourceIdentifier.equals(fedoraRootObjectResourceId)) {
-            fedoraOCFLMappingMap.put(fedoraResourceIdentifier, mapping);
+            fedoraOcflMappingMap.put(fedoraResourceIdentifier, mapping);
         }
 
         LOGGER.debug("added mapping {} for {}", mapping, fedoraResourceIdentifier);
@@ -72,12 +72,12 @@ public class TestOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     @Override
     public void removeMapping(@Nonnull final String transactionId, final String fedoraResourceIdentifier) {
-        fedoraOCFLMappingMap.remove(fedoraResourceIdentifier);
+        fedoraOcflMappingMap.remove(fedoraResourceIdentifier);
     }
 
     @Override
     public void reset() {
-        fedoraOCFLMappingMap.clear();
+        fedoraOcflMappingMap.clear();
     }
 
     @Override

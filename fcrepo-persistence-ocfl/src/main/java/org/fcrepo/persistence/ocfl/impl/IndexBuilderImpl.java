@@ -66,7 +66,7 @@ public class IndexBuilderImpl implements IndexBuilder {
     private OcflObjectSessionFactory objectSessionFactory;
 
     @Inject
-    private FedoraToOcflObjectIndex fedoraToOCFLObjectIndex;
+    private FedoraToOcflObjectIndex fedoraToOcflObjectIndex;
 
     @Inject
     private ContainmentIndex containmentIndex;
@@ -92,7 +92,7 @@ public class IndexBuilderImpl implements IndexBuilder {
     private void rebuild() {
         LOGGER.info("Initiating index rebuild.");
 
-        fedoraToOCFLObjectIndex.reset();
+        fedoraToOcflObjectIndex.reset();
         containmentIndex.reset();
         searchIndex.reset();
 
@@ -112,7 +112,7 @@ public class IndexBuilderImpl implements IndexBuilder {
             }
 
             containmentIndex.commitTransaction(txId);
-            fedoraToOCFLObjectIndex.commit(txId);
+            fedoraToOcflObjectIndex.commit(txId);
             LOGGER.info("Index rebuild complete");
         } catch (RuntimeException e) {
             execQuietly("Failed to rollback containment index transaction " +txId, () -> {
@@ -120,7 +120,7 @@ public class IndexBuilderImpl implements IndexBuilder {
                 return null;
             });
             execQuietly("Failed to rollback OCFL index transaction " +txId, () -> {
-                fedoraToOCFLObjectIndex.rollback(txId);
+                fedoraToOcflObjectIndex.rollback(txId);
                 return null;
             });
             throw e;
@@ -179,7 +179,7 @@ public class IndexBuilderImpl implements IndexBuilder {
                 if (rootFedoraIdentifier == null) {
                     rootFedoraIdentifier = fedoraIdentifier;
                 }
-                fedoraToOCFLObjectIndex.addMapping(txId, fedoraIdentifier, rootFedoraIdentifier, ocflId);
+                fedoraToOcflObjectIndex.addMapping(txId, fedoraIdentifier, rootFedoraIdentifier, ocflId);
                 LOGGER.debug("Rebuilt fedora-to-ocfl object index entry for {}", fedoraIdentifier);
             });
         } catch (final PersistentStorageException e) {
@@ -199,7 +199,7 @@ public class IndexBuilderImpl implements IndexBuilder {
 
     private boolean repoRootMappingExists() {
         try {
-            return fedoraToOCFLObjectIndex.getMapping(null, FedoraId.getRepositoryRootId().getFullId()) != null;
+            return fedoraToOcflObjectIndex.getMapping(null, FedoraId.getRepositoryRootId().getFullId()) != null;
         } catch (final FedoraOcflMappingNotFoundException e) {
             return false;
         }

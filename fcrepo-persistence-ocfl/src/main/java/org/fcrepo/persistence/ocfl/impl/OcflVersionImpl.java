@@ -22,7 +22,7 @@ import org.fcrepo.persistence.ocfl.api.OcflVersion;
 import java.time.Instant;
 
 /**
- * Default OCFLVersion impl
+ * Default OcflVersion impl
  */
 public class OcflVersionImpl implements OcflVersion {
 

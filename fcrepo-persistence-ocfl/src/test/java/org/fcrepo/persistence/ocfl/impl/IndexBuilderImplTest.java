@@ -104,7 +104,7 @@ public class IndexBuilderImplTest {
 
         indexBuilder = new IndexBuilderImpl();
         setField(indexBuilder, "ocflRepository", repository);
-        setField(indexBuilder, "fedoraToOCFLObjectIndex", index);
+        setField(indexBuilder, "fedoraToOcflObjectIndex", index);
         setField(indexBuilder, "objectSessionFactory", ocflObjectSessionFactory);
         setField(indexBuilder, "containmentIndex", containmentIndex);
         setField(indexBuilder, "searchIndex", searchIndex);

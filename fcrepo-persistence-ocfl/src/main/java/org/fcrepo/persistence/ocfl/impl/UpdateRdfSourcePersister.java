@@ -39,7 +39,7 @@ class UpdateRdfSourcePersister extends AbstractRdfSourcePersister {
 
     /**
      * Constructor
-     * @param index The FedoraToOCFLObjectIndex
+     * @param index The FedoraToOcflObjectIndex
      */
     protected UpdateRdfSourcePersister(final FedoraToOcflObjectIndex index) {
         super(RdfSourceOperation.class, UPDATE, index);
@@ -51,9 +51,9 @@ class UpdateRdfSourcePersister extends AbstractRdfSourcePersister {
         final var resourceId = operation.getResourceId();
         log.debug("persisting {} to {}", resourceId, session);
 
-        final var fedoraOCFLMapping = getMapping(session.getId(), resourceId);
-        final var ocflId = fedoraOCFLMapping.getOcflObjectId();
+        final var fedoraOcflMapping = getMapping(session.getId(), resourceId);
+        final var ocflId = fedoraOcflMapping.getOcflObjectId();
         final OcflObjectSession objSession = session.findOrCreateSession(ocflId);
-        persistRDF(objSession, operation, fedoraOCFLMapping.getRootObjectIdentifier());
+        persistRDF(objSession, operation, fedoraOcflMapping.getRootObjectIdentifier());
     }
 }
