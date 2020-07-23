@@ -17,21 +17,33 @@
  */
 package org.fcrepo.persistence.ocfl.api;
 
-import java.nio.file.Path;
 
 /**
- * A factory interface for creating {@link org.fcrepo.persistence.ocfl.api.OCFLObjectSession}.
+ * Indicates the fedora identifier was not found in the index.
+ *
  * @author dbernstein
- * @since 6.0.0
+
  */
-public interface OCFLObjectSessionFactory {
+public class FedoraOcflMappingNotFoundException extends Exception {
+
+    private static final long serialVersionUID = 1L;
 
     /**
-     * Create new session.
-     * @param ocflId The OCFL Object identifier
-     * @param sessionStagingDir path to the staging directory for the storage session
-     * @return The newly created session.
+     * Ordinary constructor
+     *
+     * @param msg the message
      */
-    OCFLObjectSession create(final String ocflId, final Path sessionStagingDir);
+    public FedoraOcflMappingNotFoundException(final String msg) {
+        super(msg);
+    }
+
+    /**
+     * Constructor for wrapping exception.
+     *
+     * @param exception the original exception.
+     */
+    public FedoraOcflMappingNotFoundException(final Throwable exception) {
+        super(exception);
+    }
 
 }

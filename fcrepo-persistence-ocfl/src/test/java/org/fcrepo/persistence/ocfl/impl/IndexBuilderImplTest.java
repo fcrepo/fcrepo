@@ -27,7 +27,7 @@ import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
+import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.IndexBuilder;
 import org.fcrepo.search.api.SearchIndex;
@@ -45,7 +45,7 @@ import java.nio.file.Paths;
 
 import static java.lang.System.currentTimeMillis;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.createRepository;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createRepository;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -95,16 +95,16 @@ public class IndexBuilderImplTest {
         index = new TestOcflObjectIndex();
         index.reset();
 
-        final var ocflObjectSessionFactory = new DefaultOCFLObjectSessionFactory();
+        final var ocflObjectSessionFactory = new DefaultOcflObjectSessionFactory();
         setField(ocflObjectSessionFactory, "ocflRepository", repository);
 
-        sessionManager = new OCFLPersistentSessionManager(staging);
+        sessionManager = new OcflPersistentSessionManager(staging);
         setField(sessionManager, "fedoraOcflIndex", index);
         setField(sessionManager, "objectSessionFactory", ocflObjectSessionFactory);
 
         indexBuilder = new IndexBuilderImpl();
         setField(indexBuilder, "ocflRepository", repository);
-        setField(indexBuilder, "fedoraToOCFLObjectIndex", index);
+        setField(indexBuilder, "fedoraToOcflObjectIndex", index);
         setField(indexBuilder, "objectSessionFactory", ocflObjectSessionFactory);
         setField(indexBuilder, "containmentIndex", containmentIndex);
         setField(indexBuilder, "searchIndex", searchIndex);
@@ -171,13 +171,13 @@ public class IndexBuilderImplTest {
         try {
             index.getMapping(null, resourceId.getResourceId());
             fail(resourceId + " should not exist in index");
-        } catch (final FedoraOCFLMappingNotFoundException e) {
+        } catch (final FedoraOcflMappingNotFoundException e) {
             //do nothing - expected
         }
     }
 
     private void assertHasOcflId(final String expectedOcflId, final FedoraId resourceId)
-            throws FedoraOCFLMappingNotFoundException {
+            throws FedoraOcflMappingNotFoundException {
         assertEquals(FedoraTypes.FEDORA_ID_PREFIX + "/" + expectedOcflId,
                 index.getMapping(null, resourceId.getResourceId()).getOcflObjectId());
     }

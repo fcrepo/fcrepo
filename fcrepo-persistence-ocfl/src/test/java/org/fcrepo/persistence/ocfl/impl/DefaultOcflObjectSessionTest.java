@@ -30,7 +30,7 @@ import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.ocfl.api.OCFLVersion;
+import org.fcrepo.persistence.ocfl.api.OcflVersion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -62,7 +62,7 @@ import static org.junit.Assert.fail;
  * @author bbpennel
  *
  */
-public class DefaultOCFLObjectSessionTest {
+public class DefaultOcflObjectSessionTest {
 
     private final static String OBJ_ID = "obj1";
 
@@ -79,7 +79,7 @@ public class DefaultOCFLObjectSessionTest {
 
     private Path stagingPath;
 
-    private DefaultOCFLObjectSession session;
+    private DefaultOcflObjectSession session;
 
     private MutableOcflRepository ocflRepository;
 
@@ -99,11 +99,11 @@ public class DefaultOCFLObjectSessionTest {
         session = makeNewSession();
     }
 
-    private DefaultOCFLObjectSession makeNewSession() throws Exception {
+    private DefaultOcflObjectSession makeNewSession() throws Exception {
         if (stagingPath == null || !stagingPath.toFile().exists()) {
             stagingPath = tempFolder.newFolder(OBJ_ID).toPath();
         }
-        return new DefaultOCFLObjectSession(OBJ_ID, stagingPath, ocflRepository, UNVERSIONED);
+        return new DefaultOcflObjectSession(OBJ_ID, stagingPath, ocflRepository, UNVERSIONED);
     }
 
     @Test
@@ -176,7 +176,7 @@ public class DefaultOCFLObjectSessionTest {
 
         assertMutableHeadPopulated(OBJ_ID);
 
-        session = new DefaultOCFLObjectSession(OBJ_ID, stagingPath, ocflRepository, UNVERSIONED);
+        session = new DefaultOcflObjectSession(OBJ_ID, stagingPath, ocflRepository, UNVERSIONED);
 
         // Commit changes to new version in second commit
         session.write(FILE2_SUBPATH, fileStream(FILE_CONTENT2));
@@ -644,7 +644,7 @@ public class DefaultOCFLObjectSessionTest {
 
         final var session3 = makeNewSession();
 
-        final List<OCFLVersion> versions = session3.listVersions();
+        final List<OcflVersion> versions = session3.listVersions();
         session3.close();
 
         assertEquals("First version in list is not \"v1\"", "v1", versions.get(0).getOcflVersionId());
@@ -670,7 +670,7 @@ public class DefaultOCFLObjectSessionTest {
 
         final var session3 = makeNewSession();
 
-        final List<OCFLVersion> versions = session3.listVersions();
+        final List<OcflVersion> versions = session3.listVersions();
         session3.close();
 
         assertEquals("First version in list is not \"v1\"", "v2", versions.get(0).getOcflVersionId());
@@ -697,22 +697,22 @@ public class DefaultOCFLObjectSessionTest {
 
         final var session3 = makeNewSession();
 
-        final List<OCFLVersion> file1Versions = session3.listVersions(FILE1_SUBPATH);
-        final List<OCFLVersion> file2Versions = session3.listVersions(FILE2_SUBPATH);
-        final List<OCFLVersion> allVersions = session3.listVersions(null);
+        final List<OcflVersion> file1Versions = session3.listVersions(FILE1_SUBPATH);
+        final List<OcflVersion> file2Versions = session3.listVersions(FILE2_SUBPATH);
+        final List<OcflVersion> allVersions = session3.listVersions(null);
 
         session3.close();
 
         assertThat(file1Versions.stream()
-                .map(OCFLVersion::getOcflVersionId)
+                .map(OcflVersion::getOcflVersionId)
                 .collect(Collectors.toList()), contains("v1"));
 
         assertThat(file2Versions.stream()
-                .map(OCFLVersion::getOcflVersionId)
+                .map(OcflVersion::getOcflVersionId)
                 .collect(Collectors.toList()), contains("v1", "v2"));
 
         assertThat(allVersions.stream()
-                .map(OCFLVersion::getOcflVersionId)
+                .map(OcflVersion::getOcflVersionId)
                 .collect(Collectors.toList()), contains("v1", "v2", "v3"));
     }
 
@@ -736,22 +736,22 @@ public class DefaultOCFLObjectSessionTest {
 
         final var session3 = makeNewSession();
 
-        final List<OCFLVersion> file1Versions = session3.listVersions(FILE1_SUBPATH);
-        final List<OCFLVersion> file2Versions = session3.listVersions(FILE2_SUBPATH);
-        final List<OCFLVersion> allVersions = session3.listVersions(null);
+        final List<OcflVersion> file1Versions = session3.listVersions(FILE1_SUBPATH);
+        final List<OcflVersion> file2Versions = session3.listVersions(FILE2_SUBPATH);
+        final List<OcflVersion> allVersions = session3.listVersions(null);
 
         session3.close();
 
         assertThat(file1Versions.stream()
-                .map(OCFLVersion::getOcflVersionId)
+                .map(OcflVersion::getOcflVersionId)
                 .collect(Collectors.toList()), contains("v1"));
 
         assertThat(file2Versions.stream()
-                .map(OCFLVersion::getOcflVersionId)
+                .map(OcflVersion::getOcflVersionId)
                 .collect(Collectors.toList()), contains("v1"));
 
         assertThat(allVersions.stream()
-                .map(OCFLVersion::getOcflVersionId)
+                .map(OcflVersion::getOcflVersionId)
                 .collect(Collectors.toList()), contains("v1"));
     }
 
@@ -797,8 +797,8 @@ public class DefaultOCFLObjectSessionTest {
     public void ensureFilesDontStageTogether() throws Exception {
         final String obj1ID = UUID.randomUUID().toString();
         final String obj2ID = UUID.randomUUID().toString();
-        final var session1 = new DefaultOCFLObjectSession(obj1ID, stagingPath, ocflRepository, UNVERSIONED);
-        final var session2 = new DefaultOCFLObjectSession(obj2ID, tempFolder.newFolder(obj2ID).toPath(),
+        final var session1 = new DefaultOcflObjectSession(obj1ID, stagingPath, ocflRepository, UNVERSIONED);
+        final var session2 = new DefaultOcflObjectSession(obj2ID, tempFolder.newFolder(obj2ID).toPath(),
                 ocflRepository, UNVERSIONED);
         session1.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
         session2.write(FILE2_SUBPATH, fileStream(FILE_CONTENT2));
@@ -869,7 +869,7 @@ public class DefaultOCFLObjectSessionTest {
         return commit(session, option);
     }
 
-    private String commit(final DefaultOCFLObjectSession session, final CommitOption option)
+    private String commit(final DefaultOcflObjectSession session, final CommitOption option)
             throws PersistentStorageException {
         session.setCommitOption(option);
         return session.commit();

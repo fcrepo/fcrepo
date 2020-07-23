@@ -17,14 +17,14 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import org.fcrepo.persistence.ocfl.api.OCFLVersion;
+import org.fcrepo.persistence.ocfl.api.OcflVersion;
 
 import java.time.Instant;
 
 /**
- * Default OCFLVersion impl
+ * Default OcflVersion impl
  */
-public class OCFLVersionImpl implements OCFLVersion {
+public class OcflVersionImpl implements OcflVersion {
 
     private String ocflObjectId;
     private String ocflVersionId;
@@ -43,7 +43,7 @@ public class OCFLVersionImpl implements OCFLVersion {
      * @param ocflObjectId OCFL object id
      * @return this object for chaining
      */
-    public OCFLVersionImpl setOcflObjectId(final String ocflObjectId) {
+    public OcflVersionImpl setOcflObjectId(final String ocflObjectId) {
         this.ocflObjectId = ocflObjectId;
         return this;
     }
@@ -60,7 +60,7 @@ public class OCFLVersionImpl implements OCFLVersion {
      * @param ocflVersionId OCFL version id
      * @return this object for chaining
      */
-    public OCFLVersionImpl setOcflVersionId(final String ocflVersionId) {
+    public OcflVersionImpl setOcflVersionId(final String ocflVersionId) {
         this.ocflVersionId = ocflVersionId;
         return this;
     }
@@ -77,7 +77,7 @@ public class OCFLVersionImpl implements OCFLVersion {
      * @param created Instant version was created
      * @return this object for chaining
      */
-    public OCFLVersionImpl setCreated(final Instant created) {
+    public OcflVersionImpl setCreated(final Instant created) {
         this.created = created;
         return this;
     }
@@ -94,7 +94,7 @@ public class OCFLVersionImpl implements OCFLVersion {
      * @param createdBy who created the version
      * @return this object for chaining
      */
-    public OCFLVersionImpl setCreatedBy(final String createdBy) {
+    public OcflVersionImpl setCreatedBy(final String createdBy) {
         this.createdBy = createdBy;
         return this;
     }

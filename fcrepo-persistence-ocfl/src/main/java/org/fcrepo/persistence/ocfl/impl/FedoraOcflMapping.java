@@ -26,7 +26,7 @@ import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToStrin
  *
  * @author dbernstein
  */
-public class FedoraOCFLMapping {
+public class FedoraOcflMapping {
     private String rootObjectIdentifier;
     private String ocflObjectId;
 
@@ -35,7 +35,7 @@ public class FedoraOCFLMapping {
      * @param rootObjectIdentifier The fedora root object resource identifier
      * @param ocflObjectId The OCFL Object identitifer
      */
-    public FedoraOCFLMapping(final String rootObjectIdentifier, final String ocflObjectId){
+    public FedoraOcflMapping(final String rootObjectIdentifier, final String ocflObjectId){
         this.rootObjectIdentifier = rootObjectIdentifier;
         this.ocflObjectId = ocflObjectId;
     }
@@ -69,7 +69,7 @@ public class FedoraOCFLMapping {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final FedoraOCFLMapping that = (FedoraOCFLMapping) o;
+        final FedoraOcflMapping that = (FedoraOcflMapping) o;
         return rootObjectIdentifier.equals(that.rootObjectIdentifier) &&
                 ocflObjectId.equals(that.ocflObjectId);
     }

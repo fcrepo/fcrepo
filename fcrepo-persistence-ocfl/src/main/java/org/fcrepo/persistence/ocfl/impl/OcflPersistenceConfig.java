@@ -15,35 +15,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.persistence.ocfl.api;
+package org.fcrepo.persistence.ocfl.impl;
 
+import edu.wisc.library.ocfl.api.MutableOcflRepository;
+import org.fcrepo.config.OcflPropsConfig;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import javax.inject.Inject;
+
+import java.io.IOException;
+
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createRepository;
 
 /**
- * Indicates the fedora identifier was not found in the index.
+ * A Configuration for OCFL dependencies
  *
  * @author dbernstein
-
+ * @since 6.0.0
  */
-public class FedoraOCFLMappingNotFoundException extends Exception {
 
-    private static final long serialVersionUID = 1L;
+@Configuration
+public class OcflPersistenceConfig {
 
-    /**
-     * Ordinary constructor
-     *
-     * @param msg the message
-     */
-    public FedoraOCFLMappingNotFoundException(final String msg) {
-        super(msg);
-    }
+    @Inject
+    private OcflPropsConfig ocflPropsConfig;
 
     /**
-     * Constructor for wrapping exception.
-     *
-     * @param exception the original exception.
+     * Create an OCFL Repository
+     * @return the repository
      */
-    public FedoraOCFLMappingNotFoundException(final Throwable exception) {
-        super(exception);
+    @Bean
+    public MutableOcflRepository repository() throws IOException {
+        return createRepository(ocflPropsConfig.getOcflRepoRoot(), ocflPropsConfig.getOcflTemp());
     }
 
 }

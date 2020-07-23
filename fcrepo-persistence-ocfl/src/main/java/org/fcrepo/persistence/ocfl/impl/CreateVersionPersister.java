@@ -42,7 +42,7 @@ public class CreateVersionPersister extends AbstractPersister {
     }
 
     @Override
-    public void persist(final OCFLPersistentStorageSession session, final ResourceOperation operation)
+    public void persist(final OcflPersistentStorageSession session, final ResourceOperation operation)
             throws PersistentStorageException {
 
         final var resourceId = operation.getResourceId();

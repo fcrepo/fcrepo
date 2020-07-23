@@ -19,7 +19,7 @@ package org.fcrepo.persistence.ocfl.api;
 
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageSession;
+import org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageSession;
 
 /**
  * @author dbernstein
@@ -41,7 +41,7 @@ public interface Persister {
      * @param operation The operation and associated data need to perform the operation.
      * @throws PersistentStorageException on failure
      */
-    void persist(final OCFLPersistentStorageSession session,
+    void persist(final OcflPersistentStorageSession session,
             final ResourceOperation operation)
             throws PersistentStorageException;
 }

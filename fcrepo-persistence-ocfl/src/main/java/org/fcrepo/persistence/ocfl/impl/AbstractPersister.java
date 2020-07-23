@@ -24,16 +24,16 @@ import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
+import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
+import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
 import org.fcrepo.persistence.ocfl.api.Persister;
 
 import java.util.Optional;
 
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.serializeHeaders;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getSidecarSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.getSidecarSubpath;
 
 /**
  * A base abstract persister class
@@ -71,8 +71,8 @@ abstract class AbstractPersister implements Persister {
      * @param subpath The subpath of the resource whose headers you are writing
      * @throws PersistentStorageException
      */
-    protected static void writeHeaders(final OCFLObjectSession session, final ResourceHeaders headers,
-            final String subpath) throws PersistentStorageException {
+    protected static void writeHeaders(final OcflObjectSession session, final ResourceHeaders headers,
+                                       final String subpath) throws PersistentStorageException {
         final var headerStream = serializeHeaders(headers);
         session.write(getSidecarSubpath(subpath), headerStream);
     }
@@ -84,7 +84,7 @@ abstract class AbstractPersister implements Persister {
      * @return The resource's headers object
      * @throws PersistentStorageException
      */
-    protected static ResourceHeaders readHeaders(final OCFLObjectSession objSession, final String subpath)
+    protected static ResourceHeaders readHeaders(final OcflObjectSession objSession, final String subpath)
             throws PersistentStorageException {
         final var headerStream = objSession.read(getSidecarSubpath(subpath));
         return deserializeHeaders(headerStream);
@@ -102,11 +102,11 @@ abstract class AbstractPersister implements Persister {
      * @return The associated mapping
      * @throws PersistentStorageException When no mapping is found.
      */
-    protected FedoraOCFLMapping getMapping(final String transactionId, final String resourceId)
+    protected FedoraOcflMapping getMapping(final String transactionId, final String resourceId)
             throws PersistentStorageException {
         try {
             return this.index.getMapping(transactionId, resourceId);
-        } catch (final FedoraOCFLMappingNotFoundException e){
+        } catch (final FedoraOcflMappingNotFoundException e){
             throw new PersistentStorageException(e.getMessage());
         }
     }
@@ -118,13 +118,13 @@ abstract class AbstractPersister implements Persister {
      * @return The fedora root object identifier associated with the resource described by the operation.
      */
     protected FedoraId resolveRootObjectId(final FedoraId fedoraId,
-                                       final OCFLPersistentStorageSession session) {
+                                       final OcflPersistentStorageSession session) {
         final var archivalGroupId = findArchivalGroupInAncestry(fedoraId, session);
         return archivalGroupId.orElseGet(() -> FedoraId.create(fedoraId.getBaseId()));
     }
 
     protected Optional<FedoraId> findArchivalGroupInAncestry(final FedoraId fedoraId,
-                                                             final OCFLPersistentStorageSession session) {
+                                                             final OcflPersistentStorageSession session) {
             if (fedoraId.isRepositoryRoot()) {
                 return Optional.empty();
             }
@@ -158,7 +158,7 @@ abstract class AbstractPersister implements Persister {
         try {
             final var mapping = index.getMapping(sessionId, fedoraId.getBaseId());
             return mapping.getOcflObjectId();
-        } catch (final FedoraOCFLMappingNotFoundException e) {
+        } catch (final FedoraOcflMappingNotFoundException e) {
             // If the a mapping doesn't already exist, use a one-to-one Fedora ID to OCFL ID mapping
             return fedoraId.getBaseId();
         }

@@ -70,7 +70,7 @@ public class RebuildIT extends AbstractResourceIT {
      * The test verifies that these objects exist in the rebuilt repository.
      */
     @Test
-    public void testRebuildOCFL() {
+    public void testRebuildOcfl() {
 
         // Optional debugging
         if (LOGGER.isDebugEnabled()) {

@@ -24,7 +24,7 @@ import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentItemConflictException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
+import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,20 +36,20 @@ import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
  * @author dbernstein
  * @since 6.0.0
  */
-class CreateRDFSourcePersister extends AbstractRDFSourcePersister {
+class CreateRdfSourcePersister extends AbstractRdfSourcePersister {
 
-    private static final Logger log = LoggerFactory.getLogger(CreateRDFSourcePersister.class);
+    private static final Logger log = LoggerFactory.getLogger(CreateRdfSourcePersister.class);
 
     /**
      * Constructor
      * @param index The FedoraToOCFLObjectIndex
      */
-    protected CreateRDFSourcePersister(final FedoraToOcflObjectIndex index) {
+    protected CreateRdfSourcePersister(final FedoraToOcflObjectIndex index) {
         super(RdfSourceOperation.class, CREATE, index);
     }
 
     @Override
-    public void persist(final OCFLPersistentStorageSession session, final ResourceOperation operation)
+    public void persist(final OcflPersistentStorageSession session, final ResourceOperation operation)
             throws PersistentStorageException {
 
         final var resourceId = operation.getResourceId();
@@ -72,7 +72,7 @@ class CreateRDFSourcePersister extends AbstractRDFSourcePersister {
         }
 
         final String ocflObjectId = mapToOcflId(session.getId(), rootObjectId);
-        final OCFLObjectSession ocflObjectSession = session.findOrCreateSession(ocflObjectId);
+        final OcflObjectSession ocflObjectSession = session.findOrCreateSession(ocflObjectId);
         persistRDF(ocflObjectSession, operation, rootObjectId.getBaseId());
         index.addMapping(session.getId(), resourceId, rootObjectId.getBaseId(), ocflObjectId);
     }

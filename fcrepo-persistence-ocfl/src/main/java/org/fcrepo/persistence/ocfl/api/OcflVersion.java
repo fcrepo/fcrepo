@@ -17,13 +17,31 @@
  */
 package org.fcrepo.persistence.ocfl.api;
 
-/**
- * OCFL Persistence layer constants
- *
- * @author dbernstein
- */
-public class OCFLPersistenceConstants {
-    public static final String DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID = "_fedora_repository_root";
+import java.time.Instant;
 
-    private OCFLPersistenceConstants () {}
+/**
+ * Contains details about an OCFL version
+ */
+public interface OcflVersion {
+
+    /**
+     * @return the OFCL object id
+     */
+    String getOcflObjectId();
+
+    /**
+     * @return the OCFL version id
+     */
+    String getOcflVersionId();
+
+    /**
+     * @return the instant, second granularity, the version was created
+     */
+    Instant getCreated();
+
+    /**
+     * @return who created the version; may be null
+     */
+    String getCreatedBy();
+
 }

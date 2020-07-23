@@ -28,8 +28,8 @@ import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.ser
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.newResourceHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchCreationHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchModificationHeaders;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getInternalFedoraDirectory;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.getRDFFileExtension;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.getInternalFedoraDirectory;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.getRDFFileExtension;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -56,7 +56,7 @@ import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
+import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -84,16 +84,16 @@ public class UpdateRDFSourcePersisterTest {
     private RdfSourceOperation operation;
 
     @Mock
-    private OCFLObjectSession session;
+    private OcflObjectSession session;
 
     @Mock
-    private FedoraOCFLMapping mapping;
+    private FedoraOcflMapping mapping;
 
     @Mock
     private FedoraToOcflObjectIndex index;
 
     @Mock
-    private OCFLPersistentStorageSession psSession;
+    private OcflPersistentStorageSession psSession;
 
     @Mock
     private WriteOutcome writeOutcome;
@@ -104,7 +104,7 @@ public class UpdateRDFSourcePersisterTest {
     @Captor
     private ArgumentCaptor<InputStream> headersIsCaptor;
 
-    private UpdateRDFSourcePersister persister;
+    private UpdateRdfSourcePersister persister;
 
     private static final String SESSION_ID = "SOME-SESSION-ID";
 
@@ -118,7 +118,7 @@ public class UpdateRDFSourcePersisterTest {
         when(index.getMapping(eq(SESSION_ID), anyString())).thenReturn(mapping);
         when(operation.getType()).thenReturn(UPDATE);
 
-        persister = new UpdateRDFSourcePersister(this.index);
+        persister = new UpdateRdfSourcePersister(this.index);
     }
 
     @Test

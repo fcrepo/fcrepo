@@ -20,8 +20,8 @@ package org.fcrepo.persistence.ocfl.impl;
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.fcrepo.persistence.api.CommitOption;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
+import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
+import org.fcrepo.persistence.ocfl.api.OcflObjectSessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,15 +37,15 @@ import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
 import static org.fcrepo.persistence.api.CommitOption.UNVERSIONED;
 
 /**
- * A default implemenntation of the {@link org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory} interface.
+ * A default implemenntation of the {@link OcflObjectSessionFactory} interface.
  *
  * @author dbernstein
  * @since 6.0.0
  */
 @Component
-public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory {
+public class DefaultOcflObjectSessionFactory implements OcflObjectSessionFactory {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultOCFLObjectSessionFactory.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultOcflObjectSessionFactory.class);
 
     /**
      * Controls whether changes are committed to new OCFL versions or to a mutable HEAD
@@ -57,9 +57,9 @@ public class DefaultOCFLObjectSessionFactory implements OCFLObjectSessionFactory
     private MutableOcflRepository ocflRepository;
 
     @Override
-    public OCFLObjectSession create(final String ocflId,
+    public OcflObjectSession create(final String ocflId,
                                     final Path sessionStagingDir) {
-        return new DefaultOCFLObjectSession(ocflId, createStagingDir(sessionStagingDir, ocflId),
+        return new DefaultOcflObjectSession(ocflId, createStagingDir(sessionStagingDir, ocflId),
                 this.ocflRepository, defaultCommitOption());
     }
 

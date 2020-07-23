@@ -21,7 +21,7 @@ package org.fcrepo.persistence.ocfl.impl;
 import com.google.common.base.Preconditions;
 import org.fcrepo.common.db.DbPlatform;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
+import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -181,7 +181,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     /*
      * Row mapper for the Lookup queries.
      */
-    private static final RowMapper<FedoraOCFLMapping> GET_MAPPING_ROW_MAPPER = (resultSet, i) -> new FedoraOCFLMapping(
+    private static final RowMapper<FedoraOcflMapping> GET_MAPPING_ROW_MAPPER = (resultSet, i) -> new FedoraOcflMapping(
             resultSet.getString(1),
             resultSet.getString(2)
     );
@@ -219,8 +219,8 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     }
 
     @Override
-    public FedoraOCFLMapping getMapping(final String transactionId, final String fedoraId)
-            throws FedoraOCFLMappingNotFoundException {
+    public FedoraOcflMapping getMapping(final String transactionId, final String fedoraId)
+            throws FedoraOcflMappingNotFoundException {
         try {
             final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
             parameterSource.addValue("fedoraId", fedoraId);
@@ -232,15 +232,15 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
                 return jdbcTemplate.queryForObject(LOOKUP_MAPPING, parameterSource, GET_MAPPING_ROW_MAPPER);
             }
         } catch (final EmptyResultDataAccessException e) {
-            throw new FedoraOCFLMappingNotFoundException("No OCFL mapping found for " + fedoraId);
+            throw new FedoraOcflMappingNotFoundException("No OCFL mapping found for " + fedoraId);
         }
     }
 
     @Override
-    public FedoraOCFLMapping addMapping(@Nonnull final String transactionId, final String fedoraId,
+    public FedoraOcflMapping addMapping(@Nonnull final String transactionId, final String fedoraId,
                                         final String fedoraRootId, final String ocflId) {
         upsert(transactionId, fedoraId, "add", fedoraRootId, ocflId);
-        return new FedoraOCFLMapping(fedoraRootId, ocflId);
+        return new FedoraOcflMapping(fedoraRootId, ocflId);
     }
 
     @Override

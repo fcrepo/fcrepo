@@ -122,7 +122,7 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.DC;
 import org.apache.jena.vocabulary.RDF;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
-import org.fcrepo.persistence.ocfl.impl.DefaultOCFLObjectSessionFactory;
+import org.fcrepo.persistence.ocfl.impl.DefaultOcflObjectSessionFactory;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -157,13 +157,13 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     @Rule
     public TemporaryFolder tmpDir = new TemporaryFolder();
 
-    private DefaultOCFLObjectSessionFactory objectSessionFactory;
+    private DefaultOcflObjectSessionFactory objectSessionFactory;
 
     @Before
     public void init() {
         id = getRandomUniqueId();
         subjectUri = serverAddress + id;
-        objectSessionFactory = getBean(DefaultOCFLObjectSessionFactory.class);
+        objectSessionFactory = getBean(DefaultOcflObjectSessionFactory.class);
     }
 
     @Ignore //TODO Fix this test

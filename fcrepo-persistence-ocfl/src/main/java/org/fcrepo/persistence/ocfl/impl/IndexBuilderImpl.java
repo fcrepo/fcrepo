@@ -23,11 +23,11 @@ import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.ocfl.api.FedoraOCFLMappingNotFoundException;
+import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.IndexBuilder;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSessionFactory;
+import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
+import org.fcrepo.persistence.ocfl.api.OcflObjectSessionFactory;
 import org.fcrepo.search.api.SearchIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.lang.String.format;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.isSidecarSubpath;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.isSidecarSubpath;
 
 /**
  * An implementation of {@link IndexBuilder}.  This implementation rebuilds the following indexable state derived
@@ -63,10 +63,10 @@ public class IndexBuilderImpl implements IndexBuilder {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexBuilderImpl.class);
 
     @Inject
-    private OCFLObjectSessionFactory objectSessionFactory;
+    private OcflObjectSessionFactory objectSessionFactory;
 
     @Inject
-    private FedoraToOcflObjectIndex fedoraToOCFLObjectIndex;
+    private FedoraToOcflObjectIndex fedoraToOcflObjectIndex;
 
     @Inject
     private ContainmentIndex containmentIndex;
@@ -92,7 +92,7 @@ public class IndexBuilderImpl implements IndexBuilder {
     private void rebuild() {
         LOGGER.info("Initiating index rebuild.");
 
-        fedoraToOCFLObjectIndex.reset();
+        fedoraToOcflObjectIndex.reset();
         containmentIndex.reset();
         searchIndex.reset();
 
@@ -112,7 +112,7 @@ public class IndexBuilderImpl implements IndexBuilder {
             }
 
             containmentIndex.commitTransaction(txId);
-            fedoraToOCFLObjectIndex.commit(txId);
+            fedoraToOcflObjectIndex.commit(txId);
             LOGGER.info("Index rebuild complete");
         } catch (RuntimeException e) {
             execQuietly("Failed to rollback containment index transaction " +txId, () -> {
@@ -120,7 +120,7 @@ public class IndexBuilderImpl implements IndexBuilder {
                 return null;
             });
             execQuietly("Failed to rollback OCFL index transaction " +txId, () -> {
-                fedoraToOCFLObjectIndex.rollback(txId);
+                fedoraToOcflObjectIndex.rollback(txId);
                 return null;
             });
             throw e;
@@ -129,7 +129,7 @@ public class IndexBuilderImpl implements IndexBuilder {
         }
     }
 
-    private void indexOcflObject(final String ocflId, final String txId, final OCFLObjectSession session) {
+    private void indexOcflObject(final String ocflId, final String txId, final OcflObjectSession session) {
         try (final var subpaths = session.listHeadSubpaths()) {
             final var rootId = new AtomicReference<String>();
             final var fedoraIds = new ArrayList<String>();
@@ -179,7 +179,7 @@ public class IndexBuilderImpl implements IndexBuilder {
                 if (rootFedoraIdentifier == null) {
                     rootFedoraIdentifier = fedoraIdentifier;
                 }
-                fedoraToOCFLObjectIndex.addMapping(txId, fedoraIdentifier, rootFedoraIdentifier, ocflId);
+                fedoraToOcflObjectIndex.addMapping(txId, fedoraIdentifier, rootFedoraIdentifier, ocflId);
                 LOGGER.debug("Rebuilt fedora-to-ocfl object index entry for {}", fedoraIdentifier);
             });
         } catch (final PersistentStorageException e) {
@@ -199,8 +199,8 @@ public class IndexBuilderImpl implements IndexBuilder {
 
     private boolean repoRootMappingExists() {
         try {
-            return fedoraToOCFLObjectIndex.getMapping(null, FedoraId.getRepositoryRootId().getFullId()) != null;
-        } catch (final FedoraOCFLMappingNotFoundException e) {
+            return fedoraToOcflObjectIndex.getMapping(null, FedoraId.getRepositoryRootId().getFullId()) != null;
+        } catch (final FedoraOcflMappingNotFoundException e) {
             return false;
         }
     }

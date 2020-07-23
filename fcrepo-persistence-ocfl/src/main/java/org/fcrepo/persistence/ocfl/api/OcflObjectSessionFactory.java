@@ -15,39 +15,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.persistence.ocfl.impl;
+package org.fcrepo.persistence.ocfl.api;
 
-import edu.wisc.library.ocfl.api.MutableOcflRepository;
-import org.fcrepo.config.OcflPropsConfig;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
-import javax.inject.Inject;
-
-import java.io.IOException;
-
-import static org.fcrepo.persistence.ocfl.impl.OCFLPersistentStorageUtils.createRepository;
+import java.nio.file.Path;
 
 /**
- * A Configuration for OCFL dependencies
- *
+ * A factory interface for creating {@link OcflObjectSession}.
  * @author dbernstein
  * @since 6.0.0
  */
-
-@Configuration
-public class OCFLPersistenceConfig {
-
-    @Inject
-    private OcflPropsConfig ocflPropsConfig;
+public interface OcflObjectSessionFactory {
 
     /**
-     * Create an OCFL Repository
-     * @return the repository
+     * Create new session.
+     * @param ocflId The OCFL Object identifier
+     * @param sessionStagingDir path to the staging directory for the storage session
+     * @return The newly created session.
      */
-    @Bean
-    public MutableOcflRepository repository() throws IOException {
-        return createRepository(ocflPropsConfig.getOcflRepoRoot(), ocflPropsConfig.getOcflTemp());
-    }
+    OcflObjectSession create(final String ocflId, final Path sessionStagingDir);
 
 }

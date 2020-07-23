@@ -25,7 +25,7 @@ import org.fcrepo.persistence.api.exceptions.PersistentItemConflictException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
+import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,7 +43,7 @@ public class CreateVersionPersisterTest {
     private FedoraToOcflObjectIndex index;
 
     @Mock
-    private OCFLPersistentStorageSession session;
+    private OcflPersistentStorageSession session;
 
     @Before
     public void setup() {
@@ -103,9 +103,9 @@ public class CreateVersionPersisterTest {
         when(session.getHeaders(resourceId, null)).thenReturn(headers);
     }
 
-    private OCFLObjectSession addMapping(final String resourceId, final String ocflId) {
+    private OcflObjectSession addMapping(final String resourceId, final String ocflId) {
         index.addMapping("not-used", resourceId, resourceId, ocflId);
-        final var objectSession = mock(OCFLObjectSession.class);
+        final var objectSession = mock(OcflObjectSession.class);
         when(session.findOrCreateSession(ocflId)).thenReturn(objectSession);
         return objectSession;
     }
