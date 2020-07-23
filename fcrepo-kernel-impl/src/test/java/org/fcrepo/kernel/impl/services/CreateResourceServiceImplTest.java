@@ -148,7 +148,7 @@ public class CreateResourceServiceImplTest {
 
     private static final String CONTENT_TYPE = "text/html";
 
-    private static final Long CONTENT_SIZE = 100l;
+    private static final Long CONTENT_SIZE = 100L;
 
     private static final String EXTERNAL_URL = "http://example.org/rest/object";
 
@@ -200,7 +200,7 @@ public class CreateResourceServiceImplTest {
     public void testNoParentRdf() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("child");
-        when(psSession.getHeaders(fedoraId.getFullId(), null)).thenThrow(PersistentItemNotFoundException.class);
+        when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
         createResourceService.perform(TX_ID, USER_PRINCIPAL, childId, null, model);
     }
 
@@ -213,7 +213,7 @@ public class CreateResourceServiceImplTest {
         final FedoraId childId = fedoraId.resolve("child");
         containmentIndex.addContainedBy(TX_ID, rootId, fedoraId);
         when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
-        when(psSession.getHeaders(fedoraId.getFullId(), null)).thenReturn(resourceHeaders);
+        when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         createResourceService.perform(TX_ID, USER_PRINCIPAL, childId, null, model);
     }
 
@@ -226,7 +226,7 @@ public class CreateResourceServiceImplTest {
         final FedoraId childId = fedoraId.resolve("child");
         containmentIndex.addContainedBy(TX_ID, rootId, fedoraId);
         when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
-        when(psSession.getHeaders(fedoraId.getFullId(), null)).thenReturn(resourceHeaders);
+        when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         createResourceService.perform(TX_ID, USER_PRINCIPAL, childId, null, FILENAME, CONTENT_SIZE, null,
                 DIGESTS, null, null);
     }
@@ -241,7 +241,7 @@ public class CreateResourceServiceImplTest {
         final FedoraId childId = fedoraId.resolve("child");
         containmentIndex.addContainedBy(TX_ID, rootId, fedoraId);
         when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
-        when(psSession.getHeaders(fedoraId.getFullId(), null)).thenReturn(resourceHeaders);
+        when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         createResourceService.perform(TX_ID, USER_PRINCIPAL, childId, null, FILENAME, CONTENT_SIZE, null,
                 DIGESTS, null, extContent);
     }
@@ -254,14 +254,14 @@ public class CreateResourceServiceImplTest {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("child");
         containmentIndex.addContainedBy(TX_ID, rootId, fedoraId);
-        when(psSession.getHeaders(fedoraId.getFullId(), null)).thenReturn(resourceHeaders);
+        when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         createResourceService.perform(TX_ID, USER_PRINCIPAL, childId, null, model);
         cleanupList.add(fedoraId);
         verify(psSession).persist(operationCaptor.capture());
-        final String persistedId = operationCaptor.getValue().getResourceId();
+        final FedoraId persistedId = operationCaptor.getValue().getResourceId();
         assertNotEquals(fedoraId, persistedId);
-        assertTrue(persistedId.startsWith(fedoraId.getFullId()));
+        assertTrue(persistedId.getFullId().startsWith(fedoraId.getFullId()));
         when(fedoraResource.getFedoraId()).thenReturn(fedoraId);
         assertEquals(1, containmentIndex.getContains(transaction.getId(), fedoraResource).count());
     }
@@ -274,7 +274,7 @@ public class CreateResourceServiceImplTest {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("child");
         containmentIndex.addContainedBy(TX_ID, rootId, fedoraId);
-        when(psSession.getHeaders(fedoraId.getFullId(), null)).thenReturn(resourceHeaders);
+        when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         createResourceService.perform(TX_ID, USER_PRINCIPAL, childId, CONTENT_TYPE,
                 FILENAME, CONTENT_SIZE, null, DIGESTS, null, null);
@@ -282,11 +282,11 @@ public class CreateResourceServiceImplTest {
         verify(psSession, times(2)).persist(operationCaptor.capture());
         final List<ResourceOperation> operations = operationCaptor.getAllValues();
         final var operation = getOperation(operations, CreateNonRdfSourceOperation.class);
-        final String persistedId = operation.getResourceId();
+        final FedoraId persistedId = operation.getResourceId();
         assertNotEquals(fedoraId, persistedId);
-        assertTrue(persistedId.startsWith(fedoraId.getFullId()));
+        assertTrue(persistedId.getFullId().startsWith(fedoraId.getFullId()));
         assertBinaryPropertiesPresent(operation);
-        assertEquals(fedoraId.getFullId(), operation.getParentId());
+        assertEquals(fedoraId, operation.getParentId());
         when(fedoraResource.getFedoraId()).thenReturn(fedoraId);
         assertEquals(1, containmentIndex.getContains(transaction.getId(), fedoraResource).count());
     }
@@ -309,8 +309,8 @@ public class CreateResourceServiceImplTest {
         resc.addLiteral(CREATED_DATE, Date.from(createdDate));
         resc.addLiteral(CREATED_BY, relaxedUser);
 
-        when(psSession.getHeaders(fedoraId.getFullId(), null)).thenReturn(resourceHeaders);
-        when(psSession.getHeaders(childId.getFullId(), null)).thenThrow(PersistentItemNotFoundException.class);
+        when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
+        when(psSession.getHeaders(childId, null)).thenThrow(PersistentItemNotFoundException.class);
 
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         try {
@@ -324,10 +324,10 @@ public class CreateResourceServiceImplTest {
         verify(psSession).persist(operationCaptor.capture());
 
         final var operation = operationCaptor.getValue();
-        final String persistedId = operation.getResourceId();
+        final FedoraId persistedId = operation.getResourceId();
         assertNotEquals(fedoraId, persistedId);
-        assertTrue(persistedId.startsWith(fedoraId.getFullId()));
-        assertEquals(persistedId, childId.getFullId());
+        assertTrue(persistedId.getFullId().startsWith(fedoraId.getFullId()));
+        assertEquals(persistedId, childId);
 
         final var rdfOp = (RdfSourceOperation) operation;
         assertEquals(relaxedUser, rdfOp.getCreatedBy());
@@ -348,8 +348,8 @@ public class CreateResourceServiceImplTest {
         final FedoraId childId = fedoraId.resolve("testSlug");
         containmentIndex.addContainedBy(TX_ID, fedoraId, childId);
         containmentIndex.commitTransaction(transaction.getId());
-        when(psSession.getHeaders(fedoraId.getFullId(), null)).thenReturn(resourceHeaders);
-        when(psSession.getHeaders(childId.getFullId(), null)).thenReturn(resourceHeaders);
+        when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
+        when(psSession.getHeaders(childId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         createResourceService.perform(TX_ID, USER_PRINCIPAL, childId,
                 CONTENT_TYPE, FILENAME, CONTENT_SIZE, null, DIGESTS, null, null);
@@ -357,15 +357,15 @@ public class CreateResourceServiceImplTest {
         verify(psSession, times(2)).persist(operationCaptor.capture());
         final List<ResourceOperation> operations = operationCaptor.getAllValues();
         final var operation = getOperation(operations, CreateNonRdfSourceOperation.class);
-        final String persistedId = operation.getResourceId();
-        assertNotEquals(fedoraId.getFullId(), persistedId);
-        assertEquals(childId.getFullId(), persistedId);
-        assertTrue(persistedId.startsWith(fedoraId.getFullId()));
+        final FedoraId persistedId = operation.getResourceId();
+        assertNotEquals(fedoraId, persistedId);
+        assertEquals(childId, persistedId);
+        assertTrue(persistedId.getFullId().startsWith(fedoraId.getFullId()));
         assertBinaryPropertiesPresent(operation);
-        assertEquals(fedoraId.getFullId(), operation.getParentId());
+        assertEquals(fedoraId, operation.getParentId());
 
         final var descOperation = getOperation(operations, CreateRdfSourceOperation.class);
-        assertEquals(persistedId + "/fcr:metadata", descOperation.getResourceId());
+        assertEquals(persistedId.asDescription(), descOperation.getResourceId());
         when(fedoraResource.getFedoraId()).thenReturn(fedoraId);
         assertEquals(1, containmentIndex.getContains(transaction.getId(), fedoraResource).count());
     }

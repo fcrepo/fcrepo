@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 
 /**
@@ -29,16 +30,16 @@ public abstract class AbstractResourceOperation implements ResourceOperation {
     /**
      * The internal Fedora ID.
      */
-    private final String rescId;
+    private final FedoraId rescId;
 
     private String userPrincipal;
 
-    protected AbstractResourceOperation(final String rescId) {
+    protected AbstractResourceOperation(final FedoraId rescId) {
         this.rescId = rescId;
     }
 
     @Override
-    public String getResourceId() {
+    public FedoraId getResourceId() {
         return rescId;
     }
 

@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.impl.operations;
 
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateRdfSourceOperation;
 
 /**
@@ -27,7 +28,7 @@ import org.fcrepo.kernel.api.operations.CreateRdfSourceOperation;
  */
 public class CreateRdfSourceOperationImpl extends AbstractRdfSourceOperation implements CreateRdfSourceOperation {
 
-    private String parentId;
+    private FedoraId parentId;
 
     /**
      * The interaction model
@@ -43,7 +44,7 @@ public class CreateRdfSourceOperationImpl extends AbstractRdfSourceOperation imp
      * @param interactionModel interaction model for the resource
      * @param triples triples stream for the resource
      */
-    protected CreateRdfSourceOperationImpl(final String rescId, final String interactionModel,
+    protected CreateRdfSourceOperationImpl(final FedoraId rescId, final String interactionModel,
                                            final RdfStream triples) {
         super(rescId, triples);
         this.interactionModel = interactionModel;
@@ -60,14 +61,14 @@ public class CreateRdfSourceOperationImpl extends AbstractRdfSourceOperation imp
     }
 
     @Override
-    public String getParentId() {
+    public FedoraId getParentId() {
         return parentId;
     }
 
     /**
      * @param parentId the parentId to set
      */
-    public void setParentId(final String parentId) {
+    public void setParentId(final FedoraId parentId) {
         this.parentId = parentId;
     }
 

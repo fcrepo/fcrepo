@@ -20,6 +20,7 @@ package org.fcrepo.kernel.impl.operations;
 import static org.junit.Assert.assertEquals;
 
 import org.apache.commons.io.IOUtils;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
 import org.junit.Before;
@@ -36,12 +37,12 @@ public class NonRdfSourceOperationFactoryImplTest {
 
     private NonRdfSourceOperationFactory factory;
 
-    private String randomId;
+    private FedoraId randomId;
 
     @Before
     public void setUp() throws Exception {
         factory = new NonRdfSourceOperationFactoryImpl();
-        randomId = UUID.randomUUID().toString();
+        randomId = FedoraId.create(UUID.randomUUID().toString());
     }
 
     @Test

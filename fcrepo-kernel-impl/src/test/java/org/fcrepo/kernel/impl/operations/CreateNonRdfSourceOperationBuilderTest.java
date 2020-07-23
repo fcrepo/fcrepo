@@ -20,6 +20,7 @@ package org.fcrepo.kernel.impl.operations;
 import static org.junit.Assert.assertEquals;
 
 import org.apache.commons.io.IOUtils;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ExternalContent;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
@@ -39,7 +40,7 @@ public class CreateNonRdfSourceOperationBuilderTest {
 
     private NonRdfSourceOperationBuilder internalBuilder;
 
-    final String resourceId = "info:fedora/test-subject";
+    final FedoraId resourceId = FedoraId.create("info:fedora/test-subject");
 
     @Before
     public void setUp() throws Exception {

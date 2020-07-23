@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.api.operations;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+
 import java.net.URI;
 import java.util.Collection;
 
@@ -45,7 +47,7 @@ public interface CreateNonRdfSourceOperationBuilder extends NonRdfSourceOperatio
      * @param parentId parent internal identifier
      * @return the builder
      */
-    CreateNonRdfSourceOperationBuilder parentId(String parentId);
+    CreateNonRdfSourceOperationBuilder parentId(FedoraId parentId);
 
     @Override
     CreateNonRdfSourceOperationBuilder userPrincipal(String userPrincipal);

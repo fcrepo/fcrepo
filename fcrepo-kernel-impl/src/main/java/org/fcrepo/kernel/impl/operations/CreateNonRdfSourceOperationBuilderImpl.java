@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateNonRdfSourceOperationBuilder;
 
 import java.io.InputStream;
@@ -32,7 +33,7 @@ import java.util.Collection;
 public class CreateNonRdfSourceOperationBuilderImpl extends AbstractNonRdfSourceOperationBuilder
         implements CreateNonRdfSourceOperationBuilder {
 
-    private String parentId;
+    private FedoraId parentId;
 
     /**
      * Constructor for external binary.
@@ -41,7 +42,7 @@ public class CreateNonRdfSourceOperationBuilderImpl extends AbstractNonRdfSource
      * @param handling    the external content handling type.
      * @param externalUri the external content URI.
      */
-    protected CreateNonRdfSourceOperationBuilderImpl(final String rescId, final String handling,
+    protected CreateNonRdfSourceOperationBuilderImpl(final FedoraId rescId, final String handling,
             final URI externalUri) {
         super(rescId, handling, externalUri);
     }
@@ -52,7 +53,7 @@ public class CreateNonRdfSourceOperationBuilderImpl extends AbstractNonRdfSource
      * @param rescId the internal identifier.
      * @param stream the content stream.
      */
-    protected CreateNonRdfSourceOperationBuilderImpl(final String rescId, final InputStream stream) {
+    protected CreateNonRdfSourceOperationBuilderImpl(final FedoraId rescId, final InputStream stream) {
         super(rescId, stream);
     }
 
@@ -82,7 +83,7 @@ public class CreateNonRdfSourceOperationBuilderImpl extends AbstractNonRdfSource
     }
 
     @Override
-    public CreateNonRdfSourceOperationBuilder parentId(final String parentId) {
+    public CreateNonRdfSourceOperationBuilder parentId(final FedoraId parentId) {
         this.parentId = parentId;
         return this;
     }

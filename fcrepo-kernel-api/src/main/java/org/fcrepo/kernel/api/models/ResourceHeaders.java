@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.api.models;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
@@ -33,14 +35,14 @@ public interface ResourceHeaders {
      *
      * @return identifier for the resource.
      */
-    String getId();
+    FedoraId getId();
 
     /**
      * Get the identifier of the parent of the resource
      *
      * @return identifier of the parent
      */
-    String getParent();
+    FedoraId getParent();
 
     /**
      * Get the State Token value for the resource.

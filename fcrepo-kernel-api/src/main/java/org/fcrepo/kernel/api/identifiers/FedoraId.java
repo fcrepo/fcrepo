@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.api.identifiers;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.kernel.api.exception.InvalidMementoPathException;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
@@ -97,6 +99,7 @@ public class FedoraId {
      * @param additions One or more strings to build an ID.
      * @return The FedoraId.
      */
+    @JsonCreator
     public static FedoraId create(final String... additions) {
         return new FedoraId(idBuilder(additions));
     }
@@ -196,6 +199,15 @@ public class FedoraId {
     }
 
     /**
+     * Behaves the same as {@link #getResourceId()} except it returns a FedoraId rather than a String.
+     *
+     * @return the ID of the associated physical resource
+     */
+    public FedoraId asResourceId() {
+        return FedoraId.create(getResourceId());
+    }
+
+    /**
      * Returns the ID string for the base ID the Fedora ID describes. This value is the equivalent of the full ID
      * with all extensions removed.
      *
@@ -209,6 +221,15 @@ public class FedoraId {
      */
     public String getBaseId() {
         return baseId;
+    }
+
+    /**
+     * Behaves the same as {@link #getBaseId()} except it returns a FedoraId rather than a String.
+     *
+     * @return the ID of the associated base resource
+     */
+    public FedoraId asBaseId() {
+        return FedoraId.create(getBaseId());
     }
 
     /**
@@ -386,6 +407,7 @@ public class FedoraId {
         return getFullId().hashCode();
     }
 
+    @JsonValue
     @Override
     public String toString() {
         return getFullId();

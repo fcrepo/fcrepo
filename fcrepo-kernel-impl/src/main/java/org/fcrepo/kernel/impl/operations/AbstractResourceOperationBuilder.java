@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.ResourceOperationBuilder;
 
 /**
@@ -25,7 +26,7 @@ import org.fcrepo.kernel.api.operations.ResourceOperationBuilder;
  */
 abstract public class AbstractResourceOperationBuilder implements ResourceOperationBuilder {
 
-    protected String rescId;
+    protected FedoraId rescId;
 
     protected String userPrincipal;
 
@@ -33,7 +34,7 @@ abstract public class AbstractResourceOperationBuilder implements ResourceOperat
      * Constructor.
      * @param rescId the resource identifier.
      */
-    public AbstractResourceOperationBuilder(final String rescId) {
+    public AbstractResourceOperationBuilder(final FedoraId rescId) {
         this.rescId = rescId;
     }
 

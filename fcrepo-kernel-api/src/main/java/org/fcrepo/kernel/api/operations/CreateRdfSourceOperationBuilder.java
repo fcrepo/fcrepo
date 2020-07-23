@@ -19,6 +19,7 @@ package org.fcrepo.kernel.api.operations;
 
 import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 /**
  * @author bbpennel
@@ -44,7 +45,7 @@ public interface CreateRdfSourceOperationBuilder extends RdfSourceOperationBuild
      * @param parentId parent internal identifier
      * @return the builder
      */
-    CreateRdfSourceOperationBuilder parentId(String parentId);
+    CreateRdfSourceOperationBuilder parentId(FedoraId parentId);
 
     /**
      * Indicates that this resource should be created as an Archival Group

@@ -88,16 +88,16 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         final CreateNonRdfSourceOperationBuilder builder;
         String mimeType = contentType;
         if (externalContent == null) {
-            builder = nonRdfSourceOperationFactory.createInternalBinaryBuilder(fedoraId.getFullId(), requestBody);
+            builder = nonRdfSourceOperationFactory.createInternalBinaryBuilder(fedoraId, requestBody);
         } else {
-            builder = nonRdfSourceOperationFactory.createExternalBinaryBuilder(fedoraId.getFullId(),
+            builder = nonRdfSourceOperationFactory.createExternalBinaryBuilder(fedoraId,
                     externalContent.getHandling(), URI.create(externalContent.getURL()));
             if (externalContent.getContentType() != null) {
                 mimeType = externalContent.getContentType();
             }
         }
         final ResourceOperation createOp = builder
-                .parentId(parentId.getFullId())
+                .parentId(parentId)
                 .userPrincipal(userPrincipal)
                 .contentDigests(digest)
                 .mimeType(mimeType)
@@ -118,10 +118,10 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
             final FedoraId binaryId) {
         final var descId = binaryId.asDescription();
         final var createOp = rdfSourceOperationFactory.createBuilder(
-                    descId.getFullId(),
+                    descId,
                     FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI
                 ).userPrincipal(userPrincipal)
-                .parentId(binaryId.getFullId())
+                .parentId(binaryId)
                 .build();
         try {
             pSession.persist(createOp);
@@ -146,8 +146,8 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         final RdfStream stream = fromModel(model.getResource(fedoraId.getFullId()).asNode(), model);
 
         final RdfSourceOperation createOp = rdfSourceOperationFactory
-                .createBuilder(fedoraId.getFullId(),interactionModel)
-                .parentId(parentId.getFullId())
+                .createBuilder(fedoraId, interactionModel)
+                .parentId(parentId)
                 .triples(stream)
                 .relaxedProperties(model)
                 .archivalGroup(rdfTypes.contains(ARCHIVAL_GROUP.getURI()))
@@ -180,7 +180,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                 // Make sure the parent exists.
                 // TODO: object existence can be from the index, but we don't have interaction model. Should we add it?
                 final boolean parentExists = containmentIndex.resourceExists(txId, fedoraId);
-                parent = pSession.getHeaders(fedoraId.getResourceId(), null);
+                parent = pSession.getHeaders(fedoraId.asResourceId(), null);
             } catch (final PersistentItemNotFoundException exc) {
                 throw new ItemNotFoundException(String.format("Item %s was not found", fedoraId), exc);
             } catch (final PersistentStorageException exc) {

@@ -29,6 +29,7 @@ import java.net.URI;
 import java.util.Collection;
 
 import org.apache.commons.io.IOUtils;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
 import org.junit.Test;
@@ -38,13 +39,13 @@ import org.junit.Test;
  */
 public class UpdateNonRdfSourceOperationBuilderTest {
 
-    private final String RESOURCE_ID = "info:fedora/test-subject";
+    private final FedoraId RESOURCE_ID = FedoraId.create("info:fedora/test-subject");
 
     private final String MIME_TYPE = "text/plain";
 
     private final String FILENAME = "someFile.txt";
 
-    private final Long FILESIZE = 123l;
+    private final Long FILESIZE = 123L;
 
     private final Collection<URI> DIGESTS = asList(URI.create("urn:sha1:1234abcd"), URI.create("urn:md5:zyxw9876"));
 

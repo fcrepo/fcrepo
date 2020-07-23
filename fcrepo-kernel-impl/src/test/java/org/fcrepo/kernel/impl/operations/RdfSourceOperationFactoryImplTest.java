@@ -19,6 +19,7 @@ package org.fcrepo.kernel.impl.operations;
 
 import static org.junit.Assert.assertEquals;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.junit.Before;
@@ -32,13 +33,13 @@ import java.util.UUID;
 public class RdfSourceOperationFactoryImplTest {
 
     private RdfSourceOperationFactory factory;
-    private String randomId;
+    private FedoraId randomId;
 
 
     @Before
     public void setUp() {
         factory = new RdfSourceOperationFactoryImpl();
-        randomId = UUID.randomUUID().toString();
+        randomId = FedoraId.create(UUID.randomUUID().toString());
     }
 
     @Test

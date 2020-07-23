@@ -19,6 +19,7 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
@@ -95,9 +96,9 @@ public class CreateNonRdfSourcePersisterTest {
     @Mock
     private OcflPersistentStorageSession psSession;
 
-    private static final String RESOURCE_ID = "info:fedora/parent/child";
+    private static final FedoraId RESOURCE_ID = FedoraId.create("info:fedora/parent/child");
 
-    private static final String ROOT_RESOURCE_ID = "info:fedora/parent";
+    private static final FedoraId ROOT_RESOURCE_ID = FedoraId.create("info:fedora/parent");
 
     private static final String USER_PRINCIPAL = "fedoraUser";
 
@@ -113,7 +114,7 @@ public class CreateNonRdfSourcePersisterTest {
 
     private static final String EXTERNAL_HANDLING = "proxy";
 
-    private static final Long EXTERNAL_CONTENT_SIZE = 526632l;
+    private static final Long EXTERNAL_CONTENT_SIZE = 526632L;
 
     private CreateNonRdfSourcePersister persister;
 
@@ -144,7 +145,7 @@ public class CreateNonRdfSourcePersisterTest {
         persister = new CreateNonRdfSourcePersister(index);
 
         when(psSession.findOrCreateSession(anyString())).thenReturn(session);
-        when(index.getMapping(eq(SESSION_ID), anyString())).thenReturn(mapping);
+        when(index.getMapping(eq(SESSION_ID), any())).thenReturn(mapping);
 
     }
 
@@ -211,7 +212,7 @@ public class CreateNonRdfSourcePersisterTest {
         final InputStream content = IOUtils.toInputStream(CONTENT_BODY, "UTF-8");
 
         when(nonRdfSourceOperation.getContentStream()).thenReturn(content);
-        when(nonRdfSourceOperation.getContentSize()).thenReturn(99l);
+        when(nonRdfSourceOperation.getContentSize()).thenReturn(99L);
         when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel())
                 .thenReturn(NON_RDF_SOURCE.toString());
         when(headers.isArchivalGroup()).thenReturn(false);

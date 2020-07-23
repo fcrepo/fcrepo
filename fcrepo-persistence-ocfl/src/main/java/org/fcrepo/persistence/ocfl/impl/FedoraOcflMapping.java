@@ -17,6 +17,8 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+
 import java.util.Objects;
 
 import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToString;
@@ -27,15 +29,16 @@ import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToStrin
  * @author dbernstein
  */
 public class FedoraOcflMapping {
-    private String rootObjectIdentifier;
-    private String ocflObjectId;
+
+    private final FedoraId rootObjectIdentifier;
+    private final String ocflObjectId;
 
     /**
      * Default constructor
      * @param rootObjectIdentifier The fedora root object resource identifier
      * @param ocflObjectId The OCFL Object identitifer
      */
-    public FedoraOcflMapping(final String rootObjectIdentifier, final String ocflObjectId){
+    public FedoraOcflMapping(final FedoraId rootObjectIdentifier, final String ocflObjectId){
         this.rootObjectIdentifier = rootObjectIdentifier;
         this.ocflObjectId = ocflObjectId;
     }
@@ -44,7 +47,7 @@ public class FedoraOcflMapping {
      * The id for the fedora resource which represents this ocfl object
      * @return the fedora root object identifier
      */
-    public String getRootObjectIdentifier() {
+    public FedoraId getRootObjectIdentifier() {
         return rootObjectIdentifier;
     }
 

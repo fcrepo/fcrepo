@@ -135,10 +135,10 @@ public class FedoraResourceImplTest {
         userModel.add(subject, type, createResource(exampleType));
         final var userStream = fromModel(subject.asNode(), userModel);
         when(sessionManager.getReadOnlySession()).thenReturn(psSession);
-        when(psSession.getHeaders(eq(FEDORA_ID.getResourceId()),any())).thenReturn(headers);
+        when(psSession.getHeaders(eq(FEDORA_ID),any())).thenReturn(headers);
         when(headers.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         when(headers.isArchivalGroup()).thenReturn(false);
-        when(psSession.getTriples(eq(FEDORA_ID.getResourceId()), any())).thenReturn(userStream);
+        when(psSession.getTriples(eq(FEDORA_ID), any())).thenReturn(userStream);
 
         final List<URI> expectedTypes = List.of(
                 create(exampleType),
@@ -173,10 +173,10 @@ public class FedoraResourceImplTest {
 
         when(resourceFactory.getResource(any(), eq(descriptionFedoraId))).thenReturn(description);
         when(sessionManager.getReadOnlySession()).thenReturn(psSession);
-        when(psSession.getHeaders(eq(FEDORA_ID.getResourceId()),any())).thenReturn(headers);
+        when(psSession.getHeaders(eq(FEDORA_ID),any())).thenReturn(headers);
         when(headers.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         when(headers.isArchivalGroup()).thenReturn(false);
-        when(psSession.getTriples(eq(descriptionFedoraId.getResourceId()), any())).thenReturn(userStream);
+        when(psSession.getTriples(eq(descriptionFedoraId), any())).thenReturn(userStream);
 
         final List<URI> expectedTypes = List.of(
                 create(exampleType),

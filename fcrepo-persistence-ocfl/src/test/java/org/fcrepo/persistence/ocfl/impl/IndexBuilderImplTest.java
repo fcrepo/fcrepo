@@ -169,7 +169,7 @@ public class IndexBuilderImplTest {
 
     private void assertDoesNotHaveOcflId(final FedoraId resourceId) {
         try {
-            index.getMapping(null, resourceId.getResourceId());
+            index.getMapping(null, resourceId);
             fail(resourceId + " should not exist in index");
         } catch (final FedoraOcflMappingNotFoundException e) {
             //do nothing - expected
@@ -179,7 +179,7 @@ public class IndexBuilderImplTest {
     private void assertHasOcflId(final String expectedOcflId, final FedoraId resourceId)
             throws FedoraOcflMappingNotFoundException {
         assertEquals(FedoraTypes.FEDORA_ID_PREFIX + "/" + expectedOcflId,
-                index.getMapping(null, resourceId.getResourceId()).getOcflObjectId());
+                index.getMapping(null, resourceId).getOcflObjectId());
     }
 
     private void createResource(final PersistentStorageSession session,
@@ -187,7 +187,8 @@ public class IndexBuilderImplTest {
             throws PersistentStorageException {
         final var operation = mock(RdfSourceOperation.class, withSettings().extraInterfaces(
                 CreateResourceOperation.class));
-        when(operation.getResourceId()).thenReturn(resourceId.getResourceId());
+        when(operation.getResourceId()).thenReturn(resourceId);
+        when(((CreateResourceOperation) operation).getParentId()).thenReturn(FedoraId.getRepositoryRootId());
         when(operation.getType()).thenReturn(CREATE);
         when(((CreateResourceOperation)operation).isArchivalGroup()).thenReturn(isArchivalGroup);
         session.persist(operation);
@@ -198,7 +199,7 @@ public class IndexBuilderImplTest {
             throws PersistentStorageException {
         final var operation = mock(NonRdfSourceOperation.class, withSettings().extraInterfaces(
                 CreateResourceOperation.class));
-        when(operation.getResourceId()).thenReturn(childId.getResourceId());
+        when(operation.getResourceId()).thenReturn(childId);
         when(operation.getType()).thenReturn(CREATE);
         final var bytes = "test".getBytes();
         final var stream = new ByteArrayInputStream(bytes);
@@ -206,7 +207,7 @@ public class IndexBuilderImplTest {
         when(operation.getContentStream()).thenReturn(stream);
         when(operation.getMimeType()).thenReturn("text/plain");
         when(operation.getFilename()).thenReturn("test");
-        when(((CreateResourceOperation)operation).getParentId()).thenReturn(parentId.getResourceId());
+        when(((CreateResourceOperation)operation).getParentId()).thenReturn(parentId);
         session.persist(operation);
     }
 

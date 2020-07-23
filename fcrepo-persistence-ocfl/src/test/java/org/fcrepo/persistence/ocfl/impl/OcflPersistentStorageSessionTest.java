@@ -23,6 +23,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.vocabulary.DC;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
@@ -116,17 +117,17 @@ public class OcflPersistentStorageSessionTest {
 
     private DefaultOcflObjectSessionFactory objectSessionFactory;
 
-    private static final String ROOT_OBJECT_ID = "info:fedora/resource1";
+    private static final FedoraId ROOT_OBJECT_ID = FedoraId.create("info:fedora/resource1");
 
-    private static final String RESOURCE_ID = ROOT_OBJECT_ID;
+    private static final FedoraId RESOURCE_ID = ROOT_OBJECT_ID;
 
-    private static final String OCFL_RESOURCE_ID = RESOURCE_ID;
+    private static final String OCFL_RESOURCE_ID = RESOURCE_ID.getResourceId();
 
-    private static final String ROOT_OBJECT_ID_2 = "info:fedora/resource2";
+    private static final FedoraId ROOT_OBJECT_ID_2 = FedoraId.create("info:fedora/resource2");
 
-    private static final String RESOURCE_ID2 = ROOT_OBJECT_ID_2;
+    private static final FedoraId RESOURCE_ID2 = ROOT_OBJECT_ID_2;
 
-    private static final String OCFL_RESOURCE_ID2 = RESOURCE_ID2;
+    private static final String OCFL_RESOURCE_ID2 = RESOURCE_ID2.getResourceId();
 
     private static final String USER_PRINCIPAL = "fedoraUser";
 
@@ -178,50 +179,52 @@ public class OcflPersistentStorageSessionTest {
                 objectSessionFactory);
     }
 
-    private void mockNoIndex(final String resourceId) throws FedoraOcflMappingNotFoundException {
-        when(index.getMapping(any(), eq(resourceId))).thenThrow(new FedoraOcflMappingNotFoundException(resourceId));
+    private void mockNoIndex(final FedoraId resourceId) throws FedoraOcflMappingNotFoundException {
+        when(index.getMapping(any(), eq(resourceId)))
+                .thenThrow(new FedoraOcflMappingNotFoundException(resourceId.getFullId()));
     }
 
-    private void mockMappingAndIndexWithNoIndex(final String ocflObjectId, final String resourceId,
-                                                final String rootObjectId, final FedoraOcflMapping mapping)
+    private void mockMappingAndIndexWithNoIndex(final String ocflObjectId, final FedoraId resourceId,
+                                                final FedoraId rootObjectId, final FedoraOcflMapping mapping)
             throws FedoraOcflMappingNotFoundException {
         mockMapping(ocflObjectId, rootObjectId, mapping);
         when(index.getMapping(any(), eq(resourceId)))
-                .thenThrow(new FedoraOcflMappingNotFoundException(resourceId))
+                .thenThrow(new FedoraOcflMappingNotFoundException(resourceId.getFullId()))
                 .thenReturn(mapping);
     }
 
-    private void mockMappingAndIndex(final String ocflObjectId, final String resourceId, final String rootObjectId,
+    private void mockMappingAndIndex(final String ocflObjectId, final FedoraId resourceId, final FedoraId rootObjectId,
                                      final FedoraOcflMapping mapping) throws FedoraOcflMappingNotFoundException {
         mockMapping(ocflObjectId, rootObjectId, mapping);
         when(index.getMapping(anyString(), eq(resourceId))).thenReturn(mapping);
     }
 
-    private void mockMapping(final String ocflObjectId, final String rootObjectId, final FedoraOcflMapping mapping) {
+    private void mockMapping(final String ocflObjectId, final FedoraId rootObjectId, final FedoraOcflMapping mapping) {
         when(mapping.getOcflObjectId()).thenReturn(ocflObjectId);
         when(mapping.getRootObjectIdentifier()).thenReturn(rootObjectId);
     }
 
     private void mockResourceOperation(final RdfSourceOperation rdfSourceOperation, final RdfStream userStream,
-                                       final String userPrincipal, final String resourceId) {
+                                       final String userPrincipal, final FedoraId resourceId) {
         when(rdfSourceOperation.getTriples()).thenReturn(userStream);
-        when(rdfSourceOperation.getResourceId()).thenReturn(resourceId);
+        when(rdfSourceOperation.getResourceId()).thenReturn(FedoraId.create(resourceId.getFullId()));
+        when(((CreateResourceOperation) rdfSourceOperation).getParentId()).thenReturn(FedoraId.getRepositoryRootId());
         when(rdfSourceOperation.getType()).thenReturn(CREATE);
         when(rdfSourceOperation.getUserPrincipal()).thenReturn(userPrincipal);
     }
 
-    private void mockResourceOperation(final RdfSourceOperation rdfSourceOperation, final String resourceId) {
-        final Node resourceUri = createURI(resourceId);
+    private void mockResourceOperation(final RdfSourceOperation rdfSourceOperation, final FedoraId resourceId) {
+        final Node resourceUri = createURI(resourceId.getFullId());
         mockResourceOperation(rdfSourceOperation, new DefaultRdfStream(resourceUri, Stream.empty()),
                 USER_PRINCIPAL,
-                resourceUri.getURI());
+                resourceId);
     }
 
     @Test
     public void roundtripCreateContainerCreation() throws Exception {
         mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
 
-        final Node resourceUri = createURI(RESOURCE_ID);
+        final Node resourceUri = createURI(RESOURCE_ID.getFullId());
 
         //create some test user triples
         final String title = "my title";
@@ -232,7 +235,7 @@ public class OcflPersistentStorageSessionTest {
         //perform the create rdf operation
         session.persist(rdfSourceOperation);
 
-        final var node = createURI(RESOURCE_ID);
+        final var node = createURI(RESOURCE_ID.getFullId());
 
         //verify get triples within the transaction
         var retrievedUserStream = session.getTriples(RESOURCE_ID, null);
@@ -272,11 +275,11 @@ public class OcflPersistentStorageSessionTest {
     @Test
     public void getTriplesOfBinaryDescription() throws Exception {
 
-        final String descriptionResource = RESOURCE_ID + "/" + FedoraTypes.FCR_METADATA;
+        final FedoraId descriptionResource = RESOURCE_ID.resolve(FedoraTypes.FCR_METADATA);
         mockMappingAndIndexWithNoIndex(OCFL_RESOURCE_ID, descriptionResource, ROOT_OBJECT_ID, mapping);
         mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
 
-        final Node resourceUri = createURI(RESOURCE_ID);
+        final Node resourceUri = createURI(RESOURCE_ID.getFullId());
 
         //create some test user triples
         final String title = "my title";
@@ -599,7 +602,7 @@ public class OcflPersistentStorageSessionTest {
         objectSessionFactory.setAutoVersioningEnabled(true);
         mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
 
-        final Node resourceUri = createURI(RESOURCE_ID);
+        final Node resourceUri = createURI(RESOURCE_ID.getFullId());
 
         //mock the operation
         final String title = "my title";
@@ -625,7 +628,7 @@ public class OcflPersistentStorageSessionTest {
 
         //verify get triples from version
         final RdfStream retrievedUserStream = newSession.getTriples(RESOURCE_ID, version);
-        final var node = createURI(RESOURCE_ID);
+        final var node = createURI(RESOURCE_ID.getFullId());
         assertEquals(node, retrievedUserStream.topic());
         assertEquals(dcTitleTriple, retrievedUserStream.findFirst().get());
     }
@@ -633,7 +636,7 @@ public class OcflPersistentStorageSessionTest {
     @Test
     public void listVersionsOfAResourceContainedInAnArchivalGroup() throws Exception {
         objectSessionFactory.setAutoVersioningEnabled(true);
-        final Node resourceUri = createURI(RESOURCE_ID);
+        final Node resourceUri = createURI(RESOURCE_ID.getFullId());
 
         mockMapping(OCFL_RESOURCE_ID, ROOT_OBJECT_ID, mapping);
         final var mappingCount = new AtomicInteger(0);
@@ -650,7 +653,7 @@ public class OcflPersistentStorageSessionTest {
         session.persist(createArchivalGroupOperation);
         session.commit();
 
-        final var childId = RESOURCE_ID + "/child";
+        final var childId = RESOURCE_ID.resolve("child");
         when(index.getMapping(anyString(), eq(childId))).thenReturn(mapping);
 
         final String title = "title";
@@ -660,7 +663,8 @@ public class OcflPersistentStorageSessionTest {
 
         final var session2 = createSession(index, objectSessionFactory);
         mockResourceOperation(rdfSourceOperation, userStream, USER_PRINCIPAL, childId);
-        when(((CreateResourceOperation) rdfSourceOperation).getParentId()).thenReturn(RESOURCE_ID);
+        when(((CreateResourceOperation) rdfSourceOperation).getParentId())
+                .thenReturn(RESOURCE_ID);
 
         session2.persist(rdfSourceOperation);
         session2.commit();
@@ -758,7 +762,7 @@ public class OcflPersistentStorageSessionTest {
     public void shouldRemoveStagingDirectoryOnCommitSuccess() throws Exception {
         mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
 
-        final Node resourceUri = createURI(RESOURCE_ID);
+        final Node resourceUri = createURI(RESOURCE_ID.getFullId());
 
         final String title = "my title";
         final var dcTitleTriple = Triple.create(resourceUri, DC.title.asNode(), createLiteral(title));
@@ -778,7 +782,7 @@ public class OcflPersistentStorageSessionTest {
     public void shouldRemoveStagingDirectoryOnCommitRollback() throws Exception {
         mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
 
-        final Node resourceUri = createURI(RESOURCE_ID);
+        final Node resourceUri = createURI(RESOURCE_ID.getFullId());
 
         final String title = "my title";
         final var dcTitleTriple = Triple.create(resourceUri, DC.title.asNode(), createLiteral(title));
@@ -795,7 +799,7 @@ public class OcflPersistentStorageSessionTest {
     }
 
     private NonRdfSourceOperation mockNonRdfSourceOperation(final String content,
-            final String userPrincipal, final String resourceId) {
+            final String userPrincipal, final FedoraId resourceId) {
         final var binOperation = mock(NonRdfSourceOperation.class,
                 withSettings().extraInterfaces(CreateResourceOperation.class));
 
@@ -803,6 +807,7 @@ public class OcflPersistentStorageSessionTest {
         when(binOperation.getContentStream()).thenReturn(contentStream);
         when(binOperation.getContentSize()).thenReturn((long) content.length());
         when(binOperation.getResourceId()).thenReturn(resourceId);
+        when(((CreateResourceOperation) binOperation).getParentId()).thenReturn(FedoraId.getRepositoryRootId());
         when(binOperation.getType()).thenReturn(CREATE);
         when(binOperation.getUserPrincipal()).thenReturn(userPrincipal);
         return binOperation;

@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+
 import java.io.InputStream;
 import java.net.URI;
 
@@ -26,11 +28,11 @@ import java.net.URI;
  * @author bbpennel
  */
 public class UpdateNonRdfSourceOperationBuilder extends AbstractNonRdfSourceOperationBuilder {
-    protected UpdateNonRdfSourceOperationBuilder(final String rescId, final InputStream stream) {
+    protected UpdateNonRdfSourceOperationBuilder(final FedoraId rescId, final InputStream stream) {
         super(rescId, stream);
     }
 
-    protected UpdateNonRdfSourceOperationBuilder(final String rescId, final String handling, final URI contentUri) {
+    protected UpdateNonRdfSourceOperationBuilder(final FedoraId rescId, final String handling, final URI contentUri) {
         super(rescId, handling, contentUri);
     }
 

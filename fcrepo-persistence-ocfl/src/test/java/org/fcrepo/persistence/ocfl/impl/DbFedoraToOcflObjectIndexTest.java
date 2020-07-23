@@ -17,6 +17,7 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -35,10 +36,10 @@ import java.util.UUID;
  */
 public class DbFedoraToOcflObjectIndexTest {
 
-    private static final String RESOURCE_ID_1 = "info:fedora/parent/child1";
-    private static final String RESOURCE_ID_2 = "info:fedora/parent/child2";
-    private static final String RESOURCE_ID_3 = "info:fedora/resource3";
-    private static final String ROOT_RESOURCE_ID = "info:fedora/parent";
+    private static final FedoraId RESOURCE_ID_1 = FedoraId.create("info:fedora/parent/child1");
+    private static final FedoraId RESOURCE_ID_2 = FedoraId.create("info:fedora/parent/child2");
+    private static final FedoraId RESOURCE_ID_3 = FedoraId.create("info:fedora/resource3");
+    private static final FedoraId ROOT_RESOURCE_ID = FedoraId.create("info:fedora/parent");
     private static final String OCFL_ID = "ocfl-id";
     private static final String OCFL_ID_RESOURCE_3 = "ocfl-id-resource-3";
 
@@ -174,7 +175,7 @@ public class DbFedoraToOcflObjectIndexTest {
         }
     }
 
-    private void verifyMapping(final FedoraOcflMapping mapping1, final String rootResourceId, final String ocflId) {
+    private void verifyMapping(final FedoraOcflMapping mapping1, final FedoraId rootResourceId, final String ocflId) {
         assertEquals(rootResourceId, mapping1.getRootObjectIdentifier());
         assertEquals(ocflId, mapping1.getOcflObjectId());
     }

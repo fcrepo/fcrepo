@@ -50,6 +50,7 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.vocabulary.DC;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
@@ -72,9 +73,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class UpdateRDFSourcePersisterTest {
 
-    private static final String RESOURCE_ID = "info:fedora/parent/child";
+    private static final FedoraId RESOURCE_ID = FedoraId.create("info:fedora/parent/child");
 
-    private static final String ROOT_RESOURCE_ID = "info:fedora/parent";
+    private static final FedoraId ROOT_RESOURCE_ID = FedoraId.create("info:fedora/parent");
 
     private static final String USER_PRINCIPAL = "fedoraUser";
 
@@ -115,7 +116,7 @@ public class UpdateRDFSourcePersisterTest {
         when(psSession.getId()).thenReturn(SESSION_ID);
         when(session.write(anyString(), any(InputStream.class))).thenReturn(writeOutcome);
         when(psSession.findOrCreateSession(anyString())).thenReturn(session);
-        when(index.getMapping(eq(SESSION_ID), anyString())).thenReturn(mapping);
+        when(index.getMapping(eq(SESSION_ID), any())).thenReturn(mapping);
         when(operation.getType()).thenReturn(UPDATE);
 
         persister = new UpdateRdfSourcePersister(this.index);
@@ -153,7 +154,7 @@ public class UpdateRDFSourcePersisterTest {
         // verify user triples
         final Model userModel = retrievePersistedUserModel("child");
 
-        assertTrue(userModel.contains(userModel.createResource(RESOURCE_ID),
+        assertTrue(userModel.contains(userModel.createResource(RESOURCE_ID.getResourceId()),
                 DC.title, TITLE));
 
         // verify server triples
@@ -167,8 +168,8 @@ public class UpdateRDFSourcePersisterTest {
                 || originalModified.isBefore(resultHeaders.getLastModifiedDate()));
     }
 
-    private RdfStream constructTitleStream(final String resourceId, final String title) {
-        final Node resourceUri = createURI(resourceId);
+    private RdfStream constructTitleStream(final FedoraId resourceId, final String title) {
+        final Node resourceUri = createURI(resourceId.getResourceId());
         // create some test user triples
         final Stream<Triple> userTriples = Stream.of(Triple.create(resourceUri,
                 DC.title.asNode(),

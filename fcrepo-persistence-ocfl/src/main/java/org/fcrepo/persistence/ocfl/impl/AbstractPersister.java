@@ -102,7 +102,7 @@ abstract class AbstractPersister implements Persister {
      * @return The associated mapping
      * @throws PersistentStorageException When no mapping is found.
      */
-    protected FedoraOcflMapping getMapping(final String transactionId, final String resourceId)
+    protected FedoraOcflMapping getMapping(final String transactionId, final FedoraId resourceId)
             throws PersistentStorageException {
         try {
             return this.index.getMapping(transactionId, resourceId);
@@ -132,7 +132,7 @@ abstract class AbstractPersister implements Persister {
             final var resourceId = fedoraId.getResourceId();
 
             try {
-                final var headers = session.getHeaders(resourceId, null);
+                final var headers = session.getHeaders(fedoraId.asResourceId(), null);
                 if (headers != null && headers.isArchivalGroup()) {
                     return Optional.of(fedoraId);
                 }
@@ -156,7 +156,7 @@ abstract class AbstractPersister implements Persister {
      */
     protected String mapToOcflId(final String sessionId, final FedoraId fedoraId) {
         try {
-            final var mapping = index.getMapping(sessionId, fedoraId.getBaseId());
+            final var mapping = index.getMapping(sessionId, fedoraId.asBaseId());
             return mapping.getOcflObjectId();
         } catch (final FedoraOcflMappingNotFoundException e) {
             // If the a mapping doesn't already exist, use a one-to-one Fedora ID to OCFL ID mapping

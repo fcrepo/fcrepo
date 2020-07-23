@@ -21,6 +21,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 
 /**
@@ -30,9 +31,9 @@ import org.fcrepo.kernel.api.models.ResourceHeaders;
  */
 public class ResourceHeadersImpl implements ResourceHeaders {
 
-    private String id;
+    private FedoraId id;
 
-    private String parent;
+    private FedoraId parent;
 
     private String stateToken;
 
@@ -65,26 +66,26 @@ public class ResourceHeadersImpl implements ResourceHeaders {
     private boolean deleted;
 
     @Override
-    public String getId() {
+    public FedoraId getId() {
         return id;
     }
 
     /**
      * @param id the fedora id to set
      */
-    public void setId(final String id) {
+    public void setId(final FedoraId id) {
         this.id = id;
     }
 
     @Override
-    public String getParent() {
+    public FedoraId getParent() {
         return parent;
     }
 
     /**
      * @param parent the parent to set
      */
-    public void setParent(final String parent) {
+    public void setParent(final FedoraId parent) {
         this.parent = parent;
     }
 

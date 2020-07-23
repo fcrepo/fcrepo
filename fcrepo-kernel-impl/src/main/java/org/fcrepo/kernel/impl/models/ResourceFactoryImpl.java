@@ -104,8 +104,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
 
             try {
                 // Resource ID for metadata or ACL contains their individual endopoints (ie. fcr:metadata, fcr:acl)
-                final String id = fedoraId.getResourceId();
-                final ResourceHeaders headers = psSession.getHeaders(id, fedoraId.getMementoInstant());
+                final ResourceHeaders headers = psSession.getHeaders(fedoraId, fedoraId.getMementoInstant());
                 return !headers.isDeleted();
             } catch (final PersistentItemNotFoundException e) {
                 // Object doesn't exist.
@@ -178,10 +177,9 @@ public class ResourceFactoryImpl implements ResourceFactory {
             throws PathNotFoundException {
         try {
             // For descriptions and ACLs we need the actual endpoint.
-            final String id = identifier.getResourceId();
             final var psSession = getSession(transaction);
             final Instant versionDateTime = identifier.isMemento() ? identifier.getMementoInstant() : null;
-            final var headers = psSession.getHeaders(id, versionDateTime);
+            final var headers = psSession.getHeaders(identifier, versionDateTime);
 
             // Determine the appropriate class from headers
             final var createClass = getClassForTypes(headers);

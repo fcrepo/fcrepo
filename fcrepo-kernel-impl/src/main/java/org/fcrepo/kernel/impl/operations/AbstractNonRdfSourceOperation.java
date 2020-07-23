@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 
 /**
@@ -52,7 +53,7 @@ public abstract class AbstractNonRdfSourceOperation extends AbstractResourceOper
      * @param externalContentURI the URI of the external content.
      * @param externalHandling the type of external content handling (REDIRECT, PROXY)
      */
-    protected AbstractNonRdfSourceOperation(final String rescId, final URI externalContentURI,
+    protected AbstractNonRdfSourceOperation(final FedoraId rescId, final URI externalContentURI,
             final String externalHandling) {
         super(rescId);
         this.externalHandlingURI = externalContentURI;
@@ -65,7 +66,7 @@ public abstract class AbstractNonRdfSourceOperation extends AbstractResourceOper
      * @param rescId the internal identifier.
      * @param content the stream of the content.
      */
-    protected AbstractNonRdfSourceOperation(final String rescId, final InputStream content) {
+    protected AbstractNonRdfSourceOperation(final FedoraId rescId, final InputStream content) {
         super(rescId);
         this.content = content;
     }
@@ -75,7 +76,7 @@ public abstract class AbstractNonRdfSourceOperation extends AbstractResourceOper
      *
      * @param rescId The internal Fedora ID.
      */
-    protected AbstractNonRdfSourceOperation(final String rescId) {
+    protected AbstractNonRdfSourceOperation(final FedoraId rescId) {
         super(rescId);
     }
 

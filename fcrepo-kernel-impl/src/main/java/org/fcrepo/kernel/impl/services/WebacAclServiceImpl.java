@@ -76,8 +76,8 @@ public class WebacAclServiceImpl extends AbstractService implements WebacAclServ
         final RdfStream stream = fromModel(model.getResource(fedoraId.getFullId()).asNode(), model);
 
         final RdfSourceOperation createOp = rdfSourceOperationFactory
-                .createBuilder(fedoraId.getResourceId(), FEDORA_WEBAC_ACL_URI)
-                .parentId(fedoraId.getBaseId())
+                .createBuilder(fedoraId, FEDORA_WEBAC_ACL_URI)
+                .parentId(fedoraId.asBaseId())
                 .triples(stream)
                 .relaxedProperties(model)
                 .userPrincipal(userPrincipal)

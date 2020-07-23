@@ -18,6 +18,8 @@
 package org.fcrepo.kernel.api.operations;
 
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+
 /**
  * Factory for operations on rdf sources
  *
@@ -32,7 +34,7 @@ public interface RdfSourceOperationFactory extends ResourceOperationFactory {
      * @param interactionModel interaction model for the resource being created
      * @return new builder
      */
-    CreateRdfSourceOperationBuilder createBuilder(String rescId, String interactionModel);
+    CreateRdfSourceOperationBuilder createBuilder(FedoraId rescId, String interactionModel);
 
     /**
      * Get a builder for an operation to update an RDF source
@@ -40,7 +42,7 @@ public interface RdfSourceOperationFactory extends ResourceOperationFactory {
      * @param rescId id of the resource targeted by the operation
      * @return new builder
      */
-    RdfSourceOperationBuilder updateBuilder(String rescId);
+    RdfSourceOperationBuilder updateBuilder(FedoraId rescId);
 
     /**
      * Get a builder for an operation to perform a sparql update on an RDF source
@@ -49,5 +51,5 @@ public interface RdfSourceOperationFactory extends ResourceOperationFactory {
      * @param updateQuery sparql update query
      * @return new builder
      */
-    ResourceOperationBuilder sparqlUpdateBuilder(String rescId, String updateQuery);
+    ResourceOperationBuilder sparqlUpdateBuilder(FedoraId rescId, String updateQuery);
 }

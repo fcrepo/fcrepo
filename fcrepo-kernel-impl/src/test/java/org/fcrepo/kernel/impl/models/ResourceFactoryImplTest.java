@@ -85,7 +85,7 @@ public class ResourceFactoryImplTest {
 
     private final static String STATE_TOKEN = "stately_value";
 
-    private final static long CONTENT_SIZE = 100l;
+    private final static long CONTENT_SIZE = 100L;
 
     private final static String MIME_TYPE = "text/plain";
 
@@ -144,12 +144,12 @@ public class ResourceFactoryImplTest {
         setField(factory, "containmentIndex", containmentIndex);
 
         resourceHeaders = new ResourceHeadersImpl();
-        resourceHeaders.setId(fedoraIdStr);
+        resourceHeaders.setId(fedoraId);
 
         when(sessionManager.getSession(sessionId)).thenReturn(psSession);
         when(sessionManager.getReadOnlySession()).thenReturn(psSession);
 
-        when(psSession.getHeaders(eq(fedoraIdStr), nullable(Instant.class))).thenReturn(resourceHeaders);
+        when(psSession.getHeaders(eq(fedoraId), nullable(Instant.class))).thenReturn(resourceHeaders);
     }
 
     @After
@@ -163,7 +163,7 @@ public class ResourceFactoryImplTest {
 
     @Test(expected = PathNotFoundException.class)
     public void getResource_ObjectNotFound() throws Exception {
-        when(psSession.getHeaders(fedoraIdStr, null)).thenThrow(PersistentItemNotFoundException.class);
+        when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
 
         factory.getResource(fedoraId);
     }
@@ -199,7 +199,7 @@ public class ResourceFactoryImplTest {
     public void getResource_BasicContainer_WithParent() throws Exception {
         populateHeaders(resourceHeaders, BASIC_CONTAINER);
 
-        final var parentId = FEDORA_ID_PREFIX + UUID.randomUUID().toString();
+        final var parentId = FedoraId.create(FEDORA_ID_PREFIX + UUID.randomUUID().toString());
         resourceHeaders.setParent(parentId);
 
         final var parentHeaders = new ResourceHeadersImpl();
@@ -216,7 +216,7 @@ public class ResourceFactoryImplTest {
 
         final var parentResc = resc.getParent();
         assertTrue("Parent must be a container", parentResc instanceof Container);
-        assertEquals(parentId, parentResc.getId());
+        assertEquals(parentId, parentResc.getFedoraId());
         assertStateFieldsMatches(parentResc);
     }
 
@@ -296,7 +296,7 @@ public class ResourceFactoryImplTest {
 
     @Test(expected = RepositoryRuntimeException.class)
     public void getResource_Binary_StorageException() throws Exception {
-        when(psSession.getHeaders(fedoraIdStr, null)).thenThrow(new PersistentStorageException("Boom"));
+        when(psSession.getHeaders(fedoraId, null)).thenThrow(new PersistentStorageException("Boom"));
 
         populateHeaders(resourceHeaders, NON_RDF_SOURCE);
         populateInternalBinaryHeaders(resourceHeaders);
@@ -325,13 +325,12 @@ public class ResourceFactoryImplTest {
 
     @Test
     public void getNonRdfSourceDescription() throws Exception {
-        final String descId = FEDORA_ID_PREFIX + "/object1/fcr:metadata";
-        final FedoraId descFedoraId = FedoraId.create(descId);
+        final FedoraId descFedoraId = FedoraId.create(FEDORA_ID_PREFIX + "/object1/fcr:metadata");
 
         final var headers = new ResourceHeadersImpl();
-        headers.setId(descId);
+        headers.setId(descFedoraId);
         populateHeaders(headers, ResourceFactory.createResource(FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI));
-        when(psSession.getHeaders(descId, null)).thenReturn(headers);
+        when(psSession.getHeaders(descFedoraId, null)).thenReturn(headers);
 
         final var resc = factory.getResource(descFedoraId);
         assertTrue("Factory must return a NonRdfSourceDescripton", resc instanceof NonRdfSourceDescriptionImpl);
@@ -404,7 +403,7 @@ public class ResourceFactoryImplTest {
      */
     @Test(expected = RepositoryRuntimeException.class)
     public void doesResourceExist_Exception_WithSession() throws Exception {
-        when(psSession.getHeaders(fedoraMementoId.getResourceId(), fedoraMementoId.getMementoInstant()))
+        when(psSession.getHeaders(fedoraMementoId, fedoraMementoId.getMementoInstant()))
                 .thenThrow(PersistentSessionClosedException.class);
         factory.doesResourceExist(mockTx, fedoraMementoId);
     }
@@ -414,7 +413,7 @@ public class ResourceFactoryImplTest {
      */
     @Test(expected = RepositoryRuntimeException.class)
     public void doesResourceExist_Exception_WithoutSession() throws Exception {
-        when(psSession.getHeaders(fedoraMementoId.getResourceId(), fedoraMementoId.getMementoInstant()))
+        when(psSession.getHeaders(fedoraMementoId, fedoraMementoId.getMementoInstant()))
                 .thenThrow(PersistentSessionClosedException.class);
         factory.doesResourceExist(null, fedoraMementoId);
     }

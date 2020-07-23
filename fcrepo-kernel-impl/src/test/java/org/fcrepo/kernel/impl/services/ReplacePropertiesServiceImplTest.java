@@ -87,7 +87,7 @@ public class ReplacePropertiesServiceImplTest {
     @Captor
     private ArgumentCaptor<UpdateRdfSourceOperation> operationCaptor;
 
-    private static final String FEDORA_ID = "info:fedora/resource1";
+    private static final FedoraId FEDORA_ID = FedoraId.create("info:fedora/resource1");
     private static final String TX_ID = "tx-1234";
     private static final String RDF =
             "<" + FEDORA_ID + "> <" + DC.getURI() + "title> 'fancy title' .\n" +
@@ -100,7 +100,7 @@ public class ReplacePropertiesServiceImplTest {
         setField(service, "eventAccumulator", eventAccumulator);
         when(tx.getId()).thenReturn(TX_ID);
         when(psManager.getSession(anyString())).thenReturn(pSession);
-        when(resource.getId()).thenReturn(FEDORA_ID);
+        when(resource.getId()).thenReturn(FEDORA_ID.getFullId());
     }
 
     @Test
@@ -116,10 +116,10 @@ public class ReplacePropertiesServiceImplTest {
         final RdfStream stream = operationCaptor.getValue().getTriples();
         final Model captureModel = stream.collect(RdfCollectors.toModel());
 
-        assertTrue(captureModel.contains(ResourceFactory.createResource(FEDORA_ID),
+        assertTrue(captureModel.contains(ResourceFactory.createResource(FEDORA_ID.getResourceId()),
                 ResourceFactory.createProperty("http://purl.org/dc/elements/1.1/title"),
                 "another fancy title"));
-        assertTrue(captureModel.contains(ResourceFactory.createResource(FEDORA_ID),
+        assertTrue(captureModel.contains(ResourceFactory.createResource(FEDORA_ID.getResourceId()),
                 ResourceFactory.createProperty("http://purl.org/dc/elements/1.1/title"),
                 "fancy title"));
     }

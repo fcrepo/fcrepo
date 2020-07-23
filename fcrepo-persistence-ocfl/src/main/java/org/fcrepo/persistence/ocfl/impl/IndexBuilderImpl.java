@@ -131,16 +131,16 @@ public class IndexBuilderImpl implements IndexBuilder {
 
     private void indexOcflObject(final String ocflId, final String txId, final OcflObjectSession session) {
         try (final var subpaths = session.listHeadSubpaths()) {
-            final var rootId = new AtomicReference<String>();
-            final var fedoraIds = new ArrayList<String>();
+            final var rootId = new AtomicReference<FedoraId>();
+            final var fedoraIds = new ArrayList<FedoraId>();
 
             subpaths.forEach(subpath -> {
                 if (isSidecarSubpath(subpath)) {
                     //we're only interested in sidecar subpaths
                     try {
                         final var headers = deserializeHeaders(session.read(subpath));
-                        final var fedoraId = FedoraId.create(headers.getId());
-                        fedoraIds.add(fedoraId.getFullId());
+                        final var fedoraId = headers.getId();
+                        fedoraIds.add(fedoraId);
                         if (headers.isArchivalGroup() || headers.isObjectRoot()) {
                             rootId.set(headers.getId());
                         }
@@ -150,13 +150,13 @@ public class IndexBuilderImpl implements IndexBuilder {
 
                             if (parentId == null) {
                                 if (headers.isObjectRoot()) {
-                                    parentId = FedoraId.getRepositoryRootId().getFullId();
+                                    parentId = FedoraId.getRepositoryRootId();
                                 }
                             }
 
                             if (parentId != null) {
-                                this.containmentIndex.addContainedBy(txId, FedoraId.create(parentId),
-                                        FedoraId.create(headers.getId()));
+                                this.containmentIndex.addContainedBy(txId, parentId,
+                                        headers.getId());
                             }
                         }
 
@@ -199,7 +199,7 @@ public class IndexBuilderImpl implements IndexBuilder {
 
     private boolean repoRootMappingExists() {
         try {
-            return fedoraToOcflObjectIndex.getMapping(null, FedoraId.getRepositoryRootId().getFullId()) != null;
+            return fedoraToOcflObjectIndex.getMapping(null, FedoraId.getRepositoryRootId()) != null;
         } catch (final FedoraOcflMappingNotFoundException e) {
             return false;
         }

@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 
 /**
@@ -27,7 +28,7 @@ import org.fcrepo.kernel.api.operations.ResourceOperationType;
  */
 public class PurgeResourceOperation extends AbstractResourceOperation {
 
-    protected PurgeResourceOperation(final String rescId) {
+    protected PurgeResourceOperation(final FedoraId rescId) {
         super(rescId);
     }
 

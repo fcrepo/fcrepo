@@ -53,12 +53,13 @@ class PurgeResourcePersister extends AbstractPersister {
             // We are at the root of the object, so remove the entire OCFL object.
             objectSession.deleteObject();
         } else {
-            final var relativeSubPath = relativizeSubpath(fedoraResourceRoot, operation.getResourceId());
-            final var ocflSubPath = resolveOCFLSubpath(fedoraResourceRoot, relativeSubPath);
+            final var relativeSubPath = relativizeSubpath(fedoraResourceRoot.getResourceId(),
+                    operation.getResourceId().getResourceId());
+            final var ocflSubPath = resolveOCFLSubpath(fedoraResourceRoot.getResourceId(), relativeSubPath);
             final var sidecar = getSidecarSubpath(ocflSubPath);
             purgePath(sidecar, objectSession);
         }
-        index.removeMapping(session.getId(), resourceId);
+        index.removeMapping(session.getId(), resourceId.asResourceId());
     }
 
     /**

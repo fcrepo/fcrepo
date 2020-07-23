@@ -22,6 +22,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import java.io.InputStream;
 import java.net.URI;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 
 /**
@@ -31,7 +32,7 @@ import org.fcrepo.kernel.api.operations.CreateResourceOperation;
  */
 public class CreateNonRdfSourceOperation extends AbstractNonRdfSourceOperation implements CreateResourceOperation {
 
-    private String parentId;
+    private FedoraId parentId;
 
     /**
      * Constructor for external content.
@@ -40,8 +41,8 @@ public class CreateNonRdfSourceOperation extends AbstractNonRdfSourceOperation i
      * @param externalContentURI the URI of the external content.
      * @param externalHandling the type of external content handling (REDIRECT, PROXY)
      */
-    protected CreateNonRdfSourceOperation(final String rescId, final URI externalContentURI,
-            final String externalHandling) {
+    protected CreateNonRdfSourceOperation(final FedoraId rescId, final URI externalContentURI,
+                                          final String externalHandling) {
         super(rescId, externalContentURI, externalHandling);
     }
 
@@ -51,7 +52,7 @@ public class CreateNonRdfSourceOperation extends AbstractNonRdfSourceOperation i
      * @param rescId the internal identifier.
      * @param content the stream of the content.
      */
-    protected CreateNonRdfSourceOperation(final String rescId, final InputStream content) {
+    protected CreateNonRdfSourceOperation(final FedoraId rescId, final InputStream content) {
         super(rescId, content);
     }
 
@@ -66,14 +67,14 @@ public class CreateNonRdfSourceOperation extends AbstractNonRdfSourceOperation i
     }
 
     @Override
-    public String getParentId() {
+    public FedoraId getParentId() {
         return parentId;
     }
 
     /**
      * @param parentId the parentId to set
      */
-    public void setParentId(final String parentId) {
+    public void setParentId(final FedoraId parentId) {
         this.parentId = parentId;
     }
 

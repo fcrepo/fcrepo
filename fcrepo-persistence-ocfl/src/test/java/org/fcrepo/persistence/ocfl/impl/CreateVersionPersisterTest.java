@@ -18,6 +18,7 @@
 
 package org.fcrepo.persistence.ocfl.impl;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateVersionResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.api.CommitOption;
@@ -53,7 +54,7 @@ public class CreateVersionPersisterTest {
 
     @Test
     public void setCommitToNewVersionWhenNoChildOfAg() throws PersistentStorageException {
-        final var resourceId = "info:fedora/blah";
+        final var resourceId = FedoraId.create("info:fedora/blah");
         final var ocflId = "blah";
 
         final var objectSession = addMapping(resourceId, ocflId);
@@ -65,7 +66,7 @@ public class CreateVersionPersisterTest {
 
     @Test
     public void setCommitToNewVersionWhenAg() throws PersistentStorageException {
-        final var resourceId = "info:fedora/blah";
+        final var resourceId = FedoraId.create("info:fedora/blah");
         final var ocflId = "blah";
 
         final var objectSession = addMapping(resourceId, ocflId);
@@ -77,40 +78,40 @@ public class CreateVersionPersisterTest {
 
     @Test(expected = PersistentItemConflictException.class)
     public void failVersionCreationWhenChildOfAg() throws PersistentStorageException {
-        final var resourceId = "info:fedora/ag/blah";
+        final var resourceId = FedoraId.create("info:fedora/ag/blah");
 
         expectArchivalGroup(resourceId, false);
-        expectArchivalGroup("info:fedora/ag", true);
+        expectArchivalGroup(FedoraId.create("info:fedora/ag"), true);
 
         persister.persist(session, operation(resourceId));
     }
 
     @Test(expected = PersistentStorageException.class)
     public void failVersionCreationWhenNoOclfMapping() throws PersistentStorageException {
-        final var resourceId = "info:fedora/bogus";
+        final var resourceId = FedoraId.create("info:fedora/bogus");
         final var ocflId = "blah";
 
-        addMapping("info:fedora/blah", ocflId);
+        addMapping(FedoraId.create("info:fedora/blah"), ocflId);
         expectArchivalGroup(resourceId, false);
 
         persister.persist(session, operation(resourceId));
     }
 
-    private void expectArchivalGroup(final String resourceId, final boolean isAgChild)
+    private void expectArchivalGroup(final FedoraId resourceId, final boolean isAgChild)
             throws PersistentStorageException {
         final var headers = new ResourceHeadersImpl();
         headers.setArchivalGroup(isAgChild);
         when(session.getHeaders(resourceId, null)).thenReturn(headers);
     }
 
-    private OcflObjectSession addMapping(final String resourceId, final String ocflId) {
+    private OcflObjectSession addMapping(final FedoraId resourceId, final String ocflId) {
         index.addMapping("not-used", resourceId, resourceId, ocflId);
         final var objectSession = mock(OcflObjectSession.class);
         when(session.findOrCreateSession(ocflId)).thenReturn(objectSession);
         return objectSession;
     }
 
-    private CreateVersionResourceOperation operation(final String resourceId) {
+    private CreateVersionResourceOperation operation(final FedoraId resourceId) {
         final var operation = mock(CreateVersionResourceOperation.class);
         when(operation.getType()).thenReturn(ResourceOperationType.UPDATE);
         when(operation.getResourceId()).thenReturn(resourceId);

@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.DeleteResourceOperationFactory;
 import org.fcrepo.kernel.api.operations.ResourceOperationBuilder;
 import org.springframework.stereotype.Component;
@@ -30,12 +31,12 @@ import org.springframework.stereotype.Component;
 public class DeleteResourceOperationFactoryImpl implements DeleteResourceOperationFactory {
 
     @Override
-    public DeleteResourceOperationBuilder deleteBuilder(final String rescId) {
+    public DeleteResourceOperationBuilder deleteBuilder(final FedoraId rescId) {
         return new DeleteResourceOperationBuilder(rescId);
     }
 
     @Override
-    public ResourceOperationBuilder purgeBuilder(final String rescId) {
+    public ResourceOperationBuilder purgeBuilder(final FedoraId rescId) {
         return new PurgeResourceOperationBuilder(rescId);
     }
 

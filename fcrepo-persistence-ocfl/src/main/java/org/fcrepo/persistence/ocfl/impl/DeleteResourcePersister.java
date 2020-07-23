@@ -74,8 +74,9 @@ class DeleteResourcePersister extends AbstractPersister {
                 throw new PersistentStorageException(exc);
             }
         } else {
-            final var relativeSubPath = relativizeSubpath(fedoraResourceRoot, operation.getResourceId());
-            final var ocflSubPath = resolveOCFLSubpath(fedoraResourceRoot, relativeSubPath);
+            final var relativeSubPath = relativizeSubpath(fedoraResourceRoot.getResourceId(),
+                    operation.getResourceId().getResourceId());
+            final var ocflSubPath = resolveOCFLSubpath(fedoraResourceRoot.getResourceId(), relativeSubPath);
             final var headers = (ResourceHeadersImpl) readHeaders(objectSession, ocflSubPath);
             final boolean isRdf = !Objects.equals(NON_RDF_SOURCE.toString(), headers.getInteractionModel());
             final var filePath = resolveExtensions(ocflSubPath, isRdf);

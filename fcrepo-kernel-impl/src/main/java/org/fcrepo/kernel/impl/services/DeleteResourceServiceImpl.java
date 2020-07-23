@@ -55,7 +55,7 @@ public class DeleteResourceServiceImpl extends AbstractDeleteResourceService imp
                             final FedoraId fedoraId, final String userPrincipal)
             throws PersistentStorageException {
         log.debug("starting delete of {}", fedoraId.getFullId());
-        final ResourceOperation deleteOp = deleteResourceFactory.deleteBuilder(fedoraId.getFullId())
+        final ResourceOperation deleteOp = deleteResourceFactory.deleteBuilder(fedoraId)
                 .userPrincipal(userPrincipal)
                 .build();
         pSession.persist(deleteOp);
