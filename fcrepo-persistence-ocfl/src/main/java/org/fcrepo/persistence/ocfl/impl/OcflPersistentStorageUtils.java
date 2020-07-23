@@ -181,7 +181,7 @@ public class OcflPersistentStorageUtils {
      * @param fedoraIdentifier The fedora identifier
      * @return The resolved topic
      */
-    public static FedoraId resolveTopic(final FedoraId fedoraIdentifier) {
+    private static FedoraId resolveTopic(final FedoraId fedoraIdentifier) {
         if (fedoraIdentifier.isDescription()) {
             return FedoraId.create(fedoraIdentifier.getBaseId());
         } else {
