@@ -272,16 +272,27 @@ public class ResourceHeadersImpl implements ResourceHeaders {
         this.deleted = deleted;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isDeleted() {
         return deleted;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getContentPath() {
         return contentPath;
     }
 
+    /**
+     * Sets the path to the content file associated with the header file
+     *
+     * @param contentPath path to content file
+     */
     public void setContentPath(final String contentPath) {
         this.contentPath = contentPath;
     }
