@@ -33,7 +33,7 @@ public class PaginationInfo {
     /**
      * Default constructor
      */
-    public PaginationInfo() {}
+    public PaginationInfo() { }
 
     /**
      * Constructor

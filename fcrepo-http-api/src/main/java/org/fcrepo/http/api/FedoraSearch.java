@@ -72,8 +72,11 @@ public class FedoraSearch extends FedoraBaseResource {
      * Perform simple search on the repository
      *
      * @param conditions The conditions constraining the query
+     * @param fields     The fields to return in results
      * @param maxResults The max number of results to return
      * @param offset     The zero-based offset of the first result to be returned
+     * @param order      The order: ie "asc" or "desc"
+     * @param orderBy    The field by which to order the results
      * @return A response object with the search results
      */
     @GET

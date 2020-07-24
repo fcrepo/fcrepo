@@ -146,7 +146,7 @@ public class WebACFilterTest {
     private Subject mockSubject;
 
     @Before
-    public void setupRequest() throws Exception{
+    public void setupRequest() throws Exception {
         SecurityUtils.setSecurityManager(mockSecurityManager);
 
         mockSubject = Mockito.mock(Subject.class);
@@ -608,7 +608,7 @@ public class WebACFilterTest {
     }
 
     @Test
-    public void testAuthUserReadAppendPostBinary() throws Exception{
+    public void testAuthUserReadAppendPostBinary() throws Exception {
         setupAuthUserReadAppend();
         setupBinaryResource();
         // POST => 403

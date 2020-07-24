@@ -31,6 +31,8 @@ import static java.util.UUID.randomUUID;
 
 /**
  * An event that describes one or more actions that a user preformed on a resource.
+ *
+ * @author pwinckles
  */
 public class EventImpl implements Event {
 

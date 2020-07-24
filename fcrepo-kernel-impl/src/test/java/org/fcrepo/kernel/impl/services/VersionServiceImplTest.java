@@ -38,6 +38,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
+/**
+ * @author mdurbin
+ */
 @RunWith(MockitoJUnitRunner.class)
 public class VersionServiceImplTest {
 

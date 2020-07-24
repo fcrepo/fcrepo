@@ -31,6 +31,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Persister for creating a new OCFL version of a resource. The new version is not created until the session
  * is committed.
+ *
+ * @author pwinckles
  */
 public class CreateVersionPersister extends AbstractPersister {
 

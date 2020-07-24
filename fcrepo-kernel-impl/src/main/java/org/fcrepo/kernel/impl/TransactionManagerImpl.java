@@ -94,7 +94,7 @@ public class TransactionManagerImpl implements TransactionManager {
     @Override
     public synchronized Transaction create() {
         String txId = randomUUID().toString();
-        while(transactions.containsKey(txId)) {
+        while (transactions.containsKey(txId)) {
             txId = randomUUID().toString();
         }
         final Transaction tx = new TransactionImpl(txId, this);

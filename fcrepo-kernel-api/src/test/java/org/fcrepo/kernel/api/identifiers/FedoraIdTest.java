@@ -37,6 +37,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+/**
+ * @author pwinckles
+ */
 public class FedoraIdTest {
 
     @Test
@@ -341,7 +344,7 @@ public class FedoraIdTest {
 
     @Test(expected = InvalidResourceIdentifierException.class)
     public void testDoubleAcl() {
-        FedoraId.create("core-object/" + FCR_ACL + "/" +FCR_ACL);
+        FedoraId.create("core-object/" + FCR_ACL + "/" + FCR_ACL);
     }
 
     @Test

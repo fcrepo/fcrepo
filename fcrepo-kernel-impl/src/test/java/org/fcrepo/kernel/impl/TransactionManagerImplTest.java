@@ -121,13 +121,13 @@ public class TransactionManagerImplTest {
         try {
             testTxManager.get(commitTx.getId());
             fail("Transaction must be committed");
-        } catch(final TransactionClosedException e) {
+        } catch (final TransactionClosedException e) {
             //expected
         }
         try {
             testTxManager.get(rollbackTx.getId());
             fail("Transaction must be rolled back");
-        } catch(final TransactionClosedException e) {
+        } catch (final TransactionClosedException e) {
             //expected
         }
 
@@ -140,13 +140,13 @@ public class TransactionManagerImplTest {
         try {
             testTxManager.get(commitTx.getId());
             fail("Transaction must be present but committed");
-        } catch(final TransactionClosedException e) {
+        } catch (final TransactionClosedException e) {
             //expected
         }
         try {
             testTxManager.get(rollbackTx.getId());
             fail("Transaction must be present but rolled back");
-        } catch(final TransactionClosedException e) {
+        } catch (final TransactionClosedException e) {
             //expected
         }
 
@@ -188,7 +188,7 @@ public class TransactionManagerImplTest {
         try {
             testTxManager.get(expiringTx.getId());
             fail("Transaction must be expired");
-        } catch(final TransactionClosedException e) {
+        } catch (final TransactionClosedException e) {
             //expected
         }
 

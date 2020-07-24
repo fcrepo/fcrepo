@@ -61,6 +61,7 @@ public class OcflPersistentSessionManager implements PersistentStorageSessionMan
 
     /**
      * Default constructor
+     * @param sessionStagingRoot OCFL staging directory
      */
     @Autowired
     public OcflPersistentSessionManager(@Value("#{ocflPropsConfig.fedoraOcflStaging}")

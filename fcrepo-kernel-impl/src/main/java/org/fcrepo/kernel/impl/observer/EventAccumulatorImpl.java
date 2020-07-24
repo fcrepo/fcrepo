@@ -40,6 +40,9 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Strings.emptyToNull;
 
+/**
+ * @author pwinckles
+ */
 @Component
 public class EventAccumulatorImpl implements EventAccumulator {
 

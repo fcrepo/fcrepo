@@ -25,5 +25,5 @@ package org.fcrepo.persistence.ocfl.api;
 public class OcflPersistenceConstants {
     public static final String DEFAULT_REPOSITORY_ROOT_OCFL_OBJECT_ID = "_fedora_repository_root";
 
-    private OcflPersistenceConstants() {}
+    private OcflPersistenceConstants() { }
 }

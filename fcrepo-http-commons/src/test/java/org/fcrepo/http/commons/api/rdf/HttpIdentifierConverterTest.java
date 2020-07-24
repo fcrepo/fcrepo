@@ -35,6 +35,9 @@ import javax.ws.rs.core.UriBuilder;
 
 import java.util.UUID;
 
+/**
+ * @author whikloj
+ */
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class HttpIdentifierConverterTest {
 

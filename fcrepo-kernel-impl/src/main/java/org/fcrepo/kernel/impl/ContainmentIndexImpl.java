@@ -245,7 +245,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      * Get the parent ID for this resource from the operations table for an 'add' operation in this transaction, but
      * exclude any 'delete' operations for this resource in this transaction.
      */
-    private static final String PARENT_EXISTS_IN_TRANSACTION= "SELECT x." + PARENT_COLUMN + " FROM" +
+    private static final String PARENT_EXISTS_IN_TRANSACTION = "SELECT x." + PARENT_COLUMN + " FROM" +
             " (SELECT " + PARENT_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child" +
             " UNION SELECT " + PARENT_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE +
             " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +

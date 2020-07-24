@@ -25,6 +25,8 @@ import java.util.Collection;
 
 /**
  * Service which calculates and compares digests for binary objects
+ *
+ * @author peichman
  */
 public interface FixityService {
   /**

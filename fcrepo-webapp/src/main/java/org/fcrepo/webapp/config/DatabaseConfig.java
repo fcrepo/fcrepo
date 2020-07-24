@@ -30,6 +30,9 @@ import javax.sql.DataSource;
 import java.beans.PropertyVetoException;
 import java.util.Map;
 
+/**
+ * @author pwinckles
+ */
 @Configuration
 public class DatabaseConfig {
 

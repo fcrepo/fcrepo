@@ -114,11 +114,11 @@ public class IndexBuilderImpl implements IndexBuilder {
             fedoraToOcflObjectIndex.commit(txId);
             LOGGER.info("Index rebuild complete");
         } catch (RuntimeException e) {
-            execQuietly("Failed to rollback containment index transaction " +txId, () -> {
+            execQuietly("Failed to rollback containment index transaction " + txId, () -> {
                 containmentIndex.rollbackTransaction(txId);
                 return null;
             });
-            execQuietly("Failed to rollback OCFL index transaction " +txId, () -> {
+            execQuietly("Failed to rollback OCFL index transaction " + txId, () -> {
                 fedoraToOcflObjectIndex.rollback(txId);
                 return null;
             });

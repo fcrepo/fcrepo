@@ -50,6 +50,8 @@ import java.util.UUID;
 /**
  * Maps Fedora IDs to the OCFL IDs of the OCFL objects the Fedora resource is stored in. This implementation is backed
  * by a relational database.
+ *
+ * @author pwinckles
  */
 @Component
 public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {

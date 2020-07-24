@@ -22,6 +22,8 @@ import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 /**
  * Factory for creating {@link CreateVersionResourceOperationBuilder}s
+ *
+ * @author pwinckles
  */
 public interface VersionResourceOperationFactory extends ResourceOperationFactory {
 

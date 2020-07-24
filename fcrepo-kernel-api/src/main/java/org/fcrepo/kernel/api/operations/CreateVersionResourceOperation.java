@@ -22,6 +22,8 @@ import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
 
 /**
  * An operation for creating a new version of a resource
+ *
+ * @author pwinckles
  */
 public interface CreateVersionResourceOperation extends ResourceOperation {
 

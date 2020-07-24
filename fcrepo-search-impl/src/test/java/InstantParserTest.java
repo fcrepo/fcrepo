@@ -20,6 +20,9 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
+/**
+ * @author dbernstein
+ */
 public class InstantParserTest {
     @Test
     public void test() {

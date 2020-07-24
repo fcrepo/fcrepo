@@ -26,6 +26,8 @@ import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 
 /**
  * Tombstone class
+ *
+ * @author whikloj
  */
 public class TombstoneImpl extends FedoraResourceImpl implements Tombstone {
 

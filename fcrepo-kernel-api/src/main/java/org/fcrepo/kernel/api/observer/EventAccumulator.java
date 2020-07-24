@@ -25,6 +25,8 @@ import org.fcrepo.kernel.api.operations.ResourceOperation;
  * Accumulates events for changes made to resources, grouped by transaction. The events are not emitted until after the
  * transaction has been committed. If a transaction is rolled back, {@link #clearEvents} MUST be called to release the
  * stored events.
+ *
+ * @author pwinckles
  */
 public interface EventAccumulator {
 

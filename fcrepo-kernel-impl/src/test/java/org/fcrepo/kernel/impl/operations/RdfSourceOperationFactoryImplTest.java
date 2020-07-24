@@ -29,6 +29,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.UUID;
 
+/**
+ * @author bseeger
+ */
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class RdfSourceOperationFactoryImplTest {
 

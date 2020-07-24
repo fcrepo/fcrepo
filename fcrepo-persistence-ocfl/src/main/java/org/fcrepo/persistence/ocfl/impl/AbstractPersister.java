@@ -103,7 +103,7 @@ abstract class AbstractPersister implements Persister {
             throws PersistentStorageException {
         try {
             return this.index.getMapping(transactionId, resourceId);
-        } catch (final FedoraOcflMappingNotFoundException e){
+        } catch (final FedoraOcflMappingNotFoundException e) {
             throw new PersistentStorageException(e.getMessage());
         }
     }

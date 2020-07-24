@@ -473,7 +473,7 @@ public class OcflPersistentStorageSessionTest {
         try {
             session1.getTriples(RESOURCE_ID, null);
             fail("session1.getTriples(...) invocation should have failed.");
-        } catch (final PersistentStorageException e){
+        } catch (final PersistentStorageException e) {
             //do nothing
         }
 
@@ -541,7 +541,7 @@ public class OcflPersistentStorageSessionTest {
         try {
             session1.persist(rdfSourceOperation);
             session1.rollback();
-        }catch(final PersistentStorageException e) {
+        } catch (final PersistentStorageException e) {
             fail("Neither persist() nor rollback() should have failed.");
 
         }
@@ -640,8 +640,8 @@ public class OcflPersistentStorageSessionTest {
 
         mockMapping(OCFL_RESOURCE_ID, ROOT_OBJECT_ID, mapping);
         final var mappingCount = new AtomicInteger(0);
-        when(index.getMapping(anyString(), eq(RESOURCE_ID))).thenAnswer((Answer<FedoraOcflMapping>) invocationOnMock ->
-        {
+        when(index.getMapping(anyString(), eq(RESOURCE_ID))).thenAnswer(
+                (Answer<FedoraOcflMapping>) invocationOnMock -> {
             final var current = mappingCount.getAndIncrement();
             if (current == 0) {
                 throw new FedoraOcflMappingNotFoundException("");

@@ -17,6 +17,9 @@
  */
 package org.fcrepo.auth.common;
 
+/**
+ * @author peichman
+ */
 public class ShiroAuthenticationProvider {
 
 }

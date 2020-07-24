@@ -49,6 +49,8 @@ import org.junit.Test;
 
 /**
  * Tests related to tombstone stuff.
+ *
+ * @author whikloj
  */
 public class FedoraTombstonesIT extends AbstractResourceIT {
 

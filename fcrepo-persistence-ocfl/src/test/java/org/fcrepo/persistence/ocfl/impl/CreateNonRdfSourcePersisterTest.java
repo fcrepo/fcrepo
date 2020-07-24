@@ -169,7 +169,7 @@ public class CreateNonRdfSourcePersisterTest {
     }
 
     @Test
-    public void testHandle(){
+    public void testHandle() {
         assertTrue(this.persister.handle(this.nonRdfSourceOperation));
         final ResourceOperation badOperation = mock(ResourceOperation.class);
         when(badOperation.getType()).thenReturn(CREATE);

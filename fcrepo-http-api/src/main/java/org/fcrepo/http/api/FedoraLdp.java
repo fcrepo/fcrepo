@@ -710,7 +710,7 @@ public class FedoraLdp extends ContentExposingResource {
                 .replaceFirst(":", "=").replaceFirst("sha1=", "sha=")).collect(Collectors.joining(","));
     }
 
-    private static void ensureArchivalGroupHeaderNotPresentForBinaries(final List<String> links){
+    private static void ensureArchivalGroupHeaderNotPresentForBinaries(final List<String> links) {
         if (links == null) {
             return;
         }
