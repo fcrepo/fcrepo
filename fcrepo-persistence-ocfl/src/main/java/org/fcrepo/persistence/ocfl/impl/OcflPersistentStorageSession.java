@@ -49,15 +49,11 @@ import java.util.concurrent.TimeoutException;
 
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
 import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.getBinaryStream;
 import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.getRdfStream;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.getSidecarSubpath;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.resolveExtensions;
 import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.resolveVersionId;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.resovleOCFLSubpathFromResourceId;
 
 
 
@@ -195,16 +191,14 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         final FedoraOcflMapping mapping = getFedoraOcflMapping(identifier);
         final OcflObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
         final var rootIdentifier = mapping.getRootObjectIdentifier();
-        final var ocflSubpath = resovleOCFLSubpathFromResourceId(rootIdentifier.getResourceId(),
-                identifier.getResourceId());
-        final var sidecarSubpath = getSidecarSubpath(ocflSubpath);
+        final var headerPath = PersistencePaths.headerPath(rootIdentifier, identifier);
 
         final InputStream headerStream;
         if (version != null) {
             final var versionId = resolveVersionId(objSession, version);
-            headerStream = objSession.read(sidecarSubpath, versionId);
+            headerStream = objSession.read(headerPath, versionId);
         } else {
-            headerStream = objSession.read(sidecarSubpath);
+            headerStream = objSession.read(headerPath);
         }
 
         return deserializeHeaders(headerStream);
@@ -224,12 +218,9 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         ensureCommitNotStarted();
 
         final var mapping = getFedoraOcflMapping(identifier);
-        final var rootIdentifier = mapping.getRootObjectIdentifier();
         final var objSession = findOrCreateSession(mapping.getOcflObjectId());
-        final var ocflSubpath = resovleOCFLSubpathFromResourceId(rootIdentifier.getResourceId(),
-                identifier.getResourceId());
-        final var filePath = resolveExtensions(ocflSubpath, true);
-        return getRdfStream(identifier, objSession, filePath, version);
+        final var headers = getHeaders(identifier, version);
+        return getRdfStream(identifier, objSession, headers.getContentPath(), version);
     }
 
     @Override
@@ -241,13 +232,8 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
 
         // Find the subpath if it's a child of an AG
         if (!mapping.getRootObjectIdentifier().equals(fedoraIdentifier)) {
-
             final var headers = getHeaders(fedoraIdentifier, null);
-            subpath = resolveExtensions(
-                    resovleOCFLSubpathFromResourceId(mapping.getRootObjectIdentifier().getResourceId(),
-                            fedoraIdentifier.getResourceId()),
-                    !NON_RDF_SOURCE.getURI().equals(headers.getInteractionModel())
-            );
+            subpath = headers.getContentPath();
         }
 
         return OcflPersistentStorageUtils.listVersions(objSession, subpath);
@@ -259,12 +245,9 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         ensureCommitNotStarted();
 
         final var mapping = getFedoraOcflMapping(identifier);
-        final var rootIdentifier = mapping.getRootObjectIdentifier();
         final var objSession = findOrCreateSession(mapping.getOcflObjectId());
-        final var ocflSubpath = resovleOCFLSubpathFromResourceId(rootIdentifier.getResourceId(),
-                identifier.getResourceId());
-
-        return getBinaryStream(objSession, ocflSubpath, version);
+        final var headers = getHeaders(identifier, version);
+        return getBinaryStream(objSession, headers.getContentPath(), version);
     }
 
     @Override

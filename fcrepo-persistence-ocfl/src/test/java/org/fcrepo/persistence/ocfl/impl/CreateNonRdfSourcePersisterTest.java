@@ -28,7 +28,6 @@ import org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM;
 import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.FileWriteOutcome;
-import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,9 +47,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
-import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.RESOURCE_HEADER_EXTENSION;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.getInternalFedoraDirectory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -76,12 +73,6 @@ public class CreateNonRdfSourcePersisterTest {
     private OcflObjectSession session;
 
     @Mock
-    private FedoraOcflMapping mapping;
-
-    @Mock
-    private FedoraToOcflObjectIndex index;
-
-    @Mock
     private FileWriteOutcome writeOutcome;
 
     @Captor
@@ -95,6 +86,8 @@ public class CreateNonRdfSourcePersisterTest {
 
     @Mock
     private OcflPersistentStorageSession psSession;
+
+    private TestOcflObjectIndex index;
 
     private static final FedoraId RESOURCE_ID = FedoraId.create("info:fedora/parent/child");
 
@@ -122,8 +115,10 @@ public class CreateNonRdfSourcePersisterTest {
 
     @Before
     public void setUp() throws Exception {
-        when(mapping.getOcflObjectId()).thenReturn("object-id");
-        when(mapping.getRootObjectIdentifier()).thenReturn(ROOT_RESOURCE_ID);
+        index = new TestOcflObjectIndex();
+
+        index.addMapping(null, ROOT_RESOURCE_ID, FedoraId.getRepositoryRootId(),
+                ROOT_RESOURCE_ID.getFullId());
 
         when(session.write(anyString(), any(InputStream.class))).thenReturn(writeOutcome);
         when(session.getObjectDigestAlgorithm()).thenReturn(DIGEST_ALGORITHM.SHA1);
@@ -145,8 +140,6 @@ public class CreateNonRdfSourcePersisterTest {
         persister = new CreateNonRdfSourcePersister(index);
 
         when(psSession.findOrCreateSession(anyString())).thenReturn(session);
-        when(index.getMapping(eq(SESSION_ID), any())).thenReturn(mapping);
-
     }
 
     @Test
@@ -167,7 +160,7 @@ public class CreateNonRdfSourcePersisterTest {
         assertEquals(CONTENT_BODY, IOUtils.toString(userContent, StandardCharsets.UTF_8));
 
         // verify resource headers
-        final var resultHeaders = retrievePersistedHeaders("child");
+        final var resultHeaders = retrievePersistedHeaders();
 
         assertEquals(NON_RDF_SOURCE.toString(), resultHeaders.getInteractionModel());
         assertEquals(LOCAL_CONTENT_SIZE, resultHeaders.getContentSize());
@@ -196,7 +189,7 @@ public class CreateNonRdfSourcePersisterTest {
         persister.persist(psSession, nonRdfSourceOperation);
 
         // verify resource headers
-        final var resultHeaders = retrievePersistedHeaders("child");
+        final var resultHeaders = retrievePersistedHeaders();
 
         assertEquals(NON_RDF_SOURCE.toString(), resultHeaders.getInteractionModel());
         assertEquals(EXTERNAL_HANDLING, resultHeaders.getExternalHandling());
@@ -240,7 +233,7 @@ public class CreateNonRdfSourcePersisterTest {
         verify(session).write(eq("child"), any(InputStream.class));
 
         // verify resource headers
-        final var resultHeaders = retrievePersistedHeaders("child");
+        final var resultHeaders = retrievePersistedHeaders();
 
         assertEquals(NON_RDF_SOURCE.toString(), resultHeaders.getInteractionModel());
         assertEquals(LOCAL_CONTENT_SIZE, resultHeaders.getContentSize());
@@ -278,8 +271,8 @@ public class CreateNonRdfSourcePersisterTest {
         });
     }
 
-    private ResourceHeaders retrievePersistedHeaders(final String subpath) throws Exception {
-        verify(session).write(eq(getInternalFedoraDirectory() + subpath + RESOURCE_HEADER_EXTENSION),
+    private ResourceHeaders retrievePersistedHeaders() throws Exception {
+        verify(session).write(eq(PersistencePaths.headerPath(RESOURCE_ID, RESOURCE_ID)),
                 headersIsCaptor.capture());
         final var headersIs = headersIsCaptor.getValue();
         return deserializeHeaders(headersIs);

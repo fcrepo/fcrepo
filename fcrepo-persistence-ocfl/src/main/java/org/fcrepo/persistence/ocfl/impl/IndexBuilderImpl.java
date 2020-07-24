@@ -46,7 +46,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.lang.String.format;
 import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.isSidecarSubpath;
 
 /**
  * An implementation of {@link IndexBuilder}.  This implementation rebuilds the following indexable state derived
@@ -135,7 +134,7 @@ public class IndexBuilderImpl implements IndexBuilder {
             final var fedoraIds = new ArrayList<FedoraId>();
 
             subpaths.forEach(subpath -> {
-                if (isSidecarSubpath(subpath)) {
+                if (PersistencePaths.isHeaderFile(subpath)) {
                     //we're only interested in sidecar subpaths
                     try {
                         final var headers = deserializeHeaders(session.read(subpath));

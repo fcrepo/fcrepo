@@ -146,4 +146,10 @@ public interface ResourceHeaders {
      */
     boolean isDeleted();
 
+    /**
+     * Returns the path to the content file the resource headers are associated with
+     * @return path the content file
+     */
+    String getContentPath();
+
 }
