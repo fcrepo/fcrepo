@@ -20,6 +20,8 @@ package org.fcrepo.kernel.api.operations;
 
 /**
  * Builder for creating {@link CreateVersionResourceOperation}s
+ *
+ * @author pwinckles
  */
 public interface CreateVersionResourceOperationBuilder extends ResourceOperationBuilder {
 

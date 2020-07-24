@@ -40,6 +40,8 @@ import org.slf4j.Logger;
 
 /**
  * Test of OCFL specific issues from the HTTP layer.
+ *
+ * @author whikloj
  */
 public class OcflPersistenceIT extends AbstractResourceIT {
 

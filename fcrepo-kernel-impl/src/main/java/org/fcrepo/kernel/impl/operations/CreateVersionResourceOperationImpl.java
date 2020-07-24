@@ -23,6 +23,8 @@ import org.fcrepo.kernel.api.operations.CreateVersionResourceOperation;
 
 /**
  * Default impl of {@link CreateVersionResourceOperation}
+ *
+ * @author pwinckles
  */
 public class CreateVersionResourceOperationImpl extends AbstractResourceOperation
         implements CreateVersionResourceOperation {

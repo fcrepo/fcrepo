@@ -24,6 +24,8 @@ import java.util.Set;
 
 /**
  * Stores details about an Event.
+ *
+ * @author pwinckles
  */
 public interface EventBuilder {
 

@@ -38,7 +38,7 @@ public class FedoraOcflMapping {
      * @param rootObjectIdentifier The fedora root object resource identifier
      * @param ocflObjectId The OCFL Object identitifer
      */
-    public FedoraOcflMapping(final FedoraId rootObjectIdentifier, final String ocflObjectId){
+    public FedoraOcflMapping(final FedoraId rootObjectIdentifier, final String ocflObjectId) {
         this.rootObjectIdentifier = rootObjectIdentifier;
         this.ocflObjectId = ocflObjectId;
     }

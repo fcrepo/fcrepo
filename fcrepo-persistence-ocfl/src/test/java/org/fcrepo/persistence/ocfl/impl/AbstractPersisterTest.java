@@ -53,7 +53,7 @@ public class AbstractPersisterTest {
 
             @Override
             public void persist(final OcflPersistentStorageSession session,
-                                final ResourceOperation operation) {}
+                                final ResourceOperation operation) { }
         }
 
         when(nonRdfSourceOperation.getType()).thenReturn(CREATE);
@@ -70,7 +70,7 @@ public class AbstractPersisterTest {
 
             @Override
             public void persist(final OcflPersistentStorageSession session,
-                                final ResourceOperation operation) {}
+                                final ResourceOperation operation) { }
         }
 
         final MyPersister mp = new MyPersister();
@@ -86,7 +86,7 @@ public class AbstractPersisterTest {
 
             @Override
             public void persist(final OcflPersistentStorageSession session,
-                                final ResourceOperation operation) {}
+                                final ResourceOperation operation) { }
         }
 
         when(nonRdfSourceOperation.getType()).thenReturn(UPDATE);

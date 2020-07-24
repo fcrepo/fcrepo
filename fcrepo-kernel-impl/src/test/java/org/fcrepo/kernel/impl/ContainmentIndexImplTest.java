@@ -45,6 +45,9 @@ import static org.mockito.Mockito.when;
 
 import java.util.UUID;
 
+/**
+ * @author peichman
+ */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration("/containmentIndexTest.xml")
 public class ContainmentIndexImplTest {

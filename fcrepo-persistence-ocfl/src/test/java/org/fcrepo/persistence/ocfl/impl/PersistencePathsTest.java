@@ -147,7 +147,7 @@ public class PersistencePathsTest {
     public void createContentPathForAgContainerAcl() {
         final var rootId = FedoraId.create("ag");
         final var id = FedoraId.create("ag/foo/bar").asAcl();
-        assertEquals("foo/bar/" + CONTAINER_PREFIX + ACL_SUFFIX+ NT,
+        assertEquals("foo/bar/" + CONTAINER_PREFIX + ACL_SUFFIX + NT,
                 PersistencePaths.aclContentPath(true, rootId, id));
     }
 

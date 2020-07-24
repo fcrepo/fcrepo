@@ -21,6 +21,8 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 
 /**
  * Wrapper class to allow using things that throw PersistentStorageExceptions in lambda functions.
+ *
+ * @author whikloj
  */
 public class PersistentStorageRuntimeException extends RepositoryRuntimeException {
     public PersistentStorageRuntimeException(final String msg) {

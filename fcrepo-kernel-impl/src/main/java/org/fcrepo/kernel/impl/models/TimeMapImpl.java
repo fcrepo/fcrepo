@@ -49,6 +49,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 
 /**
  * FedoraResource implementation that represents a Memento TimeMap of the base resource.
+ *
+ * @author pwinckles
  */
 public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
 

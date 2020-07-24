@@ -23,6 +23,8 @@ import java.time.Instant;
 
 /**
  * Default OcflVersion impl
+ *
+ * @author pwinckles
  */
 public class OcflVersionImpl implements OcflVersion {
 

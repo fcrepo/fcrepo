@@ -53,7 +53,7 @@ public class InstantParser {
                 .parseDefaulting(ChronoField.NANO_OF_DAY, 0).toFormatter().withZone(zoneId));
     }
 
-    private InstantParser() {}
+    private InstantParser() { }
 
     /**
      * Parse a datestring into an instant.  If timezone or time information is missing, UTC is assumed.

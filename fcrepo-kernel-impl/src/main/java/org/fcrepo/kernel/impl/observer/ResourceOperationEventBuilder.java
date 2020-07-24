@@ -32,6 +32,8 @@ import java.util.Set;
 
 /**
  * Converts a ResourceOperation into an Event.
+ *
+ * @author pwinckles
  */
 public class ResourceOperationEventBuilder implements EventBuilder {
 

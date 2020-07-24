@@ -119,7 +119,7 @@ public class CreateRdfSourcePersisterTest {
     }
 
     @Test
-    public void testHandle(){
+    public void testHandle() {
         assertTrue(this.persister.handle(this.operation));
         final RdfSourceOperation badOperation = mock(RdfSourceOperation.class);
         when(badOperation.getType()).thenReturn(UPDATE);

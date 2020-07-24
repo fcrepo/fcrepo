@@ -52,6 +52,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.MockitoJUnitRunner;
 
+/**
+ * @author pwinckles
+ */
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class TimeMapImplTest {
 

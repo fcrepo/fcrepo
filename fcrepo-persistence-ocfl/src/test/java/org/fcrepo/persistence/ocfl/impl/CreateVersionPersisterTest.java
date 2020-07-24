@@ -36,6 +36,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+/**
+ * @author pwinckles
+ */
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class CreateVersionPersisterTest {
 

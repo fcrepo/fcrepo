@@ -32,6 +32,9 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.UUID;
 
+/**
+ * @author bseeger
+ */
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class NonRdfSourceOperationFactoryImplTest {
 

@@ -90,7 +90,7 @@ public class HttpRdfServiceTest {
     private static final MediaType CONTENT_TYPE = new MediaType("text", "turtle");
 
     @Before
-    public void setup(){
+    public void setup() {
         when(idTranslator.toInternalId(FEDORA_URI_1)).thenReturn(FEDORA_ID_1);
         when(idTranslator.toInternalId(FEDORA_URI_2)).thenReturn(FEDORA_ID_2);
         when(idTranslator.inExternalDomain(FEDORA_URI_1)).thenReturn(true);

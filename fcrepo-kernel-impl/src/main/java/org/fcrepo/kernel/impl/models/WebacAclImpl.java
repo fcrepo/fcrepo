@@ -28,6 +28,8 @@ import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 
 /**
  * Webac Acl class
+ *
+ * @author whikloj
  */
 public class WebacAclImpl extends ContainerImpl implements WebacAcl {
 

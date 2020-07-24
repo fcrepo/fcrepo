@@ -225,7 +225,7 @@ public class WebACRolesProviderTest {
 
     @Ignore // TODO FIX THIS TEST
     @Test
-    public void acl01Test2() throws RepositoryException, PathNotFoundException{
+    public void acl01Test2() throws RepositoryException, PathNotFoundException {
         final String accessTo = "/webacl_box2";
         final String acl = "/acls/01/acl.ttl";
 
@@ -269,7 +269,7 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void acl03Test1() throws RepositoryException, PathNotFoundException{
+    public void acl03Test1() throws RepositoryException, PathNotFoundException {
         final String agent = "http://xmlns.com/foaf/0.1/Agent";
         final String accessTo = "/dark/archive/sunshine";
         final String acl = "/acls/03/acl.ttl";
@@ -446,7 +446,7 @@ public class WebACRolesProviderTest {
      * therefore retrieve two agents.
      */
     @Test
-    public void acl09Test1() throws RepositoryException, PathNotFoundException{
+    public void acl09Test1() throws RepositoryException, PathNotFoundException {
         final String agent1 = "person1";
         final String accessTo = "/anotherCollection";
 

@@ -34,6 +34,9 @@ import java.util.HashSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * @author bseeger
+ */
 public class CreateNonRdfSourceOperationBuilderTest {
 
     private InputStream stream;

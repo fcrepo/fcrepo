@@ -25,6 +25,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Default impl of {@link VersionResourceOperationFactory}
+ *
+ * @author pwinckles
  */
 @Component
 public class VersionResourceOperationFactoryImpl implements VersionResourceOperationFactory {

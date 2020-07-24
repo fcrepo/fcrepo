@@ -37,6 +37,9 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+/**
+ * @author pwinckles
+ */
 public class ResourceOperationEventBuilderTest {
 
     private static final FedoraId FEDORA_ID = FedoraId.create("/test");

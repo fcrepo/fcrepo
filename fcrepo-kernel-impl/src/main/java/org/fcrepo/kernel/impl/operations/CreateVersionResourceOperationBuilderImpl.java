@@ -25,6 +25,8 @@ import org.fcrepo.kernel.api.operations.ResourceOperationBuilder;
 
 /**
  * Default impl of {@link CreateVersionResourceOperationBuilder}
+ *
+ * @author pwinckles
  */
 public class CreateVersionResourceOperationBuilderImpl implements CreateVersionResourceOperationBuilder {
 

@@ -37,7 +37,7 @@ public class SearchResult {
     /**
      * Default Constructor
      */
-    public SearchResult() {}
+    public SearchResult() { }
     /**
      * Constructor
      *

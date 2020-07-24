@@ -31,6 +31,8 @@ import java.util.Map;
 
 /**
  * An simple in-memory implementation of the {@link FedoraToOcflObjectIndex} used for testing
+ *
+ * @author pwinckles
  */
 public class TestOcflObjectIndex implements FedoraToOcflObjectIndex {
 

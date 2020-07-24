@@ -21,6 +21,8 @@ import java.time.Instant;
 
 /**
  * Contains details about an OCFL version
+ *
+ * @author pwinckles
  */
 public interface OcflVersion {
 
