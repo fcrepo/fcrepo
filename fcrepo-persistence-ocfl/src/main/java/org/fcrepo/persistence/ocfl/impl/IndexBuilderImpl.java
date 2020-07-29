@@ -182,7 +182,7 @@ public class IndexBuilderImpl implements IndexBuilder {
             });
 
             headersList.forEach(headers -> {
-                if(!headers.isDeleted())  {
+                if (!headers.isDeleted())  {
                     searchIndex.addUpdateIndex(headers);
                 }
             });
