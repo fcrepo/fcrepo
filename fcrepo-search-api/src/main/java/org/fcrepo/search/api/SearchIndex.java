@@ -35,6 +35,13 @@ public interface SearchIndex {
     void addUpdateIndex(ResourceHeaders resourceHeaders);
 
     /**
+     * Adds or updates the index with the resource header information.
+     * @param txId The database transaction id
+     * @param resourceHeaders The resource headers associated with the resource
+     */
+    void addUpdateIndex(String txId, ResourceHeaders resourceHeaders);
+
+    /**
      * Removes indexed fields associated with the specified Fedora ID
      * @param fedoraId The Fedora ID
      */

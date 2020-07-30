@@ -262,6 +262,11 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     @Override
     public void addUpdateIndex(final ResourceHeaders resourceHeaders) {
+        addUpdateIndex(UUID.randomUUID().toString(),   resourceHeaders);
+    }
+
+    @Override
+    public void addUpdateIndex(final String txId, final ResourceHeaders resourceHeaders) {
         final var fullId = resourceHeaders.getId().getFullId();
         final var selectParams = new MapSqlParameterSource();
         selectParams.addValue(FEDORA_ID_PARAM, fullId);
@@ -269,7 +274,6 @@ public class DbSearchIndexImpl implements SearchIndex {
                 jdbcTemplate.queryForList(SELECT_BY_FEDORA_ID,
                         selectParams);
 
-        final var txId = UUID.randomUUID().toString();
         executeInDbTransaction(txId, status -> {
             try {
                 final var fedoraResource = resourceFactory.getResource(FedoraId.create(fullId)).getDescription();

@@ -183,7 +183,7 @@ public class IndexBuilderImpl implements IndexBuilder {
 
             headersList.forEach(headers -> {
                 if (!headers.isDeleted())  {
-                    searchIndex.addUpdateIndex(headers);
+                    searchIndex.addUpdateIndex(txId, headers);
                 }
             });
         } catch (final PersistentStorageException e) {
