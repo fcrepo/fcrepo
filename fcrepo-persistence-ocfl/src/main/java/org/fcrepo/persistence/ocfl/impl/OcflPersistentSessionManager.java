@@ -86,7 +86,7 @@ public class OcflPersistentSessionManager implements PersistentStorageSessionMan
         return sessionMap.computeIfAbsent(sessionId, key -> new OcflPersistentStorageSession(
                 key,
                 fedoraOcflIndex,
-                createSessionStagingDir(sessionId),
+                sessionStagingDir(sessionId),
                 objectSessionFactory));
     }
 
@@ -99,7 +99,7 @@ public class OcflPersistentSessionManager implements PersistentStorageSessionMan
                 localSession = this.readOnlySession;
                 if (localSession == null) {
                     this.readOnlySession = new OcflPersistentStorageSession(fedoraOcflIndex,
-                            createSessionStagingDir(null), objectSessionFactory);
+                            sessionStagingDir(null), objectSessionFactory);
                     localSession = this.readOnlySession;
                 }
             }
@@ -108,13 +108,8 @@ public class OcflPersistentSessionManager implements PersistentStorageSessionMan
         return localSession;
     }
 
-    private Path createSessionStagingDir(final String sessionId) {
-        try {
-            return Files.createDirectories(sessionStagingRoot.resolve(
-                    sessionId == null ? "read-only" : sessionId));
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+    private Path sessionStagingDir(final String sessionId) {
+        return sessionStagingRoot.resolve(sessionId == null ? "read-only" : sessionId);
     }
 
 }

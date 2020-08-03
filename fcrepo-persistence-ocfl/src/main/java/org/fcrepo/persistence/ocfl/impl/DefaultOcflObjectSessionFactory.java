@@ -28,9 +28,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.fcrepo.persistence.api.CommitOption.NEW_VERSION;
@@ -59,7 +56,7 @@ public class DefaultOcflObjectSessionFactory implements OcflObjectSessionFactory
     @Override
     public OcflObjectSession create(final String ocflId,
                                     final Path sessionStagingDir) {
-        return new DefaultOcflObjectSession(ocflId, createStagingDir(sessionStagingDir, ocflId),
+        return new DefaultOcflObjectSession(ocflId, objectStagingDir(sessionStagingDir, ocflId),
                 this.ocflRepository, defaultCommitOption());
     }
 
@@ -79,13 +76,9 @@ public class DefaultOcflObjectSessionFactory implements OcflObjectSessionFactory
         this.autoVersioningEnabled = autoVersioningEnabled;
     }
 
-    private Path createStagingDir(final Path sessionStaging, final String objectIdentifier) {
+    private Path objectStagingDir(final Path sessionStaging, final String objectIdentifier) {
         final var digest = DigestUtils.sha256Hex(objectIdentifier);
-        try {
-            return Files.createDirectories(sessionStaging.resolve(digest));
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        return sessionStaging.resolve(digest);
     }
 
 }
