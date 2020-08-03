@@ -96,7 +96,9 @@ abstract public class AbstractDeleteResourceService extends AbstractService {
             final Stream<String> children = getContained(tx, fedoraResource);
             children.forEach(childResourceId -> {
                 try {
-                    final FedoraResource res = resourceFactory.getResource(tx, FedoraId.create(childResourceId));
+
+                    final FedoraResource res = resourceFactory.getResource(txtIdIfUncommittedOrNull(tx),
+                            FedoraId.create(childResourceId));
                     if (res instanceof Tombstone) {
                         deleteDepthFirst(tx, pSession, ((Tombstone) res).getDeletedObject(), userPrincipal);
                     } else {

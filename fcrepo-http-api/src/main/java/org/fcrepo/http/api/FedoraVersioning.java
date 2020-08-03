@@ -139,7 +139,7 @@ public class FedoraVersioning extends ContentExposingResource {
             // need to commit the transaction before loading the memento otherwise it won't exist
             transaction.commitIfShortLived();
 
-            final var versions = resource.getTimeMap().getChildren().collect(Collectors.toList());
+            final var versions = reloadResource().getTimeMap().getChildren().collect(Collectors.toList());
 
             if (versions.isEmpty()) {
                 throw new RepositoryRuntimeException(String.format("Failed to create a version for %s", externalPath));

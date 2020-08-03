@@ -17,7 +17,6 @@
  */
 package org.fcrepo.kernel.api.models;
 
-import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
@@ -42,12 +41,12 @@ public interface ResourceFactory {
     /**
      * Get a FedoraResource for existing resource
      *
-     * @param transaction The transaction this request is part of.
+     * @param transactionId The transaction id associated with this request.
      * @param fedoraID The identifier for the resource.
      * @return The resource.
      * @throws PathNotFoundException If the identifier cannot be found.
      */
-    public FedoraResource getResource(final Transaction transaction, final FedoraId fedoraID)
+    public FedoraResource getResource(final String transactionId, final FedoraId fedoraID)
             throws PathNotFoundException;
 
     /**
@@ -66,28 +65,43 @@ public interface ResourceFactory {
      * Get a resource as a particular type
      *
      * @param <T> type for the resource
-     * @param transaction The transaction this request is part of.
+     * @param transactionId The transaction id associated with this request.
      * @param fedoraID The identifier for the resource.
      * @param clazz class the resource will be cast to
      * @return The resource.
      * @throws PathNotFoundException If the identifier cannot be found.
      */
-    public <T extends FedoraResource> T getResource(final Transaction transaction, final FedoraId fedoraID,
+    public <T extends FedoraResource> T getResource(final String transactionId, final FedoraId fedoraID,
                                                     final Class<T> clazz) throws PathNotFoundException;
 
     /**
      * Check if a resource exists.
-     * @param transaction The current transaction or null if read-only.
      * @param fedoraId The internal identifier
      * @return True if the identifier resolves to a resource.
      */
-    public boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId);
+    public boolean doesResourceExist(final FedoraId fedoraId);
+
+    /**
+     * Check if a resource exists.
+     * @param transactionId The current transaction id
+     * @param fedoraId The internal identifier
+     * @return True if the identifier resolves to a resource.
+     */
+    public boolean doesResourceExist(final String transactionId, final FedoraId fedoraId);
+
 
     /**
      * Get the containing resource (if exists).
-     * @param transaction The current transaction or null if read-only.
      * @param resourceId The internal identifer
      * @return The containing resource or null if none.
      */
-    public FedoraResource getContainer(final Transaction transaction, final FedoraId resourceId);
+    public FedoraResource getContainer(final FedoraId resourceId);
+
+    /**
+     * Get the containing resource (if exists).
+     * @param transactionId The current transaction id
+     * @param resourceId The internal identifier
+     * @return The containing resource or null if none.
+     */
+    public FedoraResource getContainer(final String transactionId, final FedoraId resourceId);
 }

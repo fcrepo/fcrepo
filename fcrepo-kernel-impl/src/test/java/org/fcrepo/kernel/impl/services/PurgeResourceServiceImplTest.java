@@ -143,7 +143,7 @@ public class PurgeResourceServiceImplTest {
         when(childContainer.isAcl()).thenReturn(false);
         when(childContainer.getAcl()).thenReturn(null);
 
-        when(resourceFactory.getResource(tx, CHILD_RESOURCE_ID)).thenReturn(childContainer);
+        when(resourceFactory.getResource(tx.getId(), CHILD_RESOURCE_ID)).thenReturn(childContainer);
         containmentIndex.addContainedBy(tx.getId(), container.getFedoraId(), childContainer.getFedoraId());
         containmentIndex.commitTransaction(tx.getId());
         containmentIndex.removeContainedBy(tx.getId(), container.getFedoraId(), childContainer.getFedoraId());

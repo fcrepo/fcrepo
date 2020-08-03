@@ -262,23 +262,31 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     @Override
     public void addUpdateIndex(final ResourceHeaders resourceHeaders) {
-        addUpdateIndex(UUID.randomUUID().toString(),   resourceHeaders);
+        addUpdateIndex(null, resourceHeaders);
     }
 
     @Override
     public void addUpdateIndex(final String txId, final ResourceHeaders resourceHeaders) {
         final var fullId = resourceHeaders.getId().getFullId();
+        final var fedoraId = FedoraId.create(fullId);
         final var selectParams = new MapSqlParameterSource();
         selectParams.addValue(FEDORA_ID_PARAM, fullId);
         final var result =
                 jdbcTemplate.queryForList(SELECT_BY_FEDORA_ID,
                         selectParams);
 
-        executeInDbTransaction(txId, status -> {
+        if (fedoraId.isAcl() || fedoraId.isMemento()) {
+            LOGGER.debug("The search index does not include acls or mementos. Ignoring resource {}", fullId);
+            return;
+        }
+
+        final var dbTxId = txId == null ? UUID.randomUUID().toString() : txId;
+        executeInDbTransaction(dbTxId, status -> {
             try {
-                final var fedoraResource = resourceFactory.getResource(FedoraId.create(fullId)).getDescription();
+                final var fedoraResource = txId != null ? resourceFactory.getResource(txId, fedoraId) :
+                        resourceFactory.getResource(fedoraId);
                 final var rdfTypes = fedoraResource.getTypes();
-                final ArrayList<Long> rdfTypeIds = findOrCreateRdfTypesInDb(rdfTypes);
+                final var rdfTypeIds = findOrCreateRdfTypesInDb(rdfTypes);
                 final var params = new MapSqlParameterSource();
                 params.addValue(FEDORA_ID_PARAM, fullId);
                 params.addValue(MODIFIED_PARAM, new Timestamp(resourceHeaders.getLastModifiedDate().toEpochMilli()));

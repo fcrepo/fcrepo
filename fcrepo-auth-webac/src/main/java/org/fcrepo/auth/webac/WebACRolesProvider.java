@@ -235,7 +235,9 @@ public class WebACRolesProvider {
                 final String hashedSuffix = hashIndex > 0 ? agentGroup.substring(hashIndex) : null;
                 try {
                     final FedoraId fedoraId = FedoraId.create(agentGroupNoHash);
-                    final FedoraResource resource = resourceFactory.getResource(transaction, fedoraId);
+                    final var txId = transaction == null || transaction.isCommitted() ? null : transaction.getId();
+                    final FedoraResource resource = txId != null ? resourceFactory.getResource(txId, fedoraId) :
+                            resourceFactory.getResource(fedoraId);
                     return getAgentMembers(translator, resource, hashedSuffix);
                 } catch (final PathNotFoundException e) {
                     throw new PathNotFoundRuntimeException(e);

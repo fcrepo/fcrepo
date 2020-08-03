@@ -624,9 +624,12 @@ public class FedoraLdp extends ContentExposingResource {
         }
         LOGGER.debug("Finished creating resource with path: {}", externalPath());
         transaction.commitIfShortLived();
-
-        final var resource = getFedoraResource(transaction, newFedoraId);
-        return createUpdateResponse(resource, true);
+        try {
+            final var resource = getFedoraResource(transaction, newFedoraId);
+            return createUpdateResponse(resource, true);
+        } catch (PathNotFoundException e) {
+            throw new PathNotFoundRuntimeException(e);
+        }
     }
 
     @Override

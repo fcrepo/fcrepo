@@ -23,17 +23,16 @@ import org.fcrepo.http.commons.session.TransactionProvider;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
-import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.slf4j.Logger;
 
-import java.security.Principal;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.SecurityContext;
+import java.security.Principal;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -80,18 +79,16 @@ abstract public class FedoraBaseResource extends AbstractResource {
      * or uses a new transaction.
      *
      * @param transaction the fedora transaction
-     * @param fedoraId identifier of the resource
+     * @param fedoraId    identifier of the resource
      * @return the requested FedoraResource
      */
-    protected FedoraResource getFedoraResource(final Transaction transaction, final FedoraId fedoraId) {
-        try {
-            if (transaction.isCommitted()) {
-                return getFedoraResource(fedoraId);
-            } else {
-                return resourceFactory.getResource(transaction, fedoraId);
-            }
-        } catch (final PathNotFoundException e) {
-            throw new PathNotFoundRuntimeException(e);
+    protected FedoraResource getFedoraResource(final Transaction transaction, final FedoraId fedoraId)
+            throws PathNotFoundException {
+        final var txId = txtIdIfUncommittedOrNull(transaction);
+        if (txId == null) {
+            return getFedoraResource(fedoraId);
+        } else {
+            return resourceFactory.getResource(txId, fedoraId);
         }
     }
 
@@ -101,7 +98,12 @@ abstract public class FedoraBaseResource extends AbstractResource {
      * @return Returns true if an object with the provided id exists
      */
     protected boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId) {
-        return resourceFactory.doesResourceExist(transaction, fedoraId);
+        final var txId = txtIdIfUncommittedOrNull(transaction);
+        if (txId == null) {
+            return resourceFactory.doesResourceExist(fedoraId);
+        } else {
+            return resourceFactory.doesResourceExist(transaction.getId(), fedoraId);
+        }
     }
 
     protected String getUserPrincipal() {
@@ -115,5 +117,9 @@ abstract public class FedoraBaseResource extends AbstractResource {
             transaction = txProvider.provide();
         }
         return transaction;
+    }
+
+    protected String txtIdIfUncommittedOrNull(final Transaction tx) {
+        return tx == null || tx.isCommitted() ? null : tx.getId();
     }
 }

@@ -60,7 +60,7 @@ public class WebacAclServiceImpl extends AbstractService implements WebacAclServ
     @Override
     public WebacAcl find(final Transaction transaction, final FedoraId fedoraId) {
         try {
-            return resourceFactory.getResource(transaction, fedoraId, WebacAclImpl.class);
+            return resourceFactory.getResource(txtIdIfUncommittedOrNull(transaction), fedoraId, WebacAclImpl.class);
         } catch (final PathNotFoundException exc) {
             throw new PathNotFoundRuntimeException(exc);
         }

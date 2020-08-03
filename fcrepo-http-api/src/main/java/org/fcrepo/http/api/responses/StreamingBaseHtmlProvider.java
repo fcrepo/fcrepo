@@ -226,10 +226,11 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
     private FedoraResource getResourceFromSubject(final String subjectUri) {
         final FedoraId fedoraID = FedoraId.create(identifierConverter().toInternalId(subjectUri));
         try {
-            if (transaction() == null) {
+            final var tx = transaction();
+            if (tx == null || tx.isCommitted()) {
                 return resourceFactory.getResource(fedoraID);
             } else {
-                return resourceFactory.getResource(transaction(), fedoraID);
+                return resourceFactory.getResource(tx.getId(), fedoraID);
             }
         } catch (final PathNotFoundException e) {
             throw new RepositoryRuntimeException(e);

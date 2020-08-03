@@ -19,7 +19,6 @@ package org.fcrepo.kernel.impl.models;
 
 import org.apache.jena.graph.Triple;
 import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
@@ -84,14 +83,14 @@ public class FedoraResourceImpl implements FedoraResource {
     private boolean isMemento;
 
     // The transaction this representation of the resource belongs to
-    protected final Transaction tx;
+    protected final String txId;
 
     protected FedoraResourceImpl(final FedoraId fedoraId,
-                                 final Transaction tx,
+                                 final String txId,
                                  final PersistentStorageSessionManager pSessionManager,
                                  final ResourceFactory resourceFactory) {
         this.fedoraId = fedoraId;
-        this.tx = tx;
+        this.txId = txId;
         this.pSessionManager = pSessionManager;
         this.resourceFactory = resourceFactory;
     }
@@ -115,7 +114,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public FedoraResource getContainer() {
-        return resourceFactory.getContainer(tx, fedoraId);
+        return txId != null ? resourceFactory.getContainer(txId, fedoraId) : resourceFactory.getContainer(fedoraId);
     }
 
     @Override
@@ -123,7 +122,8 @@ public class FedoraResourceImpl implements FedoraResource {
         if (isMemento()) {
             try {
                 // We are in a memento so we need to create a FedoraId for just the original resource.
-                return resourceFactory.getResource(tx, FedoraId.create(getFedoraId().getResourceId()));
+                final var fedoraId = FedoraId.create(getFedoraId().getResourceId());
+                return getFedoraResource(fedoraId);
             } catch (final PathNotFoundException e) {
                 throw new PathNotFoundRuntimeException(e);
             }
@@ -131,9 +131,17 @@ public class FedoraResourceImpl implements FedoraResource {
         return this;
     }
 
+    private FedoraResource getFedoraResource(final FedoraId fedoraId) throws PathNotFoundException {
+        if (txId == null) {
+            return resourceFactory.getResource(fedoraId);
+        } else {
+            return resourceFactory.getResource(txId, fedoraId);
+        }
+    }
+
     @Override
     public FedoraResource getTimeMap() {
-        return new TimeMapImpl(this.getOriginalResource(), tx, pSessionManager, resourceFactory);
+        return new TimeMapImpl(this.getOriginalResource(), txId, pSessionManager, resourceFactory);
     }
 
     @Override
@@ -180,7 +188,7 @@ public class FedoraResourceImpl implements FedoraResource {
         }
         try {
             final var aclId = fedoraId.asAcl();
-            return resourceFactory.getResource(tx, aclId);
+            return getFedoraResource(aclId);
         } catch (final PathNotFoundException e) {
             return null;
         }
@@ -311,10 +319,10 @@ public class FedoraResourceImpl implements FedoraResource {
     }
 
     protected PersistentStorageSession getSession() {
-        if (tx == null || tx.isCommitted()) {
+        if (txId == null) {
             return pSessionManager.getReadOnlySession();
         } else {
-            return pSessionManager.getSession(tx.getId());
+            return pSessionManager.getSession(txId);
         }
     }
 

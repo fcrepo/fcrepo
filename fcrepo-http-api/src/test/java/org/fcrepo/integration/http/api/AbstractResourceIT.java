@@ -47,6 +47,7 @@ import org.apache.http.util.EntityUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.http.commons.test.util.ContainerWrapper;
 import org.junit.Before;
@@ -122,6 +123,9 @@ public abstract class AbstractResourceIT {
 
     @Inject
     private ContainerWrapper containerWrapper;
+
+    @Inject
+    private static FedoraPropsConfig propsConfig;
 
     @Before
     public void setLogger() {

@@ -117,7 +117,7 @@ public class FedoraTombstones extends ContentExposingResource {
     protected FedoraResource resource() {
         final FedoraId resourceId = identifierConverter().pathToInternalId(externalPath);
         try {
-            return resourceFactory.getResource(transaction(), resourceId);
+            return getFedoraResource(transaction(), resourceId);
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
         }

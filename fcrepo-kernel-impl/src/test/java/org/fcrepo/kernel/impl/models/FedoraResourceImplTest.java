@@ -174,7 +174,7 @@ public class FedoraResourceImplTest {
         final var description = new NonRdfSourceDescriptionImpl(descriptionFedoraId, null, sessionManager,
                 resourceFactory);
 
-        when(resourceFactory.getResource(any(), eq(descriptionFedoraId))).thenReturn(description);
+        when(resourceFactory.getResource(eq(descriptionFedoraId))).thenReturn(description);
         when(sessionManager.getReadOnlySession()).thenReturn(psSession);
         when(psSession.getHeaders(eq(FEDORA_ID),any())).thenReturn(headers);
         when(headers.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());

@@ -421,6 +421,11 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         return fedoraResource;
     }
 
+    protected FedoraResource reloadResource() {
+        this.fedoraResource = null;
+        return resource();
+    }
+
     /**
      * Add the standard Accept-Post header, for reuse.
      */
@@ -1021,7 +1026,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath);
 
         try {
-            final FedoraResource fedoraResource = resourceFactory.getResource(transaction(), fedoraId);
+            final var txId = txtIdIfUncommittedOrNull(transaction());
+            final FedoraResource fedoraResource = txId != null ? resourceFactory.getResource(txId, fedoraId) :
+                    resourceFactory.getResource(fedoraId);
 
             final FedoraResource originalResource;
             if (fedoraId.isMemento()) {

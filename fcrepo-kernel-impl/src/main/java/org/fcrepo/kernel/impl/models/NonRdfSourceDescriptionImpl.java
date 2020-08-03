@@ -17,17 +17,9 @@
  */
 package org.fcrepo.kernel.impl.models;
 
-import static org.apache.jena.graph.NodeFactory.createURI;
-import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
-
-import java.net.URI;
-import java.util.List;
-import java.util.stream.Stream;
-
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -36,6 +28,13 @@ import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+
+import java.net.URI;
+import java.util.List;
+import java.util.stream.Stream;
+
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 
 /**
  * Implementation of a non-rdf source description
@@ -48,15 +47,15 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
      * Construct a description resource
      *
      * @param fedoraID internal identifier
-     * @param tx transaction
+     * @param txId transaction
      * @param pSessionManager session manager
      * @param resourceFactory resource factory
      */
     public NonRdfSourceDescriptionImpl(final FedoraId fedoraID,
-            final Transaction tx,
+            final String txId,
             final PersistentStorageSessionManager pSessionManager,
             final ResourceFactory resourceFactory) {
-        super(fedoraID, tx, pSessionManager, resourceFactory);
+        super(fedoraID, txId, pSessionManager, resourceFactory);
     }
 
     @Override
@@ -69,7 +68,8 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
         // Get a FedoraId for the binary
         final FedoraId describedId = FedoraId.create(this.getFedoraId().getBaseId());
         try {
-            return this.resourceFactory.getResource(tx, describedId);
+            return txId != null ? this.resourceFactory.getResource(txId, describedId) :
+                    this.resourceFactory.getResource(describedId);
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
         }

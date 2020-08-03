@@ -17,28 +17,6 @@
  */
 package org.fcrepo.auth.webac;
 
-import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_ADMIN_ROLE;
-import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_USER_ROLE;
-import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
-import static org.fcrepo.auth.webac.URIConstants.WEBAC_AUTHENTICATED_AGENT_VALUE;
-import static org.fcrepo.auth.common.HttpHeaderPrincipalProvider.HttpHeaderPrincipal;
-import static org.fcrepo.auth.common.DelegateHeaderPrincipalProvider.DelegatedHeaderPrincipal;
-import static org.fcrepo.auth.webac.WebACFilter.getBaseUri;
-import static org.fcrepo.auth.webac.WebACFilter.identifierConverter;
-import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.net.URI;
-import java.security.Principal;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.http.auth.BasicUserPrincipal;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
@@ -58,6 +36,27 @@ import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.slf4j.Logger;
+
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import java.net.URI;
+import java.security.Principal;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import static org.fcrepo.auth.common.DelegateHeaderPrincipalProvider.DelegatedHeaderPrincipal;
+import static org.fcrepo.auth.common.HttpHeaderPrincipalProvider.HttpHeaderPrincipal;
+import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_ADMIN_ROLE;
+import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_USER_ROLE;
+import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_AUTHENTICATED_AGENT_VALUE;
+import static org.fcrepo.auth.webac.WebACFilter.getBaseUri;
+import static org.fcrepo.auth.webac.WebACFilter.identifierConverter;
+import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
+import static org.slf4j.LoggerFactory.getLogger;
 /**
  * Authorization-only realm that performs authorization checks using WebAC ACLs stored in a Fedora repository. It
  * locates the ACL for the currently requested resource and parses the ACL RDF into a set of {@link WebACPermission}
@@ -234,17 +233,22 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     }
 
     private FedoraResource getResourceOrParentFromPath(final FedoraId fedoraId) {
+        final var tx = transaction();
+        final var txId = tx == null || tx.isCommitted() ? null : tx.getId();
+
         try {
             log.debug("Testing FedoraResource for {}", fedoraId.getFullIdPath());
-            return this.resourceFactory.getResource(transaction(), fedoraId);
+
+            return txId != null ? this.resourceFactory.getResource(txId, fedoraId) :
+                    this.resourceFactory.getResource(fedoraId);
         } catch (final PathNotFoundException exc) {
             log.debug("Resource {} not found getting container", fedoraId.getFullIdPath());
-            final String txID = transaction() == null ? null : transaction().getId();
-            final FedoraId containerId = containmentIndex.getContainerIdByPath(txID, fedoraId);
+            final FedoraId containerId = containmentIndex.getContainerIdByPath(txId, fedoraId);
             log.debug("Attempting to get FedoraResource for {}", fedoraId.getFullIdPath());
             try {
                 log.debug("Got FedoraResource for {}", containerId.getFullIdPath());
-                return this.resourceFactory.getResource(transaction(), containerId);
+                return txId != null ? this.resourceFactory.getResource(txId, containerId) :
+                        this.resourceFactory.getResource(containerId);
             } catch (final PathNotFoundException exc2) {
                 log.debug("Path {} does not exist, but we should never end up here.", containerId.getFullIdPath());
                 return null;

@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.impl.models;
 
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
@@ -62,13 +63,13 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
      * Construct the binary
      *
      * @param fedoraID fedora identifier
-     * @param tx transaction
+     * @param txId transaction id
      * @param pSessionManager session manager
      * @param resourceFactory resource factory
      */
-    public BinaryImpl(final FedoraId fedoraID, final Transaction tx,
+    public BinaryImpl(final FedoraId fedoraID, final String txId,
                       final PersistentStorageSessionManager pSessionManager, final ResourceFactory resourceFactory) {
-        super(fedoraID, tx, pSessionManager, resourceFactory);
+        super(fedoraID, txId, pSessionManager, resourceFactory);
     }
 
     @Override
@@ -132,9 +133,12 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
         try {
             final FedoraId descId = getFedoraId().asDescription();
             if (this.isMemento()) {
-                return resourceFactory.getResource(tx, descId.asMemento(getMementoDatetime()));
+                final var descIdAsMemento = descId.asMemento(getMementoDatetime());
+                return txId == null ? resourceFactory.getResource(descIdAsMemento) : resourceFactory.getResource(txId,
+                        descIdAsMemento);
             }
-            return resourceFactory.getResource(tx, descId);
+            return txId == null ? resourceFactory.getResource(descId) : resourceFactory.getResource(txId,
+                    descId);
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
         }

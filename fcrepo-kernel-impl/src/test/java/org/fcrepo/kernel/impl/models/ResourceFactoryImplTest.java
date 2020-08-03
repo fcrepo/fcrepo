@@ -208,7 +208,7 @@ public class ResourceFactoryImplTest {
 
         when(psSession.getHeaders(parentId, null)).thenReturn(parentHeaders);
 
-        final var resc = factory.getResource(mockTx, fedoraId);
+        final var resc = factory.getResource(mockTx.getId(), fedoraId);
 
         assertTrue("Factory must return a container", resc instanceof Container);
         assertEquals(fedoraIdStr, resc.getId());
@@ -224,7 +224,7 @@ public class ResourceFactoryImplTest {
     public void getResource_BasicContainer_InTransaction() throws Exception {
         populateHeaders(resourceHeaders, BASIC_CONTAINER);
 
-        final var resc = factory.getResource(mockTx, fedoraId);
+        final var resc = factory.getResource(mockTx.getId(), fedoraId);
 
         assertTrue("Factory must return a container", resc instanceof Container);
         assertEquals(fedoraIdStr, resc.getId());
@@ -250,7 +250,7 @@ public class ResourceFactoryImplTest {
     public void getResource_BasicContainer_Cast_InTransaction() throws Exception {
         populateHeaders(resourceHeaders, BASIC_CONTAINER);
 
-        final var resc = factory.getResource(mockTx, fedoraId, Container.class);
+        final var resc = factory.getResource(mockTx.getId(), fedoraId, Container.class);
 
         assertTrue("Factory must return a container", resc instanceof Container);
         assertEquals(fedoraIdStr, resc.getId());
@@ -339,9 +339,9 @@ public class ResourceFactoryImplTest {
     @Test
     public void doesResourceExist_Exists_WithSession() throws Exception {
         containmentIndex.addContainedBy(mockTx.getId(), rootId, fedoraId);
-        final boolean answerIn = factory.doesResourceExist(mockTx, fedoraId);
+        final boolean answerIn = factory.doesResourceExist(mockTx.getId(), fedoraId);
         assertTrue(answerIn);
-        final boolean answerOut = factory.doesResourceExist(null, fedoraId);
+        final boolean answerOut = factory.doesResourceExist(fedoraId);
         assertFalse(answerOut);
     }
 
@@ -349,9 +349,9 @@ public class ResourceFactoryImplTest {
     public void doesResourceExist_Exists_Description_WithSession() {
         containmentIndex.addContainedBy(mockTx.getId(), rootId, fedoraId);
         final FedoraId descId = fedoraId.asDescription();
-        final boolean answerIn = factory.doesResourceExist(mockTx, descId);
+        final boolean answerIn = factory.doesResourceExist(mockTx.getId(), descId);
         assertTrue(answerIn);
-        final boolean answerOut = factory.doesResourceExist(null, descId);
+        final boolean answerOut = factory.doesResourceExist(descId);
         assertFalse(answerOut);
     }
 
@@ -359,7 +359,7 @@ public class ResourceFactoryImplTest {
     public void doesResourceExist_Exists_WithoutSession() throws Exception {
         containmentIndex.addContainedBy(mockTx.getId(), rootId, fedoraId);
         containmentIndex.commitTransaction(mockTx.getId());
-        final boolean answer = factory.doesResourceExist(null, fedoraId);
+        final boolean answer = factory.doesResourceExist(fedoraId);
         assertTrue(answer);
     }
 
@@ -368,33 +368,33 @@ public class ResourceFactoryImplTest {
         containmentIndex.addContainedBy(mockTx.getId(), rootId, fedoraId);
         containmentIndex.commitTransaction(mockTx.getId());
         final FedoraId descId = fedoraId.asDescription();
-        final boolean answer = factory.doesResourceExist(null, descId);
+        final boolean answer = factory.doesResourceExist(descId);
         assertTrue(answer);
     }
 
     @Test
     public void doesResourceExist_DoesntExist_WithSession() throws Exception {
-        final boolean answer = factory.doesResourceExist(mockTx, fedoraId);
+        final boolean answer = factory.doesResourceExist(mockTx.getId(), fedoraId);
         assertFalse(answer);
     }
 
     @Test
     public void doesResourceExist_DoesntExists_Description_WithSession() {
         final FedoraId descId = fedoraId.asDescription();
-        final boolean answer = factory.doesResourceExist(mockTx, descId);
+        final boolean answer = factory.doesResourceExist(mockTx.getId(), descId);
         assertFalse(answer);
     }
 
     @Test
     public void doesResourceExist_DoesntExist_WithoutSession() throws Exception {
-        final boolean answer = factory.doesResourceExist(null, fedoraId);
+        final boolean answer = factory.doesResourceExist(fedoraId);
         assertFalse(answer);
     }
 
     @Test
     public void doesResourceExist_DoesntExists_Description_WithoutSession() {
         final FedoraId descId = fedoraId.asDescription();
-        final boolean answer = factory.doesResourceExist(null, descId);
+        final boolean answer = factory.doesResourceExist(descId);
         assertFalse(answer);
     }
 
@@ -405,7 +405,7 @@ public class ResourceFactoryImplTest {
     public void doesResourceExist_Exception_WithSession() throws Exception {
         when(psSession.getHeaders(fedoraMementoId, fedoraMementoId.getMementoInstant()))
                 .thenThrow(PersistentSessionClosedException.class);
-        factory.doesResourceExist(mockTx, fedoraMementoId);
+        factory.doesResourceExist(mockTx.getId(), fedoraMementoId);
     }
 
     /**
@@ -415,7 +415,7 @@ public class ResourceFactoryImplTest {
     public void doesResourceExist_Exception_WithoutSession() throws Exception {
         when(psSession.getHeaders(fedoraMementoId, fedoraMementoId.getMementoInstant()))
                 .thenThrow(PersistentSessionClosedException.class);
-        factory.doesResourceExist(null, fedoraMementoId);
+        factory.doesResourceExist(fedoraMementoId);
     }
 
     private void assertStateFieldsMatches(final FedoraResource resc) {

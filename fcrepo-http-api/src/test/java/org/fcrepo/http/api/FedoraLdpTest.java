@@ -289,7 +289,7 @@ public class FedoraLdpTest {
         when(mockContainer.getDescribedResource()).thenReturn(mockContainer);
         when(mockContainer.getFedoraId()).thenReturn(pathId);
 
-        when(resourceFactory.doesResourceExist(mockTransaction, pathId)).thenReturn(false);
+        when(resourceFactory.doesResourceExist(mockTransaction.getId(), pathId)).thenReturn(false);
 
         when(mockNonRdfSourceDescription.getEtagValue()).thenReturn("");
         when(mockNonRdfSourceDescription.getStateToken()).thenReturn("");
@@ -564,7 +564,7 @@ public class FedoraLdpTest {
     @Test
     public void testOptionWithBinary() throws Exception {
         setField(testObj, "externalPath", binaryPath);
-        when(resourceFactory.getResource(mockTransaction, binaryPathId)).thenReturn(mockBinary);
+        when(resourceFactory.getResource(mockTransaction.getId(), binaryPathId)).thenReturn(mockBinary);
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertShouldNotAdvertiseAcceptPostFlavors();
@@ -576,7 +576,8 @@ public class FedoraLdpTest {
     @Test
     public void testOptionWithBinaryDescription() throws Exception {
         setField(testObj, "externalPath", binaryDescriptionPath);
-        when(resourceFactory.getResource(mockTransaction, binaryDescId)).thenReturn(mockNonRdfSourceDescription);
+        when(resourceFactory.getResource(mockTransaction.getId(), binaryDescId))
+                .thenReturn(mockNonRdfSourceDescription);
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertShouldNotAdvertiseAcceptPostFlavors();
@@ -926,7 +927,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testDelete() throws Exception {
-        when(resourceFactory.getResource(mockTransaction, pathId)).thenReturn(mockContainer);
+        when(resourceFactory.getResource(mockTransaction.getId(), pathId)).thenReturn(mockContainer);
         when(mockRequest.getMethod()).thenReturn("DELETE");
         final Response actual = testObj.deleteObject();
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
@@ -941,7 +942,7 @@ public class FedoraLdpTest {
         setField(testObj, "externalPath", "some/path");
         final Binary mockObject = (Binary)setResource(Binary.class);
         when(mockRequest.getMethod()).thenReturn("PUT");
-        when(resourceFactory.getResource(mockTransaction, FedoraId.create("some/path"))).thenReturn(mockObject);
+        when(resourceFactory.getResource(mockTransaction.getId(), FedoraId.create("some/path"))).thenReturn(mockObject);
 
         final Response actual = testObj.createOrReplaceObjectRdf(null, emptyStream,
                 null, null, null, null);
@@ -959,7 +960,7 @@ public class FedoraLdpTest {
     public void testPutNewObjectWithRdf() throws Exception {
 
         when(mockRequest.getMethod()).thenReturn("PUT");
-        when(resourceFactory.getResource(mockTransaction, pathId)).thenReturn(mockContainer);
+        when(resourceFactory.getResource(mockTransaction.getId(), pathId)).thenReturn(mockContainer);
 
         final Response actual = testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
@@ -978,7 +979,7 @@ public class FedoraLdpTest {
         setField(testObj, "externalPath", "some/path");
         final Binary mockObject = (Binary)setResource(Binary.class);
         when(mockRequest.getMethod()).thenReturn("PUT");
-        when(resourceFactory.getResource(mockTransaction, FedoraId.create("some/path"))).thenReturn(mockObject);
+        when(resourceFactory.getResource(mockTransaction.getId(), FedoraId.create("some/path"))).thenReturn(mockObject);
 
         final Response actual = testObj.createOrReplaceObjectRdf(TEXT_PLAIN_TYPE,
                 toInputStream("xyz", UTF_8), null, null, nonRDFSourceLink, null);
@@ -992,8 +993,8 @@ public class FedoraLdpTest {
         setField(testObj, "externalPath", "some/path");
         final Container mockObject = (Container)setResource(Container.class);
         when(mockRequest.getMethod()).thenReturn("PUT");
-        when(resourceFactory.getResource(mockTransaction, pathId)).thenReturn(mockObject);
-        when(resourceFactory.doesResourceExist(mockTransaction, pathId)).thenReturn(true);
+        when(resourceFactory.getResource(mockTransaction.getId(), pathId)).thenReturn(mockObject);
+        when(resourceFactory.doesResourceExist(mockTransaction.getId(), pathId)).thenReturn(true);
 
         final Response actual = testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
@@ -1007,8 +1008,8 @@ public class FedoraLdpTest {
     public void testPutWithStrictIfMatchHandling() throws Exception {
 
         when(mockHttpConfiguration.putRequiresIfMatch()).thenReturn(true);
-        when(resourceFactory.getResource(mockTransaction, pathId)).thenReturn(mockContainer);
-        when(resourceFactory.doesResourceExist(mockTransaction, pathId)).thenReturn(true);
+        when(resourceFactory.getResource(mockTransaction.getId(), pathId)).thenReturn(mockContainer);
+        when(resourceFactory.doesResourceExist(mockTransaction.getId(), pathId)).thenReturn(true);
 
         testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
@@ -1034,7 +1035,8 @@ public class FedoraLdpTest {
                         of(new Triple(createURI("mockBinary"), createURI("called"),
                             createURI("child:properties")))));
 
-        when(resourceFactory.getResource(mockTransaction, binaryDescId)).thenReturn(mockNonRdfSourceDescription);
+        when(resourceFactory.getResource(mockTransaction.getId(), binaryDescId))
+                .thenReturn(mockNonRdfSourceDescription);
         testObj.updateSparql(toInputStream("xyz", UTF_8));
         verify(updatePropertiesService).updateProperties(
                 eq(mockTransaction.getId()),
@@ -1310,7 +1312,7 @@ public class FedoraLdpTest {
     @Test(expected = CannotCreateResourceException.class)
     public void testLDPRNotImplemented() throws Exception {
         final var resource = setResource(Container.class);
-        when(resourceFactory.getResource(mockTransaction, pathId.resolve("x"))).thenReturn(resource);
+        when(resourceFactory.getResource(mockTransaction.getId(), pathId.resolve("x"))).thenReturn(resource);
         testObj.createObject(null, null, "x", null,
                 singletonList("<http://www.w3.org/ns/ldp#Resource>; rel=\"type\""), null);
     }
@@ -1318,7 +1320,7 @@ public class FedoraLdpTest {
     @Test(expected = ClientErrorException.class)
     public void testLDPRNotImplementedInvalidLink() throws Exception {
         final var resource = setResource(Container.class);
-        when(resourceFactory.getResource(mockTransaction, pathId.resolve("x"))).thenReturn(resource);
+        when(resourceFactory.getResource(mockTransaction.getId(), pathId.resolve("x"))).thenReturn(resource);
         testObj.createObject(null, null, "x", null, singletonList("<http://foo;rel=\"type\""), null);
     }
 

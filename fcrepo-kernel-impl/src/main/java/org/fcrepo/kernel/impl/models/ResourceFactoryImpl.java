@@ -18,7 +18,6 @@
 package org.fcrepo.kernel.impl.models;
 
 import org.fcrepo.kernel.api.ContainmentIndex;
-import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ResourceTypeException;
@@ -37,6 +36,7 @@ import org.springframework.stereotype.Component;
 import javax.inject.Inject;
 import java.time.Instant;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
@@ -66,29 +66,46 @@ public class ResourceFactoryImpl implements ResourceFactory {
     @Override
     public FedoraResource getResource(final FedoraId fedoraID)
             throws PathNotFoundException {
-        return getResource(null, fedoraID);
+        return getResourceImpl(null, fedoraID);
     }
 
     @Override
-    public FedoraResource getResource(final Transaction transaction, final FedoraId fedoraID)
+    public FedoraResource getResource(final String transactionId, final FedoraId fedoraID)
             throws PathNotFoundException {
-        return instantiateResource(transaction, fedoraID);
+        checkNotNull(transactionId);
+        return getResourceImpl(transactionId, fedoraID);
+    }
+
+    private FedoraResource getResourceImpl(final String transactionId, final FedoraId fedoraID)
+            throws PathNotFoundException {
+        return instantiateResource(transactionId, fedoraID);
     }
 
     @Override
     public <T extends FedoraResource> T getResource(final FedoraId identifier,
                                                     final Class<T> clazz) throws PathNotFoundException {
-        return clazz.cast(getResource(null, identifier));
+        return clazz.cast(getResourceImpl(null, identifier));
     }
 
     @Override
-    public <T extends FedoraResource> T getResource(final Transaction transaction, final FedoraId identifier,
-            final Class<T> clazz) throws PathNotFoundException {
-        return clazz.cast(getResource(transaction, identifier));
+    public <T extends FedoraResource> T getResource(final String transactionId, final FedoraId identifier,
+                                                    final Class<T> clazz) throws PathNotFoundException {
+        checkNotNull(transactionId);
+        return clazz.cast(getResourceImpl(transactionId, identifier));
     }
 
     @Override
-    public boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId) {
+    public boolean doesResourceExist(final FedoraId fedoraId) {
+        return doesResourceExistImpl(null, fedoraId);
+    }
+
+    @Override
+    public boolean doesResourceExist(final String transactionId, final FedoraId fedoraId) {
+        checkNotNull(transactionId);
+        return doesResourceExistImpl(transactionId, fedoraId);
+    }
+
+    private boolean doesResourceExistImpl(final String transactionId, final FedoraId fedoraId) {
         if (fedoraId.isRepositoryRoot()) {
             // Root always exists.
             return true;
@@ -96,11 +113,10 @@ public class ResourceFactoryImpl implements ResourceFactory {
         if (!(fedoraId.isMemento() || fedoraId.isAcl())) {
             // containment index doesn't handle versions and only tells us if the resource (not acl) is there,
             // so don't bother checking for them.
-            final String transactionId = transaction == null ? null : transaction.getId();
             return containmentIndex.resourceExists(transactionId, fedoraId);
         } else {
 
-            final PersistentStorageSession psSession = getSession(transaction);
+            final PersistentStorageSession psSession = getSession(transactionId);
 
             try {
                 // Resource ID for metadata or ACL contains their individual endopoints (ie. fcr:metadata, fcr:acl)
@@ -113,7 +129,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
                 // Other error, pass along.
                 throw new RepositoryRuntimeException(e);
             } finally {
-                if (transaction == null) {
+                if (transactionId == null) {
                     // Commit session (if read-only) so it doesn't hang around.
                     try {
                         psSession.commit();
@@ -126,14 +142,23 @@ public class ResourceFactoryImpl implements ResourceFactory {
     }
 
     @Override
-    public FedoraResource getContainer(final Transaction transaction, final FedoraId resourceId) {
-        final String txId = (transaction == null ? null : transaction.getId());
-        final String containerId = containmentIndex.getContainedBy(txId, resourceId);
+    public FedoraResource getContainer(final FedoraId resourceId) {
+        return getContainerImpl(null, resourceId);
+    }
+
+    @Override
+    public FedoraResource getContainer(final String transactionId, final FedoraId resourceId) {
+        checkNotNull(transactionId);
+        return getContainerImpl(transactionId, resourceId);
+    }
+
+    private FedoraResource getContainerImpl(final String transactionId, final FedoraId resourceId) {
+        final String containerId = containmentIndex.getContainedBy(transactionId, resourceId);
         if (containerId == null) {
             return null;
         }
         try {
-            return getResource(transaction, FedoraId.create(containerId));
+            return getResourceImpl(transactionId, FedoraId.create(containerId));
         } catch (final PathNotFoundException exc) {
             return null;
         }
@@ -167,17 +192,17 @@ public class ResourceFactoryImpl implements ResourceFactory {
     /**
      * Instantiates a new FedoraResource object of the given class.
      *
-     * @param transaction the transaction
-     * @param identifier identifier for the new instance
+     * @param transactionId the transaction id
+     * @param identifier    identifier for the new instance
      * @return new FedoraResource instance
      * @throws PathNotFoundException
      */
-    private FedoraResource instantiateResource(final Transaction transaction,
+    private FedoraResource instantiateResource(final String transactionId,
                                                final FedoraId identifier)
             throws PathNotFoundException {
         try {
             // For descriptions and ACLs we need the actual endpoint.
-            final var psSession = getSession(transaction);
+            final var psSession = getSession(transactionId);
             final Instant versionDateTime = identifier.isMemento() ? identifier.getMementoInstant() : null;
             final var headers = psSession.getHeaders(identifier, versionDateTime);
 
@@ -187,7 +212,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
             // Retrieve standard constructor
             final var constructor = createClass.getConstructor(
                     FedoraId.class,
-                    Transaction.class,
+                    String.class,
                     PersistentStorageSessionManager.class,
                     ResourceFactory.class);
 
@@ -195,13 +220,13 @@ public class ResourceFactoryImpl implements ResourceFactory {
             final var instantiationId = identifier.isTimemap() ?
                     FedoraId.create(identifier.getResourceId()) : identifier;
 
-            final var rescImpl = constructor.newInstance(instantiationId, transaction,
+            final var rescImpl = constructor.newInstance(instantiationId, transactionId,
                     persistentStorageSessionManager, this);
             populateResourceHeaders(rescImpl, headers, versionDateTime);
 
             if (headers.isDeleted()) {
                 final var rootId = FedoraId.create(identifier.getBaseId());
-                final var tombstone = new TombstoneImpl(rootId, transaction, persistentStorageSessionManager,
+                final var tombstone = new TombstoneImpl(rootId, transactionId, persistentStorageSessionManager,
                         this, rescImpl);
                 tombstone.setLastModifiedDate(headers.getLastModifiedDate());
                 return tombstone;
@@ -249,15 +274,15 @@ public class ResourceFactoryImpl implements ResourceFactory {
     /**
      * Get a session for this interaction.
      *
-     * @param transaction The supplied transaction id.
+     * @param transactionId The supplied transaction id.
      * @return a storage session.
      */
-    private PersistentStorageSession getSession(final Transaction transaction) {
+    private PersistentStorageSession getSession(final String transactionId) {
         final PersistentStorageSession session;
-        if (transaction == null || transaction.isCommitted()) {
+        if (transactionId == null) {
             session = persistentStorageSessionManager.getReadOnlySession();
         } else {
-            session = persistentStorageSessionManager.getSession(transaction.getId());
+            session = persistentStorageSessionManager.getSession(transactionId);
         }
         return session;
     }

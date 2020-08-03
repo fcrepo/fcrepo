@@ -238,8 +238,6 @@ public abstract class AbstractService {
                         createResource(currentResourcePath));
     }
 
-    protected String txId(final Transaction tx) {
-        return tx == null ? null : tx.getId();
-    }
-
-}
+    protected String txtIdIfUncommittedOrNull(final Transaction tx) {
+        return tx == null || tx.isCommitted() ? null : tx.getId();
+    }}

@@ -159,6 +159,8 @@ public class IndexBuilderImpl implements IndexBuilder {
                                         headers.getId());
                                 headersList.add(headers);
                             }
+
+
                         }
                     } catch (PersistentStorageException e) {
                         throw new RepositoryRuntimeException(format("fedora-to-ocfl index rebuild failed: %s",
@@ -182,10 +184,12 @@ public class IndexBuilderImpl implements IndexBuilder {
             });
 
             headersList.forEach(headers -> {
-                if (!headers.isDeleted())  {
+                if (!headers.isDeleted()) {
                     searchIndex.addUpdateIndex(txId, headers);
+                    LOGGER.debug("Rebuilt searchIndex for {}", headers.getId());
                 }
             });
+
         } catch (final PersistentStorageException e) {
             throw new RepositoryRuntimeException("Failed to rebuild fedora-to-ocfl index: " +
                     e.getMessage(), e);

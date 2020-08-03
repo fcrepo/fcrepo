@@ -17,12 +17,6 @@
  */
 package org.fcrepo.kernel.impl.models;
 
-import java.net.URI;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
@@ -35,6 +29,18 @@ import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+
+import java.net.URI;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
@@ -42,15 +48,9 @@ import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThat;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * @author pwinckles
@@ -159,7 +159,7 @@ public class TimeMapImplTest {
             mementos.add(memento);
             final FedoraId mementoID = FedoraId.create(id, FCR_VERSIONS, instantStr(version));
             when(memento.getFedoraId()).thenReturn(mementoID);
-            when(resourceFactory.getResource(null, mementoID)).thenReturn(memento);
+            when(resourceFactory.getResource(mementoID)).thenReturn(memento);
         }
         return mementos;
     }

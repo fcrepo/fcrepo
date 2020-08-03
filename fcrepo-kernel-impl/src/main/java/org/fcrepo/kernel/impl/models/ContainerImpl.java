@@ -17,20 +17,19 @@
  */
 package org.fcrepo.kernel.impl.models;
 
-import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
-
-import java.net.URI;
-import java.util.List;
-
-import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+
+import java.net.URI;
+import java.util.List;
+
+import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 
 
 /**
@@ -44,13 +43,13 @@ public class ContainerImpl extends FedoraResourceImpl implements Container {
      * Construct the container
      *
      * @param fedoraID internal identifier
-     * @param tx transaction
+     * @param txId transaction id
      * @param pSessionManager session manager
      * @param resourceFactory resource factory
      */
-    public ContainerImpl(final FedoraId fedoraID, final Transaction tx,
+    public ContainerImpl(final FedoraId fedoraID, final String txId,
                          final PersistentStorageSessionManager pSessionManager, final ResourceFactory resourceFactory) {
-        super(fedoraID, tx, pSessionManager, resourceFactory);
+        super(fedoraID, txId, pSessionManager, resourceFactory);
     }
 
     @Override
