@@ -67,7 +67,7 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
             String mimeType = contentType;
             Long size = contentSize;
             final NonRdfSourceOperationBuilder builder;
-            if (externalContent == null) {
+            if (externalContent == null || externalContent.isCopy()) {
                 builder = factory.updateInternalBinaryBuilder(fedoraId, contentBody);
             } else {
                 builder = factory.updateExternalBinaryBuilder(fedoraId,

@@ -22,7 +22,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.BAD_GATEWAY;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.Status.TEMPORARY_REDIRECT;
@@ -84,7 +83,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testRemoteContentTypeForHttpUri() throws Exception {
+    public void testProxyRemoteContentTypeForHttpUri() throws Exception {
         final var externalLocation = createHttpResource("audio/ogg", "xyz");
         final String finalLocation = getRandomUniqueId();
 
@@ -103,7 +102,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testClientContentTypeOverridesRemoteForHttpUri() throws Exception {
+    public void testProxyClientContentTypeOverridesRemoteForHttpUri() throws Exception {
         final var externalLocation = createHttpResource("audio/ogg", "vxyz");
         final String finalLocation = getRandomUniqueId();
 
@@ -118,6 +117,42 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
             assertContentType(response, "audio/mp3");
             assertContentLocation(response, externalLocation);
             assertContentLength(response, 4);
+        }
+    }
+
+    @Test
+    public void testCopyRemoteContentTypeForHttpUri() throws Exception {
+        final var externalLocation = createHttpResource("audio/ogg", "xyz");
+        final String finalLocation = getRandomUniqueId();
+
+        // Make an external content resource proxying the above URI.
+        final HttpPut put = putObjMethod(finalLocation);
+        put.addHeader(LINK, getExternalContentLinkHeader(externalLocation, "copy", null));
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        // Get the external content proxy resource.
+        try (final CloseableHttpResponse response = execute(getObjMethod(finalLocation))) {
+            assertEquals(SC_OK, getStatus(response));
+            assertContentType(response, "audio/ogg");
+            assertContentLength(response, 3);
+        }
+    }
+
+    @Test
+    public void testCopyClientContentTypeOverridesRemoteForHttpUri() throws Exception {
+        final var externalLocation = createHttpResource("audio/ogg", "xyz");
+        final String finalLocation = getRandomUniqueId();
+
+        // Make an external content resource proxying the above URI.
+        final HttpPut put = putObjMethod(finalLocation);
+        put.addHeader(LINK, getExternalContentLinkHeader(externalLocation, "copy", "audio/mp3"));
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        // Get the external content proxy resource.
+        try (final CloseableHttpResponse response = execute(getObjMethod(finalLocation))) {
+            assertEquals(SC_OK, getStatus(response));
+            assertContentType(response, "audio/mp3");
+            assertContentLength(response, 3);
         }
     }
 
@@ -454,7 +489,6 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore
     @Test
     public void testCopyLocalFile() throws Exception {
         final String entityStr = "Hello there, this is the original object speaking.";
@@ -475,12 +509,11 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
             try (final CloseableHttpResponse getResponse = execute(get)) {
                 assertEquals(OK.getStatusCode(), getStatus(getResponse));
                 assertContentType(getResponse, "text/plain");
-                assertBodyMatches(getResponse, TEST_BINARY_CONTENT);
+                assertBodyMatches(getResponse, entityStr);
             }
         }
     }
 
-    @Ignore
     @Test
     public void testCopyForHttpUri() throws Exception {
         // create a random binary object
@@ -501,7 +534,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
             try (final CloseableHttpResponse getResponse = execute(get)) {
                 assertEquals(OK.getStatusCode(), getStatus(getResponse));
                 assertContentType(getResponse, "text/plain");
-                assertBodyMatches(getResponse, TEST_BINARY_CONTENT);
+                assertBodyMatches(getResponse, entityStr);
             }
         }
     }
@@ -593,7 +626,6 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testCopyNotFoundHttpContent() throws Exception {
         final String nonexistentPath = serverAddress + getRandomUniqueId();
@@ -604,12 +636,12 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         httpPost.addHeader(LINK, getExternalContentLinkHeader(nonexistentPath, "copy", null));
 
         try (final CloseableHttpResponse response = execute(httpPost)) {
-            assertEquals("Didn't get a BAD_REQUEST response!", BAD_GATEWAY.getStatusCode(),
+            assertEquals("Didn't get a BAD_REQUEST response!", BAD_REQUEST.getStatusCode(),
                     getStatus(response));
+            assertBodyContains(response, "Unable to access external binary");
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testCopyUnreachableHttpContent() throws Exception {
         final String nonexistentPath = "http://" + getRandomUniqueId() + ".example.com/";
@@ -620,8 +652,9 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         httpPost.addHeader(LINK, getExternalContentLinkHeader(nonexistentPath, "copy", null));
 
         try (final CloseableHttpResponse response = execute(httpPost)) {
-            assertEquals("Didn't get a BAD_GATEWAY response!", BAD_GATEWAY.getStatusCode(),
+            assertEquals("Didn't get a BAD_REQUEST response!", BAD_REQUEST.getStatusCode(),
                     getStatus(response));
+            assertBodyContains(response, "Unable to access external binary");
         }
     }
 

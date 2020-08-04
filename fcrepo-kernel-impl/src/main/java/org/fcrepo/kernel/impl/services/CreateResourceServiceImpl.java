@@ -88,7 +88,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         final CreateNonRdfSourceOperationBuilder builder;
         String mimeType = contentType;
         Long size = contentSize;
-        if (externalContent == null) {
+        if (externalContent == null || externalContent.isCopy()) {
             builder = nonRdfSourceOperationFactory.createInternalBinaryBuilder(fedoraId, requestBody);
         } else {
             builder = nonRdfSourceOperationFactory.createExternalBinaryBuilder(fedoraId,
