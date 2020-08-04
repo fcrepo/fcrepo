@@ -18,7 +18,7 @@
 package org.fcrepo.http.api;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
-
+import static org.apache.http.HttpHeaders.CONTENT_LENGTH;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -30,13 +30,15 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.fcrepo.kernel.api.exception.ExternalContentAccessException;
 import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import javax.ws.rs.core.Link;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 
 import org.fcrepo.kernel.api.models.ExternalContent;
@@ -59,8 +61,8 @@ public class ExternalContentHandler implements ExternalContent {
 
     private final Link link;
     private final String handling;
-    private final String type;
-    private final String contentType;
+    private String contentType;
+    private Long contentSize;
 
     /* link header for external content should look like this:
           Link: <http://example.org/some/content>;
@@ -81,13 +83,29 @@ public class ExternalContentHandler implements ExternalContent {
         final Map<String, String> map = link.getParams();
         // handling will be in the map, where as content type may not be
         handling = map.get(HANDLING).toLowerCase();
-        type = map.get(EXT_CONTENT_TYPE) != null ? map.get(EXT_CONTENT_TYPE).toLowerCase() : null;
-        contentType = type != null ? type : findContentType(getURL());
+        // Retrieve details directly from the content
+        retrieveContentDetails();
+        final var type = map.get(EXT_CONTENT_TYPE) != null ? map.get(EXT_CONTENT_TYPE).toLowerCase() : null;
+        if (type != null) {
+            contentType = type;
+        } else if (contentType == null) {
+            LOGGER.debug("Defaulting to octet stream for media type");
+            contentType = APPLICATION_OCTET_STREAM_TYPE.toString();
+        }
+
+        if (contentSize == null) {
+            contentSize = -1l;
+        }
     }
 
     @Override
     public String getContentType() {
         return contentType;
+    }
+
+    @Override
+    public long getContentSize() {
+        return contentSize;
     }
 
     @Override
@@ -163,36 +181,38 @@ public class ExternalContentHandler implements ExternalContent {
         return realLink;
     }
 
-    /**
-     * Find the content type for a remote resource
-     * @param url of remote resource
-     * @return the mime-type reported by remote system or "application/octet-stream" if not supplied
-     */
-    private String findContentType(final String url) {
-        if (url == null) {
-            return null;
-        }
+    private void retrieveContentDetails() {
+        final URI uri = getURI();
+        final String scheme = uri.getScheme().toLowerCase();
 
-        if (url.startsWith("file")) {
-            return APPLICATION_OCTET_STREAM_TYPE.toString();
-        } else if (url.startsWith("http")) {
+        if ("file".equals(scheme)) {
+            final Path path = Paths.get(uri);
+            try {
+                contentSize = Files.size(path);
+            } catch (final IOException e) {
+                throw new ExternalMessageBodyException("Unable to access external binary at URI " + uri, e);
+            }
+        } else if ("http".equals(scheme) || "https".equals(scheme)) {
             try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-                final HttpHead httpHead = new HttpHead(url);
+                final HttpHead httpHead = new HttpHead(uri);
                 try (CloseableHttpResponse response = httpClient.execute(httpHead)) {
-                    if (response.getStatusLine().getStatusCode() == SC_OK) {
-                        final Header contentType = response.getFirstHeader(CONTENT_TYPE);
-                        if (contentType != null) {
-                            return contentType.getValue();
-                        }
+                    if (response.getStatusLine().getStatusCode() != SC_OK) {
+                        throw new ExternalMessageBodyException("Unable to access external binary at URI " + uri
+                                + " received response " + response.getStatusLine().getStatusCode());
+                    }
+
+                    final Header typeHeader = response.getFirstHeader(CONTENT_TYPE);
+                    if (typeHeader != null) {
+                        contentType = typeHeader.getValue();
+                    }
+                    final Header sizeHeader = response.getFirstHeader(CONTENT_LENGTH);
+                    if (sizeHeader != null) {
+                        contentSize = Long.parseLong(sizeHeader.getValue());
                     }
                 }
             } catch (final IOException e) {
-                LOGGER.warn("Unable to retrieve external content from {} due to {}", url, e.getMessage());
-            } catch (final Exception e) {
-                throw new RepositoryRuntimeException(e);
+                throw new ExternalMessageBodyException("Unable to access external binary at URI " + uri, e);
             }
         }
-        LOGGER.debug("Defaulting to octet stream for media type");
-        return APPLICATION_OCTET_STREAM_TYPE.toString();
     }
 }

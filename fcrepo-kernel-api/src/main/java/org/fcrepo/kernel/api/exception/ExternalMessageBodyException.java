@@ -35,4 +35,14 @@ public class ExternalMessageBodyException extends ConstraintViolationException {
     public ExternalMessageBodyException(final String msg) {
         super(msg);
     }
+
+    /**
+     * Ordinary constructor.
+     *
+     * @param msg the message
+     * @param rootCause the root cause
+     */
+    public ExternalMessageBodyException(final String msg, final Throwable rootCause) {
+        super(msg, rootCause);
+    }
 }

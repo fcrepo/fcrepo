@@ -57,7 +57,7 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
                         final String contentType,
                         final Collection<URI> digests,
                         final InputStream contentBody,
-                        final Long size,
+                        final Long contentSize,
                         final ExternalContent externalContent) {
         try {
             final PersistentStorageSession pSession = this.psManager.getSession(txId);
@@ -65,6 +65,7 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
             hasRestrictedPath(fedoraId.getFullId());
 
             String mimeType = contentType;
+            Long size = contentSize;
             final NonRdfSourceOperationBuilder builder;
             if (externalContent == null) {
                 builder = factory.updateInternalBinaryBuilder(fedoraId, contentBody);
@@ -75,6 +76,9 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
 
                 if (externalContent.getContentType() != null) {
                     mimeType = externalContent.getContentType();
+                }
+                if (contentSize == null) {
+                    size = externalContent.getContentSize();
                 }
             }
 

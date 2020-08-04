@@ -87,6 +87,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
         final CreateNonRdfSourceOperationBuilder builder;
         String mimeType = contentType;
+        Long size = contentSize;
         if (externalContent == null) {
             builder = nonRdfSourceOperationFactory.createInternalBinaryBuilder(fedoraId, requestBody);
         } else {
@@ -95,13 +96,16 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
             if (externalContent.getContentType() != null) {
                 mimeType = externalContent.getContentType();
             }
+            if (contentSize == null) {
+                size = externalContent.getContentSize();
+            }
         }
         final ResourceOperation createOp = builder
                 .parentId(parentId)
                 .userPrincipal(userPrincipal)
                 .contentDigests(digest)
                 .mimeType(mimeType)
-                .contentSize(contentSize)
+                .contentSize(size)
                 .filename(filename)
                 .build();
 

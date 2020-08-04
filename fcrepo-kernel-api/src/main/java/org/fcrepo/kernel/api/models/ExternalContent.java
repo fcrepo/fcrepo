@@ -37,6 +37,12 @@ public interface ExternalContent {
     public String getContentType();
 
     /**
+     * Returns the size of the content located at the link header
+     * @return content size
+     */
+    public long getContentSize();
+
+    /**
      * Retrieve handling information
      * @return a String containing the type of handling requested ["proxy", "copy" or "redirect"]
      */
