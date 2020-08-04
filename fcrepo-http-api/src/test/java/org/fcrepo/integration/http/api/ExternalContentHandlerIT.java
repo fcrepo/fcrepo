@@ -51,7 +51,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -156,7 +155,6 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore
     @Test
     public void testProxyWithWantDigestForLocalFile() throws IOException {
 
@@ -182,7 +180,6 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         checkExternalDataStreamResponseHeader(getObjMethod, fileUri, expectedDigestHeaderValue);
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testCopyWithWantDigestForLocalFile() throws IOException {
 
@@ -208,7 +205,6 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         checkExternalDataStreamResponseHeader(getObjMethod, null, expectedDigestHeaderValue);
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testProxyWithWantDigestForHttpUri() throws Exception {
 
@@ -232,7 +228,6 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         checkExternalDataStreamResponseHeader(getObjMethod, dsUrl, expectedDigestHeaderValue);
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testCopyWithWantDigestForHttpUri() throws Exception {
 
@@ -256,7 +251,6 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         checkExternalDataStreamResponseHeader(getObjMethod, null, expectedDigestHeaderValue);
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testProxyWithWantDigestMultipleForLocalFile() throws IOException {
 
@@ -394,7 +388,6 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testRedirectWithWantDigest() throws Exception {
 

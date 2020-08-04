@@ -76,7 +76,7 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
     @Override
     public InputStream getContent() {
         try {
-            if (isProxy()) {
+            if (isProxy() || isRedirect()) {
                 return URI.create(getExternalURL()).toURL().openStream();
             } else {
                 return getSession().getBinaryContent(getFedoraId().asResourceId(), getMementoDatetime());
