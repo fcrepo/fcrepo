@@ -36,6 +36,7 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.common.MultiDigestInputStreamWrapper;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -43,6 +44,7 @@ import javax.ws.rs.core.Link;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -98,6 +100,13 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
             }
             if (contentSize == null) {
                 size = externalContent.getContentSize();
+            }
+            if (!digest.isEmpty()) {
+                final var multiDigestWrapper = new MultiDigestInputStreamWrapper(
+                        externalContent.fetchExternalContent(),
+                        digest,
+                        Collections.emptyList());
+                multiDigestWrapper.checkFixity();
             }
         }
         final ResourceOperation createOp = builder

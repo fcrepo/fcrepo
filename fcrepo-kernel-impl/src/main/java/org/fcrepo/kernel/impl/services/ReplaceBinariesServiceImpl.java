@@ -26,13 +26,14 @@ import org.fcrepo.kernel.api.services.ReplaceBinariesService;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.common.MultiDigestInputStreamWrapper;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
-
+import java.util.Collections;
 import static java.lang.String.format;
 
 /**
@@ -79,6 +80,13 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
                 }
                 if (contentSize == null) {
                     size = externalContent.getContentSize();
+                }
+                if (!digests.isEmpty()) {
+                    final var multiDigestWrapper = new MultiDigestInputStreamWrapper(
+                            externalContent.fetchExternalContent(),
+                            digests,
+                            Collections.emptyList());
+                    multiDigestWrapper.checkFixity();
                 }
             }
 

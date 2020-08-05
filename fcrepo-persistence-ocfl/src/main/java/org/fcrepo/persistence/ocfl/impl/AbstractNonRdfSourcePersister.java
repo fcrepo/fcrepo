@@ -144,7 +144,6 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
                     NON_RDF_SOURCE.toString());
             headers.setObjectRoot(objectRoot);
             touchCreationHeaders(headers, op.getUserPrincipal(), timeWritten);
-            headers.setContentPath(contentPath);
         } else {
             headers = (ResourceHeadersImpl) readHeaders(objSession, headerPath);
         }
@@ -159,8 +158,16 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
                 digests);
 
         if (forExternalBinary(op)) {
+            // Clear any content path for externals
+            headers.setContentPath(null);
             populateExternalBinaryHeaders(headers, op.getContentUri().toString(),
                     op.getExternalHandling());
+        } else {
+            headers.setContentPath(contentPath);
+            if (!CREATE.equals(op.getType())) {
+                // If performing an update of an internal binary, ensure that no external properties are retained
+                populateExternalBinaryHeaders(headers, null, null);
+            }
         }
 
         return headers;
@@ -195,7 +202,7 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
      * @param op the operation
      * @return Returns true if the operation involved persisting an external binary
      */
-    private boolean forExternalBinary(final NonRdfSourceOperation op) {
+    protected boolean forExternalBinary(final NonRdfSourceOperation op) {
         return op.getContentUri() != null && op.getExternalHandling() != null;
     }
 }

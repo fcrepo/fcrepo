@@ -91,7 +91,9 @@ class DeleteResourcePersister extends AbstractPersister {
     private void deletePath(final String path, final OcflObjectSession session, final ResourceHeadersImpl headers,
                             final String user, final Instant deleteTime, final String headerPath)
         throws PersistentStorageException {
-        session.delete(path);
+        if (path != null) {
+            session.delete(path);
+        }
         headers.setDeleted(true);
         ResourceHeaderUtils.touchModificationHeaders(headers, user, deleteTime);
         writeHeaders(session, headers, headerPath);
