@@ -38,6 +38,7 @@
         <option value="basic container">basic container</option>
         <option value="direct container">direct container</option>
         <option value="indirect container">indirect container</option>
+        <option value="archival group">archival group</option>
         <option value="binary">binary</option>
     </select>
         </div>

@@ -5,6 +5,10 @@
     <dt>Last Modified at</dt> <dd>$helpers.getObjectsAsString($rdf, $originalResource, $rdfLexicon.LAST_MODIFIED_DATE, true)
     by $esc.html($helpers.getObjectsAsString($rdf, $originalResource, $rdfLexicon.LAST_MODIFIED_BY, true))</dd>
 
+    #if ($isArchivalGroup == true)
+        <dt>Archival Group</dt> <dd>true</dd>
+    #end
+
     <dt>Children <span class="badge">$helpers.getNumChildren($rdf, $originalResource) </span></dt>
     <dd>
         <ol id="childList">
