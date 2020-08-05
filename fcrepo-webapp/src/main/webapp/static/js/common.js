@@ -87,6 +87,8 @@
         headers.push(['Link', '<http://www.w3.org/ns/ldp#DirectContainer>; rel=\"type\"']);
       } else if (mixin == 'indirect container') {
         headers.push(['Link', '<http://www.w3.org/ns/ldp#IndirectContainer>; rel=\"type\"']);
+      } else if (mixin == 'archival group') {
+        headers.push(['Link', '<http://fedora.info/definitions/v4/repository#ArchivalGroup>; rel=\"type\"']);
       } else {
         alert("Unrecognized type: " + mixin);
         return;

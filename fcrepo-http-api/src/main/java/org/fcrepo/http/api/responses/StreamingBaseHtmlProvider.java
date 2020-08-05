@@ -26,6 +26,7 @@ import static org.apache.jena.sparql.util.graph.GraphUtils.multiValueURI;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
+import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
@@ -39,6 +40,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
@@ -202,6 +204,8 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
 
         final FedoraResource resource = getResourceFromSubject(subject.toString());
         context.put("isOriginalResource", (resource != null && resource.isOriginalResource()));
+        context.put("isArchivalGroup", (resource != null &&
+                resource.getSystemTypes(false).contains(URI.create(ARCHIVAL_GROUP.getURI()))));
         context.put("isVersion", (resource != null && resource.isMemento()));
         context.put("isLDPNR", (resource != null &&
                 (resource instanceof Binary || !resource.getDescribedResource().equals(resource))));
