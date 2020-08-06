@@ -81,7 +81,8 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
 
     private static final String TEST_MD5_DIGEST_HEADER_VALUE = "md5=baed005300234f3d1503c50a48ce8e6f";
 
-    private static final CloseableHttpClient noFollowClient = HttpClientBuilder.create().disableRedirectHandling().build();
+    private static final CloseableHttpClient noFollowClient = HttpClientBuilder.create()
+            .disableRedirectHandling().build();
 
     @Before
     public void setup() throws Exception {
@@ -1141,7 +1142,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
 
     private void assertBodyContains(final CloseableHttpResponse response, final String expected) throws IOException {
         final String body = IOUtils.toString(response.getEntity().getContent(), UTF_8);
-        assertTrue("Expected response to contain '" + expected + "' but was '" + body +"'",
+        assertTrue("Expected response to contain '" + expected + "' but was '" + body + "'",
                 body.contains(expected));
     }
 
@@ -1151,7 +1152,8 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
     }
 
     private void assertContentLength(final CloseableHttpResponse response, final long expectedLength) {
-        assertEquals("Content-length header did not match", expectedLength, Long.parseLong(response.getFirstHeader(CONTENT_LENGTH).getValue()));
+        assertEquals("Content-length header did not match", expectedLength, Long.parseLong(response
+                .getFirstHeader(CONTENT_LENGTH).getValue()));
     }
 
     private void assertContentType(final CloseableHttpResponse response, final String expected) {

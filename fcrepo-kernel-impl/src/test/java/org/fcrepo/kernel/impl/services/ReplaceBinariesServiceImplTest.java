@@ -30,9 +30,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
+import java.io.File;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Collection;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -48,7 +52,9 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -59,8 +65,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 /**
  * @author bbpennel
  */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ReplaceBinariesServiceImplTest {
+
+    @Rule
+    public TemporaryFolder tempFolder = new TemporaryFolder();
 
     private static final String USER_PRINCIPAL = "fedoraUser";
 
@@ -124,19 +133,26 @@ public class ReplaceBinariesServiceImplTest {
 
     @Test
     public void replaceExternalBinary() throws Exception {
-        final URI uri = URI.create("http://example.org/test/location");
-        when(externalContent.getURI()).thenReturn(uri);
-        when(externalContent.getHandling()).thenReturn(COPY);
+        final var realDigests = asList(URI.create("urn:sha1:94e66df8cd09d410c62d9e0dc59d3a884e458e05"),
+                URI.create("urn:md5:9893532233caff98cd083a116b013c0b"));
 
-        service.perform(TX_ID, USER_PRINCIPAL, FEDORA_ID, FILENAME, MIME_TYPE, DIGESTS, null, FILESIZE,
+        tempFolder.create();
+        final File externalFile = tempFolder.newFile();
+        FileUtils.write(externalFile, "some content", StandardCharsets.UTF_8);
+        final URI uri = externalFile.toURI();
+        when(externalContent.fetchExternalContent()).thenReturn(Files.newInputStream(externalFile.toPath()));
+        when(externalContent.getURI()).thenReturn(uri);
+        when(externalContent.getHandling()).thenReturn(ExternalContent.PROXY);
+
+        service.perform(TX_ID, USER_PRINCIPAL, FEDORA_ID, FILENAME, MIME_TYPE, realDigests, null, FILESIZE,
                 externalContent);
         verify(pSession).persist(operationCaptor.capture());
         final NonRdfSourceOperation op = operationCaptor.getValue();
 
         assertEquals(FEDORA_ID, operationCaptor.getValue().getResourceId());
         assertEquals(uri, op.getContentUri());
-        assertEquals(COPY, op.getExternalHandling());
-        assertPropertiesPopulated(op);
+        assertEquals(ExternalContent.PROXY, op.getExternalHandling());
+        assertPropertiesPopulated(op, MIME_TYPE, FILENAME, FILESIZE, realDigests);
 
         assertNull(op.getContentStream());
     }
@@ -144,20 +160,29 @@ public class ReplaceBinariesServiceImplTest {
     // Check that the content type from the external content link is given preference
     @Test
     public void replaceExternalBinary_WithExternalContentType() throws Exception {
-        final URI uri = URI.create("http://example.org/test/location");
+        final var realDigests = asList(URI.create("urn:sha1:94e66df8cd09d410c62d9e0dc59d3a884e458e05"),
+                URI.create("urn:md5:9893532233caff98cd083a116b013c0b"));
+
+        tempFolder.create();
+        final String contentString = "some content";
+        final File externalFile = tempFolder.newFile();
+        FileUtils.write(externalFile, contentString, StandardCharsets.UTF_8);
+        final URI uri = externalFile.toURI();
+        when(externalContent.fetchExternalContent()).thenReturn(Files.newInputStream(externalFile.toPath()));
+        when(externalContent.getContentSize()).thenReturn((long) contentString.length());
         when(externalContent.getURI()).thenReturn(uri);
         when(externalContent.getHandling()).thenReturn(COPY);
         when(externalContent.getContentType()).thenReturn(MIME_TYPE);
 
         service.perform(TX_ID, USER_PRINCIPAL, FEDORA_ID, FILENAME, "application/octet-stream",
-                DIGESTS, null, FILESIZE, externalContent);
+                realDigests, null, null, externalContent);
         verify(pSession).persist(operationCaptor.capture());
         final NonRdfSourceOperation op = operationCaptor.getValue();
 
         assertEquals(FEDORA_ID, operationCaptor.getValue().getResourceId());
         assertEquals(uri, op.getContentUri());
         assertEquals(COPY, op.getExternalHandling());
-        assertPropertiesPopulated(op);
+        assertPropertiesPopulated(op, MIME_TYPE, FILENAME, (long) contentString.length(), realDigests);
 
         assertNull(op.getContentStream());
     }
@@ -173,10 +198,43 @@ public class ReplaceBinariesServiceImplTest {
                 null);
     }
 
+    @Test
+    public void copyExternalBinary() throws Exception {
+        final var realDigests = asList(URI.create("urn:sha1:94e66df8cd09d410c62d9e0dc59d3a884e458e05"));
+
+        tempFolder.create();
+        final File externalFile = tempFolder.newFile();
+        final String contentString = "some content";
+        FileUtils.write(externalFile, contentString, StandardCharsets.UTF_8);
+        final URI uri = externalFile.toURI();
+        when(externalContent.fetchExternalContent()).thenReturn(Files.newInputStream(externalFile.toPath()));
+        when(externalContent.getURI()).thenReturn(uri);
+        when(externalContent.isCopy()).thenReturn(true);
+        when(externalContent.getHandling()).thenReturn(ExternalContent.COPY);
+        when(externalContent.getContentType()).thenReturn("text/xml");
+
+        service.perform(TX_ID, USER_PRINCIPAL, FEDORA_ID, FILENAME, MIME_TYPE, realDigests, null,
+                (long) contentString.length(), externalContent);
+        verify(pSession).persist(operationCaptor.capture());
+        final NonRdfSourceOperation op = operationCaptor.getValue();
+
+        assertEquals(FEDORA_ID, operationCaptor.getValue().getResourceId());
+        assertNull(op.getContentUri());
+        assertNull(op.getExternalHandling());
+        assertPropertiesPopulated(op, "text/xml", FILENAME, (long) contentString.length(), realDigests);
+
+        assertEquals(contentString, IOUtils.toString(op.getContentStream(), UTF_8));
+    }
+
+    private void assertPropertiesPopulated(final NonRdfSourceOperation op, final String exMimetype,
+            final String exFilename, final Long exContentSize, final Collection<URI> exDigests) {
+        assertEquals(exMimetype, op.getMimeType());
+        assertEquals(exFilename, op.getFilename());
+        assertEquals(exContentSize, op.getContentSize());
+        assertEquals(exDigests, op.getContentDigests());
+    }
+
     private void assertPropertiesPopulated(final NonRdfSourceOperation op) {
-        assertEquals(MIME_TYPE, op.getMimeType());
-        assertEquals(FILENAME, op.getFilename());
-        assertEquals(FILESIZE, op.getContentSize());
-        assertEquals(DIGESTS, op.getContentDigests());
+        assertPropertiesPopulated(op, MIME_TYPE, FILENAME, FILESIZE, DIGESTS);
     }
 }

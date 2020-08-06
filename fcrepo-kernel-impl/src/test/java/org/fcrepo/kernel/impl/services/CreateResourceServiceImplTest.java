@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
@@ -43,8 +44,11 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import javax.inject.Inject;
 
+import java.io.File;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,6 +57,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -83,7 +88,9 @@ import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
@@ -108,6 +115,9 @@ public class CreateResourceServiceImplTest {
             BASIC_CONTAINER.toString());
 
     private final String defaultInteractionModel = DEFAULT_INTERACTION_MODEL.toString();
+
+    @Rule
+    public TemporaryFolder tempFolder = new TemporaryFolder();
 
     @Mock
     private PersistentStorageSessionManager psManager;
@@ -175,9 +185,6 @@ public class CreateResourceServiceImplTest {
         setField(createResourceService, "containmentIndex", containmentIndex);
         setField(createResourceService, "eventAccumulator", eventAccumulator);
         when(psManager.getSession(ArgumentMatchers.any())).thenReturn(psSession);
-        when(extContent.getURL()).thenReturn(EXTERNAL_URL);
-        when(extContent.getHandling()).thenReturn(ExternalContent.PROXY);
-        when(extContent.getContentType()).thenReturn(EXTERNAL_CONTENT_TYPE);
         when(transaction.getId()).thenReturn(TX_ID);
         // Always try to clean up root.
         cleanupList.add(FedoraId.getRepositoryRootId());
@@ -533,19 +540,86 @@ public class CreateResourceServiceImplTest {
         createResourceService.checkAclLinkHeader(links);
     }
 
-    private void assertBinaryPropertiesPresent(final ResourceOperation operation) {
-        final var nonRdfOperation = (NonRdfSourceOperation) operation;
-        assertEquals(CONTENT_SIZE, nonRdfOperation.getContentSize());
-        assertEquals(FILENAME, nonRdfOperation.getFilename());
-        assertEquals(CONTENT_TYPE, nonRdfOperation.getMimeType());
-        assertTrue(DIGESTS.containsAll(nonRdfOperation.getContentDigests()));
+    @Test
+    public void testCopyExternalBinary() throws Exception {
+        final var realDigests = asList(URI.create("urn:sha1:94e66df8cd09d410c62d9e0dc59d3a884e458e05"));
+
+        tempFolder.create();
+        final File externalFile = tempFolder.newFile();
+        final String contentString = "some content";
+        FileUtils.write(externalFile, contentString, StandardCharsets.UTF_8);
+        final URI uri = externalFile.toURI();
+        when(extContent.fetchExternalContent()).thenReturn(Files.newInputStream(externalFile.toPath()));
+        when(extContent.getURI()).thenReturn(uri);
+        when(extContent.isCopy()).thenReturn(true);
+        when(extContent.getHandling()).thenReturn(ExternalContent.COPY);
+        when(extContent.getContentType()).thenReturn("text/plain");
+
+        final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
+        final FedoraId childId = fedoraId.resolve("child");
+
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, childId,
+                CONTENT_TYPE, FILENAME, (long) contentString.length(), null, realDigests, null, extContent);
+
+        verify(psSession, times(2)).persist(operationCaptor.capture());
+        final List<ResourceOperation> operations = operationCaptor.getAllValues();
+        final var operation = getOperation(operations, CreateNonRdfSourceOperation.class);
+        final FedoraId persistedId = operation.getResourceId();
+        assertNotEquals(fedoraId, persistedId);
+        assertTrue(persistedId.getFullId().startsWith(fedoraId.getFullId()));
+        assertBinaryPropertiesPresent(operation, "text/plain", FILENAME, (long) contentString.length(), realDigests);
     }
 
-    private void assertExternalBinaryPropertiesPresent(final ResourceOperation operation) {
+    @Test
+    public void testProxyExternalBinary() throws Exception {
+        final var realDigests = asList(URI.create("urn:sha1:94e66df8cd09d410c62d9e0dc59d3a884e458e05"));
+
+        tempFolder.create();
+        final File externalFile = tempFolder.newFile();
+        final String contentString = "some content";
+        FileUtils.write(externalFile, contentString, StandardCharsets.UTF_8);
+        final URI uri = externalFile.toURI();
+        when(extContent.fetchExternalContent()).thenReturn(Files.newInputStream(externalFile.toPath()));
+        when(extContent.getURI()).thenReturn(uri);
+        when(extContent.getHandling()).thenReturn(ExternalContent.PROXY);
+        when(extContent.getContentType()).thenReturn(EXTERNAL_CONTENT_TYPE);
+
+        final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
+        final FedoraId childId = fedoraId.resolve("child");
+
+        createResourceService.perform(TX_ID, USER_PRINCIPAL, childId,
+                CONTENT_TYPE, FILENAME, (long) contentString.length(), null, realDigests, null, extContent);
+
+        verify(psSession, times(2)).persist(operationCaptor.capture());
+        final List<ResourceOperation> operations = operationCaptor.getAllValues();
+        final var operation = getOperation(operations, CreateNonRdfSourceOperation.class);
+        final FedoraId persistedId = operation.getResourceId();
+        assertNotEquals(fedoraId, persistedId);
+        assertTrue(persistedId.getFullId().startsWith(fedoraId.getFullId()));
+        assertBinaryPropertiesPresent(operation, EXTERNAL_CONTENT_TYPE, FILENAME, (long) contentString.length(),
+                realDigests);
+
+        assertExternalBinaryPropertiesPresent(operation, uri, ExternalContent.PROXY);
+    }
+
+    private void assertBinaryPropertiesPresent(final ResourceOperation operation, final String exMimetype,
+            final String exFilename, final Long exContentSize, final Collection<URI> exDigests) {
         final var nonRdfOperation = (NonRdfSourceOperation) operation;
-        assertEquals(EXTERNAL_URL, nonRdfOperation.getContentUri().toString());
-        assertEquals(ExternalContent.PROXY, nonRdfOperation.getExternalHandling());
-        assertEquals(EXTERNAL_CONTENT_TYPE, nonRdfOperation.getMimeType());
+        assertEquals(exContentSize, nonRdfOperation.getContentSize());
+        assertEquals(exFilename, nonRdfOperation.getFilename());
+        assertEquals(exMimetype, nonRdfOperation.getMimeType());
+        assertTrue(exDigests.containsAll(nonRdfOperation.getContentDigests()));
+    }
+
+    private void assertBinaryPropertiesPresent(final ResourceOperation operation) {
+        assertBinaryPropertiesPresent(operation, CONTENT_TYPE, FILENAME, CONTENT_SIZE, DIGESTS);
+    }
+
+    private void assertExternalBinaryPropertiesPresent(final ResourceOperation operation, final URI exExternalUri,
+            final String exHandling) {
+        final var nonRdfOperation = (NonRdfSourceOperation) operation;
+        assertEquals(exExternalUri, nonRdfOperation.getContentUri());
+        assertEquals(exHandling, nonRdfOperation.getExternalHandling());
     }
 
     private <T extends ResourceOperation> T getOperation(final List<ResourceOperation> operations,

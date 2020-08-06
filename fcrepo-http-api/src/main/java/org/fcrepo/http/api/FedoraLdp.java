@@ -429,11 +429,6 @@ public class FedoraLdp extends ContentExposingResource {
             } else {
                 contentSize = contentDisposition.getSize();
             }
-            InputStream stream = requestBodyStream;
-            if (extContent != null && extContent.isCopy()) {
-                LOGGER.debug("External content COPY '{}', '{}'", externalPath, extContent.getURL());
-                stream = extContent.fetchExternalContent();
-            }
 
             if (resourceExists) {
                 replaceBinariesService.perform(transaction.getId(),
@@ -442,7 +437,7 @@ public class FedoraLdp extends ContentExposingResource {
                                                originalFileName,
                                                contentType,
                                                checksums,
-                                               stream,
+                                               requestBodyStream,
                                                contentSize,
                                                extContent);
             } else {
@@ -454,7 +449,7 @@ public class FedoraLdp extends ContentExposingResource {
                                               contentSize,
                                               links,
                                               checksums,
-                                              stream,
+                                              requestBodyStream,
                                               extContent);
                 created = true;
             }
@@ -608,11 +603,6 @@ public class FedoraLdp extends ContentExposingResource {
             } else {
                 contentSize = contentDisposition.getSize();
             }
-            InputStream stream = requestBodyStream;
-            if (extContent != null && extContent.isCopy()) {
-                LOGGER.debug("External content COPY '{}', '{}'", externalPath, extContent.getURL());
-                stream = extContent.fetchExternalContent();
-            }
 
             createResourceService.perform(transaction.getId(),
                                           getUserPrincipal(),
@@ -622,7 +612,7 @@ public class FedoraLdp extends ContentExposingResource {
                                           contentSize,
                                           links,
                                           checksums,
-                                          stream,
+                                          requestBodyStream,
                                           extContent);
         } else {
             final var contentType = requestContentType != null ? requestContentType : DEFAULT_RDF_CONTENT_TYPE;
