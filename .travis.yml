@@ -1,13 +1,57 @@
 
 jobs:
   include:
-    - os: linux
-      language: java
+    - name: Build - Linux
+      os: linux
       dist: trusty
       sudo: true
+      language: java
       jdk: openjdk11
-    - os: windows
+      env: DEPLOY=true
+    - name: Build - Windows
+      os: windows
       language: shell
+    - name: ITests - PostgreSQL
+      os: linux
+      dist: trusty
+      sudo: true
+      language: java
+      jdk: openjdk11
+      before_script:
+        - psql -c 'CREATE DATABASE fcrepo;' -U postgres
+      script:
+        - ./mvnw -DjdbcUrl="jdbc:postgresql://localhost:5432/fcrepo" -DdbUser="postgres" -DdbPassword="" clean install -P db-tests
+    - name: ITests - MariaDB
+      os: linux
+      dist: trusty
+      sudo: true
+      language: java
+      jdk: openjdk11
+      addons:
+        mariadb: "10.4"
+      before_script:
+        - mysql -e 'CREATE DATABASE IF NOT EXISTS fcrepo;'
+      script:
+        - ./mvnw -DjdbcUrl="jdbc:mariadb://localhost:3306/fcrepo" -DdbUser="travis" -DdbPassword="" clean install -P db-tests
+    - name: ITests - MySQL
+      os: linux
+      dist: xenial
+      sudo: true
+      language: java
+      jdk: openjdk11
+      services:
+        - mysql
+      before_script:
+        - wget https://repo.mysql.com//mysql-apt-config_0.8.10-1_all.deb
+        - sudo dpkg -i mysql-apt-config_0.8.10-1_all.deb
+        - sudo apt-get update -q
+        - sudo apt-get install -q -y --allow-unauthenticated -o Dpkg::Options::=--force-confnew mysql-server
+        - sudo systemctl restart mysql
+        - sudo mysql_upgrade
+        - mysql --version
+        - mysql -e 'CREATE DATABASE IF NOT EXISTS fcrepo;'
+      script:
+        - ./mvnw -DjdbcUrl="jdbc:mysql://localhost:3306/fcrepo" -DdbUser="travis" -DdbPassword="" clean install  -P db-tests
 
 env:
   - MAVEN_VERSION=3.6.3
@@ -58,10 +102,9 @@ deploy:
    on:
      repo: fcrepo4/fcrepo4
      branch: main 
-     condition: $TRAVIS_OS_NAME = linux
+     condition: $DEPLOY = true
 
 notifications:
   irc: "irc.freenode.org#fcrepo"
   email:
       - fedora-tech@googlegroups.com
-
