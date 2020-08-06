@@ -37,6 +37,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -161,6 +162,8 @@ public class FedoraSearchIT extends AbstractResourceIT {
                     result.getItems().size());
             modified = result.getItems().get(0).get(MODIFIED.toString()).toString();
         }
+
+        TimeUnit.SECONDS.sleep(1);
 
         final var patch = new HttpPatch(resourceId);
         patch.setHeader("Content-Type", "application/sparql-update");
