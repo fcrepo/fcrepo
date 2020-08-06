@@ -11,7 +11,7 @@ ObjectStore/
 .cache
 .DS_Store
 *~
-fcrepo4-data/
+fcrepo-home/
 *.iml
 .idea/
 .checkstyle

@@ -43,7 +43,7 @@ public class FedoraPropsConfig {
 
     private static final String DATA_DIR = "data";
 
-    @Value("${" + FCREPO_HOME + ":fcrepo}")
+    @Value("${" + FCREPO_HOME + ":fcrepo-home}")
     private Path fedoraHome;
 
     @Value("#{fedoraPropsConfig.fedoraHome.resolve('" + DATA_DIR + "')}")
