@@ -124,8 +124,7 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
         return getVersions().stream().map(version -> {
             try {
                 final var fedoraId = getInstantFedoraId(version);
-                return txId != null ? resourceFactory.getResource(txId, fedoraId) :
-                        resourceFactory.getResource(fedoraId);
+                return resourceFactory.getResource(txId, fedoraId);
             } catch (final PathNotFoundException e) {
                 throw new PathNotFoundRuntimeException(e);
             }

@@ -49,8 +49,7 @@ public class WebacAclImpl extends ContainerImpl implements WebacAcl {
         final var originalId = FedoraId.create(getFedoraId().getBaseId());
         try {
 
-            return txId != null ? resourceFactory.getResource(txId, originalId) :
-                    resourceFactory.getResource(originalId);
+            return resourceFactory.getResource(txId, originalId);
         } catch (final PathNotFoundException exc) {
             throw new PathNotFoundRuntimeException(exc);
         }

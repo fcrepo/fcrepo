@@ -17,6 +17,7 @@
  */
 package org.fcrepo.search.impl;
 
+import org.fcrepo.common.db.DbPlatform;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceFactory;
@@ -53,7 +54,6 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +61,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
+import static org.fcrepo.common.db.DbPlatform.H2;
+import static org.fcrepo.common.db.DbPlatform.MARIADB;
+import static org.fcrepo.common.db.DbPlatform.MYSQL;
+import static org.fcrepo.common.db.DbPlatform.POSTGRESQL;
 import static org.fcrepo.search.api.Condition.Field.CONTENT_SIZE;
 import static org.fcrepo.search.api.Condition.Field.FEDORA_ID;
 import static org.fcrepo.search.api.Condition.Field.MIME_TYPE;
@@ -95,21 +99,19 @@ public class DbSearchIndexImpl implements SearchIndex {
             "from search_resource_rdf_type rrt, search_rdf_type rt " +
             "WHERE rrt.rdf_type_id = rt.id group by rrt.resource_id) r";
     private static final String DEFAULT_DDL = "sql/default-search-index.sql";
-    private static final String POSTGRESQL_KEY = "PostgreSQL";
-    private static final String MYSQL_KEY = "MySQL";
-    private static final String MARIA_DB_KEY = "MariaDB";
-    private static final String H2_KEY = "H2";
-    private static final Map<String, String> DDL_MAP = Map.of(
-            MYSQL_KEY, DEFAULT_DDL,
-            H2_KEY, DEFAULT_DDL,
-            POSTGRESQL_KEY, "sql/postgresql-search-index.sql",
-            MARIA_DB_KEY, DEFAULT_DDL
+
+    private static final Map<DbPlatform, String> DDL_MAP = Map.of(
+            MYSQL, DEFAULT_DDL,
+            H2, DEFAULT_DDL,
+            POSTGRESQL, "sql/postgresql-search-index.sql",
+            MARIADB, DEFAULT_DDL
     );
     public static final String SEARCH_RESOURCE_RDF_TYPE_TABLE = "search_resource_rdf_type";
     public static final String RESOURCE_ID_PARAM = "resource_id";
     public static final String RDF_TYPE_ID_PARAM = "rdf_type_id";
     public static final String RDF_TYPE_URI_PARAM = "rdf_type_uri";
     public static final String SEARCH_RDF_TYPE_TABLE = "search_rdf_type";
+    public static final String ID_COLUMN = "id";
 
     @Inject
     private DataSource dataSource;
@@ -122,11 +124,14 @@ public class DbSearchIndexImpl implements SearchIndex {
     @Inject
     private ResourceFactory resourceFactory;
 
+    private DbPlatform dbPlatForm;
+
     /**
      * Setup database table and connection
      */
     @PostConstruct
     public void setup() {
+        this.dbPlatForm = DbPlatform.fromDataSource(this.dataSource);
         final var ddl = lookupDdl();
         LOGGER.debug("Applying ddl: {}", ddl);
         DatabasePopulatorUtils.execute(
@@ -135,18 +140,8 @@ public class DbSearchIndexImpl implements SearchIndex {
         this.jdbcTemplate = getNamedParameterJdbcTemplate();
     }
 
-    private String getDdlKey() {
-        try (final var connection = dataSource.getConnection()) {
-            final var productName = connection.getMetaData().getDatabaseProductName();
-            LOGGER.debug("Identified database as: {}", productName);
-            return productName;
-        } catch (final SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private String lookupDdl() {
-        return DDL_MAP.get(getDdlKey());
+        return DDL_MAP.get(dbPlatForm);
     }
 
     private NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
@@ -218,7 +213,7 @@ public class DbSearchIndexImpl implements SearchIndex {
     }
 
     private void addWhereClause(final int paramCount, final MapSqlParameterSource parameterSource,
-                                final ArrayList<String> whereClauses,
+                                final List<String> whereClauses,
                                 final Condition condition) throws InvalidQueryException {
         final var field = condition.getField();
         final var operation = condition.getOperator();
@@ -283,8 +278,7 @@ public class DbSearchIndexImpl implements SearchIndex {
         final var dbTxId = txId == null ? UUID.randomUUID().toString() : txId;
         executeInDbTransaction(dbTxId, status -> {
             try {
-                final var fedoraResource = txId != null ? resourceFactory.getResource(txId, fedoraId) :
-                        resourceFactory.getResource(fedoraId);
+                final var fedoraResource = resourceFactory.getResource(txId, fedoraId);
                 final var rdfTypes = fedoraResource.getTypes();
                 final var rdfTypeIds = findOrCreateRdfTypesInDb(rdfTypes);
                 final var params = new MapSqlParameterSource();
@@ -295,7 +289,7 @@ public class DbSearchIndexImpl implements SearchIndex {
                 final var exists = result.size() > 0;
                 final Long resourcePrimaryKey;
                 if (exists) {
-                    resourcePrimaryKey = (Long) result.get(0).get("id");
+                    resourcePrimaryKey = (Long) result.get(0).get(ID_COLUMN);
                     jdbcTemplate.update(UPDATE_INDEX_SQL, params);
                     //delete rdf_type associations
                     deleteRdfTypeAssociations(resourcePrimaryKey);
@@ -303,7 +297,7 @@ public class DbSearchIndexImpl implements SearchIndex {
                     params.addValue(CREATED_PARAM, new Timestamp(resourceHeaders.getCreatedDate().toEpochMilli()));
                     final var jdbcInsertResource =
                             new SimpleJdbcInsert(this.jdbcTemplate.getJdbcTemplate()).usingGeneratedKeyColumns(
-                                    "id");
+                                    ID_COLUMN);
                     resourcePrimaryKey =
                             jdbcInsertResource.withTableName(SIMPLE_SEARCH_TABLE).executeAndReturnKey(params)
                                     .longValue();
@@ -321,7 +315,7 @@ public class DbSearchIndexImpl implements SearchIndex {
         //add rdf type associations
         final var jdbcInsertRdfTypeAssociations = new SimpleJdbcInsert(this.jdbcTemplate.getJdbcTemplate());
         jdbcInsertRdfTypeAssociations.withTableName(SEARCH_RESOURCE_RDF_TYPE_TABLE).usingGeneratedKeyColumns(
-                "id");
+                ID_COLUMN);
         for (var rdfTypeId : rdfTypeIds) {
             final var assocParams = new MapSqlParameterSource();
             assocParams.addValue(RESOURCE_ID_PARAM, resourceId);
@@ -340,7 +334,7 @@ public class DbSearchIndexImpl implements SearchIndex {
     private ArrayList<Long> findOrCreateRdfTypesInDb(final List<URI> rdfTypes) {
         final var jdbcInsertRdfTypes = new SimpleJdbcInsert(this.jdbcTemplate.getJdbcTemplate());
         jdbcInsertRdfTypes.withTableName(SEARCH_RDF_TYPE_TABLE).usingGeneratedKeyColumns(
-                "id");
+                ID_COLUMN);
         final var rdfTypeIds = new ArrayList<Long>();
         for (var rdfTypeUri : rdfTypes) {
             final var typeParams = new MapSqlParameterSource();
@@ -351,7 +345,7 @@ public class DbSearchIndexImpl implements SearchIndex {
                 final Number key = jdbcInsertRdfTypes.executeAndReturnKey(typeParams);
                 rdfTypeIds.add(key.longValue());
             } else {
-                rdfTypeIds.add((long) results.get(0).get("id"));
+                rdfTypeIds.add((long) results.get(0).get(ID_COLUMN));
             }
         }
         return rdfTypeIds;
@@ -401,18 +395,18 @@ public class DbSearchIndexImpl implements SearchIndex {
     private List<String> toggleForeignKeyChecks(final boolean enable) {
 
         if (isPostgres()) {
-            final var statements = new ArrayList<String>();
-            statements.add(togglePostgresTriggers(SEARCH_RESOURCE_RDF_TYPE_TABLE, enable));
-            statements.add(togglePostgresTriggers(SEARCH_RDF_TYPE_TABLE, enable));
-            statements.add(togglePostgresTriggers(SIMPLE_SEARCH_TABLE, enable));
-            return statements;
+            return List.of(
+                    togglePostgresTriggers(SEARCH_RESOURCE_RDF_TYPE_TABLE, enable),
+                    togglePostgresTriggers(SEARCH_RDF_TYPE_TABLE, enable),
+                    togglePostgresTriggers(SIMPLE_SEARCH_TABLE, enable)
+            );
         } else {
-            return Arrays.asList("SET FOREIGN_KEY_CHECKS = " + (enable ? 1 : 0) + ";");
+            return List.of("SET FOREIGN_KEY_CHECKS = " + (enable ? 1 : 0) + ";");
         }
     }
 
     private boolean isPostgres() {
-        return getDdlKey().equals(POSTGRESQL_KEY);
+        return dbPlatForm.equals(POSTGRESQL);
     }
 
     private String togglePostgresTriggers(final String tableName, final boolean enable) {

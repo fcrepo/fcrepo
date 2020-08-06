@@ -68,8 +68,7 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
         // Get a FedoraId for the binary
         final FedoraId describedId = FedoraId.create(this.getFedoraId().getBaseId());
         try {
-            return txId != null ? this.resourceFactory.getResource(txId, describedId) :
-                    this.resourceFactory.getResource(describedId);
+            return this.resourceFactory.getResource(txId, describedId);
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
         }

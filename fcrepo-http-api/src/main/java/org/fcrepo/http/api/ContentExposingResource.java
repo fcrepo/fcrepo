@@ -37,6 +37,7 @@ import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionUtils;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
@@ -1026,9 +1027,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath);
 
         try {
-            final var txId = txtIdIfUncommittedOrNull(transaction());
-            final FedoraResource fedoraResource = txId != null ? resourceFactory.getResource(txId, fedoraId) :
-                    resourceFactory.getResource(fedoraId);
+            final FedoraResource fedoraResource =
+                    resourceFactory.getResource(TransactionUtils.openTxId(transaction()), fedoraId);
 
             final FedoraResource originalResource;
             if (fedoraId.isMemento()) {

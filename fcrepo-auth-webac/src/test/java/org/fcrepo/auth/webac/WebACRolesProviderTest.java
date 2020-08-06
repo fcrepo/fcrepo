@@ -455,9 +455,9 @@ public class WebACRolesProviderTest {
         final String acl = aclDir + "/acl.ttl";
         final String group = aclDir + "/group.ttl";
 
-        when(mockResourceFactory.getResource(FedoraId.create(addPrefix(acl))))
+        when(mockResourceFactory.getResource(null, FedoraId.create(addPrefix(acl))))
                 .thenReturn(mockAclResource);
-        when(mockResourceFactory.getResource(FedoraId.create(addPrefix(groupResource))))
+        when(mockResourceFactory.getResource(null, FedoraId.create(addPrefix(groupResource))))
                 .thenReturn(mockAgentClassResource);
         when(mockResource.getAcl()).thenReturn(mockAclResource);
         when(mockResource.getId()).thenReturn(addPrefix(accessTo));

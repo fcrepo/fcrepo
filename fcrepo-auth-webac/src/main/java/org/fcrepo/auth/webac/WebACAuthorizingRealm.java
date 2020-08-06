@@ -30,6 +30,7 @@ import org.fcrepo.http.commons.session.TransactionProvider;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.TransactionUtils;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryConfigurationException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -233,22 +234,18 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     }
 
     private FedoraResource getResourceOrParentFromPath(final FedoraId fedoraId) {
-        final var tx = transaction();
-        final var txId = tx == null || tx.isCommitted() ? null : tx.getId();
+        final var txId = TransactionUtils.openTxId(transaction());
 
         try {
             log.debug("Testing FedoraResource for {}", fedoraId.getFullIdPath());
-
-            return txId != null ? this.resourceFactory.getResource(txId, fedoraId) :
-                    this.resourceFactory.getResource(fedoraId);
+            return this.resourceFactory.getResource(txId, fedoraId);
         } catch (final PathNotFoundException exc) {
             log.debug("Resource {} not found getting container", fedoraId.getFullIdPath());
             final FedoraId containerId = containmentIndex.getContainerIdByPath(txId, fedoraId);
             log.debug("Attempting to get FedoraResource for {}", fedoraId.getFullIdPath());
             try {
                 log.debug("Got FedoraResource for {}", containerId.getFullIdPath());
-                return txId != null ? this.resourceFactory.getResource(txId, containerId) :
-                        this.resourceFactory.getResource(containerId);
+                return this.resourceFactory.getResource(txId, containerId);
             } catch (final PathNotFoundException exc2) {
                 log.debug("Path {} does not exist, but we should never end up here.", containerId.getFullIdPath());
                 return null;

@@ -76,26 +76,12 @@ public interface ResourceFactory {
 
     /**
      * Check if a resource exists.
-     * @param fedoraId The internal identifier
-     * @return True if the identifier resolves to a resource.
-     */
-    public boolean doesResourceExist(final FedoraId fedoraId);
-
-    /**
-     * Check if a resource exists.
      * @param transactionId The current transaction id
      * @param fedoraId The internal identifier
      * @return True if the identifier resolves to a resource.
      */
     public boolean doesResourceExist(final String transactionId, final FedoraId fedoraId);
 
-
-    /**
-     * Get the containing resource (if exists).
-     * @param resourceId The internal identifer
-     * @return The containing resource or null if none.
-     */
-    public FedoraResource getContainer(final FedoraId resourceId);
 
     /**
      * Get the containing resource (if exists).

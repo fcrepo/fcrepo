@@ -42,6 +42,8 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_NAMESPACE_VALUE;
 import static org.fcrepo.http.api.FedoraAcl.getDefaultAcl;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
+
+import org.fcrepo.kernel.api.TransactionUtils;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -235,9 +237,8 @@ public class WebACRolesProvider {
                 final String hashedSuffix = hashIndex > 0 ? agentGroup.substring(hashIndex) : null;
                 try {
                     final FedoraId fedoraId = FedoraId.create(agentGroupNoHash);
-                    final var txId = transaction == null || transaction.isCommitted() ? null : transaction.getId();
-                    final FedoraResource resource = txId != null ? resourceFactory.getResource(txId, fedoraId) :
-                            resourceFactory.getResource(fedoraId);
+                    final FedoraResource resource = resourceFactory.getResource(TransactionUtils.openTxId(transaction),
+                            fedoraId);
                     return getAgentMembers(translator, resource, hashedSuffix);
                 } catch (final PathNotFoundException e) {
                     throw new PathNotFoundRuntimeException(e);

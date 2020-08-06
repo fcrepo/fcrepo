@@ -159,7 +159,7 @@ public class TimeMapImplTest {
             mementos.add(memento);
             final FedoraId mementoID = FedoraId.create(id, FCR_VERSIONS, instantStr(version));
             when(memento.getFedoraId()).thenReturn(mementoID);
-            when(resourceFactory.getResource(mementoID)).thenReturn(memento);
+            when(resourceFactory.getResource(null, mementoID)).thenReturn(memento);
         }
         return mementos;
     }

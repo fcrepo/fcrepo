@@ -134,11 +134,9 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
             final FedoraId descId = getFedoraId().asDescription();
             if (this.isMemento()) {
                 final var descIdAsMemento = descId.asMemento(getMementoDatetime());
-                return txId == null ? resourceFactory.getResource(descIdAsMemento) : resourceFactory.getResource(txId,
-                        descIdAsMemento);
+                return resourceFactory.getResource(txId, descIdAsMemento);
             }
-            return txId == null ? resourceFactory.getResource(descId) : resourceFactory.getResource(txId,
-                    descId);
+            return resourceFactory.getResource(txId, descId);
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
         }

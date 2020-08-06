@@ -36,7 +36,6 @@ import org.springframework.stereotype.Component;
 import javax.inject.Inject;
 import java.time.Instant;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
@@ -66,17 +65,11 @@ public class ResourceFactoryImpl implements ResourceFactory {
     @Override
     public FedoraResource getResource(final FedoraId fedoraID)
             throws PathNotFoundException {
-        return getResourceImpl(null, fedoraID);
+        return instantiateResource(null, fedoraID);
     }
 
     @Override
     public FedoraResource getResource(final String transactionId, final FedoraId fedoraID)
-            throws PathNotFoundException {
-        checkNotNull(transactionId);
-        return getResourceImpl(transactionId, fedoraID);
-    }
-
-    private FedoraResource getResourceImpl(final String transactionId, final FedoraId fedoraID)
             throws PathNotFoundException {
         return instantiateResource(transactionId, fedoraID);
     }
@@ -84,24 +77,17 @@ public class ResourceFactoryImpl implements ResourceFactory {
     @Override
     public <T extends FedoraResource> T getResource(final FedoraId identifier,
                                                     final Class<T> clazz) throws PathNotFoundException {
-        return clazz.cast(getResourceImpl(null, identifier));
+        return clazz.cast(getResource(null, identifier));
     }
 
     @Override
     public <T extends FedoraResource> T getResource(final String transactionId, final FedoraId identifier,
                                                     final Class<T> clazz) throws PathNotFoundException {
-        checkNotNull(transactionId);
-        return clazz.cast(getResourceImpl(transactionId, identifier));
-    }
-
-    @Override
-    public boolean doesResourceExist(final FedoraId fedoraId) {
-        return doesResourceExistImpl(null, fedoraId);
+        return clazz.cast(getResource(transactionId, identifier));
     }
 
     @Override
     public boolean doesResourceExist(final String transactionId, final FedoraId fedoraId) {
-        checkNotNull(transactionId);
         return doesResourceExistImpl(transactionId, fedoraId);
     }
 
@@ -142,23 +128,13 @@ public class ResourceFactoryImpl implements ResourceFactory {
     }
 
     @Override
-    public FedoraResource getContainer(final FedoraId resourceId) {
-        return getContainerImpl(null, resourceId);
-    }
-
-    @Override
     public FedoraResource getContainer(final String transactionId, final FedoraId resourceId) {
-        checkNotNull(transactionId);
-        return getContainerImpl(transactionId, resourceId);
-    }
-
-    private FedoraResource getContainerImpl(final String transactionId, final FedoraId resourceId) {
         final String containerId = containmentIndex.getContainedBy(transactionId, resourceId);
         if (containerId == null) {
             return null;
         }
         try {
-            return getResourceImpl(transactionId, FedoraId.create(containerId));
+            return getResource(transactionId, FedoraId.create(containerId));
         } catch (final PathNotFoundException exc) {
             return null;
         }

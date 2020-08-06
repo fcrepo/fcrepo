@@ -39,6 +39,7 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -93,7 +94,7 @@ public class FedoraTombstonesTest {
         setField(testObj, "request", mockRequest);
         setField(testObj, "context", mockServletContext);
 
-        when(resourceFactory.getResource(eq(fedoraId))).thenReturn(mockTombstone);
+        when(resourceFactory.getResource(any(), eq(fedoraId))).thenReturn(mockTombstone);
         when(mockTombstone.getDeletedObject()).thenReturn(mockDeletedObj);
     }
 
@@ -110,7 +111,7 @@ public class FedoraTombstonesTest {
      */
     @Test
     public void testNotYetDeleted() throws Exception {
-        when(resourceFactory.getResource(eq(fedoraId))).thenReturn(mockDeletedObj);
+        when(resourceFactory.getResource(any(), eq(fedoraId))).thenReturn(mockDeletedObj);
         final Response actual = testObj.delete();
         assertEquals(NOT_FOUND.getStatusCode(), actual.getStatus());
     }
