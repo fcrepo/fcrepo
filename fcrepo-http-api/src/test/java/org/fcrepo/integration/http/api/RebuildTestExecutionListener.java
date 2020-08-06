@@ -19,11 +19,12 @@ package org.fcrepo.integration.http.api;
 
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.http.commons.test.util.ContainerWrapper;
+import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
+import org.fcrepo.search.api.SearchIndex;
 import org.springframework.test.annotation.DirtiesContext.HierarchyMode;
 import org.springframework.test.context.TestContext;
 import org.springframework.test.context.support.AbstractTestExecutionListener;
-
-import javax.sql.DataSource;
 
 /**
  * Isolate RebuildIT from the rest of the IT contexts.
@@ -47,21 +48,13 @@ public class RebuildTestExecutionListener extends AbstractTestExecutionListener 
     }
 
     private void cleanDb(final TestContext testContext) throws Exception {
-        final var dataSource = getBean(testContext, DataSource.class);
+        final var containmentIndex = getBean(testContext, ContainmentIndex.class);
+        final var ocflIndex = getBean(testContext, FedoraToOcflObjectIndex.class);
+        final var searchIndex = getBean(testContext, SearchIndex.class);
 
-        try (var conn = dataSource.getConnection()) {
-            try (var queryStmt = conn.prepareStatement(
-                    "SELECT DISTINCT table_name FROM information_schema.tables WHERE table_schema = 'PUBLIC'")) {
-                try (var resultSet = queryStmt.executeQuery()) {
-                    while (resultSet.next()) {
-                        try (var truncStmt = conn.prepareStatement(
-                                "TRUNCATE TABLE " + resultSet.getString(1))) {
-                            truncStmt.executeUpdate();
-                        }
-                    }
-                }
-            }
-        }
+        containmentIndex.reset();
+        ocflIndex.reset();
+        searchIndex.reset();
     }
 
     private <T> T getBean(final TestContext testContext, final Class<T> clazz) {

@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.fcrepo.webapp.config;
+package org.fcrepo.config;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import org.slf4j.Logger;
