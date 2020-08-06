@@ -231,9 +231,33 @@ public class ExternalContentPathValidatorTest {
     }
 
     @Test
-    public void testCaseInsensitive() throws Exception {
-        final String goodPath = "FILE://" + dataDir.toURI().getPath() + "/";
-        final String extPath = dataUri + "/file.txt";
+    public void testCaseInsensitiveFileScheme() throws Exception {
+        final String goodPath = "FILE://" + dataDir.toURI().getPath();
+        final String extPath = dataUri + "file.txt";
+
+        addAllowedPath(goodPath);
+
+        validator.validate(extPath);
+    }
+
+    @Test
+    public void testVaryingSensitiveFilePath() throws Exception {
+        final File subfolder = tmpDir.newFolder("CAPSLOCK");
+        final File file = new File(subfolder, "OoOoOooOOooo.txt");
+        file.createNewFile();
+
+        final String goodPath = subfolder.toURI().toString();
+        final String extPath = file.toURI().toString();
+
+        addAllowedPath(goodPath);
+
+        validator.validate(extPath);
+    }
+
+    @Test
+    public void testVaryingCaseHttpUri() throws Exception {
+        final String goodPath = "http://sensitive.example.com/PATH/to/";
+        final String extPath = "http://sensitive.example.com/PATH/to/stuff";
 
         addAllowedPath(goodPath);
 
