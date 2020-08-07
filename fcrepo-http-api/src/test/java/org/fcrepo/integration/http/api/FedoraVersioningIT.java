@@ -1494,7 +1494,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testCreateExternalBinaryProxyVersion() throws Exception {
         // Create binary to use as content for proxying

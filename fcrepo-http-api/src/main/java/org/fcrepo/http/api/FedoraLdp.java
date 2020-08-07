@@ -95,13 +95,11 @@ import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
-import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.Binary;
@@ -629,32 +627,6 @@ public class FedoraLdp extends ContentExposingResource {
 
         final var resource = getFedoraResource(transaction, newFedoraId);
         return createUpdateResponse(resource, true);
-    }
-
-    /**
-     * @param rootThrowable The original throwable
-     * @param throwable The throwable under direct scrutiny.
-     */
-    @Override
-    protected void checkForInsufficientStorageException(final Throwable rootThrowable, final Throwable throwable)
-            throws InvalidChecksumException {
-        final String message = throwable.getMessage();
-        if (throwable instanceof IOException && message != null && message.contains(
-                INSUFFICIENT_SPACE_IDENTIFYING_MESSAGE)) {
-            throw new InsufficientStorageException(throwable.getMessage(), rootThrowable);
-        }
-
-        if (throwable.getCause() != null) {
-            checkForInsufficientStorageException(rootThrowable, throwable.getCause());
-        }
-
-        if (rootThrowable instanceof InvalidChecksumException) {
-            throw (InvalidChecksumException) rootThrowable;
-        } else if (rootThrowable instanceof RuntimeException) {
-            throw (RuntimeException) rootThrowable;
-        } else {
-            throw new RepositoryRuntimeException(rootThrowable);
-        }
     }
 
     @Override

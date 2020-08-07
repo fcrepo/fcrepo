@@ -36,6 +36,8 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.common.MultiDigestInputStreamWrapper;
+import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -43,6 +45,7 @@ import javax.ws.rs.core.Link;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,6 +55,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_PAIR_TREE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
+import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 /**
@@ -61,6 +65,8 @@ import static org.springframework.util.CollectionUtils.isEmpty;
  */
 @Component
 public class CreateResourceServiceImpl extends AbstractService implements CreateResourceService {
+
+    private static final Logger LOGGER = getLogger(CreateResourceServiceImpl.class);
 
     @Inject
     private PersistentStorageSessionManager psManager;
@@ -87,21 +93,40 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
         final CreateNonRdfSourceOperationBuilder builder;
         String mimeType = contentType;
-        if (externalContent == null) {
-            builder = nonRdfSourceOperationFactory.createInternalBinaryBuilder(fedoraId, requestBody);
+        Long size = contentSize;
+        if (externalContent == null || externalContent.isCopy()) {
+            var contentInputStream = requestBody;
+            if (externalContent != null) {
+                LOGGER.debug("External content COPY '{}', '{}'", fedoraId, externalContent.getURL());
+                contentInputStream = externalContent.fetchExternalContent();
+            }
+
+            builder = nonRdfSourceOperationFactory.createInternalBinaryBuilder(fedoraId, contentInputStream);
         } else {
             builder = nonRdfSourceOperationFactory.createExternalBinaryBuilder(fedoraId,
-                    externalContent.getHandling(), URI.create(externalContent.getURL()));
-            if (externalContent.getContentType() != null) {
-                mimeType = externalContent.getContentType();
+                    externalContent.getHandling(), externalContent.getURI());
+            if (contentSize == null) {
+                size = externalContent.getContentSize();
+            }
+            if (!digest.isEmpty()) {
+                final var multiDigestWrapper = new MultiDigestInputStreamWrapper(
+                        externalContent.fetchExternalContent(),
+                        digest,
+                        Collections.emptyList());
+                multiDigestWrapper.checkFixity();
             }
         }
+
+        if (externalContent != null && externalContent.getContentType() != null) {
+            mimeType = externalContent.getContentType();
+        }
+
         final ResourceOperation createOp = builder
                 .parentId(parentId)
                 .userPrincipal(userPrincipal)
                 .contentDigests(digest)
                 .mimeType(mimeType)
-                .contentSize(contentSize)
+                .contentSize(size)
                 .filename(filename)
                 .build();
 

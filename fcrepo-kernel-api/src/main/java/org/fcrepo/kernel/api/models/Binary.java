@@ -17,12 +17,8 @@
  */
 package org.fcrepo.kernel.api.models;
 
-import org.fcrepo.kernel.api.exception.InvalidChecksumException;
-import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
-
 import java.io.InputStream;
 import java.net.URI;
-import java.util.Collection;
 
 /**
  * @author cabeer
@@ -34,22 +30,6 @@ public interface Binary extends FedoraResource {
      * @return The InputStream of content associated with this datastream.
      */
     InputStream getContent();
-
-    /**
-     * Sets the content of this Datastream.
-     *
-     * @param content  InputStream of binary content to be stored
-     * @param contentType MIME type of content (optional)
-     * @param checksums Collection of checksum URIs of the content (optional)
-     * @param originalFileName Original file name of the content (optional)
-     * @param storagePolicyDecisionPoint Policy decision point for storing the content (optional)
-     * @throws InvalidChecksumException if invalid checksum exception occurred
-     */
-    @Deprecated
-    void setContent(InputStream content, String contentType, Collection<URI> checksums,
-                    String originalFileName,
-                    StoragePolicyDecisionPoint storagePolicyDecisionPoint)
-            throws InvalidChecksumException;
 
     /**
      * @return The size in bytes of content associated with this datastream.

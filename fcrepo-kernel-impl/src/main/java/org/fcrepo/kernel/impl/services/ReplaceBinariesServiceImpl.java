@@ -26,14 +26,17 @@ import org.fcrepo.kernel.api.services.ReplaceBinariesService;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.common.MultiDigestInputStreamWrapper;
+import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
-
+import java.util.Collections;
 import static java.lang.String.format;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Implementation of a service for replacing/updating binary resources
@@ -42,6 +45,8 @@ import static java.lang.String.format;
  */
 @Component
 public class ReplaceBinariesServiceImpl extends AbstractService implements ReplaceBinariesService {
+
+    private static final Logger LOGGER = getLogger(ReplaceBinariesServiceImpl.class);
 
     @Inject
     private PersistentStorageSessionManager psManager;
@@ -57,7 +62,7 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
                         final String contentType,
                         final Collection<URI> digests,
                         final InputStream contentBody,
-                        final Long size,
+                        final Long contentSize,
                         final ExternalContent externalContent) {
         try {
             final PersistentStorageSession pSession = this.psManager.getSession(txId);
@@ -65,17 +70,35 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
             hasRestrictedPath(fedoraId.getFullId());
 
             String mimeType = contentType;
+            Long size = contentSize;
             final NonRdfSourceOperationBuilder builder;
-            if (externalContent == null) {
-                builder = factory.updateInternalBinaryBuilder(fedoraId, contentBody);
+            if (externalContent == null || externalContent.isCopy()) {
+                var contentInputStream = contentBody;
+                if (externalContent != null) {
+                    LOGGER.debug("External content COPY '{}', '{}'", fedoraId, externalContent.getURL());
+                    contentInputStream = externalContent.fetchExternalContent();
+                }
+
+                builder = factory.updateInternalBinaryBuilder(fedoraId, contentInputStream);
             } else {
                 builder = factory.updateExternalBinaryBuilder(fedoraId,
                         externalContent.getHandling(),
                         externalContent.getURI());
 
-                if (externalContent.getContentType() != null) {
-                    mimeType = externalContent.getContentType();
+                if (contentSize == null) {
+                    size = externalContent.getContentSize();
                 }
+                if (!digests.isEmpty()) {
+                    final var multiDigestWrapper = new MultiDigestInputStreamWrapper(
+                            externalContent.fetchExternalContent(),
+                            digests,
+                            Collections.emptyList());
+                    multiDigestWrapper.checkFixity();
+                }
+            }
+
+            if (externalContent != null && externalContent.getContentType() != null) {
+                mimeType = externalContent.getContentType();
             }
 
             builder.mimeType(mimeType)

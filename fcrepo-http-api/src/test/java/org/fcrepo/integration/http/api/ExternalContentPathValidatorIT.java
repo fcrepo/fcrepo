@@ -45,7 +45,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -120,7 +119,6 @@ public class ExternalContentPathValidatorIT extends AbstractResourceIT {
         System.clearProperty("fcrepo.external.content.allowed");
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testAllowedPath() throws Exception {
         final HttpPost method = postObjMethod();
@@ -163,11 +161,32 @@ public class ExternalContentPathValidatorIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testAllowedFilePath() throws Exception {
         final String fileContent = "content";
         final File permittedFile = new File(allowedDir, "test.txt");
+        FileUtils.writeStringToFile(permittedFile, fileContent, "UTF-8");
+        final String fileUri = permittedFile.toURI().toString();
+
+        final String id = getRandomUniqueId();
+        final HttpPut put = putObjMethod(id);
+        put.addHeader(LINK, getExternalContentLinkHeader(fileUri, "proxy", "text/plain"));
+        try (final CloseableHttpResponse response = execute(put)) {
+            assertEquals(SC_CREATED, getStatus(response));
+        }
+        // Get the external content proxy resource.
+        try (final CloseableHttpResponse response = execute(getObjMethod(id))) {
+            assertEquals(SC_OK, getStatus(response));
+            assertEquals("text/plain", response.getFirstHeader(CONTENT_TYPE).getValue());
+            assertEquals(fileUri, response.getFirstHeader(CONTENT_LOCATION).getValue());
+            assertEquals(fileContent, IOUtils.toString(response.getEntity().getContent(), "UTF-8"));
+        }
+    }
+
+    @Test
+    public void testAllowedCaseSensitiveFilePath() throws Exception {
+        final String fileContent = "content";
+        final File permittedFile = new File(allowedDir, "TEST.txt");
         FileUtils.writeStringToFile(permittedFile, fileContent, "UTF-8");
         final String fileUri = permittedFile.toURI().toString();
 
