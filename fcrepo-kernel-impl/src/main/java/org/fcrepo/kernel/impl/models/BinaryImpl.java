@@ -18,7 +18,6 @@
 package org.fcrepo.kernel.impl.models;
 
 import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
@@ -28,7 +27,6 @@ import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.ExternalContent;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
-import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -87,14 +85,6 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
         } catch (final PersistentStorageException | IOException e) {
             throw new RepositoryRuntimeException(e);
         }
-    }
-
-    @Override
-    public void setContent(final InputStream content, final String contentType, final Collection<URI> checksums,
-            final String originalFileName, final StoragePolicyDecisionPoint storagePolicyDecisionPoint)
-            throws InvalidChecksumException {
-        // TODO Auto-generated method stub
-
     }
 
     @Override

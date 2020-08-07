@@ -83,7 +83,6 @@ import java.net.URI;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -244,7 +243,7 @@ public class FedoraLdpTest {
     @Mock
     private Principal principal;
 
-    private List<URI> typeList = new ArrayList<>();
+    private final List<URI> typeList = new ArrayList<>();
 
     private static final Logger log = getLogger(FedoraLdpTest.class);
 
@@ -1145,21 +1144,17 @@ public class FedoraLdpTest {
         }
     }
 
-    @Ignore("Not sure if this is still relevant")
+    @Ignore("Insufficient space root exception not thrown and checkForInsufficientStorageException is not called")
     @Test(expected = InsufficientStorageException.class)
     public void testCreateNewBinaryWithInsufficientResources() throws Exception {
         final var finalId = pathId.resolve("b");
         when(resourceFactory.getResource(any(), eq(finalId))).thenReturn(mockBinary);
 
         try (final InputStream content = toInputStream("x", UTF_8)) {
-
             final RuntimeException ex = new RuntimeException(new IOException("root exception", new IOException(
                     FedoraLdp.INSUFFICIENT_SPACE_IDENTIFYING_MESSAGE)));
-            doThrow(ex).when(mockBinary).setContent(content, APPLICATION_OCTET_STREAM_TYPE.toString(),
-                    Collections
-                    .emptySet(),
-                    "",
-                    null);
+            doThrow(ex).when(createResourceService).perform(anyString(), anyString(), eq(finalId), anyString(),
+                    anyString(), any(Long.class), anyList(), isNull(), any(InputStream.class), isNull());
 
             testObj.createObject(null, APPLICATION_OCTET_STREAM_TYPE, "b", content, nonRDFSourceLink, null);
         }

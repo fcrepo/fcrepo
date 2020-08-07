@@ -70,7 +70,6 @@
     <junit.version>4.13</junit.version>
     <system-rules.version>1.18.0</system-rules.version>
     <mockito.version>2.22.0</mockito.version>
-    <wiremock.version>2.13.0</wiremock.version>
     <!-- fcrepo5-specific plugins -->
     <enforcer.plugin.version>3.0.0-M3</enforcer.plugin.version>
     <war.plugin.version>3.2.2</war.plugin.version>
