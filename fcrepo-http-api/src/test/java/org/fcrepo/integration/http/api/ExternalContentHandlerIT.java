@@ -597,9 +597,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
 
     @Test
     public void testUnsupportedHandlingTypeInExternalMessagePOST() throws IOException {
-
-        final String id = getRandomUniqueId();
-        final HttpPost httpPost = postObjMethod(id);
+        final HttpPost httpPost = postObjMethod();
         httpPost.addHeader(LINK, getExternalContentLinkHeader("http://example.com/junk", "junk", "image/jpeg"));
 
         try (final CloseableHttpResponse response = execute(httpPost)) {
@@ -841,8 +839,34 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
     @Test
     public void testProxyPostWithTransmissionFixityForHttpUri() throws Exception {
         final String externalLocation = createHttpResource("text/plain", TEST_BINARY_CONTENT);
-        final String id = getRandomUniqueId();
-        final HttpPost httpPost = postObjMethod(id);
+        final HttpPost httpPost = postObjMethod();
+        httpPost.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        httpPost.addHeader(LINK, getExternalContentLinkHeader(externalLocation, "proxy", "text/plain"));
+        httpPost.addHeader("Digest", TEST_SHA_DIGEST_HEADER_VALUE);
+
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            assertIsProxyBinary(getLocation(response), externalLocation, TEST_BINARY_CONTENT, "text/plain");
+        }
+    }
+
+    @Test
+    public void testProxyPostWithInvalidTransmissionFixityForHttpUri() throws Exception {
+        final String externalLocation = createHttpResource("text/plain", "bad content");
+        final HttpPost httpPost = postObjMethod();
+        httpPost.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        httpPost.addHeader(LINK, getExternalContentLinkHeader(externalLocation, "proxy", "text/plain"));
+        httpPost.addHeader("Digest", TEST_SHA_DIGEST_HEADER_VALUE);
+
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+            assertEquals(CONFLICT.getStatusCode(), getStatus(response));
+        }
+    }
+
+    @Test
+    public void testRedirectPostWithTransmissionFixityForHttpUri() throws Exception {
+        final String externalLocation = createHttpResource("text/plain", TEST_BINARY_CONTENT);
+        final HttpPost httpPost = postObjMethod();
         httpPost.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         httpPost.addHeader(LINK, getExternalContentLinkHeader(externalLocation, "redirect", "text/plain"));
         httpPost.addHeader("Digest", TEST_SHA_DIGEST_HEADER_VALUE);
@@ -854,16 +878,28 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testProxyPostWithInvalidTransmissionFixityForHttpUri() throws Exception {
+    public void testRedirectPostWithInvalidTransmissionFixityForHttpUri() throws Exception {
         final String externalLocation = createHttpResource("text/plain", "bad content");
-        final String id = getRandomUniqueId();
-        final HttpPost httpPost = postObjMethod(id);
+        final HttpPost httpPost = postObjMethod();
         httpPost.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         httpPost.addHeader(LINK, getExternalContentLinkHeader(externalLocation, "redirect", "text/plain"));
         httpPost.addHeader("Digest", TEST_SHA_DIGEST_HEADER_VALUE);
 
         try (final CloseableHttpResponse response = execute(httpPost)) {
             assertEquals(CONFLICT.getStatusCode(), getStatus(response));
+        }
+    }
+
+    @Test
+    public void testProxyPutWithTransmissionFixityForHttpUri() throws Exception {
+        final String externalLocation = createHttpResource("text/plain", TEST_BINARY_CONTENT);
+
+        final HttpPut httpPut = setupExternalContentPut(externalLocation, "proxy", "text/plain");
+        httpPut.addHeader("Digest", TEST_SHA_DIGEST_HEADER_VALUE);
+
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            assertIsProxyBinary(getLocation(response), externalLocation, TEST_BINARY_CONTENT, "text/plain");
         }
     }
 
