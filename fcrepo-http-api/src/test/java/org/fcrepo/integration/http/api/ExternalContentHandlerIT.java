@@ -471,7 +471,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         final HttpPut httpPut = putObjMethod(id);
         httpPut.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         final String fileUri = localFile.toURI().toString();
-        httpPut.addHeader(LINK, getExternalContentLinkHeader(fileUri.toString(), "proxy", "text/plain"));
+        httpPut.addHeader(LINK, getExternalContentLinkHeader(fileUri, "proxy", "text/plain"));
 
         try (final CloseableHttpResponse response = execute(httpPut)) {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));

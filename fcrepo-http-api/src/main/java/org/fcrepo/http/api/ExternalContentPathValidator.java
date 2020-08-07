@@ -121,7 +121,7 @@ public class ExternalContentPathValidator extends AutoReloadingConfiguration {
         // lowercase the scheme since it is case insensitive
         final String[] parts = path.split(":", 2);
         final String normalized;
-        if (parts.length > 1) {
+        if (parts.length == 2) {
             normalized = parts[0].toLowerCase() + ":" + parts[1];
         } else {
             return path;

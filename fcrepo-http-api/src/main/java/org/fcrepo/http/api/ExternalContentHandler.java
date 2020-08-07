@@ -115,27 +115,27 @@ public class ExternalContentHandler implements ExternalContent {
 
     @Override
     public String getURL() {
-        return link != null ? link.getUri().toString() : null;
+        return link.getUri().toString();
     }
 
     @Override
     public URI getURI() {
-        return link != null ? link.getUri() : null;
+        return link.getUri();
     }
 
     @Override
     public boolean isCopy() {
-        return handling != null && handling.equals(COPY);
+        return COPY.equals(handling);
     }
 
     @Override
     public boolean isRedirect() {
-        return handling != null && handling.equals(REDIRECT);
+        return REDIRECT.equals(handling);
     }
 
     @Override
     public boolean isProxy() {
-        return handling != null && handling.equals(PROXY);
+        return PROXY.equals(handling);
     }
 
     @Override
