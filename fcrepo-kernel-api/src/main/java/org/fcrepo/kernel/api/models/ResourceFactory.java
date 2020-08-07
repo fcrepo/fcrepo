@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.api.models;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
@@ -41,7 +42,18 @@ public interface ResourceFactory {
     /**
      * Get a FedoraResource for existing resource
      *
-     * @param transactionId The transaction id associated with this request.
+     * @param transaction The transaction associated with this request or null if not in a transaction.
+     * @param fedoraID The identifier for the resource.
+     * @return The resource.
+     * @throws PathNotFoundException If the identifier cannot be found.
+     */
+    public FedoraResource getResource(final Transaction transaction, final FedoraId fedoraID)
+            throws PathNotFoundException;
+
+    /**
+     * Get a FedoraResource for existing resource
+     *
+     * @param transactionId The transaction id associated with this request or null if not in a transaction.
      * @param fedoraID The identifier for the resource.
      * @return The resource.
      * @throws PathNotFoundException If the identifier cannot be found.
@@ -65,13 +77,13 @@ public interface ResourceFactory {
      * Get a resource as a particular type
      *
      * @param <T> type for the resource
-     * @param transactionId The transaction id associated with this request.
+     * @param transaction The transaction associated with this request or null
      * @param fedoraID The identifier for the resource.
      * @param clazz class the resource will be cast to
      * @return The resource.
      * @throws PathNotFoundException If the identifier cannot be found.
      */
-    public <T extends FedoraResource> T getResource(final String transactionId, final FedoraId fedoraID,
+    public <T extends FedoraResource> T getResource(final Transaction transaction, final FedoraId fedoraID,
                                                     final Class<T> clazz) throws PathNotFoundException;
 
     /**

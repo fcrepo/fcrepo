@@ -94,7 +94,7 @@ public class FedoraTombstonesTest {
         setField(testObj, "request", mockRequest);
         setField(testObj, "context", mockServletContext);
 
-        when(resourceFactory.getResource(any(), eq(fedoraId))).thenReturn(mockTombstone);
+        when(resourceFactory.getResource((Transaction)any(), eq(fedoraId))).thenReturn(mockTombstone);
         when(mockTombstone.getDeletedObject()).thenReturn(mockDeletedObj);
     }
 
@@ -111,7 +111,7 @@ public class FedoraTombstonesTest {
      */
     @Test
     public void testNotYetDeleted() throws Exception {
-        when(resourceFactory.getResource(any(), eq(fedoraId))).thenReturn(mockDeletedObj);
+        when(resourceFactory.getResource((Transaction)any(), eq(fedoraId))).thenReturn(mockDeletedObj);
         final Response actual = testObj.delete();
         assertEquals(NOT_FOUND.getStatusCode(), actual.getStatus());
     }

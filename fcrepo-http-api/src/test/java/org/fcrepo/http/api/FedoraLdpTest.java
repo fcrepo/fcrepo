@@ -564,7 +564,7 @@ public class FedoraLdpTest {
     @Test
     public void testOptionWithBinary() throws Exception {
         setField(testObj, "externalPath", binaryPath);
-        when(resourceFactory.getResource(mockTransaction.getId(), binaryPathId)).thenReturn(mockBinary);
+        when(resourceFactory.getResource(mockTransaction, binaryPathId)).thenReturn(mockBinary);
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertShouldNotAdvertiseAcceptPostFlavors();
@@ -576,7 +576,7 @@ public class FedoraLdpTest {
     @Test
     public void testOptionWithBinaryDescription() throws Exception {
         setField(testObj, "externalPath", binaryDescriptionPath);
-        when(resourceFactory.getResource(mockTransaction.getId(), binaryDescId))
+        when(resourceFactory.getResource(mockTransaction, binaryDescId))
                 .thenReturn(mockNonRdfSourceDescription);
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
@@ -592,7 +592,7 @@ public class FedoraLdpTest {
         final var resource = setResource(Container.class);
         setField(testObj, "externalPath", path);
         when(mockRequest.getMethod()).thenReturn("GET");
-        when(resourceFactory.getResource(any(), any(FedoraId.class))).thenReturn(resource);
+        when(resourceFactory.getResource((Transaction)any(), any(FedoraId.class))).thenReturn(resource);
         final Response actual = testObj.getResource(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should have a Link header", mockResponse.containsHeader(LINK));
@@ -927,7 +927,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testDelete() throws Exception {
-        when(resourceFactory.getResource(mockTransaction.getId(), pathId)).thenReturn(mockContainer);
+        when(resourceFactory.getResource(mockTransaction, pathId)).thenReturn(mockContainer);
         when(mockRequest.getMethod()).thenReturn("DELETE");
         final Response actual = testObj.deleteObject();
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
@@ -942,7 +942,7 @@ public class FedoraLdpTest {
         setField(testObj, "externalPath", "some/path");
         final Binary mockObject = (Binary)setResource(Binary.class);
         when(mockRequest.getMethod()).thenReturn("PUT");
-        when(resourceFactory.getResource(mockTransaction.getId(), FedoraId.create("some/path"))).thenReturn(mockObject);
+        when(resourceFactory.getResource(mockTransaction, FedoraId.create("some/path"))).thenReturn(mockObject);
 
         final Response actual = testObj.createOrReplaceObjectRdf(null, emptyStream,
                 null, null, null, null);
@@ -960,7 +960,7 @@ public class FedoraLdpTest {
     public void testPutNewObjectWithRdf() throws Exception {
 
         when(mockRequest.getMethod()).thenReturn("PUT");
-        when(resourceFactory.getResource(mockTransaction.getId(), pathId)).thenReturn(mockContainer);
+        when(resourceFactory.getResource(mockTransaction, pathId)).thenReturn(mockContainer);
 
         final Response actual = testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
@@ -979,7 +979,7 @@ public class FedoraLdpTest {
         setField(testObj, "externalPath", "some/path");
         final Binary mockObject = (Binary)setResource(Binary.class);
         when(mockRequest.getMethod()).thenReturn("PUT");
-        when(resourceFactory.getResource(mockTransaction.getId(), FedoraId.create("some/path"))).thenReturn(mockObject);
+        when(resourceFactory.getResource(mockTransaction, FedoraId.create("some/path"))).thenReturn(mockObject);
 
         final Response actual = testObj.createOrReplaceObjectRdf(TEXT_PLAIN_TYPE,
                 toInputStream("xyz", UTF_8), null, null, nonRDFSourceLink, null);
@@ -993,7 +993,7 @@ public class FedoraLdpTest {
         setField(testObj, "externalPath", "some/path");
         final Container mockObject = (Container)setResource(Container.class);
         when(mockRequest.getMethod()).thenReturn("PUT");
-        when(resourceFactory.getResource(mockTransaction.getId(), pathId)).thenReturn(mockObject);
+        when(resourceFactory.getResource(mockTransaction, pathId)).thenReturn(mockObject);
         when(resourceFactory.doesResourceExist(mockTransaction.getId(), pathId)).thenReturn(true);
 
         final Response actual = testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
@@ -1008,7 +1008,7 @@ public class FedoraLdpTest {
     public void testPutWithStrictIfMatchHandling() throws Exception {
 
         when(mockHttpConfiguration.putRequiresIfMatch()).thenReturn(true);
-        when(resourceFactory.getResource(mockTransaction.getId(), pathId)).thenReturn(mockContainer);
+        when(resourceFactory.getResource(mockTransaction, pathId)).thenReturn(mockContainer);
         when(resourceFactory.doesResourceExist(mockTransaction.getId(), pathId)).thenReturn(true);
 
         testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
@@ -1035,7 +1035,7 @@ public class FedoraLdpTest {
                         of(new Triple(createURI("mockBinary"), createURI("called"),
                             createURI("child:properties")))));
 
-        when(resourceFactory.getResource(mockTransaction.getId(), binaryDescId))
+        when(resourceFactory.getResource(mockTransaction, binaryDescId))
                 .thenReturn(mockNonRdfSourceDescription);
         testObj.updateSparql(toInputStream("xyz", UTF_8));
         verify(updatePropertiesService).updateProperties(
@@ -1067,7 +1067,7 @@ public class FedoraLdpTest {
     public void testCreateNewObject() throws Exception {
         final var resource = setResource(Container.class);
         final var finalId = pathId.resolve("b");
-        when(resourceFactory.getResource(any(), eq(finalId))).thenReturn(resource);
+        when(resourceFactory.getResource((Transaction)any(), eq(finalId))).thenReturn(resource);
         final Response actual = testObj.createObject(null, null, "b",
                 emptyStream, null, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
@@ -1077,7 +1077,7 @@ public class FedoraLdpTest {
     public void testCreateNewObjectWithVersionedResource() throws Exception {
         final var resource = setResource(Container.class);
         final var finalId = pathId.resolve("b");
-        when(resourceFactory.getResource(any(), eq(finalId))).thenReturn(resource);
+        when(resourceFactory.getResource((Transaction)any(), eq(finalId))).thenReturn(resource);
         final String versionedResourceLink = "<" + VERSIONED_RESOURCE.getURI() + ">;rel=\"type\"";
         final Response actual = testObj.createObject(null, null, "b",
                 toInputStream("", UTF_8), singletonList(versionedResourceLink), null);
@@ -1089,7 +1089,7 @@ public class FedoraLdpTest {
     public void testCreateNewObjectWithSparql() throws Exception {
         final var resource = setResource(Container.class);
         final var finalId = pathId.resolve("b");
-        when(resourceFactory.getResource(any(), eq(finalId))).thenReturn(resource);
+        when(resourceFactory.getResource((Transaction)any(), eq(finalId))).thenReturn(resource);
         final Response actual = testObj.createObject(null,
                 MediaType.valueOf(contentTypeSPARQLUpdate),
                 "b",
@@ -1109,7 +1109,7 @@ public class FedoraLdpTest {
     public void testCreateNewObjectWithRdf() throws Exception {
         final var resource = setResource(Container.class);
         final var finalId = pathId.resolve("b");
-        when(resourceFactory.getResource(any(), eq(finalId))).thenReturn(resource);
+        when(resourceFactory.getResource((Transaction)any(), eq(finalId))).thenReturn(resource);
         final Response actual = testObj.createObject(null, NTRIPLES_TYPE, "b",
                 toInputStream("_:a <info:b> _:c .", UTF_8), null, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
@@ -1127,7 +1127,7 @@ public class FedoraLdpTest {
            IOException, UnsupportedAlgorithmException, PathNotFoundException {
         setResource(Container.class);
         final var finalId = pathId.resolve("b");
-        when(resourceFactory.getResource(any(), eq(finalId))).thenReturn(mockBinary);
+        when(resourceFactory.getResource((Transaction)any(), eq(finalId))).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final Response actual = testObj.createObject(null, APPLICATION_OCTET_STREAM_TYPE, "b", content,
                 nonRDFSourceLink, null);
@@ -1150,7 +1150,7 @@ public class FedoraLdpTest {
     @Test(expected = InsufficientStorageException.class)
     public void testCreateNewBinaryWithInsufficientResources() throws Exception {
         final var finalId = pathId.resolve("b");
-        when(resourceFactory.getResource(any(), eq(finalId))).thenReturn(mockBinary);
+        when(resourceFactory.getResource((Transaction)any(), eq(finalId))).thenReturn(mockBinary);
 
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final RuntimeException ex = new RuntimeException(new IOException("root exception", new IOException(
@@ -1168,7 +1168,7 @@ public class FedoraLdpTest {
 
         setResource(Container.class);
         final var finalId = pathId.resolve("b");
-        when(resourceFactory.getResource(any(), eq(finalId))).thenReturn(mockBinary);
+        when(resourceFactory.getResource((Transaction)any(), eq(finalId))).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
             final Response actual = testObj.createObject(null, requestContentType, "b", content, nonRDFSourceLink,
@@ -1193,7 +1193,7 @@ public class FedoraLdpTest {
            InvalidChecksumException, IOException, UnsupportedAlgorithmException, PathNotFoundException {
 
         final var finalId = pathId.resolve("b");
-        when(resourceFactory.getResource(any(), eq(finalId))).thenReturn(mockBinary);
+        when(resourceFactory.getResource((Transaction)any(), eq(finalId))).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
             final String sha = "07a4d371f3b7b6283a8e1230b7ec6764f8287bf2";
@@ -1221,7 +1221,7 @@ public class FedoraLdpTest {
         InvalidChecksumException, IOException, UnsupportedAlgorithmException, PathNotFoundException {
 
         final var finalId = pathId.resolve("b");
-        when(resourceFactory.getResource(any(), eq(finalId))).thenReturn(mockBinary);
+        when(resourceFactory.getResource((Transaction)any(), eq(finalId))).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
             final String sha = "73cb3858a687a8494ca3323053016282f3dad39d42cf62ca4e79dda2aac7d9ac";
@@ -1249,7 +1249,7 @@ public class FedoraLdpTest {
             InvalidChecksumException, IOException, UnsupportedAlgorithmException, PathNotFoundException {
 
         final var finalId = pathId.resolve("b");
-        when(resourceFactory.getResource(any(), eq(finalId))).thenReturn(mockBinary);
+        when(resourceFactory.getResource((Transaction)any(), eq(finalId))).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
             final String md5 = "HUXZLQLMuI/KZ5KDcJPcOA==";
@@ -1277,7 +1277,7 @@ public class FedoraLdpTest {
            InvalidChecksumException, IOException, UnsupportedAlgorithmException, PathNotFoundException {
 
         final var finalId = pathId.resolve("b");
-        when(resourceFactory.getResource(any(), eq(finalId))).thenReturn(mockBinary);
+        when(resourceFactory.getResource((Transaction)any(), eq(finalId))).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
 

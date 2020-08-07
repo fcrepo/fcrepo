@@ -81,7 +81,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
      */
     protected FedoraResource getFedoraResource(final Transaction transaction, final FedoraId fedoraId)
             throws PathNotFoundException {
-            return resourceFactory.getResource(TransactionUtils.openTxId(transaction), fedoraId);
+            return resourceFactory.getResource(transaction, fedoraId);
     }
 
     /**

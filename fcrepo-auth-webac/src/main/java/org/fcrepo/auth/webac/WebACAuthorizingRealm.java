@@ -234,18 +234,17 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     }
 
     private FedoraResource getResourceOrParentFromPath(final FedoraId fedoraId) {
-        final var txId = TransactionUtils.openTxId(transaction());
-
         try {
             log.debug("Testing FedoraResource for {}", fedoraId.getFullIdPath());
-            return this.resourceFactory.getResource(txId, fedoraId);
+            return this.resourceFactory.getResource(transaction(), fedoraId);
         } catch (final PathNotFoundException exc) {
             log.debug("Resource {} not found getting container", fedoraId.getFullIdPath());
-            final FedoraId containerId = containmentIndex.getContainerIdByPath(txId, fedoraId);
+            final FedoraId containerId =
+                    containmentIndex.getContainerIdByPath(TransactionUtils.openTxId(transaction()), fedoraId);
             log.debug("Attempting to get FedoraResource for {}", fedoraId.getFullIdPath());
             try {
                 log.debug("Got FedoraResource for {}", containerId.getFullIdPath());
-                return this.resourceFactory.getResource(txId, containerId);
+                return this.resourceFactory.getResource(transaction(), containerId);
             } catch (final PathNotFoundException exc2) {
                 log.debug("Path {} does not exist, but we should never end up here.", containerId.getFullIdPath());
                 return null;

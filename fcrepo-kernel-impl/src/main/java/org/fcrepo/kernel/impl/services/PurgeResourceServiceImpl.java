@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.impl.services;
 
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionUtils;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.operations.DeleteResourceOperationFactory;
@@ -47,7 +48,7 @@ public class PurgeResourceServiceImpl extends AbstractDeleteResourceService impl
 
     @Override
     protected Stream<String> getContained(final Transaction tx, final FedoraResource resource) {
-        return containmentIndex.getContainsDeleted(txtIdIfUncommittedOrNull(tx), resource);
+        return containmentIndex.getContainsDeleted(TransactionUtils.openTxId(tx), resource);
     }
 
     @Override

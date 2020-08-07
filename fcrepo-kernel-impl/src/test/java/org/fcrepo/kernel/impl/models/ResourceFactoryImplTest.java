@@ -250,7 +250,7 @@ public class ResourceFactoryImplTest {
     public void getResource_BasicContainer_Cast_InTransaction() throws Exception {
         populateHeaders(resourceHeaders, BASIC_CONTAINER);
 
-        final var resc = factory.getResource(mockTx.getId(), fedoraId, Container.class);
+        final var resc = factory.getResource(mockTx, fedoraId, Container.class);
 
         assertTrue("Factory must return a container", resc instanceof Container);
         assertEquals(fedoraIdStr, resc.getId());

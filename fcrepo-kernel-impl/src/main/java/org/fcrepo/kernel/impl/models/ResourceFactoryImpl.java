@@ -18,6 +18,8 @@
 package org.fcrepo.kernel.impl.models;
 
 import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionUtils;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ResourceTypeException;
@@ -69,6 +71,12 @@ public class ResourceFactoryImpl implements ResourceFactory {
     }
 
     @Override
+    public FedoraResource getResource(final Transaction transaction, final FedoraId fedoraID)
+            throws PathNotFoundException {
+        return getResource(TransactionUtils.openTxId(transaction), fedoraID);
+    }
+
+    @Override
     public FedoraResource getResource(final String transactionId, final FedoraId fedoraID)
             throws PathNotFoundException {
         return instantiateResource(transactionId, fedoraID);
@@ -77,13 +85,13 @@ public class ResourceFactoryImpl implements ResourceFactory {
     @Override
     public <T extends FedoraResource> T getResource(final FedoraId identifier,
                                                     final Class<T> clazz) throws PathNotFoundException {
-        return clazz.cast(getResource(null, identifier));
+        return clazz.cast(getResource((Transaction)null, identifier));
     }
 
     @Override
-    public <T extends FedoraResource> T getResource(final String transactionId, final FedoraId identifier,
+    public <T extends FedoraResource> T getResource(final Transaction transaction, final FedoraId identifier,
                                                     final Class<T> clazz) throws PathNotFoundException {
-        return clazz.cast(getResource(transactionId, identifier));
+        return clazz.cast(getResource(transaction, identifier));
     }
 
     @Override

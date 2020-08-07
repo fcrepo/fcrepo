@@ -732,7 +732,8 @@ public class WebACFilterTest {
     public void testAuthUserAppendPutNewChild() throws Exception {
         setupAuthUserAppendOnly();
         // PUT => 200
-        when(mockResourceFactory.getResource(any(), eq(testChildId))).thenThrow(PathNotFoundException.class);
+        when(mockResourceFactory.getResource((Transaction)any(), eq(testChildId)))
+                .thenThrow(PathNotFoundException.class);
         request.setRequestURI(testChildPath);
         request.setPathInfo(testChildPath);
         request.setMethod("PUT");

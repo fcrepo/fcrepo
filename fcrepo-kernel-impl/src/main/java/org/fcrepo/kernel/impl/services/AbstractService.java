@@ -51,7 +51,6 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.vocabulary.RDF;
 import org.fcrepo.kernel.api.ContainmentIndex;
-import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.ACLAuthorizationConstraintViolationException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RequestWithAclLinkHeaderException;
@@ -89,15 +88,15 @@ public abstract class AbstractService {
     /**
      * Utility to determine the correct interaction model from elements of a request.
      *
-     * @param linkTypes Link headers with rel="type"
-     * @param isRdfContentType Is the Content-type a known RDF type?
-     * @param contentPresent Is there content present on the request body?
+     * @param linkTypes         Link headers with rel="type"
+     * @param isRdfContentType  Is the Content-type a known RDF type?
+     * @param contentPresent    Is there content present on the request body?
      * @param isExternalContent Is there Link headers that define external content?
      * @return The determined or default interaction model.
      */
     protected String determineInteractionModel(final List<String> linkTypes,
-                                                   final boolean isRdfContentType, final boolean contentPresent,
-                                                   final boolean isExternalContent) {
+                                               final boolean isRdfContentType, final boolean contentPresent,
+                                               final boolean isExternalContent) {
         final String interactionModel = linkTypes == null ? null :
                 linkTypes.stream().filter(INTERACTION_MODELS_FULL::contains).findFirst().orElse(null);
 
@@ -114,6 +113,7 @@ public abstract class AbstractService {
 
     /**
      * Check that we don't try to provide an ACL Link header.
+     *
      * @param links list of the link headers provided.
      * @throws RequestWithAclLinkHeaderException If we provide an rel="acl" link header.
      */
@@ -173,11 +173,11 @@ public abstract class AbstractService {
 
                     // Throw exception if object is a server-managed property
                     if (isManagedPredicate.test(createProperty(uri))) {
-                            throw new ServerManagedPropertyException(
-                                    String.format(
-                                            "{0} cannot take a server managed property " +
-                                                    "as an object: property value = {1}.",
-                                            HAS_MEMBER_RELATION, uri));
+                        throw new ServerManagedPropertyException(
+                                String.format(
+                                        "{0} cannot take a server managed property " +
+                                                "as an object: property value = {1}.",
+                                        HAS_MEMBER_RELATION, uri));
                     }
                 }
             }
@@ -209,10 +209,10 @@ public abstract class AbstractService {
             if (graph.contains(subject, WEBAC_ACCESS_TO_URI, Node.ANY) &&
                     graph.contains(subject, WEBAC_ACCESS_TO_CLASS_URI, Node.ANY)) {
                 throw new ACLAuthorizationConstraintViolationException(
-                    String.format(
-                            "Using both accessTo and accessToClass within " +
-                                    "a single Authorization is not allowed: %s.",
-                            subject.toString().substring(subject.toString().lastIndexOf("#"))));
+                        String.format(
+                                "Using both accessTo and accessToClass within " +
+                                        "a single Authorization is not allowed: %s.",
+                                subject.toString().substring(subject.toString().lastIndexOf("#"))));
             } else if (!(graph.contains(subject, WEBAC_ACCESS_TO_URI, Node.ANY) ||
                     graph.contains(subject, WEBAC_ACCESS_TO_CLASS_URI, Node.ANY))) {
                 inputModel.add(createDefaultAccessToStatement(subject.toString()));
@@ -233,11 +233,9 @@ public abstract class AbstractService {
     private Statement createDefaultAccessToStatement(final String authSubject) {
         final String currentResourcePath = authSubject.substring(0, authSubject.indexOf("/" + FCR_ACL));
         return createStatement(
-                        createResource(authSubject),
-                        WEBAC_ACCESS_TO_PROPERTY,
-                        createResource(currentResourcePath));
+                createResource(authSubject),
+                WEBAC_ACCESS_TO_PROPERTY,
+                createResource(currentResourcePath));
     }
+}
 
-    protected String txtIdIfUncommittedOrNull(final Transaction tx) {
-        return tx == null || tx.isCommitted() ? null : tx.getId();
-    }}
