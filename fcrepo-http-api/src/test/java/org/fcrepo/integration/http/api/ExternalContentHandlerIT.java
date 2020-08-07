@@ -17,29 +17,33 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.BAD_GATEWAY;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.Status.TEMPORARY_REDIRECT;
+import static org.apache.http.HttpHeaders.CONTENT_LENGTH;
+import static org.apache.http.HttpStatus.SC_CREATED;
+import static org.apache.http.HttpStatus.SC_OK;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.text.ParseException;
-import static org.apache.http.HttpStatus.SC_OK;
-import static org.apache.http.HttpStatus.SC_CREATED;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;
@@ -49,15 +53,21 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.util.EntityUtils;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author whikloj
  * @since 2018-07-10
  */
 public class ExternalContentHandlerIT extends AbstractResourceIT {
+
+    @Rule
+    public TemporaryFolder tempFolder = new TemporaryFolder();
 
     private static final String NON_RDF_SOURCE_LINK_HEADER = "<" + NON_RDF_SOURCE.getURI() + ">;rel=\"type\"";
 
@@ -71,37 +81,90 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
 
     private static final String TEST_MD5_DIGEST_HEADER_VALUE = "md5=baed005300234f3d1503c50a48ce8e6f";
 
-    @Test
-    public void testRemoteUriContentType() throws Exception {
-        final HttpPost method = postObjMethod();
-        method.addHeader(CONTENT_TYPE, "audio/ogg");
-        method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
-        method.setEntity(new StringEntity("xyz"));
-        final String external_location;
-        final String final_location = getRandomUniqueId();
+    private static final CloseableHttpClient noFollowClient = HttpClientBuilder.create()
+            .disableRedirectHandling().build();
 
-        // Make an external remote URI.
-        try (final CloseableHttpResponse response = execute(method)) {
-            assertEquals(SC_CREATED, getStatus(response));
-            external_location = getLocation(response);
-        }
-        // Make an external content resource proxying the above URI.
-        final HttpPut put = putObjMethod(final_location);
-        put.addHeader(LINK, getExternalContentLinkHeader(external_location, "proxy", null));
-        try (final CloseableHttpResponse response = execute(put)) {
-            assertEquals(SC_CREATED, getStatus(response));
-        }
-        // Get the external content proxy resource.
-        try (final CloseableHttpResponse response = execute(getObjMethod(final_location))) {
-            assertEquals(SC_OK, getStatus(response));
-            assertEquals("audio/ogg", response.getFirstHeader(CONTENT_TYPE).getValue());
-            assertEquals(external_location, response.getFirstHeader(CONTENT_LOCATION).getValue());
-        }
-
+    @Before
+    public void setup() throws Exception {
+        tempFolder.create();
     }
 
     @Test
-    public void testExternalDatastreamProxyWithWantDigestForLocalFile() throws IOException {
+    public void testProxyRemoteContentTypeForHttpUri() throws Exception {
+        final String externalLocation = createHttpResource("audio/ogg", "xyz");
+        final String finalLocation = getRandomUniqueId();
+
+        // Make an external content resource proxying the above URI.
+        final HttpPut put = putObjMethod(finalLocation);
+        put.addHeader(LINK, getExternalContentLinkHeader(externalLocation, "proxy", null));
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        // Get the external content proxy resource.
+        try (final CloseableHttpResponse response = execute(getObjMethod(finalLocation))) {
+            assertEquals(SC_OK, getStatus(response));
+            assertContentType(response, "audio/ogg");
+            assertContentLocation(response, externalLocation);
+            assertContentLength(response, 3);
+        }
+    }
+
+    @Test
+    public void testProxyClientContentTypeOverridesRemoteForHttpUri() throws Exception {
+        final String externalLocation = createHttpResource("audio/ogg", "vxyz");
+        final String finalLocation = getRandomUniqueId();
+
+        // Make an external content resource proxying the above URI.
+        final HttpPut put = putObjMethod(finalLocation);
+        put.addHeader(LINK, getExternalContentLinkHeader(externalLocation, "proxy", "audio/mp3"));
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        // Get the external content proxy resource.
+        try (final CloseableHttpResponse response = execute(getObjMethod(finalLocation))) {
+            assertEquals(SC_OK, getStatus(response));
+            assertContentType(response, "audio/mp3");
+            assertContentLocation(response, externalLocation);
+            assertContentLength(response, 4);
+        }
+    }
+
+    @Test
+    public void testCopyRemoteContentTypeForHttpUri() throws Exception {
+        final String externalLocation = createHttpResource("audio/ogg", "xyz");
+        final String finalLocation = getRandomUniqueId();
+
+        // Make an external content resource proxying the above URI.
+        final HttpPut put = putObjMethod(finalLocation);
+        put.addHeader(LINK, getExternalContentLinkHeader(externalLocation, "copy", null));
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        // Get the external content proxy resource.
+        try (final CloseableHttpResponse response = execute(getObjMethod(finalLocation))) {
+            assertEquals(SC_OK, getStatus(response));
+            assertContentType(response, "audio/ogg");
+            assertContentLength(response, 3);
+        }
+    }
+
+    @Test
+    public void testCopyClientContentTypeOverridesRemoteForHttpUri() throws Exception {
+        final String externalLocation = createHttpResource("audio/ogg", "xyz");
+        final String finalLocation = getRandomUniqueId();
+
+        // Make an external content resource proxying the above URI.
+        final HttpPut put = putObjMethod(finalLocation);
+        put.addHeader(LINK, getExternalContentLinkHeader(externalLocation, "copy", "audio/mp3"));
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        // Get the external content proxy resource.
+        try (final CloseableHttpResponse response = execute(getObjMethod(finalLocation))) {
+            assertEquals(SC_OK, getStatus(response));
+            assertContentType(response, "audio/mp3");
+            assertContentLength(response, 3);
+        }
+    }
+
+    @Test
+    public void testProxyWithWantDigestForLocalFile() throws IOException {
 
         final File externalFile = createExternalLocalFile(TEST_BINARY_CONTENT);
 
@@ -126,7 +189,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testExternalDatastreamCopyWithWantDigestForLocalFile() throws IOException {
+    public void testCopyWithWantDigestForLocalFile() throws IOException {
 
         final File externalFile = createExternalLocalFile(TEST_BINARY_CONTENT);
 
@@ -151,12 +214,9 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testExternalDatastreamProxyWithWantDigest() throws IOException {
+    public void testProxyWithWantDigestForHttpUri() throws Exception {
 
-        final String dsId = getRandomUniqueId();
-        createDatastream(dsId, "x", TEST_BINARY_CONTENT);
-
-        final String dsUrl = serverAddress + dsId + "/x";
+        final String dsUrl = createHttpResource(TEST_BINARY_CONTENT);
 
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
@@ -177,12 +237,9 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testExternalDatastreamCopyWithWantDigest() throws IOException {
+    public void testCopyWithWantDigestForHttpUri() throws Exception {
 
-        final String dsId = getRandomUniqueId();
-        createDatastream(dsId, "x", TEST_BINARY_CONTENT);
-
-        final String dsUrl = serverAddress + dsId + "/x";
+        final String dsUrl = createHttpResource(TEST_BINARY_CONTENT);
 
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
@@ -203,7 +260,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testExternalDatastreamProxyWithWantDigestMultipleForLocalFile() throws IOException {
+    public void testProxyWithWantDigestMultipleForLocalFile() throws IOException {
 
         final File externalFile = createExternalLocalFile(TEST_BINARY_CONTENT);
 
@@ -219,7 +276,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         headObjMethod.addHeader(WANT_DIGEST, "sha, md5;q=0.3");
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
-            assertEquals(fileUri, getContentLocation(response));
+            assertContentLocation(response, fileUri);
             assertTrue(response.getHeaders(DIGEST).length > 0);
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
@@ -234,7 +291,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         getObjMethod.addHeader(WANT_DIGEST, "sha, md5;q=0.3");
         try (final CloseableHttpResponse response = execute(getObjMethod)) {
             assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
-            assertEquals(fileUri, getContentLocation(response));
+            assertContentLocation(response, fileUri);
             assertTrue(response.getHeaders(DIGEST).length > 0);
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
@@ -245,18 +302,12 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         }
     }
 
-    private File createExternalLocalFile(final String content) {
-        final File externalFile;
-        try {
-            externalFile = File.createTempFile("binary", ".txt");
-            externalFile.deleteOnExit();
-            try (final FileWriter fw = new FileWriter(externalFile)) {
-                fw.write(content);
-            }
-            return externalFile;
-        } catch (final IOException e) {
-            throw new RuntimeException(e);
+    private File createExternalLocalFile(final String content) throws IOException {
+        final File externalFile = tempFolder.newFile();
+        try (final FileWriter fw = new FileWriter(externalFile)) {
+            fw.write(content);
         }
+        return externalFile;
     }
 
     private void checkExternalDataStreamResponseHeader(final HttpUriRequest req, final String contenLocation,
@@ -274,11 +325,13 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testHeadExternalDatastreamRedirect() throws IOException, ParseException {
+    public void testHeadExternalDatastreamRedirectForHttpUri() throws Exception {
+
+        final String externalLocation = createHttpResource(TEST_BINARY_CONTENT);
 
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
-        put.addHeader(LINK, getExternalContentLinkHeader("http://example.com/test", "redirect", "image/jpeg"));
+        put.addHeader(LINK, getExternalContentLinkHeader(externalLocation, "redirect", "image/jpeg"));
         assertEquals(CREATED.getStatusCode(), getStatus(put));
 
         // Configure HEAD request to NOT follow redirects
@@ -289,9 +342,10 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
-            assertEquals("http://example.com/test", getLocation(response));
+            assertLocation(response, externalLocation);
             assertEquals("bytes", response.getFirstHeader("Accept-Ranges").getValue());
-            assertEquals("0", response.getFirstHeader("Content-Length").getValue());
+            assertContentLength(response, 0);
+            assertContentType(response, "image/jpeg");
             final ContentDisposition disposition =
                     new ContentDisposition(response.getFirstHeader(CONTENT_DISPOSITION).getValue());
             assertEquals("attachment", disposition.getType());
@@ -299,10 +353,13 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testGetExternalDatastream() throws IOException, ParseException {
+    public void testGetExternalDatastreamForHttpUri() throws Exception {
+
+        final String externalLocation = createHttpResource(TEST_BINARY_CONTENT);
+
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
-        put.addHeader(LINK, getExternalContentLinkHeader("http://example.com/test", "redirect", "image/jpeg"));
+        put.addHeader(LINK, getExternalContentLinkHeader(externalLocation, "redirect", "image/jpeg"));
         assertEquals(CREATED.getStatusCode(), getStatus(put));
 
         // Configure HEAD request to NOT follow redirects
@@ -313,7 +370,8 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(getObjMethod)) {
             assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
-            assertEquals("http://example.com/test", getLocation(response));
+            assertLocation(response, externalLocation);
+            assertContentType(response, "image/jpeg");
             assertEquals("bytes", response.getFirstHeader("Accept-Ranges").getValue());
             final ContentDisposition disposition =
                     new ContentDisposition(response.getFirstHeader(CONTENT_DISPOSITION).getValue());
@@ -325,7 +383,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
             final String md5) throws IOException {
         try (final CloseableHttpResponse response = execute(request)) {
             assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
-            assertEquals(dsUrl, getLocation(response));
+            assertLocation(response, dsUrl);
             assertTrue(response.getHeaders(DIGEST).length > 0);
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
@@ -339,12 +397,9 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testRedirectWithWantDigest() throws IOException {
+    public void testRedirectWithWantDigest() throws Exception {
 
-        final String dsId = getRandomUniqueId();
-        createDatastream(dsId, "x", TEST_BINARY_CONTENT);
-
-        final String dsUrl = serverAddress + dsId + "/x";
+        final String dsUrl = createHttpResource(TEST_BINARY_CONTENT);
 
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
@@ -389,30 +444,49 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testExternalMessageBodyRedirect() throws IOException {
+    public void testRedirectForHttpUri() throws Exception {
 
-        // we need a client that won't automatically follow redirects
-        try (final CloseableHttpClient noFollowClient = HttpClientBuilder.create().disableRedirectHandling()
-                .build()) {
+        final String externalLocation = createHttpResource(TEST_BINARY_CONTENT);
 
-            final String id = getRandomUniqueId();
-            final HttpPut httpPut = putObjMethod(id);
-            httpPut.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
-            httpPut.addHeader(LINK, getExternalContentLinkHeader("http://www.example.com/file", "redirect", null));
+        final String id = getRandomUniqueId();
+        final HttpPut httpPut = putObjMethod(id);
+        httpPut.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        httpPut.addHeader(LINK, getExternalContentLinkHeader(externalLocation, "redirect", null));
 
-            try (final CloseableHttpResponse response = execute(httpPut)) {
-                assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
-                final HttpGet get = new HttpGet(getLocation(response));
-                try (final CloseableHttpResponse getResponse = noFollowClient.execute(get)) {
-                    assertEquals(TEMPORARY_REDIRECT.getStatusCode(), getStatus(getResponse));
-                    assertEquals("http://www.example.com/file", getLocation(getResponse));
-                }
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            final HttpGet get = new HttpGet(getLocation(response));
+            try (final CloseableHttpResponse getResponse = noFollowClient.execute(get)) {
+                assertEquals(TEMPORARY_REDIRECT.getStatusCode(), getStatus(getResponse));
+                assertLocation(getResponse, externalLocation);
             }
         }
     }
 
     @Test
-    public void testExternalMessageBodyCopyLocalFile() throws Exception {
+    public void testProxyLocalFile() throws Exception {
+        final File localFile = createExternalLocalFile(TEST_BINARY_CONTENT);
+
+        final String id = getRandomUniqueId();
+        final HttpPut httpPut = putObjMethod(id);
+        httpPut.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        final String fileUri = localFile.toURI().toString();
+        httpPut.addHeader(LINK, getExternalContentLinkHeader(fileUri, "proxy", "text/plain"));
+
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            final HttpGet get = new HttpGet(getLocation(response));
+            try (final CloseableHttpResponse getResponse = execute(get)) {
+                assertEquals(OK.getStatusCode(), getStatus(getResponse));
+                assertContentLocation(getResponse, fileUri);
+                assertContentLength(getResponse, TEST_BINARY_CONTENT.length());
+                assertBodyMatches(getResponse, TEST_BINARY_CONTENT);
+            }
+        }
+    }
+
+    @Test
+    public void testCopyLocalFile() throws Exception {
         final String entityStr = "Hello there, this is the original object speaking.";
 
         final File localFile = createExternalLocalFile(entityStr);
@@ -430,21 +504,17 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
             final HttpGet get = new HttpGet(getLocation(response));
             try (final CloseableHttpResponse getResponse = execute(get)) {
                 assertEquals(OK.getStatusCode(), getStatus(getResponse));
-                final String content = EntityUtils.toString(getResponse.getEntity());
-                assertEquals("Entity Data doesn't match original object!", entityStr, content);
-                assertEquals("Content-Type is different from expected on External COPY", "text/plain",
-                        response.getFirstHeader(CONTENT_TYPE).getValue());
+                assertContentType(getResponse, "text/plain");
+                assertBodyMatches(getResponse, entityStr);
             }
         }
     }
 
     @Test
-    public void testExternalMessageBodyCopy() throws IOException {
+    public void testCopyForHttpUri() throws Exception {
         // create a random binary object
-        final String copyPid = getRandomUniqueId();
         final String entityStr = "Hello there, this is the original object speaking.";
-        final String copyLocation = serverAddress + copyPid + "/binary";
-        assertEquals(CREATED.getStatusCode(), getStatus(putDSMethod(copyPid, "binary", entityStr)));
+        final String copyLocation = createHttpResource(entityStr);
 
         // create a copy of it
         final String id = getRandomUniqueId();
@@ -459,26 +529,17 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
             final HttpGet get = new HttpGet(getLocation(response));
             try (final CloseableHttpResponse getResponse = execute(get)) {
                 assertEquals(OK.getStatusCode(), getStatus(getResponse));
-                final String content = EntityUtils.toString(getResponse.getEntity());
-                assertEquals("Entity Data doesn't match original object!", entityStr, content);
-                assertEquals("Content-Type is different from expected on External COPY", "text/plain",
-                        response.getFirstHeader(CONTENT_TYPE).getValue());
+                assertContentType(getResponse, "text/plain");
+                assertBodyMatches(getResponse, entityStr);
             }
         }
     }
 
     @Test
-    public void testExternalMessageBodyProxy() throws IOException {
+    public void testProxyForHttpUri() throws Exception {
         // Create a resource
-        final HttpPost method = postObjMethod();
         final String entityStr = "Hello there, this is the original object speaking.";
-        method.setEntity(new StringEntity(entityStr));
-
-        final String origLocation;
-        try (final CloseableHttpResponse response = execute(method)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
-            origLocation = response.getFirstHeader("Location").getValue();
-        }
+        final String origLocation = createHttpResource(entityStr);
 
         final String id = getRandomUniqueId();
         final HttpPut httpPut = putObjMethod(id);
@@ -490,25 +551,17 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
             final HttpGet get = new HttpGet(getLocation(response));
             try (final CloseableHttpResponse getResponse = execute(get)) {
                 assertEquals(OK.getStatusCode(), getStatus(getResponse));
-                assertEquals(origLocation, getContentLocation(getResponse));
-                final String content = EntityUtils.toString(getResponse.getEntity());
-                assertEquals("Entity Data doesn't match original object!", entityStr, content);
+                assertContentLocation(getResponse, origLocation);
+                assertBodyMatches(getResponse, entityStr);
             }
         }
     }
 
     @Test
-    public void testPostExternalContentProxy() throws Exception {
+    public void testPostExternalContentProxyForHttpUri() throws Exception {
         // Create a resource
-        final HttpPost method = postObjMethod();
         final String entityStr = "Hello there, this is the original object speaking.";
-        method.setEntity(new StringEntity(entityStr));
-
-        final String origLocation;
-        try (final CloseableHttpResponse response = execute(method)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
-            origLocation = response.getFirstHeader("Location").getValue();
-        }
+        final String origLocation = createHttpResource(entityStr);
 
         final String id = getRandomUniqueId();
         final HttpPost httpPost = postObjMethod();
@@ -521,13 +574,9 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
             final HttpGet get = new HttpGet(getLocation(response));
             try (final CloseableHttpResponse getResponse = execute(get)) {
                 assertEquals(OK.getStatusCode(), getStatus(getResponse));
-                assertEquals(origLocation, getContentLocation(getResponse));
-
-                final String contentType = getResponse.getFirstHeader("Content-Type").getValue();
-                assertEquals("text/plain", contentType);
-
-                final String content = EntityUtils.toString(getResponse.getEntity());
-                assertEquals("Entity Data doesn't match original object!", entityStr, content);
+                assertContentLocation(getResponse, origLocation);
+                assertContentType(getResponse, "text/plain");
+                assertBodyMatches(getResponse, entityStr);
             }
         }
     }
@@ -542,6 +591,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(httpPut)) {
             assertEquals("Didn't get a BAD REQUEST error!", BAD_REQUEST.getStatusCode(),
                     getStatus(response));
+            assertBodyContains(response, "External content link header url is malformed");
         }
     }
 
@@ -555,6 +605,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(httpPost)) {
             assertEquals("Didn't get a BAD_REQUEST response!", BAD_REQUEST.getStatusCode(),
                     getStatus(response));
+            assertBodyContains(response, "External content link header url is malformed");
         }
     }
 
@@ -567,6 +618,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(httpPut)) {
             assertEquals("Didn't get a BAD_REQUEST response!", BAD_REQUEST.getStatusCode(),
                     getStatus(response));
+            assertBodyContains(response, "External content link header url is malformed");
         }
     }
 
@@ -580,8 +632,8 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         httpPost.addHeader(LINK, getExternalContentLinkHeader(nonexistentPath, "copy", null));
 
         try (final CloseableHttpResponse response = execute(httpPost)) {
-            assertEquals("Didn't get a BAD_REQUEST response!", BAD_GATEWAY.getStatusCode(),
-                    getStatus(response));
+            assertEquals(502, getStatus(response));
+            assertBodyContains(response, "Failed to read external content");
         }
     }
 
@@ -595,8 +647,8 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         httpPost.addHeader(LINK, getExternalContentLinkHeader(nonexistentPath, "copy", null));
 
         try (final CloseableHttpResponse response = execute(httpPost)) {
-            assertEquals("Didn't get a BAD_GATEWAY response!", BAD_GATEWAY.getStatusCode(),
-                    getStatus(response));
+            assertEquals(502, getStatus(response));
+            assertBodyContains(response, "Failed to read external content");
         }
     }
 
@@ -610,13 +662,9 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         httpPost.addHeader(LINK, getExternalContentLinkHeader(nonexistentPath, "proxy", null));
 
         try (final CloseableHttpResponse response = execute(httpPost)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(),
-                    getStatus(response));
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
 
-            final HttpGet get = new HttpGet(getLocation(response));
-            try (final CloseableHttpResponse getResponse = execute(get)) {
-                assertEquals(BAD_GATEWAY.getStatusCode(), getStatus(getResponse));
-            }
+            assertEquals(502, getStatus(new HttpGet(getLocation(response))));
         }
     }
 
@@ -630,35 +678,516 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         httpPost.addHeader(LINK, getExternalContentLinkHeader(nonexistentPath, "proxy", null));
 
         try (final CloseableHttpResponse response = execute(httpPost)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(),
+            assertEquals(CREATED.getStatusCode(),
                     getStatus(response));
 
+            assertEquals(502, getStatus(new HttpGet(getLocation(response))));
+        }
+    }
+
+    @Test
+    public void testProxyNotFoundLocalFile() throws Exception {
+        verifyNotFoundLocalFile("proxy");
+    }
+
+    @Test
+    public void testRedirectNotFoundLocalFile() throws Exception {
+        verifyNotFoundLocalFile("redirect");
+    }
+
+    @Test
+    public void testCopyNotFoundLocalFile() throws Exception {
+        verifyNotFoundLocalFile("copy");
+    }
+
+    private void verifyNotFoundLocalFile(final String handling) throws Exception {
+        final File nonexistentFile = tempFolder.newFile();
+        nonexistentFile.delete();
+        final String nonexistentUri = nonexistentFile.toURI().toString();
+
+        // create a copy of it
+        final HttpPost httpPost = postObjMethod();
+        httpPost.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        httpPost.addHeader(LINK, getExternalContentLinkHeader(nonexistentUri, handling, null));
+
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+            assertEquals("Expected failure on creation", BAD_REQUEST.getStatusCode(),
+                    getStatus(response));
+            assertBodyContains(response, "Path did not match any allowed external content paths");
+        }
+    }
+
+    @Test
+    public void testCopyWithTransmissionFixityForLocalFile() throws Exception {
+        final File localFile = createExternalLocalFile(TEST_BINARY_CONTENT);
+
+        final String localPath = localFile.toURI().toString();
+        final HttpPut httpPut = setupExternalContentPut(localPath, "copy", "text/plain");
+        httpPut.addHeader("Digest", TEST_SHA_DIGEST_HEADER_VALUE);
+
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+
+            // fetch the copy of the object
             final HttpGet get = new HttpGet(getLocation(response));
             try (final CloseableHttpResponse getResponse = execute(get)) {
-                assertEquals(BAD_GATEWAY.getStatusCode(), getStatus(getResponse));
+                assertEquals(OK.getStatusCode(), getStatus(getResponse));
+                assertContentType(getResponse, "text/plain");
+                assertBodyMatches(getResponse, TEST_BINARY_CONTENT);
             }
         }
     }
 
     @Test
-    public void testRedirectUnreachableHttpContent() throws Exception {
-        final String nonexistentPath = "http://" + getRandomUniqueId() + ".example.com/";
+    public void testCopyWithInvalidTransmissionFixityForLocalFile() throws Exception {
+        final String content = "Not the expected content";
+        final File localFile = createExternalLocalFile(content);
+        final String localPath = localFile.toURI().toString();
 
-        // create a copy of it
-        final HttpPost httpPost = postObjMethod();
-        httpPost.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
-        httpPost.addHeader(LINK, getExternalContentLinkHeader(nonexistentPath, "redirect", null));
+        final HttpPut httpPut = setupExternalContentPut(localPath, "copy", "text/plain");
+        httpPut.addHeader("Digest", TEST_SHA_DIGEST_HEADER_VALUE);
 
-        try (final CloseableHttpResponse response = execute(httpPost)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(),
-                    getStatus(response));
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals(CONFLICT.getStatusCode(), getStatus(response));
+        }
+    }
 
+    @Test
+    public void testCopyWithTransmissionFixityForHttpUri() throws Exception {
+        final String externalLocation = createHttpResource("text/plain", TEST_BINARY_CONTENT);
+        final HttpPut httpPut = setupExternalContentPut(externalLocation, "copy", "text/plain");
+        httpPut.addHeader("Digest", TEST_SHA_DIGEST_HEADER_VALUE);
+
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+
+            // fetch the copy of the object
             final HttpGet get = new HttpGet(getLocation(response));
-            try (final CloseableHttpClient noFollowClient =
-                    HttpClientBuilder.create().disableRedirectHandling().build();
-                    final CloseableHttpResponse getResponse = noFollowClient.execute(get)) {
-                assertEquals(TEMPORARY_REDIRECT.getStatusCode(), getStatus(getResponse));
+            try (final CloseableHttpResponse getResponse = execute(get)) {
+                assertEquals(OK.getStatusCode(), getStatus(getResponse));
+                assertContentType(getResponse, "text/plain");
+                assertBodyMatches(getResponse, TEST_BINARY_CONTENT);
             }
         }
+    }
+
+    @Test
+    public void testProxyWithTransmissionFixityForLocalFile() throws Exception {
+        final File localFile = createExternalLocalFile(TEST_BINARY_CONTENT);
+
+        final String externalLocation = localFile.toURI().toString();
+        final HttpPut httpPut = setupExternalContentPut(externalLocation, "proxy", "text/plain");
+        httpPut.addHeader("Digest", TEST_SHA_DIGEST_HEADER_VALUE);
+
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            assertIsProxyBinary(getLocation(response), externalLocation, TEST_BINARY_CONTENT, "text/plain");
+        }
+    }
+
+    @Test
+    public void testProxyWithInvalidTransmissionFixityForLocalFile() throws Exception {
+        final File localFile = createExternalLocalFile(TEST_BINARY_CONTENT);
+
+        final String externalLocation = localFile.toURI().toString();
+        final HttpPut httpPut = setupExternalContentPut(externalLocation, "proxy", "text/plain");
+        httpPut.addHeader("Digest", "sha=12345678910");
+
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals(CONFLICT.getStatusCode(), getStatus(response));
+        }
+    }
+
+    @Test
+    public void testRedirectWithTransmissionFixityForHttpUri() throws Exception {
+        final String externalLocation = createHttpResource("text/plain", TEST_BINARY_CONTENT);
+        final HttpPut httpPut = setupExternalContentPut(externalLocation, "redirect", "text/plain");
+        httpPut.addHeader("Digest", TEST_SHA_DIGEST_HEADER_VALUE);
+
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            assertIsRedirectBinary(getLocation(response), externalLocation, TEST_BINARY_CONTENT, "text/plain");
+        }
+    }
+
+    @Test
+    public void testRedirectWithInvalidTransmissionFixityForHttpUri() throws Exception {
+        final String externalLocation = createHttpResource("text/plain", "bad content");
+        final HttpPut httpPut = setupExternalContentPut(externalLocation, "redirect", "text/plain");
+        httpPut.addHeader("Digest", TEST_SHA_DIGEST_HEADER_VALUE);
+
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals(CONFLICT.getStatusCode(), getStatus(response));
+        }
+    }
+
+    @Test
+    public void testProxyPostWithTransmissionFixityForHttpUri() throws Exception {
+        final String externalLocation = createHttpResource("text/plain", TEST_BINARY_CONTENT);
+        final HttpPost httpPost = postObjMethod();
+        httpPost.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        httpPost.addHeader(LINK, getExternalContentLinkHeader(externalLocation, "proxy", "text/plain"));
+        httpPost.addHeader("Digest", TEST_SHA_DIGEST_HEADER_VALUE);
+
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            assertIsProxyBinary(getLocation(response), externalLocation, TEST_BINARY_CONTENT, "text/plain");
+        }
+    }
+
+    @Test
+    public void testProxyPostWithInvalidTransmissionFixityForHttpUri() throws Exception {
+        final String externalLocation = createHttpResource("text/plain", "bad content");
+        final HttpPost httpPost = postObjMethod();
+        httpPost.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        httpPost.addHeader(LINK, getExternalContentLinkHeader(externalLocation, "proxy", "text/plain"));
+        httpPost.addHeader("Digest", TEST_SHA_DIGEST_HEADER_VALUE);
+
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+            assertEquals(CONFLICT.getStatusCode(), getStatus(response));
+        }
+    }
+
+    @Test
+    public void testRedirectPostWithTransmissionFixityForHttpUri() throws Exception {
+        final String externalLocation = createHttpResource("text/plain", TEST_BINARY_CONTENT);
+        final HttpPost httpPost = postObjMethod();
+        httpPost.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        httpPost.addHeader(LINK, getExternalContentLinkHeader(externalLocation, "redirect", "text/plain"));
+        httpPost.addHeader("Digest", TEST_SHA_DIGEST_HEADER_VALUE);
+
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            assertIsRedirectBinary(getLocation(response), externalLocation, TEST_BINARY_CONTENT, "text/plain");
+        }
+    }
+
+    @Test
+    public void testRedirectPostWithInvalidTransmissionFixityForHttpUri() throws Exception {
+        final String externalLocation = createHttpResource("text/plain", "bad content");
+        final HttpPost httpPost = postObjMethod();
+        httpPost.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        httpPost.addHeader(LINK, getExternalContentLinkHeader(externalLocation, "redirect", "text/plain"));
+        httpPost.addHeader("Digest", TEST_SHA_DIGEST_HEADER_VALUE);
+
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+            assertEquals(CONFLICT.getStatusCode(), getStatus(response));
+        }
+    }
+
+    @Test
+    public void testProxyPutWithTransmissionFixityForHttpUri() throws Exception {
+        final String externalLocation = createHttpResource("text/plain", TEST_BINARY_CONTENT);
+
+        final HttpPut httpPut = setupExternalContentPut(externalLocation, "redirect", "text/plain");
+        httpPut.addHeader("Digest", TEST_SHA_DIGEST_HEADER_VALUE);
+
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            assertIsRedirectBinary(getLocation(response), externalLocation, TEST_BINARY_CONTENT, "text/plain");
+        }
+    }
+
+    @Test
+    public void testUpdateProxyHttpUri() throws Exception {
+        final String content2 = "<doc>some more content</doc>";
+        final String externalLocation1 = createHttpResource("text/plain", TEST_BINARY_CONTENT);
+        final String externalLocation2 = createHttpResource("text/xml", content2);
+
+        final String rescLoc = createExternalContentResource(externalLocation1, "proxy", null);
+        assertIsProxyBinary(rescLoc, externalLocation1, TEST_BINARY_CONTENT, "text/plain");
+
+        updateExternalContentResource(rescLoc, externalLocation2, "proxy", null);
+        assertIsProxyBinary(rescLoc, externalLocation2, content2, "text/xml");
+    }
+
+    @Test
+    public void testUpdateProxyLocalFile() throws Exception {
+        final String content2 = "<doc>some more content</doc>";
+        final File localFile1 = createExternalLocalFile(TEST_BINARY_CONTENT);
+        final File localFile2 = createExternalLocalFile(content2);
+        final String externalLocation1 = localFile1.toURI().toString();
+        final String externalLocation2 = localFile2.toURI().toString();
+
+        final String rescLoc = createExternalContentResource(externalLocation1, "proxy", null);
+        assertIsProxyBinary(rescLoc, externalLocation1, TEST_BINARY_CONTENT, "application/octet-stream");
+
+        updateExternalContentResource(rescLoc, externalLocation2, "proxy", "text/xml");
+        assertIsProxyBinary(rescLoc, externalLocation2, content2, "text/xml");
+    }
+
+    @Test
+    public void testUpdateRedirectHttpUri() throws Exception {
+        final String content2 = "<doc>some more content</doc>";
+        final String externalLocation1 = createHttpResource("text/plain", TEST_BINARY_CONTENT);
+        final String externalLocation2 = createHttpResource(content2);
+
+        final String rescLoc = createExternalContentResource(externalLocation1, "redirect", null);
+        assertIsRedirectBinary(rescLoc, externalLocation1, TEST_BINARY_CONTENT, "text/plain");
+
+        updateExternalContentResource(rescLoc, externalLocation2, "redirect", "text/xml");
+        assertIsRedirectBinary(rescLoc, externalLocation2, content2, "text/xml");
+    }
+
+    @Test
+    public void testUpdateProxyToRedirectForHttpUri() throws Exception {
+        // Create a resource
+        final String externalLocation = createHttpResource(TEST_BINARY_CONTENT);
+
+        final String rescLoc = createExternalContentResource(externalLocation, "proxy", null);
+        assertIsProxyBinary(rescLoc, externalLocation, TEST_BINARY_CONTENT, null);
+
+        updateExternalContentResource(rescLoc, externalLocation, "redirect", null);
+        assertIsRedirectBinary(rescLoc, externalLocation, TEST_BINARY_CONTENT, null);
+    }
+
+    @Test
+    public void testUpdateRedirectToProxyForHttpUri() throws Exception {
+        final String externalLocation = createHttpResource(TEST_BINARY_CONTENT);
+
+        final String rescLoc = createExternalContentResource(externalLocation, "redirect", null);
+        assertIsRedirectBinary(rescLoc, externalLocation, TEST_BINARY_CONTENT, null);
+
+        updateExternalContentResource(rescLoc, externalLocation, "proxy", null);
+        assertIsProxyBinary(rescLoc, externalLocation, TEST_BINARY_CONTENT, null);
+    }
+
+    @Test
+    public void testUpdateProxyToRedirectForLocalFile() throws Exception {
+        final String content2 = "<doc>some more content</doc>";
+        final File localFile1 = createExternalLocalFile(TEST_BINARY_CONTENT);
+        final File localFile2 = createExternalLocalFile(content2);
+        final String externalLocation1 = localFile1.toURI().toString();
+        final String externalLocation2 = localFile2.toURI().toString();
+
+        final String rescLoc = createExternalContentResource(externalLocation1, "proxy", "text/plain");
+        assertIsProxyBinary(rescLoc, externalLocation1, TEST_BINARY_CONTENT, "text/plain");
+
+        updateExternalContentResource(rescLoc, externalLocation2, "redirect", "text/xml");
+        // Not checking on the content, since following a redirect on a file is unlikely to work
+        assertIsRedirectBinary(rescLoc, externalLocation2, null, "text/xml");
+    }
+
+    @Test
+    public void testUpdateHttpUriToLocalFile() throws Exception {
+        final String content2 = "some more content";
+        final String externalLocation1 = createHttpResource(TEST_BINARY_CONTENT);
+        final File localFile2 = createExternalLocalFile(content2);
+        final String externalLocation2 = localFile2.toURI().toString();
+
+        final String rescLoc = createExternalContentResource(externalLocation1, "proxy", null);
+        assertIsProxyBinary(rescLoc, externalLocation1, TEST_BINARY_CONTENT, "text/plain");
+
+        updateExternalContentResource(rescLoc, externalLocation2, "proxy", null);
+        assertIsProxyBinary(rescLoc, externalLocation2, content2, "application/octet-stream");
+    }
+
+    @Test
+    public void testUpdateInternalToLocalFile() throws Exception {
+        final String id = getRandomUniqueId();
+        final String rescLoc;
+        try (final CloseableHttpResponse response = execute(putDSMethod(id, "x", TEST_BINARY_CONTENT))) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            rescLoc = getLocation(response);
+        }
+
+        final String content2 = "<doc>some more content</doc>";
+        final File localFile = createExternalLocalFile(content2);
+        final String externalLocation = localFile.toURI().toString();
+
+        updateExternalContentResource(rescLoc, externalLocation, "proxy", "text/xml");
+        assertIsProxyBinary(rescLoc, externalLocation, content2, "text/xml");
+    }
+
+    @Ignore("Conversion from external to internal is not current supported")
+    @Test
+    public void testUpdateLocalFileToInternal() throws Exception {
+        final File localFile = createExternalLocalFile(TEST_BINARY_CONTENT);
+        final String externalLocation = localFile.toURI().toString();
+
+        final String rescLoc = createExternalContentResource(externalLocation, "proxy", "text/plain");
+        assertIsProxyBinary(rescLoc, externalLocation, TEST_BINARY_CONTENT, "text/plain");
+
+        final String content2 = "<doc>some more content</doc>";
+        final HttpPut put = new HttpPut(rescLoc);
+        put.setEntity(new StringEntity(content2));
+        put.setHeader(CONTENT_TYPE, "text/xml");
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(put));
+
+        final HttpGet get = new HttpGet(rescLoc);
+        try (final CloseableHttpResponse resp = execute(get)) {
+            assertEquals(OK.getStatusCode(), getStatus(resp));
+            assertNull(resp.getFirstHeader("Content-Location"));
+            assertContentLength(resp, content2.length());
+            assertBodyMatches(resp, content2);
+            assertContentType(resp, "text/xml");
+        }
+    }
+
+    @Test
+    public void testUpdateInternalToHttpUri() throws Exception {
+        final String id = getRandomUniqueId();
+        final String rescLoc;
+        try (final CloseableHttpResponse response = execute(putDSMethod(id, "x", TEST_BINARY_CONTENT))) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            rescLoc = getLocation(response);
+        }
+
+        final String content2 = "<doc>some more content</doc>";
+        final String externalLocation = createHttpResource(content2);
+
+        updateExternalContentResource(rescLoc, externalLocation, "redirect", "text/xml");
+        assertIsRedirectBinary(rescLoc, externalLocation, content2, "text/xml");
+    }
+
+    @Ignore("Conversion from external to internal is not current supported")
+    @Test
+    public void testUpdateHttpUriToInternal() throws Exception {
+        final String externalLocation = createHttpResource(TEST_BINARY_CONTENT);
+
+        final String rescLoc = createExternalContentResource(externalLocation, "proxy", null);
+        assertIsProxyBinary(rescLoc, externalLocation, TEST_BINARY_CONTENT, "text/plain");
+
+        final String content2 = "<doc>some more content</doc>";
+        final HttpPut put = new HttpPut(rescLoc);
+        put.setEntity(new StringEntity(content2));
+        put.setHeader(CONTENT_TYPE, "text/xml");
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(put));
+
+        final HttpGet get = new HttpGet(rescLoc);
+        try (final CloseableHttpResponse resp = execute(get)) {
+            assertEquals(OK.getStatusCode(), getStatus(resp));
+            assertNull(resp.getFirstHeader("Content-Location"));
+            assertContentLength(resp, content2.length());
+            assertBodyMatches(resp, content2);
+            assertContentType(resp, "text/xml");
+        }
+    }
+
+    @Test
+    public void testLocalFileNotDeleted() throws Exception {
+        final File localFile = createExternalLocalFile(TEST_BINARY_CONTENT);
+        final String externalLocation = localFile.toURI().toString();
+
+        final String rescLoc = createExternalContentResource(externalLocation, "proxy", "text/plain");
+        final String id = StringUtils.substringAfterLast(rescLoc, "/");
+        assertIsProxyBinary(rescLoc, externalLocation, TEST_BINARY_CONTENT, "text/plain");
+
+        final HttpDelete delete = new HttpDelete(rescLoc);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(delete));
+        assertDeleted(id);
+        assertTrue("External binary must exist after resource deletion", localFile.exists());
+
+        final HttpDelete deleteTomb = new HttpDelete(rescLoc + "/fcr:tombstone");
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteTomb));
+        assertTrue("External binary must exist after deleting tombstone", localFile.exists());
+    }
+
+    private HttpPut setupExternalContentPut(final String externalLocation, final String handling,
+            final String contentType) {
+        final String id = getRandomUniqueId();
+        final HttpPut httpPut = putObjMethod(id);
+        httpPut.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        httpPut.addHeader(LINK, getExternalContentLinkHeader(externalLocation, handling, contentType));
+        return httpPut;
+    }
+
+    private String createExternalContentResource(final String externalLocation, final String handling,
+            final String contentType) throws IOException {
+        final HttpPut httpPut = setupExternalContentPut(externalLocation, handling, contentType);
+
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+
+            return getLocation(response);
+        }
+    }
+
+    private void updateExternalContentResource(final String rescLoc, final String externalLocation,
+            final String handling, final String contentType) throws IOException {
+        final HttpPut httpPut = new HttpPut(rescLoc);
+        httpPut.addHeader(LINK, getExternalContentLinkHeader(externalLocation, handling, contentType));
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+        }
+    }
+
+    private void assertIsProxyBinary(final String rescLocation, final String expectedLocation,
+            final String expectedContent, final String expectedType) throws IOException {
+        final HttpGet get = new HttpGet(rescLocation);
+        try (final CloseableHttpResponse resp = execute(get)) {
+            assertEquals(OK.getStatusCode(), getStatus(resp));
+            assertContentLocation(resp, expectedLocation);
+            assertContentLength(resp, expectedContent.length());
+            assertBodyMatches(resp, expectedContent);
+            if (expectedType != null) {
+                assertContentType(resp, expectedType);
+            }
+        }
+    }
+
+    private void assertIsRedirectBinary(final String rescLocation, final String expectedLocation,
+            final String expectedContent, final String expectedType) throws IOException {
+        final HttpGet get = new HttpGet(rescLocation);
+        try (final CloseableHttpResponse resp = noFollowClient.execute(get)) {
+            assertEquals(TEMPORARY_REDIRECT.getStatusCode(), getStatus(resp));
+            assertLocation(resp, expectedLocation);
+            if (expectedType != null) {
+                assertContentType(resp, expectedType);
+            }
+        }
+
+        if (expectedContent != null) {
+            // Follow redirect to the content
+            try (final CloseableHttpResponse resp = execute(get)) {
+                assertBodyMatches(resp, expectedContent);
+                assertContentLength(resp, expectedContent.length());
+            }
+        }
+    }
+
+    private String createHttpResource(final String content) throws Exception {
+        return createHttpResource("text/plain", content);
+    }
+
+    private String createHttpResource(final String contentType, final String content) throws Exception {
+        final HttpPost method = postObjMethod();
+        method.addHeader(CONTENT_TYPE, contentType);
+        method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        method.setEntity(new StringEntity(content));
+
+        // Make an external remote URI.
+        try (final CloseableHttpResponse response = execute(method)) {
+            assertEquals(SC_CREATED, getStatus(response));
+            return getLocation(response);
+        }
+    }
+
+    private void assertBodyContains(final CloseableHttpResponse response, final String expected) throws IOException {
+        final String body = IOUtils.toString(response.getEntity().getContent(), UTF_8);
+        assertTrue("Expected response to contain '" + expected + "' but was '" + body + "'",
+                body.contains(expected));
+    }
+
+    private void assertBodyMatches(final CloseableHttpResponse response, final String expected) throws IOException {
+        final String body = IOUtils.toString(response.getEntity().getContent(), UTF_8);
+        assertEquals("Response body did not match the expected value", expected, body);
+    }
+
+    private void assertContentLength(final CloseableHttpResponse response, final long expectedLength) {
+        assertEquals("Content-length header did not match", expectedLength, Long.parseLong(response
+                .getFirstHeader(CONTENT_LENGTH).getValue()));
+    }
+
+    private void assertContentType(final CloseableHttpResponse response, final String expected) {
+        assertEquals("Content-type header did not match", expected, response.getFirstHeader(CONTENT_TYPE).getValue());
+    }
+
+    private void assertContentLocation(final CloseableHttpResponse response, final String expectedLoc) {
+        assertEquals("Content location header did not match", expectedLoc, getContentLocation(response));
+    }
+
+    private void assertLocation(final CloseableHttpResponse response, final String expectedLoc) {
+        assertEquals("Location header did not match", expectedLoc, getLocation(response));
     }
 }

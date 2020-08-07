@@ -17,10 +17,10 @@
  */
 package org.fcrepo.kernel.modeshape;
 
-//import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
-import static org.slf4j.LoggerFactory.getLogger;
 import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
 import static org.fcrepo.kernel.api.FedoraExternalContent.REDIRECT;
+//import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
+
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.ExternalContentAccessException;
@@ -124,8 +125,14 @@ public class UrlBinary extends AbstractFedoraBinary {
         try {
             if (externalHandling.equals(PROXY)) {
                 contentNode.setProperty(PROXY_FOR, externalUrl);
+                if (contentNode.hasProperty(REDIRECTS_TO)) {
+                    contentNode.getProperty(REDIRECTS_TO).remove();
+                }
             } else if (externalHandling.equals(REDIRECT)) {
                 contentNode.setProperty(REDIRECTS_TO, externalUrl);
+                if (contentNode.hasProperty(PROXY_FOR)) {
+                    contentNode.getProperty(PROXY_FOR).remove();
+                }
             } else {
                 throw new RepositoryException("Unknown external content handling type: " + externalHandling);
             }
