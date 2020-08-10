@@ -20,7 +20,7 @@ jobs:
       before_script:
         - psql -c 'CREATE DATABASE fcrepo;' -U postgres
       script:
-        - ./mvnw -DjdbcUrl="jdbc:postgresql://localhost:5432/fcrepo" -DdbUser="postgres" -DdbPassword="" clean install -P db-tests
+        - ./mvnw -Dfcrepo.db.url="jdbc:postgresql://localhost:5432/fcrepo" -Dfcrepo.db.user="postgres" -Dfcrepo.db.user="" clean install -P db-tests
     - name: ITests - MariaDB
       os: linux
       dist: trusty
@@ -32,7 +32,7 @@ jobs:
       before_script:
         - mysql -e 'CREATE DATABASE IF NOT EXISTS fcrepo;'
       script:
-        - ./mvnw -DjdbcUrl="jdbc:mariadb://localhost:3306/fcrepo" -DdbUser="travis" -DdbPassword="" clean install -P db-tests
+        - ./mvnw -Dfcrepo.db.url="jdbc:mariadb://localhost:3306/fcrepo" -Dfcrepo.db.user="travis" -Dfcrepo.db.user="" clean install -P db-tests
     - name: ITests - MySQL
       os: linux
       dist: xenial
@@ -51,7 +51,7 @@ jobs:
         - mysql --version
         - mysql -e 'CREATE DATABASE IF NOT EXISTS fcrepo;'
       script:
-        - ./mvnw -DjdbcUrl="jdbc:mysql://localhost:3306/fcrepo" -DdbUser="travis" -DdbPassword="" clean install  -P db-tests
+        - ./mvnw -Dfcrepo.db.url="jdbc:mysql://localhost:3306/fcrepo" -Dfcrepo.db.user="travis" -Dfcrepo.db.user="" clean install  -P db-tests
 
 env:
   - MAVEN_VERSION=3.6.3
