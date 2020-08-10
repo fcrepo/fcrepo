@@ -17,6 +17,8 @@ jobs:
       sudo: true
       language: java
       jdk: openjdk11
+      addons:
+        postgresql: '12'
       before_script:
         - psql -c 'CREATE DATABASE fcrepo;' -U postgres
       script:
