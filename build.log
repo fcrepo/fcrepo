@@ -1,0 +1,98 @@
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] Fedora Commons :: Parent POM                                       [pom]
+[INFO] Fedora Commons                                                     [pom]
+[INFO] Fedora Repository Common Module                                 [bundle]
+[INFO] Fedora Repository Kernel API                                    [bundle]
+[INFO] Fedora Repository Persistence API Module                        [bundle]
+[INFO] Fedora Repository Persistence Common Module                     [bundle]
+[INFO] Fedora Repository Kernel Implementation                         [bundle]
+[INFO] Fedora Repository Configurations Module                         [bundle]
+[INFO] Fedora Repository Search API                                    [bundle]
+[INFO] Fedora Repository OCFL Persistence Impl                         [bundle]
+[INFO] Fedora Repository Search Impl                                   [bundle]
+[INFO] Fedora Repository HTTP Commons Module                           [bundle]
+[INFO] Fedora Event Serialization                                      [bundle]
+[INFO] Fedora Repository JMS Module                                    [bundle]
+[INFO] Fedora Repository Authorization Commons Module                  [bundle]
+[INFO] Fedora Repository HTTP API Module                               [bundle]
+[INFO] Fedora Repository WebAC Authorization Module                    [bundle]
+[INFO] Fedora Repository Deployable Web Application                       [war]
+[INFO] Fedora Repository LDP integration tests Module                     [jar]
+[INFO] Fedora Repository RDF integration tests Module                     [jar]
+[INFO] 
+[INFO] ----------------------< org.fcrepo:fcrepo-parent >----------------------
+[INFO] Building Fedora Commons :: Parent POM 6.0.0-SNAPSHOT              [1/20]
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:3.1.0:clean (default-clean) @ fcrepo-parent ---
+[INFO] 
+[INFO] --- maven-install-plugin:2.5.2:install (default-install) @ fcrepo-parent ---
+[INFO] Installing /home/winckles/workspace/fcrepo/fcrepo4/fcrepo-parent/pom.xml to /home/winckles/.m2/repository/org/fcrepo/fcrepo-parent/6.0.0-SNAPSHOT/fcrepo-parent-6.0.0-SNAPSHOT.pom
+[INFO] 
+[INFO] -------------------------< org.fcrepo:fcrepo >--------------------------
+[INFO] Building Fedora Commons 6.0.0-SNAPSHOT                            [2/20]
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:3.1.0:clean (default-clean) @ fcrepo ---
+[INFO] Deleting /home/winckles/workspace/fcrepo/fcrepo4/target
+[INFO] 
+[INFO] --- maven-enforcer-plugin:3.0.0-M3:enforce (default) @ fcrepo ---
+[INFO] 
+[INFO] --- jacoco-maven-plugin:0.8.2:prepare-agent (default-prepare-agent) @ fcrepo ---
+[INFO] Skipping JaCoCo execution because property jacoco.skip is set.
+[INFO] jacoco.agent.unit.arg set to empty
+[INFO] 
+[INFO] --- maven-source-plugin:3.0.1:jar-no-fork (attach-sources) @ fcrepo ---
+[INFO] Skipping source per configuration.
+[INFO] 
+[INFO] --- maven-javadoc-plugin:3.2.0:jar (verify-javadocs) @ fcrepo ---
+[INFO] Skipping javadoc generation
+[INFO] 
+[INFO] --- maven-javadoc-plugin:3.2.0:test-jar (verify-javadocs) @ fcrepo ---
+[INFO] Skipping javadoc generation
+[INFO] 
+[INFO] --- jacoco-maven-plugin:0.8.2:prepare-agent-integration (default-prepare-agent-integration) @ fcrepo ---
+[INFO] Skipping JaCoCo execution because property jacoco.skip is set.
+[INFO] jacoco.agent.it.arg set to empty
+[INFO] 
+[INFO] --- maven-failsafe-plugin:3.0.0-M4:integration-test (integration-test) @ fcrepo ---
+[INFO] No tests to run.
+[INFO] 
+[INFO] --- license-maven-plugin:3.0:check (default) @ fcrepo ---
+[INFO] 
+[INFO] --- maven-checkstyle-plugin:3.1.1:check (checkstyle) @ fcrepo ---
+[INFO] 
+[INFO] --- maven-failsafe-plugin:3.0.0-M4:verify (verify) @ fcrepo ---
+[INFO] 
+[INFO] --- jacoco-maven-plugin:0.8.2:report (default-report) @ fcrepo ---
+[INFO] Skipping JaCoCo execution because property jacoco.skip is set.
+[INFO] 
+[INFO] --- jacoco-maven-plugin:0.8.2:report-integration (default-report-integration) @ fcrepo ---
+[INFO] Skipping JaCoCo execution because property jacoco.skip is set.
+[INFO] 
+[INFO] --- maven-install-plugin:2.5.2:install (default-install) @ fcrepo ---
+[INFO] Installing /home/winckles/workspace/fcrepo/fcrepo4/pom.xml to /home/winckles/.m2/repository/org/fcrepo/fcrepo/6.0.0-SNAPSHOT/fcrepo-6.0.0-SNAPSHOT.pom
+[INFO] 
+[INFO] ----------------------< org.fcrepo:fcrepo-common >----------------------
+[INFO] Building Fedora Repository Common Module 6.0.0-SNAPSHOT           [3/20]
+[INFO] -------------------------------[ bundle ]-------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:3.1.0:clean (default-clean) @ fcrepo-common ---
+[INFO] Deleting /home/winckles/workspace/fcrepo/fcrepo4/fcrepo-common/target
+[INFO] 
+[INFO] --- maven-enforcer-plugin:3.0.0-M3:enforce (default) @ fcrepo-common ---
+[INFO] 
+[INFO] --- jacoco-maven-plugin:0.8.2:prepare-agent (default-prepare-agent) @ fcrepo-common ---
+[INFO] Skipping JaCoCo execution because property jacoco.skip is set.
+[INFO] jacoco.agent.unit.arg set to empty
+[INFO] 
+[INFO] --- maven-resources-plugin:3.1.0:resources (default-resources) @ fcrepo-common ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory /home/winckles/workspace/fcrepo/fcrepo4/fcrepo-common/src/main/resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.8.0:compile (default-compile) @ fcrepo-common ---
+[INFO] Changes detected - recompiling the module!
+[INFO] Compiling 1 source file to /home/winckles/workspace/fcrepo/fcrepo4/fcrepo-common/target/classes
