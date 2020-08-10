@@ -19,6 +19,12 @@ jobs:
       jdk: openjdk11
       addons:
         postgresql: '12'
+        "apt": {
+          "packages": [
+            "postgresql-12",
+            "postgresql-client-12"
+          ]
+        }
       before_script:
         - psql -c 'CREATE DATABASE fcrepo;' -U postgres
       script:
