@@ -24,11 +24,11 @@ jobs:
             - postgresql-12
             - postgresql-client-12
       env:
-        DB=postgresql
+        - DB=postgresql
+        - DB_PORT=5432
+        - ITEST=true
       before_script:
         - psql -c 'CREATE DATABASE fcrepo;' -U postgres
-      script:
-        - ./mvnw -Dfcrepo.db.url="jdbc:postgresql://localhost:5432/fcrepo" -Dfcrepo.db.user="travis" -Dfcrepo.db.password="" clean install -P db-tests
     - name: ITests - MariaDB
       os: linux
       dist: trusty
@@ -37,16 +37,22 @@ jobs:
       jdk: openjdk11
       addons:
         mariadb: "10.4"
+      env:
+        - DB=mariadb
+        - DB_PORT=3306
+        - ITEST=true
       before_script:
         - mysql -e 'CREATE DATABASE IF NOT EXISTS fcrepo;'
-      script:
-        - ./mvnw -Dfcrepo.db.url="jdbc:mariadb://localhost:3306/fcrepo" -Dfcrepo.db.user="travis" -Dfcrepo.db.password="" clean install -P db-tests
     - name: ITests - MySQL
       os: linux
       dist: xenial
       sudo: true
       language: java
       jdk: openjdk11
+      env:
+        - DB=mysql
+        - DB_PORT=3306
+        - ITEST=true
       services:
         - mysql
       before_script:
@@ -58,8 +64,6 @@ jobs:
         - sudo mysql_upgrade
         - mysql --version
         - mysql -e 'CREATE DATABASE IF NOT EXISTS fcrepo;'
-      script:
-        - ./mvnw -Dfcrepo.db.url="jdbc:mysql://localhost:3306/fcrepo" -Dfcrepo.db.user="travis" -Dfcrepo.db.password="" clean install  -P db-tests
 
 env:
   - MAVEN_VERSION=3.6.3
@@ -87,7 +91,9 @@ install:
  - true
 
 before_script:
- - if [ "$TRAVIS_OS_NAME" = "linux" ]; then 
+ - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+     sudo service mysql stop;
+     sudo service postgresql stop;
      sudo service acpid stop;
      sudo service atd stop;
      sudo service cron stop;
@@ -100,7 +106,8 @@ before_script:
    fi
     
 script:
- - ./mvnw --settings .travis/settings.xml -Dgpg.skip -Dfcrepo.streaming.parallel=true install -B -V
+ - if [ ! -z "$ITEST" ]; then ./mvnw --settings .travis/settings.xml -Dgpg.skip -Dfcrepo.streaming.parallel=true install -B -V; fi
+ - if [ "$ITEST" = "true" ]; then ./mvnw -Dfcrepo.db.url="jdbc:${DB}://localhost:${DB_PORT}/fcrepo" -Dfcrepo.db.user="travis" -Dfcrepo.db.password="" clean install -P db-tests; fi
 
 deploy:
  -
