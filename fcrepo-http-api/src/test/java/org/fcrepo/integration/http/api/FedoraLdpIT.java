@@ -136,6 +136,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Variant;
@@ -4055,6 +4056,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         t2.join();
         t3.join();
         t4.join();
+
+        TimeUnit.SECONDS.sleep(1);
 
         try (final CloseableDataset dataset = getDataset(getObjMethod(parent))) {
             final DatasetGraph graphStore = dataset.asDatasetGraph();

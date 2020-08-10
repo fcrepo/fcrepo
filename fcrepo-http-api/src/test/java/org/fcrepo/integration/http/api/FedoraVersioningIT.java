@@ -853,8 +853,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
             final var expectedUri = expected.getUri().toString();
             final var actualUri = actual.getUri().toString();
-            assertEquals(expectedUri.substring(0, expectedUri.length() - 2),
-                    actualUri.substring(0, actualUri.length() - 2));
+            assertEquals(expectedUri.substring(0, expectedUri.length() - 3),
+                    actualUri.substring(0, actualUri.length() - 3));
         }
     }
 
