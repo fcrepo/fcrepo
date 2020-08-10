@@ -13,7 +13,7 @@ jobs:
       language: shell
     - name: ITests - PostgreSQL
       os: linux
-      dist: trusty
+      dist: xenial
       sudo: true
       language: java
       jdk: openjdk11
