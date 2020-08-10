@@ -17,8 +17,6 @@
  */
 package org.fcrepo.kernel.impl.models;
 
-import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
