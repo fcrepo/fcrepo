@@ -94,10 +94,11 @@ public class DbSearchIndexImpl implements SearchIndex {
     private static final String CREATED_PARAM = "created";
     private static final String DELETE_RDF_TYPE_ASSOCIATIONS =
             "DELETE FROM search_resource_rdf_type where resource_id = :resource_id";
-    private static final String RDF_TYPE_TABLE = ", (SELECT rrt.resource_id, " +
-            "GROUP_CONCAT(distinct rt.rdf_type_uri ORDER BY rt.rdf_type_uri ASC SEPARATOR ',') as rdf_type " +
-            "from search_resource_rdf_type rrt, search_rdf_type rt " +
-            "WHERE rrt.rdf_type_id = rt.id group by rrt.resource_id) r";
+    private static final String RDF_TYPE_TABLE = ", (SELECT rrt.resource_id,  GROUP_CONCAT(distinct rt.rdf_type_uri " +
+            "ORDER BY rt.rdf_type_uri ASC SEPARATOR ',') as rdf_type from search_resource_rdf_type rrt, " +
+            "search_rdf_type rt  WHERE rrt.rdf_type_id = rt.id group by rrt.resource_id) r, " +
+            "(SELECT rrt.resource_id from search_resource_rdf_type rrt, search_rdf_type rt " +
+            "WHERE rt.rdf_type_uri like :rdf_type_uri and rrt.rdf_type_id = rt.id group by rrt.resource_id) r_filter";
     private static final String DEFAULT_DDL = "sql/default-search-index.sql";
 
     private static final Map<DbPlatform, String> DDL_MAP = Map.of(
@@ -162,6 +163,7 @@ public class DbSearchIndexImpl implements SearchIndex {
         final boolean containsRDFTypeField = fields.contains(RDF_TYPE.toString());
         if (containsRDFTypeField) {
             whereClauses.add("s.id = r.resource_id");
+            whereClauses.add("r.resource_id = r_filter.resource_id");
         }
 
         final var sql =
@@ -169,6 +171,13 @@ public class DbSearchIndexImpl implements SearchIndex {
 
         if (containsRDFTypeField) {
             sql.append(RDF_TYPE_TABLE);
+            for (Condition condition: conditions) {
+                var rdfTypeUriParamValue = "*";
+                if (condition.getField().equals(RDF_TYPE)) {
+                    rdfTypeUriParamValue = condition.getObject();
+                }
+                parameterSource.addValue(RDF_TYPE_URI_PARAM, convertToSqlLikeWildcard(rdfTypeUriParamValue));
+            }
         }
 
         if (!whereClauses.isEmpty()) {
@@ -219,18 +228,18 @@ public class DbSearchIndexImpl implements SearchIndex {
         final var operation = condition.getOperator();
         var object = condition.getObject();
         final var paramName = "param" + paramCount;
-        if ((field.equals(FEDORA_ID) || field.equals(MIME_TYPE) || field.equals(RDF_TYPE)) &&
+        if ((field.equals(FEDORA_ID) || field.equals(MIME_TYPE)) &&
                 condition.getOperator().equals(Condition.Operator.EQ)) {
             if (!object.equals("*")) {
                 final String whereClause;
                 if (object.contains("*")) {
-                    object = object.replace("*", "%");
+                    object = convertToSqlLikeWildcard(object);
                     whereClause = field + " like :" + paramName;
                 } else {
                     whereClause = field + " = :" + paramName;
                 }
 
-                whereClauses.add((field.equals(RDF_TYPE) ? "r." : "s.") + whereClause);
+                whereClauses.add("s." +  whereClause);
                 parameterSource.addValue(paramName, object);
             }
         } else if (field.equals(Condition.Field.CREATED) || field.equals(Condition.Field.MODIFIED)) {
@@ -250,9 +259,15 @@ public class DbSearchIndexImpl implements SearchIndex {
             } catch (Exception ex) {
                 throw new InvalidQueryException(ex.getMessage());
             }
+        } else if (field.equals(RDF_TYPE) && condition.getOperator().equals(Condition.Operator.EQ) ) {
+           //allowed but no where clause added here.
         } else {
             throw new InvalidQueryException("Condition not supported: \"" + condition + "\"");
         }
+    }
+
+    private String convertToSqlLikeWildcard(final String value) {
+        return value.replace("*", "%");
     }
 
     @Override

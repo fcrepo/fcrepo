@@ -507,12 +507,27 @@ public class FedoraSearchIT extends AbstractResourceIT {
         }
     }
 
+
     @Test
-    public void testSearchByRdfSource() throws Exception {
+    public void testSearchByRdfSourceWildCards() throws Exception {
+        testSearchByRdfTypeParam("*Basic*");
+    }
+
+    @Test
+    public void testSearchByRdfSourceWildcard() throws Exception {
+        testSearchByRdfTypeParam("*Container");
+    }
+
+    @Test
+    public void testSearchByRdfSourceExactMatch() throws Exception {
+        testSearchByRdfTypeParam("http://www.w3.org/ns/ldp#RDFSource");
+    }
+
+    private void testSearchByRdfTypeParam(final String rdfTypeString) throws Exception {
         final var resourceId = getRandomUniqueId();
         createObjectAndClose(resourceId);
         final var condition = FEDORA_ID + "=" + resourceId;
-        final var rdfTypeCondition = RDF_TYPE + "=*BasicContainer*";
+        final var rdfTypeCondition = RDF_TYPE + "=" + rdfTypeString;
         final String searchUrl =
                 getSearchEndpoint() + "condition=" + encode(condition) + "&condition=" + encode(rdfTypeCondition);
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
