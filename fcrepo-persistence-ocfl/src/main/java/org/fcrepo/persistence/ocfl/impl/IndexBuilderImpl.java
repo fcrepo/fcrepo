@@ -144,23 +144,24 @@ public class IndexBuilderImpl implements IndexBuilder {
                             rootId.set(headers.getId());
                         }
 
-                        if (!fedoraId.isRepositoryRoot()) {
-                            var parentId = headers.getParent();
+                        if (!headers.isDeleted()) {
+                            if (!fedoraId.isRepositoryRoot()) {
+                                var parentId = headers.getParent();
 
-                            if (parentId == null) {
-                                if (headers.isObjectRoot()) {
-                                    parentId = FedoraId.getRepositoryRootId();
+                                if (parentId == null) {
+                                    if (headers.isObjectRoot()) {
+                                        parentId = FedoraId.getRepositoryRootId();
+                                    }
+                                }
+
+                                if (parentId != null) {
+                                    this.containmentIndex.addContainedBy(txId, parentId,
+                                            headers.getId());
                                 }
                             }
 
-                            if (parentId != null) {
-                                this.containmentIndex.addContainedBy(txId, parentId,
-                                        headers.getId());
-                            }
+                            searchIndex.addUpdateIndex(headers);
                         }
-
-                        searchIndex.addUpdateIndex(headers);
-
                     } catch (PersistentStorageException e) {
                         throw new RepositoryRuntimeException(format("fedora-to-ocfl index rebuild failed: %s",
                                 e.getMessage()), e);

@@ -24,6 +24,7 @@ import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
+import org.fcrepo.kernel.impl.operations.DeleteResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -45,6 +46,7 @@ import java.nio.file.Paths;
 
 import static java.lang.System.currentTimeMillis;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.DELETE;
 import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createRepository;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -52,6 +54,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -167,6 +170,41 @@ public class IndexBuilderImplTest {
         verify(searchIndex, times(2)).addUpdateIndex(isA(ResourceHeaders.class));
     }
 
+    @Test
+    public void shouldNotAddDeletedResourcesToContainmentIndex() throws PersistentStorageException,
+            FedoraOcflMappingNotFoundException {
+        final var session = sessionManager.getSession(session1Id);
+
+        createResource(session, resource1, true);
+        createChildResource(session, resource1, resource2);
+
+        session.commit();
+
+        assertHasOcflId("resource1", resource1);
+        assertHasOcflId("resource1", resource2);
+
+        final var session2 = sessionManager.getSession("session2");
+
+        deleteResource(session2, resource2);
+
+        session2.commit();
+
+        index.reset();
+
+        assertDoesNotHaveOcflId(resource1);
+        assertDoesNotHaveOcflId(resource2);
+
+        indexBuilder.rebuildIfNecessary();
+
+        assertHasOcflId("resource1", resource1);
+        assertHasOcflId("resource1", resource2);
+
+        verify(containmentIndex).addContainedBy(anyString(), eq(FedoraId.getRepositoryRootId()), eq(resource1));
+        verify(containmentIndex, never()).addContainedBy(anyString(), eq(resource1), eq(resource2));
+        verify(containmentIndex).commitTransaction(anyString());
+        verify(searchIndex, times(1)).addUpdateIndex(isA(ResourceHeaders.class));
+    }
+
     private void assertDoesNotHaveOcflId(final FedoraId resourceId) {
         try {
             index.getMapping(null, resourceId);
@@ -208,6 +246,14 @@ public class IndexBuilderImplTest {
         when(operation.getMimeType()).thenReturn("text/plain");
         when(operation.getFilename()).thenReturn("test");
         when(((CreateResourceOperation)operation).getParentId()).thenReturn(parentId);
+        session.persist(operation);
+    }
+
+    private void deleteResource(final PersistentStorageSession session, final FedoraId resourceId)
+            throws PersistentStorageException {
+        final var operation = mock(DeleteResourceOperation.class);
+        when(operation.getResourceId()).thenReturn(resourceId);
+        when(operation.getType()).thenReturn(DELETE);
         session.persist(operation);
     }
 
