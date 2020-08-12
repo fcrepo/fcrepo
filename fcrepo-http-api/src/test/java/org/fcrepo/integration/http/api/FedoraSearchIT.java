@@ -60,7 +60,7 @@ import static org.junit.Assert.assertTrue;
  * @since 05/06/20
  */
 @TestExecutionListeners(
-        listeners = { TestIsolationExecutionListener.class },
+        listeners = { LinuxTestIsolationExecutionListener.class },
         mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class FedoraSearchIT extends AbstractResourceIT {
 

@@ -66,7 +66,7 @@ import org.springframework.test.context.TestExecutionListeners;
  * @since 2018-07-10
  */
 @TestExecutionListeners(
-        listeners = { TestIsolationExecutionListener.class },
+        listeners = { LinuxTestIsolationExecutionListener.class },
         mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class ExternalContentHandlerIT extends AbstractResourceIT {
 

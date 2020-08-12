@@ -91,7 +91,7 @@ import static org.junit.Assert.assertTrue;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @TestExecutionListeners(
-        listeners = { TestIsolationExecutionListener.class },
+        listeners = { LinuxTestIsolationExecutionListener.class },
         mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class FedoraRelaxedLdpIT extends AbstractResourceIT {
 

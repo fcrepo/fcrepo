@@ -18,46 +18,28 @@
 package org.fcrepo.integration.auth.webac;
 
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
+import org.apache.commons.lang3.SystemUtils;
 import org.fcrepo.http.commons.test.util.ContainerWrapper;
 import org.fcrepo.persistence.ocfl.RepositoryInitializer;
 import org.springframework.test.context.TestContext;
 import org.springframework.test.context.support.AbstractTestExecutionListener;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * Listener that baselines the DB and OCFL repo between every test.
+ * It does not baseline on Windows due to difficulties associated with deleting and immediately recreating directories.
  *
  * @author pwinckles
  */
-public class TestIsolationExecutionListener extends AbstractTestExecutionListener {
-
-    private static final int ATTEMPTS = 5;
+public class LinuxTestIsolationExecutionListener extends AbstractTestExecutionListener {
 
     @Override
-    public void beforeTestMethod(final TestContext testContext) throws InterruptedException {
-        final var ocflRepo = getBean(testContext, MutableOcflRepository.class);
-        final var initializer = getBean(testContext, RepositoryInitializer.class);
+    public void beforeTestMethod(final TestContext testContext) {
+        if (!SystemUtils.IS_OS_WINDOWS) {
+            final var ocflRepo = getBean(testContext, MutableOcflRepository.class);
+            final var initializer = getBean(testContext, RepositoryInitializer.class);
 
-        ocflRepo.listObjectIds().forEach(ocflRepo::purgeObject);
-
-        // Retry initialize if it fails
-        for (int i = 0; i < ATTEMPTS; i++) {
-            try {
-                initializer.initialize();
-                break;
-            } catch (RuntimeException e) {
-                // Windows queues files for deletion and returns before they are deleted.
-                // This sometimes creates a problem when the root OCFL object is deleted and then recreated here,
-                // because an exception is thrown it attempts to create the object directories while they are
-                // still pending deletion.
-
-                if (i + 1 != ATTEMPTS) {
-                    TimeUnit.MILLISECONDS.sleep(30);
-                } else {
-                    throw e;
-                }
-            }
+            ocflRepo.listObjectIds().forEach(ocflRepo::purgeObject);
+            initializer.initialize();
         }
     }
 

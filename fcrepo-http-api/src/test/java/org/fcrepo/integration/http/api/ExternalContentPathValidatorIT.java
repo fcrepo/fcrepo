@@ -62,7 +62,7 @@ import org.springframework.test.context.support.DependencyInjectionTestExecution
 @DirtiesContext(classMode = ClassMode.BEFORE_CLASS)
 @TestExecutionListeners(listeners = {
         DependencyInjectionTestExecutionListener.class,
-        TestIsolationExecutionListener.class,
+        LinuxTestIsolationExecutionListener.class,
         DirtyContextBeforeAndAfterClassTestExecutionListener.class
 }, mergeMode = MergeMode.MERGE_WITH_DEFAULTS)
 public class ExternalContentPathValidatorIT extends AbstractResourceIT {
