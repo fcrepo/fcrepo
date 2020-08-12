@@ -53,7 +53,7 @@ public class TestIsolationExecutionListener extends AbstractTestExecutionListene
                 // still pending deletion.
 
                 if (i + 1 != ATTEMPTS) {
-                    TimeUnit.MILLISECONDS.sleep(10);
+                    TimeUnit.MILLISECONDS.sleep(30);
                 } else {
                     throw e;
                 }
