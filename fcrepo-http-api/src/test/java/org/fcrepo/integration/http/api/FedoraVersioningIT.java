@@ -128,11 +128,15 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.springframework.test.context.TestExecutionListeners;
 
 /**
  * @author lsitu
  * @author bbpennel
  */
+@TestExecutionListeners(
+        listeners = { TestIsolationExecutionListener.class },
+        mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class FedoraVersioningIT extends AbstractResourceIT {
 
     private static final String BINARY_CONTENT = "binary content";

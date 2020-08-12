@@ -37,12 +37,16 @@ import org.apache.http.client.methods.HttpPut;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
+import org.springframework.test.context.TestExecutionListeners;
 
 /**
  * Test of OCFL specific issues from the HTTP layer.
  *
  * @author whikloj
  */
+@TestExecutionListeners(
+        listeners = { TestIsolationExecutionListener.class },
+        mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class OcflPersistenceIT extends AbstractResourceIT {
 
     private static final Logger LOGGER = getLogger(OcflPersistenceIT.class);

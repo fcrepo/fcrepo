@@ -56,11 +56,15 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
+import org.springframework.test.context.TestExecutionListeners;
 
 /**
  * @author lsitu
  * @author 4/20/2018
  */
+@TestExecutionListeners(
+        listeners = { TestIsolationExecutionListener.class },
+        mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class FedoraAclIT extends AbstractResourceIT {
 
     private String subjectUri;

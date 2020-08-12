@@ -46,12 +46,16 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
 import org.junit.Test;
+import org.springframework.test.context.TestExecutionListeners;
 
 /**
  * Tests related to tombstone stuff.
  *
  * @author whikloj
  */
+@TestExecutionListeners(
+        listeners = { TestIsolationExecutionListener.class },
+        mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class FedoraTombstonesIT extends AbstractResourceIT {
 
     private Link getTombstoneLink(final HttpResponse res) {

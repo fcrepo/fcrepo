@@ -42,6 +42,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import javax.ws.rs.core.Link;
@@ -89,6 +90,9 @@ import static org.junit.Assert.assertTrue;
  * @author Mike Durbin
  */
 @RunWith(SpringJUnit4ClassRunner.class)
+@TestExecutionListeners(
+        listeners = { TestIsolationExecutionListener.class },
+        mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class FedoraRelaxedLdpIT extends AbstractResourceIT {
 
     private final String providedUsername = "provided-username";

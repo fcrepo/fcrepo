@@ -34,10 +34,14 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.springframework.test.context.TestExecutionListeners;
 
 /**
  * @author dbernstein
  */
+@TestExecutionListeners(
+        listeners = { TestIsolationExecutionListener.class },
+        mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class StateTokensIT extends AbstractResourceIT {
 
     private static final String X_STATE_TOKEN_HEADER = "X-State-Token";

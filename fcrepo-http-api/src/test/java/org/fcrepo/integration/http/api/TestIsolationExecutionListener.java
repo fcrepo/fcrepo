@@ -17,44 +17,26 @@
  */
 package org.fcrepo.integration.http.api;
 
-import org.fcrepo.config.OcflPropsConfig;
+import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import org.fcrepo.http.commons.test.util.ContainerWrapper;
-import org.fcrepo.kernel.api.ContainmentIndex;
-import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.search.api.SearchIndex;
-import org.springframework.test.annotation.DirtiesContext.HierarchyMode;
+import org.fcrepo.persistence.ocfl.RepositoryInitializer;
 import org.springframework.test.context.TestContext;
 import org.springframework.test.context.support.AbstractTestExecutionListener;
 
 /**
- * Isolate RebuildIT from the rest of the IT contexts.
+ * Listener that baselines the DB and OCFL repo between every test.
  *
  * @author pwinckles
  */
-public class RebuildTestExecutionListener extends AbstractTestExecutionListener {
+public class TestIsolationExecutionListener extends AbstractTestExecutionListener {
 
     @Override
-    public void beforeTestClass(final TestContext testContext) {
-        cleanDb(testContext);
-        System.setProperty(OcflPropsConfig.FCREPO_OCFL_ROOT, "target/test-classes/test-rebuild-ocfl/ocfl-root");
-        testContext.markApplicationContextDirty(HierarchyMode.EXHAUSTIVE);
-    }
+    public void beforeTestMethod(final TestContext testContext) {
+        final var ocflRepo = getBean(testContext, MutableOcflRepository.class);
+        final var initializer = getBean(testContext, RepositoryInitializer.class);
 
-    @Override
-    public void afterTestClass(final TestContext testContext) {
-        cleanDb(testContext);
-        System.clearProperty(OcflPropsConfig.FCREPO_OCFL_ROOT);
-        testContext.markApplicationContextDirty(HierarchyMode.EXHAUSTIVE);
-    }
-
-    private void cleanDb(final TestContext testContext) {
-        final var containmentIndex = getBean(testContext, ContainmentIndex.class);
-        final var ocflIndex = getBean(testContext, FedoraToOcflObjectIndex.class);
-        final var searchIndex = getBean(testContext, SearchIndex.class);
-
-        containmentIndex.reset();
-        ocflIndex.reset();
-        searchIndex.reset();
+        ocflRepo.listObjectIds().forEach(ocflRepo::purgeObject);
+        initializer.initialize();
     }
 
     private <T> T getBean(final TestContext testContext, final Class<T> clazz) {
