@@ -17,13 +17,36 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.vocabulary.DC;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
+import org.fcrepo.kernel.api.operations.RdfSourceOperation;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
+import org.fcrepo.storage.ocfl.OcflObjectSession;
+import org.fcrepo.storage.ocfl.ResourceHeaders;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+
+import java.io.InputStream;
+import java.util.stream.Stream;
+
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
-import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
-import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.serializeHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.newResourceHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchCreationHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchModificationHeaders;
@@ -36,32 +59,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import java.io.InputStream;
-import java.util.stream.Stream;
-
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.vocabulary.DC;
-import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.ResourceHeaders;
-import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
-import org.fcrepo.kernel.api.operations.RdfSourceOperation;
-import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.persistence.api.WriteOutcome;
-import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * @author dbernstein
@@ -93,14 +90,11 @@ public class UpdateRDFSourcePersisterTest {
     @Mock
     private OcflPersistentStorageSession psSession;
 
-    @Mock
-    private WriteOutcome writeOutcome;
-
     @Captor
     private ArgumentCaptor<InputStream> userTriplesIsCaptor;
 
     @Captor
-    private ArgumentCaptor<InputStream> headersIsCaptor;
+    private ArgumentCaptor<ResourceHeaders> headersCaptor;
 
     private UpdateRdfSourcePersister persister;
 
@@ -111,7 +105,6 @@ public class UpdateRDFSourcePersisterTest {
         operation = mock(RdfSourceOperation.class);
 
         when(psSession.getId()).thenReturn(SESSION_ID);
-        when(session.write(anyString(), any(InputStream.class))).thenReturn(writeOutcome);
         when(psSession.findOrCreateSession(anyString())).thenReturn(session);
         when(index.getMapping(eq(SESSION_ID), any())).thenReturn(mapping);
         when(operation.getType()).thenReturn(UPDATE);
@@ -140,13 +133,14 @@ public class UpdateRDFSourcePersisterTest {
         final var headers = newResourceHeaders(ROOT_RESOURCE_ID, RESOURCE_ID, BASIC_CONTAINER.toString());
         touchCreationHeaders(headers, USER_PRINCIPAL);
         touchModificationHeaders(headers, USER_PRINCIPAL);
-        final var headerStream = serializeHeaders(headers);
-        when(session.read(anyString())).thenReturn(headerStream);
+        when(session.readHeaders(anyString())).thenReturn(new ResourceHeadersAdapter(headers).asStorageHeaders());
 
         final var originalCreation = headers.getCreatedDate();
         final var originalModified = headers.getLastModifiedDate();
 
         persister.persist(psSession, operation);
+
+        verify(session).writeResource(headersCaptor.capture(), userTriplesIsCaptor.capture());
 
         // verify user triples
         final Model userModel = retrievePersistedUserModel();
@@ -155,7 +149,7 @@ public class UpdateRDFSourcePersisterTest {
                 DC.title, TITLE));
 
         // verify server triples
-        final var resultHeaders = retrievePersistedHeaders();
+        final var resultHeaders = headersCaptor.getValue();
 
         assertEquals(BASIC_CONTAINER.toString(), resultHeaders.getInteractionModel());
         assertEquals(originalCreation, resultHeaders.getCreatedDate());
@@ -174,16 +168,7 @@ public class UpdateRDFSourcePersisterTest {
         return new DefaultRdfStream(resourceUri, userTriples);
     }
 
-    private ResourceHeaders retrievePersistedHeaders() throws Exception {
-        verify(session).write(eq(PersistencePaths.headerPath(RESOURCE_ID, RESOURCE_ID)),
-                headersIsCaptor.capture());
-        final var headersIs = headersIsCaptor.getValue();
-        return deserializeHeaders(headersIs);
-    }
-
     private Model retrievePersistedUserModel() throws Exception {
-        verify(session).write(eq(PersistencePaths.rdfContentPath(RESOURCE_ID, RESOURCE_ID)),
-                userTriplesIsCaptor.capture());
         final InputStream userTriplesIs = userTriplesIsCaptor.getValue();
 
         final Model userModel = createDefaultModel();

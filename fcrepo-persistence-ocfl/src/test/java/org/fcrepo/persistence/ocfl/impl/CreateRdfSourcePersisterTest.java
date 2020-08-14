@@ -25,14 +25,13 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.vocabulary.DC;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
+import org.fcrepo.storage.ocfl.OcflObjectSession;
+import org.fcrepo.storage.ocfl.ResourceHeaders;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,13 +50,10 @@ import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
-import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -93,14 +89,11 @@ public class CreateRdfSourcePersisterTest {
     @Mock
     private OcflPersistentStorageSession psSession;
 
-    @Mock
-    private WriteOutcome writeOutcome;
-
     @Captor
     private ArgumentCaptor<InputStream> userTriplesIsCaptor;
 
     @Captor
-    private ArgumentCaptor<InputStream> headersIsCaptor;
+    private ArgumentCaptor<ResourceHeaders> headersCaptor;
 
     private CreateRdfSourcePersister persister;
 
@@ -109,7 +102,6 @@ public class CreateRdfSourcePersisterTest {
         operation = mock(RdfSourceOperation.class, withSettings().extraInterfaces(
                 CreateResourceOperation.class));
 
-        when(session.write(anyString(), any(InputStream.class))).thenReturn(writeOutcome);
         when(psSession.findOrCreateSession(anyString())).thenReturn(session);
         when(operation.getType()).thenReturn(CREATE);
 
@@ -137,6 +129,8 @@ public class CreateRdfSourcePersisterTest {
 
         persister.persist(psSession, operation);
 
+        verify(session).writeResource(headersCaptor.capture(), userTriplesIsCaptor.capture());
+
         //verify user triples
         final Model userModel = retrievePersistedUserModel();
 
@@ -144,7 +138,7 @@ public class CreateRdfSourcePersisterTest {
                 DC.title, TITLE));
 
         //verify server triples
-        final var headers = retrievePersistedHeaders();
+        final var headers = headersCaptor.getValue();
 
         assertEquals(RDF_SOURCE.toString(), headers.getInteractionModel());
     }
@@ -171,14 +165,16 @@ public class CreateRdfSourcePersisterTest {
 
         persister.persist(psSession, operation);
 
+        verify(session).writeResource(headersCaptor.capture(), userTriplesIsCaptor.capture());
+
         //verify user triples
-        final Model userModel = retrievePersistedUserModel(ROOT_RESOURCE_ID, RESOURCE_ID);
+        final Model userModel = retrievePersistedUserModel();
 
         assertTrue(userModel.contains(userModel.createResource(RESOURCE_ID.getResourceId()),
                 DC.title, TITLE));
 
         //verify server triples
-        final var headers = retrievePersistedHeaders(ROOT_RESOURCE_ID, RESOURCE_ID);
+        final var headers = headersCaptor.getValue();
 
         assertEquals(RDF_SOURCE.toString(), headers.getInteractionModel());
         assertEquals(ocflId, index.getMapping(null, RESOURCE_ID).getOcflObjectId());
@@ -202,6 +198,8 @@ public class CreateRdfSourcePersisterTest {
 
         persister.persist(psSession, operation);
 
+        verify(session).writeResource(headersCaptor.capture(), userTriplesIsCaptor.capture());
+
         // verify user triples
         final Model userModel = retrievePersistedUserModel();
 
@@ -209,7 +207,7 @@ public class CreateRdfSourcePersisterTest {
                 DC.title, TITLE));
 
         // verify server triples
-        final var resultHeaders = retrievePersistedHeaders();
+        final var resultHeaders = headersCaptor.getValue();
 
         assertEquals(RDF_SOURCE.toString(), resultHeaders.getInteractionModel());
 
@@ -228,24 +226,7 @@ public class CreateRdfSourcePersisterTest {
         return new DefaultRdfStream(resourceUri, userTriples);
     }
 
-    private ResourceHeaders retrievePersistedHeaders() throws Exception {
-        return retrievePersistedHeaders(RESOURCE_ID, RESOURCE_ID);
-    }
-
-    private ResourceHeaders retrievePersistedHeaders(final FedoraId rootId,
-                                                     final FedoraId resourceId) throws Exception {
-        verify(session).write(eq(PersistencePaths.headerPath(rootId, resourceId)),
-                headersIsCaptor.capture());
-        final var headersIs = headersIsCaptor.getValue();
-        return deserializeHeaders(headersIs);
-    }
-
     private Model retrievePersistedUserModel() throws Exception {
-        return retrievePersistedUserModel(RESOURCE_ID, RESOURCE_ID);
-    }
-
-    private Model retrievePersistedUserModel(final FedoraId rootId, final FedoraId resourceId) throws Exception {
-        verify(session).write(eq(PersistencePaths.rdfContentPath(rootId, resourceId)), userTriplesIsCaptor.capture());
         final InputStream userTriplesIs = userTriplesIsCaptor.getValue();
         final Model userModel = createDefaultModel();
         RDFDataMgr.read(userModel, userTriplesIs, Lang.NTRIPLES);

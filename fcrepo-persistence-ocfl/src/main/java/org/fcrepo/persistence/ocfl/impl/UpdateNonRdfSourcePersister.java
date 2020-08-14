@@ -20,9 +20,8 @@ package org.fcrepo.persistence.ocfl.impl;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.common.ResourceHeadersImpl;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
+import org.fcrepo.storage.ocfl.OcflObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,20 +55,15 @@ class UpdateNonRdfSourcePersister extends AbstractNonRdfSourcePersister {
         log.debug("retrieved mapping: {}", mapping);
         final OcflObjectSession objSession = session.findOrCreateSession(mapping.getOcflObjectId());
 
-        boolean cleanupInternal = false;
         // If storing an external binary, clean up internal binary if needed
         if (forExternalBinary((NonRdfSourceOperation) operation)) {
             // Read the resource headers prior to updating how the existing resource is stored
-            final var headerPath = PersistencePaths.headerPath(rootIdentifier, resourceId);
-            final var headers = (ResourceHeadersImpl) readHeaders(objSession, headerPath);
-            cleanupInternal = headers.getExternalUrl() == null;
+            final var headers = objSession.readHeaders(resourceId.getResourceId());
+            if (headers.getExternalUrl() == null) {
+                objSession.deleteContentFile(headers);
+            }
         }
 
         persistNonRDFSource(operation, objSession, rootIdentifier);
-
-        if (cleanupInternal) {
-            final var contentPath = PersistencePaths.nonRdfContentPath(rootIdentifier, resourceId);
-            objSession.delete(contentPath);
-        }
     }
 }

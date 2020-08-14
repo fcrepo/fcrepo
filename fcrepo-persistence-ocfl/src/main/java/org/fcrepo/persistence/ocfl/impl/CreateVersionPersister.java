@@ -21,10 +21,10 @@ package org.fcrepo.persistence.ocfl.impl;
 import org.fcrepo.kernel.api.operations.CreateVersionResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
-import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.api.exceptions.PersistentItemConflictException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
+import org.fcrepo.storage.ocfl.CommitType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +61,7 @@ public class CreateVersionPersister extends AbstractPersister {
         final var ocflObjectSession = session.findOrCreateSession(ocflMapping.getOcflObjectId());
 
         // The version is not actually created until the session is committed
-        ocflObjectSession.setCommitOption(CommitOption.NEW_VERSION);
+        ocflObjectSession.commitType(CommitType.NEW_VERSION);
     }
 
 }

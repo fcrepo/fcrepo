@@ -21,12 +21,12 @@ package org.fcrepo.persistence.ocfl.impl;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateVersionResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
-import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.api.exceptions.PersistentItemConflictException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
+import org.fcrepo.storage.ocfl.CommitType;
+import org.fcrepo.storage.ocfl.OcflObjectSession;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -62,7 +62,7 @@ public class CreateVersionPersisterTest {
 
         final var objectSession = addMapping(resourceId, ocflId);
         expectArchivalGroup(resourceId, false);
-        objectSession.setCommitOption(CommitOption.NEW_VERSION);
+        objectSession.commitType(CommitType.NEW_VERSION);
 
         persister.persist(session, operation(resourceId));
     }
@@ -74,7 +74,7 @@ public class CreateVersionPersisterTest {
 
         final var objectSession = addMapping(resourceId, ocflId);
         expectArchivalGroup(resourceId, true);
-        objectSession.setCommitOption(CommitOption.NEW_VERSION);
+        objectSession.commitType(CommitType.NEW_VERSION);
 
         persister.persist(session, operation(resourceId));
     }

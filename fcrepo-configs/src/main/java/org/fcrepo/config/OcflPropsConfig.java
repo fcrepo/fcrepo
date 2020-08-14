@@ -56,6 +56,12 @@ public class OcflPropsConfig {
     @Value("${" + FCREPO_OCFL_TEMP + ":#{fedoraPropsConfig.fedoraData.resolve('" + OCFL_TEMP + "')}}")
     private Path ocflTemp;
 
+    /**
+     * Controls whether changes are committed to new OCFL versions or to a mutable HEAD
+     */
+    @Value("${fcrepo.autoversioning.enabled:true}")
+    private boolean autoVersioningEnabled;
+
     @PostConstruct
     private void postConstruct() throws IOException {
         LOGGER.info("Fedora staging: {}", fedoraOcflStaging);
@@ -112,6 +118,22 @@ public class OcflPropsConfig {
      */
     public void setOcflTemp(final Path ocflTemp) {
         this.ocflTemp = ocflTemp;
+    }
+
+    /**
+     * @return true if every update should create a new OCFL version; false if the mutable HEAD should be used
+     */
+    public boolean isAutoVersioningEnabled() {
+        return autoVersioningEnabled;
+    }
+
+    /**
+     * Determines whether or not new OCFL versions are created on every update.
+     *
+     * @param autoVersioningEnabled true to create new versions on every update
+     */
+    public void setAutoVersioningEnabled(final boolean autoVersioningEnabled) {
+        this.autoVersioningEnabled = autoVersioningEnabled;
     }
 
 }

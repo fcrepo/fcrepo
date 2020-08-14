@@ -20,24 +20,19 @@ package org.fcrepo.persistence.ocfl.impl;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
-import org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM;
-import org.fcrepo.persistence.api.WriteOutcome;
-import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.common.FileWriteOutcome;
-import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
+import org.fcrepo.persistence.common.ResourceHeadersImpl;
+import org.fcrepo.storage.ocfl.OcflObjectSession;
+import org.fcrepo.storage.ocfl.ResourceHeaders;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -47,14 +42,13 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
-import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -72,17 +66,13 @@ public class CreateNonRdfSourcePersisterTest {
     @Mock
     private OcflObjectSession session;
 
-    @Mock
-    private FileWriteOutcome writeOutcome;
-
     @Captor
     private ArgumentCaptor<InputStream> userContentCaptor;
 
     @Captor
-    private ArgumentCaptor<InputStream> headersIsCaptor;
+    private ArgumentCaptor<ResourceHeaders> headersCaptor;
 
-    @Mock
-    private ResourceHeaders headers;
+    private ResourceHeadersImpl headers;
 
     @Mock
     private OcflPersistentStorageSession psSession;
@@ -101,8 +91,6 @@ public class CreateNonRdfSourcePersisterTest {
 
     private static final URI CONTENT_SHA1_URI = URI.create("urn:sha1:" + CONTENT_SHA1);
 
-    private static final Long LOCAL_CONTENT_SIZE = Long.valueOf(CONTENT_BODY.length());
-
     private static final String EXTERNAL_URL = "http://example.com/file.txt";
 
     private static final String EXTERNAL_HANDLING = "proxy";
@@ -120,8 +108,8 @@ public class CreateNonRdfSourcePersisterTest {
         index.addMapping(null, ROOT_RESOURCE_ID, FedoraId.getRepositoryRootId(),
                 ROOT_RESOURCE_ID.getFullId());
 
-        when(session.write(anyString(), any(InputStream.class))).thenReturn(writeOutcome);
-        when(session.getObjectDigestAlgorithm()).thenReturn(DIGEST_ALGORITHM.SHA1);
+        headers = new ResourceHeadersImpl();
+        headers.setArchivalGroup(false);
 
         nonRdfSourceOperation = mock(NonRdfSourceOperation.class, withSettings().extraInterfaces(
                 CreateResourceOperation.class));
@@ -135,8 +123,6 @@ public class CreateNonRdfSourcePersisterTest {
                 .thenReturn(headers);
         when(psSession.getId()).thenReturn(SESSION_ID);
 
-        when(writeOutcome.getContentSize()).thenReturn(LOCAL_CONTENT_SIZE);
-
         persister = new CreateNonRdfSourcePersister(index);
 
         when(psSession.findOrCreateSession(anyString())).thenReturn(session);
@@ -144,27 +130,21 @@ public class CreateNonRdfSourcePersisterTest {
 
     @Test
     public void testNonRdfNewResource() throws Exception {
-
         final InputStream content = IOUtils.toInputStream(CONTENT_BODY, "UTF-8");
 
         when(nonRdfSourceOperation.getContentStream()).thenReturn(content);
         when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel())
                 .thenReturn(NON_RDF_SOURCE.toString());
-        when(headers.isArchivalGroup()).thenReturn(false);
 
         persister.persist(psSession, nonRdfSourceOperation);
 
-        // verify user content
-        verify(session).write(eq("child"), userContentCaptor.capture());
+        verify(session).writeResource(headersCaptor.capture(), userContentCaptor.capture());
+
         final InputStream userContent = userContentCaptor.getValue();
         assertEquals(CONTENT_BODY, IOUtils.toString(userContent, StandardCharsets.UTF_8));
 
-        // verify resource headers
-        final var resultHeaders = retrievePersistedHeaders();
-
+        final var resultHeaders = headersCaptor.getValue();
         assertEquals(NON_RDF_SOURCE.toString(), resultHeaders.getInteractionModel());
-        assertEquals(LOCAL_CONTENT_SIZE, resultHeaders.getContentSize());
-
         assertModificationHeadersSet(resultHeaders);
     }
 
@@ -178,18 +158,17 @@ public class CreateNonRdfSourcePersisterTest {
 
     @Test
     public void testNonRdfNewExternalBinary() throws Exception {
-
         when(nonRdfSourceOperation.getContentUri()).thenReturn(URI.create(EXTERNAL_URL));
         when(nonRdfSourceOperation.getExternalHandling()).thenReturn(EXTERNAL_HANDLING);
         when(nonRdfSourceOperation.getContentSize()).thenReturn(EXTERNAL_CONTENT_SIZE);
         when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel()).thenReturn(NON_RDF_SOURCE
                 .toString());
-        when(headers.isArchivalGroup()).thenReturn(false);
 
         persister.persist(psSession, nonRdfSourceOperation);
 
-        // verify resource headers
-        final var resultHeaders = retrievePersistedHeaders();
+        verify(session).writeResource(headersCaptor.capture(), userContentCaptor.capture());
+
+        final var resultHeaders = headersCaptor.getValue();
 
         assertEquals(NON_RDF_SOURCE.toString(), resultHeaders.getInteractionModel());
         assertEquals(EXTERNAL_HANDLING, resultHeaders.getExternalHandling());
@@ -197,20 +176,6 @@ public class CreateNonRdfSourcePersisterTest {
         assertEquals(EXTERNAL_CONTENT_SIZE, resultHeaders.getContentSize());
 
         assertModificationHeadersSet(resultHeaders);
-    }
-
-    @Test(expected = PersistentStorageException.class)
-    public void testNonRdfContentSizeMismatch() throws Exception {
-
-        final InputStream content = IOUtils.toInputStream(CONTENT_BODY, "UTF-8");
-
-        when(nonRdfSourceOperation.getContentStream()).thenReturn(content);
-        when(nonRdfSourceOperation.getContentSize()).thenReturn(99L);
-        when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel())
-                .thenReturn(NON_RDF_SOURCE.toString());
-        when(headers.isArchivalGroup()).thenReturn(false);
-
-        persister.persist(psSession, nonRdfSourceOperation);
     }
 
     @Test
@@ -221,7 +186,6 @@ public class CreateNonRdfSourcePersisterTest {
         final InputStream content = IOUtils.toInputStream(CONTENT_BODY, UTF_8);
 
         when(nonRdfSourceOperation.getContentDigests()).thenReturn(asList(CONTENT_SHA1_URI));
-        when(writeOutcome.getDigests()).thenReturn(asList(CONTENT_SHA1_URI));
 
         when(nonRdfSourceOperation.getContentStream()).thenReturn(content);
         when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel())
@@ -229,14 +193,10 @@ public class CreateNonRdfSourcePersisterTest {
 
         persister.persist(psSession, nonRdfSourceOperation);
 
-        // verify content was written
-        verify(session).write(eq("child"), any(InputStream.class));
-
         // verify resource headers
-        final var resultHeaders = retrievePersistedHeaders();
+        final var resultHeaders = headersCaptor.getValue();
 
         assertEquals(NON_RDF_SOURCE.toString(), resultHeaders.getInteractionModel());
-        assertEquals(LOCAL_CONTENT_SIZE, resultHeaders.getContentSize());
 
         assertModificationHeadersSet(resultHeaders);
         assertTrue("Headers did not contain the provided sha1 digest",
@@ -261,21 +221,11 @@ public class CreateNonRdfSourcePersisterTest {
     }
 
     private void mockSessionWriteConsumeStream() throws Exception {
-        when(session.write(eq("child"), any(InputStream.class))).thenAnswer(new Answer<WriteOutcome>() {
-            @Override
-            public WriteOutcome answer(final InvocationOnMock invocation) throws Throwable {
-                // Consume the input stream
-                IOUtils.toString((InputStream) invocation.getArgument(1), UTF_8);
-                return writeOutcome;
-            }
-        });
-    }
-
-    private ResourceHeaders retrievePersistedHeaders() throws Exception {
-        verify(session).write(eq(PersistencePaths.headerPath(RESOURCE_ID, RESOURCE_ID)),
-                headersIsCaptor.capture());
-        final var headersIs = headersIsCaptor.getValue();
-        return deserializeHeaders(headersIs);
+        doAnswer(invocation -> {
+            // Consume the input stream
+            IOUtils.toString((InputStream) invocation.getArgument(1), UTF_8);
+            return null;
+        }).when(session).writeResource(headersCaptor.capture(), any(InputStream.class));
     }
 
     private void assertModificationHeadersSet(final ResourceHeaders headers) {

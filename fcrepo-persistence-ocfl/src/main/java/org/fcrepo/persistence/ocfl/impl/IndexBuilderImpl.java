@@ -18,35 +18,24 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import edu.wisc.library.ocfl.api.OcflRepository;
-import org.apache.commons.io.FileUtils;
 import org.fcrepo.kernel.api.ContainmentIndex;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
-import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.IndexBuilder;
-import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
-import org.fcrepo.persistence.ocfl.api.OcflObjectSessionFactory;
 import org.fcrepo.search.api.SearchIndex;
+import org.fcrepo.storage.ocfl.OcflObjectSession;
+import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static java.lang.String.format;
-import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
 
 /**
  * An implementation of {@link IndexBuilder}.  This implementation rebuilds the following indexable state derived
@@ -77,9 +66,6 @@ public class IndexBuilderImpl implements IndexBuilder {
     @Inject
     private OcflRepository ocflRepository;
 
-    @Value("#{ocflPropsConfig.fedoraOcflStaging}")
-    private Path sessionStagingRoot;
-
     @Override
     public void rebuildIfNecessary() {
         if (shouldRebuild()) {
@@ -97,7 +83,6 @@ public class IndexBuilderImpl implements IndexBuilder {
         searchIndex.reset();
 
         final var txId = UUID.randomUUID().toString();
-        final var stagingDir = createStagingDir(txId);
 
         try {
             LOGGER.debug("Reading object ids...");
@@ -105,8 +90,14 @@ public class IndexBuilderImpl implements IndexBuilder {
             try (final var ocflIds = ocflRepository.listObjectIds()) {
                 ocflIds.forEach(ocflId -> {
                     LOGGER.debug("Reading {}", ocflId);
-                    try (final var session = objectSessionFactory.create(ocflId, stagingDir)) {
+                    try (var session = objectSessionFactory.newSession(ocflId)) {
                         indexOcflObject(ocflId, txId, session);
+                    } catch (Exception e) {
+                        // The session's close method signature throws Exception
+                        if (e instanceof RuntimeException) {
+                            throw (RuntimeException) e;
+                        }
+                        throw new RuntimeException(e);
                     }
                 });
             }
@@ -129,75 +120,62 @@ public class IndexBuilderImpl implements IndexBuilder {
                 return null;
             });
             throw e;
-        } finally {
-            cleanupStaging(stagingDir);
         }
     }
 
     private void indexOcflObject(final String ocflId, final String txId, final OcflObjectSession session) {
-        try (final var subpaths = session.listHeadSubpaths()) {
-            final var rootId = new AtomicReference<FedoraId>();
-            final var fedoraIds = new ArrayList<FedoraId>();
-            final var headersList = new ArrayList<ResourceHeaders>();
-            subpaths.forEach(subpath -> {
-                if (PersistencePaths.isHeaderFile(subpath)) {
-                    //we're only interested in sidecar subpaths
-                    try {
-                        final var headers = deserializeHeaders(session.read(subpath));
-                        final var fedoraId = headers.getId();
-                        fedoraIds.add(fedoraId);
-                        if (headers.isArchivalGroup() || headers.isObjectRoot()) {
-                            rootId.set(headers.getId());
-                        }
+        final var rootId = new AtomicReference<FedoraId>();
+        final var fedoraIds = new ArrayList<FedoraId>();
+        final var headersList = new ArrayList<ResourceHeaders>();
 
-                        if (!headers.isDeleted()) {
-                            if (!fedoraId.isRepositoryRoot()) {
-                                var parentId = headers.getParent();
+        session.streamResourceHeaders().forEach(storageHeaders -> {
+            final var headers = new ResourceHeadersAdapter(storageHeaders);
 
-                                if (parentId == null) {
-                                    if (headers.isObjectRoot()) {
-                                        parentId = FedoraId.getRepositoryRootId();
-                                    }
-                                }
-
-                                if (parentId != null) {
-                                    this.containmentIndex.addContainedBy(txId, parentId,
-                                            headers.getId());
-                                }
-
-                                headersList.add(headers);
-                            }
-                        }
-                    } catch (PersistentStorageException e) {
-                        throw new RepositoryRuntimeException(format("fedora-to-ocfl index rebuild failed: %s",
-                                e.getMessage()), e);
-                    }
-                }
-            });
-
-            // if a resource is not an AG then there should only be a single resource per OCFL object
-            if (fedoraIds.size() == 1 && rootId.get() == null) {
-                rootId.set(fedoraIds.get(0));
+            final var fedoraId = headers.getId();
+            fedoraIds.add(fedoraId);
+            if (headers.isArchivalGroup() || headers.isObjectRoot()) {
+                rootId.set(fedoraId);
             }
 
-            fedoraIds.forEach(fedoraIdentifier -> {
-                var rootFedoraIdentifier = rootId.get();
-                if (rootFedoraIdentifier == null) {
-                    rootFedoraIdentifier = fedoraIdentifier;
+            if (!headers.isDeleted()) {
+                if (!fedoraId.isRepositoryRoot()) {
+                    var parentId = headers.getParent();
+
+                    if (headers.getParent() == null) {
+                        if (headers.isObjectRoot()) {
+                            parentId = FedoraId.getRepositoryRootId();
+                        } else {
+                            throw new IllegalStateException(String.format("Resource %s must have a parent defined",
+                                    fedoraId.getFullId()));
+                        }
+                    }
+
+                    this.containmentIndex.addContainedBy(txId, parentId, fedoraId);
+                    headersList.add(headers.asKernelHeaders());
                 }
-                fedoraToOcflObjectIndex.addMapping(txId, fedoraIdentifier, rootFedoraIdentifier, ocflId);
-                LOGGER.debug("Rebuilt fedora-to-ocfl object index entry for {}", fedoraIdentifier);
-            });
 
-            headersList.forEach(headers -> {
-                searchIndex.addUpdateIndex(txId, headers);
-                LOGGER.debug("Rebuilt searchIndex for {}", headers.getId());
-            });
+                searchIndex.addUpdateIndex(headers);
+            }
+        });
 
-        } catch (final PersistentStorageException e) {
-            throw new RepositoryRuntimeException("Failed to rebuild fedora-to-ocfl index: " +
-                    e.getMessage(), e);
+        // if a resource is not an AG then there should only be a single resource per OCFL object
+        if (fedoraIds.size() == 1 && rootId.get() == null) {
+            rootId.set(fedoraIds.get(0));
         }
+
+        fedoraIds.forEach(fedoraIdentifier -> {
+            var rootFedoraIdentifier = rootId.get();
+            if (rootFedoraIdentifier == null) {
+                rootFedoraIdentifier = fedoraIdentifier;
+            }
+            fedoraToOcflObjectIndex.addMapping(txId, fedoraIdentifier, rootFedoraIdentifier, ocflId);
+            LOGGER.debug("Rebuilt fedora-to-ocfl object index entry for {}", fedoraIdentifier);
+        });
+
+        headersList.forEach(headers -> {
+            searchIndex.addUpdateIndex(txId, headers);
+            LOGGER.debug("Rebuilt searchIndex for {}", headers.getId());
+        });
     }
 
     private boolean shouldRebuild() {
@@ -223,20 +201,6 @@ public class IndexBuilderImpl implements IndexBuilder {
 
     private boolean repoContainsObjects() {
         return ocflRepository.listObjectIds().findFirst().isPresent();
-    }
-
-    private Path createStagingDir(final String txId) {
-        try {
-            return Files.createDirectories(sessionStagingRoot.resolve(txId));
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    private void cleanupStaging(final Path stagingDir) {
-        if (!FileUtils.deleteQuietly(stagingDir.toFile())) {
-            LOGGER.warn("Failed to cleanup staging directory: {}", stagingDir);
-        }
     }
 
     /**
