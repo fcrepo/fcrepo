@@ -94,8 +94,8 @@ public class DbSearchIndexImpl implements SearchIndex {
     private static final String CREATED_PARAM = "created";
     private static final String DELETE_RDF_TYPE_ASSOCIATIONS =
             "DELETE FROM search_resource_rdf_type where resource_id = :resource_id";
-    private static final String RDF_TYPE_TABLE = ", (SELECT rrt.resource_id,  GROUP_CONCAT(distinct rt.rdf_type_uri " +
-            "ORDER BY rt.rdf_type_uri ASC SEPARATOR ',') as rdf_type from search_resource_rdf_type rrt, " +
+    private static final String RDF_TYPE_TABLE = ", (SELECT rrt.resource_id,  group_concat_function as rdf_type " +
+            "from search_resource_rdf_type rrt, " +
             "search_rdf_type rt  WHERE rrt.rdf_type_id = rt.id group by rrt.resource_id) r, " +
             "(SELECT rrt.resource_id from search_resource_rdf_type rrt, search_rdf_type rt " +
             "WHERE rt.rdf_type_uri like :rdf_type_uri and rrt.rdf_type_id = rt.id group by rrt.resource_id) r_filter";
@@ -113,6 +113,10 @@ public class DbSearchIndexImpl implements SearchIndex {
     public static final String RDF_TYPE_URI_PARAM = "rdf_type_uri";
     public static final String SEARCH_RDF_TYPE_TABLE = "search_rdf_type";
     public static final String ID_COLUMN = "id";
+    private static final String GROUP_CONCAT_FUNCTION = "group_concat_function";
+    private static final String POSTGRES_GROUP_CONCAT_FUNCTION = "STRING_AGG(rt.rdf_type_uri, ',')";
+    private static final String DEFAULT_GROUP_CONCAT_FUNCTION = "GROUP_CONCAT(distinct rt.rdf_type_uri " +
+            "ORDER BY rt.rdf_type_uri ASC SEPARATOR ',')";
 
     @Inject
     private DataSource dataSource;
@@ -170,14 +174,17 @@ public class DbSearchIndexImpl implements SearchIndex {
                 new StringBuilder("SELECT " + String.join(",", fields) + " FROM " + SIMPLE_SEARCH_TABLE + " s");
 
         if (containsRDFTypeField) {
-            sql.append(RDF_TYPE_TABLE);
+            final var rdf_type_tables = RDF_TYPE_TABLE.replace(GROUP_CONCAT_FUNCTION,
+                    isPostgres() ? POSTGRES_GROUP_CONCAT_FUNCTION : DEFAULT_GROUP_CONCAT_FUNCTION);
+            sql.append(rdf_type_tables);
+            var rdfTypeUriParamValue = "*";
             for (Condition condition: conditions) {
-                var rdfTypeUriParamValue = "*";
                 if (condition.getField().equals(RDF_TYPE)) {
                     rdfTypeUriParamValue = condition.getObject();
+                    break;
                 }
-                parameterSource.addValue(RDF_TYPE_URI_PARAM, convertToSqlLikeWildcard(rdfTypeUriParamValue));
             }
+            parameterSource.addValue(RDF_TYPE_URI_PARAM, convertToSqlLikeWildcard(rdfTypeUriParamValue));
         }
 
         if (!whereClauses.isEmpty()) {
