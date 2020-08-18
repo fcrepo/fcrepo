@@ -213,8 +213,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         verifyTimemapResponse(subjectUri, id, new String[]{v1, v2, v3}, v1, v3);
     }
 
-    // TODO fix before pr
-    @Ignore
     @Test
     public void getTimeMapFromAgWithChildrenWithDifferentVersions() throws Exception {
         final var childId1 = id + "/child1";
@@ -236,30 +234,33 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         putVersionedBinary(childId1, OCTET_STREAM_TYPE, "v4", true);
         TimeUnit.SECONDS.sleep(1);
 
-        verifyTimemapResponse(subjectUri, id, new String[]{v1, v2, v3, v4}, v1, v4);
+        verifyTimemapResponse(subjectUri, id, v1);
         verifyTimemapResponse(subjectUri + "/child1", childId1, new String[]{v2, v4}, v2, v4);
         verifyTimemapResponse(subjectUri + "/child2", childId2, v3);
     }
 
-    // TODO fix before pr
-    @Ignore
     @Test
     public void getMementoFromAgChild() throws Exception {
-        final var childId1 = id + "/child1";
+        objectSessionFactory.setDefaultCommitType(CommitType.UNVERSIONED);
+        try {
+            final var childId1 = id + "/child1";
 
-        createVersionedArchivalGroup(id);
-        createMemento(subjectUri);
-        TimeUnit.SECONDS.sleep(1);
+            createVersionedArchivalGroup(id);
+            createMemento(subjectUri);
+            TimeUnit.SECONDS.sleep(1);
 
-        putVersionedBinary(childId1, OCTET_STREAM_TYPE, "v2", false);
-        final var mementoUri = createMemento(subjectUri);
-        final var mementoTime = mementoUri.substring(mementoUri.lastIndexOf("/"));
+            putVersionedBinary(childId1, OCTET_STREAM_TYPE, "v2", false);
+            final var mementoUri = createMemento(subjectUri + "/child1");
+            final var mementoTime = mementoUri.substring(mementoUri.lastIndexOf("/"));
 
-        final HttpGet httpGet = new HttpGet(subjectUri + "/child1/fcr:versions" + mementoTime);
-        try (final CloseableHttpResponse response = execute(httpGet)) {
-            assertMementoDatetimeHeaderMatches(response, now());
-            assertEquals("Binary content of memento must match original content",
-                    "v2", EntityUtils.toString(response.getEntity()));
+            final HttpGet httpGet = new HttpGet(subjectUri + "/child1/fcr:versions" + mementoTime);
+            try (final CloseableHttpResponse response = execute(httpGet)) {
+                assertMementoDatetimeHeaderMatches(response, now());
+                assertEquals("Binary content of memento must match original content",
+                        "v2", EntityUtils.toString(response.getEntity()));
+            }
+        } finally {
+            objectSessionFactory.setDefaultCommitType(CommitType.NEW_VERSION);
         }
     }
 
@@ -931,8 +932,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    // TODO fix before pr
-    @Ignore
     @Test
     public void testCreateVersionOfBinaryWithDatetimeAndBody() throws Exception {
         objectSessionFactory.setDefaultCommitType(CommitType.UNVERSIONED);

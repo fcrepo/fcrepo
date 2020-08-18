@@ -257,8 +257,9 @@ public class FedoraResourceImpl implements FedoraResource {
     @Override
     public List<URI> getUserTypes() {
         try {
-            final var triples = getSession().getTriples(getDescription().getFedoraId().asResourceId(),
-                    getMementoDatetime());
+            final var description = getDescription();
+            final var triples = getSession().getTriples(description.getFedoraId().asResourceId(),
+                    description.getMementoDatetime());
             return triples.filter(t -> t.predicateMatches(type.asNode())).map(Triple::getObject)
                     .map(t -> URI.create(t.toString())).collect(toList());
         } catch (final PersistentItemNotFoundException e) {
