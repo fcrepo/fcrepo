@@ -31,7 +31,6 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.Persister;
-import org.fcrepo.storage.ocfl.NotFoundException;
 import org.fcrepo.storage.ocfl.OcflObjectSession;
 import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
 import org.fcrepo.storage.ocfl.OcflVersionInfo;
@@ -187,15 +186,11 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         final FedoraOcflMapping mapping = getFedoraOcflMapping(identifier);
         final OcflObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
 
-        try {
-            final var versionId = resolveVersionNumber(objSession, identifier, version);
-            final var headers = objSession.readHeaders(identifier.getResourceId(), versionId);
+        final var versionId = resolveVersionNumber(objSession, identifier, version);
+        final var headers = StorageExceptionConverter.exec(() ->
+                objSession.readHeaders(identifier.getResourceId(), versionId));
 
-            return new ResourceHeadersAdapter(headers).asKernelHeaders();
-        } catch (NotFoundException e) {
-            throw new PersistentItemNotFoundException(
-                    String.format("Resource %s version %s was not found in OCFL storage", identifier, version), e);
-        }
+        return new ResourceHeadersAdapter(headers).asKernelHeaders();
     }
 
     private FedoraOcflMapping getFedoraOcflMapping(final FedoraId identifier) throws PersistentStorageException {
@@ -226,15 +221,10 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         final var mapping = getFedoraOcflMapping(fedoraIdentifier);
         final var objSession = findOrCreateSession(mapping.getOcflObjectId());
 
-        try {
-            return objSession.listVersions(fedoraIdentifier.getResourceId())
-                    .stream()
-                    .map(OcflVersionInfo::getCreated)
-                    .collect(Collectors.toList());
-        } catch (NotFoundException e) {
-            throw new PersistentItemNotFoundException(
-                    String.format("Resource %s was not found in OCFL storage", fedoraIdentifier), e);
-        }
+        return StorageExceptionConverter.exec(() -> objSession.listVersions(fedoraIdentifier.getResourceId()))
+                .stream()
+                .map(OcflVersionInfo::getCreated)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -247,14 +237,10 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
 
         final var versionNumber = resolveVersionNumber(objSession, identifier, version);
 
-        try {
-            return objSession.readContent(identifier.getResourceId(), versionNumber).getContentStream()
-                    .orElseThrow(() -> new PersistentItemNotFoundException("No binary content found for resource "
-                            + identifier.getFullId()));
-        } catch (NotFoundException e) {
-            throw new PersistentItemNotFoundException(
-                    String.format("Resource %s version %s was not found in OCFL storage", identifier, version), e);
-        }
+        return StorageExceptionConverter.exec(() -> objSession.readContent(identifier.getResourceId(), versionNumber))
+                .getContentStream()
+                .orElseThrow(() -> new PersistentItemNotFoundException("No binary content found for resource "
+                        + identifier.getFullId()));
     }
 
     @Override
@@ -365,23 +351,19 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
                                        final Instant version)
             throws PersistentStorageException {
         if (version != null) {
-            try {
-                final var versions = objSession.listVersions(fedoraId.getResourceId());
-                // reverse order so that the most recent version is matched first
-                Collections.reverse(versions);
-                return versions.stream()
-                        .filter(vd -> vd.getCreated().equals(version))
-                        .map(OcflVersionInfo::getVersionNumber)
-                        .findFirst()
-                        .orElseThrow(() -> {
-                            return new PersistentItemNotFoundException(format(
-                                    "There is no version in %s with a created date matching %s",
-                                    fedoraId, version));
-                        });
-            } catch (NotFoundException e) {
-                throw new PersistentItemNotFoundException(
-                        String.format("Resource %s was not found in OCFL storage", fedoraId), e);
-            }
+            final var versions = StorageExceptionConverter.exec(() ->
+                    objSession.listVersions(fedoraId.getResourceId()));
+            // reverse order so that the most recent version is matched first
+            Collections.reverse(versions);
+            return versions.stream()
+                    .filter(vd -> vd.getCreated().equals(version))
+                    .map(OcflVersionInfo::getVersionNumber)
+                    .findFirst()
+                    .orElseThrow(() -> {
+                        return new PersistentItemNotFoundException(format(
+                                "There is no version in %s with a created date matching %s",
+                                fedoraId, version));
+                    });
         }
 
         return null;

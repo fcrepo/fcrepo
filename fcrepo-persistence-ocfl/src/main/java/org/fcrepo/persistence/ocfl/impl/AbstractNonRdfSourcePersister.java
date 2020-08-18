@@ -76,7 +76,8 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
                 resourceId.equals(rootIdentifier)));
 
         if (forExternalBinary(nonRdfSourceOperation)) {
-            objectSession.writeResource(headers.asStorageHeaders(), null);
+            StorageExceptionConverter.exec(() ->
+                    objectSession.writeResource(headers.asStorageHeaders(), null));
         } else {
             final var providedDigests = nonRdfSourceOperation.getContentDigests();
 
@@ -87,7 +88,8 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
                     Collections.emptyList());
             final var contentStream = multiDigestWrapper.getInputStream();
 
-            objectSession.writeResource(headers.asStorageHeaders(), contentStream);
+            StorageExceptionConverter.exec(() ->
+                objectSession.writeResource(headers.asStorageHeaders(), contentStream));
 
             // Verify that the content matches the provided digests
             if (!CollectionUtils.isEmpty(providedDigests)) {
@@ -107,7 +109,7 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
      */
     private ResourceHeadersImpl createHeaders(final OcflObjectSession objSession,
                                               final NonRdfSourceOperation op,
-                                              final boolean objectRoot) {
+                                              final boolean objectRoot) throws PersistentStorageException {
 
         final var headers = createCommonHeaders(objSession, op, objectRoot);
 

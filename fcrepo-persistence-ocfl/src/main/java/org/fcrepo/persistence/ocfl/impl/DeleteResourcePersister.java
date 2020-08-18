@@ -49,12 +49,14 @@ class DeleteResourcePersister extends AbstractPersister {
         log.debug("Deleting {} from {}", resourceId, mapping.getOcflObjectId());
 
         try {
-            final var headers = new ResourceHeadersAdapter(objectSession.readHeaders(resourceId.getResourceId()))
+            final var headers = new ResourceHeadersAdapter(StorageExceptionConverter.exec(() ->
+                    objectSession.readHeaders(resourceId.getResourceId())))
                     .asKernelHeaders();
             headers.setDeleted(true);
             ResourceHeaderUtils.touchModificationHeaders(headers, operation.getUserPrincipal());
 
-            objectSession.deleteContentFile(new ResourceHeadersAdapter(headers).asStorageHeaders());
+            StorageExceptionConverter.exec(() ->
+                objectSession.deleteContentFile(new ResourceHeadersAdapter(headers).asStorageHeaders()));
         } catch (RuntimeException e) {
             throw new PersistentStorageException(
                     String.format("Failed to delete resource content for %s", resourceId), e);

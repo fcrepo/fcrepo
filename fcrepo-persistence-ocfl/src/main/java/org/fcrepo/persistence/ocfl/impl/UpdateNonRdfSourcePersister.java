@@ -58,9 +58,10 @@ class UpdateNonRdfSourcePersister extends AbstractNonRdfSourcePersister {
         // If storing an external binary, clean up internal binary if needed
         if (forExternalBinary((NonRdfSourceOperation) operation)) {
             // Read the resource headers prior to updating how the existing resource is stored
-            final var headers = objSession.readHeaders(resourceId.getResourceId());
+            final var headers = StorageExceptionConverter.exec(() ->
+                    objSession.readHeaders(resourceId.getResourceId()));
             if (headers.getExternalUrl() == null) {
-                objSession.deleteContentFile(headers);
+                StorageExceptionConverter.exec(() -> objSession.deleteContentFile(headers));
             }
         }
 

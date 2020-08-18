@@ -86,7 +86,7 @@ abstract class AbstractRdfSourcePersister extends AbstractPersister {
      */
     private ResourceHeadersImpl createHeaders(final OcflObjectSession objSession,
                                           final RdfSourceOperation operation,
-                                          final boolean objectRoot) {
+                                          final boolean objectRoot) throws PersistentStorageException {
         final var headers = createCommonHeaders(objSession, operation, objectRoot);
         overrideRelaxedProperties(headers, operation);
         return headers;
@@ -135,7 +135,8 @@ abstract class AbstractRdfSourcePersister extends AbstractPersister {
             streamRDF.finish();
 
             final var is = new ByteArrayInputStream(os.toByteArray());
-            session.writeResource(new ResourceHeadersAdapter(headers).asStorageHeaders(), is);
+            StorageExceptionConverter.exec(() ->
+                session.writeResource(new ResourceHeadersAdapter(headers).asStorageHeaders(), is));
             log.debug("wrote {} to {}", headers.getId().getFullId(), session.sessionId());
         } catch (final IOException ex) {
             throw new PersistentStorageException(

@@ -142,7 +142,7 @@ abstract class AbstractPersister implements Persister {
 
     protected ResourceHeadersImpl createCommonHeaders(final OcflObjectSession session,
                                                       final ResourceOperation operation,
-                                                      final boolean isResourceRoot) {
+                                                      final boolean isResourceRoot) throws PersistentStorageException {
         final var now = Instant.now();
 
         final ResourceHeadersImpl headers;
@@ -156,7 +156,8 @@ abstract class AbstractPersister implements Persister {
             headers.setArchivalGroup(createOperation.isArchivalGroup());
             headers.setObjectRoot(isResourceRoot);
         } else {
-            headers = new ResourceHeadersAdapter(session.readHeaders(operation.getResourceId().getResourceId()))
+            headers = new ResourceHeadersAdapter(StorageExceptionConverter.exec(() ->
+                    session.readHeaders(operation.getResourceId().getResourceId())))
                     .asKernelHeaders();
         }
 
