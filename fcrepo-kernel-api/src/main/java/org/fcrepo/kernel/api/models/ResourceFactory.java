@@ -88,11 +88,11 @@ public interface ResourceFactory {
 
     /**
      * Check if a resource exists.
-     * @param transactionId The current transaction id
+     * @param transaction The current transaction
      * @param fedoraId The internal identifier
      * @return True if the identifier resolves to a resource.
      */
-    public boolean doesResourceExist(final String transactionId, final FedoraId fedoraId);
+    public boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId);
 
 
     /**

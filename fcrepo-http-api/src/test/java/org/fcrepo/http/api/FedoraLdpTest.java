@@ -289,7 +289,7 @@ public class FedoraLdpTest {
         when(mockContainer.getDescribedResource()).thenReturn(mockContainer);
         when(mockContainer.getFedoraId()).thenReturn(pathId);
 
-        when(resourceFactory.doesResourceExist(mockTransaction.getId(), pathId)).thenReturn(false);
+        when(resourceFactory.doesResourceExist(mockTransaction, pathId)).thenReturn(false);
 
         when(mockNonRdfSourceDescription.getEtagValue()).thenReturn("");
         when(mockNonRdfSourceDescription.getStateToken()).thenReturn("");
@@ -994,7 +994,7 @@ public class FedoraLdpTest {
         final Container mockObject = (Container)setResource(Container.class);
         when(mockRequest.getMethod()).thenReturn("PUT");
         when(resourceFactory.getResource(mockTransaction, pathId)).thenReturn(mockObject);
-        when(resourceFactory.doesResourceExist(mockTransaction.getId(), pathId)).thenReturn(true);
+        when(resourceFactory.doesResourceExist(mockTransaction, pathId)).thenReturn(true);
 
         final Response actual = testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
@@ -1009,7 +1009,7 @@ public class FedoraLdpTest {
 
         when(mockHttpConfiguration.putRequiresIfMatch()).thenReturn(true);
         when(resourceFactory.getResource(mockTransaction, pathId)).thenReturn(mockContainer);
-        when(resourceFactory.doesResourceExist(mockTransaction.getId(), pathId)).thenReturn(true);
+        when(resourceFactory.doesResourceExist(mockTransaction, pathId)).thenReturn(true);
 
         testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
@@ -1312,7 +1312,7 @@ public class FedoraLdpTest {
     @Test(expected = CannotCreateResourceException.class)
     public void testLDPRNotImplemented() throws Exception {
         final var resource = setResource(Container.class);
-        when(resourceFactory.getResource(mockTransaction.getId(), pathId.resolve("x"))).thenReturn(resource);
+        when(resourceFactory.getResource(mockTransaction, pathId.resolve("x"))).thenReturn(resource);
         testObj.createObject(null, null, "x", null,
                 singletonList("<http://www.w3.org/ns/ldp#Resource>; rel=\"type\""), null);
     }
@@ -1320,7 +1320,7 @@ public class FedoraLdpTest {
     @Test(expected = ClientErrorException.class)
     public void testLDPRNotImplementedInvalidLink() throws Exception {
         final var resource = setResource(Container.class);
-        when(resourceFactory.getResource(mockTransaction.getId(), pathId.resolve("x"))).thenReturn(resource);
+        when(resourceFactory.getResource(mockTransaction, pathId.resolve("x"))).thenReturn(resource);
         testObj.createObject(null, null, "x", null, singletonList("<http://foo;rel=\"type\""), null);
     }
 

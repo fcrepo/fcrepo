@@ -95,8 +95,8 @@ public class ResourceFactoryImpl implements ResourceFactory {
     }
 
     @Override
-    public boolean doesResourceExist(final String transactionId, final FedoraId fedoraId) {
-        return doesResourceExistImpl(transactionId, fedoraId);
+    public boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId) {
+        return doesResourceExistImpl(TransactionUtils.openTxId(transaction), fedoraId);
     }
 
     private boolean doesResourceExistImpl(final String transactionId, final FedoraId fedoraId) {
