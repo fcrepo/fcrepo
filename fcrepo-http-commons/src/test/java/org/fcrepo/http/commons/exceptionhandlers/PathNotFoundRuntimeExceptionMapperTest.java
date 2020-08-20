@@ -21,31 +21,35 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.junit.Assert.assertEquals;
 
 import javax.ws.rs.core.Response;
-import org.fcrepo.kernel.api.exception.ItemNotFoundException;
+
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+
+import org.fcrepo.kernel.api.models.FedoraResource;
 import org.junit.Before;
 import org.junit.Test;
 
 
 /**
- * ItemNotFoundExceptionMapperTest class.
+ * PathNotFoundRuntimeExceptionMapperTest class.
  *
- * @author pwinckles
+ * @author robyj
  */
-public class ItemNotFoundExceptionMapperTest {
+public class PathNotFoundRuntimeExceptionMapperTest {
 
-    private ItemNotFoundExceptionMapper testObj;
+    private PathNotFoundRuntimeExceptionMapper testObj;
+
+    private FedoraResource mockResource;
 
     @Before
     public void setUp() {
-
-        testObj = new ItemNotFoundExceptionMapper();
+        testObj = new PathNotFoundRuntimeExceptionMapper();
     }
 
     @Test
     public void testToResponse() {
-        final ItemNotFoundException input = new ItemNotFoundException("xyz");
-        final Response actual = testObj.toResponse(input);
+        //final PathNotFoundRuntimeException input = new PathNotFoundRuntimeException(mockResource);
+        final Response actual = testObj.toResponse(new PathNotFoundRuntimeException("Resource at /xyz not found",null));
         assertEquals(NOT_FOUND.getStatusCode(), actual.getStatus());
-        assertEquals(actual.getEntity(), "Error: xyz");
+        assertEquals(actual.getEntity(), "Error: Resource at /xyz not found");
     }
 }

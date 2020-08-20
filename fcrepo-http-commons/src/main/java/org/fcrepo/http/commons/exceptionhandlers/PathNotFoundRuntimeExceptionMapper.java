@@ -22,28 +22,30 @@ import static org.slf4j.LoggerFactory.getLogger;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
-import org.fcrepo.kernel.api.exception.ItemNotFoundException;
+
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.slf4j.Logger;
 
+
 /**
- * Catch ItemNotFoundException
+ * Catch PathNotFoundException
  *
- * @author pwinckles
+ * @author robyj
  */
 @Provider
-public class ItemNotFoundExceptionMapper implements
-        ExceptionMapper<ItemNotFoundException>, ExceptionDebugLogging {
+public class PathNotFoundRuntimeExceptionMapper implements
+        ExceptionMapper<PathNotFoundRuntimeException>, ExceptionDebugLogging {
 
     private static final Logger LOGGER =
-        getLogger(ItemNotFoundExceptionMapper.class);
+        getLogger(PathNotFoundRuntimeExceptionMapper.class);
 
     @Override
-    public Response toResponse(final ItemNotFoundException e) {
+    public Response toResponse(final PathNotFoundRuntimeException e) {
 
-        LOGGER.debug("Exception intercepted by ItemNotFoundExceptionMapper: {}\n", e.getMessage());
+        LOGGER.debug("Exception intercepted by PathNotFoundRuntimeExceptionMapper: {}\n", e.getMessage());
         debugException(this, e, LOGGER);
         return Response.status(Response.Status.NOT_FOUND).
-                entity("Error: " + e.getMessage()).build();
+                entity("Error: "+e.getMessage()).build();
     }
 }
 

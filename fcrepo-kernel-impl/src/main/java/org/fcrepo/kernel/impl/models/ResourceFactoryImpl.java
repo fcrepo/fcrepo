@@ -215,7 +215,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
         } catch (final SecurityException | ReflectiveOperationException e) {
             throw new RepositoryRuntimeException("Unable to construct object", e);
         } catch (final PersistentItemNotFoundException e) {
-            throw new PathNotFoundException(e);
+            throw new PathNotFoundException(e.getMessage(),e);
         } catch (final PersistentStorageException e) {
             throw new RepositoryRuntimeException(e);
         }
