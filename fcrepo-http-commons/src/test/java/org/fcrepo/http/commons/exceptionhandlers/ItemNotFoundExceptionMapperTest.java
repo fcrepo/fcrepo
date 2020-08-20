@@ -34,10 +34,13 @@ import org.junit.Test;
 public class ItemNotFoundExceptionMapperTest {
 
     private ItemNotFoundExceptionMapper testObj;
+    private ItemNotFoundExceptionMapper testObj2;
 
     @Before
     public void setUp() {
+
         testObj = new ItemNotFoundExceptionMapper();
+        testObj2 = new ItemNotFoundExceptionMapper();
     }
 
     @Test
@@ -45,6 +48,14 @@ public class ItemNotFoundExceptionMapperTest {
         final ItemNotFoundException input = new ItemNotFoundException("xyz");
         final Response actual = testObj.toResponse(input);
         assertEquals(NOT_FOUND.getStatusCode(), actual.getStatus());
-        assertEquals(actual.getEntity(), "Error: xyz");
+        assertEquals(actual.getEntity(), "Resource at xyz not found");
+    }
+    @Test
+    public void testToResponse2() {
+        //tombstone
+        final ItemNotFoundException input2 = new ItemNotFoundException("/fcr:tombstone");
+        final Response actual2 = testObj2.toResponse(input2);
+        assertEquals(NOT_FOUND.getStatusCode(), actual2.getStatus());
+        assertEquals(actual2.getEntity(), "Discovered tombstone resource at /fcr:tombstone");
     }
 }
