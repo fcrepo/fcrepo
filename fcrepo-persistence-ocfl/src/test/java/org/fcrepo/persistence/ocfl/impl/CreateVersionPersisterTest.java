@@ -21,6 +21,7 @@ package org.fcrepo.persistence.ocfl.impl;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateVersionResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
+import org.fcrepo.persistence.api.exceptions.PersistentItemConflictException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
@@ -81,8 +82,8 @@ public class CreateVersionPersisterTest {
         verify(objectSession).commitType(CommitType.NEW_VERSION);
     }
 
-    @Test
-    public void allowVersionCreationWhenChildOfAg() throws PersistentStorageException {
+    @Test(expected = PersistentItemConflictException.class)
+    public void forbidVersionCreationWhenChildOfAg() throws PersistentStorageException {
         final var resourceId = FedoraId.create("info:fedora/ag/blah");
         final var ocflId = "blah";
 
@@ -91,8 +92,6 @@ public class CreateVersionPersisterTest {
         expectArchivalGroup(FedoraId.create("info:fedora/ag"), true);
 
         persister.persist(session, operation(resourceId));
-
-        verify(objectSession).commitType(CommitType.NEW_VERSION);
     }
 
     @Test(expected = PersistentStorageException.class)

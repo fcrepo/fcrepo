@@ -36,6 +36,7 @@ import java.io.IOException;
 
 import static java.lang.String.format;
 import static org.apache.jena.riot.system.StreamRDFWriter.getWriterStream;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
 
 /**
  * This class implements the persistence of a new RDFSource
@@ -59,20 +60,31 @@ abstract class AbstractRdfSourcePersister extends AbstractPersister {
     /**
      * Persists the RDF using the specified operation and session.
      * @param session The session.
+     * @param objectSession The object session.
      * @param operation The operation
      * @param rootId The fedora root object identifier tha maps to the OCFL object root.
      * @throws PersistentStorageException
      */
-    protected void persistRDF(final OcflObjectSession session, final ResourceOperation operation,
+    protected void persistRDF(final OcflPersistentStorageSession session,
+                              final OcflObjectSession objectSession,
+                              final ResourceOperation operation,
                               final FedoraId rootId) throws PersistentStorageException {
 
         final RdfSourceOperation rdfSourceOp = (RdfSourceOperation)operation;
         log.debug("persisting RDFSource ({}) to OCFL", operation.getResourceId());
 
-        final var headers = createHeaders(session, rdfSourceOp,
+        final var headers = createHeaders(objectSession, rdfSourceOp,
                 operation.getResourceId().equals(rootId));
 
-        writeRdf(session, headers, rdfSourceOp.getTriples());
+        writeRdf(objectSession, headers, rdfSourceOp.getTriples());
+
+        if (FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI.equals(headers.getInteractionModel())) {
+            final var binaryId = operation.getResourceId().asBaseId().getResourceId();
+            // Touch the associated binary so they are versioned together
+            StorageExceptionConverter.exec(() -> objectSession.touchResource(binaryId));
+        }
+
+        touchContainingAg(headers, session);
     }
 
     /**

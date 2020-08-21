@@ -613,7 +613,7 @@ public class OcflPersistentStorageSessionTest {
         final var agVersions = session3.listVersions(RESOURCE_ID);
         final var childVersions = session3.listVersions(childId);
 
-        assertEquals(1, agVersions.size());
+        assertEquals(2, agVersions.size());
         assertEquals(1, childVersions.size());
         assertThat(agVersions, hasItems(childVersions.get(0)));
     }
@@ -703,6 +703,7 @@ public class OcflPersistentStorageSessionTest {
 
         final var contentStream = new ByteArrayInputStream(content.getBytes());
         when(binOperation.getContentStream()).thenReturn(contentStream);
+        when(binOperation.getContentSize()).thenReturn(null);
         when(binOperation.getResourceId()).thenReturn(resourceId);
         when(((CreateResourceOperation) binOperation).getParentId()).thenReturn(FedoraId.getRepositoryRootId());
         when(binOperation.getType()).thenReturn(CREATE);

@@ -59,12 +59,15 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
      * the OCFL Object Session.
      *
      * @param operation The operation to perform the persistence routine on
+     * @param session The storage session
      * @param objectSession The ocfl object session
      * @param rootIdentifier The fedora object root identifier associated with the resource to be persisted.
      * @throws PersistentStorageException thrown if writing fails
      */
     protected void persistNonRDFSource(final ResourceOperation operation,
-                                       final OcflObjectSession objectSession, final FedoraId rootIdentifier)
+                                       final OcflPersistentStorageSession session,
+                                       final OcflObjectSession objectSession,
+                                       final FedoraId rootIdentifier)
             throws PersistentStorageException {
         final var resourceId = operation.getResourceId();
 
@@ -96,6 +99,15 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
                 multiDigestWrapper.checkFixity();
             }
         }
+
+        final var descriptionId = resourceId.asDescription().getResourceId();
+        if (objectSession.containsResource(descriptionId)) {
+            // Touch the resource description if it exists so that they are versioned together.
+            // If it doesn't exist, it means that it will be created later in the transaction.
+            StorageExceptionConverter.exec(() -> objectSession.touchResource(descriptionId));
+        }
+
+        touchContainingAg(headers.asKernelHeaders(), session);
     }
 
     /**

@@ -19,6 +19,7 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
@@ -35,6 +36,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Optional;
 
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_WEBAC_ACL_URI;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 
 /**
@@ -99,6 +101,31 @@ abstract class AbstractPersister implements Persister {
         return archivalGroupId.orElseGet(fedoraId::asBaseId);
     }
 
+    /**
+     * Touches the last modified headers on the AG that contains the resource. If it is not contained by an AG or
+     * is an AG itself, it does nothing.
+     *
+     * @param headers the headers of the resource
+     * @param session the current session
+     * @throws PersistentStorageException if the touch fails
+     */
+    protected void touchContainingAg(final ResourceHeaders headers, final OcflPersistentStorageSession session)
+            throws PersistentStorageException {
+        if (headers.isArchivalGroup() || FEDORA_WEBAC_ACL_URI.equals(headers.getInteractionModel())) {
+            // Do not need to touch when the resource is an AG itself or a web acl
+            return;
+        }
+
+        final var agOptional = findArchivalGroupInAncestry(headers.getParent(), session);
+
+        if (agOptional.isPresent()) {
+            final var agId = agOptional.get();
+            final var ocflId = mapToOcflId(session.getId(), agId);
+            final var ocflSession = session.findOrCreateSession(ocflId);
+            StorageExceptionConverter.exec(() -> ocflSession.touchResource(agId.getResourceId()));
+        }
+    }
+
     protected Optional<FedoraId> findArchivalGroupInAncestry(final FedoraId fedoraId,
                                                              final OcflPersistentStorageSession session) {
             if (fedoraId.isRepositoryRoot()) {
@@ -161,8 +188,9 @@ abstract class AbstractPersister implements Persister {
                     .asKernelHeaders();
         }
 
-        // Existing digests should be cleared, and new digests populated from the operation later as applicable
+        // Existing size and digests must be cleared so they can be populated for the new content
         headers.setDigests(new ArrayList<>());
+        headers.setContentSize(null);
 
         ResourceHeaderUtils.touchModificationHeaders(headers, operation.getUserPrincipal(), now);
 

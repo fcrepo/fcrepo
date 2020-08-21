@@ -65,6 +65,6 @@ class UpdateNonRdfSourcePersister extends AbstractNonRdfSourcePersister {
             }
         }
 
-        persistNonRDFSource(operation, objSession, rootIdentifier);
+        persistNonRDFSource(operation, session, objSession, rootIdentifier);
     }
 }
