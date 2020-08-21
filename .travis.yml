@@ -107,7 +107,7 @@ before_script:
     
 script:
  - if [ "$ITEST" != "true" ]; then ./mvnw --settings .travis/settings.xml -Dgpg.skip -Dfcrepo.streaming.parallel=true install -B -V; fi
- - if [ "$ITEST" = "true" ]; then ./mvnw -Dfcrepo.db.url="jdbc:${DB}://localhost:${DB_PORT}/fcrepo" -Dfcrepo.db.user="travis" -Dfcrepo.db.password="" clean install -P db-tests; fi
+ - if [ "$ITEST" = "true" ]; then ./mvnw -Dfcrepo.db.url="jdbc:${DB}://localhost:${DB_PORT}/fcrepo" -Dfcrepo.db.user="travis" -Dfcrepo.db.password="" clean install -P db-test; fi
 
 deploy:
  -

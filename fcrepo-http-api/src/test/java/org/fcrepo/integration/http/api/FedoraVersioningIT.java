@@ -853,10 +853,13 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     private void assertMementoLink(final Link expected, final Link actual) {
         if (!expected.equals(actual)) {
+            // Ensures the timestamps are close to each other
             assertDuration(expected.getParams().get("datetime"), actual.getParams().get("datetime"));
 
             final var expectedUri = expected.getUri().toString();
             final var actualUri = actual.getUri().toString();
+            // Reduces the granularity of the timestamp strings to ensure their formatting is the same, even if they're
+            // a few seconds apart.
             assertEquals(expectedUri.substring(0, expectedUri.length() - 3),
                     actualUri.substring(0, actualUri.length() - 3));
         }
