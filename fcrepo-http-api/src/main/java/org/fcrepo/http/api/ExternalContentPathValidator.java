@@ -49,7 +49,7 @@ public class ExternalContentPathValidator extends AutoReloadingConfiguration {
 
     private static final Set<String> ALLOWED_SCHEMES = new HashSet<>(Arrays.asList("file", "http", "https"));
 
-    private static final Pattern SCHEME_PATTERN = Pattern.compile("^(http|https|file):/.*");
+    private static final Pattern SCHEME_PATTERN = Pattern.compile("^(http|https|file):/.*", Pattern.CASE_INSENSITIVE);
 
     // Pattern to check that an http uri contains a / after the domain if a domain is present
     private static final Pattern HTTP_DOMAIN_PATTERN = Pattern.compile("^(http|https)://([^/]+/.*|$)");
@@ -76,7 +76,7 @@ public class ExternalContentPathValidator extends AutoReloadingConfiguration {
             throw new ExternalMessageBodyException("External content path was empty");
         }
 
-        final String path = normalizePath(extPath.toLowerCase());
+        final String path = normalizeUri(extPath);
 
         final URI uri;
         try {
@@ -117,12 +117,20 @@ public class ExternalContentPathValidator extends AutoReloadingConfiguration {
         throw new ExternalMessageBodyException("Path did not match any allowed external content paths: " + extPath);
     }
 
-    private String normalizePath(final String path) {
-        // file uris can have between 1 and 3 slashes depending on if the authority is present
-        if (path.startsWith("file://")) {
-            return NORMALIZE_FILE_URI.matcher(path).replaceFirst("file:/");
+    private String normalizeUri(final String path) {
+        // lowercase the scheme since it is case insensitive
+        final String[] parts = path.split(":", 2);
+        final String normalized;
+        if (parts.length == 2) {
+            normalized = parts[0].toLowerCase() + ":" + parts[1];
+        } else {
+            return path;
         }
-        return path;
+        // file uris can have between 1 and 3 slashes depending on if the authority is present
+        if (normalized.startsWith("file://")) {
+            return NORMALIZE_FILE_URI.matcher(normalized).replaceFirst("file:/");
+        }
+        return normalized;
     }
 
     /**
@@ -134,7 +142,7 @@ public class ExternalContentPathValidator extends AutoReloadingConfiguration {
     protected synchronized void loadConfiguration() throws IOException {
         LOGGER.info("Loading list of allowed external content locations from {}", configPath);
         try (final Stream<String> stream = Files.lines(Paths.get(configPath))) {
-            allowedList = stream.map(line -> normalizePath(line.trim().toLowerCase()))
+            allowedList = stream.map(line -> normalizeUri(line.trim()))
                     .filter(line -> isAllowanceValid(line))
                     .collect(Collectors.toList());
         }
@@ -149,7 +157,7 @@ public class ExternalContentPathValidator extends AutoReloadingConfiguration {
             return false;
         }
 
-        final String protocol = schemeMatcher.group(1);
+        final String protocol = schemeMatcher.group(1).toLowerCase();
         if ("file".equals(protocol)) {
             // If a file uri ends with / it must be a directory, otherwise it must be a file.
             final File allowing = new File(URI.create(allowance).getPath());
