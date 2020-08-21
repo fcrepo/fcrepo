@@ -33,6 +33,7 @@ import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.BasicHttpEntity;
 import org.junit.Test;
+import org.springframework.test.context.TestExecutionListeners;
 
 /**
  * This "test" is a utility for collecting the timing of concurrent operations operations.
@@ -43,6 +44,9 @@ import org.junit.Test;
  *
  * @author lsitu
  */
+@TestExecutionListeners(
+        listeners = { LinuxTestIsolationExecutionListener.class },
+        mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class FedoraCrudConcurrentIT extends AbstractResourceIT {
 
     private static final String TEST_ACTIVATION_PROPERTY = "fcrepo.test.http.concurrent";

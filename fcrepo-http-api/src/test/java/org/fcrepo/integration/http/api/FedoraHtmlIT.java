@@ -28,12 +28,16 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
+import org.springframework.test.context.TestExecutionListeners;
 
 /**
  * <p>FedoraHtmlIT class.</p>
  *
  * @author awoods
  */
+@TestExecutionListeners(
+        listeners = { LinuxTestIsolationExecutionListener.class },
+        mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class FedoraHtmlIT extends AbstractResourceIT {
 
     @Test

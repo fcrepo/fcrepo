@@ -65,6 +65,7 @@ import org.junit.Test;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.sparql.core.DatasetGraph;
+import org.springframework.test.context.TestExecutionListeners;
 
 /**
  * <p>FedoraFixityIT class.</p>
@@ -72,6 +73,9 @@ import org.apache.jena.sparql.core.DatasetGraph;
  * @author awoods
  * @author ajs6f
  */
+@TestExecutionListeners(
+        listeners = { LinuxTestIsolationExecutionListener.class },
+        mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class FedoraFixityIT extends AbstractResourceIT {
 
     private static final RDFDatatype IntegerType = TypeMapper.getInstance().getTypeByClass(Integer.class);

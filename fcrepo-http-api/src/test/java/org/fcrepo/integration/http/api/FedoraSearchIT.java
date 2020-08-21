@@ -26,6 +26,7 @@ import org.apache.http.entity.StringEntity;
 import org.fcrepo.search.api.Condition;
 import org.fcrepo.search.api.SearchResult;
 import org.junit.Test;
+import org.springframework.test.context.TestExecutionListeners;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -58,6 +59,9 @@ import static org.junit.Assert.assertTrue;
  * @author dbernstein
  * @since 05/06/20
  */
+@TestExecutionListeners(
+        listeners = { LinuxTestIsolationExecutionListener.class },
+        mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class FedoraSearchIT extends AbstractResourceIT {
 
     private String getSearchEndpoint() {

@@ -1,13 +1,69 @@
 
 jobs:
   include:
-    - os: linux
-      language: java
+    - name: Build - Linux
+      os: linux
       dist: trusty
       sudo: true
+      language: java
       jdk: openjdk11
-    - os: windows
+      env: DEPLOY=true
+    - name: Build - Windows
+      os: windows
       language: shell
+    - name: ITests - PostgreSQL
+      os: linux
+      dist: focal
+      sudo: true
+      language: java
+      jdk: openjdk11
+      addons:
+        postgresql: '12'
+        apt:
+          packages:
+            - postgresql-12
+            - postgresql-client-12
+      env:
+        - DB=postgresql
+        - DB_PORT=5432
+        - ITEST=true
+      before_script:
+        - psql -c 'CREATE DATABASE fcrepo;' -U postgres
+    - name: ITests - MariaDB
+      os: linux
+      dist: trusty
+      sudo: true
+      language: java
+      jdk: openjdk11
+      addons:
+        mariadb: "10.4"
+      env:
+        - DB=mariadb
+        - DB_PORT=3306
+        - ITEST=true
+      before_script:
+        - mysql -e 'CREATE DATABASE IF NOT EXISTS fcrepo;'
+    - name: ITests - MySQL
+      os: linux
+      dist: xenial
+      sudo: true
+      language: java
+      jdk: openjdk11
+      env:
+        - DB=mysql
+        - DB_PORT=3306
+        - ITEST=true
+      services:
+        - mysql
+      before_script:
+        - wget https://repo.mysql.com/mysql-apt-config_0.8.10-1_all.deb
+        - sudo dpkg -i mysql-apt-config_0.8.10-1_all.deb
+        - sudo apt-get update -q
+        - sudo apt-get install -q -y --allow-unauthenticated -o Dpkg::Options::=--force-confnew mysql-server
+        - sudo systemctl restart mysql
+        - sudo mysql_upgrade
+        - mysql --version
+        - mysql -e 'CREATE DATABASE IF NOT EXISTS fcrepo;'
 
 env:
   - MAVEN_VERSION=3.6.3
@@ -23,8 +79,10 @@ before_install:
  - "echo $PATH"
  - "export JAVA_OPTS=-Xmx512m"
  - "mvn -N io.takari:maven:0.7.7:wrapper -Dmaven=${MAVEN_VERSION}"
- - if [ "$TRAVIS_OS_NAME" = "linux" ] && [ ! -z "$GPG_SECRET_KEYS" ] [ ! -z "$GPG_SECRET_KEYS" ]; then echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import; fi
- - if [ "$TRAVIS_OS_NAME" = "linux" ] && [ ! -z "$GPG_OWNERTRUST" ]; then echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust; fi
+ - if [ "$DEPLOY" = "true" ] && [ ! -z "$GPG_SECRET_KEYS" ] [ ! -z "$GPG_SECRET_KEYS" ]; then echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import; fi
+ - if [ "$DEPLOY" = "true" ] && [ ! -z "$GPG_OWNERTRUST" ]; then echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust; fi
+ - if [ "$DB" = "postgresql" ]; then sudo sed -i -e '/local.*peer/s/postgres/all/' -e 's/peer\|md5/trust/g' /etc/postgresql/*/main/pg_hba.conf; fi
+ - if [ "$DB" = "postgresql" ]; then sudo systemctl restart postgresql@12-main; fi
 
 # Default installation command is 
 # mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
@@ -33,7 +91,7 @@ install:
  - true
 
 before_script:
- - if [ "$TRAVIS_OS_NAME" = "linux" ]; then 
+ - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
      sudo service mysql stop;
      sudo service postgresql stop;
      sudo service acpid stop;
@@ -48,7 +106,8 @@ before_script:
    fi
     
 script:
- - ./mvnw --settings .travis/settings.xml -Dgpg.skip -Dfcrepo.streaming.parallel=true install -B -V
+ - if [ "$ITEST" != "true" ]; then ./mvnw --settings .travis/settings.xml -Dgpg.skip -Dfcrepo.streaming.parallel=true install -B -V; fi
+ - if [ "$ITEST" = "true" ]; then ./mvnw -Dfcrepo.db.url="jdbc:${DB}://localhost:${DB_PORT}/fcrepo" -Dfcrepo.db.user="travis" -Dfcrepo.db.password="" clean install -P db-test; fi
 
 deploy:
  -
@@ -58,10 +117,9 @@ deploy:
    on:
      repo: fcrepo4/fcrepo4
      branch: main 
-     condition: $TRAVIS_OS_NAME = linux
+     condition: $DEPLOY = true
 
 notifications:
   irc: "irc.freenode.org#fcrepo"
   email:
       - fedora-tech@googlegroups.com
-

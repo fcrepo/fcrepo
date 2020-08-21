@@ -60,9 +60,11 @@ import org.springframework.test.context.support.DependencyInjectionTestExecution
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @DirtiesContext(classMode = ClassMode.BEFORE_CLASS)
-@TestExecutionListeners(listeners = { DependencyInjectionTestExecutionListener.class,
-    DirtyContextBeforeAndAfterClassTestExecutionListener.class },
-        mergeMode = MergeMode.MERGE_WITH_DEFAULTS)
+@TestExecutionListeners(listeners = {
+        DependencyInjectionTestExecutionListener.class,
+        LinuxTestIsolationExecutionListener.class,
+        DirtyContextBeforeAndAfterClassTestExecutionListener.class
+}, mergeMode = MergeMode.MERGE_WITH_DEFAULTS)
 public class ExternalContentPathValidatorIT extends AbstractResourceIT {
 
     private static final Logger LOGGER = getLogger(ExternalContentPathValidatorIT.class);
