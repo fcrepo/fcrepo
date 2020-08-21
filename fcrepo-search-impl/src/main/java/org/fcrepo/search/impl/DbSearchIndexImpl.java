@@ -131,6 +131,8 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     private DbPlatform dbPlatForm;
 
+    private String rdfTables;
+
     /**
      * Setup database table and connection
      */
@@ -143,6 +145,9 @@ public class DbSearchIndexImpl implements SearchIndex {
                 new ResourceDatabasePopulator(new DefaultResourceLoader().getResource("classpath:" + ddl)),
                 this.dataSource);
         this.jdbcTemplate = getNamedParameterJdbcTemplate();
+
+        this.rdfTables = RDF_TYPE_TABLE.replace(GROUP_CONCAT_FUNCTION,
+                isPostgres() ? POSTGRES_GROUP_CONCAT_FUNCTION : DEFAULT_GROUP_CONCAT_FUNCTION);
     }
 
     private String lookupDdl() {
@@ -174,9 +179,7 @@ public class DbSearchIndexImpl implements SearchIndex {
                 new StringBuilder("SELECT " + String.join(",", fields) + " FROM " + SIMPLE_SEARCH_TABLE + " s");
 
         if (containsRDFTypeField) {
-            final var rdf_type_tables = RDF_TYPE_TABLE.replace(GROUP_CONCAT_FUNCTION,
-                    isPostgres() ? POSTGRES_GROUP_CONCAT_FUNCTION : DEFAULT_GROUP_CONCAT_FUNCTION);
-            sql.append(rdf_type_tables);
+            sql.append(rdfTables);
             var rdfTypeUriParamValue = "*";
             for (Condition condition: conditions) {
                 if (condition.getField().equals(RDF_TYPE)) {

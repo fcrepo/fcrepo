@@ -115,6 +115,11 @@ public class IndexBuilderImpl implements IndexBuilder {
             fedoraToOcflObjectIndex.commit(txId);
             LOGGER.info("Index rebuild complete");
         } catch (RuntimeException e) {
+            execQuietly("Failed to reset searchIndex", () -> {
+                searchIndex.reset();
+                return null;
+            });
+
             execQuietly("Failed to rollback containment index transaction " + txId, () -> {
                 containmentIndex.rollbackTransaction(txId);
                 return null;
