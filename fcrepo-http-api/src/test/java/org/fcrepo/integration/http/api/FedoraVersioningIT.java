@@ -128,11 +128,15 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.springframework.test.context.TestExecutionListeners;
 
 /**
  * @author lsitu
  * @author bbpennel
  */
+@TestExecutionListeners(
+        listeners = { LinuxTestIsolationExecutionListener.class },
+        mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class FedoraVersioningIT extends AbstractResourceIT {
 
     private static final String BINARY_CONTENT = "binary content";
@@ -849,12 +853,15 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     private void assertMementoLink(final Link expected, final Link actual) {
         if (!expected.equals(actual)) {
+            // Ensures the timestamps are close to each other
             assertDuration(expected.getParams().get("datetime"), actual.getParams().get("datetime"));
 
             final var expectedUri = expected.getUri().toString();
             final var actualUri = actual.getUri().toString();
-            assertEquals(expectedUri.substring(0, expectedUri.length() - 2),
-                    actualUri.substring(0, actualUri.length() - 2));
+            // Reduces the granularity of the timestamp strings to ensure their formatting is the same, even if they're
+            // a few seconds apart.
+            assertEquals(expectedUri.substring(0, expectedUri.length() - 3),
+                    actualUri.substring(0, actualUri.length() - 3));
         }
     }
 

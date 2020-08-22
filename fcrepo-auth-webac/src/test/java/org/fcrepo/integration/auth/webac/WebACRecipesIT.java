@@ -74,6 +74,7 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.integration.http.api.AbstractResourceIT;
+import org.fcrepo.integration.http.api.LinuxTestIsolationExecutionListener;
 import org.glassfish.grizzly.utils.Charsets;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -81,12 +82,16 @@ import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.test.context.TestExecutionListeners;
 
 /**
  * @author Peter Eichman
  * @author whikloj
  * @since September 4, 2015
  */
+@TestExecutionListeners(
+        listeners = { LinuxTestIsolationExecutionListener.class },
+        mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class WebACRecipesIT extends AbstractResourceIT {
 
     private static final Logger logger = LoggerFactory.getLogger(WebACRecipesIT.class);

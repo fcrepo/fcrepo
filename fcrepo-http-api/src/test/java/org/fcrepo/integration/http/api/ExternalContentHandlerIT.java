@@ -59,11 +59,15 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.springframework.test.context.TestExecutionListeners;
 
 /**
  * @author whikloj
  * @since 2018-07-10
  */
+@TestExecutionListeners(
+        listeners = { LinuxTestIsolationExecutionListener.class },
+        mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class ExternalContentHandlerIT extends AbstractResourceIT {
 
     @Rule

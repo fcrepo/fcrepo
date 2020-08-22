@@ -68,12 +68,16 @@ import org.apache.http.entity.StringEntity;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.springframework.test.context.TestExecutionListeners;
 
 /**
  * <p>TransactionsIT class.</p>
  *
  * @author awoods
  */
+@TestExecutionListeners(
+        listeners = { LinuxTestIsolationExecutionListener.class },
+        mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class TransactionsIT extends AbstractResourceIT {
 
     public static final long REAP_INTERVAL = 1000;
