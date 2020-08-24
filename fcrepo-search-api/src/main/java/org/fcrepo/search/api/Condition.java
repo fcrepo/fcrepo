@@ -59,7 +59,8 @@ public class Condition {
         MODIFIED,
         CREATED,
         CONTENT_SIZE,
-        MIME_TYPE;
+        MIME_TYPE,
+        RDF_TYPE;
 
         @Override
         public String toString() {

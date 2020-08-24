@@ -421,6 +421,11 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         return fedoraResource;
     }
 
+    protected FedoraResource reloadResource() {
+        this.fedoraResource = null;
+        return resource();
+    }
+
     /**
      * Add the standard Accept-Post header, for reuse.
      */

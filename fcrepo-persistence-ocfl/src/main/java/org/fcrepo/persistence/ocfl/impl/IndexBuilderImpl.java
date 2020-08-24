@@ -22,6 +22,7 @@ import org.apache.commons.io.FileUtils;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
@@ -114,6 +115,11 @@ public class IndexBuilderImpl implements IndexBuilder {
             fedoraToOcflObjectIndex.commit(txId);
             LOGGER.info("Index rebuild complete");
         } catch (RuntimeException e) {
+            execQuietly("Failed to reset searchIndex", () -> {
+                searchIndex.reset();
+                return null;
+            });
+
             execQuietly("Failed to rollback containment index transaction " + txId, () -> {
                 containmentIndex.rollbackTransaction(txId);
                 return null;
@@ -132,7 +138,7 @@ public class IndexBuilderImpl implements IndexBuilder {
         try (final var subpaths = session.listHeadSubpaths()) {
             final var rootId = new AtomicReference<FedoraId>();
             final var fedoraIds = new ArrayList<FedoraId>();
-
+            final var headersList = new ArrayList<ResourceHeaders>();
             subpaths.forEach(subpath -> {
                 if (PersistencePaths.isHeaderFile(subpath)) {
                     //we're only interested in sidecar subpaths
@@ -158,9 +164,9 @@ public class IndexBuilderImpl implements IndexBuilder {
                                     this.containmentIndex.addContainedBy(txId, parentId,
                                             headers.getId());
                                 }
-                            }
 
-                            searchIndex.addUpdateIndex(headers);
+                                headersList.add(headers);
+                            }
                         }
                     } catch (PersistentStorageException e) {
                         throw new RepositoryRuntimeException(format("fedora-to-ocfl index rebuild failed: %s",
@@ -182,6 +188,12 @@ public class IndexBuilderImpl implements IndexBuilder {
                 fedoraToOcflObjectIndex.addMapping(txId, fedoraIdentifier, rootFedoraIdentifier, ocflId);
                 LOGGER.debug("Rebuilt fedora-to-ocfl object index entry for {}", fedoraIdentifier);
             });
+
+            headersList.forEach(headers -> {
+                searchIndex.addUpdateIndex(txId, headers);
+                LOGGER.debug("Rebuilt searchIndex for {}", headers.getId());
+            });
+
         } catch (final PersistentStorageException e) {
             throw new RepositoryRuntimeException("Failed to rebuild fedora-to-ocfl index: " +
                     e.getMessage(), e);

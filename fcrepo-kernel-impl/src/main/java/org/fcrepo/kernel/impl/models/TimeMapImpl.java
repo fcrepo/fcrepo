@@ -22,7 +22,6 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.impl.StatementImpl;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
@@ -78,10 +77,10 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
 
     protected TimeMapImpl(
             final FedoraResource originalResource,
-            final Transaction tx,
+            final String txId,
             final PersistentStorageSessionManager pSessionManager,
             final ResourceFactory resourceFactory) {
-        super(originalResource.getFedoraId().asTimemap(), tx, pSessionManager, resourceFactory);
+        super(originalResource.getFedoraId().asTimemap(), txId, pSessionManager, resourceFactory);
 
         this.originalResource = originalResource;
         setCreatedBy(originalResource.getCreatedBy());
@@ -124,7 +123,8 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
     public Stream<FedoraResource> getChildren(final Boolean recursive) {
         return getVersions().stream().map(version -> {
             try {
-                return resourceFactory.getResource(tx, getInstantFedoraId(version));
+                final var fedoraId = getInstantFedoraId(version);
+                return resourceFactory.getResource(txId, fedoraId);
             } catch (final PathNotFoundException e) {
                 throw new PathNotFoundRuntimeException(e);
             }

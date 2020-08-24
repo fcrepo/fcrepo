@@ -1,18 +1,16 @@
 -- simple search
 CREATE TABLE IF NOT EXISTS simple_search (
-    id bigint PRIMARY KEY AUTO_INCREMENT,
-    fedora_id  varchar(503) NOT NULL,
+    id bigserial PRIMARY KEY,
+    fedora_id  varchar(503) NOT NULL UNIQUE,
     created timestamp NOT NULL,
     modified timestamp NOT NULL,
     content_size bigint DEFAULT NULL,
-    mime_type varchar(255) DEFAULT NULL,
-    UNIQUE KEY fedora_id (fedora_id)
+    mime_type varchar(255) DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS search_rdf_type (
-    id bigint PRIMARY KEY AUTO_INCREMENT,
-    rdf_type_uri varchar(255) NOT NULL,
-    UNIQUE KEY rdf_type_uri (rdf_type_uri)
+    id bigserial PRIMARY KEY,
+    rdf_type_uri varchar(255) NOT NULL UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS search_resource_rdf_type (
@@ -22,6 +20,5 @@ CREATE TABLE IF NOT EXISTS search_resource_rdf_type (
     FOREIGN KEY (resource_id) REFERENCES simple_search(id) ON DELETE CASCADE,
     FOREIGN KEY (rdf_type_id) REFERENCES search_rdf_type(id)  ON DELETE CASCADE
 );
-
 
 

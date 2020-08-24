@@ -35,6 +35,13 @@ public interface SearchIndex {
     void addUpdateIndex(ResourceHeaders resourceHeaders);
 
     /**
+     * Adds or updates the index with the resource header information.
+     * @param dbTxId The database transaction id
+     * @param resourceHeaders The resource headers associated with the resource
+     */
+    void addUpdateIndex(String dbTxId, ResourceHeaders resourceHeaders);
+
+    /**
      * Removes indexed fields associated with the specified Fedora ID
      * @param fedoraId The Fedora ID
      */
@@ -47,6 +54,7 @@ public interface SearchIndex {
      * @return The result of the search
      */
     SearchResult doSearch(SearchParameters parameters) throws InvalidQueryException;
+
 
     /**
      * Remove all persistent state associated with the index.

@@ -129,7 +129,7 @@ public class FedoraAcl extends ContentExposingResource {
         LOGGER.info("PUT acl resource '{}'", externalPath());
 
         final FedoraId aclId = identifierConverter().pathToInternalId(externalPath()).asAcl();
-        final boolean exists = resourceFactory.doesResourceExist(transaction(), aclId);
+        final boolean exists = doesResourceExist(transaction(), aclId);
 
         final MediaType contentType =
             requestContentType == null ? RDFMediaType.TURTLE_TYPE : valueOf(getSimpleContentType(requestContentType));
@@ -148,14 +148,19 @@ public class FedoraAcl extends ContentExposingResource {
         }
         transaction().commitIfShortLived();
 
-        final FedoraResource aclResource = getFedoraResource(transaction(), aclId);
-        addCacheControlHeaders(servletResponse, aclResource, transaction());
-        final URI location = getUri(aclResource);
-        if (!exists) {
-            return created(location).build();
-        } else {
-            return noContent().location(location).build();
+        try {
+            final var aclResource = getFedoraResource(transaction(), aclId);
+            addCacheControlHeaders(servletResponse, aclResource, transaction());
+            final URI location = getUri(aclResource);
+            if (!exists) {
+                return created(location).build();
+            } else {
+                return noContent().location(location).build();
+            }
+        } catch (PathNotFoundException e) {
+            throw new PathNotFoundRuntimeException(e);
         }
+
     }
 
     /**
@@ -179,7 +184,7 @@ public class FedoraAcl extends ContentExposingResource {
         final FedoraId aclId = originalId.asAcl();
         final FedoraResource aclResource;
         try {
-             aclResource = resourceFactory.getResource(transaction(), aclId);
+             aclResource = getFedoraResource(transaction(), aclId);
         } catch (final PathNotFoundException exc) {
             if (originalId.isRepositoryRoot()) {
                 throw new ClientErrorException("The default root ACL is system generated and cannot be modified. " +
@@ -240,7 +245,7 @@ public class FedoraAcl extends ContentExposingResource {
 
         final FedoraId originalId = identifierConverter().pathToInternalId(externalPath());
         final FedoraId aclId = originalId.asAcl();
-        final boolean exists = resourceFactory.doesResourceExist(transaction(), aclId);
+        final boolean exists = doesResourceExist(transaction(), aclId);
 
         if (!exists) {
             if (originalId.isRepositoryRoot()) {
@@ -281,7 +286,7 @@ public class FedoraAcl extends ContentExposingResource {
         final FedoraId originalId = identifierConverter().pathToInternalId(externalPath());
         final FedoraId aclId = originalId.asAcl();
         try {
-            final var aclResource = resourceFactory.getResource(transaction(), aclId);
+            final var aclResource = getFedoraResource(transaction(), aclId);
             deleteResourceService.perform(transaction(), aclResource, getUserPrincipal());
         } catch (final PathNotFoundException exc) {
             if (originalId.isRepositoryRoot()) {

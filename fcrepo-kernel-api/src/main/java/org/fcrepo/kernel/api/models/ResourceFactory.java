@@ -42,12 +42,23 @@ public interface ResourceFactory {
     /**
      * Get a FedoraResource for existing resource
      *
-     * @param transaction The transaction this request is part of.
+     * @param transaction The transaction associated with this request or null if not in a transaction.
      * @param fedoraID The identifier for the resource.
      * @return The resource.
      * @throws PathNotFoundException If the identifier cannot be found.
      */
     public FedoraResource getResource(final Transaction transaction, final FedoraId fedoraID)
+            throws PathNotFoundException;
+
+    /**
+     * Get a FedoraResource for existing resource
+     *
+     * @param transactionId The transaction id associated with this request or null if not in a transaction.
+     * @param fedoraID The identifier for the resource.
+     * @return The resource.
+     * @throws PathNotFoundException If the identifier cannot be found.
+     */
+    public FedoraResource getResource(final String transactionId, final FedoraId fedoraID)
             throws PathNotFoundException;
 
     /**
@@ -66,7 +77,7 @@ public interface ResourceFactory {
      * Get a resource as a particular type
      *
      * @param <T> type for the resource
-     * @param transaction The transaction this request is part of.
+     * @param transaction The transaction associated with this request or null
      * @param fedoraID The identifier for the resource.
      * @param clazz class the resource will be cast to
      * @return The resource.
@@ -77,17 +88,18 @@ public interface ResourceFactory {
 
     /**
      * Check if a resource exists.
-     * @param transaction The current transaction or null if read-only.
+     * @param transaction The current transaction
      * @param fedoraId The internal identifier
      * @return True if the identifier resolves to a resource.
      */
     public boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId);
 
+
     /**
      * Get the containing resource (if exists).
-     * @param transaction The current transaction or null if read-only.
-     * @param resourceId The internal identifer
+     * @param transactionId The current transaction id
+     * @param resourceId The internal identifier
      * @return The containing resource or null if none.
      */
-    public FedoraResource getContainer(final Transaction transaction, final FedoraId resourceId);
+    public FedoraResource getContainer(final String transactionId, final FedoraId resourceId);
 }
