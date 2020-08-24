@@ -163,8 +163,9 @@ public class IndexBuilderImpl implements IndexBuilder {
                                 if (parentId != null) {
                                     this.containmentIndex.addContainedBy(txId, parentId,
                                             headers.getId());
-                                  headersList.add(headers);
                                 }
+
+                                headersList.add(headers);
                             }
                         }
                     } catch (PersistentStorageException e) {
@@ -189,10 +190,8 @@ public class IndexBuilderImpl implements IndexBuilder {
             });
 
             headersList.forEach(headers -> {
-                if (!headers.isDeleted()) {
-                    searchIndex.addUpdateIndex(txId, headers);
-                    LOGGER.debug("Rebuilt searchIndex for {}", headers.getId());
-                }
+                searchIndex.addUpdateIndex(txId, headers);
+                LOGGER.debug("Rebuilt searchIndex for {}", headers.getId());
             });
 
         } catch (final PersistentStorageException e) {

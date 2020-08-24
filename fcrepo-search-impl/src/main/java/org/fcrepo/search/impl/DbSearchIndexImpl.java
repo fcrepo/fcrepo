@@ -397,10 +397,7 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     @Override
     public void reset() {
-        final var builder = new StringBuilder();
-
-        try {
-            final var conn = this.dataSource.getConnection();
+        try (final var conn = this.dataSource.getConnection()) {
             final var statement = conn.createStatement();
             for (var sql : toggleForeignKeyChecks(false)) {
                 statement.addBatch(sql);

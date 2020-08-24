@@ -202,7 +202,7 @@ public class IndexBuilderImplTest {
         verify(containmentIndex).addContainedBy(anyString(), eq(FedoraId.getRepositoryRootId()), eq(resource1));
         verify(containmentIndex, never()).addContainedBy(anyString(), eq(resource1), eq(resource2));
         verify(containmentIndex).commitTransaction(anyString());
-        verify(searchIndex, times(1)).addUpdateIndex(isA(ResourceHeaders.class));
+        verify(searchIndex, times(1)).addUpdateIndex(anyString(), isA(ResourceHeaders.class));
     }
 
     private void assertDoesNotHaveOcflId(final FedoraId resourceId) {
