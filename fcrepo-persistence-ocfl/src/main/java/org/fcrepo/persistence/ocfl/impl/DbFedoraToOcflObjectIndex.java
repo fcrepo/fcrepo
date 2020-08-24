@@ -32,20 +32,16 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.init.DatabasePopulatorUtils;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionCallback;
-import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 import java.util.Collections;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * Maps Fedora IDs to the OCFL IDs of the OCFL objects the Fedora resource is stored in. This implementation is backed
@@ -193,13 +189,10 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
-    private PlatformTransactionManager platformTransactionManager;
-
     private DbPlatform dbPlatform;
 
     public DbFedoraToOcflObjectIndex(@Autowired final DataSource dataSource) {
         this.dataSource = dataSource;
-        this.platformTransactionManager = new DataSourceTransactionManager(dataSource);
         this.jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
     }
 
@@ -275,36 +268,29 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
         jdbcTemplate.update(UPSERT_MAPPING_TX_MAP.get(dbPlatform), parameterSource);
     }
 
+    @Transactional
     @Override
     public void reset() {
-        final String tempSessionId = UUID.randomUUID().toString();
-        executeInDbTransaction(tempSessionId, status -> {
-            try {
-                jdbcTemplate.update(TRUNCATE_MAPPINGS, Collections.emptyMap());
-                jdbcTemplate.update(TRUNCATE_TRANSACTIONS, Collections.emptyMap());
-                return null;
-            } catch (final Exception e) {
-                status.setRollbackOnly();
-                throw new RepositoryRuntimeException("Failed to truncate FedoraToOcfl index tables", e);
-            }
-        });
+        try {
+            jdbcTemplate.update(TRUNCATE_MAPPINGS, Collections.emptyMap());
+            jdbcTemplate.update(TRUNCATE_TRANSACTIONS, Collections.emptyMap());
+        } catch (final Exception e) {
+            throw new RepositoryRuntimeException("Failed to truncate FedoraToOcfl index tables", e);
+        }
     }
 
+    @Transactional
     @Override
     public void commit(@Nonnull final String sessionId) {
         final Map<String, String> map = Map.of("transactionId", sessionId);
-        executeInDbTransaction(sessionId, status -> {
-            try {
-                jdbcTemplate.update(COMMIT_DELETE_RECORDS, map);
-                jdbcTemplate.update(COMMIT_ADD_MAPPING_MAP.get(dbPlatform), map);
-                jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, map);
-                return null;
-            } catch (final Exception e) {
-                status.setRollbackOnly();
-                LOGGER.warn("Unable to commit FedoraToOcfl index transaction {}: {}", sessionId, e.getMessage());
-                throw new RepositoryRuntimeException("Unable to commit FedoraToOcfl index transaction", e);
-            }
-        });
+        try {
+            jdbcTemplate.update(COMMIT_DELETE_RECORDS, map);
+            jdbcTemplate.update(COMMIT_ADD_MAPPING_MAP.get(dbPlatform), map);
+            jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, map);
+        } catch (final Exception e) {
+            LOGGER.warn("Unable to commit FedoraToOcfl index transaction {}: {}", sessionId, e.getMessage());
+            throw new RepositoryRuntimeException("Unable to commit FedoraToOcfl index transaction", e);
+        }
     }
 
     @Override
@@ -312,11 +298,4 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
         jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, Map.of("transactionId", sessionId));
     }
 
-    private <T> void executeInDbTransaction(final String txId, final TransactionCallback<T> callback) {
-        final TransactionTemplate transactionTemplate = new TransactionTemplate(platformTransactionManager);
-        // Seemingly setting the name ensures that we don't re-use a transaction.
-        transactionTemplate.setName("tx-" + txId);
-        transactionTemplate.setPropagationBehavior(TransactionTemplate.PROPAGATION_REQUIRED);
-        transactionTemplate.execute(callback);
-    }
 }

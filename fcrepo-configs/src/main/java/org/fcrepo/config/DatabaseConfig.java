@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.sql.DataSource;
 import java.beans.PropertyVetoException;
@@ -33,6 +34,7 @@ import java.util.Map;
 /**
  * @author pwinckles
  */
+@EnableTransactionManagement
 @Configuration
 public class DatabaseConfig {
 
@@ -50,6 +52,9 @@ public class DatabaseConfig {
 
     @Value("${fcrepo.db.password:}")
     private String dbPassword;
+
+    @Value("${fcrepo.db.max.pool.size:15}")
+    private Integer maxPoolSize;
 
     private static final Map<String, String> DB_DRIVER_MAP = Map.of(
             "h2", "org.h2.Driver",
@@ -70,6 +75,8 @@ public class DatabaseConfig {
         dataSource.setJdbcUrl(dbUrl);
         dataSource.setUser(dbUser);
         dataSource.setPassword(dbPassword);
+        dataSource.setCheckoutTimeout(10_000);
+        dataSource.setMaxPoolSize(maxPoolSize);
         return dataSource;
     }
 

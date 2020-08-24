@@ -30,9 +30,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.init.DatabasePopulatorUtils;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionCallback;
-import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.PostConstruct;
@@ -41,7 +39,6 @@ import javax.sql.DataSource;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
@@ -59,9 +56,6 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     private DataSource dataSource;
 
     private NamedParameterJdbcTemplate jdbcTemplate;
-
-    @Inject
-    private PlatformTransactionManager platformTransactionManager;
 
     public static final String RESOURCES_TABLE = "resources";
 
@@ -471,25 +465,22 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         return parentID.stream().findFirst().orElse(null);
     }
 
+    @Transactional
     @Override
     public void commitTransaction(final String txId) {
         if (txId != null) {
-            executeInDbTransaction(txId, status -> {
-                try {
-                    final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-                    parameterSource.addValue("transactionId", txId);
+            try {
+                final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+                parameterSource.addValue("transactionId", txId);
 
-                    jdbcTemplate.update(COMMIT_PURGE_RECORDS, parameterSource);
-                    jdbcTemplate.update(COMMIT_DELETE_RECORDS, parameterSource);
-                    jdbcTemplate.update(COMMIT_ADD_RECORDS, parameterSource);
-                    jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, parameterSource);
-                    return null;
-                } catch (final Exception e) {
-                    status.setRollbackOnly();
-                    LOGGER.warn("Unable to commit containment index transaction {}: {}", txId, e.getMessage());
-                    throw new RepositoryRuntimeException("Unable to commit containment index transaction", e);
-                }
-            });
+                jdbcTemplate.update(COMMIT_PURGE_RECORDS, parameterSource);
+                jdbcTemplate.update(COMMIT_DELETE_RECORDS, parameterSource);
+                jdbcTemplate.update(COMMIT_ADD_RECORDS, parameterSource);
+                jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, parameterSource);
+            } catch (final Exception e) {
+                LOGGER.warn("Unable to commit containment index transaction {}: {}", txId, e.getMessage());
+                throw new RepositoryRuntimeException("Unable to commit containment index transaction", e);
+            }
         }
     }
 
@@ -548,19 +539,15 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         return FedoraId.getRepositoryRootId();
     }
 
+    @Transactional
     @Override
     public void reset() {
-        final var txId = UUID.randomUUID().toString();
-        executeInDbTransaction(txId, status -> {
-            try {
-                jdbcTemplate.update(TRUNCATE_TABLE + RESOURCES_TABLE, Collections.emptyMap());
-                jdbcTemplate.update(TRUNCATE_TABLE + TRANSACTION_OPERATIONS_TABLE, Collections.emptyMap());
-                return null;
-            } catch (Exception e) {
-                status.setRollbackOnly();
-                throw new RepositoryRuntimeException("Failed to truncate containment tables", e);
-            }
-        });
+        try {
+            jdbcTemplate.update(TRUNCATE_TABLE + RESOURCES_TABLE, Collections.emptyMap());
+            jdbcTemplate.update(TRUNCATE_TABLE + TRANSACTION_OPERATIONS_TABLE, Collections.emptyMap());
+        } catch (Exception e) {
+            throw new RepositoryRuntimeException("Failed to truncate containment tables", e);
+        }
     }
 
     /**
@@ -577,14 +564,6 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      */
     public void setDataSource(final DataSource dataSource) {
         this.dataSource = dataSource;
-    }
-
-    private <T> T executeInDbTransaction(final String txId, final TransactionCallback<T> callback) {
-        final TransactionTemplate transactionTemplate = new TransactionTemplate(platformTransactionManager);
-        // Seemingly setting the name ensures that we don't re-use a transaction.
-        transactionTemplate.setName("tx-" + txId);
-        transactionTemplate.setPropagationBehavior(TransactionTemplate.PROPAGATION_REQUIRED);
-        return transactionTemplate.execute(callback);
     }
 
 }
