@@ -39,9 +39,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.datasource.init.DatabasePopulatorUtils;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionCallback;
-import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.PostConstruct;
@@ -57,7 +55,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
@@ -122,9 +119,6 @@ public class DbSearchIndexImpl implements SearchIndex {
     private DataSource dataSource;
 
     private NamedParameterJdbcTemplate jdbcTemplate;
-
-    @Inject
-    private PlatformTransactionManager platformTransactionManager;
 
     @Inject
     private ResourceFactory resourceFactory;
@@ -285,6 +279,7 @@ public class DbSearchIndexImpl implements SearchIndex {
         addUpdateIndex(null, resourceHeaders);
     }
 
+    @Transactional
     @Override
     public void addUpdateIndex(final String txId, final ResourceHeaders resourceHeaders) {
         final var fullId = resourceHeaders.getId().getFullId();
@@ -300,40 +295,35 @@ public class DbSearchIndexImpl implements SearchIndex {
             return;
         }
 
-        final var dbTxId = txId == null ? UUID.randomUUID().toString() : txId;
-        executeInDbTransaction(dbTxId, status -> {
-            try {
-                final var fedoraResource = resourceFactory.getResource(txId, fedoraId);
-                final var rdfTypes = fedoraResource.getTypes();
-                final var rdfTypeIds = findOrCreateRdfTypesInDb(rdfTypes);
-                final var params = new MapSqlParameterSource();
-                params.addValue(FEDORA_ID_PARAM, fullId);
-                params.addValue(MODIFIED_PARAM, new Timestamp(resourceHeaders.getLastModifiedDate().toEpochMilli()));
-                params.addValue(MIME_TYPE_PARAM, resourceHeaders.getMimeType());
-                params.addValue(CONTENT_SIZE_PARAM, resourceHeaders.getContentSize());
-                final var exists = result.size() > 0;
-                final Long resourcePrimaryKey;
-                if (exists) {
-                    resourcePrimaryKey = (Long) result.get(0).get(ID_COLUMN);
-                    jdbcTemplate.update(UPDATE_INDEX_SQL, params);
-                    //delete rdf_type associations
-                    deleteRdfTypeAssociations(resourcePrimaryKey);
-                } else {
-                    params.addValue(CREATED_PARAM, new Timestamp(resourceHeaders.getCreatedDate().toEpochMilli()));
-                    final var jdbcInsertResource =
-                            new SimpleJdbcInsert(this.jdbcTemplate.getJdbcTemplate()).usingGeneratedKeyColumns(
-                                    ID_COLUMN);
-                    resourcePrimaryKey =
-                            jdbcInsertResource.withTableName(SIMPLE_SEARCH_TABLE).executeAndReturnKey(params)
-                                    .longValue();
-                }
-                insertRdfTypeAssociations(rdfTypeIds, resourcePrimaryKey);
-                return null;
-            } catch (Exception e) {
-                status.setRollbackOnly();
-                throw new RepositoryRuntimeException("Failed add/updated the search index for : " + fullId, e);
+        try {
+            final var fedoraResource = resourceFactory.getResource(txId, fedoraId);
+            final var rdfTypes = fedoraResource.getTypes();
+            final var rdfTypeIds = findOrCreateRdfTypesInDb(rdfTypes);
+            final var params = new MapSqlParameterSource();
+            params.addValue(FEDORA_ID_PARAM, fullId);
+            params.addValue(MODIFIED_PARAM, new Timestamp(resourceHeaders.getLastModifiedDate().toEpochMilli()));
+            params.addValue(MIME_TYPE_PARAM, resourceHeaders.getMimeType());
+            params.addValue(CONTENT_SIZE_PARAM, resourceHeaders.getContentSize());
+            final var exists = result.size() > 0;
+            final Long resourcePrimaryKey;
+            if (exists) {
+                resourcePrimaryKey = (Long) result.get(0).get(ID_COLUMN);
+                jdbcTemplate.update(UPDATE_INDEX_SQL, params);
+                //delete rdf_type associations
+                deleteRdfTypeAssociations(resourcePrimaryKey);
+            } else {
+                params.addValue(CREATED_PARAM, new Timestamp(resourceHeaders.getCreatedDate().toEpochMilli()));
+                final var jdbcInsertResource =
+                        new SimpleJdbcInsert(this.jdbcTemplate.getJdbcTemplate()).usingGeneratedKeyColumns(
+                                ID_COLUMN);
+                resourcePrimaryKey =
+                        jdbcInsertResource.withTableName(SIMPLE_SEARCH_TABLE).executeAndReturnKey(params)
+                                .longValue();
             }
-        });
+            insertRdfTypeAssociations(rdfTypeIds, resourcePrimaryKey);
+        } catch (Exception e) {
+            throw new RepositoryRuntimeException("Failed add/updated the search index for : " + fullId, e);
+        }
     }
 
     private void insertRdfTypeAssociations(final List<Long> rdfTypeIds, final Long resourceId) {
@@ -387,14 +377,6 @@ public class DbSearchIndexImpl implements SearchIndex {
         }
     }
 
-    private <T> T executeInDbTransaction(final String txId, final TransactionCallback<T> callback) {
-        final TransactionTemplate transactionTemplate = new TransactionTemplate(platformTransactionManager);
-        // Seemingly setting the name ensures that we don't re-use a transaction.
-        transactionTemplate.setName("tx-" + txId);
-        transactionTemplate.setPropagationBehavior(TransactionTemplate.PROPAGATION_REQUIRED);
-        return transactionTemplate.execute(callback);
-    }
-
     @Override
     public void reset() {
         try (final var conn = this.dataSource.getConnection()) {
@@ -409,8 +391,8 @@ public class DbSearchIndexImpl implements SearchIndex {
                 statement.addBatch(sql);
             }
             statement.executeBatch();
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
+        } catch (SQLException e) {
+            throw new RepositoryRuntimeException("Failed to truncate search index tables", e);
         }
     }
 
