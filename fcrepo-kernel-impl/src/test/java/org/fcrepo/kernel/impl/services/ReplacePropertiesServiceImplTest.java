@@ -38,6 +38,7 @@ import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
+import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.kernel.impl.operations.RdfSourceOperationFactoryImpl;
 import org.fcrepo.kernel.impl.operations.UpdateRdfSourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
@@ -76,6 +77,9 @@ public class ReplacePropertiesServiceImplTest {
     @Mock
     private EventAccumulator eventAccumulator;
 
+    @Mock
+    private ReferenceService referenceService;
+
     @InjectMocks
     private UpdateRdfSourceOperation operation;
 
@@ -98,6 +102,7 @@ public class ReplacePropertiesServiceImplTest {
         factory = new RdfSourceOperationFactoryImpl();
         setField(service, "factory", factory);
         setField(service, "eventAccumulator", eventAccumulator);
+        setField(service, "referenceService", referenceService);
         when(tx.getId()).thenReturn(TX_ID);
         when(psManager.getSession(anyString())).thenReturn(pSession);
         when(resource.getId()).thenReturn(FEDORA_ID.getFullId());

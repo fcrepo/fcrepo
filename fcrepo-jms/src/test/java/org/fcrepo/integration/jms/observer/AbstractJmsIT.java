@@ -30,6 +30,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.services.CreateResourceService;
 import org.fcrepo.kernel.api.services.DeleteResourceService;
+import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.kernel.api.services.ReplaceBinariesService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
@@ -72,6 +73,7 @@ import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_CREATION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_DELETION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_MODIFICATION;
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * <p>
@@ -123,6 +125,9 @@ abstract class AbstractJmsIT implements MessageListener {
     @Inject
     private ActiveMQConnectionFactory connectionFactory;
 
+    @Inject
+    private ReferenceService referenceService;
+
     private Connection connection;
 
     protected Session jmsSession;
@@ -134,6 +139,12 @@ abstract class AbstractJmsIT implements MessageListener {
     private static final Logger LOGGER = getLogger(AbstractJmsIT.class);
 
     protected abstract Destination createDestination() throws JMSException;
+
+    @Before
+    public void setUp() {
+        setField(createResourceService, "referenceService", referenceService);
+        setField(replacePropertiesService, "referenceService", referenceService);
+    }
 
     @Test(timeout = TIMEOUT)
     public void testIngestion() {

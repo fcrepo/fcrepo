@@ -17,10 +17,20 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.getRdfFormat;
+
 import edu.wisc.library.ocfl.api.OcflRepository;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.RDFDataMgr;
 import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.IndexBuilder;
@@ -32,7 +42,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
+
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
@@ -66,6 +79,9 @@ public class IndexBuilderImpl implements IndexBuilder {
     @Inject
     private OcflRepository ocflRepository;
 
+    @Inject
+    private ReferenceService referenceService;
+
     @Override
     public void rebuildIfNecessary() {
         if (shouldRebuild()) {
@@ -81,6 +97,7 @@ public class IndexBuilderImpl implements IndexBuilder {
         fedoraToOcflObjectIndex.reset();
         containmentIndex.reset();
         searchIndex.reset();
+        referenceService.reset();
 
         final var txId = UUID.randomUUID().toString();
 
@@ -90,9 +107,9 @@ public class IndexBuilderImpl implements IndexBuilder {
             try (final var ocflIds = ocflRepository.listObjectIds()) {
                 ocflIds.forEach(ocflId -> {
                     LOGGER.debug("Reading {}", ocflId);
-                    try (var session = objectSessionFactory.newSession(ocflId)) {
+                    try (final var session = objectSessionFactory.newSession(ocflId)) {
                         indexOcflObject(ocflId, txId, session);
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         // The session's close method signature throws Exception
                         if (e instanceof RuntimeException) {
                             throw (RuntimeException) e;
@@ -104,8 +121,9 @@ public class IndexBuilderImpl implements IndexBuilder {
 
             containmentIndex.commitTransaction(txId);
             fedoraToOcflObjectIndex.commit(txId);
+            referenceService.commitTransaction(txId);
             LOGGER.info("Index rebuild complete");
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             execQuietly("Failed to reset searchIndex", () -> {
                 searchIndex.reset();
                 return null;
@@ -146,6 +164,13 @@ public class IndexBuilderImpl implements IndexBuilder {
                     } else {
                         throw new IllegalStateException(String.format("Resource %s must have a parent defined",
                                 fedoraId.getFullId()));
+                    }
+                }
+                if (!headers.getInteractionModel().equalsIgnoreCase(NON_RDF_SOURCE.toString())) {
+                    final Optional<InputStream> content = session.readContent(fedoraId.getFullId()).getContentStream();
+                    if (content.isPresent()) {
+                        final RdfStream rdf = parseRdf(fedoraId, content.get());
+                        this.referenceService.updateReferences(txId, fedoraId, rdf);
                     }
                 }
 
@@ -195,6 +220,13 @@ public class IndexBuilderImpl implements IndexBuilder {
         return ocflRepository.listObjectIds().findFirst().isPresent();
     }
 
+    private static RdfStream parseRdf(final FedoraId fedoraIdentifier, final InputStream inputStream) {
+        final Model model = createDefaultModel();
+        RDFDataMgr.read(model, inputStream, getRdfFormat().getLang());
+        final FedoraId topic = (fedoraIdentifier.isDescription() ? fedoraIdentifier.asBaseId() : fedoraIdentifier);
+        return DefaultRdfStream.fromModel(createURI(topic.getFullId()), model);
+    }
+
     /**
      * Executes the closure, capturing all exceptions, and logging them as errors.
      *
@@ -204,7 +236,7 @@ public class IndexBuilderImpl implements IndexBuilder {
     private void execQuietly(final String failureMessage, final Callable<Void> callable) {
         try {
             callable.call();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error(failureMessage, e);
         }
     }

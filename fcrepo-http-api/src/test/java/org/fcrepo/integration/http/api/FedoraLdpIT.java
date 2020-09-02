@@ -2827,7 +2827,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testGetObjectReferences() throws IOException {
         final String id = getRandomUniqueId();
         final String resource = serverAddress + id;
@@ -2842,7 +2841,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         updateObjectGraphMethod.setEntity(new StringEntity("INSERT { <" +
                 resourcea + "> <http://purl.org/dc/terms/isPartOf> <" + resourceb + "> . \n <" +
                 resourcea + "> <info:xyz#some-other-property> <" + resourceb + "> } WHERE {}"));
-        executeAndClose(updateObjectGraphMethod);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(updateObjectGraphMethod));
 
         final HttpGet getObjMethod = new HttpGet(resourceb);
 

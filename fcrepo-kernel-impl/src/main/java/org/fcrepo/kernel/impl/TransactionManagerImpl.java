@@ -23,6 +23,7 @@ import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.TransactionClosedException;
 import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
+import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +56,9 @@ public class TransactionManagerImpl implements TransactionManager {
 
     @Inject
     private EventAccumulator eventAccumulator;
+
+    @Inject
+    private ReferenceService referenceService;
 
     TransactionManagerImpl() {
         transactions = new ConcurrentHashMap<>();
@@ -137,4 +141,7 @@ public class TransactionManagerImpl implements TransactionManager {
         return eventAccumulator;
     }
 
+    protected ReferenceService getReferenceService() {
+        return referenceService;
+    }
 }

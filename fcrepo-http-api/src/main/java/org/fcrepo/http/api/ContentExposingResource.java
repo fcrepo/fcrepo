@@ -61,6 +61,7 @@ import org.fcrepo.kernel.api.services.ContainmentTriplesService;
 import org.fcrepo.kernel.api.services.CreateResourceService;
 import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.fcrepo.kernel.api.services.ManagedPropertiesService;
+import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
@@ -220,6 +221,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     @Inject
     protected ContainmentTriplesService containmentTriplesService;
 
+    @Inject
+    protected ReferenceService referenceService;
+
     protected abstract String externalPath();
 
     protected static final Splitter.MapSplitter RFC3230_SPLITTER =
@@ -317,9 +321,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
             // Include inbound references to this object
             if (ldpPreferences.prefersReferences()) {
-                //TODO implement inbound triple retrieval service:
-                // https://jira.lyrasis.org/browse/FCREPO-3166
-                //streams.add(getTriples(resource, INBOUND_REFERENCES));
+                streams.add(referenceService.getInboundReferences(transaction().getId(), resource));
             }
 
             // Embed the children of this object
@@ -784,7 +786,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * Returns an acceptable plain text media type if possible, or null if not.
      * @return an acceptable plain-text media type, or null
      */
-    private MediaType acceptabePlainTextMediaType() {
+    private MediaType acceptablePlainTextMediaType() {
         final List<MediaType> acceptable = headers.getAcceptableMediaTypes();
         if (acceptable == null || acceptable.size() == 0) {
             return TEXT_PLAIN_TYPE;
@@ -827,7 +829,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final Response.ResponseBuilder builder = created(location);
 
         if (prefer == null || !prefer.hasReturn()) {
-            final MediaType acceptablePlainText = acceptabePlainTextMediaType();
+            final MediaType acceptablePlainText = acceptablePlainTextMediaType();
             if (acceptablePlainText != null) {
                 return builder.type(acceptablePlainText).entity(location.toString()).build();
             }

@@ -21,4 +21,9 @@
     <bean id="containmentIndex" class="org.fcrepo.kernel.impl.ContainmentIndexImpl">
         <property name="dataSource" ref="containmentIndexDataSource"/>
     </bean>
+
+    <!-- ReferenceService index to test -->
+    <bean id="referenceIndex" class="org.fcrepo.kernel.impl.services.ReferenceServiceImpl">
+        <property name="dataSource" ref="containmentIndexDataSource" />
+    </bean>
 </beans>

@@ -24,6 +24,7 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
@@ -46,6 +47,9 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
 
     @Inject
     private RdfSourceOperationFactory factory;
+
+    @Inject
+    private ReferenceService referenceService;
 
     @Override
     public void perform(final String txId,
@@ -70,6 +74,8 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
                 .build();
 
             pSession.persist(updateOp);
+            referenceService.updateReferences(txId, fedoraId,
+                    fromModel(inputModel.createResource(fedoraId.getFullId()).asNode(), inputModel));
             recordEvent(txId, fedoraId, updateOp);
         } catch (final PersistentStorageException ex) {
             throw new RepositoryRuntimeException(String.format("failed to replace resource %s",

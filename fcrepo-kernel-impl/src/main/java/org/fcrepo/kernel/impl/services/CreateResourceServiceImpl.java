@@ -32,6 +32,7 @@ import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.services.CreateResourceService;
+import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
@@ -76,6 +77,9 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
     @Inject
     private NonRdfSourceOperationFactory nonRdfSourceOperationFactory;
+
+    @Inject
+    private ReferenceService referenceService;
 
     @Override
     public void perform(final String txId, final String userPrincipal, final FedoraId fedoraId,
@@ -180,6 +184,8 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
         try {
             pSession.persist(createOp);
+            referenceService.updateReferences(txId, fedoraId,
+                    fromModel(model.getResource(fedoraId.getFullId()).asNode(), model));
             addToContainmentIndex(txId, parentId, fedoraId);
             recordEvent(txId, fedoraId, createOp);
         } catch (final PersistentStorageException exc) {
