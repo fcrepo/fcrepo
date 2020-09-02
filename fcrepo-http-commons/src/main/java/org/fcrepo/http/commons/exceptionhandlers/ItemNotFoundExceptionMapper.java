@@ -42,8 +42,19 @@ public class ItemNotFoundExceptionMapper implements
 
         LOGGER.debug("Exception intercepted by ItemNotFoundExceptionMapper: {}\n", e.getMessage());
         debugException(this, e, LOGGER);
-        return Response.status(Response.Status.NOT_FOUND).
-                entity("Error: " + e.getMessage()).build();
+        String tmp = e.getMessage();
+        LOGGER.debug("tmp is {}\n", tmp);
+        final int idx = tmp.lastIndexOf("/");
+        if (idx != -1) {
+            tmp = tmp.substring(idx);
+        }
+        if (tmp.contains("fcr:tombstone")) {
+            return Response.status(Response.Status.NOT_FOUND).
+                            entity("Discovered tombstone resource at " + tmp).build();
+        } else {
+            return Response.status(Response.Status.NOT_FOUND).
+                            entity("Resource at " + tmp + " not found").build();
+        }
     }
 }
 
