@@ -33,5 +33,7 @@ public class PathNotFoundRuntimeException extends RepositoryRuntimeException {
         super(rootCause);
     }
 
-    public PathNotFoundRuntimeException(final String msg, final Throwable rootCause) { super(msg,rootCause); }
+    public PathNotFoundRuntimeException(final String msg, final Throwable rootCause) {
+        super(msg,rootCause);
+    }
 }
