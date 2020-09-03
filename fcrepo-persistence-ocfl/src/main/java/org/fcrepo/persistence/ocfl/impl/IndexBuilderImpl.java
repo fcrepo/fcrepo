@@ -160,9 +160,6 @@ public class IndexBuilderImpl implements IndexBuilder {
 
         fedoraIds.forEach(fedoraIdentifier -> {
             var rootFedoraIdentifier = rootId.get();
-            if (rootFedoraIdentifier == null) {
-                rootFedoraIdentifier = fedoraIdentifier;
-            }
             fedoraToOcflObjectIndex.addMapping(txId, fedoraIdentifier, rootFedoraIdentifier, ocflId);
             LOGGER.debug("Rebuilt fedora-to-ocfl object index entry for {}", fedoraIdentifier);
         });
