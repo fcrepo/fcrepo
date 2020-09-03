@@ -37,7 +37,9 @@ public class PathNotFoundException extends Exception {
         super(msg);
     }
 
-    public PathNotFoundException(final String msg, final Throwable exception) { super(msg,exception); }
+    public PathNotFoundException(final String msg, final Throwable exception) {
+        super(msg,exception);
+    }
 
     /**
      * Constructor for wrapping exception.
