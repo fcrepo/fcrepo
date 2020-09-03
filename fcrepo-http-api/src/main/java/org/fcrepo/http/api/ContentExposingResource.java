@@ -1104,7 +1104,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
             return fedoraResource;
         } catch (final PathNotFoundException exc) {
-            throw new PathNotFoundRuntimeException("Resource at /"+externalPath + " not found",exc);
+            throw new PathNotFoundRuntimeException("Resource at /" + externalPath + " not found",exc);
         }
     }
 }
