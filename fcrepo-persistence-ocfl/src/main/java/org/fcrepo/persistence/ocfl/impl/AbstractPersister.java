@@ -156,8 +156,7 @@ abstract class AbstractPersister implements Persister {
             headers.setArchivalGroup(createOperation.isArchivalGroup());
             headers.setObjectRoot(isResourceRoot);
         } else {
-            headers = new ResourceHeadersAdapter(StorageExceptionConverter.exec(() ->
-                    session.readHeaders(operation.getResourceId().getResourceId())))
+            headers = new ResourceHeadersAdapter(session.readHeaders(operation.getResourceId().getResourceId()))
                     .asKernelHeaders();
         }
 

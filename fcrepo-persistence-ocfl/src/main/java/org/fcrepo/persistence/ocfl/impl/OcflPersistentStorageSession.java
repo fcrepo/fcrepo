@@ -173,8 +173,9 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
 
 
     OcflObjectSession findOrCreateSession(final String ocflId) {
-        return this.sessionMap.computeIfAbsent(ocflId,
-                this.objectSessionFactory::newSession);
+        return this.sessionMap.computeIfAbsent(ocflId, key -> {
+            return new FcrepoOcflObjectSessionWrapper(this.objectSessionFactory.newSession(key));
+        });
     }
 
     @Override
@@ -187,8 +188,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         final OcflObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
 
         final var versionId = resolveVersionNumber(objSession, identifier, version);
-        final var headers = StorageExceptionConverter.exec(() ->
-                objSession.readHeaders(identifier.getResourceId(), versionId));
+        final var headers = objSession.readHeaders(identifier.getResourceId(), versionId);
 
         return new ResourceHeadersAdapter(headers).asKernelHeaders();
     }
@@ -221,8 +221,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         final var mapping = getFedoraOcflMapping(fedoraIdentifier);
         final var objSession = findOrCreateSession(mapping.getOcflObjectId());
 
-        return StorageExceptionConverter.exec(() -> objSession.listVersions(fedoraIdentifier.getResourceId()))
-                .stream()
+        return objSession.listVersions(fedoraIdentifier.getResourceId()).stream()
                 .map(OcflVersionInfo::getCreated)
                 .collect(Collectors.toList());
     }
@@ -237,7 +236,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
 
         final var versionNumber = resolveVersionNumber(objSession, identifier, version);
 
-        return StorageExceptionConverter.exec(() -> objSession.readContent(identifier.getResourceId(), versionNumber))
+        return objSession.readContent(identifier.getResourceId(), versionNumber)
                 .getContentStream()
                 .orElseThrow(() -> new PersistentItemNotFoundException("No binary content found for resource "
                         + identifier.getFullId()));
@@ -351,8 +350,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
                                        final Instant version)
             throws PersistentStorageException {
         if (version != null) {
-            final var versions = StorageExceptionConverter.exec(() ->
-                    objSession.listVersions(fedoraId.getResourceId()));
+            final var versions = objSession.listVersions(fedoraId.getResourceId());
             // reverse order so that the most recent version is matched first
             Collections.reverse(versions);
             return versions.stream()

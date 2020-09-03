@@ -136,8 +136,7 @@ abstract class AbstractRdfSourcePersister extends AbstractPersister {
             streamRDF.finish();
 
             final var is = new ByteArrayInputStream(os.toByteArray());
-            StorageExceptionConverter.exec(() ->
-                session.writeResource(new ResourceHeadersAdapter(headers).asStorageHeaders(), is));
+            session.writeResource(new ResourceHeadersAdapter(headers).asStorageHeaders(), is);
             log.debug("wrote {} to {}", headers.getId().getFullId(), session.sessionId());
         } catch (final IOException ex) {
             throw new PersistentStorageException(

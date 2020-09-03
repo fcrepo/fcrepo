@@ -23,7 +23,7 @@ package org.fcrepo.persistence.api.exceptions;
  * @author whikloj
  * @since 2019-09-20
  */
-public class PersistentStorageException extends Exception {
+public class PersistentStorageException extends RuntimeException {
 
     /**
      * version UID.
