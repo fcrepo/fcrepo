@@ -124,6 +124,7 @@ import org.apache.jena.vocabulary.RDF;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.storage.ocfl.CommitType;
 import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -169,6 +170,11 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         id = getRandomUniqueId();
         subjectUri = serverAddress + id;
         objectSessionFactory = getBean(DefaultOcflObjectSessionFactory.class);
+    }
+
+    @After
+    public void after() {
+        objectSessionFactory.setDefaultCommitType(CommitType.NEW_VERSION);
     }
 
     @Ignore //TODO Fix this test
@@ -242,25 +248,21 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     @Test
     public void getMementoFromAgChild() throws Exception {
         objectSessionFactory.setDefaultCommitType(CommitType.UNVERSIONED);
-        try {
-            final var childId1 = id + "/child1";
+        final var childId1 = id + "/child1";
 
-            createVersionedArchivalGroup(id);
-            createMemento(subjectUri);
-            TimeUnit.SECONDS.sleep(1);
+        createVersionedArchivalGroup(id);
+        createMemento(subjectUri);
+        TimeUnit.SECONDS.sleep(1);
 
-            putVersionedBinary(childId1, OCTET_STREAM_TYPE, "v2", false);
-            final var mementoUri = createMemento(subjectUri);
-            final var mementoTime = mementoUri.substring(mementoUri.lastIndexOf("/"));
+        putVersionedBinary(childId1, OCTET_STREAM_TYPE, "v2", false);
+        final var mementoUri = createMemento(subjectUri);
+        final var mementoTime = mementoUri.substring(mementoUri.lastIndexOf("/"));
 
-            final HttpGet httpGet = new HttpGet(subjectUri + "/child1/fcr:versions" + mementoTime);
-            try (final CloseableHttpResponse response = execute(httpGet)) {
-                assertMementoDatetimeHeaderMatches(response, now());
-                assertEquals("Binary content of memento must match original content",
-                        "v2", EntityUtils.toString(response.getEntity()));
-            }
-        } finally {
-            objectSessionFactory.setDefaultCommitType(CommitType.NEW_VERSION);
+        final HttpGet httpGet = new HttpGet(subjectUri + "/child1/fcr:versions" + mementoTime);
+        try (final CloseableHttpResponse response = execute(httpGet)) {
+            assertMementoDatetimeHeaderMatches(response, now());
+            assertEquals("Binary content of memento must match original content",
+                    "v2", EntityUtils.toString(response.getEntity()));
         }
     }
 
@@ -695,14 +697,10 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     @Test
     public void testGetTimeMapResponseForBinary() throws Exception {
         objectSessionFactory.setDefaultCommitType(CommitType.UNVERSIONED);
-        try {
 
-            createVersionedBinary(id);
+        createVersionedBinary(id);
 
-            verifyTimemapResponse(subjectUri, id);
-        } finally {
-            objectSessionFactory.setDefaultCommitType(CommitType.NEW_VERSION);
-        }
+        verifyTimemapResponse(subjectUri, id);
     }
 
     @Test
@@ -722,16 +720,12 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     public void testGetTimeMapResponseForBinaryDescription() throws Exception {
         objectSessionFactory.setDefaultCommitType(CommitType.UNVERSIONED);
 
-        try {
-            createVersionedBinary(id);
+        createVersionedBinary(id);
 
-            final String descriptionUri = subjectUri + "/fcr:metadata";
-            final String descriptionId = id + "/fcr:metadata";
+        final String descriptionUri = subjectUri + "/fcr:metadata";
+        final String descriptionId = id + "/fcr:metadata";
 
-            verifyTimemapResponse(descriptionUri, descriptionId);
-        } finally {
-            objectSessionFactory.setDefaultCommitType(CommitType.NEW_VERSION);
-        }
+        verifyTimemapResponse(descriptionUri, descriptionId);
     }
 
     /**
@@ -936,44 +930,40 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     public void testCreateVersionOfBinaryWithDatetimeAndBody() throws Exception {
         objectSessionFactory.setDefaultCommitType(CommitType.UNVERSIONED);
 
-        try {
-            createVersionedBinary(id);
+        createVersionedBinary(id);
 
-            final String mementoUri = createMemento(subjectUri);
-            final String v1Time = now();
-            assertMementoUri(mementoUri, subjectUri);
+        final String mementoUri = createMemento(subjectUri);
+        final String v1Time = now();
+        assertMementoUri(mementoUri, subjectUri);
 
-            TimeUnit.SECONDS.sleep(1);
+        TimeUnit.SECONDS.sleep(1);
 
-            putVersionedBinary(id, OCTET_STREAM_TYPE, BINARY_UPDATED, true);
+        putVersionedBinary(id, OCTET_STREAM_TYPE, BINARY_UPDATED, true);
 
-            final String mementoUri2 = createMemento(subjectUri);
-            final String v2Time = now();
-            assertMementoUri(mementoUri2, subjectUri);
+        final String mementoUri2 = createMemento(subjectUri);
+        final String v2Time = now();
+        assertMementoUri(mementoUri2, subjectUri);
 
-            assertNotEquals("mementos should be different", mementoUri, mementoUri2);
+        assertNotEquals("mementos should be different", mementoUri, mementoUri2);
 
-            // Verify that the memento has the updated binary
-            try (final CloseableHttpResponse response = execute(new HttpGet(mementoUri))) {
-                assertMementoDatetimeHeaderMatches(response, v1Time);
+        // Verify that the memento has the updated binary
+        try (final CloseableHttpResponse response = execute(new HttpGet(mementoUri))) {
+            assertMementoDatetimeHeaderMatches(response, v1Time);
 
-                assertEquals(OCTET_STREAM_TYPE, response.getFirstHeader(CONTENT_TYPE).getValue());
+            assertEquals(OCTET_STREAM_TYPE, response.getFirstHeader(CONTENT_TYPE).getValue());
 
-                assertEquals("Binary content of memento must match original content",
-                        BINARY_CONTENT, EntityUtils.toString(response.getEntity()));
-            }
+            assertEquals("Binary content of memento must match original content",
+                    BINARY_CONTENT, EntityUtils.toString(response.getEntity()));
+        }
 
-            try (final CloseableHttpResponse response = execute(new HttpGet(mementoUri2))) {
-                assertMementoDatetimeHeaderMatches(response, v2Time);
+        try (final CloseableHttpResponse response = execute(new HttpGet(mementoUri2))) {
+            assertMementoDatetimeHeaderMatches(response, v2Time);
 
-                // Content-type is not retained for a binary memento created without description
-                assertEquals(OCTET_STREAM_TYPE, response.getFirstHeader(CONTENT_TYPE).getValue());
+            // Content-type is not retained for a binary memento created without description
+            assertEquals(OCTET_STREAM_TYPE, response.getFirstHeader(CONTENT_TYPE).getValue());
 
-                assertEquals("Binary content of memento must match updated content",
-                        BINARY_UPDATED, EntityUtils.toString(response.getEntity()));
-            }
-        } finally {
-            objectSessionFactory.setDefaultCommitType(CommitType.NEW_VERSION);
+            assertEquals("Binary content of memento must match updated content",
+                    BINARY_UPDATED, EntityUtils.toString(response.getEntity()));
         }
     }
 
@@ -1251,20 +1241,16 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     public void testDatetimeNegotiationNoMementos() throws Exception {
         objectSessionFactory.setDefaultCommitType(CommitType.UNVERSIONED);
         final CloseableHttpClient customClient = createClient(true);
-        try {
-            createVersionedContainer(id);
-            final String requestDatetime =
-                    MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-01-12T00:00:00Z", Instant::from));
-            final HttpGet getMemento = getObjMethod(id);
-            getMemento.addHeader(ACCEPT_DATETIME, requestDatetime);
+        createVersionedContainer(id);
+        final String requestDatetime =
+                MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-01-12T00:00:00Z", Instant::from));
+        final HttpGet getMemento = getObjMethod(id);
+        getMemento.addHeader(ACCEPT_DATETIME, requestDatetime);
 
-            try (final CloseableHttpResponse response = customClient.execute(getMemento)) {
-                assertEquals("Didn't get NOT_ACCEPTABLE response", NOT_ACCEPTABLE.getStatusCode(), getStatus(response));
-                assertNull("Didn't expect a Location header", response.getFirstHeader(LOCATION));
-                assertNotEquals("Didn't get Content-Length > 0", 0, response.getFirstHeader(CONTENT_LENGTH).getValue());
-            }
-        } finally {
-            objectSessionFactory.setDefaultCommitType(CommitType.NEW_VERSION);
+        try (final CloseableHttpResponse response = customClient.execute(getMemento)) {
+            assertEquals("Didn't get NOT_ACCEPTABLE response", NOT_ACCEPTABLE.getStatusCode(), getStatus(response));
+            assertNull("Didn't expect a Location header", response.getFirstHeader(LOCATION));
+            assertNotEquals("Didn't get Content-Length > 0", 0, response.getFirstHeader(CONTENT_LENGTH).getValue());
         }
     }
 
@@ -1276,33 +1262,29 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final String mementoDateTime =
             MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-08-29T15:47:50Z", Instant::from));
 
-        try {
-            createVersionedContainer(id);
+        createVersionedContainer(id);
 
-            // Status 406: Get absent memento with datetime negotiation.
-            final HttpGet getMethod1 = getObjMethod(id);
-            getMethod1.setHeader(ACCEPT_DATETIME, mementoDateTime);
-            assertEquals("Didn't get status 406 on absent memento!",
-                    NOT_ACCEPTABLE.getStatusCode(), getStatus(customClient.execute(getMethod1)));
+        // Status 406: Get absent memento with datetime negotiation.
+        final HttpGet getMethod1 = getObjMethod(id);
+        getMethod1.setHeader(ACCEPT_DATETIME, mementoDateTime);
+        assertEquals("Didn't get status 406 on absent memento!",
+                NOT_ACCEPTABLE.getStatusCode(), getStatus(customClient.execute(getMethod1)));
 
-            // Create memento
-            final String mementoUri = createLDPRSMementoWithExistingBody(id);
+        // Create memento
+        final String mementoUri = createLDPRSMementoWithExistingBody(id);
 
-            // Status 302: GET memento with datetime negotiation
-            final HttpGet getMethod2 = getObjMethod(id);
-            getMethod2.setHeader(ACCEPT_DATETIME, mementoDateTime);
-            assertEquals("Expected memento is NOT found: " + mementoUri, FOUND.getStatusCode(),
-                    getStatus(customClient.execute(getMethod2)));
+        // Status 302: GET memento with datetime negotiation
+        final HttpGet getMethod2 = getObjMethod(id);
+        getMethod2.setHeader(ACCEPT_DATETIME, mementoDateTime);
+        assertEquals("Expected memento is NOT found: " + mementoUri, FOUND.getStatusCode(),
+                getStatus(customClient.execute(getMethod2)));
 
-            // Status 400: Get memento with bad Accept-Datetime header value
-            final String badDataTime = "Wed, 29 Aug 2017 15:47:50 GMT"; // should be TUE, 29 Aug 2017 15:47:50 GMT
-            final HttpGet getMethod3 = getObjMethod(id);
-            getMethod3.setHeader(ACCEPT_DATETIME, badDataTime);
-            assertEquals("Didn't get status 400 on bad Accept-Datetime value!",
-                    BAD_REQUEST.getStatusCode(), getStatus(customClient.execute(getMethod3)));
-        } finally {
-            objectSessionFactory.setDefaultCommitType(CommitType.NEW_VERSION);
-        }
+        // Status 400: Get memento with bad Accept-Datetime header value
+        final String badDataTime = "Wed, 29 Aug 2017 15:47:50 GMT"; // should be TUE, 29 Aug 2017 15:47:50 GMT
+        final HttpGet getMethod3 = getObjMethod(id);
+        getMethod3.setHeader(ACCEPT_DATETIME, badDataTime);
+        assertEquals("Didn't get status 400 on bad Accept-Datetime value!",
+                BAD_REQUEST.getStatusCode(), getStatus(customClient.execute(getMethod3)));
     }
 
     @Ignore("fixity not implemented")

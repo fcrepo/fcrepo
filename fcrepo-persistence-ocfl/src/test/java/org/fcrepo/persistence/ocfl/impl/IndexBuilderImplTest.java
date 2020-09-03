@@ -17,9 +17,6 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -49,7 +46,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
 
-import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS;
 import static java.lang.System.currentTimeMillis;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
@@ -106,10 +102,7 @@ public class IndexBuilderImplTest {
         index = new TestOcflObjectIndex();
         index.reset();
 
-        final var objectMapper = new ObjectMapper()
-                .configure(WRITE_DATES_AS_TIMESTAMPS, false)
-                .registerModule(new JavaTimeModule())
-                .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        final var objectMapper = OcflPersistentStorageUtils.objectMapper();
         final var ocflObjectSessionFactory = new DefaultOcflObjectSessionFactory(repository,
                 tempFolder.newFolder().toPath(),
                 objectMapper, CommitType.NEW_VERSION,

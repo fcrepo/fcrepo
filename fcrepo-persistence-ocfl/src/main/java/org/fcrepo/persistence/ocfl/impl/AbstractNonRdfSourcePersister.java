@@ -73,7 +73,8 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
 
         final var nonRdfSourceOperation = (NonRdfSourceOperation) operation;
 
-        final var headers = new ResourceHeadersAdapter(createHeaders(objectSession, nonRdfSourceOperation,
+        final var headers = new ResourceHeadersAdapter(
+                createHeaders(objectSession, nonRdfSourceOperation,
                 resourceId.equals(rootIdentifier)));
 
         if (forExternalBinary(nonRdfSourceOperation)) {

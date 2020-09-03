@@ -17,9 +17,6 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -60,7 +57,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
-import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
@@ -149,10 +145,7 @@ public class OcflPersistentStorageSessionTest {
         final var repoDir = tempFolder.newFolder("ocfl-repo").toPath();
         final var workDir = tempFolder.newFolder("ocfl-work").toPath();
 
-        final var objectMapper = new ObjectMapper()
-                .configure(WRITE_DATES_AS_TIMESTAMPS, false)
-                .registerModule(new JavaTimeModule())
-                .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        final var objectMapper = OcflPersistentStorageUtils.objectMapper();
         final var repository = createRepository(repoDir, workDir);
         objectSessionFactory = new DefaultOcflObjectSessionFactory(repository, stagingDir,
                 objectMapper, CommitType.NEW_VERSION,

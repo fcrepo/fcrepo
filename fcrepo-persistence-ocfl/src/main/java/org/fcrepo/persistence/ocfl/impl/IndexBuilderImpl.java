@@ -137,28 +137,25 @@ public class IndexBuilderImpl implements IndexBuilder {
                 rootId.set(fedoraId);
             }
 
-            if (!headers.isDeleted()) {
-                if (!fedoraId.isRepositoryRoot()) {
-                    var parentId = headers.getParent();
+            if (!headers.isDeleted() && !fedoraId.isRepositoryRoot()) {
+                var parentId = headers.getParent();
 
-                    if (headers.getParent() == null) {
-                        if (headers.isObjectRoot()) {
-                            parentId = FedoraId.getRepositoryRootId();
-                        } else {
-                            throw new IllegalStateException(String.format("Resource %s must have a parent defined",
-                                    fedoraId.getFullId()));
-                        }
+                if (headers.getParent() == null) {
+                    if (headers.isObjectRoot()) {
+                        parentId = FedoraId.getRepositoryRootId();
+                    } else {
+                        throw new IllegalStateException(String.format("Resource %s must have a parent defined",
+                                fedoraId.getFullId()));
                     }
-
-                    this.containmentIndex.addContainedBy(txId, parentId, fedoraId);
-                    headersList.add(headers.asKernelHeaders());
                 }
+
+                this.containmentIndex.addContainedBy(txId, parentId, fedoraId);
+                headersList.add(headers.asKernelHeaders());
             }
         });
 
-        // if a resource is not an AG then there should only be a single resource per OCFL object
-        if (fedoraIds.size() == 1 && rootId.get() == null) {
-            rootId.set(fedoraIds.get(0));
+        if (rootId.get() == null) {
+            throw new IllegalStateException(String.format("Failed to find root resource in object %s", ocflId));
         }
 
         fedoraIds.forEach(fedoraIdentifier -> {

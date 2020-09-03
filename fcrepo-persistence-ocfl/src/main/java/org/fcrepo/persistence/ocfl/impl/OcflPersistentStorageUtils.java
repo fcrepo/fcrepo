@@ -17,6 +17,9 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import edu.wisc.library.ocfl.api.DigestAlgorithmRegistry;
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import edu.wisc.library.ocfl.api.OcflConfig;
@@ -37,6 +40,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS;
 import static org.apache.jena.riot.RDFFormat.NTRIPLES;
 
 /**
@@ -102,6 +106,16 @@ public class OcflPersistentStorageUtils {
                 .storage((FileSystemOcflStorage.builder().repositoryRoot(ocflStorageRootDir).build()))
                 .workDir(ocflWorkDir)
                 .buildMutable();
+    }
+
+    /**
+     * @return new object mapper with default config
+     */
+    public static ObjectMapper objectMapper() {
+        return new ObjectMapper()
+                .configure(WRITE_DATES_AS_TIMESTAMPS, false)
+                .registerModule(new JavaTimeModule())
+                .setSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
 
     /**
