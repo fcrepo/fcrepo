@@ -1021,7 +1021,7 @@ public class FedoraLdpTest {
 
         setResource(Container.class);
         when(mockRequest.getMethod()).thenReturn("PATCH");
-        testObj.updateSparql(toInputStream("xyz", UTF_8));
+        testObj.updateSparql(toInputStream("INSERT DATA { <> <http://some/predicate> \"xyz\" }", UTF_8));
     }
 
 
@@ -1037,12 +1037,12 @@ public class FedoraLdpTest {
 
         when(resourceFactory.getResource(mockTransaction, binaryDescId))
                 .thenReturn(mockNonRdfSourceDescription);
-        testObj.updateSparql(toInputStream("xyz", UTF_8));
+        testObj.updateSparql(toInputStream("INSERT DATA { <> <http://some/predicate> \"xyz\" }", UTF_8));
         verify(updatePropertiesService).updateProperties(
                 eq(mockTransaction.getId()),
                 anyString(),
                 eq(binaryDescId),
-                eq("xyz")
+                anyString()
         );
     }
 

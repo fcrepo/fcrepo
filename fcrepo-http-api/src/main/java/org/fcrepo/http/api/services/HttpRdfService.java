@@ -41,6 +41,9 @@ import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RiotException;
+import org.apache.jena.update.Update;
+import org.apache.jena.update.UpdateFactory;
+import org.apache.jena.update.UpdateRequest;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -159,6 +162,25 @@ public class HttpRdfService {
         final Model model = bodyToInternalModel(extResourceId, stream, contentType, idTranslator);
 
         return fromModel(model.getResource(idTranslator.toInternalId(extResourceId)).asNode(), model);
+    }
+
+    /**
+     * Takes a PATCH request body and translates any subjects and objects that are in the domain of the repository
+     * to use internal IDs.
+     * @param extResourceId the internal ID of the current resource.
+     * @param requestBody the request body.
+     * @param idTranslator an ID converter for the current context.
+     * @return the converted string.
+     */
+    public String patchRequestToInternalString(final String extResourceId, final String requestBody,
+                                               final HttpIdentifierConverter idTranslator) {
+        final UpdateRequest request = UpdateFactory.create(requestBody, extResourceId);
+        final List<Update> updates = request.getOperations();
+        final SparqlTranslateVisitor visitor = new SparqlTranslateVisitor(idTranslator);
+        for (final Update update : updates) {
+            update.visit(visitor);
+        }
+        return visitor.getTranslatedRequest().toString();
     }
 
     /**
