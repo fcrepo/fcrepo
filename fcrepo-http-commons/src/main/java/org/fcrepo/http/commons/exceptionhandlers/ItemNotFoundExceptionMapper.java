@@ -43,7 +43,7 @@ public class ItemNotFoundExceptionMapper implements
         LOGGER.debug("Exception intercepted by ItemNotFoundExceptionMapper: {}\n", e.getMessage());
         debugException(this, e, LOGGER);
         return Response.status(Response.Status.NOT_FOUND).
-                            entity("Error: "+e.getMessage()).build();
+                            entity("Error: " + e.getMessage()).build();
     }
 }
 
