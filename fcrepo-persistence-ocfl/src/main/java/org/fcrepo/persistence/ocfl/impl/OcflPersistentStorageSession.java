@@ -345,7 +345,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
      * @return name of version
      * @throws PersistentStorageException thrown if version not found
      */
-    public String resolveVersionNumber(final OcflObjectSession objSession,
+    private String resolveVersionNumber(final OcflObjectSession objSession,
                                        final FedoraId fedoraId,
                                        final Instant version)
             throws PersistentStorageException {
