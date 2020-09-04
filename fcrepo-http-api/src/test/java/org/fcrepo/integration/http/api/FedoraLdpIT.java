@@ -2957,7 +2957,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testUpdateAndReplaceObjectGraph() throws IOException {
         final String subjectURI = getLocation(postObjMethod());
         final HttpPatch updateObjectGraphMethod = new HttpPatch(subjectURI);
@@ -3101,7 +3100,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         patch.setEntity(new StringEntity(
                 "PREFIX ebucore: <http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#> " +
-                "INSERT { <" + subjectURI + "> ebucore:hasMimeType> \"-- invalid syntax! --\" } WHERE {}")
+                "INSERT { <" + subjectURI + "> ebucore:hasMimeType \"-- invalid syntax! --\" } WHERE {}")
         );
 
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patch));
@@ -3261,7 +3260,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testLinkedDeletion() {
         final String linkedFrom = getRandomUniqueId();
         final String linkedTo = getRandomUniqueId();
