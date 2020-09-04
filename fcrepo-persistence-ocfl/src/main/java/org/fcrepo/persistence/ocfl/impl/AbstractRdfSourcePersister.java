@@ -17,26 +17,25 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import org.apache.jena.riot.system.StreamRDF;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.ResourceHeaders;
-import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
-import org.fcrepo.persistence.api.WriteOutcome;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
+import org.fcrepo.storage.ocfl.OcflObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
-import static org.fcrepo.persistence.common.ResourceHeaderUtils.newResourceHeaders;
-import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchCreationHeaders;
-import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchModificationHeaders;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.writeRDF;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
+import static java.lang.String.format;
+import static org.apache.jena.riot.system.StreamRDFWriter.getWriterStream;
 
 /**
  * This class implements the persistence of a new RDFSource
@@ -59,27 +58,22 @@ abstract class AbstractRdfSourcePersister extends AbstractPersister {
 
     /**
      * Persists the RDF using the specified operation and session.
-     * @param session The session.
+     * @param objectSession The object session.
      * @param operation The operation
      * @param rootId The fedora root object identifier tha maps to the OCFL object root.
      * @throws PersistentStorageException
      */
-    protected void persistRDF(final OcflObjectSession session, final ResourceOperation operation,
+    protected void persistRDF(final OcflObjectSession objectSession,
+                              final ResourceOperation operation,
                               final FedoraId rootId) throws PersistentStorageException {
 
         final RdfSourceOperation rdfSourceOp = (RdfSourceOperation)operation;
         log.debug("persisting RDFSource ({}) to OCFL", operation.getResourceId());
 
-        final var contentPath = resolveRdfContentPath(session, rootId, operation.getResourceId());
-        final var headerPath = PersistencePaths.headerPath(rootId, operation.getResourceId());
+        final var headers = createHeaders(objectSession, rdfSourceOp,
+                operation.getResourceId().equals(rootId));
 
-        //write user triples
-        final var outcome = writeRDF(session, rdfSourceOp.getTriples(), contentPath);
-
-        // Write resource headers
-        final var headers = populateHeaders(session, headerPath, rdfSourceOp, outcome,
-                operation.getResourceId().equals(rootId), contentPath);
-        writeHeaders(session, headers, headerPath);
+        writeRdf(objectSession, headers, rdfSourceOp.getTriples());
     }
 
     /**
@@ -87,34 +81,14 @@ abstract class AbstractRdfSourcePersister extends AbstractPersister {
      * operation, and merged with existing properties if appropriate.
      *
      * @param objSession the object session
-     * @param headerPath the headerPath of the file
      * @param operation the operation being persisted
-     * @param outcome outcome of persisting the RDF file
      * @param objectRoot indicates this is the object root
      * @return populated resource headers
-     * @throws PersistentStorageException if unexpectedly unable to retrieve existing object headers
      */
-    private ResourceHeaders populateHeaders(final OcflObjectSession objSession, final String headerPath,
-                                            final RdfSourceOperation operation, final WriteOutcome outcome,
-                                            final boolean objectRoot, final String contentPath)
-            throws PersistentStorageException {
-
-        final ResourceHeadersImpl headers;
-        final var timeWritten = outcome.getTimeWritten();
-        if (CREATE.equals(operation.getType())) {
-            final var createOperation = (CreateResourceOperation) operation;
-            headers = newResourceHeaders(createOperation.getParentId(),
-                    operation.getResourceId(),
-                    createOperation.getInteractionModel());
-            touchCreationHeaders(headers, operation.getUserPrincipal(), timeWritten);
-            headers.setArchivalGroup(createOperation.isArchivalGroup());
-            headers.setObjectRoot(objectRoot);
-            headers.setContentPath(contentPath);
-        } else {
-            headers = (ResourceHeadersImpl) readHeaders(objSession, headerPath);
-        }
-        touchModificationHeaders(headers, operation.getUserPrincipal(), timeWritten);
-
+    private ResourceHeadersImpl createHeaders(final OcflObjectSession objSession,
+                                          final RdfSourceOperation operation,
+                                          final boolean objectRoot) throws PersistentStorageException {
+        final var headers = createCommonHeaders(objSession, operation, objectRoot);
         overrideRelaxedProperties(headers, operation);
         return headers;
     }
@@ -143,21 +117,31 @@ abstract class AbstractRdfSourcePersister extends AbstractPersister {
         }
     }
 
-    private String resolveRdfContentPath(final OcflObjectSession session,
-                                         final FedoraId rootId,
-                                         final FedoraId resourceId) throws PersistentStorageException {
-        final String contentPath;
+    /**
+     * Writes an RDFStream to a contentPath within an ocfl object.
+     *
+     * @param session The object session
+     * @param triples The triples
+     * @throws PersistentStorageException on write failure
+     */
+    private void writeRdf(final OcflObjectSession session,
+                          final ResourceHeadersImpl headers,
+                          final RdfStream triples) throws PersistentStorageException {
+        try (final var os = new ByteArrayOutputStream()) {
+            final StreamRDF streamRDF = getWriterStream(os, OcflPersistentStorageUtils.getRdfFormat());
+            streamRDF.start();
+            if (triples != null) {
+                triples.forEach(streamRDF::triple);
+            }
+            streamRDF.finish();
 
-        if (resourceId.isAcl()) {
-            final var parentHeaders = readHeaders(session,
-                    PersistencePaths.headerPath(rootId, resourceId.asBaseId()));
-            final var isRdf = !NON_RDF_SOURCE.getURI().equals(parentHeaders.getInteractionModel());
-            contentPath = PersistencePaths.aclContentPath(isRdf, rootId, resourceId);
-        } else {
-            contentPath = PersistencePaths.rdfContentPath(rootId, resourceId);
+            final var is = new ByteArrayInputStream(os.toByteArray());
+            session.writeResource(new ResourceHeadersAdapter(headers).asStorageHeaders(), is);
+            log.debug("wrote {} to {}", headers.getId().getFullId(), session.sessionId());
+        } catch (final IOException ex) {
+            throw new PersistentStorageException(
+                    format("failed to write %s in %s", headers.getId().getFullId(), session.sessionId()), ex);
         }
-
-        return contentPath;
     }
 
 }

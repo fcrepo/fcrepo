@@ -19,20 +19,23 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.common.ResourceHeaderUtils;
+import org.fcrepo.persistence.common.ResourceHeadersImpl;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
 import org.fcrepo.persistence.ocfl.api.Persister;
+import org.fcrepo.storage.ocfl.OcflObjectSession;
 
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Optional;
 
-import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.deserializeHeaders;
-import static org.fcrepo.persistence.common.ResourceHeaderSerializationUtils.serializeHeaders;
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 
 /**
  * A base abstract persister class
@@ -61,30 +64,6 @@ abstract class AbstractPersister implements Persister {
         this.resourceOperationClass = resourceOperationClass;
         this.resourceOperationType = resourceOperationType;
         this.index = index;
-    }
-
-    /**
-     * Writes the resource headers to the sidecar file.
-     * @param session The OCFL object session
-     * @param headers The resource headers
-     * @param headerPath The headerPath of the resource whose headers you are writing
-     * @throws PersistentStorageException
-     */
-    protected void writeHeaders(final OcflObjectSession session, final ResourceHeaders headers,
-                                       final String headerPath) throws PersistentStorageException {
-        session.write(headerPath, serializeHeaders(headers));
-    }
-
-    /**
-     * Reads the headers associated with the resource at specified headerPath.
-     * @param objSession The OCFL object session
-     * @param headerPath The headerPath of the resource whose headers you are reading
-     * @return The resource's headers object
-     * @throws PersistentStorageException
-     */
-    protected ResourceHeaders readHeaders(final OcflObjectSession objSession, final String headerPath)
-            throws PersistentStorageException {
-        return deserializeHeaders(objSession.read(headerPath));
     }
 
     @Override
@@ -159,6 +138,35 @@ abstract class AbstractPersister implements Persister {
             // If the a mapping doesn't already exist, use a one-to-one Fedora ID to OCFL ID mapping
             return fedoraId.getBaseId();
         }
+    }
+
+    protected ResourceHeadersImpl createCommonHeaders(final OcflObjectSession session,
+                                                      final ResourceOperation operation,
+                                                      final boolean isResourceRoot) throws PersistentStorageException {
+        final var now = Instant.now();
+
+        final ResourceHeadersImpl headers;
+        if (CREATE.equals(operation.getType())) {
+            final var createOperation = (CreateResourceOperation) operation;
+            headers = ResourceHeaderUtils.newResourceHeaders(
+                    createOperation.getParentId(),
+                    createOperation.getResourceId(),
+                    createOperation.getInteractionModel());
+            ResourceHeaderUtils.touchCreationHeaders(headers, createOperation.getUserPrincipal(), now);
+            headers.setArchivalGroup(createOperation.isArchivalGroup());
+            headers.setObjectRoot(isResourceRoot);
+        } else {
+            headers = new ResourceHeadersAdapter(session.readHeaders(operation.getResourceId().getResourceId()))
+                    .asKernelHeaders();
+        }
+
+        // Existing size and digests must be cleared so they can be populated for the new content
+        headers.setDigests(new ArrayList<>());
+        headers.setContentSize(null);
+
+        ResourceHeaderUtils.touchModificationHeaders(headers, operation.getUserPrincipal(), now);
+
+        return headers;
     }
 
 }

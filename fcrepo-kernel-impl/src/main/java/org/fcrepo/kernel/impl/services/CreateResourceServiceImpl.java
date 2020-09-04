@@ -88,9 +88,6 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         final FedoraId parentId = containmentIndex.getContainerIdByPath(txId, fedoraId);
         checkParent(txId, pSession, parentId);
 
-        // Populate the description for the new binary
-        createDescription(pSession, userPrincipal, fedoraId);
-
         final CreateNonRdfSourceOperationBuilder builder;
         String mimeType = contentType;
         Long size = contentSize;
@@ -132,6 +129,8 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
         try {
             pSession.persist(createOp);
+            // Populate the description for the new binary
+            createDescription(pSession, userPrincipal, fedoraId);
             addToContainmentIndex(txId, parentId, fedoraId);
             recordEvent(txId, fedoraId, createOp);
         } catch (final PersistentStorageException exc) {

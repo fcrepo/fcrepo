@@ -17,29 +17,34 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
+import org.fcrepo.storage.ocfl.NotFoundException;
+import org.fcrepo.storage.ocfl.OcflObjectSession;
+import org.fcrepo.storage.ocfl.ResourceHeaders;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.persistence.common.ResourceHeaderUtils.newResourceHeaders;
+import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchCreationHeaders;
+import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchModificationHeaders;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.stream.Stream;
-
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.operations.ResourceOperation;
-import org.fcrepo.persistence.api.PersistentStorageSession;
-import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
-import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Delete Persister tests.
@@ -50,9 +55,6 @@ public class DeleteResourcePersisterTest {
 
     @Mock
     private FedoraOcflMapping mapping;
-
-    @Mock
-    private PersistentStorageSession storageSession;
 
     @Mock
     private OcflObjectSession session;
@@ -66,9 +68,15 @@ public class DeleteResourcePersisterTest {
     @Mock
     private OcflPersistentStorageSession psSession;
 
+    @Captor
+    private ArgumentCaptor<ResourceHeaders> headersCaptor;
+
     private DeleteResourcePersister persister;
 
     private static final String SESSION_ID = "SOME-SESSION-ID";
+
+    private FedoraId resourceId = FedoraId.create("info:fedora/an-ocfl-object/some-subpath");
+    private FedoraId parentId = FedoraId.create("info:fedora/an-ocfl-object");
 
     @Before
     public void setup() throws Exception {
@@ -80,51 +88,69 @@ public class DeleteResourcePersisterTest {
 
     @Test
     public void testDeleteSubPathBinary() throws Exception {
-        final String header_string1 = "{\"parent\":\"info:fedora/an-ocfl-object\",\"id\":" +
-            "\"info:fedora/an-ocfl-object/some-subpath\",\"lastModifiedDate\":\"2020-04-14T03:42:00.765231Z\"," +
-            "\"interactionModel\":\"http://www.w3.org/ns/ldp#NonRDFSource\",\"createdDate\":" +
-            "\"2020-04-14T03:42:00.765231Z\",\"stateToken\":\"6763672ED325A4B632B450545518B34B\"," +
-            "\"archivalGroup\":false,\"objectRoot\":false,\"contentPath\":\"some-subpath\"}";
-        final InputStream header_stream1 = new ByteArrayInputStream(header_string1.getBytes());
-        when(session.read(".fcrepo/some-subpath.json")).thenReturn(header_stream1);
+        final var resourceId = FedoraId.create();
+
+        final var headers = newResourceHeaders(
+                parentId,
+                resourceId,
+                NON_RDF_SOURCE.toString());
+        touchCreationHeaders(headers, null);
+        touchModificationHeaders(headers, null);
+
+        when(session.readHeaders(resourceId.getResourceId()))
+                .thenReturn(new ResourceHeadersAdapter(headers).asStorageHeaders());
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
-        when(mapping.getRootObjectIdentifier()).thenReturn(FedoraId.create("info:fedora/an-ocfl-object"));
-        when(operation.getResourceId()).thenReturn(FedoraId.create("info:fedora/an-ocfl-object/some-subpath"));
+        when(mapping.getRootObjectIdentifier()).thenReturn(parentId);
+        when(operation.getResourceId()).thenReturn(resourceId);
         when(index.getMapping(eq(SESSION_ID), any())).thenReturn(mapping);
+        when(session.containsResource(resourceId.getResourceId())).thenReturn(true);
+
         persister.persist(psSession, operation);
-        verify(session).delete("some-subpath");
-        verify(session).read(".fcrepo/some-subpath.json");
-        verify(session).write(eq(".fcrepo/some-subpath.json"), any());
+
+        verify(session).deleteContentFile(headersCaptor.capture());
+
+        final var deleteHeaders = headersCaptor.getValue();
+        assertEquals(resourceId.toString(), deleteHeaders.getId());
+        assertTrue(deleteHeaders.isDeleted());
     }
 
     @Test
-    public void testDeleteSubPathRdf() throws Exception {
-        final String header_string = "{\"parent\":\"info:fedora/an-ocfl-object\",\"id\":" +
-            "\"info:fedora/an-ocfl-object/some-subpath\",\"lastModifiedDate\":\"2020-04-14T03:42:00.765231Z\"," +
-            "\"interactionModel\":\"http://www.w3.org/ns/ldp#BasicContainer\",\"createdDate\":" +
-            "\"2020-04-14T03:42:00.765231Z\",\"stateToken\":\"6763672ED325A4B632B450545518B34B\"," +
-            "\"archivalGroup\":false,\"objectRoot\":false,\"contentPath\":\"some-subpath.nt\"}";
-        final InputStream header_stream = new ByteArrayInputStream(header_string.getBytes());
-        when(session.read(".fcrepo/some-subpath.json")).thenReturn(header_stream);
+    public void deleteWhenEntireResourceRemoved() throws Exception {
+        final var resourceId = FedoraId.create();
+
+        final var headers = newResourceHeaders(
+                parentId,
+                resourceId,
+                NON_RDF_SOURCE.toString());
+        touchCreationHeaders(headers, null);
+        touchModificationHeaders(headers, null);
+
+        when(session.readHeaders(resourceId.getResourceId()))
+                .thenReturn(new ResourceHeadersAdapter(headers).asStorageHeaders());
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
-        when(mapping.getRootObjectIdentifier()).thenReturn(FedoraId.create("info:fedora/an-ocfl-object"));
-        when(operation.getResourceId()).thenReturn(FedoraId.create("info:fedora/an-ocfl-object/some-subpath"));
+        when(mapping.getRootObjectIdentifier()).thenReturn(parentId);
+        when(operation.getResourceId()).thenReturn(resourceId);
         when(index.getMapping(eq(SESSION_ID), any())).thenReturn(mapping);
+        when(session.containsResource(resourceId.getResourceId())).thenReturn(false);
+
         persister.persist(psSession, operation);
-        verify(session).delete("some-subpath.nt");
-        verify(session).read(".fcrepo/some-subpath.json");
-        verify(session).write(eq(".fcrepo/some-subpath.json"), any());
+
+        verify(session).deleteContentFile(headersCaptor.capture());
+
+        final var deleteHeaders = headersCaptor.getValue();
+        assertEquals(resourceId.toString(), deleteHeaders.getId());
+        assertTrue(deleteHeaders.isDeleted());
+
+        verify(index).removeMapping(SESSION_ID, resourceId);
     }
 
     @Test(expected = PersistentStorageException.class)
     public void testDeleteSubPathDoesNotExist() throws Exception {
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
-        when(mapping.getRootObjectIdentifier()).thenReturn(FedoraId.create("info:fedora/an-ocfl-object"));
-        when(operation.getResourceId()).thenReturn(FedoraId.create("info:fedora/an-ocfl-object/some-subpath"));
+        when(mapping.getRootObjectIdentifier()).thenReturn(parentId);
+        when(operation.getResourceId()).thenReturn(resourceId);
         when(index.getMapping(eq(SESSION_ID), any())).thenReturn(mapping);
-        when(session.read(".fcrepo/some-subpath.json")).thenThrow(
-                new PersistentStorageException("error")
-        );
+        when(session.readHeaders(resourceId.getResourceId())).thenThrow(NotFoundException.class);
         persister.persist(psSession, operation);
     }
 
@@ -136,70 +162,6 @@ public class DeleteResourcePersisterTest {
         when(index.getMapping(eq(SESSION_ID), any())).thenThrow(new FedoraOcflMappingNotFoundException("error"));
 
         persister.persist(psSession, operation);
-        verify(session).delete("some-subpath");
     }
 
-
-    @Test
-    public void testDeleteFullObjectRdf() throws Exception {
-        final String header_string = "{\"parent\":\"info:fedora\",\"id\":" +
-            "\"info:fedora/an-ocfl-object\",\"lastModifiedDate\":\"2020-04-14T03:42:00.765231Z\"," +
-            "\"interactionModel\":\"http://www.w3.org/ns/ldp#BasicContainer\",\"createdDate\":" +
-            "\"2020-04-14T03:42:00.765231Z\",\"stateToken\":\"6763672ED325A4B632B450545518B34B\"," +
-            "\"archivalGroup\":false,\"objectRoot\":true,\"contentPath\":\"some-ocfl-id.nt\"}";
-        final InputStream rdf_header_stream = new ByteArrayInputStream(header_string.getBytes());
-        when(session.listHeadSubpaths()).thenReturn(Stream.of("some-ocfl-id.nt", ".fcrepo/some-ocfl-id.json"));
-        when(session.read(".fcrepo/some-ocfl-id.json")).thenReturn(rdf_header_stream);
-        when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
-        when(mapping.getRootObjectIdentifier()).thenReturn(FedoraId.create("info:fedora/an-ocfl-object"));
-        when(operation.getResourceId()).thenReturn(FedoraId.create("info:fedora/an-ocfl-object"));
-        when(index.getMapping(eq(SESSION_ID), any())).thenReturn(mapping);
-
-        persister.persist(psSession, operation);
-        verify(session).delete("some-ocfl-id.nt");
-        verify(session).read(".fcrepo/some-ocfl-id.json");
-        verify(session).write(eq(".fcrepo/some-ocfl-id.json"), any());
-    }
-
-    @Test
-    public void testDeleteFullObjectBinary() throws Exception {
-        final String header_string1 = "{\"parent\":\"info:fedora\",\"id\":" +
-                "\"info:fedora/an-ocfl-object\",\"lastModifiedDate\":\"2020-04-14T03:42:00.765231Z\"," +
-                "\"interactionModel\":\"http://www.w3.org/ns/ldp#NonRDFSource\",\"createdDate\":" +
-                "\"2020-04-14T03:42:00.765231Z\",\"stateToken\":\"6763672ED325A4B632B450545518B34B\"," +
-                "\"archivalGroup\":false,\"objectRoot\":true,\"contentPath\":\"some-ocfl-id\"}";
-        final InputStream header_stream1 = new ByteArrayInputStream(header_string1.getBytes());
-        final String header_string2 = "{\"parent\":\"info:fedora/an-ocfl-object/sub-path\",\"id\":" +
-                "\"info:fedora/an-ocfl-object/some-subpath-desc\",\"lastModifiedDate\":" +
-                "\"2020-04-14T03:42:00.765231Z\",\"interactionModel\":" +
-                "\"http://fedora.info/definitions/v4/repository#NonRdfSourceDescription\"," +
-                "\"createdDate\":\"2020-04-14T03:42:00.765231Z\",\"stateToken\":\"6763672ED325A4B632B450545518B34B\"," +
-                "\"archivalGroup\":false,\"objectRoot\":false,\"contentPath\":\"some-ocfl-id-description.nt\"}";
-        final InputStream header_stream2 = new ByteArrayInputStream(header_string2.getBytes());
-        when(session.listHeadSubpaths()).thenReturn(Stream.of("some-ocfl-id", ".fcrepo/some-ocfl-id.json",
-                "some-ocfl-id-description.nt", ".fcrepo/some-ocfl-id-description.json"));
-        when(session.read(".fcrepo/some-ocfl-id.json")).thenReturn(header_stream1);
-        when(session.read(".fcrepo/some-ocfl-id-description.json")).thenReturn(header_stream2);
-        when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
-        when(mapping.getRootObjectIdentifier()).thenReturn(FedoraId.create("info:fedora/an-ocfl-object"));
-        when(operation.getResourceId()).thenReturn(FedoraId.create("info:fedora/an-ocfl-object"));
-        when(index.getMapping(eq(SESSION_ID), any())).thenReturn(mapping);
-
-        persister.persist(psSession, operation);
-        verify(session).delete("some-ocfl-id");
-        verify(session).read(".fcrepo/some-ocfl-id.json");
-        verify(session).write(eq(".fcrepo/some-ocfl-id.json"), any());
-        verify(session).delete("some-ocfl-id-description.nt");
-        verify(session).read(".fcrepo/some-ocfl-id-description.json");
-        verify(session).write(eq(".fcrepo/some-ocfl-id-description.json"), any());
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testNotPartOfObject() throws Exception {
-        when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
-        when(mapping.getRootObjectIdentifier()).thenReturn(FedoraId.create("info:fedora/some-wrong-object"));
-        when(operation.getResourceId()).thenReturn(FedoraId.create("info:fedora/an-ocfl-object"));
-        when(index.getMapping(eq(SESSION_ID), any())).thenReturn(mapping);
-        persister.persist(psSession, operation);
-    }
 }

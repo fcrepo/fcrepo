@@ -17,7 +17,6 @@
  */
 package org.fcrepo.integration.persistence.ocfl.impl;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.config.OcflPropsConfig;
@@ -40,9 +39,10 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -129,7 +129,7 @@ public class NonRdfSourcesPersistenceIT {
     public void createInternalNonRdfResourceWithDigests() throws Exception {
         final var op = nonRdfSourceOpFactory.createInternalBinaryBuilder(
                     rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
-                .contentDigests(asList(CONTENT_SHA1, CONTENT_MD5))
+                .contentDigests(new ArrayList<>(List.of(CONTENT_SHA1, CONTENT_MD5)))
                 .mimeType("text/plain")
                 .parentId(FedoraId.getRepositoryRootId())
                 .build();
@@ -179,7 +179,7 @@ public class NonRdfSourcesPersistenceIT {
     public void createInternalNonRdfResourceWithInvalidDigest() throws Exception {
         final var op = nonRdfSourceOpFactory.createInternalBinaryBuilder(
                     rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
-                .contentDigests(asList(URI.create("urn:sha1:ohnothisisbad")))
+                .contentDigests(new ArrayList<>(List.of(URI.create("urn:sha1:ohnothisisbad"))))
                 .mimeType("text/plain")
                 .build();
 
@@ -203,7 +203,7 @@ public class NonRdfSourcesPersistenceIT {
                     rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
                 .filename("test.txt")
                 .mimeType("text/plain")
-                .contentDigests(asList(CONTENT_SHA1))
+                .contentDigests(new ArrayList<>(List.of(CONTENT_SHA1)))
                 .parentId(FedoraId.getRepositoryRootId())
                 .build();
 
@@ -312,7 +312,7 @@ public class NonRdfSourcesPersistenceIT {
                     rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
                 .filename("test.txt")
                 .mimeType("text/plain")
-                .contentDigests(asList(CONTENT_SHA1))
+                .contentDigests(new ArrayList<>(List.of(CONTENT_SHA1)))
                 .parentId(FedoraId.getRepositoryRootId())
                 .build();
 
@@ -354,8 +354,9 @@ public class NonRdfSourcesPersistenceIT {
         // Modify the file after staging to simulate a transmission error
         final Path ocflStagingDir = ocflPropsConfig.getFedoraOcflStaging();
         final String rawId = StringUtils.substringAfterLast(rescId.getFullId(), "/");
-        final String digest = DigestUtils.sha256Hex(rescId.getFullId());
-        final Path stagedFile = Paths.get(ocflStagingDir.toString(), storageSession.getId(), digest, rawId);
+        final Path stagedFile = Files.find(ocflStagingDir, 10, (path, attrs) -> {
+            return path.getFileName().toString().equals(rawId);
+        }).findFirst().get();
         Files.write(stagedFile, "oops".getBytes(), StandardOpenOption.APPEND);
 
         try {
@@ -363,7 +364,7 @@ public class NonRdfSourcesPersistenceIT {
             fail("Expected commit to fail to due fixity failure");
         } catch (final PersistentStorageException e) {
             assertThat(e.getMessage(), containsString("Failed to commit object"));
-            assertThat(e.getCause().getMessage(), containsString("due to fixity check failure"));
+            assertThat(e.getCause().getMessage(), containsString("Expected sha-512 digest"));
         }
     }
 

@@ -20,18 +20,13 @@ package org.fcrepo.persistence.ocfl.impl;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OcflObjectSessionFactory;
+import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -57,23 +52,12 @@ public class OcflPersistentSessionManager implements PersistentStorageSessionMan
     @Inject
     private FedoraToOcflObjectIndex fedoraOcflIndex;
 
-    private Path sessionStagingRoot;
-
     /**
      * Default constructor
-     * @param sessionStagingRoot OCFL staging directory
      */
     @Autowired
-    public OcflPersistentSessionManager(@Value("#{ocflPropsConfig.fedoraOcflStaging}")
-                                        final Path sessionStagingRoot) {
+    public OcflPersistentSessionManager() {
         this.sessionMap = new ConcurrentHashMap<>();
-
-        LOGGER.debug("Session staging root directory: {}", sessionStagingRoot);
-        try {
-            this.sessionStagingRoot = Files.createDirectories(sessionStagingRoot);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 
     @Override
@@ -86,7 +70,6 @@ public class OcflPersistentSessionManager implements PersistentStorageSessionMan
         return sessionMap.computeIfAbsent(sessionId, key -> new OcflPersistentStorageSession(
                 key,
                 fedoraOcflIndex,
-                sessionStagingDir(sessionId),
                 objectSessionFactory));
     }
 
@@ -98,18 +81,13 @@ public class OcflPersistentSessionManager implements PersistentStorageSessionMan
             synchronized (this) {
                 localSession = this.readOnlySession;
                 if (localSession == null) {
-                    this.readOnlySession = new OcflPersistentStorageSession(fedoraOcflIndex,
-                            sessionStagingDir(null), objectSessionFactory);
+                    this.readOnlySession = new OcflPersistentStorageSession(fedoraOcflIndex, objectSessionFactory);
                     localSession = this.readOnlySession;
                 }
             }
         }
 
         return localSession;
-    }
-
-    private Path sessionStagingDir(final String sessionId) {
-        return sessionStagingRoot.resolve(sessionId == null ? "read-only" : sessionId);
     }
 
 }

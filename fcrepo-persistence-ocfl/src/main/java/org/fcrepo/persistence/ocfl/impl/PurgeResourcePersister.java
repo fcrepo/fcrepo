@@ -20,7 +20,6 @@ package org.fcrepo.persistence.ocfl.impl;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,28 +41,17 @@ class PurgeResourcePersister extends AbstractPersister {
     public void persist(final OcflPersistentStorageSession session, final ResourceOperation operation)
             throws PersistentStorageException {
         final var mapping = getMapping(session.getId(), operation.getResourceId());
-        final var fedoraResourceRoot = mapping.getRootObjectIdentifier();
         final var resourceId = operation.getResourceId();
         final var objectSession = session.findOrCreateSession(mapping.getOcflObjectId());
         log.debug("Deleting {} from {}", resourceId, mapping.getOcflObjectId());
-        if (fedoraResourceRoot.equals(resourceId)) {
-            // We are at the root of the object, so remove the entire OCFL object.
-            objectSession.deleteObject();
-        } else {
-            final var headerPath = PersistencePaths.headerPath(fedoraResourceRoot, resourceId);
-            purgePath(headerPath, objectSession);
-        }
-        index.removeMapping(session.getId(), resourceId.asResourceId());
-    }
 
-    /**
-     * Simple utility to delete a path's sidecar files.
-     * @param path Path to purge.
-     * @param session Session to delete the path in.
-     * @throws PersistentStorageException if can't read, write or delete a file.
-     */
-    private void purgePath(final String path, final OcflObjectSession session) throws PersistentStorageException {
-        session.delete(path);
+        try {
+            objectSession.deleteResource(resourceId.getResourceId());
+        } catch (RuntimeException e) {
+            throw new PersistentStorageException(String.format("Purge resource %s failed", resourceId), e);
+        }
+
+        index.removeMapping(session.getId(), resourceId.asResourceId());
     }
 
 }

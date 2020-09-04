@@ -32,6 +32,8 @@ import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.IndexBuilder;
 import org.fcrepo.search.api.SearchIndex;
+import org.fcrepo.storage.ocfl.CommitType;
+import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -45,6 +47,8 @@ import java.io.IOException;
 import java.nio.file.Paths;
 
 import static java.lang.System.currentTimeMillis;
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.DELETE;
 import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createRepository;
@@ -98,10 +102,13 @@ public class IndexBuilderImplTest {
         index = new TestOcflObjectIndex();
         index.reset();
 
-        final var ocflObjectSessionFactory = new DefaultOcflObjectSessionFactory();
-        setField(ocflObjectSessionFactory, "ocflRepository", repository);
+        final var objectMapper = OcflPersistentStorageUtils.objectMapper();
+        final var ocflObjectSessionFactory = new DefaultOcflObjectSessionFactory(repository,
+                tempFolder.newFolder().toPath(),
+                objectMapper, CommitType.NEW_VERSION,
+                "Fedora 6 test", "fedoraAdmin", "info:fedora/fedoraAdmin");
 
-        sessionManager = new OcflPersistentSessionManager(staging);
+        sessionManager = new OcflPersistentSessionManager();
         setField(sessionManager, "fedoraOcflIndex", index);
         setField(sessionManager, "objectSessionFactory", ocflObjectSessionFactory);
 
@@ -111,7 +118,6 @@ public class IndexBuilderImplTest {
         setField(indexBuilder, "objectSessionFactory", ocflObjectSessionFactory);
         setField(indexBuilder, "containmentIndex", containmentIndex);
         setField(indexBuilder, "searchIndex", searchIndex);
-        setField(indexBuilder, "sessionStagingRoot", tempFolder.newFolder().toPath());
     }
 
     @Test
@@ -229,6 +235,11 @@ public class IndexBuilderImplTest {
         when(((CreateResourceOperation) operation).getParentId()).thenReturn(FedoraId.getRepositoryRootId());
         when(operation.getType()).thenReturn(CREATE);
         when(((CreateResourceOperation)operation).isArchivalGroup()).thenReturn(isArchivalGroup);
+        if (isArchivalGroup) {
+            when(((CreateResourceOperation) operation).getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
+        } else {
+            when(((CreateResourceOperation) operation).getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
+        }
         session.persist(operation);
     }
 
@@ -246,6 +257,7 @@ public class IndexBuilderImplTest {
         when(operation.getMimeType()).thenReturn("text/plain");
         when(operation.getFilename()).thenReturn("test");
         when(((CreateResourceOperation)operation).getParentId()).thenReturn(parentId);
+        when(((CreateResourceOperation) operation).getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         session.persist(operation);
     }
 

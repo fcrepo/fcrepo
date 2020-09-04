@@ -21,12 +21,12 @@ package org.fcrepo.persistence.ocfl.impl;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateVersionResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
-import org.fcrepo.persistence.api.CommitOption;
 import org.fcrepo.persistence.api.exceptions.PersistentItemConflictException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OcflObjectSession;
+import org.fcrepo.storage.ocfl.CommitType;
+import org.fcrepo.storage.ocfl.OcflObjectSession;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,6 +34,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -62,9 +63,10 @@ public class CreateVersionPersisterTest {
 
         final var objectSession = addMapping(resourceId, ocflId);
         expectArchivalGroup(resourceId, false);
-        objectSession.setCommitOption(CommitOption.NEW_VERSION);
 
         persister.persist(session, operation(resourceId));
+
+        verify(objectSession).commitType(CommitType.NEW_VERSION);
     }
 
     @Test
@@ -74,15 +76,18 @@ public class CreateVersionPersisterTest {
 
         final var objectSession = addMapping(resourceId, ocflId);
         expectArchivalGroup(resourceId, true);
-        objectSession.setCommitOption(CommitOption.NEW_VERSION);
 
         persister.persist(session, operation(resourceId));
+
+        verify(objectSession).commitType(CommitType.NEW_VERSION);
     }
 
     @Test(expected = PersistentItemConflictException.class)
-    public void failVersionCreationWhenChildOfAg() throws PersistentStorageException {
+    public void forbidVersionCreationWhenChildOfAg() throws PersistentStorageException {
         final var resourceId = FedoraId.create("info:fedora/ag/blah");
+        final var ocflId = "blah";
 
+        final var objectSession = addMapping(resourceId, ocflId);
         expectArchivalGroup(resourceId, false);
         expectArchivalGroup(FedoraId.create("info:fedora/ag"), true);
 

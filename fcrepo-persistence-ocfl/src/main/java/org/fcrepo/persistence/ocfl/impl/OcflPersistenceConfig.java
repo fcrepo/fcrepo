@@ -19,11 +19,13 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import org.fcrepo.config.OcflPropsConfig;
+import org.fcrepo.storage.ocfl.CommitType;
+import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
+import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import javax.inject.Inject;
-
 import java.io.IOException;
 
 import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createRepository;
@@ -48,6 +50,26 @@ public class OcflPersistenceConfig {
     @Bean
     public MutableOcflRepository repository() throws IOException {
         return createRepository(ocflPropsConfig.getOcflRepoRoot(), ocflPropsConfig.getOcflTemp());
+    }
+
+    @Bean
+    public OcflObjectSessionFactory ocflObjectSessionFactory() throws IOException {
+        final var objectMapper = OcflPersistentStorageUtils.objectMapper();
+
+        return new DefaultOcflObjectSessionFactory(repository(),
+                ocflPropsConfig.getFedoraOcflStaging(),
+                objectMapper,
+                commitType(),
+                "Authored by Fedora 6",
+                "fedoraAdmin",
+                "info:fedora/fedoraAdmin");
+    }
+
+    private CommitType commitType() {
+        if (ocflPropsConfig.isAutoVersioningEnabled()) {
+            return CommitType.NEW_VERSION;
+        }
+        return CommitType.UNVERSIONED;
     }
 
 }

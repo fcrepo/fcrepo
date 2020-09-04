@@ -21,11 +21,9 @@ import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.persistence.ocfl.api.OcflObjectSessionFactory;
+import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -58,17 +56,11 @@ public class OcflPersistentSessionManagerTest {
     private FedoraToOcflObjectIndex index;
 
     @Mock
-    private FedoraOcflMapping mapping;
-
-    @Mock
     private OcflObjectSessionFactory objectSessionFactory;
-
-    @Rule
-    public TemporaryFolder tempFolder = new TemporaryFolder();
 
     @Before
     public void setUp() throws IOException {
-        this.sessionManager = new OcflPersistentSessionManager(tempFolder.newFolder().toPath());
+        this.sessionManager = new OcflPersistentSessionManager();
         readWriteSession = this.sessionManager.getSession(testSessionId);
         setField(sessionManager, "objectSessionFactory", objectSessionFactory);
         setField(sessionManager, "fedoraOcflIndex", index);
