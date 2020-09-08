@@ -64,6 +64,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
@@ -1021,7 +1022,7 @@ public class FedoraLdpTest {
 
         setResource(Container.class);
         when(mockRequest.getMethod()).thenReturn("PATCH");
-        testObj.updateSparql(toInputStream("xyz", UTF_8));
+        testObj.updateSparql(toInputStream("INSERT DATA { <> <http://some/predicate> \"xyz\" }", UTF_8));
     }
 
 
@@ -1037,12 +1038,12 @@ public class FedoraLdpTest {
 
         when(resourceFactory.getResource(mockTransaction, binaryDescId))
                 .thenReturn(mockNonRdfSourceDescription);
-        testObj.updateSparql(toInputStream("xyz", UTF_8));
+        testObj.updateSparql(toInputStream("INSERT DATA { <> <http://some/predicate> \"xyz\" }", UTF_8));
         verify(updatePropertiesService).updateProperties(
                 eq(mockTransaction.getId()),
                 anyString(),
                 eq(binaryDescId),
-                eq("xyz")
+                contains("<http://some/predicate> \"xyz\"")
         );
     }
 
