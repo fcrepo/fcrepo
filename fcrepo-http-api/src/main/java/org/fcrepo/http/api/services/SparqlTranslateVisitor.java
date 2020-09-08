@@ -85,7 +85,7 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
 
     /**
      * Get the new UpdateRequest based on the parsed Updates.
-     * @return the new updaterequest object.
+     * @return the new update request object.
      */
     public UpdateRequest getTranslatedRequest() {
         final UpdateRequest newRequest = UpdateFactory.create();

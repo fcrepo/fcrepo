@@ -64,6 +64,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
@@ -1042,7 +1043,7 @@ public class FedoraLdpTest {
                 eq(mockTransaction.getId()),
                 anyString(),
                 eq(binaryDescId),
-                anyString()
+                contains("<http://some/predicate> \"xyz\"")
         );
     }
 

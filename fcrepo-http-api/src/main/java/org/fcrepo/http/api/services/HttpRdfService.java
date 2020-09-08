@@ -167,14 +167,14 @@ public class HttpRdfService {
     /**
      * Takes a PATCH request body and translates any subjects and objects that are in the domain of the repository
      * to use internal IDs.
-     * @param extResourceId the internal ID of the current resource.
+     * @param resourceId the internal ID of the current resource.
      * @param requestBody the request body.
      * @param idTranslator an ID converter for the current context.
-     * @return the converted string.
+     * @return the converted PATCH request.
      */
-    public String patchRequestToInternalString(final String extResourceId, final String requestBody,
+    public String patchRequestToInternalString(final String resourceId, final String requestBody,
                                                final HttpIdentifierConverter idTranslator) {
-        final UpdateRequest request = UpdateFactory.create(requestBody, extResourceId);
+        final UpdateRequest request = UpdateFactory.create(requestBody, resourceId);
         final List<Update> updates = request.getOperations();
         final SparqlTranslateVisitor visitor = new SparqlTranslateVisitor(idTranslator);
         for (final Update update : updates) {
