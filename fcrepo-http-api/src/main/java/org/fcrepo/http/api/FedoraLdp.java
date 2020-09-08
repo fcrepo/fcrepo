@@ -515,6 +515,7 @@ public class FedoraLdp extends ContentExposingResource {
             LOGGER.info("PATCH for '{}'", externalPath);
             final String newRequest = httpRdfService.patchRequestToInternalString(resource().getFedoraId().getFullId(),
                     requestBody, identifierConverter());
+            LOGGER.debug("PATCH request translated to '{}'", newRequest);
             patchResourcewithSparql(resource(), newRequest);
             transaction.commitIfShortLived();
 
@@ -630,7 +631,7 @@ public class FedoraLdp extends ContentExposingResource {
             final var resource = getFedoraResource(transaction, newFedoraId);
             return createUpdateResponse(resource, true);
         } catch (final PathNotFoundException e) {
-            throw new PathNotFoundRuntimeException(e);
+            throw new PathNotFoundRuntimeException(e.getMessage(), e);
         }
     }
 

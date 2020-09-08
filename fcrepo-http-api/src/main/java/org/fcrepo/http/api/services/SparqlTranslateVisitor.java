@@ -26,6 +26,8 @@ import java.util.List;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.modify.request.QuadAcc;
 import org.apache.jena.sparql.modify.request.QuadDataAcc;
@@ -36,6 +38,8 @@ import org.apache.jena.sparql.modify.request.UpdateDeleteWhere;
 import org.apache.jena.sparql.modify.request.UpdateModify;
 import org.apache.jena.sparql.modify.request.UpdateVisitorBase;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementGroup;
+import org.apache.jena.sparql.syntax.ElementPathBlock;
 import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
@@ -120,8 +124,32 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
         deleteQuads.forEach(q -> newUpdate.getDeleteAcc().addQuad(q));
 
         final Element where = update.getWherePattern();
-        newUpdate.setElement(where);
+        final Element newElement = processElements(where);
+        newUpdate.setElement(newElement);
         newUpdates.add(newUpdate);
+    }
+
+    /**
+     * Process triples inside the Element or return the element.
+     * @param element the element to translate.
+     * @return the translated or original element.
+     */
+    private Element processElements(final Element element) {
+        if (element instanceof ElementGroup) {
+            final ElementGroup group = new ElementGroup();
+            ((ElementGroup) element).getElements().forEach(e -> group.addElement(processElements(e)));
+            return group;
+        } else if (element instanceof ElementPathBlock) {
+            final BasicPattern basicPattern = new BasicPattern();
+            final var tripleIter = ((ElementPathBlock) element).patternElts();
+            tripleIter.forEachRemaining(t -> {
+                if (t.isTriple()) {
+                    basicPattern.add(translateTriple(t.asTriple()));
+                }
+            });
+            return new ElementPathBlock(basicPattern);
+        }
+        return element;
     }
 
     /**
@@ -139,6 +167,17 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
             newQuads.add(quad);
         }
         return newQuads;
+    }
+
+    /**
+     * Translate the subject and object of a triple from external URIs to internal IDs.
+     * @param triple the triple to translate
+     * @return the translated triple.
+     */
+    private Triple translateTriple(final Triple triple) {
+        final Node subject = translateId(triple.getSubject());
+        final Node object = translateId(triple.getObject());
+        return Triple.create(subject, triple.getPredicate(), object);
     }
 
     /**
