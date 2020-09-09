@@ -44,6 +44,7 @@ import static java.util.stream.Collectors.toList;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
@@ -235,6 +236,7 @@ public class FedoraResourceImpl implements FedoraResource {
             types.add(create(headers.getInteractionModel()));
             // ldp:Resource is on all resources
             types.add(create(RESOURCE.toString()));
+            types.add(create(FEDORA_RESOURCE.getURI()));
             if (!forRdf) {
                 // These types are not exposed as RDF triples.
                 if (headers.isArchivalGroup()) {

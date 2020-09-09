@@ -17,11 +17,17 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDlong;
 import static org.apache.jena.datatypes.xsd.impl.XSDDateTimeType.XSDdateTime;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIME_TYPE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 
 import java.util.ArrayList;
@@ -29,7 +35,9 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import org.apache.jena.graph.Triple;
+import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.TimeMap;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.ManagedPropertiesService;
@@ -52,10 +60,29 @@ public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {
                 createLiteral(resource.getCreatedDate().toString(), XSDdateTime)));
         triples.add(Triple.create(subject, LAST_MODIFIED_DATE.asNode(),
                 createLiteral(resource.getLastModifiedDate().toString(), XSDdateTime)));
+        if (resource.getCreatedBy() != null) {
+            triples.add(Triple.create(subject, CREATED_BY.asNode(), createLiteral(resource.getCreatedBy())));
+        }
+        if (resource.getLastModifiedBy() != null) {
+            triples.add(Triple.create(subject, LAST_MODIFIED_BY.asNode(), createLiteral(resource.getLastModifiedBy())));
+        }
 
         resource.getDescribedResource().getSystemTypes(true).forEach(triple -> {
             triples.add(Triple.create(subject, type.asNode(), createURI(triple.toString())));
         });
+        if (resource instanceof NonRdfSourceDescription) {
+            final Binary binary = (Binary) resource.getDescribedResource();
+
+            triples.add(Triple.create(subject, HAS_SIZE.asNode(),
+                    createLiteral(String.valueOf(binary.getContentSize()), XSDlong)));
+            if (binary.getMimeType() != null) {
+                triples.add(Triple.create(subject, HAS_MIME_TYPE.asNode(), createLiteral(binary.getMimeType())));
+            }
+            if (binary.getContentDigest() != null) {
+                triples.add(Triple.create(subject, HAS_MESSAGE_DIGEST.asNode(),
+                        createURI(binary.getContentDigest().toString())));
+            }
+        }
 
         return new DefaultRdfStream(subject, triples.stream());
     }
