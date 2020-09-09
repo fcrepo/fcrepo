@@ -251,7 +251,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         }
 
         this.state = State.COMMIT_STARTED;
-        LOGGER.debug("Starting storage session {} commit", sessionId);
+        LOGGER.trace("Starting storage session {} commit", sessionId);
 
         synchronized (this.phaser) {
             if (this.phaser.getRegisteredParties() > 0) {
@@ -259,7 +259,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
             }
         }
 
-        LOGGER.debug("All persisters are complete in session {}", sessionId);
+        LOGGER.trace("All persisters are complete in session {}", sessionId);
 
         // order map for testing
         final var sessions = new TreeMap<>(sessionMap);
@@ -271,7 +271,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
 
     private void commitObjectSessions(final Map<String, OcflObjectSession> sessions)
             throws PersistentStorageException {
-        LOGGER.debug("Committing session {}", sessionId);
+        LOGGER.trace("Committing session {}", sessionId);
 
         this.sessionsToRollback = new HashMap<>(sessionMap.size());
 
@@ -307,7 +307,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         final boolean commitWasStarted = this.state != State.COMMIT_NOT_STARTED;
 
         this.state = State.ROLLING_BACK;
-        LOGGER.info("Rolling back storage session {}", sessionId);
+        LOGGER.debug("Rolling back storage session {}", sessionId);
 
         if (!commitWasStarted) {
             //if the commit had not been started at the time this method was invoked
@@ -333,7 +333,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         }
 
         this.state = State.ROLLED_BACK;
-        LOGGER.debug("Successfully rolled back storage session {}", sessionId);
+        LOGGER.trace("Successfully rolled back storage session {}", sessionId);
     }
 
     /**

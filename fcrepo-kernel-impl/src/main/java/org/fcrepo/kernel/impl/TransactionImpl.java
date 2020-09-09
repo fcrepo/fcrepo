@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -88,6 +89,10 @@ public class TransactionImpl implements Transaction {
             this.getEventAccumulator().emitEvents(id, baseUri, userAgent);
             this.committed = true;
         } catch (final PersistentStorageException ex) {
+            if (log.isDebugEnabled()) {
+                log.debug("Failed to commit transaction: {}\n{}", ex.getMessage(), ExceptionUtils.getStackTrace(ex));
+            }
+
             // Rollback on commit failure
             rollback();
             throw new RepositoryRuntimeException("Failed to commit transaction " + id, ex);

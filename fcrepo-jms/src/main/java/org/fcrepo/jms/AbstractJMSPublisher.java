@@ -76,10 +76,10 @@ abstract class AbstractJMSPublisher {
     @Subscribe
     @AllowConcurrentEvents
     public void publishJCREvent(final Event event) throws JMSException {
-        LOGGER.debug("Received an event from the internal bus.");
+        LOGGER.debug("Received an event from the internal bus. {}", event);
         final Message tm =
                 eventFactory.getMessage(event, jmsSession);
-        LOGGER.debug("Transformed the event to a JMS message.");
+        LOGGER.trace("Transformed the event to a JMS message.");
         producer.send(tm);
 
         LOGGER.debug("Put event: {} onto JMS.", tm.getJMSMessageID());
