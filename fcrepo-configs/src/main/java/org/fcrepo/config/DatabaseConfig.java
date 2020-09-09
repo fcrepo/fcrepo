@@ -56,6 +56,15 @@ public class DatabaseConfig {
     @Value("${fcrepo.db.max.pool.size:15}")
     private Integer maxPoolSize;
 
+    @Value("${fcrepo.db.connection.checkout.timeout:10000}")
+    private Integer checkoutTimeout;
+
+    @Value("${fcrepo.db.connection.idle.test.period:300}")
+    private Integer idleConnectionTestPeriod;
+
+    @Value("${fcrepo.db.connection.test.on.checkout:true}")
+    private boolean testConnectionOnCheckout;
+
     private static final Map<String, String> DB_DRIVER_MAP = Map.of(
             "h2", "org.h2.Driver",
             "postgresql", "org.postgresql.Driver",
@@ -75,8 +84,10 @@ public class DatabaseConfig {
         dataSource.setJdbcUrl(dbUrl);
         dataSource.setUser(dbUser);
         dataSource.setPassword(dbPassword);
-        dataSource.setCheckoutTimeout(10_000);
+        dataSource.setCheckoutTimeout(checkoutTimeout);
         dataSource.setMaxPoolSize(maxPoolSize);
+        dataSource.setIdleConnectionTestPeriod(idleConnectionTestPeriod);
+        dataSource.setTestConnectionOnCheckout(testConnectionOnCheckout);
         return dataSource;
     }
 
