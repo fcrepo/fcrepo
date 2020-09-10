@@ -17,7 +17,6 @@
  */
 package org.fcrepo.kernel.impl;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
