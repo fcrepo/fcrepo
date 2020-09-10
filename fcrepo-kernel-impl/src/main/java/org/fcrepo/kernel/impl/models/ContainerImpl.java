@@ -28,7 +28,6 @@ import java.util.List;
 
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 
 
@@ -61,7 +60,7 @@ public class ContainerImpl extends FedoraResourceImpl implements Container {
     public List<URI> getSystemTypes(final boolean forRdf) {
         final var types = super.getSystemTypes(forRdf);
         types.addAll(List.of(URI.create(RDF_SOURCE.toString()), URI.create(CONTAINER.toString()),
-                URI.create(FEDORA_CONTAINER.toString()), URI.create(FEDORA_RESOURCE.toString())));
+                URI.create(FEDORA_CONTAINER.toString())));
         return types;
     }
 

@@ -43,7 +43,9 @@ import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
@@ -147,6 +149,7 @@ public class FedoraResourceImplTest {
                 create(exampleType),
                 create(BASIC_CONTAINER.toString()),
                 create(RESOURCE.toString()),
+                create(FEDORA_RESOURCE.toString()),
                 create(VERSIONED_RESOURCE.getURI()),
                 create(VERSIONING_TIMEGATE_TYPE)
         );
@@ -185,6 +188,8 @@ public class FedoraResourceImplTest {
                 create(exampleType),
                 create(NON_RDF_SOURCE.toString()),
                 create(RESOURCE.toString()),
+                create(FEDORA_RESOURCE.toString()),
+                create(FEDORA_BINARY.toString()),
                 create(VERSIONED_RESOURCE.getURI()),
                 create(VERSIONING_TIMEGATE_TYPE)
         );

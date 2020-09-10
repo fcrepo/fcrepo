@@ -50,6 +50,7 @@ import static org.apache.http.entity.ContentType.parse;
 import static org.apache.http.impl.client.cache.CacheConfig.DEFAULT;
 import static org.apache.jena.datatypes.TypeMapper.getInstance;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDinteger;
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDlong;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
@@ -68,6 +69,7 @@ import static org.apache.jena.vocabulary.DC_11.title;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_FIXITY;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
@@ -77,11 +79,15 @@ import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_SERVICE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIME_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_ORIGINAL_NAME;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.IS_MEMBER_OF_RELATION;
@@ -93,6 +99,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_SERVER_MANAGED;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
@@ -3172,6 +3179,52 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
         replaceMethod.addHeader(CONTENT_TYPE, "application/n-triples");
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(replaceMethod));
+    }
+
+    @Test
+    public void testDefaultBinaryDescriptionTriples() throws Exception {
+        final String id = getRandomUniqueId();
+        final HttpPost post = postObjMethod();
+        final String binaryUri = serverAddress + id;
+        final Node binaryNode = createURI(binaryUri);
+
+        post.setHeader("Slug", id);
+        post.setHeader(CONTENT_TYPE, TEXT_PLAIN);
+        post.setEntity(new StringEntity("some text", UTF_8));
+        post.setHeader(CONTENT_DISPOSITION, "attachment; filename=\"mytest.txt\"");
+        assertEquals(CREATED.getStatusCode(), getStatus(post));
+
+        final HttpGet get = getObjMethod(id + "/" + FCR_METADATA);
+        try (final CloseableHttpResponse response = execute(get)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            try (final CloseableDataset dataset = getDataset(response)) {
+                final DatasetGraph graph = dataset.asDatasetGraph();
+                // Not checking for CreatedBy and LastModifiedBy as they require authentication.
+                assertFalse(dataset.isEmpty());
+                assertTrue(graph.contains(ANY, binaryNode, CREATED_DATE.asNode(), ANY));
+                assertTrue(graph.contains(ANY, binaryNode, LAST_MODIFIED_DATE.asNode(), ANY));
+                assertTrue(graph.contains(ANY, binaryNode, type.asNode(), NON_RDF_SOURCE.asNode()));
+                assertTrue(graph.contains(ANY, binaryNode, type.asNode(), RESOURCE.asNode()));
+                assertTrue(graph.contains(ANY, binaryNode, type.asNode(), FEDORA_RESOURCE.asNode()));
+                assertTrue(graph.contains(ANY, binaryNode, type.asNode(), FEDORA_BINARY.asNode()));
+                assertTrue(graph.contains(ANY, binaryNode, HAS_SIZE.asNode(), createLiteral("9", XSDlong)));
+                assertTrue(graph.contains(ANY, binaryNode, HAS_MESSAGE_DIGEST.asNode(), ANY));
+                assertTrue(graph.contains(ANY, binaryNode, HAS_FIXITY_SERVICE.asNode(),
+                        createURI(binaryUri + "/" + FCR_FIXITY)));
+                assertTrue(graph.contains(ANY, binaryNode, HAS_ORIGINAL_NAME.asNode(),
+                        createLiteral("mytest.txt")));
+            }
+        }
+
+        // Now get with ServerManaged omitted
+        final HttpGet get2 = getObjMethod(id + "/" + FCR_METADATA);
+        get2.setHeader("Prefer", "return=representation; omit=\"" + PREFER_SERVER_MANAGED + "\"");
+        try (final CloseableHttpResponse response = execute(get2)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            try (final CloseableDataset dataset = getDataset(response)) {
+                assertTrue(dataset.isEmpty());
+            }
+        }
     }
 
     @Test

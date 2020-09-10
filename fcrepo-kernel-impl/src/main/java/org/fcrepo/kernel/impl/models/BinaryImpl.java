@@ -34,7 +34,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
+import java.util.List;
 
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
 
 
@@ -180,5 +182,13 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
      */
     protected void setDigests(final Collection<URI> digests) {
         this.digests = digests;
+    }
+
+    @Override
+    public List<URI> getSystemTypes(final boolean forRdf) {
+        final var types = super.getSystemTypes(forRdf);
+        // Add fedora:Binary type.
+        types.add(URI.create(FEDORA_BINARY.getURI()));
+        return types;
     }
 }
