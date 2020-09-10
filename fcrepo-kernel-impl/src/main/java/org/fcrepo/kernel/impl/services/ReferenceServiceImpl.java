@@ -209,6 +209,15 @@ public class ReferenceServiceImpl implements ReferenceService {
         return references.stream();
     }
 
+    @Override
+    public void deleteAllReferences(@Nonnull final String txId, final FedoraId resourceId) {
+        final Stream<Triple> deleteReferences = getOutboundReferences(txId, resourceId);
+        // Remove all the existing references.
+        deleteReferences.forEach(t ->
+                removeReference(txId, resourceId.getFullId(), t.getPredicate().getURI(), t.getObject().getURI())
+        );
+    }
+
     /**
      * Get a stream of triples of resources being referenced from the provided resource.
      * @param txId transaction Id or null if none.
@@ -241,7 +250,7 @@ public class ReferenceServiceImpl implements ReferenceService {
 
     @Override
     @Transactional
-    public void updateReferences(final String txId, final FedoraId resourceId, final RdfStream rdfStream) {
+    public void updateReferences(@Nonnull final String txId, final FedoraId resourceId, final RdfStream rdfStream) {
         try {
             final Stream<Triple> deleteReferences = getOutboundReferences(txId, resourceId);
             // Remove all the existing references.

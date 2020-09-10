@@ -38,6 +38,14 @@ public interface ReferenceService {
     RdfStream getInboundReferences(final String txId, final FedoraResource resource);
 
     /**
+     * Delete all references from a resource to any other resource.
+     *
+     * @param txId the transaction ID
+     * @param resourceId the ID of the resource referencing others.
+     */
+    void deleteAllReferences(final String txId, final FedoraId resourceId);
+
+    /**
      * Parse the stream of triples for references, add any new ones and remove any missing ones.
      * @param txId the transaction ID
      * @param resourceId the subject ID of the triples.

@@ -2857,6 +2857,58 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testReferenceRemovedOnDelete() throws Exception {
+        final String id = getRandomUniqueId();
+        final String resource = serverAddress + id;
+        final String resourcea = resource + "/a";
+        final String resourceb = resource + "/b";
+        final String resourcec = resource + "/c";
+
+        createObjectAndClose(id);
+        createObjectAndClose(id + "/a");
+        createObjectAndClose(id + "/b");
+        createObjectAndClose(id + "/c");
+        // Patch a to point to c.
+        final HttpPatch updateObjectGraphMethodA = patchObjMethod(id + "/a");
+        updateObjectGraphMethodA.addHeader(CONTENT_TYPE, "application/sparql-update");
+        updateObjectGraphMethodA.setEntity(new StringEntity("INSERT { <" +
+                resourcea + "> <http://purl.org/dc/terms/isPartOf> <" + resourcec + "> . } WHERE {}"));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(updateObjectGraphMethodA));
+        // Patch b to point to c as well.
+        final HttpPatch updateObjectGraphMethodB = patchObjMethod(id + "/b");
+        updateObjectGraphMethodB.addHeader(CONTENT_TYPE, "application/sparql-update");
+        updateObjectGraphMethodB.setEntity(new StringEntity("INSERT { <" +
+                resourceb + "> <http://purl.org/dc/terms/isPartOf> <" + resourcec + "> . } WHERE {}"));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(updateObjectGraphMethodB));
+
+        // Verify the inbound references.
+        final HttpGet getObjMethod = new HttpGet(resourcec);
+        getObjMethod.addHeader("Prefer", "return=representation; include=\"" + INBOUND_REFERENCES + "\"");
+        try (final CloseableDataset dataset = getDataset(getObjMethod)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue(graph.contains(ANY,
+                    createURI(resourcea), createURI("http://purl.org/dc/terms/isPartOf"), createURI(resourcec)));
+
+            assertTrue(graph.contains(ANY,
+                    createURI(resourceb), createURI("http://purl.org/dc/terms/isPartOf"), createURI(resourcec)));
+        }
+        // Delete a.
+        final HttpDelete deleteReferrer = deleteObjMethod(id + "/a");
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteReferrer));
+        // Verify only inbound reference from b
+        final HttpGet getObjMethod2 = new HttpGet(resourcec);
+        getObjMethod2.addHeader("Prefer", "return=representation; include=\"" + INBOUND_REFERENCES + "\"");
+        try (final CloseableDataset dataset = getDataset(getObjMethod2)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertFalse(graph.contains(ANY,
+                    createURI(resourcea), createURI("http://purl.org/dc/terms/isPartOf"), createURI(resourceb)));
+
+            assertTrue(graph.contains(ANY,
+                    createURI(resourceb), createURI("http://purl.org/dc/terms/isPartOf"), createURI(resourcec)));
+        }
+    }
+
+    @Test
 @Ignore
     public void testGetObjectReferencesIndirect() throws Exception {
         final String uuid = getRandomUniqueId();
