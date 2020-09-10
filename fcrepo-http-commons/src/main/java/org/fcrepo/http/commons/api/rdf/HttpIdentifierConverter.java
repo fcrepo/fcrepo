@@ -79,7 +79,7 @@ public class HttpIdentifierConverter {
      * @return the internal identifier.
      */
     public String toInternalId(final String httpUri) {
-        LOGGER.debug("Translating http URI {} to Fedora ID", httpUri);
+        LOGGER.trace("Translating http URI {} to Fedora ID", httpUri);
 
         final String path = getPath(httpUri);
         if (path != null) {
@@ -100,7 +100,7 @@ public class HttpIdentifierConverter {
      * @return true if it is in domain.
      */
     public boolean inExternalDomain(final String httpUri) {
-        LOGGER.debug("Checking if http URI {} is in domain", httpUri);
+        LOGGER.trace("Checking if http URI {} is in domain", httpUri);
         return getPath(httpUri) != null;
     }
 
@@ -111,7 +111,7 @@ public class HttpIdentifierConverter {
      * @return the external URI.
      */
     public String toExternalId(final String fedoraId) {
-        LOGGER.debug("Translating Fedora ID {} to Http URI", fedoraId);
+        LOGGER.trace("Translating Fedora ID {} to Http URI", fedoraId);
         if (inInternalDomain(fedoraId)) {
             // If it starts with our prefix, strip the prefix and any leading slashes and use it as the path
             // part of the URI.
@@ -138,7 +138,7 @@ public class HttpIdentifierConverter {
      * @return true if it is in domain.
      */
     public boolean inInternalDomain(final String fedoraId) {
-        LOGGER.debug("Checking if fedora ID {} is in domain", fedoraId);
+        LOGGER.trace("Checking if fedora ID {} is in domain", fedoraId);
         return (fedoraId.startsWith(FEDORA_ID_PREFIX));
     }
 

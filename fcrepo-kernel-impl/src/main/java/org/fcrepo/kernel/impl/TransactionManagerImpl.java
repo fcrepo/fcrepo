@@ -65,7 +65,7 @@ public class TransactionManagerImpl implements TransactionManager {
      */
     @Scheduled(fixedDelayString = "#{systemProperties['fcrepo.session.timeout'] ?: 180000}")
     public void cleanupClosedTransactions() {
-        LOGGER.debug("Cleaning up expired transactions");
+        LOGGER.trace("Cleaning up expired transactions");
 
         final var txIt = transactions.entrySet().iterator();
         while (txIt.hasNext()) {

@@ -103,7 +103,7 @@ public class EventAccumulatorImpl implements EventAccumulator {
 
     @Override
     public void clearEvents(final String transactionId) {
-        LOG.debug("Clearing events for transaction {}", transactionId);
+        LOG.trace("Clearing events for transaction {}", transactionId);
         transactionEventMap.remove(transactionId);
     }
 

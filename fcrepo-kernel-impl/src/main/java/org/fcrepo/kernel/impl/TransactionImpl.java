@@ -88,6 +88,8 @@ public class TransactionImpl implements Transaction {
             this.getEventAccumulator().emitEvents(id, baseUri, userAgent);
             this.committed = true;
         } catch (final PersistentStorageException ex) {
+            log.error("Failed to commit transaction: {}", id, ex);
+
             // Rollback on commit failure
             rollback();
             throw new RepositoryRuntimeException("Failed to commit transaction " + id, ex);

@@ -89,6 +89,7 @@ public class FedoraSearch extends FedoraBaseResource {
                              @DefaultValue("asc") @QueryParam("order") final String order,
                              @DefaultValue("fedora_id") @QueryParam("order_by") final String orderBy) {
 
+        LOGGER.info("GET on search with conditions: {}, and fields: {}", conditions, fields);
         try {
             final var conditionList = new ArrayList<Condition>();
             for (String condition : conditions) {

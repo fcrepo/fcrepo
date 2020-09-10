@@ -367,6 +367,7 @@ public class FedoraLdp extends ContentExposingResource {
             @HeaderParam("Digest") final String digest)
             throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException,
                    PathNotFoundException {
+        LOGGER.info("PUT to create resource with ID: {}", externalPath());
 
         hasRestrictedPath(externalPath);
 
@@ -588,6 +589,8 @@ public class FedoraLdp extends ContentExposingResource {
         final FedoraId newFedoraId = mintNewPid(fedoraId, slug);
         final var providedContentType = getSimpleContentType(requestContentType);
 
+        LOGGER.info("POST to create resource with ID: {}, slug: {}", newFedoraId.getFullIdPath(), slug);
+
         if (isBinary(interactionModel,
                      providedContentType,
                      requestBodyStream != null && providedContentType != null,
@@ -798,7 +801,7 @@ public class FedoraLdp extends ContentExposingResource {
         final FedoraId fullTestPath = fedoraId.resolve(pid);
 
         if (doesResourceExist(transaction(), fullTestPath)) {
-            LOGGER.trace("Resource with path {} already exists; minting new path instead", fullTestPath);
+            LOGGER.debug("Resource with path {} already exists; minting new path instead", fullTestPath);
             return mintNewPid(fedoraId, null);
         }
 
