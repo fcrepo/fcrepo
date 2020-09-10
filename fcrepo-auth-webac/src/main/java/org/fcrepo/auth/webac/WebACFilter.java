@@ -95,6 +95,7 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
 import static org.fcrepo.auth.webac.WebACAuthorizingRealm.URIS_TO_AUTHORIZE;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_TX;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
@@ -299,6 +300,7 @@ public class WebACFilter extends RequestContextFilter {
     private boolean isAuthorized(final Subject currentUser, final HttpServletRequest httpRequest) throws IOException {
         final String requestURL = httpRequest.getRequestURL().toString();
         final boolean isAcl = requestURL.endsWith(FCR_ACL);
+        final boolean isTxEndpoint = requestURL.endsWith(FCR_TX);
         final URI requestURI = URI.create(requestURL);
         log.debug("Request URI is {}", requestURI);
         final FedoraResource resource = resource(httpRequest);
@@ -365,6 +367,10 @@ public class WebACFilter extends RequestContextFilter {
                 }
             }
         case "POST":
+            if (isTxEndpoint && currentUser.isAuthenticated()) {
+                log.debug("POST allowed to transaction endpoint");
+                return true;
+            }
             if (currentUser.isPermitted(toWrite)) {
                 if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {
                     log.debug("POST denied, not authorized to write to membershipRelation");

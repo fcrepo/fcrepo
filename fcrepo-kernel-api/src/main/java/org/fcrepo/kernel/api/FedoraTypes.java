@@ -99,6 +99,8 @@ public interface FedoraTypes {
 
     String FCR_TOMBSTONE = "fcr:tombstone";
 
+    String FCR_TX = "fcr:tx";
+
     String LDP_HAS_MEMBER_RELATION = "ldp:hasMemberRelation";
 
     String LDP_IS_MEMBER_OF_RELATION = "ldp:isMemberOfRelation";
