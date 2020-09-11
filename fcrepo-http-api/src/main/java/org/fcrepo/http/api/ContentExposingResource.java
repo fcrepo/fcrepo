@@ -289,7 +289,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         final List<Stream<Triple>> streams = new ArrayList<>();
 
-        streams.add(resource.getTriples());
+        if (!ldpPreferences.preferNoUserRdf()) {
+            // provide user RDF only if we didn't receive an omit=ldp:PreferMinimalContainer
+            streams.add(resource.getTriples());
+        }
         if (returnPreference.getValue().equals("minimal")) {
             if (ldpPreferences.prefersServerManaged())  {
                 streams.add(this.managedPropertiesService.get(resource));

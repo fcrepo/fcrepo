@@ -99,6 +99,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MINIMAL_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_SERVER_MANAGED;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
@@ -738,22 +739,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(put)) {
             assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
 
-        }
-    }
-
-    @Test
-    public void testGetRDFSourceWithPreferMinimal() throws IOException {
-        final String id = getRandomUniqueId();
-        createObjectAndClose(id);
-
-        final HttpGet getMethod = new HttpGet(serverAddress + id);
-        final String preferHeader = "return=minimal";
-        getMethod.addHeader("Prefer", preferHeader);
-
-        try (final CloseableHttpResponse response = execute(getMethod)) {
-            assertEquals(OK.getStatusCode(), getStatus(response));
-            final Collection<String> preferenceApplied = getHeader(response, "Preference-Applied");
-            assertTrue("Preference-Applied header doesn't matched", preferenceApplied.contains(preferHeader));
         }
     }
 
@@ -2324,20 +2309,64 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @Test
     public void testGetObjectGraphMinimal() throws IOException {
-        final String id = getRandomUniqueId();
-        createObjectAndClose(id, BASIC_CONTAINER_LINK_HEADER);
-        createObjectAndClose(id + "/a");
-        final HttpGet getObjMethod = getObjMethod(id);
-        getObjMethod.addHeader("Prefer", "return=minimal");
-        try (final CloseableDataset dataset = getDataset(getObjMethod)) {
+        final String uri;
+        final HttpPost httpPost = postObjMethod();
+        httpPost.setHeader("Link", BASIC_CONTAINER_LINK_HEADER);
+        httpPost.setHeader(CONTENT_TYPE, "text/turtle");
+        httpPost.setEntity(new StringEntity("<> <" + DCTITLE.getURI() + "> \"The title\" ."));
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            uri = getLocation(response);
+        }
+        final Node resource = createURI(uri);
+        // Create a contained child.
+        final HttpPut httpPut = new HttpPut(uri + "/a");
+        assertEquals(CREATED.getStatusCode(), getStatus(httpPut));
+
+        final HttpGet getObjMethod = new HttpGet(uri);
+        final String preferHeader = "return=minimal";
+        getObjMethod.addHeader("Prefer", preferHeader);
+        try (final CloseableHttpResponse response = execute(getObjMethod);
+             final CloseableDataset dataset = getDataset(response)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
             final DatasetGraph graph = dataset.asDatasetGraph();
-            final Node resource = createURI(serverAddress + id);
             assertFalse("Didn't expect members", graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
+            final Collection<String> preferenceApplied = getHeader(response, "Preference-Applied");
+            assertTrue("Preference-Applied header doesn't matched", preferenceApplied.contains(preferHeader));
+            assertTrue("Missing a user RDF triple", graph.contains(ANY, resource, DCTITLE, ANY));
+        }
+        // Now test with include preference
+        final HttpGet httpGet = new HttpGet(uri);
+        final String preferHeader2 = "return=representation; include=\"" +
+                PREFER_MINIMAL_CONTAINER.getURI() + "\"";
+        httpGet.setHeader("Prefer", preferHeader2);
+        try (final CloseableHttpResponse response = execute(httpGet);
+             final CloseableDataset dataset = getDataset(response)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertFalse("Didn't expect members", graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
+            final Collection<String> preferenceApplied = getHeader(response, "Preference-Applied");
+            assertTrue("Preference-Applied header doesn't matched",
+                    preferenceApplied.contains(preferHeader2));
+            assertTrue("Missing a user RDF triple", graph.contains(ANY, resource, DCTITLE, ANY));
+        }
+        // Now try with Omit minimal
+        final HttpGet getOmit = new HttpGet(uri);
+        final String preferOmitHeader = "return=representation; omit=\"" + PREFER_MINIMAL_CONTAINER + "\"";
+        getOmit.addHeader("Prefer", preferOmitHeader);
+        try (final CloseableHttpResponse response = execute(getOmit);
+             final CloseableDataset dataset = getDataset(response)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue("Expected members", graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
+            final Collection<String> preferenceApplied = getHeader(response, "Preference-Applied");
+            assertTrue("Preference-Applied header doesn't matched",
+                    preferenceApplied.contains(preferOmitHeader));
+            assertFalse("Should not return user RDF triples", graph.contains(ANY, resource, DCTITLE, ANY));
         }
     }
 
     @Test
-@Ignore
     public void testGetObjectOmitMembership() throws IOException {
         final String id = getRandomUniqueId();
         final Node resource = createURI(serverAddress + id);
@@ -2354,10 +2383,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue("Expected server managed", graph.find(ANY, resource, ANY, FEDORA_CONTAINER.asNode()).hasNext());
             assertTrue("Expected server managed", graph.find(ANY, resource, ANY, FEDORA_RESOURCE.asNode()).hasNext());
             assertTrue("Expected server managed", graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, CREATED_BY.asNode(), ANY).hasNext());
             assertTrue("Expected server managed",
                     graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, LAST_MODIFIED_BY.asNode(), ANY).hasNext());
+            assertFalse("Expected no members", graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
         }
     }
 

@@ -21,7 +21,9 @@ import static java.util.Arrays.asList;
 import static java.util.Optional.ofNullable;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
-import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_CONTAINMENT;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MEMBERSHIP;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MINIMAL_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_SERVER_MANAGED;
 
 import java.util.List;
@@ -46,6 +48,8 @@ public class LdpPreferTag extends PreferTag {
 
     private final boolean managedProperties;
 
+    private final boolean noMinimal;
+
     /**
      * Standard constructor.
      *
@@ -63,14 +67,17 @@ public class LdpPreferTag extends PreferTag {
 
         final boolean minimal = preferTag.getValue().equals("minimal") || received.orElse("").equals("minimal");
 
-        final boolean preferMinimalContainer = includes.contains(LDP_NAMESPACE + "PreferMinimalContainer") || minimal;
+        final boolean preferMinimalContainer = (!omits.contains(PREFER_MINIMAL_CONTAINER.toString()) &&
+                (includes.contains(PREFER_MINIMAL_CONTAINER.toString()) || minimal));
 
-        membership = (!preferMinimalContainer && !omits.contains(LDP_NAMESPACE + "PreferMembership")) ||
-                includes.contains(LDP_NAMESPACE + "PreferMembership");
+        noMinimal = omits.contains(PREFER_MINIMAL_CONTAINER.toString());
 
-        containment = (!preferMinimalContainer && !omits.contains(LDP_NAMESPACE + "PreferContainment") &&
+        membership = (!preferMinimalContainer && !omits.contains(PREFER_MEMBERSHIP.toString())) ||
+                includes.contains(PREFER_MEMBERSHIP.toString());
+
+        containment = (!preferMinimalContainer && !omits.contains(PREFER_CONTAINMENT.toString()) &&
                 !omits.contains(PREFER_SERVER_MANAGED.toString()))
-                || includes.contains(LDP_NAMESPACE + "PreferContainment");
+                || includes.contains(PREFER_CONTAINMENT.toString());
 
         references = includes.contains(INBOUND_REFERENCES.toString());
 
@@ -111,5 +118,12 @@ public class LdpPreferTag extends PreferTag {
      */
     public boolean prefersServerManaged() {
         return managedProperties;
+    }
+
+    /**
+     * @return Whether this prefer tag demands no minimal container, ie. no user RDF.
+     */
+    public boolean preferNoUserRdf() {
+        return noMinimal;
     }
 }

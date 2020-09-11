@@ -19,7 +19,9 @@ package org.fcrepo.http.commons.domain;
 
 import static java.util.Arrays.asList;
 import static java.util.Optional.ofNullable;
-import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_CONTAINMENT;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MEMBERSHIP;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MINIMAL_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_SERVER_MANAGED;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
@@ -90,7 +92,7 @@ public class PreferTag implements Comparable<PreferTag> {
                         params = new HashMap<>();
                     }
                 }
-            } catch (ParseException e) {
+            } catch (final ParseException e) {
                 throw new IllegalArgumentException("Could not parse 'Prefer' header", e);
             }
         } else {
@@ -145,9 +147,9 @@ public class PreferTag implements Comparable<PreferTag> {
 
         if (!(value.equals("minimal") || receivedParam.equals("minimal"))) {
             final List<String> appliedPrefs = asList(PREFER_SERVER_MANAGED.toString(),
-                    LDP_NAMESPACE + "PreferMinimalContainer",
-                    LDP_NAMESPACE + "PreferMembership",
-                    LDP_NAMESPACE + "PreferContainment");
+                    PREFER_MINIMAL_CONTAINER.toString(),
+                    PREFER_MEMBERSHIP.toString(),
+                    PREFER_CONTAINMENT.toString());
             final List<String> includePrefs = asList(EMBED_CONTAINED.toString(),
                     INBOUND_REFERENCES.toString());
             includes.forEach(param -> includeBuilder.append(
