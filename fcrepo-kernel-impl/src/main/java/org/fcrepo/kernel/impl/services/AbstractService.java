@@ -31,6 +31,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_ACCESS_TO;
 import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_ACCESS_TO_CLASS;
 import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_ACCESS_TO_PROPERTY;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
+import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
@@ -226,6 +227,17 @@ public abstract class AbstractService {
 
     protected void recordEvent(final String transactionId, final FedoraId fedoraId, final ResourceOperation operation) {
         this.eventAccumulator.recordEventForOperation(transactionId, fedoraId, operation);
+    }
+
+    /**
+     * Wrapper to call the referenceService updateReference method
+     * @param transactionId the transaction ID.
+     * @param resourceId the resource's ID.
+     * @param model the model of the request body.
+     */
+    protected void updateReferences(final String transactionId, final FedoraId resourceId, final Model model) {
+        referenceService.updateReferences(transactionId, resourceId,
+                fromModel(model.getResource(resourceId.getFullId()).asNode(), model));
     }
 
     /**

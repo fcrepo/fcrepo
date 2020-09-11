@@ -180,8 +180,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
         try {
             pSession.persist(createOp);
-            referenceService.updateReferences(txId, fedoraId,
-                    fromModel(model.getResource(fedoraId.getFullId()).asNode(), model));
+            updateReferences(txId, fedoraId, model);
             addToContainmentIndex(txId, parentId, fedoraId);
             recordEvent(txId, fedoraId, createOp);
         } catch (final PersistentStorageException exc) {

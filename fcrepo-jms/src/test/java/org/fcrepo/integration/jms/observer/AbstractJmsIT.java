@@ -73,7 +73,6 @@ import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_CREATION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_DELETION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_MODIFICATION;
 import static org.slf4j.LoggerFactory.getLogger;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * <p>
@@ -139,12 +138,6 @@ abstract class AbstractJmsIT implements MessageListener {
     private static final Logger LOGGER = getLogger(AbstractJmsIT.class);
 
     protected abstract Destination createDestination() throws JMSException;
-
-    @Before
-    public void setUp() {
-        setField(createResourceService, "referenceService", referenceService);
-        setField(replacePropertiesService, "referenceService", referenceService);
-    }
 
     @Test(timeout = TIMEOUT)
     public void testIngestion() {
@@ -349,7 +342,7 @@ abstract class AbstractJmsIT implements MessageListener {
     private FedoraResource getResource(final FedoraId fedoraId) {
         try {
             return resourceFactory.getResource(fedoraId);
-        } catch (PathNotFoundException e) {
+        } catch (final PathNotFoundException e) {
             throw new RuntimeException(e);
         }
     }

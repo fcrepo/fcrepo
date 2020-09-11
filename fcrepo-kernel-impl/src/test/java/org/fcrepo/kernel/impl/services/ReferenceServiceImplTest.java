@@ -69,7 +69,7 @@ public class ReferenceServiceImplTest {
 
     private Resource target;
 
-    private static Property referenceProp = ResourceFactory.createProperty("http://example.org/pointer");
+    private static final Property referenceProp = ResourceFactory.createProperty("http://example.org/pointer");
 
     private String transactionId;
 
@@ -200,6 +200,35 @@ public class ReferenceServiceImplTest {
     }
 
     @Test
+    public void commitTransactionNotExist() {
+        final String txID = UUID.randomUUID().toString();
+        referenceService.commitTransaction(txID);
+    }
+
+    @Test
+    public void ensureNoCrossTransactionLeakage() {
+        assertEquals(0, referenceService.getInboundReferences(null, targetResource).count());
+
+        final Model model = createDefaultModel();
+        model.add(subject1, referenceProp, target);
+        final RdfStream stream = fromModel(subject1.asNode(), model);
+        referenceService.updateReferences(transactionId, subject1Id, stream);
+
+        final String transaction2 = UUID.randomUUID().toString();
+        // Still not public.
+        assertEquals(0, referenceService.getInboundReferences(null, targetResource).count());
+        // Available to current transaction
+        assertEquals(1, referenceService.getInboundReferences(transactionId, targetResource).count());
+        // But not to other transactions.
+        assertEquals(0, referenceService.getInboundReferences(transaction2, targetResource).count());
+        referenceService.commitTransaction(transactionId);
+        // Now all return the one.
+        assertEquals(1, referenceService.getInboundReferences(null, targetResource).count());
+        assertEquals(1, referenceService.getInboundReferences(transactionId, targetResource).count());
+        assertEquals(1, referenceService.getInboundReferences(transaction2, targetResource).count());
+    }
+
+    @Test
     public void testAddAndRemove() {
         assertEquals(0, referenceService.getInboundReferences(null, targetResource).count());
 
@@ -217,6 +246,10 @@ public class ReferenceServiceImplTest {
         model.remove(subject1, referenceProp, target);
         final RdfStream stream2 = fromModel(subject1.asNode(), model);
         referenceService.updateReferences(transaction2, subject1Id, stream2);
+        // Reference still available outside transaction.
+        assertEquals(1, referenceService.getInboundReferences(null, targetResource).count());
+        // But gone inside the transaction
+        assertEquals(0, referenceService.getInboundReferences(transaction2, targetResource).count());
         referenceService.commitTransaction(transaction2);
         assertEquals(0, referenceService.getInboundReferences(null, targetResource).count());
     }

@@ -29,7 +29,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 public interface ReferenceService {
 
     /**
-     * Return a RDFstream of statements referring the provided resource.
+     * Return a RDFstream of statements referring to the provided resource.
      *
      * @param txId the transaction ID or null if no transaction.
      * @param resource the resource to get inbound references for.

@@ -166,7 +166,7 @@ public class IndexBuilderImpl implements IndexBuilder {
                                 fedoraId.getFullId()));
                     }
                 }
-                if (!headers.getInteractionModel().equalsIgnoreCase(NON_RDF_SOURCE.toString())) {
+                if (!headers.getInteractionModel().equals(NON_RDF_SOURCE.toString())) {
                     final Optional<InputStream> content = session.readContent(fedoraId.getFullId()).getContentStream();
                     if (content.isPresent()) {
                         final RdfStream rdf = parseRdf(fedoraId, content.get());

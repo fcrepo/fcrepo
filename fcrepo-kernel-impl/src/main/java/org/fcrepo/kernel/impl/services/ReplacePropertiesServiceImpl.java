@@ -70,8 +70,7 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
                 .build();
 
             pSession.persist(updateOp);
-            referenceService.updateReferences(txId, fedoraId,
-                    fromModel(inputModel.createResource(fedoraId.getFullId()).asNode(), inputModel));
+            updateReferences(txId, fedoraId, inputModel);
             recordEvent(txId, fedoraId, updateOp);
         } catch (final PersistentStorageException ex) {
             throw new RepositoryRuntimeException(String.format("failed to replace resource %s",

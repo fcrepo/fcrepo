@@ -4018,7 +4018,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testInboundLinksDoNotUpdateEtag() throws IOException {
         final String id1 = getRandomUniqueId();
         final HttpPut httpPut = putObjMethod(id1);

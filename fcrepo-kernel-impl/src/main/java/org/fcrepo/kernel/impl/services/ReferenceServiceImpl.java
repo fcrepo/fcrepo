@@ -357,8 +357,7 @@ public class ReferenceServiceImpl implements ReferenceService {
             return (s.isURI() && s.getURI().startsWith(FEDORA_ID_PREFIX) && o.isURI() &&
                     o.getURI().startsWith(FEDORA_ID_PREFIX));
         };
-        return stream.peek(t -> LOGGER.trace("Before reference filtering: {}", t)).filter(isInternalReference)
-                .peek(t -> LOGGER.trace("After reference filtering: {}", t));
+        return stream.filter(isInternalReference);
     }
 
     /**
