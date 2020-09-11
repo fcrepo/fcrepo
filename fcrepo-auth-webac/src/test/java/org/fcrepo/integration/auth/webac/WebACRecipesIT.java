@@ -2211,4 +2211,11 @@ public class WebACRecipesIT extends AbstractResourceIT {
         okPatch.setEntity(patchEntity);
         assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(okPatch));
     }
+
+    @Test
+    public void testAuthenticatedUserCanCreateTransaction() {
+        final HttpPost txnCreatePost = postObjMethod("rest/fcr:tx");
+        setAuth(txnCreatePost, "testUser92");
+        assertEquals(SC_CREATED, getStatus(txnCreatePost));
+    }
 }
