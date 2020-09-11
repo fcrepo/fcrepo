@@ -143,7 +143,7 @@ public class FcrepoOcflObjectSessionWrapper implements OcflObjectSession {
     public boolean isOpen() {
         return inner.isOpen();
     }
-
+    
     @Override
     public void close() {
         exec(inner::close);
