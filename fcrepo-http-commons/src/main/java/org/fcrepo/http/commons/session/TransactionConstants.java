@@ -18,6 +18,7 @@
 package org.fcrepo.http.commons.session;
 
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_TX;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -39,7 +40,7 @@ public class TransactionConstants {
 
     public static final String ATOMIC_EXPIRES_HEADER = "Atomic-Expires";
 
-    public static final String TX_PREFIX = "fcr:tx/";
+    public static final String TX_PREFIX = FCR_TX + "/";
 
     public static final String TX_NS = "http://fedora.info/definitions/v4/transaction#";
 

@@ -300,7 +300,7 @@ public class WebACFilter extends RequestContextFilter {
     private boolean isAuthorized(final Subject currentUser, final HttpServletRequest httpRequest) throws IOException {
         final String requestURL = httpRequest.getRequestURL().toString();
         final boolean isAcl = requestURL.endsWith(FCR_ACL);
-        final boolean isTxEndpoint = requestURL.endsWith(FCR_TX);
+        final boolean isTxEndpoint = requestURL.endsWith(FCR_TX) || requestURL.endsWith(FCR_TX + "/");
         final URI requestURI = URI.create(requestURL);
         log.debug("Request URI is {}", requestURI);
         final FedoraResource resource = resource(httpRequest);
@@ -368,7 +368,8 @@ public class WebACFilter extends RequestContextFilter {
             }
         case "POST":
             if (isTxEndpoint && currentUser.isAuthenticated()) {
-                log.debug("POST allowed to transaction endpoint");
+                final String currentUsername = ((Principal) currentUser.getPrincipal()).getName();
+                log.debug("POST allowed to transaction endpoint for authenticated user {}", currentUsername);
                 return true;
             }
             if (currentUser.isPermitted(toWrite)) {
