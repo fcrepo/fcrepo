@@ -145,7 +145,7 @@ public class FcrepoOcflObjectSessionWrapper implements OcflObjectSession {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         exec(inner::close);
     }
 
