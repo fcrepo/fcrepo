@@ -22,7 +22,6 @@ import org.fcrepo.common.db.DbPlatform;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.FedoraResource;
 import org.slf4j.Logger;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -314,8 +313,8 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    public Stream<String> getContains(final String txId, final FedoraResource fedoraResource) {
-        final String resourceId = fedoraResource.getFedoraId().getFullId();
+    public Stream<String> getContains(final String txId, final FedoraId fedoraId) {
+        final String resourceId = fedoraId.getFullId();
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("parent", resourceId);
 
@@ -334,8 +333,8 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    public Stream<String> getContainsDeleted(final String txId, final FedoraResource fedoraResource) {
-        final String resourceId = fedoraResource.getFedoraId().getFullId();
+    public Stream<String> getContainsDeleted(final String txId, final FedoraId fedoraId) {
+        final String resourceId = fedoraId.getFullId();
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("parent", resourceId);
 
@@ -545,7 +544,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         try {
             jdbcTemplate.update(TRUNCATE_TABLE + RESOURCES_TABLE, Collections.emptyMap());
             jdbcTemplate.update(TRUNCATE_TABLE + TRANSACTION_OPERATIONS_TABLE, Collections.emptyMap());
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RepositoryRuntimeException("Failed to truncate containment tables", e);
         }
     }

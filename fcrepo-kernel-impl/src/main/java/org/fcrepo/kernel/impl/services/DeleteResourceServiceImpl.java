@@ -48,7 +48,7 @@ public class DeleteResourceServiceImpl extends AbstractDeleteResourceService imp
 
     @Override
     protected Stream<String> getContained(final Transaction tx, final FedoraResource resource) {
-        return containmentIndex.getContains(TransactionUtils.openTxId(tx), resource);
+        return containmentIndex.getContains(TransactionUtils.openTxId(tx), resource.getFedoraId());
     }
 
     @Override

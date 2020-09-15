@@ -37,6 +37,7 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.time.Instant;
+import java.util.stream.Stream;
 
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
@@ -269,5 +270,12 @@ public class ResourceFactoryImpl implements ResourceFactory {
             session = persistentStorageSessionManager.getSession(transactionId);
         }
         return session;
+    }
+
+    @Override
+    public Stream<FedoraResource> getChildren(final String transactionId, final FedoraId resourceId) {
+//        containmentIndex.getContains(transactionId, fedoraResource).getContainedBy(transactionId, resourceId);
+        // TODO Auto-generated method stub
+        return null;
     }
 }

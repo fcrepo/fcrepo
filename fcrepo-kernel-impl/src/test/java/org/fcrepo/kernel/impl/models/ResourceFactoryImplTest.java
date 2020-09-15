@@ -107,7 +107,7 @@ public class ResourceFactoryImplTest {
 
     private String sessionId;
 
-    private FedoraId rootId = FedoraId.getRepositoryRootId();
+    private final FedoraId rootId = FedoraId.getRepositoryRootId();
 
     private FedoraId fedoraId;
 
@@ -156,7 +156,7 @@ public class ResourceFactoryImplTest {
     public void cleanUp() {
         when(mockResource.getFedoraId()).thenReturn(rootId);
         containmentIndex.rollbackTransaction(mockTx.getId());
-        containmentIndex.getContains(null, mockResource).forEach(c ->
+        containmentIndex.getContains(null, rootId).forEach(c ->
                 containmentIndex.removeContainedBy(mockTx.getId(), rootId, FedoraId.create(c)));
         containmentIndex.commitTransaction(mockTx.getId());
     }
