@@ -142,6 +142,7 @@ public interface FedoraResource {
      * @param relPath the given path
      * @return the child of this resource
      */
+    @Deprecated
     FedoraResource getChild(String relPath);
 
     /**

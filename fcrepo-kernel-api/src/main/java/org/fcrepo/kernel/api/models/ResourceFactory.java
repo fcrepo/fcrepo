@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.api.models;
 
+import java.util.stream.Stream;
+
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -102,4 +104,12 @@ public interface ResourceFactory {
      * @return The containing resource or null if none.
      */
     public FedoraResource getContainer(final String transactionId, final FedoraId resourceId);
+
+    /**
+     * Get immediate children of the resource
+     * @param transactionId The transaction id
+     * @param resourceId Identifier of the resource
+     * @return Stream of child resources
+     */
+    public Stream<FedoraResource> getChildren(final String transactionId, final FedoraId resourceId);
 }
