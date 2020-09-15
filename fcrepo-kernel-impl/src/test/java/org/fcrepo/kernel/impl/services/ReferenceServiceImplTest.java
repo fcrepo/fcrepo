@@ -18,8 +18,11 @@
 package org.fcrepo.kernel.impl.services;
 
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import javax.inject.Inject;
@@ -35,7 +38,9 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.junit.Before;
 import org.junit.Test;
@@ -58,6 +63,12 @@ public class ReferenceServiceImplTest {
 
     @Mock
     private FedoraResource targetResource;
+
+    @Mock
+    private Binary binaryResource;
+
+    @Mock
+    private NonRdfSourceDescription binaryDescriptionResource;
 
     private FedoraId subject1Id;
 
@@ -252,5 +263,49 @@ public class ReferenceServiceImplTest {
         assertEquals(0, referenceService.getInboundReferences(transaction2, targetResource).count());
         referenceService.commitTransaction(transaction2);
         assertEquals(0, referenceService.getInboundReferences(null, targetResource).count());
+    }
+
+    @Test
+    public void testBinaryDescriptionListAllReferences() {
+        final FedoraId binaryId = FedoraId.create(UUID.randomUUID().toString());
+        final FedoraId descriptionId = binaryId.resolve(FCR_METADATA);
+        final Resource binaryUri = ResourceFactory.createResource(binaryId.getFullId());
+        final Resource binaryDescUri = ResourceFactory.createResource(descriptionId.getFullId());
+        when(binaryResource.getFedoraId()).thenReturn(binaryId);
+        when(binaryDescriptionResource.getFedoraId()).thenReturn(descriptionId);
+        when(binaryDescriptionResource.getDescribedResource()).thenReturn(binaryResource);
+        assertEquals(0, referenceService.getInboundReferences(null, binaryDescriptionResource).count());
+
+        // Add a reference to binary
+        final Model model = createDefaultModel();
+        model.add(subject1, referenceProp, binaryUri);
+        final RdfStream stream = fromModel(subject1.asNode(), model);
+        referenceService.updateReferences(transactionId, subject1Id, stream);
+        // Check before committing
+        assertEquals(0, referenceService.getInboundReferences(null, binaryDescriptionResource).count());
+        assertEquals(1, referenceService.getInboundReferences(transactionId, binaryDescriptionResource)
+                .count());
+        // Commit
+        referenceService.commitTransaction(transactionId);
+        assertEquals(1, referenceService.getInboundReferences(null, binaryDescriptionResource).count());
+
+        // Add a second to the description.
+        final Model model2 = createDefaultModel();
+        model2.add(subject2, referenceProp, binaryDescUri);
+        final RdfStream stream2 = fromModel(subject2.asNode(), model2);
+        referenceService.updateReferences(transactionId, subject2Id, stream2);
+        // One reference outside the transaction
+        assertEquals(1, referenceService.getInboundReferences(null, binaryDescriptionResource).count());
+        // Two inside
+        assertEquals(2, referenceService.getInboundReferences(transactionId, binaryDescriptionResource)
+                .count());
+        // Commit the transaction
+        referenceService.commitTransaction(transactionId);
+
+        // Verify both the reference to the binary and the description are returned.
+        final Model rdfModel = referenceService.getInboundReferences(null, binaryDescriptionResource).collect(
+                toModel());
+        assertTrue(rdfModel.contains(subject1, referenceProp, binaryUri));
+        assertTrue(rdfModel.contains(subject2, referenceProp, binaryDescUri));
     }
 }
