@@ -756,7 +756,7 @@ public class FedoraLdpTest {
         verify(builder, times(0)).entity(any());
     }
 
-    @Ignore("Can't properly omit triples - FCREPO-3037")
+    @Ignore("Needs membership triples - FCREPO-3165")
     @Test
     public void testGetWithObjectOmitContainment() throws Exception {
         setResource(Container.class);
@@ -774,7 +774,7 @@ public class FedoraLdpTest {
         }
     }
 
-    @Ignore("Membership Triples not implemented - FCREPO-3165 & Can't properly omit triples - FCREPO-3037")
+    @Ignore("Membership Triples not implemented - FCREPO-3165 & Needs membership triples - FCREPO-3165")
     @Test
     public void testGetWithObjectOmitMembership() throws Exception {
         setResource(Container.class);

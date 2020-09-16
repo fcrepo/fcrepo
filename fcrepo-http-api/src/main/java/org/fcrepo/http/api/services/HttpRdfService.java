@@ -48,6 +48,7 @@ import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.exception.UnsupportedMediaTypeException;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
@@ -209,6 +210,11 @@ public class HttpRdfService {
         }
 
         final Lang format = contentTypeToLang(contentTypeWithoutCharset);
+        if (format == null) {
+            // No valid RDF format for the mimeType.
+            throw new UnsupportedMediaTypeException("Media type " + contentTypeWithoutCharset + " is not a valid RDF " +
+                    "format");
+        }
         try {
             final Model inputModel = createDefaultModel();
             inputModel.read(requestBodyStream, extResourceId, format.getName().toUpperCase());
