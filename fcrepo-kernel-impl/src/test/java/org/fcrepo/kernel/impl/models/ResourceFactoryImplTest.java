@@ -438,22 +438,19 @@ public class ResourceFactoryImplTest {
     public void getChildren_WithChildren() throws Exception {
         populateHeaders(resourceHeaders, BASIC_CONTAINER);
 
-        final var child1IdStr = FEDORA_ID_PREFIX + "/" + UUID.randomUUID().toString();
-        final var child1Id = FedoraId.create(child1IdStr);
+        final var child1Id = FedoraId.create(UUID.randomUUID().toString());
         final var child1Headers = new ResourceHeadersImpl();
         child1Headers.setId(child1Id);
         populateHeaders(child1Headers, BASIC_CONTAINER);
         when(psSession.getHeaders(child1Id, null)).thenReturn(child1Headers);
 
-        final var childNestedIdStr = FEDORA_ID_PREFIX + "/" + UUID.randomUUID().toString();
-        final var childNestedId = FedoraId.create(childNestedIdStr);
+        final var childNestedId = FedoraId.create(UUID.randomUUID().toString());
         final var childNestedHeaders = new ResourceHeadersImpl();
         childNestedHeaders.setId(childNestedId);
         populateHeaders(childNestedHeaders, BASIC_CONTAINER);
         when(psSession.getHeaders(childNestedId, null)).thenReturn(childNestedHeaders);
 
-        final var child2IdStr = FEDORA_ID_PREFIX + "/" + UUID.randomUUID().toString();
-        final var child2Id = FedoraId.create(child2IdStr);
+        final var child2Id = FedoraId.create(UUID.randomUUID().toString());
         final var child2Headers = new ResourceHeadersImpl();
         child2Headers.setId(child2Id);
         populateHeaders(child2Headers, NON_RDF_SOURCE);

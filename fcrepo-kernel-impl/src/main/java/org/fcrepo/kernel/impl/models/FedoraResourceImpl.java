@@ -191,12 +191,6 @@ public class FedoraResourceImpl implements FedoraResource {
     }
 
     @Override
-    public FedoraResource getChild(final String relPath) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
     public boolean hasProperty(final String relPath) {
         // TODO Auto-generated method stub
         return false;

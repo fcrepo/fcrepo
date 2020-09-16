@@ -17,7 +17,6 @@
  */
 package org.fcrepo.kernel.impl.models;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -58,8 +57,7 @@ public class ContainerImplTest {
     @Before
     public void setup() throws Exception {
         MockitoAnnotations.initMocks(this);
-        final var fedoraIdStr = FEDORA_ID_PREFIX + "/" + UUID.randomUUID().toString();
-        fedoraId = FedoraId.create(fedoraIdStr);
+        fedoraId = FedoraId.create(UUID.randomUUID().toString());
     }
 
     @Test

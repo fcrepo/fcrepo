@@ -137,15 +137,6 @@ public interface FedoraResource {
     FedoraResource getAcl();
 
     /**
-     * Get the child of this resource at the given path
-     *
-     * @param relPath the given path
-     * @return the child of this resource
-     */
-    @Deprecated
-    FedoraResource getChild(String relPath);
-
-    /**
      * Does this resource have a property
      * @param relPath the given path
      * @return the boolean value whether the resource has a property
