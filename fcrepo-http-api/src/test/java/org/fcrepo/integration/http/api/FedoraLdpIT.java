@@ -1730,37 +1730,23 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
+    /**
+     * We no longer support SPARQL as a valid RDF syntax for object creation.
+     */
     @Test
-@Ignore
     public void testIngestWithNewAndSparqlQuery() throws IOException {
         final HttpPost method = postObjMethod();
         method.addHeader(CONTENT_TYPE, "application/sparql-update");
         method.setEntity(new StringEntity(
                 "INSERT { <> <http://purl.org/dc/elements/1.1/title> \"title\" } WHERE {}"));
-        try (final CloseableHttpResponse response = execute(method)) {
-            final String content = EntityUtils.toString(response.getEntity());
-            final int status = getStatus(response);
-            assertEquals("Didn't get a CREATED response! Got content:\n" + content, CREATED.getStatusCode(), status);
-            final String lastmod = response.getFirstHeader("Last-Modified").getValue();
-            assertNotNull("Should set Last-Modified for new nodes", lastmod);
-            assertNotEquals("Last-Modified should not be blank for new nodes", lastmod.trim(), "");
-            assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
-            final String location = getLocation(response);
-            try (final CloseableDataset dataset = getDataset(new HttpGet(location))) {
-                final DatasetGraph graphStore = dataset.asDatasetGraph();
-                assertTrue(graphStore.contains(ANY, createURI(location), DCTITLE, createLiteral("title")));
-            }
-        }
-    }
+        assertEquals(UNSUPPORTED_MEDIA_TYPE.getStatusCode(), getStatus(method));
 
-    @Test
-    public void testIngestWithSparqlQueryBadNS() throws IOException {
-        final HttpPost method = postObjMethod();
-        method.addHeader(CONTENT_TYPE, "application/sparql-update");
-        method.setEntity(new StringEntity("PREFIX fcr: <http://xmlns.com/my-fcr/> "
-                + "INSERT { <> <http://purl.org/dc/elements/1.1/title> \"this is a title\" } WHERE {}"));
-        assertNotEquals("Should not get a CREATED response with bad namspace prefix!",
-                CREATED.getStatusCode(), getStatus(method));
+        final String id = getRandomUniqueId();
+        final HttpPut putMethod = putObjMethod(id);
+        putMethod.addHeader(CONTENT_TYPE, "application/sparql-update");
+        putMethod.setEntity(new StringEntity(
+                "INSERT { <> <http://purl.org/dc/elements/1.1/title> \"title\" } WHERE {}"));
+        assertEquals(UNSUPPORTED_MEDIA_TYPE.getStatusCode(), getStatus(putMethod));
     }
 
     @Test
@@ -1987,7 +1973,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // Retrieve the new resource and verify the content-disposition
         verifyContentDispositionFilename(location, filename);
 
-        // TODO enble once PATCH is working
+        // TODO enable once PATCH is working
+        // DO WE WANT TO ALTER THE USER'S RDF BY ADDING THE TRIPLES?
         // Update the filename
         // final String filename1 = "new-file.png";
         // final HttpPatch patch = new HttpPatch(location + "/" + FCR_METADATA);
@@ -2064,21 +2051,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 assertTrue(graphStore.contains(ANY, subj, DCTITLE, createLiteral("english title", "en", false)));
                 assertTrue(graphStore.contains(ANY, subj, DCTITLE, createLiteral("french title", "fr", false)));
             }
-        }
-    }
-
-    @Test
-    // TODO It's not clear what this test is actually testing, or why it sleeps while running
-            public
-            void testCreateManyObjects() throws IOException, InterruptedException {
-        if (System.getProperty(TEST_ACTIVATION_PROPERTY) == null) {
-            LOGGER.info("Not running testCreateManyObjects because system property TEST_ACTIVATION_PROPERTY not set.");
-            return;
-        }
-        final int manyObjects = 2000;
-        for (int i = 0; i < manyObjects; i++) {
-            sleep(10); // needed to prevent overloading TODO why?
-            createObject().close();
         }
     }
 
