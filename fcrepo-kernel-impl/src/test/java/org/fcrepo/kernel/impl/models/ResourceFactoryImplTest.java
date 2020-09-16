@@ -49,6 +49,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
@@ -107,7 +108,7 @@ public class ResourceFactoryImplTest {
 
     private String sessionId;
 
-    private FedoraId rootId = FedoraId.getRepositoryRootId();
+    private final FedoraId rootId = FedoraId.getRepositoryRootId();
 
     private FedoraId fedoraId;
 
@@ -156,7 +157,7 @@ public class ResourceFactoryImplTest {
     public void cleanUp() {
         when(mockResource.getFedoraId()).thenReturn(rootId);
         containmentIndex.rollbackTransaction(mockTx.getId());
-        containmentIndex.getContains(null, mockResource).forEach(c ->
+        containmentIndex.getContains(null, rootId).forEach(c ->
                 containmentIndex.removeContainedBy(mockTx.getId(), rootId, FedoraId.create(c)));
         containmentIndex.commitTransaction(mockTx.getId());
     }
@@ -416,6 +417,64 @@ public class ResourceFactoryImplTest {
         when(psSession.getHeaders(fedoraMementoId, fedoraMementoId.getMementoInstant()))
                 .thenThrow(PersistentSessionClosedException.class);
         factory.doesResourceExist(null, fedoraMementoId);
+    }
+
+    @Test
+    public void getChildren_NoChildren() throws Exception {
+        populateHeaders(resourceHeaders, BASIC_CONTAINER);
+
+        final var childrenStream = factory.getChildren(sessionId, fedoraId);
+
+        assertEquals(0, childrenStream.count());
+    }
+
+    @Test
+    public void getChildren_DoesNotExist() throws Exception {
+        final var childrenStream = factory.getChildren(sessionId, fedoraId);
+        assertEquals(0, childrenStream.count());
+    }
+
+    @Test
+    public void getChildren_WithChildren() throws Exception {
+        populateHeaders(resourceHeaders, BASIC_CONTAINER);
+
+        final var child1Id = FedoraId.create(UUID.randomUUID().toString());
+        final var child1Headers = new ResourceHeadersImpl();
+        child1Headers.setId(child1Id);
+        populateHeaders(child1Headers, BASIC_CONTAINER);
+        when(psSession.getHeaders(child1Id, null)).thenReturn(child1Headers);
+
+        final var childNestedId = FedoraId.create(UUID.randomUUID().toString());
+        final var childNestedHeaders = new ResourceHeadersImpl();
+        childNestedHeaders.setId(childNestedId);
+        populateHeaders(childNestedHeaders, BASIC_CONTAINER);
+        when(psSession.getHeaders(childNestedId, null)).thenReturn(childNestedHeaders);
+
+        final var child2Id = FedoraId.create(UUID.randomUUID().toString());
+        final var child2Headers = new ResourceHeadersImpl();
+        child2Headers.setId(child2Id);
+        populateHeaders(child2Headers, NON_RDF_SOURCE);
+        populateInternalBinaryHeaders(child2Headers);
+        when(psSession.getHeaders(child2Id, null)).thenReturn(child2Headers);
+
+        containmentIndex.addContainedBy(mockTx.getId(), rootId, fedoraId);
+        containmentIndex.addContainedBy(mockTx.getId(), fedoraId, child1Id);
+        containmentIndex.addContainedBy(mockTx.getId(), child1Id, childNestedId);
+        containmentIndex.addContainedBy(mockTx.getId(), fedoraId, child2Id);
+        containmentIndex.commitTransaction(mockTx.getId());
+
+        final var childrenStream = factory.getChildren(sessionId, fedoraId);
+        final var childrenList = childrenStream.collect(Collectors.toList());
+
+        assertEquals(2, childrenList.size());
+
+        final var child1 = childrenList.stream().filter(c -> c.getFedoraId().equals(child1Id)).findFirst();
+        assertTrue(child1.isPresent());
+        assertTrue(child1.get() instanceof Container);
+
+        final var child2 = childrenList.stream().filter(c -> c.getFedoraId().equals(child2Id)).findFirst();
+        assertTrue(child2.isPresent());
+        assertTrue(child2.get() instanceof Binary);
     }
 
     private void assertStateFieldsMatches(final FedoraResource resc) {

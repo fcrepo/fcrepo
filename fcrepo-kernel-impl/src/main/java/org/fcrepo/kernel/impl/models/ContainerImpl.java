@@ -25,6 +25,7 @@ import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 
 import java.net.URI;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
@@ -64,4 +65,8 @@ public class ContainerImpl extends FedoraResourceImpl implements Container {
         return types;
     }
 
+    @Override
+    public Stream<FedoraResource> getChildren(final Boolean recursive) {
+        return resourceFactory.getChildren(txId, fedoraId);
+    }
 }

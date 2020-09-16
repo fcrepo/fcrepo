@@ -205,6 +205,12 @@ public class FedoraResourceImplTest {
         assertEquals(expectedTypes.size(), resourceTypes.size());
     }
 
+    @Test
+    public void testGetChildren() {
+        final var resource = new FedoraResourceImpl(FEDORA_ID, null, sessionManager, resourceFactory);
+        assertEquals(0, resource.getChildren().count());
+    }
+
     private void expectMementos(final String... instants) {
         final var mementos = new ArrayList<FedoraResource>(instants.length);
         for (int i = 0; i < instants.length; i++) {

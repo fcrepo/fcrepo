@@ -18,8 +18,6 @@
 package org.fcrepo.kernel.api;
 
 import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.FedoraResource;
-
 import javax.annotation.Nonnull;
 import java.util.stream.Stream;
 
@@ -35,20 +33,20 @@ public interface ContainmentIndex {
      * Return a stream of fedora identifiers contained by the specified fedora resource.
      *
      * @param txId The transaction id, or null if no transaction
-     * @param fedoraResource The containing fedora resource
+     * @param fedoraId The ID of the containing fedora resource
      * @return A stream of contained identifiers
      */
-    Stream<String> getContains(String txId, FedoraResource fedoraResource);
+    Stream<String> getContains(String txId, FedoraId fedoraId);
 
     /**
      * Return a stream of fedora identifiers contained by the specified fedora resource that have deleted
      * relationships.
      *
      * @param txId The transaction id, or null if no transaction
-     * @param fedoraResource The containing fedora resource
+     * @param fedoraId The ID of the containing fedora resource
      * @return A stream of contained identifiers
      */
-    Stream<String> getContainsDeleted(String txId, FedoraResource fedoraResource);
+    Stream<String> getContainsDeleted(String txId, FedoraId fedoraId);
 
     /**
      * Return the ID of the containing resource for resourceID.

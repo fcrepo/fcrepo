@@ -61,7 +61,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     protected final ResourceFactory resourceFactory;
 
-    private FedoraId fedoraId;
+    protected final FedoraId fedoraId;
 
     private FedoraId parentId;
 
@@ -109,8 +109,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public Stream<FedoraResource> getChildren(final Boolean recursive) {
-        // TODO Auto-generated method stub
-        return null;
+        return Stream.empty();
     }
 
     @Override
@@ -189,12 +188,6 @@ public class FedoraResourceImpl implements FedoraResource {
         } catch (final PathNotFoundException e) {
             return null;
         }
-    }
-
-    @Override
-    public FedoraResource getChild(final String relPath) {
-        // TODO Auto-generated method stub
-        return null;
     }
 
     @Override

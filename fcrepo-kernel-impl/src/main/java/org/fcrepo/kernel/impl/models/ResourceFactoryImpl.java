@@ -21,6 +21,7 @@ import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionUtils;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ResourceTypeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -37,6 +38,7 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.time.Instant;
+import java.util.stream.Stream;
 
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
@@ -269,5 +271,17 @@ public class ResourceFactoryImpl implements ResourceFactory {
             session = persistentStorageSessionManager.getSession(transactionId);
         }
         return session;
+    }
+
+    @Override
+    public Stream<FedoraResource> getChildren(final String transactionId, final FedoraId resourceId) {
+        return containmentIndex.getContains(transactionId, resourceId)
+            .map(childId -> {
+                try {
+                    return getResource(transactionId, FedoraId.create(childId));
+                } catch (final PathNotFoundException e) {
+                    throw new PathNotFoundRuntimeException(e);
+                }
+            });
     }
 }

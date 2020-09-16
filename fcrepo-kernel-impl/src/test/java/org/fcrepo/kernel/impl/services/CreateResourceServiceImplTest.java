@@ -193,8 +193,7 @@ public class CreateResourceServiceImplTest {
     @After
     public void cleanUp() {
         cleanupList.forEach(parentID -> {
-            when(fedoraResource.getFedoraId()).thenReturn(parentID);
-            containmentIndex.getContains(transaction.getId(), fedoraResource).forEach(c ->
+            containmentIndex.getContains(transaction.getId(), parentID).forEach(c ->
                     containmentIndex.removeContainedBy(TX_ID, parentID, FedoraId.create(c)));
         });
         cleanupList.clear();
@@ -272,8 +271,7 @@ public class CreateResourceServiceImplTest {
         final FedoraId persistedId = operationCaptor.getValue().getResourceId();
         assertNotEquals(fedoraId, persistedId);
         assertTrue(persistedId.getFullId().startsWith(fedoraId.getFullId()));
-        when(fedoraResource.getFedoraId()).thenReturn(fedoraId);
-        assertEquals(1, containmentIndex.getContains(transaction.getId(), fedoraResource).count());
+        assertEquals(1, containmentIndex.getContains(transaction.getId(), fedoraId).count());
     }
 
     /**
@@ -297,8 +295,7 @@ public class CreateResourceServiceImplTest {
         assertTrue(persistedId.getFullId().startsWith(fedoraId.getFullId()));
         assertBinaryPropertiesPresent(operation);
         assertEquals(fedoraId, operation.getParentId());
-        when(fedoraResource.getFedoraId()).thenReturn(fedoraId);
-        assertEquals(1, containmentIndex.getContains(transaction.getId(), fedoraResource).count());
+        assertEquals(1, containmentIndex.getContains(transaction.getId(), fedoraId).count());
     }
 
     /**
@@ -344,8 +341,7 @@ public class CreateResourceServiceImplTest {
         assertEquals(relaxedUser, rdfOp.getLastModifiedBy());
         assertEquals(createdDate, rdfOp.getCreatedDate());
         assertEquals(lastModifiedDate, rdfOp.getLastModifiedDate());
-        when(fedoraResource.getFedoraId()).thenReturn(fedoraId);
-        assertEquals(1, containmentIndex.getContains(transaction.getId(), fedoraResource).count());
+        assertEquals(1, containmentIndex.getContains(transaction.getId(), fedoraId).count());
     }
 
     /**
@@ -376,8 +372,7 @@ public class CreateResourceServiceImplTest {
 
         final var descOperation = getOperation(operations, CreateRdfSourceOperation.class);
         assertEquals(persistedId.asDescription(), descOperation.getResourceId());
-        when(fedoraResource.getFedoraId()).thenReturn(fedoraId);
-        assertEquals(1, containmentIndex.getContains(transaction.getId(), fedoraResource).count());
+        assertEquals(1, containmentIndex.getContains(transaction.getId(), fedoraId).count());
     }
 
     @Test
