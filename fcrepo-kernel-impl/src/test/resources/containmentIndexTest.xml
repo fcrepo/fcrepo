@@ -29,5 +29,12 @@
 
     <bean id="eventAccumulator" class="org.mockito.Mockito" factory-method="mock">
         <constructor-arg value="org.fcrepo.kernel.api.observer.EventAccumulator"/>
+    
+    <bean id="membershipIndexManager" class="org.fcrepo.kernel.impl.services.MembershipIndexManager">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+    
+    <bean id="membershipService" class="org.fcrepo.kernel.impl.services.MembershipServiceImpl">
+        <property name="membershipIndexManager" ref="membershipIndexManager" />
     </bean>
 </beans>
