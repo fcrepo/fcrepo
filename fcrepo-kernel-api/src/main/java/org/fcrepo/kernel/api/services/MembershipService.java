@@ -20,7 +20,6 @@ package org.fcrepo.kernel.api.services;
 import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.FedoraResource;
 
 /**
  * Service used to manage membership properties of resources
@@ -33,10 +32,10 @@ public interface MembershipService {
      * Return an RdfStream of membership relations of which the provided resource is the subject.
      *
      * @param txId transaction id
-     * @param fedoraResc the resource to get membership relations for.
+     * @param fedoraId the resource to get membership relations for.
      * @return RdfStream of membership relations.
      */
-    RdfStream getMembership(final String txId, final FedoraResource fedoraResc);
+    RdfStream getMembership(final String txId, final FedoraId fedoraId);
 
     /**
      * Update membership properties based on the creation of the specified resource

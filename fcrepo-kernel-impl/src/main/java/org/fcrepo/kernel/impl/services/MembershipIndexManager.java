@@ -55,6 +55,9 @@ public class MembershipIndexManager {
 
     private static final Timestamp NO_END_TIMESTAMP = Timestamp.from(Instant.parse("9999-12-31T00:00:00.000Z"));
 
+    private static final String ADD_OPERATION = "add";
+    private static final String DELETE_OPERATION = "delete";
+
     private static final String SELECT_MEMBERSHIP =
             "SELECT property, object_id" +
             " FROM membership x" +
@@ -73,13 +76,13 @@ public class MembershipIndexManager {
                 " FROM membership_tx_operations" +
                 " WHERE subject_id = :subjectId" +
                     " AND tx_id = :txId" +
-                    " AND operation = 'add'" +
+                    " AND operation = :addOp" +
             " ) x" +
             " WHERE NOT EXISTS (" +
                 " SELECT 1" +
                 " FROM membership_tx_operations" +
                 " WHERE subject_id = :subjectId" +
-                    " AND operation = 'delete')";
+                    " AND operation = :deleteOp)";
 
     private static final String SELECT_MEMBERSHIP_MEMENTO =
             "SELECT property, object_id" +
@@ -95,16 +98,16 @@ public class MembershipIndexManager {
 
     private static final String END_ADDED_FOR_SOURCE_IN_TX =
             "UPDATE membership_tx_operations" +
-            " SET end_time = :endTime, operation = 'deleted'" +
+            " SET end_time = :endTime, operation = :deleteOp" +
             " WHERE source_id = :sourceId" +
                 " AND tx_id = :txId" +
-                " AND operation = 'added'";
+                " AND operation = :addOp";
 
-    // Add "deleted" entries for all existing membership from the given source, if not already deleted
+    // Add "delete" entries for all existing membership from the given source, if not already deleted
     private static final String DELETE_EXISTING_FOR_SOURCE_IN_TX =
             "INSERT INTO membership_tx_operations" +
             " (subject_id, property, object_id, source_id, start_time, end_time, tx_id, operation)" +
-            " SELECT subject_id, property, object_id, source_id, start_time, :endTime, :txId, 'deleted'" +
+            " SELECT subject_id, property, object_id, source_id, start_time, :endTime, :txId, :deleteOp" +
             " FROM membership m" +
             " WHERE source_id = :sourceId" +
                 " AND end_time < :noEndTime" +
@@ -115,8 +118,42 @@ public class MembershipIndexManager {
                         " AND mtx.property = m.property" +
                         " AND mtx.subject_id = m.subject_id" +
                         " AND mtx.source_id = m.source_id" +
-                        " AND mtx.operation = 'deleted'" +
+                        " AND mtx.operation = :deleteOp" +
                     ")";
+
+    private static final String COMMIT_DELETES =
+            "UPDATE membership m" +
+            " SET end_time = (" +
+                " SELECT mto.end_time" +
+                " FROM membership_tx_operations mto" +
+                " WHERE mto.tx_id = :txId" +
+                    " AND m.source_id = mto.source_id" +
+                    " AND m.subject_id = mto.subject_id" +
+                    " AND m.property = mto.property" +
+                    " AND m.object_id = mto.object_id" +
+                " )" +
+            " WHERE EXISTS (" +
+                "SELECT TRUE" +
+                " FROM membership_tx_operations mto" +
+                " WHERE mto.tx_id = :txId" +
+                    " AND mto.operation = :deleteOp" +
+                    " AND m.source_id = mto.source_id" +
+                    " AND m.subject_id = mto.subject_id" +
+                    " AND m.property = mto.property" +
+                    " AND m.object_id = mto.object_id" +
+                " )";
+
+    private static final String COMMIT_ADDS =
+            "INSERT INTO membership" +
+            " (subject_id, property, object_id, source_id, start_time, end_time)" +
+            " SELECT subject_id, property, object_id, source_id, start_time, end_time" +
+            " FROM membership_tx_operations" +
+            " WHERE tx_id = :txId" +
+                " AND operation = :addOp";
+
+    private static final String DELETE_TRANSACTION =
+            "DELETE FROM membership_tx_operations" +
+            " WHERE tx_id = :txId";
 
 
     @Inject
@@ -125,10 +162,10 @@ public class MembershipIndexManager {
     private NamedParameterJdbcTemplate jdbcTemplate;
 
     private static final Map<DbPlatform, String> DDL_MAP = Map.of(
-            DbPlatform.MYSQL, "sql/mysql-references.sql",
-            DbPlatform.H2, "sql/default-references.sql",
-            DbPlatform.POSTGRESQL, "sql/default-references.sql",
-            DbPlatform.MARIADB, "sql/default-references.sql"
+            DbPlatform.MYSQL, "sql/mysql-membership.sql",
+            DbPlatform.H2, "sql/default-membership.sql",
+            DbPlatform.POSTGRESQL, "sql/default-membership.sql",
+            DbPlatform.MARIADB, "sql/default-membership.sql"
     );
 
     @PostConstruct
@@ -156,7 +193,9 @@ public class MembershipIndexManager {
         // End all membership added in this transaction
         final Map<String, Object> parameterSource = Map.of(
                 "txId", txId,
-                "sourceId", sourceId.getFullId());
+                "sourceId", sourceId.getFullId(),
+                "addOp", ADD_OPERATION,
+                "deleteOp", DELETE_OPERATION);
 
         jdbcTemplate.update(END_ADDED_FOR_SOURCE_IN_TX, parameterSource);
 
@@ -165,7 +204,8 @@ public class MembershipIndexManager {
                 "txId", txId,
                 "sourceId", sourceId.getFullId(),
                 "endTime", Timestamp.from(endTime),
-                "noEndTime", NO_END_TIMESTAMP);
+                "noEndTime", NO_END_TIMESTAMP,
+                "deleteOp", DELETE_OPERATION);
         jdbcTemplate.update(DELETE_EXISTING_FOR_SOURCE_IN_TX, parameterSource2);
     }
 
@@ -186,11 +226,17 @@ public class MembershipIndexManager {
                 "startTime", Timestamp.from(startTime),
                 "endTime", NO_END_TIMESTAMP,
                 "txId", txId,
-                "operation", "add");
+                "operation", ADD_OPERATION);
 
         jdbcTemplate.update(INSERT_MEMBERSHIP_IN_TX, parameterSource);
     }
 
+    /**
+     * Get a stream of membership triples with
+     * @param txId transaction from which membership will be retrieved, or null for no transaction
+     * @param subjectId ID of the subject
+     * @return Stream of membership triples
+     */
     public Stream<Triple> getMembership(final String txId, final FedoraId subjectId) {
         final Node subjectNode = NodeFactory.createURI(subjectId.getBaseId());
 
@@ -217,13 +263,28 @@ public class MembershipIndexManager {
                 final Map<String, Object> parameterSource = Map.of(
                         "subjectId", subjectId.getFullId(),
                         "noEndTime", NO_END_TIMESTAMP,
-                        "txId", txId);
+                        "txId", txId,
+                        "addOp", ADD_OPERATION,
+                        "deleteOp", DELETE_OPERATION);
 
                 membership = jdbcTemplate.query(SELECT_MEMBERSHIP_IN_TX, parameterSource, membershipMapper);
             }
         }
 
         return membership.stream();
+    }
+
+    /**
+     * Perform a commit of operations stored in the specified transaction
+     * @param txId transaction id
+     */
+    public void commitTransaction(final String txId) {
+        final Map<String, String> parameterSource = Map.of("txId", txId,
+                "addOp", ADD_OPERATION,
+                "deleteOp", DELETE_OPERATION);
+        jdbcTemplate.update(COMMIT_DELETES, parameterSource);
+        jdbcTemplate.update(COMMIT_ADDS, parameterSource);
+        jdbcTemplate.update(DELETE_TRANSACTION, parameterSource);
     }
 
     /**

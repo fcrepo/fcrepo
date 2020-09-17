@@ -320,7 +320,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public FedoraResource getParent() throws PathNotFoundException {
-        return resourceFactory.getResource(parentId);
+        return resourceFactory.getResource(txId, parentId);
     }
 
     @Override

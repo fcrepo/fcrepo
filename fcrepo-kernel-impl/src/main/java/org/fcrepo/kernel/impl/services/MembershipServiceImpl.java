@@ -25,6 +25,8 @@ import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
+
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
@@ -39,6 +41,7 @@ import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.Tombstone;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.MembershipService;
 
 /**
@@ -214,21 +217,15 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
-    public RdfStream getMembership(final String txId, final FedoraResource fedoraResc) {
-
-        if (fedoraResc.isMemento()) {
-            // get using memento query
-        } else {
-
-        }
-        // TODO Auto-generated method stub
-        return null;
+    public RdfStream getMembership(final String txId, final FedoraId fedoraId) {
+        final var subject = NodeFactory.createURI(fedoraId.getFullId());
+        final var membershipStream = indexManager.getMembership(txId, fedoraId);
+        return new DefaultRdfStream(subject, membershipStream);
     }
 
     @Override
     public void commitTransaction(final String txId) {
-
-
+        indexManager.commitTransaction(txId);
     }
 
     @Override
