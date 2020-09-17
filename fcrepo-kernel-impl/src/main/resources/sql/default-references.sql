@@ -4,6 +4,7 @@
 -- Holds the ID and the item it references.
 CREATE TABLE IF NOT EXISTS reference (
     fedora_id varchar(503) NOT NULL,
+    subject_id varchar(503) NOT NULL,
     property varchar(503) NOT NULL,
     target_id varchar(503) NOT NULL
 );
@@ -12,13 +13,18 @@ CREATE TABLE IF NOT EXISTS reference (
 CREATE INDEX IF NOT EXISTS reference_idx1
     ON reference (fedora_id);
 
--- Create an index to speed searches for target of a reference.
+-- Create an index to speed searches for the subject of a reference.
 CREATE INDEX IF NOT EXISTS reference_idx2
+    ON reference (subject_id);
+
+-- Create an index to speed searches for target of a reference.
+CREATE INDEX IF NOT EXISTS reference_idx3
     ON reference (target_id);
 
 -- Holds operations to add or delete records from the REFERENCE table.
 CREATE TABLE IF NOT EXISTS reference_transaction_operations (
     fedora_id varchar(503) NOT NULL,
+    subject_id varchar(503) NOT NULL,
     property varchar(503) NOT NULL,
     target_id varchar(503) NOT NULL,
     transaction_id varchar(255) NOT NULL,

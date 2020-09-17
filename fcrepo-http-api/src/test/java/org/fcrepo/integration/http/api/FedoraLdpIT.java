@@ -230,6 +230,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
     private static final String NON_RDF_SOURCE_LINK_HEADER = "<" + NON_RDF_SOURCE.getURI() + ">; rel=\"type\"";
     private static final String VERSIONED_RESOURCE_LINK_HEADER = "<" + VERSIONED_RESOURCE.getURI() + ">; rel=\"type\"";
 
+    private static final String INBOUND_REFERENCE_PREFER_HEADER = "return=representation; include=\"" +
+            INBOUND_REFERENCES + "\"";
+
     private static final String TEST_ACTIVATION_PROPERTY = "RUN_TEST_CREATE_MANY";
 
     private static final String WANT_DIGEST = "Want-Digest";
@@ -2845,7 +2848,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpGet getObjMethod = new HttpGet(resourceb);
 
-        getObjMethod.addHeader("Prefer", "return=representation; include=\"" + INBOUND_REFERENCES + "\"");
+        getObjMethod.addHeader("Prefer", INBOUND_REFERENCE_PREFER_HEADER);
         try (final CloseableDataset dataset = getDataset(getObjMethod)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertTrue(graph.contains(ANY,
@@ -2883,11 +2886,78 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(patchDesc));
 
         final HttpGet getContainer = new HttpGet(containerUri);
-        getContainer.setHeader("Prefer", "return=representation; include=\"" + INBOUND_REFERENCES + "\"");
+        getContainer.setHeader("Prefer", INBOUND_REFERENCE_PREFER_HEADER);
         try (final CloseableDataset dataset = getDataset(getContainer)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertTrue(graph.contains(ANY, NodeFactory.createURI(binaryUri), referenceProp,
                     NodeFactory.createURI(containerUri)));
+        }
+    }
+
+    /**
+     * Create the same reference from two resources, check that one exists when the other is deleted.
+     */
+    @Test
+    public void testMultipleReferences() throws Exception {
+        // Need to use something different or they come out as a single triple in the serialization.
+        final Node referenceProp1 = NodeFactory.createURI("http://awoods.com/pointsAt");
+        final Node referenceProp2 = createURI("http://example.org/lookAt");
+        final HttpPost postContainer = postObjMethod();
+        final String targetUri;
+        try (final CloseableHttpResponse response = execute(postContainer)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            targetUri = getLocation(response);
+        }
+        final Node targetNode = createURI(targetUri);
+
+        final HttpPost post1 = postObjMethod();
+        post1.setHeader(CONTENT_TYPE, "text/turtle");
+        post1.setEntity(new StringEntity("<> <" + referenceProp1.getURI() + "> <" + targetUri + "> ."));
+        final String firstContainerUri;
+        try (final CloseableHttpResponse response = execute(post1)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            firstContainerUri = getLocation(response);
+        }
+        final Node subjectNode = createURI(firstContainerUri);
+
+        final HttpPost post2 = postObjMethod();
+        post2.setHeader(CONTENT_TYPE, "text/turtle");
+        post2.setEntity(new StringEntity("<" + firstContainerUri + "> <" + referenceProp2.getURI() + "> <" + targetUri +
+                "> ."));
+        final String secondContainerUri;
+        try (final CloseableHttpResponse response = execute(post2)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            secondContainerUri = getLocation(response);
+        }
+
+        final HttpGet getReferences = new HttpGet(targetUri);
+        getReferences.setHeader("Prefer", INBOUND_REFERENCE_PREFER_HEADER);
+        try (final CloseableDataset dataset = getDataset(getReferences)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue(graph.contains(ANY, subjectNode, referenceProp1, targetNode));
+            assertTrue(graph.contains(ANY, subjectNode, referenceProp2, targetNode));
+        }
+        // Delete the first resource.
+        final HttpDelete deleteFirst = new HttpDelete(firstContainerUri);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteFirst));
+        // Still one reference.
+        final HttpGet getReferences2 = new HttpGet(targetUri);
+        getReferences2.setHeader("Prefer", INBOUND_REFERENCE_PREFER_HEADER);
+        try (final CloseableDataset dataset = getDataset(getReferences2)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertFalse(graph.contains(ANY, subjectNode, referenceProp1, targetNode));
+            assertTrue(graph.contains(ANY, subjectNode, referenceProp2, targetNode));
+        }
+        // Delete the second resource
+        final HttpDelete deleteSecond = new HttpDelete(secondContainerUri);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteSecond));
+        // No more references.
+        final HttpGet getReferences3 = new HttpGet(targetUri);
+        getReferences3.setHeader("Prefer", INBOUND_REFERENCE_PREFER_HEADER);
+        try (final CloseableDataset dataset = getDataset(getReferences3)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertFalse(graph.contains(ANY, subjectNode, referenceProp1, targetNode));
+            assertFalse(graph.contains(ANY, subjectNode, referenceProp2, targetNode));
         }
     }
 
@@ -2918,7 +2988,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // Verify the inbound references.
         final HttpGet getObjMethod = new HttpGet(resourcec);
-        getObjMethod.addHeader("Prefer", "return=representation; include=\"" + INBOUND_REFERENCES + "\"");
+        getObjMethod.addHeader("Prefer", INBOUND_REFERENCE_PREFER_HEADER);
         try (final CloseableDataset dataset = getDataset(getObjMethod)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertTrue(graph.contains(ANY,
@@ -2932,7 +3002,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteReferrer));
         // Verify only inbound reference from b
         final HttpGet getObjMethod2 = new HttpGet(resourcec);
-        getObjMethod2.addHeader("Prefer", "return=representation; include=\"" + INBOUND_REFERENCES + "\"");
+        getObjMethod2.addHeader("Prefer", INBOUND_REFERENCE_PREFER_HEADER);
         try (final CloseableDataset dataset = getDataset(getObjMethod2)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertFalse(graph.contains(ANY,

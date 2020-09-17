@@ -35,6 +35,7 @@ import com.google.common.base.Preconditions;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.core.Quad;
 import org.fcrepo.common.db.DbPlatform;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -71,7 +72,9 @@ public class ReferenceServiceImpl implements ReferenceService {
 
     private static final String TRANSACTION_TABLE = "reference_transaction_operations";
 
-    private static final String SUBJECT_COLUMN = "fedora_id";
+    private static final String RESOURCE_COLUMN = "fedora_id";
+
+    private static final String SUBJECT_COLUMN = "subject_id";
 
     private static final String PROPERTY_COLUMN = "property";
 
@@ -92,49 +95,56 @@ public class ReferenceServiceImpl implements ReferenceService {
             "(SELECT 1 FROM " + TRANSACTION_TABLE + " WHERE " + TARGET_COLUMN + " = :targetId AND " +
             OPERATION_COLUMN + " = 'delete')";
 
-    private static final String SELECT_OUTBOUND = "SELECT " + TARGET_COLUMN + ", " + PROPERTY_COLUMN + " FROM " +
-            TABLE_NAME + " WHERE " + SUBJECT_COLUMN + " = :resourceId";
+    private static final String SELECT_OUTBOUND = "SELECT " + SUBJECT_COLUMN + ", " + TARGET_COLUMN + ", " +
+            PROPERTY_COLUMN + " FROM " + TABLE_NAME + " WHERE " + RESOURCE_COLUMN + " = :resourceId";
 
-    private static final String SELECT_OUTBOUND_IN_TRANSACTION = "SELECT x." + TARGET_COLUMN + ", x." +
-            PROPERTY_COLUMN + " FROM " + "(SELECT " + TARGET_COLUMN + ", " + PROPERTY_COLUMN + " FROM " + TABLE_NAME +
-            " WHERE " + SUBJECT_COLUMN + " = :resourceId UNION " + "SELECT " + TARGET_COLUMN + ", " + PROPERTY_COLUMN +
-            " FROM " + TRANSACTION_TABLE + " WHERE " + SUBJECT_COLUMN + " = :resourceId " +
-            "AND " + TRANSACTION_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " = 'add') x WHERE NOT " +
-            "EXISTS (SELECT 1 FROM " + TRANSACTION_TABLE + " WHERE " + SUBJECT_COLUMN + " = :resourceId AND " +
-            OPERATION_COLUMN + " = 'delete')";
+    private static final String SELECT_OUTBOUND_IN_TRANSACTION = "SELECT x." + SUBJECT_COLUMN + ", x." + TARGET_COLUMN +
+            ", x." + PROPERTY_COLUMN + " FROM " + "(SELECT " + SUBJECT_COLUMN + ", " + TARGET_COLUMN + ", " +
+            PROPERTY_COLUMN + " FROM " + TABLE_NAME + " WHERE " + RESOURCE_COLUMN + " = :resourceId UNION " +
+            "SELECT " + SUBJECT_COLUMN + ", " + TARGET_COLUMN + ", " + PROPERTY_COLUMN + " FROM " + TRANSACTION_TABLE +
+            " WHERE " + RESOURCE_COLUMN + " = :resourceId " + "AND " + TRANSACTION_COLUMN + " = :transactionId AND " +
+            OPERATION_COLUMN + " = 'add') x WHERE NOT EXISTS (SELECT 1 FROM " + TRANSACTION_TABLE + " WHERE " +
+            RESOURCE_COLUMN + " = :resourceId AND " + OPERATION_COLUMN + " = 'delete')";
 
     private static final String INSERT_REFERENCE_IN_TRANSACTION = "INSERT INTO " + TRANSACTION_TABLE + "(" +
-            SUBJECT_COLUMN + ", " + PROPERTY_COLUMN + ", " + TARGET_COLUMN + ", " + TRANSACTION_COLUMN + ", " +
-            OPERATION_COLUMN + ") VALUES (:resourceId, :property, :targetId, :transactionId, 'add')";
+            RESOURCE_COLUMN + ", " + SUBJECT_COLUMN + ", " + PROPERTY_COLUMN + ", " + TARGET_COLUMN + ", " +
+            TRANSACTION_COLUMN + ", " + OPERATION_COLUMN + ") VALUES (:resourceId, :subjectId, :property, :targetId, " +
+            ":transactionId, 'add')";
 
     private static final String UNDO_INSERT_REFERENCE_IN_TRANSACTION = "DELETE FROM " + TRANSACTION_TABLE + " WHERE " +
-            SUBJECT_COLUMN + " = :resourceId AND " + PROPERTY_COLUMN + " = :property AND " + TARGET_COLUMN +
-            " = :targetId AND " + TRANSACTION_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " = 'add'";
+            RESOURCE_COLUMN + " = :resourceId AND " + SUBJECT_COLUMN + " = :subjectId AND " + PROPERTY_COLUMN +
+            " = :property AND " + TARGET_COLUMN + " = :targetId AND " + TRANSACTION_COLUMN + " = :transactionId AND " +
+            OPERATION_COLUMN + " = 'add'";
 
     private static final String DELETE_REFERENCE_IN_TRANSACTION = "INSERT INTO " + TRANSACTION_TABLE + "(" +
-            SUBJECT_COLUMN + ", " + PROPERTY_COLUMN + ", " + TARGET_COLUMN + ", " + TRANSACTION_COLUMN + ", " +
-            OPERATION_COLUMN + ") VALUES (:resourceId, :property, :targetId, :transactionId, 'delete')";
+            RESOURCE_COLUMN + ", " + SUBJECT_COLUMN + ", " + PROPERTY_COLUMN + ", " + TARGET_COLUMN + ", " +
+            TRANSACTION_COLUMN + ", " + OPERATION_COLUMN + ") VALUES (:resourceId, :subjectId, :property, :targetId, " +
+            ":transactionId, 'delete')";
 
     private static final String UNDO_DELETE_REFERENCE_IN_TRANSACTION = "DELETE FROM " + TRANSACTION_TABLE + " WHERE " +
-            SUBJECT_COLUMN + " = :resourceId AND " + PROPERTY_COLUMN + " = :property AND " + TARGET_COLUMN +
-            " = :targetId AND " + TRANSACTION_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " = 'delete'";
+            RESOURCE_COLUMN + " = :resourceId AND " + SUBJECT_COLUMN + " = :subjectId AND " + PROPERTY_COLUMN +
+            " = :property AND " + TARGET_COLUMN + " = :targetId AND " + TRANSACTION_COLUMN + " = :transactionId AND " +
+            OPERATION_COLUMN + " = 'delete'";
 
     private static final String IS_REFERENCE_ADDED_IN_TRANSACTION = "SELECT TRUE FROM " + TRANSACTION_TABLE + " WHERE "
-            + SUBJECT_COLUMN + " = :resourceId AND " + PROPERTY_COLUMN + " = :property AND " + TARGET_COLUMN +
-            " = :targetId AND " + TRANSACTION_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " = 'add'";
+            + RESOURCE_COLUMN + " = :resourceId AND " + SUBJECT_COLUMN + " = :subjectId AND " + PROPERTY_COLUMN +
+            " = :property AND " + TARGET_COLUMN + " = :targetId AND " + TRANSACTION_COLUMN + " = :transactionId AND " +
+            OPERATION_COLUMN + " = 'add'";
 
     private static final String IS_REFERENCE_DELETED_IN_TRANSACTION = "SELECT TRUE FROM " + TRANSACTION_TABLE +
-            " WHERE " + SUBJECT_COLUMN + " = :resourceId AND " + PROPERTY_COLUMN + " = :property AND " + TARGET_COLUMN +
-            " = :targetId AND " + TRANSACTION_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " = 'delete'";
+            " WHERE " + RESOURCE_COLUMN + " = :resourceId AND " + SUBJECT_COLUMN + " = :subjectId AND " +
+            PROPERTY_COLUMN + " = :property AND " + TARGET_COLUMN + " = :targetId AND " + TRANSACTION_COLUMN +
+            " = :transactionId AND " + OPERATION_COLUMN + " = 'delete'";
 
-    private static final String COMMIT_ADD_RECORDS = "INSERT INTO " + TABLE_NAME + " ( " + SUBJECT_COLUMN + ", "
-            + PROPERTY_COLUMN + ", " + TARGET_COLUMN + " ) SELECT " + SUBJECT_COLUMN + ", " + PROPERTY_COLUMN + ", " +
-            TARGET_COLUMN + " FROM " + TRANSACTION_TABLE + " WHERE " + TRANSACTION_COLUMN + " = :transactionId AND " +
-            OPERATION_COLUMN + " = 'add'";
+    private static final String COMMIT_ADD_RECORDS = "INSERT INTO " + TABLE_NAME + " ( " + RESOURCE_COLUMN + ", " +
+            SUBJECT_COLUMN + ", " + PROPERTY_COLUMN + ", " + TARGET_COLUMN + " ) SELECT " + RESOURCE_COLUMN + ", " +
+            SUBJECT_COLUMN + ", " + PROPERTY_COLUMN + ", " + TARGET_COLUMN + " FROM " + TRANSACTION_TABLE + " WHERE " +
+            TRANSACTION_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " = 'add'";
 
     private static final String COMMIT_DELETE_RECORDS = "DELETE FROM " + TABLE_NAME + " WHERE " +
             "EXISTS (SELECT * FROM " + TRANSACTION_TABLE + " t WHERE t." +
             TRANSACTION_COLUMN + " = :transactionId AND t." +  OPERATION_COLUMN + " = 'delete' AND" +
+            " t." + RESOURCE_COLUMN + " = " + TABLE_NAME + "." + RESOURCE_COLUMN + " AND" +
             " t." + SUBJECT_COLUMN + " = " + TABLE_NAME + "." + SUBJECT_COLUMN +
             " AND t." + PROPERTY_COLUMN + " = " + TABLE_NAME + "." + PROPERTY_COLUMN +
             " AND t." + TARGET_COLUMN + " = " + TABLE_NAME + "." + TARGET_COLUMN + ")";
@@ -182,13 +192,13 @@ public class ReferenceServiceImpl implements ReferenceService {
     /**
      * Get the inbound references for the resource Id and the transaction id.
      * @param txId transaction id or null for none.
-     * @param resourceId the resource id.
+     * @param targetId the id that will be the target of references.
      * @return RDF stream of inbound references
      */
-    private Stream<Triple> getReferencesInternal(final String txId, final String resourceId) {
+    private Stream<Triple> getReferencesInternal(final String txId, final String targetId) {
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-        parameterSource.addValue("targetId", resourceId);
-        final Node targetNode = NodeFactory.createURI(resourceId);
+        parameterSource.addValue("targetId", targetId);
+        final Node targetNode = NodeFactory.createURI(targetId);
 
         final RowMapper<Triple> inboundMapper = (rs, rowNum) ->
                 Triple.create(NodeFactory.createURI(rs.getString(SUBJECT_COLUMN)),
@@ -205,43 +215,41 @@ public class ReferenceServiceImpl implements ReferenceService {
             references = jdbcTemplate.query(SELECT_INBOUND, parameterSource, inboundMapper);
         }
         LOGGER.debug("getInboundReferences for {} in transaction {} found {} references",
-                resourceId, txId, references.size());
+                targetId, txId, references.size());
         return references.stream();
     }
 
     @Override
     public void deleteAllReferences(@Nonnull final String txId, final FedoraId resourceId) {
-        final Stream<Triple> deleteReferences = getOutboundReferences(txId, resourceId);
+        final Stream<Quad> deleteReferences = getOutboundReferences(txId, resourceId);
         // Remove all the existing references.
-        deleteReferences.forEach(t ->
-                removeReference(txId, t)
-        );
+        deleteReferences.forEach(t -> removeReference(txId, t));
         if (resourceId.isDescription()) {
             // Also get and delete the binary references
-            final Stream<Triple> binaryDeleteRef = getOutboundReferences(txId, resourceId.asBaseId());
-            binaryDeleteRef.forEach(t ->
-                    removeReference(txId, t)
-            );
+            final Stream<Quad> binaryDeleteRef = getOutboundReferences(txId, resourceId.asBaseId());
+            binaryDeleteRef.forEach(t -> removeReference(txId, t));
         }
     }
 
     /**
-     * Get a stream of triples of resources being referenced from the provided resource.
+     * Get a stream of quads of resources being referenced from the provided resource, the graph of the quad is the
+     * URI of the resource the reference is from.
      * @param txId transaction Id or null if none.
      * @param resourceId the resource Id.
-     * @return stream of Triples
+     * @return stream of Quads
      */
-    private Stream<Triple> getOutboundReferences(final String txId, final FedoraId resourceId) {
+    private Stream<Quad> getOutboundReferences(final String txId, final FedoraId resourceId) {
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("resourceId", resourceId.getFullId());
         final Node subjectNode = NodeFactory.createURI(resourceId.getFullId());
 
-        final RowMapper<Triple> outboundMapper = (rs, rowNum) ->
-                Triple.create(subjectNode,
+        final RowMapper<Quad> outboundMapper = (rs, rowNum) ->
+                Quad.create(subjectNode,
+                        NodeFactory.createURI(rs.getString(SUBJECT_COLUMN)),
                         NodeFactory.createURI(rs.getString(PROPERTY_COLUMN)),
                         NodeFactory.createURI(rs.getString(TARGET_COLUMN)));
 
-        final List<Triple> references;
+        final List<Quad> references;
         if (txId != null) {
             // we are in a transaction
             parameterSource.addValue("transactionId", txId);
@@ -259,21 +267,21 @@ public class ReferenceServiceImpl implements ReferenceService {
     @Transactional
     public void updateReferences(@Nonnull final String txId, final FedoraId resourceId, final RdfStream rdfStream) {
         try {
-            final Stream<Triple> deleteReferences = getOutboundReferences(txId, resourceId);
+            final Stream<Quad> deleteReferences = getOutboundReferences(txId, resourceId);
             // Remove all the existing references.
             deleteReferences.forEach(t ->
                 removeReference(txId, t)
             );
             if (resourceId.isDescription()) {
                 // Also get and delete the binary references
-                final Stream<Triple> binaryDeleteRef = getOutboundReferences(txId, resourceId.asBaseId());
+                final Stream<Quad> binaryDeleteRef = getOutboundReferences(txId, resourceId.asBaseId());
                 binaryDeleteRef.forEach(t ->
                         removeReference(txId, t)
                 );
             }
-
+            final Node resourceNode = NodeFactory.createURI(resourceId.getFullId());
             final Stream<Triple> addReferences = getReferencesFromRdf(rdfStream);
-            addReferences.forEach(r -> addReference(txId, r));
+            addReferences.forEach(r -> addReference(txId, Quad.create(resourceNode, r)));
         } catch (final Exception e) {
             LOGGER.warn("Unable to update reference index for resource {} in transaction {}: {}",
                     resourceId.getFullId(), txId, e.getMessage());
@@ -320,11 +328,12 @@ public class ReferenceServiceImpl implements ReferenceService {
     /**
      * Remove a reference.
      * @param txId transaction Id.
-     * @param reference the triple with the reference.
+     * @param reference the quad with the reference, is Quad(resourceId, subjectId, propertyId, targetId)
      */
-    private void removeReference(@Nonnull final String txId, final Triple reference) {
+    private void removeReference(@Nonnull final String txId, final Quad reference) {
         final Map<String, String> parameterSource = Map.of("transactionId", txId,
-                "resourceId", reference.getSubject().getURI(),
+                "resourceId", reference.getGraph().getURI(),
+                "subjectId", reference.getSubject().getURI(),
                 "property", reference.getPredicate().getURI(),
                 "targetId", reference.getObject().getURI());
         final boolean addedInTx = !jdbcTemplate.queryForList(IS_REFERENCE_ADDED_IN_TRANSACTION, parameterSource)
@@ -339,11 +348,12 @@ public class ReferenceServiceImpl implements ReferenceService {
     /**
      * Add a reference
      * @param txId the transaction Id.
-     * @param reference the triple with the reference.
+     * @param reference the quad with the reference, is is Quad(resourceId, subjectId, propertyId, targetId)
      */
-    private void addReference(@Nonnull final String txId, final Triple reference) {
+    private void addReference(@Nonnull final String txId, final Quad reference) {
         final Map<String, String> parameterSource = Map.of("transactionId", txId,
-                "resourceId", reference.getSubject().getURI(),
+                "resourceId", reference.getGraph().getURI(),
+                "subjectId", reference.getSubject().getURI(),
                 "property", reference.getPredicate().getURI(),
                 "targetId", reference.getObject().getURI());
         final boolean addedInTx = !jdbcTemplate.queryForList(IS_REFERENCE_DELETED_IN_TRANSACTION, parameterSource)

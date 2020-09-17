@@ -308,4 +308,37 @@ public class ReferenceServiceImplTest {
         assertTrue(rdfModel.contains(subject1, referenceProp, binaryUri));
         assertTrue(rdfModel.contains(subject2, referenceProp, binaryDescUri));
     }
+
+    @Test
+    public void testReferencesFromTwoSources() throws Exception {
+        assertEquals(0, referenceService.getInboundReferences(null, targetResource).count());
+
+        // Add a reference.
+        final Model model = createDefaultModel();
+        model.add(subject1, referenceProp, target);
+        final RdfStream stream = fromModel(subject1.asNode(), model);
+        referenceService.updateReferences(transactionId, subject1Id, stream);
+        referenceService.commitTransaction(transactionId);
+        assertEquals(1, referenceService.getInboundReferences(null, targetResource).count());
+
+        // Add the same reference from another resource.
+        final RdfStream stream2 = fromModel(subject1.asNode(), model);
+        referenceService.updateReferences(transactionId, subject2Id, stream2);
+        referenceService.commitTransaction(transactionId);
+        assertEquals(2, referenceService.getInboundReferences(null, targetResource).count());
+        final Triple expectedTriple = Triple.create(subject1.asNode(), referenceProp.asNode(), target.asNode());
+        assertTrue(referenceService.getInboundReferences(null, targetResource)
+                .allMatch(t -> t.equals(expectedTriple)));
+        // Delete the first resource and see the second reference remains.
+        referenceService.deleteAllReferences(transactionId, subject1Id);
+        referenceService.commitTransaction(transactionId);
+        assertEquals(1, referenceService.getInboundReferences(null, targetResource).count());
+        assertTrue(referenceService.getInboundReferences(null, targetResource)
+                .allMatch(t -> t.equals(expectedTriple)));
+
+        // Delete the second resource and see all references gone.
+        referenceService.deleteAllReferences(transactionId, subject2Id);
+        referenceService.commitTransaction(transactionId);
+        assertEquals(0, referenceService.getInboundReferences(null, targetResource).count());
+    }
 }
