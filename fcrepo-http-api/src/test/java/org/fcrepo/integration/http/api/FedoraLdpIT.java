@@ -2857,6 +2857,41 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testInboundReferencesFromBinary() throws Exception {
+        final Node referenceProp = NodeFactory.createURI("http://awoods.com/pointsAt");
+        final HttpPost postContainer = postObjMethod();
+        final String containerUri;
+        try (final CloseableHttpResponse response = execute(postContainer)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            containerUri = getLocation(response);
+        }
+
+        final HttpPost postBinary = postObjMethod();
+        postBinary.setHeader(CONTENT_TYPE, TEXT_PLAIN);
+        postBinary.setEntity(new StringEntity("Test text"));
+        final String binaryUri;
+        try (final CloseableHttpResponse response = execute(postBinary)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            binaryUri = getLocation(response);
+        }
+
+        final String linkRdf = "INSERT { <" + binaryUri + "> <http://awoods.com/pointsAt> <" + containerUri + "> . } " +
+                "WHERE {}";
+        final HttpPatch patchDesc = new HttpPatch(binaryUri + "/" + FCR_METADATA);
+        patchDesc.setHeader(CONTENT_TYPE, "application/sparql-update");
+        patchDesc.setEntity(new StringEntity(linkRdf));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patchDesc));
+
+        final HttpGet getContainer = new HttpGet(containerUri);
+        getContainer.setHeader("Prefer", "return=representation; include=\"" + INBOUND_REFERENCES + "\"");
+        try (final CloseableDataset dataset = getDataset(getContainer)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue(graph.contains(ANY, NodeFactory.createURI(binaryUri), referenceProp,
+                    NodeFactory.createURI(containerUri)));
+        }
+    }
+
+    @Test
     public void testReferenceRemovedOnDelete() throws Exception {
         final String id = getRandomUniqueId();
         final String resource = serverAddress + id;

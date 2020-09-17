@@ -214,8 +214,15 @@ public class ReferenceServiceImpl implements ReferenceService {
         final Stream<Triple> deleteReferences = getOutboundReferences(txId, resourceId);
         // Remove all the existing references.
         deleteReferences.forEach(t ->
-                removeReference(txId, resourceId.getFullId(), t.getPredicate().getURI(), t.getObject().getURI())
+                removeReference(txId, t)
         );
+        if (resourceId.isDescription()) {
+            // Also get and delete the binary references
+            final Stream<Triple> binaryDeleteRef = getOutboundReferences(txId, resourceId.asBaseId());
+            binaryDeleteRef.forEach(t ->
+                    removeReference(txId, t)
+            );
+        }
     }
 
     /**
@@ -255,11 +262,18 @@ public class ReferenceServiceImpl implements ReferenceService {
             final Stream<Triple> deleteReferences = getOutboundReferences(txId, resourceId);
             // Remove all the existing references.
             deleteReferences.forEach(t ->
-                removeReference(txId, resourceId.getFullId(), t.getPredicate().getURI(), t.getObject().getURI())
+                removeReference(txId, t)
             );
+            if (resourceId.isDescription()) {
+                // Also get and delete the binary references
+                final Stream<Triple> binaryDeleteRef = getOutboundReferences(txId, resourceId.asBaseId());
+                binaryDeleteRef.forEach(t ->
+                        removeReference(txId, t)
+                );
+            }
+
             final Stream<Triple> addReferences = getReferencesFromRdf(rdfStream);
-            addReferences.forEach(r -> addReference(txId, resourceId.getFullId(),
-                    r.getPredicate().getURI(), r.getObject().getURI()));
+            addReferences.forEach(r -> addReference(txId, r));
         } catch (final Exception e) {
             LOGGER.warn("Unable to update reference index for resource {} in transaction {}: {}",
                     resourceId.getFullId(), txId, e.getMessage());
@@ -306,15 +320,13 @@ public class ReferenceServiceImpl implements ReferenceService {
     /**
      * Remove a reference.
      * @param txId transaction Id.
-     * @param resourceId the subject resource Id.
-     * @param targetId the target resource Id.
+     * @param reference the triple with the reference.
      */
-    private void removeReference(@Nonnull final String txId, final String resourceId, final String property,
-                                 final String targetId) {
+    private void removeReference(@Nonnull final String txId, final Triple reference) {
         final Map<String, String> parameterSource = Map.of("transactionId", txId,
-                "resourceId", resourceId,
-                "property", property,
-                "targetId", targetId);
+                "resourceId", reference.getSubject().getURI(),
+                "property", reference.getPredicate().getURI(),
+                "targetId", reference.getObject().getURI());
         final boolean addedInTx = !jdbcTemplate.queryForList(IS_REFERENCE_ADDED_IN_TRANSACTION, parameterSource)
                 .isEmpty();
         if (addedInTx) {
@@ -327,15 +339,13 @@ public class ReferenceServiceImpl implements ReferenceService {
     /**
      * Add a reference
      * @param txId the transaction Id.
-     * @param resourceId the subject resource Id.
-     * @param targetId the target resource Id.
+     * @param reference the triple with the reference.
      */
-    private void addReference(@Nonnull final String txId, final String resourceId, final String property,
-                              final String targetId) {
+    private void addReference(@Nonnull final String txId, final Triple reference) {
         final Map<String, String> parameterSource = Map.of("transactionId", txId,
-                "resourceId", resourceId,
-                "property", property,
-                "targetId", targetId);
+                "resourceId", reference.getSubject().getURI(),
+                "property", reference.getPredicate().getURI(),
+                "targetId", reference.getObject().getURI());
         final boolean addedInTx = !jdbcTemplate.queryForList(IS_REFERENCE_DELETED_IN_TRANSACTION, parameterSource)
                 .isEmpty();
         if (addedInTx) {
