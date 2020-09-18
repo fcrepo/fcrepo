@@ -28,7 +28,6 @@ import javax.inject.Inject;
 
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
@@ -61,7 +60,7 @@ public class MembershipServiceImpl implements MembershipService {
     private ResourceFactory resourceFactory;
 
     @Override
-    public void updateOnCreation(final String txId, final FedoraId fedoraId) {
+    public void resourceCreated(final String txId, final FedoraId fedoraId) {
         final var fedoraResc = getFedoraResource(txId, fedoraId);
 
         // Only need to compute membership for created containers and binaries
@@ -81,23 +80,18 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
-    public void updateOnModification(final String txId, final FedoraId fedoraId, final Model preUpdateModel) {
+    public void resourceModified(final String txId, final FedoraId fedoraId) {
         final var fedoraResc = getFedoraResource(txId, fedoraId);
 
         if (isDirectContainer(fedoraResc)) {
             final var dcRdfResc = getRdfResource(fedoraResc);
-
-            if (!membershipPropertiesChanged(dcRdfResc, preUpdateModel)) {
-                log.debug("Membership related properties of DirectContainer {} are unchanged", fedoraId);
-                return;
-            }
 
             log.debug("Modified DirectContainer {}, recomputing generated membership relations", fedoraId);
 
             final var dcLastModified = fedoraResc.getLastModifiedDate();
 
             // Delete/end existing membership from this container
-            indexManager.deleteMembership(txId, fedoraResc.getFedoraId(), dcLastModified);
+            indexManager.deleteMembershipForSource(txId, fedoraResc.getFedoraId(), dcLastModified);
 
             // Add updated membership properties for all non-tombstone children
             fedoraResc.getChildren()
@@ -105,32 +99,9 @@ public class MembershipServiceImpl implements MembershipService {
                     .map(child -> generateDirectMembership(txId, dcRdfResc, child))
                     .forEach(newMembership -> indexManager.addMembership(txId, fedoraId,
                             newMembership, dcLastModified));
+            return;
         }
         // TODO handle modification of IndirectContainers and proxies
-    }
-
-    private boolean membershipPropertiesChanged(final Resource existingRdfResc, final Model newModel) {
-        if (newModel == null) {
-            return false;
-        }
-        final var newRdfResc = newModel.getResource(existingRdfResc.getURI());
-
-        final var existingMembershipResc = getMembershipResource(existingRdfResc);
-        final var newMembershipResc = getMembershipResource(newRdfResc);
-        if (!existingMembershipResc.equals(newMembershipResc)) {
-            return true;
-        }
-
-        final var existingMemberOfRel = getMemberOfRelation(existingRdfResc);
-        final var newMemberOfRel = getMemberOfRelation(newRdfResc);
-        if (!existingMemberOfRel.equals(newMemberOfRel)) {
-            return true;
-        }
-
-        final var existingHasMemberRel = getHasMemberRelation(existingRdfResc);
-        final var newHasMemberRel = getHasMemberRelation(newRdfResc);
-
-        return !existingHasMemberRel.equals(newHasMemberRel);
     }
 
     private Triple generateDirectMembership(final String txId, final Resource dcRdfResc,
@@ -212,8 +183,25 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
-    public void updateOnDeletion(final String txId, final FedoraId fedoraId) {
+    public void resourceDeleted(final String txId, final FedoraId fedoraId) {
+        // delete DirectContainer, end all membership for that source
+        final var fedoraResc = getFedoraResource(txId, fedoraId);
 
+        if (isDirectContainer(fedoraResc)) {
+            indexManager.deleteMembershipForSource(txId, fedoraId, fedoraResc.getLastModifiedDate());
+        }
+
+        // delete child of DirectContainer, clear from tx and end existing
+        final var parentResc = getParentResource(fedoraResc);
+
+        if (isDirectContainer(parentResc)) {
+            final var parentRdfResc = getRdfResource(parentResc);
+            final var deletedMembership = generateDirectMembership(txId, parentRdfResc, fedoraResc);
+            indexManager.deleteMembership(txId, parentResc.getFedoraId(), deletedMembership,
+                    fedoraResc.getLastModifiedDate());
+
+        }
+        // delete membership resource, do nothing? Membership references will persist on members
     }
 
     @Override
@@ -230,14 +218,12 @@ public class MembershipServiceImpl implements MembershipService {
 
     @Override
     public void rollbackTransaction(final String txId) {
-        // TODO Auto-generated method stub
-
+        indexManager.deleteTransaction(txId);
     }
 
     @Override
     public void reset() {
-        // TODO Auto-generated method stub
-
+        indexManager.clearIndex();
     }
 
     /**

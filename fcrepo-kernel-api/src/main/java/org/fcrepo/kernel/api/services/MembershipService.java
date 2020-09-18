@@ -17,7 +17,6 @@
  */
 package org.fcrepo.kernel.api.services;
 
-import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
@@ -43,16 +42,15 @@ public interface MembershipService {
      * @param txId transaction id
      * @param fedoraId ID of the object created
      */
-    void updateOnCreation(final String txId, final FedoraId fedoraId);
+    void resourceCreated(final String txId, final FedoraId fedoraId);
 
     /**
      * Update membership properties based on the creation of the specified resource
      *
      * @param txId transaction id
      * @param fedoraId ID of the object modified
-     * @param preUpdateModel Model representing the object modified prior to the update, if applicable.
      */
-    void updateOnModification(final String txId, final FedoraId fedoraId, final Model preUpdateModel);
+    void resourceModified(final String txId, final FedoraId fedoraId);
 
     /**
      * Update membership properties based on the deletion of the specified resource
@@ -60,7 +58,7 @@ public interface MembershipService {
      * @param txId transaction id
      * @param fedoraId ID of the object deleted
      */
-    void updateOnDeletion(final String txId, final FedoraId fedoraId);
+    void resourceDeleted(final String txId, final FedoraId fedoraId);
 
     /**
      * Commit any pending membership changes.

@@ -33,7 +33,6 @@ import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.MembershipService;
@@ -80,6 +79,10 @@ public class MembershipServiceImplTest {
 
     private final static Property MEMBER_OF = createProperty("http://example.com/memberOf");
 
+    private final static Property OTHER_MEMBER_OF = createProperty("http://example.com/otherMemberOf");
+
+    private final static Property OTHER_HAS_MEMBER = createProperty("http://example.com/anotherHasMember");
+
     @Inject
     private PersistentStorageSessionManager pSessionManager;
     @Mock
@@ -87,9 +90,9 @@ public class MembershipServiceImplTest {
     @Inject
     private MembershipService membershipService;
     @Inject
-    private ContainmentIndex containmentIndex;
+    private MembershipIndexManager indexManager;
     @Inject
-    private ResourceFactory resourceFactory;
+    private ContainmentIndex containmentIndex;
 
     private final FedoraId rootId = FedoraId.getRepositoryRootId();
 
@@ -124,113 +127,519 @@ public class MembershipServiceImplTest {
         containmentIndex.getContains(null, rootId).forEach(c ->
                 containmentIndex.removeContainedBy(txId, rootId, FedoraId.create(c)));
         containmentIndex.commitTransaction(txId);
-    }
 
-    // get membership for container with no members
-    // get in tx, container no members
-    // get in tx, container with newly added members
-    // get in tx, container with existing members, no new
-    // get in tx, container with existing members and new, no overly
-    // get in tx,
+        indexManager.clearIndex();
+    }
 
     @Test
     public void getMembers_NoMembership() throws Exception {
         mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
         containmentIndex.addContainedBy(txId, rootId, membershipRescId);
-        membershipService.updateOnCreation(txId, membershipRescId);
+        membershipService.resourceCreated(txId, membershipRescId);
 
-        final var results = membershipService.getMembership(txId, membershipRescId);
-        assertEquals(0, results.count());
+        assertUncommittedMembershipCount(txId, membershipRescId, 0);
     }
 
     @Test
     public void getMembers_WithDC_NoMembers() throws Exception {
         mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
-        membershipService.updateOnCreation(txId, membershipRescId);
+        membershipService.resourceCreated(txId, membershipRescId);
 
         final var dcId = createDirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
-        membershipService.updateOnCreation(txId, dcId);
+        membershipService.resourceCreated(txId, dcId);
 
-        final var results = membershipService.getMembership(txId, membershipRescId);
-        assertEquals(0, results.count());
+        assertUncommittedMembershipCount(txId, membershipRescId, 0);
     }
 
     @Test
     public void getMembers_WithDC_AddedMembers_HasMemberRelation() throws Exception {
         mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
-        membershipService.updateOnCreation(txId, membershipRescId);
+        membershipService.resourceCreated(txId, membershipRescId);
 
         final var dcId = createDirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
-        membershipService.updateOnCreation(txId, dcId);
+        membershipService.resourceCreated(txId, dcId);
 
-        final var member1Id = mintFedoraId();
-        mockGetHeaders(txId, member1Id, dcId, BASIC_CONTAINER);
-        membershipService.updateOnCreation(txId, member1Id);
-        final var member2Id = mintFedoraId();
-        mockGetHeaders(txId, member2Id, dcId, RdfLexicon.NON_RDF_SOURCE);
-        membershipService.updateOnCreation(txId, member2Id);
+        final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
+        final var member2Id = createDCMember(dcId, RdfLexicon.NON_RDF_SOURCE);
 
-        final var results = membershipService.getMembership(txId, membershipRescId);
-        final var membershipList = results.collect(Collectors.toList());
-        assertEquals(2, membershipList.size());
-
-        assertContainsMembership(membershipList, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
-        assertContainsMembership(membershipList, membershipRescId, RdfLexicon.LDP_MEMBER, member2Id);
+        assertHasMembers(txId, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
 
         // Commit the transaction and verify we can still get the added members
         membershipService.commitTransaction(txId);
 
-        final var afterCommitResults = membershipService.getMembership(null, membershipRescId);
-        final var afterMembershipList = afterCommitResults.collect(Collectors.toList());
-        assertEquals(2, afterMembershipList.size());
+        assertHasMembers(null, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
+    }
 
-        assertContainsMembership(afterMembershipList, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
-        assertContainsMembership(afterMembershipList, membershipRescId, RdfLexicon.LDP_MEMBER, member2Id);
+    @Test
+    public void getMembers_WithDC_AddedMembers_DefaultHasMemberRelation() throws Exception {
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(txId, membershipRescId);
+
+        // Don't specify a membership relation
+        final var dcId = createDirectContainer(membershipRescId, null, false);
+        membershipService.resourceCreated(txId, dcId);
+
+        final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
+
+        assertHasMembers(txId, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
     }
 
     @Test
     public void getMembers_WithDC_AddedMembers_IsMemberOfRelation() throws Exception {
         mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
-        membershipService.updateOnCreation(txId, membershipRescId);
+        membershipService.resourceCreated(txId, membershipRescId);
 
         final var dcId = createDirectContainer(membershipRescId, MEMBER_OF, true);
-        membershipService.updateOnCreation(txId, dcId);
+        membershipService.resourceCreated(txId, dcId);
 
-        final var member1Id = mintFedoraId();
-        mockGetHeaders(txId, member1Id, dcId, BASIC_CONTAINER);
-        membershipService.updateOnCreation(txId, member1Id);
-        final var member2Id = mintFedoraId();
-        mockGetHeaders(txId, member2Id, dcId, RdfLexicon.NON_RDF_SOURCE);
-        membershipService.updateOnCreation(txId, member2Id);
+        final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
+        final var member2Id = createDCMember(dcId, RdfLexicon.NON_RDF_SOURCE);
 
-        final var containerResults = membershipService.getMembership(txId, membershipRescId);
-        assertEquals(0, containerResults.count());
-
-        final var member1Results = membershipService.getMembership(txId, member1Id);
-        final var member1Membership = member1Results.collect(Collectors.toList());
-        assertEquals(1, member1Membership.size());
-        assertContainsMembership(member1Membership, member1Id, MEMBER_OF, membershipRescId);
-
-        final var member2Results = membershipService.getMembership(txId, member2Id);
-        final var member2Membership = member2Results.collect(Collectors.toList());
-        assertEquals(1, member2Membership.size());
-        assertContainsMembership(member2Membership, member2Id, MEMBER_OF, membershipRescId);
+        assertUncommittedMembershipCount(txId, membershipRescId, 0);
+        assertIsMemberOf(txId, member1Id, MEMBER_OF, membershipRescId);
+        assertIsMemberOf(txId, member2Id, MEMBER_OF, membershipRescId);
 
         // Commit the transaction and verify we can still get the added members
         membershipService.commitTransaction(txId);
 
-        final var committedContainerResults = membershipService.getMembership(null, membershipRescId);
-        assertEquals(0, committedContainerResults.count());
+        assertCommittedMembershipCount(membershipRescId, 0);
 
-        final var committedMember1Results = membershipService.getMembership(null, member1Id);
-        final var committedMember1Membership = committedMember1Results.collect(Collectors.toList());
-        assertEquals(1, committedMember1Membership.size());
-        assertContainsMembership(committedMember1Membership, member1Id, MEMBER_OF, membershipRescId);
+        assertIsMemberOf(null, member1Id, MEMBER_OF, membershipRescId);
+        assertIsMemberOf(null, member2Id, MEMBER_OF, membershipRescId);
+    }
 
-        final var committedMember2Results = membershipService.getMembership(null, member2Id);
-        final var committedMember2Membership = committedMember2Results.collect(Collectors.toList());
-        assertEquals(1, committedMember2Membership.size());
-        assertContainsMembership(committedMember2Membership, member2Id, MEMBER_OF, membershipRescId);
+    @Test
+    public void deleteMember_InDC_AddedInSameTx_HasMemberRelation() throws Exception {
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(txId, membershipRescId);
+
+        final var dcId = createDirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceCreated(txId, dcId);
+
+        final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
+
+        assertUncommittedMembershipCount(txId, membershipRescId, 1);
+
+        // Notify that the member was deleted
+        membershipService.resourceDeleted(txId, member1Id);
+
+        assertUncommittedMembershipCount(txId, membershipRescId, 0);
+        assertCommittedMembershipCount(membershipRescId, 0);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(membershipRescId, 0);
+    }
+
+    @Test
+    public void deleteExistingMember_InDC_HasMemberRelation() throws Exception {
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(txId, membershipRescId);
+
+        final var dcId = createDirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceCreated(txId, dcId);
+
+        final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(membershipRescId, 1);
+
+        // Notify that the member was deleted
+        membershipService.resourceDeleted(txId, member1Id);
+
+        assertUncommittedMembershipCount(txId, membershipRescId, 0);
+        assertCommittedMembershipCount(membershipRescId, 1);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(membershipRescId, 0);
+    }
+
+    @Test
+    public void deleteExistingMember_InDC_IsMemberOfRelation() throws Exception {
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(txId, membershipRescId);
+
+        final var dcId = createDirectContainer(membershipRescId, MEMBER_OF, true);
+        membershipService.resourceCreated(txId, dcId);
+
+        final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(member1Id, 1);
+
+        // Notify that the member was deleted
+        membershipService.resourceDeleted(txId, member1Id);
+
+        assertCommittedMembershipCount(member1Id, 1);
+        assertUncommittedMembershipCount(txId, member1Id, 0);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(member1Id, 0);
+    }
+
+    @Test
+    public void deleteDC_WithMember_CreatedInSameTx() throws Exception {
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(txId, membershipRescId);
+
+        final var dcId = createDirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceCreated(txId, dcId);
+
+        createDCMember(dcId, BASIC_CONTAINER);
+
+        assertCommittedMembershipCount(membershipRescId, 0);
+        assertUncommittedMembershipCount(txId, membershipRescId, 1);
+
+        // Notify that the DC was deleted
+        membershipService.resourceDeleted(txId, dcId);
+
+        assertUncommittedMembershipCount(txId, membershipRescId, 0);
+        assertCommittedMembershipCount(membershipRescId, 0);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(membershipRescId, 0);
+    }
+
+    @Test
+    public void deleteExistingDC_WithExistingMember() throws Exception {
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(txId, membershipRescId);
+
+        final var dcId = createDirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceCreated(txId, dcId);
+
+        createDCMember(dcId, BASIC_CONTAINER);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(membershipRescId, 1);
+
+        // Notify that the DC was deleted
+        membershipService.resourceDeleted(txId, dcId);
+
+        assertUncommittedMembershipCount(txId, membershipRescId, 0);
+        assertCommittedMembershipCount(membershipRescId, 1);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(membershipRescId, 0);
+    }
+
+    @Test
+    public void deleteExistingMemberAndDC_InSameTx() throws Exception {
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(txId, membershipRescId);
+
+        final var dcId = createDirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceCreated(txId, dcId);
+
+        final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
+
+        membershipService.commitTransaction(txId);
+
+        // Delete the member
+        membershipService.resourceDeleted(txId, member1Id);
+        // Delete the DC itself
+        membershipService.resourceDeleted(txId, dcId);
+
+        assertCommittedMembershipCount(membershipRescId, 1);
+        assertUncommittedMembershipCount(txId, membershipRescId, 0);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(membershipRescId, 0);
+    }
+
+    @Test
+    public void recreateExistingMember_InDC_HasMemberRelation() throws Exception {
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(txId, membershipRescId);
+
+        final var dcId = createDirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceCreated(txId, dcId);
+
+        final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(membershipRescId, 1);
+
+        // Notify that the member was deleted
+        membershipService.resourceDeleted(txId, member1Id);
+
+        assertUncommittedMembershipCount(txId, membershipRescId, 0);
+        assertCommittedMembershipCount(membershipRescId, 1);
+
+        // Recreate the resource in the same TX
+        membershipService.resourceCreated(txId, member1Id);
+
+        assertUncommittedMembershipCount(txId, membershipRescId, 1);
+        assertCommittedMembershipCount(membershipRescId, 1);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(membershipRescId, 1);
+    }
+
+    @Test
+    public void getMembers_MultipleDCsSameMembershipResource_HasMemberRelation() throws Exception {
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(txId, membershipRescId);
+
+        final var dc1Id = createDirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceCreated(txId, dc1Id);
+
+        // Add a child to the outer DC
+        final var member1Id = createDCMember(dc1Id, BASIC_CONTAINER);
+
+        final var dc2Id = createDirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceCreated(txId, dc2Id);
+
+        // Add a child to the outer DC
+        final var member2Id = createDCMember(dc2Id, BASIC_CONTAINER);
+
+        assertUncommittedMembershipCount(txId, membershipRescId, 2);
+
+        membershipService.commitTransaction(txId);
+
+        assertHasMembers(null, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
+
+        // Delete one to ensure only those members are cleaned up
+        membershipService.resourceDeleted(txId, member2Id);
+
+        membershipService.commitTransaction(txId);
+
+        assertHasMembers(null, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
+    }
+
+    @Test
+    public void getMembers_MultipleDCsSameMembershipResource_IsMemberOfRelation() throws Exception {
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(txId, membershipRescId);
+
+        final var dc1Id = createDirectContainer(membershipRescId, MEMBER_OF, true);
+        membershipService.resourceCreated(txId, dc1Id);
+
+        // Add a child to the outer DC
+        final var member1Id = createDCMember(dc1Id, BASIC_CONTAINER);
+
+        final var dc2Id = createDirectContainer(membershipRescId, MEMBER_OF, true);
+        membershipService.resourceCreated(txId, dc2Id);
+
+        // Add a child to the outer DC
+        final var member2Id = createDCMember(dc2Id, BASIC_CONTAINER);
+
+        assertUncommittedMembershipCount(txId, membershipRescId, 0);
+        assertUncommittedMembershipCount(txId, member1Id, 1);
+        assertUncommittedMembershipCount(txId, member2Id, 1);
+
+        membershipService.commitTransaction(txId);
+
+        assertIsMemberOf(null, member1Id, MEMBER_OF, membershipRescId);
+        assertIsMemberOf(null, member2Id, MEMBER_OF, membershipRescId);
+
+        // Delete one to ensure only those members are cleaned up
+        membershipService.resourceDeleted(txId, member2Id);
+
+        membershipService.commitTransaction(txId);
+
+        assertIsMemberOf(null, member1Id, MEMBER_OF, membershipRescId);
+        assertCommittedMembershipCount(member2Id, 0);
+    }
+
+    @Test
+    public void getMembers_DCmemberOfDC() throws Exception {
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(txId, membershipRescId);
+
+        final var dcId = createDirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceCreated(txId, dcId);
+
+        // Add a child to the outer DC
+        final var outerMemberId = createDCMember(dcId, BASIC_CONTAINER);
+
+        // Add a DC as the child of the first DC
+        final var nestedDcId = createDirectContainer(dcId, membershipRescId, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceCreated(txId, nestedDcId);
+
+        // Add a child to the nested DC
+        final var nestedMemberId = createDCMember(nestedDcId, BASIC_CONTAINER);
+
+        assertCommittedMembershipCount(membershipRescId, 0);
+        assertUncommittedMembershipCount(txId, membershipRescId, 3);
+
+        membershipService.commitTransaction(txId);
+
+        assertHasMembers(null, membershipRescId, RdfLexicon.LDP_MEMBER, outerMemberId, nestedDcId, nestedMemberId);
+
+        // Delete the nested DC to ensure that it gets cleaned up as both a DC and a member
+        membershipService.resourceDeleted(txId, nestedDcId);
+
+        membershipService.commitTransaction(txId);
+
+        assertHasMembers(null, membershipRescId, RdfLexicon.LDP_MEMBER, outerMemberId);
+    }
+
+    @Test
+    public void changeMembershipResource_ForDC() throws Exception {
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(txId, membershipRescId);
+
+        final var membershipResc2Id = mintFedoraId();
+        mockGetHeaders(populateHeaders(membershipResc2Id, BASIC_CONTAINER));
+        membershipService.resourceCreated(txId, membershipResc2Id);
+
+        final var dcId = createDirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceCreated(txId, dcId);
+
+        final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
+        final var member2Id = createDCMember(dcId, BASIC_CONTAINER);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(membershipRescId, 2);
+        assertCommittedMembershipCount(membershipResc2Id, 0);
+
+        // Change the membership resource for the DC
+        mockGetTriplesForDC(dcId, membershipResc2Id, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceModified(txId, dcId);
+
+        assertHasMembers(txId, membershipResc2Id, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(membershipRescId, 0);
+        assertHasMembers(null, membershipResc2Id, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
+    }
+
+    @Test
+    public void changeMembershipRelation_DC_HasMember() throws Exception {
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(txId, membershipRescId);
+
+        final var dcId = createDirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceCreated(txId, dcId);
+
+        final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
+        final var member2Id = createDCMember(dcId, BASIC_CONTAINER);
+
+        assertUncommittedMembershipCount(txId, membershipRescId, 2);
+
+        membershipService.commitTransaction(txId);
+
+        assertHasMembers(null, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
+
+        // Change the membership relation
+        mockGetTriplesForDC(dcId, membershipRescId, OTHER_HAS_MEMBER, false);
+        membershipService.resourceModified(txId, dcId);
+
+        assertHasMembers(txId, membershipRescId, OTHER_HAS_MEMBER, member1Id, member2Id);
+
+        membershipService.commitTransaction(txId);
+
+        assertHasMembers(null, membershipRescId, OTHER_HAS_MEMBER, member1Id, member2Id);
+    }
+
+    @Test
+    public void changeResource_DC_HasMemberToIsMemberOf() throws Exception {
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(txId, membershipRescId);
+
+        final var dcId = createDirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceCreated(txId, dcId);
+
+        final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
+
+        assertUncommittedMembershipCount(txId, membershipRescId, 1);
+
+        membershipService.commitTransaction(txId);
+
+        assertHasMembers(txId, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
+
+        // Change the membership direction from a ldp:hasMemberRelation to a ldp:isMemberOfRelation
+        mockGetTriplesForDC(dcId, membershipRescId, MEMBER_OF, true);
+        membershipService.resourceModified(txId, dcId);
+
+        assertCommittedMembershipCount(membershipRescId, 1);
+        assertUncommittedMembershipCount(txId, membershipRescId, 0);
+        assertIsMemberOf(txId, member1Id, MEMBER_OF, membershipRescId);
+
+        membershipService.commitTransaction(txId);
+
+        assertIsMemberOf(null, member1Id, MEMBER_OF, membershipRescId);
+
+        // Reverse the membership direction again
+        mockGetTriplesForDC(dcId, membershipRescId, OTHER_HAS_MEMBER, false);
+        membershipService.resourceModified(txId, dcId);
+
+        assertCommittedMembershipCount(member1Id, 1);
+        assertUncommittedMembershipCount(txId, member1Id, 0);
+        assertHasMembers(txId, membershipRescId, OTHER_HAS_MEMBER, member1Id);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(member1Id, 0);
+        assertHasMembers(null, membershipRescId, OTHER_HAS_MEMBER, member1Id);
+    }
+
+    @Test
+    public void changeResource_DC_IsMemberOf() throws Exception {
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(txId, membershipRescId);
+
+        final var dcId = createDirectContainer(membershipRescId, MEMBER_OF, true);
+        membershipService.resourceCreated(txId, dcId);
+
+        final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
+
+        membershipService.commitTransaction(txId);
+
+        assertIsMemberOf(null, member1Id, MEMBER_OF, membershipRescId);
+
+        // Switch DC to a different ldp:isMemberOfRelation
+        mockGetTriplesForDC(dcId, membershipRescId, OTHER_MEMBER_OF, true);
+        membershipService.resourceModified(txId, dcId);
+
+        assertIsMemberOf(txId, member1Id, OTHER_MEMBER_OF, membershipRescId);
+
+        membershipService.commitTransaction(txId);
+
+        assertIsMemberOf(null, member1Id, OTHER_MEMBER_OF, membershipRescId);
+
+        // Switch back again
+        mockGetTriplesForDC(dcId, membershipRescId, MEMBER_OF, true);
+        membershipService.resourceModified(txId, dcId);
+
+        assertIsMemberOf(txId, member1Id, MEMBER_OF, membershipRescId);
+
+        membershipService.commitTransaction(txId);
+
+        assertIsMemberOf(null, member1Id, MEMBER_OF, membershipRescId);
+    }
+
+    private void assertHasMembers(final String txId, final FedoraId membershipRescId,
+            final Property hasMemberRelation, final FedoraId... memberIds) {
+        final var membershipList = getMembershipList(txId, membershipRescId);
+        assertEquals(memberIds.length, membershipList.size());
+        for (final FedoraId memberId : memberIds) {
+            assertContainsMembership(membershipList, membershipRescId, hasMemberRelation, memberId);
+        }
+    }
+
+    private void assertIsMemberOf(final String txId, final FedoraId memberId, final Property isMemberOf, final FedoraId membershipRescId) {
+        final var membershipList = getMembershipList(txId, memberId);
+        assertEquals(1, membershipList.size());
+        assertContainsMembership(membershipList, memberId, isMemberOf, membershipRescId);
+    }
+
+    private List<Triple> getMembershipList(final String txId, final FedoraId fedoraId) {
+        final var results = membershipService.getMembership(txId, fedoraId);
+        return results.collect(Collectors.toList());
     }
 
     private FedoraId mintFedoraId() {
@@ -250,7 +659,13 @@ public class MembershipServiceImplTest {
             final Resource ixModel) {
         final var headers = populateHeaders(fedoraId, parentId, ixModel);
         mockGetHeaders(txId, headers, parentId);
+    }
 
+    private FedoraId createDCMember(final FedoraId dcId, final Resource ixModel) {
+        final var memberId = mintFedoraId();
+        mockGetHeaders(txId, memberId, dcId, ixModel);
+        membershipService.resourceCreated(txId, memberId);
+        return memberId;
     }
 
     private ResourceHeaders populateHeaders(final FedoraId fedoraId, final Resource ixModel) {
@@ -273,9 +688,19 @@ public class MembershipServiceImplTest {
 
     private FedoraId createDirectContainer(final FedoraId membershipRescId, final Property relation,
             final boolean useIsMemberOf) {
-        final var dcId = mintFedoraId();
-        mockGetHeaders(populateHeaders(dcId, RdfLexicon.DIRECT_CONTAINER));
+        return createDirectContainer(rootId, membershipRescId, relation, useIsMemberOf);
+    }
 
+    private FedoraId createDirectContainer(final FedoraId parentId, final FedoraId membershipRescId, final Property relation,
+            final boolean useIsMemberOf) {
+        final var dcId = mintFedoraId();
+        mockGetHeaders(populateHeaders(dcId, parentId, RdfLexicon.DIRECT_CONTAINER));
+        mockGetTriplesForDC(dcId, membershipRescId, relation, useIsMemberOf);
+        return dcId;
+    }
+
+    private void mockGetTriplesForDC(final FedoraId dcId, final FedoraId membershipRescId, final Property relation,
+            final boolean useIsMemberOf) {
         final var model = ModelFactory.createDefaultModel();
         final var dcRdfResc = model.getResource(dcId.getFullId());
         final var membershipRdfResc = model.getResource(membershipRescId.getFullId());
@@ -294,8 +719,6 @@ public class MembershipServiceImplTest {
                 return fromModel(model.getResource(dcId.getFullId()).asNode(), model);
             }
         });
-
-        return dcId;
     }
 
     private void assertContainsMembership(final List<Triple> membershipList, final FedoraId subjectId,
@@ -308,5 +731,17 @@ public class MembershipServiceImplTest {
                 membershipList.stream().anyMatch(t -> t.getSubject().equals(subjectNode)
                         && t.getPredicate().equals(property.asNode())
                         && t.getObject().equals(objectNode)));
+    }
+
+    private void assertCommittedMembershipCount(final FedoraId subjectId, final int expected) {
+        final var results = membershipService.getMembership(null, subjectId);
+        assertEquals("Incorrect number of committed membership properties for " + subjectId,
+                expected, results.count());
+    }
+
+    private void assertUncommittedMembershipCount(final String txId, final FedoraId subjectId, final int expected) {
+        final var results = membershipService.getMembership(txId, subjectId);
+        assertEquals("Incorrect number of uncommitted membership properties for " + subjectId,
+                expected, results.count());
     }
 }
