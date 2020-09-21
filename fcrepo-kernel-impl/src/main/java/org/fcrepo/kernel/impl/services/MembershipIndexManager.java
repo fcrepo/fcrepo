@@ -273,6 +273,7 @@ public class MembershipIndexManager {
      * Delete all membership properties resulting from the specified source container
      * @param txId transaction id
      * @param sourceId ID of the direct/indirect container whose membership should be cleaned up
+     * @param endTime the time the resource was deleted, generally its last modified
      */
     public void deleteMembershipForSource(final String txId, final FedoraId sourceId, final Instant endTime) {
         // End all membership added in this transaction

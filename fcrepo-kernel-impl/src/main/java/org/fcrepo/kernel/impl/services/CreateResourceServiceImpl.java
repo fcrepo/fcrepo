@@ -132,6 +132,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
             // Populate the description for the new binary
             createDescription(pSession, userPrincipal, fedoraId);
             addToContainmentIndex(txId, parentId, fedoraId);
+            membershipService.resourceCreated(txId, fedoraId);
             recordEvent(txId, fedoraId, createOp);
         } catch (final PersistentStorageException exc) {
             throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
@@ -182,6 +183,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
             pSession.persist(createOp);
             updateReferences(txId, fedoraId, userPrincipal, model);
             addToContainmentIndex(txId, parentId, fedoraId);
+            membershipService.resourceCreated(txId, fedoraId);
             recordEvent(txId, fedoraId, createOp);
         } catch (final PersistentStorageException exc) {
             throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);

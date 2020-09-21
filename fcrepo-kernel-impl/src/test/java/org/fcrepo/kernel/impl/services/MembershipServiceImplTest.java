@@ -985,8 +985,8 @@ public class MembershipServiceImplTest {
         return createDirectContainer(rootId, membershipRescId, relation, useIsMemberOf);
     }
 
-    private FedoraId createDirectContainer(final FedoraId parentId, final FedoraId membershipRescId, final Property relation,
-            final boolean useIsMemberOf) {
+    private FedoraId createDirectContainer(final FedoraId parentId, final FedoraId membershipRescId,
+            final Property relation, final boolean useIsMemberOf) {
         final var dcId = mintFedoraId();
         mockGetHeaders(populateHeaders(dcId, parentId, RdfLexicon.DIRECT_CONTAINER));
         mockGetTriplesForDC(dcId, membershipRescId, relation, useIsMemberOf);
