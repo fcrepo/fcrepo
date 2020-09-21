@@ -33,7 +33,6 @@ import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
-import org.fcrepo.kernel.api.exception.RepositoryException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
@@ -114,12 +113,8 @@ public class MembershipServiceImpl implements MembershipService {
 
         if (memberOfRel != null) {
             return new Triple(memberRdfResc.asNode(), memberOfRel.asNode(), membershipResc.asNode());
-
-        } else if (hasMemberRel != null) {
-            return new Triple(membershipResc.asNode(), hasMemberRel.asNode(), memberRdfResc.asNode());
         } else {
-            throw new RepositoryException("DirectContainer " + dcRdfResc.getURI()
-                    + " must specify either ldp:isMemberOfRelation or ldp:hasMemberRelation");
+            return new Triple(membershipResc.asNode(), hasMemberRel.asNode(), memberRdfResc.asNode());
         }
     }
 
@@ -176,7 +171,11 @@ public class MembershipServiceImpl implements MembershipService {
 
     private FedoraResource getParentResource(final FedoraResource resc) {
         try {
-            return resc.getParent();
+            if (resc instanceof Tombstone) {
+                return ((Tombstone) resc).getDeletedObject().getParent();
+            } else {
+                return resc.getParent();
+            }
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
         }

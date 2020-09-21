@@ -65,7 +65,7 @@ public class MembershipIndexManager {
                 " AND end_time = :noEndTime";
 
     private static final String SELECT_MEMBERSHIP_IN_TX =
-            "SELECT property, object_id" +
+            "SELECT m.property, m.object_id" +
             " FROM membership m" +
             " WHERE subject_id = :subjectId" +
                 " AND end_time = :noEndTime" +
@@ -74,6 +74,7 @@ public class MembershipIndexManager {
                     " FROM membership_tx_operations mto" +
                     " WHERE mto.subject_id = :subjectId" +
                         " AND mto.source_id = m.source_id" +
+                        " AND mto.object_id = m.object_id" +
                         " AND mto.tx_id = :txId" +
                         " AND mto.operation = :deleteOp)" +
             " UNION" +
@@ -87,8 +88,33 @@ public class MembershipIndexManager {
             "SELECT property, object_id" +
             " FROM membership" +
             " WHERE subject_id = :subjectId" +
-                " AND start_time <= :startTime" +
-                " AND end_time <= :endTime";
+                " AND start_time <= :mementoTime" +
+                " AND end_time > :mementoTime";
+
+    private static final String SELECT_MEMBERSHIP_MEMENTO_IN_TX =
+            "SELECT property, object_id" +
+            " FROM membership m" +
+            " WHERE m.subject_id = :subjectId" +
+                " AND m.start_time <= :mementoTime" +
+                " AND m.end_time > :mementoTime" +
+                " AND NOT EXISTS (" +
+                    " SELECT 1" +
+                    " FROM membership_tx_operations mto" +
+                    " WHERE mto.subject_id = :subjectId" +
+                        " AND mto.source_id = m.source_id" +
+                        " AND mto.property = m.property" +
+                        " AND mto.object_id = m.object_id" +
+                        " AND mto.end_time <= :mementoTime" +
+                        " AND mto.tx_id = :txId" +
+                        " AND mto.operation = :deleteOp)" +
+            " UNION" +
+            " SELECT property, object_id" +
+            " FROM membership_tx_operations" +
+            " WHERE subject_id = :subjectId" +
+                " AND tx_id = :txId" +
+                " AND start_time <= :mementoTime" +
+                " AND end_time > :mementoTime" +
+                " AND operation = :addOp";
 
     private static final String INSERT_MEMBERSHIP_IN_TX =
             "INSERT INTO membership_tx_operations" +
@@ -98,7 +124,7 @@ public class MembershipIndexManager {
     private static final String END_EXISTING_MEMBERSHIP =
             "INSERT INTO membership_tx_operations" +
             " (subject_id, property, object_id, source_id, start_time, end_time, tx_id, operation)" +
-            " SELECT subject_id, property, object_id, source_id, start_time, :endTime, :txId, :deleteOp" +
+            " SELECT m.subject_id, m.property, m.object_id, m.source_id, m.start_time, :endTime, :txId, :deleteOp" +
             " FROM membership m" +
             " WHERE m.source_id = :sourceId" +
                 " AND m.end_time = :noEndTime" +
@@ -318,7 +344,11 @@ public class MembershipIndexManager {
         List<Triple> membership = null;
         if (txId == null) {
             if (subjectId.isMemento()) {
+                final Map<String, Object> parameterSource = Map.of(
+                        "subjectId", subjectId.getBaseId(),
+                        "mementoTime", subjectId.getMementoInstant());
 
+                membership = jdbcTemplate.query(SELECT_MEMBERSHIP_MEMENTO, parameterSource, membershipMapper);
             } else {
                 final Map<String, Object> parameterSource = Map.of(
                         "subjectId", subjectId.getFullId(),
@@ -328,7 +358,14 @@ public class MembershipIndexManager {
             }
         } else {
             if (subjectId.isMemento()) {
+                final Map<String, Object> parameterSource = Map.of(
+                        "subjectId", subjectId.getBaseId(),
+                        "mementoTime", subjectId.getMementoInstant(),
+                        "txId", txId,
+                        "addOp", ADD_OPERATION,
+                        "deleteOp", DELETE_OPERATION);
 
+                membership = jdbcTemplate.query(SELECT_MEMBERSHIP_MEMENTO_IN_TX, parameterSource, membershipMapper);
             } else {
                 final Map<String, Object> parameterSource = Map.of(
                         "subjectId", subjectId.getFullId(),
@@ -356,7 +393,7 @@ public class MembershipIndexManager {
         final int adds = jdbcTemplate.update(COMMIT_ADDS, parameterSource);
         final int cleaned = jdbcTemplate.update(DELETE_TRANSACTION, parameterSource);
 
-        log.error("Completed commit, {} deletes, {} adds, {} operations", deletes, adds, cleaned);
+        log.debug("Completed commit, {} deletes, {} adds, {} operations", deletes, adds, cleaned);
     }
 
     /**
