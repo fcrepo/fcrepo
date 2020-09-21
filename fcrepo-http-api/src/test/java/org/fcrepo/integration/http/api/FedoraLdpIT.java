@@ -2878,12 +2878,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
             binaryUri = getLocation(response);
         }
 
-        final String linkRdf = "INSERT { <" + binaryUri + "> <http://awoods.com/pointsAt> <" + containerUri + "> . } " +
-                "WHERE {}";
-        final HttpPatch patchDesc = new HttpPatch(binaryUri + "/" + FCR_METADATA);
-        patchDesc.setHeader(CONTENT_TYPE, "application/sparql-update");
-        patchDesc.setEntity(new StringEntity(linkRdf));
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patchDesc));
+        setProperty(binaryUri.replace(serverAddress, "") + "/" + FCR_METADATA, referenceProp.getURI(),
+                URI.create(containerUri));
 
         final HttpGet getContainer = new HttpGet(containerUri);
         getContainer.setHeader("Prefer", INBOUND_REFERENCE_PREFER_HEADER);
