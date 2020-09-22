@@ -80,6 +80,7 @@ import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.kernel.impl.operations.CreateNonRdfSourceOperation;
 import org.fcrepo.kernel.impl.operations.NonRdfSourceOperationFactoryImpl;
 import org.fcrepo.kernel.impl.operations.RdfSourceOperationFactoryImpl;
@@ -144,6 +145,9 @@ public class CreateResourceServiceImplTest {
     @Mock
     private Transaction transaction;
 
+    @Mock
+    private ReferenceService referenceService;
+
     @Captor
     private ArgumentCaptor<ResourceOperation> operationCaptor;
 
@@ -184,6 +188,7 @@ public class CreateResourceServiceImplTest {
         setField(createResourceService, "nonRdfSourceOperationFactory", nonRdfSourceOperationFactory);
         setField(createResourceService, "containmentIndex", containmentIndex);
         setField(createResourceService, "eventAccumulator", eventAccumulator);
+        setField(createResourceService, "referenceService", referenceService);
         when(psManager.getSession(ArgumentMatchers.any())).thenReturn(psSession);
         when(transaction.getId()).thenReturn(TX_ID);
         // Always try to clean up root.

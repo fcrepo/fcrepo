@@ -24,6 +24,10 @@
   <bean id="searchIndex" class="org.mockito.Mockito" factory-method="mock">
     <constructor-arg value="org.fcrepo.search.api.SearchIndex" />
   </bean>
+
+  <bean id="referenceService" class="org.mockito.Mockito" factory-method="mock">
+    <constructor-arg value="org.fcrepo.kernel.api.services.ReferenceService" />
+  </bean>
   
   <bean id="transactionManager" class="org.mockito.Mockito" factory-method="mock">
     <constructor-arg value="org.fcrepo.kernel.api.TransactionManager" />

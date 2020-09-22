@@ -27,6 +27,7 @@ import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.WebacAcl;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
+import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.kernel.impl.operations.DeleteResourceOperation;
 import org.fcrepo.kernel.impl.operations.DeleteResourceOperationFactoryImpl;
 import org.fcrepo.persistence.api.PersistentStorageSession;
@@ -44,6 +45,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import javax.inject.Inject;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -99,6 +101,9 @@ public class DeleteResourceServiceImplTest {
     @Mock
     private NonRdfSourceDescription binaryDesc;
 
+    @Mock
+    private ReferenceService referenceService;
+
     @Captor
     private ArgumentCaptor<DeleteResourceOperation> operationCaptor;
 
@@ -121,6 +126,7 @@ public class DeleteResourceServiceImplTest {
         setField(service, "deleteResourceFactory", factoryImpl);
         setField(service, "containmentIndex", containmentIndex);
         setField(service, "eventAccumulator", eventAccumulator);
+        setField(service, "referenceService", referenceService);
         when(container.getFedoraId()).thenReturn(RESOURCE_ID);
     }
 

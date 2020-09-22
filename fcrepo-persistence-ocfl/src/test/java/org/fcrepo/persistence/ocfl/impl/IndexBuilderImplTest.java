@@ -24,6 +24,7 @@ import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
+import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.kernel.impl.operations.DeleteResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
@@ -82,6 +83,9 @@ public class IndexBuilderImplTest {
     @Mock
     private SearchIndex searchIndex;
 
+    @Mock
+    private ReferenceService referenceService;
+
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
 
@@ -118,6 +122,7 @@ public class IndexBuilderImplTest {
         setField(indexBuilder, "objectSessionFactory", ocflObjectSessionFactory);
         setField(indexBuilder, "containmentIndex", containmentIndex);
         setField(indexBuilder, "searchIndex", searchIndex);
+        setField(indexBuilder, "referenceService", referenceService);
     }
 
     @Test
@@ -234,6 +239,7 @@ public class IndexBuilderImplTest {
         when(operation.getResourceId()).thenReturn(resourceId);
         when(((CreateResourceOperation) operation).getParentId()).thenReturn(FedoraId.getRepositoryRootId());
         when(operation.getType()).thenReturn(CREATE);
+        when(((CreateResourceOperation) operation).getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         when(((CreateResourceOperation)operation).isArchivalGroup()).thenReturn(isArchivalGroup);
         if (isArchivalGroup) {
             when(((CreateResourceOperation) operation).getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
@@ -256,6 +262,7 @@ public class IndexBuilderImplTest {
         when(operation.getContentStream()).thenReturn(stream);
         when(operation.getMimeType()).thenReturn("text/plain");
         when(operation.getFilename()).thenReturn("test");
+        when(((CreateResourceOperation)operation).getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         when(((CreateResourceOperation)operation).getParentId()).thenReturn(parentId);
         when(((CreateResourceOperation) operation).getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         session.persist(operation);

@@ -30,6 +30,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.services.CreateResourceService;
 import org.fcrepo.kernel.api.services.DeleteResourceService;
+import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.kernel.api.services.ReplaceBinariesService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
@@ -122,6 +123,9 @@ abstract class AbstractJmsIT implements MessageListener {
 
     @Inject
     private ActiveMQConnectionFactory connectionFactory;
+
+    @Inject
+    private ReferenceService referenceService;
 
     private Connection connection;
 
@@ -338,7 +342,7 @@ abstract class AbstractJmsIT implements MessageListener {
     private FedoraResource getResource(final FedoraId fedoraId) {
         try {
             return resourceFactory.getResource(fedoraId);
-        } catch (PathNotFoundException e) {
+        } catch (final PathNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
