@@ -165,6 +165,19 @@ public class MembershipIndexManager {
                         " AND mtx.operation = :deleteOp" +
                     ")";
 
+    private static final String PURGE_ALL_REFERENCES_MEMBERSHIP =
+            "DELETE from membership" +
+            " where source_id = :targetId" +
+                " OR subject_id = :targetId" +
+                " OR object_id = :targetId";
+
+    private static final String PURGE_ALL_REFERENCES_TRANSACTION =
+            "DELETE from membership_tx_operations" +
+            " where tx_id = :txId" +
+                " AND (source_id = :targetId" +
+                " OR subject_id = :targetId" +
+                " OR object_id = :targetId)";
+
     private static final String COMMIT_DELETES =
             "UPDATE membership m" +
             " SET end_time = (" +
@@ -242,6 +255,14 @@ public class MembershipIndexManager {
                 dataSource);
     }
 
+    /**
+     * Delete a membership entry
+     *
+     * @param txId transaction id
+     * @param sourceId ID of the direct/indirect container whose membership should be cleaned up
+     * @param membership membership triple to delete
+     * @param endTime the time the resource was deleted, generally its last modified
+     */
     public void deleteMembership(final String txId,  final FedoraId sourceId, final Triple membership,
             final Instant endTime) {
         final Map<String, Object> parameterSource = Map.of(
@@ -292,6 +313,20 @@ public class MembershipIndexManager {
                 "noEndTime", NO_END_TIMESTAMP,
                 "deleteOp", DELETE_OPERATION);
         jdbcTemplate.update(END_EXISTING_FOR_SOURCE, parameterSource2);
+    }
+
+    /**
+     * Clean up any references to the target id, in transactions and outside
+     * @param txId transaction id
+     * @param targetId identifier of the resource to cleanup membership references for
+     */
+    public void deleteMembershipReferences(final String txId, final FedoraId targetId) {
+        final Map<String, Object> parameterSource = Map.of(
+                "targetId", targetId.getFullId(),
+                "txId", txId);
+
+        jdbcTemplate.update(PURGE_ALL_REFERENCES_TRANSACTION, parameterSource);
+        jdbcTemplate.update(PURGE_ALL_REFERENCES_MEMBERSHIP, parameterSource);
     }
 
     /**

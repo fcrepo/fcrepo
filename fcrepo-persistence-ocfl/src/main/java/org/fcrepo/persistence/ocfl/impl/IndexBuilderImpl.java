@@ -30,6 +30,7 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
@@ -82,6 +83,9 @@ public class IndexBuilderImpl implements IndexBuilder {
     @Inject
     private ReferenceService referenceService;
 
+    @Inject
+    private MembershipService membershipService;
+
     @Override
     public void rebuildIfNecessary() {
         if (shouldRebuild()) {
@@ -98,6 +102,7 @@ public class IndexBuilderImpl implements IndexBuilder {
         containmentIndex.reset();
         searchIndex.reset();
         referenceService.reset();
+        membershipService.reset();
 
         final var txId = UUID.randomUUID().toString();
 
@@ -135,6 +140,11 @@ public class IndexBuilderImpl implements IndexBuilder {
             });
             execQuietly("Failed to rollback OCFL index transaction " + txId, () -> {
                 fedoraToOcflObjectIndex.rollback(txId);
+                return null;
+            });
+
+            execQuietly("Failed to rollback membership index transaction " + txId, () -> {
+                membershipService.rollbackTransaction(txId);
                 return null;
             });
             throw e;

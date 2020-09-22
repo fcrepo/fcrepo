@@ -24,6 +24,7 @@ import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
+import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.kernel.impl.operations.DeleteResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
@@ -86,6 +87,9 @@ public class IndexBuilderImplTest {
     @Mock
     private ReferenceService referenceService;
 
+    @Mock
+    private MembershipService membershipService;
+
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
 
@@ -123,6 +127,7 @@ public class IndexBuilderImplTest {
         setField(indexBuilder, "containmentIndex", containmentIndex);
         setField(indexBuilder, "searchIndex", searchIndex);
         setField(indexBuilder, "referenceService", referenceService);
+        setField(indexBuilder, "membershipService", membershipService);
     }
 
     @Test

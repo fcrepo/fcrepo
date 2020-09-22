@@ -180,7 +180,14 @@ public class MembershipServiceImpl implements MembershipService {
     @Override
     public void resourceDeleted(final String txId, final FedoraId fedoraId) {
         // delete DirectContainer, end all membership for that source
-        var fedoraResc = getFedoraResource(txId, fedoraId);
+        FedoraResource fedoraResc;
+        try {
+            fedoraResc = getFedoraResource(txId, fedoraId);
+        } catch (final PathNotFoundRuntimeException e) {
+            log.debug("Deleted resource {} does not have a tombstone, cleanup any references");
+            indexManager.deleteMembershipReferences(txId, fedoraId);
+            return;
+        }
         if (fedoraResc instanceof Tombstone) {
             fedoraResc = ((Tombstone) fedoraResc).getDeletedObject();
         }

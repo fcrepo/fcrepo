@@ -38,6 +38,7 @@ import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
 import org.junit.After;
 import org.junit.Before;
@@ -65,7 +66,7 @@ import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
  * @author bbpennel
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration("/containmentIndexTest.xml")
+@ContextConfiguration("/membershipServiceTest.xml")
 public class MembershipServiceImplTest {
 
     private final static Instant CREATED_DATE = Instant.parse("2019-11-12T10:00:30.0Z");
@@ -408,6 +409,76 @@ public class MembershipServiceImplTest {
         membershipService.commitTransaction(txId);
 
         assertCommittedMembershipCount(membershipRescId, 0);
+    }
+
+    @Test
+    public void purgeDC() throws Exception {
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(txId, membershipRescId);
+
+        final var dcId = createDirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceCreated(txId, dcId);
+
+        createDCMember(dcId, BASIC_CONTAINER);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(membershipRescId, 1);
+
+        when(psSession.getHeaders(eq(dcId), nullable(Instant.class))).thenThrow(
+                new PersistentItemNotFoundException(""));
+
+        membershipService.resourceDeleted(txId, dcId);
+
+        assertCommittedMembershipCount(membershipRescId, 0);
+        assertUncommittedMembershipCount(txId, membershipRescId, 0);
+    }
+
+    @Test
+    public void purgeMember() throws Exception {
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(txId, membershipRescId);
+
+        final var dcId = createDirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceCreated(txId, dcId);
+
+        final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
+        final var member2Id = createDCMember(dcId, BASIC_CONTAINER);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(membershipRescId, 2);
+
+        when(psSession.getHeaders(eq(member1Id), nullable(Instant.class))).thenThrow(
+                new PersistentItemNotFoundException(""));
+
+        membershipService.resourceDeleted(txId, member1Id);
+
+        assertHasMembers(null, membershipRescId, RdfLexicon.LDP_MEMBER, member2Id);
+        assertUncommittedMembershipCount(txId, membershipRescId, 1);
+    }
+
+    @Test
+    public void purgeMembershipResource_isMemberOfRelation() throws Exception {
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(txId, membershipRescId);
+
+        final var dcId = createDirectContainer(membershipRescId, MEMBER_OF, true);
+        membershipService.resourceCreated(txId, dcId);
+
+        final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(member1Id, 1);
+
+        when(psSession.getHeaders(eq(membershipRescId), nullable(Instant.class))).thenThrow(
+                new PersistentItemNotFoundException(""));
+
+        membershipService.resourceDeleted(txId, membershipRescId);
+
+        assertCommittedMembershipCount(member1Id, 0);
+        assertUncommittedMembershipCount(txId, member1Id, 0);
     }
 
     @Test
