@@ -32,6 +32,7 @@ import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
+import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
@@ -72,6 +73,9 @@ public class TransactionImplTest {
     @Mock
     private ReferenceService referenceService;
 
+    @Mock
+    private MembershipService membershipService;
+
     @Before
     public void setUp() {
         when(pssManager.getSession("123")).thenReturn(psSession);
@@ -79,6 +83,7 @@ public class TransactionImplTest {
         when(txManager.getContainmentIndex()).thenReturn(containmentIndex);
         when(txManager.getEventAccumulator()).thenReturn(eventAccumulator);
         when(txManager.getReferenceService()).thenReturn(referenceService);
+        when(txManager.getMembershipService()).thenReturn(membershipService);
         testTx = new TransactionImpl("123", txManager);
     }
 

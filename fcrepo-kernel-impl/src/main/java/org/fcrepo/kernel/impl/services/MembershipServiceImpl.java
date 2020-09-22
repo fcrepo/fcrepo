@@ -119,7 +119,7 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     private boolean isDirectContainer(final FedoraResource fedoraResc) {
-        return fedoraResc.hasType(RdfLexicon.DIRECT_CONTAINER.getURI());
+        return fedoraResc instanceof Container && fedoraResc.hasType(RdfLexicon.DIRECT_CONTAINER.getURI());
     }
 
     private Resource getRdfResource(final FedoraResource fedoraResc) {
@@ -171,11 +171,7 @@ public class MembershipServiceImpl implements MembershipService {
 
     private FedoraResource getParentResource(final FedoraResource resc) {
         try {
-            if (resc instanceof Tombstone) {
-                return ((Tombstone) resc).getDeletedObject().getParent();
-            } else {
-                return resc.getParent();
-            }
+            return resc.getParent();
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
         }
@@ -184,7 +180,10 @@ public class MembershipServiceImpl implements MembershipService {
     @Override
     public void resourceDeleted(final String txId, final FedoraId fedoraId) {
         // delete DirectContainer, end all membership for that source
-        final var fedoraResc = getFedoraResource(txId, fedoraId);
+        var fedoraResc = getFedoraResource(txId, fedoraId);
+        if (fedoraResc instanceof Tombstone) {
+            fedoraResc = ((Tombstone) fedoraResc).getDeletedObject();
+        }
 
         if (isDirectContainer(fedoraResc)) {
             indexManager.deleteMembershipForSource(txId, fedoraId, fedoraResc.getLastModifiedDate());
@@ -205,8 +204,14 @@ public class MembershipServiceImpl implements MembershipService {
 
     @Override
     public RdfStream getMembership(final String txId, final FedoraId fedoraId) {
-        final var subject = NodeFactory.createURI(fedoraId.getFullId());
-        final var membershipStream = indexManager.getMembership(txId, fedoraId);
+        final FedoraId subjectId;
+        if (fedoraId.isDescription()) {
+            subjectId = fedoraId.asBaseId();
+        } else {
+            subjectId = fedoraId;
+        }
+        final var subject = NodeFactory.createURI(subjectId.getFullId());
+        final var membershipStream = indexManager.getMembership(txId, subjectId);
         return new DefaultRdfStream(subject, membershipStream);
     }
 

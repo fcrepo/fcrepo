@@ -210,6 +210,25 @@ public class MembershipServiceImplTest {
     }
 
     @Test
+    public void getMembers_WithDC_BinaryAsMembershipResc() throws Exception {
+        mockGetHeaders(populateHeaders(membershipRescId, RdfLexicon.NON_RDF_SOURCE));
+        membershipService.resourceCreated(txId, membershipRescId);
+
+        final var dcId = createDirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceCreated(txId, dcId);
+
+        final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
+
+        final var descId = membershipRescId.asDescription();
+
+        assertHasMembers(txId, descId, RdfLexicon.LDP_MEMBER, member1Id);
+
+        membershipService.commitTransaction(txId);
+
+        assertHasMembers(null, descId, RdfLexicon.LDP_MEMBER, member1Id);
+    }
+
+    @Test
     public void deleteMember_InDC_AddedInSameTx_HasMemberRelation() throws Exception {
         mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
         membershipService.resourceCreated(txId, membershipRescId);

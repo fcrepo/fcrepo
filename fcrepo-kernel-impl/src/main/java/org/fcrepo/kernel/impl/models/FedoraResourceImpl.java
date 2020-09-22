@@ -36,6 +36,7 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -258,6 +259,10 @@ public class FedoraResourceImpl implements FedoraResource {
             return triples.filter(t -> t.predicateMatches(type.asNode())).map(Triple::getObject)
                     .map(t -> URI.create(t.toString())).collect(toList());
         } catch (final PersistentItemNotFoundException e) {
+            final var headers = getSession().getHeaders(getFedoraId().asResourceId(), getMementoDatetime());
+            if (headers.isDeleted()) {
+                return Collections.emptyList();
+            }
             throw new ItemNotFoundException("Unable to retrieve triples for " + getId(), e);
         } catch (final PersistentStorageException e) {
             throw new RepositoryRuntimeException(e);
