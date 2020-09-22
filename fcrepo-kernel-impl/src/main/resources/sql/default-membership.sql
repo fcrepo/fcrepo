@@ -21,6 +21,9 @@ CREATE INDEX IF NOT EXISTS membership_idx2
 
 CREATE INDEX IF NOT EXISTS membership_idx3
     ON membership (source_id, subject_id, property, object_id);
+    
+CREATE INDEX IF NOT EXISTS membership_idx4
+    ON membership (end_time);
 
 -- Holds operations to add or delete records from the REFERENCE table.
 CREATE TABLE IF NOT EXISTS membership_tx_operations (
@@ -44,3 +47,6 @@ CREATE INDEX IF NOT EXISTS membership_tx_operations_idx2
 
 CREATE INDEX IF NOT EXISTS membership_tx_operations_idx3
     ON membership_tx_operations (source_id, subject_id, property, object_id);
+    
+CREATE INDEX IF NOT EXISTS membership_tx_operations_idx4
+    ON membership_tx_operations (end_time);
