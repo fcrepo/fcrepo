@@ -15,14 +15,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.operations;
+package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 /**
- * Specifies the type of modification action represented by a resource operation.
- *
- * @author bbpennel
+ * Build a reference operation.
+ * @author whikloj
  */
-public enum ResourceOperationType {
-    UPDATE, CREATE, DELETE, PURGE, FOLLOW
+public class ReferenceOperationBuilder extends AbstractResourceOperationBuilder {
+
+    /**
+     * Constructor.
+     *
+     * @param rescId the resource identifier.
+     */
+    public ReferenceOperationBuilder(final FedoraId rescId) {
+        super(rescId);
+    }
+
+    @Override
+    public ReferenceOperation build() {
+        final var operation = new ReferenceOperation(rescId);
+        operation.setUserPrincipal(userPrincipal);
+        return operation;
+    }
+
 }

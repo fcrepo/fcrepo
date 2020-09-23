@@ -170,7 +170,7 @@ public class IndexBuilderImpl implements IndexBuilder {
                     final Optional<InputStream> content = session.readContent(fedoraId.getFullId()).getContentStream();
                     if (content.isPresent()) {
                         final RdfStream rdf = parseRdf(fedoraId, content.get());
-                        this.referenceService.updateReferences(txId, fedoraId, rdf);
+                        this.referenceService.updateReferences(txId, fedoraId, null, rdf);
                     }
                 }
 

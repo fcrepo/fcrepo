@@ -49,9 +49,11 @@ public interface ReferenceService {
      * Parse the stream of triples for references, add any new ones and remove any missing ones.
      * @param txId the transaction ID
      * @param resourceId the subject ID of the triples.
+     * @param userPrincipal the user who's action is updating references.
      * @param rdfStream the RDF stream.
      */
-    void updateReferences(final String txId, final FedoraId resourceId, final RdfStream rdfStream);
+    void updateReferences(final String txId, final FedoraId resourceId, final String userPrincipal,
+                          final RdfStream rdfStream);
 
     /**
      * Commit any pending references.

@@ -84,6 +84,8 @@ public class ReferenceServiceImplTest {
 
     private String transactionId;
 
+    private static final String TEST_USER = "someUser";
+
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
@@ -105,7 +107,7 @@ public class ReferenceServiceImplTest {
         final Model model = createDefaultModel();
         model.add(subject1, referenceProp, target);
         final RdfStream stream = fromModel(subject1.asNode(), model);
-        referenceService.updateReferences(transactionId, subject1Id, stream);
+        referenceService.updateReferences(transactionId, subject1Id, TEST_USER, stream);
         referenceService.commitTransaction(transactionId);
 
         final List<Triple> refs = referenceService.getInboundReferences(null, targetResource)
@@ -122,7 +124,7 @@ public class ReferenceServiceImplTest {
         final Model model = createDefaultModel();
         model.add(subject1, referenceProp, "http://some/text/uri");
         final RdfStream stream = fromModel(subject1.asNode(), model);
-        referenceService.updateReferences(transactionId, subject1Id, stream);
+        referenceService.updateReferences(transactionId, subject1Id, TEST_USER, stream);
         referenceService.commitTransaction(transactionId);
         assertEquals(0, referenceService.getInboundReferences(null, targetResource).count());
     }
@@ -133,7 +135,7 @@ public class ReferenceServiceImplTest {
         final Model model = createDefaultModel();
         model.add(subject1, referenceProp, target);
         final RdfStream stream = fromModel(subject1.asNode(), model);
-        referenceService.updateReferences(transactionId, subject1Id, stream);
+        referenceService.updateReferences(transactionId, subject1Id, TEST_USER, stream);
         referenceService.commitTransaction(transactionId);
         final List<Triple> refs = referenceService.getInboundReferences(null, targetResource).collect(
                 Collectors.toList());
@@ -144,7 +146,7 @@ public class ReferenceServiceImplTest {
         model.add(subject2, referenceProp, target);
         final RdfStream stream2 = fromModel(subject2.asNode(),
                 model);
-        referenceService.updateReferences(transactionId, subject2Id, stream2);
+        referenceService.updateReferences(transactionId, subject2Id, TEST_USER, stream2);
         referenceService.commitTransaction(transactionId);
         final List<Triple> refs2 = referenceService.getInboundReferences(null, targetResource).collect(
                 Collectors.toList());
@@ -161,14 +163,14 @@ public class ReferenceServiceImplTest {
         model.add(external, referenceProp, target);
         final RdfStream stream = fromModel(external.asNode(), model);
 
-        referenceService.updateReferences(transactionId, subject1Id, stream);
+        referenceService.updateReferences(transactionId, subject1Id, TEST_USER, stream);
         referenceService.commitTransaction(transactionId);
         assertEquals(0, referenceService.getInboundReferences(null, targetResource).count());
 
         model.remove(external, referenceProp, target);
         model.add(subject1, referenceProp, target);
         final RdfStream stream2 = fromModel(subject1.asNode(), model);
-        referenceService.updateReferences(transactionId, subject1Id, stream2);
+        referenceService.updateReferences(transactionId, subject1Id, TEST_USER, stream2);
         referenceService.commitTransaction(transactionId);
         assertEquals(1, referenceService.getInboundReferences(null, targetResource).count());
 
@@ -181,7 +183,7 @@ public class ReferenceServiceImplTest {
         final Model model = createDefaultModel();
         model.add(subject1, referenceProp, target);
         final RdfStream stream = fromModel(subject1.asNode(), model);
-        referenceService.updateReferences(transactionId, subject1Id, stream);
+        referenceService.updateReferences(transactionId, subject1Id, TEST_USER, stream);
         // Still nothing outside the transaction.
         assertEquals(0, referenceService.getInboundReferences(null, targetResource).count());
         // One inside the transaction
@@ -199,7 +201,7 @@ public class ReferenceServiceImplTest {
         final Model model = createDefaultModel();
         model.add(subject1, referenceProp, target);
         final RdfStream stream = fromModel(subject1.asNode(), model);
-        referenceService.updateReferences(transactionId, subject1Id, stream);
+        referenceService.updateReferences(transactionId, subject1Id, TEST_USER, stream);
         // Still nothing outside the transaction.
         assertEquals(0, referenceService.getInboundReferences(null, targetResource).count());
         // One inside the transaction
@@ -223,7 +225,7 @@ public class ReferenceServiceImplTest {
         final Model model = createDefaultModel();
         model.add(subject1, referenceProp, target);
         final RdfStream stream = fromModel(subject1.asNode(), model);
-        referenceService.updateReferences(transactionId, subject1Id, stream);
+        referenceService.updateReferences(transactionId, subject1Id, TEST_USER, stream);
 
         final String transaction2 = UUID.randomUUID().toString();
         // Still not public.
@@ -247,7 +249,7 @@ public class ReferenceServiceImplTest {
         final Model model = createDefaultModel();
         model.add(subject1, referenceProp, target);
         final RdfStream stream = fromModel(subject1.asNode(), model);
-        referenceService.updateReferences(transactionId, subject1Id, stream);
+        referenceService.updateReferences(transactionId, subject1Id, TEST_USER, stream);
         referenceService.commitTransaction(transactionId);
         assertEquals(1, referenceService.getInboundReferences(null, targetResource).count());
 
@@ -256,7 +258,7 @@ public class ReferenceServiceImplTest {
         model.add(subject1, ResourceFactory.createProperty("http://someother/description"), "Some text");
         model.remove(subject1, referenceProp, target);
         final RdfStream stream2 = fromModel(subject1.asNode(), model);
-        referenceService.updateReferences(transaction2, subject1Id, stream2);
+        referenceService.updateReferences(transaction2, subject1Id, TEST_USER, stream2);
         // Reference still available outside transaction.
         assertEquals(1, referenceService.getInboundReferences(null, targetResource).count());
         // But gone inside the transaction
@@ -280,7 +282,7 @@ public class ReferenceServiceImplTest {
         final Model model = createDefaultModel();
         model.add(subject1, referenceProp, binaryUri);
         final RdfStream stream = fromModel(subject1.asNode(), model);
-        referenceService.updateReferences(transactionId, subject1Id, stream);
+        referenceService.updateReferences(transactionId, subject1Id, TEST_USER, stream);
         // Check before committing
         assertEquals(0, referenceService.getInboundReferences(null, binaryDescriptionResource).count());
         assertEquals(1, referenceService.getInboundReferences(transactionId, binaryDescriptionResource)
@@ -293,7 +295,7 @@ public class ReferenceServiceImplTest {
         final Model model2 = createDefaultModel();
         model2.add(subject2, referenceProp, binaryDescUri);
         final RdfStream stream2 = fromModel(subject2.asNode(), model2);
-        referenceService.updateReferences(transactionId, subject2Id, stream2);
+        referenceService.updateReferences(transactionId, subject2Id, TEST_USER, stream2);
         // One reference outside the transaction
         assertEquals(1, referenceService.getInboundReferences(null, binaryDescriptionResource).count());
         // Two inside
@@ -317,13 +319,13 @@ public class ReferenceServiceImplTest {
         final Model model = createDefaultModel();
         model.add(subject1, referenceProp, target);
         final RdfStream stream = fromModel(subject1.asNode(), model);
-        referenceService.updateReferences(transactionId, subject1Id, stream);
+        referenceService.updateReferences(transactionId, subject1Id, TEST_USER, stream);
         referenceService.commitTransaction(transactionId);
         assertEquals(1, referenceService.getInboundReferences(null, targetResource).count());
 
         // Add the same reference from another resource.
         final RdfStream stream2 = fromModel(subject1.asNode(), model);
-        referenceService.updateReferences(transactionId, subject2Id, stream2);
+        referenceService.updateReferences(transactionId, subject2Id, TEST_USER, stream2);
         referenceService.commitTransaction(transactionId);
         assertEquals(2, referenceService.getInboundReferences(null, targetResource).count());
         final Triple expectedTriple = Triple.create(subject1.asNode(), referenceProp.asNode(), target.asNode());

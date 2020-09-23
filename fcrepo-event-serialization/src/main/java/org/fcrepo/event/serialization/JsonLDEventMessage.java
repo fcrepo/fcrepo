@@ -18,8 +18,10 @@
 
 package org.fcrepo.event.serialization;
 
-import static java.util.Collections.singletonList;
+import static java.time.format.DateTimeFormatter.ISO_INSTANT;
 import static java.util.stream.Collectors.toList;
+
+import static org.fcrepo.kernel.api.RdfLexicon.ACTIVITY_STREAMS_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.PROV_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -29,6 +31,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.fcrepo.kernel.api.observer.Event;
 
 import org.slf4j.Logger;
@@ -41,15 +45,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * 
  * @author acoburn
  * @author dbernstein
+ * @author whikloj
  */
-class JsonLDEventMessage {
+public class JsonLDEventMessage {
 
     @JsonIgnore
     private static final Logger LOGGER = getLogger(JsonLDEventMessage.class);
 
-    private static final String ACTIVITYSTREAMS_NS = "https://www.w3.org/ns/activitystreams";
-
-    static class ContextElement {
+    public static class ContextElement {
 
         @JsonProperty("@id")
         public final String id;
@@ -68,7 +71,7 @@ class JsonLDEventMessage {
         }
     }
 
-    static class Context {
+    public static class Context {
 
         public final String prov = "http://www.w3.org/ns/prov#";
 
@@ -82,7 +85,7 @@ class JsonLDEventMessage {
 
     }
 
-    static class Object {
+    public static class Object {
 
         @JsonProperty("type")
         public List<String> type;
@@ -93,6 +96,10 @@ class JsonLDEventMessage {
         @JsonProperty("isPartOf")
         public String isPartOf;
 
+        public Object() {
+            // Needed to deserialize class.
+        }
+
         public Object(final String id, final List<String> type, final String isPartOf) {
             this.type = type;
             this.id = id;
@@ -100,33 +107,45 @@ class JsonLDEventMessage {
         }
     }
 
-    static class Actor {
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+    @JsonSubTypes({
+            @JsonSubTypes.Type(value = Application.class, name = "Application"),
+            @JsonSubTypes.Type(value = Person.class, name = "Person") }
+    )
+    public static class Actor {
+        @JsonIgnore
+        public String type;
 
-        @JsonProperty("type")
-        public List<String> type;
-
-        public Actor(final List<String> type) {
+        public Actor(final String type) {
             this.type = type;
         }
     }
 
-    static class Application extends Actor {
+    public static class Application extends Actor {
 
         @JsonProperty("name")
         public String name;
 
-        public Application(final String name, final List<String> type) {
+        public Application() {
+            super("Application");
+        }
+
+        public Application(final String name, final String type) {
             super(type);
             this.name = name;
         }
     }
 
-    static class Person extends Actor {
+    public static class Person extends Actor {
 
         @JsonProperty("id")
         public String id;
 
-        public Person(final String id, final List<String> type) {
+        public Person() {
+            super("Person");
+        }
+
+        public Person(final String id, final String type) {
             super(type);
             this.id = id;
         }
@@ -153,6 +172,10 @@ class JsonLDEventMessage {
 
     @JsonProperty("@context")
     public List<java.lang.Object> context;
+
+    public void setPublished(final String published) {
+        this.published = Instant.from(ISO_INSTANT.parse(published));
+    }
 
     /**
      * Populate a JsonLDEventMessage from a Event
@@ -184,16 +207,16 @@ class JsonLDEventMessage {
 
         // build actors list
         final List<Actor> actor = new ArrayList<>();
-        actor.add(new Person(Objects.toString(evt.getUserURI()), singletonList("Person")));
+        actor.add(new Person(Objects.toString(evt.getUserURI()), "Person"));
         final String softwareAgent = evt.getUserAgent();
         if (softwareAgent != null) {
-            actor.add(new Application(softwareAgent, singletonList("Application")));
+            actor.add(new Application(softwareAgent, "Application"));
         }
 
         final JsonLDEventMessage msg = new JsonLDEventMessage();
 
         msg.id = evt.getEventID();
-        msg.context = Arrays.asList(ACTIVITYSTREAMS_NS, new Context());
+        msg.context = Arrays.asList(ACTIVITY_STREAMS_NAMESPACE, new Context());
         msg.actor = actor;
         msg.published = evt.getDate();
         msg.type = types;

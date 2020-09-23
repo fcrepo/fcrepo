@@ -29,6 +29,7 @@ import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.base.Preconditions;
@@ -37,13 +38,17 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.Quad;
 import org.fcrepo.common.db.DbPlatform;
+import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.ReferenceService;
+import org.fcrepo.kernel.impl.operations.ReferenceOperation;
+import org.fcrepo.kernel.impl.operations.ReferenceOperationBuilder;
 import org.slf4j.Logger;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.jdbc.core.RowMapper;
@@ -65,6 +70,12 @@ public class ReferenceServiceImpl implements ReferenceService {
 
     @Inject
     private DataSource dataSource;
+
+    @Inject
+    private EventAccumulator eventAccumulator;
+
+    @Inject
+    private ContainmentIndex containmentIndex;
 
     private NamedParameterJdbcTemplate jdbcTemplate;
 
@@ -221,14 +232,13 @@ public class ReferenceServiceImpl implements ReferenceService {
 
     @Override
     public void deleteAllReferences(@Nonnull final String txId, final FedoraId resourceId) {
-        final Stream<Quad> deleteReferences = getOutboundReferences(txId, resourceId);
+        final List<Quad> deleteReferences = getOutboundReferences(txId, resourceId);
+        if (resourceId.isDescription()) {
+            // Also get the binary references
+            deleteReferences.addAll(getOutboundReferences(txId, resourceId.asBaseId()));
+        }
         // Remove all the existing references.
         deleteReferences.forEach(t -> removeReference(txId, t));
-        if (resourceId.isDescription()) {
-            // Also get and delete the binary references
-            final Stream<Quad> binaryDeleteRef = getOutboundReferences(txId, resourceId.asBaseId());
-            binaryDeleteRef.forEach(t -> removeReference(txId, t));
-        }
     }
 
     /**
@@ -236,9 +246,9 @@ public class ReferenceServiceImpl implements ReferenceService {
      * URI of the resource the reference is from.
      * @param txId transaction Id or null if none.
      * @param resourceId the resource Id.
-     * @return stream of Quads
+     * @return list of Quads
      */
-    private Stream<Quad> getOutboundReferences(final String txId, final FedoraId resourceId) {
+    private List<Quad> getOutboundReferences(final String txId, final FedoraId resourceId) {
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("resourceId", resourceId.getFullId());
         final Node subjectNode = NodeFactory.createURI(resourceId.getFullId());
@@ -260,28 +270,31 @@ public class ReferenceServiceImpl implements ReferenceService {
         }
         LOGGER.debug("getOutboundReferences for {} in transaction {} found {} references",
                 resourceId, txId, references.size());
-        return references.stream();
+        return references;
     }
 
     @Override
     @Transactional
-    public void updateReferences(@Nonnull final String txId, final FedoraId resourceId, final RdfStream rdfStream) {
+    public void updateReferences(@Nonnull final String txId, final FedoraId resourceId, final String userPrincipal,
+                                 final RdfStream rdfStream) {
         try {
-            final Stream<Quad> deleteReferences = getOutboundReferences(txId, resourceId);
-            // Remove all the existing references.
-            deleteReferences.forEach(t ->
-                removeReference(txId, t)
-            );
+            final List<Triple> addReferences = getReferencesFromRdf(rdfStream).collect(Collectors.toList());
+            // This predicate checks for items we are adding, so we don't bother to delete and then re-add them.
+            final Predicate<Quad> notInAdds = q -> !addReferences.contains(q.asTriple());
+            // References from this resource.
+            final List<Quad> existingReferences = getOutboundReferences(txId, resourceId);
             if (resourceId.isDescription()) {
-                // Also get and delete the binary references
-                final Stream<Quad> binaryDeleteRef = getOutboundReferences(txId, resourceId.asBaseId());
-                binaryDeleteRef.forEach(t ->
-                        removeReference(txId, t)
-                );
+                // Resource is a binary description so also get the binary references.
+                existingReferences.addAll(getOutboundReferences(txId, resourceId.asBaseId()));
             }
+            // Remove any existing references not being re-added.
+            existingReferences.stream().filter(notInAdds).forEach(t -> removeReference(txId, t));
             final Node resourceNode = NodeFactory.createURI(resourceId.getFullId());
-            final Stream<Triple> addReferences = getReferencesFromRdf(rdfStream);
-            addReferences.forEach(r -> addReference(txId, Quad.create(resourceNode, r)));
+            // This predicate checks for references that didn't already exist in the database.
+            final Predicate<Triple> alreadyExists = t -> !existingReferences.contains(Quad.create(resourceNode, t));
+            // Add the new references.
+            addReferences.stream().filter(alreadyExists).forEach(r ->
+                    addReference(txId, Quad.create(resourceNode, r), userPrincipal));
         } catch (final Exception e) {
             LOGGER.warn("Unable to update reference index for resource {} in transaction {}: {}",
                     resourceId.getFullId(), txId, e.getMessage());
@@ -349,20 +362,48 @@ public class ReferenceServiceImpl implements ReferenceService {
      * Add a reference
      * @param txId the transaction Id.
      * @param reference the quad with the reference, is is Quad(resourceId, subjectId, propertyId, targetId)
+     * @param userPrincipal the user adding the reference.
      */
-    private void addReference(@Nonnull final String txId, final Quad reference) {
+    private void addReference(@Nonnull final String txId, final Quad reference, final String userPrincipal) {
+        final String targetId = reference.getObject().getURI();
         final Map<String, String> parameterSource = Map.of("transactionId", txId,
                 "resourceId", reference.getGraph().getURI(),
                 "subjectId", reference.getSubject().getURI(),
                 "property", reference.getPredicate().getURI(),
-                "targetId", reference.getObject().getURI());
+                "targetId", targetId);
         final boolean addedInTx = !jdbcTemplate.queryForList(IS_REFERENCE_DELETED_IN_TRANSACTION, parameterSource)
                 .isEmpty();
         if (addedInTx) {
             jdbcTemplate.update(UNDO_DELETE_REFERENCE_IN_TRANSACTION, parameterSource);
         } else {
             jdbcTemplate.update(INSERT_REFERENCE_IN_TRANSACTION, parameterSource);
+            recordEvent(txId, targetId, userPrincipal);
         }
+    }
+
+    /**
+     * Record the inbound reference event if the target exists.
+     * @param txId the transaction id.
+     * @param resourceId the id of the target of the inbound reference.
+     * @param userPrincipal the user making the reference.
+     */
+    private void recordEvent(final String txId, final String resourceId, final String userPrincipal) {
+        final FedoraId fedoraId = FedoraId.create(resourceId);
+        if (this.containmentIndex.resourceExists(txId, fedoraId)) {
+            this.eventAccumulator.recordEventForOperation(txId, fedoraId, getOperation(fedoraId, userPrincipal));
+        }
+    }
+
+    /**
+     * Create a ReferenceOperation for the current add.
+     * @param id the target resource of the reference.
+     * @param user the user making the change
+     * @return a ReferenceOperation
+     */
+    private static ReferenceOperation getOperation(final FedoraId id, final String user) {
+        final ReferenceOperationBuilder builder = new ReferenceOperationBuilder(id);
+        builder.userPrincipal(user);
+        return builder.build();
     }
 
     /**
