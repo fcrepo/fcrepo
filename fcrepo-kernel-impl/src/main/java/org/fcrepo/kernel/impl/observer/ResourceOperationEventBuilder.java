@@ -74,6 +74,8 @@ public class ResourceOperationEventBuilder implements EventBuilder {
                 return EventType.RESOURCE_DELETION;
             case PURGE:
                 return EventType.RESOURCE_PURGE;
+            case FOLLOW:
+                return EventType.INBOUND_REFERENCE;
             default:
                 throw new IllegalStateException(
                         String.format("There is no EventType mapping for ResourceOperation type %s on operation %s",

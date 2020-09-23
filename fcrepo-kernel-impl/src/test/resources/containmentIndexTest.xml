@@ -26,4 +26,8 @@
     <bean id="referenceIndex" class="org.fcrepo.kernel.impl.services.ReferenceServiceImpl">
         <property name="dataSource" ref="dataSource" />
     </bean>
+
+    <bean id="eventAccumulator" class="org.mockito.Mockito" factory-method="mock">
+        <constructor-arg value="org.fcrepo.kernel.api.observer.EventAccumulator"/>
+    </bean>
 </beans>

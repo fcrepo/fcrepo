@@ -86,9 +86,9 @@ public class JsonLDSerializerTest extends EventSerializerTestBase {
         assertEquals(EventType.RESOURCE_MODIFICATION.getName(), node.get("name").textValue());
         assertEquals(EventType.RESOURCE_MODIFICATION.getTypeAbbreviated(), node.get("type").get(0).asText());
         assertEquals(user, node.get("actor").get(0).get("id").asText());
-        assertEquals("Person", node.get("actor").get(0).get("type").get(0).asText());
+        assertEquals("Person", node.get("actor").get(0).get("type").asText());
         assertEquals(softwareAgent, node.get("actor").get(1).get("name").asText());
-        assertEquals("Application", node.get("actor").get(1).get("type").get(0).asText());
+        assertEquals("Application", node.get("actor").get(1).get("type").asText());
         assertEquals(node.get("published").textValue(), timestamp.toString());
         final List<String> types = new ArrayList<>();
         final JsonNode objectNode = node.get("object");

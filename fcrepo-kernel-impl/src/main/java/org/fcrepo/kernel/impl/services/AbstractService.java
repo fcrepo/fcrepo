@@ -235,8 +235,9 @@ public abstract class AbstractService {
      * @param resourceId the resource's ID.
      * @param model the model of the request body.
      */
-    protected void updateReferences(final String transactionId, final FedoraId resourceId, final Model model) {
-        referenceService.updateReferences(transactionId, resourceId,
+    protected void updateReferences(final String transactionId, final FedoraId resourceId, final String user,
+                                    final Model model) {
+        referenceService.updateReferences(transactionId, resourceId, user,
                 fromModel(model.getResource(resourceId.getFullId()).asNode(), model));
     }
 

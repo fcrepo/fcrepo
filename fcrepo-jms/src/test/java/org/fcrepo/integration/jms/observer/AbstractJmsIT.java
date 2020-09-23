@@ -17,15 +17,21 @@
  */
 package org.fcrepo.integration.jms.observer;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.awaitility.Duration;
+import com.jayway.awaitility.core.ConditionTimeoutException;
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.vocabulary.RDF;
+import org.fcrepo.event.serialization.JsonLDEventMessage;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.services.CreateResourceService;
@@ -36,7 +42,6 @@ import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 
@@ -48,30 +53,34 @@ import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
 import javax.jms.Session;
+import javax.jms.TextMessage;
+import javax.ws.rs.core.UriBuilder;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import static com.google.common.base.Strings.nullToEmpty;
 import static com.jayway.awaitility.Awaitility.await;
 import static com.jayway.awaitility.Duration.ONE_HUNDRED_MILLISECONDS;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.UUID.randomUUID;
+
 import static javax.jms.Session.AUTO_ACKNOWLEDGE;
-import static org.fcrepo.jms.DefaultMessageFactory.BASE_URL_HEADER_NAME;
-import static org.fcrepo.jms.DefaultMessageFactory.EVENT_TYPE_HEADER_NAME;
-import static org.fcrepo.jms.DefaultMessageFactory.IDENTIFIER_HEADER_NAME;
-import static org.fcrepo.jms.DefaultMessageFactory.RESOURCE_TYPE_HEADER_NAME;
-import static org.fcrepo.jms.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
+
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.observer.EventType.INBOUND_REFERENCE;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_CREATION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_DELETION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_MODIFICATION;
+import static org.junit.Assert.fail;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -99,6 +108,8 @@ abstract class AbstractJmsIT implements MessageListener {
     private static final String USER = "fedoraAdmin";
     private static final String TEST_USER_AGENT = "FedoraClient/1.0";
     private static final String TEST_BASE_URL = "http://localhost:8080/rest";
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Inject
     private ResourceFactory resourceFactory;
@@ -139,29 +150,35 @@ abstract class AbstractJmsIT implements MessageListener {
 
     protected abstract Destination createDestination() throws JMSException;
 
+    private final HttpIdentifierConverter identifierConverter = new HttpIdentifierConverter(
+            UriBuilder.fromUri(TEST_BASE_URL + "/{path: .*}"));
+
     @Test(timeout = TIMEOUT)
     public void testIngestion() {
 
         LOGGER.debug("Expecting a {} event", RESOURCE_CREATION.getType());
+        final FedoraId fedoraId = FedoraId.create(testIngested);
+        final String externalUri = identifierConverter.toExternalId(fedoraId.getFullId());
 
         doInTx(tx -> {
-            createResourceService.perform(tx.getId(), USER, FedoraId.create(testIngested),
-                    null, ModelFactory.createDefaultModel());
+            createResourceService.perform(tx.getId(), USER, fedoraId,
+                    null, createDefaultModel());
             tx.commit();
-            awaitMessageOrFail(testIngested, RESOURCE_CREATION.getType(), null);
+            awaitMessageOrFail(externalUri, RESOURCE_CREATION.getType(), null);
         });
     }
 
     @Test(timeout = TIMEOUT)
     public void testFileEvents() throws InvalidChecksumException {
         final var fedoraId = FedoraId.create(testFile);
+        final var externalId = identifierConverter.toExternalId(fedoraId.getFullId());
 
         doInTx(tx -> {
             createResourceService.perform(tx.getId(), USER, fedoraId,
                     "text/plain", "file.txt", 3L,
                     List.of(), null, stream("foo"), null);
             tx.commit();
-            awaitMessageOrFail(testFile, RESOURCE_CREATION.getType(), NON_RDF_SOURCE.toString());
+            awaitMessageOrFail(externalId, RESOURCE_CREATION.getType(), NON_RDF_SOURCE.toString());
         });
 
         doInTx(tx -> {
@@ -169,51 +186,49 @@ abstract class AbstractJmsIT implements MessageListener {
                     "file.txt", "text/plain", null,
                     stream("barney"), 6L, null);
             tx.commit();
-            awaitMessageOrFail(testFile, RESOURCE_MODIFICATION.getType(), NON_RDF_SOURCE.toString());
+            awaitMessageOrFail(externalId, RESOURCE_MODIFICATION.getType(), NON_RDF_SOURCE.toString());
         });
 
         doInTx(tx -> {
             final FedoraResource binaryResource = getResource(fedoraId);
             deleteResourceService.perform(tx, binaryResource, USER);
             tx.commit();
-            awaitMessageOrFail(testFile, RESOURCE_DELETION.getType(), null);
+            awaitMessageOrFail(externalId, RESOURCE_DELETION.getType(), null);
         });
     }
 
     @Test(timeout = TIMEOUT)
-    @Ignore("updatePropertiesService is not implemented")
     public void testMetadataEvents() {
-        final IdentifierConverter<Resource,FedoraResource> subjects = null;
+        final var fedoraId = FedoraId.create(testMeta);
+        final var externalId = identifierConverter.toExternalId(fedoraId.getFullId());
 
         doInTx(tx -> {
-            // final FedoraResource resource1 = containerService.findOrCreate(tx, testMeta);
+            createResourceService.perform(tx.getId(), USER, fedoraId, List.of(), createDefaultModel());
             final String sparql1 = "insert data { <> <http://foo.com/prop> \"foo\" . }";
-            // updatePropertiesService.updateProperties(resource1, sparql1, resource1.getTriples(subjects,
-            // PROPERTIES));
+            updatePropertiesService.updateProperties(tx.getId(), USER, fedoraId, sparql1);
             tx.commit();
-            awaitMessageOrFail(testMeta, RESOURCE_MODIFICATION.getType(), REPOSITORY_NAMESPACE + "Container");
+            awaitMessageOrFail(externalId, RESOURCE_MODIFICATION.getType(), REPOSITORY_NAMESPACE + "Container");
         });
 
         doInTx(tx -> {
-            // final FedoraResource resource2 = containerService.findOrCreate(tx, testMeta);
             final String sparql2 = " delete { <> <http://foo.com/prop> \"foo\" . } "
                     + "insert { <> <http://foo.com/prop> \"bar\" . } where {}";
-            // updatePropertiesService.updateProperties(resource2, sparql2, resource2.getTriples(subjects,
-            // PROPERTIES));
+            updatePropertiesService.updateProperties(tx.getId(), USER, fedoraId, sparql2);
             tx.commit();
-            awaitMessageOrFail(testMeta, RESOURCE_MODIFICATION.getType(), REPOSITORY_NAMESPACE + "Resource");
+            awaitMessageOrFail(externalId, RESOURCE_MODIFICATION.getType(), REPOSITORY_NAMESPACE + "Resource");
         });
     }
 
     @Test(timeout = TIMEOUT)
     public void testRemoval() throws PathNotFoundException {
         final var fedoraId = FedoraId.create(testRemoved);
+        final var externalId = identifierConverter.toExternalId(fedoraId.getFullId());
 
         LOGGER.debug("Expecting a {} event", RESOURCE_DELETION.getType());
 
         doInTx(tx -> {
             createResourceService.perform(tx.getId(), USER, fedoraId,
-                    null, ModelFactory.createDefaultModel());
+                    null, createDefaultModel());
             tx.commit();
         });
 
@@ -221,43 +236,51 @@ abstract class AbstractJmsIT implements MessageListener {
             final var resource = getResource(fedoraId);
             deleteResourceService.perform(tx, resource, USER);
             tx.commit();
-            awaitMessageOrFail(testRemoved, RESOURCE_DELETION.getType(), null);
+            awaitMessageOrFail(externalId, RESOURCE_DELETION.getType(), null);
         });
     }
 
     @Test(timeout = TIMEOUT)
-    @Ignore("updatePropertiesService is not implemented")
     public void testInboundReference() {
-        final String uri1 = "/testInboundReference-" + randomUUID().toString();
-        final String uri2 = "/testInboundReference-" + randomUUID().toString();
-
-        final IdentifierConverter<Resource,FedoraResource> subjects = null;
+        final var id1 = FedoraId.create("/testInboundReference-" + randomUUID().toString());
+        final var id2 = FedoraId.create("/testInboundReference-" + randomUUID().toString());
+        final var externalId2 = identifierConverter.toExternalId(id2.getFullId());
 
         doInTx(tx -> {
-            // final Container resource = containerService.findOrCreate(tx, uri1);
-            // final Container resource2 = containerService.findOrCreate(tx, uri2);
+            createResourceService.perform(tx.getId(), USER, id1, List.of(), createDefaultModel());
+            createResourceService.perform(tx.getId(), USER, id2, List.of(), createDefaultModel());
             tx.commit();
         });
 
         doInTx(tx -> {
-            // final Resource subject2 = subjects.reverse().convert(resource2);
-            // final String sparql = "insert { <> <http://foo.com/prop> <" + subject2 + "> . } where {}";
-            // updatePropertiesService.updateProperties(resource, sparql, resource.getTriples(subjects, PROPERTIES));
+            final String sparql = "insert { <> <http://foo.com/prop> <" + id2.getFullId() + "> . } where {}";
+            updatePropertiesService.updateProperties(tx.getId(), USER, id1, sparql);
             tx.commit();
-            awaitMessageOrFail(uri2, INBOUND_REFERENCE.getType(), null);
+            awaitMessageOrFail(externalId2, INBOUND_REFERENCE.getType(), null);
+        });
+    }
+
+    @Test
+    public void testInboundReferenceNoMessage() {
+        final var id1 = FedoraId.create("/testInboundReference-" + randomUUID().toString());
+        final var id2 = FedoraId.create("/testInboundReference-" + randomUUID().toString());
+        final var externalId2 = identifierConverter.toExternalId(id2.getFullId());
+
+        doInTx(tx -> {
+            createResourceService.perform(tx.getId(), USER, id1, List.of(), createDefaultModel());
+            tx.commit();
+        });
+
+        doInTx(tx -> {
+            final String sparql = "insert { <> <http://foo.com/prop> <" + id2.getFullId() + "> . } where {}";
+            updatePropertiesService.updateProperties(tx.getId(), USER, id1, sparql);
+            tx.commit();
+            awaitNoMessageOrFail(externalId2, INBOUND_REFERENCE.getType(), null);
         });
     }
 
     @Override
     public void onMessage(final Message message) {
-        try {
-            LOGGER.debug(
-                    "Received JMS message: {} with path: {}, timestamp: {}, event type: {}, properties: {},"
-                            + " and baseURL: {}", message.getJMSMessageID(), getPath(message), getTimestamp(message),
-                            getEventTypes(message), getResourceTypes(message), getBaseURL(message));
-        } catch (final JMSException e) {
-            throw new RuntimeException(e);
-        }
         messages.add(message);
     }
 
@@ -283,40 +306,62 @@ abstract class AbstractJmsIT implements MessageListener {
         connection.close();
     }
 
-    private void awaitMessageOrFail(final String id, final String eventType, final String type) {
+    private void awaitMessageOrFail(final String id, final String eventType, final String resourceType) {
         await().pollInterval(ONE_HUNDRED_MILLISECONDS).until(() -> messages.stream().anyMatch(msg -> {
             try {
-                LOGGER.debug("Received msg: {}", msg);
-                return getPath(msg).equals(id) && getEventTypes(msg).contains(eventType)
-                        && getResourceTypes(msg).contains(nullToEmpty(type));
-            } catch (final JMSException e) {
+                return checkForMatchingMessage(msg, id, eventType, resourceType);
+            } catch (final JMSException | JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
         }));
     }
 
-    private static String getPath(final Message msg) throws JMSException {
-        final String id = msg.getStringProperty(IDENTIFIER_HEADER_NAME);
-        LOGGER.debug("Processing an event with identifier: {}", id);
-        return id;
+    private void awaitNoMessageOrFail(final String id, final String eventType, final String resourceType) {
+        try {
+            await().atMost(new Duration(TIMEOUT, TimeUnit.MILLISECONDS)).until(() -> messages.stream().anyMatch(msg -> {
+                try {
+                    return checkForMatchingMessage(msg, id, eventType, resourceType);
+                } catch (final JMSException | JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+            }));
+            fail("Should not match the message");
+        } catch (final ConditionTimeoutException exc) {
+            // We don't want to match so this is a pass
+        }
     }
 
-    private static String getEventTypes(final Message msg) throws JMSException {
-        final String type = msg.getStringProperty(EVENT_TYPE_HEADER_NAME);
-        LOGGER.debug("Processing an event with type: {}", type);
-        return type;
+    private static boolean checkForMatchingMessage(final Message msg, final String id, final String eventType,
+                                                   final String resourceType)
+            throws JMSException, JsonProcessingException {
+        LOGGER.debug("Received msg: {}", msg);
+        final String msgBody = ((TextMessage)msg).getText();
+        final JsonLDEventMessage eventMsg = objectMapper.readValue(msgBody, JsonLDEventMessage.class);
+        final Model model = decodeModel(eventMsg.object.id, msgBody);
+        final String eventId = eventMsg.id;
+        final String resourceId = eventMsg.object.id;
+        final Resource expectedResource = createResource(id);
+        final boolean resourceTypeComparison;
+        if (resourceType != null) {
+            resourceTypeComparison = model.contains(expectedResource, RDF.type, createResource(resourceType));
+        } else {
+            resourceTypeComparison = true;
+        }
+        return resourceId.equals(id) &&
+                model.contains(createResource(eventId), RDF.type, createResource(eventType)) &&
+                resourceTypeComparison;
     }
 
-    private static Long getTimestamp(final Message msg) throws JMSException {
-        return msg.getLongProperty(TIMESTAMP_HEADER_NAME);
-    }
-
-    private static String getBaseURL(final Message msg) throws JMSException {
-        return msg.getStringProperty(BASE_URL_HEADER_NAME);
-    }
-
-    private static String getResourceTypes(final Message msg) throws JMSException {
-        return msg.getStringProperty(RESOURCE_TYPE_HEADER_NAME);
+    /**
+     * Decode message body into a graph.
+     * @param id the base id of the graph.
+     * @param msgBody the message body
+     * @return the model from the message.
+     */
+    private static Model decodeModel(final String id, final String msgBody) {
+        final Model model = createDefaultModel();
+        model.read(new ByteArrayInputStream(msgBody.getBytes(UTF_8)), id, "JSON-LD");
+        return model;
     }
 
     private void doInTx(final Consumer<Transaction> consumer) {
@@ -336,7 +381,7 @@ abstract class AbstractJmsIT implements MessageListener {
     }
 
     private InputStream stream(final String value) {
-        return new ByteArrayInputStream(value.getBytes(StandardCharsets.UTF_8));
+        return new ByteArrayInputStream(value.getBytes(UTF_8));
     }
 
     private FedoraResource getResource(final FedoraId fedoraId) {

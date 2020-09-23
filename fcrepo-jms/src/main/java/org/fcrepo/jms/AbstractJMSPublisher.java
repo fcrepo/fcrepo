@@ -67,7 +67,7 @@ abstract class AbstractJMSPublisher {
     protected abstract Destination createDestination() throws JMSException;
 
     /**
-     * When an EventBus mesage is received, map it to our JMS
+     * When an EventBus message is received, map it to our JMS
      * message payload and push it onto the queue.
      *
      * @param event the fedora event
@@ -86,7 +86,7 @@ abstract class AbstractJMSPublisher {
     }
 
     /**
-     * Connect to JCR Repostory and JMS queue
+     * Connect to JCR Repository and JMS queue
      *
      * @throws JMSException if JMS Exception occurred
      */
