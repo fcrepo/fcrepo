@@ -55,6 +55,15 @@
     <load-on-startup>1</load-on-startup>
   </servlet>
 
+  <servlet>
+    <servlet-name>prometheus</servlet-name>
+    <servlet-class>org.fcrepo.http.commons.PrometheusMetricsServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>prometheus</servlet-name>
+    <url-pattern>/prometheus</url-pattern>
+  </servlet-mapping>
+
   <servlet-mapping>
 		<servlet-name>jersey-servlet</servlet-name>
 		<url-pattern>/rest/*</url-pattern>
