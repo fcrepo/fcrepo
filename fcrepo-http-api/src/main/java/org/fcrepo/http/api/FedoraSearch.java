@@ -17,6 +17,7 @@
  */
 package org.fcrepo.http.api;
 
+import io.micrometer.core.annotation.Timed;
 import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.search.api.Condition;
@@ -51,7 +52,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @author dbernstein
  * @since 05/06/20
  */
-
+@Timed
 @Scope("request")
 @Path("/fcr:search")
 public class FedoraSearch extends FedoraBaseResource {

@@ -41,6 +41,7 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import io.micrometer.core.annotation.Timed;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TransactionClosedException;
@@ -56,6 +57,7 @@ import org.springframework.context.annotation.Scope;
  * @author gregjan
  * @author mohideen
  */
+@Timed
 @Scope("prototype")
 @Path("/fcr:tx")
 public class Transactions extends FedoraBaseResource {

@@ -38,6 +38,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Link;
 import com.google.common.annotations.VisibleForTesting;
+import io.micrometer.core.annotation.Timed;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.models.Binary;
@@ -52,6 +53,7 @@ import org.springframework.context.annotation.Scope;
  * @author ajs6f
  * @since Jun 12, 2013
  */
+@Timed
 @Scope("request")
 @Path("/{path: .*}/fcr:fixity")
 public class FedoraFixity extends ContentExposingResource {

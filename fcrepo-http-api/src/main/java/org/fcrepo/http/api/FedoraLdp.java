@@ -20,8 +20,7 @@ package org.fcrepo.http.api;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
-import io.micrometer.core.instrument.Metrics;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.annotation.Timed;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.rdf.model.Model;
@@ -123,6 +122,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @since 9/25/14
  */
 
+@Timed
 @Scope("request")
 @Path("/{path: .*}")
 public class FedoraLdp extends ContentExposingResource {
@@ -243,47 +243,42 @@ public class FedoraLdp extends ContentExposingResource {
     public Response getResource(@HeaderParam("Range") final String rangeValue)
             throws IOException, UnsupportedAlgorithmException {
 
-        final var timer = Timer.start();
-        try {
-            final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);
-            if (!isBlank(datetimeHeader) && resource().isOriginalResource()) {
-                return getMemento(datetimeHeader, resource());
+        final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);
+        if (!isBlank(datetimeHeader) && resource().isOriginalResource()) {
+            return getMemento(datetimeHeader, resource());
+        }
+
+        checkCacheControlHeaders(request, servletResponse, resource(), transaction());
+
+        final ImmutableList<MediaType> acceptableMediaTypes = ImmutableList.copyOf(headers
+                .getAcceptableMediaTypes());
+
+        LOGGER.info("GET resource '{}'", externalPath);
+        addResourceHttpHeaders(resource());
+
+        if (resource() instanceof Binary) {
+            final Binary binary = (Binary) resource();
+            if (!acceptableMediaTypes.isEmpty()) {
+                final MediaType mediaType = getBinaryResourceMediaType(resource());
+
+                if (acceptableMediaTypes.stream().noneMatch(t -> t.isCompatible(mediaType))) {
+                    return notAcceptable(VariantListBuilder.newInstance().mediaTypes(mediaType).build()).build();
+                }
             }
 
-            checkCacheControlHeaders(request, servletResponse, resource(), transaction());
+            // Respect the Want-Digest header for fixity check
+            final String wantDigest = headers.getHeaderString(WANT_DIGEST);
+            if (!isNullOrEmpty(wantDigest)) {
+                servletResponse.addHeader(DIGEST, handleWantDigestHeader(binary, wantDigest));
+            }
 
-            final ImmutableList<MediaType> acceptableMediaTypes = ImmutableList.copyOf(headers
-                    .getAcceptableMediaTypes());
-
-            LOGGER.info("GET resource '{}'", externalPath);
-            addResourceHttpHeaders(resource());
-
-            if (resource() instanceof Binary) {
-                final Binary binary = (Binary) resource();
-                if (!acceptableMediaTypes.isEmpty()) {
-                    final MediaType mediaType = getBinaryResourceMediaType(resource());
-
-                    if (acceptableMediaTypes.stream().noneMatch(t -> t.isCompatible(mediaType))) {
-                        return notAcceptable(VariantListBuilder.newInstance().mediaTypes(mediaType).build()).build();
-                    }
-                }
-
-                // Respect the Want-Digest header for fixity check
-                final String wantDigest = headers.getHeaderString(WANT_DIGEST);
-                if (!isNullOrEmpty(wantDigest)) {
-                    servletResponse.addHeader(DIGEST, handleWantDigestHeader(binary, wantDigest));
-                }
-
-                if (binary.isRedirect()) {
-                    return temporaryRedirect(binary.getExternalURI()).build();
-                } else {
-                    return getBinaryContent(rangeValue, binary);
-                }
+            if (binary.isRedirect()) {
+                return temporaryRedirect(binary.getExternalURI()).build();
             } else {
-                return getContent(getChildrenLimit(), resource());
+                return getBinaryContent(rangeValue, binary);
             }
-        } finally {
-            timer.stop(Metrics.timer("fcrepo.http.request", "api", "getResource"));
+        } else {
+            return getContent(getChildrenLimit(), resource());
         }
     }
 
@@ -373,114 +368,109 @@ public class FedoraLdp extends ContentExposingResource {
                    PathNotFoundException {
         LOGGER.info("PUT to create resource with ID: {}", externalPath());
 
-        final var timer = Timer.start();
-        try {
-            hasRestrictedPath(externalPath);
+        hasRestrictedPath(externalPath);
 
-            final var transaction = transaction();
+        final var transaction = transaction();
 
-            final List<String> links = unpackLinks(rawLinks);
+        final List<String> links = unpackLinks(rawLinks);
 
-            if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
-                handleRequestDisallowedOnMemento();
+        if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
+            handleRequestDisallowedOnMemento();
 
-                return status(METHOD_NOT_ALLOWED).build();
+            return status(METHOD_NOT_ALLOWED).build();
+        }
+
+        // If request is an external binary, verify link header before proceeding
+        final ExternalContent extContent = extContentHandlerFactory.createFromLinks(links);
+
+        final String interactionModel = checkInteractionModel(links);
+
+        final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath());
+        final boolean resourceExists = doesResourceExist(transaction, fedoraId);
+
+        if (resourceExists) {
+
+            if (httpConfiguration.putRequiresIfMatch() && StringUtils.isBlank(ifMatch)) {
+                throw new ClientErrorException("An If-Match header is required", 428);
             }
 
-            // If request is an external binary, verify link header before proceeding
-            final ExternalContent extContent = extContentHandlerFactory.createFromLinks(links);
+        // TODO: Check existing resources interaction model and make sure we aren't trying to change it.
+        //final String resInteractionModel = getInteractionModel(resource);
+        //if (StringUtils.isNoneBlank(interactionModel) && StringUtils.isNoneBlank(resInteractionModel)
+        //        && !resInteractionModel.equals(interactionModel)) {
+        //    throw new InteractionModelViolationException("Changing the interaction model " + resInteractionModel
+        //            + " to " + interactionModel + " is not allowed!");
+        //}
+        }
 
-            final String interactionModel = checkInteractionModel(links);
+        // TODO: Refactor to check preconditions
+        //evaluateRequestPreconditions(request, servletResponse, resource, transaction);
 
-            final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath());
-            final boolean resourceExists = doesResourceExist(transaction, fedoraId);
+        final var providedContentType = getSimpleContentType(requestContentType);
+
+        boolean created = false;
+
+        if ((resourceExists && resource() instanceof Binary) ||
+                (!resourceExists && isBinary(interactionModel,
+                        providedContentType,
+                        requestBodyStream != null && providedContentType != null,
+                        extContent != null))) {
+            ensureArchivalGroupHeaderNotPresentForBinaries(links);
+
+            final Collection<URI> checksums = parseDigestHeader(digest);
+            final var binaryType = requestContentType != null ? requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;
+            final var contentType = extContent == null ? binaryType.toString() : extContent.getContentType();
+            final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
+            final Long contentSize;
+            if (contentDisposition == null || contentDisposition.getSize() == -1) {
+                contentSize = null;
+            } else {
+                contentSize = contentDisposition.getSize();
+            }
 
             if (resourceExists) {
-
-                if (httpConfiguration.putRequiresIfMatch() && StringUtils.isBlank(ifMatch)) {
-                    throw new ClientErrorException("An If-Match header is required", 428);
-                }
-
-            // TODO: Check existing resources interaction model and make sure we aren't trying to change it.
-            //final String resInteractionModel = getInteractionModel(resource);
-            //if (StringUtils.isNoneBlank(interactionModel) && StringUtils.isNoneBlank(resInteractionModel)
-            //        && !resInteractionModel.equals(interactionModel)) {
-            //    throw new InteractionModelViolationException("Changing the interaction model " + resInteractionModel
-            //            + " to " + interactionModel + " is not allowed!");
-            //}
-            }
-
-            // TODO: Refactor to check preconditions
-            //evaluateRequestPreconditions(request, servletResponse, resource, transaction);
-
-            final var providedContentType = getSimpleContentType(requestContentType);
-
-            boolean created = false;
-
-            if ((resourceExists && resource() instanceof Binary) ||
-                    (!resourceExists && isBinary(interactionModel,
-                            providedContentType,
-                            requestBodyStream != null && providedContentType != null,
-                            extContent != null))) {
-                ensureArchivalGroupHeaderNotPresentForBinaries(links);
-
-                final Collection<URI> checksums = parseDigestHeader(digest);
-                final var binaryType = requestContentType != null ? requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;
-                final var contentType = extContent == null ? binaryType.toString() : extContent.getContentType();
-                final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
-                final Long contentSize;
-                if (contentDisposition == null || contentDisposition.getSize() == -1) {
-                    contentSize = null;
-                } else {
-                    contentSize = contentDisposition.getSize();
-                }
-
-                if (resourceExists) {
-                    replaceBinariesService.perform(transaction.getId(),
-                            getUserPrincipal(),
-                            fedoraId,
-                            originalFileName,
-                            contentType,
-                            checksums,
-                            requestBodyStream,
-                            contentSize,
-                            extContent);
-                } else {
-                    createResourceService.perform(transaction.getId(),
-                            getUserPrincipal(),
-                            fedoraId,
-                            contentType,
-                            originalFileName,
-                            contentSize,
-                            links,
-                            checksums,
-                            requestBodyStream,
-                            extContent);
-                    created = true;
-                }
+                replaceBinariesService.perform(transaction.getId(),
+                        getUserPrincipal(),
+                        fedoraId,
+                        originalFileName,
+                        contentType,
+                        checksums,
+                        requestBodyStream,
+                        contentSize,
+                        extContent);
             } else {
-                final var contentType = requestContentType != null ? requestContentType : DEFAULT_RDF_CONTENT_TYPE;
-                final Model model = httpRdfService.bodyToInternalModel(fedoraId.getFullId(), requestBodyStream,
-                        contentType, identifierConverter());
-
-                if (resourceExists) {
-                    replacePropertiesService.perform(transaction.getId(),
-                            getUserPrincipal(),
-                            fedoraId,
-                            model);
-                } else {
-                    createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, links, model);
-                    created = true;
-                }
+                createResourceService.perform(transaction.getId(),
+                        getUserPrincipal(),
+                        fedoraId,
+                        contentType,
+                        originalFileName,
+                        contentSize,
+                        links,
+                        checksums,
+                        requestBodyStream,
+                        extContent);
+                created = true;
             }
+        } else {
+            final var contentType = requestContentType != null ? requestContentType : DEFAULT_RDF_CONTENT_TYPE;
+            final Model model = httpRdfService.bodyToInternalModel(fedoraId.getFullId(), requestBodyStream,
+                    contentType, identifierConverter());
 
-            // TODO: How to generate a response.
-            LOGGER.debug("Finished creating resource with path: {}", externalPath());
-            transaction.commitIfShortLived();
-            return createUpdateResponse(getFedoraResource(transaction, fedoraId), created);
-        } finally {
-            timer.stop(Metrics.timer("fcrepo.http.request", "api", "putResource"));
+            if (resourceExists) {
+                replacePropertiesService.perform(transaction.getId(),
+                        getUserPrincipal(),
+                        fedoraId,
+                        model);
+            } else {
+                createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, links, model);
+                created = true;
+            }
         }
+
+        // TODO: How to generate a response.
+        LOGGER.debug("Finished creating resource with path: {}", externalPath());
+        transaction.commitIfShortLived();
+        return createUpdateResponse(getFedoraResource(transaction, fedoraId), created);
     }
 
     /**

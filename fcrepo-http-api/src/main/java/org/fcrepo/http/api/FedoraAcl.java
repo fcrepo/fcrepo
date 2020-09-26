@@ -17,6 +17,7 @@
  */
 package org.fcrepo.http.api;
 
+import io.micrometer.core.annotation.Timed;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
@@ -87,6 +88,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @author peichman
  * @since 4/20/18
  */
+@Timed
 @Scope("request")
 @Path("/{path: (.+/)?}fcr:acl")
 public class FedoraAcl extends ContentExposingResource {
