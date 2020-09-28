@@ -18,10 +18,10 @@
 
   <properties>
     <!-- Use ${project_name} and ${project_organization instead of ${project.artifactId}
-      to avoid incorrect replacements of "fcrepo4" in child modules
+      to avoid incorrect replacements of "fcrepo" in child modules
       (for scm, site-distribution, etc -->
-    <project_name>fcrepo4</project_name>
-    <project_organization>fcrepo4</project_organization>
+    <project_name>fcrepo</project_name>
+    <project_organization>fcrepo</project_organization>
     <!-- Dependency version properties -->
     <activemq.version>5.15.5</activemq.version>
     <commons-codec.version>1.11</commons-codec.version>
@@ -786,12 +786,12 @@
 
   <issueManagement>
     <system>GitHub</system>
-    <url>https://github.com/fcrepo4/fcrepo4/issues</url>
+    <url>https://github.com/fcrepo/fcrepo/issues</url>
   </issueManagement>
 
   <ciManagement>
     <system>Jenkins</system>
-    <url>http://jenkins.fcrepo.org/job/fcrepo4</url>
+    <url>http://jenkins.fcrepo.org/job/fcrepo</url>
   </ciManagement>
 
   <scm>

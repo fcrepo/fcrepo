@@ -11,7 +11,7 @@ the `5.x-maintenance` branch.
 
 ---
 
-[![Build Status](https://travis-ci.com/fcrepo4/fcrepo4.svg?branch=master)](https://travis-ci.com/fcrepo4/fcrepo4)
+[![Build Status](https://travis-ci.com/fcrepo/fcrepo.svg?branch=master)](https://travis-ci.com/fcrepo/fcrepo)
 
 [JavaDocs](http://docs.fcrepo.org/) | 
 [Fedora Wiki](https://wiki.duraspace.org/display/FF) | 
@@ -34,7 +34,7 @@ The Fedora community is supported by the stewardship of the [DuraSpace](http://w
 ## Downloads
 
 The current web-deployable version of Fedora can be downloaded from the [Duraspace website](https://wiki.duraspace.org/display/FF/Downloads)
-or from [Github](https://github.com/fcrepo4/fcrepo4/releases). These artifacts can be deployed directly in a Jetty or Tomcat container
+or from [Github](https://github.com/fcrepo/fcrepo/releases). These artifacts can be deployed directly in a Jetty or Tomcat container
 as described in the guide to [deploying Fedora](https://wiki.duraspace.org/display/FEDORA5x/Deploying+Fedora+-+Complete+Guide).
 
 ## Contributing
@@ -66,8 +66,8 @@ System Requirements
 * Maven 3.6.3
 
 ```bash
-$ git clone https://github.com/fcrepo4/fcrepo4.git
-$ cd fcrepo4
+$ git clone https://github.com/fcrepo/fcrepo.git
+$ cd fcrepo
 $ MAVEN_OPTS="-Xmx1024m -XX:MaxMetaspaceSize=1024m" mvn install
 ```
 
@@ -115,7 +115,7 @@ To set your $JAVA_HOME environment variable:
 export JAVA_HOME=/path/to/java
 ```
 
-If you have problems building fcrepo4 with the above settings, you may need to also pass
+If you have problems building fcrepo with the above settings, you may need to also pass
 options to the JaCoCo code coverage plugin:
 
 ```bash
