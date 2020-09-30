@@ -49,7 +49,8 @@ CREATE TABLE membership_tx_operations (
     start_time datetime,
     end_time datetime,
     tx_id varchar(255) NOT NULL,
-    operation varchar(10) NOT NULL
+    operation varchar(10) NOT NULL,
+    force varchar(10)
 );
 
 -- Create an index to speed searches for records targeting a resource to adding/excluding transaction records

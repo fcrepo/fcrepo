@@ -63,6 +63,7 @@ import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * @author bbpennel
@@ -123,6 +124,8 @@ public class MembershipServiceImplTest {
         });
 
         membershipRescId = mintFedoraId();
+
+        setField(membershipService, "autoVersioningEnabled", Boolean.TRUE);
     }
 
     @After
@@ -643,6 +646,81 @@ public class MembershipServiceImplTest {
 
         assertCommittedMembershipCount(membershipRescId, 0);
         assertHasMembers(null, membershipResc2Id, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
+    }
+
+    @Test
+    public void changeMembershipResource_ForDC_ManualVersioning() throws Exception {
+        setField(membershipService, "autoVersioningEnabled", Boolean.FALSE);
+
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(txId, membershipRescId);
+
+        final var membershipResc2Id = mintFedoraId();
+        mockGetHeaders(populateHeaders(membershipResc2Id, BASIC_CONTAINER));
+        membershipService.resourceCreated(txId, membershipResc2Id);
+
+        final var dcId = createDirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceCreated(txId, dcId);
+
+        final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(membershipRescId, 1);
+        assertCommittedMembershipCount(membershipResc2Id, 0);
+
+        // Change the membership resource for the DC without creating a version
+        mockListVersion(dcId, CREATED_DATE);
+        mockGetTriplesForDC(dcId, CREATED_DATE, membershipResc2Id, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceModified(txId, dcId);
+
+        assertHasMembers(null, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
+        assertHasMembers(txId, membershipResc2Id, RdfLexicon.LDP_MEMBER, member1Id);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(membershipRescId, 0);
+        assertHasMembers(null, membershipResc2Id, RdfLexicon.LDP_MEMBER, member1Id);
+
+        // Change membership property without versioning
+        mockListVersion(dcId, CREATED_DATE);
+        mockGetTriplesForDC(dcId, CREATED_DATE, membershipResc2Id, OTHER_HAS_MEMBER, false);
+        membershipService.resourceModified(txId, dcId);
+
+        assertHasMembers(null, membershipResc2Id, RdfLexicon.LDP_MEMBER, member1Id);
+        assertHasMembers(txId, membershipResc2Id, OTHER_HAS_MEMBER, member1Id);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(membershipRescId, 0);
+        assertHasMembers(null, membershipResc2Id, OTHER_HAS_MEMBER, member1Id);
+
+        // Create version from former head version
+        final var finalChangeTime = Instant.parse("2019-11-13T12:00:00.0Z");
+        mockListVersion(dcId, CREATED_DATE, finalChangeTime);
+        // New head state matches previous head state for the moment
+        mockGetTriplesForDC(dcId, finalChangeTime, membershipResc2Id, OTHER_HAS_MEMBER, false);
+        mockGetHeaders(txId, dcId.asMemento(finalChangeTime), populateHeaders(dcId, rootId,
+                RdfLexicon.DIRECT_CONTAINER, CREATED_DATE, finalChangeTime), rootId);
+
+        // Change memebership resource after having created version
+        mockGetTriplesForDC(dcId, finalChangeTime, membershipRescId, OTHER_HAS_MEMBER, false);
+        membershipService.resourceModified(txId, dcId);
+
+        // Membership resc 2 should still have a member prior to the version creation/last property update
+        assertHasMembers(txId, membershipResc2Id.asMemento(CREATED_DATE), OTHER_HAS_MEMBER,
+                member1Id);
+        assertUncommittedMembershipCount(txId, membershipResc2Id, 0);
+        assertHasMembers(null, membershipResc2Id, OTHER_HAS_MEMBER, member1Id);
+        assertHasMembers(txId, membershipRescId, OTHER_HAS_MEMBER, member1Id);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(membershipResc2Id, 0);
+        assertHasMembers(null, membershipResc2Id.asMemento(CREATED_DATE), OTHER_HAS_MEMBER,
+                member1Id);
+        assertCommittedMembershipCount(membershipRescId.asMemento(CREATED_DATE), 0);
+        assertHasMembers(null, membershipRescId, OTHER_HAS_MEMBER, member1Id);
     }
 
     @Test

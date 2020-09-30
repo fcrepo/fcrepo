@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -68,6 +69,9 @@ public class MembershipServiceImpl implements MembershipService {
     @Inject
     private ResourceFactory resourceFactory;
 
+    @Value("${fcrepo.autoversioning.enabled:true}")
+    private boolean autoVersioningEnabled;
+
     @Override
     public void resourceCreated(final String txId, final FedoraId fedoraId) {
         final var fedoraResc = getFedoraResource(txId, fedoraId);
@@ -93,6 +97,14 @@ public class MembershipServiceImpl implements MembershipService {
         final var fedoraResc = getFedoraResource(txId, fedoraId);
 
         if (isDirectContainer(fedoraResc)) {
+            // If using manual versioning all membership history could change for this source
+            if (!autoVersioningEnabled) {
+                indexManager.deleteMembershipForSource(txId, fedoraId);
+                populateMembershipHistory(txId, fedoraId);
+                return;
+            }
+
+            // For autoversioning, perform
             final var dcRdfResc = getRdfResource(fedoraResc);
 
             log.debug("Modified DirectContainer {}, recomputing generated membership relations", fedoraId);
@@ -100,7 +112,7 @@ public class MembershipServiceImpl implements MembershipService {
             final var dcLastModified = fedoraResc.getLastModifiedDate();
 
             // Delete/end existing membership from this container
-            indexManager.deleteMembershipForSource(txId, fedoraResc.getFedoraId(), dcLastModified);
+            indexManager.endMembershipForSource(txId, fedoraResc.getFedoraId(), dcLastModified);
 
             // Add updated membership properties for all non-tombstone children
             fedoraResc.getChildren()
@@ -209,7 +221,7 @@ public class MembershipServiceImpl implements MembershipService {
         }
 
         if (isDirectContainer(fedoraResc)) {
-            indexManager.deleteMembershipForSource(txId, fedoraId, fedoraResc.getLastModifiedDate());
+            indexManager.endMembershipForSource(txId, fedoraId, fedoraResc.getLastModifiedDate());
         }
 
         // delete child of DirectContainer, clear from tx and end existing
@@ -218,7 +230,7 @@ public class MembershipServiceImpl implements MembershipService {
         if (isDirectContainer(parentResc)) {
             final var parentRdfResc = getRdfResource(parentResc);
             final var deletedMembership = generateDirectMembership(txId, parentRdfResc, fedoraResc);
-            indexManager.deleteMembership(txId, parentResc.getFedoraId(), deletedMembership,
+            indexManager.endMembership(txId, parentResc.getFedoraId(), deletedMembership,
                     fedoraResc.getLastModifiedDate());
 
         }
