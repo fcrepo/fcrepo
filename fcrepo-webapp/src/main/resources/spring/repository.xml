@@ -4,6 +4,6 @@
     xsi:schemaLocation="
     http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-    <!-- Master context for fcrepo4. -->
+    <!-- Master context for fcrepo. -->
     <import resource="${fcrepo.spring.configuration:classpath:/spring/fcrepo-config.xml}"/>
 </beans>

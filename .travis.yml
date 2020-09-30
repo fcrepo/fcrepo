@@ -115,7 +115,7 @@ deploy:
    script: .travis/deploy.sh
    skip_cleanup: true
    on:
-     repo: fcrepo4/fcrepo4
+     repo: fcrepo/fcrepo
      branch: main 
      condition: $DEPLOY = true
 

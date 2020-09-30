@@ -17,4 +17,4 @@ A description of what steps someone could take to:
 * Good testing instructions help get your PR completed faster.
 
 # Interested parties
-Tag (@ mention) interested parties or, if unsure, @fcrepo4/committers
+Tag (@ mention) interested parties or, if unsure, @fcrepo/committers

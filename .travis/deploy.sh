@@ -5,8 +5,8 @@ else
     echo "not on a tag -> deploying to dockerhub and sonatype..."
     FCREPO_VERSION=$(./mvnw org.apache.maven.plugins:maven-help-plugin:3.1.0:evaluate -Dexpression=project.version -q -DforceStdout)
     
-    echo "clone fcrepo4-labs/fcrepo-docker repository"
-    git clone https://github.com/fcrepo4-labs/fcrepo-docker.git
+    echo "clone fcrepo-exts/fcrepo-docker repository"
+    git clone https://github.com/fcrepo-exts/fcrepo-docker.git
     echo "building docker container"
     cd fcrepo-docker
     ./build.sh ../fcrepo-webapp/target/fcrepo-webapp-${FCREPO_VERSION}.war

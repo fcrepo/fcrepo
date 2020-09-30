@@ -2,7 +2,7 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/DECORATION/1.6.0 
     http://maven.apache.org/xsd/decoration-1.6.0.xsd"
-    name="fcrepo4">
+    name="fcrepo">
 
   <skin>
     <!-- see http://maven.apache.org/skins/maven-fluido-skin/ -->
@@ -14,8 +14,8 @@
   <body>
     <links>
       <item name="Fedora" href="http://fcrepo.org/" />
-      <item name="Fedora on GitHub" href="http://github.com/fcrepo4/" />
-      <item name="Developer Documentation" href="http://fcrepo4.github.com/fcrepo4/" />
+      <item name="Fedora on GitHub" href="http://github.com/fcrepo/" />
+      <item name="Developer Documentation" href="http://fcrepo.github.com/fcrepo/" />
     </links>
 
     <breadcrumbs>

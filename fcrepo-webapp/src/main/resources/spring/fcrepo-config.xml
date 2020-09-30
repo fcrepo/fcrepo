@@ -11,7 +11,7 @@
     http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd
     http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
-    <!-- Master context for fcrepo4. -->
+    <!-- Master context for fcrepo. -->
 
     <context:property-placeholder/>
     <context:annotation-config/>
