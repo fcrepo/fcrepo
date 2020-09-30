@@ -3,7 +3,6 @@
 
 -- Non-transaction state of membership properties.
 CREATE TABLE IF NOT EXISTS membership (
-    id integer UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     subject_id varchar(503) NOT NULL,
     property varchar(503) NOT NULL,
     object_id varchar(503) NOT NULL,
@@ -28,7 +27,6 @@ CREATE INDEX IF NOT EXISTS membership_idx4
 
 -- Holds operations to add or delete records from the REFERENCE table.
 CREATE TABLE IF NOT EXISTS membership_tx_operations (
-    id integer UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     subject_id varchar(503) NOT NULL,
     property varchar(503) NOT NULL,
     object_id varchar(503) NOT NULL,

@@ -2,7 +2,6 @@
 
 -- Non-transaction state of membership properties.
 CREATE TABLE membership (
-    id integer UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     subject_id varchar(503) NOT NULL,
     property varchar(503) NOT NULL,
     object_id varchar(503) NOT NULL,
@@ -30,7 +29,7 @@ EXECUTE stmt;
 SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
     WHERE table_name = 'membership' AND index_name = 'membership_idx3' AND table_schema = database());
 SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
-    'CREATE INDEX membership_idx3 ON membership (source_id, subject_id, property, object_id)');
+    'CREATE INDEX membership_idx3 ON membership (subject_id, property, object_id)');
 PREPARE stmt FROM @sqlstmt;
 EXECUTE stmt;
 
@@ -43,7 +42,6 @@ EXECUTE stmt;
 
 -- Holds operations to add or delete records from the REFERENCE table.
 CREATE TABLE membership_tx_operations (
-    id integer UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     subject_id varchar(503) NOT NULL,
     property varchar(503) NOT NULL,
     object_id varchar(503) NOT NULL,
@@ -74,7 +72,7 @@ EXECUTE stmt;
 SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
     WHERE table_name = 'membership_tx_operations' AND index_name = 'membership_tx_operations_idx3' AND table_schema = database());
 SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
-    'CREATE INDEX membership_tx_operations_idx3 ON membership_tx_operations (source_id, subject_id, property, object_id)');
+    'CREATE INDEX membership_tx_operations_idx3 ON membership_tx_operations (subject_id, property, object_id)');
 PREPARE stmt FROM @sqlstmt;
 EXECUTE stmt;
 

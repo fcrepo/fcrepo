@@ -204,17 +204,17 @@ public class MembershipIndexManager {
                 " OR object_id = :targetId)";
 
     private static final String COMMIT_DELETES =
-            "DELETE from membership m" +
+            "DELETE from membership" +
             " WHERE EXISTS (" +
                 " SELECT TRUE" +
                 " FROM membership_tx_operations mto" +
                 " WHERE mto.tx_id = :txId" +
                     " AND mto.operation = :deleteOp" +
                     " AND mto.force_flag = :forceFlag" +
-                    " AND m.source_id = mto.source_id" +
-                    " AND m.subject_id = mto.subject_id" +
-                    " AND m.property = mto.property" +
-                    " AND m.object_id = mto.object_id" +
+                    " AND membership.source_id = mto.source_id" +
+                    " AND membership.subject_id = mto.subject_id" +
+                    " AND membership.property = mto.property" +
+                    " AND membership.object_id = mto.object_id" +
                 " )";
 
 
