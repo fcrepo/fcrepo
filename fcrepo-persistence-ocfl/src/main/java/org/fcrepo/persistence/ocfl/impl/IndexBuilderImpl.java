@@ -216,6 +216,11 @@ public class IndexBuilderImpl implements IndexBuilder {
         });
     }
 
+    /**
+     * Index all membership properties by querying for Direct containers, and then
+     * trying population of the membership index for each one
+     * @param txId
+     */
     private void indexMembership(final String txId) {
         final var fields = List.of(Condition.Field.FEDORA_ID);
         final var conditions = List.of(Condition.fromEnums(Field.RDF_TYPE, Operator.EQ,
@@ -236,6 +241,7 @@ public class IndexBuilderImpl implements IndexBuilder {
                     .map(entry -> FedoraId.create((String) entry.get(Condition.Field.FEDORA_ID.toString())))
                     .forEach(containerId -> membershipService.populateMembershipHistory(txId, containerId));
 
+                // Results are paged, so step through pages until we reach the last one
                 offset += membershipPageSize;
             } while (numResults == membershipPageSize);
 

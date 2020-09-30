@@ -45,7 +45,7 @@ public interface MembershipService {
     void resourceCreated(final String txId, final FedoraId fedoraId);
 
     /**
-     * Update membership properties based on the creation of the specified resource
+     * Update membership properties based on the modification of the specified resource
      *
      * @param txId transaction id
      * @param fedoraId ID of the object modified

@@ -569,7 +569,7 @@ public class MembershipIndexManager {
     }
 
     /**
-     * Log all membership entries, for debugging usage only
+     * Log all membership operations, for debugging usage only
      */
     public void logOperations() {
         log.info("source_id, subject_id, property, object_id, start_time, end_time, tx_id, operation, force");
