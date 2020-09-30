@@ -3,12 +3,13 @@
 
 -- Non-transaction state of membership properties.
 CREATE TABLE IF NOT EXISTS membership (
+    id integer UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     subject_id varchar(503) NOT NULL,
     property varchar(503) NOT NULL,
     object_id varchar(503) NOT NULL,
     source_id varchar(503) NOT NULL,
-    start_time datetime,
-    end_time datetime
+    start_time timestamp,
+    end_time timestamp
 );
 
 -- Create an index to speed searches for a resource.
@@ -27,15 +28,16 @@ CREATE INDEX IF NOT EXISTS membership_idx4
 
 -- Holds operations to add or delete records from the REFERENCE table.
 CREATE TABLE IF NOT EXISTS membership_tx_operations (
+    id integer UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     subject_id varchar(503) NOT NULL,
     property varchar(503) NOT NULL,
     object_id varchar(503) NOT NULL,
     source_id varchar(503) NOT NULL,
-    start_time datetime,
-    end_time datetime,
+    start_time timestamp,
+    end_time timestamp,
     tx_id varchar(255) NOT NULL,
     operation varchar(10) NOT NULL,
-    force varchar(10)
+    force_flag varchar(10)
 );
 
 -- Create an index to speed searches for records targeting a resource to adding/excluding transaction records

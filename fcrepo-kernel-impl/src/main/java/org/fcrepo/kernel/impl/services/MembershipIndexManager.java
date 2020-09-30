@@ -185,7 +185,7 @@ public class MembershipIndexManager {
 
     private static final String DELETE_EXISTING_FOR_SOURCE =
             "INSERT INTO membership_tx_operations" +
-            " (subject_id, property, object_id, source_id, start_time, end_time, tx_id, operation, force)" +
+            " (subject_id, property, object_id, source_id, start_time, end_time, tx_id, operation, force_flag)" +
             " SELECT subject_id, property, object_id, source_id, start_time, end_time, :txId, :deleteOp, :forceFlag" +
             " FROM membership m" +
             " WHERE m.source_id = :sourceId";
@@ -210,7 +210,7 @@ public class MembershipIndexManager {
                 " FROM membership_tx_operations mto" +
                 " WHERE mto.tx_id = :txId" +
                     " AND mto.operation = :deleteOp" +
-                    " AND mto.force = :forceFlag" +
+                    " AND mto.force_flag = :forceFlag" +
                     " AND m.source_id = mto.source_id" +
                     " AND m.subject_id = mto.subject_id" +
                     " AND m.property = mto.property" +
@@ -572,7 +572,7 @@ public class MembershipIndexManager {
      * Log all membership operations, for debugging usage only
      */
     public void logOperations() {
-        log.info("source_id, subject_id, property, object_id, start_time, end_time, tx_id, operation, force");
+        log.info("source_id, subject_id, property, object_id, start_time, end_time, tx_id, operation, force_flag");
         jdbcTemplate.query(SELECT_ALL_OPERATIONS, new RowCallbackHandler() {
             @Override
             public void processRow(final ResultSet rs) throws SQLException {
