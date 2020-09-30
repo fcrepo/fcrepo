@@ -19,6 +19,8 @@ package org.fcrepo.kernel.impl.services;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
@@ -36,6 +38,7 @@ import org.fcrepo.common.db.DbPlatform;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.slf4j.Logger;
 import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.init.DatabasePopulatorUtils;
@@ -53,10 +56,12 @@ import com.google.common.base.Preconditions;
 public class MembershipIndexManager {
     private static final Logger log = getLogger(MembershipIndexManager.class);
 
-    private static final Timestamp NO_END_TIMESTAMP = Timestamp.from(Instant.parse("9999-12-31T00:00:00.000Z"));
+    private static final Timestamp NO_END_TIMESTAMP = Timestamp.from(MembershipServiceImpl.NO_END_INSTANT);
 
     private static final String ADD_OPERATION = "add";
     private static final String DELETE_OPERATION = "delete";
+
+    private static final String SELECT_ALL_MEMBERSHIP = "SELECT * FROM membership";
 
     private static final String SELECT_MEMBERSHIP =
             "SELECT property, object_id" +
@@ -131,6 +136,15 @@ public class MembershipIndexManager {
                 " AND m.subject_id = :subjectId" +
                 " AND m.property = :property" +
                 " AND m.object_id = :objectId";
+
+    private static final String END_MEMBERSHIP_IN_TX =
+            "UPDATE membership_tx_operations" +
+            " SET end_time = :endTime" +
+            " WHERE source_id = :sourceId" +
+                " AND end_time = :noEndTime" +
+                " AND subject_id = :subjectId" +
+                " AND property = :property" +
+                " AND object_id = :objectId";
 
     private static final String CLEAR_ENTRY_IN_TX =
             "DELETE FROM membership_tx_operations" +
@@ -290,6 +304,19 @@ public class MembershipIndexManager {
         }
     }
 
+    public void endMembershipInTx(final String txId,  final FedoraId sourceId, final Triple membership,
+            final Instant endTime) {
+        final Map<String, Object> parameterSource = Map.of(
+                "txId", txId,
+                "sourceId", sourceId.getFullId(),
+                "subjectId", membership.getSubject().getURI(),
+                "property", membership.getPredicate().getURI(),
+                "objectId", membership.getObject().getURI(),
+                "endTime", Timestamp.from(endTime),
+                "noEndTime", NO_END_TIMESTAMP);
+        jdbcTemplate.update(END_MEMBERSHIP_IN_TX, parameterSource);
+    }
+
     /**
      * Delete all membership properties resulting from the specified source container
      * @param txId transaction id
@@ -330,7 +357,8 @@ public class MembershipIndexManager {
     }
 
     /**
-     * Update index with a newly added membership property
+     * Add new membership property to the index, clearing any delete
+     * operations for the property if necessary.
      * @param txId transaction id
      * @param sourceId ID of the direct/indirect container which produced the membership
      * @param membership membership triple
@@ -350,13 +378,28 @@ public class MembershipIndexManager {
         jdbcTemplate.update(CLEAR_ENTRY_IN_TX, parametersDelete);
 
         // Add the new membership operation
+        addMembership(txId, sourceId, membership, startTime, null);
+    }
+
+    /**
+     * Add new membership property to the index
+     * @param txId transaction id
+     * @param sourceId ID of the direct/indirect container which produced the membership
+     * @param membership membership triple
+     * @param startTime time the membership triple was added
+     * @param endTime time the membership triple ends, or never if not provided
+     */
+    public void addMembership(final String txId, final FedoraId sourceId, final Triple membership,
+            final Instant startTime, final Instant endTime) {
+        final var endTimestamp = endTime == null ? NO_END_TIMESTAMP : Timestamp.from(endTime);
+        // Add the new membership operation
         final Map<String, Object> parameterSource = Map.of(
                 "subjectId", membership.getSubject().getURI(),
                 "property", membership.getPredicate().getURI(),
                 "targetId", membership.getObject().getURI(),
                 "sourceId", sourceId.getFullId(),
                 "startTime", Timestamp.from(startTime),
-                "endTime", NO_END_TIMESTAMP,
+                "endTime", endTimestamp,
                 "txId", txId,
                 "operation", ADD_OPERATION);
 
@@ -447,6 +490,21 @@ public class MembershipIndexManager {
     public void clearIndex() {
         jdbcTemplate.update(TRUNCATE_MEMBERSHIP, Map.of());
         jdbcTemplate.update(TRUNCATE_MEMBERSHIP_TX, Map.of());
+    }
+
+    /**
+     * Log all membership entries, for debugging usage only
+     */
+    public void logMembership() {
+        log.info("source_id, subject_id, property, object_id, start_time, end_time");
+        jdbcTemplate.query(SELECT_ALL_MEMBERSHIP, new RowCallbackHandler() {
+            @Override
+            public void processRow(final ResultSet rs) throws SQLException {
+                log.info("{}, {}, {}, {}, {}, {}", rs.getString("source_id"), rs.getString("subject_id"),
+                        rs.getString("property"), rs.getString("object_id"), rs.getDate("start_time"),
+                        rs.getDate("end_time"));
+            }
+        });
     }
 
     /**

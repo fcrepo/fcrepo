@@ -61,6 +61,14 @@ public interface MembershipService {
     void resourceDeleted(final String txId, final FedoraId fedoraId);
 
     /**
+     * Regenerate the membership history for specified Direct or Indirect container.
+     *
+     * @param txId transaction id
+     * @param containerId ID of the container
+     */
+    void populateMembershipHistory(final String txId, final FedoraId containerId);
+
+    /**
      * Commit any pending membership changes.
      * @param txId the transaction id.
      */
