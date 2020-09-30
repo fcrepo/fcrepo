@@ -19,6 +19,10 @@
 package org.fcrepo.http.api.services;
 
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.vocabulary.RDF.Init.type;
+import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
+import static org.fcrepo.kernel.api.RdfLexicon.restrictedType;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -45,9 +49,11 @@ import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
+import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.api.exception.UnsupportedMediaTypeException;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.slf4j.Logger;
@@ -64,7 +70,6 @@ import org.springframework.stereotype.Component;
 public class HttpRdfService {
 
     private static final Logger log = getLogger(HttpRdfService.class);
-
 
     /**
      * Convert internal IDs to external URIs
@@ -117,6 +122,7 @@ public class HttpRdfService {
 
         while (stmtIterator.hasNext()) {
             final Statement stmt = stmtIterator.nextStatement();
+            checkForDisallowedRdf(stmt);
             if (stmt.getSubject().isURIResource()) {
                 final String originalSubj = stmt.getSubject().getURI();
                 final String subj = idTranslator.inExternalDomain(originalSubj) ?
@@ -231,4 +237,34 @@ public class HttpRdfService {
         }
     }
 
+    /**
+     * Checks if the RDF contains any disallowed statements.
+     * @param statement a statement from the incoming RDF.
+     */
+    private static void checkForDisallowedRdf(final Statement statement) {
+        checkTripleForDisallowed(statement.asTriple());
+    }
+
+    /**
+     * Several tests for invalid or disallowed RDF statements.
+     * @param triple the triple to check.
+     */
+    public static void checkTripleForDisallowed(final Triple triple) {
+        if (triple.getPredicate().equals(type().asNode()) && !triple.getObject().isURI()) {
+            // The object of a rdf:type triple is not a URI.
+            final var newType = triple.getObject().toString();
+            throw new MalformedRdfException(
+                    String.format("Invalid rdf:type: %s", newType));
+        } else if (restrictedType.test(triple)) {
+            // The object of a rdf:type triple has a restricted namespace.
+            final var newType = triple.getObject().toString();
+            throw new InteractionModelViolationException(
+                    String.format("Changing this resource's interaction model to %s is not allowed", newType));
+        } else if (isManagedPredicate.test(createProperty(triple.getPredicate().getURI()))) {
+            // The predicate is server managed.
+            throw new ServerManagedPropertyException(
+                    String.format("The server managed predicate (%s) cannot be modified by the client.",
+                            triple.getPredicate().toString()));
+        }
+    }
 }

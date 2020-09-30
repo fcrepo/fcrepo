@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.impl.services;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.times;
@@ -144,7 +145,8 @@ public class PurgeResourceServiceImplTest {
         when(childContainer.getAcl()).thenReturn(null);
 
         when(resourceFactory.getResource(tx, CHILD_RESOURCE_ID)).thenReturn(childContainer);
-        containmentIndex.addContainedBy(tx.getId(), container.getFedoraId(), childContainer.getFedoraId());
+        containmentIndex.addContainedBy(tx.getId(), container.getFedoraId(), childContainer.getFedoraId(),
+                BASIC_CONTAINER.toString());
         containmentIndex.commitTransaction(tx.getId());
         containmentIndex.removeContainedBy(tx.getId(), container.getFedoraId(), childContainer.getFedoraId());
 

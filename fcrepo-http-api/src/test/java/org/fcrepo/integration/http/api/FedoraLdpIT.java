@@ -2659,7 +2659,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPutToChangeNonRdfSourceToRdfSource() throws IOException {
         final String pid = getRandomUniqueId();
 
@@ -2673,7 +2672,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPutChangeBinaryTypeNotAllowed() throws IOException {
         final HttpPost postMethod = new HttpPost(serverAddress);
         postMethod.setEntity(new StringEntity("TestString."));
@@ -2702,7 +2700,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPutChangeBasicContainerToParent() throws Exception {
         final String pid = getRandomUniqueId();
         final String location = serverAddress + pid;
@@ -2726,7 +2723,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPutToChangeInteractionModelWithRdf() throws IOException {
         final String pid = getRandomUniqueId();
         final String resource = serverAddress + pid;
@@ -2787,7 +2783,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testChangeInteractionModelWithPut() throws IOException {
         final String pid = getRandomUniqueId();
         final String resource = serverAddress + pid;
@@ -3107,13 +3102,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
-    public void testLinkToNonExistent() throws IOException {
+    public void testNoReferentialIntegrity() throws IOException {
         final HttpPatch patch = new HttpPatch(getLocation(postObjMethod()));
         patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         patch.setEntity(new StringEntity("INSERT { " +
                 "<> <http://some-vocabulary#isMemberOfCollection> <" + serverAddress + "non-existant> } WHERE {}"));
-        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patch));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
     }
 
     @Test
@@ -3163,7 +3157,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testUpdateObjectGraphWithProblems() throws IOException {
         final String subjectURI = getLocation(postObjMethod());
         final Link ex = fromUri(URI.create(serverAddress + "static/constraints/ServerManagedPropertyException.rdf"))
@@ -3180,7 +3173,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPutResourceBadRdf() throws IOException {
         final HttpPut httpPut = new HttpPut(serverAddress + getRandomUniqueId());
         httpPut.setHeader(CONTENT_TYPE, "text/turtle");
@@ -3204,13 +3196,16 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(CREATED.getStatusCode(), getStatus(new HttpPut(serverAddress + getRandomUniqueId())));
     }
 
+    /*
+     * TODO: This was originally expecting a 415 Unsupported Media Type, but because we assume text/turtle now it
+     *  returns a 400 Bad Request.
+     */
     @Test
-@Ignore
     public void testUpdateObjectWithoutContentType() throws IOException {
         final HttpPut httpPut = new HttpPut(getLocation(postObjMethod()));
         // use a bytestream-based entity to avoid settin a content type
         httpPut.setEntity(new ByteArrayEntity("bogus content".getBytes(UTF_8)));
-        assertEquals(UNSUPPORTED_MEDIA_TYPE.getStatusCode(), getStatus(httpPut));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(httpPut));
     }
 
     @Test
@@ -3242,11 +3237,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
-    /* https://jira.duraspace.org/browse/FCREPO-2520: create binary with fine mime type then
-     * attempt to change the mime type to something syntactically invalid. Ensure one can still retrieve it.
-     */
     @Test
-@Ignore
     public void testBinarySetBadMimeType() throws IOException {
         final String subjectURI = serverAddress + getRandomUniqueId();
         final HttpPut createMethod = new HttpPut(subjectURI);
@@ -3263,7 +3254,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 "INSERT { <" + subjectURI + "> ebucore:hasMimeType \"-- invalid syntax! --\" } WHERE {}")
         );
 
-        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patch));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
 
         // make sure it's still retrievable
         final HttpGet getMethod = new HttpGet(subjectURI);
@@ -3306,7 +3297,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testRoundTripReplaceGraphForDatastreamDescription() throws IOException {
         final String id = getRandomUniqueId();
         final String subjectURI = serverAddress + id + "/ds1";
@@ -3314,6 +3304,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpGet getObjMethod = new HttpGet(subjectURI + "/" + FCR_METADATA);
         getObjMethod.addHeader(ACCEPT, "text/turtle");
+        getObjMethod.addHeader("Prefer", "return=representation; omit=\"" + PREFER_SERVER_MANAGED + "\"");
         final Model model = createDefaultModel();
         try (final CloseableHttpResponse getResponse = execute(getObjMethod)) {
             final String graph = EntityUtils.toString(getResponse.getEntity());
@@ -3523,7 +3514,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPostCreateDate() throws IOException {
         final HttpPost httpPost = postObjMethod("/");
         httpPost.addHeader("Slug", getRandomUniqueId());
@@ -3720,7 +3710,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testWithHashUris() throws IOException {
         final HttpPost method = postObjMethod();
         method.addHeader(CONTENT_TYPE, "text/turtle");

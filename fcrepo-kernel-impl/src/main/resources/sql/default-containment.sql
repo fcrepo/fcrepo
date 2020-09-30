@@ -5,6 +5,7 @@
 CREATE TABLE IF NOT EXISTS resources (
     fedora_id varchar(503) NOT NULL PRIMARY KEY,
     parent varchar(503) NOT NULL,
+    interaction_model varchar(200) NULL,
     is_deleted boolean NOT NULL DEFAULT(FALSE)
 );
 
@@ -16,6 +17,7 @@ CREATE INDEX IF NOT EXISTS resources_idx
 CREATE TABLE IF NOT EXISTS transaction_operations (
     fedora_id varchar(503) NOT NULL,
     parent varchar(503) NOT NULL,
+    interaction_model varchar(200) NULL,
     transaction_id varchar(255) NOT NULL,
     operation varchar(10) NOT NULL
 );

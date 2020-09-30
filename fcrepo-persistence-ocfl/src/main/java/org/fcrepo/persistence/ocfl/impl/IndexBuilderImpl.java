@@ -201,7 +201,7 @@ public class IndexBuilderImpl implements IndexBuilder {
                     }
                 }
 
-                this.containmentIndex.addContainedBy(txId, parentId, fedoraId);
+                this.containmentIndex.addContainedBy(txId, parentId, fedoraId, headers.getInteractionModel());
                 headersList.add(headers.asKernelHeaders());
             }
         });

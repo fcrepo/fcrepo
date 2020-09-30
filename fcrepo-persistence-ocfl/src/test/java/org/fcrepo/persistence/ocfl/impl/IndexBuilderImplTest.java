@@ -163,8 +163,10 @@ public class IndexBuilderImplTest {
         assertHasOcflId("resource1", resource1);
         assertHasOcflId("resource1", resource2);
 
-        verify(containmentIndex).addContainedBy(anyString(), eq(FedoraId.getRepositoryRootId()), eq(resource1));
-        verify(containmentIndex).addContainedBy(anyString(), eq(resource1), eq(resource2));
+        verify(containmentIndex).addContainedBy(anyString(), eq(FedoraId.getRepositoryRootId()), eq(resource1),
+                eq(BASIC_CONTAINER.toString()));
+        verify(containmentIndex).addContainedBy(anyString(), eq(resource1), eq(resource2),
+                eq(NON_RDF_SOURCE.toString()));
         verify(containmentIndex).commitTransaction(anyString());
         verify(searchIndex, times(2)).addUpdateIndex(isA(String.class), isA(ResourceHeaders.class));
     }
@@ -191,8 +193,10 @@ public class IndexBuilderImplTest {
         assertHasOcflId("resource1", resource1);
         assertHasOcflId("resource1/resource2", resource2);
 
-        verify(containmentIndex).addContainedBy(anyString(), eq(FedoraId.getRepositoryRootId()), eq(resource1));
-        verify(containmentIndex).addContainedBy(anyString(), eq(resource1), eq(resource2));
+        verify(containmentIndex).addContainedBy(anyString(), eq(FedoraId.getRepositoryRootId()), eq(resource1),
+                eq(NON_RDF_SOURCE.toString()));
+        verify(containmentIndex).addContainedBy(anyString(), eq(resource1), eq(resource2),
+                eq(NON_RDF_SOURCE.toString()));
         verify(containmentIndex).commitTransaction(anyString());
         verify(searchIndex, times(2)).addUpdateIndex(isA(String.class), isA(ResourceHeaders.class));
     }
@@ -226,8 +230,10 @@ public class IndexBuilderImplTest {
         assertHasOcflId("resource1", resource1);
         assertHasOcflId("resource1", resource2);
 
-        verify(containmentIndex).addContainedBy(anyString(), eq(FedoraId.getRepositoryRootId()), eq(resource1));
-        verify(containmentIndex, never()).addContainedBy(anyString(), eq(resource1), eq(resource2));
+        verify(containmentIndex).addContainedBy(anyString(), eq(FedoraId.getRepositoryRootId()), eq(resource1),
+                eq(BASIC_CONTAINER.toString()));
+        verify(containmentIndex, never()).addContainedBy(anyString(), eq(resource1), eq(resource2),
+                eq(NON_RDF_SOURCE.toString()));
         verify(containmentIndex).commitTransaction(anyString());
         verify(searchIndex, times(1)).addUpdateIndex(anyString(), isA(ResourceHeaders.class));
     }
@@ -287,7 +293,6 @@ public class IndexBuilderImplTest {
         when(operation.getResourceId()).thenReturn(resourceId);
         when(((CreateResourceOperation) operation).getParentId()).thenReturn(FedoraId.getRepositoryRootId());
         when(operation.getType()).thenReturn(CREATE);
-        when(((CreateResourceOperation) operation).getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         when(((CreateResourceOperation)operation).isArchivalGroup()).thenReturn(isArchivalGroup);
         if (isArchivalGroup) {
             when(((CreateResourceOperation) operation).getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
@@ -312,8 +317,7 @@ public class IndexBuilderImplTest {
         when(operation.getFilename()).thenReturn("test");
         when(((CreateResourceOperation)operation).getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         when(((CreateResourceOperation)operation).getParentId()).thenReturn(parentId);
-        when(((CreateResourceOperation) operation).getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
-        session.persist(operation);
+                session.persist(operation);
     }
 
     private void deleteResource(final PersistentStorageSession session, final FedoraId resourceId)

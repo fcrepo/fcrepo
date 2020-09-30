@@ -230,7 +230,7 @@ public class CreateResourceServiceImplTest {
     public void testParentIsBinaryRdf() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("child");
-        containmentIndex.addContainedBy(TX_ID, rootId, fedoraId);
+        containmentIndex.addContainedBy(TX_ID, rootId, fedoraId, NON_RDF_SOURCE.toString());
         when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         createResourceService.perform(TX_ID, USER_PRINCIPAL, childId, null, model);
@@ -243,7 +243,7 @@ public class CreateResourceServiceImplTest {
     public void testParentIsBinary() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("child");
-        containmentIndex.addContainedBy(TX_ID, rootId, fedoraId);
+        containmentIndex.addContainedBy(TX_ID, rootId, fedoraId, NON_RDF_SOURCE.toString());
         when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         createResourceService.perform(TX_ID, USER_PRINCIPAL, childId, null, FILENAME, CONTENT_SIZE, null,
@@ -258,7 +258,7 @@ public class CreateResourceServiceImplTest {
     public void testParentIsExternal() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("child");
-        containmentIndex.addContainedBy(TX_ID, rootId, fedoraId);
+        containmentIndex.addContainedBy(TX_ID, rootId, fedoraId, NON_RDF_SOURCE.toString());
         when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         createResourceService.perform(TX_ID, USER_PRINCIPAL, childId, null, FILENAME, CONTENT_SIZE, null,
@@ -272,7 +272,7 @@ public class CreateResourceServiceImplTest {
     public void testParentIsRdf() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("child");
-        containmentIndex.addContainedBy(TX_ID, rootId, fedoraId);
+        containmentIndex.addContainedBy(TX_ID, rootId, fedoraId, BASIC_CONTAINER.toString());
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         createResourceService.perform(TX_ID, USER_PRINCIPAL, childId, null, model);
@@ -291,7 +291,7 @@ public class CreateResourceServiceImplTest {
     public void testParentIsRdfBinary() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("child");
-        containmentIndex.addContainedBy(TX_ID, rootId, fedoraId);
+        containmentIndex.addContainedBy(TX_ID, rootId, fedoraId, BASIC_CONTAINER.toString());
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         createResourceService.perform(TX_ID, USER_PRINCIPAL, childId, CONTENT_TYPE,
@@ -318,7 +318,7 @@ public class CreateResourceServiceImplTest {
         final String relaxedUser = "relaxedUser";
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("testSlug");
-        containmentIndex.addContainedBy(TX_ID, rootId, fedoraId);
+        containmentIndex.addContainedBy(TX_ID, rootId, fedoraId, BASIC_CONTAINER.toString());
 
         final var resc = model.getResource(childId.getFullId());
         resc.addLiteral(LAST_MODIFIED_DATE, Date.from(lastModifiedDate));
@@ -362,7 +362,7 @@ public class CreateResourceServiceImplTest {
     public void testWithBinary() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("testSlug");
-        containmentIndex.addContainedBy(TX_ID, fedoraId, childId);
+        containmentIndex.addContainedBy(TX_ID, fedoraId, childId, BASIC_CONTAINER.toString());
         containmentIndex.commitTransaction(transaction.getId());
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(psSession.getHeaders(childId, null)).thenReturn(resourceHeaders);

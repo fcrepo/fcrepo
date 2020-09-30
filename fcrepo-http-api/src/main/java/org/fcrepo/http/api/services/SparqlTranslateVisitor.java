@@ -17,6 +17,7 @@
  */
 package org.fcrepo.http.api.services;
 
+import static org.fcrepo.http.api.services.HttpRdfService.checkTripleForDisallowed;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.lang.reflect.Constructor;
@@ -162,6 +163,7 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
         for (final Quad q : quadsList) {
             final Node subject = translateId(q.getSubject());
             final Node object = translateId(q.getObject());
+            checkTripleForDisallowed(q.asTriple());
             final Quad quad = new Quad(q.getGraph(), subject, q.getPredicate(), object);
             LOGGER.trace("Translated quad is: {}", quad);
             newQuads.add(quad);
@@ -177,6 +179,7 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
     private Triple translateTriple(final Triple triple) {
         final Node subject = translateId(triple.getSubject());
         final Node object = translateId(triple.getObject());
+        checkTripleForDisallowed(triple);
         return Triple.create(subject, triple.getPredicate(), object);
     }
 

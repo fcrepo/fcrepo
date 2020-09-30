@@ -50,7 +50,7 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.UUID;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.times;
@@ -114,11 +114,11 @@ public class DeleteResourceServiceImplTest {
     @InjectMocks
     private DeleteResourceServiceImpl service;
 
-    private static final FedoraId RESOURCE_ID = FedoraId.create(FEDORA_ID_PREFIX + "test-resource");
-    private static final FedoraId CHILD_RESOURCE_ID = FedoraId.create(FEDORA_ID_PREFIX + "test-resource-child");
+    private static final FedoraId RESOURCE_ID = FedoraId.create("test-resource");
+    private static final FedoraId CHILD_RESOURCE_ID = FedoraId.create("test-resource-child");
     private static final FedoraId RESOURCE_DESCRIPTION_ID =
-            FedoraId.create(FEDORA_ID_PREFIX + "test-resource-description");
-    private static final FedoraId RESOURCE_ACL_ID = FedoraId.create(FEDORA_ID_PREFIX + "test-resource-acl");
+            FedoraId.create("test-resource-description");
+    private static final FedoraId RESOURCE_ACL_ID = FedoraId.create("test-resource-acl");
 
     @Before
     public void setup() {
@@ -162,7 +162,8 @@ public class DeleteResourceServiceImplTest {
         when(childContainer.getAcl()).thenReturn(null);
 
         when(resourceFactory.getResource(tx, CHILD_RESOURCE_ID)).thenReturn(childContainer);
-        containmentIndex.addContainedBy(tx.getId(), container.getFedoraId(), childContainer.getFedoraId());
+        containmentIndex.addContainedBy(tx.getId(), container.getFedoraId(), childContainer.getFedoraId(),
+                BASIC_CONTAINER.toString());
 
         when(container.isAcl()).thenReturn(false);
         when(container.getAcl()).thenReturn(null);

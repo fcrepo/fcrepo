@@ -51,6 +51,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_OCTET_STRE
 
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODEL_RESOURCES;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -97,6 +98,7 @@ import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
 import org.fcrepo.kernel.api.exception.GhostNodeException;
+import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
@@ -398,13 +400,12 @@ public class FedoraLdp extends ContentExposingResource {
                 throw new ClientErrorException("An If-Match header is required", 428);
             }
 
-            // TODO: Check existing resources interaction model and make sure we aren't trying to change it.
-            //final String resInteractionModel = getInteractionModel(resource);
-            //if (StringUtils.isNoneBlank(interactionModel) && StringUtils.isNoneBlank(resInteractionModel)
-            //        && !resInteractionModel.equals(interactionModel)) {
-            //    throw new InteractionModelViolationException("Changing the interaction model " + resInteractionModel
-            //            + " to " + interactionModel + " is not allowed!");
-            //}
+            final String resInteractionModel = getInteractionModel(transaction, fedoraId);
+            if (StringUtils.isNoneBlank(interactionModel) && StringUtils.isNoneBlank(resInteractionModel)
+                    && !resInteractionModel.equals(interactionModel)) {
+                throw new InteractionModelViolationException("Changing the interaction model " + resInteractionModel
+                        + " to " + interactionModel + " is not allowed!");
+            }
         }
 
         if (isGhostNode(transaction(), fedoraId)) {
@@ -680,7 +681,7 @@ public class FedoraLdp extends ContentExposingResource {
                              final boolean contentPresent, final boolean contentExternal) {
         final String simpleContentType = contentPresent ? contentType : null;
         final boolean isRdfContent = isRdfContentType(simpleContentType);
-        return "ldp:NonRDFSource".equals(interactionModel) || contentExternal ||
+        return NON_RDF_SOURCE.getURI().equals(interactionModel) || contentExternal ||
                 (contentPresent && interactionModel == null && !isRdfContent);
     }
 
@@ -727,7 +728,7 @@ public class FedoraLdp extends ContentExposingResource {
                     }
                     final Resource type = createResource(linq.getUri().toString());
                     if (INTERACTION_MODEL_RESOURCES.contains(type)) {
-                        return "ldp:" + type.getLocalName();
+                        return type.getURI();
                     } else if (type.equals(VERSIONED_RESOURCE)) {
                         // skip if versioned resource link header
                         // NB: the versioned resource header is used for enabling
