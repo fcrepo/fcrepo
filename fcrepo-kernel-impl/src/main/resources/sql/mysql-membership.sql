@@ -1,7 +1,7 @@
 -- DDL for setting up membership tables in MySQL 8
 
 -- Non-transaction state of membership properties.
-CREATE TABLE membership IF NOT EXISTS (
+CREATE TABLE IF NOT EXISTS membership (
     subject_id varchar(503) NOT NULL,
     property varchar(503) NOT NULL,
     object_id varchar(503) NOT NULL,
@@ -41,7 +41,7 @@ PREPARE stmt FROM @sqlstmt;
 EXECUTE stmt;
 
 -- Holds operations to add or delete records from the REFERENCE table.
-CREATE TABLE membership_tx_operations IF NOT EXISTS (
+CREATE TABLE IF NOT EXISTS membership_tx_operations (
     subject_id varchar(503) NOT NULL,
     property varchar(503) NOT NULL,
     object_id varchar(503) NOT NULL,
