@@ -70,8 +70,6 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     private static final String IS_DELETED_COLUMN = "is_deleted";
 
-    private static final String INTERACTION_MODEL_COLUMN = "interaction_model";
-
     /*
      * Select children of a resource that are not marked as deleted.
      */
@@ -118,9 +116,8 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      * Insert a parent child relationship to the transaction operation table.
      */
     private static final String INSERT_CHILD_IN_TRANSACTION = "INSERT INTO " + TRANSACTION_OPERATIONS_TABLE +
-            " ( " + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + INTERACTION_MODEL_COLUMN + ", " +
-            TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + " ) VALUES (:parent, :child, :ixnModel, :transactionId," +
-            " 'add')";
+            " ( " + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + TRANSACTION_ID_COLUMN + ", " +
+            OPERATION_COLUMN + " ) VALUES (:parent, :child, :transactionId, 'add')";
 
     /*
      * Remove an insert row from the transaction operation table for this parent child relationship.
@@ -188,8 +185,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      * Add to the main table all rows from the transaction operation table marked 'add' for this transaction.
      */
     private static final String COMMIT_ADD_RECORDS = "INSERT INTO " + RESOURCES_TABLE + " ( " + FEDORA_ID_COLUMN + ", "
-            + PARENT_COLUMN + ", " + INTERACTION_MODEL_COLUMN + " ) SELECT " + FEDORA_ID_COLUMN + ", " + PARENT_COLUMN
-            + ", " + INTERACTION_MODEL_COLUMN + " FROM " +
+            + PARENT_COLUMN + " ) SELECT " + FEDORA_ID_COLUMN + ", " + PARENT_COLUMN + " FROM " +
             TRANSACTION_OPERATIONS_TABLE + " WHERE " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
             OPERATION_COLUMN + " = 'add'";
 

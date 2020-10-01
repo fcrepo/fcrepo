@@ -50,7 +50,6 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.UUID;
 
-import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.times;
@@ -162,8 +161,7 @@ public class DeleteResourceServiceImplTest {
         when(childContainer.getAcl()).thenReturn(null);
 
         when(resourceFactory.getResource(tx, CHILD_RESOURCE_ID)).thenReturn(childContainer);
-        containmentIndex.addContainedBy(tx.getId(), container.getFedoraId(), childContainer.getFedoraId(),
-                BASIC_CONTAINER.toString());
+        containmentIndex.addContainedBy(tx.getId(), container.getFedoraId(), childContainer.getFedoraId());
 
         when(container.isAcl()).thenReturn(false);
         when(container.getAcl()).thenReturn(null);

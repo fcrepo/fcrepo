@@ -19,7 +19,6 @@ package org.fcrepo.kernel.impl.services;
 
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
-import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -95,8 +94,7 @@ public class ContainmentTriplesServiceImplTest {
     @Test
     public void testOneChild() {
         final FedoraId child = FedoraId.create(UUID.randomUUID().toString());
-        containmentIndex.addContainedBy(transaction.getId(), parentResource.getFedoraId(), child,
-                BASIC_CONTAINER.toString());
+        containmentIndex.addContainedBy(transaction.getId(), parentResource.getFedoraId(), child);
         assertEquals(1, containmentTriplesService.get(transaction, parentResource).count());
         final Model expectedModel = ModelFactory.createDefaultModel();
         expectedModel.add(createResource(parentResource.getFedoraId().getFullId()), CONTAINS,
@@ -109,10 +107,8 @@ public class ContainmentTriplesServiceImplTest {
     public void testTwoChildren() {
         final FedoraId child1 = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId child2 = FedoraId.create(UUID.randomUUID().toString());
-        containmentIndex.addContainedBy(transaction.getId(), parentResource.getFedoraId(), child1,
-                BASIC_CONTAINER.toString());
-        containmentIndex.addContainedBy(transaction.getId(), parentResource.getFedoraId(), child2,
-                BASIC_CONTAINER.toString());
+        containmentIndex.addContainedBy(transaction.getId(), parentResource.getFedoraId(), child1);
+        containmentIndex.addContainedBy(transaction.getId(), parentResource.getFedoraId(), child2);
         assertEquals(2, containmentTriplesService.get(transaction, parentResource).count());
         final Model expectedModel = ModelFactory.createDefaultModel();
         expectedModel.add(createResource(parentResource.getFedoraId().getFullId()), CONTAINS,
@@ -128,8 +124,7 @@ public class ContainmentTriplesServiceImplTest {
         final Model expectedModel = ModelFactory.createDefaultModel();
         for (var foo = 0; foo < 10; foo += 1) {
             final FedoraId child = FedoraId.create(UUID.randomUUID().toString());
-            containmentIndex.addContainedBy(transaction.getId(), parentResource.getFedoraId(), child,
-                    BASIC_CONTAINER.toString());
+            containmentIndex.addContainedBy(transaction.getId(), parentResource.getFedoraId(), child);
             expectedModel.add(createResource(parentResource.getFedoraId().getFullId()), CONTAINS,
                     createResource(child.getFullId()));
         }
@@ -143,8 +138,7 @@ public class ContainmentTriplesServiceImplTest {
         final FedoraId child = FedoraId.create(UUID.randomUUID().toString());
         final String otherTransaction = UUID.randomUUID().toString();
         when(transaction2.getId()).thenReturn(otherTransaction);
-        containmentIndex.addContainedBy(transaction.getId(), parentResource.getFedoraId(), child,
-                BASIC_CONTAINER.toString());
+        containmentIndex.addContainedBy(transaction.getId(), parentResource.getFedoraId(), child);
         assertEquals(1, containmentTriplesService.get(transaction, parentResource).count());
         final Model expectedModel = ModelFactory.createDefaultModel();
         expectedModel.add(createResource(parentResource.getFedoraId().getFullId()), CONTAINS,

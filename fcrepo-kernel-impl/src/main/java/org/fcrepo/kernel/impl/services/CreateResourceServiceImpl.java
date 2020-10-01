@@ -131,7 +131,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
             pSession.persist(createOp);
             // Populate the description for the new binary
             createDescription(pSession, userPrincipal, fedoraId);
-            addToContainmentIndex(txId, parentId, fedoraId, NON_RDF_SOURCE.toString());
+            addToContainmentIndex(txId, parentId, fedoraId);
             membershipService.resourceCreated(txId, fedoraId);
             recordEvent(txId, fedoraId, createOp);
         } catch (final PersistentStorageException exc) {
@@ -182,7 +182,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         try {
             pSession.persist(createOp);
             updateReferences(txId, fedoraId, userPrincipal, model);
-            addToContainmentIndex(txId, parentId, fedoraId, interactionModel);
+            addToContainmentIndex(txId, parentId, fedoraId);
             membershipService.resourceCreated(txId, fedoraId);
             recordEvent(txId, fedoraId, createOp);
         } catch (final PersistentStorageException exc) {
@@ -253,10 +253,8 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
      * @param txId The transaction ID or null if no transaction.
      * @param parentId The parent ID.
      * @param id The child ID.
-     * @param ixnModel The child's interaction model.
      */
-    private void addToContainmentIndex(final String txId, final FedoraId parentId, final FedoraId id,
-                                       final String ixnModel) {
-        containmentIndex.addContainedBy(txId, parentId, id, ixnModel);
+    private void addToContainmentIndex(final String txId, final FedoraId parentId, final FedoraId id) {
+        containmentIndex.addContainedBy(txId, parentId, id);
     }
 }
