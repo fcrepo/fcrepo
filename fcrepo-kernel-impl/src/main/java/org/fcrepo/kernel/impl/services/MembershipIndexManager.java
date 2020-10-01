@@ -277,7 +277,7 @@ public class MembershipIndexManager {
             DbPlatform.MYSQL, "sql/mysql-membership.sql",
             DbPlatform.H2, "sql/default-membership.sql",
             DbPlatform.POSTGRESQL, "sql/default-membership.sql",
-            DbPlatform.MARIADB, "sql/default-membership.sql"
+            DbPlatform.MARIADB, "sql/mariadb-membership.sql"
     );
 
     @PostConstruct

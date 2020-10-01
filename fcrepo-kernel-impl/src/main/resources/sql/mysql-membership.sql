@@ -6,8 +6,8 @@ CREATE TABLE membership IF NOT EXISTS (
     property varchar(503) NOT NULL,
     object_id varchar(503) NOT NULL,
     source_id varchar(503) NOT NULL,
-    start_time timestamp,
-    end_time timestamp
+    start_time datetime,
+    end_time datetime
 );
 
 -- Create an index to speed searches for a resource.
@@ -46,8 +46,8 @@ CREATE TABLE membership_tx_operations IF NOT EXISTS (
     property varchar(503) NOT NULL,
     object_id varchar(503) NOT NULL,
     source_id varchar(503) NOT NULL,
-    start_time timestamp,
-    end_time timestamp,
+    start_time datetime,
+    end_time datetime,
     tx_id varchar(36) NOT NULL,
     operation varchar(10) NOT NULL,
     force_flag varchar(10)

@@ -1,5 +1,6 @@
--- DDL for setting up membership tables in H2 and PostgreSQL 12.3
--- MySQL 8 will only supports varchar up to 503 characters
+-- DDL for setting up membership tables inMariaDB 10.5
+
+SET time_zone = 'UTC';
 
 -- Non-transaction state of membership properties.
 CREATE TABLE IF NOT EXISTS membership (
@@ -7,8 +8,8 @@ CREATE TABLE IF NOT EXISTS membership (
     property varchar(503) NOT NULL,
     object_id varchar(503) NOT NULL,
     source_id varchar(503) NOT NULL,
-    start_time timestamp,
-    end_time timestamp
+    start_time datetime,
+    end_time datetime
 );
 
 -- Create an index to speed searches for a resource.
@@ -31,8 +32,8 @@ CREATE TABLE IF NOT EXISTS membership_tx_operations (
     property varchar(503) NOT NULL,
     object_id varchar(503) NOT NULL,
     source_id varchar(503) NOT NULL,
-    start_time timestamp,
-    end_time timestamp,
+    start_time datetime,
+    end_time datetime,
     tx_id varchar(36) NOT NULL,
     operation varchar(10) NOT NULL,
     force_flag varchar(10)
