@@ -44,7 +44,7 @@ import java.time.Duration;
 @Configuration
 public class MetricsConfig {
 
-    @Value("${fcrepo.metrics.enable:true}")
+    @Value("${fcrepo.metrics.enable:false}")
     private boolean enableMetrics;
 
     @Bean
