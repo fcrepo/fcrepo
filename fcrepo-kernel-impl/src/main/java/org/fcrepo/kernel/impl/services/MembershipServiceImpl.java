@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
+import javax.transaction.Transactional;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -72,6 +73,7 @@ public class MembershipServiceImpl implements MembershipService {
     private boolean autoVersioningEnabled;
 
     @Override
+    @Transactional
     public void resourceCreated(final String txId, final FedoraId fedoraId) {
         final var fedoraResc = getFedoraResource(txId, fedoraId);
 
@@ -92,6 +94,7 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
+    @Transactional
     public void resourceModified(final String txId, final FedoraId fedoraId) {
         final var fedoraResc = getFedoraResource(txId, fedoraId);
 
@@ -205,6 +208,7 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
+    @Transactional
     public void resourceDeleted(final String txId, final FedoraId fedoraId) {
         // delete DirectContainer, end all membership for that source
         FedoraResource fedoraResc;
@@ -264,6 +268,7 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
+    @Transactional
     public void populateMembershipHistory(final String txId, final FedoraId containerId) {
         final FedoraResource fedoraResc = getFedoraResource(txId, containerId);
 
@@ -330,7 +335,6 @@ public class MembershipServiceImpl implements MembershipService {
      */
     private List<DirectContainerProperties> makePropertyTimeline(final FedoraResource fedoraResc) {
         final var entryList = fedoraResc.getTimeMap().getChildren()
-                .sorted((m1, m2) -> m1.getFedoraId().getFullId().compareTo(m1.getFedoraId().getFullId()))
                 .map(memento -> new DirectContainerProperties(memento))
                 .collect(Collectors.toList());
 
@@ -338,8 +342,7 @@ public class MembershipServiceImpl implements MembershipService {
         final var changeEntries = new ArrayList<DirectContainerProperties>();
         var curr = entryList.get(0);
         changeEntries.add(curr);
-        int i = 1;
-        while (i < entryList.size()) {
+        for (int i = 1; i < entryList.size(); i++) {
             final var next = entryList.get(i);
             if (!Objects.equals(next.membershipResource, curr.membershipResource)
                     || !Objects.equals(next.hasMemberRelation, curr.hasMemberRelation)
@@ -349,7 +352,6 @@ public class MembershipServiceImpl implements MembershipService {
                 changeEntries.add(next);
                 curr = next;
             }
-            i++;
         }
         return changeEntries;
     }

@@ -20,7 +20,7 @@ CREATE INDEX IF NOT EXISTS membership_idx2
     ON membership (source_id);
 
 CREATE INDEX IF NOT EXISTS membership_idx3
-    ON membership (source_id, subject_id, property, object_id);
+    ON membership (property);
     
 CREATE INDEX IF NOT EXISTS membership_idx4
     ON membership (end_time);
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS membership_tx_operations (
     source_id varchar(503) NOT NULL,
     start_time timestamp,
     end_time timestamp,
-    tx_id varchar(255) NOT NULL,
+    tx_id varchar(36) NOT NULL,
     operation varchar(10) NOT NULL,
     force_flag varchar(10)
 );
@@ -47,7 +47,7 @@ CREATE INDEX IF NOT EXISTS membership_tx_operations_idx2
     ON membership_tx_operations (tx_id);
 
 CREATE INDEX IF NOT EXISTS membership_tx_operations_idx3
-    ON membership_tx_operations (source_id, subject_id, property, object_id);
+    ON membership_tx_operations (property);
     
 CREATE INDEX IF NOT EXISTS membership_tx_operations_idx4
     ON membership_tx_operations (end_time);

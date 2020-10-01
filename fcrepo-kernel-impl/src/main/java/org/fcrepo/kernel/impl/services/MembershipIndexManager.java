@@ -30,7 +30,6 @@ import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.sql.DataSource;
-
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
@@ -157,7 +156,8 @@ public class MembershipIndexManager {
                 " AND subject_id = :subjectId" +
                 " AND property = :property" +
                 " AND object_id = :objectId" +
-                " AND operation = :operation";
+                " AND operation = :operation" +
+                " AND force_flag IS NULL";
 
     private static final String CLEAR_ALL_ADDED_FOR_SOURCE_IN_TX =
             "DELETE FROM membership_tx_operations" +
@@ -228,6 +228,7 @@ public class MembershipIndexManager {
                     " AND m.subject_id = mto.subject_id" +
                     " AND m.property = mto.property" +
                     " AND m.object_id = mto.object_id" +
+                    " AND mto.operation = :deleteOp" +
                 " )" +
             " WHERE EXISTS (" +
                 "SELECT TRUE" +
