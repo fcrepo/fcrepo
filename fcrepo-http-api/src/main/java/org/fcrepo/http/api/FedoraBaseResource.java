@@ -36,7 +36,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.SecurityContext;
 import java.security.Principal;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -109,9 +108,6 @@ abstract public class FedoraBaseResource extends AbstractResource {
     }
 
     protected String getInteractionModel(final Transaction transaction, final FedoraId fedoraId) {
-        if (fedoraId.isDescription()) {
-            return FEDORA_NON_RDF_SOURCE_DESCRIPTION;
-        }
         return resourceFactory.getInteractionModel(TransactionUtils.openTxId(transaction), fedoraId);
     }
 

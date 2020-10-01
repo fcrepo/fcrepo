@@ -65,6 +65,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -401,8 +402,8 @@ public class FedoraLdp extends ContentExposingResource {
             }
 
             final String resInteractionModel = getInteractionModel(transaction, fedoraId);
-            if (StringUtils.isNoneBlank(interactionModel) && StringUtils.isNoneBlank(resInteractionModel)
-                    && !resInteractionModel.equals(interactionModel)) {
+            if (StringUtils.isNoneBlank(resInteractionModel, interactionModel) &&
+                    !Objects.equals(resInteractionModel, interactionModel)) {
                 throw new InteractionModelViolationException("Changing the interaction model " + resInteractionModel
                         + " to " + interactionModel + " is not allowed!");
             }
