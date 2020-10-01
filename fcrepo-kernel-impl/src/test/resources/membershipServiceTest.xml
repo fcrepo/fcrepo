@@ -27,6 +27,10 @@
         <property name="dataSource" ref="dataSource" />
     </bean>
     
+    <bean id="eventAccumulator" class="org.mockito.Mockito" factory-method="mock">
+        <constructor-arg value="org.fcrepo.kernel.api.observer.EventAccumulator"/>
+    </bean>
+    
     <bean id="membershipIndexManager" class="org.fcrepo.kernel.impl.services.MembershipIndexManager">
         <property name="dataSource" ref="dataSource" />
     </bean>
@@ -36,6 +40,12 @@
     </bean>
     
     <bean id="resourceFactory" class="org.fcrepo.kernel.impl.models.ResourceFactoryImpl">
+    </bean>
+    
+    <bean id="fedoraPropsConfig" class="org.fcrepo.config.FedoraPropsConfig">
+    </bean>
+    
+    <bean id="ocflPropsConfig" class="org.fcrepo.config.OcflPropsConfig">
     </bean>
     
     <bean id="membershipService" class="org.fcrepo.kernel.impl.services.MembershipServiceImpl">

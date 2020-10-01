@@ -31,6 +31,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
+import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
@@ -98,6 +99,8 @@ public class MembershipServiceImplTest {
     private MembershipIndexManager indexManager;
     @Inject
     private ContainmentIndex containmentIndex;
+    @Inject
+    private OcflPropsConfig propsConfig;
 
     private final FedoraId rootId = FedoraId.getRepositoryRootId();
 
@@ -125,7 +128,7 @@ public class MembershipServiceImplTest {
 
         membershipRescId = mintFedoraId();
 
-        setField(membershipService, "autoVersioningEnabled", Boolean.TRUE);
+        setField(propsConfig, "autoVersioningEnabled", Boolean.TRUE);
     }
 
     @After
@@ -650,7 +653,7 @@ public class MembershipServiceImplTest {
 
     @Test
     public void changeMembershipResource_ForDC_ManualVersioning() throws Exception {
-        setField(membershipService, "autoVersioningEnabled", Boolean.FALSE);
+        setField(propsConfig, "autoVersioningEnabled", Boolean.FALSE);
 
         mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
         membershipService.resourceCreated(txId, membershipRescId);

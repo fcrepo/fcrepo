@@ -28,7 +28,6 @@ import java.util.stream.Collectors;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -38,6 +37,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Resource;
+import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
@@ -69,8 +69,8 @@ public class MembershipServiceImpl implements MembershipService {
     @Inject
     private ResourceFactory resourceFactory;
 
-    @Value("${fcrepo.autoversioning.enabled:true}")
-    private boolean autoVersioningEnabled;
+    @Inject
+    private OcflPropsConfig propsConfig;
 
     @Override
     @Transactional
@@ -102,7 +102,7 @@ public class MembershipServiceImpl implements MembershipService {
             log.debug("Modified DirectContainer {}, recomputing generated membership relations", fedoraId);
 
             // If using manual versioning all membership history could change for this source
-            if (!autoVersioningEnabled) {
+            if (!propsConfig.isAutoVersioningEnabled()) {
                 indexManager.deleteMembershipForSource(txId, fedoraId);
                 populateMembershipHistory(txId, fedoraId);
                 return;
@@ -215,7 +215,7 @@ public class MembershipServiceImpl implements MembershipService {
         try {
             fedoraResc = getFedoraResource(txId, fedoraId);
         } catch (final PathNotFoundRuntimeException e) {
-            log.debug("Deleted resource {} does not have a tombstone, cleanup any references");
+            log.debug("Deleted resource {} does not have a tombstone, cleanup any references", fedoraId);
             indexManager.deleteMembershipReferences(txId, fedoraId);
             return;
         }

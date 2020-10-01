@@ -1,7 +1,5 @@
 -- DDL for setting up membership tables inMariaDB 10.5
 
-SET time_zone = 'UTC';
-
 -- Non-transaction state of membership properties.
 CREATE TABLE IF NOT EXISTS membership (
     subject_id varchar(503) NOT NULL,

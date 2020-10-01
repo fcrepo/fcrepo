@@ -29,4 +29,5 @@
 
     <bean id="eventAccumulator" class="org.mockito.Mockito" factory-method="mock">
         <constructor-arg value="org.fcrepo.kernel.api.observer.EventAccumulator"/>
+    </bean>
 </beans>
