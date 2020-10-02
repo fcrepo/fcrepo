@@ -26,6 +26,7 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.TimeMap;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
@@ -137,7 +138,7 @@ public class FedoraResourceImpl implements FedoraResource {
     }
 
     @Override
-    public FedoraResource getTimeMap() {
+    public TimeMap getTimeMap() {
         return new TimeMapImpl(this.getOriginalResource(), txId, pSessionManager, resourceFactory);
     }
 

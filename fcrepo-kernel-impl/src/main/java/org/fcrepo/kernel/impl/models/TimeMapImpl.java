@@ -142,7 +142,7 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
     }
 
     @Override
-    public FedoraResource getTimeMap() {
+    public TimeMap getTimeMap() {
         return this;
     }
 
@@ -170,6 +170,11 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
      */
     private FedoraId getInstantFedoraId(final Instant version) {
         return getFedoraId().asMemento(version);
+    }
+
+    @Override
+    public List<Instant> listMementoDatetimes() {
+        return getVersions();
     }
 
 }

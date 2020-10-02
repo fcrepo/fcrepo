@@ -99,7 +99,7 @@ public interface FedoraResource {
      *
      * @return the container for TimeMap/LDPCv of this resource
      */
-    FedoraResource getTimeMap();
+    TimeMap getTimeMap();
 
     /**
      * Retrieve the mementoDatetime property and return it as an Instant
