@@ -673,8 +673,8 @@ public class MembershipServiceImplTest {
         assertCommittedMembershipCount(membershipResc2Id, 0);
 
         // Change the membership resource for the DC without creating a version
-        mockListVersion(dcId, CREATED_DATE);
-        mockGetTriplesForDC(dcId, CREATED_DATE, membershipResc2Id, RdfLexicon.LDP_MEMBER, false);
+        mockListVersion(dcId);
+        mockGetTriplesForDCHead(dcId, CREATED_DATE, membershipResc2Id, RdfLexicon.LDP_MEMBER, false);
         membershipService.resourceModified(txId, dcId);
 
         assertHasMembers(null, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
@@ -686,8 +686,7 @@ public class MembershipServiceImplTest {
         assertHasMembers(null, membershipResc2Id, RdfLexicon.LDP_MEMBER, member1Id);
 
         // Change membership property without versioning
-        mockListVersion(dcId, CREATED_DATE);
-        mockGetTriplesForDC(dcId, CREATED_DATE, membershipResc2Id, OTHER_HAS_MEMBER, false);
+        mockGetTriplesForDCHead(dcId, CREATED_DATE, membershipResc2Id, OTHER_HAS_MEMBER, false);
         membershipService.resourceModified(txId, dcId);
 
         assertHasMembers(null, membershipResc2Id, RdfLexicon.LDP_MEMBER, member1Id);
@@ -699,15 +698,18 @@ public class MembershipServiceImplTest {
         assertHasMembers(null, membershipResc2Id, OTHER_HAS_MEMBER, member1Id);
 
         // Create version from former head version
-        final var finalChangeTime = Instant.parse("2019-11-13T12:00:00.0Z");
-        mockListVersion(dcId, CREATED_DATE, finalChangeTime);
+        final var versionChangeTime = Instant.parse("2019-11-13T12:00:00.0Z");
+        mockListVersion(dcId, versionChangeTime);
         // New head state matches previous head state for the moment
-        mockGetTriplesForDC(dcId, finalChangeTime, membershipResc2Id, OTHER_HAS_MEMBER, false);
-        mockGetHeaders(txId, dcId.asMemento(finalChangeTime), populateHeaders(dcId, rootId,
-                RdfLexicon.DIRECT_CONTAINER, CREATED_DATE, finalChangeTime), rootId);
+        mockGetTriplesForDC(dcId, versionChangeTime, membershipResc2Id, OTHER_HAS_MEMBER, false);
+        mockGetHeaders(txId, dcId.asMemento(versionChangeTime), populateHeaders(dcId, rootId,
+                RdfLexicon.DIRECT_CONTAINER, CREATED_DATE, versionChangeTime), rootId);
 
         // Change memebership resource after having created version
-        mockGetTriplesForDC(dcId, finalChangeTime, membershipRescId, OTHER_HAS_MEMBER, false);
+        final var afterVersionChangeTime = Instant.parse("2019-11-13T14:00:00.0Z");
+        mockGetHeaders(txId, dcId, populateHeaders(dcId, rootId,
+                RdfLexicon.DIRECT_CONTAINER, CREATED_DATE, afterVersionChangeTime), rootId);
+        mockGetTriplesForDCHead(dcId, afterVersionChangeTime, membershipRescId, OTHER_HAS_MEMBER, false);
         membershipService.resourceModified(txId, dcId);
 
         // Membership resc 2 should still have a member prior to the version creation/last property update
@@ -1380,8 +1382,18 @@ public class MembershipServiceImplTest {
         return dcId;
     }
 
+    private void mockGetTriplesForDCHead(final FedoraId dcId, final Instant startTime, final FedoraId membershipRescId,
+            final Property relation, final boolean useIsMemberOf) {
+        mockGetTriplesForDC(dcId, startTime, membershipRescId, relation, useIsMemberOf, true);
+    }
+
     private void mockGetTriplesForDC(final FedoraId dcId, final Instant startTime, final FedoraId membershipRescId,
             final Property relation, final boolean useIsMemberOf) {
+        mockGetTriplesForDC(dcId, startTime, membershipRescId, relation, useIsMemberOf, false);
+    }
+
+    private void mockGetTriplesForDC(final FedoraId dcId, final Instant startTime, final FedoraId membershipRescId,
+            final Property relation, final boolean useIsMemberOf, final boolean isHead) {
         final var model = ModelFactory.createDefaultModel();
         final var dcRdfResc = model.getResource(dcId.getBaseId());
         final var membershipRdfResc = model.getResource(membershipRescId.getFullId());
@@ -1395,7 +1407,9 @@ public class MembershipServiceImplTest {
         }
 
         mockGetTriplesForDC(dcId, null, model);
-        mockGetTriplesForDC(dcId, startTime, model);
+        if (!isHead) {
+            mockGetTriplesForDC(dcId, startTime, model);
+        }
     }
 
     private void mockGetTriplesForDC(final FedoraId dcId, final Instant startTime, final Model model) {

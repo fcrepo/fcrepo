@@ -101,30 +101,46 @@ public class MembershipServiceImpl implements MembershipService {
         if (isDirectContainer(fedoraResc)) {
             log.debug("Modified DirectContainer {}, recomputing generated membership relations", fedoraId);
 
-            // If using manual versioning all membership history could change for this source
-            if (!propsConfig.isAutoVersioningEnabled()) {
-                indexManager.deleteMembershipForSource(txId, fedoraId);
-                populateMembershipHistory(txId, fedoraId);
-                return;
+            if (propsConfig.isAutoVersioningEnabled()) {
+                modifyDCAutoversioned(txId, fedoraResc);
+            } else {
+                modifyDCOnDemandVersioning(txId, fedoraResc);
             }
-
-            // For autoversioning, perform incremental update of properties
-            final var dcRdfResc = getRdfResource(fedoraResc);
-
-            final var dcLastModified = fedoraResc.getLastModifiedDate();
-
-            // Delete/end existing membership from this container
-            indexManager.endMembershipForSource(txId, fedoraResc.getFedoraId(), dcLastModified);
-
-            // Add updated membership properties for all non-tombstone children
-            fedoraResc.getChildren()
-                    .filter(child -> !(child instanceof Tombstone))
-                    .map(child -> generateDirectMembership(txId, dcRdfResc, child))
-                    .forEach(newMembership -> indexManager.addMembership(txId, fedoraId,
-                            newMembership, dcLastModified));
             return;
         }
         // TODO handle modification of IndirectContainers and proxies
+    }
+
+    private void modifyDCAutoversioned(final String txId, final FedoraResource dcResc) {
+        final var dcId = dcResc.getFedoraId();
+        final var dcRdfResc = getRdfResource(dcResc);
+
+        final var dcLastModified = dcResc.getLastModifiedDate();
+
+        // Delete/end existing membership from this container
+        indexManager.endMembershipForSource(txId, dcResc.getFedoraId(), dcLastModified);
+
+        // Add updated membership properties for all non-tombstone children
+        dcResc.getChildren()
+                .filter(child -> !(child instanceof Tombstone))
+                .map(child -> generateDirectMembership(txId, dcRdfResc, child))
+                .forEach(newMembership -> indexManager.addMembership(txId, dcId,
+                        newMembership, dcLastModified));
+    }
+
+    private void modifyDCOnDemandVersioning(final String txId, final FedoraResource dcResc) {
+        final var dcId = dcResc.getFedoraId();
+        final var mementoDatetimes = dcResc.getTimeMap().listMementoDatetimes();
+        final Instant lastVersionDatetime;
+        if (mementoDatetimes.size() == 0) {
+            // If no previous versions of DC, then cleanup and repopulate everything
+            lastVersionDatetime = null;
+        } else {
+            // If at least one past version, then reindex membership involving the last version and after
+            lastVersionDatetime = mementoDatetimes.get(mementoDatetimes.size() - 1);
+        }
+        indexManager.deleteMembershipForSourceAfter(txId, dcId, lastVersionDatetime);
+        populateMembershipHistory(txId, dcResc, lastVersionDatetime);
     }
 
     private Triple generateDirectMembership(final String txId, final Resource dcRdfResc,
@@ -273,42 +289,57 @@ public class MembershipServiceImpl implements MembershipService {
         final FedoraResource fedoraResc = getFedoraResource(txId, containerId);
 
         if (isDirectContainer(fedoraResc)) {
-            final var propertyTimeline = makePropertyTimeline(fedoraResc);
-
-            // get all the members of the DC and index the history for each, accounting for changes to the DC
-            fedoraResc.getChildren().forEach(member -> {
-                final var memberDeleted = member instanceof Tombstone;
-                final var memberNode = NodeFactory.createURI(member.getFedoraId().getFullId());
-                log.debug("Populating membership history for DirectContainer {}member {}",
-                        memberDeleted ? "deleted " : "", member.getFedoraId());
-                final Instant memberCreated;
-                // Get the creation time from the deleted object if the member is a tombstone
-                if (memberDeleted) {
-                    memberCreated = ((Tombstone) member).getDeletedObject().getCreatedDate();
-                } else {
-                    memberCreated = member.getCreatedDate();
-                }
-                final var memberModified = member.getLastModifiedDate();
-                final var memberEnd = memberDeleted ? memberModified : NO_END_INSTANT;
-
-                // Reduce timeline to just states in effect after the member was created
-                var timelineStream = propertyTimeline.stream()
-                        .filter(e -> e.endDatetime.compareTo(memberCreated) > 0);
-                // If the member was deleted, then reduce timeline to states before the deletion
-                if (memberDeleted) {
-                    timelineStream = timelineStream.filter(e -> e.mementoDatetime.compareTo(memberModified) < 0);
-                }
-                // Index each addition or change to the membership generated by this member
-                timelineStream.forEach(e -> {
-                    // Start time of the membership is the later of member creation or membership resc memento time
-                    indexManager.addMembership(txId, containerId,
-                            generateMembershipTriple(e.membershipResource,
-                                    memberNode, e.hasMemberRelation, e.isMemberOfRelation),
-                            instantMax(memberCreated, e.mementoDatetime),
-                            instantMin(memberEnd, e.endDatetime));
-                });
-            });
+            populateMembershipHistory(txId, fedoraResc, null);
         }
+    }
+
+    private void populateMembershipHistory(final String txId, final FedoraResource fedoraResc,
+            final Instant afterTime) {
+        final var containerId = fedoraResc.getFedoraId();
+        final var propertyTimeline = makePropertyTimeline(fedoraResc);
+        final List<DirectContainerProperties> timeline;
+        // If provided, filter the timeline to just entries active on or after the specified time
+        if (afterTime != null) {
+            timeline = propertyTimeline.stream().filter(e -> e.startDatetime.compareTo(afterTime) >= 0
+                    || e.endDatetime.compareTo(afterTime) >= 0)
+                .collect(Collectors.toList());
+        } else {
+            timeline = propertyTimeline;
+        }
+
+        // get all the members of the DC and index the history for each, accounting for changes to the DC
+        fedoraResc.getChildren().forEach(member -> {
+            final var memberDeleted = member instanceof Tombstone;
+            final var memberNode = NodeFactory.createURI(member.getFedoraId().getFullId());
+            log.debug("Populating membership history for DirectContainer {}member {}",
+                    memberDeleted ? "deleted " : "", member.getFedoraId());
+            final Instant memberCreated;
+            // Get the creation time from the deleted object if the member is a tombstone
+            if (memberDeleted) {
+                memberCreated = ((Tombstone) member).getDeletedObject().getCreatedDate();
+            } else {
+                memberCreated = member.getCreatedDate();
+            }
+            final var memberModified = member.getLastModifiedDate();
+            final var memberEnd = memberDeleted ? memberModified : NO_END_INSTANT;
+
+            // Reduce timeline to just states in effect after the member was created
+            var timelineStream = timeline.stream()
+                    .filter(e -> e.endDatetime.compareTo(memberCreated) > 0);
+            // If the member was deleted, then reduce timeline to states before the deletion
+            if (memberDeleted) {
+                timelineStream = timelineStream.filter(e -> e.startDatetime.compareTo(memberModified) < 0);
+            }
+            // Index each addition or change to the membership generated by this member
+            timelineStream.forEach(e -> {
+                // Start time of the membership is the later of member creation or membership resc memento time
+                indexManager.addMembership(txId, containerId,
+                        generateMembershipTriple(e.membershipResource,
+                                memberNode, e.hasMemberRelation, e.isMemberOfRelation),
+                        instantMax(memberCreated, e.startDatetime),
+                        instantMin(memberEnd, e.endDatetime));
+            });
+        });
     }
 
     private Instant instantMax(final Instant first, final Instant second) {
@@ -336,7 +367,13 @@ public class MembershipServiceImpl implements MembershipService {
     private List<DirectContainerProperties> makePropertyTimeline(final FedoraResource fedoraResc) {
         final var entryList = fedoraResc.getTimeMap().getChildren()
                 .map(memento -> new DirectContainerProperties(memento))
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(ArrayList::new));
+        // For versioning on demand, add the head version to the timeline
+        if (!propsConfig.isAutoVersioningEnabled()) {
+            entryList.add(new DirectContainerProperties(fedoraResc));
+        }
+        // First entry starts at creation time of the resource
+        entryList.get(0).startDatetime = fedoraResc.getCreatedDate();
 
         // Reduce timeline to entries where significant properties change
         final var changeEntries = new ArrayList<DirectContainerProperties>();
@@ -348,7 +385,7 @@ public class MembershipServiceImpl implements MembershipService {
                     || !Objects.equals(next.hasMemberRelation, curr.hasMemberRelation)
                     || !Objects.equals(next.isMemberOfRelation, curr.isMemberOfRelation)) {
                 // Adjust the end the previous entry before the next state begins
-                curr.endDatetime = next.mementoDatetime;
+                curr.endDatetime = next.startDatetime;
                 changeEntries.add(next);
                 curr = next;
             }
@@ -364,15 +401,16 @@ public class MembershipServiceImpl implements MembershipService {
         public Node membershipResource;
         public Node hasMemberRelation;
         public Node isMemberOfRelation;
-        public Instant mementoDatetime;
+        public Instant startDatetime;
         public Instant endDatetime = NO_END_INSTANT;
 
         /**
-         * @param memento memento of the resource from which the properties will be extracted
+         * @param fedoraResc resource/memento from which the properties will be extracted
          */
-        public DirectContainerProperties(final FedoraResource memento) {
-            mementoDatetime = memento.getMementoDatetime();
-            memento.getTriples().forEach(triple -> {
+        public DirectContainerProperties(final FedoraResource fedoraResc) {
+            startDatetime = fedoraResc.isMemento() ?
+                    fedoraResc.getMementoDatetime() : fedoraResc.getLastModifiedDate();
+            fedoraResc.getTriples().forEach(triple -> {
                 if (RdfLexicon.MEMBERSHIP_RESOURCE.asNode().equals(triple.getPredicate())) {
                     membershipResource = triple.getObject();
                 } else if (RdfLexicon.HAS_MEMBER_RELATION.asNode().equals(triple.getPredicate())) {

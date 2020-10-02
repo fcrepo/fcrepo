@@ -56,6 +56,7 @@ public class MembershipIndexManager {
     private static final Logger log = getLogger(MembershipIndexManager.class);
 
     private static final Timestamp NO_END_TIMESTAMP = Timestamp.from(MembershipServiceImpl.NO_END_INSTANT);
+    private static final Timestamp NO_START_TIMESTAMP = Timestamp.from(Instant.parse("1000-01-01T00:00:00.000Z"));
 
     private static final String ADD_OPERATION = "add";
     private static final String DELETE_OPERATION = "delete";
@@ -198,12 +199,14 @@ public class MembershipIndexManager {
                         " AND mtx.operation = :deleteOp" +
                     ")";
 
-    private static final String DELETE_EXISTING_FOR_SOURCE =
+    private static final String DELETE_EXISTING_FOR_SOURCE_AFTER =
             "INSERT INTO membership_tx_operations" +
             " (subject_id, property, object_id, source_id, start_time, end_time, tx_id, operation, force_flag)" +
             " SELECT subject_id, property, object_id, source_id, start_time, end_time, :txId, :deleteOp, :forceFlag" +
             " FROM membership m" +
-            " WHERE m.source_id = :sourceId";
+            " WHERE m.source_id = :sourceId" +
+                " AND (m.start_time >= :startTime" +
+                " OR m.end_time >= :startTime)";
 
     private static final String PURGE_ALL_REFERENCES_MEMBERSHIP =
             "DELETE from membership" +
@@ -374,22 +377,6 @@ public class MembershipIndexManager {
      * @param endTime the time the resource was deleted, generally its last modified
      */
     public void endMembershipForSource(final String txId, final FedoraId sourceId, final Instant endTime) {
-        deleteMembershipForSource(txId, sourceId, endTime, false);
-    }
-
-    /**
-     * Delete all membership properties from a source container, clearing properties from
-     * the current transaction and setting an action to clear the properties outside the tx
-     * @param txId transaction id
-     * @param sourceId ID of the direct/indirect container whose membership should be cleaned up
-     */
-    public void deleteMembershipForSource(final String txId, final FedoraId sourceId) {
-        deleteMembershipForSource(txId, sourceId, null, true);
-    }
-
-    private void deleteMembershipForSource(final String txId, final FedoraId sourceId, final Instant endTime,
-            final boolean deleteProperties) {
-        // End all membership added in this transaction
         final Map<String, Object> parameterSource = Map.of(
                 TX_ID_PARAM, txId,
                 SOURCE_ID_PARAM, sourceId.getFullId(),
@@ -397,23 +384,40 @@ public class MembershipIndexManager {
 
         jdbcTemplate.update(CLEAR_ALL_ADDED_FOR_SOURCE_IN_TX, parameterSource);
 
-        // End all membership that existed prior to this transaction
-        if (deleteProperties) {
-            final Map<String, Object> parameterSource2 = Map.of(
-                    TX_ID_PARAM, txId,
-                    SOURCE_ID_PARAM, sourceId.getFullId(),
-                    FORCE_PARAM, FORCE_FLAG,
-                    DELETE_OP_PARAM, DELETE_OPERATION);
-            jdbcTemplate.update(DELETE_EXISTING_FOR_SOURCE, parameterSource2);
-        } else {
-            final Map<String, Object> parameterSource2 = Map.of(
-                    TX_ID_PARAM, txId,
-                    SOURCE_ID_PARAM, sourceId.getFullId(),
-                    END_TIME_PARAM, Timestamp.from(endTime),
-                    NO_END_TIME_PARAM, NO_END_TIMESTAMP,
-                    DELETE_OP_PARAM, DELETE_OPERATION);
-            jdbcTemplate.update(END_EXISTING_FOR_SOURCE, parameterSource2);
-        }
+        final Map<String, Object> parameterSource2 = Map.of(
+                TX_ID_PARAM, txId,
+                SOURCE_ID_PARAM, sourceId.getFullId(),
+                END_TIME_PARAM, Timestamp.from(endTime),
+                NO_END_TIME_PARAM, NO_END_TIMESTAMP,
+                DELETE_OP_PARAM, DELETE_OPERATION);
+        jdbcTemplate.update(END_EXISTING_FOR_SOURCE, parameterSource2);
+    }
+
+    /**
+     * Delete membership entries that are active at or after the given timestamp for the specified source
+     * @param txId transaction id
+     * @param sourceId ID of the direct/indirect container
+     * @param afterTime time at or after which membership should be removed
+     */
+    public void deleteMembershipForSourceAfter(final String txId, final FedoraId sourceId, final Instant afterTime) {
+        // Clear all membership added in this transaction
+        final Map<String, Object> parameterSource = Map.of(
+                TX_ID_PARAM, txId,
+                SOURCE_ID_PARAM, sourceId.getFullId(),
+                ADD_OP_PARAM, ADD_OPERATION);
+
+        jdbcTemplate.update(CLEAR_ALL_ADDED_FOR_SOURCE_IN_TX, parameterSource);
+
+        final var afterTimestamp = afterTime == null ? NO_START_TIMESTAMP : Timestamp.from(afterTime);
+
+        // Delete all existing membership entries that start after or end after the given timestamp
+        final Map<String, Object> parameterSource2 = Map.of(
+                TX_ID_PARAM, txId,
+                SOURCE_ID_PARAM, sourceId.getFullId(),
+                START_TIME_PARAM, afterTimestamp,
+                FORCE_PARAM, FORCE_FLAG,
+                DELETE_OP_PARAM, DELETE_OPERATION);
+        jdbcTemplate.update(DELETE_EXISTING_FOR_SOURCE_AFTER, parameterSource2);
     }
 
     /**
