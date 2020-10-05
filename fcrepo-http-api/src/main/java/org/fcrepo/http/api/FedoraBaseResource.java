@@ -92,6 +92,16 @@ abstract public class FedoraBaseResource extends AbstractResource {
         return resourceFactory.doesResourceExist(transaction, fedoraId);
     }
 
+    /**
+     *
+     * @param transaction the transaction in which to check
+     * @param fedoraId identifier of the object to check
+     * @return Returns true if object does not exist but whose ID starts other resources that do exist.
+     */
+    protected boolean isGhostNode(final Transaction transaction, final FedoraId fedoraId) {
+        return resourceFactory.isGhostNode(transaction, fedoraId);
+    }
+
     protected String getUserPrincipal() {
         final Principal p = securityContext.getUserPrincipal();
         return p == null ? null : p.getName();

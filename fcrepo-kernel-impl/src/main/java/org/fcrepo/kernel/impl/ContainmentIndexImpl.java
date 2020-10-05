@@ -282,6 +282,17 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     private static final String TRUNCATE_TABLE = "TRUNCATE TABLE ";
 
+    private static final String SELECT_ID_LIKE = "SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " +
+            FEDORA_ID_COLUMN + " LIKE :resourceId";
+
+    private static final String SELECT_ID_LIKE_IN_TRANSACTION = "SELECT x." + FEDORA_ID_COLUMN + " FROM (SELECT " +
+            FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " LIKE :resourceId UNION " +
+            "SELECT " + FEDORA_ID_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN +
+            " LIKE :resourceId AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN +
+            " = 'add') x WHERE NOT EXISTS (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " +
+            FEDORA_ID_COLUMN + " = :resourceId AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
+            OPERATION_COLUMN + " = 'delete')";
+
     private static final Map<DbPlatform, String> DDL_MAP = Map.of(
             DbPlatform.MYSQL, "sql/mysql-containment.sql",
             DbPlatform.H2, "sql/default-containment.sql",
@@ -547,6 +558,21 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         } catch (final Exception e) {
             throw new RepositoryRuntimeException("Failed to truncate containment tables", e);
         }
+    }
+
+    @Override
+    public boolean hasResourcesStartingWith(final String txID, final FedoraId fedoraId) {
+        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+        parameterSource.addValue("resourceId", fedoraId.getFullId() + "/%");
+        final boolean matchingIds;
+        if (txID != null) {
+            parameterSource.addValue("transactionId", txID);
+            matchingIds = !jdbcTemplate.queryForList(SELECT_ID_LIKE_IN_TRANSACTION, parameterSource, String.class)
+                .isEmpty();
+        } else {
+            matchingIds = !jdbcTemplate.queryForList(SELECT_ID_LIKE, parameterSource, String.class).isEmpty();
+        }
+        return matchingIds;
     }
 
     /**

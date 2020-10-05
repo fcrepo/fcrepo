@@ -153,6 +153,14 @@ public class ResourceFactoryImpl implements ResourceFactory {
         }
     }
 
+    @Override
+    public boolean isGhostNode(final Transaction transaction, final FedoraId resourceId) {
+        if (!doesResourceExist(transaction, resourceId)) {
+            return containmentIndex.hasResourcesStartingWith(TransactionUtils.openTxId(transaction), resourceId);
+        }
+        return false;
+    }
+
     /**
      * Returns the appropriate FedoraResource class for an object based on the provided headers
      *

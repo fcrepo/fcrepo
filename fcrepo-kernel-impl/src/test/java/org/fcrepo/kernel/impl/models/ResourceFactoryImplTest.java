@@ -477,6 +477,49 @@ public class ResourceFactoryImplTest {
         assertTrue(child2.get() instanceof Binary);
     }
 
+    /**
+     * Test an item is not a ghost node because it exists.
+     */
+    @Test
+    public void testGhostNodeFailure() {
+        containmentIndex.addContainedBy(mockTx.getId(), rootId, fedoraId);
+        // Inside the transaction the resource exists, so its not a ghost node.
+        assertTrue(factory.doesResourceExist(mockTx, fedoraId));
+        assertFalse(factory.isGhostNode(mockTx, fedoraId));
+        // Outside the transaction the resource does not exist.
+        assertFalse(factory.doesResourceExist(null, fedoraId));
+        // Because there are no other items it is not a ghost node.
+        assertFalse(factory.isGhostNode(null, fedoraId));
+
+        containmentIndex.commitTransaction(mockTx.getId());
+
+        // Now it exists outside the transaction.
+        assertTrue(factory.doesResourceExist(null, fedoraId));
+        // So it can't be a ghost node.
+        assertFalse(factory.isGhostNode(null, fedoraId));
+    }
+
+    /**
+     * Test that when the resource that does exist shares the ID of a resource that does not, then we have a ghost node.
+     */
+    @Test
+    public void testGhostNodeSuccess() {
+        final var resourceId = fedoraId.resolve("the/child/path");
+        containmentIndex.addContainedBy(mockTx.getId(), rootId, resourceId);
+        assertTrue(factory.doesResourceExist(mockTx, resourceId));
+        assertFalse(factory.doesResourceExist(mockTx, fedoraId));
+        assertTrue(factory.isGhostNode(mockTx, fedoraId));
+        assertFalse(factory.doesResourceExist(null, resourceId));
+        assertFalse(factory.doesResourceExist(null, fedoraId));
+        assertFalse(factory.isGhostNode(null, fedoraId));
+
+        containmentIndex.commitTransaction(mockTx.getId());
+
+        assertTrue(factory.doesResourceExist(null, resourceId));
+        assertFalse(factory.doesResourceExist(null, fedoraId));
+        assertTrue(factory.isGhostNode(null, fedoraId));
+    }
+
     private void assertStateFieldsMatches(final FedoraResource resc) {
         assertEquals(CREATED_DATE, resc.getCreatedDate());
         assertEquals(CREATED_BY, resc.getCreatedBy());

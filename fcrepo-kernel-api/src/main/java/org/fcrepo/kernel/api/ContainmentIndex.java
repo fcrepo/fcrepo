@@ -124,4 +124,11 @@ public interface ContainmentIndex {
      */
     void reset();
 
+    /**
+     * Find whether there are any resources that starts with the ID provided.
+     * @param txID The transaction id, or null if no transaction.
+     * @param fedoraId The ID to use to look for other IDs.
+     * @return Are there any matching IDs.
+     */
+    boolean hasResourcesStartingWith(final String txID, final FedoraId fedoraId);
 }
