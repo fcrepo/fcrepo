@@ -27,6 +27,7 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 
 /**
  * Fedora's OCFL related configuration properties
@@ -42,6 +43,7 @@ public class OcflPropsConfig {
     public static final String FCREPO_OCFL_STAGING = "fcrepo.ocfl.staging";
     public static final String FCREPO_OCFL_ROOT = "fcrepo.ocfl.root";
     public static final String FCREPO_OCFL_TEMP = "fcrepo.ocfl.temp";
+    private static final String FCREPO_OCFL_S3_BUCKET = "fcrepo.ocfl.s3.bucket";
 
     private static final String OCFL_STAGING = "staging";
     private static final String OCFL_ROOT = "ocfl-root";
@@ -62,14 +64,47 @@ public class OcflPropsConfig {
     @Value("${fcrepo.autoversioning.enabled:true}")
     private boolean autoVersioningEnabled;
 
+    @Value("${fcrepo.storage:ocfl-fs}")
+    private String storageStr;
+    private Storage storage;
+
+    @Value("${fcrepo.aws.access-key:}")
+    private String awsAccessKey;
+
+    @Value("${fcrepo.aws.secret-key:}")
+    private String awsSecretKey;
+
+    @Value("${fcrepo.aws.region:}")
+    private String awsRegion;
+
+    @Value("${" + FCREPO_OCFL_S3_BUCKET + ":}")
+    private String ocflS3Bucket;
+
+    @Value("${fcrepo.ocfl.s3.prefix:}")
+    private String ocflS3Prefix;
+
     @PostConstruct
     private void postConstruct() throws IOException {
+        storage = Storage.fromString(storageStr);
+        LOGGER.info("Fedora storage type: {}", storage);
         LOGGER.info("Fedora staging: {}", fedoraOcflStaging);
-        LOGGER.info("Fedora OCFL root: {}", ocflRepoRoot);
         LOGGER.info("Fedora OCFL temp: {}", ocflTemp);
         Files.createDirectories(fedoraOcflStaging);
-        Files.createDirectories(ocflRepoRoot);
         Files.createDirectories(ocflTemp);
+
+        if (storage == Storage.OCFL_FILESYSTEM) {
+            LOGGER.info("Fedora OCFL root: {}", ocflRepoRoot);
+            Files.createDirectories(ocflRepoRoot);
+        } else if (storage == Storage.OCFL_S3) {
+            Objects.requireNonNull(ocflS3Bucket,
+                    String.format("The property %s must be set when OCFL S3 storage is used", FCREPO_OCFL_S3_BUCKET));
+
+            LOGGER.info("Fedora AWS access key: {}", awsAccessKey);
+            LOGGER.info("Fedora AWS secret key set: {}", Objects.isNull(awsSecretKey));
+            LOGGER.info("Fedora AWS region: {}", awsRegion);
+            LOGGER.info("Fedora OCFL S3 bucket: {}", ocflS3Bucket);
+            LOGGER.info("Fedora OCFL S3 prefix: {}", ocflS3Prefix);
+        }
     }
 
     /**
@@ -134,6 +169,90 @@ public class OcflPropsConfig {
      */
     public void setAutoVersioningEnabled(final boolean autoVersioningEnabled) {
         this.autoVersioningEnabled = autoVersioningEnabled;
+    }
+
+    /**
+     * @return Indicates the storage type. ocfl-fs is the default
+     */
+    public Storage getStorage() {
+        return storage;
+    }
+
+    /**
+     * @param storage storage to use
+     */
+    public void setStorage(final Storage storage) {
+        this.storage = storage;
+    }
+
+    /**
+     * @return the aws access key to use, may be null
+     */
+    public String getAwsAccessKey() {
+        return awsAccessKey;
+    }
+
+    /**
+     * @param awsAccessKey the aws access key to use
+     */
+    public void setAwsAccessKey(final String awsAccessKey) {
+        this.awsAccessKey = awsAccessKey;
+    }
+
+    /**
+     * @return the aws secret key to use, may be null
+     */
+    public String getAwsSecretKey() {
+        return awsSecretKey;
+    }
+
+    /**
+     * @param awsSecretKey the aws secret key to use
+     */
+    public void setAwsSecretKey(final String awsSecretKey) {
+        this.awsSecretKey = awsSecretKey;
+    }
+
+    /**
+     * @return the aws region to use, may be null
+     */
+    public String getAwsRegion() {
+        return awsRegion;
+    }
+
+    /**
+     * @param awsRegion the aws region to use
+     */
+    public void setAwsRegion(final String awsRegion) {
+        this.awsRegion = awsRegion;
+    }
+
+    /**
+     * @return the s3 bucket to store objects in
+     */
+    public String getOcflS3Bucket() {
+        return ocflS3Bucket;
+    }
+
+    /**
+     * @param ocflS3Bucket sets the s3 bucket to store objects in
+     */
+    public void setOcflS3Bucket(final String ocflS3Bucket) {
+        this.ocflS3Bucket = ocflS3Bucket;
+    }
+
+    /**
+     * @return the s3 prefix to store objects under, may be null
+     */
+    public String getOcflS3Prefix() {
+        return ocflS3Prefix;
+    }
+
+    /**
+     * @param ocflS3Prefix the prefix to store objects under
+     */
+    public void setOcflS3Prefix(final String ocflS3Prefix) {
+        this.ocflS3Prefix = ocflS3Prefix;
     }
 
 }

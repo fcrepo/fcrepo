@@ -59,7 +59,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.DELETE;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createRepository;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createFilesystemRepository;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -114,7 +114,7 @@ public class IndexBuilderImplTest {
         final var repoDir = dataDir.resolve("ocfl-repo");
         final var workDir = dataDir.resolve("ocfl-work");
 
-        final var repository = createRepository(repoDir, workDir);
+        final var repository = createFilesystemRepository(repoDir, workDir);
 
         index = new TestOcflObjectIndex();
         index.reset();
