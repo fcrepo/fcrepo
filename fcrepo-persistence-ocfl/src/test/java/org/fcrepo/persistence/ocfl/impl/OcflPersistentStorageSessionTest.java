@@ -63,7 +63,7 @@ import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createRepository;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createFilesystemRepository;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.junit.Assert.assertEquals;
@@ -146,7 +146,7 @@ public class OcflPersistentStorageSessionTest {
         final var workDir = tempFolder.newFolder("ocfl-work").toPath();
 
         final var objectMapper = OcflPersistentStorageUtils.objectMapper();
-        final var repository = createRepository(repoDir, workDir);
+        final var repository = createFilesystemRepository(repoDir, workDir);
         objectSessionFactory = new DefaultOcflObjectSessionFactory(repository, stagingDir,
                 objectMapper, CommitType.NEW_VERSION,
                 "Fedora 6 test", "fedoraAdmin", "info:fedora/fedoraAdmin");
