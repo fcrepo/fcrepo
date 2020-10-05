@@ -60,6 +60,7 @@ public class DeleteResourceServiceImpl extends AbstractDeleteResourceService imp
                 .userPrincipal(userPrincipal)
                 .build();
         pSession.persist(deleteOp);
+        membershipService.resourceDeleted(tx.getId(), fedoraId);
         containmentIndex.removeResource(tx.getId(), fedoraId);
         referenceService.deleteAllReferences(tx.getId(), fedoraId);
 

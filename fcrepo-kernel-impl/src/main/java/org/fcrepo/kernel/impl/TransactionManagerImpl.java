@@ -23,6 +23,7 @@ import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.TransactionClosedException;
 import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
+import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.slf4j.Logger;
@@ -60,6 +61,9 @@ public class TransactionManagerImpl implements TransactionManager {
     @Inject
     private ReferenceService referenceService;
 
+    @Inject
+    private MembershipService membershipService;
+
     TransactionManagerImpl() {
         transactions = new ConcurrentHashMap<>();
     }
@@ -88,7 +92,7 @@ public class TransactionManagerImpl implements TransactionManager {
                     // but don't immediately remove it from the list of transactions
                     // so that the rolled back status can be checked
                     tx.rollback();
-                } catch (RuntimeException e) {
+                } catch (final RuntimeException e) {
                     LOGGER.error("Failed to rollback expired transaction {}", tx.getId(), e);
                 }
             }
@@ -143,5 +147,9 @@ public class TransactionManagerImpl implements TransactionManager {
 
     protected ReferenceService getReferenceService() {
         return referenceService;
+    }
+
+    protected MembershipService getMembershipService() {
+        return membershipService;
     }
 }

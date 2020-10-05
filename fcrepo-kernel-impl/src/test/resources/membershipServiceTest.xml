@@ -1,0 +1,53 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+    ">
+    <context:annotation-config/>
+
+    <!-- Creating TransactionManager Bean -->
+    <bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="org.h2.jdbcx.JdbcDataSource" />
+        <property name="url" value="jdbc:h2:mem:index;DB_CLOSE_DELAY=-1" />
+    </bean>
+
+    <!-- Containment Index to test -->
+    <bean id="containmentIndex" class="org.fcrepo.kernel.impl.ContainmentIndexImpl">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <!-- ReferenceService index to test -->
+    <bean id="referenceIndex" class="org.fcrepo.kernel.impl.services.ReferenceServiceImpl">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+    
+    <bean id="eventAccumulator" class="org.mockito.Mockito" factory-method="mock">
+        <constructor-arg value="org.fcrepo.kernel.api.observer.EventAccumulator"/>
+    </bean>
+    
+    <bean id="membershipIndexManager" class="org.fcrepo.kernel.impl.services.MembershipIndexManager">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+    
+    <bean id="persistentStorageSessionManager" class="org.mockito.Mockito" factory-method="mock">
+        <constructor-arg value="org.fcrepo.persistence.api.PersistentStorageSessionManager" />
+    </bean>
+    
+    <bean id="resourceFactory" class="org.fcrepo.kernel.impl.models.ResourceFactoryImpl">
+    </bean>
+    
+    <bean id="fedoraPropsConfig" class="org.fcrepo.config.FedoraPropsConfig">
+    </bean>
+    
+    <bean id="ocflPropsConfig" class="org.fcrepo.config.OcflPropsConfig">
+    </bean>
+    
+    <bean id="membershipService" class="org.fcrepo.kernel.impl.services.MembershipServiceImpl">
+    </bean>
+</beans>

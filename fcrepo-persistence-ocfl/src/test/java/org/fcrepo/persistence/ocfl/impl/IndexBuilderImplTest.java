@@ -24,6 +24,7 @@ import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
+import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.kernel.impl.operations.DeleteResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
@@ -32,7 +33,10 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.IndexBuilder;
+import org.fcrepo.search.api.Condition;
 import org.fcrepo.search.api.SearchIndex;
+import org.fcrepo.search.api.SearchParameters;
+import org.fcrepo.search.api.SearchResult;
 import org.fcrepo.storage.ocfl.CommitType;
 import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
 import org.junit.Before;
@@ -44,8 +48,11 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static java.lang.System.currentTimeMillis;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
@@ -65,6 +72,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
+import static org.mockito.ArgumentMatchers.any;
 
 /**
  * @author dbernstein
@@ -86,6 +94,12 @@ public class IndexBuilderImplTest {
     @Mock
     private ReferenceService referenceService;
 
+    @Mock
+    private MembershipService membershipService;
+
+    @Mock
+    private SearchResult containerResult;
+
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
 
@@ -94,12 +108,11 @@ public class IndexBuilderImplTest {
     private final FedoraId resource2 =  FedoraId.create(resource1 + "/resource2");
 
     @Before
-    public void setup() throws IOException {
+    public void setup() throws Exception {
         final var targetDir = Paths.get("target");
         final var dataDir = targetDir.resolve("test-fcrepo-data-" + currentTimeMillis());
         final var repoDir = dataDir.resolve("ocfl-repo");
         final var workDir = dataDir.resolve("ocfl-work");
-        final var staging = dataDir.resolve("ocfl-staging");
 
         final var repository = createRepository(repoDir, workDir);
 
@@ -123,6 +136,9 @@ public class IndexBuilderImplTest {
         setField(indexBuilder, "containmentIndex", containmentIndex);
         setField(indexBuilder, "searchIndex", searchIndex);
         setField(indexBuilder, "referenceService", referenceService);
+        setField(indexBuilder, "membershipService", membershipService);
+
+        when(searchIndex.doSearch(any(SearchParameters.class))).thenReturn(containerResult);
     }
 
     @Test
@@ -214,6 +230,38 @@ public class IndexBuilderImplTest {
         verify(containmentIndex, never()).addContainedBy(anyString(), eq(resource1), eq(resource2));
         verify(containmentIndex).commitTransaction(anyString());
         verify(searchIndex, times(1)).addUpdateIndex(anyString(), isA(ResourceHeaders.class));
+    }
+
+    // Verify that DirectContainers get membership rebuilt, and that querying/paging for resources works
+    @Test
+    public void rebuildRepoLotsOfMembership() throws Exception {
+        // Reduce the page size so the test doesn't take a while
+        ((IndexBuilderImpl) indexBuilder).setMembershipQueryPageSize(5);
+
+        final var session = sessionManager.getSession(session1Id);
+
+        final int numberContainers = 18;
+        final List<Map<String, Object>> result = new ArrayList<>();
+        for (int i = 0; i < numberContainers; i++) {
+            final FedoraId containerId = FedoraId.create(UUID.randomUUID().toString());
+            result.add(Map.of(Condition.Field.FEDORA_ID.toString(), containerId.getFullId()));
+            createResource(session, containerId, false);
+        }
+
+        when(containerResult.getItems()).thenReturn(result);
+
+        session.commit();
+
+        index.reset();
+
+        indexBuilder.rebuildIfNecessary();
+
+        verify(containmentIndex, times(numberContainers)).addContainedBy(anyString(),
+                eq(FedoraId.getRepositoryRootId()), any(FedoraId.class));
+        verify(containmentIndex).commitTransaction(anyString());
+        verify(searchIndex, times(numberContainers)).addUpdateIndex(isA(String.class), isA(ResourceHeaders.class));
+        verify(membershipService, times(numberContainers)).populateMembershipHistory(anyString(), any(FedoraId.class));
+        verify(membershipService).commitTransaction(anyString());
     }
 
     private void assertDoesNotHaveOcflId(final FedoraId resourceId) {

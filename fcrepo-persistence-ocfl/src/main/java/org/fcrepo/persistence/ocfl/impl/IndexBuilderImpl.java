@@ -26,15 +26,23 @@ import edu.wisc.library.ocfl.api.OcflRepository;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
 import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.IndexBuilder;
+import org.fcrepo.search.api.Condition;
 import org.fcrepo.search.api.SearchIndex;
+import org.fcrepo.search.api.SearchParameters;
+import org.fcrepo.search.api.Condition.Field;
+import org.fcrepo.search.api.Condition.Operator;
+import org.fcrepo.search.api.InvalidQueryException;
 import org.fcrepo.storage.ocfl.OcflObjectSession;
 import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
 import org.slf4j.Logger;
@@ -45,6 +53,7 @@ import javax.inject.Inject;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -64,6 +73,8 @@ public class IndexBuilderImpl implements IndexBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexBuilderImpl.class);
 
+    private int membershipPageSize = 500;
+
     @Inject
     private OcflObjectSessionFactory objectSessionFactory;
 
@@ -82,6 +93,9 @@ public class IndexBuilderImpl implements IndexBuilder {
     @Inject
     private ReferenceService referenceService;
 
+    @Inject
+    private MembershipService membershipService;
+
     @Override
     public void rebuildIfNecessary() {
         if (shouldRebuild()) {
@@ -98,6 +112,7 @@ public class IndexBuilderImpl implements IndexBuilder {
         containmentIndex.reset();
         searchIndex.reset();
         referenceService.reset();
+        membershipService.reset();
 
         final var txId = UUID.randomUUID().toString();
 
@@ -122,6 +137,7 @@ public class IndexBuilderImpl implements IndexBuilder {
             containmentIndex.commitTransaction(txId);
             fedoraToOcflObjectIndex.commit(txId);
             referenceService.commitTransaction(txId);
+            indexMembership(txId);
             LOGGER.info("Index rebuild complete");
         } catch (final RuntimeException e) {
             execQuietly("Failed to reset searchIndex", () -> {
@@ -135,6 +151,11 @@ public class IndexBuilderImpl implements IndexBuilder {
             });
             execQuietly("Failed to rollback OCFL index transaction " + txId, () -> {
                 fedoraToOcflObjectIndex.rollback(txId);
+                return null;
+            });
+
+            execQuietly("Failed to rollback membership index transaction " + txId, () -> {
+                membershipService.rollbackTransaction(txId);
                 return null;
             });
             throw e;
@@ -193,6 +214,48 @@ public class IndexBuilderImpl implements IndexBuilder {
             searchIndex.addUpdateIndex(txId, headers);
             LOGGER.debug("Rebuilt searchIndex for {}", headers.getId());
         });
+    }
+
+    /**
+     * Index all membership properties by querying for Direct containers, and then
+     * trying population of the membership index for each one
+     * @param txId
+     */
+    private void indexMembership(final String txId) {
+        final var fields = List.of(Condition.Field.FEDORA_ID);
+        final var conditions = List.of(Condition.fromEnums(Field.RDF_TYPE, Operator.EQ,
+                RdfLexicon.DIRECT_CONTAINER.getURI()));
+        int offset = 0;
+
+        try {
+            int numResults = membershipPageSize;
+            do {
+                final var params = new SearchParameters(fields, conditions, membershipPageSize,
+                        offset, Field.FEDORA_ID, "asc");
+
+                final var searchResult = searchIndex.doSearch(params);
+                final var resultList = searchResult.getItems();
+                numResults = resultList.size();
+
+                resultList.stream()
+                    .map(entry -> FedoraId.create((String) entry.get(Condition.Field.FEDORA_ID.toString())))
+                    .forEach(containerId -> membershipService.populateMembershipHistory(txId, containerId));
+
+                // Results are paged, so step through pages until we reach the last one
+                offset += membershipPageSize;
+            } while (numResults == membershipPageSize);
+
+        } catch (final InvalidQueryException e) {
+            throw new RepositoryRuntimeException("Failed to repopulate membership history", e);
+        }
+        membershipService.commitTransaction(txId);
+    }
+
+    /**
+     * @param pageSize number of results to use when querying for membership producing resources
+     */
+    public void setMembershipQueryPageSize(final int pageSize) {
+        this.membershipPageSize = pageSize;
     }
 
     private boolean shouldRebuild() {

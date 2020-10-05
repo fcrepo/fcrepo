@@ -26,6 +26,7 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.TimeMap;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
@@ -36,6 +37,7 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -136,7 +138,7 @@ public class FedoraResourceImpl implements FedoraResource {
     }
 
     @Override
-    public FedoraResource getTimeMap() {
+    public TimeMap getTimeMap() {
         return new TimeMapImpl(this.getOriginalResource(), txId, pSessionManager, resourceFactory);
     }
 
@@ -258,6 +260,10 @@ public class FedoraResourceImpl implements FedoraResource {
             return triples.filter(t -> t.predicateMatches(type.asNode())).map(Triple::getObject)
                     .map(t -> URI.create(t.toString())).collect(toList());
         } catch (final PersistentItemNotFoundException e) {
+            final var headers = getSession().getHeaders(getFedoraId().asResourceId(), getMementoDatetime());
+            if (headers.isDeleted()) {
+                return Collections.emptyList();
+            }
             throw new ItemNotFoundException("Unable to retrieve triples for " + getId(), e);
         } catch (final PersistentStorageException e) {
             throw new RepositoryRuntimeException(e);
@@ -320,7 +326,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public FedoraResource getParent() throws PathNotFoundException {
-        return resourceFactory.getResource(parentId);
+        return resourceFactory.getResource(txId, parentId);
     }
 
     @Override

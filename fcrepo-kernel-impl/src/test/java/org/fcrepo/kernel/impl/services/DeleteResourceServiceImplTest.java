@@ -27,6 +27,7 @@ import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.WebacAcl;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
+import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.kernel.impl.operations.DeleteResourceOperation;
 import org.fcrepo.kernel.impl.operations.DeleteResourceOperationFactoryImpl;
@@ -104,6 +105,9 @@ public class DeleteResourceServiceImplTest {
     @Mock
     private ReferenceService referenceService;
 
+    @Mock
+    private MembershipService membershipService;
+
     @Captor
     private ArgumentCaptor<DeleteResourceOperation> operationCaptor;
 
@@ -127,6 +131,7 @@ public class DeleteResourceServiceImplTest {
         setField(service, "containmentIndex", containmentIndex);
         setField(service, "eventAccumulator", eventAccumulator);
         setField(service, "referenceService", referenceService);
+        setField(service, "membershipService", membershipService);
         when(container.getFedoraId()).thenReturn(RESOURCE_ID);
     }
 

@@ -22,6 +22,7 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TransactionClosedException;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
+import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -87,6 +88,7 @@ public class TransactionImpl implements Transaction {
             this.getPersistentSession().commit();
             this.getContainmentIndex().commitTransaction(id);
             this.getReferenceService().commitTransaction(id);
+            this.getMembershipService().commitTransaction(id);
             this.getEventAccumulator().emitEvents(id, baseUri, userAgent);
             this.committed = true;
         } catch (final PersistentStorageException ex) {
@@ -122,6 +124,10 @@ public class TransactionImpl implements Transaction {
         });
         execQuietly("Failed to rollback reference index in transaction " + id, () -> {
             this.getReferenceService().rollbackTransaction(id);
+            return null;
+        });
+        execQuietly("Failed to rollback membership index in transaction " + id, () -> {
+            this.getMembershipService().rollbackTransaction(id);
             return null;
         });
         execQuietly("Failed to rollback events in transaction " + id, () -> {
@@ -258,6 +264,10 @@ public class TransactionImpl implements Transaction {
 
     private ReferenceService getReferenceService() {
         return this.txManager.getReferenceService();
+    }
+
+    private MembershipService getMembershipService() {
+        return this.txManager.getMembershipService();
     }
 
 }

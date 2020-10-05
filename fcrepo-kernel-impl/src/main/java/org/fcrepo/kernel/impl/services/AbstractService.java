@@ -60,6 +60,7 @@ import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.slf4j.Logger;
 
@@ -89,6 +90,9 @@ public abstract class AbstractService {
 
     @Inject
     protected ReferenceService referenceService;
+
+    @Inject
+    protected MembershipService membershipService;
 
     /**
      * Utility to determine the correct interaction model from elements of a request.

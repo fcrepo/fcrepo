@@ -88,10 +88,11 @@ public interface PersistentStorageSession {
             throws PersistentStorageException;
 
     /**
-     * Returns a list of immutable versions associated with the specified fedora identifier
+     * Returns a list of immutable versions associated with the specified fedora identifier in ascending order
+     * by creation time of the version.
      *
      * @param identifier identifier for the resource.
-     * @return The list of instants that map to the underlying versions
+     * @return The list of instants that map to the underlying versions, ordered by time created
      * @throws PersistentStorageException  Either a PersistentItemNotFoundException or PersistentSessionClosedException
      */
     List<Instant> listVersions(final FedoraId identifier)
