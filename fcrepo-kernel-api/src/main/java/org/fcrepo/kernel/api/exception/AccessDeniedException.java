@@ -28,12 +28,13 @@ public class AccessDeniedException extends RepositoryRuntimeException {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Ordinary constructor.
+     * Constructor
      *
-     * @param rootCause the root cause
+     * @param msg message
+     * @param e cause
      */
-    public AccessDeniedException(final Throwable rootCause) {
-        super(rootCause);
+    public AccessDeniedException(final String msg, final Throwable e) {
+        super(msg, e);
     }
 
 }

@@ -123,7 +123,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
                 return false;
             } catch (final PersistentStorageException e) {
                 // Other error, pass along.
-                throw new RepositoryRuntimeException(e);
+                throw new RepositoryRuntimeException(e.getMessage(), e);
             } finally {
                 if (transactionId == null) {
                     // Commit session (if read-only) so it doesn't hang around.
@@ -224,9 +224,9 @@ public class ResourceFactoryImpl implements ResourceFactory {
         } catch (final SecurityException | ReflectiveOperationException e) {
             throw new RepositoryRuntimeException("Unable to construct object", e);
         } catch (final PersistentItemNotFoundException e) {
-            throw new PathNotFoundException(e);
+            throw new PathNotFoundException(e.getMessage(), e);
         } catch (final PersistentStorageException e) {
-            throw new RepositoryRuntimeException(e);
+            throw new RepositoryRuntimeException(e.getMessage(), e);
         }
     }
 
@@ -280,7 +280,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
                 try {
                     return getResource(transactionId, FedoraId.create(childId));
                 } catch (final PathNotFoundException e) {
-                    throw new PathNotFoundRuntimeException(e);
+                    throw new PathNotFoundRuntimeException(e.getMessage(), e);
                 }
             });
     }

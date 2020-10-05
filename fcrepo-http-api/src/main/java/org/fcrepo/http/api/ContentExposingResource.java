@@ -996,7 +996,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         } else if (rootThrowable instanceof RuntimeException) {
             throw (RuntimeException) rootThrowable;
         } else {
-            throw new RepositoryRuntimeException(rootThrowable);
+            throw new RepositoryRuntimeException(rootThrowable.getMessage(), rootThrowable);
         }
     }
 
@@ -1048,7 +1048,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
             return fedoraResource;
         } catch (final PathNotFoundException exc) {
-            throw new PathNotFoundRuntimeException(exc);
+            throw new PathNotFoundRuntimeException(exc.getMessage(), exc);
         }
     }
 }

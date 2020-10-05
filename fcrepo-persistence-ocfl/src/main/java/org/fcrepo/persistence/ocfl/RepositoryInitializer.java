@@ -97,7 +97,7 @@ public class RepositoryInitializer {
             }
 
         } catch (PersistentStorageException ex) {
-            throw new RepositoryRuntimeException(ex);
+            throw new RepositoryRuntimeException(ex.getMessage(), ex);
         }
     }
 

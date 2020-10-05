@@ -105,7 +105,7 @@ abstract public class AbstractDeleteResourceService extends AbstractService {
                     }
                 } catch (final PathNotFoundException ex) {
                     log.error("Path not found for {}: {}", fedoraId.getFullId(), ex.getMessage());
-                    throw new PathNotFoundRuntimeException(ex);
+                    throw new PathNotFoundRuntimeException(ex.getMessage(), ex);
                 } catch (final PersistentStorageException ex) {
                     throw new RepositoryRuntimeException(format("failed to delete resource %s", fedoraId.getFullId()),
                             ex);

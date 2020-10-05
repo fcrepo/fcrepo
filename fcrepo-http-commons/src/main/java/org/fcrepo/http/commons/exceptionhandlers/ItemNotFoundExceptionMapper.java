@@ -17,13 +17,14 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import org.fcrepo.kernel.api.exception.ItemNotFoundException;
+import org.slf4j.Logger;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
-import org.fcrepo.kernel.api.exception.ItemNotFoundException;
-import org.slf4j.Logger;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 
 /**
@@ -40,8 +41,6 @@ public class ItemNotFoundExceptionMapper implements
 
     @Override
     public Response toResponse(final ItemNotFoundException e) {
-
-        LOGGER.debug("Exception intercepted by ItemNotFoundExceptionMapper: {}\n", e.getMessage());
         debugException(this, e, LOGGER);
         return Response.status(Response.Status.NOT_FOUND).
                 entity("Error: " + e.getMessage()).build();

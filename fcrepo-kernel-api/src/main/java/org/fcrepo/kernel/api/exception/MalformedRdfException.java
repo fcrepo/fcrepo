@@ -42,15 +42,6 @@ public class MalformedRdfException extends ConstraintViolationException {
     /**
      * Ordinary constructor.
      *
-     * @param rootCause the root cause
-     */
-    public MalformedRdfException(final Throwable rootCause) {
-        super(rootCause);
-    }
-
-    /**
-     * Ordinary constructor.
-     *
      * @param msg the message
      * @param rootCause the root cause
      */

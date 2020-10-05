@@ -37,16 +37,6 @@ public class RepositoryRuntimeException extends RuntimeException {
     /**
      * Ordinary constructor.
      *
-     * @param rootCause the root cause
-     */
-    public RepositoryRuntimeException(final Throwable rootCause) {
-        super(rootCause);
-    }
-
-
-    /**
-     * Ordinary constructor.
-     *
      * @param msg the message
      * @param rootCause the root cause
      */

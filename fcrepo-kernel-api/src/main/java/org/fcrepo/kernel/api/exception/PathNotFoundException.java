@@ -40,10 +40,10 @@ public class PathNotFoundException extends Exception {
     /**
      * Constructor for wrapping exception.
      *
-     * @param exception the original exception.
+     * @param message the original message.
+     * @param cause the root cause.
      */
-    public PathNotFoundException(final Throwable exception) {
-        super(exception);
+    public PathNotFoundException(final String message, final Throwable cause) {
+        super(message, cause);
     }
-
 }

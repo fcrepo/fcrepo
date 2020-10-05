@@ -17,12 +17,12 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
+import org.slf4j.Logger;
+
 import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
-
-import org.slf4j.Logger;
 
 import static javax.ws.rs.core.Response.fromResponse;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
@@ -41,7 +41,7 @@ public class ServerErrorExceptionMapper implements
 
     @Override
     public Response toResponse(final ServerErrorException e) {
-        debugException(this, e, LOGGER);
+        LOGGER.warn("Server error", e);
         return fromResponse(e.getResponse()).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
     }
 }

@@ -233,7 +233,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
                 return resourceFactory.getResource(tx.getId(), fedoraID);
             }
         } catch (final PathNotFoundException e) {
-            throw new RepositoryRuntimeException(e);
+            throw new RepositoryRuntimeException(e.getMessage(), e);
         }
     }
 

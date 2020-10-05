@@ -64,9 +64,9 @@ public class UpdatePropertiesServiceImpl extends AbstractService implements Upda
             UpdateAction.execute(request, model);
             replacePropertiesService.perform(txId, userPrincipal, fedoraId, model);
         } catch (final PersistentItemNotFoundException ex) {
-            throw new ItemNotFoundException(ex);
+            throw new ItemNotFoundException(ex.getMessage(), ex);
         } catch (final PersistentStorageException ex) {
-            throw new RepositoryRuntimeException(ex);
+            throw new RepositoryRuntimeException(ex.getMessage(), ex);
         }
 
     }

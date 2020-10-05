@@ -126,7 +126,7 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
                 final var fedoraId = getInstantFedoraId(version);
                 return resourceFactory.getResource(txId, fedoraId);
             } catch (final PathNotFoundException e) {
-                throw new PathNotFoundRuntimeException(e);
+                throw new PathNotFoundRuntimeException(e.getMessage(), e);
             }
         });
     }
@@ -153,7 +153,7 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
             } catch (final PersistentItemNotFoundException e) {
                 throw new ItemNotFoundException("Unable to retrieve versions for " + getId(), e);
             } catch (final PersistentStorageException e) {
-                throw new RepositoryRuntimeException(e);
+                throw new RepositoryRuntimeException(e.getMessage(), e);
             }
         }
         return versions;

@@ -84,7 +84,7 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
             throw new ItemNotFoundException("Unable to find content for " + getId()
                     + " version " + getMementoDatetime(), e);
         } catch (final PersistentStorageException | IOException e) {
-            throw new RepositoryRuntimeException(e);
+            throw new RepositoryRuntimeException(e.getMessage(), e);
         }
     }
 
@@ -138,7 +138,7 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
             }
             return resourceFactory.getResource(txId, descId);
         } catch (final PathNotFoundException e) {
-            throw new PathNotFoundRuntimeException(e);
+            throw new PathNotFoundRuntimeException(e.getMessage(), e);
         }
     }
 

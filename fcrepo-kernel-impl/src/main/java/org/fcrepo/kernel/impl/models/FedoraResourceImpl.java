@@ -127,7 +127,7 @@ public class FedoraResourceImpl implements FedoraResource {
                 final var fedoraId = FedoraId.create(getFedoraId().getResourceId());
                 return getFedoraResource(fedoraId);
             } catch (final PathNotFoundException e) {
-                throw new PathNotFoundRuntimeException(e);
+                throw new PathNotFoundRuntimeException(e.getMessage(), e);
             }
         }
         return this;
@@ -247,7 +247,7 @@ public class FedoraResourceImpl implements FedoraResource {
         } catch (final PersistentItemNotFoundException e) {
             throw new ItemNotFoundException("Unable to retrieve headers for " + getId(), e);
         } catch (final PersistentStorageException e) {
-            throw new RepositoryRuntimeException(e);
+            throw new RepositoryRuntimeException(e.getMessage(), e);
         }
     }
 
@@ -266,7 +266,7 @@ public class FedoraResourceImpl implements FedoraResource {
             }
             throw new ItemNotFoundException("Unable to retrieve triples for " + getId(), e);
         } catch (final PersistentStorageException e) {
-            throw new RepositoryRuntimeException(e);
+            throw new RepositoryRuntimeException(e.getMessage(), e);
         }
     }
 
@@ -280,7 +280,7 @@ public class FedoraResourceImpl implements FedoraResource {
         } catch (final PersistentItemNotFoundException e) {
             throw new ItemNotFoundException("Unable to retrieve triples for " + getId(), e);
         } catch (final PersistentStorageException e) {
-            throw new RepositoryRuntimeException(e);
+            throw new RepositoryRuntimeException(e.getMessage(), e);
         }
     }
 

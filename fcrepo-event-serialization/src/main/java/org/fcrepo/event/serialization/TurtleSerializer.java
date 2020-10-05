@@ -44,7 +44,7 @@ public class TurtleSerializer implements EventSerializer {
             model.write(out, "TTL");
             return out.toString("UTF-8");
         } catch (final UnsupportedEncodingException ex) {
-            throw new RepositoryRuntimeException(ex);
+            throw new RepositoryRuntimeException(ex.getMessage(), ex);
         }
     }
 }

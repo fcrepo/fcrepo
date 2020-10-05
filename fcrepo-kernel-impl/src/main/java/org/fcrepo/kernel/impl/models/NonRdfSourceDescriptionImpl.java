@@ -70,7 +70,7 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
         try {
             return this.resourceFactory.getResource(txId, describedId);
         } catch (final PathNotFoundException e) {
-            throw new PathNotFoundRuntimeException(e);
+            throw new PathNotFoundRuntimeException(e.getMessage(), e);
         }
     }
 

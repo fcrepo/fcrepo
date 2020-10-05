@@ -42,7 +42,7 @@ public class InterruptedExceptionMapper implements
 
     @Override
     public Response toResponse(final InterruptedRuntimeException e) {
-        debugException(this, e, LOGGER);
+        LOGGER.warn("Service interrupted", e);
         return status(SERVICE_UNAVAILABLE).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
     }
 }

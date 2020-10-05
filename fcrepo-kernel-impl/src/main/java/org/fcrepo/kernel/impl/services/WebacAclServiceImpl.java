@@ -17,11 +17,6 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_WEBAC_ACL_URI;
-import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
-
-import javax.inject.Inject;
-
 import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
@@ -39,6 +34,11 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
+
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_WEBAC_ACL_URI;
+import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 
 /**
  * Implementation of {@link WebacAclService}
@@ -62,7 +62,7 @@ public class WebacAclServiceImpl extends AbstractService implements WebacAclServ
         try {
             return resourceFactory.getResource(transaction, fedoraId, WebacAclImpl.class);
         } catch (final PathNotFoundException exc) {
-            throw new PathNotFoundRuntimeException(exc);
+            throw new PathNotFoundRuntimeException(exc.getMessage(), exc);
         }
     }
 

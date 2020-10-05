@@ -237,7 +237,7 @@ public class WebACRolesProvider {
                     final FedoraResource resource = resourceFactory.getResource(transaction, fedoraId);
                     return getAgentMembers(translator, resource, hashedSuffix);
                 } catch (final PathNotFoundException e) {
-                    throw new PathNotFoundRuntimeException(e);
+                    throw new PathNotFoundRuntimeException(e.getMessage(), e);
                 }
             } else if (agentGroup.equals(FOAF_AGENT_VALUE)) {
                 return of(agentGroup);

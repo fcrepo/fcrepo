@@ -17,17 +17,17 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static com.google.common.base.Throwables.getStackTraceAsString;
-import static javax.ws.rs.core.Response.serverError;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import org.fcrepo.kernel.api.exception.SessionMissingException;
+import org.slf4j.Logger;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
-import org.fcrepo.kernel.api.exception.SessionMissingException;
-import org.slf4j.Logger;
+import static com.google.common.base.Throwables.getStackTraceAsString;
+import static javax.ws.rs.core.Response.serverError;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Catch all the exceptions!
@@ -41,7 +41,7 @@ import org.slf4j.Logger;
 public class WildcardExceptionMapper implements
         ExceptionMapper<Exception>, ExceptionDebugLogging {
 
-    Boolean showStackTrace = true;
+    Boolean showStackTrace = false;
 
     private static final Logger LOGGER =
         getLogger(WildcardExceptionMapper.class);
@@ -53,9 +53,7 @@ public class WildcardExceptionMapper implements
                     .toResponse((SessionMissingException) e.getCause());
         }
 
-
-        LOGGER.error("Exception intercepted by WildcardExceptionMapper: {}\n", e.getMessage());
-        debugException(this, e, LOGGER);
+        LOGGER.warn("Unmapped exception", e);
         return serverError().entity(
                 showStackTrace ? getStackTraceAsString(e) : null).type(TEXT_PLAIN_WITH_CHARSET).build();
     }

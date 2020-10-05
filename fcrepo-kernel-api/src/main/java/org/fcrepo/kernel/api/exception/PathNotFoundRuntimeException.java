@@ -27,14 +27,6 @@ public class PathNotFoundRuntimeException extends RepositoryRuntimeException {
 
     /**
      * Wrap a PathNotFoundException in a runtime exception
-     * @param rootCause the root cause
-     */
-    public PathNotFoundRuntimeException(final Throwable rootCause) {
-        super(rootCause);
-    }
-
-    /**
-     * Wrap a PathNotFoundException in a runtime exception
      * @param message the original message.
      * @param rootCause the root cause.
      */
