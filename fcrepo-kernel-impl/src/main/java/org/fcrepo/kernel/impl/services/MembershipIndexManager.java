@@ -157,15 +157,6 @@ public class MembershipIndexManager {
                 " AND m.property = :property" +
                 " AND m.object_id = :objectId";
 
-    private static final String END_MEMBERSHIP_IN_TX =
-            "UPDATE membership_tx_operations" +
-            " SET end_time = :endTime" +
-            " WHERE source_id = :sourceId" +
-                " AND end_time = :noEndTime" +
-                " AND subject_id = :subjectId" +
-                " AND property = :property" +
-                " AND object_id = :objectId";
-
     private static final String CLEAR_ENTRY_IN_TX =
             "DELETE FROM membership_tx_operations" +
             " WHERE source_id = :sourceId" +
@@ -350,26 +341,6 @@ public class MembershipIndexManager {
                     DELETE_OP_PARAM, DELETE_OPERATION);
             jdbcTemplate.update(END_EXISTING_MEMBERSHIP, parameterSource2);
         }
-    }
-
-    /**
-     * End membership entry within a transaction
-     * @param txId transaction id
-     * @param sourceId ID of the direct/indirect container whose membership should be ended
-     * @param membership membership triple to end
-     * @param endTime the time the resource was deleted, generally its last modified
-     */
-    public void endMembershipInTx(final String txId,  final FedoraId sourceId, final Triple membership,
-            final Instant endTime) {
-        final Map<String, Object> parameterSource = Map.of(
-                TX_ID_PARAM, txId,
-                SOURCE_ID_PARAM, sourceId.getFullId(),
-                SUBJECT_ID_PARAM, membership.getSubject().getURI(),
-                PROPERTY_PARAM, membership.getPredicate().getURI(),
-                OBJECT_ID_PARAM, membership.getObject().getURI(),
-                END_TIME_PARAM, Timestamp.from(endTime),
-                NO_END_TIME_PARAM, NO_END_TIMESTAMP);
-        jdbcTemplate.update(END_MEMBERSHIP_IN_TX, parameterSource);
     }
 
     /**

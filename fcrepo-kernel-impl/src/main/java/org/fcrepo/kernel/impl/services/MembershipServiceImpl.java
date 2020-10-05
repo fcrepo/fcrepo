@@ -86,7 +86,7 @@ public class MembershipServiceImpl implements MembershipService {
 
         if (isDirectContainer(parentResc)) {
             final var parentRdfResc = getRdfResource(parentResc);
-            final var newMembership = generateDirectMembership(txId, parentRdfResc, fedoraResc);
+            final var newMembership = generateDirectMembership(parentRdfResc, fedoraResc);
             indexManager.addMembership(txId, parentResc.getFedoraId(), newMembership, fedoraResc.getCreatedDate());
         }
 
@@ -123,7 +123,7 @@ public class MembershipServiceImpl implements MembershipService {
         // Add updated membership properties for all non-tombstone children
         dcResc.getChildren()
                 .filter(child -> !(child instanceof Tombstone))
-                .map(child -> generateDirectMembership(txId, dcRdfResc, child))
+                .map(child -> generateDirectMembership(dcRdfResc, child))
                 .forEach(newMembership -> indexManager.addMembership(txId, dcId,
                         newMembership, dcLastModified));
     }
@@ -143,8 +143,7 @@ public class MembershipServiceImpl implements MembershipService {
         populateMembershipHistory(txId, dcResc, lastVersionDatetime);
     }
 
-    private Triple generateDirectMembership(final String txId, final Resource dcRdfResc,
-            final FedoraResource memberResc) {
+    private Triple generateDirectMembership(final Resource dcRdfResc, final FedoraResource memberResc) {
         final var memberRdfResc = getRdfResource(memberResc.getFedoraId());
 
         final var membershipResc = getMembershipResource(dcRdfResc);
@@ -248,7 +247,7 @@ public class MembershipServiceImpl implements MembershipService {
 
         if (isDirectContainer(parentResc)) {
             final var parentRdfResc = getRdfResource(parentResc);
-            final var deletedMembership = generateDirectMembership(txId, parentRdfResc, fedoraResc);
+            final var deletedMembership = generateDirectMembership(parentRdfResc, fedoraResc);
             indexManager.endMembership(txId, parentResc.getFedoraId(), deletedMembership,
                     fedoraResc.getLastModifiedDate());
 
