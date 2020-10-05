@@ -30,6 +30,7 @@ import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.sql.DataSource;
+import javax.transaction.Transactional;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
@@ -323,6 +324,7 @@ public class MembershipIndexManager {
      * @param membership membership triple to end
      * @param endTime the time the resource was deleted, generally its last modified
      */
+    @Transactional
     public void endMembership(final String txId,  final FedoraId sourceId, final Triple membership,
             final Instant endTime) {
         final Map<String, Object> parameterSource = Map.of(
@@ -376,6 +378,7 @@ public class MembershipIndexManager {
      * @param sourceId ID of the direct/indirect container whose membership should be ended
      * @param endTime the time the resource was deleted, generally its last modified
      */
+    @Transactional
     public void endMembershipForSource(final String txId, final FedoraId sourceId, final Instant endTime) {
         final Map<String, Object> parameterSource = Map.of(
                 TX_ID_PARAM, txId,
@@ -399,6 +402,7 @@ public class MembershipIndexManager {
      * @param sourceId ID of the direct/indirect container
      * @param afterTime time at or after which membership should be removed
      */
+    @Transactional
     public void deleteMembershipForSourceAfter(final String txId, final FedoraId sourceId, final Instant afterTime) {
         // Clear all membership added in this transaction
         final Map<String, Object> parameterSource = Map.of(
@@ -425,6 +429,7 @@ public class MembershipIndexManager {
      * @param txId transaction id
      * @param targetId identifier of the resource to cleanup membership references for
      */
+    @Transactional
     public void deleteMembershipReferences(final String txId, final FedoraId targetId) {
         final Map<String, Object> parameterSource = Map.of(
                 TARGET_ID_PARAM, targetId.getFullId(),
@@ -442,6 +447,7 @@ public class MembershipIndexManager {
      * @param membership membership triple
      * @param startTime time the membership triple was added
      */
+    @Transactional
     public void addMembership(final String txId, final FedoraId sourceId, final Triple membership,
             final Instant startTime) {
         // Clear any existing delete operation for this membership
@@ -542,6 +548,7 @@ public class MembershipIndexManager {
      * Perform a commit of operations stored in the specified transaction
      * @param txId transaction id
      */
+    @Transactional
     public void commitTransaction(final String txId) {
         final Map<String, String> parameterSource = Map.of(TX_ID_PARAM, txId,
                 ADD_OP_PARAM, ADD_OPERATION,
@@ -568,6 +575,7 @@ public class MembershipIndexManager {
     /**
      * Clear all entries from the index
      */
+    @Transactional
     public void clearIndex() {
         jdbcTemplate.update(TRUNCATE_MEMBERSHIP, Map.of());
         jdbcTemplate.update(TRUNCATE_MEMBERSHIP_TX, Map.of());
