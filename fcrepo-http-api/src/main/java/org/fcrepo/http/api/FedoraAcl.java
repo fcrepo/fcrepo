@@ -158,7 +158,7 @@ public class FedoraAcl extends ContentExposingResource {
                 return noContent().location(location).build();
             }
         } catch (PathNotFoundException e) {
-            throw new PathNotFoundRuntimeException(e);
+            throw new PathNotFoundRuntimeException(e.getMessage(), e);
         }
 
     }
@@ -294,7 +294,7 @@ public class FedoraAcl extends ContentExposingResource {
                         "To override the default root ACL you must PUT a user-defined ACL to this endpoint.",
                         CONFLICT);
             }
-            throw new PathNotFoundRuntimeException(exc);
+            throw new PathNotFoundRuntimeException(exc.getMessage(), exc);
         } finally {
             transaction().commitIfShortLived();
         }

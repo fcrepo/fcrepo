@@ -35,13 +35,4 @@ public class InvalidACLException extends ConstraintViolationException {
         super(msg);
     }
 
-    /**
-     * Ordinary constructor.
-     *
-     * @param rootCause the root cause
-     */
-    public InvalidACLException(final Throwable rootCause) {
-        super(rootCause);
-    }
-
 }

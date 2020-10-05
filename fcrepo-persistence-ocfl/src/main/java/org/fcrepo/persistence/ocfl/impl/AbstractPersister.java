@@ -116,7 +116,7 @@ abstract class AbstractPersister implements Persister {
                 //do nothing since there are cases where the resourceId will be the resource
                 //that is about to be created and thus will not yet exist in peristent storage.
             } catch (final PersistentStorageException ex) {
-                throw new RepositoryRuntimeException(ex);
+                throw new RepositoryRuntimeException(ex.getMessage(), ex);
             }
 
             //get the previous path segment not including the trailing slash

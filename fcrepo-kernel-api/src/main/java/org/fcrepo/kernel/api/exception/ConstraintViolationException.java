@@ -39,15 +39,6 @@ public class ConstraintViolationException extends RepositoryRuntimeException {
     /**
      * Ordinary constructor.
      *
-     * @param rootCause the root cause
-     */
-    public ConstraintViolationException(final Throwable rootCause) {
-        super(rootCause);
-    }
-
-    /**
-     * Ordinary constructor.
-     *
      * @param msg the message
      * @param rootCause the root cause
      */

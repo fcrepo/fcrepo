@@ -56,7 +56,7 @@ public class RepositoryRuntimeExceptionMapperTest {
     public void testToResponseWithHandledRepositoryException() {
         when(mockProviders.getExceptionMapper(RepositoryException.class)).thenReturn(mockProvider);
         final RepositoryException cause = new RepositoryException("xyz");
-        final RepositoryRuntimeException ex = new RepositoryRuntimeException(cause);
+        final RepositoryRuntimeException ex = new RepositoryRuntimeException(cause.getMessage(), cause);
         testObj.toResponse(ex);
         verify(mockProvider).toResponse(cause);
     }
@@ -65,7 +65,7 @@ public class RepositoryRuntimeExceptionMapperTest {
     public void testToResponseWithUnhandledRepositoryException() {
         when(mockProviders.getExceptionMapper(Exception.class)).thenReturn(null);
         final Exception cause = new Exception("xyz");
-        final RepositoryRuntimeException ex = new RepositoryRuntimeException(cause);
+        final RepositoryRuntimeException ex = new RepositoryRuntimeException(cause.getMessage(), cause);
         final Response response = testObj.toResponse(ex);
         assertEquals(500, response.getStatus());
     }

@@ -148,9 +148,9 @@ public final class ContentDigest {
 
             return new URI(scheme, value, null);
         } catch (final URISyntaxException unlikelyException) {
-            LOGGER.warn("Exception creating checksum URI: {}",
-                               unlikelyException);
-            throw new RepositoryRuntimeException(unlikelyException);
+            LOGGER.warn("Exception creating checksum URI: alg={}; value={}",
+                               algorithm, value);
+            throw new RepositoryRuntimeException(unlikelyException.getMessage(), unlikelyException);
         }
     }
 

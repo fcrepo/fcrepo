@@ -29,12 +29,13 @@ public class InterruptedRuntimeException extends RepositoryRuntimeException {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Ordinary constructor
+     * Constructor
      *
-     * @param throwable that is being wrapped
+     * @param msg message
+     * @param e cause
      */
-    public InterruptedRuntimeException(final Throwable throwable) {
-        super(throwable);
+    public InterruptedRuntimeException(final String msg, final Throwable e) {
+        super(msg, e);
     }
 
 }

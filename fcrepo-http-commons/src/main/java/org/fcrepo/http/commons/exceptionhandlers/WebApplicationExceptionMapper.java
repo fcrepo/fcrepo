@@ -17,16 +17,16 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static javax.ws.rs.core.Response.fromResponse;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.slf4j.Logger;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
-import org.slf4j.Logger;
+import static javax.ws.rs.core.Response.fromResponse;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Handle Jersey WebApplicationException
@@ -42,9 +42,7 @@ public class WebApplicationExceptionMapper implements
 
     @Override
     public Response toResponse(final WebApplicationException e) {
-        LOGGER.warn(
-                "WebApplicationException intercepted by WebApplicationExceptionMapper: {}\n", e.getMessage());
-        debugException(this, e, LOGGER);
+        LOGGER.warn("Web application error", e);
         final String msg = null == e.getCause() ? e.getMessage() : e.getCause().getMessage();
         // 204, 205, 304 MUST NOT contain an entity body - RFC2616
         switch (e.getResponse().getStatus()) {

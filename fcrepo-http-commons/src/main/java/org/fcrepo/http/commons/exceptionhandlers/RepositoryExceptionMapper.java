@@ -17,20 +17,18 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static com.google.common.base.Throwables.getStackTraceAsString;
-import static javax.ws.rs.core.Response.serverError;
-import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.fcrepo.kernel.api.exception.RepositoryException;
+import org.slf4j.Logger;
 
 import javax.ws.rs.core.Response;
-
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
-import org.fcrepo.kernel.api.exception.RepositoryException;
-import org.slf4j.Logger;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.serverError;
+import static javax.ws.rs.core.Response.status;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Provide a quasi-useful stacktrace when a generic RepositoryException is caught
@@ -45,13 +43,12 @@ public class RepositoryExceptionMapper implements
 
     @Override
     public Response toResponse(final RepositoryException e) {
+        LOGGER.error("Caught a repository exception", e);
 
-        LOGGER.error("Caught a repository exception: {}", e.getMessage());
-        debugException(this, e, LOGGER);
         if (e.getMessage().matches("Error converting \".+\" from String to a Name")) {
             return status(BAD_REQUEST).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
         }
 
-        return serverError().entity(getStackTraceAsString(e)).type(TEXT_PLAIN_WITH_CHARSET).build();
+        return serverError().entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
     }
 }

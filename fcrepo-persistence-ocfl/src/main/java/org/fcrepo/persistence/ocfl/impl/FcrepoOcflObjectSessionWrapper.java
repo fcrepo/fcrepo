@@ -155,7 +155,7 @@ public class FcrepoOcflObjectSessionWrapper implements OcflObjectSession {
         } catch (NotFoundException e) {
             throw new PersistentItemNotFoundException(e.getMessage(), e);
         } catch (Exception e) {
-            throw new PersistentStorageException(e);
+            throw new PersistentStorageException(e.getMessage(), e);
         }
     }
 
@@ -165,7 +165,7 @@ public class FcrepoOcflObjectSessionWrapper implements OcflObjectSession {
         } catch (NotFoundException e) {
             throw new PersistentItemNotFoundException(e.getMessage(), e);
         } catch (Exception e) {
-            throw new PersistentStorageException(e);
+            throw new PersistentStorageException(e.getMessage(), e);
         }
     }
 

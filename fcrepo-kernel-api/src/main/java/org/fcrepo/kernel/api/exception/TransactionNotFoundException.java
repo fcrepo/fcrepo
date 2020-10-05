@@ -36,16 +36,6 @@ public class TransactionNotFoundException extends TransactionRuntimeException {
     /**
      * Ordinary constructor.
      *
-     * @param rootCause the root cause
-     */
-    public TransactionNotFoundException(final Throwable rootCause) {
-        super(rootCause);
-    }
-
-
-    /**
-     * Ordinary constructor.
-     *
      * @param msg the message
      * @param rootCause the root cause
      */

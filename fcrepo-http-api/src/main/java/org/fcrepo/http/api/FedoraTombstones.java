@@ -119,7 +119,7 @@ public class FedoraTombstones extends ContentExposingResource {
         try {
             return getFedoraResource(transaction(), resourceId);
         } catch (final PathNotFoundException e) {
-            throw new PathNotFoundRuntimeException(e);
+            throw new PathNotFoundRuntimeException(e.getMessage(), e);
         }
     }
 

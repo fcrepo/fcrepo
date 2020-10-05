@@ -224,9 +224,10 @@ public class HttpRdfService {
 
         } catch (final RuntimeIOException e) {
             if (e.getCause() instanceof JsonParseException) {
-                throw new MalformedRdfException(e.getCause());
+                final var cause = e.getCause();
+                throw new MalformedRdfException(cause.getMessage(), cause);
             }
-            throw new RepositoryRuntimeException(e);
+            throw new RepositoryRuntimeException(e.getMessage(), e);
         }
     }
 

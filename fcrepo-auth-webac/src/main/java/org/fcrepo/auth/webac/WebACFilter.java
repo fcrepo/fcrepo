@@ -627,9 +627,10 @@ public class WebACFilter extends RequestContextFilter {
             throw new BadRequestException("RDF was not parsable: " + e.getMessage(), e);
         } catch (final RuntimeIOException e) {
             if (e.getCause() instanceof JsonParseException) {
-                throw new MalformedRdfException(e.getCause());
+                final var cause = e.getCause();
+                throw new MalformedRdfException(cause.getMessage(), cause);
             }
-            throw new RepositoryRuntimeException(e);
+            throw new RepositoryRuntimeException(e.getMessage(), e);
         }
     }
 

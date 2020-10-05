@@ -41,8 +41,6 @@ public class PathNotFoundRuntimeExceptionMapper implements
 
     @Override
     public Response toResponse(final PathNotFoundRuntimeException e) {
-
-        LOGGER.debug("Exception intercepted by PathNotFoundRuntimeExceptionMapper: {}\n", e.getMessage());
         debugException(this, e, LOGGER);
         return Response.status(Response.Status.NOT_FOUND).
                 entity("Error: " + e.getMessage()).build();

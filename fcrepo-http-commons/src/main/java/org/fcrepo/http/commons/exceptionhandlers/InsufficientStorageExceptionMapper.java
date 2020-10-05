@@ -18,17 +18,16 @@
 
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static javax.ws.rs.core.Response.status;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.fcrepo.kernel.api.exception.InsufficientStorageException;
+import org.slf4j.Logger;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
-import org.fcrepo.kernel.api.exception.InsufficientStorageException;
-
-import org.slf4j.Logger;
+import static javax.ws.rs.core.Response.status;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Translate InsufficientStorageException errors into HTTP error codes
@@ -47,10 +46,7 @@ public class InsufficientStorageExceptionMapper implements
 
     @Override
     public Response toResponse(final InsufficientStorageException e) {
-        LOGGER.error("InsufficientStorageException intercepted by {}: {}\n",
-                getClass().getSimpleName(),
-                e.getMessage());
-        debugException(this, e, LOGGER);
+        LOGGER.error("Insufficient storage", e);
         return status(INSUFFICIENT_STORAGE_HTTP_CODE).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
     }
 }

@@ -36,16 +36,6 @@ public class TransactionClosedException extends TransactionRuntimeException {
     /**
      * Ordinary constructor.
      *
-     * @param rootCause the root cause
-     */
-    public TransactionClosedException(final Throwable rootCause) {
-        super(rootCause);
-    }
-
-
-    /**
-     * Ordinary constructor.
-     *
      * @param msg the message
      * @param rootCause the root cause
      */

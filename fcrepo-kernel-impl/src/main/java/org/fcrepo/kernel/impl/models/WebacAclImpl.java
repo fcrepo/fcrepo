@@ -51,7 +51,7 @@ public class WebacAclImpl extends ContainerImpl implements WebacAcl {
 
             return resourceFactory.getResource(txId, originalId);
         } catch (final PathNotFoundException exc) {
-            throw new PathNotFoundRuntimeException(exc);
+            throw new PathNotFoundRuntimeException(exc.getMessage(), exc);
         }
     }
 

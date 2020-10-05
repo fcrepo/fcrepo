@@ -51,11 +51,4 @@ public class PersistentStorageException extends RepositoryRuntimeException {
         super(msg, e);
     }
 
-    /**
-     * Constructor
-     * @param e cause
-     */
-    public PersistentStorageException(final Throwable e) {
-        super(e);
-    }
 }

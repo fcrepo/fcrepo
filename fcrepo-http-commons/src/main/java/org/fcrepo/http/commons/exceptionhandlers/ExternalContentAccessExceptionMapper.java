@@ -45,7 +45,7 @@ public class ExternalContentAccessExceptionMapper
 
     @Override
     public Response toResponse(final ExternalContentAccessException exception) {
-        debugException(this, exception, LOGGER);
+        LOGGER.warn("Failed to read external content", exception);
         return status(BAD_GATEWAY).entity(exception.getMessage()).type(TEXT_PLAIN_WITH_CHARSET)
             .build();
     }
