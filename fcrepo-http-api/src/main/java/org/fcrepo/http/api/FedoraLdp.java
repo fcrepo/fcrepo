@@ -17,9 +17,76 @@
  */
 package org.fcrepo.http.api;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.LINK;
+import static javax.ws.rs.core.HttpHeaders.LOCATION;
+import static javax.ws.rs.core.MediaType.WILDCARD;
+import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.notAcceptable;
+import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.temporaryRedirect;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.FOUND;
+import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
+import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_TYPE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_OCTET_STREAM_TYPE;
+
+import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
+import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODEL_RESOURCES;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
+import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ClientErrorException;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.HEAD;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.OPTIONS;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Link;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilderException;
+import javax.ws.rs.core.Variant.VariantListBuilder;
+
 import io.micrometer.core.annotation.Timed;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -48,73 +115,9 @@ import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
-import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ClientErrorException;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HEAD;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.OPTIONS;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilderException;
-import javax.ws.rs.core.Variant.VariantListBuilder;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.time.Instant;
-import java.time.format.DateTimeParseException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.HttpHeaders.LOCATION;
-import static javax.ws.rs.core.MediaType.WILDCARD;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.FOUND;
-import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
-import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
-import static javax.ws.rs.core.Response.noContent;
-import static javax.ws.rs.core.Response.notAcceptable;
-import static javax.ws.rs.core.Response.ok;
-import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.temporaryRedirect;
-import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
-import static org.apache.jena.rdf.model.ResourceFactory.createResource;
-import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
-import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_OCTET_STREAM_TYPE;
-import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
-import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
-import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_TYPE;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
-import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
-import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODEL_RESOURCES;
-import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
-import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
-import static org.slf4j.LoggerFactory.getLogger;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 
 /**
  * @author cabeer
@@ -394,13 +397,13 @@ public class FedoraLdp extends ContentExposingResource {
                 throw new ClientErrorException("An If-Match header is required", 428);
             }
 
-        // TODO: Check existing resources interaction model and make sure we aren't trying to change it.
-        //final String resInteractionModel = getInteractionModel(resource);
-        //if (StringUtils.isNoneBlank(interactionModel) && StringUtils.isNoneBlank(resInteractionModel)
-        //        && !resInteractionModel.equals(interactionModel)) {
-        //    throw new InteractionModelViolationException("Changing the interaction model " + resInteractionModel
-        //            + " to " + interactionModel + " is not allowed!");
-        //}
+            // TODO: Check existing resources interaction model and make sure we aren't trying to change it.
+            //final String resInteractionModel = getInteractionModel(resource);
+            //if (StringUtils.isNoneBlank(interactionModel) && StringUtils.isNoneBlank(resInteractionModel)
+            //        && !resInteractionModel.equals(interactionModel)) {
+            //    throw new InteractionModelViolationException("Changing the interaction model " + resInteractionModel
+            //            + " to " + interactionModel + " is not allowed!");
+            //}
         }
 
         // TODO: Refactor to check preconditions
@@ -430,25 +433,25 @@ public class FedoraLdp extends ContentExposingResource {
 
             if (resourceExists) {
                 replaceBinariesService.perform(transaction.getId(),
-                        getUserPrincipal(),
-                        fedoraId,
-                        originalFileName,
-                        contentType,
-                        checksums,
-                        requestBodyStream,
-                        contentSize,
-                        extContent);
+                                               getUserPrincipal(),
+                                               fedoraId,
+                                               originalFileName,
+                                               contentType,
+                                               checksums,
+                                               requestBodyStream,
+                                               contentSize,
+                                               extContent);
             } else {
                 createResourceService.perform(transaction.getId(),
-                        getUserPrincipal(),
-                        fedoraId,
-                        contentType,
-                        originalFileName,
-                        contentSize,
-                        links,
-                        checksums,
-                        requestBodyStream,
-                        extContent);
+                                              getUserPrincipal(),
+                                              fedoraId,
+                                              contentType,
+                                              originalFileName,
+                                              contentSize,
+                                              links,
+                                              checksums,
+                                              requestBodyStream,
+                                              extContent);
                 created = true;
             }
         } else {
@@ -458,9 +461,9 @@ public class FedoraLdp extends ContentExposingResource {
 
             if (resourceExists) {
                 replacePropertiesService.perform(transaction.getId(),
-                        getUserPrincipal(),
-                        fedoraId,
-                        model);
+                                                 getUserPrincipal(),
+                                                 fedoraId,
+                                                 model);
             } else {
                 createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, links, model);
                 created = true;
@@ -471,6 +474,7 @@ public class FedoraLdp extends ContentExposingResource {
         LOGGER.debug("Finished creating resource with path: {}", externalPath());
         transaction.commitIfShortLived();
         return createUpdateResponse(getFedoraResource(transaction, fedoraId), created);
+
     }
 
     /**
