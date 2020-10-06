@@ -27,7 +27,9 @@ import static org.fcrepo.kernel.api.RdfLexicon.INSERTED_CONTENT_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_MEMBER;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBER_SUBJECT;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RdfLexicon.PROXY_FOR;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.junit.Assert.assertEquals;
@@ -35,7 +37,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.StringWriter;
+
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -60,6 +64,10 @@ public class LDPContainerIT extends AbstractResourceIT {
     private final String PCDM_HAS_MEMBER = "http://pcdm.org/models#hasMember";
 
     private final Property PCDM_HAS_MEMBER_PROP = createProperty(PCDM_HAS_MEMBER);
+
+    private final Property EX_IS_MEMBER_PROP = createProperty("http://example.com/isMember");
+
+    private final Property EX_HAS_MEMBER_PROP = createProperty("http://example.com/hasMember");
 
     private static final String DIRECT_CONTAINER_LINK_HEADER = "<" + DIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
 
@@ -235,13 +243,11 @@ public class LDPContainerIT extends AbstractResourceIT {
 
     @Test
     public void testDirectContainerOverrides() throws Exception {
-        final String parentId = getRandomUniqueId();
+        final String parentId = createBasicContainer();
         final String parentURI = serverAddress + parentId;
-        createObjectAndClose(parentId);
 
-        final String directId = parentId + "/direct";
+        final var directId = createDirectContainer(parentURI);
         final String directURI = serverAddress + directId;
-        createDirectContainer(directId, parentURI);
 
         final Model model = getModel(directId);
         final Resource resc = model.getResource(directURI);
@@ -260,13 +266,11 @@ public class LDPContainerIT extends AbstractResourceIT {
 
     @Test
     public void testDirectContainerDefaultsAfterPUT() throws Exception {
-        final String parentId = getRandomUniqueId();
+        final String parentId = createBasicContainer();
         final String parentURI = serverAddress + parentId;
-        createObjectAndClose(parentId);
 
-        final String directId = parentId + "/direct";
+        final var directId = createDirectContainer(parentURI);
         final String directURI = serverAddress + directId;
-        createDirectContainer(directId, parentURI);
 
         final Model replaceModel = ModelFactory.createDefaultModel();
         // TODO switch back removing individual properties once lenient handling of SMTs is in place
@@ -293,14 +297,11 @@ public class LDPContainerIT extends AbstractResourceIT {
 
     @Test
     public void testDirectContainerDefaultsAfterPatch() throws Exception {
-        final String parentId = getRandomUniqueId();
+        final String parentId = createBasicContainer();
         final String parentURI = serverAddress + parentId;
-        final HttpPut putParent = putObjMethod(parentId);
-        executeAndClose(putParent);
 
-        final String directId = parentId + "/direct";
+        final var directId = createDirectContainer(parentURI);
         final String directURI = serverAddress + directId;
-        createDirectContainer(directId, parentURI);
 
         final HttpPatch patch = new HttpPatch(directURI);
         patch.addHeader(CONTENT_TYPE, "application/sparql-update");
@@ -327,18 +328,139 @@ public class LDPContainerIT extends AbstractResourceIT {
                 resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
     }
 
-    private void createDirectContainer(final String directId, final String membershipURI)
+    @Test
+    public void directContainerPopulatesHasMember() throws Exception {
+        final var membershipRescId = createBasicContainer();
+        final var membershipRescURI = serverAddress + membershipRescId;
+
+        final var directId = createDirectContainer(membershipRescURI);
+
+        assertHasNoMembership(membershipRescId, PCDM_HAS_MEMBER_PROP);
+
+        // Add some members
+        final var member1Id = createBasicContainer(directId, "member1");
+        final var member2Id = createBasicContainer(directId, "member2");
+
+        assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id, member2Id);
+        assertHasNoMembershipWhenOmitted(membershipRescId, PCDM_HAS_MEMBER_PROP);
+
+        executeAndClose(deleteObjMethod(member1Id));
+
+        assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member2Id);
+
+        executeAndClose(deleteObjMethod(directId));
+
+        assertHasNoMembership(membershipRescId, PCDM_HAS_MEMBER_PROP);
+    }
+
+    @Test
+    public void directContainerPopulatesIsMemberOf() throws Exception {
+        final var membershipRescId = createBasicContainer();
+        final var membershipRescURI = serverAddress + membershipRescId;
+
+        final var directId = createDirectContainer(membershipRescURI, EX_IS_MEMBER_PROP, true);
+
+        assertHasNoMembership(membershipRescId, EX_IS_MEMBER_PROP);
+        assertHasNoMembership(directId, EX_IS_MEMBER_PROP);
+
+        // Add some members
+        final var member1Id = createBasicContainer(directId, "member1");
+        final var member2Id = createBasicContainer(directId, "member2");
+
+        assertHasNoMembership(membershipRescId, EX_IS_MEMBER_PROP);
+        assertIsMemberOf(member1Id, EX_IS_MEMBER_PROP, membershipRescId);
+        assertIsMemberOf(member2Id, EX_IS_MEMBER_PROP, membershipRescId);
+        assertHasNoMembershipWhenOmitted(member1Id, EX_IS_MEMBER_PROP);
+        assertHasNoMembershipWhenOmitted(member2Id, EX_IS_MEMBER_PROP);
+    }
+
+    private void assertHasMembers(final String membershipRescId,
+            final Property hasMemberRelation, final String... memberIds) throws Exception {
+        final var model = getModel(membershipRescId);
+        final var membershipResc = model.getResource(serverAddress + membershipRescId);
+
+        assertEquals(memberIds.length, membershipResc.listProperties(hasMemberRelation).toList().size());
+        for (final String memberId : memberIds) {
+            final var memberUri = serverAddress + memberId;
+            assertTrue("Did not contain expected member " + memberId,
+                    membershipResc.hasProperty(hasMemberRelation, createResource(memberUri)));
+        }
+    }
+
+    private void assertIsMemberOf(final String memberId, final Property isMemberOfRelation,
+            final String membershipRescId) throws Exception {
+        final var model = getModel(memberId);
+        final var memberResc = model.getResource(serverAddress + memberId);
+
+        final var membershipUri = serverAddress + membershipRescId;
+        assertTrue("Did not contain expected membership " + isMemberOfRelation + " " + membershipRescId,
+                memberResc.hasProperty(isMemberOfRelation, createResource(membershipUri)));
+    }
+
+    private void assertHasNoMembership(final String subjectId, final Property memberRelation) throws Exception {
+        assertHasNoMembership(getModel(subjectId), subjectId, memberRelation);
+    }
+
+    private void assertHasNoMembership(final Model model, final String subjectId, final Property memberRelation) throws Exception {
+        final var membershipResc = model.getResource(serverAddress + subjectId);
+        assertFalse("Expect " + subjectId + " to have no membership",
+                membershipResc.hasProperty(memberRelation));
+    }
+
+    private void assertHasNoMembershipWhenOmitted(final String subjectId, final Property memberRelation)
             throws Exception {
-        final String[] idParts = directId.split("/");
-        final HttpPost postIndirect = postObjMethod(idParts[0]);
-        postIndirect.setHeader("Slug", idParts[1]);
+        assertHasNoMembership(getModelOmitMembership(subjectId), subjectId, memberRelation);
+    }
+
+    private Model getModelOmitMembership(final String pid) throws Exception {
+        final Model model = createDefaultModel();
+        final var httpGet = new HttpGet(serverAddress + pid);
+        httpGet.addHeader("Prefer", "return=representation; omit=\"" + PREFER_MEMBERSHIP + "\"");
+        try (final CloseableHttpResponse response = execute(httpGet)) {
+            model.read(response.getEntity().getContent(), serverAddress + pid, "TURTLE");
+        }
+        return model;
+    }
+
+    private String createBasicContainer() {
+        return createBasicContainer(null, getRandomUniqueId());
+    }
+
+    private String createBasicContainer(final String parentId, final String id) {
+        final String containerId;
+        if (parentId != null) {
+            containerId = parentId + "/" + id;
+        } else {
+            containerId = id;
+        }
+        final HttpPut putContainer = putObjMethod(containerId);
+        executeAndClose(putContainer);
+
+        return containerId;
+    }
+
+    private String createDirectContainer(final String membershipURI)
+            throws Exception {
+        return createDirectContainer(membershipURI, PCDM_HAS_MEMBER_PROP, false);
+    }
+
+    private String createDirectContainer(final String membershipURI, final Property memberRelation,
+            final boolean isMemberOf) throws Exception {
+        final String containerId = getRandomUniqueId();
+
+        final HttpPost postIndirect = postObjMethod();
+        postIndirect.setHeader("Slug", containerId);
         postIndirect.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
         postIndirect.addHeader(CONTENT_TYPE, "text/turtle");
+
+        final var relationProperty = isMemberOf ? "ldp:isMemberOfRelation" : "ldp:hasMemberRelation";
         final String membersRDF = "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
-                "<> ldp:hasMemberRelation <" + PCDM_HAS_MEMBER + "> ; " +
+                "<> " + relationProperty + " <" + memberRelation.getURI() + "> ; " +
                 "ldp:membershipResource <" + membershipURI + "> . ";
         postIndirect.setEntity(new StringEntity(membersRDF));
         executeAndClose(postIndirect);
+
+        return containerId;
     }
 
     private void replacePropertiesWithPUT(final String resourceURI, final Model replaceModel)
