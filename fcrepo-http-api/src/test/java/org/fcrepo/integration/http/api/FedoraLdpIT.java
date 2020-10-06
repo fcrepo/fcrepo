@@ -472,7 +472,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testHeadDirectContainer() throws IOException {
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
@@ -2426,7 +2425,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testGetObjectOmitServerManaged() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -2470,7 +2468,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testGetObjectIncludeContainmentAndOmitServerManaged() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -2556,7 +2553,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @Test
 @Ignore
-    public void testPatchToCreateDirectContainerInSparqlUpdate() throws IOException {
+    public void testPatchToCreateDirectContainerInSparqlUpdateFails() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
         final HttpPatch patch = patchObjMethod(id);
@@ -2570,7 +2567,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPatchWithLdpContainsIndirectContainer() throws IOException {
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
@@ -2588,7 +2584,23 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
+    public void testPatchWithLdpContainsIsMemberIndirectContainer() throws IOException {
+        final String id = getRandomUniqueId();
+        final HttpPut put = putObjMethod(id);
+        put.setHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
+        executeAndClose(put);
+
+        final HttpPatch patch = patchObjMethod(id);
+        patch.setHeader(CONTENT_TYPE, "application/sparql-update");
+        final String updateString =
+                "INSERT DATA { <> <" + MEMBERSHIP_RESOURCE.getURI() +
+                        "> <> ; <" + IS_MEMBER_OF_RELATION + "> <" + LDP_NAMESPACE + "contains> .}";
+        patch.setEntity(new StringEntity(updateString));
+        assertEquals("Patch with sparql update allowed ldp:contains in indirect container!",
+                CONFLICT.getStatusCode(), getStatus(patch));
+    }
+
+    @Test
     public void testPatchWithoutLdpContainsIndirectContainer() throws IOException {
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
@@ -2606,7 +2618,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPatchWithLdpContainsDirectContainer() throws IOException {
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
@@ -2624,7 +2635,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPatchWithoutDirectContainer() throws IOException {
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);

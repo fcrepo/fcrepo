@@ -61,6 +61,7 @@ import org.fcrepo.kernel.api.services.ContainmentTriplesService;
 import org.fcrepo.kernel.api.services.CreateResourceService;
 import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.fcrepo.kernel.api.services.ManagedPropertiesService;
+import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
@@ -227,6 +228,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     @Qualifier("referenceService")
     protected ReferenceService referenceService;
 
+    @Inject
+    protected MembershipService membershipService;
+
     protected abstract String externalPath();
 
     protected static final Splitter.MapSplitter RFC3230_SPLITTER =
@@ -328,9 +332,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
             // LDP container membership triples for this resource
             if (ldpPreferences.prefersMembership()) {
-                //TODO implement memebership triple retrieval service:
-                // https://jira.lyrasis.org/browse/FCREPO-3165
-                //streams.add(getTriples(resource, LDP_MEMBERSHIP));
+                streams.add(membershipService.getMembership(transaction().getId(), resource.getFedoraId()));
             }
 
             // Include inbound references to this object

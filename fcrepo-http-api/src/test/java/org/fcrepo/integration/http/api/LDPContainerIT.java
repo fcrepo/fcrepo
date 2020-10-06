@@ -41,6 +41,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
@@ -213,7 +214,6 @@ public class LDPContainerIT extends AbstractResourceIT {
         executeAndClose(putIndirect);
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testDirectContainerDefaults() throws Exception {
         final String id = getRandomUniqueId();
@@ -233,7 +233,6 @@ public class LDPContainerIT extends AbstractResourceIT {
                 resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testDirectContainerOverrides() throws Exception {
         final String parentId = getRandomUniqueId();
@@ -259,7 +258,6 @@ public class LDPContainerIT extends AbstractResourceIT {
                 resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testDirectContainerDefaultsAfterPUT() throws Exception {
         final String parentId = getRandomUniqueId();
@@ -270,9 +268,11 @@ public class LDPContainerIT extends AbstractResourceIT {
         final String directURI = serverAddress + directId;
         createDirectContainer(directId, parentURI);
 
-        final Model replaceModel = getModel(directId);
-        replaceModel.removeAll(null, MEMBERSHIP_RESOURCE, null);
-        replaceModel.removeAll(null, HAS_MEMBER_RELATION, null);
+        final Model replaceModel = ModelFactory.createDefaultModel();
+        // TODO switch back removing individual properties once lenient handling of SMTs is in place
+//        final Model replaceModel = getModel(directId);
+//        replaceModel.removeAll(null, MEMBERSHIP_RESOURCE, null);
+//        replaceModel.removeAll(null, HAS_MEMBER_RELATION, null);
 
         replacePropertiesWithPUT(directURI, replaceModel);
 
@@ -291,7 +291,6 @@ public class LDPContainerIT extends AbstractResourceIT {
                 resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testDirectContainerDefaultsAfterPatch() throws Exception {
         final String parentId = getRandomUniqueId();
@@ -346,6 +345,7 @@ public class LDPContainerIT extends AbstractResourceIT {
             throws Exception {
         final HttpPut replaceMethod = new HttpPut(resourceURI);
         replaceMethod.addHeader(CONTENT_TYPE, "text/turtle");
+        replaceMethod.setHeader("Prefer", "handling=lenient; received=\"minimal\"");
         try (final StringWriter w = new StringWriter()) {
             replaceModel.write(w, "TURTLE");
             replaceMethod.setEntity(new StringEntity(w.toString()));
