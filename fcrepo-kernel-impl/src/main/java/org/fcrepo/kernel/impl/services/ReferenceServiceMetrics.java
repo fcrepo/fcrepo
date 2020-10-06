@@ -42,7 +42,7 @@ public class ReferenceServiceMetrics implements ReferenceService {
     private static final String REFERENCE = "reference";
     private static final String OPERATION = "operation";
 
-    private static final Timer getMappingTimer = Metrics.timer(METRIC_NAME,
+    private static final Timer getInboundReferences = Metrics.timer(METRIC_NAME,
             DB, REFERENCE, OPERATION, "getInboundReferences");
     private static final Timer deleteAllReferencesTimer = Metrics.timer(METRIC_NAME,
             DB, REFERENCE, OPERATION, "deleteAllReferences");
@@ -61,7 +61,7 @@ public class ReferenceServiceMetrics implements ReferenceService {
 
     @Override
     public RdfStream getInboundReferences(final String txId, final FedoraResource resource) {
-        return MetricsHelper.time(getMappingTimer, () -> {
+        return MetricsHelper.time(getInboundReferences, () -> {
             return referenceServiceImpl.getInboundReferences(txId, resource);
         });
     }

@@ -143,7 +143,7 @@ public class ContainmentIndexMetrics implements ContainmentIndex {
 
     @Override
     public FedoraId getContainerIdByPath(final String txID, final FedoraId fedoraId) {
-        return MetricsHelper.time(getContainsByTimer, () -> {
+        return MetricsHelper.time(getContainerIdByPathTimer, () -> {
             return containmentIndexImpl.getContainerIdByPath(txID, fedoraId);
         });
     }
