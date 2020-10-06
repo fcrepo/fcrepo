@@ -56,14 +56,14 @@ abstract class AbstractPersister implements Persister {
      * to determine which operations the persister knows how to handle.
      */
     private final ResourceOperationType resourceOperationType;
-    protected final FedoraToOcflObjectIndex index;
+    protected final FedoraToOcflObjectIndex ocflIndex;
 
     protected AbstractPersister(final Class<? extends ResourceOperation> resourceOperationClass,
                       final ResourceOperationType resourceOperationType,
-                      final FedoraToOcflObjectIndex index) {
+                      final FedoraToOcflObjectIndex ocflIndex) {
         this.resourceOperationClass = resourceOperationClass;
         this.resourceOperationType = resourceOperationType;
-        this.index = index;
+        this.ocflIndex = ocflIndex;
     }
 
     @Override
@@ -81,7 +81,7 @@ abstract class AbstractPersister implements Persister {
     protected FedoraOcflMapping getMapping(final String transactionId, final FedoraId resourceId)
             throws PersistentStorageException {
         try {
-            return this.index.getMapping(transactionId, resourceId);
+            return this.ocflIndex.getMapping(transactionId, resourceId);
         } catch (final FedoraOcflMappingNotFoundException e) {
             throw new PersistentStorageException(e.getMessage());
         }
@@ -132,7 +132,7 @@ abstract class AbstractPersister implements Persister {
      */
     protected String mapToOcflId(final String sessionId, final FedoraId fedoraId) {
         try {
-            final var mapping = index.getMapping(sessionId, fedoraId.asBaseId());
+            final var mapping = ocflIndex.getMapping(sessionId, fedoraId.asBaseId());
             return mapping.getOcflObjectId();
         } catch (final FedoraOcflMappingNotFoundException e) {
             // If the a mapping doesn't already exist, use a one-to-one Fedora ID to OCFL ID mapping

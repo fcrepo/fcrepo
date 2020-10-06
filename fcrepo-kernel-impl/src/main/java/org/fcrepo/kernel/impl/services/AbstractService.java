@@ -63,6 +63,8 @@ import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 
 /**
@@ -82,13 +84,15 @@ public abstract class AbstractService {
 
     protected final List<Triple> serverManagedProperties = new ArrayList<>();
 
-    @Inject
+    @Autowired
+    @Qualifier("containmentIndex")
     protected ContainmentIndex containmentIndex;
 
     @Inject
     private EventAccumulator eventAccumulator;
 
-    @Inject
+    @Autowired
+    @Qualifier("referenceService")
     protected ReferenceService referenceService;
 
     @Inject

@@ -51,7 +51,7 @@ class PurgeResourcePersister extends AbstractPersister {
             throw new PersistentStorageException(String.format("Purge resource %s failed", resourceId), e);
         }
 
-        index.removeMapping(session.getId(), resourceId.asResourceId());
+        ocflIndex.removeMapping(session.getId(), resourceId.asResourceId());
     }
 
 }

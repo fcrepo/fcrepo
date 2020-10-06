@@ -46,7 +46,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * @author peichman
  */
-@Component
+@Component("containmentIndexImpl")
 public class ContainmentIndexImpl implements ContainmentIndex {
 
     private static final Logger LOGGER = getLogger(ContainmentIndexImpl.class);

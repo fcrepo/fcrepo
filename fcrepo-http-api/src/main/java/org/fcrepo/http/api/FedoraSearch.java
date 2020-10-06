@@ -27,9 +27,10 @@ import org.fcrepo.search.api.SearchIndex;
 import org.fcrepo.search.api.SearchParameters;
 import org.fcrepo.search.api.SearchResult;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Scope;
 
-import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -59,8 +60,9 @@ public class FedoraSearch extends FedoraBaseResource {
 
     private static final Logger LOGGER = getLogger(FedoraSearch.class);
 
-    @Inject
-    private SearchIndex service;
+    @Autowired
+    @Qualifier("searchIndex")
+    private SearchIndex searchIndex;
 
     /**
      * Default JAX-RS entry point
@@ -127,7 +129,7 @@ public class FedoraSearch extends FedoraBaseResource {
             final var params = new SearchParameters(parsedFields, conditionList, maxResults, offset, orderByField,
                     order);
             final Response.ResponseBuilder builder = ok();
-            final var result = this.service.doSearch(params);
+            final var result = this.searchIndex.doSearch(params);
             final var translatedResults = translateResults(result);
 
             builder.entity(translatedResults);

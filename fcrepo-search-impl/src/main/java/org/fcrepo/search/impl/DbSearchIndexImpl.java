@@ -73,7 +73,7 @@ import static org.fcrepo.search.api.Condition.Field.RDF_TYPE;
  *
  * @author dbernstein
  */
-@Component
+@Component("searchIndexImpl")
 public class DbSearchIndexImpl implements SearchIndex {
     public static final String SELECT_RDF_TYPE_ID = "select id from search_rdf_type where rdf_type_uri = :rdf_type_uri";
     private static final Logger LOGGER = LoggerFactory.getLogger(DbSearchIndexImpl.class);

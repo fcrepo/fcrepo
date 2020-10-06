@@ -44,6 +44,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import javax.inject.Inject;
 import javax.jms.Connection;
@@ -135,7 +137,8 @@ abstract class AbstractJmsIT implements MessageListener {
     @Inject
     private ActiveMQConnectionFactory connectionFactory;
 
-    @Inject
+    @Autowired
+    @Qualifier("referenceService")
     private ReferenceService referenceService;
 
     private Connection connection;

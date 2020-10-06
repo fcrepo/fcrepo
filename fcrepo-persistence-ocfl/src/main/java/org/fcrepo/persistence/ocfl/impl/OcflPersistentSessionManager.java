@@ -50,7 +50,7 @@ public class OcflPersistentSessionManager implements PersistentStorageSessionMan
     private OcflObjectSessionFactory objectSessionFactory;
 
     @Inject
-    private FedoraToOcflObjectIndex fedoraOcflIndex;
+    private FedoraToOcflObjectIndex ocflIndex;
 
     /**
      * Default constructor
@@ -67,10 +67,11 @@ public class OcflPersistentSessionManager implements PersistentStorageSessionMan
             throw new IllegalArgumentException("session id must be non-null");
         }
 
-        return sessionMap.computeIfAbsent(sessionId, key -> new OcflPersistentStorageSession(
-                key,
-                fedoraOcflIndex,
-                objectSessionFactory));
+        return sessionMap.computeIfAbsent(sessionId, key -> new OcflPersistentStorageSessionMetrics(
+                new OcflPersistentStorageSession(
+                        key,
+                        ocflIndex,
+                        objectSessionFactory)));
     }
 
     @Override
@@ -81,7 +82,8 @@ public class OcflPersistentSessionManager implements PersistentStorageSessionMan
             synchronized (this) {
                 localSession = this.readOnlySession;
                 if (localSession == null) {
-                    this.readOnlySession = new OcflPersistentStorageSession(fedoraOcflIndex, objectSessionFactory);
+                    this.readOnlySession = new OcflPersistentStorageSessionMetrics(
+                            new OcflPersistentStorageSession(ocflIndex, objectSessionFactory));
                     localSession = this.readOnlySession;
                 }
             }

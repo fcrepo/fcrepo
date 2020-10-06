@@ -18,6 +18,10 @@
 
 package org.fcrepo.persistence.ocfl.impl;
 
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Timer;
+import org.fcrepo.common.lang.CheckedRunnable;
+import org.fcrepo.common.metrics.MetricsHelper;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.storage.ocfl.CommitType;
@@ -34,13 +38,24 @@ import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 
 /**
- * Wrapper around an OcflObjectSession to convert exceptions into fcrepo exceptions
+ * Wrapper around an OcflObjectSession to convert exceptions into fcrepo exceptions and time operations
  *
  * @author pwinckles
  */
 public class FcrepoOcflObjectSessionWrapper implements OcflObjectSession {
 
     private final OcflObjectSession inner;
+
+    private static final String METRIC_NAME = "fcrepo.storage.ocfl.object";
+    private static final String OPERATION = "operation";
+    private static final Timer writeTimer = Metrics.timer(METRIC_NAME, OPERATION, "write");
+    private static final Timer deleteContentTimer = Metrics.timer(METRIC_NAME, OPERATION, "deleteContent");
+    private static final Timer deleteResourceTimer = Metrics.timer(METRIC_NAME, OPERATION, "deleteResource");
+    private static final Timer containsResourceTimer = Metrics.timer(METRIC_NAME, OPERATION, "containsResource");
+    private static final Timer readHeadersTimer = Metrics.timer(METRIC_NAME, OPERATION, "readHeaders");
+    private static final Timer readContentTimer = Metrics.timer(METRIC_NAME, OPERATION, "readContent");
+    private static final Timer listVersionsTimer = Metrics.timer(METRIC_NAME, OPERATION, "listVersions");
+    private static final Timer commitTimer = Metrics.timer(METRIC_NAME, OPERATION, "commit");
 
     /**
      * @param inner the session to wrap
@@ -61,47 +76,65 @@ public class FcrepoOcflObjectSessionWrapper implements OcflObjectSession {
 
     @Override
     public void writeResource(final ResourceHeaders headers, final InputStream content) {
-        exec(() -> inner.writeResource(headers, content));
+        writeTimer.record(() -> {
+            exec(() -> inner.writeResource(headers, content));
+        });
     }
 
     @Override
     public void deleteContentFile(final ResourceHeaders headers) {
-        exec(() -> inner.deleteContentFile(headers));
+        deleteContentTimer.record(() -> {
+            exec(() -> inner.deleteContentFile(headers));
+        });
     }
 
     @Override
     public void deleteResource(final String resourceId) {
-        exec(() -> inner.deleteResource(resourceId));
+        deleteResourceTimer.record(() -> {
+            exec(() -> inner.deleteResource(resourceId));
+        });
     }
 
     @Override
     public boolean containsResource(final String resourceId) {
-        return exec(() -> inner.containsResource(resourceId));
+        return MetricsHelper.time(containsResourceTimer, () -> {
+            return exec(() -> inner.containsResource(resourceId));
+        });
     }
 
     @Override
     public ResourceHeaders readHeaders(final String resourceId) {
-        return exec(() -> inner.readHeaders(resourceId));
+        return MetricsHelper.time(readHeadersTimer, () -> {
+            return exec(() -> inner.readHeaders(resourceId));
+        });
     }
 
     @Override
     public ResourceHeaders readHeaders(final String resourceId, final String versionNumber) {
-        return exec(() -> inner.readHeaders(resourceId, versionNumber));
+        return MetricsHelper.time(readHeadersTimer, () -> {
+            return exec(() -> inner.readHeaders(resourceId, versionNumber));
+        });
     }
 
     @Override
     public ResourceContent readContent(final String resourceId) {
-        return exec(() -> inner.readContent(resourceId));
+        return MetricsHelper.time(readContentTimer, () -> {
+            return exec(() -> inner.readContent(resourceId));
+        });
     }
 
     @Override
     public ResourceContent readContent(final String resourceId, final String versionNumber) {
-        return exec(() -> inner.readContent(resourceId, versionNumber));
+        return MetricsHelper.time(readContentTimer, () -> {
+            return exec(() -> inner.readContent(resourceId, versionNumber));
+        });
     }
 
     @Override
     public List<OcflVersionInfo> listVersions(final String resourceId) {
-        return exec(() -> inner.listVersions(resourceId));
+        return MetricsHelper.time(listVersionsTimer, () -> {
+            return exec(() -> inner.listVersions(resourceId));
+        });
     }
 
     @Override
@@ -131,7 +164,9 @@ public class FcrepoOcflObjectSessionWrapper implements OcflObjectSession {
 
     @Override
     public void commit() {
-        exec(inner::commit);
+        commitTimer.record(() -> {
+            exec(inner::commit);
+        });
     }
 
     @Override
@@ -159,18 +194,14 @@ public class FcrepoOcflObjectSessionWrapper implements OcflObjectSession {
         }
     }
 
-    private void exec(final VoidCallable callable) throws PersistentStorageException {
+    private void exec(final CheckedRunnable runnable) throws PersistentStorageException {
         try {
-            callable.call();
+            runnable.run();
         } catch (NotFoundException e) {
             throw new PersistentItemNotFoundException(e.getMessage(), e);
         } catch (Exception e) {
             throw new PersistentStorageException(e.getMessage(), e);
         }
-    }
-
-    private interface VoidCallable {
-        void call() throws Exception;
     }
 
 }

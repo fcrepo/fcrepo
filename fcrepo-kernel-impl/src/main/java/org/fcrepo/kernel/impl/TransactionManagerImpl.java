@@ -28,6 +28,8 @@ import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -49,7 +51,8 @@ public class TransactionManagerImpl implements TransactionManager {
 
     private final Map<String, Transaction> transactions;
 
-    @Inject
+    @Autowired
+    @Qualifier("containmentIndex")
     private ContainmentIndex containmentIndex;
 
     @Inject
@@ -58,7 +61,8 @@ public class TransactionManagerImpl implements TransactionManager {
     @Inject
     private EventAccumulator eventAccumulator;
 
-    @Inject
+    @Autowired
+    @Qualifier("referenceService")
     private ReferenceService referenceService;
 
     @Inject

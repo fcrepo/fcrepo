@@ -49,7 +49,7 @@ import java.util.Map;
  *
  * @author pwinckles
  */
-@Component
+@Component("ocflIndexImpl")
 public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DbFedoraToOcflObjectIndex.class);
