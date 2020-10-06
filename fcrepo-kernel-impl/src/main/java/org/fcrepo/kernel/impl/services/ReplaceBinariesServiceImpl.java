@@ -67,8 +67,6 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
         try {
             final PersistentStorageSession pSession = this.psManager.getSession(txId);
 
-            hasRestrictedPath(fedoraId.getFullId());
-
             String mimeType = contentType;
             Long size = contentSize;
             final NonRdfSourceOperationBuilder builder;

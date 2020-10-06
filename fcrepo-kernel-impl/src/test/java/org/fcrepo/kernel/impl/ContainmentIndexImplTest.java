@@ -36,7 +36,6 @@ import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -78,8 +77,6 @@ public class ContainmentIndexImplTest {
 
     private final Map<String, FedoraResource> id_to_resource = new HashMap<>();
     private final Map<String, Transaction> id_to_transaction = new HashMap<>();
-
-    private final String ixnModel = BASIC_CONTAINER.getURI();
 
     @Before
     public void setUp() {

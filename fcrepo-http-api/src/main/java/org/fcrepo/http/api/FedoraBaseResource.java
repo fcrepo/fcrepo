@@ -22,7 +22,6 @@ import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.http.commons.session.TransactionProvider;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
-import org.fcrepo.kernel.api.TransactionUtils;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -105,10 +104,6 @@ abstract public class FedoraBaseResource extends AbstractResource {
      */
     protected boolean isGhostNode(final Transaction transaction, final FedoraId fedoraId) {
         return resourceHelper.isGhostNode(transaction, fedoraId);
-    }
-
-    protected String getInteractionModel(final Transaction transaction, final FedoraId fedoraId) {
-        return resourceFactory.getInteractionModel(TransactionUtils.openTxId(transaction), fedoraId);
     }
 
     protected String getUserPrincipal() {

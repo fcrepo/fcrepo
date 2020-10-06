@@ -244,4 +244,10 @@ public interface FedoraResource {
      * @return the resource being described
      */
     FedoraResource getDescribedResource();
+
+    /**
+     * Get the resource's interaction model.
+     * @return the interaction model.
+     */
+    String getInteractionModel();
 }

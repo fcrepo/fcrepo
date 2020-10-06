@@ -103,12 +103,4 @@ public interface ResourceFactory {
      * @return Stream of child resources
      */
     public Stream<FedoraResource> getChildren(final String transactionId, final FedoraId resourceId);
-
-    /**
-     * Get the interaction model of the resource, assumes you've checked it exists already.
-     * @param transactionId The transaction id
-     * @param fedoraId Identifier of the resource.
-     * @return The interaction model.
-     */
-    public String getInteractionModel(final String transactionId, final FedoraId fedoraId);
 }

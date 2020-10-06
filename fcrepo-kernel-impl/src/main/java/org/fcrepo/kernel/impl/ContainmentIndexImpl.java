@@ -116,8 +116,8 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      * Insert a parent child relationship to the transaction operation table.
      */
     private static final String INSERT_CHILD_IN_TRANSACTION = "INSERT INTO " + TRANSACTION_OPERATIONS_TABLE +
-            " ( " + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + TRANSACTION_ID_COLUMN + ", " +
-            OPERATION_COLUMN + " ) VALUES (:parent, :child, :transactionId, 'add')";
+            " ( " + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN +
+            " ) VALUES (:parent, :child, :transactionId, 'add')";
 
     /*
      * Remove an insert row from the transaction operation table for this parent child relationship.

@@ -20,7 +20,7 @@ package org.fcrepo.kernel.api;
 import static com.google.common.collect.ImmutableSet.of;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
-import static org.apache.jena.vocabulary.RDF.Init.type;
+import static org.apache.jena.vocabulary.RDF.type;
 
 import java.util.Set;
 import java.util.function.Predicate;
@@ -89,9 +89,10 @@ public final class RdfLexicon {
             p.equals(LDP_NAMESPACE) || p.equals(MEMENTO_NAMESPACE);
 
     /**
-     * Tests if we are trying to set the rdf:type to an object with a restricted namespace.
+     * Tests if the triple has a predicate of rdf:type and an object with a managed namespace.
+     * @see RdfLexicon#isManagedNamespace
      */
-    public static final Predicate<Triple> restrictedType = s -> s.getPredicate().equals(type().asNode()) &&
+    public static final Predicate<Triple> restrictedType = s -> s.getPredicate().equals(type.asNode()) &&
             (s.getObject().isURI() && isManagedNamespace.test(s.getObject().getNameSpace()));
 
     // FIXITY
@@ -267,25 +268,25 @@ public final class RdfLexicon {
     /**
      * Fedora defined JCR node type with supertype of nt:file with two nt:folder named fedora:timemap and
      * fedora:binaryTimemap inside.
-     * TODO: Remove modeshape-ism?
+     * TODO: Remove modeshape-ism - FCREPO-3444
      */
     public static final String NT_VERSION_FILE = "nt:versionFile";
 
     /**
      * Fedora defined JCR node type which can have no children except optionally a timemap
-     * TODO: Remove modeshape-ism?
+     * TODO: Remove modeshape-ism - FCREPO-3444
      */
     public static final String NT_LEAF_NODE = "nt:leafNode";
 
     /**
      * Fedora defined node path for a binary description.
-     * TODO: Remove modeshape-ism?
+     * TODO: Remove modeshape-ism - FCREPO-3444
      */
     public static final String FEDORA_DESCRIPTION = "fedora:description";
 
     /**
      * Fedora defined node path for a timemap
-     * TODO: Remove modeshape-ism?
+     * TODO: Remove modeshape-ism - FCREPO-3444
      */
     public static final String LDPCV_TIME_MAP = "fedora:timemap";
 

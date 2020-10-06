@@ -113,35 +113,6 @@ public class ResourceFactoryImpl implements ResourceFactory {
         }
     }
 
-    @Override
-    public String getInteractionModel(final String transactionId, final FedoraId fedoraId) {
-        if (fedoraId.isRepositoryRoot()) {
-            return BASIC_CONTAINER.getURI();
-        }
-        final PersistentStorageSession psSession = getSession(transactionId);
-
-        try {
-            // Resource ID for metadata or ACL contains their individual endpoints (ie. fcr:metadata, fcr:acl)
-            final ResourceHeaders headers = psSession.getHeaders(fedoraId, fedoraId.getMementoInstant());
-            return headers.getInteractionModel();
-        } catch (final PersistentItemNotFoundException e) {
-            // Object doesn't exist.
-            return null;
-        } catch (final PersistentStorageException e) {
-            // Other error, pass along.
-            throw new RepositoryRuntimeException(e);
-        } finally {
-            if (transactionId == null) {
-                // Commit session (if read-only) so it doesn't hang around.
-                try {
-                    psSession.commit();
-                } catch (final PersistentStorageException e) {
-                    LOGGER.error("Error committing session, message: {}", e.getMessage());
-                }
-            }
-        }
-    }
-
     /**
      * Returns the appropriate FedoraResource class for an object based on the provided headers
      *

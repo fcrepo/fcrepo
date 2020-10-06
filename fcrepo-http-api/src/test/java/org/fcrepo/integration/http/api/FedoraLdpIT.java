@@ -2735,7 +2735,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // attempt to change basic container to NonRdfSource
         final String ttl1 = "<> a <" + NON_RDF_SOURCE.getURI() + "> .";
         final HttpPut put1 = putObjMethod(pid + "/a", "text/turtle", ttl1);
-        put1.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
         assertEquals("Changed the basic container ixn to NonRdfSource through PUT with RDF content!",
                 CONFLICT.getStatusCode(), getStatus(put1));
 
@@ -2743,7 +2742,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String ttl2 = "<> a <" + DIRECT_CONTAINER.getURI() + "> ; <" + MEMBERSHIP_RESOURCE.getURI() +
                 "> <" + resource + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "member> .";
         final HttpPut put2 = putObjMethod(pid + "/a", "text/turtle", ttl2);
-        put2.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
         assertEquals("Changed the basic container ixn to Direct Container through PUT with RDF content!",
                 CONFLICT.getStatusCode(), getStatus(put2));
 
@@ -2759,7 +2757,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String ttla = "<> <" + MEMBERSHIP_RESOURCE + "> <" + container + ">;\n"
                 + "<" + HAS_MEMBER_RELATION + "> <info:some/relation> .\n";
         final HttpPut puta = putObjMethod(pid + "/b", "text/turtle", ttla);
-        puta.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
         puta.addHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(puta));
 
@@ -2767,7 +2764,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String ttl3 = "<> a <" + BASIC_CONTAINER.getURI() +
                 "> ; <http://purl.org/dc/elements/1.1/title> \"this is a title\".";
         final HttpPut put3 = putObjMethod(pid + "/b", "text/turtle", ttl3);
-        put3.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
         assertEquals("Changed the direct container ixn to basic container through PUT with RDF content!",
                 CONFLICT.getStatusCode(), getStatus(put3));
 
@@ -2777,7 +2773,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 + "<" + HAS_MEMBER_RELATION + "> <info:some/relation>;\n"
                 + "<" + LDP_NAMESPACE + "insertedContentRelation> <info:proxy/for> .\n";
         final HttpPut put4 = putObjMethod(pid + "/b", "text/turtle", ttl4);
-        put4.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
         assertEquals("Changed the direct container ixn to indirect container through PUT with RDF content!",
                 CONFLICT.getStatusCode(), getStatus(put4));
     }
@@ -3521,6 +3516,59 @@ public class FedoraLdpIT extends AbstractResourceIT {
         httpPost.setEntity(new StringEntity(getTTLThatUpdatesServerManagedTriples("fakeuser", null, null, null)));
         try (final CloseableHttpResponse response = execute(httpPost)) {
             assertEquals("Must not be able to update createdBy!", CONFLICT.getStatusCode(), getStatus(response));
+        }
+    }
+
+    @Test
+    public void testPutRdfLenient() throws IOException {
+        final String location = getLocation(postObjMethod());
+        final Node uriResource = createURI(location);
+        final HttpGet getObjMethod = new HttpGet(location);
+        String createdDate = null;
+        try (final CloseableHttpResponse response = execute(getObjMethod)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            try (final CloseableDataset dataset = getDataset(response)) {
+                final DatasetGraph graph = dataset.asDatasetGraph();
+                final var iterator = graph.find(ANY, uriResource, CREATED_DATE.asNode(), ANY);
+                while (iterator.hasNext()) {
+                    final var quad = iterator.next();
+                    createdDate = quad.getObject().getLiteral().toString();
+                }
+            }
+        }
+        final HttpPut putMethod = new HttpPut(location);
+        putMethod.setHeader(CONTENT_TYPE, "text/turtle");
+        putMethod.setEntity(new StringEntity("<> <" + CREATED_DATE + "> \"1979-01-01T00:00:00\" ;" +
+                "<" + DCTITLE + "> \"This is a new title\" . "));
+        // Can't set the created date
+        assertEquals(CONFLICT.getStatusCode(), getStatus(putMethod));
+
+        // With lenient we ignore it.
+        putMethod.setHeader("Prefer", "handling=\"lenient\"");
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(putMethod));
+
+        final HttpGet getObj2 = new HttpGet(location);
+        try (final CloseableHttpResponse response = execute(getObj2)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            try (final CloseableDataset dataset = getDataset(response)) {
+                String createdDate2 = null;
+                String title = null;
+                final DatasetGraph graph = dataset.asDatasetGraph();
+                final var iterator = graph.find(ANY, uriResource, CREATED_DATE.asNode(), ANY);
+                while (iterator.hasNext()) {
+                    final var quad = iterator.next();
+                    createdDate2 = quad.getObject().getLiteral().toString();
+                }
+                final var iterator2 = graph.find(ANY, uriResource, DCTITLE, ANY);
+                while (iterator2.hasNext()) {
+                    final var quad = iterator2.next();
+                    title = quad.getObject().getLiteral().toString();
+                }
+                // Created date change did not take effect.
+                assertEquals(createdDate, createdDate2);
+                // But the new title is there.
+                assertEquals("This is a new title", title);
+            }
         }
     }
 

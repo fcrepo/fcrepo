@@ -108,12 +108,14 @@ public class HttpRdfService {
      * @param stream the input stream containing the RDF
      * @param contentType the media type of the RDF
      * @param idTranslator the identifier convert
+     * @param lenientHandling whether the request included a handling=lenient prefer header.
      * @return RdfStream containing triples from request body, with Fedora IDs in them
      * @throws MalformedRdfException in case rdf json cannot be parsed
      * @throws BadRequestException in the case where the RDF syntax is bad
      */
     public Model bodyToInternalModel(final String extResourceId, final InputStream stream,
-                                     final MediaType contentType, final HttpIdentifierConverter idTranslator)
+                                     final MediaType contentType, final HttpIdentifierConverter idTranslator,
+                                     final boolean lenientHandling)
                                      throws RepositoryRuntimeException, BadRequestException {
 
         final Model model = parseBodyAsModel(stream, contentType, extResourceId);
@@ -122,27 +124,32 @@ public class HttpRdfService {
 
         while (stmtIterator.hasNext()) {
             final Statement stmt = stmtIterator.nextStatement();
-            checkForDisallowedRdf(stmt);
-            if (stmt.getSubject().isURIResource()) {
-                final String originalSubj = stmt.getSubject().getURI();
-                final String subj = idTranslator.inExternalDomain(originalSubj) ?
-                        idTranslator.toInternalId(originalSubj) : originalSubj;
-
-                RDFNode obj = stmt.getObject();
-                if (stmt.getObject().isResource()) {
-                    final String objString = stmt.getObject().asResource().getURI();
-                    if (idTranslator.inExternalDomain(objString)) {
-                        obj = model.getResource(idTranslator.toInternalId(objString));
-                    }
-                }
-
-                if (!subj.equals(originalSubj) || !obj.equals(stmt.getObject())) {
-                    insertStatements.add(new StatementImpl(model.getResource(subj), stmt.getPredicate(), obj));
-
-                    stmtIterator.remove();
-                }
+            if (lenientHandling && stmtIsServerManaged(stmt)) {
+                // Remove any statement that touches a server managed property or namespace.
+                stmtIterator.remove();
             } else {
-                log.debug("Subject {} is not a URI resource, skipping", stmt.getSubject());
+                checkForDisallowedRdf(stmt);
+                if (stmt.getSubject().isURIResource()) {
+                    final String originalSubj = stmt.getSubject().getURI();
+                    final String subj = idTranslator.inExternalDomain(originalSubj) ?
+                            idTranslator.toInternalId(originalSubj) : originalSubj;
+
+                    RDFNode obj = stmt.getObject();
+                    if (stmt.getObject().isResource()) {
+                        final String objString = stmt.getObject().asResource().getURI();
+                        if (idTranslator.inExternalDomain(objString)) {
+                            obj = model.getResource(idTranslator.toInternalId(objString));
+                        }
+                    }
+
+                    if (!subj.equals(originalSubj) || !obj.equals(stmt.getObject())) {
+                        insertStatements.add(new StatementImpl(model.getResource(subj), stmt.getPredicate(), obj));
+
+                        stmtIterator.remove();
+                    }
+                } else {
+                    log.debug("Subject {} is not a URI resource, skipping", stmt.getSubject());
+                }
             }
         }
 
@@ -159,14 +166,16 @@ public class HttpRdfService {
      * @param stream the input stream containing the RDF
      * @param contentType the media type of the RDF
      * @param idTranslator the identifier convert
+     * @param lenientHandling whether the request had a handling=lenient prefer header.
      * @return RdfStream containing triples from request body, with Fedora IDs in them
      * @throws MalformedRdfException in case rdf json cannot be parsed
      * @throws BadRequestException in the case where the RDF syntax is bad
      */
     public RdfStream bodyToInternalStream(final String extResourceId, final InputStream stream,
-                                          final MediaType contentType, final HttpIdentifierConverter idTranslator)
+                                          final MediaType contentType, final HttpIdentifierConverter idTranslator,
+                                          final boolean lenientHandling)
                                           throws RepositoryRuntimeException, BadRequestException {
-        final Model model = bodyToInternalModel(extResourceId, stream, contentType, idTranslator);
+        final Model model = bodyToInternalModel(extResourceId, stream, contentType, idTranslator, lenientHandling);
 
         return fromModel(model.getResource(idTranslator.toInternalId(extResourceId)).asNode(), model);
     }
@@ -252,19 +261,32 @@ public class HttpRdfService {
     public static void checkTripleForDisallowed(final Triple triple) {
         if (triple.getPredicate().equals(type().asNode()) && !triple.getObject().isURI()) {
             // The object of a rdf:type triple is not a URI.
-            final var newType = triple.getObject().toString();
             throw new MalformedRdfException(
-                    String.format("Invalid rdf:type: %s", newType));
+                    String.format("Invalid rdf:type: %s", triple.getObject()));
         } else if (restrictedType.test(triple)) {
             // The object of a rdf:type triple has a restricted namespace.
-            final var newType = triple.getObject().toString();
             throw new InteractionModelViolationException(
-                    String.format("Changing this resource's interaction model to %s is not allowed", newType));
+                    String.format("Changing this resource's interaction model to %s is not allowed",
+                            triple.getObject()));
         } else if (isManagedPredicate.test(createProperty(triple.getPredicate().getURI()))) {
             // The predicate is server managed.
             throw new ServerManagedPropertyException(
                     String.format("The server managed predicate (%s) cannot be modified by the client.",
-                            triple.getPredicate().toString()));
+                            triple.getPredicate()));
         }
+    }
+
+    /**
+     * Does the statement's triple touch any server managed properties / namespaces.
+     * ie.
+     * - has a rdf:type with an object which is in a managed namespace
+     * - has a predicate which is in a managed namespace.
+     *
+     * @param statement the statement to check
+     * @return Return true if this does touch a server managed property or namespace.
+     */
+    private boolean stmtIsServerManaged(final Statement statement) {
+        final Triple triple = statement.asTriple();
+        return restrictedType.test(triple) || isManagedPredicate.test(createProperty(triple.getPredicate().getURI()));
     }
 }

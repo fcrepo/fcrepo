@@ -401,7 +401,7 @@ public class FedoraLdp extends ContentExposingResource {
                 throw new ClientErrorException("An If-Match header is required", 428);
             }
 
-            final String resInteractionModel = getInteractionModel(transaction, fedoraId);
+            final String resInteractionModel = resource().getInteractionModel();
             if (StringUtils.isNoneBlank(resInteractionModel, interactionModel) &&
                     !Objects.equals(resInteractionModel, interactionModel)) {
                 throw new InteractionModelViolationException("Changing the interaction model " + resInteractionModel
@@ -464,7 +464,7 @@ public class FedoraLdp extends ContentExposingResource {
         } else {
             final var contentType = requestContentType != null ? requestContentType : DEFAULT_RDF_CONTENT_TYPE;
             final Model model = httpRdfService.bodyToInternalModel(fedoraId.getFullId(), requestBodyStream,
-                    contentType, identifierConverter());
+                    contentType, identifierConverter(), hasLenientPreferHeader());
 
             if (resourceExists) {
                 replacePropertiesService.perform(transaction.getId(),
@@ -630,7 +630,7 @@ public class FedoraLdp extends ContentExposingResource {
         } else {
             final var contentType = requestContentType != null ? requestContentType : DEFAULT_RDF_CONTENT_TYPE;
             final Model model = httpRdfService.bodyToInternalModel(newFedoraId.getFullId(), requestBodyStream,
-                    contentType, identifierConverter());
+                    contentType, identifierConverter(), hasLenientPreferHeader());
             createResourceService.perform(transaction.getId(),
                                           getUserPrincipal(),
                                           newFedoraId,
@@ -808,6 +808,7 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         final FedoraId fullTestPath = fedoraId.resolve(pid);
+        hasRestrictedPath(fullTestPath.getFullIdPath());
 
         if (doesResourceExist(transaction(), fullTestPath) || isGhostNode(transaction(), fullTestPath)) {
             LOGGER.debug("Resource with path {} already exists or is an immutable resource; minting new path instead",

@@ -25,7 +25,6 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.RdfLexicon.DEFAULT_INTERACTION_MODEL;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS_FULL;
-import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_ACCESS_TO;
 import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_ACCESS_TO_CLASS;
@@ -37,7 +36,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import javax.inject.Inject;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -49,14 +47,10 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.StmtIterator;
-import org.apache.jena.vocabulary.RDF;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.exception.ACLAuthorizationConstraintViolationException;
-import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RequestWithAclLinkHeaderException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
-import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
@@ -135,35 +129,6 @@ public abstract class AbstractService {
         if (links != null && links.stream().anyMatch(matcher)) {
             throw new RequestWithAclLinkHeaderException(
                     "Unable to handle request with the specified LDP-RS as the ACL.");
-        }
-    }
-
-    /**
-     * Check if a path has a segment prefixed with fedora:
-     *
-     * @param externalPath the path.
-     */
-    protected void hasRestrictedPath(final String externalPath) {
-        final String[] pathSegments = externalPath.split("/");
-        if (Arrays.stream(pathSegments).anyMatch(p -> p.startsWith("fedora:"))) {
-            throw new ServerManagedTypeException("Path cannot contain a fedora: prefixed segment.");
-        }
-    }
-
-    /**
-     * Looks through an RdfStream for rdf:types in the LDP namespace or server managed predicates.
-     *
-     * @param model The RDF model.
-     */
-    protected void checkForSmtsLdpTypes(final Model model) {
-        final StmtIterator it = model.listStatements();
-        while (it.hasNext()) {
-            final Statement st = it.next();
-            if ((st.getPredicate().equals(RDF.type) && st.getObject().isURIResource() &&
-                    st.getObject().toString().startsWith(LDP_NAMESPACE)) ||
-                    isManagedPredicate.test(st.getPredicate())) {
-                throw new MalformedRdfException("RDF contains a server managed triple or restricted rdf:type");
-            }
         }
     }
 
