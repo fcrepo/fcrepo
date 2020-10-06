@@ -3191,10 +3191,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(CREATED.getStatusCode(), getStatus(new HttpPut(serverAddress + getRandomUniqueId())));
     }
 
-    /*
-     * TODO: This was originally expecting a 415 Unsupported Media Type, but because we assume text/turtle now it
-     *  returns a 400 Bad Request.
-     */
     @Test
     public void testUpdateObjectWithoutContentType() throws IOException {
         final HttpPut httpPut = new HttpPut(getLocation(postObjMethod()));
