@@ -210,7 +210,7 @@ public class MembershipServiceImpl implements MembershipService {
         try {
             return resourceFactory.getResource(txId, fedoraId);
         } catch (final PathNotFoundException e) {
-            throw new PathNotFoundRuntimeException(e);
+            throw new PathNotFoundRuntimeException(e.getMessage(), e);
         }
     }
 
@@ -218,7 +218,7 @@ public class MembershipServiceImpl implements MembershipService {
         try {
             return resc.getParent();
         } catch (final PathNotFoundException e) {
-            throw new PathNotFoundRuntimeException(e);
+            throw new PathNotFoundRuntimeException(e.getMessage(), e);
         }
     }
 
