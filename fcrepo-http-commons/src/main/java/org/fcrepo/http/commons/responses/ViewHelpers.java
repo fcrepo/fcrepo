@@ -33,9 +33,9 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toMap;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
@@ -384,9 +384,7 @@ public class ViewHelpers {
      * @return true if has rdf:type http://fedora.info/definitions/v4/repository#RepositoryRoot
      */
     public boolean isRootResource(final Graph graph, final Node subject) {
-        final String rootRes = graph.getPrefixMapping().expandPrefix(FEDORA_REPOSITORY_ROOT);
-        final Node root = createResource(rootRes).asNode();
-        return graph.contains(subject, rdfType().asNode(), root);
+        return graph.contains(subject, rdfType().asNode(), REPOSITORY_ROOT.asNode());
     }
 
     /**

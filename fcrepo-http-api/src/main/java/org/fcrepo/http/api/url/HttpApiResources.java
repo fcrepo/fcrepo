@@ -19,9 +19,9 @@ package org.fcrepo.http.api.url;
 
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_SERVICE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_TRANSACTION_SERVICE;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_ROOT;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
@@ -53,7 +53,7 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
 
         final Resource s = idTranslator.reverse().convert(resource);
 
-        if (resource.hasType(FEDORA_REPOSITORY_ROOT)) {
+        if (resource.hasType(REPOSITORY_ROOT.getURI())) {
             addRepositoryStatements(uriInfo, model, s);
         }
 

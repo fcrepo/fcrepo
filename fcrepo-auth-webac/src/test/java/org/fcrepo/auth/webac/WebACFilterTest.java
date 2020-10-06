@@ -28,7 +28,6 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_CONTROL;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
@@ -200,13 +199,11 @@ public class WebACFilterTest {
                 .thenReturn(mockContainer);
         when(mockResourceFactory.getResource(mockTransaction, testChildId))
                 .thenReturn(mockChildContainer);
-        when(mockBinary.hasType(FEDORA_BINARY)).thenReturn(false);
     }
 
     private void setupBinaryResource() throws Exception {
         when(mockResourceFactory.getResource(mockTransaction, testId))
                 .thenReturn(mockBinary);
-        when(mockBinary.hasType(FEDORA_BINARY)).thenReturn(true);
     }
 
     private void setupAdminUser() {

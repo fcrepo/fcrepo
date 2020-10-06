@@ -551,7 +551,7 @@ public class WebACFilter extends RequestContextFilter {
             }
         } else if (request.getMethod().equalsIgnoreCase("PUT")) {
             // PUT to a URI check that the immediate container is not direct or indirect.
-            if (container != null && isResourceIndirectOrDirect(container)) {
+            if (isResourceIndirectOrDirect(container)) {
                 final URI membershipResource = getHasMemberFromResource(request, container);
                 addURIToAuthorize(request, membershipResource);
                 if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, membershipResource))) {

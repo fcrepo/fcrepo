@@ -35,7 +35,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
 import static org.junit.Assert.assertEquals;
@@ -70,9 +70,6 @@ import org.apache.jena.vocabulary.DCTerms;
 public class ViewHelpersTest {
 
     private ViewHelpers testObj;
-
-    private static final String REPOSITORY_ROOT_URI =
-        FEDORA_REPOSITORY_ROOT.replaceAll("fedora:", REPOSITORY_NAMESPACE);
 
     @Before
     public void setUp() {
@@ -354,7 +351,7 @@ public class ViewHelpersTest {
         final Node child = createURI("http://localhost/not_root");
 
         mem.add(new Triple(root, type.asNode(), BASIC_CONTAINER.asNode()));
-        mem.add(new Triple(root, type.asNode(), createURI(REPOSITORY_ROOT_URI)));
+        mem.add(new Triple(root, type.asNode(), REPOSITORY_ROOT.asNode()));
         mem.add(new Triple(child, type.asNode(), BASIC_CONTAINER.asNode()));
 
         assertTrue("Root should be a Repository Root", testObj.isRootResource(mem, root));

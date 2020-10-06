@@ -265,31 +265,6 @@ public final class RdfLexicon {
     public static final Predicate<Property> isManagedPredicate =
             hasFedoraNamespace.or(hasMementoNamespace).or(p -> serverManagedProperties.contains(p));
 
-    /**
-     * Fedora defined JCR node type with supertype of nt:file with two nt:folder named fedora:timemap and
-     * fedora:binaryTimemap inside.
-     * TODO: Remove modeshape-ism - FCREPO-3444
-     */
-    public static final String NT_VERSION_FILE = "nt:versionFile";
-
-    /**
-     * Fedora defined JCR node type which can have no children except optionally a timemap
-     * TODO: Remove modeshape-ism - FCREPO-3444
-     */
-    public static final String NT_LEAF_NODE = "nt:leafNode";
-
-    /**
-     * Fedora defined node path for a binary description.
-     * TODO: Remove modeshape-ism - FCREPO-3444
-     */
-    public static final String FEDORA_DESCRIPTION = "fedora:description";
-
-    /**
-     * Fedora defined node path for a timemap
-     * TODO: Remove modeshape-ism - FCREPO-3444
-     */
-    public static final String LDPCV_TIME_MAP = "fedora:timemap";
-
     // VERSIONING
     /**
      * Memento TimeMap type.
