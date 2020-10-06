@@ -87,6 +87,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilderException;
 import javax.ws.rs.core.Variant.VariantListBuilder;
 
+import io.micrometer.core.annotation.Timed;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.rdf.model.Model;
@@ -124,6 +125,7 @@ import com.google.common.collect.ImmutableList;
  * @since 9/25/14
  */
 
+@Timed
 @Scope("request")
 @Path("/{path: .*}")
 public class FedoraLdp extends ContentExposingResource {

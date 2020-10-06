@@ -18,6 +18,7 @@
 package org.fcrepo.http.api;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.micrometer.core.annotation.Timed;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.LinkFormatStream;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
@@ -71,6 +72,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @author cabeer
  * @since 9/25/14
  */
+@Timed
 @Scope("request")
 @Path("/{path: .*}/fcr:versions")
 public class FedoraVersioning extends ContentExposingResource {

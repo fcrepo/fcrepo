@@ -18,6 +18,7 @@
 package org.fcrepo.http.api;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.micrometer.core.annotation.Timed;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -46,6 +47,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  *
  * @author cbeer
  */
+@Timed
 @Scope("request")
 @Path("/{path: .*}/fcr:tombstone")
 public class FedoraTombstones extends ContentExposingResource {

@@ -34,6 +34,15 @@
 
 	</servlet-mapping>
 
+    <servlet>
+        <servlet-name>prometheus</servlet-name>
+        <servlet-class>org.fcrepo.http.commons.metrics.PrometheusMetricsServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>prometheus</servlet-name>
+        <url-pattern>/prometheus</url-pattern>
+    </servlet-mapping>
+
   <filter>
     <filter-name>ETagFilter</filter-name>
     <filter-class>org.springframework.web.filter.ShallowEtagHeaderFilter</filter-class>
