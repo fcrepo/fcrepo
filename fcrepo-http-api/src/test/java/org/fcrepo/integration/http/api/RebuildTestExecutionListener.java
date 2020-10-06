@@ -48,19 +48,19 @@ public class RebuildTestExecutionListener extends AbstractTestExecutionListener 
     }
 
     private void cleanDb(final TestContext testContext) {
-        final var containmentIndex = getBean(testContext, ContainmentIndex.class);
-        final var ocflIndex = getBean(testContext, FedoraToOcflObjectIndex.class);
-        final var searchIndex = getBean(testContext, SearchIndex.class);
+        final ContainmentIndex containmentIndex = getBean(testContext, "containmentIndex");
+        final FedoraToOcflObjectIndex ocflIndex = getBean(testContext, "ocflIndex");
+        final SearchIndex searchIndex = getBean(testContext, "searchIndex");
 
         containmentIndex.reset();
         ocflIndex.reset();
         searchIndex.reset();
     }
 
-    private <T> T getBean(final TestContext testContext, final Class<T> clazz) {
+    private <T> T getBean(final TestContext testContext, final String name) {
         final var containerWrapper = testContext.getApplicationContext()
                 .getBean(ContainerWrapper.class);
-        return containerWrapper.getSpringAppContext().getBean(clazz);
+        return (T) containerWrapper.getSpringAppContext().getBean(name);
     }
 
 }

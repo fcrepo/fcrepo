@@ -63,7 +63,7 @@ public class OcflPersistentSessionManagerTest {
         this.sessionManager = new OcflPersistentSessionManager();
         readWriteSession = this.sessionManager.getSession(testSessionId);
         setField(sessionManager, "objectSessionFactory", objectSessionFactory);
-        setField(sessionManager, "fedoraOcflIndex", index);
+        setField(sessionManager, "ocflIndex", index);
         readOnlySession = this.sessionManager.getReadOnlySession();
     }
 

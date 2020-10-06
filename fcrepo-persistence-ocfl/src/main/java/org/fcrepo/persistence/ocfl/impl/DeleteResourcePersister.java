@@ -62,7 +62,7 @@ class DeleteResourcePersister extends AbstractPersister {
         }
 
         if (!objectSession.containsResource(resourceId.getResourceId())) {
-            index.removeMapping(session.getId(), resourceId);
+            oclfIndex.removeMapping(session.getId(), resourceId);
         }
     }
 

@@ -23,9 +23,10 @@ import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.ContainmentTriplesService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
 import java.util.stream.Stream;
 
 import static org.apache.jena.graph.NodeFactory.createURI;
@@ -39,7 +40,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 @Component
 public class ContainmentTriplesServiceImpl implements ContainmentTriplesService {
 
-    @Inject
+    @Autowired
+    @Qualifier("containmentIndex")
     private ContainmentIndex containmentIndex;
 
     @Override

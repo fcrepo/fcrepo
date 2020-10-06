@@ -47,6 +47,8 @@ import org.fcrepo.storage.ocfl.OcflObjectSession;
 import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -78,19 +80,23 @@ public class IndexBuilderImpl implements IndexBuilder {
     @Inject
     private OcflObjectSessionFactory objectSessionFactory;
 
-    @Inject
-    private FedoraToOcflObjectIndex fedoraToOcflObjectIndex;
+    @Autowired
+    @Qualifier("ocflIndex")
+    private FedoraToOcflObjectIndex ocflIndex;
 
-    @Inject
+    @Autowired
+    @Qualifier("containmentIndex")
     private ContainmentIndex containmentIndex;
 
-    @Inject
+    @Autowired
+    @Qualifier("searchIndex")
     private SearchIndex searchIndex;
 
     @Inject
     private OcflRepository ocflRepository;
 
-    @Inject
+    @Autowired
+    @Qualifier("referenceService")
     private ReferenceService referenceService;
 
     @Inject
@@ -108,7 +114,7 @@ public class IndexBuilderImpl implements IndexBuilder {
     private void rebuild() {
         LOGGER.info("Initiating index rebuild.");
 
-        fedoraToOcflObjectIndex.reset();
+        ocflIndex.reset();
         containmentIndex.reset();
         searchIndex.reset();
         referenceService.reset();
@@ -135,7 +141,7 @@ public class IndexBuilderImpl implements IndexBuilder {
             }
 
             containmentIndex.commitTransaction(txId);
-            fedoraToOcflObjectIndex.commit(txId);
+            ocflIndex.commit(txId);
             referenceService.commitTransaction(txId);
             indexMembership(txId);
             LOGGER.info("Index rebuild complete");
@@ -150,7 +156,7 @@ public class IndexBuilderImpl implements IndexBuilder {
                 return null;
             });
             execQuietly("Failed to rollback OCFL index transaction " + txId, () -> {
-                fedoraToOcflObjectIndex.rollback(txId);
+                ocflIndex.rollback(txId);
                 return null;
             });
 
@@ -206,7 +212,7 @@ public class IndexBuilderImpl implements IndexBuilder {
 
         fedoraIds.forEach(fedoraIdentifier -> {
             final var rootFedoraIdentifier = rootId.get();
-            fedoraToOcflObjectIndex.addMapping(txId, fedoraIdentifier, rootFedoraIdentifier, ocflId);
+            ocflIndex.addMapping(txId, fedoraIdentifier, rootFedoraIdentifier, ocflId);
             LOGGER.debug("Rebuilt fedora-to-ocfl object index entry for {}", fedoraIdentifier);
         });
 
@@ -269,7 +275,7 @@ public class IndexBuilderImpl implements IndexBuilder {
 
     private boolean repoRootMappingExists() {
         try {
-            return fedoraToOcflObjectIndex.getMapping(null, FedoraId.getRepositoryRootId()) != null;
+            return ocflIndex.getMapping(null, FedoraId.getRepositoryRootId()) != null;
         } catch (final FedoraOcflMappingNotFoundException e) {
             return false;
         }

@@ -34,6 +34,8 @@ import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -63,7 +65,8 @@ public class ResourceFactoryImpl implements ResourceFactory {
     @Inject
     private PersistentStorageSessionManager persistentStorageSessionManager;
 
-    @Inject
+    @Autowired
+    @Qualifier("containmentIndex")
     private ContainmentIndex containmentIndex;
 
     @Override

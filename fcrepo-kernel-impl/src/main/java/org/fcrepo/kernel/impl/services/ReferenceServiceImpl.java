@@ -50,6 +50,8 @@ import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.kernel.impl.operations.ReferenceOperation;
 import org.fcrepo.kernel.impl.operations.ReferenceOperationBuilder;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -63,7 +65,7 @@ import org.springframework.stereotype.Component;
  * @author whikloj
  * @since 6.0.0
  */
-@Component
+@Component("referenceServiceImpl")
 public class ReferenceServiceImpl implements ReferenceService {
 
     private static final Logger LOGGER = getLogger(ReferenceServiceImpl.class);
@@ -74,7 +76,8 @@ public class ReferenceServiceImpl implements ReferenceService {
     @Inject
     private EventAccumulator eventAccumulator;
 
-    @Inject
+    @Autowired
+    @Qualifier("containmentIndex")
     private ContainmentIndex containmentIndex;
 
     private NamedParameterJdbcTemplate jdbcTemplate;

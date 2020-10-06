@@ -37,6 +37,8 @@ import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -87,7 +89,8 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     @Inject
     private ResourceFactory resourceFactory;
 
-    @Inject
+    @Autowired
+    @Qualifier("containmentIndex")
     private ContainmentIndex containmentIndex;
 
     private Transaction transaction() {

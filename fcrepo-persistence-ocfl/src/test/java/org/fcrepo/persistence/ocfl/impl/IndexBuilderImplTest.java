@@ -126,12 +126,12 @@ public class IndexBuilderImplTest {
                 "Fedora 6 test", "fedoraAdmin", "info:fedora/fedoraAdmin");
 
         sessionManager = new OcflPersistentSessionManager();
-        setField(sessionManager, "fedoraOcflIndex", index);
+        setField(sessionManager, "ocflIndex", index);
         setField(sessionManager, "objectSessionFactory", ocflObjectSessionFactory);
 
         indexBuilder = new IndexBuilderImpl();
         setField(indexBuilder, "ocflRepository", repository);
-        setField(indexBuilder, "fedoraToOcflObjectIndex", index);
+        setField(indexBuilder, "ocflIndex", index);
         setField(indexBuilder, "objectSessionFactory", ocflObjectSessionFactory);
         setField(indexBuilder, "containmentIndex", containmentIndex);
         setField(indexBuilder, "searchIndex", searchIndex);

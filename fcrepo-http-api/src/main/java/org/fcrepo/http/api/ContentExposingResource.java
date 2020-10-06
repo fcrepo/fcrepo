@@ -70,6 +70,8 @@ import org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jvnet.hk2.annotations.Optional;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import javax.inject.Inject;
 import javax.servlet.ServletContext;
@@ -221,7 +223,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     @Inject
     protected ContainmentTriplesService containmentTriplesService;
 
-    @Inject
+    @Autowired
+    @Qualifier("referenceService")
     protected ReferenceService referenceService;
 
     protected abstract String externalPath();
