@@ -241,7 +241,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @throws IOException in case of error extracting content
      */
     protected Response getContent(final int limit, final FedoraResource resource) throws IOException {
-        final RdfStream rdfStream = httpRdfService.bodyToExternalStream(getUri(resource()).toString(),
+        final RdfStream rdfStream = httpRdfService.bodyToExternalStream(getUri(resource).toString(),
                 getResourceTriples(limit, resource), identifierConverter());
         final var outputStream = new RdfNamespacedStream(
                     rdfStream, namespaceRegistry.getNamespaces());
