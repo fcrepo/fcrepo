@@ -89,15 +89,6 @@ public interface ResourceFactory {
                                                     final Class<T> clazz) throws PathNotFoundException;
 
     /**
-     * Check if a resource exists.
-     * @param transaction The current transaction
-     * @param fedoraId The internal identifier
-     * @return True if the identifier resolves to a resource.
-     */
-    public boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId);
-
-
-    /**
      * Get the containing resource (if exists).
      * @param transactionId The current transaction id
      * @param resourceId The internal identifier
@@ -113,16 +104,4 @@ public interface ResourceFactory {
      */
     public Stream<FedoraResource> getChildren(final String transactionId, final FedoraId resourceId);
 
-    /**
-     * Is the resource a "ghost node". Ghost nodes are defined as a resource that does not exist, but whose URI is part
-     * of the URI of another resource? For example:
-     *
-     * http://localhost/rest/a/b - does exist
-     * http://localhost/rest/a - does not exist and is therefore a ghost node.
-     *
-     * @param transaction The transaction
-     * @param resourceId Identifier of the resource
-     * @return Whether the resource does not exist, but has
-     */
-    public boolean isGhostNode(final Transaction transaction, final FedoraId resourceId);
 }

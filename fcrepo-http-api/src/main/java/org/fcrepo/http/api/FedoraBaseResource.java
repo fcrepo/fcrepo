@@ -26,6 +26,7 @@ import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.ResourceHelper;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -49,6 +50,9 @@ abstract public class FedoraBaseResource extends AbstractResource {
 
     @Inject
     protected ResourceFactory resourceFactory;
+
+    @Inject
+    protected ResourceHelper resourceHelper;
 
     @Context protected HttpServletRequest servletRequest;
 
@@ -89,7 +93,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
      * @return Returns true if an object with the provided id exists
      */
     protected boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId) {
-        return resourceFactory.doesResourceExist(transaction, fedoraId);
+        return resourceHelper.doesResourceExist(transaction, fedoraId);
     }
 
     /**
@@ -99,7 +103,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
      * @return Returns true if object does not exist but whose ID starts other resources that do exist.
      */
     protected boolean isGhostNode(final Transaction transaction, final FedoraId fedoraId) {
-        return resourceFactory.isGhostNode(transaction, fedoraId);
+        return resourceHelper.isGhostNode(transaction, fedoraId);
     }
 
     protected String getUserPrincipal() {

@@ -99,46 +99,6 @@ public class ResourceFactoryImpl implements ResourceFactory {
         return clazz.cast(getResource(transaction, identifier));
     }
 
-    @Override
-    public boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId) {
-        return doesResourceExistImpl(TransactionUtils.openTxId(transaction), fedoraId);
-    }
-
-    private boolean doesResourceExistImpl(final String transactionId, final FedoraId fedoraId) {
-        if (fedoraId.isRepositoryRoot()) {
-            // Root always exists.
-            return true;
-        }
-        if (!(fedoraId.isMemento() || fedoraId.isAcl())) {
-            // containment index doesn't handle versions and only tells us if the resource (not acl) is there,
-            // so don't bother checking for them.
-            return containmentIndex.resourceExists(transactionId, fedoraId);
-        } else {
-
-            final PersistentStorageSession psSession = getSession(transactionId);
-
-            try {
-                // Resource ID for metadata or ACL contains their individual endopoints (ie. fcr:metadata, fcr:acl)
-                final ResourceHeaders headers = psSession.getHeaders(fedoraId, fedoraId.getMementoInstant());
-                return !headers.isDeleted();
-            } catch (final PersistentItemNotFoundException e) {
-                // Object doesn't exist.
-                return false;
-            } catch (final PersistentStorageException e) {
-                // Other error, pass along.
-                throw new RepositoryRuntimeException(e.getMessage(), e);
-            } finally {
-                if (transactionId == null) {
-                    // Commit session (if read-only) so it doesn't hang around.
-                    try {
-                        psSession.commit();
-                    } catch (final PersistentStorageException e) {
-                        LOGGER.error("Error committing session, message: {}", e.getMessage());
-                    }
-                }
-            }
-        }
-    }
 
     @Override
     public FedoraResource getContainer(final String transactionId, final FedoraId resourceId) {
@@ -151,14 +111,6 @@ public class ResourceFactoryImpl implements ResourceFactory {
         } catch (final PathNotFoundException exc) {
             return null;
         }
-    }
-
-    @Override
-    public boolean isGhostNode(final Transaction transaction, final FedoraId resourceId) {
-        if (!doesResourceExist(transaction, resourceId)) {
-            return containmentIndex.hasResourcesStartingWith(TransactionUtils.openTxId(transaction), resourceId);
-        }
-        return false;
     }
 
     /**
