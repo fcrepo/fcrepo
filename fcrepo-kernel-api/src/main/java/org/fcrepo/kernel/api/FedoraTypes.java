@@ -27,20 +27,6 @@ public interface FedoraTypes {
 
     String FEDORA_ID_PREFIX = "info:fedora";
 
-    String FEDORA_REPOSITORY_ROOT = "fedora:RepositoryRoot";
-
-    String LDP_BASIC_CONTAINER = "ldp:BasicContainer";
-
-    String LDP_NON_RDF_SOURCE = "ldp:NonRDFSource";
-
-    String FILENAME = "ebucore:filename";
-
-    String REDIRECTS_TO = "fedora:redirectsTo";
-
-    String CONTENT_SIZE = "premis:hasSize";
-
-    String DEFAULT_DIGEST_ALGORITHM = "fedoraconfig:defaultDigestAlgorithm";
-
     String FCR_ACL = "fcr:acl";
 
     String FCR_METADATA = "fcr:metadata";

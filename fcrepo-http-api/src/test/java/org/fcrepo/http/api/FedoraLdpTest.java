@@ -44,7 +44,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES_TYPE;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getServletContextImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
@@ -438,7 +437,7 @@ public class FedoraLdpTest {
     public void testHeadWithBasicContainer() throws Exception {
         final FedoraResource resource = setResource(Container.class);
         when(mockRequest.getMethod()).thenReturn("HEAD");
-        when(resource.hasType(LDP_BASIC_CONTAINER)).thenReturn(true);
+        when(resource.hasType(BASIC_CONTAINER.toString())).thenReturn(true);
         final Response actual = testObj.head();
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertShouldBeAnLDPBasicContainer();
