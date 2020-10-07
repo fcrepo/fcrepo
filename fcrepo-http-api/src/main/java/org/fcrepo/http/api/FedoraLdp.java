@@ -408,7 +408,7 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         if (isGhostNode(transaction(), fedoraId)) {
-            throw new GhostNodeException("Resource path " + externalPath() + " is an immutable node.");
+            throw new GhostNodeException("Resource path " + externalPath() + " is an immutable resource.");
         }
 
         // TODO: Refactor to check preconditions
@@ -808,7 +808,7 @@ public class FedoraLdp extends ContentExposingResource {
         final FedoraId fullTestPath = fedoraId.resolve(pid);
 
         if (doesResourceExist(transaction(), fullTestPath) || isGhostNode(transaction(), fullTestPath)) {
-            LOGGER.debug("Resource with path {} already exists or is ghost node; minting new path instead",
+            LOGGER.debug("Resource with path {} already exists or is an immutable resource; minting new path instead",
                     fullTestPath);
             return mintNewPid(fedoraId, null);
         }

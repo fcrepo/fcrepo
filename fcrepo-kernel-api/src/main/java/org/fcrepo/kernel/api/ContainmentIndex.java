@@ -50,45 +50,45 @@ public interface ContainmentIndex {
 
     /**
      * Return the ID of the containing resource for resourceID.
-     * @param txID The transaction id, or null if no transaction
+     * @param txId The transaction id, or null if no transaction
      * @param resource The FedoraId of the resource to find the containing resource for.
      * @return The id of the containing resource or null if none found.
      */
-    String getContainedBy(String txID, final FedoraId resource);
+    String getContainedBy(String txId, final FedoraId resource);
 
     /**
      * Mark a contained by relation between the child resource and its parent as deleted.
      *
-     * @param txID The transaction ID.
+     * @param txId The transaction ID.
      * @param parent The containing resource fedoraID.
      * @param child The contained resource fedoraID.
      */
-    void removeContainedBy(@Nonnull final String txID, final FedoraId parent, final FedoraId child);
+    void removeContainedBy(@Nonnull final String txId, final FedoraId parent, final FedoraId child);
 
     /**
      * Mark all relationships to the specified resource as deleted.
      *
-     * @param txID The transaction ID.
+     * @param txId The transaction ID.
      * @param resource The FedoraId of resource to remove.
      */
-    void removeResource(@Nonnull final String txID, final FedoraId resource);
+    void removeResource(@Nonnull final String txId, final FedoraId resource);
 
     /**
      * Remove all relationships to the specified resource.
      *
-     * @param txID The transaction ID.
+     * @param txId The transaction ID.
      * @param resource The FedoraId of resource to remove.
      */
-    void purgeResource(@Nonnull final String txID, final FedoraId resource);
+    void purgeResource(@Nonnull final String txId, final FedoraId resource);
 
     /**
      * Add a contained by relation between the child resource and its parent.
      *
-     * @param txID The transaction ID.
+     * @param txId The transaction ID.
      * @param parent The containing resource fedoraID.
      * @param child The contained resource fedoraID.
      */
-    void addContainedBy(@Nonnull final String txID, final FedoraId parent, final FedoraId child);
+    void addContainedBy(@Nonnull final String txId, final FedoraId parent, final FedoraId child);
 
     /**
      * Commit the changes made in the transaction.
@@ -105,19 +105,19 @@ public interface ContainmentIndex {
     /**
      * Check if the resourceID exists in the containment index. Which should mean it exists.
      *
-     * @param txID The transaction id, or null if no transaction
+     * @param txId The transaction id, or null if no transaction
      * @param fedoraID The resource's FedoraId.
      * @return True if it is in the index.
      */
-    boolean resourceExists(final String txID, final FedoraId fedoraID);
+    boolean resourceExists(final String txId, final FedoraId fedoraID);
 
     /**
      * Find the ID for the container of the provided resource by iterating up the path until you find a real resource.
-     * @param txID The transaction id, or null if no transaction
+     * @param txId The transaction id, or null if no transaction
      * @param fedoraId The resource's ID.
      * @return The container ID.
      */
-    FedoraId getContainerIdByPath(final String txID, final FedoraId fedoraId);
+    FedoraId getContainerIdByPath(final String txId, final FedoraId fedoraId);
 
     /**
      * Truncates the containment index. This should only be called when rebuilding the index.
@@ -126,9 +126,9 @@ public interface ContainmentIndex {
 
     /**
      * Find whether there are any resources that starts with the ID provided.
-     * @param txID The transaction id, or null if no transaction.
+     * @param txId The transaction id, or null if no transaction.
      * @param fedoraId The ID to use to look for other IDs.
      * @return Are there any matching IDs.
      */
-    boolean hasResourcesStartingWith(final String txID, final FedoraId fedoraId);
+    boolean hasResourcesStartingWith(final String txId, final FedoraId fedoraId);
 }

@@ -364,13 +364,13 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    public String getContainedBy(final String txID, final FedoraId resource) {
+    public String getContainedBy(final String txId, final FedoraId resource) {
         final String resourceID = resource.getFullId();
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("child", resourceID);
         final List<String> parentID;
-        if (txID != null) {
-            parameterSource.addValue("transactionId", txID);
+        if (txId != null) {
+            parameterSource.addValue("transactionId", txId);
             parentID = jdbcTemplate.queryForList(PARENT_EXISTS_IN_TRANSACTION, parameterSource, String.class);
         } else {
             parentID = jdbcTemplate.queryForList(PARENT_EXISTS, parameterSource, String.class);
@@ -379,16 +379,16 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    public void addContainedBy(@Nonnull final String txID, final FedoraId parent, final FedoraId child) {
+    public void addContainedBy(@Nonnull final String txId, final FedoraId parent, final FedoraId child) {
         final String parentID = parent.getFullId();
         final String childID = child.getFullId();
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 
-        LOGGER.debug("Adding: parent: {}, child: {}, in txn: {}", parentID, childID, txID);
+        LOGGER.debug("Adding: parent: {}, child: {}, in txn: {}", parentID, childID, txId);
 
         parameterSource.addValue("parent", parentID);
         parameterSource.addValue("child", childID);
-        parameterSource.addValue("transactionId", txID);
+        parameterSource.addValue("transactionId", txId);
         final boolean purgedInTxn = !jdbcTemplate.queryForList(IS_CHILD_PURGED_IN_TRANSACTION, parameterSource)
                 .isEmpty();
         if (purgedInTxn) {
@@ -399,13 +399,13 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    public void removeContainedBy(@Nonnull final String txID, final FedoraId parent, final FedoraId child) {
+    public void removeContainedBy(@Nonnull final String txId, final FedoraId parent, final FedoraId child) {
         final String parentID = parent.getFullId();
         final String childID = child.getFullId();
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("parent", parentID);
         parameterSource.addValue("child", childID);
-        parameterSource.addValue("transactionId", txID);
+        parameterSource.addValue("transactionId", txId);
         final boolean addedInTxn = !jdbcTemplate.queryForList(IS_CHILD_ADDED_IN_TRANSACTION, parameterSource)
                 .isEmpty();
         if (addedInTxn) {
@@ -416,17 +416,17 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    public void removeResource(@Nonnull final String txID, final FedoraId resource) {
+    public void removeResource(@Nonnull final String txId, final FedoraId resource) {
         final String resourceID = resource.getFullId();
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("child", resourceID);
-        parameterSource.addValue("transactionId", txID);
+        parameterSource.addValue("transactionId", txId);
         final boolean addedInTxn = !jdbcTemplate.queryForList(IS_CHILD_ADDED_IN_TRANSACTION_NO_PARENT,
                 parameterSource).isEmpty();
         if (addedInTxn) {
             jdbcTemplate.update(UNDO_INSERT_CHILD_IN_TRANSACTION_NO_PARENT, parameterSource);
         } else {
-            final String parent = getContainedBy(txID, resource);
+            final String parent = getContainedBy(txId, resource);
             if (parent != null) {
                 LOGGER.debug("Marking containment relationship between parent ({}) and child ({}) deleted", parent,
                         resourceID);
@@ -437,12 +437,12 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    public void purgeResource(@Nonnull final String txID, final FedoraId resource) {
+    public void purgeResource(@Nonnull final String txId, final FedoraId resource) {
         final String resourceID = resource.getFullId();
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("child", resourceID);
-        parameterSource.addValue("transactionId", txID);
-        final String parent = getContainedByDeleted(txID, resource);
+        parameterSource.addValue("transactionId", txId);
+        final String parent = getContainedByDeleted(txId, resource);
         final boolean deletedInTxn = !jdbcTemplate.queryForList(IS_CHILD_DELETED_IN_TRANSACTION_NO_PARENT,
                 parameterSource).isEmpty();
         if (deletedInTxn) {
@@ -457,17 +457,17 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     /**
      * Find parent for a resource using a deleted containment relationship.
-     * @param txID the transaction id.
+     * @param txId the transaction id.
      * @param resource the child resource id.
      * @return the parent id.
      */
-    private String getContainedByDeleted(final String txID, final FedoraId resource) {
+    private String getContainedByDeleted(final String txId, final FedoraId resource) {
         final String resourceID = resource.getFullId();
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("child", resourceID);
         final List<String> parentID;
-        if (txID != null) {
-            parameterSource.addValue("transactionId", txID);
+        if (txId != null) {
+            parameterSource.addValue("transactionId", txId);
             parentID = jdbcTemplate.queryForList(PARENT_EXISTS_DELETED_IN_TRANSACTION, parameterSource, String.class);
         } else {
             parentID = jdbcTemplate.queryForList(PARENT_EXISTS_DELETED, parameterSource, String.class);
@@ -504,10 +504,10 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    public boolean resourceExists(final String txID, final FedoraId fedoraID) {
+    public boolean resourceExists(final String txId, final FedoraId fedoraID) {
         // Get the containing ID because fcr:metadata will not exist here but MUST exist if the containing resource does
         final String resourceID = fedoraID.getBaseId();
-        LOGGER.debug("Checking if {} exists in transaction {}", resourceID, txID);
+        LOGGER.debug("Checking if {} exists in transaction {}", resourceID, txId);
         if (fedoraID.isRepositoryRoot()) {
             // Root always exists.
             return true;
@@ -515,8 +515,8 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("child", resourceID);
         final boolean exists;
-        if (txID != null) {
-            parameterSource.addValue("transactionId", txID);
+        if (txId != null) {
+            parameterSource.addValue("transactionId", txId);
             exists = !jdbcTemplate.queryForList(RESOURCE_EXISTS_IN_TRANSACTION, parameterSource, String.class)
                     .isEmpty();
         } else {
@@ -526,12 +526,12 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    public FedoraId getContainerIdByPath(final String txID, final FedoraId fedoraId) {
+    public FedoraId getContainerIdByPath(final String txId, final FedoraId fedoraId) {
         if (fedoraId.isRepositoryRoot()) {
             // If we are root then we are the top.
             return fedoraId;
         }
-        final String parent = getContainedBy(txID, fedoraId);
+        final String parent = getContainedBy(txId, fedoraId);
         if (parent != null) {
             return FedoraId.create(parent);
         }
@@ -542,7 +542,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
                 return FedoraId.getRepositoryRootId();
             }
             final FedoraId testID = FedoraId.create(fullId);
-            if (resourceExists(txID, testID)) {
+            if (resourceExists(txId, testID)) {
                 return testID;
             }
         }
@@ -561,12 +561,12 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    public boolean hasResourcesStartingWith(final String txID, final FedoraId fedoraId) {
+    public boolean hasResourcesStartingWith(final String txId, final FedoraId fedoraId) {
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("resourceId", fedoraId.getFullId() + "/%");
         final boolean matchingIds;
-        if (txID != null) {
-            parameterSource.addValue("transactionId", txID);
+        if (txId != null) {
+            parameterSource.addValue("transactionId", txId);
             matchingIds = !jdbcTemplate.queryForList(SELECT_ID_LIKE_IN_TRANSACTION, parameterSource, String.class)
                 .isEmpty();
         } else {
