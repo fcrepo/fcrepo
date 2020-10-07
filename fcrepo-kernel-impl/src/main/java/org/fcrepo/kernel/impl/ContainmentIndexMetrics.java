@@ -137,9 +137,9 @@ public class ContainmentIndexMetrics implements ContainmentIndex {
     }
 
     @Override
-    public boolean resourceExists(final String txID, final FedoraId fedoraID) {
+    public boolean resourceExists(final String txID, final FedoraId fedoraId) {
         return MetricsHelper.time(resourceExistsTimer, () -> {
-            return containmentIndexImpl.resourceExists(txID, fedoraID);
+            return containmentIndexImpl.resourceExists(txID, fedoraId);
         });
     }
 

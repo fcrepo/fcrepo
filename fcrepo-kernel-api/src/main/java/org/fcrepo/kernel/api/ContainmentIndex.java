@@ -106,10 +106,10 @@ public interface ContainmentIndex {
      * Check if the resourceID exists in the containment index. Which should mean it exists.
      *
      * @param txId The transaction id, or null if no transaction
-     * @param fedoraID The resource's FedoraId.
+     * @param fedoraId The resource's FedoraId.
      * @return True if it is in the index.
      */
-    boolean resourceExists(final String txId, final FedoraId fedoraID);
+    boolean resourceExists(final String txId, final FedoraId fedoraId);
 
     /**
      * Find the ID for the container of the provided resource by iterating up the path until you find a real resource.

@@ -504,16 +504,16 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    public boolean resourceExists(final String txId, final FedoraId fedoraID) {
+    public boolean resourceExists(final String txId, final FedoraId fedoraId) {
         // Get the containing ID because fcr:metadata will not exist here but MUST exist if the containing resource does
-        final String resourceID = fedoraID.getBaseId();
-        LOGGER.debug("Checking if {} exists in transaction {}", resourceID, txId);
-        if (fedoraID.isRepositoryRoot()) {
+        final String resourceId = fedoraId.getBaseId();
+        LOGGER.debug("Checking if {} exists in transaction {}", resourceId, txId);
+        if (fedoraId.isRepositoryRoot()) {
             // Root always exists.
             return true;
         }
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-        parameterSource.addValue("child", resourceID);
+        parameterSource.addValue("child", resourceId);
         final boolean exists;
         if (txId != null) {
             parameterSource.addValue("transactionId", txId);
