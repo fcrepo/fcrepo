@@ -18,7 +18,7 @@
 package org.fcrepo.kernel.api.exception;
 
 /**
- * Exception when trying to alter an immutable node.
+ * Exception when trying to alter an immutable resource.
  * @author whikloj
  */
 public class GhostNodeException extends RepositoryRuntimeException {
