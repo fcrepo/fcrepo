@@ -66,6 +66,8 @@ public class ContainmentIndexMetrics implements ContainmentIndex {
             DB, CONTAINMENT, OPERATION, "getContainerIdByPath");
     private static final Timer resetTimer = Metrics.timer(METRIC_NAME,
             DB, CONTAINMENT, OPERATION, "reset");
+    private static final Timer hasResourcesStartingWithTimer = Metrics.timer(METRIC_NAME,
+            DB, CONTAINMENT, OPERATION, "hasResourcesStartingWith");
 
     @Autowired
     @Qualifier("containmentIndexImpl")
@@ -135,9 +137,9 @@ public class ContainmentIndexMetrics implements ContainmentIndex {
     }
 
     @Override
-    public boolean resourceExists(final String txID, final FedoraId fedoraID) {
+    public boolean resourceExists(final String txID, final FedoraId fedoraId) {
         return MetricsHelper.time(resourceExistsTimer, () -> {
-            return containmentIndexImpl.resourceExists(txID, fedoraID);
+            return containmentIndexImpl.resourceExists(txID, fedoraId);
         });
     }
 
@@ -153,5 +155,11 @@ public class ContainmentIndexMetrics implements ContainmentIndex {
         resetTimer.record(() -> {
             containmentIndexImpl.reset();
         });
+    }
+
+    @Override
+    public boolean hasResourcesStartingWith(final String txId, final FedoraId fedoraId) {
+        return MetricsHelper.time(hasResourcesStartingWithTimer, () ->
+                containmentIndexImpl.hasResourcesStartingWith(txId, fedoraId));
     }
 }

@@ -565,6 +565,37 @@ public class ContainmentIndexImplTest {
         assertFalse(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId()));
     }
 
+    @Test
+    public void testHasResourcesStartingFailure() {
+        stubObject("parent1");
+        stubObject("child1");
+        stubObject("transaction1");
+        // Nothing exists.
+        assertFalse(containmentIndex.hasResourcesStartingWith(null, parent1.getFedoraId()));
+        // Add the single resource.
+        containmentIndex.addContainedBy(transaction1.getId(), FedoraId.getRepositoryRootId(), parent1.getFedoraId());
+        containmentIndex.commitTransaction(transaction1.getId());
+        // Still no similar paths.
+        assertFalse(containmentIndex.hasResourcesStartingWith(null, parent1.getFedoraId()));
+        // Add a contained resource that does NOT share the URI path.
+        assertFalse(child1.getFedoraId().getFullId().startsWith(parent1.getFedoraId().getFullId()));
+        containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
+        containmentIndex.commitTransaction(transaction1.getId());
+        // Still no similar paths.
+        assertFalse(containmentIndex.hasResourcesStartingWith(null, parent1.getFedoraId()));
+    }
+
+    @Test
+    public void testHasResourcesStartingSuccess() {
+        stubObject("parent1");
+        final var subPathId = parent1.getFedoraId().resolve("a/layer/down");
+        stubObject("transaction1");
+        // Add a resource.
+        containmentIndex.addContainedBy(transaction1.getId(), FedoraId.getRepositoryRootId(), subPathId);
+        // That resource's ID starts with the ID we are checking.
+        assertTrue(subPathId.getFullId().startsWith(parent1.getFedoraId().getFullId()));
+        assertTrue(containmentIndex.hasResourcesStartingWith(transaction1.getId(), parent1.getFedoraId()));
+    }
 }
 
 

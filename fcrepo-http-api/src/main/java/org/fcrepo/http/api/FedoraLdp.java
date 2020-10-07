@@ -96,6 +96,7 @@ import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
+import org.fcrepo.kernel.api.exception.GhostNodeException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
@@ -404,6 +405,10 @@ public class FedoraLdp extends ContentExposingResource {
             //    throw new InteractionModelViolationException("Changing the interaction model " + resInteractionModel
             //            + " to " + interactionModel + " is not allowed!");
             //}
+        }
+
+        if (isGhostNode(transaction(), fedoraId)) {
+            throw new GhostNodeException("Resource path " + externalPath() + " is an immutable resource.");
         }
 
         // TODO: Refactor to check preconditions
@@ -802,8 +807,9 @@ public class FedoraLdp extends ContentExposingResource {
 
         final FedoraId fullTestPath = fedoraId.resolve(pid);
 
-        if (doesResourceExist(transaction(), fullTestPath)) {
-            LOGGER.debug("Resource with path {} already exists; minting new path instead", fullTestPath);
+        if (doesResourceExist(transaction(), fullTestPath) || isGhostNode(transaction(), fullTestPath)) {
+            LOGGER.debug("Resource with path {} already exists or is an immutable resource; minting new path instead",
+                    fullTestPath);
             return mintNewPid(fedoraId, null);
         }
 

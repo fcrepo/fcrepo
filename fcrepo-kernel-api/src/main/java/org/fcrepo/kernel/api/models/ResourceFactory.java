@@ -89,15 +89,6 @@ public interface ResourceFactory {
                                                     final Class<T> clazz) throws PathNotFoundException;
 
     /**
-     * Check if a resource exists.
-     * @param transaction The current transaction
-     * @param fedoraId The internal identifier
-     * @return True if the identifier resolves to a resource.
-     */
-    public boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId);
-
-
-    /**
      * Get the containing resource (if exists).
      * @param transactionId The current transaction id
      * @param resourceId The internal identifier
@@ -112,4 +103,5 @@ public interface ResourceFactory {
      * @return Stream of child resources
      */
     public Stream<FedoraResource> getChildren(final String transactionId, final FedoraId resourceId);
+
 }

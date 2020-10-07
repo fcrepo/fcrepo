@@ -37,6 +37,7 @@ import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -4944,4 +4945,53 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
+    @Test
+    public void testGhostNodes() throws IOException {
+        final String shallowId = getRandomUniqueId();
+        final String ghostSlug = getRandomUniqueId();
+        final String ghostId = shallowId + "/" + ghostSlug;
+        final String deepId = ghostId + "/" + getRandomUniqueId();
+        // Create 'a'
+        assertEquals(CREATED.getStatusCode(), getStatus(putObjMethod(shallowId)));
+        assertEquals(OK.getStatusCode(), getStatus(getObjMethod(shallowId)));
+
+        // Create 'a/b/c' ('b' is a ghost node)
+        assertEquals(CREATED.getStatusCode(), getStatus(putObjMethod(deepId)));
+        // Ensure the resource exists.
+        assertEquals(OK.getStatusCode(), getStatus(getObjMethod(deepId)));
+
+        // Ensure the ghost node does not exist.
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(getObjMethod(ghostId)));
+        // Ensure you can't create at the ghost node location.
+        assertEquals(CONFLICT.getStatusCode(), getStatus(putObjMethod(ghostId)));
+        // Ensure you can't POST with a slug to get the ghost node location.
+        final HttpPost ghostPost = postObjMethod(shallowId);
+        ghostPost.setHeader("Slug", ghostSlug);
+        try (final CloseableHttpResponse response = execute(ghostPost)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            assertFalse(getLocation(response).contains(ghostId));
+        }
+
+        // Delete 'a/b/c'
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteObjMethod(deepId)));
+
+        // Assert 'a/b/c' is gone.
+        assertEquals(GONE.getStatusCode(), getStatus(getObjMethod(deepId)));
+
+        // Still can't create because there is a tombstone
+        assertEquals(CONFLICT.getStatusCode(), getStatus(putObjMethod(ghostId)));
+
+        // Delete the tombstone
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteObjMethod(deepId + "/" + FCR_TOMBSTONE)));
+
+        // Now you can create a/b
+        assertEquals(CREATED.getStatusCode(), getStatus(putObjMethod(ghostId)));
+
+        // 'a' exists
+        assertEquals(OK.getStatusCode(), getStatus(getObjMethod(shallowId)));
+        // 'a/b' exists
+        assertEquals(OK.getStatusCode(), getStatus(getObjMethod(ghostId)));
+        // 'a/b/c' does not exist
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(getObjMethod(deepId)));
+    }
 }
