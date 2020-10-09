@@ -100,6 +100,11 @@ public class TransactionManagerImpl implements TransactionManager {
                     LOGGER.error("Failed to rollback expired transaction {}", tx.getId(), e);
                 }
             }
+
+            if (tx.hasExpired()) {
+                // By this point the session as already been committed or rolledback by the transaction
+                pSessionManager.removeSession(tx.getId());
+            }
         }
     }
 

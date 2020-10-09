@@ -42,4 +42,12 @@ public interface PersistentStorageSessionManager {
      */
     PersistentStorageSession getReadOnlySession();
 
+    /**
+     * Removes the indicated session. If the session does not exist, null is returned.
+     *
+     * @param sessionId the id of the session to remove
+     * @return the session, if it exists
+     */
+    PersistentStorageSession removeSession(final String sessionId);
+
 }

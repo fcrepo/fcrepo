@@ -31,6 +31,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.io.IOException;
 
 import static java.util.UUID.randomUUID;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
@@ -80,6 +82,13 @@ public class OcflPersistentSessionManagerTest {
     @Test(expected = IllegalArgumentException.class)
     public void testNullSessionId() {
         this.sessionManager.getSession(null);
+    }
+
+    @Test
+    public void removeSession() {
+        final var session = sessionManager.removeSession(testSessionId);
+        assertSame(readWriteSession, session);
+        assertNull(sessionManager.removeSession(testSessionId));
     }
 
 }
