@@ -17,14 +17,6 @@
  */
 package org.fcrepo.kernel.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
-
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.exception.TransactionClosedException;
 import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
@@ -40,6 +32,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * <p>TransactionTest class.</p>
@@ -166,6 +167,11 @@ public class TransactionManagerImplTest {
         testTxManager.cleanupClosedTransactions();
 
         // verify that closed transactions cleanedup
+
+        verify(pssManager).removeSession(commitTx.getId());
+        verify(pssManager).removeSession(rollbackTx.getId());
+        verify(pssManager, never()).removeSession(continuingTx.getId());
+
         try {
             testTxManager.get(commitTx.getId());
             fail("Committed transaction was not cleaned up");
@@ -203,6 +209,7 @@ public class TransactionManagerImplTest {
         }
 
         verify(psSession).rollback();
+        verify(pssManager).removeSession(expiringTx.getId());
 
         testTxManager.cleanupClosedTransactions();
 

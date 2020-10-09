@@ -62,6 +62,7 @@ public class OcflPersistentSessionManager implements PersistentStorageSessionMan
 
     @Override
     public PersistentStorageSession getSession(final String sessionId) {
+        LOGGER.debug("Getting storage session {}", sessionId);
 
         if (sessionId == null) {
             throw new IllegalArgumentException("session id must be non-null");
@@ -92,4 +93,9 @@ public class OcflPersistentSessionManager implements PersistentStorageSessionMan
         return localSession;
     }
 
+    @Override
+    public PersistentStorageSession removeSession(final String sessionId) {
+        LOGGER.debug("Removing storage session {}", sessionId);
+        return sessionMap.remove(sessionId);
+    }
 }
