@@ -43,6 +43,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
  */
 public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements NonRdfSourceDescription {
 
+    private static final URI RDF_SOURCE_URI = URI.create(RDF_SOURCE.getURI());
+
     /**
      * Construct a description resource
      *
@@ -76,9 +78,14 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
 
     @Override
     public List<URI> getSystemTypes(final boolean forRdf) {
-        final var types = super.getSystemTypes(forRdf);
-        // NonRdfSource gets the ldp:Resource and adds ldp:RDFSource types.
-        types.add(URI.create(RDF_SOURCE.getURI()));
+        var types = resolveSystemTypes(forRdf);
+
+        if (types == null) {
+            types = super.getSystemTypes(forRdf);
+            // NonRdfSource gets the ldp:Resource and adds ldp:RDFSource types.
+            types.add(RDF_SOURCE_URI);
+        }
+
         return types;
     }
 

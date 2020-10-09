@@ -23,6 +23,10 @@ import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.Tombstone;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 
+import java.net.URI;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Tombstone class
  *
@@ -47,5 +51,10 @@ public class TombstoneImpl extends FedoraResourceImpl implements Tombstone {
     @Override
     public FedoraId getFedoraId() {
         return this.originalResource.getFedoraId();
+    }
+
+    @Override
+    public List<URI> getUserTypes() {
+        return Collections.emptyList();
     }
 }

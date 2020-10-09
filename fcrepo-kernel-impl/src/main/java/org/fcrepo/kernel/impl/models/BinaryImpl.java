@@ -47,6 +47,8 @@ import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
  */
 public class BinaryImpl extends FedoraResourceImpl implements Binary {
 
+    private static final URI FEDORA_BINARY_URI = URI.create(FEDORA_BINARY.getURI());
+
     private String externalHandling;
 
     private String externalUrl;
@@ -100,7 +102,7 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
             return null;
         }
         final var digest = digests.stream().findFirst();
-        return digest.isPresent() ? digest.get() : null;
+        return digest.orElse(null);
     }
 
     @Override
@@ -186,9 +188,14 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
 
     @Override
     public List<URI> getSystemTypes(final boolean forRdf) {
-        final var types = super.getSystemTypes(forRdf);
-        // Add fedora:Binary type.
-        types.add(URI.create(FEDORA_BINARY.getURI()));
+        var types = resolveSystemTypes(forRdf);
+
+        if (types == null) {
+            types = super.getSystemTypes(forRdf);
+            // Add fedora:Binary type.
+            types.add(FEDORA_BINARY_URI);
+        }
+
         return types;
     }
 }

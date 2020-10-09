@@ -202,6 +202,8 @@ public class ResourceFactoryImpl implements ResourceFactory {
         resc.setParentId(headers.getParent());
         resc.setEtag(headers.getStateToken());
         resc.setStateToken(headers.getStateToken());
+        resc.setIsArchivalGroup(headers.isArchivalGroup());
+        resc.setInteractionModel(headers.getInteractionModel());
 
         // If there's a version, then it's a memento
         if (version != null) {
