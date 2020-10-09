@@ -30,7 +30,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -162,8 +161,4 @@ public class FedoraFixityIT extends AbstractResourceIT {
         assertEquals("Mismatch on " + digestName + " value", digestValue, digestHeaders.get(digestName));
     }
 
-    private static Map<String, String> decodeDigestHeader(final String digestHeader) {
-        return Arrays.stream(digestHeader.split(",")).map(h -> h.split("=", 2))
-                .collect(Collectors.toMap(a -> a[0], a -> a.length > 1 ? a[1] : ""));
-    }
 }

@@ -17,6 +17,7 @@
  */
 package org.fcrepo.integration.rdf;
 
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.PREMIS_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
@@ -40,7 +41,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIME_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_ORIGINAL_NAME;
-import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 
 import java.util.List;
@@ -64,6 +64,10 @@ import org.junit.Test;
  */
 @Ignore // TODO FIX THESE TESTS
 public class ServerManagedTriplesIT extends AbstractResourceIT {
+
+    // BINARY DESCRIPTIONS
+    public static final Property DESCRIBED_BY =
+            createProperty("http://www.iana.org/assignments/relation/describedby");
 
     private final static String NON_EXISTENT_PREDICATE = "any_predicate_will_do";
 

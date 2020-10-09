@@ -30,6 +30,7 @@ import org.springframework.context.annotation.Scope;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.OPTIONS;
@@ -53,7 +54,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.status;
+
 import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_LINK_FORMAT;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;
@@ -224,6 +228,20 @@ public class FedoraVersioning extends ContentExposingResource {
         LOGGER.info("OPTIONS for '{}'", externalPath);
         addResourceHttpHeaders(theTimeMap);
         return ok().build();
+    }
+
+    /**
+     * Can't delete TimeMaps
+     *
+     * @return the response to a delete request.
+     */
+    @DELETE
+    @Produces({TEXT_PLAIN_WITH_CHARSET})
+    public Response delete() {
+        final FedoraResource theTimeMap = resource().getTimeMap();
+        addResourceHttpHeaders(theTimeMap);
+        final String message = "Timemaps are deleted with their associated resource.";
+        return status(METHOD_NOT_ALLOWED).entity(message).type(TEXT_PLAIN_WITH_CHARSET).build();
     }
 
     @Override

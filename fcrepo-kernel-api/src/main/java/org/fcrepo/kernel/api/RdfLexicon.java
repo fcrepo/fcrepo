@@ -176,12 +176,6 @@ public final class RdfLexicon {
     public static final Property HAS_FIXITY_SERVICE =
             createProperty(REPOSITORY_NAMESPACE + "hasFixityService");
 
-    // BINARY DESCRIPTIONS
-    public static final Property DESCRIBES =
-            createProperty("http://www.iana.org/assignments/relation/describes");
-    public static final Property DESCRIBED_BY =
-            createProperty("http://www.iana.org/assignments/relation/describedby");
-
     public static final Property HAS_MIME_TYPE =
             createProperty(EBUCORE_NAMESPACE + "hasMimeType");
     public static final Property HAS_ORIGINAL_NAME =

@@ -135,7 +135,7 @@ public class HttpRdfService {
                             idTranslator.toInternalId(originalSubj) : originalSubj;
 
                     RDFNode obj = stmt.getObject();
-                    if (stmt.getObject().isResource()) {
+                    if (stmt.getObject().isURIResource()) {
                         final String objString = stmt.getObject().asResource().getURI();
                         if (idTranslator.inExternalDomain(objString)) {
                             obj = model.getResource(idTranslator.toInternalId(objString));

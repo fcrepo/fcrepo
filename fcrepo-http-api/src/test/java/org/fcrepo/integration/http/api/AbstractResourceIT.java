@@ -70,8 +70,10 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.parseInt;
@@ -126,6 +128,16 @@ public abstract class AbstractResourceIT {
 
     @Inject
     private static FedoraPropsConfig propsConfig;
+
+    /**
+     * Decode the Digest header
+     * @param digestHeader the digest header value.
+     * @return Map with keys of algorithms and values of hashes.
+     */
+    protected static Map<String, String> decodeDigestHeader(final String digestHeader) {
+        return stream(digestHeader.split(",")).map(h -> h.split("=", 2))
+                .collect(Collectors.toMap(a -> a[0], a -> a.length > 1 ? a[1] : ""));
+    }
 
     @Before
     public void setLogger() {
