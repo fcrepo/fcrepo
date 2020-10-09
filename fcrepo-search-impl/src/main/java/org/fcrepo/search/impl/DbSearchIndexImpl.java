@@ -99,7 +99,7 @@ public class DbSearchIndexImpl implements SearchIndex {
     private static final String DEFAULT_DDL = "sql/default-search-index.sql";
 
     private static final Map<DbPlatform, String> DDL_MAP = Map.of(
-            MYSQL, DEFAULT_DDL,
+            MYSQL, "sql/mysql-search-index.sql",
             H2, DEFAULT_DDL,
             POSTGRESQL, "sql/postgresql-search-index.sql",
             MARIADB, DEFAULT_DDL
@@ -120,6 +120,10 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     private NamedParameterJdbcTemplate jdbcTemplate;
 
+    private SimpleJdbcInsert jdbcInsertResource;
+    private SimpleJdbcInsert jdbcInsertRdfTypeAssociations;
+    private SimpleJdbcInsert jdbcInsertRdfTypes;
+
     @Inject
     private ResourceFactory resourceFactory;
 
@@ -134,11 +138,23 @@ public class DbSearchIndexImpl implements SearchIndex {
     public void setup() {
         this.dbPlatForm = DbPlatform.fromDataSource(this.dataSource);
         final var ddl = lookupDdl();
-        LOGGER.debug("Applying ddl: {}", ddl);
+        LOGGER.info("Applying ddl: {}", ddl);
         DatabasePopulatorUtils.execute(
                 new ResourceDatabasePopulator(new DefaultResourceLoader().getResource("classpath:" + ddl)),
                 this.dataSource);
         this.jdbcTemplate = getNamedParameterJdbcTemplate();
+
+        jdbcInsertResource = new SimpleJdbcInsert(this.jdbcTemplate.getJdbcTemplate())
+                .withTableName(SIMPLE_SEARCH_TABLE)
+                .usingGeneratedKeyColumns(ID_COLUMN);
+
+        jdbcInsertRdfTypeAssociations = new SimpleJdbcInsert(this.jdbcTemplate.getJdbcTemplate())
+                .withTableName(SEARCH_RESOURCE_RDF_TYPE_TABLE)
+                .usingGeneratedKeyColumns(ID_COLUMN);
+
+        jdbcInsertRdfTypes = new SimpleJdbcInsert(this.jdbcTemplate.getJdbcTemplate())
+                .withTableName(SEARCH_RDF_TYPE_TABLE)
+                .usingGeneratedKeyColumns(ID_COLUMN);
 
         this.rdfTables = RDF_TYPE_TABLE.replace(GROUP_CONCAT_FUNCTION,
                 isPostgres() ? POSTGRES_GROUP_CONCAT_FUNCTION : DEFAULT_GROUP_CONCAT_FUNCTION);
@@ -313,12 +329,7 @@ public class DbSearchIndexImpl implements SearchIndex {
                 deleteRdfTypeAssociations(resourcePrimaryKey);
             } else {
                 params.addValue(CREATED_PARAM, new Timestamp(resourceHeaders.getCreatedDate().toEpochMilli()));
-                final var jdbcInsertResource =
-                        new SimpleJdbcInsert(this.jdbcTemplate.getJdbcTemplate()).usingGeneratedKeyColumns(
-                                ID_COLUMN);
-                resourcePrimaryKey =
-                        jdbcInsertResource.withTableName(SIMPLE_SEARCH_TABLE).executeAndReturnKey(params)
-                                .longValue();
+                resourcePrimaryKey = jdbcInsertResource.executeAndReturnKey(params).longValue();
             }
             insertRdfTypeAssociations(rdfTypeIds, resourcePrimaryKey);
         } catch (Exception e) {
@@ -328,9 +339,6 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     private void insertRdfTypeAssociations(final List<Long> rdfTypeIds, final Long resourceId) {
         //add rdf type associations
-        final var jdbcInsertRdfTypeAssociations = new SimpleJdbcInsert(this.jdbcTemplate.getJdbcTemplate());
-        jdbcInsertRdfTypeAssociations.withTableName(SEARCH_RESOURCE_RDF_TYPE_TABLE).usingGeneratedKeyColumns(
-                ID_COLUMN);
         for (var rdfTypeId : rdfTypeIds) {
             final var assocParams = new MapSqlParameterSource();
             assocParams.addValue(RESOURCE_ID_PARAM, resourceId);
@@ -347,9 +355,6 @@ public class DbSearchIndexImpl implements SearchIndex {
     }
 
     private ArrayList<Long> findOrCreateRdfTypesInDb(final List<URI> rdfTypes) {
-        final var jdbcInsertRdfTypes = new SimpleJdbcInsert(this.jdbcTemplate.getJdbcTemplate());
-        jdbcInsertRdfTypes.withTableName(SEARCH_RDF_TYPE_TABLE).usingGeneratedKeyColumns(
-                ID_COLUMN);
         final var rdfTypeIds = new ArrayList<Long>();
         for (var rdfTypeUri : rdfTypes) {
             final var typeParams = new MapSqlParameterSource();
