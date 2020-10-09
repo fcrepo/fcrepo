@@ -59,6 +59,13 @@ import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
  */
 public class FedoraResourceImpl implements FedoraResource {
 
+    private static final URI RESOURCE_URI = create(RESOURCE.toString());
+    private static final URI FEDORA_RESOURCE_URI = create(FEDORA_RESOURCE.getURI());
+    private static final URI ARCHIVAL_GROUP_URI = create(ARCHIVAL_GROUP.getURI());
+    private static final URI MEMENTO_URI = create(MEMENTO_TYPE);
+    private static final URI VERSIONED_RESOURCE_URI = create(VERSIONED_RESOURCE.getURI());
+    private static final URI VERSIONING_TIMEGATE_URI = create(VERSIONING_TIMEGATE_TYPE);
+
     private final PersistentStorageSessionManager pSessionManager;
 
     protected final ResourceFactory resourceFactory;
@@ -87,6 +94,10 @@ public class FedoraResourceImpl implements FedoraResource {
 
     // The transaction this representation of the resource belongs to
     protected final String txId;
+
+    private boolean isArchivalGroup;
+
+    private String interactionModel;
 
     protected FedoraResourceImpl(final FedoraId fedoraId,
                                  final String txId,
@@ -225,30 +236,24 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public List<URI> getSystemTypes(final boolean forRdf) {
-        try {
-            final List<URI> types = new ArrayList<>();
-            final var headers = getSession().getHeaders(getFedoraId().asResourceId(), getMementoDatetime());
-            types.add(create(headers.getInteractionModel()));
-            // ldp:Resource is on all resources
-            types.add(create(RESOURCE.toString()));
-            types.add(create(FEDORA_RESOURCE.getURI()));
-            if (!forRdf) {
-                // These types are not exposed as RDF triples.
-                if (headers.isArchivalGroup()) {
-                    types.add(create(ARCHIVAL_GROUP.getURI()));
-                }
-                if (isMemento) {
-                    types.add(create(MEMENTO_TYPE));
-                } else if (isOriginalResource()) {
-                    types.addAll(List.of(create(VERSIONED_RESOURCE.getURI()), create(VERSIONING_TIMEGATE_TYPE)));
-                }
+        final List<URI> types = new ArrayList<>();
+        types.add(create(interactionModel));
+        // ldp:Resource is on all resources
+        types.add(RESOURCE_URI);
+        types.add(FEDORA_RESOURCE_URI);
+        if (!forRdf) {
+            // These types are not exposed as RDF triples.
+            if (isArchivalGroup) {
+                types.add(ARCHIVAL_GROUP_URI);
             }
-            return types;
-        } catch (final PersistentItemNotFoundException e) {
-            throw new ItemNotFoundException("Unable to retrieve headers for " + getId(), e);
-        } catch (final PersistentStorageException e) {
-            throw new RepositoryRuntimeException(e.getMessage(), e);
+            if (isMemento) {
+                types.add(MEMENTO_URI);
+            } else {
+                types.add(VERSIONED_RESOURCE_URI);
+                types.add(VERSIONING_TIMEGATE_URI);
+            }
         }
+        return types;
     }
 
     @Override
@@ -414,4 +419,17 @@ public class FedoraResourceImpl implements FedoraResource {
         this.isMemento = isMemento;
     }
 
+    /**
+     * @param isArchivalGroup true if the resource is an AG
+     */
+    public void setIsArchivalGroup(final boolean isArchivalGroup) {
+        this.isArchivalGroup = isArchivalGroup;
+    }
+
+    /**
+     * @param interactionModel the resource's interaction model
+     */
+    public void setInteractionModel(final String interactionModel) {
+        this.interactionModel = interactionModel;
+    }
 }

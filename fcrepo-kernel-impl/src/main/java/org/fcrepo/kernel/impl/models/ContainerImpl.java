@@ -39,6 +39,10 @@ import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
  */
 public class ContainerImpl extends FedoraResourceImpl implements Container {
 
+    private static final URI RDF_SOURCE_URI = URI.create(RDF_SOURCE.toString());
+    private static final URI CONTAINER_URI = URI.create(CONTAINER.toString());
+    private static final URI FEDORA_CONTAINER_URI = URI.create(FEDORA_CONTAINER.toString());
+
     /**
      * Construct the container
      *
@@ -60,8 +64,9 @@ public class ContainerImpl extends FedoraResourceImpl implements Container {
     @Override
     public List<URI> getSystemTypes(final boolean forRdf) {
         final var types = super.getSystemTypes(forRdf);
-        types.addAll(List.of(URI.create(RDF_SOURCE.toString()), URI.create(CONTAINER.toString()),
-                URI.create(FEDORA_CONTAINER.toString())));
+        types.add(RDF_SOURCE_URI);
+        types.add(CONTAINER_URI);
+        types.add(FEDORA_CONTAINER_URI);
         return types;
     }
 

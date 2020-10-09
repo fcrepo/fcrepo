@@ -140,9 +140,6 @@ public class FedoraResourceImplTest {
         userModel.add(subject, type, createResource(exampleType));
         final var userStream = fromModel(subject.asNode(), userModel);
         when(sessionManager.getReadOnlySession()).thenReturn(psSession);
-        when(psSession.getHeaders(eq(FEDORA_ID),any())).thenReturn(headers);
-        when(headers.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
-        when(headers.isArchivalGroup()).thenReturn(false);
         when(psSession.getTriples(eq(FEDORA_ID), any())).thenReturn(userStream);
 
         final List<URI> expectedTypes = List.of(
@@ -155,6 +152,8 @@ public class FedoraResourceImplTest {
         );
 
         final var resource = new FedoraResourceImpl(FEDORA_ID, null, sessionManager, resourceFactory);
+        resource.setInteractionModel(BASIC_CONTAINER.toString());
+        resource.setIsArchivalGroup(false);
         final var resourceTypes = resource.getTypes();
 
         // Initial lengths are the same
@@ -179,9 +178,6 @@ public class FedoraResourceImplTest {
 
         when(resourceFactory.getResource((String)any(), eq(descriptionFedoraId))).thenReturn(description);
         when(sessionManager.getReadOnlySession()).thenReturn(psSession);
-        when(psSession.getHeaders(eq(FEDORA_ID),any())).thenReturn(headers);
-        when(headers.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
-        when(headers.isArchivalGroup()).thenReturn(false);
         when(psSession.getTriples(eq(descriptionFedoraId), any())).thenReturn(userStream);
 
         final List<URI> expectedTypes = List.of(
@@ -195,6 +191,8 @@ public class FedoraResourceImplTest {
         );
 
         final var resource = new BinaryImpl(FEDORA_ID, null, sessionManager, resourceFactory);
+        resource.setInteractionModel(NON_RDF_SOURCE.toString());
+        resource.setIsArchivalGroup(false);
         final var resourceTypes = resource.getTypes();
 
         // Initial lengths are the same
