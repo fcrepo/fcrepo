@@ -76,6 +76,12 @@ public class FedoraResourceImpl implements FedoraResource {
 
     private List<URI> types;
 
+    private List<URI> systemTypes;
+
+    private List<URI> systemTypesForRdf;
+
+    private List<URI> userTypes;
+
     private Instant lastModifiedDate;
 
     private String lastModifiedBy;
@@ -236,43 +242,60 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public List<URI> getSystemTypes(final boolean forRdf) {
-        final List<URI> types = new ArrayList<>();
-        types.add(create(interactionModel));
-        // ldp:Resource is on all resources
-        types.add(RESOURCE_URI);
-        types.add(FEDORA_RESOURCE_URI);
-        if (!forRdf) {
-            // These types are not exposed as RDF triples.
-            if (isArchivalGroup) {
-                types.add(ARCHIVAL_GROUP_URI);
+        var types = resolveSystemTypes(forRdf);
+
+        if (types == null) {
+            types = new ArrayList<>();
+            types.add(create(interactionModel));
+            // ldp:Resource is on all resources
+            types.add(RESOURCE_URI);
+            types.add(FEDORA_RESOURCE_URI);
+            if (!forRdf) {
+                // These types are not exposed as RDF triples.
+                if (isArchivalGroup) {
+                    types.add(ARCHIVAL_GROUP_URI);
+                }
+                if (isMemento) {
+                    types.add(MEMENTO_URI);
+                } else {
+                    types.add(VERSIONED_RESOURCE_URI);
+                    types.add(VERSIONING_TIMEGATE_URI);
+                }
             }
-            if (isMemento) {
-                types.add(MEMENTO_URI);
+
+            if (forRdf) {
+                systemTypesForRdf = types;
             } else {
-                types.add(VERSIONED_RESOURCE_URI);
-                types.add(VERSIONING_TIMEGATE_URI);
+                systemTypes = types;
             }
         }
+
         return types;
     }
 
     @Override
     public List<URI> getUserTypes() {
-        try {
-            final var description = getDescription();
-            final var triples = getSession().getTriples(description.getFedoraId().asResourceId(),
-                    description.getMementoDatetime());
-            return triples.filter(t -> t.predicateMatches(type.asNode())).map(Triple::getObject)
-                    .map(t -> URI.create(t.toString())).collect(toList());
-        } catch (final PersistentItemNotFoundException e) {
-            final var headers = getSession().getHeaders(getFedoraId().asResourceId(), getMementoDatetime());
-            if (headers.isDeleted()) {
-                return Collections.emptyList();
+        if (userTypes == null) {
+            userTypes = new ArrayList<>();
+            try {
+                final var description = getDescription();
+                final var triples = getSession().getTriples(description.getFedoraId().asResourceId(),
+                        description.getMementoDatetime());
+                userTypes = triples.filter(t -> t.predicateMatches(type.asNode())).map(Triple::getObject)
+                        .map(t -> URI.create(t.toString())).collect(toList());
+            } catch (final PersistentItemNotFoundException e) {
+                final var headers = getSession().getHeaders(getFedoraId().asResourceId(), getMementoDatetime());
+                if (headers.isDeleted()) {
+                    userTypes = Collections.emptyList();
+                } else {
+                    throw new ItemNotFoundException("Unable to retrieve triples for " + getId(), e);
+                }
+            } catch (final PersistentStorageException e) {
+                throw new RepositoryRuntimeException(e.getMessage(), e);
             }
-            throw new ItemNotFoundException("Unable to retrieve triples for " + getId(), e);
-        } catch (final PersistentStorageException e) {
-            throw new RepositoryRuntimeException(e.getMessage(), e);
         }
+
+        return userTypes;
     }
 
     @Override
@@ -431,5 +454,9 @@ public class FedoraResourceImpl implements FedoraResource {
      */
     public void setInteractionModel(final String interactionModel) {
         this.interactionModel = interactionModel;
+    }
+
+    protected List<URI> resolveSystemTypes(final boolean forRdf) {
+        return forRdf ? systemTypesForRdf : systemTypes;
     }
 }

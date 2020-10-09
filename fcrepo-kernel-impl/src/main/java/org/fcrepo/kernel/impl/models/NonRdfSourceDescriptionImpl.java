@@ -78,9 +78,14 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
 
     @Override
     public List<URI> getSystemTypes(final boolean forRdf) {
-        final var types = super.getSystemTypes(forRdf);
-        // NonRdfSource gets the ldp:Resource and adds ldp:RDFSource types.
-        types.add(RDF_SOURCE_URI);
+        var types = resolveSystemTypes(forRdf);
+
+        if (types == null) {
+            types = super.getSystemTypes(forRdf);
+            // NonRdfSource gets the ldp:Resource and adds ldp:RDFSource types.
+            types.add(RDF_SOURCE_URI);
+        }
+
         return types;
     }
 

@@ -37,6 +37,7 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -116,7 +117,7 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
     @Override
     public List<URI> getUserTypes() {
         // TimeMaps don't have user triples.
-        return List.of();
+        return Collections.emptyList();
     }
 
     @Override

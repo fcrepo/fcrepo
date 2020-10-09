@@ -63,10 +63,15 @@ public class ContainerImpl extends FedoraResourceImpl implements Container {
 
     @Override
     public List<URI> getSystemTypes(final boolean forRdf) {
-        final var types = super.getSystemTypes(forRdf);
-        types.add(RDF_SOURCE_URI);
-        types.add(CONTAINER_URI);
-        types.add(FEDORA_CONTAINER_URI);
+        var types = resolveSystemTypes(forRdf);
+
+        if (types == null) {
+            types = super.getSystemTypes(forRdf);
+            types.add(RDF_SOURCE_URI);
+            types.add(CONTAINER_URI);
+            types.add(FEDORA_CONTAINER_URI);
+        }
+
         return types;
     }
 

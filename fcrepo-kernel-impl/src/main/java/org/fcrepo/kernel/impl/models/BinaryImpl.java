@@ -188,9 +188,14 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
 
     @Override
     public List<URI> getSystemTypes(final boolean forRdf) {
-        final var types = super.getSystemTypes(forRdf);
-        // Add fedora:Binary type.
-        types.add(FEDORA_BINARY_URI);
+        var types = resolveSystemTypes(forRdf);
+
+        if (types == null) {
+            types = super.getSystemTypes(forRdf);
+            // Add fedora:Binary type.
+            types.add(FEDORA_BINARY_URI);
+        }
+
         return types;
     }
 }
