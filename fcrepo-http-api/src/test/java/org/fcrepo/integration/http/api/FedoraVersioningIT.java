@@ -908,10 +908,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 "INSERT { <> <" + DC.title.getURI() + "> \"Original\" ." +
                         " <> <" + RDF.type.getURI() + "> <" + TEST_TYPE_RESOURCE.getURI() + "> } WHERE { }";
         patchProps.setEntity(new StringEntity(updateString));
-        try (final CloseableHttpResponse patchResp = execute(patchProps)) {
-            assertEquals(patchResp.getStatusLine().toString(), NO_CONTENT.getStatusCode(), getStatus(patchResp));
-        }
-
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patchProps));
+        TimeUnit.SECONDS.sleep(1);
         final String mementoUri = createContainerMementoWithBody(descriptionUri);
         assertMementoUri(mementoUri, descriptionUri);
 
@@ -949,20 +947,23 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         logger.debug("Posting version v0.0.1");
         final String mementoUri = createContainerMementoWithBody(subjectUri);
         assertMementoUri(mementoUri, subjectUri);
-
+        TimeUnit.SECONDS.sleep(1);
         logger.debug("Replacing the title");
         patchLiteralProperty(serverAddress + id, title.getURI(), "Second Title");
+        TimeUnit.SECONDS.sleep(1);
 
+        final var subjectUri = createURI(serverAddress + id);
         try (final CloseableDataset dataset = getContent(mementoUri)) {
             logger.debug("Got version profile:");
             final DatasetGraph versionResults = dataset.asDatasetGraph();
 
             assertTrue("Should find a title in historic version", versionResults.contains(ANY,
-                    ANY, title.asNode(), ANY));
+                    subjectUri, title.asNode(), createLiteral("First Title")));
             assertTrue("Should find original title in historic version", versionResults.contains(ANY,
-                    ANY, title.asNode(), createLiteral("First Title")));
+                    subjectUri, title.asNode(), createLiteral("First Title")));
             assertFalse("Should not find the updated title in historic version",
-                    versionResults.contains(ANY, ANY, title.asNode(), createLiteral("Second Title")));
+                    versionResults.contains(ANY, subjectUri, title.asNode(),
+                            createLiteral("Second Title")));
         }
     }
 
