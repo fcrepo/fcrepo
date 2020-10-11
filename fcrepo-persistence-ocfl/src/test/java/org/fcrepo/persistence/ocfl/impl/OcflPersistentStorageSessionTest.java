@@ -38,6 +38,7 @@ import org.fcrepo.storage.ocfl.CommitType;
 import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
 import org.fcrepo.storage.ocfl.OcflObjectSession;
 import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
+import org.fcrepo.storage.ocfl.cache.NoOpCache;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -148,7 +149,9 @@ public class OcflPersistentStorageSessionTest {
         final var objectMapper = OcflPersistentStorageUtils.objectMapper();
         final var repository = createFilesystemRepository(repoDir, workDir);
         objectSessionFactory = new DefaultOcflObjectSessionFactory(repository, stagingDir,
-                objectMapper, CommitType.NEW_VERSION,
+                objectMapper,
+                new NoOpCache<>(),
+                CommitType.NEW_VERSION,
                 "Fedora 6 test", "fedoraAdmin", "info:fedora/fedoraAdmin");
         session = createSession(index, objectSessionFactory);
 
@@ -267,7 +270,7 @@ public class OcflPersistentStorageSessionTest {
     public void getTriplesOfBinaryDescription() throws Exception {
 
         final FedoraId descriptionResource = RESOURCE_ID.resolve(FedoraTypes.FCR_METADATA);
-        mockMappingAndIndexWithNoIndex(OCFL_RESOURCE_ID, descriptionResource, ROOT_OBJECT_ID, mapping);
+        mockMappingAndIndex(OCFL_RESOURCE_ID, descriptionResource, ROOT_OBJECT_ID, mapping);
         mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
 
         final Node resourceUri = createURI(RESOURCE_ID.getFullId());
@@ -279,6 +282,11 @@ public class OcflPersistentStorageSessionTest {
         final DefaultRdfStream userStream = new DefaultRdfStream(resourceUri, userTriples);
         mockResourceOperation(rdfSourceOperation, userStream, USER_PRINCIPAL,
                 descriptionResource);
+
+        final var binOperation = mockNonRdfSourceOperation(BINARY_CONTENT, USER_PRINCIPAL, RESOURCE_ID);
+
+        // perform the create non-rdf source operation
+        session.persist(binOperation);
 
         //perform the create rdf operation
         session.persist(rdfSourceOperation);

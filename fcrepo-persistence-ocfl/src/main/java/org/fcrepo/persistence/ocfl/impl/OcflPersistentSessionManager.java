@@ -62,17 +62,18 @@ public class OcflPersistentSessionManager implements PersistentStorageSessionMan
 
     @Override
     public PersistentStorageSession getSession(final String sessionId) {
-        LOGGER.debug("Getting storage session {}", sessionId);
-
         if (sessionId == null) {
             throw new IllegalArgumentException("session id must be non-null");
         }
 
-        return sessionMap.computeIfAbsent(sessionId, key -> new OcflPersistentStorageSessionMetrics(
-                new OcflPersistentStorageSession(
-                        key,
-                        ocflIndex,
-                        objectSessionFactory)));
+        return sessionMap.computeIfAbsent(sessionId, key -> {
+            LOGGER.debug("Creating storage session {}", sessionId);
+            return new OcflPersistentStorageSessionMetrics(
+                    new OcflPersistentStorageSession(
+                            key,
+                            ocflIndex,
+                            objectSessionFactory));
+        });
     }
 
     @Override

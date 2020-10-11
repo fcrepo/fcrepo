@@ -83,6 +83,15 @@ public class OcflPropsConfig {
     @Value("${fcrepo.ocfl.s3.prefix:}")
     private String ocflS3Prefix;
 
+    @Value("${fcrepo.resource-header-cache.enable:true}")
+    private boolean resourceHeadersCacheEnabled;
+
+    @Value("${fcrepo.resource-header-cache.max-size:512}")
+    private long resourceHeadersCacheMaxSize;
+
+    @Value("${fcrepo.resource-header-cache.expire-after-seconds:600}")
+    private long resourceHeadersCacheExpireAfterSeconds;
+
     @PostConstruct
     private void postConstruct() throws IOException {
         storage = Storage.fromString(storageStr);
@@ -255,4 +264,46 @@ public class OcflPropsConfig {
         this.ocflS3Prefix = ocflS3Prefix;
     }
 
+    /**
+     * @return whether or not to enable the resource headers cache
+     */
+    public boolean isResourceHeadersCacheEnabled() {
+        return resourceHeadersCacheEnabled;
+    }
+
+    /**
+     * @param resourceHeadersCacheEnabled whether or not to enable the resource headers cache
+     */
+    public void setResourceHeadersCacheEnabled(final boolean resourceHeadersCacheEnabled) {
+        this.resourceHeadersCacheEnabled = resourceHeadersCacheEnabled;
+    }
+
+    /**
+     * @return maximum number or resource headers in cache
+     */
+    public long getResourceHeadersCacheMaxSize() {
+        return resourceHeadersCacheMaxSize;
+    }
+
+    /**
+     * @param resourceHeadersCacheMaxSize maximum number of resource headers in cache
+     */
+    public void setResourceHeadersCacheMaxSize(final long resourceHeadersCacheMaxSize) {
+        this.resourceHeadersCacheMaxSize = resourceHeadersCacheMaxSize;
+    }
+
+    /**
+     * @return number of seconds to wait before expiring a resource header from the cache
+     */
+    public long getResourceHeadersCacheExpireAfterSeconds() {
+        return resourceHeadersCacheExpireAfterSeconds;
+    }
+
+    /**
+     * @param resourceHeadersCacheExpireAfterSeconds
+     *      number of seconds to wait before expiring a resource header from the cache
+     */
+    public void setResourceHeadersCacheExpireAfterSeconds(final long resourceHeadersCacheExpireAfterSeconds) {
+        this.resourceHeadersCacheExpireAfterSeconds = resourceHeadersCacheExpireAfterSeconds;
+    }
 }

@@ -17,13 +17,21 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import org.apache.commons.lang3.StringUtils;
+import org.fcrepo.config.MetricsConfig;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.config.Storage;
 import org.fcrepo.storage.ocfl.CommitType;
 import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
 import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
+import org.fcrepo.storage.ocfl.ResourceHeaders;
+import org.fcrepo.storage.ocfl.cache.Cache;
+import org.fcrepo.storage.ocfl.cache.CaffeineCache;
+import org.fcrepo.storage.ocfl.cache.NoOpCache;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -34,6 +42,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createFilesystemRepository;
 import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createS3Repository;
@@ -50,6 +59,12 @@ public class OcflPersistenceConfig {
 
     @Inject
     private OcflPropsConfig ocflPropsConfig;
+
+    @Inject
+    private MetricsConfig metricsConfig;
+
+    @Inject
+    private MeterRegistry meterRegistry;
 
     @Inject
     private DataSource dataSource;
@@ -79,6 +94,7 @@ public class OcflPersistenceConfig {
         return new DefaultOcflObjectSessionFactory(repository(),
                 ocflPropsConfig.getFedoraOcflStaging(),
                 objectMapper,
+                resourceHeadersCache(),
                 commitType(),
                 "Authored by Fedora 6",
                 "fedoraAdmin",
@@ -107,6 +123,29 @@ public class OcflPersistenceConfig {
         // May want to do additional HTTP client configuration, connection pool, etc
 
         return builder.build();
+    }
+
+    private Cache<String, ResourceHeaders> resourceHeadersCache() {
+        if (ocflPropsConfig.isResourceHeadersCacheEnabled()) {
+            final var builder = Caffeine.newBuilder();
+
+            if (metricsConfig.isMetricsEnabled()) {
+                builder.recordStats();
+            }
+
+            final var cache = builder
+                    .maximumSize(ocflPropsConfig.getResourceHeadersCacheMaxSize())
+                    .expireAfterAccess(ocflPropsConfig.getResourceHeadersCacheExpireAfterSeconds(), TimeUnit.SECONDS)
+                    .build();
+
+            if (metricsConfig.isMetricsEnabled()) {
+                CaffeineCacheMetrics.monitor(meterRegistry, cache, "resourceHeadersCache");
+            }
+
+            return new CaffeineCache<>(cache);
+        }
+
+        return new NoOpCache<>();
     }
 
 }

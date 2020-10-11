@@ -24,6 +24,7 @@ import org.fcrepo.persistence.common.ResourceHeadersImpl;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
 
@@ -35,21 +36,22 @@ import java.util.Objects;
 public class ResourceHeadersAdapter implements ResourceHeaders {
 
     private final ResourceHeadersImpl kernelHeaders;
-    private final org.fcrepo.storage.ocfl.ResourceHeaders storageHeaders;
+    private final org.fcrepo.storage.ocfl.ResourceHeaders.Builder storageHeaders;
 
     /**
      * Default constructor
      */
     public ResourceHeadersAdapter() {
         kernelHeaders = new ResourceHeadersImpl();
-        storageHeaders = new org.fcrepo.storage.ocfl.ResourceHeaders();
+        storageHeaders = org.fcrepo.storage.ocfl.ResourceHeaders.builder();
     }
 
     /**
      * @param storageHeaders storage headers to adapt
      */
     public ResourceHeadersAdapter(final org.fcrepo.storage.ocfl.ResourceHeaders storageHeaders) {
-        this.storageHeaders = Objects.requireNonNull(storageHeaders, "storageHeaders cannot be null");
+        this.storageHeaders = org.fcrepo.storage.ocfl.ResourceHeaders
+                .builder(Objects.requireNonNull(storageHeaders, "storageHeaders cannot be null"));
         this.kernelHeaders = new ResourceHeadersImpl();
 
         if (storageHeaders.getId() != null) {
@@ -64,7 +66,8 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
         kernelHeaders.setCreatedBy(storageHeaders.getCreatedBy());
         kernelHeaders.setCreatedDate(storageHeaders.getCreatedDate());
         kernelHeaders.setDeleted(storageHeaders.isDeleted());
-        kernelHeaders.setDigests(storageHeaders.getDigests());
+        kernelHeaders.setDigests(new ArrayList<>(storageHeaders.getDigests()));
+        this.storageHeaders.withDigests(kernelHeaders.getDigests());
         kernelHeaders.setExternalHandling(storageHeaders.getExternalHandling());
         kernelHeaders.setExternalUrl(storageHeaders.getExternalUrl());
         kernelHeaders.setFilename(storageHeaders.getFilename());
@@ -81,37 +84,37 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
      */
     public ResourceHeadersAdapter(final ResourceHeadersImpl kernelHeaders) {
         this.kernelHeaders = Objects.requireNonNull(kernelHeaders, "kernelHeaders cannot be null");
-        this.storageHeaders = new org.fcrepo.storage.ocfl.ResourceHeaders();
+        this.storageHeaders = org.fcrepo.storage.ocfl.ResourceHeaders.builder();
 
         if (kernelHeaders.getId() != null) {
-            storageHeaders.setId(kernelHeaders.getId().getFullId());
+            storageHeaders.withId(kernelHeaders.getId().getFullId());
         }
         if (kernelHeaders.getParent() != null) {
-            storageHeaders.setParent(kernelHeaders.getParent().getFullId());
+            storageHeaders.withParent(kernelHeaders.getParent().getFullId());
         }
-        storageHeaders.setArchivalGroup(kernelHeaders.isArchivalGroup());
-        storageHeaders.setContentPath(kernelHeaders.getContentPath());
-        storageHeaders.setContentSize(kernelHeaders.getContentSize());
-        storageHeaders.setCreatedBy(kernelHeaders.getCreatedBy());
-        storageHeaders.setCreatedDate(kernelHeaders.getCreatedDate());
-        storageHeaders.setDeleted(kernelHeaders.isDeleted());
-        storageHeaders.setDigests(kernelHeaders.getDigests());
-        storageHeaders.setExternalHandling(kernelHeaders.getExternalHandling());
-        storageHeaders.setExternalUrl(kernelHeaders.getExternalUrl());
-        storageHeaders.setFilename(kernelHeaders.getFilename());
-        storageHeaders.setInteractionModel(kernelHeaders.getInteractionModel());
-        storageHeaders.setLastModifiedBy(kernelHeaders.getLastModifiedBy());
-        storageHeaders.setLastModifiedDate(kernelHeaders.getLastModifiedDate());
-        storageHeaders.setMimeType(kernelHeaders.getMimeType());
-        storageHeaders.setObjectRoot(kernelHeaders.isObjectRoot());
-        storageHeaders.setStateToken(kernelHeaders.getStateToken());
+        storageHeaders.withArchivalGroup(kernelHeaders.isArchivalGroup());
+        storageHeaders.withContentPath(kernelHeaders.getContentPath());
+        storageHeaders.withContentSize(kernelHeaders.getContentSize());
+        storageHeaders.withCreatedBy(kernelHeaders.getCreatedBy());
+        storageHeaders.withCreatedDate(kernelHeaders.getCreatedDate());
+        storageHeaders.withDeleted(kernelHeaders.isDeleted());
+        storageHeaders.withDigests(kernelHeaders.getDigests());
+        storageHeaders.withExternalHandling(kernelHeaders.getExternalHandling());
+        storageHeaders.withExternalUrl(kernelHeaders.getExternalUrl());
+        storageHeaders.withFilename(kernelHeaders.getFilename());
+        storageHeaders.withInteractionModel(kernelHeaders.getInteractionModel());
+        storageHeaders.withLastModifiedBy(kernelHeaders.getLastModifiedBy());
+        storageHeaders.withLastModifiedDate(kernelHeaders.getLastModifiedDate());
+        storageHeaders.withMimeType(kernelHeaders.getMimeType());
+        storageHeaders.withObjectRoot(kernelHeaders.isObjectRoot());
+        storageHeaders.withStateToken(kernelHeaders.getStateToken());
     }
 
     /**
      * @return the headers as storage headers
      */
     public org.fcrepo.storage.ocfl.ResourceHeaders asStorageHeaders() {
-        return storageHeaders;
+        return storageHeaders.build();
     }
 
     /**
@@ -138,7 +141,7 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
      */
     public void setId(final FedoraId id) {
         kernelHeaders.setId(id);
-        storageHeaders.setId(idToString(id));
+        storageHeaders.withId(idToString(id));
     }
 
     @Override
@@ -151,7 +154,7 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
      */
     public void setParent(final FedoraId parent) {
         kernelHeaders.setParent(parent);
-        storageHeaders.setParent(idToString(parent));
+        storageHeaders.withParent(idToString(parent));
     }
 
     @Override
@@ -164,7 +167,7 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
      */
     public void setStateToken(final String stateToken) {
         kernelHeaders.setStateToken(stateToken);
-        storageHeaders.setStateToken(stateToken);
+        storageHeaders.withStateToken(stateToken);
     }
 
     @Override
@@ -177,7 +180,7 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
      */
     public void setInteractionModel(final String interactionModel) {
         kernelHeaders.setInteractionModel(interactionModel);
-        storageHeaders.setInteractionModel(interactionModel);
+        storageHeaders.withInteractionModel(interactionModel);
     }
 
     @Override
@@ -190,7 +193,7 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
      */
     public void setMimeType(final String mimeType) {
         kernelHeaders.setMimeType(mimeType);
-        storageHeaders.setMimeType(mimeType);
+        storageHeaders.withMimeType(mimeType);
     }
 
     @Override
@@ -203,7 +206,7 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
      */
     public void setFilename(final String filename) {
         kernelHeaders.setFilename(filename);
-        storageHeaders.setFilename(filename);
+        storageHeaders.withFilename(filename);
     }
 
     @Override
@@ -216,7 +219,7 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
      */
     public void setContentSize(final Long contentSize) {
         kernelHeaders.setContentSize(contentSize);
-        storageHeaders.setContentSize(contentSize);
+        storageHeaders.withContentSize(contentSize);
     }
 
     @Override
@@ -229,7 +232,7 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
      */
     public void setDigests(final Collection<URI> digests) {
         kernelHeaders.setDigests(digests);
-        storageHeaders.setDigests(digests);
+        storageHeaders.withDigests(digests);
     }
 
     @Override
@@ -242,7 +245,7 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
      */
     public void setExternalHandling(final String externalHandling) {
         kernelHeaders.setExternalHandling(externalHandling);
-        storageHeaders.setExternalHandling(externalHandling);
+        storageHeaders.withExternalHandling(externalHandling);
     }
 
     @Override
@@ -255,7 +258,7 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
      */
     public void setCreatedDate(final Instant createdDate) {
         kernelHeaders.setCreatedDate(createdDate);
-        storageHeaders.setCreatedDate(createdDate);
+        storageHeaders.withCreatedDate(createdDate);
     }
 
     @Override
@@ -268,7 +271,7 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
      */
     public void setCreatedBy(final String createdBy) {
         kernelHeaders.setCreatedBy(createdBy);
-        storageHeaders.setCreatedBy(createdBy);
+        storageHeaders.withCreatedBy(createdBy);
     }
 
     @Override
@@ -281,7 +284,7 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
      */
     public void setLastModifiedDate(final Instant lastModifiedDate) {
         kernelHeaders.setLastModifiedDate(lastModifiedDate);
-        storageHeaders.setLastModifiedDate(lastModifiedDate);
+        storageHeaders.withLastModifiedDate(lastModifiedDate);
     }
 
     @Override
@@ -294,7 +297,7 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
      */
     public void setLastModifiedBy(final String lastModifiedBy) {
         kernelHeaders.setLastModifiedBy(lastModifiedBy);
-        storageHeaders.setLastModifiedBy(lastModifiedBy);
+        storageHeaders.withLastModifiedBy(lastModifiedBy);
     }
 
     /**
@@ -302,7 +305,7 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
      */
     public void setExternalUrl(final String externalUrl) {
         kernelHeaders.setExternalUrl(externalUrl);
-        storageHeaders.setExternalUrl(externalUrl);
+        storageHeaders.withExternalUrl(externalUrl);
     }
 
     @Override
@@ -316,7 +319,7 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
      */
     public void setArchivalGroup(final boolean flag) {
         kernelHeaders.setArchivalGroup(flag);
-        storageHeaders.setArchivalGroup(flag);
+        storageHeaders.withArchivalGroup(flag);
     }
 
     @Override
@@ -329,7 +332,7 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
      */
     public void setObjectRoot(final boolean flag) {
         kernelHeaders.setObjectRoot(flag);
-        storageHeaders.setObjectRoot(flag);
+        storageHeaders.withObjectRoot(flag);
     }
 
     @Override
@@ -347,7 +350,7 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
      */
     public void setDeleted(final boolean deleted) {
         kernelHeaders.setDeleted(deleted);
-        storageHeaders.setDeleted(deleted);
+        storageHeaders.withDeleted(deleted);
     }
 
     /**
@@ -373,7 +376,7 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
      */
     public void setContentPath(final String contentPath) {
         kernelHeaders.setContentPath(contentPath);
-        storageHeaders.setContentPath(contentPath);
+        storageHeaders.withContentPath(contentPath);
     }
 
 }

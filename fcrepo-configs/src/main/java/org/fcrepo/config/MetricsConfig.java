@@ -45,13 +45,13 @@ import java.time.Duration;
 public class MetricsConfig {
 
     @Value("${fcrepo.metrics.enable:false}")
-    private boolean enableMetrics;
+    private boolean metricsEnabled;
 
     @Bean
     public MeterRegistry meterRegistry() {
         final MeterRegistry registry;
 
-        if (enableMetrics) {
+        if (metricsEnabled) {
             registry = new PrometheusMeterRegistry(new PrometheusConfig() {
                 @Override
                 public Duration step() {
@@ -96,6 +96,13 @@ public class MetricsConfig {
             return ((PrometheusMeterRegistry) meterRegistry).getPrometheusRegistry();
         }
         return CollectorRegistry.defaultRegistry;
+    }
+
+    /**
+     * @return whether metrics are enabled
+     */
+    public boolean isMetricsEnabled() {
+        return metricsEnabled;
     }
 
 }
