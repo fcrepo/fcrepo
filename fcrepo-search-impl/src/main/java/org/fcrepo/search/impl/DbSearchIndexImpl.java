@@ -372,14 +372,16 @@ public class DbSearchIndexImpl implements SearchIndex {
         final var rdfTypeIds = results.stream().map(RdfType::getTypeId).collect(Collectors.toList());
         // List of existing type uris.
         final var rdfTypeUris = results.stream().map(RdfType::getTypeUri).collect(Collectors.toList());
-        // Type uris that don't already have a record.
+        // Type uris that don't already have a record. Needs to be a set to avoid inserting the same URI and
         final var missingUris = rdfTypes_str.stream().filter(t -> !rdfTypeUris.contains(t))
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
+
         if (!missingUris.isEmpty()) {
             final List<MapSqlParameterSource> parameterSourcesList = new ArrayList<>();
             missingUris.forEach(u -> {
                 final var assocParams = new MapSqlParameterSource();
                 assocParams.addValue(RDF_TYPE_URI_PARAM, u);
+                LOGGER.debug("Adding rdf type uri: " + u);
                 parameterSourcesList.add(assocParams);
             });
             final MapSqlParameterSource[] psArray = parameterSourcesList.toArray(new MapSqlParameterSource[0]);
