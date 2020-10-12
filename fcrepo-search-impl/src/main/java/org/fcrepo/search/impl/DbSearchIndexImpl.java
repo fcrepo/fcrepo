@@ -125,8 +125,21 @@ public class DbSearchIndexImpl implements SearchIndex {
     /*
      * Insert a new RDF type into the RDF type table.
      */
-    private static final String INSERT_RDF_TYPE = "INSERT INTO " + SEARCH_RDF_TYPE_TABLE + " (" + RDF_TYPE_URI_PARAM +
-            ") VALUES (:rdf_type_uri)";
+    private static final String INSERT_RDF_TYPE_MYSQLMARIA = "INSERT IGNORE INTO " + SEARCH_RDF_TYPE_TABLE + " (" +
+            RDF_TYPE_URI_PARAM + ") VALUES (:rdf_type_uri)";
+
+    private static final String INSERT_RDF_TYPE_POSTGRES = "INSERT INTO " + SEARCH_RDF_TYPE_TABLE + " (" +
+            RDF_TYPE_URI_PARAM + ") VALUES (:rdf_type_uri) ON CONFLICT DO NOTHING";
+
+    private static final String INSERT_RDF_TYPE_H2 = "MERGE INTO " + SEARCH_RDF_TYPE_TABLE + " (" +
+            RDF_TYPE_URI_PARAM + ") KEY (" + RDF_TYPE_URI_PARAM + ") VALUES (:rdf_type_uri)";
+
+    private static final Map<DbPlatform, String> INSERT_RDF_TYPE = Map.of(
+            MYSQL, INSERT_RDF_TYPE_MYSQLMARIA,
+            MARIADB, INSERT_RDF_TYPE_MYSQLMARIA,
+            POSTGRESQL, INSERT_RDF_TYPE_POSTGRES,
+            H2, INSERT_RDF_TYPE_H2
+    );
 
     @Inject
     private DataSource dataSource;
@@ -184,7 +197,7 @@ public class DbSearchIndexImpl implements SearchIndex {
             addWhereClause(i, parameterSource, whereClauses, conditions.get(i));
         }
 
-        final var fields = parameters.getFields().stream().map(x -> x.toString()).collect(Collectors.toList());
+        final var fields = parameters.getFields().stream().map(Condition.Field::toString).collect(Collectors.toList());
         final boolean containsRDFTypeField = fields.contains(RDF_TYPE.toString());
         if (containsRDFTypeField) {
             whereClauses.add("s.id = r.resource_id");
@@ -378,15 +391,15 @@ public class DbSearchIndexImpl implements SearchIndex {
 
         if (!missingUris.isEmpty()) {
             final List<MapSqlParameterSource> parameterSourcesList = new ArrayList<>();
-            missingUris.forEach(u -> {
-                final var assocParams = new MapSqlParameterSource();
-                assocParams.addValue(RDF_TYPE_URI_PARAM, u);
-                LOGGER.debug("Adding rdf type uri: " + u);
-                parameterSourcesList.add(assocParams);
-            });
-            final MapSqlParameterSource[] psArray = parameterSourcesList.toArray(new MapSqlParameterSource[0]);
+            for (final var uri : missingUris) {
+                LOGGER.debug("Adding rdf type uri: " + uri);
+                final var ps = new MapSqlParameterSource();
+                ps.addValue(RDF_TYPE_URI_PARAM, uri);
+                parameterSourcesList.add(ps);
+            }
             // Batch insert all the records.
-            jdbcTemplate.batchUpdate(INSERT_RDF_TYPE, psArray);
+            final MapSqlParameterSource[] psArray = parameterSourcesList.toArray(new MapSqlParameterSource[0]);
+            jdbcTemplate.batchUpdate(INSERT_RDF_TYPE.get(this.dbPlatForm), psArray);
             // Do a single query for the ID to all the URIs we just inserted.
             final List<RdfType> createdIds = jdbcTemplate.query(SELECT_RDF_TYPE_ID,
                     Map.of(RDF_TYPE_URI_PARAM, missingUris), RDF_TYPE_ROW_MAPPER);
