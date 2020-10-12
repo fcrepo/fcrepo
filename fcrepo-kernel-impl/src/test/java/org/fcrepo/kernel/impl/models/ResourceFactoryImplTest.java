@@ -332,8 +332,6 @@ public class ResourceFactoryImplTest {
         assertTrue("Factory must return a NonRdfSourceDescripton", resc instanceof NonRdfSourceDescriptionImpl);
     }
 
-
-
     @Test
     public void getChildren_NoChildren() throws Exception {
         populateHeaders(resourceHeaders, BASIC_CONTAINER);

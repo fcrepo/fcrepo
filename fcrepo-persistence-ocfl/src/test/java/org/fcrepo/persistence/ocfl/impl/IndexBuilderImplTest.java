@@ -287,7 +287,6 @@ public class IndexBuilderImplTest {
         when(operation.getResourceId()).thenReturn(resourceId);
         when(((CreateResourceOperation) operation).getParentId()).thenReturn(FedoraId.getRepositoryRootId());
         when(operation.getType()).thenReturn(CREATE);
-        when(((CreateResourceOperation) operation).getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         when(((CreateResourceOperation)operation).isArchivalGroup()).thenReturn(isArchivalGroup);
         if (isArchivalGroup) {
             when(((CreateResourceOperation) operation).getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
@@ -312,8 +311,7 @@ public class IndexBuilderImplTest {
         when(operation.getFilename()).thenReturn("test");
         when(((CreateResourceOperation)operation).getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         when(((CreateResourceOperation)operation).getParentId()).thenReturn(parentId);
-        when(((CreateResourceOperation) operation).getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
-        session.persist(operation);
+                session.persist(operation);
     }
 
     private void deleteResource(final PersistentStorageSession session, final FedoraId resourceId)

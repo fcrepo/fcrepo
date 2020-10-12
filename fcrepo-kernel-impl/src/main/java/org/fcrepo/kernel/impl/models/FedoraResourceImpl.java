@@ -98,12 +98,12 @@ public class FedoraResourceImpl implements FedoraResource {
 
     private boolean isMemento;
 
+    private String interactionModel;
+
     // The transaction this representation of the resource belongs to
     protected final String txId;
 
     private boolean isArchivalGroup;
-
-    private String interactionModel;
 
     protected FedoraResourceImpl(final FedoraId fedoraId,
                                  final String txId,
@@ -370,6 +370,11 @@ public class FedoraResourceImpl implements FedoraResource {
     @Override
     public FedoraId getFedoraId() {
         return this.fedoraId;
+    }
+
+    @Override
+    public String getInteractionModel() {
+        return this.interactionModel;
     }
 
     /**

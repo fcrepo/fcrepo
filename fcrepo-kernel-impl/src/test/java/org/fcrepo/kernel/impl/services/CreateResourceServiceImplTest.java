@@ -28,10 +28,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.DEFAULT_INTERACTION_MODEL;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED_PROPERTIES_MODE;
 import static org.junit.Assert.assertEquals;
@@ -45,7 +43,6 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 import javax.inject.Inject;
 
 import java.io.File;
-import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -58,17 +55,12 @@ import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.vocabulary.DC_11;
-import org.apache.jena.vocabulary.XSD;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
-import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RequestWithAclLinkHeaderException;
-import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ExternalContent;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -462,52 +454,6 @@ public class CreateResourceServiceImplTest {
         final String expected = NON_RDF_SOURCE.toString();
         final String model = createResourceService.determineInteractionModel(STRING_TYPES_NOT_VALID, true, true, true);
         assertEquals(expected, model);
-    }
-
-    @Test(expected = MalformedRdfException.class)
-    public void testCheckServerManagedLdpType() throws Exception {
-        final InputStream graph = IOUtils.toInputStream(
-                "@prefix ldp: <" + LDP_NAMESPACE + "> .\n" + "@prefix dc: <" + DC_11.getURI() + "> .\n" +
-                        "@prefix example: <http://example.org/stuff#> .\n" +
-                        "<> a example:Thing, ldp:BasicContainer ; dc:title \"The thing\" .", "UTF-8");
-        final Model model = ModelFactory.createDefaultModel();
-        model.read(graph, "http://localhost:8080/rest/test1", "TURTLE");
-        createResourceService.checkForSmtsLdpTypes(model);
-    }
-
-    @Test(expected = MalformedRdfException.class)
-    public void testCheckServerManagedPredicate() throws Exception {
-        final InputStream graph = IOUtils.toInputStream(
-                "@prefix fr: <" + REPOSITORY_NAMESPACE + "> .\n" + "@prefix " + "dc: <" + DC_11.getURI() + "> .\n" +
-                        "@prefix example: <http://example.org/stuff#> .\n@prefix xsd: <" + XSD.getURI() + ">.\n" +
-                        "<> a example:Thing; dc:title \"The thing\"; fr:lastModified " +
-                        "\"2000-01-01T00:00:00Z\"^^xsd:datetime .", "UTF-8");
-        final Model model = ModelFactory.createDefaultModel();
-        model.read(graph, "http://localhost:8080/rest/test1", "TURTLE");
-        createResourceService.checkForSmtsLdpTypes(model);
-    }
-
-    @Test
-    public void testCheckServerManagedSuccess() throws Exception {
-        final InputStream graph = IOUtils.toInputStream("@prefix dc: <" + DC_11.getURI() + "> .\n" + "@prefix " +
-                "example: <http://example.org/stuff#> .\n@prefix xsd: <" + XSD.getURI() + ">.\n" + "<> a " +
-                "example:Thing; dc:title \"The thing\"; " + "example:lastModified " +
-                "\"2000-01-01T00:00:00Z\"^^xsd:datetime .", "UTF-8");
-        final Model model = ModelFactory.createDefaultModel();
-        model.read(graph, "http://localhost:8080/rest/test1", "TURTLE");
-        createResourceService.checkForSmtsLdpTypes(model);
-    }
-
-    @Test(expected = ServerManagedTypeException.class)
-    public void testHasRestrictedPathFail() throws Exception {
-        final String path = UUID.randomUUID().toString() + "/fedora:stuff/" + UUID.randomUUID().toString();
-        createResourceService.hasRestrictedPath(path);
-    }
-
-    @Test
-    public void testHasRestrictedPathPass() throws Exception {
-        final String path = UUID.randomUUID().toString() + "/dora:stuff/" + UUID.randomUUID().toString();
-        createResourceService.hasRestrictedPath(path);
     }
 
     @Test(expected = RequestWithAclLinkHeaderException.class)

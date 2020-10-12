@@ -103,5 +103,4 @@ public interface ResourceFactory {
      * @return Stream of child resources
      */
     public Stream<FedoraResource> getChildren(final String transactionId, final FedoraId resourceId);
-
 }

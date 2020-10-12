@@ -122,6 +122,7 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PreconditionException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
+import org.fcrepo.kernel.api.exception.UnsupportedMediaTypeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
@@ -135,6 +136,7 @@ import org.fcrepo.kernel.api.services.ContainmentTriplesService;
 import org.fcrepo.kernel.api.services.CreateResourceService;
 import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.fcrepo.kernel.api.services.ManagedPropertiesService;
+import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.TimeMapService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
@@ -248,6 +250,9 @@ public class FedoraLdpTest {
     @Mock
     private Principal principal;
 
+    @Mock
+    private ReferenceService referenceService;
+
     private final List<URI> typeList = new ArrayList<>();
 
     private static final Logger log = getLogger(FedoraLdpTest.class);
@@ -281,6 +286,7 @@ public class FedoraLdpTest {
         setField(testObj, "replacePropertiesService", replacePropertiesService);
         setField(testObj, "updatePropertiesService", updatePropertiesService);
         setField(testObj, "resourceHelper", resourceHelper);
+        setField(testObj, "referenceService", referenceService);
 
         when(rdfNamespaceRegistry.getNamespaces()).thenReturn(new HashMap<>());
 
@@ -350,26 +356,34 @@ public class FedoraLdpTest {
         }
         when(mockResource.getTypes()).thenReturn(typeList);
 
+        final var testUri = createURI("test");
         final Answer<RdfStream> answer = invocationOnMock -> new DefaultRdfStream(
-                createURI("test"),
-                of(Triple.create(createURI("test"),
+                testUri,
+                of(Triple.create(testUri,
                         createURI("called"),
                         createURI("PROPERTIES"))));
 
         final Answer<RdfStream> managedAnswer = invocationOnMock -> new DefaultRdfStream(
-                createURI("test"),
-                of(Triple.create(createURI("test"),
+                testUri,
+                of(Triple.create(testUri,
                         createURI("managed"),
                         createURI("SERVER_MANAGED"))));
 
         final Answer<RdfStream> containmentAnswer = invocationOnMock -> new DefaultRdfStream(
-                createURI("test"),
-                of(Triple.create(createURI("test"),
+                testUri,
+                of(Triple.create(testUri,
                         createURI("contains"),
                         createURI("LDP_CONTAINMENT"))));
 
+        final Answer<RdfStream> inboundAnswer = invocationOnMock -> new DefaultRdfStream(
+                testUri,
+                of(Triple.create(testUri,
+                        createURI("references"),
+                        createURI("INBOUND_REFERENCES"))));
+
         when(managedPropertiesService.get(mockResource)).thenAnswer(managedAnswer);
         when(containmentTriplesService.get(any(), eq(mockResource))).thenAnswer(containmentAnswer);
+        when(referenceService.getInboundReferences(any(), eq(mockResource))).thenAnswer(inboundAnswer);
 
         doReturn(mockResource).when(testObj).resource();
         when(mockResource.getFedoraId()).thenReturn(FedoraId.create(path));
@@ -779,7 +793,7 @@ public class FedoraLdpTest {
         }
     }
 
-    @Ignore("Membership Triples not implemented - FCREPO-3165 & Needs membership triples - FCREPO-3165")
+    @Ignore("Membership Triples not implemented - FCREPO-3165")
     @Test
     public void testGetWithObjectOmitMembership() throws Exception {
         setResource(Container.class);
@@ -797,7 +811,6 @@ public class FedoraLdpTest {
         }
     }
 
-    @Ignore("Implement inbound references - FCREPO-3166")
     @Test
     public void testGetWithObjectIncludeReferences()
             throws IOException, UnsupportedAlgorithmException {
@@ -1090,8 +1103,7 @@ public class FedoraLdpTest {
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
     }
 
-    @Ignore("HttpRdfService cannot parse sparql-update")
-    @Test
+    @Test(expected = UnsupportedMediaTypeException.class)
     public void testCreateNewObjectWithSparql() throws Exception {
         final var resource = setResource(Container.class);
         final var finalId = pathId.resolve("b");
@@ -1102,13 +1114,6 @@ public class FedoraLdpTest {
                 toInputStream("INSERT DATA { <> <http://example.org/somePredicate> \"x\" }", UTF_8),
                 null,
                 null);
-        assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(createResourceService).perform(
-                eq(mockTransaction.getId()),
-                anyString(),
-                eq(finalId),
-                isNull(),
-                any());
     }
 
     @Test

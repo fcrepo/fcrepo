@@ -2659,7 +2659,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPutToChangeNonRdfSourceToRdfSource() throws IOException {
         final String pid = getRandomUniqueId();
 
@@ -2673,7 +2672,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPutChangeBinaryTypeNotAllowed() throws IOException {
         final HttpPost postMethod = new HttpPost(serverAddress);
         postMethod.setEntity(new StringEntity("TestString."));
@@ -2702,7 +2700,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPutChangeBasicContainerToParent() throws Exception {
         final String pid = getRandomUniqueId();
         final String location = serverAddress + pid;
@@ -2726,7 +2723,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPutToChangeInteractionModelWithRdf() throws IOException {
         final String pid = getRandomUniqueId();
         final String resource = serverAddress + pid;
@@ -2739,7 +2735,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // attempt to change basic container to NonRdfSource
         final String ttl1 = "<> a <" + NON_RDF_SOURCE.getURI() + "> .";
         final HttpPut put1 = putObjMethod(pid + "/a", "text/turtle", ttl1);
-        put1.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
         assertEquals("Changed the basic container ixn to NonRdfSource through PUT with RDF content!",
                 CONFLICT.getStatusCode(), getStatus(put1));
 
@@ -2747,7 +2742,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String ttl2 = "<> a <" + DIRECT_CONTAINER.getURI() + "> ; <" + MEMBERSHIP_RESOURCE.getURI() +
                 "> <" + resource + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "member> .";
         final HttpPut put2 = putObjMethod(pid + "/a", "text/turtle", ttl2);
-        put2.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
         assertEquals("Changed the basic container ixn to Direct Container through PUT with RDF content!",
                 CONFLICT.getStatusCode(), getStatus(put2));
 
@@ -2763,7 +2757,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String ttla = "<> <" + MEMBERSHIP_RESOURCE + "> <" + container + ">;\n"
                 + "<" + HAS_MEMBER_RELATION + "> <info:some/relation> .\n";
         final HttpPut puta = putObjMethod(pid + "/b", "text/turtle", ttla);
-        puta.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
         puta.addHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(puta));
 
@@ -2771,7 +2764,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String ttl3 = "<> a <" + BASIC_CONTAINER.getURI() +
                 "> ; <http://purl.org/dc/elements/1.1/title> \"this is a title\".";
         final HttpPut put3 = putObjMethod(pid + "/b", "text/turtle", ttl3);
-        put3.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
         assertEquals("Changed the direct container ixn to basic container through PUT with RDF content!",
                 CONFLICT.getStatusCode(), getStatus(put3));
 
@@ -2781,13 +2773,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 + "<" + HAS_MEMBER_RELATION + "> <info:some/relation>;\n"
                 + "<" + LDP_NAMESPACE + "insertedContentRelation> <info:proxy/for> .\n";
         final HttpPut put4 = putObjMethod(pid + "/b", "text/turtle", ttl4);
-        put4.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
         assertEquals("Changed the direct container ixn to indirect container through PUT with RDF content!",
                 CONFLICT.getStatusCode(), getStatus(put4));
     }
 
     @Test
-@Ignore
     public void testChangeInteractionModelWithPut() throws IOException {
         final String pid = getRandomUniqueId();
         final String resource = serverAddress + pid;
@@ -3107,13 +3097,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
-    public void testLinkToNonExistent() throws IOException {
+    public void testNoReferentialIntegrity() throws IOException {
         final HttpPatch patch = new HttpPatch(getLocation(postObjMethod()));
         patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         patch.setEntity(new StringEntity("INSERT { " +
                 "<> <http://some-vocabulary#isMemberOfCollection> <" + serverAddress + "non-existant> } WHERE {}"));
-        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patch));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
     }
 
     @Test
@@ -3163,7 +3152,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testUpdateObjectGraphWithProblems() throws IOException {
         final String subjectURI = getLocation(postObjMethod());
         final Link ex = fromUri(URI.create(serverAddress + "static/constraints/ServerManagedPropertyException.rdf"))
@@ -3180,7 +3168,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPutResourceBadRdf() throws IOException {
         final HttpPut httpPut = new HttpPut(serverAddress + getRandomUniqueId());
         httpPut.setHeader(CONTENT_TYPE, "text/turtle");
@@ -3205,12 +3192,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testUpdateObjectWithoutContentType() throws IOException {
         final HttpPut httpPut = new HttpPut(getLocation(postObjMethod()));
         // use a bytestream-based entity to avoid settin a content type
         httpPut.setEntity(new ByteArrayEntity("bogus content".getBytes(UTF_8)));
-        assertEquals(UNSUPPORTED_MEDIA_TYPE.getStatusCode(), getStatus(httpPut));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(httpPut));
     }
 
     @Test
@@ -3242,11 +3228,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
-    /* https://jira.duraspace.org/browse/FCREPO-2520: create binary with fine mime type then
-     * attempt to change the mime type to something syntactically invalid. Ensure one can still retrieve it.
-     */
     @Test
-@Ignore
     public void testBinarySetBadMimeType() throws IOException {
         final String subjectURI = serverAddress + getRandomUniqueId();
         final HttpPut createMethod = new HttpPut(subjectURI);
@@ -3263,7 +3245,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 "INSERT { <" + subjectURI + "> ebucore:hasMimeType \"-- invalid syntax! --\" } WHERE {}")
         );
 
-        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patch));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
 
         // make sure it's still retrievable
         final HttpGet getMethod = new HttpGet(subjectURI);
@@ -3306,7 +3288,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testRoundTripReplaceGraphForDatastreamDescription() throws IOException {
         final String id = getRandomUniqueId();
         final String subjectURI = serverAddress + id + "/ds1";
@@ -3314,6 +3295,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpGet getObjMethod = new HttpGet(subjectURI + "/" + FCR_METADATA);
         getObjMethod.addHeader(ACCEPT, "text/turtle");
+        getObjMethod.addHeader("Prefer", "return=representation; omit=\"" + PREFER_SERVER_MANAGED + "\"");
         final Model model = createDefaultModel();
         try (final CloseableHttpResponse getResponse = execute(getObjMethod)) {
             final String graph = EntityUtils.toString(getResponse.getEntity());
@@ -3523,7 +3505,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPostCreateDate() throws IOException {
         final HttpPost httpPost = postObjMethod("/");
         httpPost.addHeader("Slug", getRandomUniqueId());
@@ -3531,6 +3512,59 @@ public class FedoraLdpIT extends AbstractResourceIT {
         httpPost.setEntity(new StringEntity(getTTLThatUpdatesServerManagedTriples("fakeuser", null, null, null)));
         try (final CloseableHttpResponse response = execute(httpPost)) {
             assertEquals("Must not be able to update createdBy!", CONFLICT.getStatusCode(), getStatus(response));
+        }
+    }
+
+    @Test
+    public void testPutRdfLenient() throws IOException {
+        final String location = getLocation(postObjMethod());
+        final Node uriResource = createURI(location);
+        final HttpGet getObjMethod = new HttpGet(location);
+        String createdDate = null;
+        try (final CloseableHttpResponse response = execute(getObjMethod)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            try (final CloseableDataset dataset = getDataset(response)) {
+                final DatasetGraph graph = dataset.asDatasetGraph();
+                final var iterator = graph.find(ANY, uriResource, CREATED_DATE.asNode(), ANY);
+                while (iterator.hasNext()) {
+                    final var quad = iterator.next();
+                    createdDate = quad.getObject().getLiteral().toString();
+                }
+            }
+        }
+        final HttpPut putMethod = new HttpPut(location);
+        putMethod.setHeader(CONTENT_TYPE, "text/turtle");
+        putMethod.setEntity(new StringEntity("<> <" + CREATED_DATE + "> \"1979-01-01T00:00:00\" ;" +
+                "<" + DCTITLE + "> \"This is a new title\" . "));
+        // Can't set the created date
+        assertEquals(CONFLICT.getStatusCode(), getStatus(putMethod));
+
+        // With lenient we ignore it.
+        putMethod.setHeader("Prefer", "handling=\"lenient\"");
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(putMethod));
+
+        final HttpGet getObj2 = new HttpGet(location);
+        try (final CloseableHttpResponse response = execute(getObj2)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            try (final CloseableDataset dataset = getDataset(response)) {
+                String createdDate2 = null;
+                String title = null;
+                final DatasetGraph graph = dataset.asDatasetGraph();
+                final var iterator = graph.find(ANY, uriResource, CREATED_DATE.asNode(), ANY);
+                while (iterator.hasNext()) {
+                    final var quad = iterator.next();
+                    createdDate2 = quad.getObject().getLiteral().toString();
+                }
+                final var iterator2 = graph.find(ANY, uriResource, DCTITLE, ANY);
+                while (iterator2.hasNext()) {
+                    final var quad = iterator2.next();
+                    title = quad.getObject().getLiteral().toString();
+                }
+                // Created date change did not take effect.
+                assertEquals(createdDate, createdDate2);
+                // But the new title is there.
+                assertEquals("This is a new title", title);
+            }
         }
     }
 
@@ -3720,7 +3754,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testWithHashUris() throws IOException {
         final HttpPost method = postObjMethod();
         method.addHeader(CONTENT_TYPE, "text/turtle");

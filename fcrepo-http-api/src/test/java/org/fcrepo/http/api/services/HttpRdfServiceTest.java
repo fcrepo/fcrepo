@@ -114,7 +114,7 @@ public class HttpRdfServiceTest {
 
         final InputStream requestBodyStream = new ByteArrayInputStream(RDF.getBytes());
         final Model model = httpRdfService.bodyToInternalModel(FEDORA_URI_1, requestBodyStream,
-            CONTENT_TYPE, idTranslator);
+            CONTENT_TYPE, idTranslator, false);
 
         assertFalse(model.isEmpty());
 
@@ -126,7 +126,7 @@ public class HttpRdfServiceTest {
 
         final InputStream requestBodyStream = new ByteArrayInputStream(RDF.getBytes());
         final RdfStream stream = httpRdfService.bodyToInternalStream(FEDORA_URI_1, requestBodyStream,
-            CONTENT_TYPE, idTranslator);
+            CONTENT_TYPE, idTranslator, false);
 
         assertTrue(stream.toString().length() > 0);
         verifyTriples(stream);

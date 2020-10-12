@@ -265,6 +265,14 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         varyValues.forEach(x -> servletResponse.addHeader("Vary", x));
     }
 
+    /**
+     * Utility to check if the Prefer header contains handling="lenient"
+     * @return True if handling="lenient" was sent.
+     */
+    protected boolean hasLenientPreferHeader() {
+        return (prefer.hasHandling() && prefer.getHandling().getValue().equals("lenient"));
+    }
+
     protected RdfStream getResourceTriples(final FedoraResource resource) {
         return getResourceTriples(-1, resource);
     }

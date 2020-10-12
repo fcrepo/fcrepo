@@ -136,9 +136,8 @@ public class FedoraAcl extends ContentExposingResource {
         final MediaType contentType =
             requestContentType == null ? RDFMediaType.TURTLE_TYPE : valueOf(getSimpleContentType(requestContentType));
         if (isRdfContentType(contentType.toString())) {
-
             final Model model = httpRdfService.bodyToInternalModel(aclId.getFullId(),
-                    requestBodyStream, contentType, identifierConverter());
+                    requestBodyStream, contentType, identifierConverter(), hasLenientPreferHeader());
             if (exists) {
                 replacePropertiesService.perform(transaction().getId(), getUserPrincipal(), aclId, model);
             } else {
@@ -159,7 +158,7 @@ public class FedoraAcl extends ContentExposingResource {
             } else {
                 return noContent().location(location).build();
             }
-        } catch (PathNotFoundException e) {
+        } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e.getMessage(), e);
         }
 

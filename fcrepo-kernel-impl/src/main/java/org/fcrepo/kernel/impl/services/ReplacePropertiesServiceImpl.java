@@ -55,13 +55,9 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
         try {
             final PersistentStorageSession pSession = this.psManager.getSession(txId);
 
-            hasRestrictedPath(fedoraId.getFullId());
-
             ensureValidMemberRelation(inputModel);
 
             ensureValidACLAuthorization(inputModel);
-
-            checkForSmtsLdpTypes(inputModel);
 
             final ResourceOperation updateOp = factory.updateBuilder(fedoraId)
                 .relaxedProperties(inputModel)
