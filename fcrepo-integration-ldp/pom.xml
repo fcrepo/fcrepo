@@ -13,7 +13,7 @@
   <artifactId>fcrepo-integration-ldp</artifactId>
 
   <properties>
-    <junit.version>4.12</junit.version>
+    <junit.version>4.13.1</junit.version>
     <jetty-plugin.version>9.4.24.v20191120</jetty-plugin.version>
     <ldp-testsuite.version>0.1.1</ldp-testsuite.version>
     <jetty.users.file>${project.build.directory}/test-classes/jetty-users.properties</jetty.users.file>
