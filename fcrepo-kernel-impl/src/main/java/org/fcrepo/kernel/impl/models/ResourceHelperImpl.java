@@ -88,15 +88,6 @@ public class ResourceHelperImpl implements ResourceHelper {
             } catch (final PersistentStorageException e) {
                 // Other error, pass along.
                 throw new RepositoryRuntimeException(e.getMessage(), e);
-            } finally {
-                if (transactionId == null) {
-                    // Commit session (if read-only) so it doesn't hang around.
-                    try {
-                        psSession.commit();
-                    } catch (final PersistentStorageException e) {
-                        LOGGER.error("Error committing session, message: {}", e.getMessage());
-                    }
-                }
             }
         }
     }

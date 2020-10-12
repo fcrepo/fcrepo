@@ -17,6 +17,7 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
 import org.fcrepo.kernel.api.RdfStream;
@@ -48,6 +49,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Phaser;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
@@ -111,8 +113,18 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         this.sessionId = sessionId;
         this.fedoraOcflIndex = fedoraOcflIndex;
         this.objectSessionFactory = objectSessionFactory;
-        this.sessionMap = new ConcurrentHashMap<>();
         this.sessionsToRollback = new HashMap<>();
+
+        if (sessionId == null) {
+            // The read-only session is never closed, so it needs to periodically expire object sessions
+            this.sessionMap = Caffeine.newBuilder()
+                    .maximumSize(512)
+                    .expireAfterAccess(10, TimeUnit.MINUTES)
+                    .<String, OcflObjectSession>build()
+                    .asMap();
+        } else {
+            this.sessionMap = new ConcurrentHashMap<>();
+        }
 
         //load the persister list if empty
         persisterList.add(new CreateRdfSourcePersister(this.fedoraOcflIndex));
