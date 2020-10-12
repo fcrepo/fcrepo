@@ -17,6 +17,7 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -47,6 +48,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.ByteArrayInputStream;
 import java.nio.file.Path;
@@ -68,7 +70,9 @@ import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.create
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -108,7 +112,7 @@ public class OcflPersistentStorageSessionTest {
     @Mock
     private OcflObjectSession objectSession2;
 
-    private org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory objectSessionFactory;
+    private DefaultOcflObjectSessionFactory objectSessionFactory;
 
     private static final FedoraId ROOT_OBJECT_ID = FedoraId.create("info:fedora/resource1");
 
@@ -188,7 +192,7 @@ public class OcflPersistentStorageSessionTest {
     private void mockMappingAndIndex(final String ocflObjectId, final FedoraId resourceId, final FedoraId rootObjectId,
                                      final FedoraOcflMapping mapping) throws FedoraOcflMappingNotFoundException {
         mockMapping(ocflObjectId, rootObjectId, mapping);
-        when(index.getMapping(anyString(), eq(resourceId))).thenReturn(mapping);
+        when(index.getMapping(any(), eq(resourceId))).thenReturn(mapping);
     }
 
     private void mockMapping(final String ocflObjectId, final FedoraId rootObjectId, final FedoraOcflMapping mapping) {
@@ -695,6 +699,39 @@ public class OcflPersistentStorageSessionTest {
         final var result = IOUtils.toString(session.getBinaryContent(RESOURCE_ID, null), UTF_8);
 
         assertEquals(BINARY_CONTENT, result);
+    }
+
+    @Test
+    public void readOnlySessionShouldExpireObjectSessions() throws Exception {
+        mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, RESOURCE_ID, mapping);
+
+        // create resource
+        final Node resourceUri = createURI(RESOURCE_ID.getFullId());
+
+        final var dcTitleTriple = Triple.create(resourceUri, DC.title.asNode(), createLiteral("my title"));
+        final Stream<Triple> userTriples = Stream.of(dcTitleTriple);
+        final DefaultRdfStream userStream = new DefaultRdfStream(resourceUri, userTriples);
+        mockResourceOperation(rdfSourceOperation, userStream, USER_PRINCIPAL, RESOURCE_ID);
+        session.persist(rdfSourceOperation);
+        session.commit();
+
+        // read-only read resource
+        final var sessionMap = Caffeine.newBuilder()
+                .maximumSize(512)
+                .expireAfterAccess(1, TimeUnit.SECONDS)
+                .<String, OcflObjectSession>build()
+                .asMap();
+
+        final var readOnlySession = new OcflPersistentStorageSession(null, index, objectSessionFactory);
+        ReflectionTestUtils.setField(readOnlySession, "sessionMap", sessionMap);
+
+        readOnlySession.getHeaders(RESOURCE_ID, null);
+
+        assertTrue(sessionMap.containsKey(RESOURCE_ID.getFullId()));
+
+        TimeUnit.SECONDS.sleep(2);
+
+        assertFalse(sessionMap.containsKey(RESOURCE_ID.getFullId()));
     }
 
     private NonRdfSourceOperation mockNonRdfSourceOperation(final String content,
