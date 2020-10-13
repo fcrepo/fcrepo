@@ -49,14 +49,11 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_FIXITY;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
-import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
@@ -76,7 +73,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
-import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.time.Duration;
@@ -94,7 +90,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.ws.rs.core.Link;
-import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -177,7 +172,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         objectSessionFactory.setDefaultCommitType(CommitType.NEW_VERSION);
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testDeleteTimeMapNotAllowed() throws Exception {
         createVersionedContainer(id);
@@ -285,7 +279,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         verifyTimemapResponse(subjectUri, id, new String[] {v1, v2, v3}, v1, v3);
     }
 
-    @Ignore("returning an internal ID rather than URI")
     @Test
     public void testGetTimeMapRDFSubject() throws Exception {
         createVersionedContainer(id);
@@ -342,7 +335,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore
     @Test
     public void testCreateVersionFromResourceWithBlankNode() throws Exception {
         final HttpPost createMethod = postObjMethod();
@@ -404,64 +396,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 BAD_REQUEST.getStatusCode(), getStatus(post));
     }
 
-    @Ignore("delete not implemented")
     @Test
-    public void testDeleteAndPostContainerMemento() throws Exception {
-        createVersionedContainer(id);
-
-        final String mementoUri = createContainerMementoWithBody(subjectUri);
-
-        assertEquals("Expected delete to succeed",
-                NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(mementoUri)));
-
-        assertEquals("Deleted memento must be removed",
-                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(mementoUri)));
-
-        final String recreatedUri = createContainerMementoWithBody(subjectUri);
-        assertEquals("Recreated memento must exist",
-                OK.getStatusCode(), getStatus(new HttpGet(recreatedUri)));
-    }
-
-    @Ignore("delete not implemented")
-    @Test
-    public void testDeleteAndPostBinaryMemento() throws Exception {
-        createVersionedBinary(id);
-
-        final String mementoUri = createLDPNRMementoWithExistingBody();
-
-        assertEquals("Expected delete to succeed",
-                NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(mementoUri)));
-
-        assertEquals("Deleted memento must be removed",
-                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(mementoUri)));
-
-        final String recreatedUri = createLDPNRMementoWithExistingBody();
-        assertEquals("Recreated memento must exist",
-                OK.getStatusCode(), getStatus(new HttpGet(recreatedUri)));
-    }
-
-    @Ignore("delete not implemented")
-    @Test
-    public void testDeleteAndPostDescriptionMemento() throws Exception {
-        createVersionedBinary(id);
-
-        final String descId = id + "/" + FCR_METADATA;
-        final String descUri = serverAddress + descId;
-        final String mementoUri = createMementoWithExistingBody(descId, false);
-
-        assertEquals("Expected delete to succeed",
-                NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(mementoUri)));
-
-        assertEquals("Deleted memento must be removed",
-                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(mementoUri)));
-
-        final String recreatedUri = createContainerMementoWithBody(descUri);
-        assertEquals("Recreated memento must exist",
-                OK.getStatusCode(), getStatus(new HttpGet(recreatedUri)));
-    }
-
-    @Ignore("delete not implemented")
-    @Test
+    @Ignore("No past containment is stored - FCREPO-3450")
     public void testMementoContainmentReferences() throws Exception {
         createVersionedContainer(id);
 
@@ -581,7 +517,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         checkResponseWithInvalidMementoID(optionsMementoInvalid);
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testMementoExternalReference() throws Exception {
         createVersionedContainer(id);
@@ -603,11 +538,11 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertEquals("Expected delete to succeed",
                 NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(resource)));
 
-        // Ensure that the resource reference is gone
+        // Ensure that the resource reference remains (no referential integrity)
         try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(subjectUri));
                 final CloseableDataset dataset = getDataset(getResponse1)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
-            assertFalse("Expected NOT to have resource: " + graph, graph.contains(ANY,
+            assertTrue("Expected to see resource: " + graph, graph.contains(ANY,
                     ANY, createURI("http://pcdm.org/models#hasMember"), createURI(resource)));
         }
 
@@ -621,12 +556,11 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                     ANY, createURI("http://pcdm.org/models#hasMember"), createURI(resource)));
 
             // Ensure that the subject of the memento is the original reosurce
-            assertTrue("Subjects should be the original resource, not the memento: " + graph,
-                       !graph.contains(ANY, createURI(mementoUri), ANY, ANY));
+            assertFalse("Subjects should be the original resource, not the memento: " + graph,
+                    graph.contains(ANY, createURI(mementoUri), ANY, ANY));
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testDescriptionMementoReference() throws Exception {
         // Create binary with description referencing other resource
@@ -655,11 +589,11 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(referencedResource)));
 
         final Node originalBinaryNode = createURI(serverAddress + id);
-        // Ensure that the resource reference is gone
+        // Ensure that the resource reference remains
         try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(metadataUri));
                 final CloseableDataset dataset = getDataset(getResponse1)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
-            assertFalse("Expected NOT to have resource: " + graph, graph.contains(ANY,
+            assertTrue("Expected TO have resource: " + graph, graph.contains(ANY,
                     originalBinaryNode, createURI(relation), createURI(referencedResource)));
         }
 
@@ -670,11 +604,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertTrue("Expected resource NOT found: " + graph, graph.contains(ANY,
                     originalBinaryNode, createURI(relation), createURI(referencedResource)));
-
-            // Verify that described by link persists and there is only one
-            final Iterator<Quad> describedIt = graph.find(ANY, originalBinaryNode, DESCRIBED_BY.asNode(), ANY);
-            assertEquals(metadataUri, describedIt.next().getObject().getURI());
-            assertFalse(describedIt.hasNext());
         }
     }
 
@@ -967,7 +896,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore("patch not implemented")
     @Test
     public void testCreateVersionOfBinaryDescription() throws Exception {
         createVersionedBinary(id);
@@ -980,15 +908,13 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 "INSERT { <> <" + DC.title.getURI() + "> \"Original\" ." +
                         " <> <" + RDF.type.getURI() + "> <" + TEST_TYPE_RESOURCE.getURI() + "> } WHERE { }";
         patchProps.setEntity(new StringEntity(updateString));
-        try (final CloseableHttpResponse patchResp = execute(patchProps)) {
-            assertEquals(patchResp.getStatusLine().toString(), NO_CONTENT.getStatusCode(), getStatus(patchResp));
-        }
-
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patchProps));
+        TimeUnit.SECONDS.sleep(1);
         final String mementoUri = createContainerMementoWithBody(descriptionUri);
         assertMementoUri(mementoUri, descriptionUri);
 
         setDescriptionProperty(id, null, DC.title.getURI(), "Updated");
-
+        TimeUnit.SECONDS.sleep(1);
         try (final CloseableDataset dataset = getDataset(new HttpGet(mementoUri))) {
             final DatasetGraph results = dataset.asDatasetGraph();
 
@@ -997,84 +923,16 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             assertTrue("Property added to original before versioning must appear",
                     results.contains(ANY, mementoSubject, DC.title.asNode(), createLiteral("Original")));
             assertFalse("Property added after memento created must not appear",
-                    results.contains(ANY, mementoSubject, DC.title.asNode(), createLiteral("Updated")));
+                    results.contains(ANY, mementoSubject, title.asNode(), createLiteral("Updated")));
             assertFalse("Memento type should not be visible",
-                    results.contains(ANY, mementoSubject, RDF.type.asNode(), MEMENTO_TYPE_NODE));
+                    results.contains(ANY, mementoSubject, type.asNode(), MEMENTO_TYPE_NODE));
             assertTrue("Must have binary type",
                     results.contains(ANY, mementoSubject, RDF.type.asNode(), FEDORA_BINARY.asNode()));
             assertTrue("Must have custom type",
                     results.contains(ANY, mementoSubject, RDF.type.asNode(), TEST_TYPE_RESOURCE.asNode()));
         }
-
-        // No binary memento should be created when specifically creating a description memento.
-        final String hypotheticalBinaryUri = mementoUri.replaceAll("fcr:metadata/fcr:versions", "fcr:versions");
-        assertEquals(NOT_FOUND.getStatusCode(), getStatus(new HttpGet(hypotheticalBinaryUri)));
     }
 
-    @Ignore("descriptions aren't working")
-    @Test
-    public void testCreateVersionBinaryDescriptionWithBodyAndDatetime() throws Exception {
-        createVersionedBinary(id);
-
-        final String descriptionUri = subjectUri + "/fcr:metadata";
-
-        final String mementoUri = createContainerMementoWithBody(descriptionUri);
-        assertMementoUri(mementoUri, descriptionUri);
-
-        try (final CloseableDataset dataset = getDataset(new HttpGet(mementoUri))) {
-            final DatasetGraph results = dataset.asDatasetGraph();
-
-            final Node mementoSubject = createURI(subjectUri);
-
-            assertFalse("Memento type should not be visible",
-                    results.contains(ANY, mementoSubject, RDF.type.asNode(), MEMENTO_TYPE_NODE));
-            assertTrue("Type must be a custom type",
-                    results.contains(ANY, mementoSubject, RDF.type.asNode(), TEST_TYPE_RESOURCE.asNode()));
-            assertTrue("Memento must have first updated property",
-                    results.contains(ANY, mementoSubject, TEST_PROPERTY_NODE, createLiteral("bar")));
-        }
-    }
-
-    @Ignore("metadata problems and issues creating binary resources as text/plain" +
-            " https://jira.lyrasis.org/browse/FCREPO-3246")
-    @Test
-    public void testCreateVersionHistoricBinaryAndDescription() throws Exception {
-        createVersionedBinary(id, "text/plain", BINARY_CONTENT);
-
-        final String descriptionUri = subjectUri + "/fcr:metadata";
-
-        final String binaryMementoUri = createMemento(subjectUri);
-        assertMementoUri(binaryMementoUri, subjectUri);
-
-        TimeUnit.SECONDS.sleep(1);
-
-        final String mementoUri = createContainerMementoWithBody(descriptionUri);
-        assertMementoUri(mementoUri, descriptionUri);
-
-        try (final CloseableDataset dataset = getDataset(new HttpGet(mementoUri))) {
-            final DatasetGraph results = dataset.asDatasetGraph();
-
-            final Node mementoSubject = createURI(subjectUri);
-
-            assertTrue("Type must be a fedora:Binary",
-                    results.contains(ANY, mementoSubject, RDF.type.asNode(), FEDORA_BINARY.asNode()));
-            assertTrue("Type must be a custom type",
-                    results.contains(ANY, mementoSubject, RDF.type.asNode(), TEST_TYPE_RESOURCE.asNode()));
-            assertTrue("Memento must have first updated property",
-                    results.contains(ANY, mementoSubject, TEST_PROPERTY_NODE, createLiteral("bar")));
-        }
-
-        // Verify that the memento has the updated binary
-        try (final CloseableHttpResponse response = execute(new HttpGet(binaryMementoUri))) {
-            assertMementoDatetimeHeaderMatches(response, MEMENTO_DATETIME);
-
-            assertEquals("Binary content of memento must reflect historic version",
-                    "content", EntityUtils.toString(response.getEntity()));
-            assertEquals("text/plain", response.getFirstHeader(CONTENT_TYPE).getValue());
-        }
-    }
-
-    @Ignore("patch doesn't work")
     @Test
     public void testAddAndRetrieveVersion() throws Exception {
         createVersionedContainer(id);
@@ -1089,20 +947,23 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         logger.debug("Posting version v0.0.1");
         final String mementoUri = createContainerMementoWithBody(subjectUri);
         assertMementoUri(mementoUri, subjectUri);
-
+        TimeUnit.SECONDS.sleep(1);
         logger.debug("Replacing the title");
         patchLiteralProperty(serverAddress + id, title.getURI(), "Second Title");
+        TimeUnit.SECONDS.sleep(1);
 
+        final var subjectUri = createURI(serverAddress + id);
         try (final CloseableDataset dataset = getContent(mementoUri)) {
             logger.debug("Got version profile:");
             final DatasetGraph versionResults = dataset.asDatasetGraph();
 
             assertTrue("Should find a title in historic version", versionResults.contains(ANY,
-                    ANY, title.asNode(), ANY));
+                    subjectUri, title.asNode(), createLiteral("First Title")));
             assertTrue("Should find original title in historic version", versionResults.contains(ANY,
-                    ANY, title.asNode(), createLiteral("First Title")));
-            assertFalse("Should not find the updated title in historic version", versionResults.contains(ANY,
-                    ANY, title.asNode(), createLiteral("Second Title")));
+                    subjectUri, title.asNode(), createLiteral("First Title")));
+            assertFalse("Should not find the updated title in historic version",
+                    versionResults.contains(ANY, subjectUri, title.asNode(),
+                            createLiteral("Second Title")));
         }
     }
 
@@ -1287,16 +1148,17 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 BAD_REQUEST.getStatusCode(), getStatus(customClient.execute(getMethod3)));
     }
 
-    @Ignore("fixity not implemented")
     @Test
     public void testFixityOnVersionedResource() throws Exception {
         createVersionedBinary(id);
 
         final String mementoUri = createMemento(subjectUri);
 
-        final HttpGet checkFixity = new HttpGet(mementoUri + "/" + FCR_FIXITY);
+        final HttpGet checkFixity = new HttpGet(mementoUri);
+        checkFixity.setHeader("Want-Digest", "sha");
         try (final CloseableHttpResponse response = execute(checkFixity)) {
             assertEquals("Did not get OK response", OK.getStatusCode(), getStatus(response));
+            assertTrue(decodeDigestHeader(response.getFirstHeader("Digest").getValue()).containsKey("sha"));
         }
     }
 
@@ -1312,7 +1174,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore("patch not implemented")
     @Test
     public void testPatchOnMemento() throws Exception {
         createVersionedContainer(id);
@@ -1520,114 +1381,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
-    @Test
-    public void testCreateHistoricExternalBinaryProxyVersion() throws Exception {
-        // Create two binaries to use as content for proxying
-        final String newContent = "new content";
-        final String proxied1Id = getRandomUniqueId();
-        final String proxied1Uri = serverAddress + proxied1Id + "/ds";
-        createDatastream(proxied1Id, "ds", newContent);
-
-        final String oldContent = "old content";
-        final String proxied2Id = getRandomUniqueId();
-        final String proxied2Uri = serverAddress + proxied2Id + "/ds";
-        createDatastream(proxied2Id, "ds", "old content");
-
-        // Create the proxied external binary object using the first binary
-        createVersionedExternalBinaryMemento(id, "proxy", proxied1Uri);
-
-        // Create a historic version of the external binary using the second binary as content
-        final String mementoUri = createExternalBinaryMemento(subjectUri, "proxy", proxied2Uri);
-
-        // Verify that the historic version exists and proxies the old content
-        final HttpGet httpGet1 = new HttpGet(mementoUri);
-        try (final CloseableHttpResponse getResponse = execute(httpGet1)) {
-            assertEquals(OK.getStatusCode(), getStatus(getResponse));
-            assertMementoDatetimeHeaderMatches(getResponse, MEMENTO_DATETIME);
-            assertEquals(proxied2Uri, getContentLocation(getResponse));
-            final String content = EntityUtils.toString(getResponse.getEntity());
-            assertEquals("Entity Data doesn't match proxied historic content!", oldContent, content);
-        }
-
-        // Verify that the current version still proxies the correct content
-        final HttpGet httpGet2 = new HttpGet(subjectUri);
-        try (final CloseableHttpResponse getResponse = execute(httpGet2)) {
-            assertEquals(OK.getStatusCode(), getStatus(getResponse));
-            assertEquals(proxied1Uri, getContentLocation(getResponse));
-            final String content = EntityUtils.toString(getResponse.getEntity());
-            assertEquals("Entity Data doesn't match proxied historic content!", newContent, content);
-        }
-    }
-
-    @Ignore //TODO Fix this test
-    @Test
-    public void testCreateHistoricExternalBinaryRedirectVersion() throws Exception {
-        // Create two binaries to use as content for proxying
-        final String newContent = "new content";
-        final String ext1Id = getRandomUniqueId();
-        final String ext1Uri = serverAddress + ext1Id + "/ds";
-        createDatastream(ext1Id, "ds", newContent);
-
-        final String oldContent = "old content";
-        final String ext2Id = getRandomUniqueId();
-        final String ext2Uri = serverAddress + ext2Id + "/ds";
-        createDatastream(ext2Id, "ds", "old content");
-
-        // Create the proxied external binary object using the first binary
-        createVersionedExternalBinaryMemento(id, "redirect", ext1Uri);
-
-        // Create a historic version of the external binary using the second binary as content
-        final String mementoUri = createExternalBinaryMemento(subjectUri, "redirect", ext2Uri);
-
-        // Verify that the historic version exists and redirects to the old content
-        final HttpGet httpGet1 = new HttpGet(mementoUri);
-        try (final CloseableHttpResponse getResponse = execute(httpGet1)) {
-            assertEquals(OK.getStatusCode(), getStatus(getResponse));
-            final String content = EntityUtils.toString(getResponse.getEntity());
-            assertEquals("Content doesn't match redirected historic content", oldContent, content);
-        }
-
-        // Verify that the current version still redirects to the correct content
-        final HttpGet httpGet2 = new HttpGet(subjectUri);
-        try (final CloseableHttpResponse getResponse = execute(httpGet2)) {
-            assertEquals(OK.getStatusCode(), getStatus(getResponse));
-            final String content = EntityUtils.toString(getResponse.getEntity());
-            assertEquals("Content doesn't match redirected historic content", newContent, content);
-        }
-    }
-
-    @Ignore("bug creating text/plain resources https://jira.lyrasis.org/browse/FCREPO-3246")
-    @Test
-    public void testCreateHistoricExternalBinaryCopyVersion() throws Exception {
-        final String newContent = "new content";
-
-        final String oldContent = "old content";
-        final File localFile = tmpDir.newFile();
-        FileUtils.writeStringToFile(localFile, oldContent, "UTF-8");
-
-        createVersionedBinary(id, "text/plain", newContent);
-
-        final String mementoUri = createExternalBinaryMemento(subjectUri, "copy", localFile.toURI().toString());
-
-        // Verify that the historic version exists and is the copied old content
-        final HttpGet httpGet1 = new HttpGet(mementoUri);
-        try (final CloseableHttpResponse getResponse = execute(httpGet1)) {
-            assertEquals(OK.getStatusCode(), getStatus(getResponse));
-            assertMementoDatetimeHeaderMatches(getResponse, MEMENTO_DATETIME);
-            final String content = EntityUtils.toString(getResponse.getEntity());
-            assertEquals("Content doesn't match copied historic content", oldContent, content);
-        }
-
-        // Verify that the current version is still available
-        final HttpGet httpGet2 = new HttpGet(subjectUri);
-        try (final CloseableHttpResponse getResponse = execute(httpGet2)) {
-            assertEquals(OK.getStatusCode(), getStatus(getResponse));
-            final String content = EntityUtils.toString(getResponse.getEntity());
-            assertEquals("Binary doesn't match expected content", newContent, content);
-        }
-    }
-
     @Test
     public void versionedResourcesCreatedByDefault() throws Exception {
         final String id = getRandomUniqueId();
@@ -1688,20 +1441,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         httpPut.addHeader(LINK, getExternalContentLinkHeader(externalUri, handling, null));
         try (final CloseableHttpResponse response = execute(httpPut)) {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
-        }
-    }
-
-    private String createExternalBinaryMemento(final String rescUri, final String handling, final String externalUri)
-            throws Exception {
-        final String ldpcvUri = rescUri + "/fcr:versions";
-        final HttpPost httpPost = new HttpPost(ldpcvUri);
-        httpPost.addHeader(LINK, getExternalContentLinkHeader(externalUri, handling, null));
-        httpPost.addHeader(MEMENTO_DATETIME_HEADER, MEMENTO_DATETIME);
-
-        try (final CloseableHttpResponse response = execute(httpPost)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
-            assertMementoDatetimeHeaderPresent(response);
-            return response.getFirstHeader(LOCATION).getValue();
         }
     }
 
@@ -1769,7 +1508,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         subjectResc.addLiteral(TEST_PROPERTY, "bar");
         subjectResc.addProperty(RDF.type, TEST_TYPE_RESOURCE);
 
-        try (StringWriter stringOut = new StringWriter()) {
+        try (final StringWriter stringOut = new StringWriter()) {
             RDFDataMgr.write(stringOut, model, RDFFormat.NTRIPLES);
             body = stringOut.toString();
         }

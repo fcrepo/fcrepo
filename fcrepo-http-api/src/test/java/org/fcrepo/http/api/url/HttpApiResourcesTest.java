@@ -18,9 +18,9 @@
 package org.fcrepo.http.api.url;
 
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_SERVICE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_TRANSACTION_SERVICE;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_ROOT;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
@@ -80,8 +80,7 @@ public class HttpApiResourcesTest {
 
     @Test
     public void shouldDecorateModeRootNodesWithRepositoryWideLinks() {
-        when(mockResource.hasType(FEDORA_REPOSITORY_ROOT)).thenReturn(true);
-        when(mockResource.getPath()).thenReturn("/");
+        when(mockResource.hasType(REPOSITORY_ROOT.getURI())).thenReturn(true);
 
         final Resource graphSubject = mockSubjects.reverse().convert(mockResource);
 

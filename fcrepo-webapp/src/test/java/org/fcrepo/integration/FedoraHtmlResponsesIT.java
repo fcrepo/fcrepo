@@ -23,7 +23,6 @@ import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONFIG_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -279,14 +278,10 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         final String updateSparql = "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
                 "PREFIX fedora: <" + REPOSITORY_NAMESPACE + ">\n" +
                 "\n" +
-                "INSERT DATA { <> fedoraconfig:versioningPolicy \"auto-version\" ; dc:title \"Object Title\". }";
+                "INSERT DATA { <> dc:title \"Object Title\". }";
         postSparqlUpdateUsingHttpClient(updateSparql, pid);
 
         final HtmlPage objectPage = javascriptlessWebClient.getPage(serverAddress + pid);
-        assertEquals("Auto versioning should be set.", "auto-version",
-                     objectPage.getFirstByXPath(
-                             "//span[@property='" + FEDORA_CONFIG_NAMESPACE + "versioningPolicy']/text()")
-                             .toString());
         assertEquals("Title should be set.", "Object Title",
                      objectPage.getFirstByXPath("//span[@property='http://purl.org/dc/elements/1.1/title']/text()")
                              .toString());

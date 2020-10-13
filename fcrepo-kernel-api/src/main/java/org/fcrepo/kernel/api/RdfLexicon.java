@@ -69,15 +69,6 @@ public final class RdfLexicon {
     public static final String WEBAC_NAMESPACE_VALUE = "http://www.w3.org/ns/auth/acl#";
 
     /**
-     * Fedora configuration namespace "fedora-config", used for user-settable
-     * configuration properties.
-     **/
-    // TODO from UCDetector: Constant "RdfLexicon.FEDORA_CONFIG_NAMESPACE" has 0 references
-    // should be referenced again when versioning is back in REST api
-    public static final String FEDORA_CONFIG_NAMESPACE = // NO_UCD (unused code)
-            "info:fedoraconfig/";
-
-    /**
      * Linked Data Platform namespace.
      */
     public static final String LDP_NAMESPACE = "http://www.w3.org/ns/ldp#";
@@ -96,12 +87,6 @@ public final class RdfLexicon {
             (s.getObject().isURI() && isManagedNamespace.test(s.getObject().getNameSpace()));
 
     // FIXITY
-
-    public static final Resource FIXITY_TYPE = createResource(PREMIS_NAMESPACE + "Fixity");
-
-    public static final Property HAS_MESSAGE_DIGEST_ALGORITHM =
-            createProperty(PREMIS_NAMESPACE + "hasMessageDigestAlgorithm");
-
     public static final Property HAS_MESSAGE_DIGEST =
             createProperty(PREMIS_NAMESPACE + "hasMessageDigest");
 
@@ -112,8 +97,6 @@ public final class RdfLexicon {
 
     private static final Set<Property> fixityProperties = of(
             HAS_FIXITY_RESULT, HAS_MESSAGE_DIGEST);
-
-    public static final Resource EVENT_OUTCOME_INFORMATION = createResource(PREMIS_NAMESPACE + "EventOutcomeDetail");
 
     public static final Property HAS_FIXITY_STATE =
             createProperty(PREMIS_NAMESPACE + "hasEventOutcome");
@@ -193,14 +176,6 @@ public final class RdfLexicon {
     public static final Property HAS_FIXITY_SERVICE =
             createProperty(REPOSITORY_NAMESPACE + "hasFixityService");
 
-    // BINARY DESCRIPTIONS
-    public static final Property DESCRIBES =
-            createProperty("http://www.iana.org/assignments/relation/describes");
-    public static final Property DESCRIBED_BY =
-            createProperty("http://www.iana.org/assignments/relation/describedby");
-
-    public static final Resource INACCESSIBLE_RESOURCE =
-            createResource(REPOSITORY_NAMESPACE + "inaccessibleResource");
     public static final Property HAS_MIME_TYPE =
             createProperty(EBUCORE_NAMESPACE + "hasMimeType");
     public static final Property HAS_ORIGINAL_NAME =
@@ -265,31 +240,6 @@ public final class RdfLexicon {
     public static final Predicate<Property> isManagedPredicate =
             hasFedoraNamespace.or(hasMementoNamespace).or(p -> serverManagedProperties.contains(p));
 
-    /**
-     * Fedora defined JCR node type with supertype of nt:file with two nt:folder named fedora:timemap and
-     * fedora:binaryTimemap inside.
-     * TODO: Remove modeshape-ism - FCREPO-3444
-     */
-    public static final String NT_VERSION_FILE = "nt:versionFile";
-
-    /**
-     * Fedora defined JCR node type which can have no children except optionally a timemap
-     * TODO: Remove modeshape-ism - FCREPO-3444
-     */
-    public static final String NT_LEAF_NODE = "nt:leafNode";
-
-    /**
-     * Fedora defined node path for a binary description.
-     * TODO: Remove modeshape-ism - FCREPO-3444
-     */
-    public static final String FEDORA_DESCRIPTION = "fedora:description";
-
-    /**
-     * Fedora defined node path for a timemap
-     * TODO: Remove modeshape-ism - FCREPO-3444
-     */
-    public static final String LDPCV_TIME_MAP = "fedora:timemap";
-
     // VERSIONING
     /**
      * Memento TimeMap type.
@@ -326,13 +276,6 @@ public final class RdfLexicon {
      * String set of valid interaction models with full LDP URI.
      */
     public static final Set<String> INTERACTION_MODELS_FULL = INTERACTION_MODEL_RESOURCES.stream().map(Resource::getURI)
-            .collect(Collectors.toSet());
-
-    /**
-     * String set of valid interaction models with ldp: prefix.
-     */
-    public static final Set<String> INTERACTION_MODELS_SHORT = INTERACTION_MODELS_FULL.stream()
-            .map(m -> m.replace(LDP_NAMESPACE, "ldp:"))
             .collect(Collectors.toSet());
 
     /**
