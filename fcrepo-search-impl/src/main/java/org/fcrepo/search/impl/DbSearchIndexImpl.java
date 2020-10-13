@@ -52,8 +52,10 @@ import java.sql.Types;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
@@ -382,9 +384,13 @@ public class DbSearchIndexImpl implements SearchIndex {
         final List<RdfType> results = jdbcTemplate.query(SELECT_RDF_TYPE_ID,
                 Map.of(RDF_TYPE_URI_PARAM, rdfTypes_str), RDF_TYPE_ROW_MAPPER);
         // List of existing type ids.
-        final var rdfTypeIds = results.stream().map(RdfType::getTypeId).collect(Collectors.toList());
+        final List<Long> rdfTypeIds = new ArrayList<>();
         // List of existing type uris.
-        final var rdfTypeUris = results.stream().map(RdfType::getTypeUri).collect(Collectors.toList());
+        final Set<String> rdfTypeUris = new HashSet<>();
+        for (final RdfType type : results) {
+            rdfTypeIds.add(type.getTypeId());
+            rdfTypeUris.add(type.getTypeUri());
+        }
         // Type uris that don't already have a record. Needs to be a set to avoid inserting the same URI and
         final var missingUris = rdfTypes_str.stream().filter(t -> !rdfTypeUris.contains(t))
                 .collect(Collectors.toSet());
