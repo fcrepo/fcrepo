@@ -87,18 +87,19 @@ WHERE { }
   </form>
 
   #if ( !$isRoot )
-	#if ( $isLDPNR )
 	  <h3>Versioning</h3>
+	#if ( $isLDPNR )
 	  <p>Versioning of binary resources is not currently available through the HTML UI.</p>
-	  <hr />
+	#elseif ($autoVersioningEnabled == true)
+	  <p>Autoversioning is enabled. Versions are created with each update to a resource.
+	  <h4><a id="view_versions" href="$topic/fcr:versions">View Versions</a></h4>
 	#elseif ($isOriginalResource == true)
       <form id="action_create_version" name="action_create_version" method="POST">
-        <h3>Versions</h3>
         <button id="create-version-button" type="submit" class="btn btn-primary">Create Version</button>
-        <h4><a id="view_versions" href="$topic/fcr:versions">View Versions</a></h4>
-        <hr />
       </form>
+      <h4><a id="view_versions" href="$topic/fcr:versions">View Versions</a></h4>
     #end
+    <hr />
 
     <form id="action_delete" name="action_delete">
       <h3>Delete Resource</h3>

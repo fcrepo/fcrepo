@@ -20,6 +20,7 @@ dl {
 
 dd {
     padding-left: 38px;
+    word-wrap: break-word;
 }
 
 .well dl {
