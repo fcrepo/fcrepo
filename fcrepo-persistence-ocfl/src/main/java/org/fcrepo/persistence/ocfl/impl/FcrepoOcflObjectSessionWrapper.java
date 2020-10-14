@@ -75,9 +75,9 @@ public class FcrepoOcflObjectSessionWrapper implements OcflObjectSession {
     }
 
     @Override
-    public void writeResource(final ResourceHeaders headers, final InputStream content) {
-        writeTimer.record(() -> {
-            exec(() -> inner.writeResource(headers, content));
+    public ResourceHeaders writeResource(final ResourceHeaders headers, final InputStream content) {
+        return MetricsHelper.time(writeTimer, () -> {
+            return exec(() -> inner.writeResource(headers, content));
         });
     }
 

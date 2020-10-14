@@ -39,6 +39,7 @@ import org.fcrepo.search.api.SearchParameters;
 import org.fcrepo.search.api.SearchResult;
 import org.fcrepo.storage.ocfl.CommitType;
 import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
+import org.fcrepo.storage.ocfl.cache.NoOpCache;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -122,7 +123,9 @@ public class IndexBuilderImplTest {
         final var objectMapper = OcflPersistentStorageUtils.objectMapper();
         final var ocflObjectSessionFactory = new DefaultOcflObjectSessionFactory(repository,
                 tempFolder.newFolder().toPath(),
-                objectMapper, CommitType.NEW_VERSION,
+                objectMapper,
+                new NoOpCache<>(),
+                CommitType.NEW_VERSION,
                 "Fedora 6 test", "fedoraAdmin", "info:fedora/fedoraAdmin");
 
         sessionManager = new OcflPersistentSessionManager();
