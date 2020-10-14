@@ -232,10 +232,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
     private static final String NON_RDF_SOURCE_LINK_HEADER = "<" + NON_RDF_SOURCE.getURI() + ">; rel=\"type\"";
     private static final String VERSIONED_RESOURCE_LINK_HEADER = "<" + VERSIONED_RESOURCE.getURI() + ">; rel=\"type\"";
 
+    private static final String SERVER_MANAGED_TYPE_CONSTRAINT_URI = serverAddress +
+            "static/constraints/ServerManagedTypeException.rdf";
+
+    private static final String SERVER_MANAGED_PROPERTY_CONSTRAINT_URI = serverAddress +
+            "static/constraints/ServerManagedPropertyException.rdf";
+
     private static final String INBOUND_REFERENCE_PREFER_HEADER = "return=representation; include=\"" +
             INBOUND_REFERENCES + "\"";
-
-    private static final String TEST_ACTIVATION_PROPERTY = "RUN_TEST_CREATE_MANY";
 
     private static final String WANT_DIGEST = "Want-Digest";
 
@@ -3512,6 +3516,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         httpPost.setEntity(new StringEntity(getTTLThatUpdatesServerManagedTriples("fakeuser", null, null, null)));
         try (final CloseableHttpResponse response = execute(httpPost)) {
             assertEquals("Must not be able to update createdBy!", CONFLICT.getStatusCode(), getStatus(response));
+            assertConstrainedByPresent(response);
+            checkForLinkHeader(response, SERVER_MANAGED_PROPERTY_CONSTRAINT_URI, CONSTRAINED_BY.toString());
         }
     }
 
@@ -4618,7 +4624,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPostFedoraSlug() throws IOException {
         final HttpPost httpPost = postObjMethod("/");
         httpPost.addHeader("Slug", "fedora:path");
@@ -4706,7 +4711,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPostCreateRDFSourceWithMementoNamespaceType() throws IOException {
         final String subjectURI = getRandomUniqueId();
         final HttpPost createMethod = new HttpPost(serverAddress);
@@ -4717,11 +4721,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals("Must not be able to POST RDF that contains an \"<> a  <" + MEMENTO_TYPE + ">\"",
                          CONFLICT.getStatusCode(),
                          getStatus(response));
+            assertConstrainedByPresent(response);
+            checkForLinkHeader(response, SERVER_MANAGED_TYPE_CONSTRAINT_URI, CONSTRAINED_BY.toString());
         }
     }
 
     @Test
-@Ignore
     public void testPutCreateRDFSourceWithMementoNamespaceType() throws IOException {
         final String subjectURI = serverAddress + getRandomUniqueId();
         final HttpPut putMethod = new HttpPut(subjectURI);
@@ -4731,11 +4736,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals("Must not be able to PUT RDF that contains an \"<> a  <" + MEMENTO_TYPE + ">\"",
                          CONFLICT.getStatusCode(),
                          getStatus(response));
+            checkForLinkHeader(response, SERVER_MANAGED_TYPE_CONSTRAINT_URI, CONSTRAINED_BY.toString());
         }
     }
 
     @Test
-@Ignore
     public void testPatchInsertMementoNamespaceType() throws IOException {
         final String pid =  getRandomUniqueId();
         final String subjectURI = serverAddress + pid;
@@ -4747,11 +4752,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(patch)) {
             assertEquals("Must not be able to INSERT  \"<>  a <" + MEMENTO_TYPE + ">\"",
                          CONFLICT.getStatusCode(), getStatus(patch));
+            checkForLinkHeader(response, SERVER_MANAGED_TYPE_CONSTRAINT_URI, CONSTRAINED_BY.toString());
         }
     }
 
     @Test
-@Ignore
     public void testPostCreateRDFSourceWithMementoNamespacePredicate() throws IOException {
         final String subjectURI = getRandomUniqueId();
         final HttpPost createMethod = new HttpPost(serverAddress);
@@ -4763,11 +4768,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals("Must not be able to POST RDF that contains a memento namespace predicate",
                          CONFLICT.getStatusCode(),
                          getStatus(response));
+            checkForLinkHeader(response, SERVER_MANAGED_PROPERTY_CONSTRAINT_URI, CONSTRAINED_BY.toString());
         }
     }
 
     @Test
-@Ignore
     public void testPutCreateRDFSourceWithMementoNamespacePredicate() throws IOException {
         final String subjectURI = serverAddress + getRandomUniqueId();
         final HttpPut putMethod = new HttpPut(subjectURI);
@@ -4778,11 +4783,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals("Must not be able to PUT RDF that contains a memento namespace predicate",
                          CONFLICT.getStatusCode(),
                          getStatus(response));
+            checkForLinkHeader(response, SERVER_MANAGED_PROPERTY_CONSTRAINT_URI, CONSTRAINED_BY.toString());
         }
     }
 
     @Test
-@Ignore
     public void testPatchInsertMementoNamespacePredicate() throws IOException {
         final String pid = getRandomUniqueId();
         final String subjectURI = serverAddress + pid;
@@ -4795,6 +4800,60 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(patch)) {
             assertEquals("Must not be able to PATCH RDF that contains a memento namespace predicate",
                          CONFLICT.getStatusCode(), getStatus(response));
+            checkForLinkHeader(response, SERVER_MANAGED_PROPERTY_CONSTRAINT_URI, CONSTRAINED_BY.toString());
+        }
+    }
+
+    @Test
+    public void testPostCreateRDFSourceWithMementoTypeAndProperty() throws IOException {
+        final String subjectURI = getRandomUniqueId();
+        final HttpPost createMethod = new HttpPost(serverAddress);
+        createMethod.addHeader(CONTENT_TYPE, "text/turtle");
+        createMethod.addHeader("Slug", subjectURI);
+        createMethod.setEntity(
+                new StringEntity("<> a <" + MEMENTO_TYPE + "> ; " +
+                        "<" + MEMENTO_NAMESPACE + "mementoDatetime" + "> \"Thu, 21 Jan 2010 00:09:40 GMT\""));
+        try (final CloseableHttpResponse response = execute(createMethod)) {
+            assertEquals("Must not be able to POST RDF that contains a memento type and namespace predicate",
+                    CONFLICT.getStatusCode(),
+                    getStatus(response));
+            checkForLinkHeader(response, SERVER_MANAGED_PROPERTY_CONSTRAINT_URI, CONSTRAINED_BY.toString());
+            checkForLinkHeader(response, SERVER_MANAGED_TYPE_CONSTRAINT_URI, CONSTRAINED_BY.toString());
+        }
+    }
+
+    @Test
+    public void testPutCreateRDFSourceWithMementoTypeAndProperty() throws IOException {
+        final String subjectURI = serverAddress + getRandomUniqueId();
+        final HttpPut putMethod = new HttpPut(subjectURI);
+        putMethod.addHeader(CONTENT_TYPE, "text/turtle");
+        putMethod.setEntity(
+                new StringEntity("<> a <" + MEMENTO_TYPE + "> ; " +
+                        "<" + MEMENTO_NAMESPACE + "mementoDatetime" + "> \"Thu, 21 Jan 2010 00:09:40 GMT\""));
+        try (final CloseableHttpResponse response = execute(putMethod)) {
+            assertEquals("Must not be able to PUT RDF that contains a memento type and namespace predicate",
+                    CONFLICT.getStatusCode(),
+                    getStatus(response));
+            checkForLinkHeader(response, SERVER_MANAGED_PROPERTY_CONSTRAINT_URI, CONSTRAINED_BY.toString());
+            checkForLinkHeader(response, SERVER_MANAGED_TYPE_CONSTRAINT_URI, CONSTRAINED_BY.toString());
+        }
+    }
+
+    @Test
+    public void testPatchInsertMementoTypeAndProperty() throws IOException {
+        final String pid = getRandomUniqueId();
+        final String subjectURI = serverAddress + pid;
+        createObjectAndClose(pid);
+        final HttpPatch patch = new HttpPatch(subjectURI);
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patch.setEntity(new StringEntity(
+                "INSERT { <> a <" + MEMENTO_TYPE + "> ; <" + MEMENTO_NAMESPACE + "mementoDatetime" +
+                        "> \"Thu, 21 Jan 2010 00:09:40 GMT\". } WHERE {}"));
+        try (final CloseableHttpResponse response = execute(patch)) {
+            assertEquals("Must not be able to PATCH RDF that contains a memento type and namespace predicate",
+                    CONFLICT.getStatusCode(), getStatus(response));
+            checkForLinkHeader(response, SERVER_MANAGED_PROPERTY_CONSTRAINT_URI, CONSTRAINED_BY.toString());
+            checkForLinkHeader(response, SERVER_MANAGED_TYPE_CONSTRAINT_URI, CONSTRAINED_BY.toString());
         }
     }
 

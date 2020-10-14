@@ -17,6 +17,7 @@
  */
 package org.fcrepo.webapp;
 
+import org.fcrepo.kernel.api.exception.MultipleConstraintViolationException;
 import org.junit.Assert;
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 import org.junit.Test;
@@ -36,7 +37,8 @@ public class ConstraintExceptionsTest {
         final Reflections reflections = new Reflections("org.fcrepo");
         final Set<Class<? extends ConstraintViolationException>> subTypes =
                 reflections.getSubTypesOf(ConstraintViolationException.class);
-
+        // Multiple is a wrapper to hold other constraint violations, it has no static file.
+        subTypes.remove(MultipleConstraintViolationException.class);
         subTypes.add(ConstraintViolationException.class);
 
         for (final Class c : subTypes) {
