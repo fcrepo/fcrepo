@@ -336,7 +336,7 @@ public class MembershipIndexManager {
                     SUBJECT_ID_PARAM, membership.getSubject().getURI(),
                     PROPERTY_PARAM, membership.getPredicate().getURI(),
                     OBJECT_ID_PARAM, membership.getObject().getURI(),
-                    END_TIME_PARAM, Timestamp.from(endTime),
+                    END_TIME_PARAM, formatInstant(endTime),
                     NO_END_TIME_PARAM, NO_END_TIMESTAMP,
                     DELETE_OP_PARAM, DELETE_OPERATION);
             jdbcTemplate.update(END_EXISTING_MEMBERSHIP, parameterSource2);
@@ -361,7 +361,7 @@ public class MembershipIndexManager {
         final Map<String, Object> parameterSource2 = Map.of(
                 TX_ID_PARAM, txId,
                 SOURCE_ID_PARAM, sourceId.getFullId(),
-                END_TIME_PARAM, Timestamp.from(endTime),
+                END_TIME_PARAM, formatInstant(endTime),
                 NO_END_TIME_PARAM, NO_END_TIMESTAMP,
                 DELETE_OP_PARAM, DELETE_OPERATION);
         jdbcTemplate.update(END_EXISTING_FOR_SOURCE, parameterSource2);
@@ -383,7 +383,7 @@ public class MembershipIndexManager {
 
         jdbcTemplate.update(CLEAR_ALL_ADDED_FOR_SOURCE_IN_TX, parameterSource);
 
-        final var afterTimestamp = afterTime == null ? NO_START_TIMESTAMP : Timestamp.from(afterTime);
+        final var afterTimestamp = afterTime == null ? NO_START_TIMESTAMP : formatInstant(afterTime);
 
         // Delete all existing membership entries that start after or end after the given timestamp
         final Map<String, Object> parameterSource2 = Map.of(
@@ -446,14 +446,14 @@ public class MembershipIndexManager {
      */
     public void addMembership(final String txId, final FedoraId sourceId, final Triple membership,
             final Instant startTime, final Instant endTime) {
-        final var endTimestamp = endTime == null ? NO_END_TIMESTAMP : Timestamp.from(endTime);
+        final var endTimestamp = endTime == null ? NO_END_TIMESTAMP : formatInstant(endTime);
         // Add the new membership operation
         final Map<String, Object> parameterSource = Map.of(
                 SUBJECT_ID_PARAM, membership.getSubject().getURI(),
                 PROPERTY_PARAM, membership.getPredicate().getURI(),
                 TARGET_ID_PARAM, membership.getObject().getURI(),
                 SOURCE_ID_PARAM, sourceId.getFullId(),
-                START_TIME_PARAM, Timestamp.from(startTime),
+                START_TIME_PARAM, formatInstant(startTime),
                 END_TIME_PARAM, endTimestamp,
                 TX_ID_PARAM, txId,
                 OPERATION_PARAM, ADD_OPERATION);
@@ -480,7 +480,7 @@ public class MembershipIndexManager {
             if (subjectId.isMemento()) {
                 final Map<String, Object> parameterSource = Map.of(
                         SUBJECT_ID_PARAM, subjectId.getBaseId(),
-                        MEMENTO_TIME_PARAM, subjectId.getMementoInstant());
+                        MEMENTO_TIME_PARAM, formatInstant(subjectId.getMementoInstant()));
 
                 membership = jdbcTemplate.query(SELECT_MEMBERSHIP_MEMENTO, parameterSource, membershipMapper);
             } else {
@@ -494,7 +494,7 @@ public class MembershipIndexManager {
             if (subjectId.isMemento()) {
                 final Map<String, Object> parameterSource = Map.of(
                         SUBJECT_ID_PARAM, subjectId.getBaseId(),
-                        MEMENTO_TIME_PARAM, subjectId.getMementoInstant(),
+                        MEMENTO_TIME_PARAM, formatInstant(subjectId.getMementoInstant()),
                         TX_ID_PARAM, txId,
                         ADD_OP_PARAM, ADD_OPERATION,
                         DELETE_OP_PARAM, DELETE_OPERATION);
@@ -544,6 +544,17 @@ public class MembershipIndexManager {
     }
 
     /**
+     * Format an instant to a timestamp without milliseconds, due to precision
+     * issues with memento datetimes.
+     * @param instant
+     * @return
+     */
+    private String formatInstant(final Instant instant) {
+        final var timestamp = Timestamp.from(instant);
+        return timestamp.toString().split("\\.")[0];
+    }
+
+    /**
      * Clear all entries from the index
      */
     @Transactional
@@ -561,8 +572,8 @@ public class MembershipIndexManager {
             @Override
             public void processRow(final ResultSet rs) throws SQLException {
                 log.info("{}, {}, {}, {}, {}, {}", rs.getString("source_id"), rs.getString("subject_id"),
-                        rs.getString("property"), rs.getString("object_id"), rs.getDate("start_time"),
-                        rs.getDate("end_time"));
+                        rs.getString("property"), rs.getString("object_id"), rs.getTimestamp("start_time"),
+                        rs.getTimestamp("end_time"));
             }
         });
     }
@@ -577,7 +588,7 @@ public class MembershipIndexManager {
             public void processRow(final ResultSet rs) throws SQLException {
                 log.info("{}, {}, {}, {}, {}, {}, {}, {}, {}",
                         rs.getString("source_id"), rs.getString("subject_id"), rs.getString("property"),
-                        rs.getString("object_id"), rs.getDate("start_time"), rs.getDate("end_time"),
+                        rs.getString("object_id"), rs.getTimestamp("start_time"), rs.getTimestamp("end_time"),
                         rs.getString("tx_id"), rs.getString("operation"), rs.getString("force_flag"));
             }
         });

@@ -158,7 +158,12 @@ public abstract class AbstractService {
         dcResc.listProperties().forEachRemaining(stmt -> {
             final var predicate = stmt.getPredicate();
 
-            if (MEMBERSHIP_RESOURCE.equals(predicate) && stmt.getObject().isURIResource()) {
+            if (MEMBERSHIP_RESOURCE.equals(predicate)) {
+                if (hasMembershipResc.get()) {
+                    throw new MalformedRdfException("Direct and Indirect containers must specify"
+                            + " exactly one ldp:membershipResource property, multiple are present");
+                }
+
                 if (stmt.getObject().isURIResource()) {
                     hasMembershipResc.set(true);
                 } else {
@@ -166,17 +171,20 @@ public abstract class AbstractService {
                             + " a ldp:membershipResource property with a resource as the object");
                 }
             } else if (HAS_MEMBER_RELATION.equals(predicate) || IS_MEMBER_OF_RELATION.equals(predicate)) {
+                if (hasRelation.get()) {
+                    throw new MalformedRdfException("Direct and Indirect containers must specify exactly one"
+                            + " ldp:hasMemberRelation or ldp:isMemberOfRelation property, but multiple were present");
+                }
+
                 final RDFNode obj = stmt.getObject();
                 if (obj.isURIResource()) {
                     final String uri = obj.asResource().getURI();
 
                     // Throw exception if object is a server-managed property
                     if (isManagedPredicate.test(createProperty(uri))) {
-                        throw new ServerManagedPropertyException(
-                                String.format(
-                                        "{0} cannot take a server managed property " +
-                                                "as an object: property value = {1}.",
-                                        predicate.getLocalName(), uri));
+                        throw new ServerManagedPropertyException(String.format(
+                                "%s cannot take a server managed property as an object: property value = %s.",
+                                predicate.getLocalName(), uri));
                     }
                     hasRelation.set(true);
                 } else {
@@ -190,7 +198,7 @@ public abstract class AbstractService {
         if (!hasMembershipResc.get()) {
             dcResc.addProperty(MEMBERSHIP_RESOURCE, dcResc);
         }
-        if (!hasMembershipResc.get()) {
+        if (!hasRelation.get()) {
             dcResc.addProperty(HAS_MEMBER_RELATION, RdfLexicon.LDP_MEMBER);
         }
     }

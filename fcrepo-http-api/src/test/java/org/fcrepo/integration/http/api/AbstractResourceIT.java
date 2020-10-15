@@ -236,12 +236,12 @@ public abstract class AbstractResourceIT {
         logger.debug("Executing: " + req.getMethod() + " to " + req.getURI());
         try {
             return client.execute(req);
-        } catch (NoHttpResponseException e) {
+        } catch (final NoHttpResponseException e) {
             // sometimes the server is slow starting up -- retry once
             try {
                 TimeUnit.SECONDS.sleep(2);
                 return client.execute(req);
-            } catch (InterruptedException e2) {
+            } catch (final InterruptedException e2) {
                 throw new RuntimeException(e2);
             }
         }
@@ -440,8 +440,16 @@ public abstract class AbstractResourceIT {
     }
 
     protected Model getModel(final String pid) throws Exception {
+        return getModel(null, pid);
+    }
+
+    protected Model getModel(final String txUri, final String pid) throws Exception {
         final Model model = createDefaultModel();
-        try (final CloseableHttpResponse response = execute(new HttpGet(serverAddress + pid))) {
+        final var httpGet = new HttpGet(serverAddress + pid);
+        if (txUri != null) {
+            httpGet.addHeader(ATOMIC_ID_HEADER, txUri);
+        }
+        try (final CloseableHttpResponse response = execute(httpGet)) {
             model.read(response.getEntity().getContent(), serverAddress + pid, "TURTLE");
         }
         return model;
@@ -469,7 +477,7 @@ public abstract class AbstractResourceIT {
         }
 
         if (linkHeaders != null && linkHeaders.length > 0) {
-            for (String linkHeader : linkHeaders) {
+            for (final String linkHeader : linkHeaders) {
                 httpPost.addHeader(LINK, linkHeader);
             }
         }
