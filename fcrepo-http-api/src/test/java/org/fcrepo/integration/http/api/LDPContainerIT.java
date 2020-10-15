@@ -796,7 +796,8 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertHasNoMembership(getModel(subjectId), subjectId, memberRelation);
     }
 
-    private void assertHasNoMembership(final Model model, final String subjectId, final Property memberRelation) throws Exception {
+    private void assertHasNoMembership(final Model model, final String subjectId, final Property memberRelation)
+            throws Exception {
         final var membershipResc = model.getResource(serverAddress + subjectId);
         assertFalse("Expect " + subjectId + " to have no membership",
                 membershipResc.hasProperty(memberRelation));

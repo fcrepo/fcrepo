@@ -82,12 +82,6 @@ public class MembershipIndexManager {
 
     private static final String SELECT_ALL_OPERATIONS = "SELECT * FROM membership_tx_operations";
 
-    private static final String SELECT_MEMBERSHIP =
-            "SELECT property, object_id" +
-            " FROM membership" +
-            " WHERE subject_id = :subjectId" +
-                " AND end_time = :noEndTime";
-
     private static final String SELECT_MEMBERSHIP_IN_TX =
             "SELECT m.property, m.object_id" +
             " FROM membership m" +
@@ -108,13 +102,6 @@ public class MembershipIndexManager {
                 " AND tx_id = :txId" +
                 " AND end_time = :noEndTime" +
                 " AND operation = :addOp";
-
-    private static final String SELECT_MEMBERSHIP_MEMENTO =
-            "SELECT property, object_id" +
-            " FROM membership" +
-            " WHERE subject_id = :subjectId" +
-                " AND start_time <= :mementoTime" +
-                " AND end_time > :mementoTime";
 
     private static final String SELECT_MEMBERSHIP_MEMENTO_IN_TX =
             "SELECT property, object_id" +
@@ -226,7 +213,6 @@ public class MembershipIndexManager {
                     " AND membership.property = mto.property" +
                     " AND membership.object_id = mto.object_id" +
                 " )";
-
 
     private static final String COMMIT_ENDS =
             "UPDATE membership m" +
@@ -476,40 +462,24 @@ public class MembershipIndexManager {
                               NodeFactory.createURI(rs.getString("object_id")));
 
         List<Triple> membership = null;
-        if (txId == null) {
-            if (subjectId.isMemento()) {
-                final Map<String, Object> parameterSource = Map.of(
-                        SUBJECT_ID_PARAM, subjectId.getBaseId(),
-                        MEMENTO_TIME_PARAM, formatInstant(subjectId.getMementoInstant()));
+        if (subjectId.isMemento()) {
+            final Map<String, Object> parameterSource = Map.of(
+                    SUBJECT_ID_PARAM, subjectId.getBaseId(),
+                    MEMENTO_TIME_PARAM, formatInstant(subjectId.getMementoInstant()),
+                    TX_ID_PARAM, txId,
+                    ADD_OP_PARAM, ADD_OPERATION,
+                    DELETE_OP_PARAM, DELETE_OPERATION);
 
-                membership = jdbcTemplate.query(SELECT_MEMBERSHIP_MEMENTO, parameterSource, membershipMapper);
-            } else {
-                final Map<String, Object> parameterSource = Map.of(
-                        SUBJECT_ID_PARAM, subjectId.getFullId(),
-                        NO_END_TIME_PARAM, NO_END_TIMESTAMP);
-
-                membership = jdbcTemplate.query(SELECT_MEMBERSHIP, parameterSource, membershipMapper);
-            }
+            membership = jdbcTemplate.query(SELECT_MEMBERSHIP_MEMENTO_IN_TX, parameterSource, membershipMapper);
         } else {
-            if (subjectId.isMemento()) {
-                final Map<String, Object> parameterSource = Map.of(
-                        SUBJECT_ID_PARAM, subjectId.getBaseId(),
-                        MEMENTO_TIME_PARAM, formatInstant(subjectId.getMementoInstant()),
-                        TX_ID_PARAM, txId,
-                        ADD_OP_PARAM, ADD_OPERATION,
-                        DELETE_OP_PARAM, DELETE_OPERATION);
+            final Map<String, Object> parameterSource = Map.of(
+                    SUBJECT_ID_PARAM, subjectId.getFullId(),
+                    NO_END_TIME_PARAM, NO_END_TIMESTAMP,
+                    TX_ID_PARAM, txId,
+                    ADD_OP_PARAM, ADD_OPERATION,
+                    DELETE_OP_PARAM, DELETE_OPERATION);
 
-                membership = jdbcTemplate.query(SELECT_MEMBERSHIP_MEMENTO_IN_TX, parameterSource, membershipMapper);
-            } else {
-                final Map<String, Object> parameterSource = Map.of(
-                        SUBJECT_ID_PARAM, subjectId.getFullId(),
-                        NO_END_TIME_PARAM, NO_END_TIMESTAMP,
-                        TX_ID_PARAM, txId,
-                        ADD_OP_PARAM, ADD_OPERATION,
-                        DELETE_OP_PARAM, DELETE_OPERATION);
-
-                membership = jdbcTemplate.query(SELECT_MEMBERSHIP_IN_TX, parameterSource, membershipMapper);
-            }
+            membership = jdbcTemplate.query(SELECT_MEMBERSHIP_IN_TX, parameterSource, membershipMapper);
         }
 
         return membership.stream();
