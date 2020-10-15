@@ -290,13 +290,13 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             "SELECT " + FEDORA_ID_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN +
             " LIKE :resourceId AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN +
             " = 'add') x WHERE NOT EXISTS (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " +
-            FEDORA_ID_COLUMN + " = :resourceId AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
+            FEDORA_ID_COLUMN + " LIKE :resourceId AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
             OPERATION_COLUMN + " = 'delete')";
 
     private static final Map<DbPlatform, String> DDL_MAP = Map.of(
             DbPlatform.MYSQL, "sql/mysql-containment.sql",
             DbPlatform.H2, "sql/default-containment.sql",
-            DbPlatform.POSTGRESQL, "sql/default-containment.sql",
+            DbPlatform.POSTGRESQL, "sql/postgres-containment.sql",
             DbPlatform.MARIADB, "sql/default-containment.sql"
     );
 
