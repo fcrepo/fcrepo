@@ -135,6 +135,7 @@ import org.fcrepo.kernel.api.services.ContainmentTriplesService;
 import org.fcrepo.kernel.api.services.CreateResourceService;
 import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.fcrepo.kernel.api.services.ManagedPropertiesService;
+import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.TimeMapService;
@@ -203,6 +204,9 @@ public class FedoraLdpTest {
 
     @Mock
     private TimeMapService mockTimeMapService;
+
+    @Mock
+    private MembershipService membershipService;
 
     @Mock
     private FedoraHttpConfiguration mockHttpConfiguration;
@@ -286,6 +290,7 @@ public class FedoraLdpTest {
         setField(testObj, "updatePropertiesService", updatePropertiesService);
         setField(testObj, "resourceHelper", resourceHelper);
         setField(testObj, "referenceService", referenceService);
+        setField(testObj, "membershipService", membershipService);
 
         when(rdfNamespaceRegistry.getNamespaces()).thenReturn(new HashMap<>());
 
@@ -380,9 +385,16 @@ public class FedoraLdpTest {
                         createURI("references"),
                         createURI("INBOUND_REFERENCES"))));
 
+        final Answer<RdfStream> membershipAnswer = invocationOnMock -> new DefaultRdfStream(
+                testUri,
+                of(Triple.create(testUri,
+                        createURI("membership"),
+                        createURI("member"))));
+
         when(managedPropertiesService.get(mockResource)).thenAnswer(managedAnswer);
         when(containmentTriplesService.get(any(), eq(mockResource))).thenAnswer(containmentAnswer);
         when(referenceService.getInboundReferences(any(), eq(mockResource))).thenAnswer(inboundAnswer);
+        when(membershipService.getMembership(any(), any())).thenAnswer(membershipAnswer);
 
         doReturn(mockResource).when(testObj).resource();
         when(mockResource.getFedoraId()).thenReturn(FedoraId.create(path));
