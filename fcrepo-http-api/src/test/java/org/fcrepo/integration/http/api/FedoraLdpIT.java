@@ -488,7 +488,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testHeadIndirectContainer() throws IOException {
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
@@ -2552,7 +2551,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPatchToCreateDirectContainerInSparqlUpdateFails() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);

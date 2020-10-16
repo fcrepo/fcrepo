@@ -344,11 +344,9 @@ public class LDPContainerIT extends AbstractResourceIT {
         final var directId = createDirectContainer(parentURI);
         final String directURI = serverAddress + directId;
 
-        final Model replaceModel = ModelFactory.createDefaultModel();
-        // TODO switch back removing individual properties once lenient handling of SMTs is in place
-//        final Model replaceModel = getModel(directId);
-//        replaceModel.removeAll(null, MEMBERSHIP_RESOURCE, null);
-//        replaceModel.removeAll(null, HAS_MEMBER_RELATION, null);
+        final Model replaceModel = getModel(directId);
+        replaceModel.removeAll(null, MEMBERSHIP_RESOURCE, null);
+        replaceModel.removeAll(null, HAS_MEMBER_RELATION, null);
 
         replacePropertiesWithPUT(directURI, replaceModel);
 
