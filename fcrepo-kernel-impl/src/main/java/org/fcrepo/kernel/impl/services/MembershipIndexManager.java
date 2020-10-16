@@ -519,9 +519,10 @@ public class MembershipIndexManager {
      * @param instant
      * @return
      */
-    private String formatInstant(final Instant instant) {
+    private Timestamp formatInstant(final Instant instant) {
         final var timestamp = Timestamp.from(instant);
-        return timestamp.toString().split("\\.")[0];
+        timestamp.setNanos(0);
+        return timestamp;
     }
 
     /**

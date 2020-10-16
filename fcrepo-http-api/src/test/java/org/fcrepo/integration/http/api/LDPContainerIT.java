@@ -579,7 +579,7 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertHasNoMembership(membershipRescId, PCDM_HAS_MEMBER_PROP);
 
         // First version will have no membership
-        TimeUnit.SECONDS.sleep(1);
+        TimeUnit.MILLISECONDS.sleep(1500);
 
         final var member1Id = createBasicContainer(directId, "member1");
         final var member2Id = createBasicContainer(directId, "member2");
@@ -590,7 +590,7 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id, member2Id);
         assertHasNoMembershipWhenOmitted(membershipRescId, PCDM_HAS_MEMBER_PROP);
 
-        TimeUnit.SECONDS.sleep(1);
+        TimeUnit.MILLISECONDS.sleep(1500);
 
         // Change the membership relation
         final String directURI = serverAddress + directId;
@@ -609,7 +609,7 @@ public class LDPContainerIT extends AbstractResourceIT {
         // Update membership resc to create version where the membership rel has changed
         setProperty(membershipRescId, DC.subject.getURI(), "Updated again");
 
-        TimeUnit.SECONDS.sleep(1);
+        TimeUnit.MILLISECONDS.sleep(1500);
 
         // Delete a member, which will disappear from the head version's membership
         executeAndClose(deleteObjMethod(member1Id));
@@ -641,7 +641,7 @@ public class LDPContainerIT extends AbstractResourceIT {
         final var member1Id = createBasicContainer(directId, "member1");
         final var member2Id = createBasicContainer(directId, "member2");
 
-        TimeUnit.SECONDS.sleep(1);
+        TimeUnit.MILLISECONDS.sleep(1500);
 
         // Change the membership relation
         final String directURI = serverAddress + directId;
