@@ -124,12 +124,12 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
         final UpdateModify newUpdate = new UpdateModify();
         final List<Quad> insertQuads = (update.hasInsertClause() ? translateQuads(update.getInsertQuads()) :
                 Collections.emptyList());
-        insertQuads.forEach(q -> newUpdate.getInsertAcc().addQuad(q));
-
         final List<Quad> deleteQuads = (update.hasDeleteClause() ? translateQuads(update.getDeleteQuads()) :
                 Collections.emptyList());
-        deleteQuads.forEach(q -> newUpdate.getDeleteAcc().addQuad(q));
         assertNoExceptions();
+
+        insertQuads.forEach(q -> newUpdate.getInsertAcc().addQuad(q));
+        deleteQuads.forEach(q -> newUpdate.getDeleteAcc().addQuad(q));
 
         final Element where = update.getWherePattern();
         final Element newElement = processElements(where);

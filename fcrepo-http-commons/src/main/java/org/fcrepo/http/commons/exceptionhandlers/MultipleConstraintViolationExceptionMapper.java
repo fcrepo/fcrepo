@@ -30,9 +30,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
 
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import org.fcrepo.kernel.api.exception.MultipleConstraintViolationException;
 import org.slf4j.Logger;
 
@@ -57,14 +54,11 @@ public class MultipleConstraintViolationExceptionMapper extends
         debugException(this, e, LOGGER);
 
         final String msg = e.getMessage();
-        final Set<String> exceptionClasses = e.getExceptionTypes().stream().map(Exception::getClass)
-                .map(Class::getName).collect(Collectors.toSet());
         final Response.ResponseBuilder response = status(CONFLICT).entity(msg).type(TEXT_PLAIN_WITH_CHARSET);
-        for (final String clazz : exceptionClasses ) {
-            final Link link = buildConstraintLink(clazz, context, uriInfo);
-            response.links(link);
-        }
-        return response.build();
+        final Link[] constraintLinks = e.getExceptionTypes().stream().map(Exception::getClass)
+                .map(Class::getName).distinct().map(c -> buildConstraintLink(c, context, uriInfo))
+                .toArray(Link[]::new);
+        return response.links(constraintLinks).build();
     }
 
 }
