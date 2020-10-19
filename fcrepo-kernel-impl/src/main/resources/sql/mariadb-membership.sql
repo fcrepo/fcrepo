@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS membership (
 
 -- Create an index to speed searches for a resource.
 CREATE INDEX IF NOT EXISTS membership_idx1
-    ON membership (subject_id);
+    ON membership (subject_id, end_time);
 
 -- Create an index to speed searches for subject of membership.
 CREATE INDEX IF NOT EXISTS membership_idx2
@@ -20,9 +20,6 @@ CREATE INDEX IF NOT EXISTS membership_idx2
 
 CREATE INDEX IF NOT EXISTS membership_idx3
     ON membership (property);
-    
-CREATE INDEX IF NOT EXISTS membership_idx4
-    ON membership (end_time);
 
 -- Holds operations to add or delete records from the REFERENCE table.
 CREATE TABLE IF NOT EXISTS membership_tx_operations (
@@ -39,7 +36,7 @@ CREATE TABLE IF NOT EXISTS membership_tx_operations (
 
 -- Create an index to speed searches for records targeting a resource to adding/excluding transaction records
 CREATE INDEX IF NOT EXISTS membership_tx_operations_idx1
-    ON membership_tx_operations (subject_id, tx_id, operation);
+    ON membership_tx_operations (subject_id, tx_id, operation, end_time);
 
 -- Create an index to speed finding records related to a transaction.
 CREATE INDEX IF NOT EXISTS membership_tx_operations_idx2
@@ -47,6 +44,3 @@ CREATE INDEX IF NOT EXISTS membership_tx_operations_idx2
 
 CREATE INDEX IF NOT EXISTS membership_tx_operations_idx3
     ON membership_tx_operations (property);
-    
-CREATE INDEX IF NOT EXISTS membership_tx_operations_idx4
-    ON membership_tx_operations (end_time);

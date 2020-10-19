@@ -458,7 +458,7 @@ public class MembershipIndexManager {
 
         final RowMapper<Triple> membershipMapper = (rs, rowNum) ->
                 Triple.create(subjectNode,
-                              NodeFactory.createURI(rs.getString(PROPERTY_PARAM)),
+                              NodeFactory.createURI(rs.getString("property")),
                               NodeFactory.createURI(rs.getString("object_id")));
 
         List<Triple> membership = null;
