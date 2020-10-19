@@ -214,7 +214,7 @@ public class MembershipIndexManager {
                     " AND membership.object_id = mto.object_id" +
                 " )";
 
-    private static final String COMMIT_ENDS =
+    private static final String COMMIT_ENDS_H2 =
             "UPDATE membership m" +
             " SET end_time = (" +
                 " SELECT mto.end_time" +
@@ -236,6 +236,36 @@ public class MembershipIndexManager {
                     " AND m.property = mto.property" +
                     " AND m.object_id = mto.object_id" +
                 " )";
+
+    private static final String COMMIT_ENDS_POSTGRES =
+            "UPDATE membership" +
+            " SET end_time = mto.end_time" +
+            " FROM membership_tx_operations mto" +
+            " WHERE mto.tx_id = :txId" +
+                " AND mto.operation = :deleteOp" +
+                " AND membership.source_id = mto.source_id" +
+                " AND membership.subject_id = mto.subject_id" +
+                " AND membership.property = mto.property" +
+                " AND membership.object_id = mto.object_id";
+
+    private static final String COMMIT_ENDS_MYSQL =
+            "UPDATE membership m" +
+            " INNER JOIN membership_tx_operations mto ON" +
+                " m.source_id = mto.source_id" +
+                " AND m.subject_id = mto.subject_id" +
+                " AND m.subject_id = mto.subject_id" +
+                " AND m.property = mto.property" +
+                " AND m.object_id = mto.object_id" +
+            " SET m.end_time = mto.end_time" +
+            " WHERE mto.tx_id = :txId" +
+                " AND mto.operation = :deleteOp";
+
+    private static final Map<DbPlatform, String> COMMIT_ENDS_MAP = Map.of(
+            DbPlatform.MYSQL, COMMIT_ENDS_MYSQL,
+            DbPlatform.MARIADB, COMMIT_ENDS_MYSQL,
+            DbPlatform.POSTGRESQL, COMMIT_ENDS_POSTGRES,
+            DbPlatform.H2, COMMIT_ENDS_H2
+    );
 
     // Transfer all "add" operations from tx to committed membership, unless the entry already exists
     private static final String COMMIT_ADDS =
@@ -269,6 +299,8 @@ public class MembershipIndexManager {
 
     private NamedParameterJdbcTemplate jdbcTemplate;
 
+    private DbPlatform dbPlatform;
+
     private static final Map<DbPlatform, String> DDL_MAP = Map.of(
             DbPlatform.MYSQL, "sql/mysql-membership.sql",
             DbPlatform.H2, "sql/default-membership.sql",
@@ -280,7 +312,7 @@ public class MembershipIndexManager {
     public void setUp() {
         jdbcTemplate = new NamedParameterJdbcTemplate(getDataSource());
 
-        final var dbPlatform = DbPlatform.fromDataSource(dataSource);
+        dbPlatform = DbPlatform.fromDataSource(dataSource);
 
         Preconditions.checkArgument(DDL_MAP.containsKey(dbPlatform),
                 "Missing DDL mapping for %s", dbPlatform);
@@ -497,7 +529,7 @@ public class MembershipIndexManager {
                 FORCE_PARAM, FORCE_FLAG);
 
         jdbcTemplate.update(COMMIT_DELETES, parameterSource);
-        final int ends = jdbcTemplate.update(COMMIT_ENDS, parameterSource);
+        final int ends = jdbcTemplate.update(COMMIT_ENDS_MAP.get(this.dbPlatform), parameterSource);
         final int adds = jdbcTemplate.update(COMMIT_ADDS, parameterSource);
         final int cleaned = jdbcTemplate.update(DELETE_TRANSACTION, parameterSource);
 
