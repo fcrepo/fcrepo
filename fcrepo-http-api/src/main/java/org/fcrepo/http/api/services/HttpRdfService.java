@@ -49,6 +49,7 @@ import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
+import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.MultipleConstraintViolationException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -118,7 +119,7 @@ public class HttpRdfService {
                                      final MediaType contentType, final HttpIdentifierConverter idTranslator,
                                      final boolean lenientHandling)
                                      throws RepositoryRuntimeException, BadRequestException {
-        final List<Exception> exceptions = new ArrayList<>();
+        final List<ConstraintViolationException> exceptions = new ArrayList<>();
         final Model model = parseBodyAsModel(stream, contentType, extResourceId);
         final List<Statement> insertStatements = new ArrayList<>();
         final StmtIterator stmtIterator = model.listStatements();

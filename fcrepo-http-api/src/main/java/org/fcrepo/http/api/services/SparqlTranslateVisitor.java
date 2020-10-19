@@ -45,6 +45,7 @@ import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
+import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 import org.fcrepo.kernel.api.exception.MultipleConstraintViolationException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
@@ -67,7 +68,7 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
         idTranslator = identifierConverter;
     }
 
-    private List<Exception> exceptions = new ArrayList<>();
+    private List<ConstraintViolationException> exceptions = new ArrayList<>();
 
     @Override
     public void visit(final UpdateDataInsert update) {

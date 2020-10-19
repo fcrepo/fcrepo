@@ -27,17 +27,17 @@ import java.util.Set;
  */
 public class MultipleConstraintViolationException extends ConstraintViolationException {
 
-    private Set<Exception> exceptionTypes = new HashSet<>();
+    private Set<ConstraintViolationException> exceptionTypes = new HashSet<>();
 
     private String fullMessage = "";
 
-    public Set<Exception> getExceptionTypes() {
+    public Set<ConstraintViolationException> getExceptionTypes() {
         return exceptionTypes;
     }
 
-    public MultipleConstraintViolationException(final List<Exception> exceptions) {
+    public MultipleConstraintViolationException(final List<ConstraintViolationException> exceptions) {
         super("There are multiple exceptions");
-        for (final Exception exception : exceptions) {
+        for (final ConstraintViolationException exception : exceptions) {
             exceptionTypes.add(exception);
             fullMessage += exception.getMessage() + "\n";
         }
