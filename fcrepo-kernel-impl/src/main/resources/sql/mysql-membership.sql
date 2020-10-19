@@ -28,14 +28,7 @@ EXECUTE stmt;
 SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
     WHERE table_name = 'membership' AND index_name = 'membership_idx1b' AND table_schema = database());
 SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
-    'CREATE INDEX membership_idx1b ON membership (subject_id, start_time)');
-PREPARE stmt FROM @sqlstmt;
-EXECUTE stmt;
-
-SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
-    WHERE table_name = 'membership' AND index_name = 'membership_idx1c' AND table_schema = database());
-SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
-    'CREATE INDEX membership_idx1c ON membership (subject_id, start_time, end_time)');
+    'CREATE INDEX membership_idx1b ON membership (subject_id, start_time, end_time)');
 PREPARE stmt FROM @sqlstmt;
 EXECUTE stmt;
 
