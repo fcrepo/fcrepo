@@ -407,14 +407,12 @@ public class FedoraLdp extends ContentExposingResource {
                 throw new InteractionModelViolationException("Changing the interaction model " + resInteractionModel
                         + " to " + interactionModel + " is not allowed!");
             }
+            evaluateRequestPreconditions(request, servletResponse, resource(), transaction);
         }
 
         if (isGhostNode(transaction(), fedoraId)) {
             throw new GhostNodeException("Resource path " + externalPath() + " is an immutable resource.");
         }
-
-        // TODO: Refactor to check preconditions
-        //evaluateRequestPreconditions(request, servletResponse, resource, transaction);
 
         final var providedContentType = getSimpleContentType(requestContentType);
 
@@ -529,7 +527,7 @@ public class FedoraLdp extends ContentExposingResource {
             patchResourcewithSparql(resource(), newRequest);
             transaction.commitIfShortLived();
 
-            addCacheControlHeaders(servletResponse, resource(), transaction);
+            addCacheControlHeaders(servletResponse, reloadResource(), transaction);
 
             return noContent().build();
         } catch (final IllegalArgumentException iae) {
