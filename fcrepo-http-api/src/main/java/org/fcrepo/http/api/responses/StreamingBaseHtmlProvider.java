@@ -66,6 +66,7 @@ import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.context.Context;
 import org.apache.velocity.tools.generic.EscapeTool;
 import org.apache.velocity.tools.generic.FieldTool;
+import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.http.api.FedoraLdp;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
@@ -105,6 +106,11 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
 
     @Inject
     private ResourceFactory resourceFactory;
+
+    @Inject
+    private OcflPropsConfig ocflPropsConfig;
+
+    private boolean autoVersioningEnabled;
 
     private HttpIdentifierConverter identifierConverter;
 
@@ -155,6 +161,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
         final Properties properties = new Properties();
         final String fcrepoHome = getProperty("fcrepo.home");
         final String velocityLog = getProperty("fcrepo.velocity.runtime.log");
+        autoVersioningEnabled = ocflPropsConfig.isAutoVersioningEnabled();
         if (velocityLog != null) {
             LOGGER.debug("Setting Velocity runtime log: {}", velocityLog);
             properties.setProperty("runtime.log", velocityLog);
@@ -209,6 +216,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
         context.put("isVersion", (resource != null && resource.isMemento()));
         context.put("isLDPNR", (resource != null &&
                 (resource instanceof Binary || !resource.getDescribedResource().equals(resource))));
+        context.put("autoVersioningEnabled", autoVersioningEnabled);
 
         // the contract of MessageBodyWriter<T> is _not_ to close the stream
         // after writing to it
