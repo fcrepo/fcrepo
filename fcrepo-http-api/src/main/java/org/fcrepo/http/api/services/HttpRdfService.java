@@ -49,11 +49,13 @@ import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
-import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
+import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.MultipleConstraintViolationException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
+import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedMediaTypeException;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.slf4j.Logger;
@@ -117,7 +119,7 @@ public class HttpRdfService {
                                      final MediaType contentType, final HttpIdentifierConverter idTranslator,
                                      final boolean lenientHandling)
                                      throws RepositoryRuntimeException, BadRequestException {
-
+        final List<ConstraintViolationException> exceptions = new ArrayList<>();
         final Model model = parseBodyAsModel(stream, contentType, extResourceId);
         final List<Statement> insertStatements = new ArrayList<>();
         final StmtIterator stmtIterator = model.listStatements();
@@ -128,29 +130,37 @@ public class HttpRdfService {
                 // Remove any statement that touches a server managed property or namespace.
                 stmtIterator.remove();
             } else {
-                checkForDisallowedRdf(stmt);
-                if (stmt.getSubject().isURIResource()) {
-                    final String originalSubj = stmt.getSubject().getURI();
-                    final String subj = idTranslator.inExternalDomain(originalSubj) ?
-                            idTranslator.toInternalId(originalSubj) : originalSubj;
+                try {
+                    checkForDisallowedRdf(stmt);
+                    if (stmt.getSubject().isURIResource()) {
+                        final String originalSubj = stmt.getSubject().getURI();
+                        final String subj = idTranslator.inExternalDomain(originalSubj) ?
+                                idTranslator.toInternalId(originalSubj) : originalSubj;
 
-                    RDFNode obj = stmt.getObject();
-                    if (stmt.getObject().isURIResource()) {
-                        final String objString = stmt.getObject().asResource().getURI();
-                        if (idTranslator.inExternalDomain(objString)) {
-                            obj = model.getResource(idTranslator.toInternalId(objString));
+                        RDFNode obj = stmt.getObject();
+                        if (stmt.getObject().isURIResource()) {
+                            final String objString = stmt.getObject().asResource().getURI();
+                            if (idTranslator.inExternalDomain(objString)) {
+                                obj = model.getResource(idTranslator.toInternalId(objString));
+                            }
                         }
-                    }
 
-                    if (!subj.equals(originalSubj) || !obj.equals(stmt.getObject())) {
-                        insertStatements.add(new StatementImpl(model.getResource(subj), stmt.getPredicate(), obj));
+                        if (!subj.equals(originalSubj) || !obj.equals(stmt.getObject())) {
+                            insertStatements.add(new StatementImpl(model.getResource(subj), stmt.getPredicate(), obj));
 
-                        stmtIterator.remove();
+                            stmtIterator.remove();
+                        }
+                    } else {
+                        log.debug("Subject {} is not a URI resource, skipping", stmt.getSubject());
                     }
-                } else {
-                    log.debug("Subject {} is not a URI resource, skipping", stmt.getSubject());
+                } catch (final ServerManagedPropertyException | ServerManagedTypeException exc) {
+                    exceptions.add(exc);
                 }
             }
+        }
+
+        if (!exceptions.isEmpty()) {
+            throw new MultipleConstraintViolationException(exceptions);
         }
 
         model.add(insertStatements);
@@ -265,8 +275,8 @@ public class HttpRdfService {
                     String.format("Invalid rdf:type: %s", triple.getObject()));
         } else if (restrictedType.test(triple)) {
             // The object of a rdf:type triple has a restricted namespace.
-            throw new InteractionModelViolationException(
-                    String.format("Changing this resource's interaction model to %s is not allowed",
+            throw new ServerManagedTypeException(
+                    String.format("The server managed type (%s) cannot be modified by the client.",
                             triple.getObject()));
         } else if (isManagedPredicate.test(createProperty(triple.getPredicate().getURI()))) {
             // The predicate is server managed.

@@ -45,7 +45,11 @@ import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
+import org.fcrepo.kernel.api.exception.ConstraintViolationException;
+import org.fcrepo.kernel.api.exception.MultipleConstraintViolationException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
+import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.slf4j.Logger;
 
 /**
@@ -63,6 +67,8 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
     public SparqlTranslateVisitor(final HttpIdentifierConverter identifierConverter) {
         idTranslator = identifierConverter;
     }
+
+    private List<ConstraintViolationException> exceptions = new ArrayList<>();
 
     @Override
     public void visit(final UpdateDataInsert update) {
@@ -106,6 +112,7 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
             sourceQuads = ((UpdateData) update).getQuads();
         }
         final List<Quad> newQuads = translateQuads(sourceQuads);
+        assertNoExceptions();
         final Update newUpdate = makeUpdate(update.getClass(), newQuads);
         newUpdates.add(newUpdate);
     }
@@ -118,16 +125,23 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
         final UpdateModify newUpdate = new UpdateModify();
         final List<Quad> insertQuads = (update.hasInsertClause() ? translateQuads(update.getInsertQuads()) :
                 Collections.emptyList());
-        insertQuads.forEach(q -> newUpdate.getInsertAcc().addQuad(q));
-
         final List<Quad> deleteQuads = (update.hasDeleteClause() ? translateQuads(update.getDeleteQuads()) :
                 Collections.emptyList());
+        assertNoExceptions();
+
+        insertQuads.forEach(q -> newUpdate.getInsertAcc().addQuad(q));
         deleteQuads.forEach(q -> newUpdate.getDeleteAcc().addQuad(q));
 
         final Element where = update.getWherePattern();
         final Element newElement = processElements(where);
         newUpdate.setElement(newElement);
         newUpdates.add(newUpdate);
+    }
+
+    private void assertNoExceptions() {
+        if (!exceptions.isEmpty()) {
+            throw new MultipleConstraintViolationException(exceptions);
+        }
     }
 
     /**
@@ -145,7 +159,11 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
             final var tripleIter = ((ElementPathBlock) element).patternElts();
             tripleIter.forEachRemaining(t -> {
                 if (t.isTriple()) {
-                    basicPattern.add(translateTriple(t.asTriple()));
+                    try {
+                        basicPattern.add(translateTriple(t.asTriple()));
+                    } catch (final ServerManagedPropertyException | ServerManagedTypeException exc) {
+                        exceptions.add(exc);
+                    }
                 }
             });
             return new ElementPathBlock(basicPattern);
@@ -161,12 +179,17 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
     private List<Quad> translateQuads(final List<Quad> quadsList) {
         final List<Quad> newQuads = new ArrayList<>();
         for (final Quad q : quadsList) {
-            final Node subject = translateId(q.getSubject());
-            final Node object = translateId(q.getObject());
-            checkTripleForDisallowed(q.asTriple());
-            final Quad quad = new Quad(q.getGraph(), subject, q.getPredicate(), object);
-            LOGGER.trace("Translated quad is: {}", quad);
-            newQuads.add(quad);
+            try {
+                final Node subject = translateId(q.getSubject());
+                final Node object = translateId(q.getObject());
+                checkTripleForDisallowed(q.asTriple());
+                final Quad quad = new Quad(q.getGraph(), subject, q.getPredicate(), object);
+                LOGGER.trace("Translated quad is: {}", quad);
+                newQuads.add(quad);
+            } catch (final ServerManagedPropertyException | ServerManagedTypeException exc) {
+                // Swallow these exceptions to throw together later.
+                exceptions.add(exc);
+            }
         }
         return newQuads;
     }

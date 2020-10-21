@@ -51,7 +51,20 @@ public abstract class ConstraintExceptionMapper<T extends ConstraintViolationExc
     public static Link buildConstraintLink(final ConstraintViolationException e,
                                            final ServletContext context,
                                            final UriInfo uriInfo) {
+        return buildConstraintLink(e.getClass(), context, uriInfo);
+    }
 
+    /**
+     * Creates a constrainedBy link header with the appropriate RDF URL for the exception.
+     *
+     * @param clazz the class of the exception to build the link for.
+     * @param context ServletContext ServletContext that we're running in.
+     * @param uriInfo UriInfo UriInfo from the ExceptionMapper.
+     * @return Link A http://www.w3.org/ns/ldp#constrainedBy link header
+     */
+    public static Link buildConstraintLink(final Class<? extends ConstraintViolationException> clazz,
+                                           final ServletContext context,
+                                           final UriInfo uriInfo) {
         String path = context.getContextPath();
         if (path.equals("/")) {
             path = "";
@@ -59,7 +72,7 @@ public abstract class ConstraintExceptionMapper<T extends ConstraintViolationExc
 
         final String constraintURI = uriInfo == null ? "" : String.format("%s://%s%s%s%s.rdf",
                 uriInfo.getBaseUri().getScheme(), uriInfo.getBaseUri().getAuthority(), path,
-                CONSTRAINT_DIR, e.getClass().toString().substring(e.getClass().toString().lastIndexOf('.') + 1));
+                CONSTRAINT_DIR, clazz.getName().substring(clazz.getName().lastIndexOf('.') + 1));
         return Link.fromUri(constraintURI).rel(CONSTRAINED_BY.getURI()).build();
     }
 

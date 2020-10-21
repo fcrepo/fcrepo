@@ -103,8 +103,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -236,12 +236,12 @@ public abstract class AbstractResourceIT {
         logger.debug("Executing: " + req.getMethod() + " to " + req.getURI());
         try {
             return client.execute(req);
-        } catch (NoHttpResponseException e) {
+        } catch (final NoHttpResponseException e) {
             // sometimes the server is slow starting up -- retry once
             try {
                 TimeUnit.SECONDS.sleep(2);
                 return client.execute(req);
-            } catch (InterruptedException e2) {
+            } catch (final InterruptedException e2) {
                 throw new RuntimeException(e2);
             }
         }
@@ -448,7 +448,7 @@ public abstract class AbstractResourceIT {
     }
 
     protected static InputStream streamModel(final Model model, final RDFFormat format) throws IOException {
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+        try (final ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
             RDFDataMgr.write(bos, model, format);
             return new ByteArrayInputStream(bos.toByteArray());
         }
@@ -469,7 +469,7 @@ public abstract class AbstractResourceIT {
         }
 
         if (linkHeaders != null && linkHeaders.length > 0) {
-            for (String linkHeader : linkHeaders) {
+            for (final String linkHeader : linkHeaders) {
                 httpPost.addHeader(LINK, linkHeader);
             }
         }
