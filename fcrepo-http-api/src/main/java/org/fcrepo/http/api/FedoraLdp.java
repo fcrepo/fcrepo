@@ -797,6 +797,11 @@ public class FedoraLdp extends ContentExposingResource {
     private FedoraId mintNewPid(final FedoraId fedoraId, final String slug) {
         final String pid;
 
+        if (!isBlank(slug) && slug.contains(" ")) {
+            // Can't use a literal space
+            throw new CannotCreateResourceException("Slug cannot include literal spaces");
+        }
+
         if (!isBlank(slug)) {
             pid = slug;
         } else if (pidMinter != null) {

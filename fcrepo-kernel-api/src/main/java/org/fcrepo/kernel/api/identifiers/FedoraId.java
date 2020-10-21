@@ -20,6 +20,7 @@ package org.fcrepo.kernel.api.identifiers;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
+import org.fcrepo.kernel.api.exception.IdentifierConversionException;
 import org.fcrepo.kernel.api.exception.InvalidMementoPathException;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 
@@ -87,7 +88,7 @@ public class FedoraId {
      * @throws IllegalArgumentException If ID does not start with expected prefix.
      */
     private FedoraId(final String fullId) {
-        this.fullId = ensurePrefix(fullId).replaceAll("\\s", "%20").replaceAll("/+$", "");
+        this.fullId = ensurePrefix(fullId).replaceAll("/+$", "");
         // Carry the path of the request for any exceptions.
         this.fullPath = this.fullId.substring(FEDORA_ID_PREFIX.length());
         checkForInvalidPath();
@@ -532,6 +533,10 @@ public class FedoraId {
      * Check for obvious path errors.
      */
     private void checkForInvalidPath() {
+        // Check for literal spaces.
+        if (this.fullId.contains(" ")) {
+            throw new IdentifierConversionException("Path cannot contain literal spaces.");
+        }
         // Check for combinations of endpoints not allowed.
         if (
             // ID contains fcr:acl or fcr:tombstone AND fcr:metadata or fcr:versions
