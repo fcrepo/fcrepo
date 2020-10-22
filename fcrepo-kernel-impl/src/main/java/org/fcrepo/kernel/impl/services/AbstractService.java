@@ -25,6 +25,8 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.RdfLexicon.DEFAULT_INTERACTION_MODEL;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS_FULL;
+import static org.fcrepo.kernel.api.RdfLexicon.IS_MEMBER_OF_RELATION;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_ACCESS_TO;
 import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_ACCESS_TO_CLASS;
@@ -39,6 +41,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 import org.apache.jena.graph.Graph;
@@ -48,7 +51,9 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Statement;
 import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.exception.ACLAuthorizationConstraintViolationException;
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RequestWithAclLinkHeaderException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -132,34 +137,70 @@ public abstract class AbstractService {
         }
     }
 
-    /*
-     * This method throws an exception if the arg model contains a triple with 'ldp:hasMemberRelation' as a predicate
-     *   and a server-managed property as the object.
-     *
-     * @param inputModel to be checked
-     * @throws ServerManagedPropertyException on error
+    /**
+     * Verifies that DirectContainer properties are valid, throwing exceptions if the triples
+     * do not meet LDP requirements or a server managed property is specified as a membership relation.
+     * If no membershipResource or membership relation are specified, defaults will be populated.
+     * @param fedoraId id of the resource described
+     * @param interactionModel interaction model of the resource
+     * @param model model to check
      */
-    protected void ensureValidMemberRelation(final Model inputModel) {
-        // check that ldp:hasMemberRelation value is not server managed predicate.
-        inputModel.listStatements().forEachRemaining((final Statement s) -> {
-            log.debug("statement: s={}, p={}, o={}", s.getSubject(), s.getPredicate(), s.getObject());
+    protected void ensureValidDirectContainer(final FedoraId fedoraId, final String interactionModel,
+            final Model model) {
+        if (!(RdfLexicon.DIRECT_CONTAINER.getURI().equals(interactionModel)
+                || RdfLexicon.INDIRECT_CONTAINER.getURI().equals(interactionModel))) {
+            return;
+        }
+        final var dcResc = model.getResource(fedoraId.getFullId());
+        final AtomicBoolean hasMembershipResc = new AtomicBoolean(false);
+        final AtomicBoolean hasRelation = new AtomicBoolean(false);
 
-            if (s.getPredicate().equals(HAS_MEMBER_RELATION)) {
-                final RDFNode obj = s.getObject();
+        dcResc.listProperties().forEachRemaining(stmt -> {
+            final var predicate = stmt.getPredicate();
+
+            if (MEMBERSHIP_RESOURCE.equals(predicate)) {
+                if (hasMembershipResc.get()) {
+                    throw new MalformedRdfException("Direct and Indirect containers must specify"
+                            + " exactly one ldp:membershipResource property, multiple are present");
+                }
+
+                if (stmt.getObject().isURIResource()) {
+                    hasMembershipResc.set(true);
+                } else {
+                    throw new MalformedRdfException("Direct and Indirect containers must specify"
+                            + " a ldp:membershipResource property with a resource as the object");
+                }
+            } else if (HAS_MEMBER_RELATION.equals(predicate) || IS_MEMBER_OF_RELATION.equals(predicate)) {
+                if (hasRelation.get()) {
+                    throw new MalformedRdfException("Direct and Indirect containers must specify exactly one"
+                            + " ldp:hasMemberRelation or ldp:isMemberOfRelation property, but multiple were present");
+                }
+
+                final RDFNode obj = stmt.getObject();
                 if (obj.isURIResource()) {
                     final String uri = obj.asResource().getURI();
 
                     // Throw exception if object is a server-managed property
                     if (isManagedPredicate.test(createProperty(uri))) {
-                        throw new ServerManagedPropertyException(
-                                String.format(
-                                        "{0} cannot take a server managed property " +
-                                                "as an object: property value = {1}.",
-                                        HAS_MEMBER_RELATION, uri));
+                        throw new ServerManagedPropertyException(String.format(
+                                "%s cannot take a server managed property as an object: property value = %s.",
+                                predicate.getLocalName(), uri));
                     }
+                    hasRelation.set(true);
+                } else {
+                    throw new MalformedRdfException("Direct and Indirect containers must specify either"
+                            + " ldp:hasMemberRelation or ldp:isMemberOfRelation properties,"
+                            + " with a predicate as the object");
                 }
             }
         });
+
+        if (!hasMembershipResc.get()) {
+            dcResc.addProperty(MEMBERSHIP_RESOURCE, dcResc);
+        }
+        if (!hasRelation.get()) {
+            dcResc.addProperty(HAS_MEMBER_RELATION, RdfLexicon.LDP_MEMBER);
+        }
     }
 
     /**

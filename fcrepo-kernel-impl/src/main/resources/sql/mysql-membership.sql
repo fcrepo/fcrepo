@@ -18,6 +18,20 @@ SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
 PREPARE stmt FROM @sqlstmt;
 EXECUTE stmt;
 
+SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
+    WHERE table_name = 'membership' AND index_name = 'membership_idx1a' AND table_schema = database());
+SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
+    'CREATE INDEX membership_idx1a ON membership (subject_id, end_time)');
+PREPARE stmt FROM @sqlstmt;
+EXECUTE stmt;
+
+SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
+    WHERE table_name = 'membership' AND index_name = 'membership_idx1b' AND table_schema = database());
+SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
+    'CREATE INDEX membership_idx1b ON membership (subject_id, start_time, end_time)');
+PREPARE stmt FROM @sqlstmt;
+EXECUTE stmt;
+
 -- Create an index to speed searches for subject of membership.
 SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
     WHERE table_name = 'membership' AND index_name = 'membership_idx2' AND table_schema = database());
@@ -58,6 +72,13 @@ SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
     WHERE table_name = 'membership_tx_operations' AND index_name = 'membership_tx_operations_idx1' AND table_schema = database());
 SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
     'CREATE INDEX membership_tx_operations_idx1 ON membership_tx_operations (subject_id, tx_id, operation)');
+PREPARE stmt FROM @sqlstmt;
+EXECUTE stmt;
+
+SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
+    WHERE table_name = 'membership_tx_operations' AND index_name = 'membership_tx_operations_idx1a' AND table_schema = database());
+SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
+    'CREATE INDEX membership_tx_operations_idx1a ON membership_tx_operations (subject_id, tx_id, operation, end_time)');
 PREPARE stmt FROM @sqlstmt;
 EXECUTE stmt;
 

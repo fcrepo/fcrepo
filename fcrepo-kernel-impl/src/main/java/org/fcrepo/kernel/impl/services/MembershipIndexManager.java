@@ -82,12 +82,6 @@ public class MembershipIndexManager {
 
     private static final String SELECT_ALL_OPERATIONS = "SELECT * FROM membership_tx_operations";
 
-    private static final String SELECT_MEMBERSHIP =
-            "SELECT property, object_id" +
-            " FROM membership" +
-            " WHERE subject_id = :subjectId" +
-                " AND end_time = :noEndTime";
-
     private static final String SELECT_MEMBERSHIP_IN_TX =
             "SELECT m.property, m.object_id" +
             " FROM membership m" +
@@ -108,13 +102,6 @@ public class MembershipIndexManager {
                 " AND tx_id = :txId" +
                 " AND end_time = :noEndTime" +
                 " AND operation = :addOp";
-
-    private static final String SELECT_MEMBERSHIP_MEMENTO =
-            "SELECT property, object_id" +
-            " FROM membership" +
-            " WHERE subject_id = :subjectId" +
-                " AND start_time <= :mementoTime" +
-                " AND end_time > :mementoTime";
 
     private static final String SELECT_MEMBERSHIP_MEMENTO_IN_TX =
             "SELECT property, object_id" +
@@ -227,8 +214,7 @@ public class MembershipIndexManager {
                     " AND membership.object_id = mto.object_id" +
                 " )";
 
-
-    private static final String COMMIT_ENDS =
+    private static final String COMMIT_ENDS_H2 =
             "UPDATE membership m" +
             " SET end_time = (" +
                 " SELECT mto.end_time" +
@@ -250,6 +236,36 @@ public class MembershipIndexManager {
                     " AND m.property = mto.property" +
                     " AND m.object_id = mto.object_id" +
                 " )";
+
+    private static final String COMMIT_ENDS_POSTGRES =
+            "UPDATE membership" +
+            " SET end_time = mto.end_time" +
+            " FROM membership_tx_operations mto" +
+            " WHERE mto.tx_id = :txId" +
+                " AND mto.operation = :deleteOp" +
+                " AND membership.source_id = mto.source_id" +
+                " AND membership.subject_id = mto.subject_id" +
+                " AND membership.property = mto.property" +
+                " AND membership.object_id = mto.object_id";
+
+    private static final String COMMIT_ENDS_MYSQL =
+            "UPDATE membership m" +
+            " INNER JOIN membership_tx_operations mto ON" +
+                " m.source_id = mto.source_id" +
+                " AND m.subject_id = mto.subject_id" +
+                " AND m.subject_id = mto.subject_id" +
+                " AND m.property = mto.property" +
+                " AND m.object_id = mto.object_id" +
+            " SET m.end_time = mto.end_time" +
+            " WHERE mto.tx_id = :txId" +
+                " AND mto.operation = :deleteOp";
+
+    private static final Map<DbPlatform, String> COMMIT_ENDS_MAP = Map.of(
+            DbPlatform.MYSQL, COMMIT_ENDS_MYSQL,
+            DbPlatform.MARIADB, COMMIT_ENDS_MYSQL,
+            DbPlatform.POSTGRESQL, COMMIT_ENDS_POSTGRES,
+            DbPlatform.H2, COMMIT_ENDS_H2
+    );
 
     // Transfer all "add" operations from tx to committed membership, unless the entry already exists
     private static final String COMMIT_ADDS =
@@ -283,6 +299,8 @@ public class MembershipIndexManager {
 
     private NamedParameterJdbcTemplate jdbcTemplate;
 
+    private DbPlatform dbPlatform;
+
     private static final Map<DbPlatform, String> DDL_MAP = Map.of(
             DbPlatform.MYSQL, "sql/mysql-membership.sql",
             DbPlatform.H2, "sql/default-membership.sql",
@@ -294,7 +312,7 @@ public class MembershipIndexManager {
     public void setUp() {
         jdbcTemplate = new NamedParameterJdbcTemplate(getDataSource());
 
-        final var dbPlatform = DbPlatform.fromDataSource(dataSource);
+        dbPlatform = DbPlatform.fromDataSource(dataSource);
 
         Preconditions.checkArgument(DDL_MAP.containsKey(dbPlatform),
                 "Missing DDL mapping for %s", dbPlatform);
@@ -336,7 +354,7 @@ public class MembershipIndexManager {
                     SUBJECT_ID_PARAM, membership.getSubject().getURI(),
                     PROPERTY_PARAM, membership.getPredicate().getURI(),
                     OBJECT_ID_PARAM, membership.getObject().getURI(),
-                    END_TIME_PARAM, Timestamp.from(endTime),
+                    END_TIME_PARAM, formatInstant(endTime),
                     NO_END_TIME_PARAM, NO_END_TIMESTAMP,
                     DELETE_OP_PARAM, DELETE_OPERATION);
             jdbcTemplate.update(END_EXISTING_MEMBERSHIP, parameterSource2);
@@ -361,7 +379,7 @@ public class MembershipIndexManager {
         final Map<String, Object> parameterSource2 = Map.of(
                 TX_ID_PARAM, txId,
                 SOURCE_ID_PARAM, sourceId.getFullId(),
-                END_TIME_PARAM, Timestamp.from(endTime),
+                END_TIME_PARAM, formatInstant(endTime),
                 NO_END_TIME_PARAM, NO_END_TIMESTAMP,
                 DELETE_OP_PARAM, DELETE_OPERATION);
         jdbcTemplate.update(END_EXISTING_FOR_SOURCE, parameterSource2);
@@ -383,7 +401,7 @@ public class MembershipIndexManager {
 
         jdbcTemplate.update(CLEAR_ALL_ADDED_FOR_SOURCE_IN_TX, parameterSource);
 
-        final var afterTimestamp = afterTime == null ? NO_START_TIMESTAMP : Timestamp.from(afterTime);
+        final var afterTimestamp = afterTime == null ? NO_START_TIMESTAMP : formatInstant(afterTime);
 
         // Delete all existing membership entries that start after or end after the given timestamp
         final Map<String, Object> parameterSource2 = Map.of(
@@ -446,14 +464,14 @@ public class MembershipIndexManager {
      */
     public void addMembership(final String txId, final FedoraId sourceId, final Triple membership,
             final Instant startTime, final Instant endTime) {
-        final var endTimestamp = endTime == null ? NO_END_TIMESTAMP : Timestamp.from(endTime);
+        final var endTimestamp = endTime == null ? NO_END_TIMESTAMP : formatInstant(endTime);
         // Add the new membership operation
         final Map<String, Object> parameterSource = Map.of(
                 SUBJECT_ID_PARAM, membership.getSubject().getURI(),
                 PROPERTY_PARAM, membership.getPredicate().getURI(),
                 TARGET_ID_PARAM, membership.getObject().getURI(),
                 SOURCE_ID_PARAM, sourceId.getFullId(),
-                START_TIME_PARAM, Timestamp.from(startTime),
+                START_TIME_PARAM, formatInstant(startTime),
                 END_TIME_PARAM, endTimestamp,
                 TX_ID_PARAM, txId,
                 OPERATION_PARAM, ADD_OPERATION);
@@ -472,44 +490,28 @@ public class MembershipIndexManager {
 
         final RowMapper<Triple> membershipMapper = (rs, rowNum) ->
                 Triple.create(subjectNode,
-                              NodeFactory.createURI(rs.getString(PROPERTY_PARAM)),
+                              NodeFactory.createURI(rs.getString("property")),
                               NodeFactory.createURI(rs.getString("object_id")));
 
         List<Triple> membership = null;
-        if (txId == null) {
-            if (subjectId.isMemento()) {
-                final Map<String, Object> parameterSource = Map.of(
-                        SUBJECT_ID_PARAM, subjectId.getBaseId(),
-                        MEMENTO_TIME_PARAM, subjectId.getMementoInstant());
+        if (subjectId.isMemento()) {
+            final Map<String, Object> parameterSource = Map.of(
+                    SUBJECT_ID_PARAM, subjectId.getBaseId(),
+                    MEMENTO_TIME_PARAM, formatInstant(subjectId.getMementoInstant()),
+                    TX_ID_PARAM, txId,
+                    ADD_OP_PARAM, ADD_OPERATION,
+                    DELETE_OP_PARAM, DELETE_OPERATION);
 
-                membership = jdbcTemplate.query(SELECT_MEMBERSHIP_MEMENTO, parameterSource, membershipMapper);
-            } else {
-                final Map<String, Object> parameterSource = Map.of(
-                        SUBJECT_ID_PARAM, subjectId.getFullId(),
-                        NO_END_TIME_PARAM, NO_END_TIMESTAMP);
-
-                membership = jdbcTemplate.query(SELECT_MEMBERSHIP, parameterSource, membershipMapper);
-            }
+            membership = jdbcTemplate.query(SELECT_MEMBERSHIP_MEMENTO_IN_TX, parameterSource, membershipMapper);
         } else {
-            if (subjectId.isMemento()) {
-                final Map<String, Object> parameterSource = Map.of(
-                        SUBJECT_ID_PARAM, subjectId.getBaseId(),
-                        MEMENTO_TIME_PARAM, subjectId.getMementoInstant(),
-                        TX_ID_PARAM, txId,
-                        ADD_OP_PARAM, ADD_OPERATION,
-                        DELETE_OP_PARAM, DELETE_OPERATION);
+            final Map<String, Object> parameterSource = Map.of(
+                    SUBJECT_ID_PARAM, subjectId.getFullId(),
+                    NO_END_TIME_PARAM, NO_END_TIMESTAMP,
+                    TX_ID_PARAM, txId,
+                    ADD_OP_PARAM, ADD_OPERATION,
+                    DELETE_OP_PARAM, DELETE_OPERATION);
 
-                membership = jdbcTemplate.query(SELECT_MEMBERSHIP_MEMENTO_IN_TX, parameterSource, membershipMapper);
-            } else {
-                final Map<String, Object> parameterSource = Map.of(
-                        SUBJECT_ID_PARAM, subjectId.getFullId(),
-                        NO_END_TIME_PARAM, NO_END_TIMESTAMP,
-                        TX_ID_PARAM, txId,
-                        ADD_OP_PARAM, ADD_OPERATION,
-                        DELETE_OP_PARAM, DELETE_OPERATION);
-
-                membership = jdbcTemplate.query(SELECT_MEMBERSHIP_IN_TX, parameterSource, membershipMapper);
-            }
+            membership = jdbcTemplate.query(SELECT_MEMBERSHIP_IN_TX, parameterSource, membershipMapper);
         }
 
         return membership.stream();
@@ -527,7 +529,7 @@ public class MembershipIndexManager {
                 FORCE_PARAM, FORCE_FLAG);
 
         jdbcTemplate.update(COMMIT_DELETES, parameterSource);
-        final int ends = jdbcTemplate.update(COMMIT_ENDS, parameterSource);
+        final int ends = jdbcTemplate.update(COMMIT_ENDS_MAP.get(this.dbPlatform), parameterSource);
         final int adds = jdbcTemplate.update(COMMIT_ADDS, parameterSource);
         final int cleaned = jdbcTemplate.update(DELETE_TRANSACTION, parameterSource);
 
@@ -541,6 +543,18 @@ public class MembershipIndexManager {
     public void deleteTransaction(final String txId) {
         final Map<String, String> parameterSource = Map.of(TX_ID_PARAM, txId);
         jdbcTemplate.update(DELETE_TRANSACTION, parameterSource);
+    }
+
+    /**
+     * Format an instant to a timestamp without milliseconds, due to precision
+     * issues with memento datetimes.
+     * @param instant
+     * @return
+     */
+    private Timestamp formatInstant(final Instant instant) {
+        final var timestamp = Timestamp.from(instant);
+        timestamp.setNanos(0);
+        return timestamp;
     }
 
     /**
@@ -561,8 +575,8 @@ public class MembershipIndexManager {
             @Override
             public void processRow(final ResultSet rs) throws SQLException {
                 log.info("{}, {}, {}, {}, {}, {}", rs.getString("source_id"), rs.getString("subject_id"),
-                        rs.getString("property"), rs.getString("object_id"), rs.getDate("start_time"),
-                        rs.getDate("end_time"));
+                        rs.getString("property"), rs.getString("object_id"), rs.getTimestamp("start_time"),
+                        rs.getTimestamp("end_time"));
             }
         });
     }
@@ -577,7 +591,7 @@ public class MembershipIndexManager {
             public void processRow(final ResultSet rs) throws SQLException {
                 log.info("{}, {}, {}, {}, {}, {}, {}, {}, {}",
                         rs.getString("source_id"), rs.getString("subject_id"), rs.getString("property"),
-                        rs.getString("object_id"), rs.getDate("start_time"), rs.getDate("end_time"),
+                        rs.getString("object_id"), rs.getTimestamp("start_time"), rs.getTimestamp("end_time"),
                         rs.getString("tx_id"), rs.getString("operation"), rs.getString("force_flag"));
             }
         });

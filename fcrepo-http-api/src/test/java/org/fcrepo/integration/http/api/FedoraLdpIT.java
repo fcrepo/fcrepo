@@ -476,7 +476,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testHeadDirectContainer() throws IOException {
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
@@ -493,7 +492,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testHeadIndirectContainer() throws IOException {
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
@@ -2430,7 +2428,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testGetObjectOmitServerManaged() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -2474,7 +2471,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testGetObjectIncludeContainmentAndOmitServerManaged() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -2559,8 +2555,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
-    public void testPatchToCreateDirectContainerInSparqlUpdate() throws IOException {
+    public void testPatchToCreateDirectContainerInSparqlUpdateFails() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
         final HttpPatch patch = patchObjMethod(id);
@@ -2571,78 +2566,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         patch.setEntity(new StringEntity(updateString));
         assertEquals("Patch with sparql update created direct container from basic container!",
                 CONFLICT.getStatusCode(), getStatus(patch));
-    }
-
-    @Test
-@Ignore
-    public void testPatchWithLdpContainsIndirectContainer() throws IOException {
-        final String id = getRandomUniqueId();
-        final HttpPut put = putObjMethod(id);
-        put.setHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
-        executeAndClose(put);
-
-        final HttpPatch patch = patchObjMethod(id);
-        patch.setHeader(CONTENT_TYPE, "application/sparql-update");
-        final String updateString =
-                "INSERT DATA { <> <" + MEMBERSHIP_RESOURCE.getURI() +
-                        "> <> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "contains> .}";
-        patch.setEntity(new StringEntity(updateString));
-        assertEquals("Patch with sparql update allowed ldp:contains in indirect container!",
-                CONFLICT.getStatusCode(), getStatus(patch));
-    }
-
-    @Test
-@Ignore
-    public void testPatchWithoutLdpContainsIndirectContainer() throws IOException {
-        final String id = getRandomUniqueId();
-        final HttpPut put = putObjMethod(id);
-        put.setHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
-        executeAndClose(put);
-
-        final HttpPatch patch = patchObjMethod(id);
-        patch.setHeader(CONTENT_TYPE, "application/sparql-update");
-        final String updateString =
-                "INSERT DATA { <> <" + MEMBERSHIP_RESOURCE.getURI() +
-                        "> <> ; <" + HAS_MEMBER_RELATION + "> <info:some/relation> .}";
-        patch.setEntity(new StringEntity(updateString));
-        assertEquals("Patch with sparql update did not allow non SMT relation in indirect container!",
-                NO_CONTENT.getStatusCode(), getStatus(patch));
-    }
-
-    @Test
-@Ignore
-    public void testPatchWithLdpContainsDirectContainer() throws IOException {
-        final String id = getRandomUniqueId();
-        final HttpPut put = putObjMethod(id);
-        put.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
-        executeAndClose(put);
-
-        final HttpPatch patch = patchObjMethod(id);
-        patch.setHeader(CONTENT_TYPE, "application/sparql-update");
-        final String updateString =
-                "INSERT DATA { <> <" + MEMBERSHIP_RESOURCE.getURI() +
-                        "> <> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "contains> .}";
-        patch.setEntity(new StringEntity(updateString));
-        assertEquals("Patch with sparql update allowed ldp:contains in direct container!",
-                CONFLICT.getStatusCode(), getStatus(patch));
-    }
-
-    @Test
-@Ignore
-    public void testPatchWithoutDirectContainer() throws IOException {
-        final String id = getRandomUniqueId();
-        final HttpPut put = putObjMethod(id);
-        put.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
-        executeAndClose(put);
-
-        final HttpPatch patch = patchObjMethod(id);
-        patch.setHeader(CONTENT_TYPE, "application/sparql-update");
-        final String updateString =
-                "INSERT DATA { <> <" + MEMBERSHIP_RESOURCE.getURI() +
-                        "> <> ; <" + HAS_MEMBER_RELATION + "> <info:some/relation> .}";
-        patch.setEntity(new StringEntity(updateString));
-        assertEquals("Patch with sparql update did not allow non SMT relation in direct container!",
-                NO_CONTENT.getStatusCode(), getStatus(patch));
     }
 
     @Test

@@ -15,15 +15,15 @@ CREATE TABLE IF NOT EXISTS membership (
 CREATE INDEX IF NOT EXISTS membership_idx1
     ON membership (subject_id);
 
+CREATE INDEX IF NOT EXISTS membership_idx1a
+    ON membership (subject_id, end_time);
+
+CREATE INDEX IF NOT EXISTS membership_idx1b
+    ON membership (subject_id, start_time, end_time);
+
 -- Create an index to speed searches for subject of membership.
 CREATE INDEX IF NOT EXISTS membership_idx2
     ON membership (source_id);
-
-CREATE INDEX IF NOT EXISTS membership_idx3
-    ON membership (property);
-    
-CREATE INDEX IF NOT EXISTS membership_idx4
-    ON membership (end_time);
 
 -- Holds operations to add or delete records from the REFERENCE table.
 CREATE TABLE IF NOT EXISTS membership_tx_operations (
@@ -42,12 +42,9 @@ CREATE TABLE IF NOT EXISTS membership_tx_operations (
 CREATE INDEX IF NOT EXISTS membership_tx_operations_idx1
     ON membership_tx_operations (subject_id, tx_id, operation);
 
+CREATE INDEX IF NOT EXISTS membership_tx_operations_idx1a
+    ON membership_tx_operations (subject_id, tx_id, operation, end_time);
+
 -- Create an index to speed finding records related to a transaction.
 CREATE INDEX IF NOT EXISTS membership_tx_operations_idx2
     ON membership_tx_operations (tx_id);
-
-CREATE INDEX IF NOT EXISTS membership_tx_operations_idx3
-    ON membership_tx_operations (property);
-    
-CREATE INDEX IF NOT EXISTS membership_tx_operations_idx4
-    ON membership_tx_operations (end_time);

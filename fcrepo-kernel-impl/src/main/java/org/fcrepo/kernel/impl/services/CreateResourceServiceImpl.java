@@ -170,6 +170,8 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
         final RdfStream stream = fromModel(model.getResource(fedoraId.getFullId()).asNode(), model);
 
+        ensureValidDirectContainer(fedoraId, interactionModel, model);
+
         final RdfSourceOperation createOp = rdfSourceOperationFactory
                 .createBuilder(fedoraId, interactionModel)
                 .parentId(parentId)

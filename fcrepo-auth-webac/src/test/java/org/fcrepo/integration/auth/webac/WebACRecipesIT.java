@@ -1622,7 +1622,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         patchIndirect.setEntity(new StringEntity(patch_text, sparqlContentType));
         assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(patchIndirect));
 
-        // Delete the ldp:membershipRelation and add it with INSERT DATA {}
+        // Delete the ldp:membershipRelation and add it back
         final String patch_delete_relation = "prefix ldp: <http://www.w3.org/ns/ldp#> \n" +
                 "DELETE DATA { <> ldp:membershipResource <" + targetResource + "> }";
         final HttpPatch patchIndirect2 = new HttpPatch(indirectUri);
@@ -1630,8 +1630,11 @@ public class WebACRecipesIT extends AbstractResourceIT {
         patchIndirect2.setEntity(new StringEntity(patch_delete_relation, sparqlContentType));
         assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(patchIndirect2));
 
+        // Cannot insert membershipResource without deleting the default value
         final String patch_insert_relation = "prefix ldp: <http://www.w3.org/ns/ldp#> \n" +
-                "INSERT DATA { <> ldp:membershipResource <" + targetResource + "> }";
+                "DELETE { <> ldp:membershipResource ?o } \n" +
+                "INSERT { <> ldp:membershipResource <" + targetResource + "> } \n" +
+                "WHERE { <> ldp:membershipResource ?o }";
         final HttpPatch patchIndirect3 = new HttpPatch(indirectUri);
         setAuth(patchIndirect3, username);
         patchIndirect3.setEntity(new StringEntity(patch_insert_relation, sparqlContentType));
@@ -1912,7 +1915,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         patchDirect.setEntity(new StringEntity(patch_text, sparqlContentType));
         assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(patchDirect));
 
-        // Delete the ldp:membershipRelation and add it with INSERT DATA {}
+        // Delete the ldp:membershipRelation and add it with INSERT
         final String patch_delete_relation = "prefix ldp: <http://www.w3.org/ns/ldp#> \n" +
                 "DELETE DATA { <> ldp:membershipResource <" + targetResource + "> }";
         final HttpPatch patchDirect2 = new HttpPatch(directUri);
@@ -1920,8 +1923,11 @@ public class WebACRecipesIT extends AbstractResourceIT {
         patchDirect2.setEntity(new StringEntity(patch_delete_relation, sparqlContentType));
         assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(patchDirect2));
 
+        // Cannot insert membershipResource without deleting the default value
         final String patch_insert_relation = "prefix ldp: <http://www.w3.org/ns/ldp#> \n" +
-                "INSERT DATA { <> ldp:membershipResource <" + targetResource + "> }";
+                "DELETE { <> ldp:membershipResource ?o } \n" +
+                "INSERT { <> ldp:membershipResource <" + targetResource + "> } \n" +
+                "WHERE { <> ldp:membershipResource ?o }";
         final HttpPatch patchDirect3 = new HttpPatch(directUri);
         setAuth(patchDirect3, username);
         patchDirect3.setEntity(new StringEntity(patch_insert_relation, sparqlContentType));

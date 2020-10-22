@@ -20,9 +20,13 @@ package org.fcrepo.kernel.impl.services;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
+
+import java.time.Instant;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
@@ -36,6 +40,7 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.api.services.MembershipService;
@@ -84,6 +89,9 @@ public class ReplacePropertiesServiceImplTest {
     @Mock
     private MembershipService membershipService;
 
+    @Mock
+    private ResourceHeaders headers;
+
     @InjectMocks
     private UpdateRdfSourceOperation operation;
 
@@ -110,6 +118,7 @@ public class ReplacePropertiesServiceImplTest {
         setField(service, "membershipService", membershipService);
         when(tx.getId()).thenReturn(TX_ID);
         when(psManager.getSession(anyString())).thenReturn(pSession);
+        when(pSession.getHeaders(any(FedoraId.class), nullable(Instant.class))).thenReturn(headers);
         when(resource.getId()).thenReturn(FEDORA_ID.getFullId());
     }
 
