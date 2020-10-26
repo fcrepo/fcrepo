@@ -19,10 +19,13 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 
@@ -34,92 +37,108 @@ public class ReindexManager {
 
     private static final Logger LOGGER = getLogger(ReindexManager.class);
 
-    private final ExecutorService executorService;
+    private final String transactionId;
+
+    private final List<ReindexWorker> workers;
+
+    private final Iterator<String> ocflIter;
+
+    private final Map<String, String> resultStates = new HashMap<>();
 
     private final ReindexService reindexService;
 
-    private final AtomicLong count;
-
-    private final Object lock;
-
-    private final AtomicLong complete;
-
-    private final String transactionId;
+    private final int batchSize;
 
     /**
      * Basic constructor
-     * @param execSrvc the executorservice
-     * @param reindexSrvc the ReindexService.
+     * @param ids stream of ocfl ids.
+     * @param reindexService the reindexing service.
+     * @param failOnError whether to have threads fail on an error or log and continue.
+     * @param batchSize number of ids to distribute per request.
      */
-    public ReindexManager(final ExecutorService execSrvc, final ReindexService reindexSrvc) {
-        executorService = execSrvc;
-        reindexService = reindexSrvc;
-        count = new AtomicLong(0);
-        complete = new AtomicLong(0);
-        lock = new Object();
+    public ReindexManager(final Stream<String> ids, final ReindexService reindexService, final boolean failOnError,
+                          final int batchSize) {
+        this.ocflIter = ids.iterator();
+        this.reindexService = reindexService;
+        this.batchSize = batchSize;
         transactionId = UUID.randomUUID().toString();
+        workers = new ArrayList<>();
+        final int availableProcessors = Runtime.getRuntime().availableProcessors();
+        final int threads = availableProcessors > 1 ? availableProcessors - 1 : 1;
+        for (var foo = 0; foo < threads; foo += 1) {
+            workers.add(new ReindexWorker(this, this.reindexService, failOnError));
+        }
     }
 
     /**
-     * Add a new task to the executor service.
-     * @param id the OCFL id to reindex.
+     * Get the transaction id for the reindexing run.
+     * @return the transaction id.
      */
-    public void submit(final String id) {
-        final var task = new ReindexTask(transactionId, id, reindexService);
-
-        executorService.submit(() -> {
-            try {
-                task.run();
-            } finally {
-                count.decrementAndGet();
-                complete.incrementAndGet();
-                synchronized (lock) {
-                    lock.notifyAll();
-                }
-            }
-        });
-
-        count.incrementAndGet();
+    public String getTransactionId() {
+        return transactionId;
     }
 
     /**
-     * Blocks until all migration tasks are complete. Note, this does not prevent additional tasks from being submitted.
-     * It simply waits until the queue is empty.
-     *
-     * @throws InterruptedException on interrupt
+     * Start reindexing.
+     * @throws InterruptedException on an indexing error in a thread.
      */
-    public void awaitCompletion() throws InterruptedException {
-        LOGGER.info("OCFL objects to index: {}", count.get());
-        if (count.get() == 0) {
-            return;
-        }
-
-        synchronized (lock) {
-            while (count.get() > 0) {
-                lock.wait();
+    public void start() throws InterruptedException {
+        try {
+            workers.forEach(ReindexWorker::start);
+            for (final var worker : workers) {
+                worker.join();
             }
+        } catch (final Exception e) {
+            LOGGER.error("Error while rebuilding index", e);
+            stop();
+            throw e;
         }
+    }
+
+    /**
+     * Stop all threads.
+     */
+    public void stop() {
+        for (final var worker : workers) {
+            worker.stopThread();
+        }
+    }
+
+    /**
+     * Return a batch of OCFL ids to reindex.
+     * @return list of OCFL ids.
+     */
+    public synchronized List<String> getIds() {
+        int counter = 0;
+        final List<String> ids = new ArrayList<>();
+        while (ocflIter.hasNext() && counter < batchSize) {
+            ids.add(ocflIter.next());
+            counter += 1;
+        }
+        return ids;
+    }
+
+    /**
+     * Update the master list of reindexing states.
+     * @param newStates map of ocflIds to empty string on success or some error message.
+     */
+    public void updateComplete(final Map<String, String> newStates) {
+        resultStates.putAll(newStates);
+    }
+
+    /**
+     * Get the result states map.
+     * @return map of ocflIds to empty string on success or some error message.
+     */
+    public Map<String, String> getResultStates() {
+        return resultStates;
     }
 
     /**
      * Commit the actions, shut down the executor and closes all resources.
-     *
-     * @throws InterruptedException on interrupt
      */
-    public void shutdown() throws InterruptedException {
+    public void commit() {
         reindexService.commit(transactionId);
-        executorService.shutdown();
-        if (!executorService.awaitTermination(1, TimeUnit.MINUTES)) {
-            LOGGER.error("Failed to shutdown executor service cleanly after 1 minute of waiting");
-            executorService.shutdownNow();
-        }
     }
 
-    /**
-     * Get the number of completed ocfl objects rebuilt.
-     * @return the completed count.
-     */
-    public long getProcessed() {
-        return complete.get();
-    }
 }

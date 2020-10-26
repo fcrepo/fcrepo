@@ -140,6 +140,7 @@ public class IndexBuilderImplTest {
         setField(indexBuilder, "searchIndex", searchIndex);
         setField(indexBuilder, "referenceService", referenceService);
         setField(indexBuilder, "membershipService", membershipService);
+        setField(indexBuilder, "persistentStorageSessionManager", sessionManager);
 
         when(searchIndex.doSearch(any(SearchParameters.class))).thenReturn(containerResult);
     }
@@ -240,6 +241,8 @@ public class IndexBuilderImplTest {
     public void rebuildRepoLotsOfMembership() throws Exception {
         // Reduce the page size so the test doesn't take a while
         ((IndexBuilderImpl) indexBuilder).setMembershipQueryPageSize(5);
+        // Reduce the batch size so more than one worker does something.
+        ((IndexBuilderImpl) indexBuilder).setReindexBatchSize(4);
 
         final var session = sessionManager.getSession(session1Id);
 

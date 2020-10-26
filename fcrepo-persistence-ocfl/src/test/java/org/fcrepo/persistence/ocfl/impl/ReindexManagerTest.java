@@ -36,8 +36,6 @@ import static java.lang.System.currentTimeMillis;
 
 import java.io.ByteArrayInputStream;
 import java.nio.file.Paths;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -108,9 +106,6 @@ public class ReindexManagerTest {
         sessionManager = new OcflPersistentSessionManager();
         setField(sessionManager, "ocflIndex", index);
         setField(sessionManager, "objectSessionFactory", ocflObjectSessionFactory);
-
-        final ExecutorService executorService = Executors.newSingleThreadExecutor();
-        reindexManager = new ReindexManager(executorService, reindexService);
     }
 
     @Test
@@ -135,17 +130,10 @@ public class ReindexManagerTest {
         verify(reindexService).indexOcflObject(anyString(), eq(FEDORA_ID_PREFIX + "/resource1"));
     }
 
-    private void mockedRebuild() {
-        try (final var ocflIds = repository.listObjectIds()) {
-            ocflIds.forEach(reindexManager::submit);
-        }
-        try {
-            reindexManager.awaitCompletion();
-            reindexManager.shutdown();
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
-        }
+    private void mockedRebuild() throws Exception {
+        reindexManager = new ReindexManager(repository.listObjectIds(), reindexService, true, 1);
+        reindexManager.start();
+        reindexManager.commit();
     }
 
     private void assertDoesNotHaveOcflId(final FedoraId resourceId) {

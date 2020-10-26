@@ -41,6 +41,7 @@ import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.search.api.Condition;
 import org.fcrepo.search.api.InvalidQueryException;
@@ -54,6 +55,8 @@ import org.slf4j.Logger;
  * @author whikloj
  */
 public class ReindexService {
+
+    private final PersistentStorageSessionManager persistentStorageSessionManager;
 
     private final OcflObjectSessionFactory ocflObjectSessionFactory;
 
@@ -71,13 +74,15 @@ public class ReindexService {
 
     private final int membershipPageSize;
 
-    public ReindexService(final OcflObjectSessionFactory sessionFactory,
+    public ReindexService(final PersistentStorageSessionManager sessionManager,
+                          final OcflObjectSessionFactory sessionFactory,
                           final FedoraToOcflObjectIndex fedoraToOcflObjectIndex,
                           final ContainmentIndex containmentIdx,
                           final SearchIndex searchIdx,
                           final ReferenceService referenceSrvc,
                           final MembershipService memberService,
                           final int membershipPageSize) {
+        this.persistentStorageSessionManager = sessionManager;
         this.ocflObjectSessionFactory = sessionFactory;
         this.ocflIndex = fedoraToOcflObjectIndex;
         this.containmentIndex = containmentIdx;
@@ -143,6 +148,14 @@ public class ReindexService {
                 LOGGER.debug("Rebuilt searchIndex for {}", headers.getId());
             });
         }
+    }
+
+    /**
+     * Remove persistent sessions for a transaction to avoid memory leaks.
+     * @param transactionId the transaction id.
+     */
+    public void cleanupSession(final String transactionId) {
+        persistentStorageSessionManager.removeSession(transactionId);
     }
 
     /**

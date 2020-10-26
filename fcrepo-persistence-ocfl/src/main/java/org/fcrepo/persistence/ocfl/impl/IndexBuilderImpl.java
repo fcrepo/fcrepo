@@ -30,6 +30,7 @@ import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.IndexBuilder;
@@ -47,7 +48,6 @@ import java.io.InputStream;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
 
 /**
  * An implementation of {@link IndexBuilder}.  This implementation rebuilds the following indexable state derived
@@ -69,8 +69,13 @@ public class IndexBuilderImpl implements IndexBuilder {
 
     private int membershipPageSize = 500;
 
+    private int reindexBatchSize = 100;
+
     @Inject
     private OcflObjectSessionFactory objectSessionFactory;
+
+    @Inject
+    private PersistentStorageSessionManager persistentStorageSessionManager;
 
     @Autowired
     @Qualifier("ocflIndex")
@@ -112,30 +117,24 @@ public class IndexBuilderImpl implements IndexBuilder {
         referenceService.reset();
         membershipService.reset();
 
-        final var reindexService = new ReindexService(objectSessionFactory, ocflIndex, containmentIndex, searchIndex,
-                referenceService, membershipService, membershipPageSize);
-        final int availableProcessors = Runtime.getRuntime().availableProcessors();
-        final int threads = availableProcessors > 1 ? availableProcessors - 1 : 1;
-        final var executor = Executors.newFixedThreadPool(threads);
-        final ReindexManager reindexManager = new ReindexManager(executor, reindexService);
+        final var reindexService = new ReindexService(persistentStorageSessionManager, objectSessionFactory, ocflIndex,
+                containmentIndex, searchIndex, referenceService, membershipService, membershipPageSize);
+        final ReindexManager reindexManager = new ReindexManager(ocflRepository.listObjectIds(), reindexService,
+                true, reindexBatchSize);
 
         LOGGER.debug("Reading object ids...");
         final var startTime = Instant.now();
-
-        try (final var ocflIds = ocflRepository.listObjectIds()) {
-            ocflIds.forEach(reindexManager::submit);
-        }
-
         try {
-            reindexManager.awaitCompletion();
+            reindexManager.start();
+            reindexManager.commit();
             LOGGER.info("Reindexing complete.");
-            reindexManager.shutdown();
         } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
         final var endTime = Instant.now();
-        LOGGER.info("Index rebuild complete in {} milliseconds", Duration.between(startTime, endTime).toMillis());
+        final var count = reindexManager.getResultStates().keySet().size();
+        LOGGER.info("Index rebuild complete {} objects in {} milliseconds", count,
+                Duration.between(startTime, endTime).toMillis());
     }
 
 
@@ -144,6 +143,14 @@ public class IndexBuilderImpl implements IndexBuilder {
      */
     public void setMembershipQueryPageSize(final int pageSize) {
         this.membershipPageSize = pageSize;
+    }
+
+    /**
+     * Change the number of OCFL ids given out to workers at a time.
+     * @param batchSize number of OCFL ids per batch.
+     */
+    public void setReindexBatchSize(final int batchSize) {
+        this.reindexBatchSize = batchSize;
     }
 
     private boolean shouldRebuild() {

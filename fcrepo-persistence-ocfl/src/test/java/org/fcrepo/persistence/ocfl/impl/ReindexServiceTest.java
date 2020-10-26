@@ -40,6 +40,7 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.search.api.SearchIndex;
 import org.fcrepo.search.api.SearchParameters;
@@ -63,6 +64,9 @@ import org.mockito.junit.MockitoJUnitRunner;
  */
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class ReindexServiceTest {
+
+    @Mock
+    private PersistentStorageSessionManager persistentStorageSessionManager;
 
     @Mock
     private OcflObjectSessionFactory ocflObjectSessionFactory;
@@ -89,8 +93,8 @@ public class ReindexServiceTest {
 
     @Before
     public void setUp() {
-        reindexService = new ReindexService(ocflObjectSessionFactory, ocflObjectIndex, containmentIndex, searchIndex,
-                referenceService, membershipService, 5);
+        reindexService = new ReindexService(persistentStorageSessionManager, ocflObjectSessionFactory, ocflObjectIndex,
+                containmentIndex, searchIndex, referenceService, membershipService, 5);
         when(ocflObjectSessionFactory.newSession(anyString())).thenReturn(objectSession);
     }
 
