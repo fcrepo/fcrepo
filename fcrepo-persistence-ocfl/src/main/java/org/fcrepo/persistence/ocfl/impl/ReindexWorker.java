@@ -31,7 +31,6 @@ public class ReindexWorker implements Runnable {
     private ReindexManager manager;
     private ReindexService service;
     private boolean running = true;
-    private Map<String, String> states = new HashMap<>();
     private boolean failOnError;
 
     /**
@@ -45,17 +44,25 @@ public class ReindexWorker implements Runnable {
         manager = reindexManager;
         service = reindexService;
         this.failOnError = failOnError;
+        t = new Thread(this, "ReindexWorker");
     }
 
+    /**
+     * Join the thread.
+     * @throws InterruptedException if the current thread is interrupted.
+     */
     public void join() throws InterruptedException {
         t.join();
     }
 
+    /**
+     * Start the thread with this Runnable
+     */
     public void start() {
-        t = new Thread(this, "ReindexWorker");
         t.start();
     }
 
+    @Override
     public void run() {
         while (running) {
             final List<String> ids = manager.getIds();
@@ -63,6 +70,7 @@ public class ReindexWorker implements Runnable {
                 stopThread();
                 break;
             }
+            final Map<String, String> states = new HashMap<>();
             for (final var id : ids) {
                 try {
                     service.indexOcflObject(manager.getTransactionId(), id);
@@ -76,9 +84,9 @@ public class ReindexWorker implements Runnable {
                     }
                 }
             }
+            manager.updateComplete(states);
             service.cleanupSession(manager.getTransactionId());
         }
-        manager.updateComplete(states);
     }
 
     /**

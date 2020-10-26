@@ -135,7 +135,7 @@ public class ReindexManager {
     }
 
     /**
-     * Commit the actions, shut down the executor and closes all resources.
+     * Commit the actions.
      */
     public void commit() {
         reindexService.commit(transactionId);
