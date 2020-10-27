@@ -25,10 +25,10 @@ jobs:
             - postgresql-client-12
       env:
         - DB=postgresql
-        - DB_PORT=5432
+        - DB_PORT=5433
         - ITEST=true
       before_script:
-        - psql -c 'CREATE DATABASE fcrepo;' -U postgres
+        - psql -p $DB_PORT -c 'CREATE DATABASE fcrepo;' -U postgres
     - name: ITests - MariaDB
       os: linux
       dist: trusty
