@@ -84,7 +84,8 @@ public class HttpIdentifierConverter {
         final String path = getPath(httpUri);
         if (path != null) {
             final String decodedPath = URLDecoder.decode(path, UTF_8);
-            final String fedoraId = trimTrailingSlashes(decodedPath);
+            final String idPath = decodedPath.replaceAll(" ", "%20");
+            final String fedoraId = trimTrailingSlashes(idPath);
 
             return FEDORA_ID_PREFIX + fedoraId;
         }
@@ -115,7 +116,8 @@ public class HttpIdentifierConverter {
         if (inInternalDomain(fedoraId)) {
             // If it starts with our prefix, strip the prefix and any leading slashes and use it as the path
             // part of the URI.
-            final String path = fedoraId.substring(FEDORA_ID_PREFIX.length()).replaceFirst("\\/", "");
+            final String path = fedoraId.substring(FEDORA_ID_PREFIX.length()).replaceFirst("\\/", "")
+                    .replaceAll("%20", " ");
             final UriBuilder uri = uriBuilder();
             if (path.contains("#")) {
                 final String[] split = path.split("#", 2);
