@@ -20,18 +20,18 @@ package org.fcrepo.persistence.ocfl.impl;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import org.fcrepo.config.OcflPropsConfig;
 import org.slf4j.Logger;
 
 /**
  * Class to coordinate the index rebuilding tasks.
  * @author whikloj
+ * @since 6.0.0
  */
 public class ReindexManager {
 
@@ -43,39 +43,35 @@ public class ReindexManager {
 
     private final Iterator<String> ocflIter;
 
-    private final Map<String, String> resultStates = new HashMap<>();
+    private final Stream<String> ocflStream;
+
+    private int completedCount;
+
+    private int errorCount;
 
     private final ReindexService reindexService;
 
-    private final int batchSize;
+    private final long batchSize;
+
+    private final boolean failOnError;
 
     /**
      * Basic constructor
      * @param ids stream of ocfl ids.
      * @param reindexService the reindexing service.
-     * @param failOnError whether to have threads fail on an error or log and continue.
-     * @param batchSize number of ids to distribute per request.
+     * @param config OCFL property config object.
      */
-    public ReindexManager(final Stream<String> ids, final ReindexService reindexService, final boolean failOnError,
-                          final int batchSize) {
-        this.ocflIter = ids.iterator();
+    public ReindexManager(final Stream<String> ids, final ReindexService reindexService, final OcflPropsConfig config) {
+        this.ocflStream = ids;
+        this.ocflIter = ocflStream.iterator();
         this.reindexService = reindexService;
-        this.batchSize = batchSize;
+        this.batchSize = config.getReindexBatchSize();
+        this.failOnError = config.isReindexFailOnError();
         transactionId = UUID.randomUUID().toString();
         workers = new ArrayList<>();
-        final int availableProcessors = Runtime.getRuntime().availableProcessors();
-        final int threads = availableProcessors > 1 ? availableProcessors - 1 : 1;
-        for (var foo = 0; foo < threads; foo += 1) {
-            workers.add(new ReindexWorker(this, this.reindexService, failOnError));
+        for (var foo = 0; foo < config.getReindexingThreads(); foo += 1) {
+            workers.add(new ReindexWorker(this, this.reindexService, transactionId, this.failOnError));
         }
-    }
-
-    /**
-     * Get the transaction id for the reindexing run.
-     * @return the transaction id.
-     */
-    public String getTransactionId() {
-        return transactionId;
     }
 
     /**
@@ -99,9 +95,7 @@ public class ReindexManager {
      * Stop all threads.
      */
     public void stop() {
-        for (final var worker : workers) {
-            worker.stopThread();
-        }
+        workers.forEach(ReindexWorker::stopThread);
     }
 
     /**
@@ -120,18 +114,26 @@ public class ReindexManager {
 
     /**
      * Update the master list of reindexing states.
-     * @param newStates map of ocflIds to empty string on success or some error message.
+     * @param batchSuccessful how many items were completed successfully in the last batch.
+     * @param batchErrors how many items had an error in the last batch.
      */
-    public void updateComplete(final Map<String, String> newStates) {
-        resultStates.putAll(newStates);
+    public void updateComplete(final int batchSuccessful, final int batchErrors) {
+        completedCount += batchSuccessful;
+        errorCount += batchErrors;
     }
 
     /**
-     * Get the result states map.
-     * @return map of ocflIds to empty string on success or some error message.
+     * @return the count of items that completed successfully.
      */
-    public Map<String, String> getResultStates() {
-        return resultStates;
+    public int getCompletedCount() {
+        return completedCount;
+    }
+
+    /**
+     * @return the count of items that had errors.
+     */
+    public int getErrorCount() {
+        return errorCount;
     }
 
     /**
@@ -139,6 +141,20 @@ public class ReindexManager {
      */
     public void commit() {
         reindexService.commit(transactionId);
+        reindexService.indexMembership(transactionId);
     }
 
+    /**
+     * Rollback the current transaction.
+     */
+    public void rollback() {
+        reindexService.rollback(transactionId);
+    }
+
+    /**
+     * Close stream.
+     */
+    public void shutdown() {
+        ocflStream.close();
+    }
 }

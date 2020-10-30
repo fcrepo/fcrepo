@@ -17,25 +17,13 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static org.apache.jena.graph.NodeFactory.createURI;
-import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.getRdfFormat;
-
 import edu.wisc.library.ocfl.api.OcflRepository;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.riot.RDFDataMgr;
+import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
-import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.kernel.api.services.MembershipService;
-import org.fcrepo.kernel.api.services.ReferenceService;
-import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.IndexBuilder;
-import org.fcrepo.search.api.SearchIndex;
-import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,10 +32,8 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 
-import java.io.InputStream;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.concurrent.Callable;
 
 /**
  * An implementation of {@link IndexBuilder}.  This implementation rebuilds the following indexable state derived
@@ -67,15 +53,7 @@ public class IndexBuilderImpl implements IndexBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexBuilderImpl.class);
 
-    private int membershipPageSize = 500;
-
     private int reindexBatchSize = 100;
-
-    @Inject
-    private OcflObjectSessionFactory objectSessionFactory;
-
-    @Inject
-    private PersistentStorageSessionManager persistentStorageSessionManager;
 
     @Autowired
     @Qualifier("ocflIndex")
@@ -85,19 +63,14 @@ public class IndexBuilderImpl implements IndexBuilder {
     @Qualifier("containmentIndex")
     private ContainmentIndex containmentIndex;
 
-    @Autowired
-    @Qualifier("searchIndex")
-    private SearchIndex searchIndex;
-
     @Inject
     private OcflRepository ocflRepository;
 
-    @Autowired
-    @Qualifier("referenceService")
-    private ReferenceService referenceService;
+    @Inject
+    private ReindexService reindexService;
 
     @Inject
-    private MembershipService membershipService;
+    private OcflPropsConfig ocflPropsConfig;
 
     @Override
     public void rebuildIfNecessary() {
@@ -111,16 +84,10 @@ public class IndexBuilderImpl implements IndexBuilder {
     private void rebuild() {
         LOGGER.info("Initiating index rebuild.");
 
-        ocflIndex.reset();
-        containmentIndex.reset();
-        searchIndex.reset();
-        referenceService.reset();
-        membershipService.reset();
+        reindexService.reset();
 
-        final var reindexService = new ReindexService(persistentStorageSessionManager, objectSessionFactory, ocflIndex,
-                containmentIndex, searchIndex, referenceService, membershipService, membershipPageSize);
         final ReindexManager reindexManager = new ReindexManager(ocflRepository.listObjectIds(), reindexService,
-                true, reindexBatchSize);
+                ocflPropsConfig);
 
         LOGGER.debug("Reading object ids...");
         final var startTime = Instant.now();
@@ -129,20 +96,24 @@ public class IndexBuilderImpl implements IndexBuilder {
             reindexManager.commit();
             LOGGER.info("Reindexing complete.");
         } catch (final InterruptedException e) {
+            reindexManager.rollback();
             throw new RuntimeException(e);
+        } finally {
+            reindexManager.shutdown();
         }
         final var endTime = Instant.now();
-        final var count = reindexManager.getResultStates().keySet().size();
-        LOGGER.info("Index rebuild complete {} objects in {} milliseconds", count,
-                Duration.between(startTime, endTime).toMillis());
+        final var count = reindexManager.getCompletedCount();
+        LOGGER.info("Index rebuild complete {} objects in {} ", count,
+                getDurationMessage(Duration.between(startTime, endTime)));
     }
 
 
     /**
+     * Pass this along to the ReindexService
      * @param pageSize number of results to use when querying for membership producing resources
      */
     public void setMembershipQueryPageSize(final int pageSize) {
-        this.membershipPageSize = pageSize;
+        reindexService.setMembershipPageSize(pageSize);
     }
 
     /**
@@ -178,25 +149,14 @@ public class IndexBuilderImpl implements IndexBuilder {
         return ocflRepository.listObjectIds().findFirst().isPresent();
     }
 
-    private static RdfStream parseRdf(final FedoraId fedoraIdentifier, final InputStream inputStream) {
-        final Model model = createDefaultModel();
-        RDFDataMgr.read(model, inputStream, getRdfFormat().getLang());
-        final FedoraId topic = (fedoraIdentifier.isDescription() ? fedoraIdentifier.asBaseId() : fedoraIdentifier);
-        return DefaultRdfStream.fromModel(createURI(topic.getFullId()), model);
-    }
-
-    /**
-     * Executes the closure, capturing all exceptions, and logging them as errors.
-     *
-     * @param failureMessage what to print if the closure fails
-     * @param callable closure to execute
-     */
-    private void execQuietly(final String failureMessage, final Callable<Void> callable) {
-        try {
-            callable.call();
-        } catch (final Exception e) {
-            LOGGER.error(failureMessage, e);
+    private String getDurationMessage(final Duration duration) {
+        String message = String.format("%d seconds", duration.toSecondsPart());
+        if (duration.getSeconds() > 60) {
+            message = String.format("%d mins, ", duration.toMinutesPart()) + message;
         }
+        if (duration.getSeconds() > 3600) {
+            message = String.format("%d hours, ", duration.toHoursPart()) + message;
+        }
+        return message;
     }
-
 }

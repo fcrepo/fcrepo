@@ -17,9 +17,7 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A reindexing worker thread.
@@ -30,6 +28,7 @@ public class ReindexWorker implements Runnable {
     private Thread t;
     private ReindexManager manager;
     private ReindexService service;
+    private String transactionId;
     private boolean running = true;
     private boolean failOnError;
 
@@ -37,12 +36,14 @@ public class ReindexWorker implements Runnable {
      * Basic Constuctor
      * @param reindexManager the manager service.
      * @param reindexService the reindexing service.
+     * @param txId the transaction id.
      * @param failOnError whether the thread should fail on an error or log and continue.
      */
     public ReindexWorker(final ReindexManager reindexManager, final ReindexService reindexService,
-                         final boolean failOnError) {
+                         final String txId, final boolean failOnError) {
         manager = reindexManager;
         service = reindexService;
+        transactionId = txId;
         this.failOnError = failOnError;
         t = new Thread(this, "ReindexWorker");
     }
@@ -70,22 +71,28 @@ public class ReindexWorker implements Runnable {
                 stopThread();
                 break;
             }
-            final Map<String, String> states = new HashMap<>();
+            int completed = 0;
+            int errors = 0;
             for (final var id : ids) {
+                if (!running) {
+                    break;
+                }
                 try {
-                    service.indexOcflObject(manager.getTransactionId(), id);
-                    states.put(id, "");
+                    service.indexOcflObject(transactionId, id);
+                    completed += 1;
                 } catch (final Exception e) {
-                    states.put(id, e.getMessage());
+                    errors += 1;
                     if (failOnError) {
                         stopThread();
-                        manager.updateComplete(states);
+                        manager.updateComplete(completed, errors);
+                        manager.stop();
+                        service.cleanupSession(transactionId);
                         throw e;
                     }
                 }
             }
-            manager.updateComplete(states);
-            service.cleanupSession(manager.getTransactionId());
+            manager.updateComplete(completed, errors);
+            service.cleanupSession(transactionId);
         }
     }
 

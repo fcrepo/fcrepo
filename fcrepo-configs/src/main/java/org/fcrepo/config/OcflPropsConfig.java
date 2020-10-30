@@ -92,12 +92,31 @@ public class OcflPropsConfig {
     @Value("${fcrepo.resource-header-cache.expire-after-seconds:600}")
     private long resourceHeadersCacheExpireAfterSeconds;
 
+    @Value("${fcrepo.ocfl.reindex.threads:-1}")
+    private long reindexThreads;
+
+    @Value("${fcrepo.ocfl.reindex.batchSize:100}")
+    private long reindexBatchSize;
+
+    @Value("${fcrepo.ocfl.reindex.failOnError:true}")
+    private boolean reindexFailOnError;
+
+    private static final long availableThreads = Runtime.getRuntime().availableProcessors();
+
     @PostConstruct
     private void postConstruct() throws IOException {
+        if (reindexThreads < 0L) {
+            reindexThreads = computeDefaultReindexThreads();
+        } else {
+            reindexThreads = checkReindexThreadLimit(reindexThreads);
+        }
         storage = Storage.fromString(storageStr);
         LOGGER.info("Fedora storage type: {}", storage);
         LOGGER.info("Fedora staging: {}", fedoraOcflStaging);
         LOGGER.info("Fedora OCFL temp: {}", ocflTemp);
+        LOGGER.info("Fedora OCFL reindexing threads: {}", reindexThreads);
+        LOGGER.info("Fedora OCFL reindexing batch size: {}", reindexBatchSize);
+        LOGGER.info("Fedora OCFL reindexing fail on error: {}", reindexFailOnError);
         Files.createDirectories(fedoraOcflStaging);
         Files.createDirectories(ocflTemp);
 
@@ -305,5 +324,71 @@ public class OcflPropsConfig {
      */
     public void setResourceHeadersCacheExpireAfterSeconds(final long resourceHeadersCacheExpireAfterSeconds) {
         this.resourceHeadersCacheExpireAfterSeconds = resourceHeadersCacheExpireAfterSeconds;
+    }
+
+    /**
+     * @param threads
+     *   number of threads to use when rebuilding from Fedora OCFL on disk.
+     */
+    public void setReindexingThreads(final long threads) {
+        this.reindexThreads = checkReindexThreadLimit(threads);
+    }
+
+    /**
+     * @return number of threads to use when rebuilding from Fedora OCFL on disk.
+     */
+    public long getReindexingThreads() {
+        return this.reindexThreads;
+    }
+
+    /**
+     * @return number of OCFL ids for a the reindexing manager to hand out at once.
+     */
+    public long getReindexBatchSize() {
+        return reindexBatchSize;
+    }
+
+    /**
+     * @param reindexBatchSize
+     *   number of OCFL ids for a the reindexing manager to hand out at once.
+     */
+    public void setReindexBatchSize(final long reindexBatchSize) {
+        this.reindexBatchSize = reindexBatchSize;
+    }
+
+    /**
+     * @return whether to stop the entire reindexing process if a single object fails.
+     */
+    public boolean isReindexFailOnError() {
+        return reindexFailOnError;
+    }
+
+    /**
+     * @param reindexFailOnError
+     *   whether to stop the entire reindexing process if a single object fails.
+     */
+    public void setReindexFailOnError(final boolean reindexFailOnError) {
+        this.reindexFailOnError = reindexFailOnError;
+    }
+
+    /**
+     * Check we don't create too few reindexing threads.
+     * @param threads the number of threads requested.
+     * @return higher of the requested amount or 1
+     */
+    private long checkReindexThreadLimit(final long threads) {
+       if (threads <= 0) {
+            LOGGER.warn("Can't have fewer than 1 reindexing thread, setting to 1.");
+            return 1;
+        } else {
+            return threads;
+        }
+    }
+
+    /**
+     * @return number of available processors minus 1.
+     */
+    private static long computeDefaultReindexThreads() {
+        return availableThreads - 1;
     }
 }

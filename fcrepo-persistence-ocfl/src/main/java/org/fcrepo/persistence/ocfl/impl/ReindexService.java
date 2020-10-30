@@ -23,6 +23,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.getRdfFormat;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.inject.Inject;
+
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,48 +51,45 @@ import org.fcrepo.search.api.SearchIndex;
 import org.fcrepo.search.api.SearchParameters;
 import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 
 /**
  * Service that does the reindexing for one OCFL object.
  * @author whikloj
  */
+@Component
 public class ReindexService {
 
-    private final PersistentStorageSessionManager persistentStorageSessionManager;
+    @Inject
+    private PersistentStorageSessionManager persistentStorageSessionManager;
 
-    private final OcflObjectSessionFactory ocflObjectSessionFactory;
+    @Inject
+    private OcflObjectSessionFactory ocflObjectSessionFactory;
 
-    private final FedoraToOcflObjectIndex ocflIndex;
+    @Autowired
+    @Qualifier("ocflIndex")
+    private FedoraToOcflObjectIndex ocflIndex;
 
-    private final ContainmentIndex containmentIndex;
+    @Autowired
+    @Qualifier("containmentIndex")
+    private ContainmentIndex containmentIndex;
 
-    private final SearchIndex searchIndex;
+    @Autowired
+    @Qualifier("searchIndex")
+    private SearchIndex searchIndex;
 
-    private final ReferenceService referenceService;
+    @Autowired
+    @Qualifier("referenceService")
+    private ReferenceService referenceService;
 
-    private final MembershipService membershipService;
+    @Inject
+    private MembershipService membershipService;
 
     private static final Logger LOGGER = getLogger(ReindexService.class);
 
-    private final int membershipPageSize;
-
-    public ReindexService(final PersistentStorageSessionManager sessionManager,
-                          final OcflObjectSessionFactory sessionFactory,
-                          final FedoraToOcflObjectIndex fedoraToOcflObjectIndex,
-                          final ContainmentIndex containmentIdx,
-                          final SearchIndex searchIdx,
-                          final ReferenceService referenceSrvc,
-                          final MembershipService memberService,
-                          final int membershipPageSize) {
-        this.persistentStorageSessionManager = sessionManager;
-        this.ocflObjectSessionFactory = sessionFactory;
-        this.ocflIndex = fedoraToOcflObjectIndex;
-        this.containmentIndex = containmentIdx;
-        this.searchIndex = searchIdx;
-        this.referenceService = referenceSrvc;
-        this.membershipService = memberService;
-        this.membershipPageSize = membershipPageSize;
-    }
+    private int membershipPageSize = 500;
 
     public void indexOcflObject(final String txId, final String ocflId) {
         LOGGER.debug("Indexing ocflId {} in transaction {}", ocflId, txId);
@@ -159,6 +158,25 @@ public class ReindexService {
     }
 
     /**
+     * Set the membership page size.
+     * @param pageSize the new page size.
+     */
+    public void setMembershipPageSize(final int pageSize) {
+        membershipPageSize = pageSize;
+    }
+
+    /**
+     * Reset all the indexes.
+     */
+    public void reset() {
+        ocflIndex.reset();
+        containmentIndex.reset();
+        searchIndex.reset();
+        referenceService.reset();
+        membershipService.reset();
+    }
+
+    /**
      * Commit the records added from transaction.
      * @param transactionId the id of the transaction.
      */
@@ -168,7 +186,6 @@ public class ReindexService {
             containmentIndex.commitTransaction(transactionId);
             ocflIndex.commit(transactionId);
             referenceService.commitTransaction(transactionId);
-            indexMembership(transactionId);
             LOGGER.debug("Finished commit");
         } catch (final RuntimeException e) {
             execQuietly("Failed to reset searchIndex", () -> {
@@ -198,12 +215,20 @@ public class ReindexService {
         }
     }
 
+    public void rollback(final String transactionId) {
+        searchIndex.reset();
+        containmentIndex.rollbackTransaction(transactionId);
+        referenceService.rollbackTransaction(transactionId);
+        ocflIndex.rollback(transactionId);
+        membershipService.rollbackTransaction(transactionId);
+    }
+
     /**
      * Index all membership properties by querying for Direct containers, and then
      * trying population of the membership index for each one
      * @param txId the transaction id.
      */
-    private void indexMembership(final String txId) {
+    public void indexMembership(final String txId) {
         final var fields = List.of(Condition.Field.FEDORA_ID);
         final var conditions = List.of(Condition.fromEnums(Condition.Field.RDF_TYPE, Condition.Operator.EQ,
                 RdfLexicon.DIRECT_CONTAINER.getURI()));
