@@ -94,7 +94,7 @@ public class ReindexWorker implements Runnable {
                         service.cleanupSession(transactionId);
                         throw e;
                     }
-                    LOGGER.error("Reindexing of OCFL id {} failed: {}", id, e.getMessage());
+                    LOGGER.error("Reindexing of OCFL id {} failed", id, e);
                 }
             }
             manager.updateComplete(completed, errors);
