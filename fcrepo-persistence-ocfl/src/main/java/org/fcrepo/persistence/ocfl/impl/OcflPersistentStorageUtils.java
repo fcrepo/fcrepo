@@ -26,9 +26,7 @@ import edu.wisc.library.ocfl.api.OcflConfig;
 import edu.wisc.library.ocfl.api.model.DigestAlgorithm;
 import edu.wisc.library.ocfl.aws.OcflS3Client;
 import edu.wisc.library.ocfl.core.OcflRepositoryBuilder;
-import edu.wisc.library.ocfl.core.db.ObjectDetailsDatabaseBuilder;
 import edu.wisc.library.ocfl.core.extension.storage.layout.config.HashedTruncatedNTupleConfig;
-import edu.wisc.library.ocfl.core.lock.ObjectLockBuilder;
 import edu.wisc.library.ocfl.core.path.constraint.ContentPathConstraints;
 import edu.wisc.library.ocfl.core.path.mapper.LogicalPathMappers;
 import edu.wisc.library.ocfl.core.storage.cloud.CloudOcflStorage;
@@ -125,13 +123,12 @@ public class OcflPersistentStorageUtils {
                         .bucket(bucket)
                         .repoPrefix(prefix)
                         .build())
-                .workDir(ocflWorkDir)
                 .build();
 
         return createRepository(ocflWorkDir, builder -> {
             builder.contentPathConstraints(ContentPathConstraints.cloud())
-                    .objectLock(new ObjectLockBuilder().buildDbLock(dataSource))
-                    .objectDetailsDb(new ObjectDetailsDatabaseBuilder().build(dataSource))
+                    .objectLock(lock -> lock.dataSource(dataSource))
+                    .objectDetailsDb(db -> db.dataSource(dataSource))
                     .storage(storage);
         });
     }
