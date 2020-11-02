@@ -123,7 +123,6 @@ public class ReindexServiceTest extends AbstractReindexerTest {
     @Test
     public void rebuildWhenRepoContainsArchivalGroupObject() throws Exception {
         final var session = persistentStorageSessionManager.getSession(session1Id);
-        final var txId = getRandomId();
 
         createResource(session, resource1, true);
         createChildResourceNonRdf(session, resource1, resource2);

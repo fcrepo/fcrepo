@@ -53,8 +53,6 @@ public class IndexBuilderImpl implements IndexBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexBuilderImpl.class);
 
-    private int reindexBatchSize = 100;
-
     @Autowired
     @Qualifier("ocflIndex")
     private FedoraToOcflObjectIndex ocflIndex;
@@ -106,23 +104,6 @@ public class IndexBuilderImpl implements IndexBuilder {
         final var errors = reindexManager.getErrorCount();
         LOGGER.info("Index rebuild completed {} objects successfully and {} objects had errors in {} ", count, errors,
                 getDurationMessage(Duration.between(startTime, endTime)));
-    }
-
-
-    /**
-     * Pass this along to the ReindexService
-     * @param pageSize number of results to use when querying for membership producing resources
-     */
-    public void setMembershipQueryPageSize(final int pageSize) {
-        reindexService.setMembershipPageSize(pageSize);
-    }
-
-    /**
-     * Change the number of OCFL ids given out to workers at a time.
-     * @param batchSize number of OCFL ids per batch.
-     */
-    public void setReindexBatchSize(final int batchSize) {
-        this.reindexBatchSize = batchSize;
     }
 
     private boolean shouldRebuild() {
