@@ -3395,9 +3395,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testUpdateObjectWithSpaces() throws IOException {
         final String id = getRandomUniqueId() + " 2";
-        final HttpPost post = postObjMethod();
-        post.setHeader("Slug", id);
-        assertEquals(BAD_REQUEST.getStatusCode(),getStatus(post));
+        try (final CloseableHttpResponse createResponse = createObject(id)) {
+            final String subjectURI = getLocation(createResponse);
+            final HttpPatch updateObjectGraphMethod = new HttpPatch(subjectURI);
+            updateObjectGraphMethod.addHeader(CONTENT_TYPE, "application/sparql-update");
+            updateObjectGraphMethod.setEntity(new StringEntity(
+                    "INSERT { <> <http://purl.org/dc/elements/1.1/title> \"test\" } WHERE {}"));
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(updateObjectGraphMethod));
+        }
     }
 
     @Test

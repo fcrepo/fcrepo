@@ -18,7 +18,6 @@
 package org.fcrepo.kernel.api.identifiers;
 
 import org.fcrepo.kernel.api.FedoraTypes;
-import org.fcrepo.kernel.api.exception.IdentifierConversionException;
 import org.fcrepo.kernel.api.exception.InvalidMementoPathException;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.junit.Test;
@@ -27,7 +26,6 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
@@ -439,26 +437,6 @@ public class FedoraIdTest {
         assertAsAcl("original/" + FCR_VERSIONS + "/20200401101900", acl);
         assertAsAcl("original/child", "original/child/" + FCR_ACL);
         assertAsAcl("original/child#sad", "original/child/" + FCR_ACL);
-    }
-
-    @Test(expected = IdentifierConversionException.class)
-    public void testWithLiteralSpace() {
-        final String id = UUID.randomUUID().toString() + " sometext";
-        FedoraId.create(id);
-    }
-
-    @Test
-    public void testWithPlusSignSpaces() {
-        final String id = UUID.randomUUID().toString() + "+sometext";
-        final FedoraId fedoraId = FedoraId.create(id);
-        assertEquals(FEDORA_ID_PREFIX + "/" + id, fedoraId.getFullId());
-    }
-
-    @Test
-    public void testWithEncodedSpaces() {
-        final String id = UUID.randomUUID().toString() + "%20sometext";
-        final FedoraId fedoraId = FedoraId.create(id);
-        assertEquals(FEDORA_ID_PREFIX + "/" + id, fedoraId.getFullId());
     }
 
     private void assertAsMemento(final String original, final String expected) {
