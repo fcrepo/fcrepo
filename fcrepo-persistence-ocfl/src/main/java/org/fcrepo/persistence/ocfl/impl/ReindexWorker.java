@@ -38,7 +38,7 @@ public class ReindexWorker implements Runnable {
     private boolean failOnError;
 
     /**
-     * Basic Constuctor
+     * Basic Constructor
      * @param reindexManager the manager service.
      * @param reindexService the reindexing service.
      * @param txId the transaction id.

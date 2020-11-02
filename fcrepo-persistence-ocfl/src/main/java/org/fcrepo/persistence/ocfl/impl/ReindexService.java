@@ -182,11 +182,11 @@ public class ReindexService {
      */
     public void commit(final String transactionId) {
         try {
-            LOGGER.debug("Performing commit");
+            LOGGER.debug("Performing commit of transaction {}", transactionId);
             containmentIndex.commitTransaction(transactionId);
             ocflIndex.commit(transactionId);
             referenceService.commitTransaction(transactionId);
-            LOGGER.debug("Finished commit");
+            LOGGER.debug("Finished commit of transaction {}", transactionId);
         } catch (final RuntimeException e) {
             rollback(transactionId);
             throw e;
