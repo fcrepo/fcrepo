@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import org.fcrepo.config.OcflPropsConfig;
@@ -45,9 +46,9 @@ public class ReindexManager {
 
     private final Stream<String> ocflStream;
 
-    private int completedCount;
+    private AtomicInteger completedCount;
 
-    private int errorCount;
+    private AtomicInteger errorCount;
 
     private final ReindexService reindexService;
 
@@ -69,6 +70,8 @@ public class ReindexManager {
         this.failOnError = config.isReindexFailOnError();
         transactionId = UUID.randomUUID().toString();
         workers = new ArrayList<>();
+        completedCount = new AtomicInteger(0);
+        errorCount = new AtomicInteger(0);
         for (var foo = 0; foo < config.getReindexingThreads(); foo += 1) {
             workers.add(new ReindexWorker(this, this.reindexService, transactionId, this.failOnError));
         }
@@ -104,7 +107,7 @@ public class ReindexManager {
      */
     public synchronized List<String> getIds() {
         int counter = 0;
-        final List<String> ids = new ArrayList<>();
+        final List<String> ids = new ArrayList<>((int) batchSize);
         while (ocflIter.hasNext() && counter < batchSize) {
             ids.add(ocflIter.next());
             counter += 1;
@@ -118,22 +121,22 @@ public class ReindexManager {
      * @param batchErrors how many items had an error in the last batch.
      */
     public void updateComplete(final int batchSuccessful, final int batchErrors) {
-        completedCount += batchSuccessful;
-        errorCount += batchErrors;
+        completedCount.addAndGet(batchSuccessful);
+        errorCount.addAndGet(batchErrors);
     }
 
     /**
      * @return the count of items that completed successfully.
      */
     public int getCompletedCount() {
-        return completedCount;
+        return completedCount.get();
     }
 
     /**
      * @return the count of items that had errors.
      */
     public int getErrorCount() {
-        return errorCount;
+        return errorCount.get();
     }
 
     /**

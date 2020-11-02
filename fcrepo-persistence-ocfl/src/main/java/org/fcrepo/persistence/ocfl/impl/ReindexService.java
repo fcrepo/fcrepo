@@ -188,39 +188,39 @@ public class ReindexService {
             referenceService.commitTransaction(transactionId);
             LOGGER.debug("Finished commit");
         } catch (final RuntimeException e) {
-            execQuietly("Failed to reset searchIndex", () -> {
-                searchIndex.reset();
-                return null;
-            });
-
-            execQuietly("Failed to rollback containment index transaction " + transactionId, () -> {
-                containmentIndex.rollbackTransaction(transactionId);
-                return null;
-            });
-            execQuietly("Failed to rollback OCFL index transaction " + transactionId, () -> {
-                ocflIndex.rollback(transactionId);
-                return null;
-            });
-
-            execQuietly("Failed to rollback the reference index transaction " + transactionId, () -> {
-                referenceService.rollbackTransaction(transactionId);
-                return null;
-            });
-
-            execQuietly("Failed to rollback membership index transaction " + transactionId, () -> {
-                membershipService.rollbackTransaction(transactionId);
-                return null;
-            });
+            rollback(transactionId);
             throw e;
         }
     }
 
+    /**
+     * Quietly rollback all changes to the various indexes.
+     * @param transactionId the transaction to rollback.
+     */
     public void rollback(final String transactionId) {
-        searchIndex.reset();
-        containmentIndex.rollbackTransaction(transactionId);
-        referenceService.rollbackTransaction(transactionId);
-        ocflIndex.rollback(transactionId);
-        membershipService.rollbackTransaction(transactionId);
+        execQuietly("Failed to reset searchIndex", () -> {
+            searchIndex.reset();
+            return null;
+        });
+
+        execQuietly("Failed to rollback containment index transaction " + transactionId, () -> {
+            containmentIndex.rollbackTransaction(transactionId);
+            return null;
+        });
+        execQuietly("Failed to rollback OCFL index transaction " + transactionId, () -> {
+            ocflIndex.rollback(transactionId);
+            return null;
+        });
+
+        execQuietly("Failed to rollback the reference index transaction " + transactionId, () -> {
+            referenceService.rollbackTransaction(transactionId);
+            return null;
+        });
+
+        execQuietly("Failed to rollback membership index transaction " + transactionId, () -> {
+            membershipService.rollbackTransaction(transactionId);
+            return null;
+        });
     }
 
     /**
@@ -229,6 +229,7 @@ public class ReindexService {
      * @param txId the transaction id.
      */
     public void indexMembership(final String txId) {
+        LOGGER.debug("Starting indexMembership for transaction {}", txId);
         final var fields = List.of(Condition.Field.FEDORA_ID);
         final var conditions = List.of(Condition.fromEnums(Condition.Field.RDF_TYPE, Condition.Operator.EQ,
                 RdfLexicon.DIRECT_CONTAINER.getURI()));
@@ -256,6 +257,7 @@ public class ReindexService {
             throw new RepositoryRuntimeException("Failed to repopulate membership history", e);
         }
         membershipService.commitTransaction(txId);
+        LOGGER.debug("Finished indexMembership for transaction {}", txId);
     }
 
     /**
@@ -272,6 +274,13 @@ public class ReindexService {
         }
     }
 
+    /**
+     * Parse the inputstream from a Rdf resource to a RDFstream.
+     *
+     * @param fedoraIdentifier the resource identifier.
+     * @param inputStream the inputstream.
+     * @return an RdfStream of the resource triples.
+     */
     private static RdfStream parseRdf(final FedoraId fedoraIdentifier, final InputStream inputStream) {
         final Model model = createDefaultModel();
         RDFDataMgr.read(model, inputStream, getRdfFormat().getLang());

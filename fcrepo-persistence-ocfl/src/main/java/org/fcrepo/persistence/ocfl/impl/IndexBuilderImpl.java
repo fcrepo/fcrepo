@@ -103,7 +103,8 @@ public class IndexBuilderImpl implements IndexBuilder {
         }
         final var endTime = Instant.now();
         final var count = reindexManager.getCompletedCount();
-        LOGGER.info("Index rebuild complete {} objects in {} ", count,
+        final var errors = reindexManager.getErrorCount();
+        LOGGER.info("Index rebuild completed {} objects successfully and {} objects had errors in {} ", count, errors,
                 getDurationMessage(Duration.between(startTime, endTime)));
     }
 

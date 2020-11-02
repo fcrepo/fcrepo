@@ -17,7 +17,11 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.util.List;
+
+import org.slf4j.Logger;
 
 /**
  * A reindexing worker thread.
@@ -25,6 +29,7 @@ import java.util.List;
  */
 public class ReindexWorker implements Runnable {
 
+    private static final Logger LOGGER = getLogger(ReindexWorker.class);
     private Thread t;
     private ReindexManager manager;
     private ReindexService service;
@@ -89,6 +94,7 @@ public class ReindexWorker implements Runnable {
                         service.cleanupSession(transactionId);
                         throw e;
                     }
+                    LOGGER.error("Reindexing of OCFL id {} failed: {}", id, e.getMessage());
                 }
             }
             manager.updateComplete(completed, errors);
