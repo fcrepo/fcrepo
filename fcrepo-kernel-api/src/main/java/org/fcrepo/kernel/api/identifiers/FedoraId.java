@@ -87,7 +87,7 @@ public class FedoraId {
      * @throws IllegalArgumentException If ID does not start with expected prefix.
      */
     private FedoraId(final String fullId) {
-        this.fullId = ensurePrefix(fullId).replaceAll("\\s", "%20").replaceAll("/+$", "");
+        this.fullId = ensurePrefix(fullId).replaceAll("/+$", "");
         // Carry the path of the request for any exceptions.
         this.fullPath = this.fullId.substring(FEDORA_ID_PREFIX.length());
         checkForInvalidPath();

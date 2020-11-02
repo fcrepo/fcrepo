@@ -3393,6 +3393,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+@Ignore
     public void testUpdateObjectWithSpaces() throws IOException {
         final String id = getRandomUniqueId() + " 2";
         try (final CloseableHttpResponse createResponse = createObject(id)) {
