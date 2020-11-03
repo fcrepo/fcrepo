@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-    xmlns:amq="http://activemq.apache.org/schema/core"
-    xmlns:context="http://www.springframework.org/schema/context"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
     http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
     http://activemq.apache.org/schema/core http://activemq.apache.org/schema/core/activemq-core.xsd">
 
     <context:property-placeholder/>
 
+    <bean id="activeMqDirectory" class="java.lang.String">
+        <constructor-arg value="#{fedoraPropsConfig.activeMqDirectory}"/>
+    </bean>
     <!--
         The <broker> element is used to configure the ActiveMQ broker.
     -->
@@ -76,9 +78,9 @@
             http://activemq.apache.org/persistence.html
         -->
         <persistenceAdapter>
-            <kahaDB directory="${fcrepo.activemq.directory:ActiveMQ/kahadb}"/>
-        </persistenceAdapter>
 
+            <kahaDB directory="#activeMqDirectory"/>
+        </persistenceAdapter>
 
         <!--
             The systemUsage controls the maximum amount of space the broker will
@@ -111,9 +113,10 @@
         <transportConnectors>
             <!-- DOS protection, limit concurrent connections to 1000 and frame size to 100MB -->
             <transportConnector name="openwire"
-                uri="tcp://0.0.0.0:${fcrepo.dynamic.jms.port:61616}?maximumConnections=1000&amp;wireformat.maxFrameSize=104857600"
+                uri="tcp://0.0.0.0:#{fedoraPropsConfig.jmsPort}?maximumConnections=1000&amp;wireformat.maxFrameSize=104857600"
             />
-            <transportConnector name="stomp" uri="stomp://0.0.0.0:${fcrepo.dynamic.stomp.port:61613}"/>
+            <transportConnector name="stomp"
+                                uri="stomp://0.0.0.0:#{fedoraPropsConfig.stompPort}"/>
         </transportConnectors>
 
         <!-- destroy the spring context on shutdown to stop jetty -->
@@ -121,7 +124,6 @@
             <bean xmlns="http://www.springframework.org/schema/beans"
                 class="org.apache.activemq.hooks.SpringContextHook"/>
         </shutdownHooks>
-
     </broker>
 
     <!--
