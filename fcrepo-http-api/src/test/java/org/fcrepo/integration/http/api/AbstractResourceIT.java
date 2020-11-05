@@ -102,6 +102,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_SERVER_MANAGED;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -122,6 +123,9 @@ public abstract class AbstractResourceIT {
 
     protected static final String NON_RDF_SOURCE_LINK_HEADER = "<" + NON_RDF_SOURCE.getURI() + ">;rel=\"type\"";
     protected static final String BASIC_CONTAINER_LINK_HEADER = "<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\"";
+
+    private static final String OMIT_SERVER_PREFER_HEADER = "return=representation; omit=\"" + PREFER_SERVER_MANAGED +
+            "\"";
 
     @Inject
     private ContainerWrapper containerWrapper;
@@ -440,16 +444,35 @@ public abstract class AbstractResourceIT {
     }
 
     protected Model getModel(final String pid) throws Exception {
-        return getModel(null, pid);
+        return getModel(null, pid, false);
+    }
+
+    protected Model getModel(final String pid, final boolean omitSMTs) throws IOException {
+        return getModel(null, pid, omitSMTs);
     }
 
     protected Model getModel(final String txUri, final String pid) throws Exception {
+        return getModel(txUri, pid, false);
+    }
+
+    /**
+     * Get a model of the triples for the resource.
+     * @param txUri id of the transaction
+     * @param pid id of the resource
+     * @param omitSMTs whether to omit server managed triples from the response.
+     * @return the model of the resource triples.
+     * @throws IOException on problems getting response.
+     */
+    protected Model getModel(final String txUri, final String pid, final boolean omitSMTs) throws IOException {
         final Model model = createDefaultModel();
-        final var httpGet = new HttpGet(serverAddress + pid);
+        final HttpGet get = getObjMethod(pid);
         if (txUri != null) {
-            httpGet.addHeader(ATOMIC_ID_HEADER, txUri);
+            get.addHeader(ATOMIC_ID_HEADER, txUri);
         }
-        try (final CloseableHttpResponse response = execute(httpGet)) {
+        if (omitSMTs) {
+            get.addHeader("Prefer", OMIT_SERVER_PREFER_HEADER);
+        }
+        try (final CloseableHttpResponse response = execute(get)) {
             model.read(response.getEntity().getContent(), serverAddress + pid, "TURTLE");
         }
         return model;

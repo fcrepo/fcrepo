@@ -3948,7 +3948,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPutMalformedHeader() throws IOException {
         // Create a resource
         final String id = getRandomUniqueId();
@@ -3981,7 +3980,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
+@Ignore("Need indirect containers - https://jira.lyrasis.org/browse/FCREPO-3410")
     public void testPutServerManagedPredicateInIndirectContainer() throws IOException {
         LOGGER.info("running testPutServerManagedPredicateInIndirectContainer");
         // Create a resource
@@ -4043,7 +4042,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testDeleteLargeLiteralStoredAsBinary() throws IOException {
 
         final String pid = getRandomUniqueId();
@@ -4154,16 +4152,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
-    public void testPathsWithBrackets() {
-        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(deleteObjMethod("%5bfoo")));
-        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(getObjMethod("%5bfoo")));
-        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patchObjMethod("%5bfoo")));
-        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(postObjMethod("%5bfoo")));
-        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(putObjMethod("%5bfoo")));
-    }
-
-    @Test
     public void testConcurrentPuts() throws InterruptedException, IOException {
         final String parent = getRandomUniqueId();
         executeAndClose(putObjMethod(parent));
@@ -4253,7 +4241,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     // TODO Test flaps in travis, causing more PUTs to succeed some of the time, possibly
     // because the etag is timestamp based. Should also make sure the correct failure status returned
-    @Ignore
+    @Ignore("Handle multiple requests correctly - https://jira.lyrasis.org/browse/FCREPO-3123")
     public void testConcurrentUpdatesToBinary() throws IOException, InterruptedException {
         // create a binary
         final String path = getRandomUniqueId();
@@ -4322,7 +4310,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
+    @Ignore("Handle multiple requests correctly - https://jira.lyrasis.org/browse/FCREPO-3123")
     public void testConcurrentPatches() throws IOException, InterruptedException {
         // create a resource
         final String path = getRandomUniqueId();
@@ -4396,7 +4384,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
 
     @Test
-    @Ignore
     public void testBinaryLastModified() throws Exception {
         final String objid = getRandomUniqueId();
         final String objURI = serverAddress + objid;
@@ -4437,7 +4424,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
+    @Ignore("Waiting on membership triples - https://jira.lyrasis.org/browse/FCREPO-3165")
     public void testContainerLastModified() throws Exception {
         final String objid = getRandomUniqueId();
         final String objURI = serverAddress + objid;
@@ -4490,13 +4477,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
         sleep(1000); // wait a second to make sure last-modified value will be different
 
         // create child in the container
-        final long lastmod4;
         assertEquals(CREATED.getStatusCode(), getStatus(new HttpPut(objURI + "/members/member1")));
 
         // last-modified should be updated
         try (final CloseableHttpResponse response = execute(headObjMethod(objid))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            lastmod4 = Instant.from(
+            final long lastmod4 = Instant.from(
                 headerFormat.parse(response.getFirstHeader("Last-Modified").getValue())).toEpochMilli();
             assertTrue(lastmod4 > lastmod3);
         }
@@ -4805,7 +4791,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPutUpdateBinaryWithType() throws Exception {
         final String objid = getRandomUniqueId();
         final String objURI = serverAddress + objid;
@@ -4817,7 +4802,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
 
         // Add type using PUT
-        final Model model1 = getModel(objid + "/binary1/fcr:metadata");
+        final Model model1 = getModel(objid + "/binary1/fcr:metadata", true);
         final Resource resc = model1.getResource(binURI);
         resc.addProperty(RDF.type, PCDM_FILE_TYPE);
 
@@ -4828,7 +4813,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
         }
 
-        final Model model2 = getModel(objid + "/binary1/fcr:metadata");
+        final Model model2 = getModel(objid + "/binary1/fcr:metadata", true);
         final Resource resc2 = model2.getResource(binURI);
         assertTrue(resc2.hasProperty(RDF.type, PCDM_FILE_TYPE));
 
@@ -4848,7 +4833,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPatchUpdateBinaryWithType() throws Exception {
         final String objid = getRandomUniqueId();
         final String objURI = serverAddress + objid;
