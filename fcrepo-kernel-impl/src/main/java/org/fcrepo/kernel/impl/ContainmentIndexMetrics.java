@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.stream.Stream;
 
 /**
@@ -120,6 +121,12 @@ public class ContainmentIndexMetrics implements ContainmentIndex {
         addContainedByTimer.record(() -> {
             containmentIndexImpl.addContainedBy(txID, parent, child);
         });
+    }
+
+    @Override
+    public void addContainedBy(final String txId, final FedoraId parent, final FedoraId child,
+                               final Instant startTime, final Instant endTime) {
+        addContainedByTimer.record(() -> containmentIndexImpl.addContainedBy(txId, parent, child, startTime, endTime));
     }
 
     @Override

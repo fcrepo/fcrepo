@@ -136,10 +136,7 @@ public class DeleteResourceServiceImplTest {
 
     @After
     public void cleanUp() {
-        containmentIndex.rollbackTransaction(tx.getId());
-        containmentIndex.getContains(null, RESOURCE_ID).forEach(c ->
-                containmentIndex.removeContainedBy(tx.getId(), container.getFedoraId(), FedoraId.create(c)));
-        containmentIndex.commitTransaction(tx.getId());
+        containmentIndex.reset();
     }
 
     @Test

@@ -19,6 +19,8 @@ package org.fcrepo.kernel.api;
 
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import javax.annotation.Nonnull;
+
+import java.time.Instant;
 import java.util.stream.Stream;
 
 /**
@@ -30,7 +32,8 @@ import java.util.stream.Stream;
 public interface ContainmentIndex {
 
     /**
-     * Return a stream of fedora identifiers contained by the specified fedora resource.
+     * Return a stream of fedora identifiers contained by the specified fedora resource for the current state of the
+     * repository.
      *
      * @param txId The transaction id, or null if no transaction
      * @param fedoraId The ID of the containing fedora resource
@@ -89,6 +92,18 @@ public interface ContainmentIndex {
      * @param child The contained resource fedoraID.
      */
     void addContainedBy(@Nonnull final String txId, final FedoraId parent, final FedoraId child);
+
+    /**
+     * Add a contained by relation between the child resource and its parent for a range of time in the past.
+     *
+     * @param txId The transaction ID.
+     * @param parent The containing resource fedoraID.
+     * @param child The contained resource fedoraID.
+     * @param startTime The start instant of the containment relationship.
+     * @param endTime The end instant of the containment relationship.
+     */
+    void addContainedBy(@Nonnull final String txId, final FedoraId parent, final FedoraId child,
+                        final Instant startTime, final Instant endTime);
 
     /**
      * Commit the changes made in the transaction.

@@ -35,6 +35,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.sql.DataSource;
+
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +48,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author peichman
+ * @author whikloj
+ * @since 6.0.0
  */
 @Component("containmentIndexImpl")
 public class ContainmentIndexImpl implements ContainmentIndex {
@@ -56,9 +61,11 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     private NamedParameterJdbcTemplate jdbcTemplate;
 
-    public static final String RESOURCES_TABLE = "resources";
+    private DbPlatform dbPlatform;
 
-    private static final String TRANSACTION_OPERATIONS_TABLE = "transaction_operations";
+    public static final String RESOURCES_TABLE = "containment";
+
+    private static final String TRANSACTION_OPERATIONS_TABLE = "containment_transactions";
 
     public static final String FEDORA_ID_COLUMN = "fedora_id";
 
@@ -68,13 +75,22 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     private static final String OPERATION_COLUMN = "operation";
 
-    private static final String IS_DELETED_COLUMN = "is_deleted";
+    private static final String START_TIME_COLUMN = "start_time";
+
+    private static final String END_TIME_COLUMN = "end_time";
 
     /*
      * Select children of a resource that are not marked as deleted.
      */
     private static final String SELECT_CHILDREN = "SELECT " + FEDORA_ID_COLUMN +
-            " FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :parent AND " + IS_DELETED_COLUMN + " = FALSE";
+            " FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :parent AND " + END_TIME_COLUMN + " IS NULL";
+
+    /*
+     * Select children of a memento of a resource.
+     */
+    private static final String SELECT_CHILDREN_OF_MEMENTO = "SELECT " + FEDORA_ID_COLUMN +
+            " FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :parent AND " + START_TIME_COLUMN +
+            " <= :asOfTime AND (" + END_TIME_COLUMN + " > :asOfTime OR " + END_TIME_COLUMN + " IS NULL)";
 
     /*
      * Select children of a parent from resources table and from the transaction table with an 'add' operation,
@@ -82,7 +98,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      */
     private static final String SELECT_CHILDREN_IN_TRANSACTION = "SELECT x." + FEDORA_ID_COLUMN + " FROM" +
             " (SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :parent" +
-            " AND " + IS_DELETED_COLUMN + " = FALSE" +
+            " AND " + END_TIME_COLUMN + " IS NULL " +
             " UNION SELECT " + FEDORA_ID_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE +
             " WHERE " + PARENT_COLUMN + " = :parent AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +
             " AND " + OPERATION_COLUMN + " = 'add') x" +
@@ -95,7 +111,8 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      * Select all children of a resource that are marked for deletion.
      */
     private static final String SELECT_DELETED_CHILDREN = "SELECT " + FEDORA_ID_COLUMN +
-            " FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :parent AND " + IS_DELETED_COLUMN + " = TRUE";
+            " FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :parent AND " + END_TIME_COLUMN +
+            " IS NOT NULL";
 
     /*
      * Select children of a resource plus children 'delete'd in the non-committed transaction, but excluding any
@@ -103,7 +120,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      */
     private static final String SELECT_DELETED_CHILDREN_IN_TRANSACTION = "SELECT x." + FEDORA_ID_COLUMN +
             " FROM (SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE +
-            " WHERE " + PARENT_COLUMN + " = :parent AND " + IS_DELETED_COLUMN + " = TRUE UNION" +
+            " WHERE " + PARENT_COLUMN + " = :parent AND " + END_TIME_COLUMN + " IS NOT NULL UNION" +
             " SELECT " + FEDORA_ID_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " +
             PARENT_COLUMN + " = :parent AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
             OPERATION_COLUMN + " = 'delete') x" +
@@ -116,8 +133,9 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      * Insert a parent child relationship to the transaction operation table.
      */
     private static final String INSERT_CHILD_IN_TRANSACTION = "INSERT INTO " + TRANSACTION_OPERATIONS_TABLE +
-            " ( " + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN +
-            " ) VALUES (:parent, :child, :transactionId, 'add')";
+            " ( " + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ", " +
+            TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + " ) VALUES (:parent, :child, :startTime, :endTime, " +
+            ":transactionId, 'add')";
 
     /*
      * Remove an insert row from the transaction operation table for this parent child relationship.
@@ -130,8 +148,8 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      * Add a parent child relationship deletion to the transaction operation table.
      */
     private static final String DELETE_CHILD_IN_TRANSACTION = "INSERT INTO " + TRANSACTION_OPERATIONS_TABLE +
-            " ( " + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN +
-            " ) VALUES (:parent, :child, :transactionId, 'delete')";
+            " ( " + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + END_TIME_COLUMN + ", " + TRANSACTION_ID_COLUMN +
+            ", " + OPERATION_COLUMN + " ) VALUES (:parent, :child, :endTime, :transactionId, 'delete')";
 
     /*
      * Add a parent child relationship purge to the transaction operation table.
@@ -185,19 +203,47 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      * Add to the main table all rows from the transaction operation table marked 'add' for this transaction.
      */
     private static final String COMMIT_ADD_RECORDS = "INSERT INTO " + RESOURCES_TABLE + " ( " + FEDORA_ID_COLUMN + ", "
-            + PARENT_COLUMN + " ) SELECT " + FEDORA_ID_COLUMN + ", " + PARENT_COLUMN + " FROM " +
+            + PARENT_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + " ) SELECT " + FEDORA_ID_COLUMN +
+            ", " + PARENT_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + " FROM " +
             TRANSACTION_OPERATIONS_TABLE + " WHERE " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
             OPERATION_COLUMN + " = 'add'";
 
     /*
-     * Mark deleted in the main table all rows from transaction operation table marked 'delete' for this transaction.
+     * Add an end time to the rows in the main table that match all rows from transaction operation table marked
+     * 'delete' for this transaction.
      */
-    private static final String COMMIT_DELETE_RECORDS = "UPDATE " + RESOURCES_TABLE +
-            " r SET " + IS_DELETED_COLUMN + " = TRUE WHERE EXISTS " +
-            "(SELECT TRUE FROM " + TRANSACTION_OPERATIONS_TABLE + " t WHERE " +
-            "t." + FEDORA_ID_COLUMN + " = r." + FEDORA_ID_COLUMN + " AND " +
-            "t." + TRANSACTION_ID_COLUMN + " = :transactionId AND t." +  OPERATION_COLUMN + " = 'delete' AND " +
-            "t." + PARENT_COLUMN + " = r." + PARENT_COLUMN + ")";
+    private static final String COMMIT_DELETE_RECORDS_H2 = "UPDATE " + RESOURCES_TABLE +
+            " r SET r." + END_TIME_COLUMN + " = ( SELECT t." + END_TIME_COLUMN + " FROM " +
+            TRANSACTION_OPERATIONS_TABLE + " t " +
+            " WHERE t." + FEDORA_ID_COLUMN + " = r." + FEDORA_ID_COLUMN + " AND t." + TRANSACTION_ID_COLUMN +
+            " = :transactionId AND t." +  OPERATION_COLUMN +
+            " = 'delete' AND t." + PARENT_COLUMN + " = r." + PARENT_COLUMN + " AND r." +
+            END_TIME_COLUMN + " IS NULL)" +
+            " WHERE EXISTS (SELECT * FROM " + TRANSACTION_OPERATIONS_TABLE + " t WHERE t." + FEDORA_ID_COLUMN +
+            " = r." + FEDORA_ID_COLUMN + " AND t." + TRANSACTION_ID_COLUMN + " = :transactionId AND t." +
+            OPERATION_COLUMN + " = 'delete' AND t." + PARENT_COLUMN + " = r." + PARENT_COLUMN + " AND r." +
+            END_TIME_COLUMN + " IS NULL)";
+
+    private static final String COMMIT_DELETE_RECORDS_MYSQL = "UPDATE " + RESOURCES_TABLE +
+            " r INNER JOIN " + TRANSACTION_OPERATIONS_TABLE + " t ON t." + FEDORA_ID_COLUMN + " = r." +
+            FEDORA_ID_COLUMN + " AND t." + PARENT_COLUMN + " = r." + PARENT_COLUMN + " SET r." + END_TIME_COLUMN +
+            " = t." + END_TIME_COLUMN +
+            " WHERE t." + TRANSACTION_ID_COLUMN + " = :transactionId AND t." +  OPERATION_COLUMN +
+            " = 'delete' AND r." + END_TIME_COLUMN + " IS NULL";
+
+    private static final String COMMIT_DELETE_RECORDS_POSTGRES = "UPDATE " + RESOURCES_TABLE + " SET " +
+            END_TIME_COLUMN + " = t." + END_TIME_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE + " t WHERE t." +
+            FEDORA_ID_COLUMN + " = " + RESOURCES_TABLE + "." + FEDORA_ID_COLUMN + " AND t." + PARENT_COLUMN +
+            " = " + RESOURCES_TABLE + "." + PARENT_COLUMN + " AND t." + TRANSACTION_ID_COLUMN +
+            " = :transactionId AND t." + OPERATION_COLUMN + " = 'delete' AND " + RESOURCES_TABLE + "." +
+            END_TIME_COLUMN + " IS NULL";
+
+    private Map<DbPlatform, String> COMMIT_DELETE_RECORDS = Map.of(
+            DbPlatform.H2, COMMIT_DELETE_RECORDS_H2,
+            DbPlatform.MARIADB, COMMIT_DELETE_RECORDS_MYSQL,
+            DbPlatform.MYSQL, COMMIT_DELETE_RECORDS_MYSQL,
+            DbPlatform.POSTGRESQL, COMMIT_DELETE_RECORDS_POSTGRES
+    );
 
     /*
      * Remove from the main table all rows from transaction operation table marked 'purge' for this transaction.
@@ -212,7 +258,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      * Query if a resource exists in the main table and is not deleted.
      */
     private static final String RESOURCE_EXISTS = "SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE +
-            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + IS_DELETED_COLUMN + " = FALSE";
+            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + END_TIME_COLUMN + " IS NULL";
 
     /*
      * Resource exists as a record in the transaction operations table with an 'add' operation and not also
@@ -220,7 +266,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      */
     private static final String RESOURCE_EXISTS_IN_TRANSACTION = "SELECT x." + FEDORA_ID_COLUMN + " FROM" +
             " (SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child" +
-            "  AND " + IS_DELETED_COLUMN + " = FALSE UNION SELECT " + FEDORA_ID_COLUMN + " FROM " +
+            "  AND " + END_TIME_COLUMN + " IS NULL UNION SELECT " + FEDORA_ID_COLUMN + " FROM " +
             TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN +
             " = :transactionId" + " AND " + OPERATION_COLUMN + " = 'add') x WHERE NOT EXISTS " +
             " (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE +
@@ -251,7 +297,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      * Get the parent ID for this resource from the main table if not deleted.
      */
     private static final String PARENT_EXISTS = "SELECT " + PARENT_COLUMN + " FROM " + RESOURCES_TABLE +
-            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + IS_DELETED_COLUMN + " = FALSE";
+            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + END_TIME_COLUMN + " IS NULL";
 
     /*
      * Get the parent ID for this resource from the operations table for an 'add' operation in this transaction, but
@@ -259,6 +305,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      */
     private static final String PARENT_EXISTS_IN_TRANSACTION = "SELECT x." + PARENT_COLUMN + " FROM" +
             " (SELECT " + PARENT_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child" +
+            " AND " + END_TIME_COLUMN + " IS NULL" +
             " UNION SELECT " + PARENT_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE +
             " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +
             " AND " + OPERATION_COLUMN + " = 'add') x" +
@@ -271,7 +318,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      * Get the parent ID for this resource from the main table if deleted.
      */
     private static final String PARENT_EXISTS_DELETED = "SELECT " + PARENT_COLUMN + " FROM " + RESOURCES_TABLE +
-            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + IS_DELETED_COLUMN + " = TRUE";
+            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + END_TIME_COLUMN + " IS NOT NULL";
 
     /*
      * Get the parent ID for this resource from main table and the operations table for a 'delete' operation in this
@@ -279,9 +326,9 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      */
     private static final String PARENT_EXISTS_DELETED_IN_TRANSACTION = "SELECT x." + PARENT_COLUMN + " FROM" +
             " (SELECT " + PARENT_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child" +
-            " UNION SELECT " + PARENT_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN +
-            " = :child AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " = 'delete') x" +
-            " WHERE NOT EXISTS " +
+            " AND " + END_TIME_COLUMN + " IS NOT NULL UNION SELECT " + PARENT_COLUMN + " FROM " +
+            TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN +
+            " = :transactionId AND " + OPERATION_COLUMN + " = 'delete') x WHERE NOT EXISTS " +
             " (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child AND " +
             TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " = 'add')";
 
@@ -301,15 +348,19 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     private static final String TRUNCATE_TABLE = "TRUNCATE TABLE ";
 
+    /*
+     * Any record tracked in the containment index is either active or a tombstone. Either way it exists for the
+     * purpose of finding ghost nodes.
+     */
     private static final String SELECT_ID_LIKE = "SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " +
             FEDORA_ID_COLUMN + " LIKE :resourceId";
 
     private static final String SELECT_ID_LIKE_IN_TRANSACTION = "SELECT x." + FEDORA_ID_COLUMN + " FROM (SELECT " +
-            FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " LIKE :resourceId UNION " +
-            "SELECT " + FEDORA_ID_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN +
-            " LIKE :resourceId AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN +
-            " = 'add') x WHERE NOT EXISTS (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " +
+            FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " LIKE :resourceId" +
+            " UNION SELECT " + FEDORA_ID_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " +
             FEDORA_ID_COLUMN + " LIKE :resourceId AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
+            OPERATION_COLUMN + " = 'add') x WHERE NOT EXISTS (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE +
+            " WHERE " + FEDORA_ID_COLUMN + " LIKE :resourceId AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
             OPERATION_COLUMN + " = 'delete')";
 
     private static final Map<DbPlatform, String> DDL_MAP = Map.of(
@@ -326,7 +377,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     private void setup() {
         jdbcTemplate = getNamedParameterJdbcTemplate();
 
-        final var dbPlatform = DbPlatform.fromDataSource(dataSource);
+        dbPlatform = DbPlatform.fromDataSource(dataSource);
 
         Preconditions.checkArgument(DDL_MAP.containsKey(dbPlatform),
                 "Missing DDL mapping for %s", dbPlatform);
@@ -344,21 +395,27 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     @Override
     public Stream<String> getContains(final String txId, final FedoraId fedoraId) {
-        final String resourceId = fedoraId.getFullId();
+        final String resourceId = fedoraId.isMemento() ? fedoraId.getBaseId() : fedoraId.getFullId();
+        final Instant asOfTime = fedoraId.isMemento() ? fedoraId.getMementoInstant() : null;
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("parent", resourceId);
 
         final List<String> children;
-        if (txId != null) {
-            // we are in a transaction
-            parameterSource.addValue("transactionId", txId);
-            children = jdbcTemplate.queryForList(SELECT_CHILDREN_IN_TRANSACTION, parameterSource, String.class);
+        if (asOfTime == null) {
+            if (txId != null) {
+                // we are in a transaction
+                parameterSource.addValue("transactionId", txId);
+                children = jdbcTemplate.queryForList(SELECT_CHILDREN_IN_TRANSACTION, parameterSource, String.class);
+            } else {
+                // not in a transaction
+                children = jdbcTemplate.queryForList(SELECT_CHILDREN, parameterSource, String.class);
+            }
         } else {
-            // not in a transaction
-            children = jdbcTemplate.queryForList(SELECT_CHILDREN, parameterSource, String.class);
+            parameterSource.addValue("asOfTime", formatInstant(asOfTime));
+            children = jdbcTemplate.queryForList(SELECT_CHILDREN_OF_MEMENTO, parameterSource, String.class);
         }
-        LOGGER.debug("getContains for {} in transaction {} found {} children",
-                resourceId, txId, children.size());
+        LOGGER.debug("getContains for {} in transaction {} and instant {} found {} children",
+                resourceId, txId, asOfTime, children.size());
         return children.stream();
     }
 
@@ -399,15 +456,24 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     @Override
     public void addContainedBy(@Nonnull final String txId, final FedoraId parent, final FedoraId child) {
+        addContainedBy(txId, parent, child, Instant.now(), null);
+    }
+
+    @Override
+    public void addContainedBy(@Nonnull final String txId, final FedoraId parent, final FedoraId child,
+                               final Instant startTime, final Instant endTime) {
         final String parentID = parent.getFullId();
         final String childID = child.getFullId();
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 
-        LOGGER.debug("Adding: parent: {}, child: {}, in txn: {}", parentID, childID, txId);
+        LOGGER.debug("Adding: parent: {}, child: {}, in txn: {}, start time {}, end time {}", parentID, childID, txId,
+                formatInstant(startTime), formatInstant(endTime));
 
         parameterSource.addValue("parent", parentID);
         parameterSource.addValue("child", childID);
         parameterSource.addValue("transactionId", txId);
+        parameterSource.addValue("startTime", formatInstant(startTime));
+        parameterSource.addValue("endTime", formatInstant(endTime));
         final boolean purgedInTxn = !jdbcTemplate.queryForList(IS_CHILD_PURGED_IN_TRANSACTION, parameterSource)
                 .isEmpty();
         if (purgedInTxn) {
@@ -425,6 +491,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         parameterSource.addValue("parent", parentID);
         parameterSource.addValue("child", childID);
         parameterSource.addValue("transactionId", txId);
+        parameterSource.addValue("endTime", formatInstant(Instant.now()));
         final boolean addedInTxn = !jdbcTemplate.queryForList(IS_CHILD_ADDED_IN_TRANSACTION, parameterSource)
                 .isEmpty();
         if (addedInTxn) {
@@ -450,6 +517,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
                 LOGGER.debug("Marking containment relationship between parent ({}) and child ({}) deleted", parent,
                         resourceID);
                 parameterSource.addValue("parent", parent);
+                parameterSource.addValue("endTime", formatInstant(Instant.now()));
                 jdbcTemplate.update(DELETE_CHILD_IN_TRANSACTION, parameterSource);
             }
         }
@@ -503,7 +571,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
                 parameterSource.addValue("transactionId", txId);
 
                 jdbcTemplate.update(COMMIT_PURGE_RECORDS, parameterSource);
-                jdbcTemplate.update(COMMIT_DELETE_RECORDS, parameterSource);
+                jdbcTemplate.update(COMMIT_DELETE_RECORDS.get(dbPlatform), parameterSource);
                 jdbcTemplate.update(COMMIT_ADD_RECORDS, parameterSource);
                 jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, parameterSource);
             } catch (final Exception e) {
@@ -614,4 +682,18 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         this.dataSource = dataSource;
     }
 
+    /**
+     * Format an instant to a timestamp without milliseconds, due to precision
+     * issues with memento datetimes.
+     * @param instant
+     * @return the timestamp
+     */
+    private Timestamp formatInstant(final Instant instant) {
+        if (instant == null) {
+            return null;
+        }
+        final var timestamp = Timestamp.from(instant);
+        timestamp.setNanos(0);
+        return timestamp;
+    }
 }

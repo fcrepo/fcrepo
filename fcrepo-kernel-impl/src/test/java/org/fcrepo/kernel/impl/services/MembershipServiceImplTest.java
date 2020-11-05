@@ -136,11 +136,7 @@ public class MembershipServiceImplTest {
 
     @After
     public void cleanUp() {
-        containmentIndex.rollbackTransaction(txId);
-        containmentIndex.getContains(null, rootId).forEach(c ->
-                containmentIndex.removeContainedBy(txId, rootId, FedoraId.create(c)));
-        containmentIndex.commitTransaction(txId);
-
+        containmentIndex.reset();
         indexManager.clearIndex();
     }
 

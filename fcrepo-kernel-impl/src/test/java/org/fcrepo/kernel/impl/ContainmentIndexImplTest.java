@@ -33,9 +33,12 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import javax.inject.Inject;
+
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -43,7 +46,10 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 
+import static java.time.ZoneOffset.UTC;
+
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author peichman
@@ -51,6 +57,7 @@ import java.util.UUID;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration("/containmentIndexTest.xml")
 public class ContainmentIndexImplTest {
+
     @Mock
     private FedoraResource parent1;
 
@@ -105,9 +112,7 @@ public class ContainmentIndexImplTest {
 
     @After
     public void cleanUp() {
-        // Rollback any in-process transactions.
-        containmentIndex.rollbackTransaction(transaction1.getId());
-        containmentIndex.rollbackTransaction(transaction2.getId());
+        containmentIndex.reset();
     }
 
     @Test
@@ -318,7 +323,7 @@ public class ContainmentIndexImplTest {
     }
 
     @Test
-    public void testOnlyCommitOne() {
+    public void testOnlyCommitOne() throws Exception {
         stubObject("parent1");
         stubObject("child1");
         stubObject("child2");
@@ -335,12 +340,16 @@ public class ContainmentIndexImplTest {
         assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent1.getFedoraId()).count());
         assertEquals(1, containmentIndex.getContains(transaction2.getId(), parent1.getFedoraId()).count());
         containmentIndex.commitTransaction(transaction1.getId());
+        // Wait a second because containment end time is second accuracy.
+        TimeUnit.SECONDS.sleep(1);
         // Now only one record was removed
         assertEquals(1, containmentIndex.getContains(null, parent1.getFedoraId()).count());
         assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent1.getFedoraId()).count());
         // Except in the second transaction as it should now have 0
         assertEquals(0, containmentIndex.getContains(transaction2.getId(), parent1.getFedoraId()).count());
         containmentIndex.commitTransaction(transaction2.getId());
+        // Wait a second because containment end time is second accuracy.
+        TimeUnit.SECONDS.sleep(1);
         // Now all are gone
         assertEquals(0, containmentIndex.getContains(null, parent1.getFedoraId()).count());
         assertEquals(0, containmentIndex.getContains(transaction1.getId(), parent1.getFedoraId()).count());
@@ -613,6 +622,46 @@ public class ContainmentIndexImplTest {
         containmentIndex.commitTransaction(transaction1.getId());
         assertFalse(containmentIndex.resourceExists(null, parent1.getFedoraId(), false));
         assertFalse(containmentIndex.resourceExists(null, parent1.getFedoraId(), true));
+    }
+
+    @Test
+    public void testMementosContainment() throws Exception {
+        stubObject("parent1");
+        stubObject("child1");
+        stubObject("child2");
+        stubObject("transaction1");
+
+        // Parent contains child1 and child2
+        containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
+        containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), child2.getFedoraId());
+        containmentIndex.commitTransaction(transaction1.getId());
+        TimeUnit.SECONDS.sleep(1);
+        assertEquals(2, containmentIndex.getContains(null, parent1.getFedoraId()).count());
+        // get the current instant and make a FedoraId for a memento at this instant.
+        final var bothTime = Instant.now();
+        final var mementoId = parent1.getFedoraId().resolve("fcr:versions/" +
+                bothTime.atZone(UTC).format(MEMENTO_LABEL_FORMATTER));
+        // Wait.
+        TimeUnit.SECONDS.sleep(2);
+        // Delete child1
+        containmentIndex.removeContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
+        assertEquals(2, containmentIndex.getContains(null, parent1.getFedoraId()).count());
+        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent1.getFedoraId()).count());
+        containmentIndex.commitTransaction(transaction1.getId());
+        TimeUnit.SECONDS.sleep(1);
+        // Child1 is gone in the current view.
+        assertEquals(1, containmentIndex.getContains(null, parent1.getFedoraId()).count());
+        // Child1 remains in the memento view.
+        assertEquals(2, containmentIndex.getContains(null, mementoId).count());
+        // purging child 1
+        containmentIndex.purgeResource(transaction1.getId(), child1.getFedoraId());
+        // stays the same as we haven't committed yet.
+        assertEquals(1, containmentIndex.getContains(null, parent1.getFedoraId()).count());
+        assertEquals(2, containmentIndex.getContains(null, mementoId).count());
+        containmentIndex.commitTransaction(transaction1.getId());
+        // Now the memento loses track of child1.
+        assertEquals(1, containmentIndex.getContains(null, parent1.getFedoraId()).count());
+        assertEquals(1, containmentIndex.getContains(null, mementoId).count());
     }
 }
 

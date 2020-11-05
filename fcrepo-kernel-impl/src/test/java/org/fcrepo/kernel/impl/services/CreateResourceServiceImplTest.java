@@ -194,10 +194,7 @@ public class CreateResourceServiceImplTest {
 
     @After
     public void cleanUp() {
-        cleanupList.forEach(parentID -> {
-            containmentIndex.getContains(transaction.getId(), parentID).forEach(c ->
-                    containmentIndex.removeContainedBy(TX_ID, parentID, FedoraId.create(c)));
-        });
+        containmentIndex.reset();
         cleanupList.clear();
     }
 
