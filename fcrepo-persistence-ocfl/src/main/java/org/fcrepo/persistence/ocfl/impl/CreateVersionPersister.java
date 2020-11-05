@@ -23,6 +23,7 @@ import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.api.exceptions.PersistentItemConflictException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.common.ResourceHeaderUtils;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.storage.ocfl.CommitType;
 import org.slf4j.Logger;
@@ -60,6 +61,13 @@ public class CreateVersionPersister extends AbstractPersister {
         final var ocflMapping = getMapping(session.getId(), resourceId);
         final var ocflObjectSession = session.findOrCreateSession(ocflMapping.getOcflObjectId());
 
+        // Touching the last modified date is necessary so that resource that do not have any outstanding changes are
+        // still versioned
+        final var headers = new ResourceHeadersAdapter(ocflObjectSession.readHeaders(resourceId.getResourceId()))
+                .asKernelHeaders();
+        ResourceHeaderUtils.touchModificationHeaders(headers, operation.getUserPrincipal());
+
+        ocflObjectSession.writeHeaders(new ResourceHeadersAdapter(headers).asStorageHeaders());
         // The version is not actually created until the session is committed
         ocflObjectSession.commitType(CommitType.NEW_VERSION);
     }

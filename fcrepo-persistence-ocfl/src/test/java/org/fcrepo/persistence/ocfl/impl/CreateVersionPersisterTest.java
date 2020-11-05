@@ -27,12 +27,21 @@ import org.fcrepo.persistence.common.ResourceHeadersImpl;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.storage.ocfl.CommitType;
 import org.fcrepo.storage.ocfl.OcflObjectSession;
+import org.fcrepo.storage.ocfl.ResourceHeaders;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.time.Duration;
+import java.time.Instant;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -49,6 +58,9 @@ public class CreateVersionPersisterTest {
 
     @Mock
     private OcflPersistentStorageSession session;
+
+    @Captor
+    private ArgumentCaptor<ResourceHeaders> headersCaptor;
 
     @Before
     public void setup() {
@@ -67,6 +79,7 @@ public class CreateVersionPersisterTest {
         persister.persist(session, operation(resourceId));
 
         verify(objectSession).commitType(CommitType.NEW_VERSION);
+        verifyHeaders(objectSession);
     }
 
     @Test
@@ -80,6 +93,7 @@ public class CreateVersionPersisterTest {
         persister.persist(session, operation(resourceId));
 
         verify(objectSession).commitType(CommitType.NEW_VERSION);
+        verifyHeaders(objectSession);
     }
 
     @Test(expected = PersistentItemConflictException.class)
@@ -116,6 +130,8 @@ public class CreateVersionPersisterTest {
         index.addMapping("not-used", resourceId, resourceId, ocflId);
         final var objectSession = mock(OcflObjectSession.class);
         when(session.findOrCreateSession(ocflId)).thenReturn(objectSession);
+        doReturn(ResourceHeaders.builder().build()).when(objectSession)
+                .readHeaders(resourceId.getResourceId());
         return objectSession;
     }
 
@@ -124,6 +140,15 @@ public class CreateVersionPersisterTest {
         when(operation.getType()).thenReturn(ResourceOperationType.UPDATE);
         when(operation.getResourceId()).thenReturn(resourceId);
         return operation;
+    }
+
+    private void verifyHeaders(final OcflObjectSession objectSession) {
+        verify(objectSession).writeHeaders(headersCaptor.capture());
+        final var actualHeaders = headersCaptor.getValue();
+        assertNotNull(actualHeaders.getStateToken());
+        assertTrue("Timestamp should be within 1 second of now",
+                Duration.between(actualHeaders.getLastModifiedDate(), Instant.now())
+                        .compareTo(Duration.ofSeconds(1)) < 0);
     }
 
 }

@@ -183,11 +183,15 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testGetTimeMapResponse() throws Exception {
+    public void createMementoOnResourceWithNoUnversionedChanges() throws Exception {
+        final var v1 = now();
         createVersionedContainer(id);
+        TimeUnit.SECONDS.sleep(1);
 
+        final var v2 = now();
         createContainerMementoWithBody(subjectUri);
-        verifyTimemapResponse(subjectUri, id, now());
+
+        verifyTimemapResponse(subjectUri, id, new String[]{v1, v2}, v1, v2);
     }
 
     @Test
@@ -264,17 +268,14 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     public void testGetTimeMapResponseMultipleMementos() throws Exception {
         createVersionedContainer(id);
         final var v1 = now();
-        createMemento(subjectUri);
         TimeUnit.SECONDS.sleep(1);
 
         putVersionedContainer(id, "2", true);
         final var v2 = now();
-        createMemento(subjectUri);
         TimeUnit.SECONDS.sleep(1);
 
         putVersionedContainer(id, "3", true);
         final var v3 = now();
-        createMemento(subjectUri);
 
         verifyTimemapResponse(subjectUri, id, new String[] {v1, v2, v3}, v1, v3);
     }
@@ -912,6 +913,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         TimeUnit.SECONDS.sleep(1);
         final String mementoUri = createContainerMementoWithBody(descriptionUri);
         assertMementoUri(mementoUri, descriptionUri);
+        TimeUnit.SECONDS.sleep(1);
 
         setDescriptionProperty(id, null, DC.title.getURI(), "Updated");
         TimeUnit.SECONDS.sleep(1);
