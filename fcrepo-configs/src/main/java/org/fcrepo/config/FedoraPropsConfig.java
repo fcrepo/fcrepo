@@ -49,14 +49,15 @@ public class FedoraPropsConfig {
     public static final String FCREPO_ACTIVEMQ_CONFIGURATION = "fcrepo.activemq.configuration";
     public static final String FCREPO_NAMESPACE_REGISTRY = "fcrepo.namespace.registry";
     public static final String FCREPO_EXTERNAL_CONTENT_ALLOWED = "fcrepo.external.content.allowed";
-    private static final String DATA_DIR = "data";
-    private static final String ACTIVE_MQ_DIR = "ActiveMQ/kahadb";
     private static final String FCREPO_ACTIVEMQ_DIRECTORY = "fcrepo.activemq.directory";
+
+    private static final String DATA_DIR_DEFAULT_VALUE = "data";
+    private static final String ACTIVE_MQ_DIR_DEFAULT_VALUE = "ActiveMQ/kahadb";
 
     @Value("${" + FCREPO_HOME + ":fcrepo-home}")
     private Path fedoraHome;
 
-    @Value("#{fedoraPropsConfig.fedoraHome.resolve('" + DATA_DIR + "')}")
+    @Value("#{fedoraPropsConfig.fedoraHome.resolve('" + DATA_DIR_DEFAULT_VALUE + "')}")
     private Path fedoraData;
 
     @Value("${" + FCREPO_JMS_HOST + ":localhost}")
@@ -72,7 +73,7 @@ public class FedoraPropsConfig {
     @Value("${" + FCREPO_ACTIVEMQ_CONFIGURATION + ":classpath:/config/activemq.xml}")
     private String activeMQConfiguration;
 
-    @Value("${" + FCREPO_ACTIVEMQ_DIRECTORY + ":#{fedoraPropsConfig.fedoraData.resolve('" + ACTIVE_MQ_DIR + "')" +
+    @Value("${" + FCREPO_ACTIVEMQ_DIRECTORY + ":#{fedoraPropsConfig.fedoraData.resolve('" + ACTIVE_MQ_DIR_DEFAULT_VALUE + "')" +
             ".toAbsolutePath().toString()}}")
     private String activeMqDirectory;
 
