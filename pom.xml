@@ -67,7 +67,7 @@
     <!-- test gear -->
     <awaitility.version>1.7.0</awaitility.version>
     <grizzly.version>2.4.3</grizzly.version>
-    <junit.version>4.13</junit.version>
+    <junit.version>4.13.1</junit.version>
     <system-rules.version>1.18.0</system-rules.version>
     <mockito.version>2.22.0</mockito.version>
     <!-- fcrepo5-specific plugins -->
