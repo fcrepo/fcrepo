@@ -36,6 +36,7 @@ import org.fcrepo.kernel.api.exception.RepositoryConfigurationException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.Tombstone;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -191,7 +192,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     private Map<String, Collection<String>> getRolesForId(final FedoraId id) {
         Map<String, Collection<String>> roles = null;
         final FedoraResource fedoraResource = getResourceOrParentFromPath(id);
-        if (fedoraResource != null) {
+        if (fedoraResource != null && ! (fedoraResource instanceof Tombstone)) {
             // check ACL for the request URI and get a mapping of agent => modes
             roles = rolesProvider.getRoles(fedoraResource, transaction());
         }
