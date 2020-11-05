@@ -41,7 +41,7 @@ public class FedoraPropsConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FedoraPropsConfig.class);
 
-    public static final String FCREPO_CONFIG_FILE = "fcrepo.config-file";
+    public static final String FCREPO_CONFIG_FILE = "fcrepo.config.file";
     public static final String FCREPO_HOME = "fcrepo.home";
     public static final String FCREPO_JMS_HOST = "fcrepo.jms.host";
     public static final String FCREPO_DYNAMIC_JMS_PORT = "fcrepo.dynamic.jms.port";
