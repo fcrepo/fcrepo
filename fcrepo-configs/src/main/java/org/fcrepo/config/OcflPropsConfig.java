@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
@@ -37,8 +36,7 @@ import java.util.Objects;
  * @since 6.0.0
  */
 @Configuration
-@PropertySource (value = "file:${" + FedoraPropsConfig.FCREPO_CONFIG_FILE + "}", ignoreResourceNotFound = true)
-public class OcflPropsConfig {
+public class OcflPropsConfig extends BasePropsConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OcflPropsConfig.class);
 

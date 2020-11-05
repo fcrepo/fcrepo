@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
@@ -37,8 +36,7 @@ import java.util.Map;
  */
 @EnableTransactionManagement
 @Configuration
-@PropertySource (value = "file:${" + FedoraPropsConfig.FCREPO_CONFIG_FILE + "}", ignoreResourceNotFound = true)
-public class DatabaseConfig {
+public class DatabaseConfig extends BasePropsConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseConfig.class);
 

@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
@@ -36,8 +35,7 @@ import java.nio.file.Path;
  * @since 6.0.0
  */
 @Configuration
-@PropertySource (value = "file:${" + FedoraPropsConfig.FCREPO_CONFIG_FILE + "}", ignoreResourceNotFound = true)
-public class FedoraPropsConfig {
+public class FedoraPropsConfig extends BasePropsConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FedoraPropsConfig.class);
 
@@ -53,6 +51,7 @@ public class FedoraPropsConfig {
 
     private static final String DATA_DIR_DEFAULT_VALUE = "data";
     private static final String ACTIVE_MQ_DIR_DEFAULT_VALUE = "ActiveMQ/kahadb";
+
 
     @Value("${" + FCREPO_HOME + ":fcrepo-home}")
     private Path fedoraHome;
@@ -73,10 +72,9 @@ public class FedoraPropsConfig {
     @Value("${" + FCREPO_ACTIVEMQ_CONFIGURATION + ":classpath:/config/activemq.xml}")
     private String activeMQConfiguration;
 
-    @Value("${" + FCREPO_ACTIVEMQ_DIRECTORY + ":#{fedoraPropsConfig.fedoraData.resolve('" + ACTIVE_MQ_DIR_DEFAULT_VALUE + "')" +
-            ".toAbsolutePath().toString()}}")
+    @Value("${" + FCREPO_ACTIVEMQ_DIRECTORY + ":#{fedoraPropsConfig.fedoraData.resolve('" +
+            ACTIVE_MQ_DIR_DEFAULT_VALUE + "').toAbsolutePath().toString()}}")
     private String activeMqDirectory;
-
 
     @Value("${" + FCREPO_NAMESPACE_REGISTRY + ":classpath:/namespaces.yml}")
     private String namespaceRegistry;
