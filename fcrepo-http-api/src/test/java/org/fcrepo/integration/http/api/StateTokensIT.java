@@ -32,7 +32,6 @@ import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.test.context.TestExecutionListeners;
 
@@ -155,7 +154,6 @@ public class StateTokensIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testPutWithStateTokenOnNonRDFSource() throws IOException {
         final String id = getRandomUniqueId();
