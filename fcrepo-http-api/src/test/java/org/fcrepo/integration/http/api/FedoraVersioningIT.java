@@ -1449,7 +1449,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertTrue("Should allow GET", methods.contains(HttpGet.METHOD_NAME));
         assertTrue("Should allow HEAD", methods.contains(HttpHead.METHOD_NAME));
         assertTrue("Should allow OPTIONS", methods.contains(HttpOptions.METHOD_NAME));
-        assertTrue("Should allow DELETE", methods.contains(HttpDelete.METHOD_NAME));
     }
 
     private String createLDPRSMementoWithExistingBody(final String id) throws Exception {
