@@ -49,6 +49,7 @@ public class FcrepoOcflObjectSessionWrapper implements OcflObjectSession {
     private static final String METRIC_NAME = "fcrepo.storage.ocfl.object";
     private static final String OPERATION = "operation";
     private static final Timer writeTimer = Metrics.timer(METRIC_NAME, OPERATION, "write");
+    private static final Timer writeHeadersTimer = Metrics.timer(METRIC_NAME, OPERATION, "writeHeaders");
     private static final Timer deleteContentTimer = Metrics.timer(METRIC_NAME, OPERATION, "deleteContent");
     private static final Timer deleteResourceTimer = Metrics.timer(METRIC_NAME, OPERATION, "deleteResource");
     private static final Timer containsResourceTimer = Metrics.timer(METRIC_NAME, OPERATION, "containsResource");
@@ -78,6 +79,13 @@ public class FcrepoOcflObjectSessionWrapper implements OcflObjectSession {
     public ResourceHeaders writeResource(final ResourceHeaders headers, final InputStream content) {
         return MetricsHelper.time(writeTimer, () -> {
             return exec(() -> inner.writeResource(headers, content));
+        });
+    }
+
+    @Override
+    public void writeHeaders(final ResourceHeaders headers) {
+        writeHeadersTimer.record(() -> {
+            exec(() -> inner.writeHeaders(headers));
         });
     }
 
