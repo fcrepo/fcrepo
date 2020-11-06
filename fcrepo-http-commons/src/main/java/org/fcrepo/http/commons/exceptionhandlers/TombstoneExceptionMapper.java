@@ -43,7 +43,7 @@ public class TombstoneExceptionMapper implements
 
     @Override
     public Response toResponse(final TombstoneException e) {
-        debugException(this, e, LOGGER);
+        LOGGER.debug(e.getMessage());
         final Response.ResponseBuilder response = status(GONE)
                 .entity(e.getMessage());
 
