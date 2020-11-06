@@ -204,7 +204,10 @@ public class FedoraAcl extends ContentExposingResource {
             evaluateRequestPreconditions(request, servletResponse, aclResource, transaction());
 
             LOGGER.info("PATCH for '{}'", externalPath);
-            patchResourcewithSparql(aclResource, requestBody);
+            final String newRequest = httpRdfService.patchRequestToInternalString(aclResource.getFedoraId().getFullId(),
+                    requestBody, identifierConverter());
+            LOGGER.debug("PATCH request translated to '{}'", newRequest);
+            patchResourcewithSparql(aclResource, newRequest);
             transaction().commitIfShortLived();
 
             addCacheControlHeaders(servletResponse, aclResource, transaction());
