@@ -57,4 +57,9 @@ public class TombstoneImpl extends FedoraResourceImpl implements Tombstone {
     public List<URI> getUserTypes() {
         return Collections.emptyList();
     }
+
+    @Override
+    public List<URI> getSystemTypes(final boolean forRdf) {
+        return Collections.emptyList();
+    }
 }
