@@ -75,7 +75,7 @@ public class TransactionManagerImpl implements TransactionManager {
     /**
      * Periodically scan for closed transactions for cleanup
      */
-    @Scheduled(fixedDelayString = "#{systemProperties['fcrepo.session.timeout'] ?: 180000}")
+    @Scheduled(fixedDelayString = "#{fedoraPropsConfig.sessionTimeout}")
     public void cleanupClosedTransactions() {
         LOGGER.trace("Cleaning up expired transactions");
 

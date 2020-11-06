@@ -82,6 +82,12 @@ public class FedoraPropsConfig extends BasePropsConfig {
     @Value("${" + FCREPO_EXTERNAL_CONTENT_ALLOWED + ":#{null}}")
     private String externalContentAllowed;
 
+    @Value("${fcrepo.session.timeout:180000}")
+    private String sessionTimeout;
+
+    @Value("${fcrepo.velocity.runtime.log: #{fedoraPropsConfig.fedoraHome.resolve('velocity.log').toAbsolutePath()" +
+            ".toString()}}")
+    private String velocityLog;
 
     @PostConstruct
     private void postConstruct() throws IOException {
@@ -175,5 +181,19 @@ public class FedoraPropsConfig extends BasePropsConfig {
      */
     public String getNamespaceRegistry() {
         return namespaceRegistry;
+    }
+
+    /**
+     * @return The timeout in milliseconds of the persistence session
+     */
+    public String getSessionTimeout() {
+        return sessionTimeout;
+    }
+
+    /**
+     * @return The path to the velocity log.
+     */
+    public String getVelocityLog() {
+        return velocityLog;
     }
 }
