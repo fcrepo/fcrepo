@@ -39,7 +39,6 @@ public class FedoraPropsConfig extends BasePropsConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FedoraPropsConfig.class);
 
-    public static final String FCREPO_CONFIG_FILE = "fcrepo.config.file";
     public static final String FCREPO_HOME = "fcrepo.home";
     public static final String FCREPO_JMS_HOST = "fcrepo.jms.host";
     public static final String FCREPO_DYNAMIC_JMS_PORT = "fcrepo.dynamic.jms.port";
@@ -48,10 +47,11 @@ public class FedoraPropsConfig extends BasePropsConfig {
     public static final String FCREPO_NAMESPACE_REGISTRY = "fcrepo.namespace.registry";
     public static final String FCREPO_EXTERNAL_CONTENT_ALLOWED = "fcrepo.external.content.allowed";
     private static final String FCREPO_ACTIVEMQ_DIRECTORY = "fcrepo.activemq.directory";
+    private static final String FCREPO_SESSION_TIMEOUT = "fcrepo.session.timeout";
+    private static final String FCREPO_VELOCITY_RUNTIME_LOG = "fcrepo.velocity.runtime.log";
 
     private static final String DATA_DIR_DEFAULT_VALUE = "data";
     private static final String ACTIVE_MQ_DIR_DEFAULT_VALUE = "ActiveMQ/kahadb";
-
 
     @Value("${" + FCREPO_HOME + ":fcrepo-home}")
     private Path fedoraHome;
@@ -68,7 +68,6 @@ public class FedoraPropsConfig extends BasePropsConfig {
     @Value("${" + FCREPO_DYNAMIC_STOMP_PORT + ":61613}")
     private String stompPort;
 
-
     @Value("${" + FCREPO_ACTIVEMQ_CONFIGURATION + ":classpath:/config/activemq.xml}")
     private String activeMQConfiguration;
 
@@ -82,11 +81,11 @@ public class FedoraPropsConfig extends BasePropsConfig {
     @Value("${" + FCREPO_EXTERNAL_CONTENT_ALLOWED + ":#{null}}")
     private String externalContentAllowed;
 
-    @Value("${fcrepo.session.timeout:180000}")
+    @Value("${" + FCREPO_SESSION_TIMEOUT + ":180000}")
     private String sessionTimeout;
 
-    @Value("${fcrepo.velocity.runtime.log: #{fedoraPropsConfig.fedoraHome.resolve('velocity.log').toAbsolutePath()" +
-            ".toString()}}")
+    @Value("${" + FCREPO_VELOCITY_RUNTIME_LOG + ": " +
+            "#{fedoraPropsConfig.fedoraHome.resolve('velocity.log').toAbsolutePath().toString()}}")
     private String velocityLog;
 
     @PostConstruct

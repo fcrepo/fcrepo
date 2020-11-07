@@ -28,14 +28,14 @@ import org.springframework.context.annotation.PropertySources;
  * @since 6.0.0
  */
 @PropertySources({
-        @PropertySource(value = FedoraPropsConfig.DEFAULT_FCREPO_CONFIG_FILE_DEFAULT_PROP_SOURCE,
+        @PropertySource(value = BasePropsConfig.DEFAULT_FCREPO_CONFIG_FILE_PROP_SOURCE,
                 ignoreResourceNotFound = true),
-        @PropertySource(value = FedoraPropsConfig.FCREPO_CONFIG_FILE_PROP_SOURCE, ignoreResourceNotFound = true)
+        @PropertySource(value = BasePropsConfig.FCREPO_CONFIG_FILE_PROP_SOURCE, ignoreResourceNotFound = true)
 })
 abstract class BasePropsConfig {
 
-    public static final String DEFAULT_FCREPO_CONFIG_FILE_DEFAULT_PROP_SOURCE =
+    public static final String DEFAULT_FCREPO_CONFIG_FILE_PROP_SOURCE =
             "file:fcrepo-home/config/fcrepo.properties";
-    public static final String FCREPO_CONFIG_FILE_PROP_SOURCE = "file:${" + FedoraPropsConfig.FCREPO_CONFIG_FILE + "}";
+    public static final String FCREPO_CONFIG_FILE_PROP_SOURCE = "file:${fcrepo.config.file}";
 
 }
