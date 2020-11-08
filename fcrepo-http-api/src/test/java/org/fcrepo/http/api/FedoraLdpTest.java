@@ -305,7 +305,7 @@ public class FedoraLdpTest {
         when(mockContainer.getDescribedResource()).thenReturn(mockContainer);
         when(mockContainer.getFedoraId()).thenReturn(pathId);
 
-        when(resourceHelper.doesResourceExist(mockTransaction, pathId)).thenReturn(false);
+        when(resourceHelper.doesResourceExist(mockTransaction, pathId, true)).thenReturn(false);
 
         when(mockNonRdfSourceDescription.getEtagValue()).thenReturn("");
         when(mockNonRdfSourceDescription.getStateToken()).thenReturn("");
@@ -1024,7 +1024,7 @@ public class FedoraLdpTest {
         final Container mockObject = (Container)setResource(Container.class);
         when(mockRequest.getMethod()).thenReturn("PUT");
         when(resourceFactory.getResource(mockTransaction, pathId)).thenReturn(mockObject);
-        when(resourceHelper.doesResourceExist(mockTransaction, pathId)).thenReturn(true);
+        when(resourceHelper.doesResourceExist(mockTransaction, pathId, true)).thenReturn(true);
 
         final Response actual = testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
@@ -1039,7 +1039,7 @@ public class FedoraLdpTest {
 
         when(mockHttpConfiguration.putRequiresIfMatch()).thenReturn(true);
         when(resourceFactory.getResource(mockTransaction, pathId)).thenReturn(mockContainer);
-        when(resourceHelper.doesResourceExist(mockTransaction, pathId)).thenReturn(true);
+        when(resourceHelper.doesResourceExist(mockTransaction, pathId, true)).thenReturn(true);
 
         testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);

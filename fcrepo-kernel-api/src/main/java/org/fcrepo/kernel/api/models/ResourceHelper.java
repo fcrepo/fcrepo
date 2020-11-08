@@ -31,9 +31,11 @@ public interface ResourceHelper {
      * Check if a resource exists.
      * @param transaction The current transaction
      * @param fedoraId The internal identifier
+     * @param includeDeleted Whether to check for deleted resources too.
      * @return True if the identifier resolves to a resource.
      */
-    public boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId);
+    public boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId,
+                                     final boolean includeDeleted);
 
     /**
      * Is the resource a "ghost node". Ghost nodes are defined as a resource that does not exist, but whose URI is part

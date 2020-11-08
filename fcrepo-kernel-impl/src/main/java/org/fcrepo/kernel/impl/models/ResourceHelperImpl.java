@@ -57,14 +57,15 @@ public class ResourceHelperImpl implements ResourceHelper {
 
     @Override
     public boolean isGhostNode(final Transaction transaction, final FedoraId resourceId) {
-        if (!doesResourceExist(transaction, resourceId)) {
+        if (!doesResourceExist(transaction, resourceId, true)) {
             return containmentIndex.hasResourcesStartingWith(TransactionUtils.openTxId(transaction), resourceId);
         }
         return false;
     }
 
     @Override
-    public boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId) {
+    public boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId,
+                                     final boolean includeDeleted) {
         final String transactionId = TransactionUtils.openTxId(transaction);
         if (fedoraId.isRepositoryRoot()) {
             // Root always exists.
@@ -73,7 +74,7 @@ public class ResourceHelperImpl implements ResourceHelper {
         if (!(fedoraId.isMemento() || fedoraId.isAcl())) {
             // containment index doesn't handle versions and only tells us if the resource (not acl) is there,
             // so don't bother checking for them.
-            return containmentIndex.resourceExists(transactionId, fedoraId);
+            return containmentIndex.resourceExists(transactionId, fedoraId, includeDeleted);
         } else {
 
             final PersistentStorageSession psSession = getSession(transactionId);

@@ -392,7 +392,7 @@ public class ReferenceServiceImpl implements ReferenceService {
      */
     private void recordEvent(final String txId, final String resourceId, final String userPrincipal) {
         final FedoraId fedoraId = FedoraId.create(resourceId);
-        if (this.containmentIndex.resourceExists(txId, fedoraId)) {
+        if (this.containmentIndex.resourceExists(txId, fedoraId, false)) {
             this.eventAccumulator.recordEventForOperation(txId, fedoraId, getOperation(fedoraId, userPrincipal));
         }
     }

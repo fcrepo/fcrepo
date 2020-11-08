@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
@@ -204,5 +205,19 @@ public class FedoraTombstonesIT extends AbstractResourceIT {
 
         final HttpGet finalGet = new HttpGet(agPath);
         assertEquals(NOT_FOUND.getStatusCode(), getStatus(finalGet));
+    }
+
+    @Test
+    public void testNoChildrenOfTombstone() throws Exception {
+        final String uri;
+        try (final var response = execute(postObjMethod())) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            uri = getLocation(response);
+        }
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(uri)));
+        assertEquals(GONE.getStatusCode(), getStatus(new HttpPut(uri)));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(new HttpPut(uri + "/" + getRandomUniqueId())));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(new HttpPut(uri + "/" + getRandomUniqueId() + "/" +
+                getRandomUniqueId())));
     }
 }

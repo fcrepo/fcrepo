@@ -137,16 +137,16 @@ public class ContainmentIndexMetrics implements ContainmentIndex {
     }
 
     @Override
-    public boolean resourceExists(final String txID, final FedoraId fedoraId) {
+    public boolean resourceExists(final String txID, final FedoraId fedoraId, final boolean includeDeleted) {
         return MetricsHelper.time(resourceExistsTimer, () -> {
-            return containmentIndexImpl.resourceExists(txID, fedoraId);
+            return containmentIndexImpl.resourceExists(txID, fedoraId, includeDeleted);
         });
     }
 
     @Override
-    public FedoraId getContainerIdByPath(final String txID, final FedoraId fedoraId) {
+    public FedoraId getContainerIdByPath(final String txID, final FedoraId fedoraId, final boolean checkDeleted) {
         return MetricsHelper.time(getContainerIdByPathTimer, () -> {
-            return containmentIndexImpl.getContainerIdByPath(txID, fedoraId);
+            return containmentIndexImpl.getContainerIdByPath(txID, fedoraId, checkDeleted);
         });
     }
 

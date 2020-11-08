@@ -220,13 +220,32 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      */
     private static final String RESOURCE_EXISTS_IN_TRANSACTION = "SELECT x." + FEDORA_ID_COLUMN + " FROM" +
             " (SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child" +
-            " UNION SELECT " + FEDORA_ID_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE +
-            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +
-            " AND " + OPERATION_COLUMN + " = 'add') x" +
-            " WHERE NOT EXISTS " +
+            "  AND " + IS_DELETED_COLUMN + " = FALSE UNION SELECT " + FEDORA_ID_COLUMN + " FROM " +
+            TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN +
+            " = :transactionId" + " AND " + OPERATION_COLUMN + " = 'add') x WHERE NOT EXISTS " +
             " (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE +
             " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +
             " AND " + OPERATION_COLUMN + " IN ('delete', 'purge'))";
+
+    /*
+     * Query if a resource exists in the main table even if it is deleted.
+     */
+    private static final String RESOURCE_OR_TOMBSTONE_EXISTS = "SELECT " + FEDORA_ID_COLUMN + " FROM " +
+            RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child";
+
+    /*
+     * Resource exists as a record in the main table even if deleted or in the transaction operations table with an
+     * 'add' operation and not also exists as a 'delete' operation.
+     */
+    private static final String RESOURCE_OR_TOMBSTONE_EXISTS_IN_TRANSACTION = "SELECT x." + FEDORA_ID_COLUMN + " FROM" +
+            " (SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child" +
+            " UNION SELECT " + FEDORA_ID_COLUMN + " FROM " +
+            TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN +
+            " = :transactionId" + " AND " + OPERATION_COLUMN + " = 'add') x WHERE NOT EXISTS " +
+            " (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE +
+            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +
+            " AND " + OPERATION_COLUMN + " IN ('delete', 'purge'))";
+
 
     /*
      * Get the parent ID for this resource from the main table if not deleted.
@@ -504,7 +523,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    public boolean resourceExists(final String txId, final FedoraId fedoraId) {
+    public boolean resourceExists(final String txId, final FedoraId fedoraId, final boolean includeDeleted) {
         // Get the containing ID because fcr:metadata will not exist here but MUST exist if the containing resource does
         final String resourceId = fedoraId.getBaseId();
         LOGGER.debug("Checking if {} exists in transaction {}", resourceId, txId);
@@ -516,17 +535,21 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         parameterSource.addValue("child", resourceId);
         final boolean exists;
         if (txId != null) {
+            final var queryToUse = includeDeleted ? RESOURCE_OR_TOMBSTONE_EXISTS_IN_TRANSACTION :
+                    RESOURCE_EXISTS_IN_TRANSACTION;
             parameterSource.addValue("transactionId", txId);
-            exists = !jdbcTemplate.queryForList(RESOURCE_EXISTS_IN_TRANSACTION, parameterSource, String.class)
+            exists = !jdbcTemplate.queryForList(queryToUse, parameterSource, String.class)
                     .isEmpty();
         } else {
-            exists = !jdbcTemplate.queryForList(RESOURCE_EXISTS, parameterSource, String.class).isEmpty();
+            final var queryToUse = includeDeleted ? RESOURCE_OR_TOMBSTONE_EXISTS :
+                    RESOURCE_EXISTS;
+            exists = !jdbcTemplate.queryForList(queryToUse, parameterSource, String.class).isEmpty();
         }
         return exists;
     }
 
     @Override
-    public FedoraId getContainerIdByPath(final String txId, final FedoraId fedoraId) {
+    public FedoraId getContainerIdByPath(final String txId, final FedoraId fedoraId, final boolean checkDeleted) {
         if (fedoraId.isRepositoryRoot()) {
             // If we are root then we are the top.
             return fedoraId;
@@ -542,7 +565,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
                 return FedoraId.getRepositoryRootId();
             }
             final FedoraId testID = FedoraId.create(fullId);
-            if (resourceExists(txId, testID)) {
+            if (resourceExists(txId, testID, checkDeleted)) {
                 return testID;
             }
         }

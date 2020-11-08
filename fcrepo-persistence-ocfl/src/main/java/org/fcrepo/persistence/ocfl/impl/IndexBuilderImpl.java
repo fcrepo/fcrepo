@@ -124,7 +124,7 @@ public class IndexBuilderImpl implements IndexBuilder {
     }
 
     private boolean repoRootContainmentExists() {
-        return containmentIndex.resourceExists(null, FedoraId.getRepositoryRootId());
+        return containmentIndex.resourceExists(null, FedoraId.getRepositoryRootId(), false);
     }
 
     private boolean repoContainsObjects() {

@@ -243,7 +243,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
         } catch (final PathNotFoundException exc) {
             log.debug("Resource {} not found getting container", fedoraId.getFullIdPath());
             final FedoraId containerId =
-                    containmentIndex.getContainerIdByPath(TransactionUtils.openTxId(transaction()), fedoraId);
+                    containmentIndex.getContainerIdByPath(TransactionUtils.openTxId(transaction()), fedoraId, false);
             log.debug("Attempting to get FedoraResource for {}", fedoraId.getFullIdPath());
             try {
                 log.debug("Got FedoraResource for {}", containerId.getFullIdPath());
