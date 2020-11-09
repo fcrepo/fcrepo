@@ -39,7 +39,6 @@ public class FedoraPropsConfig extends BasePropsConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FedoraPropsConfig.class);
 
-    public static final String FCREPO_HOME = "fcrepo.home";
     public static final String FCREPO_JMS_HOST = "fcrepo.jms.host";
     public static final String FCREPO_DYNAMIC_JMS_PORT = "fcrepo.dynamic.jms.port";
     public static final String FCREPO_DYNAMIC_STOMP_PORT = "fcrepo.dynamic.stomp.port";
@@ -53,8 +52,8 @@ public class FedoraPropsConfig extends BasePropsConfig {
     private static final String DATA_DIR_DEFAULT_VALUE = "data";
     private static final String ACTIVE_MQ_DIR_DEFAULT_VALUE = "ActiveMQ/kahadb";
 
-    @Value("${" + FCREPO_HOME + ":fcrepo-home}")
-    private Path fedoraHome;
+    @Value("${" + FCREPO_HOME_PROPERTY + ":" + DEFAULT_FCREPO_HOME_VALUE + "}")
+    protected Path fedoraHome;
 
     @Value("#{fedoraPropsConfig.fedoraHome.resolve('" + DATA_DIR_DEFAULT_VALUE + "')}")
     private Path fedoraData;
@@ -96,7 +95,7 @@ public class FedoraPropsConfig extends BasePropsConfig {
             Files.createDirectories(fedoraHome);
         } catch (IOException e) {
             throw new IOException(String.format("Failed to create Fedora home directory at %s." +
-                    " Fedora home can be configured by setting the %s property.", fedoraHome, FCREPO_HOME), e);
+                    " Fedora home can be configured by setting the %s property.", fedoraHome, FCREPO_HOME_PROPERTY), e);
         }
         Files.createDirectories(fedoraData);
     }

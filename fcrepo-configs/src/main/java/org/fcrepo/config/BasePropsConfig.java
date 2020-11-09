@@ -34,8 +34,10 @@ import org.springframework.context.annotation.PropertySources;
 })
 abstract class BasePropsConfig {
 
+    public static final String FCREPO_HOME_PROPERTY = "fcrepo.home";
+    public static final String DEFAULT_FCREPO_HOME_VALUE = "fcrepo-home";
     public static final String DEFAULT_FCREPO_CONFIG_FILE_PROP_SOURCE =
-            "file:fcrepo-home/config/fcrepo.properties";
+            "file:${" + FCREPO_HOME_PROPERTY + ":" + DEFAULT_FCREPO_HOME_VALUE + "}/config/fcrepo.properties";
     public static final String FCREPO_CONFIG_FILE_PROP_SOURCE = "file:${fcrepo.config.file}";
 
 }
