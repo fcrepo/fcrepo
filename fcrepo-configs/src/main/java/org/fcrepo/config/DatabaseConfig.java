@@ -36,7 +36,7 @@ import java.util.Map;
  */
 @EnableTransactionManagement
 @Configuration
-public class DatabaseConfig {
+public class DatabaseConfig extends BasePropsConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseConfig.class);
 

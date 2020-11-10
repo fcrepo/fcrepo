@@ -17,7 +17,6 @@
  */
 package org.fcrepo.http.api.responses;
 
-import static java.lang.System.getProperty;
 import static java.util.stream.Stream.of;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static com.google.common.collect.ImmutableMap.builder;
@@ -66,6 +65,7 @@ import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.context.Context;
 import org.apache.velocity.tools.generic.EscapeTool;
 import org.apache.velocity.tools.generic.FieldTool;
+import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.http.api.FedoraLdp;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
@@ -110,6 +110,9 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
     @Inject
     private OcflPropsConfig ocflPropsConfig;
 
+    @Inject
+    private FedoraPropsConfig fedoraPropsConfig;
+
     private boolean autoVersioningEnabled;
 
     private HttpIdentifierConverter identifierConverter;
@@ -152,6 +155,8 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
 
     private static final ViewHelpers VIEW_HELPERS = ViewHelpers.getInstance();
 
+    private String velocityLog;
+
     private static final Logger LOGGER =
         getLogger(StreamingBaseHtmlProvider.class);
 
@@ -159,16 +164,11 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
     void init() throws IOException {
         LOGGER.trace("Velocity engine initializing...");
         final Properties properties = new Properties();
-        final String fcrepoHome = getProperty("fcrepo.home");
-        final String velocityLog = getProperty("fcrepo.velocity.runtime.log");
+        velocityLog = fedoraPropsConfig.getVelocityLog();
         autoVersioningEnabled = ocflPropsConfig.isAutoVersioningEnabled();
-        if (velocityLog != null) {
-            LOGGER.debug("Setting Velocity runtime log: {}", velocityLog);
-            properties.setProperty("runtime.log", velocityLog);
-        } else if (fcrepoHome != null) {
-            LOGGER.debug("Using fcrepo.home directory for the velocity log");
-            properties.setProperty("runtime.log", fcrepoHome + getProperty("file.separator") + "velocity.log");
-        }
+        LOGGER.debug("Setting Velocity runtime log: {}", velocityLog);
+        properties.setProperty("runtime.log", velocityLog);
+
         final URL propertiesUrl =
                 getClass().getResource(velocityPropertiesLocation);
         LOGGER.debug("Using Velocity configuration from {}", propertiesUrl);

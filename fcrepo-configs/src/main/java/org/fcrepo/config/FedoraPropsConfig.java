@@ -35,19 +35,57 @@ import java.nio.file.Path;
  * @since 6.0.0
  */
 @Configuration
-public class FedoraPropsConfig {
+public class FedoraPropsConfig extends BasePropsConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FedoraPropsConfig.class);
 
-    public static final String FCREPO_HOME = "fcrepo.home";
+    public static final String FCREPO_JMS_HOST = "fcrepo.jms.host";
+    public static final String FCREPO_DYNAMIC_JMS_PORT = "fcrepo.dynamic.jms.port";
+    public static final String FCREPO_DYNAMIC_STOMP_PORT = "fcrepo.dynamic.stomp.port";
+    public static final String FCREPO_ACTIVEMQ_CONFIGURATION = "fcrepo.activemq.configuration";
+    public static final String FCREPO_NAMESPACE_REGISTRY = "fcrepo.namespace.registry";
+    public static final String FCREPO_EXTERNAL_CONTENT_ALLOWED = "fcrepo.external.content.allowed";
+    private static final String FCREPO_ACTIVEMQ_DIRECTORY = "fcrepo.activemq.directory";
+    private static final String FCREPO_SESSION_TIMEOUT = "fcrepo.session.timeout";
+    private static final String FCREPO_VELOCITY_RUNTIME_LOG = "fcrepo.velocity.runtime.log";
 
-    private static final String DATA_DIR = "data";
+    private static final String DATA_DIR_DEFAULT_VALUE = "data";
+    private static final String ACTIVE_MQ_DIR_DEFAULT_VALUE = "ActiveMQ/kahadb";
 
-    @Value("${" + FCREPO_HOME + ":fcrepo-home}")
-    private Path fedoraHome;
+    @Value("${" + FCREPO_HOME_PROPERTY + ":" + DEFAULT_FCREPO_HOME_VALUE + "}")
+    protected Path fedoraHome;
 
-    @Value("#{fedoraPropsConfig.fedoraHome.resolve('" + DATA_DIR + "')}")
+    @Value("#{fedoraPropsConfig.fedoraHome.resolve('" + DATA_DIR_DEFAULT_VALUE + "')}")
     private Path fedoraData;
+
+    @Value("${" + FCREPO_JMS_HOST + ":localhost}")
+    private String jmsHost;
+
+    @Value("${" + FCREPO_DYNAMIC_JMS_PORT + ":61616}")
+    private String jmsPort;
+
+    @Value("${" + FCREPO_DYNAMIC_STOMP_PORT + ":61613}")
+    private String stompPort;
+
+    @Value("${" + FCREPO_ACTIVEMQ_CONFIGURATION + ":classpath:/config/activemq.xml}")
+    private String activeMQConfiguration;
+
+    @Value("${" + FCREPO_ACTIVEMQ_DIRECTORY + ":#{fedoraPropsConfig.fedoraData.resolve('" +
+            ACTIVE_MQ_DIR_DEFAULT_VALUE + "').toAbsolutePath().toString()}}")
+    private String activeMqDirectory;
+
+    @Value("${" + FCREPO_NAMESPACE_REGISTRY + ":classpath:/namespaces.yml}")
+    private String namespaceRegistry;
+
+    @Value("${" + FCREPO_EXTERNAL_CONTENT_ALLOWED + ":#{null}}")
+    private String externalContentAllowed;
+
+    @Value("${" + FCREPO_SESSION_TIMEOUT + ":180000}")
+    private String sessionTimeout;
+
+    @Value("${" + FCREPO_VELOCITY_RUNTIME_LOG + ": " +
+            "#{fedoraPropsConfig.fedoraHome.resolve('velocity.log').toAbsolutePath().toString()}}")
+    private String velocityLog;
 
     @PostConstruct
     private void postConstruct() throws IOException {
@@ -57,7 +95,7 @@ public class FedoraPropsConfig {
             Files.createDirectories(fedoraHome);
         } catch (IOException e) {
             throw new IOException(String.format("Failed to create Fedora home directory at %s." +
-                    " Fedora home can be configured by setting the %s property.", fedoraHome, FCREPO_HOME), e);
+                    " Fedora home can be configured by setting the %s property.", fedoraHome, FCREPO_HOME_PROPERTY), e);
         }
         Files.createDirectories(fedoraData);
     }
@@ -94,4 +132,66 @@ public class FedoraPropsConfig {
         this.fedoraData = fedoraData;
     }
 
+    /**
+     * @return The JMS host
+     */
+    public String getJmsHost() {
+        return jmsHost;
+    }
+
+    /**
+     * @return The JMS/Open Wire port
+     */
+    public String getJmsPort() {
+        return jmsPort;
+    }
+
+    /**
+     * @return The STOMP protocol port
+     */
+    public String getStompPort() {
+        return stompPort;
+    }
+
+    /**
+     * @return The ActiveMQ data directory
+     */
+    public String getActiveMqDirectory() {
+        return activeMqDirectory;
+    }
+
+    /**
+     * @return The path to the ActiveMQ xml spring configuration.
+     */
+    public String getActiveMQConfiguration() {
+        return activeMQConfiguration;
+    }
+
+    /**
+     * @return The path to the allowed external content pattern definitions.
+     */
+    public String getExternalContentAllowed() {
+        return externalContentAllowed;
+    }
+
+    /**
+     * @return The path to the namespace registry file.
+     */
+    public String getNamespaceRegistry() {
+        return namespaceRegistry;
+    }
+
+    /**
+     * @return The timeout in milliseconds of the persistence session
+     */
+    public String getSessionTimeout() {
+        return sessionTimeout;
+    }
+
+    /**
+     * @return The path to the velocity log.
+     */
+    public String getVelocityLog() {
+        return velocityLog;
+    }
 }

@@ -182,11 +182,11 @@
     <!-- ActiveMQ connection -->  
     <bean id="connectionFactory"
         class="org.apache.activemq.ActiveMQConnectionFactory" depends-on="jmsBroker"
-        p:brokerURL="vm://${fcrepo.jms.host:localhost}:${fcrepo.dynamic.jms.port:61616}?create=false"/>
+        p:brokerURL="vm://#{fedoraPropsConfig.jmsHost}:#{fedoraPropsConfig.jmsPort}?create=false"/>
 
     <!-- JMS Broker configuration -->
     <bean name="jmsBroker" class="org.apache.activemq.xbean.BrokerFactoryBean"
-      p:config="${fcrepo.activemq.configuration:classpath:/config/activemq.xml}" p:start="true"/>
+      p:config="#{fedoraPropsConfig.activeMQConfiguration}" p:start="true"/>
 
 
     <!-- translates events into JMS header-only format-->
@@ -198,14 +198,14 @@
     <!-- Configuration of namespace prefixes -->
     <bean name="rdfNamespaceRegistry" class="org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry"
         init-method="init" destroy-method="shutdown">
-      <property name="configPath" value="${fcrepo.namespace.registry:classpath:/namespaces.yml}" />
+      <property name="configPath" value="#{fedoraPropsConfig.namespaceRegistry}" />
       <property name="monitorForChanges" value="true" />
     </bean>
 
     <!-- External content configuration -->
     <bean name="externalContentPathValidator" class="org.fcrepo.http.api.ExternalContentPathValidator"
         init-method="init" destroy-method="shutdown">
-        <property name="configPath" value="${fcrepo.external.content.allowed:#{null}}" />
+        <property name="configPath" value="#{fedoraPropsConfig.externalContentAllowed}" />
         <property name="monitorForChanges" value="true" />
     </bean>
     

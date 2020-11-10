@@ -42,7 +42,7 @@ import java.time.Duration;
  * @author pwinckles
  */
 @Configuration
-public class MetricsConfig {
+public class MetricsConfig extends BasePropsConfig {
 
     @Value("${fcrepo.metrics.enable:false}")
     private boolean metricsEnabled;

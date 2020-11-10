@@ -36,7 +36,7 @@ import java.util.Objects;
  * @since 6.0.0
  */
 @Configuration
-public class OcflPropsConfig {
+public class OcflPropsConfig extends BasePropsConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OcflPropsConfig.class);
 
