@@ -20,7 +20,6 @@
     <osgi.export.packages>
       org.fcrepo.auth.common;version=${project.version}
     </osgi.export.packages>
-    <shiro.version>1.4.2</shiro.version>
   </properties>
 
   <dependencies>
@@ -37,7 +36,6 @@
     <dependency>
       <groupId>javax.annotation</groupId>
       <artifactId>javax.annotation-api</artifactId>
-      <version>1.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -47,18 +45,10 @@
     <dependency>
       <groupId>org.apache.shiro</groupId>
       <artifactId>shiro-core</artifactId>
-      <version>${shiro.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>commons-collections</groupId>
-          <artifactId>commons-collections</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.shiro</groupId>
       <artifactId>shiro-spring</artifactId>
-      <version>${shiro.version}</version>
     </dependency>
     
     <dependency>
@@ -185,19 +175,16 @@
     <dependency>
       <groupId>org.mariadb.jdbc</groupId>
       <artifactId>mariadb-java-client</artifactId>
-      <version>${mariadb.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>mysql</groupId>
       <artifactId>mysql-connector-java</artifactId>
-      <version>${mysql.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <version>${postgresql.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
