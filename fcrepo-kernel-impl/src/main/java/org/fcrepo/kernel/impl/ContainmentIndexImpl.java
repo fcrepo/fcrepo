@@ -226,9 +226,9 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     private static final String COMMIT_DELETE_RECORDS_MYSQL = "UPDATE " + RESOURCES_TABLE +
             " r INNER JOIN " + TRANSACTION_OPERATIONS_TABLE + " t ON t." + FEDORA_ID_COLUMN + " = r." +
-            FEDORA_ID_COLUMN + " AND t." + PARENT_COLUMN + " = r." + PARENT_COLUMN + " SET r." + END_TIME_COLUMN +
-            " = t." + END_TIME_COLUMN +
-            " WHERE t." + TRANSACTION_ID_COLUMN + " = :transactionId AND t." +  OPERATION_COLUMN +
+            FEDORA_ID_COLUMN + " SET r." + END_TIME_COLUMN + " = t." + END_TIME_COLUMN +
+            ", r." + START_TIME_COLUMN + " = r." + START_TIME_COLUMN + " WHERE t." + PARENT_COLUMN + " = r." +
+            PARENT_COLUMN + " AND t." + TRANSACTION_ID_COLUMN + " = :transactionId AND t." +  OPERATION_COLUMN +
             " = 'delete' AND r." + END_TIME_COLUMN + " IS NULL";
 
     private static final String COMMIT_DELETE_RECORDS_POSTGRES = "UPDATE " + RESOURCES_TABLE + " SET " +
