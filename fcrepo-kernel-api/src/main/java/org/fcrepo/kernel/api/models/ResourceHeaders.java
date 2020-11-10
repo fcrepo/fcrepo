@@ -73,11 +73,11 @@ public interface ResourceHeaders {
     String getFilename();
 
     /**
-     * Get the size in bytes of the content of this resource
+     * Get the size in bytes of the content of this resource. May be -1 if the size is unknown or there is no content.
      *
      * @return size
      */
-    Long getContentSize();
+    long getContentSize();
 
     /**
      * Get the list of all digest URIs recorded for this resource

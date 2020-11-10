@@ -120,7 +120,7 @@ public class NonRdfSourcesPersistenceIT {
         assertEquals(NON_RDF_SOURCE.getURI(), headers.getInteractionModel());
         assertEquals("test.txt", headers.getFilename());
         assertEquals("text/plain", headers.getMimeType());
-        assertEquals(BINARY_CONTENT.length(), headers.getContentSize().longValue());
+        assertEquals(BINARY_CONTENT.length(), headers.getContentSize());
         assertTrue("Headers did not contain default digest",
                 headers.getDigests().contains(CONTENT_SHA512));
     }
@@ -145,7 +145,7 @@ public class NonRdfSourcesPersistenceIT {
         assertEquals(rescId, headers.getId());
         assertEquals(NON_RDF_SOURCE.getURI(), headers.getInteractionModel());
         assertEquals("text/plain", headers.getMimeType());
-        assertEquals(BINARY_CONTENT.length(), headers.getContentSize().longValue());
+        assertEquals(BINARY_CONTENT.length(), headers.getContentSize());
         assertTrue("Headers did not contain md5 digest",
                 headers.getDigests().contains(CONTENT_MD5));
         assertTrue("Headers did not contain sha1 digest",
@@ -170,7 +170,7 @@ public class NonRdfSourcesPersistenceIT {
         assertEquals(rescId, headers.getId());
         assertEquals(NON_RDF_SOURCE.getURI(), headers.getInteractionModel());
         assertEquals("text/plain", headers.getMimeType());
-        assertEquals(BINARY_CONTENT.length(), headers.getContentSize().longValue());
+        assertEquals(BINARY_CONTENT.length(), headers.getContentSize());
         assertTrue("Headers did not contain default digest",
                 headers.getDigests().contains(CONTENT_SHA512));
     }
@@ -226,7 +226,7 @@ public class NonRdfSourcesPersistenceIT {
         assertEquals(NON_RDF_SOURCE.getURI(), headers.getInteractionModel());
         assertNull(headers.getFilename());
         assertEquals("text/plain", headers.getMimeType());
-        assertEquals(UPDATED_CONTENT.length(), headers.getContentSize().longValue());
+        assertEquals(UPDATED_CONTENT.length(), headers.getContentSize());
         assertEquals("Only one digest expected", 1, headers.getDigests().size());
         assertTrue("Headers did not contain default digest",
                 headers.getDigests().contains(UPDATED_SHA512));
@@ -262,7 +262,7 @@ public class NonRdfSourcesPersistenceIT {
         assertEquals(NON_RDF_SOURCE.getURI(), headers.getInteractionModel());
         assertEquals("test.txt", headers.getFilename());
         assertEquals("text/plain", headers.getMimeType());
-        assertEquals(BINARY_CONTENT.length(), headers.getContentSize().longValue());
+        assertEquals(BINARY_CONTENT.length(), headers.getContentSize());
         assertTrue("Headers did not contain default digest",
                 headers.getDigests().contains(CONTENT_SHA512));
     }
@@ -301,7 +301,7 @@ public class NonRdfSourcesPersistenceIT {
         assertEquals(rescId, headers.getParent());
         assertEquals(NON_RDF_SOURCE.getURI(), headers.getInteractionModel());
         assertEquals("text/plain", headers.getMimeType());
-        assertEquals(BINARY_CONTENT.length(), headers.getContentSize().longValue());
+        assertEquals(BINARY_CONTENT.length(), headers.getContentSize());
         assertTrue("Headers did not contain default digest",
                 headers.getDigests().contains(CONTENT_SHA512));
     }

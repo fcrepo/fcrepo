@@ -45,7 +45,7 @@ public abstract class AbstractNonRdfSourceOperationBuilder implements NonRdfSour
 
     protected Collection<URI> digests;
 
-    protected Long contentSize;
+    protected long contentSize = -1;
 
     protected String userPrincipal;
 
@@ -93,7 +93,7 @@ public abstract class AbstractNonRdfSourceOperationBuilder implements NonRdfSour
     }
 
     @Override
-    public NonRdfSourceOperationBuilder contentSize(final Long size) {
+    public NonRdfSourceOperationBuilder contentSize(final long size) {
         this.contentSize = size;
         return this;
     }

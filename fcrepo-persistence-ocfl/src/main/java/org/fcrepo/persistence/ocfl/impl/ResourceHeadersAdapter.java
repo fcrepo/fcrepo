@@ -210,7 +210,7 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
     }
 
     @Override
-    public Long getContentSize() {
+    public long getContentSize() {
         return kernelHeaders.getContentSize();
     }
 

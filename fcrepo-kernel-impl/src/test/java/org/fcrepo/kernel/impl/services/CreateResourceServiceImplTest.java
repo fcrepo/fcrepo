@@ -554,7 +554,7 @@ public class CreateResourceServiceImplTest {
     }
 
     private void assertBinaryPropertiesPresent(final ResourceOperation operation, final String exMimetype,
-            final String exFilename, final Long exContentSize, final Collection<URI> exDigests) {
+            final String exFilename, final long exContentSize, final Collection<URI> exDigests) {
         final var nonRdfOperation = (NonRdfSourceOperation) operation;
         assertEquals(exContentSize, nonRdfOperation.getContentSize());
         assertEquals(exFilename, nonRdfOperation.getFilename());

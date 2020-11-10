@@ -741,7 +741,7 @@ public class OcflPersistentStorageSessionTest {
 
         final var contentStream = new ByteArrayInputStream(content.getBytes());
         when(binOperation.getContentStream()).thenReturn(contentStream);
-        when(binOperation.getContentSize()).thenReturn(null);
+        when(binOperation.getContentSize()).thenReturn(-1L);
         when(binOperation.getResourceId()).thenReturn(resourceId);
         when(((CreateResourceOperation) binOperation).getParentId()).thenReturn(FedoraId.getRepositoryRootId());
         when(binOperation.getType()).thenReturn(CREATE);

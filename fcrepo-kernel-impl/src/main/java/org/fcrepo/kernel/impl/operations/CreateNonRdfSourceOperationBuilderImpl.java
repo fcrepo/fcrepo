@@ -73,7 +73,7 @@ public class CreateNonRdfSourceOperationBuilderImpl extends AbstractNonRdfSource
     }
 
     @Override
-    public CreateNonRdfSourceOperationBuilder contentSize(final Long size) {
+    public CreateNonRdfSourceOperationBuilder contentSize(final long size) {
         return (CreateNonRdfSourceOperationBuilder) super.contentSize(size);
     }
 

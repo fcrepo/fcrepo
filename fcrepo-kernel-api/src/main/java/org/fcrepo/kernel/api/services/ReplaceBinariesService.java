@@ -51,6 +51,6 @@ public interface ReplaceBinariesService {
                  String contentType,
                  Collection<URI> digests,
                  InputStream contentBody,
-                 Long size,
+                 long size,
                  ExternalContent externalContent);
 }
