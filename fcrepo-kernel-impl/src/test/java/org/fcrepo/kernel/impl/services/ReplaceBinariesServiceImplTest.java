@@ -175,7 +175,7 @@ public class ReplaceBinariesServiceImplTest {
         when(externalContent.getContentType()).thenReturn(MIME_TYPE);
 
         service.perform(TX_ID, USER_PRINCIPAL, FEDORA_ID, FILENAME, "application/octet-stream",
-                realDigests, null, null, externalContent);
+                realDigests, null, -1L, externalContent);
         verify(pSession).persist(operationCaptor.capture());
         final NonRdfSourceOperation op = operationCaptor.getValue();
 
@@ -227,7 +227,7 @@ public class ReplaceBinariesServiceImplTest {
     }
 
     private void assertPropertiesPopulated(final NonRdfSourceOperation op, final String exMimetype,
-            final String exFilename, final Long exContentSize, final Collection<URI> exDigests) {
+            final String exFilename, final long exContentSize, final Collection<URI> exDigests) {
         assertEquals(exMimetype, op.getMimeType());
         assertEquals(exFilename, op.getFilename());
         assertEquals(exContentSize, op.getContentSize());

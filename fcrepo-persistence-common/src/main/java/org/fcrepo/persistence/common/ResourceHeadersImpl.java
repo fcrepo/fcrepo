@@ -43,7 +43,7 @@ public class ResourceHeadersImpl implements ResourceHeaders {
 
     private String filename;
 
-    private Long contentSize;
+    private long contentSize;
 
     private Collection<URI> digests;
 
@@ -140,14 +140,14 @@ public class ResourceHeadersImpl implements ResourceHeaders {
     }
 
     @Override
-    public Long getContentSize() {
+    public long getContentSize() {
         return contentSize;
     }
 
     /**
      * @param contentSize the contentSize to set
      */
-    public void setContentSize(final Long contentSize) {
+    public void setContentSize(final long contentSize) {
         this.contentSize = contentSize;
     }
 

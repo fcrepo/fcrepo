@@ -39,7 +39,7 @@ public interface CreateNonRdfSourceOperationBuilder extends NonRdfSourceOperatio
     CreateNonRdfSourceOperationBuilder contentDigests(Collection<URI> digests);
 
     @Override
-    CreateNonRdfSourceOperationBuilder contentSize(Long size);
+    CreateNonRdfSourceOperationBuilder contentSize(long size);
 
     /**
      * Set the parent identifier of the resource

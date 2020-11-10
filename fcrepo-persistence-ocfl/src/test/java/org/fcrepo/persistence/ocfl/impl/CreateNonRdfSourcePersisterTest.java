@@ -95,7 +95,7 @@ public class CreateNonRdfSourcePersisterTest {
 
     private static final String EXTERNAL_HANDLING = "proxy";
 
-    private static final Long EXTERNAL_CONTENT_SIZE = 526632L;
+    private static final long EXTERNAL_CONTENT_SIZE = 526632L;
 
     private CreateNonRdfSourcePersister persister;
 
@@ -115,7 +115,7 @@ public class CreateNonRdfSourcePersisterTest {
                 CreateResourceOperation.class));
         when(nonRdfSourceOperation.getUserPrincipal()).thenReturn(USER_PRINCIPAL);
         when(nonRdfSourceOperation.getResourceId()).thenReturn(RESOURCE_ID);
-        when(nonRdfSourceOperation.getContentSize()).thenReturn(null);
+        when(nonRdfSourceOperation.getContentSize()).thenReturn(-1L);
         when(nonRdfSourceOperation.getType()).thenReturn(CREATE);
         when(((CreateResourceOperation)nonRdfSourceOperation).getParentId()).thenReturn(ROOT_RESOURCE_ID);
 

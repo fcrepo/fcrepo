@@ -35,6 +35,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
+
 import static java.lang.String.format;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -62,13 +63,13 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
                         final String contentType,
                         final Collection<URI> digests,
                         final InputStream contentBody,
-                        final Long contentSize,
+                        final long contentSize,
                         final ExternalContent externalContent) {
         try {
             final PersistentStorageSession pSession = this.psManager.getSession(txId);
 
             String mimeType = contentType;
-            Long size = contentSize;
+            long size = contentSize;
             final NonRdfSourceOperationBuilder builder;
             if (externalContent == null || externalContent.isCopy()) {
                 var contentInputStream = contentBody;
@@ -83,7 +84,7 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
                         externalContent.getHandling(),
                         externalContent.getURI());
 
-                if (contentSize == null) {
+                if (contentSize == -1L) {
                     size = externalContent.getContentSize();
                 }
                 if (!digests.isEmpty()) {

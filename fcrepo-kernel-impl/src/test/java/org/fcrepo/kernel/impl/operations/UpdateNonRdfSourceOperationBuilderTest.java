@@ -45,7 +45,7 @@ public class UpdateNonRdfSourceOperationBuilderTest {
 
     private final String FILENAME = "someFile.txt";
 
-    private final Long FILESIZE = 123L;
+    private final long FILESIZE = 123L;
 
     private final Collection<URI> DIGESTS = asList(URI.create("urn:sha1:1234abcd"), URI.create("urn:md5:zyxw9876"));
 

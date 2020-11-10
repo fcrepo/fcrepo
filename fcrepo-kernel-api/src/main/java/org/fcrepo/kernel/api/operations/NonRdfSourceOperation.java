@@ -63,5 +63,5 @@ public interface NonRdfSourceOperation extends ResourceOperation {
     /**
      * @return The size in bytes of content associated with this resource.
      */
-    Long getContentSize();
+    long getContentSize();
 }

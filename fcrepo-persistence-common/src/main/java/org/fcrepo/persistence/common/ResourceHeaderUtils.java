@@ -129,7 +129,7 @@ public class ResourceHeaderUtils {
      * @param digests digests
      */
     public static void populateBinaryHeaders(final ResourceHeadersImpl headers, final String mimetype,
-            final String filename, final Long filesize, final Collection<URI> digests) {
+            final String filename, final long filesize, final Collection<URI> digests) {
         headers.setMimeType(mimetype);
         headers.setDigests(digests);
         headers.setFilename(filename);

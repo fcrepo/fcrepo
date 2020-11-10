@@ -102,7 +102,7 @@ public class UpdateNonRdfSourcePersisterTest {
                 CreateResourceOperation.class));
         when(nonRdfSourceOperation.getUserPrincipal()).thenReturn(USER_PRINCIPAL);
         when(nonRdfSourceOperation.getResourceId()).thenReturn(RESOURCE_ID);
-        when(nonRdfSourceOperation.getContentSize()).thenReturn(null);
+        when(nonRdfSourceOperation.getContentSize()).thenReturn(-1L);
 
         when(psSession.findOrCreateSession(anyString())).thenReturn(session);
         when(index.getMapping(eq(SESSION_ID), any())).thenReturn(mapping);

@@ -44,7 +44,7 @@ public abstract class AbstractNonRdfSourceOperation extends AbstractResourceOper
 
     private Collection<URI> digests;
 
-    private Long contentSize;
+    private long contentSize = -1;
 
     /**
      * Constructor for external content.
@@ -111,7 +111,7 @@ public abstract class AbstractNonRdfSourceOperation extends AbstractResourceOper
     }
 
     @Override
-    public Long getContentSize() {
+    public long getContentSize() {
         return contentSize;
     }
 
@@ -188,7 +188,7 @@ public abstract class AbstractNonRdfSourceOperation extends AbstractResourceOper
     /**
      * @param contentSize the contentSize to set
      */
-    protected void setContentSize(final Long contentSize) {
+    protected void setContentSize(final long contentSize) {
         this.contentSize = contentSize;
     }
 }

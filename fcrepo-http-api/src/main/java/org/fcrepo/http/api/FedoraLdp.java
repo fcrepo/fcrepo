@@ -429,12 +429,7 @@ public class FedoraLdp extends ContentExposingResource {
             final var binaryType = requestContentType != null ? requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;
             final var contentType = extContent == null ? binaryType.toString() : extContent.getContentType();
             final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
-            final Long contentSize;
-            if (contentDisposition == null || contentDisposition.getSize() == -1) {
-                contentSize = null;
-            } else {
-                contentSize = contentDisposition.getSize();
-            }
+            final long contentSize = contentDisposition == null ? -1L : contentDisposition.getSize();
 
             if (resourceExists) {
                 replaceBinariesService.perform(transaction.getId(),
@@ -608,12 +603,7 @@ public class FedoraLdp extends ContentExposingResource {
             final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
             final var binaryType = requestContentType != null ? requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;
             final var contentType = extContent == null ? binaryType.toString() : extContent.getContentType();
-            final Long contentSize;
-            if (contentDisposition == null || contentDisposition.getSize() == -1) {
-                contentSize = null;
-            } else {
-                contentSize = contentDisposition.getSize();
-            }
+            final long contentSize = contentDisposition == null ? -1L : contentDisposition.getSize();
 
             createResourceService.perform(transaction.getId(),
                                           getUserPrincipal(),

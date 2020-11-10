@@ -48,7 +48,7 @@ public interface CreateResourceService {
      * @param externalContent The external content handler or null if none.
      */
     void perform(String txId, String userPrincipal, FedoraId fedoraId,
-            String contentType, String filename, Long contentSize, List<String> linkHeaders,
+            String contentType, String filename, long contentSize, List<String> linkHeaders,
             Collection<URI> digest, InputStream requestBody, ExternalContent externalContent);
 
     /**

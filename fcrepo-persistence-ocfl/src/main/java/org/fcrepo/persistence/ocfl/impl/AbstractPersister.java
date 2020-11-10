@@ -162,7 +162,7 @@ abstract class AbstractPersister implements Persister {
 
         // Existing size and digests must be cleared so they can be populated for the new content
         headers.setDigests(new ArrayList<>());
-        headers.setContentSize(null);
+        headers.setContentSize(-1);
 
         ResourceHeaderUtils.touchModificationHeaders(headers, operation.getUserPrincipal(), now);
 
