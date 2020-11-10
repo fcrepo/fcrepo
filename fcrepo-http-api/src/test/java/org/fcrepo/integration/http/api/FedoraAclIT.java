@@ -50,6 +50,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
+import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.junit.Before;
@@ -153,6 +154,64 @@ public class FedoraAclIT extends AbstractResourceIT {
                                       createURI("http://www.w3.org/ns/auth/acl#Write")));
         }
 
+    }
+
+    @Test
+    public void testPatchAclDelete() throws Exception {
+        final String aclURI = subjectUri + "/" + FCR_ACL;
+        createObjectAndClose(id);
+        final HttpPut putAcl = putObjMethod(id + "/" + FCR_ACL);
+        putAcl.setHeader(CONTENT_TYPE, "text/turtle");
+        putAcl.setEntity(new StringEntity("@prefix acl: <http://www.w3.org/ns/auth/acl#> . " +
+                "<#authorization> a acl:Authorization ; acl:agent \"user3\" ; acl:mode acl:Read ; " +
+                "acl:accessTo <" + subjectUri + "> ; acl:default <" + subjectUri + "> ."));
+        assertEquals(CREATED.getStatusCode(), getStatus(putAcl));
+
+        final Node subjectNode = createURI(subjectUri);
+        final Node authNode = createURI(aclURI + "#authorization");
+        final Node modeNode = createURI("http://www.w3.org/ns/auth/acl#mode");
+        final Node writeNode = createURI("http://www.w3.org/ns/auth/acl#Read");
+        final Node accessToNode = createURI("http://www.w3.org/ns/auth/acl#accessTo");
+        final Node defaultNode = createURI("http://www.w3.org/ns/auth/acl#default");
+        // Verify initial state
+        try (final CloseableDataset dataset = getDataset(new HttpGet(aclURI))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue(graph.contains(ANY,
+                    authNode,
+                    modeNode,
+                    writeNode));
+            assertTrue(graph.contains(ANY,
+                    authNode,
+                    accessToNode,
+                    subjectNode));
+            assertTrue(graph.contains(ANY,
+                    authNode,
+                    defaultNode,
+                    subjectNode));
+        }
+
+        final HttpPatch patch = new HttpPatch(aclURI);
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patch.setEntity(new StringEntity("PREFIX acl: <http://www.w3.org/ns/auth/acl#> " +
+                "DELETE { <#authorization> acl:default <" + subjectUri + "> . } WHERE { }"));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
+
+        // verify the patch worked
+        try (final CloseableDataset dataset = getDataset(new HttpGet(aclURI))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue(graph.contains(ANY,
+                    authNode,
+                    modeNode,
+                    writeNode));
+            assertTrue(graph.contains(ANY,
+                    authNode,
+                    accessToNode,
+                    subjectNode));
+            assertFalse(graph.contains(ANY,
+                    authNode,
+                    defaultNode,
+                    subjectNode));
+        }
     }
 
     @Test
