@@ -21,9 +21,9 @@ import static java.util.Arrays.stream;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
+
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.OK;
-
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_FORBIDDEN;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
@@ -57,6 +57,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -2086,6 +2087,9 @@ public class WebACRecipesIT extends AbstractResourceIT {
 
     @Test
     public void testRequestWithEmptyPath() throws Exception {
+        // Ensure HttpClient does not remove empty paths
+        final RequestConfig config = RequestConfig.custom().setNormalizeUri(false).build();
+
         final String username = "testUser92";
         final String parent = getRandomUniqueId();
         final HttpPost postParent = postObjMethod();
@@ -2141,10 +2145,12 @@ public class WebACRecipesIT extends AbstractResourceIT {
         // Admin bypasses ACL resolution gets 409.
         final HttpGet getAdminRequest = getObjMethod(parent + "//" + child);
         setAuth(getAdminRequest, "fedoraAdmin");
+        getAdminRequest.setConfig(config);
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(getAdminRequest));
         // User
         final HttpGet getUserRequest = getObjMethod(parent + "//" + child);
         setAuth(getUserRequest, username);
+        getUserRequest.setConfig(config);
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(getUserRequest));
     }
 

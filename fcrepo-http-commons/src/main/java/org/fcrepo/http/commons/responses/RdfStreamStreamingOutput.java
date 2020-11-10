@@ -149,7 +149,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
 
     private static void serializeNTriples(final RdfStream rdfStream, final RDFFormat format,
             final OutputStream output) {
-        final StreamRDF stream = new SynchonizedStreamRDFWrapper(getWriterStream(output, format));
+        final StreamRDF stream = new SynchonizedStreamRDFWrapper(getWriterStream(output, format.getLang()));
         stream.start();
         rdfStream.forEach(stream::triple);
         stream.finish();
@@ -160,7 +160,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
 
         final Set<String> namespacesPresent = new HashSet<>();
 
-        final StreamRDF stream = new SynchonizedStreamRDFWrapper(getWriterStream(output, format));
+        final StreamRDF stream = new SynchonizedStreamRDFWrapper(getWriterStream(output, format.getLang()));
         stream.start();
         // Must read the rdf stream before writing out ns prefixes, otherwise the prefixes come after the triples
         final List<Triple> tripleList = rdfStream.peek(t -> {

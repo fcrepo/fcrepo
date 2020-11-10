@@ -128,7 +128,7 @@ abstract class AbstractRdfSourcePersister extends AbstractPersister {
                           final ResourceHeadersImpl headers,
                           final RdfStream triples) throws PersistentStorageException {
         try (final var os = new ByteArrayOutputStream()) {
-            final StreamRDF streamRDF = getWriterStream(os, OcflPersistentStorageUtils.getRdfFormat());
+            final StreamRDF streamRDF = getWriterStream(os, OcflPersistentStorageUtils.getRdfFormat().getLang());
             streamRDF.start();
             if (triples != null) {
                 triples.forEach(streamRDF::triple);
