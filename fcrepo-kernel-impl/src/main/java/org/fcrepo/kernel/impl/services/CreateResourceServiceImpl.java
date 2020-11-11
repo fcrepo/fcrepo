@@ -39,6 +39,7 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.MultiDigestInputStreamWrapper;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
+import javax.ws.rs.BadRequestException;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Link;
@@ -236,9 +237,15 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
      * @return a list of LINK headers with rel="type"
      */
     private List<String> getTypes(final List<String> headers) {
-        return getLinkHeaders(headers) == null ? emptyList() : getLinkHeaders(headers).stream()
-                .filter(p -> p.getRel().equalsIgnoreCase("type")).map(Link::getUri)
-                .map(URI::toString).collect(Collectors.toList());
+        final List hdrobjs = getLinkHeaders(headers);
+        try {
+            return hdrobjs == null ? emptyList() : getLinkHeaders(headers).stream()
+                    //.filter(p -> p.getRel() != null)
+                    .filter(p -> p.getRel().equalsIgnoreCase("type")).map(Link::getUri)
+                    .map(URI::toString).collect(Collectors.toList());
+        } catch ( Exception e ) {
+            throw new BadRequestException("Invalid type found");
+        }
     }
 
     /**
