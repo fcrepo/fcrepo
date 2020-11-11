@@ -240,7 +240,6 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         final List hdrobjs = getLinkHeaders(headers);
         try {
             return hdrobjs == null ? emptyList() : getLinkHeaders(headers).stream()
-                    //.filter(p -> p.getRel() != null)
                     .filter(p -> p.getRel().equalsIgnoreCase("type")).map(Link::getUri)
                     .map(URI::toString).collect(Collectors.toList());
         } catch ( Exception e ) {
