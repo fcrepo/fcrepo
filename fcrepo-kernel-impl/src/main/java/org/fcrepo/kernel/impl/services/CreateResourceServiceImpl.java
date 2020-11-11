@@ -237,9 +237,9 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
      * @return a list of LINK headers with rel="type"
      */
     private List<String> getTypes(final List<String> headers) {
-        final List hdrobjs = getLinkHeaders(headers);
+        final List<Link> hdrobjs = getLinkHeaders(headers);
         try {
-            return hdrobjs == null ? emptyList() : getLinkHeaders(headers).stream()
+            return hdrobjs == null ? emptyList() : hdrobjs.stream()
                     .filter(p -> p.getRel().equalsIgnoreCase("type")).map(Link::getUri)
                     .map(URI::toString).collect(Collectors.toList());
         } catch ( Exception e ) {
