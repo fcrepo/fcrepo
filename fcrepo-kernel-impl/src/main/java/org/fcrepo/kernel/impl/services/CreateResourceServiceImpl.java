@@ -243,7 +243,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                     .filter(p -> p.getRel().equalsIgnoreCase("type")).map(Link::getUri)
                     .map(URI::toString).collect(Collectors.toList());
         } catch ( Exception e ) {
-            throw new BadRequestException("Invalid type found");
+            throw new BadRequestException("Invalid Link header type found",e);
         }
     }
 
