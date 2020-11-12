@@ -410,12 +410,12 @@ public class ContainmentIndexImplTest {
         stubObject("child1");
         stubObject("transaction1");
         stubObject("transaction2");
-        assertFalse(containmentIndex.resourceExists(null, child1.getFedoraId()));
-        assertFalse(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId()));
+        assertFalse(containmentIndex.resourceExists(null, child1.getFedoraId(), false));
+        assertFalse(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId(), false));
         containmentIndex.addContainedBy(transaction2.getId(), parent1.getFedoraId(), child1.getFedoraId());
         containmentIndex.commitTransaction(transaction2.getId());
-        assertTrue(containmentIndex.resourceExists(null, child1.getFedoraId()));
-        assertTrue(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId()));
+        assertTrue(containmentIndex.resourceExists(null, child1.getFedoraId(), false));
+        assertTrue(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId(), false));
     }
 
     @Test
@@ -424,29 +424,29 @@ public class ContainmentIndexImplTest {
         stubObject("child1");
         stubObject("transaction1");
         stubObject("transaction2");
-        assertFalse(containmentIndex.resourceExists(null, child1.getFedoraId()));
-        assertFalse(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId()));
-        assertFalse(containmentIndex.resourceExists(transaction2.getId(), child1.getFedoraId()));
+        assertFalse(containmentIndex.resourceExists(null, child1.getFedoraId(), false));
+        assertFalse(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId(), false));
+        assertFalse(containmentIndex.resourceExists(transaction2.getId(), child1.getFedoraId(), false));
         // Only visible in the transaction.
         containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
-        assertFalse(containmentIndex.resourceExists(null, child1.getFedoraId()));
-        assertTrue(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId()));
-        assertFalse(containmentIndex.resourceExists(transaction2.getId(), child1.getFedoraId()));
+        assertFalse(containmentIndex.resourceExists(null, child1.getFedoraId(), false));
+        assertTrue(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId(), false));
+        assertFalse(containmentIndex.resourceExists(transaction2.getId(), child1.getFedoraId(), false));
         // Rollback transaction.
         containmentIndex.rollbackTransaction(transaction1.getId());
-        assertFalse(containmentIndex.resourceExists(null, child1.getFedoraId()));
-        assertFalse(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId()));
-        assertFalse(containmentIndex.resourceExists(transaction2.getId(), child1.getFedoraId()));
+        assertFalse(containmentIndex.resourceExists(null, child1.getFedoraId(), false));
+        assertFalse(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId(), false));
+        assertFalse(containmentIndex.resourceExists(transaction2.getId(), child1.getFedoraId(), false));
         // Add again in transaction.
         containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
-        assertFalse(containmentIndex.resourceExists(null, child1.getFedoraId()));
-        assertTrue(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId()));
-        assertFalse(containmentIndex.resourceExists(transaction2.getId(), child1.getFedoraId()));
+        assertFalse(containmentIndex.resourceExists(null, child1.getFedoraId(), false));
+        assertTrue(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId(), false));
+        assertFalse(containmentIndex.resourceExists(transaction2.getId(), child1.getFedoraId(), false));
         // Commit and visible everywhere.
         containmentIndex.commitTransaction(transaction1.getId());
-        assertTrue(containmentIndex.resourceExists(null, child1.getFedoraId()));
-        assertTrue(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId()));
-        assertTrue(containmentIndex.resourceExists(transaction2.getId(), child1.getFedoraId()));
+        assertTrue(containmentIndex.resourceExists(null, child1.getFedoraId(), false));
+        assertTrue(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId(), false));
+        assertTrue(containmentIndex.resourceExists(transaction2.getId(), child1.getFedoraId(), false));
     }
 
     @Test
@@ -528,8 +528,8 @@ public class ContainmentIndexImplTest {
         assertEquals(1, containmentIndex.getContains(null, parent1.getFedoraId()).count());
         assertEquals(parent1.getFedoraId().getFullId(),
                 containmentIndex.getContainedBy(null, child1.getFedoraId()));
-        assertTrue(containmentIndex.resourceExists(null, child1.getFedoraId()));
-        assertTrue(containmentIndex.resourceExists(null, fedoraID));
+        assertTrue(containmentIndex.resourceExists(null, child1.getFedoraId(), false));
+        assertTrue(containmentIndex.resourceExists(null, fedoraID, false));
     }
 
     /**
@@ -546,8 +546,8 @@ public class ContainmentIndexImplTest {
         assertEquals(1, containmentIndex.getContains(null, parent1.getFedoraId()).count());
         assertEquals(parent1.getFedoraId().getFullId(),
                 containmentIndex.getContainedBy(null, child1.getFedoraId()));
-        assertTrue(containmentIndex.resourceExists(null, child1.getFedoraId()));
-        assertTrue(containmentIndex.resourceExists(null, fedoraID));
+        assertTrue(containmentIndex.resourceExists(null, child1.getFedoraId(), false));
+        assertTrue(containmentIndex.resourceExists(null, fedoraID, false));
     }
 
     @Test
@@ -558,11 +558,11 @@ public class ContainmentIndexImplTest {
 
         containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
 
-        assertTrue(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId()));
+        assertTrue(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId(), false));
 
         containmentIndex.reset();
 
-        assertFalse(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId()));
+        assertFalse(containmentIndex.resourceExists(transaction1.getId(), child1.getFedoraId(), false));
     }
 
     @Test
@@ -595,6 +595,24 @@ public class ContainmentIndexImplTest {
         // That resource's ID starts with the ID we are checking.
         assertTrue(subPathId.getFullId().startsWith(parent1.getFedoraId().getFullId()));
         assertTrue(containmentIndex.hasResourcesStartingWith(transaction1.getId(), parent1.getFedoraId()));
+    }
+
+    @Test
+    public void testDeletedResourceExists() {
+        stubObject("parent1");
+        stubObject("transaction1");
+        containmentIndex.addContainedBy(transaction1.getId(), FedoraId.getRepositoryRootId(), parent1.getFedoraId());
+        containmentIndex.commitTransaction(transaction1.getId());
+        assertTrue(containmentIndex.resourceExists(null, parent1.getFedoraId(), false));
+        assertTrue(containmentIndex.resourceExists(null, parent1.getFedoraId(), true));
+        containmentIndex.removeContainedBy(transaction1.getId(), FedoraId.getRepositoryRootId(), parent1.getFedoraId());
+        containmentIndex.commitTransaction(transaction1.getId());
+        assertFalse(containmentIndex.resourceExists(null, parent1.getFedoraId(), false));
+        assertTrue(containmentIndex.resourceExists(null, parent1.getFedoraId(), true));
+        containmentIndex.purgeResource(transaction1.getId(), parent1.getFedoraId());
+        containmentIndex.commitTransaction(transaction1.getId());
+        assertFalse(containmentIndex.resourceExists(null, parent1.getFedoraId(), false));
+        assertFalse(containmentIndex.resourceExists(null, parent1.getFedoraId(), true));
     }
 }
 

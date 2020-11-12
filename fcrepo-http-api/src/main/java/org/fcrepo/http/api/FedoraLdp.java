@@ -393,7 +393,7 @@ public class FedoraLdp extends ContentExposingResource {
         final String interactionModel = checkInteractionModel(links);
 
         final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath());
-        final boolean resourceExists = doesResourceExist(transaction, fedoraId);
+        final boolean resourceExists = doesResourceExist(transaction, fedoraId, true);
 
         if (resourceExists) {
 
@@ -798,7 +798,7 @@ public class FedoraLdp extends ContentExposingResource {
         final FedoraId fullTestPath = fedoraId.resolve(pid);
         hasRestrictedPath(fullTestPath.getFullIdPath());
 
-        if (doesResourceExist(transaction(), fullTestPath) || isGhostNode(transaction(), fullTestPath)) {
+        if (doesResourceExist(transaction(), fullTestPath, true) || isGhostNode(transaction(), fullTestPath)) {
             LOGGER.debug("Resource with path {} already exists or is an immutable resource; minting new path instead",
                     fullTestPath);
             return mintNewPid(fedoraId, null);

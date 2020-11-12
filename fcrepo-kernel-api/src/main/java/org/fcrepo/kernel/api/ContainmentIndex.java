@@ -107,17 +107,19 @@ public interface ContainmentIndex {
      *
      * @param txId The transaction id, or null if no transaction
      * @param fedoraId The resource's FedoraId.
+     * @param includeDeleted Include deleted resources in the search.
      * @return True if it is in the index.
      */
-    boolean resourceExists(final String txId, final FedoraId fedoraId);
+    boolean resourceExists(final String txId, final FedoraId fedoraId, final boolean includeDeleted);
 
     /**
      * Find the ID for the container of the provided resource by iterating up the path until you find a real resource.
      * @param txId The transaction id, or null if no transaction
      * @param fedoraId The resource's ID.
+     * @param checkDeleted Whether to include deleted resource (tombstones) in the search.
      * @return The container ID.
      */
-    FedoraId getContainerIdByPath(final String txId, final FedoraId fedoraId);
+    FedoraId getContainerIdByPath(final String txId, final FedoraId fedoraId, final boolean checkDeleted);
 
     /**
      * Truncates the containment index. This should only be called when rebuilding the index.

@@ -131,7 +131,7 @@ public class FedoraAcl extends ContentExposingResource {
         LOGGER.info("PUT acl resource '{}'", externalPath());
 
         final FedoraId aclId = identifierConverter().pathToInternalId(externalPath()).asAcl();
-        final boolean exists = doesResourceExist(transaction(), aclId);
+        final boolean exists = doesResourceExist(transaction(), aclId, false);
 
         final MediaType contentType =
             requestContentType == null ? RDFMediaType.TURTLE_TYPE : valueOf(getSimpleContentType(requestContentType));
@@ -246,7 +246,7 @@ public class FedoraAcl extends ContentExposingResource {
 
         final FedoraId originalId = identifierConverter().pathToInternalId(externalPath());
         final FedoraId aclId = originalId.asAcl();
-        final boolean exists = doesResourceExist(transaction(), aclId);
+        final boolean exists = doesResourceExist(transaction(), aclId, false);
 
         if (!exists) {
             if (originalId.isRepositoryRoot()) {

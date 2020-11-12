@@ -90,10 +90,12 @@ abstract public class FedoraBaseResource extends AbstractResource {
     /**
      * @param transaction the transaction in which to check
      * @param fedoraId identifier of the object to check
+     * @param includeDeleted Whether to check for deleted resources too.
      * @return Returns true if an object with the provided id exists
      */
-    protected boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId) {
-        return resourceHelper.doesResourceExist(transaction, fedoraId);
+    protected boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId,
+                                        final boolean includeDeleted) {
+        return resourceHelper.doesResourceExist(transaction, fedoraId, includeDeleted);
     }
 
     /**

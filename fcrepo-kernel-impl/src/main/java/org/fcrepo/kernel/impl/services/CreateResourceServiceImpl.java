@@ -85,8 +85,8 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
         checkAclLinkHeader(linkHeaders);
         // Locate a containment parent of fedoraId, if exists.
-        final FedoraId parentId = containmentIndex.getContainerIdByPath(txId, fedoraId);
-        checkParent(txId, pSession, parentId);
+        final FedoraId parentId = containmentIndex.getContainerIdByPath(txId, fedoraId, true);
+        checkParent(pSession, parentId);
 
         final CreateNonRdfSourceOperationBuilder builder;
         String mimeType = contentType;
@@ -161,8 +161,8 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
         checkAclLinkHeader(linkHeaders);
         // Locate a containment parent of fedoraId, if exists.
-        final FedoraId parentId = containmentIndex.getContainerIdByPath(txId, fedoraId);
-        checkParent(txId, pSession, parentId);
+        final FedoraId parentId = containmentIndex.getContainerIdByPath(txId, fedoraId, true);
+        checkParent(pSession, parentId);
 
         final List<String> rdfTypes = isEmpty(linkHeaders) ? emptyList() : getTypes(linkHeaders);
         final String interactionModel = determineInteractionModel(rdfTypes, true,
@@ -196,11 +196,10 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
     /**
      * Check the parent to contain the new resource exists and can have a child.
      *
-     * @param txId the transaction ID or null if no transaction.
      * @param pSession a persistence session.
      * @param fedoraId Id of parent.
      */
-    private void checkParent(final String txId, final PersistentStorageSession pSession, final FedoraId fedoraId)
+    private void checkParent(final PersistentStorageSession pSession, final FedoraId fedoraId)
         throws RepositoryRuntimeException {
 
         if (fedoraId != null && !fedoraId.isRepositoryRoot()) {
@@ -208,7 +207,6 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
             try {
                 // Make sure the parent exists.
                 // TODO: object existence can be from the index, but we don't have interaction model. Should we add it?
-                final boolean parentExists = containmentIndex.resourceExists(txId, fedoraId);
                 parent = pSession.getHeaders(fedoraId.asResourceId(), null);
             } catch (final PersistentItemNotFoundException exc) {
                 throw new ItemNotFoundException(String.format("Item %s was not found", fedoraId), exc);
@@ -216,7 +214,11 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                 throw new RepositoryRuntimeException(String.format("Failed to find storage headers for %s", fedoraId),
                     exc);
             }
-
+            if (parent.isDeleted()) {
+                throw new CannotCreateResourceException(
+                        String.format("Cannot create resource as child of a tombstone. Tombstone found at %s",
+                                fedoraId.getFullIdPath()));
+            }
             final boolean isParentBinary = NON_RDF_SOURCE.toString().equals(parent.getInteractionModel());
             if (isParentBinary) {
                 // Binary is not a container, can't have children.

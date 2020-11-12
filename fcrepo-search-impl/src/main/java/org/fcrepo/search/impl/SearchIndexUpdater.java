@@ -77,7 +77,7 @@ public class SearchIndexUpdater {
         try {
             final var fedoraId = event.getFedoraId();
             final var types = event.getTypes();
-            if (types.contains(RESOURCE_DELETION) && !resourceHelper.doesResourceExist(null, fedoraId)) {
+            if (types.contains(RESOURCE_DELETION) && !resourceHelper.doesResourceExist(null, fedoraId, false)) {
                 this.searchIndex.removeFromIndex(fedoraId);
             } else if (types.contains(RESOURCE_CREATION) || types.contains(RESOURCE_MODIFICATION)) {
                 final var session = persistentStorageSessionManager.getReadOnlySession();
