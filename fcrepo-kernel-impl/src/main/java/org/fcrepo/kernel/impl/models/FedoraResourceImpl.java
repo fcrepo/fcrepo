@@ -48,6 +48,7 @@ import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
@@ -250,6 +251,9 @@ public class FedoraResourceImpl implements FedoraResource {
             // ldp:Resource is on all resources
             types.add(RESOURCE_URI);
             types.add(FEDORA_RESOURCE_URI);
+            if (getFedoraId().isRepositoryRoot()) {
+                types.add(create(REPOSITORY_ROOT.getURI()));
+            }
             if (!forRdf) {
                 // These types are not exposed as RDF triples.
                 if (isArchivalGroup) {
