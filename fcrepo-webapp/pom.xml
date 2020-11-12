@@ -22,7 +22,7 @@
     <maven.build.timestamp.format>yyyy-MM-dd</maven.build.timestamp.format>
     <!-- for standalone operation -->
     <jetty.users.file>${project.build.directory}/test-classes/jetty-users.properties</jetty.users.file>
-    <jetty-console.version>1.62</jetty-console.version>
+    <jetty-console.version>1.63</jetty-console.version>
   </properties>
 
   <dependencies>
