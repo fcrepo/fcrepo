@@ -104,6 +104,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MINIMAL_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_SERVER_MANAGED;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
@@ -4992,5 +4993,22 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(OK.getStatusCode(), getStatus(getObjMethod(ghostId)));
         // 'a/b/c' does not exist
         assertEquals(NOT_FOUND.getStatusCode(), getStatus(getObjMethod(deepId)));
+    }
+
+    @Test
+    public void testRepositoryRootTypes() throws Exception {
+        final HttpGet getRoot = new HttpGet(serverAddress);
+        final Node rootNode = createURI(serverAddress);
+        try (final CloseableHttpResponse response = execute(getRoot)) {
+            final Dataset dataset = getDataset(response);
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue(graph.contains(ANY, rootNode, type.asNode(), REPOSITORY_ROOT.asNode()));
+            assertTrue(graph.contains(ANY, rootNode, type.asNode(), RESOURCE.asNode()));
+            assertTrue(graph.contains(ANY, rootNode, type.asNode(), FEDORA_RESOURCE.asNode()));
+            assertTrue(graph.contains(ANY, rootNode, type.asNode(), RDF_SOURCE.asNode()));
+            assertTrue(graph.contains(ANY, rootNode, type.asNode(), CONTAINER.asNode()));
+            assertTrue(graph.contains(ANY, rootNode, type.asNode(), FEDORA_CONTAINER.asNode()));
+            assertTrue(graph.contains(ANY, rootNode, type.asNode(), BASIC_CONTAINER.asNode()));
+        }
     }
 }
