@@ -66,6 +66,7 @@ public class FedoraResourceImpl implements FedoraResource {
     private static final URI MEMENTO_URI = create(MEMENTO_TYPE);
     private static final URI VERSIONED_RESOURCE_URI = create(VERSIONED_RESOURCE.getURI());
     private static final URI VERSIONING_TIMEGATE_URI = create(VERSIONING_TIMEGATE_TYPE);
+    private static final URI REPOSITORY_ROOT_URI = create(REPOSITORY_ROOT.getURI());
 
     private final PersistentStorageSessionManager pSessionManager;
 
@@ -252,7 +253,7 @@ public class FedoraResourceImpl implements FedoraResource {
             types.add(RESOURCE_URI);
             types.add(FEDORA_RESOURCE_URI);
             if (getFedoraId().isRepositoryRoot()) {
-                types.add(create(REPOSITORY_ROOT.getURI()));
+                types.add(REPOSITORY_ROOT_URI);
             }
             if (!forRdf) {
                 // These types are not exposed as RDF triples.
