@@ -89,7 +89,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
 import javax.ws.rs.core.Link;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -1432,6 +1434,113 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         // Check the memento is GONE
         final HttpGet getDeletedMemento = new HttpGet(mementos.get(0));
         assertEquals(GONE.getStatusCode(), getStatus(getDeletedMemento));
+    }
+
+    @Test
+    public void testMementosMaintainContainment() throws Exception {
+        final String parentUri;
+        final String child1Uri;
+        final String child2Uri;
+        final String child3Uri;
+
+        try (final CloseableHttpResponse response = execute(postObjMethod())) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            parentUri = getLocation(response);
+        }
+        TimeUnit.SECONDS.sleep(1);
+
+        try (final var response = execute(new HttpPost(parentUri))) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            child1Uri = getLocation(response);
+        }
+        final var httpPatch1 = new HttpPatch(parentUri);
+        httpPatch1.setHeader(CONTENT_TYPE, "application/sparql-update");
+        httpPatch1.setEntity(new StringEntity("INSERT { <> <" + title + "> \"A new title\" . } WHERE {}"));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(httpPatch1));
+        final String memento1Uri = postForMemento(parentUri);
+        TimeUnit.SECONDS.sleep(1);
+
+        try (final var response = execute(new HttpPost(parentUri))) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            child2Uri = getLocation(response);
+        }
+        final var httpPatch2 = new HttpPatch(parentUri);
+        httpPatch2.setHeader(CONTENT_TYPE, "application/sparql-update");
+        httpPatch2.setEntity(new StringEntity("DELETE { <> <" + title + "> ?o } INSERT { <> <" + title +
+                "> \"A second title\" . } WHERE { <> <" + title + "> ?o }"));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(httpPatch2));
+        final String memento2Uri = postForMemento(parentUri);
+        final Instant memento2Instant = Instant.now();
+        TimeUnit.SECONDS.sleep(1);
+
+        try (final var response = execute(new HttpPost(parentUri))) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            child3Uri = getLocation(response);
+        }
+        final var httpPatch3 = new HttpPatch(parentUri);
+        httpPatch3.setHeader(CONTENT_TYPE, "application/sparql-update");
+        httpPatch3.setEntity(new StringEntity("DELETE { <> <" + title + "> ?o } INSERT { <> <" + title +
+                "> \"A third title\" . } WHERE { <> <" + title + "> ?o }"));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(httpPatch3));
+        final String memento3Uri = postForMemento(parentUri);
+        TimeUnit.SECONDS.sleep(1);
+
+        // Delete child 1
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(child1Uri)));
+        // Delete child 2
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(child2Uri)));
+        // Delete child 3
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(child3Uri)));
+
+        final Node parentNode = createURI(parentUri);
+        final var get1 = new HttpGet(memento1Uri);
+        try (final var dataset = getDataset(get1)) {
+            final var graph = dataset.asDatasetGraph();
+            assertTrue(graph.contains(ANY, parentNode, CONTAINS.asNode(), createURI(child1Uri)));
+            assertTrue(!graph.contains(ANY, parentNode, CONTAINS.asNode(), createURI(child2Uri)));
+            assertTrue(!graph.contains(ANY, parentNode, CONTAINS.asNode(), createURI(child3Uri)));
+        }
+        final var get2 = new HttpGet(memento2Uri);
+        try (final var dataset = getDataset(get2)) {
+            final var graph = dataset.asDatasetGraph();
+            assertTrue(graph.contains(ANY, parentNode, CONTAINS.asNode(), createURI(child1Uri)));
+            assertTrue(graph.contains(ANY, parentNode, CONTAINS.asNode(), createURI(child2Uri)));
+            assertTrue(!graph.contains(ANY, parentNode, CONTAINS.asNode(), createURI(child3Uri)));
+        }
+        final var get3 = new HttpGet(memento3Uri);
+        try (final var dataset = getDataset(get3)) {
+            final var graph = dataset.asDatasetGraph();
+            assertTrue(graph.contains(ANY, parentNode, CONTAINS.asNode(), createURI(child1Uri)));
+            assertTrue(graph.contains(ANY, parentNode, CONTAINS.asNode(), createURI(child2Uri)));
+            assertTrue(graph.contains(ANY, parentNode, CONTAINS.asNode(), createURI(child3Uri)));
+        }
+        final var get4 = new HttpGet(parentUri);
+        try (final var dataset = getDataset(get4)) {
+            final var graph = dataset.asDatasetGraph();
+            assertTrue(!graph.contains(ANY, parentNode, CONTAINS.asNode(), createURI(child1Uri)));
+            assertTrue(!graph.contains(ANY, parentNode, CONTAINS.asNode(), createURI(child2Uri)));
+            assertTrue(!graph.contains(ANY, parentNode, CONTAINS.asNode(), createURI(child3Uri)));
+        }
+
+        // Get the original resource with date/time around memento 2
+        final var getWithDateTime = new HttpGet(parentUri);
+        getWithDateTime.addHeader(ACCEPT_DATETIME, MEMENTO_RFC_1123_FORMATTER.format(memento2Instant));
+        try (final var dataset = getDataset(getWithDateTime)) {
+            final var graph = dataset.asDatasetGraph();
+            assertTrue(graph.contains(ANY, parentNode, CONTAINS.asNode(), createURI(child1Uri)));
+            assertTrue(graph.contains(ANY, parentNode, CONTAINS.asNode(), createURI(child2Uri)));
+            assertTrue(!graph.contains(ANY, parentNode, CONTAINS.asNode(), createURI(child3Uri)));
+        }
+    }
+
+    private String postForMemento(final String rescUri) throws Exception {
+        final var post = new HttpPost(rescUri + "/" + FCR_VERSIONS);
+        final String uri;
+        try (final var response = execute(post)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            uri = getLocation(response);
+        }
+        return uri;
     }
 
     private void createVersionedExternalBinaryMemento(final String rescId, final String handling,

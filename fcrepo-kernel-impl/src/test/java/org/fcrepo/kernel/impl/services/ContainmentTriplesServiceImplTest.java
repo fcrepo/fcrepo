@@ -81,9 +81,7 @@ public class ContainmentTriplesServiceImplTest {
 
     @After
     public void cleanUp() {
-        containmentIndex.getContains(transaction.getId(), parentResource.getFedoraId()).forEach(c ->
-                containmentIndex.removeContainedBy(transaction.getId(), parentResource.getFedoraId(),
-                        FedoraId.create(c)));
+        containmentIndex.reset();
     }
 
     @Test
