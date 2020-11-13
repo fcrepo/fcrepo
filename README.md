@@ -1,13 +1,8 @@
+# PLEASE BE ADVISED
+This branch is the main branch for 6.0.0 development. It is nearing an alpha release and while not considered 
+production ready, it is ready for community testing and feedback.
 
-
-# Fedora
----
-<div style="color:red">
-**PLEASE BE ADVISED:**  this branch (master) is currently the main branch for 6.0 development. It is a  work in progress!  
-While it will build and any unignored tests will pass, the code-base is not currently in working order and will not 
-compile into a functioning application. Any pull requests for the current production release should be made against 
-the `5.x-maintenance` branch.
-</div>
+Updated: November 13, 2020
 
 ---
 
