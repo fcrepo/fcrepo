@@ -395,7 +395,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     @Override
     public Stream<String> getContains(final String txId, final FedoraId fedoraId) {
-        final String resourceId = fedoraId.getResourceId();
+        final String resourceId = fedoraId.isMemento() ? fedoraId.getBaseId() : fedoraId.getFullId();
         final Instant asOfTime = fedoraId.isMemento() ? fedoraId.getMementoInstant() : null;
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("parent", resourceId);

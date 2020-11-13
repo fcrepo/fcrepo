@@ -28,6 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -109,8 +110,9 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         assertHasOcflId(parentIdPart, parentId);
         assertHasOcflId(parentIdPart, childId);
 
-        verify(containmentIndex).addContainedBy(anyString(), eq(FedoraId.getRepositoryRootId()), eq(parentId));
-        verify(containmentIndex).addContainedBy(anyString(), eq(parentId), eq(childId));
+        verify(containmentIndex).addContainedBy(anyString(), eq(FedoraId.getRepositoryRootId()), eq(parentId),
+                any(Instant.class), isNull());
+        verify(containmentIndex).addContainedBy(anyString(), eq(parentId), eq(childId), any(Instant.class), isNull());
         verify(referenceService).updateReferences(anyString(), eq(childId), isNull(), any(RdfStream.class));
         verify(searchIndex, times(2))
                 .addUpdateIndex(anyString(), any(org.fcrepo.kernel.api.models.ResourceHeaders.class));
@@ -144,8 +146,10 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         assertHasOcflId("resource1", resource1);
         assertHasOcflId("resource1", resource2);
 
-        verify(containmentIndex).addContainedBy(anyString(), eq(FedoraId.getRepositoryRootId()), eq(resource1));
-        verify(containmentIndex).addContainedBy(anyString(), eq(resource1), eq(resource2));
+        verify(containmentIndex).addContainedBy(anyString(), eq(FedoraId.getRepositoryRootId()), eq(resource1),
+                any(Instant.class), isNull());
+        verify(containmentIndex).addContainedBy(anyString(), eq(resource1), eq(resource2), any(Instant.class),
+                isNull());
         verify(searchIndex, times(2)).addUpdateIndex(isA(String.class), isA(
                 org.fcrepo.kernel.api.models.ResourceHeaders.class));
         verify(containmentIndex).commitTransaction(anyString());
@@ -175,12 +179,12 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         assertHasOcflId("resource1", resource1);
         assertHasOcflId("resource1/resource2", resource2);
 
-        verify(containmentIndex).addContainedBy(anyString(), eq(FedoraId.getRepositoryRootId()), eq(resource1));
-        verify(containmentIndex).addContainedBy(anyString(), eq(resource1), eq(resource2));
+        verify(containmentIndex).addContainedBy(anyString(), eq(FedoraId.getRepositoryRootId()), eq(resource1),
+                any(Instant.class), isNull());
+        verify(containmentIndex).addContainedBy(anyString(), eq(resource1), eq(resource2), any(Instant.class),
+                isNull());
         verify(containmentIndex).commitTransaction(anyString());
         verify(searchIndex, times(2)).addUpdateIndex(isA(String.class), isA(ResourceHeaders.class));
-
-
     }
 
     @Test
@@ -213,8 +217,10 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         assertHasOcflId("resource1", resource1);
         assertHasOcflId("resource1", resource2);
 
-        verify(containmentIndex).addContainedBy(anyString(), eq(FedoraId.getRepositoryRootId()), eq(resource1));
-        verify(containmentIndex, never()).addContainedBy(anyString(), eq(resource1), eq(resource2));
+        verify(containmentIndex).addContainedBy(anyString(), eq(FedoraId.getRepositoryRootId()), eq(resource1),
+                any(Instant.class), isNull());
+        verify(containmentIndex, never()).addContainedBy(anyString(), eq(resource1), eq(resource2),
+                any(Instant.class), isNull());
         verify(containmentIndex).commitTransaction(anyString());
         verify(searchIndex, times(1)).addUpdateIndex(anyString(), isA(ResourceHeaders.class));
     }
@@ -246,7 +252,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         reindexManager.shutdown();
 
         verify(containmentIndex, times(numberContainers)).addContainedBy(anyString(),
-                eq(FedoraId.getRepositoryRootId()), any(FedoraId.class));
+                eq(FedoraId.getRepositoryRootId()), any(FedoraId.class), any(Instant.class), isNull());
         verify(containmentIndex).commitTransaction(anyString());
         verify(searchIndex, times(numberContainers)).addUpdateIndex(isA(String.class), isA(
                 org.fcrepo.kernel.api.models.ResourceHeaders.class));

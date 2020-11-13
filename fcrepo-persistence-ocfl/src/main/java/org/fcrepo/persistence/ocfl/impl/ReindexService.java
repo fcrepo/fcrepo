@@ -107,7 +107,7 @@ public class ReindexService {
                     rootId.set(fedoraId);
                 }
 
-                if (!headers.isDeleted() && !fedoraId.isRepositoryRoot()) {
+                if (!fedoraId.isRepositoryRoot()) {
                     var parentId = headers.getParent();
 
                     if (headers.getParent() == null) {
@@ -118,17 +118,23 @@ public class ReindexService {
                                     String.format("Resource %s must have a parent defined", fedoraId.getFullId()));
                         }
                     }
-                    if (!headers.getInteractionModel().equals(NON_RDF_SOURCE.toString())) {
-                        final Optional<InputStream> content = session.readContent(fedoraId.getFullId())
-                                .getContentStream();
-                        if (content.isPresent()) {
-                            final RdfStream rdf = parseRdf(fedoraId, content.get());
-                            this.referenceService.updateReferences(txId, fedoraId, null, rdf);
+                    final var created = headers.getCreatedDate();
+                    if (!headers.isDeleted()) {
+                        if (!headers.getInteractionModel().equals(NON_RDF_SOURCE.toString())) {
+                            final Optional<InputStream> content = session.readContent(fedoraId.getFullId())
+                                    .getContentStream();
+                            if (content.isPresent()) {
+                                final RdfStream rdf = parseRdf(fedoraId, content.get());
+                                this.referenceService.updateReferences(txId, fedoraId, null, rdf);
+                            }
                         }
-                    }
 
-                    this.containmentIndex.addContainedBy(txId, parentId, fedoraId);
-                    headersList.add(headers.asKernelHeaders());
+                        this.containmentIndex.addContainedBy(txId, parentId, fedoraId, created, null);
+                        headersList.add(headers.asKernelHeaders());
+                    } else {
+                        final var deleted = headers.getLastModifiedDate();
+                        this.containmentIndex.addContainedBy(txId, parentId, fedoraId, created, deleted);
+                    }
                 }
             });
 
