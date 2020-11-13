@@ -25,6 +25,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -124,8 +125,14 @@ public class ReindexService {
                             final Optional<InputStream> content = session.readContent(fedoraId.getFullId())
                                     .getContentStream();
                             if (content.isPresent()) {
-                                final RdfStream rdf = parseRdf(fedoraId, content.get());
-                                this.referenceService.updateReferences(txId, fedoraId, null, rdf);
+                                try (final var stream = content.get()) {
+                                    final RdfStream rdf = parseRdf(fedoraId, stream);
+                                    this.referenceService.updateReferences(txId, fedoraId, null, rdf);
+                                } catch (final IOException e) {
+                                    LOGGER.warn("Content stream for {} closed prematurely, inbound references skipped.",
+                                            fedoraId.getFullId());
+                                    throw new RepositoryRuntimeException(e.getMessage(), e);
+                                }
                             }
                         }
 

@@ -302,8 +302,6 @@ public class ReferenceServiceImpl implements ReferenceService {
             LOGGER.warn("Unable to update reference index for resource {} in transaction {}: {}",
                     resourceId.getFullId(), txId, e.getMessage());
             throw new RepositoryRuntimeException("Unable to update reference index", e);
-        } finally {
-            rdfStream.close();
         }
     }
 
