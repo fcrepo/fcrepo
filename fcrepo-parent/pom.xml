@@ -515,6 +515,11 @@
               </executions>
               <configuration>
                 <useAgent>true</useAgent>
+                <!-- https://github.com/actions/setup-java/issues/91 -->
+                <gpgArguments>
+                  <arg>--pinentry-mode</arg>
+                  <arg>loopback</arg>
+                </gpgArguments>
               </configuration>
             </plugin>
           </plugins>
