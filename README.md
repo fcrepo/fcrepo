@@ -1,5 +1,5 @@
 # PLEASE BE ADVISED
-This branch is the main branch for 6.0.0 development. It is nearing an alpha release and while not considered 
+The `main` branch of Fedora contains the most current state of 6.0.0 development. It is nearing an alpha release and while not considered 
 production ready, it is ready for community testing and feedback.
 
 Updated: November 13, 2020
