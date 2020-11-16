@@ -41,7 +41,15 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Queue;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -55,6 +63,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class ContainmentIndexImpl implements ContainmentIndex {
 
     private static final Logger LOGGER = getLogger(ContainmentIndexImpl.class);
+
+    private int containsLimit = 50000;
 
     @Inject
     private DataSource dataSource;
@@ -83,14 +93,16 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      * Select children of a resource that are not marked as deleted.
      */
     private static final String SELECT_CHILDREN = "SELECT " + FEDORA_ID_COLUMN +
-            " FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :parent AND " + END_TIME_COLUMN + " IS NULL";
+            " FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :parent AND " + END_TIME_COLUMN + " IS NULL" +
+            " ORDER BY " + FEDORA_ID_COLUMN + " LIMIT :containsLimit OFFSET :offSet";
 
     /*
      * Select children of a memento of a resource.
      */
     private static final String SELECT_CHILDREN_OF_MEMENTO = "SELECT " + FEDORA_ID_COLUMN +
             " FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :parent AND " + START_TIME_COLUMN +
-            " <= :asOfTime AND (" + END_TIME_COLUMN + " > :asOfTime OR " + END_TIME_COLUMN + " IS NULL)";
+            " <= :asOfTime AND (" + END_TIME_COLUMN + " > :asOfTime OR " + END_TIME_COLUMN + " IS NULL) ORDER BY " +
+            FEDORA_ID_COLUMN + " LIMIT :containsLimit OFFSET :offSet";
 
     /*
      * Select children of a parent from resources table and from the transaction table with an 'add' operation,
@@ -105,14 +117,15 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             " WHERE NOT EXISTS " +
             " (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE +
             " WHERE " + PARENT_COLUMN + " = :parent AND " + FEDORA_ID_COLUMN + " = x." + FEDORA_ID_COLUMN +
-            " AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " IN ('delete', 'purge'))";
+            " AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " IN ('delete', 'purge'))" +
+            " ORDER BY x." + FEDORA_ID_COLUMN + " LIMIT :containsLimit OFFSET :offSet";
 
     /*
      * Select all children of a resource that are marked for deletion.
      */
     private static final String SELECT_DELETED_CHILDREN = "SELECT " + FEDORA_ID_COLUMN +
             " FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :parent AND " + END_TIME_COLUMN +
-            " IS NOT NULL";
+            " IS NOT NULL ORDER BY " + FEDORA_ID_COLUMN + " LIMIT :containsLimit OFFSET :offSet";
 
     /*
      * Select children of a resource plus children 'delete'd in the non-committed transaction, but excluding any
@@ -127,7 +140,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             " WHERE NOT EXISTS " +
             "(SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN + " = :parent AND " +
             FEDORA_ID_COLUMN + " = x." + FEDORA_ID_COLUMN + " AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
-            OPERATION_COLUMN + " = 'add')";
+            OPERATION_COLUMN + " = 'add') ORDER BY x." + FEDORA_ID_COLUMN + " LIMIT :containsLimit OFFSET :offSet";
 
     /*
      * Insert a parent child relationship to the transaction operation table.
@@ -393,30 +406,36 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         return new NamedParameterJdbcTemplate(getDataSource());
     }
 
+    public void setContainsLimit(final int limit) {
+        containsLimit = limit;
+    }
+
     @Override
     public Stream<String> getContains(final String txId, final FedoraId fedoraId) {
         final String resourceId = fedoraId.isMemento() ? fedoraId.getBaseId() : fedoraId.getFullId();
         final Instant asOfTime = fedoraId.isMemento() ? fedoraId.getMementoInstant() : null;
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("parent", resourceId);
+        parameterSource.addValue("containsLimit", containsLimit);
 
-        final List<String> children;
+        LOGGER.debug("getContains for {} in transaction {} and instant {}", resourceId, txId, asOfTime);
+
+        final String query;
         if (asOfTime == null) {
             if (txId != null) {
                 // we are in a transaction
                 parameterSource.addValue("transactionId", txId);
-                children = jdbcTemplate.queryForList(SELECT_CHILDREN_IN_TRANSACTION, parameterSource, String.class);
+                query = SELECT_CHILDREN_IN_TRANSACTION;
             } else {
                 // not in a transaction
-                children = jdbcTemplate.queryForList(SELECT_CHILDREN, parameterSource, String.class);
+                query = SELECT_CHILDREN;
             }
         } else {
             parameterSource.addValue("asOfTime", formatInstant(asOfTime));
-            children = jdbcTemplate.queryForList(SELECT_CHILDREN_OF_MEMENTO, parameterSource, String.class);
+            query = SELECT_CHILDREN_OF_MEMENTO;
         }
-        LOGGER.debug("getContains for {} in transaction {} and instant {} found {} children",
-                resourceId, txId, asOfTime, children.size());
-        return children.stream();
+
+        return StreamSupport.stream(new ContainmentIterator(query, parameterSource), false);
     }
 
     @Override
@@ -424,19 +443,19 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         final String resourceId = fedoraId.getFullId();
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("parent", resourceId);
+        parameterSource.addValue("containsLimit", containsLimit);
 
-        final List<String> children;
+        final String query;
         if (txId != null) {
             // we are in a transaction
             parameterSource.addValue("transactionId", txId);
-            children = jdbcTemplate.queryForList(SELECT_DELETED_CHILDREN_IN_TRANSACTION, parameterSource, String.class);
+            query = SELECT_DELETED_CHILDREN_IN_TRANSACTION;
         } else {
             // not in a transaction
-            children = jdbcTemplate.queryForList(SELECT_DELETED_CHILDREN, parameterSource, String.class);
+            query = SELECT_DELETED_CHILDREN;
         }
-        LOGGER.debug("getContainsDeleted for {} in transaction {} found {} children",
-                resourceId, txId, children.size());
-        return children.stream();
+        LOGGER.debug("getContainsDeleted for {} in transaction {}", resourceId, txId);
+        return StreamSupport.stream(new ContainmentIterator(query, parameterSource), false);
     }
 
     @Override
@@ -601,19 +620,16 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         }
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("child", resourceId);
-        final boolean exists;
+        final String queryToUse;
         if (txId != null) {
-            final var queryToUse = includeDeleted ? RESOURCE_OR_TOMBSTONE_EXISTS_IN_TRANSACTION :
+            queryToUse = includeDeleted ? RESOURCE_OR_TOMBSTONE_EXISTS_IN_TRANSACTION :
                     RESOURCE_EXISTS_IN_TRANSACTION;
             parameterSource.addValue("transactionId", txId);
-            exists = !jdbcTemplate.queryForList(queryToUse, parameterSource, String.class)
-                    .isEmpty();
         } else {
-            final var queryToUse = includeDeleted ? RESOURCE_OR_TOMBSTONE_EXISTS :
+            queryToUse = includeDeleted ? RESOURCE_OR_TOMBSTONE_EXISTS :
                     RESOURCE_EXISTS;
-            exists = !jdbcTemplate.queryForList(queryToUse, parameterSource, String.class).isEmpty();
         }
-        return exists;
+        return !jdbcTemplate.queryForList(queryToUse, parameterSource, String.class).isEmpty();
     }
 
     @Override
@@ -695,5 +711,39 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         final var timestamp = Timestamp.from(instant);
         timestamp.setNanos(0);
         return timestamp;
+    }
+
+    /**
+     * Private class to back a stream with a paged DB query.
+     *
+     * If this needs to be run in parallel we will have to override trySplit() and determine a good method to split on.
+     */
+    private class ContainmentIterator extends Spliterators.AbstractSpliterator<String> {
+        final Queue<String> children = new LinkedBlockingQueue<>();
+        final AtomicInteger numOffsets = new AtomicInteger(0);
+        final String queryToUse;
+        final MapSqlParameterSource parameterSource;
+
+        public ContainmentIterator(final String query, final MapSqlParameterSource parameters) {
+            super(Long.MAX_VALUE, Spliterator.ORDERED);
+            queryToUse = query;
+            parameterSource = parameters;
+        }
+
+        @Override
+        public boolean tryAdvance(final Consumer<? super String> action) {
+            try {
+                action.accept(children.remove());
+            } catch (final NoSuchElementException e) {
+                parameterSource.addValue("offSet", numOffsets.getAndIncrement() * containsLimit);
+                children.addAll(jdbcTemplate.queryForList(queryToUse, parameterSource, String.class));
+                if (children.size() == 0) {
+                    // no more elements.
+                    return false;
+                }
+                action.accept(children.remove());
+            }
+            return true;
+        }
     }
 }

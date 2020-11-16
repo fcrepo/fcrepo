@@ -35,7 +35,9 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import javax.inject.Inject;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
@@ -47,6 +49,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 
 import static java.time.ZoneOffset.UTC;
+import static java.util.stream.Collectors.toList;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -662,6 +665,26 @@ public class ContainmentIndexImplTest {
         // Now the memento loses track of child1.
         assertEquals(1, containmentIndex.getContains(null, parent1.getFedoraId()).count());
         assertEquals(1, containmentIndex.getContains(null, mementoId).count());
+    }
+
+    @Test
+    public void testLargeContainment() {
+        stubObject("transaction1");
+        stubObject("parent1");
+        containmentIndex.setContainsLimit(5);
+        final List<String> expectedChildren = new ArrayList<>(10);
+        for (var i = 0; i < 10; i += 1) {
+            final FedoraId childId = parent1.getFedoraId().resolve("child_" + i);
+            expectedChildren.add(childId.getFullId());
+            containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), childId);
+        }
+        assertEquals(10, containmentIndex.getContains(transaction1.getId(), parent1.getFedoraId()).count());
+        assertEquals(0, containmentIndex.getContains(null, parent1.getFedoraId()).count());
+        containmentIndex.commitTransaction(transaction1.getId());
+        final var foundChildren = containmentIndex.getContains(null, parent1.getFedoraId())
+                .collect(toList());
+        assertEquals(10, foundChildren.size());
+        assertEquals(expectedChildren, foundChildren);
     }
 }
 
