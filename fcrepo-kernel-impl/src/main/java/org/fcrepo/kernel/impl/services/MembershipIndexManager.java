@@ -28,8 +28,7 @@ import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -511,9 +510,6 @@ public class MembershipIndexManager {
 
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue(TX_ID_PARAM, txId);
-        parameterSource.addValue(ADD_OP_PARAM, ADD_OPERATION);
-        parameterSource.addValue(DELETE_OP_PARAM, DELETE_OPERATION);
-        parameterSource.addValue(LIMIT_PARAM, MEMBERSHIP_LIMIT);
 
         final String query;
         if (subjectId.isMemento()) {
@@ -631,8 +627,8 @@ public class MembershipIndexManager {
      * If this needs to be run in parallel we will have to override trySplit() and determine a good method to split on.
      */
     private class MembershipIterator extends Spliterators.AbstractSpliterator<Triple> {
-        final Queue<Triple> children = new LinkedBlockingQueue<>();
-        final AtomicInteger numOffsets = new AtomicInteger(0);
+        final Queue<Triple> children = new ConcurrentLinkedQueue<>();
+        int numOffsets = 0;
         final String queryToUse;
         final MapSqlParameterSource parameterSource;
         final RowMapper<Triple> rowMapper;
@@ -643,6 +639,9 @@ public class MembershipIndexManager {
             queryToUse = query;
             parameterSource = parameters;
             rowMapper = mapper;
+            parameterSource.addValue(ADD_OP_PARAM, ADD_OPERATION);
+            parameterSource.addValue(DELETE_OP_PARAM, DELETE_OPERATION);
+            parameterSource.addValue(LIMIT_PARAM, MEMBERSHIP_LIMIT);
         }
 
         @Override
@@ -650,7 +649,8 @@ public class MembershipIndexManager {
             try {
                 action.accept(children.remove());
             } catch (final NoSuchElementException e) {
-                parameterSource.addValue(OFFSET_PARAM, numOffsets.getAndIncrement() * MEMBERSHIP_LIMIT);
+                parameterSource.addValue(OFFSET_PARAM, numOffsets * MEMBERSHIP_LIMIT);
+                numOffsets += 1;
                 children.addAll(jdbcTemplate.query(queryToUse, parameterSource, rowMapper));
                 if (children.size() == 0) {
                     // no more elements.
