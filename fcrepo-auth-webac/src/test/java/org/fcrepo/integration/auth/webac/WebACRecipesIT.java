@@ -105,7 +105,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
     private final ContentType sparqlContentType = ContentType.create("application/sparql-update", "UTF-8");
 
     /**
-     * Convenience method to create an ACL with 0 or more authorization resources in the respository.
+     * Convenience method to create an ACL with 0 or more authorization resources in the repository.
      */
     private String ingestAcl(final String username,
             final String aclFilePath, final String aclResourcePath) throws IOException {
