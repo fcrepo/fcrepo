@@ -20,6 +20,8 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import com.google.common.base.Preconditions;
 import org.fcrepo.common.db.DbPlatform;
+//import org.fcrepo.kernel.api.exception.InsufficientStorageException;
+import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
@@ -265,7 +267,12 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
         parameterSource.addValue("ocflId", ocflId);
         parameterSource.addValue("transactionId", transactionId);
         parameterSource.addValue("operation", operation);
-        jdbcTemplate.update(UPSERT_MAPPING_TX_MAP.get(dbPlatform), parameterSource);
+        try {
+            jdbcTemplate.update(UPSERT_MAPPING_TX_MAP.get(dbPlatform), parameterSource);
+        } catch (Exception e) {
+            //throw new InvalidResourceIdentifierException("ID path too long",e);
+            throw new InvalidResourceIdentifierException("ID path too long");
+        }
     }
 
     @Transactional
