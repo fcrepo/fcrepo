@@ -45,8 +45,7 @@ import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -406,7 +405,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         return new NamedParameterJdbcTemplate(getDataSource());
     }
 
-    public void setContainsLimit(final int limit) {
+    void setContainsLimit(final int limit) {
         containsLimit = limit;
     }
 
@@ -416,7 +415,6 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         final Instant asOfTime = fedoraId.isMemento() ? fedoraId.getMementoInstant() : null;
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("parent", resourceId);
-        parameterSource.addValue("containsLimit", containsLimit);
 
         LOGGER.debug("getContains for {} in transaction {} and instant {}", resourceId, txId, asOfTime);
 
@@ -443,7 +441,6 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         final String resourceId = fedoraId.getFullId();
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("parent", resourceId);
-        parameterSource.addValue("containsLimit", containsLimit);
 
         final String query;
         if (txId != null) {
@@ -719,8 +716,8 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      * If this needs to be run in parallel we will have to override trySplit() and determine a good method to split on.
      */
     private class ContainmentIterator extends Spliterators.AbstractSpliterator<String> {
-        final Queue<String> children = new LinkedBlockingQueue<>();
-        final AtomicInteger numOffsets = new AtomicInteger(0);
+        final Queue<String> children = new ConcurrentLinkedQueue<>();
+        int numOffsets = 0;
         final String queryToUse;
         final MapSqlParameterSource parameterSource;
 
@@ -728,6 +725,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             super(Long.MAX_VALUE, Spliterator.ORDERED);
             queryToUse = query;
             parameterSource = parameters;
+            parameterSource.addValue("containsLimit", containsLimit);
         }
 
         @Override
@@ -735,7 +733,8 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             try {
                 action.accept(children.remove());
             } catch (final NoSuchElementException e) {
-                parameterSource.addValue("offSet", numOffsets.getAndIncrement() * containsLimit);
+                parameterSource.addValue("offSet", numOffsets * containsLimit);
+                numOffsets += 1;
                 children.addAll(jdbcTemplate.queryForList(queryToUse, parameterSource, String.class));
                 if (children.size() == 0) {
                     // no more elements.
