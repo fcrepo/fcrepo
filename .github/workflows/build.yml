@@ -33,7 +33,7 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     - name: Build with Maven
-      run: mvn -U clean install
+      run: mvn -B -U clean install
   postgres-itest:
     runs-on: ubuntu-latest
     services:
@@ -66,7 +66,7 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     - name: Build with Maven
-      run: mvn -U -Dfcrepo.db.url="jdbc:postgresql://localhost:5432/fcrepo" -Dfcrepo.db.user="fcrepo-user" -Dfcrepo.db.password="fcrepo-pw" clean install -P db-test
+      run: mvn -B -U -Dfcrepo.db.url="jdbc:postgresql://localhost:5432/fcrepo" -Dfcrepo.db.user="fcrepo-user" -Dfcrepo.db.password="fcrepo-pw" clean install -P db-test
   mariadb-itest:
     runs-on: ubuntu-latest
     services:
@@ -100,7 +100,7 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     - name: Build with Maven
-      run: mvn -U -Dfcrepo.db.url="jdbc:mariadb://localhost:3306/fcrepo" -Dfcrepo.db.user="fcrepo-user" -Dfcrepo.db.password="fcrepo-pw" clean install -P db-test
+      run: mvn -B -U -Dfcrepo.db.url="jdbc:mariadb://localhost:3306/fcrepo" -Dfcrepo.db.user="fcrepo-user" -Dfcrepo.db.password="fcrepo-pw" clean install -P db-test
   mysql-itest:
     runs-on: ubuntu-latest
     services:
@@ -134,4 +134,4 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     - name: Build with Maven
-      run: mvn -U -Dfcrepo.db.url="jdbc:mysql://localhost:3306/fcrepo" -Dfcrepo.db.user="fcrepo-user" -Dfcrepo.db.password="fcrepo-pw" clean install -P db-test
+      run: mvn -B -U -Dfcrepo.db.url="jdbc:mysql://localhost:3306/fcrepo" -Dfcrepo.db.user="fcrepo-user" -Dfcrepo.db.password="fcrepo-pw" clean install -P db-test
