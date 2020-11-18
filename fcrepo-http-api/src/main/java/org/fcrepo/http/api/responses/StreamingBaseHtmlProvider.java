@@ -209,13 +209,27 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
 
         final Context context = getContext(model, subject);
 
-        final FedoraResource resource = getResourceFromSubject(subject.toString());
-        context.put("isOriginalResource", (resource != null && resource.isOriginalResource()));
-        context.put("isArchivalGroup", (resource != null &&
-                resource.getSystemTypes(false).contains(URI.create(ARCHIVAL_GROUP.getURI()))));
-        context.put("isVersion", (resource != null && resource.isMemento()));
-        context.put("isLDPNR", (resource != null &&
-                (resource instanceof Binary || !resource.getDescribedResource().equals(resource))));
+        final FedoraId fedoraID = FedoraId.create(identifierConverter().toInternalId(subject.toString()));
+        try {
+            final FedoraResource resource = getResourceFromSubject(fedoraID);
+            context.put("isOriginalResource", (resource != null && resource.isOriginalResource()));
+            context.put("isArchivalGroup", (resource != null && resource.getSystemTypes(false)
+                    .contains(URI.create(ARCHIVAL_GROUP.getURI()))));
+            context.put("isVersion", (resource != null && resource.isMemento()));
+            context.put("isLDPNR", (resource != null && (resource instanceof Binary || !resource
+                    .getDescribedResource().equals(resource))));
+        } catch (final PathNotFoundException e) {
+            final var baseId = FedoraId.create(fedoraID.getBaseId());
+            if (fedoraID.isRepositoryRoot() || baseId.isRepositoryRoot()) {
+                // We have requested the root resource or default ACL.
+                context.put("isOriginalResource", true);
+                context.put("isArchivalGroup", false);
+                context.put("isVersion", false);
+                context.put("isLDPNR", false);
+            } else {
+                throw new RepositoryRuntimeException(e.getMessage(), e);
+            }
+        }
         context.put("autoVersioningEnabled", autoVersioningEnabled);
 
         // the contract of MessageBodyWriter<T> is _not_ to close the stream
@@ -228,20 +242,17 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
     /**
      * Get a FedoraResource for the subject of the graph, if it exists.
      *
-     * @param subjectUri the uri of the subject
+     * @param resourceId the FedoraId of the subject
      * @return FedoraResource if exists or null
+     * @throws PathNotFoundException if the OCFL mapping is not found.
      */
-    private FedoraResource getResourceFromSubject(final String subjectUri) {
-        final FedoraId fedoraID = FedoraId.create(identifierConverter().toInternalId(subjectUri));
-        try {
-            final var tx = transaction();
-            if (tx == null || tx.isCommitted()) {
-                return resourceFactory.getResource(fedoraID);
-            } else {
-                return resourceFactory.getResource(tx.getId(), fedoraID);
-            }
-        } catch (final PathNotFoundException e) {
-            throw new RepositoryRuntimeException(e.getMessage(), e);
+    private FedoraResource getResourceFromSubject(final FedoraId resourceId) throws PathNotFoundException {
+
+        final var tx = transaction();
+        if (tx == null || tx.isCommitted()) {
+            return resourceFactory.getResource(resourceId);
+        } else {
+            return resourceFactory.getResource(tx.getId(), resourceId);
         }
     }
 
