@@ -148,4 +148,12 @@ public interface ContainmentIndex {
      * @return Are there any matching IDs.
      */
     boolean hasResourcesStartingWith(final String txId, final FedoraId fedoraId);
+
+    /**
+     * Generate a hash value of the current contained resources of the provided resource.
+     * @param txId The transaction id, or null if no transaction.
+     * @param fedoraId The ID of the containing resource to check.
+     * @return Unique hash of the current containment of non-deleted resources.
+     */
+    String containmentHash(final String txId, final FedoraId fedoraId);
 }

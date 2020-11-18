@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.models;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionUtils;
@@ -171,7 +172,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
 
             final var rescImpl = constructor.newInstance(instantiationId, transactionId,
                     persistentStorageSessionManager, this);
-            populateResourceHeaders(rescImpl, headers, versionDateTime);
+            populateResourceHeaders(transactionId, rescImpl, headers, versionDateTime);
 
             if (headers.isDeleted()) {
                 final var rootId = FedoraId.create(identifier.getBaseId());
@@ -193,14 +194,17 @@ public class ResourceFactoryImpl implements ResourceFactory {
         }
     }
 
-    private void populateResourceHeaders(final FedoraResourceImpl resc, final ResourceHeaders headers,
-                                         final Instant version) {
+    private void populateResourceHeaders(final String transactionId, final FedoraResourceImpl resc,
+                                         final ResourceHeaders headers, final Instant version) {
         resc.setCreatedBy(headers.getCreatedBy());
         resc.setCreatedDate(headers.getCreatedDate());
         resc.setLastModifiedBy(headers.getLastModifiedBy());
         resc.setLastModifiedDate(headers.getLastModifiedDate());
         resc.setParentId(headers.getParent());
-        resc.setEtag(headers.getStateToken());
+        final String containmentHash = containmentIndex.containmentHash(transactionId, resc.getFedoraId());
+        final String newState = (containmentHash == null ? headers.getStateToken() :
+                DigestUtils.md5Hex(headers.getStateToken() + containmentHash).toUpperCase());
+        resc.setEtag(newState);
         resc.setStateToken(headers.getStateToken());
         resc.setIsArchivalGroup(headers.isArchivalGroup());
         resc.setInteractionModel(headers.getInteractionModel());

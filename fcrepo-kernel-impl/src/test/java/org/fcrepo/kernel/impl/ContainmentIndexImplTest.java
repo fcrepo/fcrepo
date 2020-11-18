@@ -43,6 +43,7 @@ import java.util.Map;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -665,6 +666,33 @@ public class ContainmentIndexImplTest {
         // Now the memento loses track of child1.
         assertEquals(1, containmentIndex.getContains(null, parent1.getFedoraId()).count());
         assertEquals(1, containmentIndex.getContains(null, mementoId).count());
+    }
+
+    @Test
+    public void testChecksum() {
+        stubObject("parent1");
+        stubObject("transaction1");
+        final String emptyHash = containmentIndex.containmentHash(null, parent1.getFedoraId());
+        final var firstBorn = parent1.getFedoraId().resolve("child1");
+        containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), firstBorn);
+        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent1.getFedoraId()).count());
+        assertEquals(0, containmentIndex.getContains(null, parent1.getFedoraId()).count());
+        final String firstHash = containmentIndex.containmentHash(transaction1.getId(), parent1.getFedoraId());
+        assertNotEquals(emptyHash, firstHash);
+        containmentIndex.commitTransaction(transaction1.getId());
+        assertEquals(1, containmentIndex.getContains(null, parent1.getFedoraId()).count());
+        assertEquals(firstHash, containmentIndex.containmentHash(null, parent1.getFedoraId()));
+        for (var i = 0; i < 30; i += 1) {
+            final var kidId = parent1.getFedoraId().resolve("child-" + i);
+            containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), kidId);
+        }
+        assertEquals(31, containmentIndex.getContains(transaction1.getId(), parent1.getFedoraId()).count());
+        final String allHash = containmentIndex.containmentHash(transaction1.getId(), parent1.getFedoraId());
+        assertNotEquals(emptyHash, allHash);
+        assertNotEquals(firstHash, allHash);
+        containmentIndex.rollbackTransaction(transaction1.getId());
+        assertEquals(1, containmentIndex.getContains(null, parent1.getFedoraId()).count());
+        assertEquals(firstHash, containmentIndex.containmentHash(null, parent1.getFedoraId()));
     }
 
     @Test

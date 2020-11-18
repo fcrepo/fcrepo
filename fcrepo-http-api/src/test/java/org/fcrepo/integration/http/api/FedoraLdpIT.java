@@ -1567,7 +1567,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testETagOnDeletedChild() throws Exception {
         final String id = getRandomUniqueId();
         final String child = id + "/child";
@@ -1588,6 +1587,50 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
 
         assertNotEquals("ETag didn't change!", etag1, etag2);
+    }
+
+    @Test
+    public void testContainmentHashChanges() throws Exception {
+        final String parentUri;
+        final String createdEtag;
+        // Create a resource and note its ETag
+        try (final var response = execute(postObjMethod())) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            parentUri = getLocation(response);
+            createdEtag = response.getFirstHeader("ETag").getValue();
+        }
+
+        // Create one child and see the parent's ETag changes
+        final String oneChildEtag;
+        assertEquals(CREATED.getStatusCode(), getStatus(new HttpPost(parentUri)));
+        try (final var response = execute(new HttpGet(parentUri))) {
+            oneChildEtag = response.getFirstHeader("ETag").getValue();
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            assertNotEquals(createdEtag, oneChildEtag);
+        }
+
+        // Create another child
+        final String otherChild;
+        try (final var response = execute(new HttpPost(parentUri))) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            otherChild = getLocation(response);
+        }
+        // See the parent's ETag changes again.
+        try (final var response = execute(new HttpGet(parentUri))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final var currentETag = response.getFirstHeader("ETag").getValue();
+            assertNotEquals(createdEtag, currentETag);
+            assertNotEquals(oneChildEtag, currentETag);
+        }
+        // Delete the second child.
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(otherChild)));
+        // See the parent's ETag changes back to the single child ETag.
+        try (final var response = execute(new HttpGet(parentUri))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final var currentETag = response.getFirstHeader("ETag").getValue();
+            assertNotEquals(createdEtag, currentETag);
+            assertEquals(oneChildEtag, currentETag);
+        }
     }
 
     @Test

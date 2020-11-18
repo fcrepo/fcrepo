@@ -382,6 +382,61 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             DbPlatform.MARIADB, "sql/default-containment.sql"
     );
 
+    private static final String SELECT_CHECKSUM_H2 = "SELECT HASH('SHA256', LISTAGG(" + FEDORA_ID_COLUMN + ", ''))" +
+            " as checksum FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :resourceId AND " +
+            END_TIME_COLUMN + " IS NULL";
+
+    private static final String SELECT_CHECKSUM_IN_TX_H2 = "SELECT HASH('SHA256', LISTAGG(x." + FEDORA_ID_COLUMN +
+            ", '')) as checksum FROM (SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " +
+            PARENT_COLUMN + " = :resourceId AND " + END_TIME_COLUMN + " IS NULL UNION SELECT " + FEDORA_ID_COLUMN +
+            " FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN + " = :resourceId AND " +
+            OPERATION_COLUMN + " = 'add' AND " + TRANSACTION_ID_COLUMN +
+            " = :transactionId) x WHERE NOT EXISTS (SELECT 1 FROM " +
+            TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN + " = :resourceId AND " + TRANSACTION_ID_COLUMN +
+            " = :transactionId AND " + OPERATION_COLUMN + " = 'delete' AND " + FEDORA_ID_COLUMN + " = x." +
+            FEDORA_ID_COLUMN + ")";
+
+    private static final String SELECT_CHECKSUM_MYSQL_MARIADB = "SELECT CRC32(GROUP_CONCAT(" + FEDORA_ID_COLUMN +
+            ")) as checksum FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :resourceId AND " +
+            END_TIME_COLUMN + " IS NULL";
+
+    private static final String SELECT_CHECKSUM_IN_TX_MYSQL_MARIADB = "SELECT CRC32(GROUP_CONCAT(x." +
+            FEDORA_ID_COLUMN + ")) as checksum FROM (SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE +
+            " WHERE " + PARENT_COLUMN + " = :resourceId AND " + END_TIME_COLUMN + " IS NULL UNION SELECT " +
+            FEDORA_ID_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN +
+            " = :resourceId AND " + OPERATION_COLUMN + " = 'add' AND " + TRANSACTION_ID_COLUMN +
+            " = :transactionId) x WHERE NOT EXISTS (SELECT 1 FROM " +
+            TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN + " = :resourceId AND " + TRANSACTION_ID_COLUMN +
+            " = :transactionId AND " + OPERATION_COLUMN + " = 'delete' AND " + FEDORA_ID_COLUMN + " = x." +
+            FEDORA_ID_COLUMN + ")";
+
+    private static final String SELECT_CHECKSUM_POSTGRES = "SELECT MD5(STRING_AGG(" + FEDORA_ID_COLUMN +
+            ", '')) as checksum FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :resourceId AND " +
+            END_TIME_COLUMN + " IS NULL";
+
+    private static final String SELECT_CHECKSUM_IN_TX_POSTGRES = "SELECT MD5(STRING_AGG(x." + FEDORA_ID_COLUMN +
+            ", '')) as checksum FROM (SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " +
+            PARENT_COLUMN + " = :resourceId AND " + END_TIME_COLUMN + " IS NULL UNION SELECT " + FEDORA_ID_COLUMN +
+            " FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN + " = :resourceId AND " +
+            OPERATION_COLUMN + " = 'add' AND " + TRANSACTION_ID_COLUMN +
+            " = :transactionId) x WHERE NOT EXISTS (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " +
+            PARENT_COLUMN + " = :resourceId AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
+            OPERATION_COLUMN + " = 'delete' AND " + FEDORA_ID_COLUMN + " = x." + FEDORA_ID_COLUMN + ")";
+
+    private static final Map<DbPlatform, String> CHECKSUM_MAP = Map.of(
+            DbPlatform.H2, SELECT_CHECKSUM_H2,
+            DbPlatform.MARIADB, SELECT_CHECKSUM_MYSQL_MARIADB,
+            DbPlatform.MYSQL, SELECT_CHECKSUM_MYSQL_MARIADB,
+            DbPlatform.POSTGRESQL, SELECT_CHECKSUM_POSTGRES
+    );
+
+    private static final Map<DbPlatform, String> CHECKSUM_IN_TX_MAP = Map.of(
+            DbPlatform.H2, SELECT_CHECKSUM_IN_TX_H2,
+            DbPlatform.MARIADB, SELECT_CHECKSUM_IN_TX_MYSQL_MARIADB,
+            DbPlatform.MYSQL, SELECT_CHECKSUM_IN_TX_MYSQL_MARIADB,
+            DbPlatform.POSTGRESQL, SELECT_CHECKSUM_IN_TX_POSTGRES
+    );
+
     /**
      * Connect to the database
      */
@@ -677,6 +732,20 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             matchingIds = !jdbcTemplate.queryForList(SELECT_ID_LIKE, parameterSource, String.class).isEmpty();
         }
         return matchingIds;
+    }
+
+    @Override
+    public String containmentHash(final String txId, final FedoraId fedoraId) {
+        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+        parameterSource.addValue("resourceId", fedoraId.getFullId());
+        final String queryToUse;
+        if (txId == null) {
+            queryToUse = CHECKSUM_MAP.get(dbPlatform);
+        } else {
+            parameterSource.addValue("transactionId", txId);
+            queryToUse = CHECKSUM_IN_TX_MAP.get(dbPlatform);
+        }
+        return jdbcTemplate.queryForObject(queryToUse, parameterSource, String.class);
     }
 
     /**
