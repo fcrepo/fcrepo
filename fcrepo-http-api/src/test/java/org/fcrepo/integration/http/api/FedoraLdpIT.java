@@ -1138,7 +1138,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPatchWithBlankNode() throws Exception {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -1156,21 +1155,20 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue(graphStore.contains(ANY, createURI(location), createURI("info:some-predicate"), ANY));
             final Node bnode = graphStore.find(ANY,
                     createURI(location), createURI("info:some-predicate"), ANY).next().getObject();
-            try (final CloseableDataset dataset2 = getDataset(new HttpGet(bnode.getURI()))) {
-                assertTrue(dataset2.asDatasetGraph().contains(ANY, bnode, DCTITLE, createLiteral("this is a title")));
-            }
+            assertTrue(graphStore.contains(ANY, bnode, DCTITLE, createLiteral("this is a title")));
         }
     }
 
     @Test
-@Ignore
     public void testReplaceGraph() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
 
         final String subjectURI = serverAddress + id;
         final String initialContent;
-        try (final CloseableHttpResponse subjectResponse = execute(getObjMethod(id))) {
+        final HttpGet getMethod = getObjMethod(id);
+        getMethod.addHeader("Prefer", "return=representation; omit=\"" + PREFER_SERVER_MANAGED + "\"");
+        try (final CloseableHttpResponse subjectResponse = execute(getMethod)) {
             initialContent = EntityUtils.toString(subjectResponse.getEntity());
         }
         final HttpPut replaceMethod = putObjMethod(id);
@@ -1291,7 +1289,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testCreateGraphWithBlanknodes() throws IOException {
         final String subjectURI = serverAddress + getRandomUniqueId();
         final HttpPut createMethod = new HttpPut(subjectURI);
@@ -1314,12 +1311,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testRoundTripReplaceGraph() throws IOException {
 
         final String subjectURI = getLocation(postObjMethod());
         final HttpGet getObjMethod = new HttpGet(subjectURI);
         getObjMethod.addHeader(ACCEPT, "text/turtle");
+        getObjMethod.addHeader("Prefer", "return=representation; omit=\"" + PREFER_SERVER_MANAGED + "\"");
 
         final Model model = createDefaultModel();
         try (final CloseableHttpResponse getResponse = execute(getObjMethod)) {
@@ -1373,11 +1370,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testBinaryEtags() throws IOException, InterruptedException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
-        final String location = serverAddress + id + "/binary";
+        final String binaryLocation = serverAddress + id + "/binary";
         final HttpPut method = putDSMethod(id, "binary", "foo");
 
         final String binaryEtag1, binaryEtag2, binaryEtag3, descEtag1, descEtag2, descEtag3;
@@ -1392,11 +1388,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
 
         // First check ETags and Last-Modified headers for the binary
-        final HttpGet get1 = new HttpGet(location);
+        final HttpGet get1 = new HttpGet(binaryLocation);
         get1.addHeader("If-None-Match", binaryEtag1);
         assertEquals("Expected 304 Not Modified", NOT_MODIFIED.getStatusCode(), getStatus(get1));
 
-        final HttpGet get2 = new HttpGet(location);
+        final HttpGet get2 = new HttpGet(binaryLocation);
         get2.addHeader("If-Modified-Since", binaryLastModed1);
         assertEquals("Expected 304 Not Modified", NOT_MODIFIED.getStatusCode(), getStatus(get2));
 
@@ -1428,25 +1424,18 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 "INSERT { <> <http://purl.org/dc/elements/1.1/title> 'this is a title' } WHERE {}"));
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(httpPatch));
 
-        // Next, check headers for the binary; they should not have changed
-        final HttpHead head1 = new HttpHead(location);
+        // Next, check headers for the binary; they should have changed as binaries and their descriptions are
+        // versioned together.
+        final HttpHead head1 = new HttpHead(binaryLocation);
         try (final CloseableHttpResponse response = execute(head1)) {
             binaryEtag2 = response.getFirstHeader("ETag").getValue();
             binaryLastModed2 = response.getFirstHeader("Last-Modified").getValue();
         }
 
-        assertEquals("ETags should be the same", binaryEtag1, binaryEtag2);
-        assertEquals("Last-Modified should be the same", binaryLastModed1, binaryLastModed2);
+        assertNotEquals("ETags should not be the same", binaryEtag1, binaryEtag2);
+        assertNotEquals("Last-Modified should not be the same", binaryLastModed1, binaryLastModed2);
 
-        final HttpGet get6 = new HttpGet(location);
-        get6.addHeader("If-None-Match", binaryEtag1);
-        assertEquals("Expected 304 Not Modified", NOT_MODIFIED.getStatusCode(), getStatus(get6));
-
-        final HttpGet get7 = new HttpGet(location);
-        get7.addHeader("If-Modified-Since", binaryLastModed1);
-        assertEquals("Expected 304 Not Modified", NOT_MODIFIED.getStatusCode(), getStatus(get7));
-
-        // Next, check headers for the description; they should have changed
+        // Next, check headers for the description; they should also have changed
         final HttpHead head2 = new HttpHead(descLocation);
         try (final CloseableHttpResponse response = execute(head2)) {
             descEtag2 = response.getFirstHeader("ETag").getValue();
@@ -1467,9 +1456,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
         sleep(1000);
 
         // Next, update the binary itself
-        final HttpPut method2 = new HttpPut(location);
-        assertFalse("Expected strong ETag", binaryEtag1.startsWith("W/"));
-        method2.addHeader("If-Match", binaryEtag1);
+        final HttpPut method2 = new HttpPut(binaryLocation);
+        assertFalse("Expected strong ETag", binaryEtag2.startsWith("W/"));
+        method2.addHeader("If-Match", binaryEtag2);
         method2.setEntity(new StringEntity("foobar"));
         try (final CloseableHttpResponse response = execute(method2)) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
@@ -1477,11 +1466,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
             binaryLastModed3 = response.getFirstHeader("Last-Modified").getValue();
         }
 
-        final HttpGet get10 = new HttpGet(location);
-        get10.addHeader("If-None-Match", binaryEtag1);
+        final HttpGet get10 = new HttpGet(binaryLocation);
+        get10.addHeader("If-None-Match", binaryEtag2);
         assertEquals("Expected 200 OK", OK.getStatusCode(), getStatus(get10));
 
-        final HttpGet get11 = new HttpGet(location);
+        final HttpGet get11 = new HttpGet(binaryLocation);
         get11.addHeader("If-Modified-Since", binaryLastModed1);
         assertEquals("Expected 200 OK", OK.getStatusCode(), getStatus(get11));
 
