@@ -520,6 +520,8 @@
                   <arg>--pinentry-mode</arg>
                   <arg>loopback</arg>
                 </gpgArguments>
+                <!-- This is needed for github actions -->
+                <passphraseServerId>gpg.passphrase</passphraseServerId>
               </configuration>
             </plugin>
           </plugins>
