@@ -136,7 +136,7 @@ jobs:
     - name: Build with Maven
       run: mvn -B -U -Dfcrepo.db.url="jdbc:mysql://localhost:3306/fcrepo" -Dfcrepo.db.user="fcrepo-user" -Dfcrepo.db.password="fcrepo-pw" clean install -P db-test
   deploy:
-    if: github.ref == 'refs/heads/deploy-test'
+    if: github.ref == 'refs/heads/main'
     needs: [build, postgres-itest, mariadb-itest, mysql-itest]
     runs-on: ubuntu-latest
     steps:
