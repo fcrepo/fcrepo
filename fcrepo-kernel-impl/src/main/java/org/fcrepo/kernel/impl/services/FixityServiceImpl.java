@@ -32,6 +32,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
@@ -40,6 +41,7 @@ import org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM;
 import org.fcrepo.persistence.common.MultiDigestInputStreamWrapper;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -66,10 +68,14 @@ public class FixityServiceImpl extends AbstractService implements FixityService 
                 .map(DIGEST_ALGORITHM::fromAlgorithm)
                 .collect(Collectors.toList());
 
-        final MultiDigestInputStreamWrapper digestWrapper = new MultiDigestInputStreamWrapper(
-                binary.getContent(), null, digestAlgs);
-
-        return digestWrapper.getDigests();
+        try (final var content = binary.getContent()) {
+            final MultiDigestInputStreamWrapper digestWrapper = new MultiDigestInputStreamWrapper(content, null,
+                    digestAlgs);
+            return digestWrapper.getDigests();
+        } catch (final IOException e) {
+            // input stream closed prematurely.
+            throw new RepositoryRuntimeException("Problem reading content stream from " + binary.getId(), e);
+        }
     }
 
     @Override
@@ -94,13 +100,16 @@ public class FixityServiceImpl extends AbstractService implements FixityService 
                 .map(DIGEST_ALGORITHM::fromAlgorithm)
                 .collect(Collectors.toList());
 
-        final MultiDigestInputStreamWrapper digestWrapper = new MultiDigestInputStreamWrapper(
-                binary.getContent(), existingDigestList, digestAlgs);
-        digestWrapper.getDigests().forEach(d ->
-                model.add(fixityResult, HAS_MESSAGE_DIGEST, model.createResource(d.toString())));
-        try {
+        try (final var content = binary.getContent()) {
+            final MultiDigestInputStreamWrapper digestWrapper = new MultiDigestInputStreamWrapper(content,
+                    existingDigestList, digestAlgs);
+            digestWrapper.getDigests().forEach(d ->
+                    model.add(fixityResult, HAS_MESSAGE_DIGEST, model.createResource(d.toString())));
             digestWrapper.checkFixity();
             model.add(fixityResult, HAS_FIXITY_STATE, successResource);
+        } catch (final IOException e) {
+            // input stream closed prematurely.
+            throw new RepositoryRuntimeException("Problem reading content stream from " + binary.getId(), e);
         } catch (final InvalidChecksumException e) {
             model.add(fixityResult, HAS_FIXITY_STATE, badChecksumResource);
         }
