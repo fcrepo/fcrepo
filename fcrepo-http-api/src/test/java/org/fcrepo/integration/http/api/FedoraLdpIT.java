@@ -33,7 +33,6 @@ import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
@@ -79,7 +78,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
-import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
@@ -96,7 +94,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INSERTED_CONTENT_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.IS_MEMBER_OF_RELATION;
-import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_MEMBER;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
@@ -1644,7 +1641,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
+@Ignore("Needs updated eTags - FCREPO-3541")
     public void testETagOnDeletedLdpDirectContainerChild() throws Exception {
         final String id = getRandomUniqueId();
         final String members = id + "/members";
@@ -1681,7 +1678,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
+@Ignore("Needs updated eTags - FCREPO-3541")
     public void testETagOnDeletedLdpIndirectContainerChild() throws Exception {
         final String id = getRandomUniqueId();
         final String members = id + "/members";
@@ -1726,7 +1723,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPutDatastreamContentOnObject() throws IOException {
         final String content = "foo";
         final String id = getRandomUniqueId();
@@ -1738,15 +1734,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(
                 "Expected UNSUPPORTED MEDIA TYPE response when PUTing content to an object (as opposed to datastream)",
                 UNSUPPORTED_MEDIA_TYPE.getStatusCode(), getStatus(put));
-    }
-
-    @Test
-@Ignore
-    public void testEmptyPutToExistingObject() {
-        final String id = getRandomUniqueId();
-        createObjectAndClose(id);
-        assertEquals("Expected CONFLICT response code when doing empty PUT on an existing object.",
-                CONFLICT.getStatusCode(), getStatus(putObjMethod(id)));
     }
 
     @Test
@@ -2054,29 +2041,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpPost method = postObjMethod(id);
         method.addHeader("Slug", "x");
         assertEquals(serverAddress + id + "/x", getLocation(method));
-    }
-
-    /**
-     * Ensure that the objects cannot be pairtree child resources
-     *
-     * @throws IOException in case of IOException
-     */
-    @Test
-@Ignore
-    public void testIngestOnPairtree() throws IOException {
-        final String parent = "123456/789/10";
-        executeAndClose(putObjMethod(parent));
-        final String objName = serverAddress + parent;
-        final String pairtreeName = objName.substring(serverAddress.length(), objName.lastIndexOf('/'));
-
-        try (final CloseableDataset dataset = getDataset(getObjMethod(pairtreeName))) {
-            final DatasetGraph graph = dataset.asDatasetGraph();
-            assertTrue("Resource \"" + objName + " " + pairtreeName + "\" must be pairtree.", graph.contains(ANY,
-                createURI(serverAddress + pairtreeName), type.asNode(), createURI(REPOSITORY_NAMESPACE + "Pairtree")));
-        }
-        // Attempting to POST to the child of the pairtree node...
-        final int status = getStatus(postObjMethod(pairtreeName));
-        assertEquals("Created an Object under a pairtree node!", FORBIDDEN.getStatusCode(), status);
     }
 
     @Test
@@ -2446,7 +2410,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testGetObjectOmitContainment() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -2472,10 +2435,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue("Expected server managed", graph.find(ANY, resource, ANY, FEDORA_CONTAINER.asNode()).hasNext());
             assertTrue("Expected server managed", graph.find(ANY, resource, ANY, FEDORA_RESOURCE.asNode()).hasNext());
             assertTrue("Expected server managed", graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, CREATED_BY.asNode(), ANY).hasNext());
             assertTrue("Expected server managed",
                     graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, LAST_MODIFIED_BY.asNode(), ANY).hasNext());
             assertFalse("Expected nothing contained", graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
         }
     }
@@ -2515,11 +2476,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertFalse("Expected nothing server managed",
                     graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext());
             assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, CREATED_BY.asNode(), ANY).hasNext());
-            assertFalse("Expected nothing server managed",
                     graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, LAST_MODIFIED_BY.asNode(), ANY).hasNext());
         }
     }
 
@@ -2548,7 +2505,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testGetLDPRmOmitServerManaged() throws IOException {
         final String versionedResourceURI = createVersionedRDFResource();
         final String mementoResourceURI = getLocation(new HttpPost(versionedResourceURI + "/fcr:versions"));
@@ -2570,16 +2526,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertFalse("Expected nothing server managed",
                     graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext());
             assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, CREATED_BY.asNode(), ANY).hasNext());
-            assertFalse("Expected nothing server managed",
                     graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, LAST_MODIFIED_BY.asNode(), ANY).hasNext());
         }
     }
 
     @Test
-@Ignore
     public void testGetLDPRmWithoutOmitServerManager() throws IOException {
         final String versionedResourceURI = createVersionedRDFResource();
         final String mementoResourceURI = getLocation(new HttpPost(versionedResourceURI + "/fcr:versions"));
@@ -2599,11 +2550,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue("Expected server managed",
                     graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext());
             assertTrue("Expected server managed",
-                    graph.find(ANY, resource, CREATED_BY.asNode(), ANY).hasNext());
-            assertTrue("Expected server managed",
                     graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext());
-            assertTrue("Expected server managed",
-                    graph.find(ANY, resource, LAST_MODIFIED_BY.asNode(), ANY).hasNext());
         }
     }
 
@@ -2622,7 +2569,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testPatchToDeleteNonRdfSourceInteractionModel() throws IOException {
         final String pid = getRandomUniqueId();
 
@@ -2981,7 +2927,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
+@Ignore("Needs indirect containers - FCREPO-3410")
     public void testGetObjectReferencesIndirect() throws Exception {
         final String uuid = getRandomUniqueId();
         final String pid1 = uuid + "/parent";
@@ -3153,17 +3099,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         httpPut.setHeader(CONTENT_TYPE, "text/turtle");
         httpPut.setEntity(new StringEntity("<> a \"still image\"."));
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(httpPut));
-    }
-
-    @Test
-@Ignore
-    public void testRepeatedPut() {
-        final String id = getRandomUniqueId();
-        assertEquals(CREATED.getStatusCode(), getStatus(new HttpPut(serverAddress + id)));
-
-        final HttpPut secondPut = new HttpPut(serverAddress + id);
-        secondPut.setHeader(CONTENT_TYPE, "text/turtle");
-        assertEquals(CONFLICT.getStatusCode(), getStatus(secondPut));
     }
 
     @Test
@@ -3446,6 +3381,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testUpdateObjectWithSpaces() throws IOException {
     public void testUpdateObjectWithSpacesPost() throws IOException {
         final String id = getRandomUniqueId() + " 2";
         final String expectedUri = serverAddress + id.replace(" ", "%20");
@@ -3614,7 +3550,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testContainerInteraction() throws IOException {
         final String id = getRandomUniqueId();
         final String location;
@@ -3656,7 +3591,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
+@Ignore("Needs indirect containers - FCREPO-3410")
     public void testIndirectContainerInteraction() throws IOException {
 
         // Create resource (object)
@@ -3721,7 +3656,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
+@Ignore("Needs indirect containers - FCREPO-3410")
     public void testIndirectContainerInteractionMemberOf() throws IOException {
         // Create resource (object)
         final String resourceId = getRandomUniqueId();
@@ -3863,30 +3798,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("This test needs manual intervention to decide how \"good\" the graph looks")
-    // TODO Do we have any way to proceed with this kind of aesthetic goal?
-    public void testGraphShouldNotBeTooLumpy() throws IOException {
-
-        final HttpPut httpPut = putObjMethod(getRandomUniqueId());
-        httpPut.addHeader(CONTENT_TYPE, "text/turtle");
-        httpPut.setEntity(new StringEntity("<> a <" + DIRECT_CONTAINER.getURI() + ">;" +
-                "    <" + MEMBERSHIP_RESOURCE.getURI() + "> <> ;" +
-                "    <" + HAS_MEMBER_RELATION.getURI() + "> <" + LDP_MEMBER + "> ;" +
-                "    <info:x> <#hash-uri> ;" +
-                "    <info:x> [ <" + DCTITLE.getURI() + "> \"xyz\" ] . " +
-                "<#hash-uri>  <" + DCTITLE.getURI() + "> \"some-hash-uri\" ."));
-
-        /*
-         * final HttpResponse response = execute(httpPut); final int status =
-         * response.getStatusLine().getStatusCode(); assertEquals("Didn't get a CREATED response!",
-         * CREATED.getStatusCode(), status); final String subjectURI = response.getFirstHeader("Location").getValue();
-         * final HttpGet get = new HttpGet(subjectURI); final HttpResponse getResponse = execute(get); final String s
-         * = EntityUtils.toString(getResponse.getEntity());
-         */
-
-    }
-
-    @Test
+@Ignore("Need embed resources - FCREPO-3525")
     public void testEmbeddedContainedResources() throws IOException {
         final String id = getRandomUniqueId();
         final String binaryId = "binary0";
@@ -4058,13 +3970,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals("Should be two values!", 2, titles.findValues("@value").size());
     }
 
-    @Test
-@Ignore
-    public void testPathWithEmptySegment() {
-        final String badLocation = "test/me/mb/er/s//members/9528a300-22da-40f2-bf3c-5b345d71affb";
-        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(headObjMethod(badLocation)));
-    }
-
     private static Optional<Instant> getDateFromModel(final Model model, final Resource subj, final Property pred)
             throws NoSuchElementException {
         final StmtIterator stmts = model.listStatements(subj, pred, (String) null);
@@ -4073,7 +3978,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testUpdateObjectGraphWithNonLocalTriples() throws IOException {
         final String pid = getRandomUniqueId();
         createObject(pid);
@@ -4087,7 +3991,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 "> <http://purl.org/dc/elements/1.1/identifier> \"this is an identifier\". " + "<" + otherLocation +
                 "> <http://purl.org/dc/elements/1.1/identifier> \"this is an identifier\"" + " } WHERE {}"));
         assertEquals("It ought not be possible to use PATCH to create non-local triples!",
-                FORBIDDEN.getStatusCode(),getStatus(updateObjectGraphMethod));
+                NO_CONTENT.getStatusCode(),getStatus(updateObjectGraphMethod));
     }
 
     @Test
@@ -4490,7 +4394,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("Waiting on membership triples - https://jira.lyrasis.org/browse/FCREPO-3165")
     public void testContainerLastModified() throws Exception {
         final String objid = getRandomUniqueId();
         final String objURI = serverAddress + objid;
@@ -4538,19 +4441,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
             lastmod3 = Instant.from(
                 headerFormat.parse(response.getFirstHeader("Last-Modified").getValue())).toEpochMilli();
             assertTrue(lastmod3 > lastmod2);
-        }
-
-        sleep(1000); // wait a second to make sure last-modified value will be different
-
-        // create child in the container
-        assertEquals(CREATED.getStatusCode(), getStatus(new HttpPut(objURI + "/members/member1")));
-
-        // last-modified should be updated
-        try (final CloseableHttpResponse response = execute(headObjMethod(objid))) {
-            assertEquals(OK.getStatusCode(), getStatus(response));
-            final long lastmod4 = Instant.from(
-                headerFormat.parse(response.getFirstHeader("Last-Modified").getValue())).toEpochMilli();
-            assertTrue(lastmod4 > lastmod3);
         }
     }
 
@@ -4833,7 +4723,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
+@Ignore("Needs indirect containers - FCREPO-3410")
     public void testPatchUpdateIndirectContainerServerManaged() throws IOException {
         final String pid = getRandomUniqueId();
         final String subjectURI = serverAddress + pid;
