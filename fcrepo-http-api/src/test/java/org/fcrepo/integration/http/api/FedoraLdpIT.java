@@ -1435,6 +1435,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertNotEquals("ETags should not be the same", binaryEtag1, binaryEtag2);
         assertNotEquals("Last-Modified should not be the same", binaryLastModed1, binaryLastModed2);
 
+        final HttpGet get6 = new HttpGet(binaryLocation);
+        get6.addHeader("If-Match", binaryEtag1);
+        assertEquals("Expected 412 Precondition Failed", PRECONDITION_FAILED.getStatusCode(), getStatus(get6));
+
+        final HttpGet get7 = new HttpGet(binaryLocation);
+        get7.addHeader("If-Unmodified-Since", binaryLastModed1);
+        assertEquals("Expected 412 Precondition Failed", PRECONDITION_FAILED.getStatusCode(), getStatus(get7));
+
         // Next, check headers for the description; they should also have changed
         final HttpHead head2 = new HttpHead(descLocation);
         try (final CloseableHttpResponse response = execute(head2)) {

@@ -812,6 +812,27 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     /**
+     * Allow a one second on each side allowance when comparing memento URIs as tests can vary.
+     * @param message Message to return.
+     * @param expected The expected URI.
+     * @param actual The actual URI.
+     */
+    private static void verifyMementoUri(final String message, final String expected, final String actual) {
+        if (!expected.equals(actual)) {
+            // Make 2 additional URIs by parsing the memento label and adding/subtracting 1 second.
+            final String expectedUriPrefix = expected.substring(0, expected.lastIndexOf("/"));
+            final String expectedDateString = expected.substring(expected.lastIndexOf("/"));
+            final Instant expectedInstant = Instant.from(MEMENTO_LABEL_FORMATTER.parse(expectedDateString));
+            final List<String> allowed = List.of(
+                    expectedUriPrefix + MEMENTO_LABEL_FORMATTER.format(expectedInstant.minusSeconds(1)),
+                    expected,
+                    expectedUriPrefix + MEMENTO_LABEL_FORMATTER.format(expectedInstant.plusSeconds(1))
+            );
+            assertTrue(message, allowed.contains(actual));
+        }
+    }
+
+    /**
      * Utility function to verify TimeMap headers
      *
      * @param response the response
@@ -1023,7 +1044,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = customClient.execute(getMemento)) {
             assertEquals("Did not get FOUND response", FOUND.getStatusCode(), getStatus(response));
             assertNoMementoDatetimeHeaderPresent(response);
-            assertEquals("Did not get Location header", version1Uri, response.getFirstHeader(LOCATION).getValue());
+            verifyMementoUri("Did not get Location header", version1Uri, response.getFirstHeader(LOCATION).getValue());
             assertEquals("Did not get Content-Length == 0", "0", response.getFirstHeader(CONTENT_LENGTH).getValue());
         }
 
@@ -1036,7 +1057,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = customClient.execute(getMemento2)) {
             assertEquals("Did not get FOUND response", FOUND.getStatusCode(), getStatus(response));
             assertNoMementoDatetimeHeaderPresent(response);
-            assertEquals("Did not get Location header", version2Uri, response.getFirstHeader(LOCATION).getValue());
+            verifyMementoUri("Did not get Location header", version2Uri, response.getFirstHeader(LOCATION).getValue());
             assertEquals("Did not get Content-Length == 0", "0", response.getFirstHeader(CONTENT_LENGTH).getValue());
         }
 
@@ -1047,7 +1068,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = customClient.execute(getMemento3)) {
             assertEquals("Did not get FOUND response", FOUND.getStatusCode(), getStatus(response));
             assertNoMementoDatetimeHeaderPresent(response);
-            assertEquals("Did not get Location header", version1Uri, response.getFirstHeader(LOCATION).getValue());
+            verifyMementoUri("Did not get Location header", version1Uri, response.getFirstHeader(LOCATION).getValue());
             assertEquals("Did not get Content-Length == 0", "0", response.getFirstHeader(CONTENT_LENGTH).getValue());
         }
     }
@@ -1086,7 +1107,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = customClient.execute(getVersion2)) {
             assertEquals("Did not get FOUND response", FOUND.getStatusCode(), getStatus(response));
             assertNoMementoDatetimeHeaderPresent(response);
-            assertEquals("Did not get expected memento location",
+            verifyMementoUri("Did not get expected memento location",
                     version2Uri, response.getFirstHeader(LOCATION).getValue());
         }
 
@@ -1097,7 +1118,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = customClient.execute(getVersion1)) {
             assertEquals("Did not get FOUND response", FOUND.getStatusCode(), getStatus(response));
             assertNoMementoDatetimeHeaderPresent(response);
-            assertEquals("Did not get expected memento location",
+            verifyMementoUri("Did not get expected memento location",
                     version1Uri, response.getFirstHeader(LOCATION).getValue());
         }
     }
