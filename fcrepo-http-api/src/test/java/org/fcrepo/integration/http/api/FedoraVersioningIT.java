@@ -1023,8 +1023,9 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         final CloseableHttpClient customClient = createClient(true);
 
-        createVersionedContainer(id);
-        final String version1Uri = createLDPRSMementoWithExistingBody(id);
+        final String uri = createVersionedContainer(id);
+
+        final String version1Uri = postForMemento(uri);
 
         TimeUnit.SECONDS.sleep(1);
 
@@ -1034,7 +1035,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         TimeUnit.SECONDS.sleep(1);
 
         putVersionedContainer(id, "update", true);
-        final String version2Uri = createLDPRSMementoWithExistingBody(id);
+        final String version2Uri = postForMemento(uri);
 
         assertNotEquals("mementos should be different", version1Uri, version2Uri);
 
@@ -1047,6 +1048,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             verifyMementoUri("Did not get Location header", version1Uri, response.getFirstHeader(LOCATION).getValue());
             assertEquals("Did not get Content-Length == 0", "0", response.getFirstHeader(CONTENT_LENGTH).getValue());
         }
+
+        TimeUnit.SECONDS.sleep(1);
 
         // Request datetime more recent than both mementos
         final String afterDatetime = MEMENTO_RFC_1123_FORMATTER.format(Instant.now().atZone(ZoneOffset.UTC));
