@@ -21,8 +21,6 @@
  *
  * <ul>
  *   <li>Fixity Service</li>
- *   <li>Contract for repository management services (e.g. backup/restore)</li>
- *   <li>Sitemap</li>
  *   <li>Controllers for manipulating object and data streams</li>
  * </ul>
  *
