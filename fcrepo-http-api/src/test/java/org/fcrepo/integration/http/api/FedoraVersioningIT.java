@@ -821,7 +821,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         if (!expected.equals(actual)) {
             // Make 2 additional URIs by parsing the memento label and adding/subtracting 1 second.
             final String expectedUriPrefix = expected.substring(0, expected.lastIndexOf("/"));
-            final String expectedDateString = expected.substring(expected.lastIndexOf("/"));
+            final String expectedDateString = expected.substring(expected.lastIndexOf("/") + 1);
             final Instant expectedInstant = Instant.from(MEMENTO_LABEL_FORMATTER.parse(expectedDateString));
             final List<String> allowed = List.of(
                     expectedUriPrefix + MEMENTO_LABEL_FORMATTER.format(expectedInstant.minusSeconds(1)),
