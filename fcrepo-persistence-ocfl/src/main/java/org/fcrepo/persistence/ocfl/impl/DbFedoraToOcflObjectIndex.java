@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -268,8 +269,8 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
         parameterSource.addValue("operation", operation);
         try {
             jdbcTemplate.update(UPSERT_MAPPING_TX_MAP.get(dbPlatform), parameterSource);
-        } catch (Exception e) {
-            throw new InvalidResourceIdentifierException("ID path too long");
+        } catch (DataIntegrityViolationException e) {
+            throw new InvalidResourceIdentifierException("Database error - Fedora ID path too long",e);
         }
     }
 
