@@ -6,7 +6,7 @@ Updated: November 13, 2020
 
 ---
 
-[![Build Status](https://travis-ci.com/fcrepo/fcrepo.svg?branch=master)](https://travis-ci.com/fcrepo/fcrepo)
+![Build](https://github.com/fcrepo/fcrepo/workflows/Build/badge.svg)
 
 [JavaDocs](http://docs.fcrepo.org/) | 
 [Fedora Wiki](https://wiki.duraspace.org/display/FF) | 
