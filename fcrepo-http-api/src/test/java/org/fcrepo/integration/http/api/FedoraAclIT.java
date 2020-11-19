@@ -17,6 +17,7 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Link.fromUri;
@@ -550,5 +551,55 @@ public class FedoraAclIT extends AbstractResourceIT {
             assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response));
             assertEquals(ex.toString(), response.getFirstHeader(LINK).getValue());
         }
+    }
+
+    @Test
+    public void testGetDefaultAcl() throws Exception {
+        final Node aclMode = createURI(WEBAC_NAMESPACE_VALUE + "mode");
+        final Node aclRead = createURI(WEBAC_NAMESPACE_VALUE + "Read");
+        final Node aclWrite = createURI(WEBAC_NAMESPACE_VALUE + "Write");
+
+        final Node defaultAclSubject = createURI(serverAddress + FCR_ACL + "#authz");
+
+        final var getTurtle = getObjMethod(FCR_ACL);
+        getTurtle.addHeader(ACCEPT, "text/turtle");
+        try (final var response = execute(getTurtle)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final var graph = getDataset(response).asDatasetGraph();
+            assertTrue(graph.contains(ANY, defaultAclSubject, aclMode, aclRead));
+            assertFalse(graph.contains(ANY, defaultAclSubject, aclMode, aclWrite));
+        }
+
+        final var getHtml = getObjMethod(FCR_ACL);
+        getHtml.addHeader(ACCEPT, "text/html");
+        assertEquals(OK.getStatusCode(), getStatus(getHtml));
+
+        final String aclBody = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n" +
+                "\n" +
+                "<#writeAccess> a acl:Authorization ;\n" +
+                "    acl:mode acl:Read, acl:Write ;\n" +
+                "    acl:agent foaf:Agent ;\n" +
+                "    acl:accessTo <" + serverAddress + "> ;\n" +
+                "    acl:default <" + serverAddress + "> .";
+        final var putAcl = putObjMethod(FCR_ACL);
+        putAcl.addHeader(CONTENT_TYPE, "text/turtle");
+        putAcl.setEntity(new StringEntity(aclBody));
+        assertEquals(CREATED.getStatusCode(), getStatus(putAcl));
+
+        final Node customAclSubject = createURI(serverAddress + FCR_ACL + "#writeAccess");
+
+        final var getTurtle2 = getObjMethod(FCR_ACL);
+        getTurtle.addHeader(ACCEPT, "text/turtle");
+        try (final var response = execute(getTurtle2)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final var graph = getDataset(response).asDatasetGraph();
+            assertTrue(graph.contains(ANY, customAclSubject, aclMode, aclRead));
+            assertTrue(graph.contains(ANY, customAclSubject, aclMode, aclWrite));
+        }
+
+        final var getHtml2 = getObjMethod(FCR_ACL);
+        getHtml.addHeader(ACCEPT, "text/html");
+        assertEquals(OK.getStatusCode(), getStatus(getHtml2));
     }
 }
