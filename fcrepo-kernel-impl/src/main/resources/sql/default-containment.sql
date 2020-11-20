@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS containment (
     fedora_id varchar(503) NOT NULL PRIMARY KEY,
     parent varchar(503) NOT NULL,
     start_time timestamp NOT NULL,
-    end_time timestamp NULL
+    end_time timestamp NULL,
+    updated timestamp NULL
 );
 
 -- Create an index to speed searches for children of a parent.

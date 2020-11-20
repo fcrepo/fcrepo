@@ -20,6 +20,7 @@ package org.fcrepo.kernel.api;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import javax.annotation.Nonnull;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.stream.Stream;
 
@@ -150,10 +151,10 @@ public interface ContainmentIndex {
     boolean hasResourcesStartingWith(final String txId, final FedoraId fedoraId);
 
     /**
-     * Generate a hash value of the current contained resources of the provided resource.
+     * Find the timestamp of the last child added or deleted
      * @param txId The transaction id, or null if no transaction.
      * @param fedoraId The ID of the containing resource to check.
-     * @return Unique hash of the current containment of non-deleted resources.
+     * @return Timestamp of last child added or deleted or null if none
      */
-    String containmentHash(final String txId, final FedoraId fedoraId);
+    Instant containmentLastUpdated(final String txId, final FedoraId fedoraId);
 }

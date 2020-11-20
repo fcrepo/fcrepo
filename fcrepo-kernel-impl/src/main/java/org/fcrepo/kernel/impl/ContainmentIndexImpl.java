@@ -24,6 +24,7 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.slf4j.Logger;
 import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.init.DatabasePopulatorUtils;
@@ -87,6 +88,8 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     private static final String START_TIME_COLUMN = "start_time";
 
     private static final String END_TIME_COLUMN = "end_time";
+
+    private static final String UPDATED_COLUMN = "updated";
 
     /*
      * Select children of a resource that are not marked as deleted.
@@ -382,60 +385,24 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             DbPlatform.MARIADB, "sql/default-containment.sql"
     );
 
-    private static final String SELECT_CHECKSUM_H2 = "SELECT HASH('SHA256', LISTAGG(" + FEDORA_ID_COLUMN + ", ''))" +
-            " as checksum FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :resourceId AND " +
-            END_TIME_COLUMN + " IS NULL";
+    private static final String SELECT_LAST_UPDATED = "SELECT " + UPDATED_COLUMN + " FROM " + RESOURCES_TABLE +
+            " WHERE " + FEDORA_ID_COLUMN + " = :resourceId";
 
-    private static final String SELECT_CHECKSUM_IN_TX_H2 = "SELECT HASH('SHA256', LISTAGG(x." + FEDORA_ID_COLUMN +
-            ", '')) as checksum FROM (SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " +
-            PARENT_COLUMN + " = :resourceId AND " + END_TIME_COLUMN + " IS NULL UNION SELECT " + FEDORA_ID_COLUMN +
-            " FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN + " = :resourceId AND " +
-            OPERATION_COLUMN + " = 'add' AND " + TRANSACTION_ID_COLUMN +
-            " = :transactionId) x WHERE NOT EXISTS (SELECT 1 FROM " +
-            TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN + " = :resourceId AND " + TRANSACTION_ID_COLUMN +
-            " = :transactionId AND " + OPERATION_COLUMN + " = 'delete' AND " + FEDORA_ID_COLUMN + " = x." +
-            FEDORA_ID_COLUMN + ")";
+    private static final String UPDATE_LAST_UPDATED = "UPDATE " + RESOURCES_TABLE + " SET " + UPDATED_COLUMN +
+            " = :updated WHERE " + FEDORA_ID_COLUMN + " = :resourceId";
 
-    private static final String SELECT_CHECKSUM_MYSQL_MARIADB = "SELECT CRC32(GROUP_CONCAT(" + FEDORA_ID_COLUMN +
-            ")) as checksum FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :resourceId AND " +
-            END_TIME_COLUMN + " IS NULL";
+    private static final String SELECT_LAST_UPDATED_IN_TX = "SELECT MAX(x.update)" +
+            " FROM (SELECT " + UPDATED_COLUMN + " as update FROM " + RESOURCES_TABLE + " WHERE " +
+            FEDORA_ID_COLUMN + " = :resourceId UNION SELECT " + START_TIME_COLUMN +
+            " as update FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN + " = :resourceId AND " +
+            OPERATION_COLUMN + " = 'add' AND " + TRANSACTION_ID_COLUMN + " = :transactionId UNION SELECT " +
+            END_TIME_COLUMN + " as update FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN +
+            " = :resourceId AND " + OPERATION_COLUMN + " = 'delete' AND " + TRANSACTION_ID_COLUMN +
+            " = :transactionId) x";
 
-    private static final String SELECT_CHECKSUM_IN_TX_MYSQL_MARIADB = "SELECT CRC32(GROUP_CONCAT(x." +
-            FEDORA_ID_COLUMN + ")) as checksum FROM (SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE +
-            " WHERE " + PARENT_COLUMN + " = :resourceId AND " + END_TIME_COLUMN + " IS NULL UNION SELECT " +
-            FEDORA_ID_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN +
-            " = :resourceId AND " + OPERATION_COLUMN + " = 'add' AND " + TRANSACTION_ID_COLUMN +
-            " = :transactionId) x WHERE NOT EXISTS (SELECT 1 FROM " +
-            TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN + " = :resourceId AND " + TRANSACTION_ID_COLUMN +
-            " = :transactionId AND " + OPERATION_COLUMN + " = 'delete' AND " + FEDORA_ID_COLUMN + " = x." +
-            FEDORA_ID_COLUMN + ")";
-
-    private static final String SELECT_CHECKSUM_POSTGRES = "SELECT MD5(STRING_AGG(" + FEDORA_ID_COLUMN +
-            ", '')) as checksum FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :resourceId AND " +
-            END_TIME_COLUMN + " IS NULL";
-
-    private static final String SELECT_CHECKSUM_IN_TX_POSTGRES = "SELECT MD5(STRING_AGG(x." + FEDORA_ID_COLUMN +
-            ", '')) as checksum FROM (SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " +
-            PARENT_COLUMN + " = :resourceId AND " + END_TIME_COLUMN + " IS NULL UNION SELECT " + FEDORA_ID_COLUMN +
-            " FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN + " = :resourceId AND " +
-            OPERATION_COLUMN + " = 'add' AND " + TRANSACTION_ID_COLUMN +
-            " = :transactionId) x WHERE NOT EXISTS (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " +
-            PARENT_COLUMN + " = :resourceId AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
-            OPERATION_COLUMN + " = 'delete' AND " + FEDORA_ID_COLUMN + " = x." + FEDORA_ID_COLUMN + ")";
-
-    private static final Map<DbPlatform, String> CHECKSUM_MAP = Map.of(
-            DbPlatform.H2, SELECT_CHECKSUM_H2,
-            DbPlatform.MARIADB, SELECT_CHECKSUM_MYSQL_MARIADB,
-            DbPlatform.MYSQL, SELECT_CHECKSUM_MYSQL_MARIADB,
-            DbPlatform.POSTGRESQL, SELECT_CHECKSUM_POSTGRES
-    );
-
-    private static final Map<DbPlatform, String> CHECKSUM_IN_TX_MAP = Map.of(
-            DbPlatform.H2, SELECT_CHECKSUM_IN_TX_H2,
-            DbPlatform.MARIADB, SELECT_CHECKSUM_IN_TX_MYSQL_MARIADB,
-            DbPlatform.MYSQL, SELECT_CHECKSUM_IN_TX_MYSQL_MARIADB,
-            DbPlatform.POSTGRESQL, SELECT_CHECKSUM_IN_TX_POSTGRES
-    );
+    private static final String GET_UPDATED_RESOURCES = "SELECT DISTINCT " + PARENT_COLUMN + " FROM " +
+            TRANSACTION_OPERATIONS_TABLE + " WHERE " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
+            OPERATION_COLUMN + " in ('add', 'delete')";
 
     /**
      * Connect to the database
@@ -640,10 +607,19 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             try {
                 final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
                 parameterSource.addValue("transactionId", txId);
-
+                final List<String> changedParents = jdbcTemplate.queryForList(GET_UPDATED_RESOURCES, parameterSource,
+                        String.class);
                 jdbcTemplate.update(COMMIT_PURGE_RECORDS, parameterSource);
                 jdbcTemplate.update(COMMIT_DELETE_RECORDS.get(dbPlatform), parameterSource);
                 jdbcTemplate.update(COMMIT_ADD_RECORDS, parameterSource);
+                for (final var parent : changedParents) {
+                    final var updated = jdbcTemplate.queryForObject(SELECT_LAST_UPDATED_IN_TX,
+                            Map.of("resourceId", parent, "transactionId", txId), Instant.class);
+                    if (updated != null) {
+                        jdbcTemplate.update(UPDATE_LAST_UPDATED,
+                                Map.of("resourceId", parent, "updated", updated));
+                    }
+                }
                 jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, parameterSource);
             } catch (final Exception e) {
                 LOGGER.warn("Unable to commit containment index transaction {}: {}", txId, e.getMessage());
@@ -735,17 +711,21 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    public String containmentHash(final String txId, final FedoraId fedoraId) {
+    public Instant containmentLastUpdated(final String txId, final FedoraId fedoraId) {
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("resourceId", fedoraId.getFullId());
         final String queryToUse;
         if (txId == null) {
-            queryToUse = CHECKSUM_MAP.get(dbPlatform);
+            queryToUse = SELECT_LAST_UPDATED;
         } else {
             parameterSource.addValue("transactionId", txId);
-            queryToUse = CHECKSUM_IN_TX_MAP.get(dbPlatform);
+            queryToUse = SELECT_LAST_UPDATED_IN_TX;
         }
-        return jdbcTemplate.queryForObject(queryToUse, parameterSource, String.class);
+        try {
+            return jdbcTemplate.queryForObject(queryToUse, parameterSource, Instant.class);
+        } catch (final EmptyResultDataAccessException e) {
+            return null;
+        }
     }
 
     /**

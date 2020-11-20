@@ -40,6 +40,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
+
 import java.time.Instant;
 import java.util.stream.Stream;
 
@@ -50,6 +51,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_WEBAC_ACL_URI;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import static java.time.format.DateTimeFormatter.ISO_INSTANT;
 
 
 /**
@@ -201,9 +204,9 @@ public class ResourceFactoryImpl implements ResourceFactory {
         resc.setLastModifiedBy(headers.getLastModifiedBy());
         resc.setLastModifiedDate(headers.getLastModifiedDate());
         resc.setParentId(headers.getParent());
-        final String containmentHash = containmentIndex.containmentHash(transactionId, resc.getFedoraId());
-        final String newState = (containmentHash == null ? headers.getStateToken() :
-                DigestUtils.md5Hex(headers.getStateToken() + containmentHash).toUpperCase());
+        final Instant containmentUpdated = containmentIndex.containmentLastUpdated(transactionId, resc.getFedoraId());
+        final String newState = (containmentUpdated == null ? headers.getStateToken() :
+                DigestUtils.md5Hex(headers.getStateToken() + ISO_INSTANT.format(containmentUpdated)).toUpperCase());
         resc.setEtag(newState);
         resc.setStateToken(headers.getStateToken());
         resc.setIsArchivalGroup(headers.isArchivalGroup());

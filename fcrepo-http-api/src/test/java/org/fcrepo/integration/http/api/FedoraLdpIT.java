@@ -146,6 +146,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
 import java.util.Random;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response.Status;
@@ -202,7 +204,6 @@ import com.google.common.collect.Iterators;
 
 import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
-
 
 /**
  * @author cabeer
@@ -1579,6 +1580,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
             etag1 = response.getFirstHeader("ETag").getValue();
         }
 
+        // If the child is created and deleted in the same second the eTag would be the same.
+        // Wait to delete.
+        TimeUnit.MILLISECONDS.sleep(500);
+
         assertEquals("Child resource not deleted!", NO_CONTENT.getStatusCode(),
                 getStatus(new HttpDelete(serverAddress + child)));
         final String etag2;
@@ -1609,6 +1614,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertNotEquals(createdEtag, oneChildEtag);
         }
 
+        // We use the last created time for the eTag, if 2 children are created in the same second there is no
+        // difference, so we wait.
+        TimeUnit.MILLISECONDS.sleep(500);
+
         // Create another child
         final String otherChild;
         try (final var response = execute(new HttpPost(parentUri))) {
@@ -1624,12 +1633,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
         // Delete the second child.
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(otherChild)));
-        // See the parent's ETag changes back to the single child ETag.
+        // See the parent's ETag change again.
         try (final var response = execute(new HttpGet(parentUri))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final var currentETag = response.getFirstHeader("ETag").getValue();
             assertNotEquals(createdEtag, currentETag);
-            assertEquals(oneChildEtag, currentETag);
+            assertNotEquals(oneChildEtag, currentETag);
         }
     }
 

@@ -69,8 +69,8 @@ public class ContainmentIndexMetrics implements ContainmentIndex {
             DB, CONTAINMENT, OPERATION, "reset");
     private static final Timer hasResourcesStartingWithTimer = Metrics.timer(METRIC_NAME,
             DB, CONTAINMENT, OPERATION, "hasResourcesStartingWith");
-    private static final Timer containmentHashTimer = Metrics.timer(METRIC_NAME, DB, CONTAINMENT, OPERATION,
-            "containmentHash");
+    private static final Timer containmentLastUpdateTimer = Metrics.timer(METRIC_NAME, DB, CONTAINMENT, OPERATION,
+            "containmentLastUpdated");
 
     @Autowired
     @Qualifier("containmentIndexImpl")
@@ -173,8 +173,8 @@ public class ContainmentIndexMetrics implements ContainmentIndex {
     }
 
     @Override
-    public String containmentHash(final String txId, final FedoraId fedoraId) {
-        return MetricsHelper.time(containmentHashTimer, () ->
-                containmentIndexImpl.containmentHash(txId, fedoraId));
+    public Instant containmentLastUpdated(final String txId, final FedoraId fedoraId) {
+        return MetricsHelper.time(containmentLastUpdateTimer, () ->
+                containmentIndexImpl.containmentLastUpdated(txId, fedoraId));
     }
 }
