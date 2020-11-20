@@ -59,6 +59,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
+import static java.util.Collections.EMPTY_LIST;
 import static org.fcrepo.common.db.DbPlatform.H2;
 import static org.fcrepo.common.db.DbPlatform.MARIADB;
 import static org.fcrepo.common.db.DbPlatform.MYSQL;
@@ -456,9 +457,9 @@ public class DbSearchIndexImpl implements SearchIndex {
             for (final var sql : toggleForeignKeyChecks(false)) {
                 statement.addBatch(sql);
             }
+            statement.addBatch(truncateTable(SEARCH_RDF_TYPE_TABLE));
             statement.addBatch(truncateTable(SEARCH_RESOURCE_RDF_TYPE_TABLE));
             statement.addBatch(truncateTable(SIMPLE_SEARCH_TABLE));
-            statement.addBatch(truncateTable(SEARCH_RDF_TYPE_TABLE));
             for (final var sql : toggleForeignKeyChecks(true)) {
                 statement.addBatch(sql);
             }
@@ -471,11 +472,7 @@ public class DbSearchIndexImpl implements SearchIndex {
     private List<String> toggleForeignKeyChecks(final boolean enable) {
 
         if (isPostgres()) {
-            return List.of(
-                    togglePostgresTriggers(SEARCH_RESOURCE_RDF_TYPE_TABLE, enable),
-                    togglePostgresTriggers(SEARCH_RDF_TYPE_TABLE, enable),
-                    togglePostgresTriggers(SIMPLE_SEARCH_TABLE, enable)
-            );
+            return EMPTY_LIST;
         } else {
             return List.of("SET FOREIGN_KEY_CHECKS = " + (enable ? 1 : 0) + ";");
         }
@@ -483,11 +480,6 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     private boolean isPostgres() {
         return dbPlatForm.equals(POSTGRESQL);
-    }
-
-    private String togglePostgresTriggers(final String tableName, final boolean enable) {
-        return "ALTER TABLE " + tableName + " " +
-                (enable ? "ENABLE" : "DISABLE") + " TRIGGER ALL;";
     }
 
     private String truncateTable(final String tableName) {
