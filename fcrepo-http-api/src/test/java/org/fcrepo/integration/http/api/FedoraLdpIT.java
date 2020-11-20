@@ -157,6 +157,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -1761,9 +1762,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
-    /**
-     * We no longer support SPARQL as a valid RDF syntax for object creation.
-     */
     @Test
     public void testIngestWithNewAndSparqlQuery() throws IOException {
         final HttpPost method = postObjMethod();
@@ -3970,6 +3968,16 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals("Should be two values!", 2, titles.findValues("@value").size());
     }
 
+    @Test
+    public void testPathWithEmptySegment() {
+        // Ensure HttpClient does not remove empty paths
+        final RequestConfig config = RequestConfig.custom().setNormalizeUri(false).build();
+        final String badLocation = "test/me/mb/er/s//members/9528a300-22da-40f2-bf3c-5b345d71affb";
+        final var getEmpty = headObjMethod(badLocation);
+        getEmpty.setConfig(config);
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(getEmpty));
+    }
+
     private static Optional<Instant> getDateFromModel(final Model model, final Resource subj, final Property pred)
             throws NoSuchElementException {
         final StmtIterator stmts = model.listStatements(subj, pred, (String) null);
@@ -4832,7 +4840,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
      * Utility to assert a GET of id and id/fcr:versions
      *
      * @param id the path
-     * @throws Exception
+     * @throws Exception issue with http communication.
      */
     private void doGetIdAndVersions(final String id) throws Exception {
         final HttpGet getMethod = getObjMethod(id);
@@ -4926,6 +4934,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
             assertFalse(getLocation(response).contains(ghostId));
         }
+        // Ensure you can't create a child of the ghost node.
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(postObjMethod(ghostId)));
 
         // Delete 'a/b/c'
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteObjMethod(deepId)));
