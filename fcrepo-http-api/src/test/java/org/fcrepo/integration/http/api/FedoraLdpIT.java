@@ -1582,7 +1582,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // If the child is created and deleted in the same second the eTag would be the same.
         // Wait to delete.
-        TimeUnit.MILLISECONDS.sleep(500);
+        TimeUnit.SECONDS.sleep(1);
 
         assertEquals("Child resource not deleted!", NO_CONTENT.getStatusCode(),
                 getStatus(new HttpDelete(serverAddress + child)));
@@ -1616,7 +1616,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // We use the last created time for the eTag, if 2 children are created in the same second there is no
         // difference, so we wait.
-        TimeUnit.MILLISECONDS.sleep(500);
+        TimeUnit.SECONDS.sleep(1);
 
         // Create another child
         final String otherChild;

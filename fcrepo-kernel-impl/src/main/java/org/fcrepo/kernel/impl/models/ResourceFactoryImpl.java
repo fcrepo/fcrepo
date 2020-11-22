@@ -52,9 +52,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import static java.time.format.DateTimeFormatter.ISO_INSTANT;
-
-
 /**
  * Implementation of ResourceFactory interface.
  *
@@ -206,7 +203,8 @@ public class ResourceFactoryImpl implements ResourceFactory {
         resc.setParentId(headers.getParent());
         final Instant containmentUpdated = containmentIndex.containmentLastUpdated(transactionId, resc.getFedoraId());
         final String newState = (containmentUpdated == null ? headers.getStateToken() :
-                DigestUtils.md5Hex(headers.getStateToken() + ISO_INSTANT.format(containmentUpdated)).toUpperCase());
+                DigestUtils.md5Hex(headers.getStateToken() + formatUpdatedInstant(containmentUpdated))
+                        .toUpperCase());
         resc.setEtag(newState);
         resc.setStateToken(headers.getStateToken());
         resc.setIsArchivalGroup(headers.isArchivalGroup());
@@ -255,5 +253,9 @@ public class ResourceFactoryImpl implements ResourceFactory {
                     throw new PathNotFoundRuntimeException(e.getMessage(), e);
                 }
             });
+    }
+
+    private String formatUpdatedInstant(final Instant update) {
+        return update.getEpochSecond() + "." + update.getNano();
     }
 }

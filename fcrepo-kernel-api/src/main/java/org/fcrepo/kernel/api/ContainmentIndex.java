@@ -20,7 +20,6 @@ package org.fcrepo.kernel.api;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import javax.annotation.Nonnull;
 
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.stream.Stream;
 

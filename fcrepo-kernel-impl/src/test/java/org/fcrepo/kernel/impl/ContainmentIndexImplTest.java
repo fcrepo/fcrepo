@@ -692,7 +692,7 @@ public class ContainmentIndexImplTest {
         assertEquals(first, containmentIndex.containmentLastUpdated(null, parent1.getFedoraId()));
 
         // Wait half a second, all these children will share a start_time.
-        TimeUnit.MILLISECONDS.sleep(500);
+        TimeUnit.SECONDS.sleep(1);
         for (var i = 0; i < 30; i += 1) {
             final var kidId = parent1.getFedoraId().resolve("child-" + i);
             containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), kidId);
@@ -705,6 +705,20 @@ public class ContainmentIndexImplTest {
         containmentIndex.rollbackTransaction(transaction1.getId());
         assertEquals(1, containmentIndex.getContains(null, parent1.getFedoraId()).count());
         assertEquals(first, containmentIndex.containmentLastUpdated(null, parent1.getFedoraId()));
+
+        TimeUnit.SECONDS.sleep(1);
+
+        containmentIndex.removeContainedBy(transaction1.getId(), parent1.getFedoraId(), firstBorn);
+        assertEquals(0, containmentIndex.getContains(transaction1.getId(), parent1.getFedoraId()).count());
+        assertNotEquals(first, containmentIndex.containmentLastUpdated(transaction1.getId(), parent1.getFedoraId()));
+        assertNotEquals(allTime, containmentIndex.containmentLastUpdated(transaction1.getId(), parent1.getFedoraId()));
+
+        containmentIndex.commitTransaction(transaction1.getId());
+        assertEquals(0, containmentIndex.getContains(null, parent1.getFedoraId()).count());
+        final var last = containmentIndex.containmentLastUpdated(null, parent1.getFedoraId());
+        assertNotNull(last);
+        assertNotEquals(first, last);
+        assertNotEquals(allTime, last);
     }
 
     @Test
