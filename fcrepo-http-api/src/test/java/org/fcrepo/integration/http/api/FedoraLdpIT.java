@@ -146,6 +146,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Random;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Variant;
@@ -202,7 +203,7 @@ import com.google.common.collect.Iterators;
 import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
 
-import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
+//import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 
 /**
  * @author cabeer
@@ -5014,18 +5015,37 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
+    public String genLongUrl(final String prefix, final int numChars) {
+        String ret = prefix;
+        String lastret = ret;
+        final Random rand = new Random();
+        int cnt = prefix.length();
+
+        while (cnt <= numChars) {
+            lastret = ret;
+            ret = ret + "/" + (char)(rand.nextInt(26) + 'a');
+            cnt = ret.length();
+        }
+        return lastret;
+    }
+
     @Test
-    public void testLongIdentifier() throws InvalidResourceIdentifierException, IOException {
-        String url = serverAddress;
-        for (int cnt = 0; cnt < 200; cnt++) {
-            url = url + "/" + Integer.toString(cnt);
-            final HttpPost postMethod = new HttpPost(url);
-            postMethod.setHeader("Slug", Integer.toString(cnt));
-            try (final CloseableHttpResponse response = execute(postMethod)) {
-                if ((cnt < 148) && (getStatus(response) == BAD_REQUEST.getStatusCode())) {
-                    fail("failed at try");
-                }
-            }
+    public void testLongIdentifier1() throws IOException {
+        final String url = genLongUrl(serverAddress,478);
+        final HttpPost postMethod = new HttpPost(url);
+        postMethod.setHeader("Slug", getRandomUniqueId());
+        try (final CloseableHttpResponse response = execute(postMethod)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+        }
+    }
+
+    @Test
+    public void testLongIdentifier2() throws IOException {
+        final String url = genLongUrl(serverAddress,479);
+        final HttpPost postMethod = new HttpPost(url);
+        postMethod.setHeader("Slug", getRandomUniqueId());
+        try (final CloseableHttpResponse response = execute(postMethod)) {
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response));
         }
     }
 }
