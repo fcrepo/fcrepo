@@ -3832,7 +3832,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
     public void testEmbeddedContainedResources() throws IOException {
         final String id = getRandomUniqueId();
         final String binaryId = "binary0";
@@ -3857,11 +3856,48 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final DatasetGraph graphStore = getDataset(response).asDatasetGraph();
             assertTrue("Property on child binary should be found!" + graphStore, graphStore.contains(ANY,
                     createURI(serverAddress + id + "/" + binaryId),
-                    createURI("http://purl.org/dc/elements/1.1/title"), createLiteral("this is a title")));
+                    title.asNode(), createLiteral("this is a title")));
         }
     }
 
+    @Test
+    public void testEmbeddedContainedResourcesNotToDeep() throws IOException {
+        final String id = getRandomUniqueId();
+        final String level1 = id + "/" + getRandomUniqueId();
+        final String level2 = level1 + "/" + getRandomUniqueId();
+        final String preferEmbed =
+                "return=representation; include=\"http://www.w3.org/ns/oa#PreferContainedDescriptions\"";
 
+        assertEquals(CREATED.getStatusCode(), getStatus(putObjMethod(id)));
+
+        final HttpPut putLevel1 = putObjMethod(level1);
+        putLevel1.addHeader(CONTENT_TYPE, "text/turtle");
+        putLevel1.setEntity(new StringEntity("<> <" + title + "> \"First level\"", UTF_8));
+        assertEquals(CREATED.getStatusCode(), getStatus(putLevel1));
+
+        final HttpPut putLevel2 = putObjMethod(level2);
+        putLevel2.addHeader(CONTENT_TYPE, "text/turtle");
+        putLevel2.setEntity(new StringEntity("<> <" + title + "> \"Second level\"", UTF_8));
+        assertEquals(CREATED.getStatusCode(), getStatus(putLevel2));
+
+        final HttpGet httpGet = getObjMethod(id);
+        httpGet.setHeader("Prefer", preferEmbed);
+        try (final CloseableHttpResponse response = execute(httpGet)) {
+            final Collection<String> preferenceApplied = getHeader(response, "Preference-Applied");
+            assertTrue("Preference-Applied header doesn't match", preferenceApplied.contains(preferEmbed));
+
+            final DatasetGraph graphStore = getDataset(response).asDatasetGraph();
+            assertTrue("Property on child binary should be found!" + graphStore, graphStore.contains(ANY,
+                    createURI(serverAddress + level1),
+                    title.asNode(), createLiteral("First level")));
+            assertFalse("Property from embeded resource's own child should not be found.",
+                    graphStore.contains(ANY,
+                            createURI(serverAddress + level2),
+                            title.asNode(), createLiteral("Second level")
+                    )
+            );
+        }
+    }
 
     @Test
     public void testJsonLdProfileCompacted() throws IOException {

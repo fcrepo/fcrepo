@@ -29,7 +29,6 @@ import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.http.commons.domain.MultiPrefer;
 import org.fcrepo.http.commons.domain.PreferTag;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
-import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
 import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
@@ -48,14 +47,12 @@ import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.ResourceHelper;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.rdf.LdpTriplePreferences;
 import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
-import org.fcrepo.kernel.api.services.ContainmentTriplesService;
 import org.fcrepo.kernel.api.services.CreateResourceService;
 import org.fcrepo.kernel.api.services.DeleteResourceService;
-import org.fcrepo.kernel.api.services.ManagedPropertiesService;
-import org.fcrepo.kernel.api.services.MembershipService;
-import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
+import org.fcrepo.kernel.api.services.ResourceTripleService;
 import org.fcrepo.kernel.api.services.TimeMapService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
 import org.junit.Before;
@@ -90,6 +87,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Predicates.containsPattern;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -134,6 +132,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -172,8 +171,7 @@ public class FedoraLdpTest {
             Link.fromUri(NON_RDF_SOURCE.toString()).rel("type").build().toString());
 
     private final HttpIdentifierConverter identifierConverter = new HttpIdentifierConverter(
-            getUriInfoImpl().getBaseUriBuilder().clone().path("/{path: .*}")
-    );
+            getUriInfoImpl().getBaseUriBuilder().clone().path("/{path: .*}"));
 
     private final InputStream emptyStream = IOUtils.toInputStream("", Charsets.UTF_8);
 
@@ -202,9 +200,6 @@ public class FedoraLdpTest {
 
     @Mock
     private TimeMapService mockTimeMapService;
-
-    @Mock
-    private MembershipService membershipService;
 
     @Mock
     private FedoraHttpConfiguration mockHttpConfiguration;
@@ -240,19 +235,13 @@ public class FedoraLdpTest {
     private DeleteResourceService deleteResourceService;
 
     @Mock
-    private ManagedPropertiesService managedPropertiesService;
-
-    @Mock
-    private ContainmentTriplesService containmentTriplesService;
-
-    @Mock
     private CreateResourceService createResourceService;
 
     @Mock
     private Principal principal;
 
     @Mock
-    private ReferenceService referenceService;
+    private ResourceTripleService resourceTripleService;
 
     private final List<URI> typeList = new ArrayList<>();
 
@@ -280,15 +269,12 @@ public class FedoraLdpTest {
         setField(testObj, "extContentHandlerFactory", extContentHandlerFactory);
         setField(testObj, "namespaceRegistry", rdfNamespaceRegistry);
         setField(testObj, "deleteResourceService", deleteResourceService);
-        setField(testObj, "managedPropertiesService", managedPropertiesService);
-        setField(testObj, "containmentTriplesService", containmentTriplesService);
+        setField(testObj, "resourceTripleService", resourceTripleService);
         setField(testObj, "httpRdfService", httpRdfService);
         setField(testObj, "createResourceService", createResourceService);
         setField(testObj, "replacePropertiesService", replacePropertiesService);
         setField(testObj, "updatePropertiesService", updatePropertiesService);
         setField(testObj, "resourceHelper", resourceHelper);
-        setField(testObj, "referenceService", referenceService);
-        setField(testObj, "membershipService", membershipService);
 
         when(rdfNamespaceRegistry.getNamespaces()).thenReturn(new HashMap<>());
 
@@ -336,6 +322,17 @@ public class FedoraLdpTest {
     }
 
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) {
+        final List<tripleTypes> defaultTriples = List.of(
+                tripleTypes.PROPERTIES,
+                tripleTypes.LDP_CONTAINMENT,
+                tripleTypes.SERVER_MANAGED,
+                tripleTypes.LDP_MEMBERSHIP
+        );
+        return setResource(klass, defaultTriples);
+    }
+
+    private FedoraResource setResource(final Class<? extends FedoraResource> klass,
+                                       final List<tripleTypes> tripleTypesList) {
         final FedoraResource mockResource = mock(klass);
         typeList.add(URI.create(RESOURCE.toString()));
         if (mockResource instanceof Binary) {
@@ -346,62 +343,47 @@ public class FedoraLdpTest {
         } else if (mockResource instanceof NonRdfSourceDescription) {
             when(mockResource.getOriginalResource()).thenReturn(mockBinary);
             when(mockBinary.getDescription()).thenReturn(mockResource);
-            typeList.addAll(List.of(
-                    URI.create(FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI),
-                    URI.create(RDF_SOURCE.toString())
-            ));
+            typeList.addAll(List.of(URI.create(FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI),
+                    URI.create(RDF_SOURCE.toString())));
         } else if (mockResource instanceof Container) {
-            typeList.addAll(List.of(
-                    URI.create(BASIC_CONTAINER.toString()),
-                    URI.create(RDF_SOURCE.toString())
-            ));
+            typeList.addAll(List.of(URI.create(BASIC_CONTAINER.toString()), URI.create(RDF_SOURCE.toString())));
         }
         when(mockResource.getTypes()).thenReturn(typeList);
-
-        final var testUri = createURI("test");
-        final Answer<RdfStream> answer = invocationOnMock -> new DefaultRdfStream(
-                testUri,
-                of(Triple.create(testUri,
-                        createURI("called"),
-                        createURI("PROPERTIES"))));
-
-        final Answer<RdfStream> managedAnswer = invocationOnMock -> new DefaultRdfStream(
-                testUri,
-                of(Triple.create(testUri,
-                        createURI("managed"),
-                        createURI("SERVER_MANAGED"))));
-
-        final Answer<RdfStream> containmentAnswer = invocationOnMock -> new DefaultRdfStream(
-                testUri,
-                of(Triple.create(testUri,
-                        createURI("contains"),
-                        createURI("LDP_CONTAINMENT"))));
-
-        final Answer<RdfStream> inboundAnswer = invocationOnMock -> new DefaultRdfStream(
-                testUri,
-                of(Triple.create(testUri,
-                        createURI("references"),
-                        createURI("INBOUND_REFERENCES"))));
-
-        final Answer<RdfStream> membershipAnswer = invocationOnMock -> new DefaultRdfStream(
-                testUri,
-                of(Triple.create(testUri,
-                        createURI("membership"),
-                        createURI("member"))));
-
-        when(managedPropertiesService.get(mockResource)).thenAnswer(managedAnswer);
-        when(containmentTriplesService.get(any(), eq(mockResource))).thenAnswer(containmentAnswer);
-        when(referenceService.getInboundReferences(any(), eq(mockResource))).thenAnswer(inboundAnswer);
-        when(membershipService.getMembership(any(), any())).thenAnswer(membershipAnswer);
 
         doReturn(mockResource).when(testObj).resource();
         when(mockResource.getFedoraId()).thenReturn(FedoraId.create(path));
         when(mockResource.getEtagValue()).thenReturn("");
         when(mockResource.getStateToken()).thenReturn("");
         when(mockResource.getDescribedResource()).thenReturn(mockResource);
-        when(mockResource.getTriples()).thenAnswer(answer);
-
+        setupResourceService(mockResource, tripleTypesList);
         return mockResource;
+    }
+
+    private enum tripleTypes {
+        PROPERTIES, SERVER_MANAGED, LDP_CONTAINMENT, INBOUND_REFERENCES, LDP_MEMBERSHIP
+    }
+
+    private void setupResourceService(final FedoraResource mockResource, final List<tripleTypes> response) {
+        final var testUri = createURI("test");
+        final List<Triple> triples = new ArrayList<>();
+        if (response.contains(tripleTypes.PROPERTIES)) {
+            triples.add(Triple.create(testUri, createURI("called"), createURI("PROPERTIES")));
+        }
+        if (response.contains(tripleTypes.SERVER_MANAGED)) {
+            triples.add(Triple.create(testUri, createURI("managed"), createURI("SERVER_MANAGED")));
+        }
+        if (response.contains(tripleTypes.LDP_CONTAINMENT)) {
+            triples.add(Triple.create(testUri, createURI("contains"), createURI("LDP_CONTAINMENT")));
+        }
+        if (response.contains(tripleTypes.INBOUND_REFERENCES)) {
+            triples.add(Triple.create(testUri, createURI("references"), createURI("INBOUND_REFERENCES")));
+        }
+        if (response.contains(tripleTypes.LDP_MEMBERSHIP)) {
+            triples.add(Triple.create(testUri, createURI("membership"), createURI("LDP_MEMBERSHIP")));
+        }
+        final Answer<Stream<Triple>> answer = invocationOnMock -> triples.stream();
+        when(resourceTripleService.getResourceTriples(any(Transaction.class),
+                eq(mockResource), any(LdpTriplePreferences.class), anyInt())).thenAnswer(answer);
     }
 
     @Test
@@ -633,8 +615,7 @@ public class FedoraLdpTest {
             final Model model = entity.stream.collect(toModel());
             final List<String> rdfNodes = model.listObjects().mapWith(RDFNode::toString).toList();
             assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
-                    "LDP_CONTAINMENT", "PROPERTIES", "SERVER_MANAGED")));
-            // TODO: Above list is missing LDP_MEMBERSHIP - https://jira.lyrasis.org/browse/FCREPO-3165
+                    "LDP_CONTAINMENT", "PROPERTIES", "SERVER_MANAGED", "LDP_MEMBERSHIP")));
         }
     }
 
@@ -823,7 +804,14 @@ public class FedoraLdpTest {
     @Test
     public void testGetWithObjectIncludeReferences()
             throws IOException, UnsupportedAlgorithmException {
-        setResource(Container.class);
+        final List<tripleTypes> triples = List.of(
+                tripleTypes.PROPERTIES,
+                tripleTypes.LDP_CONTAINMENT,
+                tripleTypes.SERVER_MANAGED,
+                tripleTypes.LDP_MEMBERSHIP,
+                tripleTypes.INBOUND_REFERENCES
+        );
+        setResource(Container.class, triples);
         when(mockRequest.getMethod()).thenReturn("GET");
         setField(testObj, "prefer", new MultiPrefer("return=representation; include=\"" + INBOUND_REFERENCES + "\""));
         final Response actual = testObj.getResource(null);

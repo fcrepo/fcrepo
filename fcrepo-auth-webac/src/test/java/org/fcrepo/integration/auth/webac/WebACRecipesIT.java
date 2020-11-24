@@ -36,6 +36,7 @@ import static org.fcrepo.http.api.FedoraAcl.ROOT_AUTHORIZATION_PROPERTY;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.junit.Assert.assertEquals;
@@ -2152,6 +2153,68 @@ public class WebACRecipesIT extends AbstractResourceIT {
         setAuth(getUserRequest, username);
         getUserRequest.setConfig(config);
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(getUserRequest));
+    }
+
+    @Test
+    public void testGetWithEmbededResourcesOk() throws Exception {
+        final String targetResource = "/rest/" + getRandomUniqueId();
+        final String childResource = targetResource + "/" + getRandomUniqueId();
+        final String username = "user88";
+        // Make a basic container.
+        final String targetUri = ingestObj(targetResource);
+        ingestObj(childResource);
+        final String readwriteString = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                "<#readauthz> a acl:Authorization ;\n" +
+                "   acl:agent \"" + username + "\" ;\n" +
+                "   acl:mode acl:Read, acl:Write ;\n" +
+                "   acl:default <" + targetResource + "> ;" +
+                "   acl:accessTo <" + targetResource + "> .";
+        // Allow user to read and write this object.
+        ingestAclString(targetUri, readwriteString, "fedoraAdmin");
+
+        final HttpGet getAdminChild = new HttpGet(targetUri);
+        setAuth(getAdminChild, username);
+        getAdminChild.addHeader("Prefer", "return=representation; include=\"" + EMBED_CONTAINED + "\"");
+        assertEquals(OK.getStatusCode(), getStatus(getAdminChild));
+    }
+
+    public void testGetWithEmbeddedResourceDenied() throws Exception {
+        final String targetResource = "/rest/" + getRandomUniqueId();
+        final String childResource = targetResource + "/" + getRandomUniqueId();
+        final String username = "user88";
+        // Make a basic container.
+        final String targetUri = ingestObj(targetResource);
+        final String readwriteString = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                "<#readauthz> a acl:Authorization ;\n" +
+                "   acl:agent \"" + username + "\" ;\n" +
+                "   acl:mode acl:Read, acl:Write ;\n" +
+                "   acl:accessTo <" + targetResource + "> .";
+        // Allow user to read and write this object.
+        ingestAclString(targetUri, readwriteString, "fedoraAdmin");
+
+        final String childUri = ingestObj(childResource);
+        final String noAccessString = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                "<#readauthz> a acl:Authorization ;\n" +
+                "   acl:agent \"fedoraAdmin\" ;\n" +
+                "   acl:mode acl:Read, acl:Write ;\n" +
+                "   acl:accessTo <" + childResource + "> .";
+        ingestAclString(childUri, noAccessString, "fedoraAdmin");
+
+        // Can get the target.
+        final HttpGet getTarget = new HttpGet(targetUri);
+        setAuth(getTarget, username);
+        assertEquals(OK.getStatusCode(), getStatus(getTarget));
+
+        // Can't get the child.
+        final HttpGet getChild = new HttpGet(childUri);
+        setAuth(getChild, username);
+        assertEquals(FORBIDDEN.getStatusCode(), getStatus(getChild));
+
+        // So you can't get the target with embedded resources.
+        final HttpGet getAdminChild = new HttpGet(targetUri);
+        setAuth(getAdminChild, username);
+        getAdminChild.addHeader("Prefer", "return=representation; include=\"" + EMBED_CONTAINED + "\"");
+        assertEquals(FORBIDDEN.getStatusCode(), getStatus(getAdminChild));
     }
 
     /**

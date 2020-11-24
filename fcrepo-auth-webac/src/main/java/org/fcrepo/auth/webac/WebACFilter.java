@@ -41,9 +41,13 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
+import org.fcrepo.http.commons.domain.MultiPrefer;
+import org.fcrepo.http.commons.domain.SinglePrefer;
+import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.http.commons.session.TransactionProvider;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.TransactionUtils;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
@@ -325,7 +329,13 @@ public class WebACFilter extends RequestContextFilter {
                     return false;
                 }
             } else {
-                return currentUser.isPermitted(toRead);
+                if (currentUser.isPermitted(toRead)) {
+                    if (!isAuthorizedForContainedResources(httpRequest, currentUser, resource)) {
+                        log.debug("GET denied, not authorized for an embedded resource");
+                        return false;
+                    }
+                    return true;
+                }
             }
         case "PUT":
             if (isAcl) {
@@ -706,6 +716,44 @@ public class WebACFilter extends RequestContextFilter {
     private static boolean isBinaryOrDescription(final FedoraResource resource) {
         return resource.getTypes().stream().map(URI::toString)
                 .anyMatch(t -> t.equals(NON_RDF_SOURCE.toString()) || t.equals(FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI));
+    }
+
+    private static boolean isEmbeddedRequest(final HttpServletRequest request) {
+        final var preferTags = request.getHeaders("Prefer");
+        final Set<SinglePrefer> preferTagSet = new HashSet<>();
+        if (preferTags.hasMoreElements()) {
+            preferTagSet.add(new SinglePrefer(preferTags.nextElement()));
+        }
+        final MultiPrefer multiPrefer = new MultiPrefer(preferTagSet);
+        if (multiPrefer.hasReturn()) {
+            final LdpPreferTag ldpPreferences = new LdpPreferTag(multiPrefer.getReturn());
+            return ldpPreferences.prefersEmbed();
+        }
+        return false;
+    }
+
+    private boolean isAuthorizedForContainedResources(final HttpServletRequest request, final Subject currentUser,
+                                                      final FedoraResource resource) {
+        if (!isBinaryOrDescription(resource) && isEmbeddedRequest(request)) {
+            final Transaction transaction = transaction(request);
+            final Stream<FedoraResource> children = resourceFactory.getChildren(TransactionUtils.openTxId(transaction),
+                    resource.getFedoraId());
+            final boolean failures = children.anyMatch(c -> {
+                final URI childURI = URI.create(c.getFedoraId().getFullId());
+                log.debug("Found embedded resource: {}", c);
+                // add the contained URI to the list URIs to retrieve ACLs for
+                addURIToAuthorize(request, childURI);
+                if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_READ, childURI))) {
+                    log.debug("Failed to access embedded resource: {}", childURI);
+                    return true;
+                }
+                return false;
+            });
+            // If failed permissions on at least one child, reject request.
+            return !failures;
+        }
+        // Is a binary or not an embedded resource request
+        return true;
     }
 
 }

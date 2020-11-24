@@ -28,9 +28,7 @@ import static org.mockito.Mockito.when;
 import java.util.Map;
 import javax.ws.rs.core.UriInfo;
 
-import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.junit.Before;
@@ -50,12 +48,8 @@ public class HttpTripleUtilTest {
 
     private HttpTripleUtil testObj;
 
-
     @Mock
     private UriInfo mockUriInfo;
-
-    @Mock
-    private IdentifierConverter<Resource,FedoraResource> mockSubjects;
 
     @Mock
     private UriAwareResourceModelFactory mockBean1;
@@ -79,18 +73,18 @@ public class HttpTripleUtilTest {
     public void shouldAddTriplesFromRegisteredBeans() {
         final Map<String, UriAwareResourceModelFactory> mockBeans = of("doesnt", mockBean1, "matter", mockBean2);
         when(mockContext.getBeansOfType(UriAwareResourceModelFactory.class)).thenReturn(mockBeans);
-        when(mockBean1.createModelForResource(eq(mockResource), eq(mockUriInfo), eq(mockSubjects))).thenReturn(
+        when(mockBean1.createModelForResource(eq(mockResource), eq(mockUriInfo))).thenReturn(
                 createDefaultModel());
-        when(mockBean2.createModelForResource(eq(mockResource), eq(mockUriInfo), eq(mockSubjects))).thenReturn(
+        when(mockBean2.createModelForResource(eq(mockResource), eq(mockUriInfo))).thenReturn(
                 createDefaultModel());
 
         try (final RdfStream rdfStream = new DefaultRdfStream(createURI("info:subject"))) {
 
-            assertTrue(testObj.addHttpComponentModelsForResourceToStream(rdfStream, mockResource, mockUriInfo,
-                    mockSubjects).count() >= 0);
+            assertTrue(testObj.addHttpComponentModelsForResourceToStream(rdfStream, mockResource, mockUriInfo)
+                    .count() >= 0);
 
-            verify(mockBean1).createModelForResource(eq(mockResource), eq(mockUriInfo), eq(mockSubjects));
-            verify(mockBean2).createModelForResource(eq(mockResource), eq(mockUriInfo), eq(mockSubjects));
+            verify(mockBean1).createModelForResource(eq(mockResource), eq(mockUriInfo));
+            verify(mockBean2).createModelForResource(eq(mockResource), eq(mockUriInfo));
         }
     }
 }

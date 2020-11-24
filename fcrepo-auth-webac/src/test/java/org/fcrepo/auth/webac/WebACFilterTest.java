@@ -29,6 +29,7 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
@@ -123,8 +124,6 @@ public class WebACFilterTest {
 
     private static final WebACPermission appendPermission = new WebACPermission(WEBAC_MODE_APPEND, testURI);
 
-    private static final WebACPermission appendChildPermission = new WebACPermission(WEBAC_MODE_APPEND, testChildURI);
-
     private static final WebACPermission writePermission = new WebACPermission(WEBAC_MODE_WRITE, testURI);
 
     private static final WebACPermission controlPermission = new WebACPermission(WEBAC_MODE_CONTROL, testURI);
@@ -133,6 +132,13 @@ public class WebACFilterTest {
     private static final WebACPermission appendAclPermission = new WebACPermission(WEBAC_MODE_APPEND, testAclURI);
     private static final WebACPermission writeAclPermission = new WebACPermission(WEBAC_MODE_WRITE, testAclURI);
     private static final WebACPermission controlAclPermission = new WebACPermission(WEBAC_MODE_CONTROL, testAclURI);
+
+    // We are dealing with internal IDs.
+    private static final WebACPermission readChildPermission = new WebACPermission(WEBAC_MODE_READ,
+            URI.create(testChildId.getFullId()));
+    private static final WebACPermission appendChildPermission = new WebACPermission(WEBAC_MODE_APPEND, testChildURI);
+    private static final WebACPermission writeChildPermission = new WebACPermission(WEBAC_MODE_WRITE, testChildURI);
+    private static final WebACPermission controlChildPermission = new WebACPermission(WEBAC_MODE_CONTROL, testChildURI);
 
     private MockHttpServletRequest request;
 
@@ -197,13 +203,16 @@ public class WebACFilterTest {
     private void setupContainerResource() throws Exception {
         when(mockResourceFactory.getResource(mockTransaction, testId))
                 .thenReturn(mockContainer);
+        when(mockContainer.getFedoraId()). thenReturn(testId);
         when(mockResourceFactory.getResource(mockTransaction, testChildId))
                 .thenReturn(mockChildContainer);
+        when(mockChildContainer.getFedoraId()).thenReturn(testChildId);
     }
 
     private void setupBinaryResource() throws Exception {
         when(mockResourceFactory.getResource(mockTransaction, testId))
                 .thenReturn(mockBinary);
+        when(mockBinary.getFedoraId()).thenReturn(testId);
     }
 
     private void setupAdminUser() {
@@ -305,6 +314,26 @@ public class WebACFilterTest {
         when(mockSubject.isPermitted(writePermission)).thenReturn(true);
         when(mockSubject.isPermitted(controlPermission)).thenReturn(true);
 
+    }
+
+    private void setupAuthUserReadParentAndChildren(final boolean accessToChild) {
+        // authenticated user has read to a container and it's contained resources.
+        when(mockSubject.isAuthenticated()).thenReturn(true);
+        when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
+        when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
+        when(mockSubject.isPermitted(readPermission)).thenReturn(true);
+        when(mockSubject.isPermitted(appendPermission)).thenReturn(false);
+        when(mockSubject.isPermitted(writePermission)).thenReturn(false);
+        when(mockSubject.isPermitted(controlPermission)).thenReturn(false);
+        when(mockSubject.isPermitted(readChildPermission)).thenReturn(accessToChild);
+        when(mockSubject.isPermitted(appendChildPermission)).thenReturn(false);
+        when(mockSubject.isPermitted(writeChildPermission)).thenReturn(false);
+        when(mockSubject.isPermitted(controlChildPermission)).thenReturn(false);
+        when(mockResourceFactory.getChildren(any(), eq(testId))).thenReturn(List.of(mockChildContainer).stream());
+    }
+
+    private void setupEmbeddedResourceHeader() {
+        request.addHeader("Prefer", "return=representation; include=\"" + EMBED_CONTAINED + "\"");
     }
 
     @Test
@@ -824,6 +853,26 @@ public class WebACFilterTest {
         setupAuthUserNoAclControl();
         request.setRequestURI(testAclPath);
         request.setMethod("DELETE");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    @Test
+    public void testAclReadEmbeddedOk() throws Exception {
+        setupAuthUserReadParentAndChildren(true);
+        setupEmbeddedResourceHeader();
+        request.setRequestURI(testPath);
+        request.setMethod("GET");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
+    @Test
+    public void testAclReadEmbeddedDenied() throws Exception {
+        setupAuthUserReadParentAndChildren(false);
+        setupEmbeddedResourceHeader();
+        request.setRequestURI(testPath);
+        request.setMethod("GET");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_FORBIDDEN, response.getStatus());
     }

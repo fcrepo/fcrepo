@@ -17,7 +17,9 @@
  */
 package org.fcrepo.http.api.url;
 
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_SERVICE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_TRANSACTION_SERVICE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_ROOT;
@@ -27,28 +29,27 @@ import static org.mockito.Mockito.when;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
-import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
-import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+
+import java.util.UUID;
 
 /**
  * <p>HttpApiResourcesTest class.</p>
  *
  * @author awoods
  * @author ajs6f
+ * @author whikloj
  */
-@Ignore // TODO fix  this test
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class HttpApiResourcesTest {
@@ -56,11 +57,6 @@ public class HttpApiResourcesTest {
     private HttpApiResources testObj;
 
     private UriInfo uriInfo;
-
-    private HttpResourceConverter mockSubjects;
-
-    @Mock
-    private Transaction mockTransaction;
 
     @Mock
     private FedoraResource mockResource;
@@ -71,35 +67,39 @@ public class HttpApiResourcesTest {
     @Mock
     private NonRdfSourceDescription mockDescription;
 
+    private FedoraId resourceId;
+
     @Before
     public void setUp() {
         testObj = new HttpApiResources();
         uriInfo = getUriInfoImpl();
-        mockSubjects = new HttpResourceConverter(mockTransaction, UriBuilder.fromUri("http://localhost/{path: .*}"));
+        resourceId = FedoraId.create(UUID.randomUUID().toString());
     }
 
     @Test
     public void shouldDecorateModeRootNodesWithRepositoryWideLinks() {
         when(mockResource.hasType(REPOSITORY_ROOT.getURI())).thenReturn(true);
+        when(mockResource.getFedoraId()).thenReturn(resourceId);
 
-        final Resource graphSubject = mockSubjects.reverse().convert(mockResource);
+        final Resource graphSubject = createResource(resourceId.getFullId());
 
         final Model model =
-            testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
+            testObj.createModelForResource(mockResource, uriInfo);
 
         assertTrue(model.contains(graphSubject, HAS_TRANSACTION_SERVICE));
     }
 
     @Test
     public void shouldDecorateDescriptionWithLinksToFixityChecks() {
+        final var descriptionId = resourceId.resolve(FCR_METADATA);
         when(mockDescription.getDescribedResource()).thenReturn(mockBinary);
-        when(mockDescription.getPath()).thenReturn("/some/path/to/datastream/fedora:description");
-        when(mockBinary.getPath()).thenReturn("/some/path/to/datastream");
+        when(mockDescription.getFedoraId()).thenReturn(descriptionId);
         when(mockBinary.getDescribedResource()).thenReturn(mockBinary);
-        final Resource graphSubject = mockSubjects.reverse().convert(mockBinary);
+        when(mockBinary.getFedoraId()).thenReturn(resourceId);
+        final Resource graphSubject = createResource(resourceId.getFullId());
 
         final Model model =
-            testObj.createModelForResource(mockDescription, uriInfo, mockSubjects);
+            testObj.createModelForResource(mockDescription, uriInfo);
 
         assertTrue(model.contains(graphSubject, HAS_FIXITY_SERVICE));
     }
