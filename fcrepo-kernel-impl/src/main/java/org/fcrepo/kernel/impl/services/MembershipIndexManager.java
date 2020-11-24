@@ -23,9 +23,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Queue;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -40,6 +46,7 @@ import org.slf4j.Logger;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.init.DatabasePopulatorUtils;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
@@ -77,13 +84,15 @@ public class MembershipIndexManager {
     private static final String OPERATION_PARAM = "operation";
     private static final String FORCE_PARAM = "forceFlag";
     private static final String OBJECT_ID_PARAM = "objectId";
+    private static final String LIMIT_PARAM = "limit";
+    private static final String OFFSET_PARAM = "offSet";
 
     private static final String SELECT_ALL_MEMBERSHIP = "SELECT * FROM membership";
 
     private static final String SELECT_ALL_OPERATIONS = "SELECT * FROM membership_tx_operations";
 
     private static final String SELECT_MEMBERSHIP_IN_TX =
-            "SELECT m.property, m.object_id" +
+            "SELECT property, object_id" +
             " FROM membership m" +
             " WHERE subject_id = :subjectId" +
                 " AND end_time = :noEndTime" +
@@ -101,7 +110,9 @@ public class MembershipIndexManager {
             " WHERE subject_id = :subjectId" +
                 " AND tx_id = :txId" +
                 " AND end_time = :noEndTime" +
-                " AND operation = :addOp";
+                " AND operation = :addOp" +
+            " ORDER BY property, object_id" +
+            " LIMIT :limit OFFSET :offSet";
 
     private static final String SELECT_MEMBERSHIP_MEMENTO_IN_TX =
             "SELECT property, object_id" +
@@ -126,7 +137,9 @@ public class MembershipIndexManager {
                 " AND tx_id = :txId" +
                 " AND start_time <= :mementoTime" +
                 " AND end_time > :mementoTime" +
-                " AND operation = :addOp";
+                " AND operation = :addOp" +
+            " ORDER BY property, object_id" +
+            " LIMIT :limit OFFSET :offSet";
 
     private static final String INSERT_MEMBERSHIP_IN_TX =
             "INSERT INTO membership_tx_operations" +
@@ -307,6 +320,8 @@ public class MembershipIndexManager {
             DbPlatform.POSTGRESQL, "sql/default-membership.sql",
             DbPlatform.MARIADB, "sql/mariadb-membership.sql"
     );
+
+    private static final int MEMBERSHIP_LIMIT = 50000;
 
     @PostConstruct
     public void setUp() {
@@ -490,31 +505,24 @@ public class MembershipIndexManager {
 
         final RowMapper<Triple> membershipMapper = (rs, rowNum) ->
                 Triple.create(subjectNode,
-                              NodeFactory.createURI(rs.getString("property")),
-                              NodeFactory.createURI(rs.getString("object_id")));
+                        NodeFactory.createURI(rs.getString("property")),
+                        NodeFactory.createURI(rs.getString("object_id")));
 
-        List<Triple> membership = null;
+        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+        parameterSource.addValue(TX_ID_PARAM, txId);
+
+        final String query;
         if (subjectId.isMemento()) {
-            final Map<String, Object> parameterSource = Map.of(
-                    SUBJECT_ID_PARAM, subjectId.getBaseId(),
-                    MEMENTO_TIME_PARAM, formatInstant(subjectId.getMementoInstant()),
-                    TX_ID_PARAM, txId,
-                    ADD_OP_PARAM, ADD_OPERATION,
-                    DELETE_OP_PARAM, DELETE_OPERATION);
-
-            membership = jdbcTemplate.query(SELECT_MEMBERSHIP_MEMENTO_IN_TX, parameterSource, membershipMapper);
+            parameterSource.addValue(SUBJECT_ID_PARAM, subjectId.getBaseId());
+            parameterSource.addValue(MEMENTO_TIME_PARAM, formatInstant(subjectId.getMementoInstant()));
+            query = SELECT_MEMBERSHIP_MEMENTO_IN_TX;
         } else {
-            final Map<String, Object> parameterSource = Map.of(
-                    SUBJECT_ID_PARAM, subjectId.getFullId(),
-                    NO_END_TIME_PARAM, NO_END_TIMESTAMP,
-                    TX_ID_PARAM, txId,
-                    ADD_OP_PARAM, ADD_OPERATION,
-                    DELETE_OP_PARAM, DELETE_OPERATION);
-
-            membership = jdbcTemplate.query(SELECT_MEMBERSHIP_IN_TX, parameterSource, membershipMapper);
+            parameterSource.addValue(SUBJECT_ID_PARAM, subjectId.getFullId());
+            parameterSource.addValue(NO_END_TIME_PARAM, NO_END_TIMESTAMP);
+            query = SELECT_MEMBERSHIP_IN_TX;
         }
 
-        return membership.stream();
+        return StreamSupport.stream(new MembershipIterator(query, parameterSource, membershipMapper), false);
     }
 
     /**
@@ -611,5 +619,46 @@ public class MembershipIndexManager {
      */
     public DataSource getDataSource() {
         return dataSource;
+    }
+
+    /**
+     * Private class to back a stream with a paged DB query.
+     *
+     * If this needs to be run in parallel we will have to override trySplit() and determine a good method to split on.
+     */
+    private class MembershipIterator extends Spliterators.AbstractSpliterator<Triple> {
+        final Queue<Triple> children = new ConcurrentLinkedQueue<>();
+        int numOffsets = 0;
+        final String queryToUse;
+        final MapSqlParameterSource parameterSource;
+        final RowMapper<Triple> rowMapper;
+
+        public MembershipIterator(final String query, final MapSqlParameterSource parameters,
+                                  final RowMapper<Triple> mapper) {
+            super(Long.MAX_VALUE, Spliterator.ORDERED);
+            queryToUse = query;
+            parameterSource = parameters;
+            rowMapper = mapper;
+            parameterSource.addValue(ADD_OP_PARAM, ADD_OPERATION);
+            parameterSource.addValue(DELETE_OP_PARAM, DELETE_OPERATION);
+            parameterSource.addValue(LIMIT_PARAM, MEMBERSHIP_LIMIT);
+        }
+
+        @Override
+        public boolean tryAdvance(final Consumer<? super Triple> action) {
+            try {
+                action.accept(children.remove());
+            } catch (final NoSuchElementException e) {
+                parameterSource.addValue(OFFSET_PARAM, numOffsets * MEMBERSHIP_LIMIT);
+                numOffsets += 1;
+                children.addAll(jdbcTemplate.query(queryToUse, parameterSource, rowMapper));
+                if (children.size() == 0) {
+                    // no more elements.
+                    return false;
+                }
+                action.accept(children.remove());
+            }
+            return true;
+        }
     }
 }
