@@ -3,10 +3,11 @@
 
 -- Holds the ID and its parent.
 CREATE TABLE IF NOT EXISTS containment (
-    fedora_id  varchar(503) NOT NULL,
+    fedora_id varchar(503) NOT NULL,
     parent varchar(503) NOT NULL,
     start_time timestamp NOT NULL,
-    end_time timestamp NULL
+    end_time timestamp NULL,
+    UNIQUE KEY (fedora_id)
 );
 
 -- Create an index to speed searches for children of a parent.
