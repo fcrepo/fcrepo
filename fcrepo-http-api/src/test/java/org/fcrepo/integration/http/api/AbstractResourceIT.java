@@ -210,7 +210,12 @@ public abstract class AbstractResourceIT {
 
     protected static HttpPut putDSMethod(final String pid, final String ds, final String content)
             throws UnsupportedEncodingException {
-        final HttpPut put = new HttpPut(serverAddress + pid + "/" + ds);
+        return putDSMethod(pid + "/" + ds, content);
+    }
+
+    protected static HttpPut putDSMethod(final String id, final String content) throws
+            UnsupportedEncodingException {
+        final HttpPut put = new HttpPut(serverAddress + id);
         put.setEntity(new StringEntity(content == null ? "" : content));
         put.setHeader(CONTENT_TYPE, TEXT_PLAIN);
         put.setHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
@@ -534,9 +539,19 @@ public abstract class AbstractResourceIT {
         }
     }
 
-    protected void createDatastream(final String pid, final String dsid, final String content) throws IOException {
+    protected String createDatastream(final String id, final String content) throws IOException {
+        try (final var response = execute(putDSMethod(id, content))) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            return getLocation(response);
+        }
+    }
+
+    protected String createDatastream(final String pid, final String dsid, final String content) throws IOException {
         logger.trace("Attempting to create datastream for object: {} at datastream ID: {}", pid, dsid);
-        assertEquals(CREATED.getStatusCode(), getStatus(putDSMethod(pid, dsid, content)));
+        try (final var response = execute(putDSMethod(pid, dsid, content))) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            return getLocation(response);
+        }
     }
 
     protected CloseableHttpResponse setProperty(final String pid, final String propertyUri, final String value)
