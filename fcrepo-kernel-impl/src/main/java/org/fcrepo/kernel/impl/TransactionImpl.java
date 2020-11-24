@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl;
 
+import org.fcrepo.common.lang.CheckedRunnable;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -25,13 +26,12 @@ import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.persistence.api.PersistentStorageSession;
-import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.concurrent.Callable;
 
 import static java.time.Duration.ofMillis;
 import static java.time.Duration.ofMinutes;
@@ -85,13 +85,16 @@ public class TransactionImpl implements Transaction {
         }
         try {
             log.debug("Committing transaction {}", id);
-            this.getPersistentSession().commit();
-            this.getContainmentIndex().commitTransaction(id);
-            this.getReferenceService().commitTransaction(id);
-            this.getMembershipService().commitTransaction(id);
-            this.getEventAccumulator().emitEvents(id, baseUri, userAgent);
+            // Cannot use transactional annotations because this class is not managed by spring
+            getTransactionTemplate().executeWithoutResult(status -> {
+                this.getPersistentSession().commit();
+                this.getContainmentIndex().commitTransaction(id);
+                this.getReferenceService().commitTransaction(id);
+                this.getMembershipService().commitTransaction(id);
+                this.getEventAccumulator().emitEvents(id, baseUri, userAgent);
+            });
             this.committed = true;
-        } catch (final PersistentStorageException ex) {
+        } catch (final Exception ex) {
             log.error("Failed to commit transaction: {}", id, ex);
 
             // Rollback on commit failure
@@ -116,23 +119,18 @@ public class TransactionImpl implements Transaction {
 
         execQuietly("Failed to rollback storage in transaction " + id, () -> {
             this.getPersistentSession().rollback();
-            return null;
         });
         execQuietly("Failed to rollback index in transaction " + id, () -> {
             this.getContainmentIndex().rollbackTransaction(id);
-            return null;
         });
         execQuietly("Failed to rollback reference index in transaction " + id, () -> {
             this.getReferenceService().rollbackTransaction(id);
-            return null;
         });
         execQuietly("Failed to rollback membership index in transaction " + id, () -> {
             this.getMembershipService().rollbackTransaction(id);
-            return null;
         });
         execQuietly("Failed to rollback events in transaction " + id, () -> {
             this.getEventAccumulator().clearEvents(id);
-            return null;
         });
     }
 
@@ -246,9 +244,9 @@ public class TransactionImpl implements Transaction {
      * @param failureMessage what to print if the closure fails
      * @param callable closure to execute
      */
-    private void execQuietly(final String failureMessage, final Callable<Void> callable) {
+    private void execQuietly(final String failureMessage, final CheckedRunnable callable) {
         try {
-            callable.call();
+            callable.run();
         } catch (final Exception e) {
             log.error(failureMessage, e);
         }
@@ -268,6 +266,10 @@ public class TransactionImpl implements Transaction {
 
     private MembershipService getMembershipService() {
         return this.txManager.getMembershipService();
+    }
+
+    private TransactionTemplate getTransactionTemplate() {
+        return this.txManager.getTransactionTemplate();
     }
 
 }

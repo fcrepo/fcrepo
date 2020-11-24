@@ -161,6 +161,10 @@ public abstract class AbstractResourceIT {
         return containerWrapper.getSpringAppContext().getBean(type);
     }
 
+    protected  <T> T getBean(final String name, final Class<T> type) {
+        return containerWrapper.getSpringAppContext().getBean(name, type);
+    }
+
     protected static final CloseableHttpClient client = createClient();
 
     protected static CloseableHttpClient createClient() {

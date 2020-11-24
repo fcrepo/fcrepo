@@ -320,7 +320,6 @@ public class ReferenceServiceImpl implements ReferenceService {
     }
 
     @Override
-    @Transactional
     public void rollbackTransaction(final String txId) {
         try {
             final Map<String, String> parameterSource = Map.of("transactionId", txId);

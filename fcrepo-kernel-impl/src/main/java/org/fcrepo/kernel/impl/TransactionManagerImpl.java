@@ -32,7 +32,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,6 +54,9 @@ public class TransactionManagerImpl implements TransactionManager {
 
     private final Map<String, Transaction> transactions;
 
+    @Inject
+    private PlatformTransactionManager platformTransactionManager;
+
     @Autowired
     @Qualifier("containmentIndex")
     private ContainmentIndex containmentIndex;
@@ -67,6 +73,13 @@ public class TransactionManagerImpl implements TransactionManager {
 
     @Inject
     private MembershipService membershipService;
+
+    private TransactionTemplate transactionTemplate;
+
+    @PostConstruct
+    public void postConstruct() {
+        transactionTemplate = new TransactionTemplate(platformTransactionManager);
+    }
 
     TransactionManagerImpl() {
         transactions = new ConcurrentHashMap<>();
@@ -160,5 +173,9 @@ public class TransactionManagerImpl implements TransactionManager {
 
     protected MembershipService getMembershipService() {
         return membershipService;
+    }
+
+    protected TransactionTemplate getTransactionTemplate() {
+        return transactionTemplate;
     }
 }

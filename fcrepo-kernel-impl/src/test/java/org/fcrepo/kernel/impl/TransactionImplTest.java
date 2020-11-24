@@ -17,17 +17,6 @@
  */
 package org.fcrepo.kernel.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.time.Duration;
-import java.time.Instant;
-
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
@@ -42,6 +31,21 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.function.Consumer;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * <p>
@@ -76,6 +80,9 @@ public class TransactionImplTest {
     @Mock
     private MembershipService membershipService;
 
+    @Mock
+    private TransactionTemplate transactionTemplate;
+
     @Before
     public void setUp() {
         when(pssManager.getSession("123")).thenReturn(psSession);
@@ -84,6 +91,11 @@ public class TransactionImplTest {
         when(txManager.getEventAccumulator()).thenReturn(eventAccumulator);
         when(txManager.getReferenceService()).thenReturn(referenceService);
         when(txManager.getMembershipService()).thenReturn(membershipService);
+        when(txManager.getTransactionTemplate()).thenReturn(transactionTemplate);
+        doAnswer(invocationOnMock -> {
+            ((Consumer)invocationOnMock.getArgument(0)).accept(null);
+            return null;
+        }).when(transactionTemplate).executeWithoutResult(any());
         testTx = new TransactionImpl("123", txManager);
     }
 
@@ -225,7 +237,7 @@ public class TransactionImplTest {
         try {
             testTx.updateExpiry(Duration.ofSeconds(1));
         } finally {
-            assertTrue(testTx.getExpires().equals(previousExpiry));
+            assertEquals(testTx.getExpires(), previousExpiry);
         }
     }
 
@@ -243,7 +255,7 @@ public class TransactionImplTest {
         try {
             testTx.refresh();
         } finally {
-            assertTrue(testTx.getExpires().equals(previousExpiry));
+            assertEquals(testTx.getExpires(), previousExpiry);
         }
     }
 

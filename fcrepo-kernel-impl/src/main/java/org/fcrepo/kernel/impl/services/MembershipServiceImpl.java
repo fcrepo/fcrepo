@@ -17,22 +17,6 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
-import static org.fcrepo.kernel.api.RdfCollectors.toModel;
-
-import org.slf4j.Logger;
-import org.springframework.stereotype.Component;
-
-import javax.inject.Inject;
-import javax.transaction.Transactional;
-
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
@@ -50,6 +34,19 @@ import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.Tombstone;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.MembershipService;
+import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
+import javax.transaction.Transactional;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Implementation of a service which updates and persists membership properties for resources
@@ -267,6 +264,7 @@ public class MembershipServiceImpl implements MembershipService {
         return new DefaultRdfStream(subject, membershipStream);
     }
 
+    @Transactional
     @Override
     public void commitTransaction(final String txId) {
         indexManager.commitTransaction(txId);

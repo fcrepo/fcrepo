@@ -32,6 +32,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -72,6 +74,12 @@ public class TransactionManagerImplTest {
     @Mock
     private MembershipService membershipService;
 
+    @Mock
+    private PlatformTransactionManager platformTransactionManager;
+
+    @Mock
+    private TransactionTemplate transactionTemplate;
+
     @Before
     public void setUp() {
         testTxManager = new TransactionManagerImpl();
@@ -81,6 +89,8 @@ public class TransactionManagerImplTest {
         setField(testTxManager, "eventAccumulator", eventAccumulator);
         setField(testTxManager, "referenceService", referenceService);
         setField(testTxManager, "membershipService", membershipService);
+        setField(testTxManager, "platformTransactionManager", platformTransactionManager);
+        setField(testTxManager, "transactionTemplate", transactionTemplate);
         testTx = (TransactionImpl) testTxManager.create();
     }
 
