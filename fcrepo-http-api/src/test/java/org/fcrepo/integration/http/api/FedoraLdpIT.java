@@ -202,6 +202,8 @@ import com.google.common.collect.Iterators;
 import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
 
+import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
+
 /**
  * @author cabeer
  * @author ajs6f
@@ -5009,6 +5011,21 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue(graph.contains(ANY, rootNode, type.asNode(), CONTAINER.asNode()));
             assertTrue(graph.contains(ANY, rootNode, type.asNode(), FEDORA_CONTAINER.asNode()));
             assertTrue(graph.contains(ANY, rootNode, type.asNode(), BASIC_CONTAINER.asNode()));
+        }
+    }
+
+    @Test
+    public void testLongIdentifier() throws InvalidResourceIdentifierException, IOException {
+        String url = serverAddress;
+        for (int cnt = 0; cnt < 200; cnt++) {
+            url = url + "/" + Integer.toString(cnt);
+            final HttpPost postMethod = new HttpPost(url);
+            postMethod.setHeader("Slug", Integer.toString(cnt));
+            try (final CloseableHttpResponse response = execute(postMethod)) {
+                if ((cnt < 148) && (getStatus(response) == BAD_REQUEST.getStatusCode())) {
+                    fail("failed at try");
+                }
+            }
         }
     }
 }

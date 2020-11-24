@@ -269,7 +269,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
         parameterSource.addValue("operation", operation);
         try {
             jdbcTemplate.update(UPSERT_MAPPING_TX_MAP.get(dbPlatform), parameterSource);
-        } catch (DataIntegrityViolationException e) {
+        } catch (final DataIntegrityViolationException e) {
             throw new InvalidResourceIdentifierException("Database error - Fedora ID path too long",e);
         }
     }
