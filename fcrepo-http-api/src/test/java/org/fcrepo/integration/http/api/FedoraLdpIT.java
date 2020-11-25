@@ -203,7 +203,6 @@ import com.google.common.collect.Iterators;
 import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
 
-//import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 
 /**
  * @author cabeer
@@ -5015,23 +5014,21 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
-    public String genLongUrl(final String prefix, final int numChars) {
+    private static String genLongUrl(final String prefix, final int numChars) {
         String ret = prefix;
-        String lastret = ret;
         final Random rand = new Random();
         int cnt = prefix.length();
 
         while (cnt <= numChars) {
-            lastret = ret;
             ret = ret + "/" + (char)(rand.nextInt(26) + 'a');
             cnt = ret.length();
         }
-        return lastret;
+        return ret;
     }
 
     @Test
     public void testLongIdentifier1() throws IOException {
-        final String url = genLongUrl(serverAddress,478);
+        final String url = genLongUrl(serverAddress,476);
         final HttpPost postMethod = new HttpPost(url);
         postMethod.setHeader("Slug", getRandomUniqueId());
         try (final CloseableHttpResponse response = execute(postMethod)) {
@@ -5041,7 +5038,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @Test
     public void testLongIdentifier2() throws IOException {
-        final String url = genLongUrl(serverAddress,479);
+        final String url = genLongUrl(serverAddress,477);
         final HttpPost postMethod = new HttpPost(url);
         postMethod.setHeader("Slug", getRandomUniqueId());
         try (final CloseableHttpResponse response = execute(postMethod)) {
