@@ -408,7 +408,6 @@ public class OcflPersistentStorageSessionTest {
         when(mockSessionFactory.newSession(eq(OCFL_RESOURCE_ID2))).thenReturn(objectSession2);
         doThrow(RuntimeException.class).when(objectSession2).commit();
         doThrow(IllegalStateException.class).when(objectSession1).rollback();
-        doThrow(IllegalStateException.class).when(objectSession2).rollback();
 
         final PersistentStorageSession session1 = createSession(index, mockSessionFactory);
         try {
