@@ -394,7 +394,7 @@ public class OcflPersistentStorageSessionTest {
      * This test covers the expected behavior when two OCFL Object Sessions are modified and one of the commits to
      * the mutable head fails.
      */
-    @Test(expected = PersistentStorageException.class)
+    @Test
     public void rollbackOnSessionWithCommitsToMutableHeadShouldFail() throws Exception {
         mockNoIndex(RESOURCE_ID);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
@@ -422,9 +422,7 @@ public class OcflPersistentStorageSessionTest {
             session1.commit();
             fail("session1.commit(...) invocation should fail.");
         } catch (final PersistentStorageException ex) {
-            //attempted rollback should also fail:
             session1.rollback();
-            fail("session1.rollback(...) invocation should fail.");
         }
     }
 
@@ -477,8 +475,8 @@ public class OcflPersistentStorageSessionTest {
         verify(objectSession1).commit();
     }
 
-    @Test(expected = PersistentStorageException.class)
-    public void rollbackFailsWhenAlreadyCommitted() throws Exception {
+    @Test
+    public void rollbackDoesNotFailWhenAlreadyCommitted() throws Exception {
         mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
 
@@ -492,7 +490,6 @@ public class OcflPersistentStorageSessionTest {
         }
 
         session1.rollback();
-        fail("session1.rollback() invocation should have failed.");
     }
 
     @Test(expected = PersistentStorageException.class)
