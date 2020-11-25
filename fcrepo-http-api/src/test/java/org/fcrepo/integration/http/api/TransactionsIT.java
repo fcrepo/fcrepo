@@ -17,6 +17,30 @@
  */
 package org.fcrepo.integration.http.api;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.Header;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.springframework.test.context.TestExecutionListeners;
+
+import javax.ws.rs.core.Response.Status;
+import java.io.IOException;
+import java.time.format.DateTimeParseException;
+import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import static java.lang.Math.min;
 import static java.lang.Thread.sleep;
 import static java.time.Duration.ofMinutes;
@@ -47,28 +71,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
-import java.io.IOException;
-import java.time.format.DateTimeParseException;
-import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.ws.rs.core.Response.Status;
-
-import org.apache.http.Header;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpHead;
-import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.StringEntity;
-import org.fcrepo.http.commons.test.util.CloseableDataset;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.springframework.test.context.TestExecutionListeners;
 
 /**
  * <p>TransactionsIT class.</p>
@@ -192,6 +194,47 @@ public class TransactionsIT extends AbstractResourceIT {
 
         assertEquals("Expected to not find our object in transaction after rollback",
                 CONFLICT.getStatusCode(), getStatus(addTxTo(new HttpGet(newLocation), txLocation)));
+    }
+
+    @Test
+    public void testRollbackShouldNotLeaveDbInPartiallyUpdatedState() throws IOException {
+        /* create a tx */
+        final String txLocation = createTransaction();
+
+        /* create a new object inside the tx */
+        final String newLocation;
+        final HttpPost postNew = new HttpPost(serverAddress);
+        postNew.addHeader(ATOMIC_ID_HEADER, txLocation);
+        try (final CloseableHttpResponse resp = execute(postNew)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(resp));
+            newLocation = getLocation(resp);
+        }
+
+        final var resourceId = StringUtils.substringAfterLast(newLocation, "/");
+
+        /* fetch the created tx from the endpoint */
+        try (final CloseableDataset dataset = getDataset(addTxTo(new HttpGet(newLocation), txLocation))) {
+            assertTrue(dataset.asDatasetGraph().contains(ANY, createURI(newLocation), ANY, ANY));
+        }
+        /* fetch the created tx from the endpoint */
+        assertEquals("Expected to not find our object within the scope of the transaction",
+                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(newLocation)));
+
+        // Add a conflicting record to the database
+        final var containmentIndex = getBean("containmentIndex", ContainmentIndex.class);
+        containmentIndex.addContainedBy("bogus", FedoraId.getRepositoryRootId(), FedoraId.create(resourceId));
+        containmentIndex.commitTransaction("bogus");
+
+        // Commit transaction -- should fail
+        assertEquals(CONFLICT.getStatusCode(), getStatus(new HttpPut(txLocation)));
+
+        assertEquals("Rolled back transaction should be gone",
+                GONE.getStatusCode(), getStatus(new HttpGet(txLocation)));
+
+        assertEquals("Expected to not find our object after rollback",
+                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(newLocation)));
+
+        // TODO FCREPO-3130: The OCFL object will still be left on disk
     }
 
     @Test
