@@ -27,9 +27,11 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ResourceTypeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.Binary;
+import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.kernel.api.models.WebacAcl;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
@@ -201,11 +203,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
         resc.setLastModifiedBy(headers.getLastModifiedBy());
         resc.setLastModifiedDate(headers.getLastModifiedDate());
         resc.setParentId(headers.getParent());
-        final Instant containmentUpdated = containmentIndex.containmentLastUpdated(transactionId, resc.getFedoraId());
-        final String newState = (containmentUpdated == null ? headers.getStateToken() :
-                DigestUtils.md5Hex(headers.getStateToken() + formatUpdatedInstant(containmentUpdated))
-                        .toUpperCase());
-        resc.setEtag(newState);
+        resc.setEtag(getStateToken(transactionId, headers, resc));
         resc.setStateToken(headers.getStateToken());
         resc.setIsArchivalGroup(headers.isArchivalGroup());
         resc.setInteractionModel(headers.getInteractionModel());
@@ -253,6 +251,26 @@ public class ResourceFactoryImpl implements ResourceFactory {
                     throw new PathNotFoundRuntimeException(e.getMessage(), e);
                 }
             });
+    }
+
+    /**
+     * Get the state token from the headers or altered by containment.
+     * @param transactionId the transaction id.
+     * @param headers The resource headers
+     * @param resource The resource
+     * @return The state token.
+     */
+    private String getStateToken(final String transactionId, final ResourceHeaders headers,
+                                 final FedoraResource resource) {
+        if (resource instanceof Container && ! (resource instanceof WebacAcl)) {
+            final Instant containmentUpdated = containmentIndex.containmentLastUpdated(transactionId,
+                    resource.getFedoraId());
+             if (containmentUpdated != null) {
+                 return DigestUtils.md5Hex(headers.getStateToken() + formatUpdatedInstant(containmentUpdated))
+                         .toUpperCase();
+             }
+        }
+        return headers.getStateToken();
     }
 
     private String formatUpdatedInstant(final Instant update) {
