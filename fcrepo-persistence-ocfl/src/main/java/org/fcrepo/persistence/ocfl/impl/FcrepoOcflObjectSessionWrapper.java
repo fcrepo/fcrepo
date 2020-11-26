@@ -178,6 +178,11 @@ public class FcrepoOcflObjectSessionWrapper implements OcflObjectSession {
     }
 
     @Override
+    public void rollback() {
+        exec(inner::rollback);
+    }
+
+    @Override
     public void abort() {
         exec(inner::abort);
     }

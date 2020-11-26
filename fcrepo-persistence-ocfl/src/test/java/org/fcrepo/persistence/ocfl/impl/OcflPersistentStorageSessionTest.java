@@ -407,6 +407,7 @@ public class OcflPersistentStorageSessionTest {
         //mock failure on commit for the second object session
         when(mockSessionFactory.newSession(eq(OCFL_RESOURCE_ID2))).thenReturn(objectSession2);
         doThrow(RuntimeException.class).when(objectSession2).commit();
+        doThrow(IllegalStateException.class).when(objectSession1).rollback();
 
         final PersistentStorageSession session1 = createSession(index, mockSessionFactory);
         try {
@@ -422,7 +423,6 @@ public class OcflPersistentStorageSessionTest {
             session1.commit();
             fail("session1.commit(...) invocation should fail.");
         } catch (final PersistentStorageException ex) {
-            //attempted rollback should also fail:
             session1.rollback();
             fail("session1.rollback(...) invocation should fail.");
         }
@@ -477,8 +477,8 @@ public class OcflPersistentStorageSessionTest {
         verify(objectSession1).commit();
     }
 
-    @Test(expected = PersistentStorageException.class)
-    public void rollbackFailsWhenAlreadyCommitted() throws Exception {
+    @Test
+    public void rollbackDoesNotFailWhenAlreadyCommitted() throws Exception {
         mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
 
@@ -492,7 +492,6 @@ public class OcflPersistentStorageSessionTest {
         }
 
         session1.rollback();
-        fail("session1.rollback() invocation should have failed.");
     }
 
     @Test(expected = PersistentStorageException.class)

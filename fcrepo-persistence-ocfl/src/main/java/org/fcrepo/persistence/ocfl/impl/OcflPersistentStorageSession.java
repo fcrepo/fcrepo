@@ -90,14 +90,21 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
     private final OcflObjectSessionFactory objectSessionFactory;
 
     private enum State {
-        COMMIT_NOT_STARTED,
-        COMMIT_STARTED,
-        PREPARE_FAILED,
-        COMMITTED,
-        COMMIT_FAILED,
-        ROLLING_BACK,
-        ROLLED_BACK,
-        ROLLBACK_FAILED;
+        COMMIT_NOT_STARTED(true),
+        COMMIT_STARTED(false),
+        PREPARE_FAILED(true),
+        COMMITTED(true),
+        COMMIT_FAILED(true),
+        ROLLING_BACK(false),
+        ROLLED_BACK(false),
+        ROLLBACK_FAILED(false);
+
+        final boolean rollbackAllowed;
+
+        State(final boolean rollbackAllowed) {
+            this.rollbackAllowed = rollbackAllowed;
+        }
+
     }
 
     /**
@@ -311,8 +318,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
             return;
         }
 
-        if (!(state.equals(State.COMMIT_FAILED) || state.equals(State.PREPARE_FAILED) ||
-                state.equals(State.COMMIT_NOT_STARTED))) {
+        if (!state.rollbackAllowed) {
             throw new PersistentStorageException("This session cannot be rolled back in this state: " + state);
         }
 
@@ -393,9 +399,12 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
             final var id = entry.getKey();
             final var session = entry.getValue();
 
-            rollbackFailures.add(String.format("Cannot rollback object <%s> in session <%s>." +
-                            " Rollback to previous version not yet implemented.", id, session.sessionId()));
-            // TODO add rollback support
+            try {
+                session.rollback();
+            } catch (Exception e) {
+                rollbackFailures.add(String.format("Failed to rollback object <%s> in session <%s>: %s",
+                        id, session.sessionId(), e.getMessage()));
+            }
         }
 
         try {

@@ -19,6 +19,7 @@ package org.fcrepo.integration.http.api;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -27,9 +28,14 @@ import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.storage.ocfl.CommitType;
+import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.test.context.TestExecutionListeners;
@@ -43,9 +49,10 @@ import java.util.regex.Pattern;
 
 import static java.lang.Math.min;
 import static java.lang.Thread.sleep;
-import static java.time.Duration.ofMinutes;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.LINK;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.GONE;
@@ -84,11 +91,23 @@ public class TransactionsIT extends AbstractResourceIT {
 
     public static final long REAP_INTERVAL = 1000;
 
-    public static final String DEFAULT_TIMEOUT = Long.toString(ofMinutes(3).toMillis());
-
     public static final Pattern TX_ID_PATTERN = Pattern.compile(".+/" + TX_PREFIX + "([0-9a-f\\-]+)$");
 
     private static final String ARCHIVAL_GROUP_TYPE = "<" + ARCHIVAL_GROUP + ">;rel=\"type\"";
+
+    private DefaultOcflObjectSessionFactory objectSessionFactory;
+    private ContainmentIndex containmentIndex;
+
+    @Before
+    public void setup() {
+        objectSessionFactory = getBean(DefaultOcflObjectSessionFactory.class);
+        containmentIndex = getBean("containmentIndex", ContainmentIndex.class);
+    }
+
+    @After
+    public void after() {
+        objectSessionFactory.setDefaultCommitType(CommitType.NEW_VERSION);
+    }
 
     @Test
     public void testRootHasTxEndpoint() throws Exception {
@@ -220,10 +239,7 @@ public class TransactionsIT extends AbstractResourceIT {
         assertEquals("Expected to not find our object within the scope of the transaction",
                 NOT_FOUND.getStatusCode(), getStatus(new HttpGet(newLocation)));
 
-        // Add a conflicting record to the database
-        final var containmentIndex = getBean("containmentIndex", ContainmentIndex.class);
-        containmentIndex.addContainedBy("bogus", FedoraId.getRepositoryRootId(), FedoraId.create(resourceId));
-        containmentIndex.commitTransaction("bogus");
+        addConflictingContainmentRecord(resourceId);
 
         // Commit transaction -- should fail
         assertEquals(CONFLICT.getStatusCode(), getStatus(new HttpPut(txLocation)));
@@ -234,7 +250,82 @@ public class TransactionsIT extends AbstractResourceIT {
         assertEquals("Expected to not find our object after rollback",
                 NOT_FOUND.getStatusCode(), getStatus(new HttpGet(newLocation)));
 
-        // TODO FCREPO-3130: The OCFL object will still be left on disk
+        assertObjectDoesNotExistOnDisk(FedoraId.create(resourceId));
+    }
+
+    @Test
+    public void rollbackShouldRollbackAllObjectsModifiedInTransaction() throws IOException {
+        final String txLocation1 = createTransaction();
+
+        final var bin1 = UUID.randomUUID().toString();
+        final var bin2 = UUID.randomUUID().toString();
+
+        putBinary(bin1, txLocation1, "test 1");
+
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation1)));
+
+        assertBinaryContent("test 1", bin1, null);
+
+        final String txLocation2 = createTransaction();
+
+        putBinary(bin1, txLocation2, "test 1 -- updated!");
+        putBinary(bin2, txLocation2, "test 2 -- I'm new!");
+
+        assertBinaryContent("test 1 -- updated!", bin1, txLocation2);
+        assertBinaryContent("test 2 -- I'm new!", bin2, txLocation2);
+
+        addConflictingContainmentRecord(bin2);
+
+        // Commit transaction -- should fail
+        assertEquals(CONFLICT.getStatusCode(), getStatus(new HttpPut(txLocation2)));
+
+        assertEquals("Rolled back transaction should be gone",
+                GONE.getStatusCode(), getStatus(new HttpGet(txLocation2)));
+
+        assertBinaryContent("test 1", bin1, null);
+        assertEquals("Expected to not find our object after rollback",
+                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(serverAddress + bin2)));
+        assertObjectDoesNotExistOnDisk(FedoraId.create(bin2));
+    }
+
+    @Test
+    public void rollbackFailsWhenAutoVersioningNotUsed() throws IOException {
+        objectSessionFactory.setDefaultCommitType(CommitType.UNVERSIONED);
+
+        final String txLocation1 = createTransaction();
+
+        final var bin1 = UUID.randomUUID().toString();
+        final var bin2 = UUID.randomUUID().toString();
+
+        putBinary(bin1, txLocation1, "test 1");
+
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation1)));
+
+        assertBinaryContent("test 1", bin1, null);
+
+        final String txLocation2 = createTransaction();
+
+        putBinary(bin1, txLocation2, "test 1 -- updated!");
+        putBinary(bin2, txLocation2, "test 2 -- I'm new!");
+
+        assertBinaryContent("test 1 -- updated!", bin1, txLocation2);
+        assertBinaryContent("test 2 -- I'm new!", bin2, txLocation2);
+
+        addConflictingContainmentRecord(bin2);
+
+        // Commit transaction -- should fail
+        assertEquals(CONFLICT.getStatusCode(), getStatus(new HttpPut(txLocation2)));
+
+        assertEquals("Rolled back transaction should be gone",
+                GONE.getStatusCode(), getStatus(new HttpGet(txLocation2)));
+
+        // bin1 was not rolled back because it has an active mutable head
+        assertBinaryContent("test 1 -- updated!", bin1, null);
+
+        // bin2 was rolled back because it does not have a mutable head
+        assertEquals("Expected to not find our object after rollback",
+                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(serverAddress + bin2)));
+        assertObjectDoesNotExistOnDisk(FedoraId.create(bin2));
     }
 
     @Test
@@ -679,4 +770,60 @@ public class TransactionsIT extends AbstractResourceIT {
             }
         }
     }
+
+    private void assertObjectDoesNotExistOnDisk(final FedoraId fedoraId) {
+        assertFalse(String.format("Expected %s to not exist on disk", fedoraId), objectExistsOnDisk(fedoraId));
+    }
+
+    private void assertObjectExistsOnDisk(final FedoraId fedoraId) {
+        assertTrue(String.format("Expected %s to exist on disk", fedoraId), objectExistsOnDisk(fedoraId));
+    }
+
+    private boolean objectExistsOnDisk(final FedoraId fedoraId) {
+        try (final var session = objectSessionFactory.newSession(fedoraId.getResourceId())) {
+            return session.containsResource(fedoraId.getResourceId());
+        }
+    }
+
+    private void assertBinaryContent(final String expected,
+                                     final String id,
+                                     final String txLocation) throws IOException {
+        final var actual = getBinary(id, txLocation);
+        assertEquals("Expected binary content for " + id, expected, actual);
+    }
+
+    private void putBinary(final String id, final String txLocation, final String content) throws IOException {
+        final HttpPut put = new HttpPut(serverAddress + id);
+        put.setEntity(new StringEntity(content == null ? "" : content));
+        put.setHeader(CONTENT_TYPE, TEXT_PLAIN);
+        put.setHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        if (txLocation != null) {
+            put.addHeader(ATOMIC_ID_HEADER, txLocation);
+        }
+        try (final CloseableHttpResponse resp = execute(put)) {
+            final var code = getStatus(resp);
+            assertTrue("Expected 201 or 204; was: " + code, code == CREATED.getStatusCode()
+                    || code == NO_CONTENT.getStatusCode());
+        }
+    }
+
+    private String getBinary(final String id, final String txLocation) throws IOException {
+        final var get = new HttpGet(serverAddress + id);
+        if (txLocation != null) {
+            get.addHeader(ATOMIC_ID_HEADER, txLocation);
+        }
+        try (final CloseableHttpResponse response = execute(get)) {
+            final HttpEntity entity = response.getEntity();
+            final String content = EntityUtils.toString(entity);
+            assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
+            return content;
+        }
+    }
+
+    private void addConflictingContainmentRecord(final String resourceId) {
+        final var txId = UUID.randomUUID().toString();
+        containmentIndex.addContainedBy(txId, FedoraId.getRepositoryRootId(), FedoraId.create(resourceId));
+        containmentIndex.commitTransaction(txId);
+    }
+
 }
