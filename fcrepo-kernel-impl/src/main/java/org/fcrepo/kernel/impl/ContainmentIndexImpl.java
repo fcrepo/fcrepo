@@ -399,7 +399,9 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             OPERATION_COLUMN + " = 'add' AND " + TRANSACTION_ID_COLUMN + " = :transactionId UNION SELECT " +
             END_TIME_COLUMN + " as updated FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN +
             " = :resourceId AND " + OPERATION_COLUMN + " = 'delete' AND " + TRANSACTION_ID_COLUMN +
-            " = :transactionId) x";
+            " = :transactionId UNION SELECT " + END_TIME_COLUMN +
+            " as updated FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN + " = :resourceId AND " +
+            OPERATION_COLUMN + " = 'add' AND " + TRANSACTION_ID_COLUMN + " = :transactionId) x";
 
     private static final String GET_UPDATED_RESOURCES = "SELECT DISTINCT " + PARENT_COLUMN + " FROM " +
             TRANSACTION_OPERATIONS_TABLE + " WHERE " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
