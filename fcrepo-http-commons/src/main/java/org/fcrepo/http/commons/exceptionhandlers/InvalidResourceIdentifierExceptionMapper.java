@@ -47,4 +47,9 @@ public class InvalidResourceIdentifierExceptionMapper implements
         LOGGER.warn("Invalid resource identifier", e);
         return status(BAD_REQUEST).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
     }
+
+    public Response toResponse(final String msg, final InvalidResourceIdentifierException e) {
+        LOGGER.warn("Invalid resource identifier", e);
+        return status(BAD_REQUEST).entity(msg).type(TEXT_PLAIN_WITH_CHARSET).build();
+    }
 }

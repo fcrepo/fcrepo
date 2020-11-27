@@ -20,6 +20,7 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import com.google.common.base.Preconditions;
 import org.fcrepo.common.db.DbPlatform;
+import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
@@ -28,7 +29,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -265,7 +268,15 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
         parameterSource.addValue("ocflId", ocflId);
         parameterSource.addValue("transactionId", transactionId);
         parameterSource.addValue("operation", operation);
-        jdbcTemplate.update(UPSERT_MAPPING_TX_MAP.get(dbPlatform), parameterSource);
+        try {
+            jdbcTemplate.update(UPSERT_MAPPING_TX_MAP.get(dbPlatform), parameterSource);
+        } catch (final DataIntegrityViolationException | BadSqlGrammarException e) {
+            if (e.getMessage().contains("too long for")) {
+                throw new InvalidResourceIdentifierException("Database error - Fedora ID path too long",e);
+            } else {
+                throw new RepositoryRuntimeException("Database error - error during upsert",e);
+            }
+        }
     }
 
     @Transactional

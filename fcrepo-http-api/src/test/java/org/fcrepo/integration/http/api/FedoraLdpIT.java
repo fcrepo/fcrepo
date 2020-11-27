@@ -146,6 +146,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Random;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Variant;
@@ -201,6 +202,7 @@ import com.google.common.collect.Iterators;
 
 import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
+
 
 /**
  * @author cabeer
@@ -5006,6 +5008,38 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue(graph.contains(ANY, rootNode, type.asNode(), CONTAINER.asNode()));
             assertTrue(graph.contains(ANY, rootNode, type.asNode(), FEDORA_CONTAINER.asNode()));
             assertTrue(graph.contains(ANY, rootNode, type.asNode(), BASIC_CONTAINER.asNode()));
+        }
+    }
+
+    private static String genLongUrl(final String prefix, final int numChars) {
+        String ret = prefix;
+        final Random rand = new Random();
+        int cnt = prefix.length();
+
+        while (cnt <= numChars) {
+            ret = ret + "/" + (char)(rand.nextInt(26) + 'a');
+            cnt = ret.length();
+        }
+        return ret;
+    }
+
+    @Test
+    public void testLongIdentifier1() throws IOException {
+        final String url = genLongUrl(serverAddress,476);
+        final HttpPost postMethod = new HttpPost(url);
+        postMethod.setHeader("Slug", getRandomUniqueId());
+        try (final CloseableHttpResponse response = execute(postMethod)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+        }
+    }
+
+    @Test
+    public void testLongIdentifier2() throws IOException {
+        final String url = genLongUrl(serverAddress,477);
+        final HttpPost postMethod = new HttpPost(url);
+        postMethod.setHeader("Slug", getRandomUniqueId());
+        try (final CloseableHttpResponse response = execute(postMethod)) {
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response));
         }
     }
 }

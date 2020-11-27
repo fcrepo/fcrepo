@@ -17,6 +17,7 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.junit.Before;
@@ -172,6 +173,23 @@ public class DbFedoraToOcflObjectIndexTest {
             fail();
         } catch (final FedoraOcflMappingNotFoundException e) {
             // The exception is expected.
+        }
+    }
+
+    @Test
+    public void identifierTooLong() throws InvalidResourceIdentifierException {
+        int cnt;
+        String root = "info:fedora/longtest";
+        for (cnt = 0; cnt < 149; cnt++) {
+            root = root + "/" + String.valueOf(cnt);
+        }
+        try {
+            final FedoraId tempid = FedoraId.create(root);
+            final String sessId = UUID.randomUUID().toString();
+            index.addMapping(sessId, tempid, ROOT_RESOURCE_ID, OCFL_ID);
+            fail();
+        } catch (InvalidResourceIdentifierException e) {
+            //the exception is expected
         }
     }
 
