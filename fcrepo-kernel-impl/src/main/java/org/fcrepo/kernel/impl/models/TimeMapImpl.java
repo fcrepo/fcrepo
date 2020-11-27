@@ -68,7 +68,6 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
      */
     private static final List<URI> HEADER_ONLY_TYPES = Stream.concat(HEADER_AND_RDF_TYPES.stream(),
             List.of(
-                create(RdfLexicon.TIME_MAP.getURI()),
                 create(RdfLexicon.VERSIONING_TIMEMAP.getURI())
             ).stream()
     ).collect(Collectors.toList());
