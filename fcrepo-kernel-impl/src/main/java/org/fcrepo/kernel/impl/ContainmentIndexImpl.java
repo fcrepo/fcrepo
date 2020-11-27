@@ -24,6 +24,7 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.slf4j.Logger;
 import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.init.DatabasePopulatorUtils;
@@ -38,6 +39,7 @@ import javax.sql.DataSource;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -87,6 +89,8 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     private static final String START_TIME_COLUMN = "start_time";
 
     private static final String END_TIME_COLUMN = "end_time";
+
+    private static final String UPDATED_COLUMN = "updated";
 
     /*
      * Select children of a resource that are not marked as deleted.
@@ -239,7 +243,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     private static final String COMMIT_DELETE_RECORDS_MYSQL = "UPDATE " + RESOURCES_TABLE +
             " r INNER JOIN " + TRANSACTION_OPERATIONS_TABLE + " t ON t." + FEDORA_ID_COLUMN + " = r." +
             FEDORA_ID_COLUMN + " SET r." + END_TIME_COLUMN + " = t." + END_TIME_COLUMN +
-            ", r." + START_TIME_COLUMN + " = r." + START_TIME_COLUMN + " WHERE t." + PARENT_COLUMN + " = r." +
+            " WHERE t." + PARENT_COLUMN + " = r." +
             PARENT_COLUMN + " AND t." + TRANSACTION_ID_COLUMN + " = :transactionId AND t." +  OPERATION_COLUMN +
             " = 'delete' AND r." + END_TIME_COLUMN + " IS NULL";
 
@@ -381,6 +385,27 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             DbPlatform.POSTGRESQL, "sql/postgres-containment.sql",
             DbPlatform.MARIADB, "sql/default-containment.sql"
     );
+
+    private static final String SELECT_LAST_UPDATED = "SELECT " + UPDATED_COLUMN + " FROM " + RESOURCES_TABLE +
+            " WHERE " + FEDORA_ID_COLUMN + " = :resourceId";
+
+    private static final String UPDATE_LAST_UPDATED = "UPDATE " + RESOURCES_TABLE + " SET " + UPDATED_COLUMN +
+            " = :updated WHERE " + FEDORA_ID_COLUMN + " = :resourceId";
+
+    private static final String SELECT_LAST_UPDATED_IN_TX = "SELECT MAX(x.updated)" +
+            " FROM (SELECT " + UPDATED_COLUMN + " as updated FROM " + RESOURCES_TABLE + " WHERE " +
+            FEDORA_ID_COLUMN + " = :resourceId UNION SELECT " + START_TIME_COLUMN +
+            " as updated FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN + " = :resourceId AND " +
+            OPERATION_COLUMN + " = 'add' AND " + TRANSACTION_ID_COLUMN + " = :transactionId UNION SELECT " +
+            END_TIME_COLUMN + " as updated FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN +
+            " = :resourceId AND " + OPERATION_COLUMN + " = 'delete' AND " + TRANSACTION_ID_COLUMN +
+            " = :transactionId UNION SELECT " + END_TIME_COLUMN +
+            " as updated FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN + " = :resourceId AND " +
+            OPERATION_COLUMN + " = 'add' AND " + TRANSACTION_ID_COLUMN + " = :transactionId) x";
+
+    private static final String GET_UPDATED_RESOURCES = "SELECT DISTINCT " + PARENT_COLUMN + " FROM " +
+            TRANSACTION_OPERATIONS_TABLE + " WHERE " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
+            OPERATION_COLUMN + " in ('add', 'delete')";
 
     /**
      * Connect to the database
@@ -585,10 +610,19 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             try {
                 final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
                 parameterSource.addValue("transactionId", txId);
-
+                final List<String> changedParents = jdbcTemplate.queryForList(GET_UPDATED_RESOURCES, parameterSource,
+                        String.class);
                 jdbcTemplate.update(COMMIT_PURGE_RECORDS, parameterSource);
                 jdbcTemplate.update(COMMIT_DELETE_RECORDS.get(dbPlatform), parameterSource);
                 jdbcTemplate.update(COMMIT_ADD_RECORDS, parameterSource);
+                for (final var parent : changedParents) {
+                    final var updated = jdbcTemplate.queryForObject(SELECT_LAST_UPDATED_IN_TX,
+                            Map.of("resourceId", parent, "transactionId", txId), Instant.class);
+                    if (updated != null) {
+                        jdbcTemplate.update(UPDATE_LAST_UPDATED,
+                                Map.of("resourceId", parent, "updated", formatInstant(updated)));
+                    }
+                }
                 jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, parameterSource);
             } catch (final Exception e) {
                 LOGGER.warn("Unable to commit containment index transaction {}: {}", txId, e.getMessage());
@@ -679,6 +713,24 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         return matchingIds;
     }
 
+    @Override
+    public Instant containmentLastUpdated(final String txId, final FedoraId fedoraId) {
+        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+        parameterSource.addValue("resourceId", fedoraId.getFullId());
+        final String queryToUse;
+        if (txId == null) {
+            queryToUse = SELECT_LAST_UPDATED;
+        } else {
+            parameterSource.addValue("transactionId", txId);
+            queryToUse = SELECT_LAST_UPDATED_IN_TX;
+        }
+        try {
+            return jdbcTemplate.queryForObject(queryToUse, parameterSource, Instant.class);
+        } catch (final EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
     /**
      * Get the data source backing this containment index
      * @return data source
@@ -698,16 +750,14 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     /**
      * Format an instant to a timestamp without milliseconds, due to precision
      * issues with memento datetimes.
-     * @param instant
-     * @return the timestamp
+     * @param instant the instant to format.
+     * @return the datetime timestamp
      */
     private Timestamp formatInstant(final Instant instant) {
         if (instant == null) {
             return null;
         }
-        final var timestamp = Timestamp.from(instant);
-        timestamp.setNanos(0);
-        return timestamp;
+        return Timestamp.from(instant.truncatedTo(ChronoUnit.SECONDS));
     }
 
     /**

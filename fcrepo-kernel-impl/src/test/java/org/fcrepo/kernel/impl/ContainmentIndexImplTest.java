@@ -43,6 +43,8 @@ import java.util.Map;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -665,6 +667,58 @@ public class ContainmentIndexImplTest {
         // Now the memento loses track of child1.
         assertEquals(1, containmentIndex.getContains(null, parent1.getFedoraId()).count());
         assertEquals(1, containmentIndex.getContains(null, mementoId).count());
+    }
+
+    @Test
+    public void testChecksum() throws Exception {
+        stubObject("parent1");
+        stubObject("transaction1");
+        // Need to add a containment record for the parent to hold the updated value.
+        containmentIndex.addContainedBy(transaction1.getId(), FedoraId.getRepositoryRootId(), parent1.getFedoraId());
+        final var empty = containmentIndex.containmentLastUpdated(null, parent1.getFedoraId());
+        assertNull(empty);
+        // Wait a half second as the ETag is based on the highest value of any child's start_time or end_time.
+        TimeUnit.MILLISECONDS.sleep(500);
+        final var firstBorn = parent1.getFedoraId().resolve("child1");
+        containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), firstBorn);
+        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent1.getFedoraId()).count());
+        assertEquals(0, containmentIndex.getContains(null, parent1.getFedoraId()).count());
+        final var first = containmentIndex.containmentLastUpdated(transaction1.getId(), parent1.getFedoraId());
+        assertNotNull(first);
+        assertNotEquals(empty, first);
+
+        containmentIndex.commitTransaction(transaction1.getId());
+        assertEquals(1, containmentIndex.getContains(null, parent1.getFedoraId()).count());
+        assertEquals(first, containmentIndex.containmentLastUpdated(null, parent1.getFedoraId()));
+
+        // Wait half a second, all these children will share a start_time.
+        TimeUnit.SECONDS.sleep(1);
+        for (var i = 0; i < 30; i += 1) {
+            final var kidId = parent1.getFedoraId().resolve("child-" + i);
+            containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), kidId);
+        }
+        assertEquals(31, containmentIndex.getContains(transaction1.getId(), parent1.getFedoraId()).count());
+        final var allTime = containmentIndex.containmentLastUpdated(transaction1.getId(), parent1.getFedoraId());
+        assertNotEquals(empty, allTime);
+        assertNotEquals(first, allTime);
+
+        containmentIndex.rollbackTransaction(transaction1.getId());
+        assertEquals(1, containmentIndex.getContains(null, parent1.getFedoraId()).count());
+        assertEquals(first, containmentIndex.containmentLastUpdated(null, parent1.getFedoraId()));
+
+        TimeUnit.SECONDS.sleep(1);
+
+        containmentIndex.removeContainedBy(transaction1.getId(), parent1.getFedoraId(), firstBorn);
+        assertEquals(0, containmentIndex.getContains(transaction1.getId(), parent1.getFedoraId()).count());
+        assertNotEquals(first, containmentIndex.containmentLastUpdated(transaction1.getId(), parent1.getFedoraId()));
+        assertNotEquals(allTime, containmentIndex.containmentLastUpdated(transaction1.getId(), parent1.getFedoraId()));
+
+        containmentIndex.commitTransaction(transaction1.getId());
+        assertEquals(0, containmentIndex.getContains(null, parent1.getFedoraId()).count());
+        final var last = containmentIndex.containmentLastUpdated(null, parent1.getFedoraId());
+        assertNotNull(last);
+        assertNotEquals(first, last);
+        assertNotEquals(allTime, last);
     }
 
     @Test

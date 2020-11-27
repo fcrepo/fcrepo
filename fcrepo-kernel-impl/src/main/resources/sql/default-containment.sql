@@ -5,8 +5,9 @@
 CREATE TABLE IF NOT EXISTS containment (
     fedora_id varchar(503) NOT NULL PRIMARY KEY,
     parent varchar(503) NOT NULL,
-    start_time timestamp NOT NULL,
-    end_time timestamp NULL
+    start_time datetime NOT NULL,
+    end_time datetime NULL,
+    updated datetime NULL
 );
 
 -- Create an index to speed searches for children of a parent.
@@ -27,8 +28,8 @@ CREATE INDEX IF NOT EXISTS containment_idx4
 CREATE TABLE IF NOT EXISTS containment_transactions (
     fedora_id varchar(503) NOT NULL,
     parent varchar(503) NOT NULL,
-    start_time timestamp NULL,
-    end_time timestamp NULL,
+    start_time datetime NULL,
+    end_time datetime NULL,
     transaction_id varchar(255) NOT NULL,
     operation varchar(10) NOT NULL
 );

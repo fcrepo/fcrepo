@@ -148,4 +148,12 @@ public interface ContainmentIndex {
      * @return Are there any matching IDs.
      */
     boolean hasResourcesStartingWith(final String txId, final FedoraId fedoraId);
+
+    /**
+     * Find the timestamp of the last child added or deleted
+     * @param txId The transaction id, or null if no transaction.
+     * @param fedoraId The ID of the containing resource to check.
+     * @return Timestamp of last child added or deleted or null if none
+     */
+    Instant containmentLastUpdated(final String txId, final FedoraId fedoraId);
 }
