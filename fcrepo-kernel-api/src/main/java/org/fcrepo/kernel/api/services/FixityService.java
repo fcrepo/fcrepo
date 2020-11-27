@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.api.services;
 
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.Binary;
 
@@ -41,9 +42,7 @@ public interface FixityService {
   /**
    * Digest this binary with the digest algorithms provided
    * @param binary the binary resource to digest
-   * @param algorithms the digest algorithms to be used
-   * @return the checksums of this binary
-   * @throws org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException if unsupported digest algorithm occurred
+   * @return The result of the fixity check.
    */
-  Collection<URI> checkFixity(Binary binary, Collection<String> algorithms) throws UnsupportedAlgorithmException;
+  RdfStream checkFixity(Binary binary);
 }

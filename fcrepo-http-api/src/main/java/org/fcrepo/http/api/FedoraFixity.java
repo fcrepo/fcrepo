@@ -37,12 +37,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Link;
+
 import com.google.common.annotations.VisibleForTesting;
 import io.micrometer.core.annotation.Timed;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.models.Binary;
-import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.FixityService;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -61,7 +62,6 @@ public class FedoraFixity extends ContentExposingResource {
     private static final Logger LOGGER = getLogger(FedoraFixity.class);
 
     @PathParam("path") protected String externalPath;
-
 
     @Inject private FixityService fixityService;
 
@@ -103,17 +103,12 @@ public class FedoraFixity extends ContentExposingResource {
         final Link.Builder rdfSourceLink = Link.fromUri(LDP_NAMESPACE + "RDFSource").rel("type");
         servletResponse.addHeader(LINK, rdfSourceLink.build().toString());
 
-        // TODO implement fixity check and generate response
-        fixityService.checkFixity((Binary)resource(), null);
-
+        final Binary binaryResource = (Binary) resource();
         LOGGER.info("Get fixity for '{}'", externalPath);
-        return new RdfNamespacedStream(
-            new DefaultRdfStream(
-                asNode(resource()),
-                null
-            ),
-            namespaceRegistry.getNamespaces()
-        );
+
+        final RdfStream rdfStream = httpRdfService.bodyToExternalStream(getUri(binaryResource).toString(),
+                fixityService.checkFixity(binaryResource), identifierConverter());
+        return new RdfNamespacedStream(rdfStream, namespaceRegistry.getNamespaces());
     }
 
     @Override

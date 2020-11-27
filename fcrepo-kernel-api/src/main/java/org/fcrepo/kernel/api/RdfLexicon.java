@@ -87,6 +87,11 @@ public final class RdfLexicon {
             (s.getObject().isURI() && isManagedNamespace.test(s.getObject().getNameSpace()));
 
     // FIXITY
+    public static final Resource PREMIS_FIXITY =
+            createResource(PREMIS_NAMESPACE + "Fixity");
+    public static final Resource PREMIS_EVENT_OUTCOME_DETAIL =
+            createResource(PREMIS_NAMESPACE + "EventOutcomeDetail");
+
     public static final Property HAS_MESSAGE_DIGEST =
             createProperty(PREMIS_NAMESPACE + "hasMessageDigest");
 

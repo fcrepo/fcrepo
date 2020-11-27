@@ -21,6 +21,8 @@ import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static javax.ws.rs.core.Response.Status.CREATED;
+
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_FIXITY;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_STATE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
@@ -30,18 +32,26 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import edu.wisc.library.ocfl.api.OcflRepository;
+import edu.wisc.library.ocfl.api.model.ObjectVersionId;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.jena.sparql.core.Quad;
+import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 
-import org.junit.Ignore;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.junit.Before;
 import org.junit.Test;
 
 import org.apache.jena.datatypes.RDFDatatype;
@@ -62,6 +72,15 @@ public class FedoraFixityIT extends AbstractResourceIT {
 
     private static final RDFDatatype IntegerType = TypeMapper.getInstance().getTypeByClass(Integer.class);
     private static final RDFDatatype StringType = TypeMapper.getInstance().getTypeByClass(String.class);
+
+    private OcflPropsConfig ocflConfig;
+    private OcflRepository ocflRepo;
+
+    @Before
+    public void setup() {
+        ocflConfig = getBean(OcflPropsConfig.class);
+        ocflRepo = getBean(OcflRepository.class);
+    }
 
     @Test
     public void testCheckDatastreamFixity() throws IOException {
@@ -121,17 +140,52 @@ public class FedoraFixityIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("Until implemented with Memento")
-    public void testBinaryVersionFixity() throws IOException {
+    public void testBinaryFixity() throws IOException {
         final String id = getRandomUniqueId();
-        createObjectAndClose(id);
-        createDatastream(id, "dsid", "foo");
-
-        logger.debug("Creating binary content version v0 ...");
-        postVersion(id + "/dsid", "v0");
+        final FedoraId resourceId = FedoraId.create(id);
+        final String uri = createDatastream(id, "foo");
 
         try (final CloseableDataset dataset =
-                     getDataset(new HttpGet(serverAddress + id + "/dsid/fcr%3aversions/v0/fcr:fixity"))) {
+                     getDataset(new HttpGet(uri + "/" + FCR_FIXITY))) {
+            final DatasetGraph graphStore = dataset.asDatasetGraph();
+            logger.debug("Got binary content fixity triples {}", graphStore);
+            final Iterator<Quad> stmtIt = graphStore.find(ANY, ANY, HAS_FIXITY_RESULT.asNode(), ANY);
+            assertTrue(stmtIt.hasNext());
+            assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(), createLiteral("SUCCESS")));
+            assertTrue(graphStore.contains(ANY, ANY, HAS_MESSAGE_DIGEST.asNode(), ANY));
+            assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(), createLiteral("3", IntegerType)));
+        }
+
+
+        final var ocflDesc = ocflRepo.describeVersion(
+                ObjectVersionId.head(resourceId.getResourceId()));
+        final var storagePath = ocflDesc.getFile(id).getStorageRelativePath();
+        Files.writeString(ocflConfig.getOcflRepoRoot().resolve(storagePath),
+                "corrupted!", StandardCharsets.UTF_8, StandardOpenOption.APPEND);
+
+        try (final CloseableDataset dataset =
+                     getDataset(new HttpGet(uri + "/" + FCR_FIXITY))) {
+            final DatasetGraph graphStore = dataset.asDatasetGraph();
+            logger.debug("Got binary content fixity triples {}", graphStore);
+            final Iterator<Quad> stmtIt = graphStore.find(ANY, ANY, HAS_FIXITY_RESULT.asNode(), ANY);
+            assertTrue(stmtIt.hasNext());
+            assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(), createLiteral("BAD_CHECKSUM")));
+            assertTrue(graphStore.contains(ANY, ANY, HAS_MESSAGE_DIGEST.asNode(), ANY));
+            assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(), createLiteral("3", IntegerType)));
+        }
+    }
+
+
+    @Test
+    public void testBinaryVersionFixity() throws IOException {
+        final String id = getRandomUniqueId();
+        createDatastream(id,"foo");
+
+        logger.debug("Creating binary content version ...");
+        final String mementoUri = postVersion(id);
+
+        try (final CloseableDataset dataset =
+                     getDataset(new HttpGet(mementoUri + "/" + FCR_FIXITY))) {
             final DatasetGraph graphStore = dataset.asDatasetGraph();
             logger.debug("Got binary content versioned fixity triples {}", graphStore);
             final Iterator<Quad> stmtIt = graphStore.find(ANY, ANY, HAS_FIXITY_RESULT.asNode(), ANY);
@@ -142,14 +196,14 @@ public class FedoraFixityIT extends AbstractResourceIT {
         }
     }
 
-    private static void postVersion(final String path, final String label) throws IOException {
+    private static String postVersion(final String path) throws IOException {
         logger.debug("Posting version");
         final HttpPost postVersion = postObjMethod(path + "/fcr:versions");
-        postVersion.addHeader("Slug", label);
         try (final CloseableHttpResponse response = execute(postVersion)) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
             final String locationHeader = getLocation(response);
             assertNotNull("No version location header found", locationHeader);
+            return locationHeader;
         }
     }
 
