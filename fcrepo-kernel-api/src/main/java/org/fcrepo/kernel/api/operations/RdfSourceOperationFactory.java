@@ -44,12 +44,4 @@ public interface RdfSourceOperationFactory extends ResourceOperationFactory {
      */
     RdfSourceOperationBuilder updateBuilder(FedoraId rescId);
 
-    /**
-     * Get a builder for an operation to perform a sparql update on an RDF source
-     *
-     * @param rescId id of the resource targeted by the operation
-     * @param updateQuery sparql update query
-     * @return new builder
-     */
-    ResourceOperationBuilder sparqlUpdateBuilder(FedoraId rescId, String updateQuery);
 }

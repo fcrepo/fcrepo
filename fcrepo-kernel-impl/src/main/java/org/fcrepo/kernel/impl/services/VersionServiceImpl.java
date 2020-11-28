@@ -53,7 +53,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         try {
             session.persist(operation);
             recordEvent(transaction.getId(), fedoraId, operation);
-        } catch (PersistentStorageException e) {
+        } catch (final PersistentStorageException e) {
             throw new RepositoryRuntimeException(String.format("Failed to create new version of %s",
                     fedoraId.getResourceId()), e);
         }

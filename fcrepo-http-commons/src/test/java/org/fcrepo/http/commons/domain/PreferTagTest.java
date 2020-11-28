@@ -17,7 +17,7 @@
  */
 package org.fcrepo.http.commons.domain;
 
-import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MINIMAL_CONTAINER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -64,7 +64,7 @@ public class PreferTagTest {
                 true);
 
         doTestHashCode(new PreferTag("handling=lenient; received=\"minimal\""),
-                new PreferTag("return=representation; include=\"" + LDP_NAMESPACE + "PreferMinimalContainer\""),
+                new PreferTag("return=representation; include=\"" + PREFER_MINIMAL_CONTAINER + "\""),
                 false);
 
         doTestHashCode(new PreferTag("handling=lenient; received=\"minimal\""),

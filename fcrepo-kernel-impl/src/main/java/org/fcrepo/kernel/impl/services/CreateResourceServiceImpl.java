@@ -244,7 +244,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
             return hdrobjs == null ? emptyList() : hdrobjs.stream()
                     .filter(p -> p.getRel().equalsIgnoreCase("type")).map(Link::getUri)
                     .map(URI::toString).collect(Collectors.toList());
-        } catch ( Exception e ) {
+        } catch (final Exception e ) {
             throw new BadRequestException("Invalid Link header type found",e);
         }
     }

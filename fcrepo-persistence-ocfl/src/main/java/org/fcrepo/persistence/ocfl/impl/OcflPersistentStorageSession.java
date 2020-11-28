@@ -301,7 +301,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
                 session.commit();
                 sessionsToRollback.put(id, session);
                 fedoraOcflIndex.commit(sessionId);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 this.state = State.COMMIT_FAILED;
                 throw new PersistentStorageException(String.format("Failed to commit object <%s> in session <%s>",
                         id, sessionId), e);
@@ -401,7 +401,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
 
             try {
                 session.rollback();
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 rollbackFailures.add(String.format("Failed to rollback object <%s> in session <%s>: %s",
                         id, session.sessionId(), e.getMessage()));
             }
@@ -409,7 +409,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
 
         try {
             fedoraOcflIndex.rollback(sessionId);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             rollbackFailures.add(String.format("Failed to rollback OCFL index updates in transaction <%s>: %s",
                     sessionId, e.getMessage()));
         }

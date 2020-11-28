@@ -81,7 +81,7 @@ public class RelaxedPropertiesHelper {
 
     private static String extractSingleStringValue(final Iterable<Statement> statements, final Property predicate) {
         String username = null;
-        for (Statement added : statements) {
+        for (final Statement added : statements) {
             if (added.getPredicate().equals(predicate)) {
                 if (username == null) {
                     username = added.getObject().asLiteral().getString();
@@ -96,7 +96,7 @@ public class RelaxedPropertiesHelper {
     private static Calendar extractSingleCalendarValue(final Iterable<Statement> statements,
                                                        final Property predicate) {
         Calendar cal = null;
-        for (Statement added : statements) {
+        for (final Statement added : statements) {
             if (added.getPredicate().equals(predicate)) {
                 if (cal == null) {
                     cal = RelaxedPropertiesHelper.parseExpectedXsdDateTimeValue(added.getObject());

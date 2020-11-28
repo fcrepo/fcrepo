@@ -60,13 +60,13 @@ public class FedoraSearchTest {
     public void testValidConditionsForFedoraId() throws InvalidConditionExpressionException {
         final var conditions = new ArrayList<String>();
         final var objects = new String[]{"test", "/test", uriBase + "/test", FEDORA_ID_PREFIX + "/test"};
-        for (String object : objects) {
-            for (Condition.Operator operator : Condition.Operator.values()) {
+        for (final String object : objects) {
+            for (final Condition.Operator operator : Condition.Operator.values()) {
                 conditions.add(FEDORA_ID.name().toLowerCase() + operator.getStringValue() + object);
             }
         }
 
-        for (String condition : conditions) {
+        for (final String condition : conditions) {
             final var con = FedoraSearch.parse(condition, converter);
             assertNotNull(con.getField());
             assertNotNull(con.getOperator());
@@ -89,12 +89,12 @@ public class FedoraSearchTest {
         final var conditions = new ArrayList<String>();
         final var object = "test";
         Arrays.stream(Condition.Field.values()).filter(x -> !x.equals(FEDORA_ID)).forEach(field -> {
-            for (Condition.Operator operator : Condition.Operator.values()) {
+            for (final Condition.Operator operator : Condition.Operator.values()) {
                 conditions.add(field.name().toLowerCase() + operator.getStringValue() + object);
             }
         });
 
-        for (String condition : conditions) {
+        for (final String condition : conditions) {
             final var con = FedoraSearch.parse(condition, converter);
             assertNotNull(con.getField());
             assertNotNull(con.getOperator());
@@ -111,11 +111,11 @@ public class FedoraSearchTest {
                 "fedora_id==/test"
         };
 
-        for (String condition : conditions) {
+        for (final String condition : conditions) {
             try {
                 FedoraSearch.parse(condition, converter);
                 fail("Condition should have failed: " + condition);
-            } catch (Exception ex) {
+            } catch (final Exception ex) {
             }
         }
     }

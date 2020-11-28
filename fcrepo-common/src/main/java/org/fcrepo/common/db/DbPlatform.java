@@ -56,7 +56,7 @@ public enum DbPlatform {
     }
 
     public static DbPlatform fromString(final String name) {
-        for (var platform : values()) {
+        for (final var platform : values()) {
             if (platform.name.equals(name)) {
                 return platform;
             }

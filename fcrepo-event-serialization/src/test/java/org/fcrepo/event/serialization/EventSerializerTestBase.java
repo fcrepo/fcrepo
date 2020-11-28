@@ -23,8 +23,9 @@ import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.ACTIVITY_STREAMS_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.PROV_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -77,8 +78,8 @@ public class EventSerializerTestBase {
         final Set<EventType> typeSet = new HashSet<>();
         typeSet.add(EventType.RESOURCE_MODIFICATION);
         final Set<String> resourceTypeSet = new HashSet<>();
-        resourceTypeSet.add(REPOSITORY_NAMESPACE + "Resource");
-        resourceTypeSet.add(REPOSITORY_NAMESPACE + "Container");
+        resourceTypeSet.add(FEDORA_RESOURCE.getURI());
+        resourceTypeSet.add(FEDORA_CONTAINER.getURI());
         resourceTypeSet.add("http://example.com/SampleType");
 
         when(mockEvent.getTypes()).thenReturn(typeSet);
@@ -111,8 +112,8 @@ public class EventSerializerTestBase {
 
         final Resource blankNode = null;
 
-        assertTrue(model.contains(resourceSubject, type, createResource(REPOSITORY_NAMESPACE + "Resource")));
-        assertTrue(model.contains(resourceSubject, type, createResource(REPOSITORY_NAMESPACE + "Container")));
+        assertTrue(model.contains(resourceSubject, type, FEDORA_RESOURCE));
+        assertTrue(model.contains(resourceSubject, type, FEDORA_CONTAINER));
         assertTrue(model.contains(resourceSubject, type, createResource(PROV_NAMESPACE + "Entity")));
         assertTrue(model.contains(resourceSubject, type, createResource("http://example.com/SampleType")));
         assertTrue(model.contains(eventSubject, type, createResource(EventType.RESOURCE_MODIFICATION.getType())));

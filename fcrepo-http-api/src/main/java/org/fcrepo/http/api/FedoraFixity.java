@@ -27,7 +27,8 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
-import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
@@ -98,9 +99,9 @@ public class FedoraFixity extends ContentExposingResource {
             throw new NotFoundException(resource() + " is not a binary");
         }
 
-        final Link.Builder resourceLink = Link.fromUri(LDP_NAMESPACE + "Resource").rel("type");
+        final Link.Builder resourceLink = Link.fromUri(RESOURCE.getURI()).rel("type");
         servletResponse.addHeader(LINK, resourceLink.build().toString());
-        final Link.Builder rdfSourceLink = Link.fromUri(LDP_NAMESPACE + "RDFSource").rel("type");
+        final Link.Builder rdfSourceLink = Link.fromUri(RDF_SOURCE.getURI()).rel("type");
         servletResponse.addHeader(LINK, rdfSourceLink.build().toString());
 
         final Binary binaryResource = (Binary) resource();

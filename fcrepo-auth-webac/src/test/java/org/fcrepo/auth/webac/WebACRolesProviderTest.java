@@ -27,7 +27,7 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE_VALUE;
 import static org.fcrepo.http.api.FedoraAcl.ROOT_AUTHORIZATION_PROPERTY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceFactory;
@@ -72,6 +72,7 @@ public class WebACRolesProviderTest {
 
     private static final String FEDORA_PREFIX = "info:fedora";
     private static final String FEDORA_URI_PREFIX = "file:///rest";
+    private static final URI FEDORA_RESOURCE_URI = URI.create(FEDORA_RESOURCE.getURI());
 
     @Mock
     private Transaction mockTransaction;
@@ -544,7 +545,7 @@ public class WebACRolesProviderTest {
 
         when(mockResource.getId()).thenReturn(FEDORA_ID_PREFIX);
         when(mockResource.getTypes()).thenReturn(
-                singletonList(URI.create(REPOSITORY_NAMESPACE + "Resource")));
+                singletonList(FEDORA_RESOURCE_URI));
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
@@ -559,7 +560,7 @@ public class WebACRolesProviderTest {
 
         when(mockResource.getId()).thenReturn(FEDORA_ID_PREFIX);
         when(mockResource.getTypes()).thenReturn(
-                singletonList(URI.create(REPOSITORY_NAMESPACE + "Resource")));
+                singletonList(FEDORA_RESOURCE_URI));
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
 
         System.setProperty(ROOT_AUTHORIZATION_PROPERTY, "./target/test-classes/logback-test.xml");
@@ -573,7 +574,7 @@ public class WebACRolesProviderTest {
         when(mockResource.getAcl()).thenReturn(null);
         when(mockResource.getId()).thenReturn(FEDORA_ID_PREFIX);
         when(mockResource.getTypes()).thenReturn(
-                singletonList(URI.create(REPOSITORY_NAMESPACE + "Resource")));
+                singletonList(FEDORA_RESOURCE_URI));
 
         System.setProperty(ROOT_AUTHORIZATION_PROPERTY, "./target/test-classes/test-root-authorization.ttl");
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);

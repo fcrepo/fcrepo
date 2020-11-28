@@ -95,7 +95,7 @@ public class FedoraSearch extends FedoraBaseResource {
         LOGGER.info("GET on search with conditions: {}, and fields: {}", conditions, fields);
         try {
             final var conditionList = new ArrayList<Condition>();
-            for (String condition : conditions) {
+            for (final String condition : conditions) {
                 final var parsedCondition = parse(condition, identifierConverter());
                 conditionList.add(parsedCondition);
             }
@@ -105,10 +105,10 @@ public class FedoraSearch extends FedoraBaseResource {
                 parsedFields = Arrays.asList(Condition.Field.values());
             } else {
                 parsedFields = new ArrayList<>();
-                for (String field : fields.split(",")) {
+                for (final String field : fields.split(",")) {
                     try {
                         parsedFields.add(Condition.Field.fromString(field));
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         throw new InvalidQueryException("The field \"" + field + "\" is not a valid output field.");
                     }
                 }
@@ -181,7 +181,7 @@ public class FedoraSearch extends FedoraBaseResource {
         try {
             new URL(str);
             return true;
-        } catch (Exception ex) {
+        } catch (final Exception ex) {
             return false;
         }
     }

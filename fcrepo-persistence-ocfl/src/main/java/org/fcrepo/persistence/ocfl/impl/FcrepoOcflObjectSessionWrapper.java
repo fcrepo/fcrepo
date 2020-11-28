@@ -200,9 +200,9 @@ public class FcrepoOcflObjectSessionWrapper implements OcflObjectSession {
     private <T> T exec(final Callable<T> callable) throws PersistentStorageException {
         try {
             return callable.call();
-        } catch (NotFoundException e) {
+        } catch (final NotFoundException e) {
             throw new PersistentItemNotFoundException(e.getMessage(), e);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new PersistentStorageException(e.getMessage(), e);
         }
     }
@@ -210,9 +210,9 @@ public class FcrepoOcflObjectSessionWrapper implements OcflObjectSession {
     private void exec(final CheckedRunnable runnable) throws PersistentStorageException {
         try {
             runnable.run();
-        } catch (NotFoundException e) {
+        } catch (final NotFoundException e) {
             throw new PersistentItemNotFoundException(e.getMessage(), e);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new PersistentStorageException(e.getMessage(), e);
         }
     }

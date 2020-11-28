@@ -47,7 +47,7 @@ class PurgeResourcePersister extends AbstractPersister {
 
         try {
             objectSession.deleteResource(resourceId.getResourceId());
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             throw new PersistentStorageException(String.format("Purge resource %s failed", resourceId), e);
         }
 

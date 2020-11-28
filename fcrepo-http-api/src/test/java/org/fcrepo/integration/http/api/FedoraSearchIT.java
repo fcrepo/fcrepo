@@ -135,7 +135,7 @@ public class FedoraSearchIT extends AbstractResourceIT {
         final var urlPrefix = serverAddress + id;
         // try all valid prefix formulations
         final var prefixes = new String[]{id, "/" + id, urlPrefix, FEDORA_ID_PREFIX + "/" + id};
-        for (String prefix : prefixes) {
+        for (final String prefix : prefixes) {
             final var condition = FEDORA_ID + "=" + prefix + "*";
             final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition);
             try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
@@ -334,9 +334,9 @@ public class FedoraSearchIT extends AbstractResourceIT {
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
             final var items = result.getItems();
             assertEquals("expected " + count + " items", count, items.size());
-            for (Map<String, Object> item : items) {
+            for (final Map<String, Object> item : items) {
                 assertEquals("expected " + fields.size() + " fields returned", fields.size(), item.size());
-                for (String field : fields) {
+                for (final String field : fields) {
                     assertTrue("Result does not contain expected field: " + field, item.containsKey(field));
                 }
             }

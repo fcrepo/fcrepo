@@ -92,11 +92,11 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_ORIGINAL_NAME;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.INSERTED_CONTENT_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.IS_MEMBER_OF_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_MEMBER;
-import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
@@ -217,7 +217,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     private static final Node DC_IDENTIFIER = DC_11.identifier.asNode();
 
-    private static final String LDP_RESOURCE_LINK_HEADER = "<" + LDP_NAMESPACE + "Resource>; rel=\"type\"";
+    private static final String LDP_RESOURCE_LINK_HEADER = "<" + RESOURCE.getURI() + ">; rel=\"type\"";
 
     private static final Node rdfType = type.asNode();
 
@@ -2297,7 +2297,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(getObjMethod(id))) {
             try (final CloseableDataset dataset = getDataset(response)) {
                 assertTrue("Didn't find child node!", dataset.asDatasetGraph().contains(ANY,
-                        createURI(location), createURI(LDP_NAMESPACE + "contains"), createURI(location + "/c")));
+                        createURI(location), CONTAINS.asNode(), createURI(location + "/c")));
 
                 final Collection<String> links = getLinkHeaders(response);
                 assertTrue("Didn't find LDP resource link header!", links.contains(LDP_RESOURCE_LINK_HEADER));
@@ -2313,7 +2313,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(getObjMethod(id))) {
             try (final CloseableDataset dataset = getDataset(response)) {
                 assertTrue("Didn't find child node!", dataset.asDatasetGraph().contains(ANY,
-                        createURI(location), createURI(LDP_NAMESPACE + "contains"), createURI(location + "/c")));
+                        createURI(location), CONTAINS.asNode(), createURI(location + "/c")));
             }
         }
 
@@ -2322,7 +2322,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response1 = execute(getObjMethod(id))) {
             try (final CloseableDataset dataset = getDataset(response1)) {
                 assertFalse("Found child node!", dataset.asDatasetGraph().contains(ANY,
-                        createURI(location), createURI(LDP_NAMESPACE + "contains"), createURI(location + "/c")));
+                        createURI(location), CONTAINS.asNode(), createURI(location + "/c")));
             }
         }
     }
@@ -2452,7 +2452,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createObjectAndClose(id);
         final String location = serverAddress + id;
         final String updateString = "<> <" + MEMBERSHIP_RESOURCE.getURI() +
-                "> <" + location + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "member> .";
+                "> <" + location + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_MEMBER + "> .";
         final HttpPut put = putObjMethod(id + "/a", "text/turtle", updateString);
         put.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
         assertEquals(CREATED.getStatusCode(), getStatus(put));
@@ -2486,7 +2486,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createObjectAndClose(id);
         final String location = serverAddress + id;
         final String updateString = "<> <" + MEMBERSHIP_RESOURCE.getURI() +
-                "> <" + location + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "member> .";
+                "> <" + location + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_MEMBER + "> .";
         final HttpPut put = putObjMethod(id + "/a", "text/turtle", updateString);
         put.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
         assertEquals(CREATED.getStatusCode(), getStatus(put));
@@ -2529,7 +2529,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createObjectAndClose(id);
         final String location = serverAddress + id;
         final String updateString = "<> <" + MEMBERSHIP_RESOURCE.getURI() +
-                "> <" + location + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "member> .";
+                "> <" + location + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_MEMBER + "> .";
         final HttpPut put = putObjMethod(id + "/a", "text/turtle", updateString);
         put.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
         assertEquals(CREATED.getStatusCode(), getStatus(put));
@@ -2615,7 +2615,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         patch.setHeader(CONTENT_TYPE, "application/sparql-update");
         final String updateString =
                 "INSERT DATA { <> a <" + DIRECT_CONTAINER.getURI() + "> ; <" + MEMBERSHIP_RESOURCE.getURI() +
-                        "> <> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "member> .}";
+                        "> <> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_MEMBER + "> .}";
         patch.setEntity(new StringEntity(updateString));
         assertEquals("Patch with sparql update created direct container from basic container!",
                 CONFLICT.getStatusCode(), getStatus(patch));
@@ -2720,14 +2720,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // attempt to change basic container to direct container
         final String ttl2 = "<> a <" + DIRECT_CONTAINER.getURI() + "> ; <" + MEMBERSHIP_RESOURCE.getURI() +
-                "> <" + resource + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "member> .";
+                "> <" + resource + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_MEMBER + "> .";
         final HttpPut put2 = putObjMethod(pid + "/a", "text/turtle", ttl2);
         assertEquals("Changed the basic container ixn to Direct Container through PUT with RDF content!",
                 CONFLICT.getStatusCode(), getStatus(put2));
 
         // create direct container
         final String ttl = "<> <" + MEMBERSHIP_RESOURCE.getURI() +
-                "> <" + resource + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "member> .";
+                "> <" + resource + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_MEMBER + "> .";
         final HttpPut put = putObjMethod(pid + "/b", "text/turtle", ttl);
         put.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
         assertEquals(CREATED.getStatusCode(), getStatus(put));
@@ -2742,7 +2742,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // attempt to change direct container to basic container
         final String ttl3 = "<> a <" + BASIC_CONTAINER.getURI() +
-                "> ; <http://purl.org/dc/elements/1.1/title> \"this is a title\".";
+                "> ; <" + title + "> \"this is a title\".";
         final HttpPut put3 = putObjMethod(pid + "/b", "text/turtle", ttl3);
         assertEquals("Changed the direct container ixn to basic container through PUT with RDF content!",
                 CONFLICT.getStatusCode(), getStatus(put3));
@@ -2751,7 +2751,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String ttl4 = "<> a <" + INDIRECT_CONTAINER.getURI()
                 + "> ; <" + MEMBERSHIP_RESOURCE + "> <" + container + ">;\n"
                 + "<" + HAS_MEMBER_RELATION + "> <info:some/relation>;\n"
-                + "<" + LDP_NAMESPACE + "insertedContentRelation> <info:proxy/for> .\n";
+                + "<" + INSERTED_CONTENT_RELATION + "> <info:proxy/for> .\n";
         final HttpPut put4 = putObjMethod(pid + "/b", "text/turtle", ttl4);
         assertEquals("Changed the direct container ixn to indirect container through PUT with RDF content!",
                 CONFLICT.getStatusCode(), getStatus(put4));
@@ -2768,7 +2768,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createObjectAndClose(pid + "/c");
 
         final String ttl1 = "<> <" + MEMBERSHIP_RESOURCE.getURI() +
-                "> <" + resource + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "member> .";
+                "> <" + resource + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_MEMBER + "> .";
         final HttpPut put1 = putObjMethod(pid + "/a", "text/turtle", ttl1);
         put1.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
         put1.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
@@ -2777,13 +2777,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // create direct container
         final String ttl = "<> <" + MEMBERSHIP_RESOURCE.getURI() +
-                "> <" + resource + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "member> .";
+                "> <" + resource + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_MEMBER + "> .";
         final HttpPut put = putObjMethod(pid + "/b", "text/turtle", ttl);
         put.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
         assertEquals(CREATED.getStatusCode(), getStatus(put));
         assertTrue(getLinkHeaders(getObjMethod(pid + "/b")).contains(DIRECT_CONTAINER_LINK_HEADER));
 
-        final String ttl2 = "<> <http://purl.org/dc/elements/1.1/title> \"this is a title\"";
+        final String ttl2 = "<> <" + title + "> \"this is a title\"";
         final HttpPut put2 = putObjMethod(pid + "/b", "text/turtle", ttl2);
         put2.setHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
         put2.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
@@ -2792,7 +2792,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final String ttl3 = "<> <" + MEMBERSHIP_RESOURCE + "> <" + container + ">;\n"
                 + "<" + HAS_MEMBER_RELATION + "> <info:some/relation>;\n"
-                + "<" + LDP_NAMESPACE + "insertedContentRelation> <info:proxy/for> .\n";
+                + "<" + INSERTED_CONTENT_RELATION + "> <info:proxy/for> .\n";
         final HttpPut put3 = putObjMethod(pid + "/b", "text/turtle", ttl3);
         put3.setHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
         put3.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
@@ -3470,9 +3470,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 final Resource nodeUri = createResource(location);
                 final String lastmodString = response.getFirstHeader("Last-Modified").getValue();
                 final Optional<Instant> createdDateTriples =
-                        getDateFromModel(model, nodeUri, createProperty(REPOSITORY_NAMESPACE + "created"));
+                        getDateFromModel(model, nodeUri, CREATED_DATE);
                 final Optional<Instant> lastmodDateTriples =
-                        getDateFromModel(model, nodeUri, createProperty(REPOSITORY_NAMESPACE + "lastModified"));
+                        getDateFromModel(model, nodeUri, LAST_MODIFIED_DATE);
                 assertTrue(createdDateTriples.isPresent());
                 assertTrue(lastmodDateTriples.isPresent());
                 // Reformatting lastModified header to ensure consistent formatting between it and fedora timestamps
@@ -3591,9 +3591,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final DatasetGraph graphStore = dataset.asDatasetGraph();
             final Node resource = createURI(location);
             assertTrue("Expected to have container t", graphStore.contains(ANY,
-                    resource, createURI(LDP_NAMESPACE + "contains"), createURI(location + "/a")));
+                    resource, CONTAINS.asNode(), createURI(location + "/a")));
             assertTrue("Expected to have container b", graphStore.contains(ANY,
-                    resource, createURI(LDP_NAMESPACE + "contains"), createURI(location + "/b")));
+                    resource, CONTAINS.asNode(), createURI(location + "/b")));
             assertTrue("Expected member relation", graphStore.contains(ANY,
                     resource, createURI("info:some/relation"), createURI(location + "/a/1")));
             assertTrue("Expected other member relation", graphStore.contains(ANY,
@@ -3622,7 +3622,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String indirectContainer;
         final String ttl = "<> <" + MEMBERSHIP_RESOURCE + "> <" + container + ">;\n"
                 + "<" + HAS_MEMBER_RELATION + "> <info:some/relation>;\n"
-                + "<" + LDP_NAMESPACE + "insertedContentRelation> <info:proxy/for> .\n";
+                + "<" + INSERTED_CONTENT_RELATION + "> <info:proxy/for> .\n";
         final HttpPut put = putObjMethod(containerId + "/t", "text/turtle", ttl);
         put.setHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
         try (final CloseableHttpResponse response = execute(put)) {
@@ -3648,7 +3648,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 final CloseableDataset dataset = getDataset(getResponse)) {
             final DatasetGraph graphStore = dataset.asDatasetGraph();
             assertTrue("Expected to have indirect container", graphStore.contains(ANY,
-                    createURI(container), createURI(LDP_NAMESPACE + "contains"), createURI(indirectContainer)));
+                    createURI(container), CONTAINS.asNode(), createURI(indirectContainer)));
 
             assertTrue("Expected to have resource: " + graphStore.toString(), graphStore.contains(ANY,
                     createURI(container), createURI("info:some/relation"), createURI(resource)));
@@ -3696,7 +3696,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String sparql = "INSERT DATA { "
                 + "<> <" + MEMBERSHIP_RESOURCE + "> <" + container + "> .\n"
                 + "<> <" + IS_MEMBER_OF_RELATION + "> <info:some/relation> .\n"
-                + "<> <" + LDP_NAMESPACE + "insertedContentRelation> <info:proxy/for> .\n"
+                + "<> <" + INSERTED_CONTENT_RELATION + "> <info:proxy/for> .\n"
                 + " }";
         patch.setEntity(new StringEntity(sparql));
         assertEquals("Expected patch to succeed", NO_CONTENT.getStatusCode(), getStatus(patch));
@@ -3751,9 +3751,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 assertTrue(graphStore.contains(ANY,
                         createURI(location + "#abc"), createURI("info:test#label"), createLiteral("asdfg")));
                 assertFalse(graphStore.contains(ANY,
-                        createURI(location + "#abc"), createURI(REPOSITORY_NAMESPACE + "lastModified"), ANY));
+                        createURI(location + "#abc"), LAST_MODIFIED_DATE.asNode(), ANY));
                 assertFalse(graphStore.contains(ANY,
-                        createURI(location + "#abc"), rdfType, createURI(REPOSITORY_NAMESPACE + "Resource")));
+                        createURI(location + "#abc"), rdfType, FEDORA_RESOURCE.asNode()));
             }
         }
     }
@@ -3817,7 +3817,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         httpPut.addHeader(CONTENT_TYPE, "text/turtle");
         httpPut.setEntity(new StringEntity("<> a <" + DIRECT_CONTAINER.getURI() + ">;" +
                 "    <" + MEMBERSHIP_RESOURCE.getURI() + "> <> ;" +
-                "    <" + HAS_MEMBER_RELATION.getURI() + "> <" + LDP_NAMESPACE + "member> ;" +
+                "    <" + HAS_MEMBER_RELATION.getURI() + "> <" + LDP_MEMBER + "> ;" +
                 "    <info:x> <#hash-uri> ;" +
                 "    <info:x> [ <" + DCTITLE.getURI() + "> \"xyz\" ] . " +
                 "<#hash-uri>  <" + DCTITLE.getURI() + "> \"some-hash-uri\" ."));

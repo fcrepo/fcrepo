@@ -48,7 +48,7 @@ public class ContainerAuthToken implements AuthenticationToken {
         servletUser = new BasicUserPrincipal(servletUsername);
         log.debug("Setting servlet username {}", servletUsername);
         this.servletRoles = new HashSet<>();
-        for (String roleName : servletRoleNames) {
+        for (final String roleName : servletRoleNames) {
             log.debug("Adding servlet role {} to {}", roleName, servletUsername);
             this.servletRoles.add(new ContainerRolesPrincipal(roleName));
         }

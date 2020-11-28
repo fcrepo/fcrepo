@@ -18,6 +18,7 @@
 package org.fcrepo.integration.rdf;
 
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.PREMIS_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
@@ -92,14 +93,14 @@ public class ServerManagedTriplesIT extends AbstractResourceIT {
         final String refURI = serverAddress + refPid;
         createObject(refPid);
 
-        verifyRejectUriRef(LDP_NAMESPACE + "contains", refURI);
-        verifyRejectUpdateUriRef(LDP_NAMESPACE + "contains", refURI);
+        verifyRejectUriRef(CONTAINS.getURI(), refURI);
+        verifyRejectUpdateUriRef(CONTAINS.getURI(), refURI);
 
         // Verify that ldp:hasMemberRelation referencing an SMT is rejected
         verifyRejectUriRef(HAS_MEMBER_RELATION.getURI(), REPOSITORY_NAMESPACE + NON_EXISTENT_PREDICATE);
         verifyRejectUpdateUriRef(HAS_MEMBER_RELATION.getURI(), REPOSITORY_NAMESPACE + NON_EXISTENT_PREDICATE);
-        verifyRejectUriRef(HAS_MEMBER_RELATION.getURI(), LDP_NAMESPACE + "contains");
-        verifyRejectUpdateUriRef(HAS_MEMBER_RELATION.getURI(), LDP_NAMESPACE + "contains");
+        verifyRejectUriRef(HAS_MEMBER_RELATION.getURI(), CONTAINS.getURI());
+        verifyRejectUpdateUriRef(HAS_MEMBER_RELATION.getURI(), CONTAINS.getURI());
 
         // Verify that types in the ldp namespace are rejected
         verifyRejectRdfType(RESOURCE.getURI());

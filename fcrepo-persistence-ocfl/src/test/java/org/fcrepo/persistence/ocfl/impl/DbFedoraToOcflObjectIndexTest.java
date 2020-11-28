@@ -188,7 +188,7 @@ public class DbFedoraToOcflObjectIndexTest {
             final String sessId = UUID.randomUUID().toString();
             index.addMapping(sessId, tempid, ROOT_RESOURCE_ID, OCFL_ID);
             fail();
-        } catch (InvalidResourceIdentifierException e) {
+        } catch (final InvalidResourceIdentifierException e) {
             //the exception is expected
         }
     }
