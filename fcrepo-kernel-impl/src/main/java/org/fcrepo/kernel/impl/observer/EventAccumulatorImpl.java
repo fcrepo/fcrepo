@@ -94,7 +94,7 @@ public class EventAccumulatorImpl implements EventAccumulator {
 
                     LOG.debug("Emitting event: {}", event);
                     eventBus.post(event);
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     LOG.error("Failed to emit events: {}", events, e);
                 }
             });
@@ -112,7 +112,7 @@ public class EventAccumulatorImpl implements EventAccumulator {
             return resourceFactory.getResource(fedoraId).getTypes().stream()
                     .map(URI::toString)
                     .collect(Collectors.toSet());
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOG.debug("Could not load resource types for {}", fedoraId, e);
             // This can happen if the resource no longer exists
             return Collections.emptySet();

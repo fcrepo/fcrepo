@@ -23,6 +23,8 @@ import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -367,7 +369,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
         final HtmlForm form = (HtmlForm)page.getElementById("action_sparql_select");
         final HtmlTextArea q = form.getTextAreaByName("q");
-        q.setText("SELECT ?subject WHERE { ?subject a <" + REPOSITORY_NAMESPACE + "Resource> }");
+        q.setText("SELECT ?subject WHERE { ?subject a <" + FEDORA_RESOURCE + "> }");
         final HtmlButton button = form.getFirstByXPath("button");
         button.click();
     }

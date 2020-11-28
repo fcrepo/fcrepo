@@ -109,7 +109,7 @@ public abstract class TestHelpers {
             final Field f = findField(parent.getClass(), name);
             f.setAccessible(true);
             f.set(parent, obj);
-        } catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException e) {
+        } catch (final IllegalArgumentException | IllegalAccessException | NoSuchFieldException e) {
             throw new RuntimeException(e);
         }
     }

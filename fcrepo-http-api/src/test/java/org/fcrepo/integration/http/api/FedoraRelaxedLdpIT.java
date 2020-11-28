@@ -113,14 +113,14 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
     @Test
     public void testBasicPutRoundtrip() throws IOException {
         final String subjectURI;
-        try (CloseableHttpResponse response = execute(postObjMethod())) {
+        try (final CloseableHttpResponse response = execute(postObjMethod())) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
             subjectURI = getLocation(response);
         }
 
         final String body;
         final HttpGet get = new HttpGet(subjectURI);
-        try (CloseableHttpResponse response = execute(get)) {
+        try (final CloseableHttpResponse response = execute(get)) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             body = EntityUtils.toString(response.getEntity());
         }
@@ -136,13 +136,13 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
     public void testCreateResourceWithSpecificCreationInformationIsAllowed() throws IOException {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
         final String subjectURI;
-        try (CloseableHttpResponse response = postResourceWithTTL(
+        try (final CloseableHttpResponse response = postResourceWithTTL(
                 getTTLThatUpdatesServerManagedTriples(providedUsername, providedDate, null, null))) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
             subjectURI = getLocation(response);
         }
 
-        try (CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
+        try (final CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
             triples(subjectURI, dataset)
                     .mustHave(CREATED_BY.asNode(), createLiteral(providedUsername))
                     .mustHave(CREATED_DATE.asNode(), createDateTime(providedDate));
@@ -155,20 +155,20 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
 
         final String subjectURI;
-        try (CloseableHttpResponse response = postBinaryResource(serverAddress, "this is the binary")) {
+        try (final CloseableHttpResponse response = postBinaryResource(serverAddress, "this is the binary")) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
             subjectURI = getLocation(response);
         }
 
         final String describedByURI = subjectURI + "/fcr:metadata";
 
-        try (CloseableHttpResponse response = putResourceWithTTL(describedByURI,
+        try (final CloseableHttpResponse response = putResourceWithTTL(describedByURI,
                 getTTLThatUpdatesServerManagedTriples(providedUsername, providedDate,
                                                       providedUsername, providedDate))) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
         }
 
-        try (CloseableDataset dataset = getDataset(new HttpGet(describedByURI))) {
+        try (final CloseableDataset dataset = getDataset(new HttpGet(describedByURI))) {
             triples(subjectURI, dataset)
                     .mustHave(CREATED_BY.asNode(), createLiteral(providedUsername))
                     .mustHave(CREATED_DATE.asNode(), createDateTime(providedDate))
@@ -183,7 +183,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
 
         final String subjectURI;
-        try (CloseableHttpResponse response = postResourceWithTTL(
+        try (final CloseableHttpResponse response = postResourceWithTTL(
                 getTTLThatUpdatesServerManagedTriples(providedUsername, providedDate, null, null))) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
             subjectURI = getLocation(response);
@@ -197,11 +197,11 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
                 "INSERT { <> fedora:created \"" + DatatypeConverter.printDateTime(updatedDate)
                         + "\"^^<http://www.w3.org/2001/XMLSchema#dateTime> }\n" +
                 "WHERE { }";
-        try (CloseableHttpResponse response = patchResource(subjectURI, sparqlUpdate)) {
+        try (final CloseableHttpResponse response = patchResource(subjectURI, sparqlUpdate)) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
         }
 
-        try (CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
+        try (final CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
             triples(subjectURI, dataset)
                     .mustHave(CREATED_BY.asNode(), createLiteral(providedUsername))
                     .mustHave(CREATED_DATE.asNode(), createDateTime(updatedDate));
@@ -214,7 +214,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
 
         final String subjectURI;
-        try (CloseableHttpResponse response = execute(postObjMethod())) {
+        try (final CloseableHttpResponse response = execute(postObjMethod())) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
             subjectURI = getLocation(response);
         }
@@ -227,11 +227,11 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
                 " <> fedora:created \"" + DatatypeConverter.printDateTime(providedDate) +
                 "\"^^<http://www.w3.org/2001/XMLSchema#dateTime> }\n" +
                 "WHERE { }";
-        try (CloseableHttpResponse response = patchResource(subjectURI, sparqlUpdate)) {
+        try (final CloseableHttpResponse response = patchResource(subjectURI, sparqlUpdate)) {
             assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response));
         }
 
-        try (CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
+        try (final CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
             triples(subjectURI, dataset)
                     .mustNotHave(CREATED_BY.asNode(), createLiteral(providedUsername))
                     .mustNotHave(CREATED_DATE.asNode(), createDateTime(updatedDate));
@@ -244,7 +244,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
 
         final String subjectURI;
-        try (CloseableHttpResponse response = createObject()) {
+        try (final CloseableHttpResponse response = createObject()) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
             subjectURI = getLocation(response);
         }
@@ -252,12 +252,12 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         providedDate = nowUTC();
         providedDate.add(Calendar.MONTH, 1);
 
-        try (CloseableHttpResponse response = putResourceWithTTL(subjectURI,
+        try (final CloseableHttpResponse response = putResourceWithTTL(subjectURI,
                 getTTLThatUpdatesServerManagedTriples(null, null, providedUsername, providedDate))) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
         }
 
-        try (CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
+        try (final CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
             triples(subjectURI, dataset)
                     .mustHave(LAST_MODIFIED_BY.asNode(), createLiteral(providedUsername))
                     .mustHave(LAST_MODIFIED_DATE.asNode(), createDateTime(providedDate));
@@ -275,7 +275,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
 
         // POST a resource with one user-managed triple
         final String containerURI;
-        try (CloseableHttpResponse response
+        try (final CloseableHttpResponse response
                      = postResourceWithTTL("<> <http://purl.org/dc/elements/1.1/title> 'title' .")) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
             containerURI = getLocation(response);
@@ -284,7 +284,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         // POST a non-rdf child resource
         final String containedBinaryURI;
         final String containedBinaryDescriptionURI;
-        try (CloseableHttpResponse response = postBinaryResource(containerURI, "content")) {
+        try (final CloseableHttpResponse response = postBinaryResource(containerURI, "content")) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
             containedBinaryURI = getLocation(response);
             containedBinaryDescriptionURI = containedBinaryURI + "/fcr:metadata";
@@ -292,21 +292,21 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
 
         // export the RDF of the container
         final String containerBody;
-        try (CloseableHttpResponse response = execute(new HttpGet(containerURI))) {
+        try (final CloseableHttpResponse response = execute(new HttpGet(containerURI))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             containerBody = EntityUtils.toString(response.getEntity());
         }
 
         // export the RDF of the child
         final String containedBinaryDescriptionBody;
-        try (CloseableHttpResponse response = execute(new HttpGet(containedBinaryDescriptionURI))) {
+        try (final CloseableHttpResponse response = execute(new HttpGet(containedBinaryDescriptionURI))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             containedBinaryDescriptionBody = EntityUtils.toString(response.getEntity());
         }
 
 
         // delete the container and its tombstone
-        try (CloseableHttpResponse response = execute(new HttpDelete(containerURI))) {
+        try (final CloseableHttpResponse response = execute(new HttpDelete(containerURI))) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
             try (final CloseableHttpResponse r2 = execute(new HttpGet(containerURI))) {
                 final Link tombstone = Link.valueOf(r2.getFirstHeader(LINK).getValue());
@@ -319,17 +319,17 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         // post the container from the export
         final String containerRdf = filterRdf(containerBody, CREATED_BY, CREATED_DATE, LAST_MODIFIED_BY,
                 LAST_MODIFIED_DATE, createProperty("http://purl.org/dc/elements/1.1/title"));
-        try (CloseableHttpResponse response = postResourceWithTTL(containerURI, containerRdf)) {
+        try (final CloseableHttpResponse response = postResourceWithTTL(containerURI, containerRdf)) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
         }
 
         // post the binary then patch its metadata to match the export
-        try (CloseableHttpResponse response = postBinaryResource(containerURI,
+        try (final CloseableHttpResponse response = postBinaryResource(containerURI,
                 containedBinaryURI.substring(containerURI.length() + 1), "content")) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
         }
         final String sparqlUpdate;
-        try (CloseableDataset d = getDataset(new HttpGet(containedBinaryDescriptionURI))) {
+        try (final CloseableDataset d = getDataset(new HttpGet(containedBinaryDescriptionURI))) {
             final Model model = createDefaultModel();
             model.read(new ByteArrayInputStream(containedBinaryDescriptionBody.getBytes()), "", "N3");
             final GraphDifferencer diff = new GraphDifferencer(model,
@@ -338,7 +338,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
                     LAST_MODIFIED_BY, LAST_MODIFIED_DATE);
         }
 
-        try (CloseableHttpResponse response = patchResource(containedBinaryDescriptionURI, sparqlUpdate)) {
+        try (final CloseableHttpResponse response = patchResource(containedBinaryDescriptionURI, sparqlUpdate)) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
         }
 
@@ -357,8 +357,8 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
     }
 
     private void assertIdentical(final String uri, final String originalRdf) throws IOException {
-        try (CloseableDataset roundtripped = getDataset(new HttpGet(uri))) {
-            try (CloseableDataset original = parseTriples(new ByteArrayInputStream(originalRdf.getBytes()))) {
+        try (final CloseableDataset roundtripped = getDataset(new HttpGet(uri))) {
+            try (final CloseableDataset original = parseTriples(new ByteArrayInputStream(originalRdf.getBytes()))) {
                 final DatasetGraph originalGraph = original.asDatasetGraph();
                 final DatasetGraph roundtrippedGraph = roundtripped.asDatasetGraph();
                 final Iterator<Quad> originalQuadIt = originalGraph.find();
@@ -401,13 +401,13 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
      * @return filtered triples
      */
     private String filterRdf(final String triples, final Property ... predicates) {
-        try (CloseableDataset original = parseTriples(new ByteArrayInputStream(triples.getBytes()))) {
+        try (final CloseableDataset original = parseTriples(new ByteArrayInputStream(triples.getBytes()))) {
             final Model m = original.getDefaultModel();
             final StmtIterator it = m.listStatements();
             while (it.hasNext()) {
                 final Statement stmt = it.nextStatement();
                 boolean keep = false;
-                for (Property p : predicates) {
+                for (final Property p : predicates) {
                     if (stmt.getPredicate().equals(p)) {
                         keep = true;
                         break;

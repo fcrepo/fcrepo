@@ -71,7 +71,7 @@ public class RepositoryInitializer {
         try {
             try {
                 session.getHeaders(root, null);
-            } catch (PersistentItemNotFoundException e) {
+            } catch (final PersistentItemNotFoundException e) {
                 LOGGER.info("Repository root ({}) not found. Creating...", root);
                 final RdfSourceOperation operation = this.operationFactory.createBuilder(root,
                         BASIC_CONTAINER.getURI())

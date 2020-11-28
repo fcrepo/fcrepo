@@ -24,7 +24,9 @@ import static java.util.Collections.singletonMap;
 import static java.util.stream.Stream.of;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
-import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -88,10 +90,10 @@ public class StreamingBaseHtmlProviderTest {
     public void setup() throws Exception {
 
         final Stream<Triple> triples = of(new Triple(createURI("test:subject"), createURI("test:predicate"),
-                createLiteral("test:object")), new Triple(createURI("test:subject"), type.asNode(), createURI(
-                        REPOSITORY_NAMESPACE + "Binary")));
-        final Stream<Triple> triples2 = of(new Triple(createURI("test:subject2"), type.asNode(), createURI(
-                REPOSITORY_NAMESPACE + "Container")));
+                createLiteral("test:object")), new Triple(createURI("test:subject"), type.asNode(),
+                FEDORA_BINARY.asNode()));
+        final Stream<Triple> triples2 = of(new Triple(createURI("test:subject2"), type.asNode(),
+                FEDORA_CONTAINER.asNode()));
         @SuppressWarnings("resource")
         final DefaultRdfStream stream = new DefaultRdfStream(createURI("test:subject"), triples);
         @SuppressWarnings("resource")
@@ -149,7 +151,7 @@ public class StreamingBaseHtmlProviderTest {
                 return "I am pretending to merge a template for you.";
             }
         }).when(mockTemplate).merge(isA(Context.class), isA(Writer.class));
-        setField(testProvider, "templatesMap", singletonMap(REPOSITORY_NAMESPACE + "Binary",
+        setField(testProvider, "templatesMap", singletonMap(FEDORA_BINARY.getURI(),
                 mockTemplate));
         testProvider.writeTo(testData, RdfNamespacedStream.class, mock(Type.class),
                 new Annotation[]{}, MediaType.valueOf("text/html"),
@@ -203,7 +205,7 @@ public class StreamingBaseHtmlProviderTest {
         }).when(mockTemplate).merge(isA(Context.class), isA(Writer.class));
 
         setField(testProvider, "templatesMap",
-                 ImmutableMap.of(REPOSITORY_NAMESPACE + "Container", mockTemplate));
+                 ImmutableMap.of(FEDORA_CONTAINER.getURI(), mockTemplate));
         testProvider.writeTo(testData2, RdfNamespacedStream.class, mock(Type.class),
                 new Annotation[] {}, MediaType
                         .valueOf("text/html"),

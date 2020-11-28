@@ -318,7 +318,7 @@ public class EventAccumulatorImplTest {
     private static URI uri(final String uri) {
         try {
             return new URI(uri);
-        } catch (URISyntaxException e) {
+        } catch (final URISyntaxException e) {
             throw new RuntimeException(e);
         }
     }

@@ -22,7 +22,9 @@ import org.junit.Test;
 
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
-import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_CONTAINMENT;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MEMBERSHIP;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MINIMAL_CONTAINER;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -49,7 +51,7 @@ public class LdpPreferTagTest {
     @Test
     public void testMinimalContainer() {
         final PreferTag prefer
-                = new PreferTag("return=representation; include=\"" + LDP_NAMESPACE + "PreferMinimalContainer\"");
+                = new PreferTag("return=representation; include=\"" + PREFER_MINIMAL_CONTAINER + "\"");
         testObj = new LdpPreferTag(prefer);
 
         assertTrue(testObj.prefersServerManaged());
@@ -62,8 +64,8 @@ public class LdpPreferTagTest {
     @Test
     public void testPreferMembership() {
         final PreferTag prefer
-                = new PreferTag("return=representation; include=\"" + LDP_NAMESPACE + "PreferMinimalContainer "
-                                                                    + LDP_NAMESPACE + "PreferMembership\"");
+                = new PreferTag("return=representation; include=\"" + PREFER_MINIMAL_CONTAINER + " "
+                                                                    + PREFER_MEMBERSHIP + "\"");
         testObj = new LdpPreferTag(prefer);
 
         assertTrue(testObj.prefersMembership());
@@ -72,8 +74,8 @@ public class LdpPreferTagTest {
     @Test
     public void testPreferContainment() {
         final PreferTag prefer
-                = new PreferTag("return=representation; include=\"" + LDP_NAMESPACE + "PreferMinimalContainer "
-                                                                    + LDP_NAMESPACE + "PreferContainment\"");
+                = new PreferTag("return=representation; include=\"" + PREFER_MINIMAL_CONTAINER + " "
+                                                                    + PREFER_CONTAINMENT + "\"");
         testObj = new LdpPreferTag(prefer);
 
         assertTrue(testObj.prefersContainment());
@@ -82,8 +84,8 @@ public class LdpPreferTagTest {
     @Test
     public void testPreferContainmentAndMembership() {
         final PreferTag prefer
-                = new PreferTag("return=representation; include=\"" + LDP_NAMESPACE + "PreferMembership "
-                                                                    + LDP_NAMESPACE + "PreferContainment\"");
+                = new PreferTag("return=representation; include=\"" + PREFER_MEMBERSHIP + " "
+                                                                    + PREFER_CONTAINMENT + "\"");
         testObj = new LdpPreferTag(prefer);
 
         assertTrue(testObj.prefersMembership());
@@ -93,8 +95,8 @@ public class LdpPreferTagTest {
     @Test
     public void testPreferOmitContainmentAndMembership() {
         final PreferTag prefer
-                = new PreferTag("return=representation; omit=\"" + LDP_NAMESPACE + "PreferMembership "
-                                                                 + LDP_NAMESPACE + "PreferContainment\"");
+                = new PreferTag("return=representation; omit=\"" + PREFER_MEMBERSHIP + " "
+                                                                 + PREFER_CONTAINMENT + "\"");
         testObj = new LdpPreferTag(prefer);
 
         assertFalse(testObj.prefersMembership());

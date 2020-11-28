@@ -43,7 +43,7 @@ public class Condition {
         }
 
         public static Operator fromString(final String str) {
-            for (Operator o : Operator.values()) {
+            for (final Operator o : Operator.values()) {
                 if (o.value.equals(str)) {
                     return o;
                 }

@@ -71,7 +71,7 @@ public class ServletContainerAuthFilter implements Filter {
         if (servletUser != null) {
             log.debug("There is a servlet user: {}", servletUser.getName());
             final Set<String> roles = new HashSet<>();
-            for (String roleName : ROLE_NAMES) {
+            for (final String roleName : ROLE_NAMES) {
                 log.debug("Testing role {}", roleName);
                 if (httpRequest.isUserInRole(roleName)) {
                     log.debug("Servlet user {} has servlet role: {}", servletUser.getName(), roleName);

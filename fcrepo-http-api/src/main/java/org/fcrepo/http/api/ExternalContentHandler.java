@@ -193,10 +193,10 @@ public class ExternalContentHandler implements ExternalContent {
                 throw new ExternalMessageBodyException("Unable to access external binary at URI " + uri, e);
             }
         } else if ("http".equals(scheme) || "https".equals(scheme)) {
-            try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            try (final CloseableHttpClient httpClient = HttpClients.createDefault()) {
                 final HttpHead httpHead = new HttpHead(uri);
                 httpHead.setHeader("Accept-Encoding", "identity");
-                try (CloseableHttpResponse response = httpClient.execute(httpHead)) {
+                try (final CloseableHttpResponse response = httpClient.execute(httpHead)) {
                     if (response.getStatusLine().getStatusCode() != SC_OK) {
                         throw new ExternalMessageBodyException("Unable to access external binary at URI " + uri
                                 + " received response " + response.getStatusLine().getStatusCode());

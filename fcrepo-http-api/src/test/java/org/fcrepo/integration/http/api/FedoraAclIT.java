@@ -30,11 +30,11 @@ import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.api.FedoraAcl.ROOT_AUTHORIZATION_PROPERTY;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
-import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_NAMESPACE_VALUE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -131,8 +131,8 @@ public class FedoraAclIT extends AbstractResourceIT {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertTrue(graph.contains(ANY,
                                       createURI(aclLocation),
-                                      createURI(RDF_NAMESPACE + "type"),
-                                      createURI(LDP_NAMESPACE + "RDFSource")));
+                                      type.asNode(),
+                                      RDF_SOURCE.asNode()));
         }
     }
 

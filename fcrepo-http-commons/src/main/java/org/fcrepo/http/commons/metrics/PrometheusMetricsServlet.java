@@ -42,7 +42,7 @@ public class PrometheusMetricsServlet extends MetricsServlet {
             final var field = MetricsServlet.class.getDeclaredField("registry");
             field.setAccessible(true);
             field.set(this, collector);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
+        } catch (final NoSuchFieldException | IllegalAccessException e) {
             throw new ServletException(e);
         }
 

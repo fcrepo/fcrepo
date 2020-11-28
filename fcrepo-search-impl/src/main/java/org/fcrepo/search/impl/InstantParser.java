@@ -62,7 +62,7 @@ public class InstantParser {
      * @return an instant
      */
     public static Instant parse(final String dateString) {
-        for (DateTimeFormatter formatter : VALID_DATE_FORMATS) {
+        for (final DateTimeFormatter formatter : VALID_DATE_FORMATS) {
             try {
                 final var temporalAccessor = formatter.parse(dateString);
                 return Instant.from(temporalAccessor);

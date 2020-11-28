@@ -56,7 +56,7 @@ class DeleteResourcePersister extends AbstractPersister {
             ResourceHeaderUtils.touchModificationHeaders(headers, operation.getUserPrincipal());
 
             objectSession.deleteContentFile(new ResourceHeadersAdapter(headers).asStorageHeaders());
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             throw new PersistentStorageException(
                     String.format("Failed to delete resource content for %s", resourceId), e);
         }

@@ -94,7 +94,7 @@ public class ExternalContentPathValidatorIT extends AbstractResourceIT {
     }
 
     private static void addAllowedPath(final File allowedFile, final String allowed) throws Exception {
-        try (BufferedWriter writer = Files.newBufferedWriter(allowedFile.toPath(), APPEND)) {
+        try (final BufferedWriter writer = Files.newBufferedWriter(allowedFile.toPath(), APPEND)) {
             writer.write(allowed + System.lineSeparator());
         }
     }

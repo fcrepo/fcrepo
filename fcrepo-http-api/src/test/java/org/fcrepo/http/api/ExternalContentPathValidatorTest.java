@@ -344,7 +344,7 @@ public class ExternalContentPathValidatorTest {
         Thread.sleep(5000);
 
         // Add a new allowed path
-        try (BufferedWriter writer = Files.newBufferedWriter(allowListFile.toPath(), APPEND)) {
+        try (final BufferedWriter writer = Files.newBufferedWriter(allowListFile.toPath(), APPEND)) {
             writer.write(dataUri + System.lineSeparator());
         }
 
@@ -367,7 +367,7 @@ public class ExternalContentPathValidatorTest {
     }
 
     private void addAllowedPath(final String allowed) throws Exception {
-        try (BufferedWriter writer = Files.newBufferedWriter(allowListFile.toPath(), APPEND)) {
+        try (final BufferedWriter writer = Files.newBufferedWriter(allowListFile.toPath(), APPEND)) {
             writer.write(allowed + System.lineSeparator());
         }
         validator.init();

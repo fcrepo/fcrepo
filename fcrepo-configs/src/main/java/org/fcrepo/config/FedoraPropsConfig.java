@@ -93,7 +93,7 @@ public class FedoraPropsConfig extends BasePropsConfig {
         LOGGER.debug("Fedora home data: {}", fedoraData);
         try {
             Files.createDirectories(fedoraHome);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new IOException(String.format("Failed to create Fedora home directory at %s." +
                     " Fedora home can be configured by setting the %s property.", fedoraHome, FCREPO_HOME_PROPERTY), e);
         }

@@ -204,7 +204,7 @@ public class LDPContainerIT extends AbstractResourceIT {
                 "DELETE { <> ldp:membershipResource <" + parentURI + "> ;\n" +
                 "ldp:hasMemberRelation <" + PCDM_HAS_MEMBER + "> ;\n" +
                 "ldp:insertedContentRelation <" + PROXY_FOR.getURI() + "> . } WHERE {}"));
-        try (CloseableHttpResponse response = execute(patch)) {
+        try (final CloseableHttpResponse response = execute(patch)) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
         }
 
@@ -379,7 +379,7 @@ public class LDPContainerIT extends AbstractResourceIT {
                 "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
                 "DELETE { <> ldp:membershipResource <" + parentURI + "> ;\n" +
                 "ldp:hasMemberRelation <" + PCDM_HAS_MEMBER + "> . } WHERE {}"));
-        try (CloseableHttpResponse response = execute(patch)) {
+        try (final CloseableHttpResponse response = execute(patch)) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
         }
 
@@ -466,7 +466,7 @@ public class LDPContainerIT extends AbstractResourceIT {
         patch.setEntity(new StringEntity(
                 "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
                 "INSERT { <> ldp:hasMemberRelation ldp:member } WHERE {}\n"));
-        try (CloseableHttpResponse response = execute(patch)) {
+        try (final CloseableHttpResponse response = execute(patch)) {
             assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response));
         }
 
@@ -505,7 +505,7 @@ public class LDPContainerIT extends AbstractResourceIT {
         patch.setEntity(new StringEntity(
                 "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
                 "INSERT { <> ldp:membershipResource <" + membershipResc2URI + "> } WHERE {}\n"));
-        try (CloseableHttpResponse response = execute(patch)) {
+        try (final CloseableHttpResponse response = execute(patch)) {
             assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response));
         }
 
@@ -600,7 +600,7 @@ public class LDPContainerIT extends AbstractResourceIT {
                 "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
                 "DELETE { <> ldp:hasMemberRelation <" + PCDM_HAS_MEMBER + "> . }" +
                 "INSERT { <> ldp:hasMemberRelation ldp:member } WHERE {}\n"));
-        try (CloseableHttpResponse response = execute(patch)) {
+        try (final CloseableHttpResponse response = execute(patch)) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
         }
 
@@ -651,7 +651,7 @@ public class LDPContainerIT extends AbstractResourceIT {
                 "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
                 "DELETE { <> ldp:isMemberOfRelation <" + EX_IS_MEMBER_PROP + "> . }" +
                 "INSERT { <> ldp:isMemberOfRelation ldp:member } WHERE {}\n"));
-        try (CloseableHttpResponse response = execute(patch)) {
+        try (final CloseableHttpResponse response = execute(patch)) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
         }
 

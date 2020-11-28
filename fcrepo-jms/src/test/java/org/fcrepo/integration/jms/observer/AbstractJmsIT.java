@@ -76,8 +76,9 @@ import static javax.jms.Session.AUTO_ACKNOWLEDGE;
 
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.observer.EventType.INBOUND_REFERENCE;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_CREATION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_DELETION;
@@ -99,13 +100,13 @@ abstract class AbstractJmsIT implements MessageListener {
      */
     private static final long TIMEOUT = 20000;
 
-    private String testIngested = "/testMessageFromIngestion-" + randomUUID();
+    private final String testIngested = "/testMessageFromIngestion-" + randomUUID();
 
-    private String testRemoved = "/testMessageFromRemoval-" + randomUUID();
+    private final String testRemoved = "/testMessageFromRemoval-" + randomUUID();
 
-    private String testFile = "/testMessageFromFile-" + randomUUID() + "/file1";
+    private final String testFile = "/testMessageFromFile-" + randomUUID() + "/file1";
 
-    private String testMeta = "/testMessageFromMetadata-" + randomUUID();
+    private final String testMeta = "/testMessageFromMetadata-" + randomUUID();
 
     private static final String USER = "fedoraAdmin";
     private static final String TEST_USER_AGENT = "FedoraClient/1.0";
@@ -210,7 +211,7 @@ abstract class AbstractJmsIT implements MessageListener {
             final String sparql1 = "insert data { <> <http://foo.com/prop> \"foo\" . }";
             updatePropertiesService.updateProperties(tx.getId(), USER, fedoraId, sparql1);
             tx.commit();
-            awaitMessageOrFail(externalId, RESOURCE_MODIFICATION.getType(), REPOSITORY_NAMESPACE + "Container");
+            awaitMessageOrFail(externalId, RESOURCE_MODIFICATION.getType(), FEDORA_CONTAINER.getURI());
         });
 
         doInTx(tx -> {
@@ -218,7 +219,7 @@ abstract class AbstractJmsIT implements MessageListener {
                     + "insert { <> <http://foo.com/prop> \"bar\" . } where {}";
             updatePropertiesService.updateProperties(tx.getId(), USER, fedoraId, sparql2);
             tx.commit();
-            awaitMessageOrFail(externalId, RESOURCE_MODIFICATION.getType(), REPOSITORY_NAMESPACE + "Resource");
+            awaitMessageOrFail(externalId, RESOURCE_MODIFICATION.getType(), FEDORA_RESOURCE.getURI());
         });
     }
 

@@ -17,9 +17,9 @@
  */
 package org.fcrepo.kernel.api;
 
-import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
-import static org.fcrepo.kernel.api.RdfLexicon.PREMIS_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.apache.jena.vocabulary.DC_11.title;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -30,16 +30,17 @@ import org.junit.Test;
  * <p>RdfLexiconTest class.</p>
  *
  * @author ajs6f
+ * @author whikloj
  */
 public class RdfLexiconTest {
 
     @Test
     public void repoPredicatesAreManaged() {
-        assertTrue(isManagedPredicate.test(createProperty(PREMIS_NAMESPACE + "hasMessageDigest")));
-        assertTrue(isManagedPredicate.test(createProperty(REPOSITORY_NAMESPACE + "hasParent")));
+        assertTrue(isManagedPredicate.test(HAS_MESSAGE_DIGEST));
+        assertTrue(isManagedPredicate.test(CREATED_BY));
     }
     @Test
     public void otherPredicatesAreNotManaged() {
-        assertFalse(isManagedPredicate.test(createProperty("http://purl.org/dc/elements/1.1/title")));
+        assertFalse(isManagedPredicate.test(title));
     }
 }

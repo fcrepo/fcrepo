@@ -39,7 +39,7 @@ public enum Storage {
     }
 
     public static Storage fromString(final String value) {
-        for (var storage : values()) {
+        for (final var storage : values()) {
             if (storage.value.equalsIgnoreCase(value)) {
                 return storage;
             }

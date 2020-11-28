@@ -62,7 +62,7 @@ public class FedoraCrudConcurrentIT extends AbstractResourceIT {
 
         final int[] numThreadsToTest = {2, 4, 8, 16, 32};
         logger.info("# Start CRUD concurrent performance testing...");
-        for (int aNumThreadsToTest : numThreadsToTest) {
+        for (final int aNumThreadsToTest : numThreadsToTest) {
             startCrudConcurrentPerformanceTest(aNumThreadsToTest);
         }
     }
@@ -247,7 +247,7 @@ public class FedoraCrudConcurrentIT extends AbstractResourceIT {
     }
 
     private static void startThreads(final List<HttpRunner> tasks) throws InterruptedException {
-        for (HttpRunner task : tasks) {
+        for (final HttpRunner task : tasks) {
 
             final Thread thread = new Thread(task);
             thread.run();
@@ -296,7 +296,7 @@ public class FedoraCrudConcurrentIT extends AbstractResourceIT {
                             taskName, request.getURI().toString(),
                             statusCode, String.valueOf(responseTime));
                 assertEquals(taskName + " exited abnormally.", expectedStatusCode, statusCode);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 logger.error("Error {} {} got IOException: {}", taskName, request.getURI().toString(), e.getMessage());
             } finally {
                 request.releaseConnection();

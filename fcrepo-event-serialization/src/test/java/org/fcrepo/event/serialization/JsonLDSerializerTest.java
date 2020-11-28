@@ -31,8 +31,9 @@ import java.util.List;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.PROV_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -98,8 +99,8 @@ public class JsonLDSerializerTest extends EventSerializerTestBase {
             types.add(n.textValue());
         });
         assertEquals(types.size(), 4);
-        assertTrue(types.contains(REPOSITORY_NAMESPACE + "Resource"));
-        assertTrue(types.contains(REPOSITORY_NAMESPACE + "Container"));
+        assertTrue(types.contains(FEDORA_RESOURCE.getURI()));
+        assertTrue(types.contains(FEDORA_CONTAINER.getURI()));
         assertTrue(types.contains(PROV_NAMESPACE + "Entity"));
         assertTrue(types.contains("http://example.com/SampleType"));
     }

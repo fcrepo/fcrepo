@@ -124,8 +124,9 @@ import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_CONTAINMENT;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
@@ -415,7 +416,7 @@ public class FedoraLdpTest {
         assertTrue("Should have a Preference-Applied header", mockResponse.containsHeader("Preference-Applied"));
         assertTrue("Should have a Vary header", mockResponse.containsHeader("Vary"));
         assertTrue("Should be an LDP Resource",
-                mockResponse.getHeaders(LINK).contains("<" + LDP_NAMESPACE + "Resource>; rel=\"type\""));
+                mockResponse.getHeaders(LINK).contains("<" + RESOURCE + ">; rel=\"type\""));
     }
 
     @Test
@@ -627,7 +628,7 @@ public class FedoraLdpTest {
         assertTrue("Should have a Link header", mockResponse.containsHeader(LINK));
         assertTrue("Should have an Allow header", mockResponse.containsHeader("Allow"));
         assertTrue("Should be an LDP Resource",
-                mockResponse.getHeaders(LINK).contains("<" + LDP_NAMESPACE + "Resource>; rel=\"type\""));
+                mockResponse.getHeaders(LINK).contains("<" + RESOURCE + ">; rel=\"type\""));
 
         try (final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity()) {
             final Model model = entity.stream.collect(toModel());
@@ -790,7 +791,7 @@ public class FedoraLdpTest {
         setResource(Container.class);
         when(mockRequest.getMethod()).thenReturn("GET");
         setField(testObj, "prefer",
-                new MultiPrefer("return=representation; omit=\"" + LDP_NAMESPACE + "PreferContainment\""));
+                new MultiPrefer("return=representation; omit=\"" + PREFER_CONTAINMENT + "\""));
         final Response actual = testObj.getResource( null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
 
@@ -808,7 +809,7 @@ public class FedoraLdpTest {
         setResource(Container.class);
         when(mockRequest.getMethod()).thenReturn("GET");
         setField(testObj, "prefer",
-                new MultiPrefer("return=representation; omit=\"" + LDP_NAMESPACE + "PreferMembership\""));
+                new MultiPrefer("return=representation; omit=\"" + PREFER_MEMBERSHIP + "\""));
         final Response actual = testObj.getResource(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
 
@@ -857,7 +858,7 @@ public class FedoraLdpTest {
 
     private void assertShouldBeAnLDPNonRDFSource() {
         assertTrue("Should be an LDP NonRDFSource",
-                mockResponse.getHeaders(LINK).contains("<" + LDP_NAMESPACE + "NonRDFSource>; rel=\"type\""));
+                mockResponse.getHeaders(LINK).contains("<" + NON_RDF_SOURCE + ">; rel=\"type\""));
         assertShouldNotAdvertiseAcceptPostFlavors();
     }
 
@@ -876,8 +877,8 @@ public class FedoraLdpTest {
         when(mockResource.getContent()).thenReturn(toInputStream("xyz", UTF_8));
         final Response actual = testObj.getResource(null);
         assertEquals(TEMPORARY_REDIRECT.getStatusCode(), actual.getStatus());
-        assertTrue("Should be an LDP NonRDFSource", mockResponse.getHeaders(LINK).contains("<" + LDP_NAMESPACE +
-                "NonRDFSource>; rel=\"type\""));
+        assertTrue("Should be an LDP NonRDFSource", mockResponse.getHeaders(LINK).contains("<" +
+                NON_RDF_SOURCE + ">; rel=\"type\""));
         assertShouldContainLinkToBinaryDescription();
         assertEquals(new URI(url), actual.getLocation());
     }
