@@ -158,6 +158,19 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
     }
 
     @Override
+    public FedoraId getArchivalGroupId() {
+        return kernelHeaders.getArchivalGroupId();
+    }
+
+    /**
+     * @param archivalGroupId the archivalGroupId to set
+     */
+    public void setArchivalGroupId(final FedoraId archivalGroupId) {
+        kernelHeaders.setArchivalGroupId(archivalGroupId);
+        storageHeaders.withArchivalGroupId(idToString(archivalGroupId));
+    }
+
+    @Override
     public String getStateToken() {
         return kernelHeaders.getStateToken();
     }

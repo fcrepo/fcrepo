@@ -61,17 +61,22 @@ abstract class AbstractRdfSourcePersister extends AbstractPersister {
      * @param objectSession The object session.
      * @param operation The operation
      * @param rootId The fedora root object identifier tha maps to the OCFL object root.
+     * @param isArchivalPart indicates if the resource is an AG part resource, ignored on update
      * @throws PersistentStorageException
      */
     protected void persistRDF(final OcflObjectSession objectSession,
                               final ResourceOperation operation,
-                              final FedoraId rootId) throws PersistentStorageException {
+                              final FedoraId rootId,
+                              final boolean isArchivalPart) throws PersistentStorageException {
 
         final RdfSourceOperation rdfSourceOp = (RdfSourceOperation)operation;
         log.debug("persisting RDFSource ({}) to OCFL", operation.getResourceId());
 
-        final var headers = createHeaders(objectSession, rdfSourceOp,
-                operation.getResourceId().equals(rootId));
+        final var headers = createHeaders(
+                objectSession,
+                rdfSourceOp,
+                operation.getResourceId().equals(rootId),
+                isArchivalPart ? rootId : null);
 
         writeRdf(objectSession, headers, rdfSourceOp.getTriples());
     }
@@ -83,12 +88,14 @@ abstract class AbstractRdfSourcePersister extends AbstractPersister {
      * @param objSession the object session
      * @param operation the operation being persisted
      * @param objectRoot indicates this is the object root
+     * @param archivalGroupId for AG parts, the id of the containg AG, otherwise null
      * @return populated resource headers
      */
     private ResourceHeadersImpl createHeaders(final OcflObjectSession objSession,
                                           final RdfSourceOperation operation,
-                                          final boolean objectRoot) throws PersistentStorageException {
-        final var headers = createCommonHeaders(objSession, operation, objectRoot);
+                                          final boolean objectRoot,
+                                          final FedoraId archivalGroupId) throws PersistentStorageException {
+        final var headers = createCommonHeaders(objSession, operation, objectRoot, archivalGroupId);
         overrideRelaxedProperties(headers, operation);
         return headers;
     }

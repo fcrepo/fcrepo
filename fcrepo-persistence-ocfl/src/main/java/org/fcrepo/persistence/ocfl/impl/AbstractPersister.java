@@ -87,18 +87,6 @@ abstract class AbstractPersister implements Persister {
         }
     }
 
-    /**
-     * Resolves the fedora root object identifier associated with the operation's resource identifier.
-     * @param fedoraId The fedoraId of the resource the being acted on
-     * @param session The OCFL persistent storage session.
-     * @return The fedora root object identifier associated with the resource described by the operation.
-     */
-    protected FedoraId resolveRootObjectId(final FedoraId fedoraId,
-                                       final OcflPersistentStorageSession session) {
-        final var archivalGroupId = findArchivalGroupInAncestry(fedoraId, session);
-        return archivalGroupId.orElseGet(fedoraId::asBaseId);
-    }
-
     protected Optional<FedoraId> findArchivalGroupInAncestry(final FedoraId fedoraId,
                                                              final OcflPersistentStorageSession session) {
             if (fedoraId.isRepositoryRoot()) {
@@ -142,7 +130,9 @@ abstract class AbstractPersister implements Persister {
 
     protected ResourceHeadersImpl createCommonHeaders(final OcflObjectSession session,
                                                       final ResourceOperation operation,
-                                                      final boolean isResourceRoot) throws PersistentStorageException {
+                                                      final boolean isResourceRoot,
+                                                      final FedoraId archivalGroupId)
+            throws PersistentStorageException {
         final var now = Instant.now();
 
         final ResourceHeadersImpl headers;
@@ -155,6 +145,7 @@ abstract class AbstractPersister implements Persister {
             ResourceHeaderUtils.touchCreationHeaders(headers, createOperation.getUserPrincipal(), now);
             headers.setArchivalGroup(createOperation.isArchivalGroup());
             headers.setObjectRoot(isResourceRoot);
+            headers.setArchivalGroupId(archivalGroupId);
         } else {
             headers = new ResourceHeadersAdapter(session.readHeaders(operation.getResourceId().getResourceId()))
                     .asKernelHeaders();

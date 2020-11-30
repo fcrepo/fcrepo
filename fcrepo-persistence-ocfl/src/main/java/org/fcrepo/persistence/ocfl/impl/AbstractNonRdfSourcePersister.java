@@ -61,11 +61,13 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
      * @param operation The operation to perform the persistence routine on
      * @param objectSession The ocfl object session
      * @param rootIdentifier The fedora object root identifier associated with the resource to be persisted.
+     * @param isArchivalPart indicates if the resource is an AG part resource, ignored on update
      * @throws PersistentStorageException thrown if writing fails
      */
     protected void persistNonRDFSource(final ResourceOperation operation,
                                        final OcflObjectSession objectSession,
-                                       final FedoraId rootIdentifier)
+                                       final FedoraId rootIdentifier,
+                                       final boolean isArchivalPart)
             throws PersistentStorageException {
         final var resourceId = operation.getResourceId();
 
@@ -74,8 +76,10 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
         final var nonRdfSourceOperation = (NonRdfSourceOperation) operation;
 
         final var headers = new ResourceHeadersAdapter(
-                createHeaders(objectSession, nonRdfSourceOperation,
-                resourceId.equals(rootIdentifier)));
+                createHeaders(objectSession,
+                        nonRdfSourceOperation,
+                        resourceId.equals(rootIdentifier),
+                        isArchivalPart ? rootIdentifier : null));
 
         if (forExternalBinary(nonRdfSourceOperation)) {
             objectSession.writeResource(headers.asStorageHeaders(), null);
@@ -105,13 +109,15 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
      * @param objSession the object session
      * @param op the operation being persisted
      * @param objectRoot flag indicating whether or not headerPath represents the object root resource
+     * @param archivalGroupId for AG parts, the id of the containg AG, otherwise null
      * @return populated resource headers
      */
     private ResourceHeadersImpl createHeaders(final OcflObjectSession objSession,
                                               final NonRdfSourceOperation op,
-                                              final boolean objectRoot) throws PersistentStorageException {
+                                              final boolean objectRoot,
+                                              final FedoraId archivalGroupId) throws PersistentStorageException {
 
-        final var headers = createCommonHeaders(objSession, op, objectRoot);
+        final var headers = createCommonHeaders(objSession, op, objectRoot, archivalGroupId);
 
         ResourceHeaderUtils.populateBinaryHeaders(headers,
                 op.getMimeType(),

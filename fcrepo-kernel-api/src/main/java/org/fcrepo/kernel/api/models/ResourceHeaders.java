@@ -45,6 +45,14 @@ public interface ResourceHeaders {
     FedoraId getParent();
 
     /**
+     * Get the identifier of the archival group resource that contains this resource, or null if the resource is not
+     * an archival part resource
+     *
+     * @return identifier of the containing archival group resource or null
+     */
+    FedoraId getArchivalGroupId();
+
+    /**
      * Get the State Token value for the resource.
      *
      * @return state-token value
@@ -136,7 +144,7 @@ public interface ResourceHeaders {
 
     /**
      * Determine whether a resource is the object root
-     * @return
+     * @return true if the resource is at the root of a persistence object
      */
     boolean isObjectRoot();
 
