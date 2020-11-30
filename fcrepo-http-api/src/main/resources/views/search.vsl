@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+#set( $title = "Search" )
+
+#parse("views/common.vsl")
+<html>
+<head>
+    <title>$title</title>
+    <meta charset="UTF-8">
+    #parse("views/common-head.vsl")
+</head>
+
+
+<body  class="fcrepo_container">
+<div  id="main" class="container">
+    #parse("views/common-header.vsl")
+
+
+    <div class="row">
+
+        <div id="sidebar" class="col-md-3 col-md-push-9 clearfix">
+            <button id="toggle-actions" type="button" class="visible-xs visible-sm btn btn-danger" data-toggle="collapse" data-target=".actions">
+                <span>Toggle actions</span>
+            </button>
+
+            ## output actions
+            <div class="actions collapse visible-lg visible-md" id="actions">
+
+                <form id="action_search" method="GET">
+                    <div class="form-group">
+                        <label for="search_query" class="control-label">
+                            Query
+                        </label>
+                        <input type="text" id="search_query" placeholder="(condition=fedora_id%3D*)" class="form-control"/>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="metadata" class="col-md-9 col-md-pull-3">
+
+            ##parse("views/common-metadata.vsl")
+
+        ## output triples for the topic node
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">Properties</h4>
+                </div>
+                <div class="panel-body">
+                    $json
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -45,6 +45,7 @@ import java.util.List;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.ok;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -84,7 +85,8 @@ public class FedoraSearch extends FedoraBaseResource {
      */
     @GET
     @Produces({APPLICATION_JSON + ";qs=1.0",
-            TEXT_PLAIN_WITH_CHARSET})
+            TEXT_PLAIN_WITH_CHARSET,
+            TEXT_HTML_WITH_CHARSET})
     public Response doSearch(@QueryParam(value = "condition") final List<String> conditions,
                              @QueryParam(value = "fields") final String fields,
                              @DefaultValue("100") @QueryParam("max_results") final int maxResults,

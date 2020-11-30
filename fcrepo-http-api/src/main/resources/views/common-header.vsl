@@ -44,6 +44,7 @@
                   #end
                 </ul>
             </li>
+            <li><a href="$uriInfo.baseUriBuilder.build()fcr:search">Search</a></li>
         </ul>
     </div>
 </nav>

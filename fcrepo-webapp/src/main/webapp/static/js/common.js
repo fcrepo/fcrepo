@@ -255,6 +255,18 @@
       e.preventDefault();
   }
 
+  function doSearch(e) {
+      const data = document.getElementById('search_query').value;
+      http('GET', window.location, [], data, function(res) {
+        if (res.status == 200) {
+          window.location.reload(true);
+        } else {
+          ajaxErrorHandler(res);
+        }
+      });
+      e.preventDefault();
+  }
+
   function ajaxErrorHandler(xhr, errorThrown) {
       document.getElementById('errorLabel').textContent = errorThrown || xhr.statusText;
       document.getElementById('errorText').textContent = xhr.responseText;
@@ -324,6 +336,7 @@
       listen('action_create_version', 'submit', createVersionSnapshot);
       listen('action_enable_version', 'submit', enableVersioning);
       listen('action_update_file', 'submit', updateFile);
+      listen('action_search', 'submit', doSearch);
 
       const links = document.querySelectorAll('a[property][href*="' + location.host + '"],#childList a,.breadcrumb a,.version_link');
       for (var i = 0; i < links.length; ++i) {
