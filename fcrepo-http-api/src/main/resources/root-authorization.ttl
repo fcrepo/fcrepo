@@ -8,7 +8,7 @@
 
 <info:fedora/fcr:acl#authz> a acl:Authorization ;
    rdfs:label "Root Authorization" ;
-   rdfs:comment "By default, all non-Admin agents (foaf:Agent) only have read access (acl:Read) to the respository" ;
+   rdfs:comment "By default, all non-Admin agents (foaf:Agent) only have read access (acl:Read) to the repository" ;
    acl:agentClass foaf:Agent ;
    acl:mode acl:Read ;
    acl:accessTo <info:fedora> ;
