@@ -28,10 +28,8 @@ import java.util.Map;
 
 import javax.ws.rs.core.UriInfo;
 
-import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.RdfStream;
@@ -64,19 +62,17 @@ public class HttpTripleUtil implements ApplicationContextAware {
      * @param rdfStream the source stream we'll add named models to
      * @param resource the FedoraResourceImpl in question
      * @param uriInfo a JAX-RS UriInfo object to build URIs to resources
-     * @param idTranslator the id translator
      * @return an RdfStream with the added triples
      */
     public RdfStream addHttpComponentModelsForResourceToStream(final RdfStream rdfStream,
-            final FedoraResource resource, final UriInfo uriInfo,
-            final IdentifierConverter<Resource,FedoraResource> idTranslator) {
+            final FedoraResource resource, final UriInfo uriInfo) {
 
         LOGGER.debug("Adding additional HTTP context triples to stream");
         return new DefaultRdfStream(rdfStream.topic(), concat(rdfStream, getUriAwareTripleFactories().entrySet()
                     .stream().flatMap(e -> {
             LOGGER.debug("Adding response information using: {}", e.getKey());
-            return stream(spliteratorUnknownSize(e.getValue().createModelForResource(resource, uriInfo,
-                        idTranslator).listStatements(), IMMUTABLE), false).map(Statement::asTriple);
+            return stream(spliteratorUnknownSize(e.getValue().createModelForResource(resource, uriInfo)
+                    .listStatements(), IMMUTABLE), false).map(Statement::asTriple);
         })));
     }
 

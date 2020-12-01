@@ -41,9 +41,13 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
+import org.fcrepo.http.commons.domain.MultiPrefer;
+import org.fcrepo.http.commons.domain.SinglePrefer;
+import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.http.commons.session.TransactionProvider;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.TransactionUtils;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
@@ -70,6 +74,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -325,7 +330,14 @@ public class WebACFilter extends RequestContextFilter {
                     return false;
                 }
             } else {
-                return currentUser.isPermitted(toRead);
+                if (currentUser.isPermitted(toRead)) {
+                    if (!isAuthorizedForContainedResources(httpRequest, currentUser, resource)) {
+                        log.debug("GET/HEAD/OPTIONS request to {} denied, user {} not authorized for an embedded " +
+                                "resource", requestURL, currentUser.toString());
+                        return false;
+                    }
+                    return true;
+                }
             }
         case "PUT":
             if (isAcl) {
@@ -706,6 +718,58 @@ public class WebACFilter extends RequestContextFilter {
     private static boolean isBinaryOrDescription(final FedoraResource resource) {
         return resource.getTypes().stream().map(URI::toString)
                 .anyMatch(t -> t.equals(NON_RDF_SOURCE.toString()) || t.equals(FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI));
+    }
+
+    /**
+     * Determine if the request is for embedding container resource descriptions.
+     * @param request the request
+     * @return true if include the Prefer tag for http://www.w3.org/ns/oa#PreferContainedDescriptions
+     */
+    private static boolean isEmbeddedRequest(final HttpServletRequest request) {
+        final var preferTags = request.getHeaders("Prefer");
+        final Set<SinglePrefer> preferTagSet = new HashSet<>();
+        while (preferTags.hasMoreElements()) {
+            preferTagSet.add(new SinglePrefer(preferTags.nextElement()));
+        }
+        final MultiPrefer multiPrefer = new MultiPrefer(preferTagSet);
+        if (multiPrefer.hasReturn()) {
+            final LdpPreferTag ldpPreferences = new LdpPreferTag(multiPrefer.getReturn());
+            return ldpPreferences.prefersEmbed();
+        }
+        return false;
+    }
+
+    /**
+     * Is the user authorized to access the immediately contained resources of the requested resource.
+     * @param request the request
+     * @param currentUser the current user
+     * @param resource the resource being requested.
+     * @return true if authorized or not an embedded resource request on a container.
+     */
+    private boolean isAuthorizedForContainedResources(final HttpServletRequest request, final Subject currentUser,
+                                                      final FedoraResource resource) {
+        if (!isBinaryOrDescription(resource) && isEmbeddedRequest(request)) {
+            final Transaction transaction = transaction(request);
+            final Stream<FedoraResource> children = resourceFactory.getChildren(TransactionUtils.openTxId(transaction),
+                    resource.getFedoraId());
+            final Predicate<FedoraResource> cannotAccessResource = resc -> {
+                final URI childURI = URI.create(resc.getFedoraId().getFullId());
+                log.debug("Found embedded resource: {}", resc);
+                // add the contained URI to the list URIs to retrieve ACLs for
+                addURIToAuthorize(request, childURI);
+                if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_READ, childURI))) {
+                    log.debug("Failed to access embedded resource: {}", childURI);
+                    // Returning true allows us to short-circuit the anyMatch and quit faster.
+                    return true;
+                }
+                return false;
+            };
+            final boolean failures = children.anyMatch(cannotAccessResource);
+            // If failed permissions on at least one child, reject request.
+            return !failures;
+        }
+        // Is a binary or not an embedded resource request
+        return true;
     }
 
 }

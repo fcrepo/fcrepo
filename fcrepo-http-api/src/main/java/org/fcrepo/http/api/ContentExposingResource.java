@@ -37,6 +37,7 @@ import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionUtils;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
@@ -57,13 +58,10 @@ import org.fcrepo.kernel.api.models.Tombstone;
 import org.fcrepo.kernel.api.models.WebacAcl;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
-import org.fcrepo.kernel.api.services.ContainmentTriplesService;
 import org.fcrepo.kernel.api.services.CreateResourceService;
 import org.fcrepo.kernel.api.services.DeleteResourceService;
-import org.fcrepo.kernel.api.services.ManagedPropertiesService;
-import org.fcrepo.kernel.api.services.MembershipService;
-import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
+import org.fcrepo.kernel.api.services.ResourceTripleService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.api.utils.ContentDigest;
@@ -71,8 +69,6 @@ import org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jvnet.hk2.annotations.Optional;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 import javax.inject.Inject;
 import javax.servlet.ServletContext;
@@ -108,6 +104,7 @@ import static java.net.URI.create;
 import static java.text.MessageFormat.format;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Stream.empty;
+
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
@@ -216,20 +213,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected UpdatePropertiesService updatePropertiesService;
 
     @Inject
-    protected ManagedPropertiesService managedPropertiesService;
-
-    @Inject
     protected HttpRdfService httpRdfService;
 
     @Inject
-    protected ContainmentTriplesService containmentTriplesService;
-
-    @Autowired
-    @Qualifier("referenceService")
-    protected ReferenceService referenceService;
-
-    @Inject
-    protected MembershipService membershipService;
+    protected ResourceTripleService resourceTripleService;
 
     protected abstract String externalPath();
 
@@ -302,56 +289,28 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         final LdpPreferTag ldpPreferences = new LdpPreferTag(returnPreference);
 
-        final List<Stream<Triple>> streams = new ArrayList<>();
+        final List<Stream<Triple>> embedStreams = new ArrayList<>();
 
-        if (!ldpPreferences.preferNoUserRdf()) {
-            // provide user RDF only if we didn't receive an omit=ldp:PreferMinimalContainer
-            streams.add(resource.getTriples());
-        }
-        if (returnPreference.getValue().equals("minimal")) {
-            if (ldpPreferences.prefersServerManaged())  {
-                streams.add(this.managedPropertiesService.get(resource));
-                //TODO Implement minimal return preference (https://jira.lyrasis.org/browse/FCREPO-3334)
-                //streams.add(getTriples(resource, MINIMAL));
-            }
-        } else {
+        embedStreams.add(resourceTripleService.getResourceTriples(
+                transaction(), resource, ldpPreferences, limit));
 
-            // Additional server-managed triples about this resource
-            if (ldpPreferences.prefersServerManaged()) {
-                streams.add(this.managedPropertiesService.get(resource));
-            }
-
-            // containment triples about this resource
-            if (ldpPreferences.prefersContainment()) {
-                if (limit == -1) {
-                    streams.add(this.containmentTriplesService.get(transaction(), resource));
-                } else {
-                    streams.add(this.containmentTriplesService.get(transaction(), resource).limit(limit));
-                }
-            }
-
-            // LDP container membership triples for this resource
-            if (ldpPreferences.prefersMembership()) {
-                streams.add(membershipService.getMembership(transaction().getId(), resource.getFedoraId()));
-            }
-
-            // Include inbound references to this object
-            if (ldpPreferences.prefersReferences()) {
-                streams.add(referenceService.getInboundReferences(transaction().getId(), resource));
-            }
-
-            // Embed the children of this object
-            if (ldpPreferences.prefersEmbed()) {
-                //streams.add(getTriples(resource, EMBED_RESOURCES));
-            }
+        // Embed the children of this object
+        if (ldpPreferences.prefersEmbed()) {
+            final var containedResources = resourceFactory.getChildren(
+                    TransactionUtils.openTxId(transaction()),
+                    resource.getFedoraId());
+            embedStreams.add(containedResources.flatMap(child -> resourceTripleService.getResourceTriples(
+                    transaction(), child, ldpPreferences, limit)));
         }
 
-        final RdfStream rdfStream = new DefaultRdfStream(
-                asNode(resource), streams.stream().reduce(empty(), Stream::concat));
+        final var rdfStream = new DefaultRdfStream(
+                asNode(resource),
+                embedStreams.stream().reduce(empty(), Stream::concat)
+        );
 
         if (httpTripleUtil != null && ldpPreferences.prefersServerManaged()) {
-            return httpTripleUtil.addHttpComponentModelsForResourceToStream(rdfStream, resource, uriInfo,
-                    translator());
+            // Adds fixity service triple to all resources and transaction triple to repo root.
+            return httpTripleUtil.addHttpComponentModelsForResourceToStream(rdfStream, resource, uriInfo);
         }
 
         return rdfStream;

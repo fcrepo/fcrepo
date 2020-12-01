@@ -31,7 +31,6 @@ import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 
 import org.springframework.stereotype.Component;
 
@@ -47,27 +46,26 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
 
     @Override
     public Model createModelForResource(final FedoraResource resource,
-        final UriInfo uriInfo, final IdentifierConverter<Resource,FedoraResource> idTranslator) {
+        final UriInfo uriInfo) {
 
         final Model model = createDefaultModel();
 
-        final Resource s = idTranslator.reverse().convert(resource);
+        final Resource s = createResource(resource.getFedoraId().getFullId());
 
         if (resource.hasType(REPOSITORY_ROOT.getURI())) {
             addRepositoryStatements(uriInfo, model, s);
         }
 
         if (resource instanceof NonRdfSourceDescription && !resource.isMemento()) {
-            addContentStatements(idTranslator, (Binary)resource.getDescribedResource(), model);
+            addContentStatements((Binary)resource.getDescribedResource(), model);
         }
         return model;
     }
 
-    private static void addContentStatements(final IdentifierConverter<Resource,FedoraResource> idTranslator,
-                                             final Binary resource,
+    private static void addContentStatements(final Binary resource,
                                              final Model model) {
         // fcr:fixity
-        final Resource subject = idTranslator.reverse().convert(resource);
+        final Resource subject = createResource(resource.getFedoraId().getFullId());
         model.add(subject, HAS_FIXITY_SERVICE, createResource(subject.getURI() +
                 "/fcr:fixity"));
     }

@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.models;
 
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
@@ -197,5 +198,10 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
         }
 
         return types;
+    }
+
+    @Override
+    public RdfStream getTriples() {
+        return getDescription().getTriples();
     }
 }

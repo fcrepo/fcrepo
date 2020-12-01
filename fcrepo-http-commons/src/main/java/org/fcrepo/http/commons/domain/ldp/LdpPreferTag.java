@@ -30,13 +30,16 @@ import java.util.List;
 import java.util.Optional;
 
 import org.fcrepo.http.commons.domain.PreferTag;
+import org.fcrepo.kernel.api.rdf.LdpTriplePreferences;
 
 /**
  * A subclass of {@link PreferTag} that contemplates the possible preferences for Linked Data Platform requests.
  *
  * @author ajs6f
  */
-public class LdpPreferTag extends PreferTag {
+public class LdpPreferTag extends PreferTag implements LdpTriplePreferences {
+
+    private final boolean getMinimal;
 
     private final boolean membership;
 
@@ -65,10 +68,10 @@ public class LdpPreferTag extends PreferTag {
         final List<String> includes = asList(include.orElse(" ").split(" "));
         final List<String> omits = asList(omit.orElse(" ").split(" "));
 
-        final boolean minimal = preferTag.getValue().equals("minimal") || received.orElse("").equals("minimal");
+        getMinimal = preferTag.getValue().equals("minimal") || received.orElse("").equals("minimal");
 
         final boolean preferMinimalContainer = (!omits.contains(PREFER_MINIMAL_CONTAINER.toString()) &&
-                (includes.contains(PREFER_MINIMAL_CONTAINER.toString()) || minimal));
+                (includes.contains(PREFER_MINIMAL_CONTAINER.toString()) || getMinimal));
 
         noMinimal = omits.contains(PREFER_MINIMAL_CONTAINER.toString());
 
@@ -84,45 +87,40 @@ public class LdpPreferTag extends PreferTag {
         embed = includes.contains(EMBED_CONTAINED.toString());
 
         managedProperties = includes.contains(PREFER_SERVER_MANAGED.toString())
-                || (!omits.contains(PREFER_SERVER_MANAGED.toString()) && !minimal);
+                || (!omits.contains(PREFER_SERVER_MANAGED.toString()) && !getMinimal);
     }
 
-    /**
-     * @return Whether this prefer tag demands membership triples.
-     */
+    @Override
+    public boolean getMinimal() {
+        return getMinimal;
+    }
+
+    @Override
     public boolean prefersMembership() {
         return membership;
     }
 
-    /**
-     * @return Whether this prefer tag demands containment triples.
-     */
+    @Override
     public boolean prefersContainment() {
         return containment;
     }
 
-    /**
-     * @return Whether this prefer tag demands references triples.
-     */
+    @Override
     public boolean prefersReferences() {
         return references;
     }
-    /**
-     * @return Whether this prefer tag demands embedded triples.
-     */
+
+    @Override
     public boolean prefersEmbed() {
         return embed;
     }
-    /**
-     * @return Whether this prefer tag demands server managed properties.
-     */
+
+    @Override
     public boolean prefersServerManaged() {
         return managedProperties;
     }
 
-    /**
-     * @return Whether this prefer tag demands no minimal container, ie. no user RDF.
-     */
+    @Override
     public boolean preferNoUserRdf() {
         return noMinimal;
     }
