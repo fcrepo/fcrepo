@@ -1,0 +1,14 @@
+<script type="text/javascript">
+<!--
+   const fields = [
+      #foreach( $f in $fields )
+        "$f",
+      #end
+   ];
+   const operators = [
+      #foreach( $o in $operators )
+        "$o",
+      #end
+   ];
+//-->
+</script>

@@ -255,16 +255,190 @@
       e.preventDefault();
   }
 
+  /*
+   * Do the search
+   */
   function doSearch(e) {
-      const data = document.getElementById('search_query').value;
-      http('GET', window.location, [], data, function(res) {
-        if (res.status == 200) {
-          window.location.reload(true);
-        } else {
-          ajaxErrorHandler(res);
-        }
-      });
+      const searchUri = document.getElementById('main').getAttribute('page');
+      if (searchUri != undefined) {
+          const searchTerms = collectSearch();
+          const newUri = searchUri + searchTerms;
+          http('GET', newUri + (searchTerms.length > 0 ? '&' : '?') + 'max_results=0', function(res) {
+              if (res.status == 200) {
+                  window.location = newUri;
+              } else {
+                  ajaxErrorHandler(res);
+              }
+          });
+      }
       e.preventDefault();
+  }
+
+  /*
+   * Collect all the various query boxes and make a search.
+   */
+  function collectSearch() {
+      const numFields = parseInt(document.getElementById('search_count').getAttribute('value'));
+      var condition_string="";
+      for (var f = 1; f <= numFields; f += 1) {
+          let condition = document.getElementById('condition_' + f);
+          let operator = document.getElementById('operator_' + f);
+          let svalue = document.getElementById('search_value_' + f);
+          if (condition != null && operator != null && svalue != null && svalue.value != '') {
+              condition_string += (condition_string.length > 0 ? "&" : "") + "condition=" + encodeSearchCondition(condition.value + operator.value + svalue.value);
+          }
+      }
+      return (condition_string.length > 0 ? '?' : '') + condition_string;
+  }
+
+  /*
+   * Check for conditions on the URL and parse them if necessary.
+   */
+  function initializeSearchPage() {
+      const searchUri = document.getElementById('main').getAttribute('page');
+      if (searchUri != null && searchUri != '') {
+          // On the search page
+          const actionForm = document.getElementById('action_search');
+          const beforeNode = document.getElementById('search_count');
+          if (String(window.location).indexOf('?') > -1) {
+              const location = String(window.location);
+              const querystring = location.substring(location.indexOf('?') + 1);
+              var conditions = decodeSearchString(querystring);
+              if (conditions['condition'] != null) {
+                  for (var foo = 0; foo < conditions["condition"].length; foo += 1) {
+                      const c = getConditionParts(conditions['condition'][foo]);
+                      buildSearch(c, foo + 1, actionForm, beforeNode);
+                  }
+              } else {
+                  // Build a blank search box.
+                  buildSearch({}, 1, actionForm, beforeNode);
+              }
+          } else {
+              // Build a blank search box.
+              buildSearch({}, 1, actionForm, beforeNode);
+          }
+      }
+  }
+
+  /**
+   * Build a set of search boxes, and see values to match object condition.
+   */
+  function buildSearch(condition, count, theForm, beforeNode) {
+     let wrapper = document.createElement('div');
+     wrapper.setAttribute('class', 'form-group');
+     let label1 = document.createElement('label');
+     label1.setAttribute('for', 'condition_' + count);
+     label1.setAttribute('class', 'control-label');
+     label1.textContent="Field";
+     wrapper.append(label1);
+     let localfield = document.createElement('select');
+     localfield.setAttribute('id', 'condition_' + count);
+     fields.forEach(function(f) {
+         let o = document.createElement('option');
+         o.setAttribute('value', f);
+         if (f == condition['field']) {
+             o.setAttribute('selected', 'true');
+         }
+         o.textContent=f;
+         localfield.append(o);
+     });
+     wrapper.append(localfield);
+     let label2 = document.createElement('label');
+     label2.setAttribute('for', 'operator_' + count);
+     label2.setAttribute('class', 'control-label');
+     label2.textContent="Operator";
+     wrapper.append(label2);
+     let localoperator = document.createElement('select');
+     localoperator.setAttribute('id', 'operator_' + count);
+     operators.forEach(function(f) {
+         let o = document.createElement('option');
+         o.setAttribute('value', f);
+         if (f == condition['operator']) {
+             o.setAttribute('selected', 'true');
+         }
+         o.textContent=f;
+         localoperator.append(o);
+     });
+     wrapper.append(localoperator);
+     let br = document.createElement('br');
+     wrapper.append(br);
+     let label3 = document.createElement('label');
+     label3.setAttribute('for', 'search_value_' + count);
+     label3.setAttribute('class', 'control-label');
+     label3.textContent="Query term";
+     wrapper.append(label3);
+     let localvalue = document.createElement('input');
+     localvalue.setAttribute('type', 'text');
+     localvalue.setAttribute('id', 'search_value_' + count);
+     localvalue.setAttribute('class', 'form-control');
+     localvalue.setAttribute('placeholder', 'info:fedora/*');
+     if (condition['value'] != null && condition['value'] != '') {
+         localvalue.setAttribute('value', condition['value']);
+     }
+     wrapper.append(localvalue);
+     theForm.insertBefore(wrapper, beforeNode);
+  }
+
+  /*
+   * Encode comparison operators in conditions.
+   */
+  function encodeSearchCondition(condition) {
+      return encodeURIComponent(condition).replaceAll('<', '%3C').replaceAll('=', '%3D').replaceAll('>', '%3E')
+      .replaceAll('%26', '&');
+  }
+
+  /*
+   * Decode a search string into an object with search parameter -> parameter value.
+   */
+  function decodeSearchString(querystring) {
+      var searchParts = {};
+      if (querystring.indexOf('&') > -1) {
+          // Multiple parts
+          const parts = querystring.split('&');
+          parts.forEach(function(p) {
+              searchParts = getSearchPart(p, searchParts);
+          });
+      } else {
+          searchParts = getSearchPart(querystring, searchParts);
+      }
+      return searchParts;
+  }
+
+  /*
+   * Parse bits out of the querystring.
+   */
+  function getSearchPart(searchPart, result) {
+      if (searchPart.indexOf("=") > -1) {
+           const bits = searchPart.split("=");
+           if (bits[0] == "condition") {
+               if (result["condition"] == null) {
+                   result["condition"] = [];
+               }
+               result["condition"].push(decodeURIComponent(bits[1]));
+           } else if (bits[0] == "fields") {
+               if (result["fields"] == null) {
+                   result["fields"] = [];
+               }
+               result["fields"].push(decodeURIComponent(bits[1]));
+           }
+      }
+      return result;
+  }
+
+  /*
+   * Decode a condition into an object with field, operator and value properties.
+   */
+  function getConditionParts(conditionString) {
+     const operator = /([<>=]+)/;
+     if (operator.test(conditionString)) {
+        const result = {};
+        const bits = conditionString.split(operator);
+        result['field'] = bits[0];
+        result['operator'] = bits[1];
+        result['value'] = bits[2];
+        return result;
+     }
+     return null;
   }
 
   function ajaxErrorHandler(xhr, errorThrown) {
@@ -342,5 +516,6 @@
       for (var i = 0; i < links.length; ++i) {
         links[i].addEventListener('click', checkIfNonRdfResource);
       }
+      initializeSearchPage();
   });
 })();

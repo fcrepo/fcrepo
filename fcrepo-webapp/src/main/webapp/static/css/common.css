@@ -111,3 +111,20 @@ dd {
 #showErrorModal {
     display: none;
 }
+
+#search_results th, #search_results td {
+    padding: 2px;
+}
+
+#search_results thead tr :not(:last-child),
+#search_results tbody tr :not(:last-child) {
+    border-right: 1px solid black;
+}
+
+#search_results tbody tr:nth-child(odd) {
+    background-color: #dedede;
+}
+
+#action_search label {
+  padding: 2px 5px;
+}

@@ -468,4 +468,51 @@ public class ViewHelpers {
     public static boolean isManagedProperty(final Node property) {
         return property.isURI() && isManagedPredicate.test(createProperty(property.getURI()));
     }
+
+    /**
+     * Find a key in a map and format it as a string
+     * @param input map of objects.
+     * @param key the key to locate in the map.
+     * @return the result string.
+     */
+    public static String getString(final Map<String, Object> input, final String key) {
+        if (input.get(key) == null) {
+            return "";
+        }
+        final var value = input.get(key);
+        final var clazz = value.getClass();
+        final String output;
+        if (clazz == String.class) {
+            output = formatAsString((String) value);
+        } else if (clazz == String[].class) {
+            output = formatAsString((String[]) value);
+        } else if (clazz == Long.class) {
+            output = formatAsString((Long) value);
+        } else {
+            output = "";
+        }
+        return output;
+    }
+
+    /**
+     * Format to a string and check for null values
+     * @param input a string array or null
+     * @return a string.
+     */
+    public static String formatAsString(final String[] input) {
+        return (input == null || input.length == 0 ? "" :  String.join(", ", input));
+    }
+
+    /**
+     * Format a string to check for null values
+     * @param input a string or null
+     * @return a string.
+     */
+    public static String formatAsString(final String input) {
+        return (input == null ? "" : input);
+    }
+
+    public static String formatAsString(final Long input) {
+        return (input == null ? "" : input.toString());
+    }
 }

@@ -17,14 +17,14 @@
  */
 package org.fcrepo.http.api.responses;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.context.Context;
 import org.apache.velocity.tools.generic.EscapeTool;
+import org.fcrepo.http.api.FedoraSearch;
 import org.fcrepo.http.commons.responses.ViewHelpers;
+import org.fcrepo.search.api.Condition;
 import org.fcrepo.search.api.SearchResult;
 import org.slf4j.Logger;
 
@@ -134,15 +134,15 @@ public class SearchResultProvider implements MessageBodyWriter<SearchResult> {
                         final OutputStream entityStream)
             throws WebApplicationException {
 
-        final ObjectMapper mapper = new ObjectMapper();
         final Template template = velocity.getTemplate(getTemplateLocation("search"));
 
         final Context context;
-        try {
-            context = getContext(mapper.writeValueAsString(result));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        context = getContext();
+        context.put("searchResults", result);
+        context.put("fields",
+                Arrays.stream(Condition.Field.values()).map(Condition.Field::toString).toArray(String[]::new));
+        context.put("operators", Arrays.stream(Condition.Operator.values()).map(Condition.Operator::getStringValue)
+                .toArray(String[]::new));
 
         context.put("isOriginalResource", null);
 
@@ -152,10 +152,12 @@ public class SearchResultProvider implements MessageBodyWriter<SearchResult> {
         writer.flush();
     }
 
-    private Context getContext(final String json) {
+    private Context getContext() {
 
         final Context context = new VelocityContext();
         final String[] baseUrl = uriInfo.getBaseUri().getPath().split("/");
+        final String searchPage = uriInfo.getBaseUriBuilder().clone().path(FedoraSearch.class).toString();
+        context.put("searchPage", searchPage);
         if (baseUrl.length > 0) {
             final String staticBaseUrl = String.join("/", Arrays.copyOf(baseUrl, baseUrl.length - 1));
             context.put("staticBaseUrl", staticBaseUrl);
@@ -165,7 +167,6 @@ public class SearchResultProvider implements MessageBodyWriter<SearchResult> {
         context.put("helpers", VIEW_HELPERS);
         context.put("esc", escapeTool);
         context.put("uriInfo", uriInfo);
-        context.put("json", json);
         return context;
     }
 
