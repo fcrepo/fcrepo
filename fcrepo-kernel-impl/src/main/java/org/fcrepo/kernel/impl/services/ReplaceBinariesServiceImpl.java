@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ExternalContent;
@@ -56,7 +57,7 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
     private NonRdfSourceOperationFactory factory;
 
     @Override
-    public void perform(final String txId,
+    public void perform(final Transaction tx,
                         final String userPrincipal,
                         final FedoraId fedoraId,
                         final String filename,
@@ -65,6 +66,7 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
                         final InputStream contentBody,
                         final long contentSize,
                         final ExternalContent externalContent) {
+        final var txId = tx.getId();
         try {
             final PersistentStorageSession pSession = this.psManager.getSession(txId);
 
@@ -106,6 +108,10 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
                    .contentDigests(digests)
                    .userPrincipal(userPrincipal);
             final var replaceOp = builder.build();
+
+            lockArchivalGroupResource(tx, pSession, fedoraId);
+            tx.lockResource(fedoraId);
+            tx.lockResource(fedoraId.asDescription());
 
             pSession.persist(replaceOp);
             recordEvent(txId, fedoraId, replaceOp);

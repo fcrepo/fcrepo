@@ -19,6 +19,7 @@ package org.fcrepo.kernel.impl.services;
 
 import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
 import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
@@ -39,9 +40,9 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.MultiDigestInputStreamWrapper;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
-import javax.ws.rs.BadRequestException;
 
 import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.Link;
 import java.io.InputStream;
 import java.net.URI;
@@ -79,10 +80,11 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
     private NonRdfSourceOperationFactory nonRdfSourceOperationFactory;
 
     @Override
-    public void perform(final String txId, final String userPrincipal, final FedoraId fedoraId,
-                          final String contentType, final String filename,
-                          final long contentSize, final List<String> linkHeaders, final Collection<URI> digest,
-                          final InputStream requestBody, final ExternalContent externalContent) {
+    public void perform(final Transaction tx, final String userPrincipal, final FedoraId fedoraId,
+                        final String contentType, final String filename,
+                        final long contentSize, final List<String> linkHeaders, final Collection<URI> digest,
+                        final InputStream requestBody, final ExternalContent externalContent) {
+        final var txId = tx.getId();
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
         checkAclLinkHeader(linkHeaders);
         // Locate a containment parent of fedoraId, if exists.
@@ -128,10 +130,13 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                 .filename(filename)
                 .build();
 
+        lockArchivalGroupResourceFromParent(tx, pSession, parentId);
+        tx.lockResource(fedoraId);
+
         try {
             pSession.persist(createOp);
             // Populate the description for the new binary
-            createDescription(pSession, userPrincipal, fedoraId);
+            createDescription(tx, pSession, userPrincipal, fedoraId);
             addToContainmentIndex(txId, parentId, fedoraId);
             membershipService.resourceCreated(txId, fedoraId);
             recordEvent(txId, fedoraId, createOp);
@@ -140,8 +145,10 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         }
     }
 
-    private void createDescription(final PersistentStorageSession pSession, final String userPrincipal,
-            final FedoraId binaryId) {
+    private void createDescription(final Transaction tx,
+                                   final PersistentStorageSession pSession,
+                                   final String userPrincipal,
+                                   final FedoraId binaryId) {
         final var descId = binaryId.asDescription();
         final var createOp = rdfSourceOperationFactory.createBuilder(
                     descId,
@@ -149,6 +156,9 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                 ).userPrincipal(userPrincipal)
                 .parentId(binaryId)
                 .build();
+
+        tx.lockResource(descId);
+
         try {
             pSession.persist(createOp);
         } catch (final PersistentStorageException exc) {
@@ -157,8 +167,9 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
     }
 
     @Override
-    public void perform(final String txId, final String userPrincipal, final FedoraId fedoraId,
+    public void perform(final Transaction tx, final String userPrincipal, final FedoraId fedoraId,
             final List<String> linkHeaders, final Model model) {
+        final var txId = tx.getId();
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
         checkAclLinkHeader(linkHeaders);
         // Locate a containment parent of fedoraId, if exists.
@@ -181,6 +192,9 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                 .archivalGroup(rdfTypes.contains(ARCHIVAL_GROUP.getURI()))
                 .userPrincipal(userPrincipal)
                 .build();
+
+        lockArchivalGroupResourceFromParent(tx, pSession, parentId);
+        tx.lockResource(fedoraId);
 
         try {
             pSession.persist(createOp);

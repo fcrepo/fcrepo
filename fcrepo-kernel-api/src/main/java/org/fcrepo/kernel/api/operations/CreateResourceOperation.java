@@ -49,7 +49,7 @@ public interface CreateResourceOperation extends ResourceOperation {
 
     /**
      * A flag indicating whether or the new resource should be created as an archival group.
-     * @return
+     * @return true if archival group
      */
-    public boolean isArchivalGroup();
+    boolean isArchivalGroup();
 }

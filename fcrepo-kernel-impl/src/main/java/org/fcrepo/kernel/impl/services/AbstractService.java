@@ -17,6 +17,37 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Statement;
+import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.RdfLexicon;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.exception.ACLAuthorizationConstraintViolationException;
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.RequestWithAclLinkHeaderException;
+import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.observer.EventAccumulator;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.kernel.api.services.MembershipService;
+import org.fcrepo.kernel.api.services.ReferenceService;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+
+import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
+
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
@@ -34,36 +65,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_ACCESS_TO_PROPERTY;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.inject.Inject;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Pattern;
-
-import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Statement;
-import org.fcrepo.kernel.api.ContainmentIndex;
-import org.fcrepo.kernel.api.RdfLexicon;
-import org.fcrepo.kernel.api.exception.ACLAuthorizationConstraintViolationException;
-import org.fcrepo.kernel.api.exception.MalformedRdfException;
-import org.fcrepo.kernel.api.exception.RequestWithAclLinkHeaderException;
-import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.observer.EventAccumulator;
-import org.fcrepo.kernel.api.operations.ResourceOperation;
-import org.fcrepo.kernel.api.services.MembershipService;
-import org.fcrepo.kernel.api.services.ReferenceService;
-import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 
 /**
@@ -253,6 +254,28 @@ public abstract class AbstractService {
                                     final Model model) {
         referenceService.updateReferences(transactionId, resourceId, user,
                 fromModel(model.getResource(resourceId.getFullId()).asNode(), model));
+    }
+
+    protected void lockArchivalGroupResource(final Transaction tx,
+                                             final PersistentStorageSession pSession,
+                                             final FedoraId fedoraId) {
+        final var headers = pSession.getHeaders(fedoraId, null);
+        if (headers.getArchivalGroupId() != null) {
+            tx.lockResource(headers.getArchivalGroupId());
+        }
+    }
+
+    protected void lockArchivalGroupResourceFromParent(final Transaction tx,
+                                                       final PersistentStorageSession pSession,
+                                                       final FedoraId parentId) {
+        if (parentId != null && !parentId.isRepositoryRoot()) {
+            final var parentHeaders = pSession.getHeaders(parentId, null);
+            if (parentHeaders.isArchivalGroup()) {
+                tx.lockResource(parentId);
+            } else if (parentHeaders.getArchivalGroupId() != null) {
+                tx.lockResource(parentHeaders.getArchivalGroupId());
+            }
+        }
     }
 
     /**

@@ -42,6 +42,7 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ExternalContent;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
@@ -100,6 +101,9 @@ public class ReplaceBinariesServiceImplTest {
     @Mock
     private ExternalContent externalContent;
 
+    @Mock
+    private ResourceHeaders headers;
+
     private NonRdfSourceOperationFactory factory;
 
     @InjectMocks
@@ -114,6 +118,8 @@ public class ReplaceBinariesServiceImplTest {
         setField(service, "factory", factory);
         setField(service, "eventAccumulator", eventAccumulator);
         when(psManager.getSession(anyString())).thenReturn(pSession);
+        when(tx.getId()).thenReturn(TX_ID);
+        when(pSession.getHeaders(FEDORA_ID, null)).thenReturn(headers);
     }
 
     @Test
@@ -121,7 +127,7 @@ public class ReplaceBinariesServiceImplTest {
         final String contentString = "This is some test data";
         final var stream = toInputStream(contentString, UTF_8);
 
-        service.perform(TX_ID, USER_PRINCIPAL, FEDORA_ID, FILENAME, MIME_TYPE, DIGESTS, stream, FILESIZE,
+        service.perform(tx, USER_PRINCIPAL, FEDORA_ID, FILENAME, MIME_TYPE, DIGESTS, stream, FILESIZE,
                 null);
         verify(pSession).persist(operationCaptor.capture());
         final NonRdfSourceOperation op = operationCaptor.getValue();
@@ -129,6 +135,34 @@ public class ReplaceBinariesServiceImplTest {
         assertEquals(FEDORA_ID, operationCaptor.getValue().getResourceId());
         assertEquals(contentString, IOUtils.toString(op.getContentStream(), UTF_8));
         assertPropertiesPopulated(op);
+
+        verify(tx).lockResource(FEDORA_ID);
+        verify(tx).lockResource(FEDORA_ID.asDescription());
+    }
+
+    @Test
+    public void replaceInternalBinaryInAg() throws Exception {
+        final String contentString = "This is some test data";
+        final var stream = toInputStream(contentString, UTF_8);
+
+        final var agId = FedoraId.create("ag");
+        final var binId = agId.resolve("bin");
+
+        when(pSession.getHeaders(binId, null)).thenReturn(headers);
+        when(headers.getArchivalGroupId()).thenReturn(agId);
+
+        service.perform(tx, USER_PRINCIPAL, binId, FILENAME, MIME_TYPE, DIGESTS, stream, FILESIZE,
+                null);
+        verify(pSession).persist(operationCaptor.capture());
+        final NonRdfSourceOperation op = operationCaptor.getValue();
+
+        assertEquals(binId, operationCaptor.getValue().getResourceId());
+        assertEquals(contentString, IOUtils.toString(op.getContentStream(), UTF_8));
+        assertPropertiesPopulated(op);
+
+        verify(tx).lockResource(agId);
+        verify(tx).lockResource(binId);
+        verify(tx).lockResource(binId.asDescription());
     }
 
     @Test
@@ -144,7 +178,7 @@ public class ReplaceBinariesServiceImplTest {
         when(externalContent.getURI()).thenReturn(uri);
         when(externalContent.getHandling()).thenReturn(ExternalContent.PROXY);
 
-        service.perform(TX_ID, USER_PRINCIPAL, FEDORA_ID, FILENAME, MIME_TYPE, realDigests, null, FILESIZE,
+        service.perform(tx, USER_PRINCIPAL, FEDORA_ID, FILENAME, MIME_TYPE, realDigests, null, FILESIZE,
                 externalContent);
         verify(pSession).persist(operationCaptor.capture());
         final NonRdfSourceOperation op = operationCaptor.getValue();
@@ -174,7 +208,7 @@ public class ReplaceBinariesServiceImplTest {
         when(externalContent.getHandling()).thenReturn(COPY);
         when(externalContent.getContentType()).thenReturn(MIME_TYPE);
 
-        service.perform(TX_ID, USER_PRINCIPAL, FEDORA_ID, FILENAME, "application/octet-stream",
+        service.perform(tx, USER_PRINCIPAL, FEDORA_ID, FILENAME, "application/octet-stream",
                 realDigests, null, -1L, externalContent);
         verify(pSession).persist(operationCaptor.capture());
         final NonRdfSourceOperation op = operationCaptor.getValue();
@@ -194,7 +228,7 @@ public class ReplaceBinariesServiceImplTest {
 
         final var stream = toInputStream("Some content", UTF_8);
 
-        service.perform(TX_ID, USER_PRINCIPAL, FEDORA_ID, FILENAME, MIME_TYPE, DIGESTS, stream, FILESIZE,
+        service.perform(tx, USER_PRINCIPAL, FEDORA_ID, FILENAME, MIME_TYPE, DIGESTS, stream, FILESIZE,
                 null);
     }
 
@@ -213,7 +247,7 @@ public class ReplaceBinariesServiceImplTest {
         when(externalContent.getHandling()).thenReturn(ExternalContent.COPY);
         when(externalContent.getContentType()).thenReturn("text/xml");
 
-        service.perform(TX_ID, USER_PRINCIPAL, FEDORA_ID, FILENAME, MIME_TYPE, realDigests, null,
+        service.perform(tx, USER_PRINCIPAL, FEDORA_ID, FILENAME, MIME_TYPE, realDigests, null,
                 (long) contentString.length(), externalContent);
         verify(pSession).persist(operationCaptor.capture());
         final NonRdfSourceOperation op = operationCaptor.getValue();

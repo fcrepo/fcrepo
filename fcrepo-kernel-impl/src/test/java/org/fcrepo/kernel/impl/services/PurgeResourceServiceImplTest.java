@@ -17,18 +17,6 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
-
-import javax.inject.Inject;
-
-import java.util.List;
-
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -37,6 +25,7 @@ import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.models.WebacAcl;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.kernel.impl.operations.DeleteResourceOperationFactoryImpl;
@@ -53,6 +42,17 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import javax.inject.Inject;
+import java.util.List;
+
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * PurgeResourceServiceTest
@@ -101,6 +101,15 @@ public class PurgeResourceServiceImplTest {
     @Mock
     private NonRdfSourceDescription binaryDesc;
 
+    @Mock
+    private ResourceHeaders resourceHeaders;
+    @Mock
+    private ResourceHeaders childHeaders;
+    @Mock
+    private ResourceHeaders descHeaders;
+    @Mock
+    private ResourceHeaders aclHeaders;
+
     @Captor
     private ArgumentCaptor<PurgeResourceOperation> operationCaptor;
 
@@ -124,6 +133,11 @@ public class PurgeResourceServiceImplTest {
         setField(service, "containmentIndex", containmentIndex);
         setField(service, "eventAccumulator", eventAccumulator);
         when(container.getFedoraId()).thenReturn(RESOURCE_ID);
+
+        when(pSession.getHeaders(RESOURCE_ID, null)).thenReturn(resourceHeaders);
+        when(pSession.getHeaders(CHILD_RESOURCE_ID, null)).thenReturn(childHeaders);
+        when(pSession.getHeaders(RESOURCE_DESCRIPTION_ID, null)).thenReturn(descHeaders);
+        when(pSession.getHeaders(RESOURCE_ACL_ID, null)).thenReturn(aclHeaders);
     }
 
     @Test
@@ -161,6 +175,9 @@ public class PurgeResourceServiceImplTest {
         assertEquals(RESOURCE_ID, operations.get(1).getResourceId());
 
         assertEquals(0, containmentIndex.getContains(tx.getId(), RESOURCE_ID).count());
+
+        verify(tx).lockResource(RESOURCE_ID);
+        verify(tx).lockResource(CHILD_RESOURCE_ID);
     }
 
     private void verifyResourceOperation(final FedoraId fedoraID,
@@ -203,5 +220,10 @@ public class PurgeResourceServiceImplTest {
         assertEquals(RESOURCE_DESCRIPTION_ID, operations.get(0).getResourceId());
         assertEquals(RESOURCE_ACL_ID, operations.get(1).getResourceId());
         assertEquals(RESOURCE_ID, operations.get(2).getResourceId());
+
+        verify(tx).lockResource(RESOURCE_ID);
+        verify(tx).lockResource(RESOURCE_DESCRIPTION_ID);
+        verify(tx).lockResource(RESOURCE_ACL_ID);
     }
+
 }

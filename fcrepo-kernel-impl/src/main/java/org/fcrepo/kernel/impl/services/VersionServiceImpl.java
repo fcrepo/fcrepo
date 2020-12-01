@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.impl.services;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -49,6 +50,16 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         final var operation = versionOperationFactory.createBuilder(fedoraId)
                 .userPrincipal(userPrincipal)
                 .build();
+
+        lockArchivalGroupResource(transaction, session, fedoraId);
+        final var headers = session.getHeaders(fedoraId, null);
+        if (RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI.equals(headers.getInteractionModel())) {
+            transaction.lockResource(fedoraId.asBaseId());
+        }
+        if (RdfLexicon.NON_RDF_SOURCE.toString().equals(headers.getInteractionModel())) {
+            transaction.lockResource(fedoraId.asDescription());
+        }
+        transaction.lockResource(fedoraId);
 
         try {
             session.persist(operation);

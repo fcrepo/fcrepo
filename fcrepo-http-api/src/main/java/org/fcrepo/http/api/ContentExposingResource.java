@@ -842,7 +842,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected void patchResourcewithSparql(final FedoraResource resource,
             final String requestBody) {
-        updatePropertiesService.updateProperties(transaction().getId(),
+        updatePropertiesService.updateProperties(transaction(),
                                                  getUserPrincipal(),
                                                  resource.getFedoraId(),
                                                  requestBody);

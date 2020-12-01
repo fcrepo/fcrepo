@@ -19,6 +19,8 @@
 package org.fcrepo.kernel.impl.services;
 
 import org.apache.jena.rdf.model.Model;
+import org.fcrepo.kernel.api.RdfLexicon;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -48,10 +50,11 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
     private RdfSourceOperationFactory factory;
 
     @Override
-    public void perform(final String txId,
+    public void perform(final Transaction tx,
                         final String userPrincipal,
                         final FedoraId fedoraId,
                         final Model inputModel) throws MalformedRdfException {
+        final var txId = tx.getId();
         try {
             final PersistentStorageSession pSession = this.psManager.getSession(txId);
 
@@ -66,6 +69,12 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
                 .userPrincipal(userPrincipal)
                 .triples(fromModel(inputModel.createResource(fedoraId.getFullId()).asNode(), inputModel))
                 .build();
+
+            lockArchivalGroupResource(tx, pSession, fedoraId);
+            tx.lockResource(fedoraId);
+            if (RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI.equals(interactionModel)) {
+                tx.lockResource(fedoraId.asBaseId());
+            }
 
             pSession.persist(updateOp);
             updateReferences(txId, fedoraId, userPrincipal, inputModel);

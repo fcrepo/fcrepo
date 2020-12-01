@@ -60,6 +60,9 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
         if (storageHeaders.getParent() != null) {
             kernelHeaders.setParent(FedoraId.create(storageHeaders.getParent()));
         }
+        if (storageHeaders.getArchivalGroupId() != null) {
+            kernelHeaders.setArchivalGroupId(FedoraId.create(storageHeaders.getArchivalGroupId()));
+        }
         kernelHeaders.setArchivalGroup(storageHeaders.isArchivalGroup());
         kernelHeaders.setContentPath(storageHeaders.getContentPath());
         kernelHeaders.setContentSize(storageHeaders.getContentSize());
@@ -91,6 +94,9 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
         }
         if (kernelHeaders.getParent() != null) {
             storageHeaders.withParent(kernelHeaders.getParent().getFullId());
+        }
+        if (kernelHeaders.getArchivalGroupId() != null) {
+            storageHeaders.withArchivalGroupId(kernelHeaders.getArchivalGroupId().getFullId());
         }
         storageHeaders.withArchivalGroup(kernelHeaders.isArchivalGroup());
         storageHeaders.withContentPath(kernelHeaders.getContentPath());

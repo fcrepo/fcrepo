@@ -343,9 +343,13 @@ public class FedoraLdp extends ContentExposingResource {
 
         LOGGER.info("Delete resource '{}'", externalPath);
 
-        deleteResourceService.perform(transaction(), resource(), getUserPrincipal());
-        transaction().commitIfShortLived();
-        return noContent().build();
+        try {
+            deleteResourceService.perform(transaction(), resource(), getUserPrincipal());
+            transaction().commitIfShortLived();
+            return noContent().build();
+        } finally {
+            transaction().releaseResourceLocksIfShortLived();
+        }
     }
 
     /**
@@ -379,102 +383,105 @@ public class FedoraLdp extends ContentExposingResource {
 
         final var transaction = transaction();
 
-        final List<String> links = unpackLinks(rawLinks);
+        try {
+            final List<String> links = unpackLinks(rawLinks);
 
-        if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
-            handleRequestDisallowedOnMemento();
+            if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
+                handleRequestDisallowedOnMemento();
 
-            return status(METHOD_NOT_ALLOWED).build();
-        }
-
-        // If request is an external binary, verify link header before proceeding
-        final ExternalContent extContent = extContentHandlerFactory.createFromLinks(links);
-
-        final String interactionModel = checkInteractionModel(links);
-
-        final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath());
-        final boolean resourceExists = doesResourceExist(transaction, fedoraId, true);
-
-        if (resourceExists) {
-
-            if (httpConfiguration.putRequiresIfMatch() && StringUtils.isBlank(ifMatch)) {
-                throw new ClientErrorException("An If-Match header is required", 428);
+                return status(METHOD_NOT_ALLOWED).build();
             }
 
-            final String resInteractionModel = resource().getInteractionModel();
-            if (StringUtils.isNoneBlank(resInteractionModel, interactionModel) &&
-                    !Objects.equals(resInteractionModel, interactionModel)) {
-                throw new InteractionModelViolationException("Changing the interaction model " + resInteractionModel
-                        + " to " + interactionModel + " is not allowed!");
-            }
-            evaluateRequestPreconditions(request, servletResponse, resource(), transaction);
-        }
+            // If request is an external binary, verify link header before proceeding
+            final ExternalContent extContent = extContentHandlerFactory.createFromLinks(links);
 
-        if (isGhostNode(transaction(), fedoraId)) {
-            throw new GhostNodeException("Resource path " + externalPath() + " is an immutable resource.");
-        }
+            final String interactionModel = checkInteractionModel(links);
 
-        final var providedContentType = getSimpleContentType(requestContentType);
-
-        boolean created = false;
-
-        if ((resourceExists && resource() instanceof Binary) ||
-                (!resourceExists && isBinary(interactionModel,
-                        providedContentType,
-                        requestBodyStream != null && providedContentType != null,
-                        extContent != null))) {
-            ensureArchivalGroupHeaderNotPresentForBinaries(links);
-
-            final Collection<URI> checksums = parseDigestHeader(digest);
-            final var binaryType = requestContentType != null ? requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;
-            final var contentType = extContent == null ? binaryType.toString() : extContent.getContentType();
-            final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
-            final long contentSize = contentDisposition == null ? -1L : contentDisposition.getSize();
+            final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath());
+            final boolean resourceExists = doesResourceExist(transaction, fedoraId, true);
 
             if (resourceExists) {
-                replaceBinariesService.perform(transaction.getId(),
-                                               getUserPrincipal(),
-                                               fedoraId,
-                                               originalFileName,
-                                               contentType,
-                                               checksums,
-                                               requestBodyStream,
-                                               contentSize,
-                                               extContent);
-            } else {
-                createResourceService.perform(transaction.getId(),
-                                              getUserPrincipal(),
-                                              fedoraId,
-                                              contentType,
-                                              originalFileName,
-                                              contentSize,
-                                              links,
-                                              checksums,
-                                              requestBodyStream,
-                                              extContent);
-                created = true;
-            }
-        } else {
-            final var contentType = requestContentType != null ? requestContentType : DEFAULT_RDF_CONTENT_TYPE;
-            final Model model = httpRdfService.bodyToInternalModel(fedoraId.getFullId(), requestBodyStream,
-                    contentType, identifierConverter(), hasLenientPreferHeader());
 
-            if (resourceExists) {
-                replacePropertiesService.perform(transaction.getId(),
-                                                 getUserPrincipal(),
-                                                 fedoraId,
-                                                 model);
-            } else {
-                createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, links, model);
-                created = true;
+                if (httpConfiguration.putRequiresIfMatch() && StringUtils.isBlank(ifMatch)) {
+                    throw new ClientErrorException("An If-Match header is required", 428);
+                }
+
+                final String resInteractionModel = resource().getInteractionModel();
+                if (StringUtils.isNoneBlank(resInteractionModel, interactionModel) &&
+                        !Objects.equals(resInteractionModel, interactionModel)) {
+                    throw new InteractionModelViolationException("Changing the interaction model " + resInteractionModel
+                            + " to " + interactionModel + " is not allowed!");
+                }
+                evaluateRequestPreconditions(request, servletResponse, resource(), transaction);
             }
+
+            if (isGhostNode(transaction(), fedoraId)) {
+                throw new GhostNodeException("Resource path " + externalPath() + " is an immutable resource.");
+            }
+
+            final var providedContentType = getSimpleContentType(requestContentType);
+
+            boolean created = false;
+
+            if ((resourceExists && resource() instanceof Binary) ||
+                    (!resourceExists && isBinary(interactionModel,
+                            providedContentType,
+                            requestBodyStream != null && providedContentType != null,
+                            extContent != null))) {
+                ensureArchivalGroupHeaderNotPresentForBinaries(links);
+
+                final Collection<URI> checksums = parseDigestHeader(digest);
+                final var binaryType = requestContentType != null ? requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;
+                final var contentType = extContent == null ? binaryType.toString() : extContent.getContentType();
+                final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
+                final long contentSize = contentDisposition == null ? -1L : contentDisposition.getSize();
+
+                if (resourceExists) {
+                    replaceBinariesService.perform(transaction,
+                            getUserPrincipal(),
+                            fedoraId,
+                            originalFileName,
+                            contentType,
+                            checksums,
+                            requestBodyStream,
+                            contentSize,
+                            extContent);
+                } else {
+                    createResourceService.perform(transaction,
+                            getUserPrincipal(),
+                            fedoraId,
+                            contentType,
+                            originalFileName,
+                            contentSize,
+                            links,
+                            checksums,
+                            requestBodyStream,
+                            extContent);
+                    created = true;
+                }
+            } else {
+                final var contentType = requestContentType != null ? requestContentType : DEFAULT_RDF_CONTENT_TYPE;
+                final Model model = httpRdfService.bodyToInternalModel(fedoraId.getFullId(), requestBodyStream,
+                        contentType, identifierConverter(), hasLenientPreferHeader());
+
+                if (resourceExists) {
+                    replacePropertiesService.perform(transaction,
+                            getUserPrincipal(),
+                            fedoraId,
+                            model);
+                } else {
+                    createResourceService.perform(transaction, getUserPrincipal(), fedoraId, links, model);
+                    created = true;
+                }
+            }
+
+            // TODO: How to generate a response.
+            LOGGER.debug("Finished creating resource with path: {}", externalPath());
+            transaction.commitIfShortLived();
+            return createUpdateResponse(getFedoraResource(transaction, fedoraId), created);
+        } finally {
+            transaction.releaseResourceLocksIfShortLived();
         }
-
-        // TODO: How to generate a response.
-        LOGGER.debug("Finished creating resource with path: {}", externalPath());
-        transaction.commitIfShortLived();
-        return createUpdateResponse(getFedoraResource(transaction, fedoraId), created);
-
     }
 
     /**
@@ -536,6 +543,8 @@ public class FedoraLdp extends ContentExposingResource {
                 throw new BadRequestException(cause.getMessage());
             }
             throw ex;
+        } finally {
+            transaction.releaseResourceLocksIfShortLived();
         }
     }
 
@@ -574,64 +583,68 @@ public class FedoraLdp extends ContentExposingResource {
 
         final var transaction = transaction();
 
-        final List<String> links = unpackLinks(rawLinks);
-
-        if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
-            handleRequestDisallowedOnMemento();
-
-            return status(METHOD_NOT_ALLOWED).build();
-        }
-
-        // If request is an external binary, verify link header before proceeding
-        final ExternalContent extContent = extContentHandlerFactory.createFromLinks(links);
-
-        final String interactionModel = checkInteractionModel(links);
-
-        final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath());
-        final FedoraId newFedoraId = mintNewPid(fedoraId, slug);
-        final var providedContentType = getSimpleContentType(requestContentType);
-
-        LOGGER.info("POST to create resource with ID: {}, slug: {}", newFedoraId.getFullIdPath(), slug);
-
-        if (isBinary(interactionModel,
-                     providedContentType,
-                     requestBodyStream != null && providedContentType != null,
-                     extContent != null)) {
-            ensureArchivalGroupHeaderNotPresentForBinaries(links);
-
-            final Collection<URI> checksums = parseDigestHeader(digest);
-            final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
-            final var binaryType = requestContentType != null ? requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;
-            final var contentType = extContent == null ? binaryType.toString() : extContent.getContentType();
-            final long contentSize = contentDisposition == null ? -1L : contentDisposition.getSize();
-
-            createResourceService.perform(transaction.getId(),
-                                          getUserPrincipal(),
-                                          newFedoraId,
-                                          contentType,
-                                          originalFileName,
-                                          contentSize,
-                                          links,
-                                          checksums,
-                                          requestBodyStream,
-                                          extContent);
-        } else {
-            final var contentType = requestContentType != null ? requestContentType : DEFAULT_RDF_CONTENT_TYPE;
-            final Model model = httpRdfService.bodyToInternalModel(newFedoraId.getFullId(), requestBodyStream,
-                    contentType, identifierConverter(), hasLenientPreferHeader());
-            createResourceService.perform(transaction.getId(),
-                                          getUserPrincipal(),
-                                          newFedoraId,
-                                          links,
-                                          model);
-        }
-        LOGGER.debug("Finished creating resource with path: {}", externalPath());
-        transaction.commitIfShortLived();
         try {
-            final var resource = getFedoraResource(transaction, newFedoraId);
-            return createUpdateResponse(resource, true);
-        } catch (final PathNotFoundException e) {
-            throw new PathNotFoundRuntimeException(e.getMessage(), e);
+            final List<String> links = unpackLinks(rawLinks);
+
+            if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
+                handleRequestDisallowedOnMemento();
+
+                return status(METHOD_NOT_ALLOWED).build();
+            }
+
+            // If request is an external binary, verify link header before proceeding
+            final ExternalContent extContent = extContentHandlerFactory.createFromLinks(links);
+
+            final String interactionModel = checkInteractionModel(links);
+
+            final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath());
+            final FedoraId newFedoraId = mintNewPid(fedoraId, slug);
+            final var providedContentType = getSimpleContentType(requestContentType);
+
+            LOGGER.info("POST to create resource with ID: {}, slug: {}", newFedoraId.getFullIdPath(), slug);
+
+            if (isBinary(interactionModel,
+                    providedContentType,
+                    requestBodyStream != null && providedContentType != null,
+                    extContent != null)) {
+                ensureArchivalGroupHeaderNotPresentForBinaries(links);
+
+                final Collection<URI> checksums = parseDigestHeader(digest);
+                final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
+                final var binaryType = requestContentType != null ? requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;
+                final var contentType = extContent == null ? binaryType.toString() : extContent.getContentType();
+                final long contentSize = contentDisposition == null ? -1L : contentDisposition.getSize();
+
+                createResourceService.perform(transaction,
+                        getUserPrincipal(),
+                        newFedoraId,
+                        contentType,
+                        originalFileName,
+                        contentSize,
+                        links,
+                        checksums,
+                        requestBodyStream,
+                        extContent);
+            } else {
+                final var contentType = requestContentType != null ? requestContentType : DEFAULT_RDF_CONTENT_TYPE;
+                final Model model = httpRdfService.bodyToInternalModel(newFedoraId.getFullId(), requestBodyStream,
+                        contentType, identifierConverter(), hasLenientPreferHeader());
+                createResourceService.perform(transaction,
+                        getUserPrincipal(),
+                        newFedoraId,
+                        links,
+                        model);
+            }
+            LOGGER.debug("Finished creating resource with path: {}", externalPath());
+            transaction.commitIfShortLived();
+            try {
+                final var resource = getFedoraResource(transaction, newFedoraId);
+                return createUpdateResponse(resource, true);
+            } catch (final PathNotFoundException e) {
+                throw new PathNotFoundRuntimeException(e.getMessage(), e);
+            }
+        } finally {
+            transaction.releaseResourceLocksIfShortLived();
         }
     }
 

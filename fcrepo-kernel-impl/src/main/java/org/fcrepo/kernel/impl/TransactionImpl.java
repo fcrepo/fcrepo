@@ -22,6 +22,8 @@ import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TransactionClosedException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.lock.ResourceLockManager;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
@@ -94,6 +96,7 @@ public class TransactionImpl implements Transaction {
                 this.getEventAccumulator().emitEvents(id, baseUri, userAgent);
             });
             this.committed = true;
+            releaseLocks();
         } catch (final Exception ex) {
             log.error("Failed to commit transaction: {}", id, ex);
 
@@ -132,6 +135,8 @@ public class TransactionImpl implements Transaction {
         execQuietly("Failed to rollback events in transaction " + id, () -> {
             this.getEventAccumulator().clearEvents(id);
         });
+
+        releaseLocks();
     }
 
     @Override
@@ -196,6 +201,18 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
+    public void lockResource(final FedoraId resourceId) {
+        getResourceLockManger().acquire(getId(), resourceId);
+    }
+
+    @Override
+    public void releaseResourceLocksIfShortLived() {
+        if (isShortLived()) {
+            releaseLocks();
+        }
+    }
+
+    @Override
     public void setBaseUri(final String baseUri) {
         this.baseUri = baseUri;
     }
@@ -238,6 +255,12 @@ public class TransactionImpl implements Transaction {
         }
     }
 
+    private void releaseLocks() {
+        execQuietly("Failed to release resource locks cleanly. You may need to restart Fedora.", () -> {
+            getResourceLockManger().releaseAll(getId());
+        });
+    }
+
     /**
      * Executes the closure, capturing all exceptions, and logging them as errors.
      *
@@ -270,6 +293,10 @@ public class TransactionImpl implements Transaction {
 
     private TransactionTemplate getTransactionTemplate() {
         return this.txManager.getTransactionTemplate();
+    }
+
+    private ResourceLockManager getResourceLockManger() {
+        return this.txManager.getResourceLockManager();
     }
 
 }

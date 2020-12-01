@@ -17,6 +17,9 @@
  */
 package org.fcrepo.kernel.api;
 
+import org.fcrepo.kernel.api.exception.ConcurrentUpdateException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+
 import java.time.Duration;
 import java.time.Instant;
 
@@ -76,12 +79,13 @@ public interface Transaction {
     /**
      * Expire a transaction
      */
-    public void expire();
+    void expire();
 
     /**
      * Has the transaction expired?
+     * @return true if expired
      */
-    public boolean hasExpired();
+    boolean hasExpired();
 
     /**
     * Update the expiry by the provided amount
@@ -100,6 +104,21 @@ public interface Transaction {
      * Refresh the transaction to extend its expiration window.
      */
     void refresh();
+
+    /**
+     * Acquires a lock on the specified resource for this transaction.
+     *
+     * @param resourceId the resource to lock
+     * @throws ConcurrentUpdateException if the lock cannot be acquired
+     */
+    void lockResource(final FedoraId resourceId);
+
+    /**
+     * Releases any resource locks held by the transaction if the session is short-lived. This method should always be
+     * called after handling a request, regardless of the outcome, so that any held locks are released immediately
+     * without having to wait for the short-lived transaction to expire.
+     */
+    void releaseResourceLocksIfShortLived();
 
     /**
      * Sets the baseUri on the transaction

@@ -20,6 +20,7 @@ package org.fcrepo.integration.http.api;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
+import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -29,6 +30,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
+import org.fcrepo.common.lang.CheckedRunnable;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -757,6 +759,62 @@ public class TransactionsIT extends AbstractResourceIT {
         assertEquals(NOT_FOUND.getStatusCode(), getStatus(childGetBinary2));
     }
 
+    @Test
+    public void lockAgResourceInTxWhenAgPartIsUpdated() throws Exception {
+        final var agId = getRandomUniqueId();
+        final var childId = agId + "/child";
+        final var binaryId = agId + "/child/bin";
+
+        putAg(agId);
+        putContainer(childId, null);
+        putBinary(binaryId, null, "binary");
+
+        final String txLocation = createTransaction();
+
+        putBinary(binaryId, txLocation, "binary - updated!");
+
+        assertConcurrentUpdate(() -> putBinary(binaryId, null, "concurrent update!"));
+        assertConcurrentUpdate(() -> updateContainerTitle(childId, "concurrent update!", null));
+        assertConcurrentUpdate(() -> updateContainerTitle(agId, "concurrent update!", null));
+        assertConcurrentUpdate(() -> putContainer(agId + "/child2", null));
+
+        commitTransaction(txLocation);
+
+        assertEquals("binary - updated!", getBinary(binaryId, null));
+
+        putBinary(binaryId, null, "unlocked!");
+        assertEquals("unlocked!", getBinary(binaryId, null));
+    }
+
+    @Test
+    public void lockBothBinaryAndDescWhenEitherIsUpdatedInTx() throws Exception {
+        final var binaryId = getRandomUniqueId();
+
+        putBinary(binaryId, null, "binary");
+
+        final String txLocation = createTransaction();
+
+        putBinary(binaryId, txLocation, "binary - updated!");
+
+        assertConcurrentUpdate(() -> putBinary(binaryId, null, "concurrent update!"));
+        assertConcurrentUpdate(() -> updateContainerTitle(binaryId + "/fcr:metadata", "concurrent update!", null));
+
+        commitTransaction(txLocation);
+
+        assertEquals("binary - updated!", getBinary(binaryId, null));
+    }
+
+    private void assertConcurrentUpdate(final CheckedRunnable runnable) throws Exception {
+        try {
+            runnable.run();
+            fail("Request should fail because the resource should be locked by another transaction.");
+        } catch (HttpResponseException e) {
+            assertEquals(CONFLICT.getStatusCode(), e.getStatusCode());
+            assertTrue("concurrent update exception",
+                    e.getReasonPhrase().contains("updated by another transaction"));
+        }
+    }
+
     private void verifyProperty(final String assertionMessage, final String pid, final String txId,
             final String propertyUri, final String propertyValue, final boolean shouldExist) throws IOException {
         final HttpGet getObjCommitted = new HttpGet(serverAddress + (txId != null ? txId + "/" : "") + pid);
@@ -792,6 +850,43 @@ public class TransactionsIT extends AbstractResourceIT {
         assertEquals("Expected binary content for " + id, expected, actual);
     }
 
+    private void putAg(final String id) throws IOException {
+        final var put = putObjMethod(id);
+        put.setHeader("Link", ARCHIVAL_GROUP_TYPE);
+        try (final CloseableHttpResponse response = execute(put)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+        }
+    }
+
+    private void putContainer(final String id, final String txLocation) throws IOException {
+        final var put = putObjMethod(id);
+        if (txLocation != null) {
+            put.addHeader(ATOMIC_ID_HEADER, txLocation);
+        }
+        try (final CloseableHttpResponse resp = execute(put)) {
+            final var code = getStatus(resp);
+            if (code != CREATED.getStatusCode()) {
+                throw new HttpResponseException(code, EntityUtils.toString(resp.getEntity()));
+            }
+        }
+    }
+
+    private void updateContainerTitle(final String id, final String title, final String txLocation) throws IOException {
+        final var patch = patchObjMethod(id);
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patch.setEntity(new StringEntity("INSERT { <> <http://purl.org/dc/elements/1.1/title> \"" + title +
+                "\" } WHERE {}"));
+        if (txLocation != null) {
+            patch.addHeader(ATOMIC_ID_HEADER, txLocation);
+        }
+        try (final CloseableHttpResponse resp = execute(patch)) {
+            final var code = getStatus(resp);
+            if (code != NO_CONTENT.getStatusCode()) {
+                throw new HttpResponseException(code, EntityUtils.toString(resp.getEntity()));
+            }
+        }
+    }
+
     private void putBinary(final String id, final String txLocation, final String content) throws IOException {
         final HttpPut put = new HttpPut(serverAddress + id);
         put.setEntity(new StringEntity(content == null ? "" : content));
@@ -802,8 +897,9 @@ public class TransactionsIT extends AbstractResourceIT {
         }
         try (final CloseableHttpResponse resp = execute(put)) {
             final var code = getStatus(resp);
-            assertTrue("Expected 201 or 204; was: " + code, code == CREATED.getStatusCode()
-                    || code == NO_CONTENT.getStatusCode());
+            if (code != CREATED.getStatusCode() && code != NO_CONTENT.getStatusCode()) {
+                throw new HttpResponseException(code, EntityUtils.toString(resp.getEntity()));
+            }
         }
     }
 
@@ -817,6 +913,15 @@ public class TransactionsIT extends AbstractResourceIT {
             final String content = EntityUtils.toString(entity);
             assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
             return content;
+        }
+    }
+
+    private void commitTransaction(final String txLocation) throws IOException {
+        try (final CloseableHttpResponse resp = execute(new HttpPut(txLocation))) {
+            final var code = getStatus(resp);
+            if (code != NO_CONTENT.getStatusCode()) {
+                throw new HttpResponseException(code, EntityUtils.toString(resp.getEntity()));
+            }
         }
     }
 
