@@ -2156,7 +2156,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testGetWithEmbededResourcesOk() throws Exception {
+    public void testGetWithEmbeddedResourcesOk() throws Exception {
         final String targetResource = "/rest/" + getRandomUniqueId();
         final String childResource = targetResource + "/" + getRandomUniqueId();
         final String username = "user88";
@@ -2178,6 +2178,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         assertEquals(OK.getStatusCode(), getStatus(getAdminChild));
     }
 
+    @Test
     public void testGetWithEmbeddedResourceDenied() throws Exception {
         final String targetResource = "/rest/" + getRandomUniqueId();
         final String childResource = targetResource + "/" + getRandomUniqueId();

@@ -80,6 +80,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
@@ -3836,7 +3837,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String id = getRandomUniqueId();
         final String binaryId = "binary0";
         final String preferEmbed =
-                "return=representation; include=\"http://www.w3.org/ns/oa#PreferContainedDescriptions\"";
+                "return=representation; include=\"" + EMBED_CONTAINED + "\"";
 
         assertEquals(CREATED.getStatusCode(), getStatus(putObjMethod(id)));
         assertEquals(CREATED.getStatusCode(), getStatus(putDSMethod(id, binaryId, "some test content")));
@@ -3866,7 +3867,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String level1 = id + "/" + getRandomUniqueId();
         final String level2 = level1 + "/" + getRandomUniqueId();
         final String preferEmbed =
-                "return=representation; include=\"http://www.w3.org/ns/oa#PreferContainedDescriptions\"";
+                "return=representation; include=\"" + EMBED_CONTAINED + "\"";
 
         assertEquals(CREATED.getStatusCode(), getStatus(putObjMethod(id)));
 
@@ -3890,7 +3891,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue("Property on child binary should be found!" + graphStore, graphStore.contains(ANY,
                     createURI(serverAddress + level1),
                     title.asNode(), createLiteral("First level")));
-            assertFalse("Property from embeded resource's own child should not be found.",
+            assertFalse("Property from embedded resource's own child should not be found.",
                     graphStore.contains(ANY,
                             createURI(serverAddress + level2),
                             title.asNode(), createLiteral("Second level")
