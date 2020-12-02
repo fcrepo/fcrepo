@@ -499,7 +499,7 @@ public class ViewHelpers {
      * @param input a string array or null
      * @return a string.
      */
-    public static String formatAsString(final String[] input) {
+    private static String formatAsString(final String[] input) {
         return (input == null || input.length == 0 ? "" :  String.join(", ", input));
     }
 
@@ -508,11 +508,11 @@ public class ViewHelpers {
      * @param input a string or null
      * @return a string.
      */
-    public static String formatAsString(final String input) {
+    private static String formatAsString(final String input) {
         return (input == null ? "" : input);
     }
 
-    public static String formatAsString(final Long input) {
+    private static String formatAsString(final Long input) {
         return (input == null ? "" : input.toString());
     }
 }

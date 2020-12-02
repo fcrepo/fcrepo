@@ -139,12 +139,6 @@ public class SearchResultProvider implements MessageBodyWriter<SearchResult> {
         final Context context;
         context = getContext();
         context.put("searchResults", result);
-        context.put("fields",
-                Arrays.stream(Condition.Field.values()).map(Condition.Field::toString).toArray(String[]::new));
-        context.put("operators", Arrays.stream(Condition.Operator.values()).map(Condition.Operator::getStringValue)
-                .toArray(String[]::new));
-
-        context.put("isOriginalResource", null);
 
         // The contract of MessageBodyWriter<T> is _not_ to close the stream after writing to it
         final PrintWriter writer = new PrintWriter(entityStream);
@@ -156,14 +150,19 @@ public class SearchResultProvider implements MessageBodyWriter<SearchResult> {
 
         final Context context = new VelocityContext();
         final String[] baseUrl = uriInfo.getBaseUri().getPath().split("/");
-        final String searchPage = uriInfo.getBaseUriBuilder().clone().path(FedoraSearch.class).toString();
-        context.put("searchPage", searchPage);
         if (baseUrl.length > 0) {
             final String staticBaseUrl = String.join("/", Arrays.copyOf(baseUrl, baseUrl.length - 1));
             context.put("staticBaseUrl", staticBaseUrl);
         } else {
             context.put("staticBaseUrl", "/");
         }
+        final var searchPage = uriInfo.getBaseUriBuilder().clone().path(FedoraSearch.class).toString();
+        context.put("searchPage", searchPage);
+        context.put("fields",
+                Arrays.stream(Condition.Field.values()).map(Condition.Field::toString).toArray(String[]::new));
+        context.put("operators", Arrays.stream(Condition.Operator.values()).map(Condition.Operator::getStringValue)
+                .toArray(String[]::new));
+        context.put("isOriginalResource", null);
         context.put("helpers", VIEW_HELPERS);
         context.put("esc", escapeTool);
         context.put("uriInfo", uriInfo);

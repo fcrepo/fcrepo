@@ -12,8 +12,9 @@
     </thead>
     <tbody>
         #foreach( $result in $searchResults.getItems() )
+        #set( $id = $helpers.getString($result, "fedora_id"))
         <tr>
-            <td>$helpers.getString($result, "fedora_id")</td>
+            <td><a href="$id">$id</a></td>
             <td>$helpers.getString($result, "rdf_type")</td>
             <td>$helpers.getString($result, "content_size")</td>
             <td>$helpers.getString($result, "mime_type")</td>

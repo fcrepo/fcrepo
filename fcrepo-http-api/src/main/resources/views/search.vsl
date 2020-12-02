@@ -17,7 +17,7 @@
 
     <div class="row">
         <div class="col-md-5">
-    <p>Enter a search to perform. Correct format is "condition""operator""value", where "condition" can be one of:</p>
+    <p>Enter a search to perform. Where <i>field</i> can be one of:</p>
         <ul>
           <li><b>fedora_id</b>: The ID or URI of the resource.</li>
           <li><b>modified</b>: The last modified date/time.</li>
@@ -26,8 +26,8 @@
           <li><b>content_size</b>: The size of the binary or RDF.</li>
           <li><b>mime_type</b>: The mime-type of the binary object.</li>
         </ul>
-        <p>"operator" can be one of <b>&lt;=, &lt; =, &gt;, &gt;=</b></p>
-        <p>"value" is the value to compare with.</p>
+        <p><i>operator<i> can be one of <b>&lt;=, &lt; =, &gt;, &gt;=</b></p>
+        <p><i>Query term</i> is the value to compare with.</p>
         </div>
         <div class="col-md-5 clearfix">
 
