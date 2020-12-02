@@ -5108,4 +5108,45 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response));
         }
     }
+
+    @Test
+    public void testIdConstraints() throws IOException {
+        assertIdStringConstraint(".fcrepo");
+        assertIdStringConstraint("fcr-root");
+        assertIdStringConstraint("fcr-container.nt");
+
+        assertIdSuffixConstraint("~fcr-desc");
+        assertIdSuffixConstraint("~fcr-acl");
+        assertIdSuffixConstraint("~fcr-desc.nt");
+        assertIdSuffixConstraint("~fcr-acl.nt");
+    }
+
+    private void assertIdStringConstraint(final String id) throws IOException {
+        assertInvalidId(id);
+        assertValidId(id + "-suffix");
+        assertValidId("prefix-" + id);
+    }
+
+    private void assertIdSuffixConstraint(final String suffix) throws IOException {
+        assertInvalidId("prefix" + suffix);
+        assertValidId(suffix);
+        assertValidId(suffix + "-suffix");
+    }
+
+    private void assertInvalidId(final String id) throws IOException {
+        final HttpPost postMethod = postObjMethod();
+        postMethod.setHeader("Slug", id);
+        try (final CloseableHttpResponse response = execute(postMethod)) {
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response));
+        }
+    }
+
+    private void assertValidId(final String id) throws IOException {
+        final HttpPost postMethod = postObjMethod();
+        postMethod.setHeader("Slug", id);
+        try (final CloseableHttpResponse response = execute(postMethod)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+        }
+    }
+
 }
