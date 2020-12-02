@@ -33,7 +33,7 @@
     <narayana-jta.version>5.9.0.Final</narayana-jta.version>
     <jetty.version>9.4.34.v20201102</jetty.version>
     <guava.version>30.0-jre</guava.version>
-    <h2database.version>1.4.200</h2database.version>
+    <h2database.version>1.4.195</h2database.version>
     <hk2.version>2.6.1</hk2.version>
     <htmlunit.version>2.33</htmlunit.version>
     <httpclient.version>4.5.13</httpclient.version>
