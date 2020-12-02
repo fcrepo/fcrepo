@@ -18,11 +18,20 @@
 package org.fcrepo.kernel.api.operations;
 
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+
 /**
- * Specifies the type of modification action represented by a resource operation.
+ * Factory for reindex resource operations
  *
- * @author bbpennel
+ * @author dbernstein
  */
-public enum ResourceOperationType {
-    UPDATE, CREATE, DELETE, PURGE, FOLLOW, REINDEX
+public interface ReindexResourceOperationFactory extends ResourceOperationFactory {
+
+    /**
+     * Get a builder for an operation to reindex a resource
+     *
+     * @param resourceId id of the resource to reindex
+     * @return new builder
+     */
+    ResourceOperationBuilder create(FedoraId resourceId);
 }

@@ -15,14 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.operations;
+package org.fcrepo.kernel.api.services;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 /**
- * Specifies the type of modification action represented by a resource operation.
+ * A service which handles reindexing operations
  *
- * @author bbpennel
+ * @author dbernstein
  */
-public enum ResourceOperationType {
-    UPDATE, CREATE, DELETE, PURGE, FOLLOW, REINDEX
+public interface ReindexService {
+    void reindexByFedoraId(String txId, String principal, FedoraId fedoraId);
 }

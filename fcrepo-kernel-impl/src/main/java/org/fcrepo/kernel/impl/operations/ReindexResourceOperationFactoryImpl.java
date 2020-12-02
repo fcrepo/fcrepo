@@ -15,14 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.operations;
+package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.operations.ReindexResourceOperationFactory;
+import org.springframework.stereotype.Component;
 
 /**
- * Specifies the type of modification action represented by a resource operation.
+ * Implementation of a reindex resource operation factory
  *
- * @author bbpennel
+ * @author dbernstein
  */
-public enum ResourceOperationType {
-    UPDATE, CREATE, DELETE, PURGE, FOLLOW, REINDEX
+@Component
+public class ReindexResourceOperationFactoryImpl implements ReindexResourceOperationFactory {
+
+    @Override
+    public ReindexResourceOperationBuilder create(final FedoraId resourceId) {
+        return new ReindexResourceOperationBuilder(resourceId);
+    }
 }

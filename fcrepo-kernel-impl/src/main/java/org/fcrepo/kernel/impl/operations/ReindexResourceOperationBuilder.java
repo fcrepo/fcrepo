@@ -15,14 +15,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.operations;
+package org.fcrepo.kernel.impl.operations;
+
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.operations.ResourceOperationBuilder;
 
 
 /**
- * Specifies the type of modification action represented by a resource operation.
+ * Builder for operations to reindex a resource
  *
- * @author bbpennel
+ * @author dbernstein
  */
-public enum ResourceOperationType {
-    UPDATE, CREATE, DELETE, PURGE, FOLLOW, REINDEX
+public class ReindexResourceOperationBuilder extends AbstractResourceOperationBuilder
+        implements ResourceOperationBuilder {
+
+    /**
+     * Construct the builder
+     *
+     * @param rescId identifier of the resource to reindex
+     */
+    public ReindexResourceOperationBuilder(final FedoraId rescId) {
+        super(rescId);
+    }
+
+    @Override
+    public ReindexResourceOperation build() {
+        final var operation = new ReindexResourceOperation(rescId);
+        operation.setUserPrincipal(userPrincipal);
+        return operation;
+    }
 }
