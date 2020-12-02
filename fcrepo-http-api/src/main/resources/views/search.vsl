@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+#set( $title = "Search" )
+
+#parse("views/common.vsl")
+<html>
+<head>
+    <title>$title</title>
+    <meta charset="UTF-8">
+    #parse("views/common-head.vsl")
+</head>
+
+
+<body class="fcrepo_search">
+<div id="main" class="container" page="$searchPage">
+    #parse("views/common-header.vsl")
+    #parse("views/search-header.vsl")
+
+    <div class="row">
+        <div class="col-md-5">
+    <p>Enter a search to perform. Where <i>field</i> can be one of:</p>
+        <ul>
+          <li><b>fedora_id</b>: The ID or URI of the resource.</li>
+          <li><b>modified</b>: The last modified date/time.</li>
+          <li><b>created</b>: The created date/time.</li>
+          <li><b>rdf_type</b>: The rdf:type of the resource.</li>
+          <li><b>content_size</b>: The size of the binary or RDF.</li>
+          <li><b>mime_type</b>: The mime-type of the binary object.</li>
+        </ul>
+        <p><i>operator<i> can be one of <b>&lt;=, &lt; =, &gt;, &gt;=</b></p>
+        <p><i>Query term</i> is the value to compare with.</p>
+        </div>
+        <div class="col-md-5 clearfix">
+
+        <form id="action_search" method="GET">
+            <p>Query (currently only supports one condition at a time).</p>
+            <input type="hidden" id="search_count" value="1"/>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+        </div>
+    </div>
+
+    <div class="row">
+
+        <div id="search_results">
+            <h3>Search results</h3>
+            #if( $searchResults.getItems().size() == 0 )
+                <p>Your search returned no results.</p>
+            #else
+                #parse("views/common-search-result.vsl")
+            #end
+        </div>
+    </div>
+</div>
+</body>
+</html>

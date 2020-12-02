@@ -72,7 +72,7 @@ public class Condition {
         }
     }
 
-    /* A regex for parsing the volue of a "condition" query  parameter which follows the format
+    /* A regex for parsing the value of a "condition" query  parameter which follows the format
      * [field_name][operation][object]
      * The field name is composed of at least one character and can contain alpha number characters and underscores.
      * The operation can equal "=", "<", ">", "<=" or ">="
@@ -116,8 +116,7 @@ public class Condition {
     }
 
     /**
-     * Returns the object portion of the condition
-     * @return
+     * @return the object portion of the condition
      */
     public String getObject() {
         return object;
@@ -132,7 +131,7 @@ public class Condition {
      * Parses a string expression into a Condition object.
      * @param expression The condition as a string expression.
      * @return The condition
-     * @throws InvalidConditionExpressionException
+     * @throws InvalidConditionExpressionException if we can't parse the string into a Condition.
      */
     public static Condition fromExpression(final String expression) throws InvalidConditionExpressionException {
         final var m = CONDITION_REGEX.matcher(expression);

@@ -1,0 +1,29 @@
+
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>RDF types</th>
+            <th>Content size</th>
+            <th>MimeType</th>
+            <th>Created</th>
+            <th>Last Modified</th>
+        </tr>
+    </thead>
+    <tbody>
+        #foreach( $result in $searchResults.getItems() )
+        #set( $id = $helpers.getString($result, "fedora_id"))
+        <tr>
+            <td><a href="$id">$id</a></td>
+            <td>$helpers.getString($result, "rdf_type")</td>
+            <td>$helpers.getString($result, "content_size")</td>
+            <td>$helpers.getString($result, "mime_type")</td>
+            <td>$helpers.getString($result, "created")</td>
+            <td>$helpers.getString($result, "modified")</td>
+        </tr>
+        #end
+    </tbody>
+</table>
+
+
+
