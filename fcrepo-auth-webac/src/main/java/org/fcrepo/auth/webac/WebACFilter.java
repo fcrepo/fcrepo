@@ -74,7 +74,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -331,13 +330,14 @@ public class WebACFilter extends RequestContextFilter {
                 }
             } else {
                 if (currentUser.isPermitted(toRead)) {
-                    if (!isAuthorizedForContainedResources(httpRequest, currentUser, resource)) {
+                    if (!isAuthorizedForEmbeddedRequest(httpRequest, currentUser, resource)) {
                         log.debug("GET/HEAD/OPTIONS request to {} denied, user {} not authorized for an embedded " +
                                 "resource", requestURL, currentUser.toString());
                         return false;
                     }
                     return true;
                 }
+                return false;
             }
         case "PUT":
             if (isAcl) {
@@ -431,8 +431,15 @@ public class WebACFilter extends RequestContextFilter {
                 if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {
                     log.debug("DELETE denied, not authorized to write to membershipRelation");
                     return false;
+                } else if (currentUser.isPermitted(toWrite)) {
+                    if (!isAuthorizedForContainedResources(resource, WEBAC_MODE_WRITE, httpRequest, currentUser,
+                            true)) {
+                        log.debug("DELETE denied, not authorized to write to a descendant of {}", resource);
+                        return false;
+                    }
+                    return true;
                 }
-                return currentUser.isPermitted(toWrite);
+                return false;
             }
         case "PATCH":
 
@@ -746,29 +753,49 @@ public class WebACFilter extends RequestContextFilter {
      * @param resource the resource being requested.
      * @return true if authorized or not an embedded resource request on a container.
      */
-    private boolean isAuthorizedForContainedResources(final HttpServletRequest request, final Subject currentUser,
+    private boolean isAuthorizedForEmbeddedRequest(final HttpServletRequest request, final Subject currentUser,
                                                       final FedoraResource resource) {
-        if (!isBinaryOrDescription(resource) && isEmbeddedRequest(request)) {
+        if (isEmbeddedRequest(request)) {
+            return isAuthorizedForContainedResources(resource, WEBAC_MODE_READ, request, currentUser, false);
+        }
+        // Is not an embedded resource request
+        return true;
+    }
+
+    /**
+     * Utility to check for a permission on the contained resources of a parent resource.
+     * @param resource the parent resource
+     * @param permission the permission required
+     * @param request the current request
+     * @param currentUser the current user
+     * @param deepTraversal whether to check children of children.
+     * @return true if we are allowed access to all descendants, false otherwise.
+     */
+    private boolean isAuthorizedForContainedResources(final FedoraResource resource, final URI permission,
+                                                      final HttpServletRequest request, final Subject currentUser,
+                                                      final boolean deepTraversal) {
+        if (!isBinaryOrDescription(resource)) {
             final Transaction transaction = transaction(request);
             final Stream<FedoraResource> children = resourceFactory.getChildren(TransactionUtils.openTxId(transaction),
                     resource.getFedoraId());
-            final Predicate<FedoraResource> cannotAccessResource = resc -> {
+            return children.noneMatch(resc -> {
                 final URI childURI = URI.create(resc.getFedoraId().getFullId());
                 log.debug("Found embedded resource: {}", resc);
                 // add the contained URI to the list URIs to retrieve ACLs for
                 addURIToAuthorize(request, childURI);
-                if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_READ, childURI))) {
+                if (!currentUser.isPermitted(new WebACPermission(permission, childURI))) {
                     log.debug("Failed to access embedded resource: {}", childURI);
-                    // Returning true allows us to short-circuit the anyMatch and quit faster.
                     return true;
                 }
+                if (deepTraversal) {
+                    // We invert this because the recursive noneMatch reports opposite what we want in here.
+                    // Here we want the true (no children failed) to become a false (no children matched a failure).
+                    return !isAuthorizedForContainedResources(resc, permission, request, currentUser, deepTraversal);
+                }
                 return false;
-            };
-            final boolean failures = children.anyMatch(cannotAccessResource);
-            // If failed permissions on at least one child, reject request.
-            return !failures;
+            });
         }
-        // Is a binary or not an embedded resource request
+        // Is a binary or description.
         return true;
     }
 
