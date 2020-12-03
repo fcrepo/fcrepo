@@ -4405,11 +4405,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 new RequestThread(patchWithSparql(path,
                         "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'one' . }")),
                 new RequestThread(patchWithSparql(path,
-                        "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'two' . }")),
-                new RequestThread(patchWithSparql(path,
-                        "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'three' . }")),
-                new RequestThread(patchWithSparql(path,
-                        "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'four' . }"))
+                        "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'two' . }"))
         };
 
         for (final RequestThread t : threads) {
