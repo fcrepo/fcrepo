@@ -780,10 +780,10 @@ public class TransactionsIT extends AbstractResourceIT {
 
         commitTransaction(txLocation);
 
-        assertEquals("binary - updated!", getBinary(binaryId, null));
+        assertEquals("binary - updated!", getResource(binaryId, null));
 
         putBinary(binaryId, null, "unlocked!");
-        assertEquals("unlocked!", getBinary(binaryId, null));
+        assertEquals("unlocked!", getResource(binaryId, null));
     }
 
     @Test
@@ -801,7 +801,26 @@ public class TransactionsIT extends AbstractResourceIT {
 
         commitTransaction(txLocation);
 
-        assertEquals("binary - updated!", getBinary(binaryId, null));
+        assertEquals("binary - updated!", getResource(binaryId, null));
+    }
+
+    @Test
+    public void concurrentSparqlUpdatesShouldNotBeAllowed() throws Exception {
+        final var containerId = getRandomUniqueId();
+
+        putContainer(containerId, null);
+
+        final String txLocation = createTransaction();
+
+        updateContainerTitle(containerId, "new title", txLocation);
+
+        assertConcurrentUpdate(() -> updateContainerTitle(containerId, "concurrent update!", null));
+
+        commitTransaction(txLocation);
+
+        final var response = getResource(containerId, null);
+        assertTrue("title should have been updated", response.contains("new title"));
+        assertFalse("concurrent update should not have been applied", response.contains("concurrent update!"));
     }
 
     private void assertConcurrentUpdate(final CheckedRunnable runnable) throws Exception {
@@ -846,7 +865,7 @@ public class TransactionsIT extends AbstractResourceIT {
     private void assertBinaryContent(final String expected,
                                      final String id,
                                      final String txLocation) throws IOException {
-        final var actual = getBinary(id, txLocation);
+        final var actual = getResource(id, txLocation);
         assertEquals("Expected binary content for " + id, expected, actual);
     }
 
@@ -903,7 +922,7 @@ public class TransactionsIT extends AbstractResourceIT {
         }
     }
 
-    private String getBinary(final String id, final String txLocation) throws IOException {
+    private String getResource(final String id, final String txLocation) throws IOException {
         final var get = new HttpGet(serverAddress + id);
         if (txLocation != null) {
             get.addHeader(ATOMIC_ID_HEADER, txLocation);

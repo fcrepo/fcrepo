@@ -4396,47 +4396,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testConcurrentPatchesOnlyOneShouldSucceed() throws Exception {
-        // create a resource
-        final String path = getRandomUniqueId();
-        executeAndClose(putObjMethod(path));
-
-        final RequestThread[] threads = new RequestThread[] {
-                new RequestThread(patchWithSparql(path,
-                        "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'one' . }")),
-                new RequestThread(patchWithSparql(path,
-                        "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'two' . }"))
-        };
-
-        for (final RequestThread t : threads) {
-            t.start();
-        }
-
-        var successCount = 0;
-        for (final RequestThread t : threads) {
-            t.join(1000);
-            assertFalse("Thread " + t.getId() + " could not perform its operation in time!", t.isAlive());
-            final int status = t.response.getStatusLine().getStatusCode();
-            if (status == 204) {
-                successCount++;
-            }
-        }
-
-        assertEquals("Exactly one patch should have succeeded", 1, successCount);
-    }
-
-    private HttpPatch patchWithSparql(final String path, final String sparqlUpdate) {
-        try {
-            final HttpPatch patch = new HttpPatch(serverAddress + path);
-            patch.addHeader(CONTENT_TYPE, "application/sparql-update");
-            patch.setEntity(new StringEntity(sparqlUpdate));
-            return patch;
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Test
     public void testBinaryLastModified() throws Exception {
         final String objid = getRandomUniqueId();
         final String objURI = serverAddress + objid;
