@@ -4415,7 +4415,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String path = getRandomUniqueId();
         executeAndClose(putObjMethod(path));
 
-        final var phaser = new Phaser(5);
+        final var phaser = new Phaser(4);
         final var futures = new ArrayList<Future<Integer>>();
 
         futures.add(executor.submit(() -> {
@@ -4432,11 +4432,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
             phaser.arriveAndAwaitAdvance();
             return patchWithSparql(path,
                     "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'three' . }");
-        }));
-        futures.add(executor.submit(() -> {
-            phaser.arriveAndAwaitAdvance();
-            return patchWithSparql(path,
-                    "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'four' . }");
         }));
 
         phaser.arriveAndAwaitAdvance();
