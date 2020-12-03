@@ -40,6 +40,7 @@ import java.io.InputStream;
 import java.io.ByteArrayInputStream;
 import org.junit.runner.RunWith;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.RdfStream;
 import org.mockito.InjectMocks;
@@ -70,10 +71,10 @@ public class HttpRdfServiceTest {
     private static final Resource FEDORA_URI_1_RESOURCE = ResourceFactory.createResource(FEDORA_URI_1);
     private static final String FEDORA_URI_2 = "http://www.example.com/fedora/rest/resource2";
     private static final Resource FEDORA_URI_2_RESOURCE = ResourceFactory.createResource(FEDORA_URI_2);
-    private static final String FEDORA_ID_1 = "info:fedora/resource1";
-    private static final Resource FEDORA_ID_1_RESOURCE = ResourceFactory.createResource(FEDORA_ID_1);
-    private static final String FEDORA_ID_2 = "info:fedora/resource2";
-    private static final Resource FEDORA_ID_2_RESOURCE = ResourceFactory.createResource(FEDORA_ID_2);
+    private static final FedoraId FEDORA_ID_1 = FedoraId.create("info:fedora/resource1");
+    private static final Resource FEDORA_ID_1_RESOURCE = ResourceFactory.createResource(FEDORA_ID_1.getFullId());
+    private static final FedoraId FEDORA_ID_2 = FedoraId.create("info:fedora/resource2");
+    private static final Resource FEDORA_ID_2_RESOURCE = ResourceFactory.createResource(FEDORA_ID_2.getFullId());
     private static final String NON_FEDORA_URI = "http://www.otherdomain.org/resource5";
     private static final Resource NON_FEDORA_URI_RESOURCE = ResourceFactory.createResource(NON_FEDORA_URI);
     private static final String RDF =
@@ -92,28 +93,27 @@ public class HttpRdfServiceTest {
 
     @Before
     public void setup() {
-        when(idTranslator.toInternalId(FEDORA_URI_1)).thenReturn(FEDORA_ID_1);
-        when(idTranslator.toInternalId(FEDORA_URI_2)).thenReturn(FEDORA_ID_2);
+        when(idTranslator.toInternalId(FEDORA_URI_1)).thenReturn(FEDORA_ID_1.getFullId());
+        when(idTranslator.toInternalId(FEDORA_URI_2)).thenReturn(FEDORA_ID_2.getFullId());
         when(idTranslator.inExternalDomain(FEDORA_URI_1)).thenReturn(true);
         when(idTranslator.inExternalDomain(FEDORA_URI_2)).thenReturn(true);
         when(idTranslator.inExternalDomain(NON_FEDORA_URI)).thenReturn(false);
 
-        when(idTranslator.toExternalId(FEDORA_ID_1)).thenReturn(FEDORA_URI_1);
-        when(idTranslator.toExternalId(FEDORA_ID_2)).thenReturn(FEDORA_URI_2);
-        when(idTranslator.inInternalDomain(FEDORA_ID_1)).thenReturn(true);
-        when(idTranslator.inInternalDomain(FEDORA_ID_2)).thenReturn(true);
+        when(idTranslator.toExternalId(FEDORA_ID_1.getFullId())).thenReturn(FEDORA_URI_1);
+        when(idTranslator.toExternalId(FEDORA_ID_2.getFullId())).thenReturn(FEDORA_URI_2);
+        when(idTranslator.inInternalDomain(FEDORA_ID_1.getFullId())).thenReturn(true);
+        when(idTranslator.inInternalDomain(FEDORA_ID_2.getFullId())).thenReturn(true);
         when(idTranslator.inInternalDomain(NON_FEDORA_URI)).thenReturn(false);
 
-        when(resource.getId()).thenReturn(FEDORA_ID_1);
+        when(resource.getId()).thenReturn(FEDORA_ID_1.getFullId());
 
         log.debug("Rdf is: {}", RDF);
     }
 
     @Test
     public void testGetModelFromInputStream() {
-
         final InputStream requestBodyStream = new ByteArrayInputStream(RDF.getBytes());
-        final Model model = httpRdfService.bodyToInternalModel(FEDORA_URI_1, requestBodyStream,
+        final Model model = httpRdfService.bodyToInternalModel(FEDORA_ID_1, requestBodyStream,
             CONTENT_TYPE, idTranslator, false);
 
         assertFalse(model.isEmpty());
@@ -122,25 +122,15 @@ public class HttpRdfServiceTest {
     }
 
     @Test
-    public void testGetRdfStreamFromInputStream() {
-
-        final InputStream requestBodyStream = new ByteArrayInputStream(RDF.getBytes());
-        final RdfStream stream = httpRdfService.bodyToInternalStream(FEDORA_URI_1, requestBodyStream,
-            CONTENT_TYPE, idTranslator, false);
-
-        assertTrue(stream.toString().length() > 0);
-        verifyTriples(stream);
-    }
-
-    @Test
     public void testConvertInternalToExternalStream() {
         final InputStream requestBodyStream = new ByteArrayInputStream(INTERNAL_RDF.getBytes());
-        final Node topic = NodeFactory.createURI(FEDORA_ID_1);
+        final Node topic = NodeFactory.createURI(FEDORA_ID_1.getEncodedFullId());
         final Model internalGraph = ModelFactory.createDefaultModel();
-        internalGraph.read(requestBodyStream, FEDORA_ID_1, "TURTLE");
+        internalGraph.read(requestBodyStream, FEDORA_ID_1.getEncodedFullId(), "TURTLE");
         final RdfStream stream = fromModel(topic, internalGraph);
 
-        final RdfStream converted = httpRdfService.bodyToExternalStream(FEDORA_ID_1, stream, idTranslator);
+        final RdfStream converted = httpRdfService.bodyToExternalStream(FEDORA_ID_1.getFullId(), stream,
+                idTranslator);
 
         final Model model = converted.collect(toModel());
         assertFalse(model.contains(FEDORA_ID_1_RESOURCE, DCTerms.isPartOf, NON_FEDORA_URI_RESOURCE));
@@ -308,19 +298,16 @@ public class HttpRdfServiceTest {
 
     private void verifyTriples(final Model model)  {
 
-        final Resource fedoraResource = model.createResource(FEDORA_ID_1);
+        final Resource fedoraResource = model.createResource(FEDORA_ID_1.getEncodedFullId());
 
         // make sure it changed the fedora uri to id, but didn't touch the non fedora domain
         assertTrue(model.contains(fedoraResource, DCTerms.isPartOf, model.createResource(NON_FEDORA_URI)));
 
         // make sure it translated the fedora uri to fedora id for this triple in both the subject and object
-        assertTrue(model.contains(fedoraResource, DCTerms.isPartOf, model.createResource(FEDORA_ID_2)));
+        assertTrue(model.contains(fedoraResource, DCTerms.isPartOf,
+                model.createResource(FEDORA_ID_2.getEncodedFullId())));
 
         // make sure there are no triples that have the subject of the fedora uri
         assertFalse(model.containsResource(model.createResource(FEDORA_URI_1)));
-    }
-
-    private void verifyTriples(final RdfStream rdfStream) {
-        verifyTriples(rdfStream.collect(toModel()));
     }
 }

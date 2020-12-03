@@ -58,7 +58,7 @@ public class HttpIdentifierConverterTest {
     @Test(expected = IllegalArgumentException.class)
     public void testBlankUri() {
         final String testUri = "";
-        final String fedoraId = converter.toInternalId(testUri);
+        converter.toInternalId(testUri);
     }
 
     /**

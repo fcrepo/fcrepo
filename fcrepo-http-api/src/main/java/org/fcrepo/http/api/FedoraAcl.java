@@ -138,7 +138,7 @@ public class FedoraAcl extends ContentExposingResource {
                     requestContentType == null ?
                             RDFMediaType.TURTLE_TYPE : valueOf(getSimpleContentType(requestContentType));
             if (isRdfContentType(contentType.toString())) {
-                final Model model = httpRdfService.bodyToInternalModel(aclId.getFullId(),
+                final Model model = httpRdfService.bodyToInternalModel(aclId,
                         requestBodyStream, contentType, identifierConverter(), hasLenientPreferHeader());
                 if (exists) {
                     replacePropertiesService.perform(transaction(), getUserPrincipal(), aclId, model);
@@ -208,7 +208,7 @@ public class FedoraAcl extends ContentExposingResource {
             evaluateRequestPreconditions(request, servletResponse, aclResource, transaction());
 
             LOGGER.info("PATCH for '{}'", externalPath);
-            final String newRequest = httpRdfService.patchRequestToInternalString(aclResource.getFedoraId().getFullId(),
+            final String newRequest = httpRdfService.patchRequestToInternalString(aclResource.getFedoraId(),
                     requestBody, identifierConverter());
             LOGGER.debug("PATCH request translated to '{}'", newRequest);
             patchResourcewithSparql(aclResource, newRequest);
