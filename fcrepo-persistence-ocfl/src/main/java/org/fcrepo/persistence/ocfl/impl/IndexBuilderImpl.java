@@ -17,23 +17,25 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import edu.wisc.library.ocfl.api.OcflRepository;
+import java.time.Duration;
+import java.time.Instant;
+
+import javax.inject.Inject;
+
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.IndexBuilder;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
-
-import java.time.Duration;
-import java.time.Instant;
+import edu.wisc.library.ocfl.api.OcflRepository;
 
 /**
  * An implementation of {@link IndexBuilder}.  This implementation rebuilds the following indexable state derived
@@ -107,28 +109,25 @@ public class IndexBuilderImpl implements IndexBuilder {
     }
 
     private boolean shouldRebuild() {
-        final var repoContainsObjects = repoContainsObjects();
-        final var repoRootMappingExists = repoRootMappingExists();
-        final var repoRootContainmentExists = repoRootContainmentExists();
+        final var repoRoot = getRepoRootMapping();
 
-        return (repoContainsObjects && (!repoRootMappingExists || !repoRootContainmentExists)
-                || (!repoContainsObjects && (repoRootMappingExists || repoRootContainmentExists)));
+        if (repoRoot == null) {
+            return true;
+        }
+
+        return !repoContainsRootObject(repoRoot);
     }
 
-    private boolean repoRootMappingExists() {
+    private String getRepoRootMapping() {
         try {
-            return ocflIndex.getMapping(null, FedoraId.getRepositoryRootId()) != null;
+            return ocflIndex.getMapping(null, FedoraId.getRepositoryRootId()).getOcflObjectId();
         } catch (final FedoraOcflMappingNotFoundException e) {
-            return false;
+            return null;
         }
     }
 
-    private boolean repoRootContainmentExists() {
-        return containmentIndex.resourceExists(null, FedoraId.getRepositoryRootId(), false);
-    }
-
-    private boolean repoContainsObjects() {
-        return ocflRepository.listObjectIds().findFirst().isPresent();
+    private boolean repoContainsRootObject(final String id) {
+        return ocflRepository.containsObject(id);
     }
 
     private String getDurationMessage(final Duration duration) {
