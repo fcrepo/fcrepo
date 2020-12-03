@@ -17,91 +17,6 @@
  */
 package org.fcrepo.integration.http.api;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Iterators;
-import nu.validator.htmlparser.sax.HtmlParser;
-import nu.validator.saxtree.TreeBuilder;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpHead;
-import org.apache.http.client.methods.HttpOptions;
-import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.entity.BasicHttpEntity;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.entity.FileEntity;
-import org.apache.http.entity.InputStreamEntity;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
-import org.apache.http.util.EntityUtils;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.query.Dataset;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.StmtIterator;
-import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.sparql.core.DatasetGraph;
-import org.apache.jena.sparql.core.Quad;
-import org.apache.jena.vocabulary.DC_11;
-import org.apache.jena.vocabulary.RDF;
-import org.fcrepo.http.commons.domain.RDFMediaType;
-import org.fcrepo.http.commons.test.util.CloseableDataset;
-import org.glassfish.jersey.media.multipart.ContentDisposition;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.springframework.test.context.TestExecutionListeners;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
-
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.core.Variant;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
-import java.net.URI;
-import java.text.ParseException;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.Random;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.Phaser;
-import java.util.concurrent.TimeUnit;
-
 import static java.lang.Thread.sleep;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.ZoneId.of;
@@ -208,6 +123,89 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
+import java.net.URI;
+import java.text.ParseException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
+import javax.ws.rs.core.Link;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.Variant;
+
+import org.fcrepo.http.commons.domain.RDFMediaType;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpOptions;
+import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.entity.BasicHttpEntity;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.FileEntity;
+import org.apache.http.entity.InputStreamEntity;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
+import org.apache.http.util.EntityUtils;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.vocabulary.DC_11;
+import org.apache.jena.vocabulary.RDF;
+import org.glassfish.jersey.media.multipart.ContentDisposition;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.springframework.test.context.TestExecutionListeners;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Iterators;
+
+import nu.validator.htmlparser.sax.HtmlParser;
+import nu.validator.saxtree.TreeBuilder;
+
 /**
  * @author cabeer
  * @author ajs6f
@@ -268,18 +266,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     private static final DateTimeFormatter tripleFormat =
       DateTimeFormatter.ISO_INSTANT.withZone(of("GMT"));
-
-    private static ExecutorService executor;
-
-    @BeforeClass
-    public static void beforeClass() {
-        executor = Executors.newCachedThreadPool();
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        executor.shutdown();
-    }
 
     @Test
     public void testHeadRepositoryGraph() throws IOException {
@@ -4357,18 +4343,18 @@ public class FedoraLdpIT extends AbstractResourceIT {
             binaryEtag = response.getFirstHeader("ETag").getValue();
         }
 
-        final PutThread[] threads = new PutThread[] {
-                new PutThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 1")),
-                new PutThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 2")),
-                new PutThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 3")),
-                new PutThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 4"))  };
+        final RequestThread[] threads = new RequestThread[] {
+                new RequestThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 1")),
+                new RequestThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 2")),
+                new RequestThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 3")),
+                new RequestThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 4"))  };
 
-        for (final PutThread t : threads) {
+        for (final RequestThread t : threads) {
             t.start();
         }
 
-        final List<PutThread> successfulThreads = new ArrayList<>();
-        for (final PutThread t : threads) {
+        final List<RequestThread> successfulThreads = new ArrayList<>();
+        for (final RequestThread t : threads) {
             t.join(1000);
             assertFalse("Thread " + t.getId() + " could not perform its operation in time!", t.isAlive());
             final int status = t.response.getStatusLine().getStatusCode();
@@ -4381,22 +4367,22 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals("Only one PUT request should have been successful!", 1, successfulThreads.size());
     }
 
-    private class PutThread extends Thread {
+    private static class RequestThread extends Thread {
 
-        private final HttpPut put;
+        private final HttpUriRequest request;
 
         private HttpResponse response;
 
-        public PutThread(final HttpPut put) {
-            this.put = put;
+        public RequestThread(final HttpUriRequest request) {
+            this.request = request;
         }
 
         @Override
         public void run() {
             try {
-                response = execute(put);
+                response = execute(request);
             } catch (final IOException e) {
-                LOGGER.error("Thread " + Thread.currentThread().getId() + ", failed to PUT resource!", e);
+                LOGGER.error("Thread " + Thread.currentThread().getId() + ", failed to request!", e);
             }
 
         }
@@ -4415,26 +4401,27 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String path = getRandomUniqueId();
         executeAndClose(putObjMethod(path));
 
-        final var phaser = new Phaser(3);
-        final var futures = new ArrayList<Future<Integer>>();
+        final RequestThread[] threads = new RequestThread[] {
+                new RequestThread(patchWithSparql(path,
+                        "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'one' . }")),
+                new RequestThread(patchWithSparql(path,
+                        "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'two' . }")),
+                new RequestThread(patchWithSparql(path,
+                        "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'three' . }")),
+                new RequestThread(patchWithSparql(path,
+                        "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'four' . }"))
+        };
 
-        futures.add(executor.submit(() -> {
-            phaser.arriveAndAwaitAdvance();
-            return patchWithSparql(path,
-                    "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'one' . }");
-        }));
-        futures.add(executor.submit(() -> {
-            phaser.arriveAndAwaitAdvance();
-            return patchWithSparql(path,
-                    "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'two' . }");
-        }));
-
-        phaser.arriveAndAwaitAdvance();
+        for (final RequestThread t : threads) {
+            t.start();
+        }
 
         var successCount = 0;
-
-        for (final var future : futures) {
-            if (future.get().equals(204)) {
+        for (final RequestThread t : threads) {
+            t.join(1000);
+            assertFalse("Thread " + t.getId() + " could not perform its operation in time!", t.isAlive());
+            final int status = t.response.getStatusLine().getStatusCode();
+            if (status == 204) {
                 successCount++;
             }
         }
@@ -4442,16 +4429,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals("Exactly one patch should have succeeded", 1, successCount);
     }
 
-    private int patchWithSparql(final String path, final String sparqlUpdate) {
+    private HttpPatch patchWithSparql(final String path, final String sparqlUpdate) {
         try {
             final HttpPatch patch = new HttpPatch(serverAddress + path);
             patch.addHeader(CONTENT_TYPE, "application/sparql-update");
             patch.setEntity(new StringEntity(sparqlUpdate));
-            final CloseableHttpResponse r = client.execute(patch);
-            final int code = r.getStatusLine().getStatusCode();
-            r.close();
-            return code;
-        } catch (final IOException e) {
+            return patch;
+        } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
     }
