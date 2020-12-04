@@ -19,11 +19,13 @@ package org.fcrepo.integration.http.api;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.HttpPost;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.TestExecutionListeners;
 
+import java.io.IOException;
 import java.nio.file.Path;
 
 import static org.junit.Assert.assertEquals;
@@ -39,31 +41,91 @@ public class FedoraReindexIT extends AbstractResourceIT {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FedoraReindexIT.class);
 
-    @Test
-    public void testSideLoading() throws Exception {
-        final var fedoraId = "container1";
-        //validate that the fedora resource is not found (404)
-        assertNotFound(fedoraId);
+    private void prepareContentForSideLoading(final String testObjectPath) throws Exception {
         //move ocfl directory into place on disk
-        final var src = Path.of("src/test/resources/reindex-test").toFile();
+        final var src = Path.of(testObjectPath).toFile();
         final var dest = Path.of("target/fcrepo-home/data/ocfl-root").toFile();
         LOGGER.info("copying {} to {}", src.toString(), dest.toString());
         FileUtils.copyDirectory(src, dest);
+    }
 
-        //invoke reindex command
-        final var httpPost = postObjMethod(fedoraId + "/fcr:reindex");
+    @Test
+    public void testReindexNewObjects() throws Exception {
+        final var fedoraId = "container1";
+        //validate that the fedora resource is not found (404)
+        assertNotFound(fedoraId);
 
-        try (final var response = execute(httpPost)) {
-            assertEquals("expected 204", HttpStatus.SC_NO_CONTENT, response.getStatusLine().getStatusCode());
-        }
+        prepareContentForSideLoading("src/test/resources/reindex-test");
+        final HttpPost httpPost = doReindex(fedoraId, HttpStatus.SC_NO_CONTENT);
+
         //validate the the fedora resource is found (200)
-        assertNotDeleted("container1");
+        assertNotDeleted(fedoraId);
 
-       //verify that attempting to index an already existing resource returns a CONFLICT.
+        //verify that attempting to index an already existing resource returns a CONFLICT.
         try (final var response = execute(httpPost)) {
             assertEquals("expected " + HttpStatus.SC_CONFLICT + " on retry after successful indexing",
                     HttpStatus.SC_CONFLICT,
                     response.getStatusLine().getStatusCode());
         }
     }
+
+    @Test
+    public void testReindexNonExistentObject() throws Exception {
+        final var fedoraId = "container1";
+        //validate that the fedora resource is not found (404)
+        assertNotFound(fedoraId);
+        doReindex(fedoraId, HttpStatus.SC_BAD_REQUEST);
+    }
+
+    @Test
+    public void testReindexChildWithinArchivalGroup() throws Exception {
+        final var parentId = "archival-group";
+        final var fedoraId = parentId + "/child1";
+
+        prepareContentForSideLoading("src/test/resources/reindex-test-ag");
+
+        //validate that the fedora resource is not found (404)
+        assertNotFound(fedoraId);
+        assertNotFound(parentId);
+
+        doReindex(fedoraId, HttpStatus.SC_BAD_REQUEST);
+
+        //ensure the resource is still not found
+        assertNotFound(fedoraId);
+        assertNotFound(parentId);
+    }
+
+    private HttpPost doReindex(final String fedoraId, final int expectedStatus) throws IOException {
+        //invoke reindex command
+        final var httpPost = postObjMethod(getReindexEndpoint(fedoraId));
+
+        try (final var response = execute(httpPost)) {
+            assertEquals("expected " + expectedStatus, expectedStatus, response.getStatusLine().getStatusCode());
+        }
+        return httpPost;
+    }
+
+    private String getReindexEndpoint(final String fedoraId) {
+        return fedoraId + "/fcr:reindex";
+    }
+
+    @Test
+    public void testMethodNotAllowed() throws Exception {
+
+        //test get
+        try (final var response = execute(getObjMethod(getReindexEndpoint("fedoraId")))) {
+            assertEquals("expected 405", HttpStatus.SC_METHOD_NOT_ALLOWED, response.getStatusLine().getStatusCode());
+        }
+
+        //test put
+        try (final var response = execute(putObjMethod(getReindexEndpoint("fedoraId")))) {
+            assertEquals("expected 405", HttpStatus.SC_METHOD_NOT_ALLOWED, response.getStatusLine().getStatusCode());
+        }
+
+        //test delete
+        try (final var response = execute(deleteObjMethod(getReindexEndpoint("fedoraId")))) {
+            assertEquals("expected 405", HttpStatus.SC_METHOD_NOT_ALLOWED, response.getStatusLine().getStatusCode());
+        }
+    }
+
 }

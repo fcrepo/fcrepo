@@ -57,7 +57,7 @@ class ReindexResourcePersister implements Persister {
         try {
             this.reindexService.indexOcflObject(session.getId(), ocflId);
         } catch (Exception ex) {
-            throw new PersistentStorageException("Failed to reindex " + ocflId, ex);
+            throw new PersistentStorageException(ex.getMessage(), ex);
         }
     }
 }

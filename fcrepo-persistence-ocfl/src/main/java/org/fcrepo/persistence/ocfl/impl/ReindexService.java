@@ -17,22 +17,6 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static org.apache.jena.graph.NodeFactory.createURI;
-import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
-import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.getRdfFormat;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.inject.Inject;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicReference;
-
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
 import org.fcrepo.kernel.api.ContainmentIndex;
@@ -55,6 +39,21 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.getRdfFormat;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Service that does the reindexing for one OCFL object.
@@ -146,7 +145,11 @@ public class ReindexService {
             });
 
             if (rootId.get() == null) {
-                throw new IllegalStateException(String.format("Failed to find root resource in object %s", ocflId));
+                throw new IllegalStateException(String.format("Failed find to the root resource in object identified" +
+                        " by %s. Please ensure both that the object ID you are attempting to index refers to a " +
+                        "corresponding valid Fedora-flavored object in the OCFL repository. Also be sure that " +
+                        "the object ID corresponds with the object root resource (as opposed to child resources " +
+                        "within the object).", ocflId));
             }
 
             fedoraIds.forEach(fedoraIdentifier -> {

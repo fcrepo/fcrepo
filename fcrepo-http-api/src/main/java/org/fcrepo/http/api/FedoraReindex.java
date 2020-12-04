@@ -26,7 +26,10 @@ import org.springframework.context.annotation.Scope;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -95,5 +98,26 @@ public class FedoraReindex extends FedoraBaseResource {
             throw new BadRequestException(ex.getMessage(), ex);
         }
     }
+
+    @DELETE
+    public Response delete() {
+        return methodNotAllowed();
+    }
+
+    @PUT
+    public Response put() {
+        return methodNotAllowed();
+    }
+
+    @GET
+    public Response get() {
+        return methodNotAllowed();
+    }
+
+    private Response methodNotAllowed() {
+        return status(HttpStatus.SC_METHOD_NOT_ALLOWED).build();
+    }
+
+
 }
 
