@@ -98,7 +98,6 @@ public class TimeMapImplTest {
     public void shouldHaveTimeMapTypes() {
         assertTrue(timeMap.getTypes().containsAll(
                 List.of(
-                URI.create(RdfLexicon.TIME_MAP.getURI()),
                 URI.create(RdfLexicon.VERSIONING_TIMEMAP.getURI())
                 ))
         );
