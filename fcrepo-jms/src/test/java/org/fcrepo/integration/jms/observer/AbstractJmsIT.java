@@ -165,7 +165,7 @@ abstract class AbstractJmsIT implements MessageListener {
         final String externalUri = identifierConverter.toExternalId(fedoraId.getFullId());
 
         doInTx(tx -> {
-            createResourceService.perform(tx.getId(), USER, fedoraId,
+            createResourceService.perform(tx, USER, fedoraId,
                     null, createDefaultModel());
             tx.commit();
             awaitMessageOrFail(externalUri, RESOURCE_CREATION.getType(), null);
@@ -178,7 +178,7 @@ abstract class AbstractJmsIT implements MessageListener {
         final var externalId = identifierConverter.toExternalId(fedoraId.getFullId());
 
         doInTx(tx -> {
-            createResourceService.perform(tx.getId(), USER, fedoraId,
+            createResourceService.perform(tx, USER, fedoraId,
                     "text/plain", "file.txt", 3L,
                     List.of(), null, stream("foo"), null);
             tx.commit();
@@ -186,7 +186,7 @@ abstract class AbstractJmsIT implements MessageListener {
         });
 
         doInTx(tx -> {
-            replaceBinariesService.perform(tx.getId(), USER, fedoraId,
+            replaceBinariesService.perform(tx, USER, fedoraId,
                     "file.txt", "text/plain", null,
                     stream("barney"), 6L, null);
             tx.commit();
@@ -207,9 +207,9 @@ abstract class AbstractJmsIT implements MessageListener {
         final var externalId = identifierConverter.toExternalId(fedoraId.getFullId());
 
         doInTx(tx -> {
-            createResourceService.perform(tx.getId(), USER, fedoraId, List.of(), createDefaultModel());
+            createResourceService.perform(tx, USER, fedoraId, List.of(), createDefaultModel());
             final String sparql1 = "insert data { <> <http://foo.com/prop> \"foo\" . }";
-            updatePropertiesService.updateProperties(tx.getId(), USER, fedoraId, sparql1);
+            updatePropertiesService.updateProperties(tx, USER, fedoraId, sparql1);
             tx.commit();
             awaitMessageOrFail(externalId, RESOURCE_MODIFICATION.getType(), FEDORA_CONTAINER.getURI());
         });
@@ -217,7 +217,7 @@ abstract class AbstractJmsIT implements MessageListener {
         doInTx(tx -> {
             final String sparql2 = " delete { <> <http://foo.com/prop> \"foo\" . } "
                     + "insert { <> <http://foo.com/prop> \"bar\" . } where {}";
-            updatePropertiesService.updateProperties(tx.getId(), USER, fedoraId, sparql2);
+            updatePropertiesService.updateProperties(tx, USER, fedoraId, sparql2);
             tx.commit();
             awaitMessageOrFail(externalId, RESOURCE_MODIFICATION.getType(), FEDORA_RESOURCE.getURI());
         });
@@ -231,7 +231,7 @@ abstract class AbstractJmsIT implements MessageListener {
         LOGGER.debug("Expecting a {} event", RESOURCE_DELETION.getType());
 
         doInTx(tx -> {
-            createResourceService.perform(tx.getId(), USER, fedoraId,
+            createResourceService.perform(tx, USER, fedoraId,
                     null, createDefaultModel());
             tx.commit();
         });
@@ -251,14 +251,14 @@ abstract class AbstractJmsIT implements MessageListener {
         final var externalId2 = identifierConverter.toExternalId(id2.getFullId());
 
         doInTx(tx -> {
-            createResourceService.perform(tx.getId(), USER, id1, List.of(), createDefaultModel());
-            createResourceService.perform(tx.getId(), USER, id2, List.of(), createDefaultModel());
+            createResourceService.perform(tx, USER, id1, List.of(), createDefaultModel());
+            createResourceService.perform(tx, USER, id2, List.of(), createDefaultModel());
             tx.commit();
         });
 
         doInTx(tx -> {
             final String sparql = "insert { <> <http://foo.com/prop> <" + id2.getFullId() + "> . } where {}";
-            updatePropertiesService.updateProperties(tx.getId(), USER, id1, sparql);
+            updatePropertiesService.updateProperties(tx, USER, id1, sparql);
             tx.commit();
             awaitMessageOrFail(externalId2, INBOUND_REFERENCE.getType(), null);
         });
@@ -271,13 +271,13 @@ abstract class AbstractJmsIT implements MessageListener {
         final var externalId2 = identifierConverter.toExternalId(id2.getFullId());
 
         doInTx(tx -> {
-            createResourceService.perform(tx.getId(), USER, id1, List.of(), createDefaultModel());
+            createResourceService.perform(tx, USER, id1, List.of(), createDefaultModel());
             tx.commit();
         });
 
         doInTx(tx -> {
             final String sparql = "insert { <> <http://foo.com/prop> <" + id2.getFullId() + "> . } where {}";
-            updatePropertiesService.updateProperties(tx.getId(), USER, id1, sparql);
+            updatePropertiesService.updateProperties(tx, USER, id1, sparql);
             tx.commit();
             awaitNoMessageOrFail(externalId2, INBOUND_REFERENCE.getType(), null);
         });
@@ -370,9 +370,11 @@ abstract class AbstractJmsIT implements MessageListener {
 
     private void doInTx(final Consumer<Transaction> consumer) {
         final var tx = newTransaction();
+        tx.setShortLived(true);
         try {
             consumer.accept(tx);
         } finally {
+            tx.releaseResourceLocksIfShortLived();
             tx.expire();
         }
     }

@@ -58,21 +58,23 @@ class CreateRdfSourcePersister extends AbstractRdfSourcePersister {
         final CreateResourceOperation createResourceOp = ((CreateResourceOperation)operation);
         final boolean archivalGroup = createResourceOp.isArchivalGroup();
 
+        final var archivalGroupId = findArchivalGroupInAncestry(resourceId, session);
         final FedoraId rootObjectId;
+
         if (archivalGroup) {
             //if archival group, ensure that there are no archival group ancestors
-            if (findArchivalGroupInAncestry(resourceId, session).isPresent()) {
+            if (archivalGroupId.isPresent()) {
                 throw new PersistentItemConflictException("Nesting an ArchivalGroup within an ArchivalGroup is not " +
                         "permitted");
             }
             rootObjectId = resourceId;
         } else {
-            rootObjectId = resolveRootObjectId(resourceId, session);
+            rootObjectId = archivalGroupId.orElseGet(resourceId::asBaseId);
         }
 
         final String ocflObjectId = mapToOcflId(session.getId(), rootObjectId);
         final OcflObjectSession ocflObjectSession = session.findOrCreateSession(ocflObjectId);
-        persistRDF(ocflObjectSession, operation, rootObjectId.asBaseId());
+        persistRDF(ocflObjectSession, operation, rootObjectId.asBaseId(), archivalGroupId.isPresent());
         ocflIndex.addMapping(session.getId(), resourceId.asResourceId(), rootObjectId.asBaseId(), ocflObjectId);
     }
 }

@@ -133,35 +133,39 @@ public class FedoraAcl extends ContentExposingResource {
         final FedoraId aclId = identifierConverter().pathToInternalId(externalPath()).asAcl();
         final boolean exists = doesResourceExist(transaction(), aclId, false);
 
-        final MediaType contentType =
-            requestContentType == null ? RDFMediaType.TURTLE_TYPE : valueOf(getSimpleContentType(requestContentType));
-        if (isRdfContentType(contentType.toString())) {
-            final Model model = httpRdfService.bodyToInternalModel(aclId.getFullId(),
-                    requestBodyStream, contentType, identifierConverter(), hasLenientPreferHeader());
-            if (exists) {
-                replacePropertiesService.perform(transaction().getId(), getUserPrincipal(), aclId, model);
-            } else {
-                webacAclService.create(transaction(), aclId, getUserPrincipal(), model);
-            }
-        } else {
-            throw new BadRequestException("Content-Type (" + requestContentType + ") is invalid. Try text/turtle " +
-                                          "or other RDF compatible type.");
-        }
-        transaction().commitIfShortLived();
-
         try {
-            final var aclResource = getFedoraResource(transaction(), aclId);
-            addCacheControlHeaders(servletResponse, aclResource, transaction());
-            final URI location = getUri(aclResource);
-            if (!exists) {
-                return created(location).build();
+            final MediaType contentType =
+                    requestContentType == null ?
+                            RDFMediaType.TURTLE_TYPE : valueOf(getSimpleContentType(requestContentType));
+            if (isRdfContentType(contentType.toString())) {
+                final Model model = httpRdfService.bodyToInternalModel(aclId.getFullId(),
+                        requestBodyStream, contentType, identifierConverter(), hasLenientPreferHeader());
+                if (exists) {
+                    replacePropertiesService.perform(transaction(), getUserPrincipal(), aclId, model);
+                } else {
+                    webacAclService.create(transaction(), aclId, getUserPrincipal(), model);
+                }
             } else {
-                return noContent().location(location).build();
+                throw new BadRequestException("Content-Type (" + requestContentType + ") is invalid. Try text/turtle " +
+                        "or other RDF compatible type.");
             }
-        } catch (final PathNotFoundException e) {
-            throw new PathNotFoundRuntimeException(e.getMessage(), e);
-        }
+            transaction().commitIfShortLived();
 
+            try {
+                final var aclResource = getFedoraResource(transaction(), aclId);
+                addCacheControlHeaders(servletResponse, aclResource, transaction());
+                final URI location = getUri(aclResource);
+                if (!exists) {
+                    return created(location).build();
+                } else {
+                    return noContent().location(location).build();
+                }
+            } catch (final PathNotFoundException e) {
+                throw new PathNotFoundRuntimeException(e.getMessage(), e);
+            }
+        } finally {
+            transaction().releaseResourceLocksIfShortLived();
+        }
     }
 
     /**
@@ -224,6 +228,8 @@ public class FedoraAcl extends ContentExposingResource {
                 throw new BadRequestException(cause.getMessage());
             }
             throw ex;
+        } finally {
+            transaction().releaseResourceLocksIfShortLived();
         }
     }
 
@@ -292,6 +298,7 @@ public class FedoraAcl extends ContentExposingResource {
         try {
             final var aclResource = getFedoraResource(transaction(), aclId);
             deleteResourceService.perform(transaction(), aclResource, getUserPrincipal());
+            transaction().commitIfShortLived();
         } catch (final PathNotFoundException exc) {
             if (originalId.isRepositoryRoot()) {
                 throw new ClientErrorException("The default root ACL is system generated and cannot be deleted. " +
@@ -300,7 +307,7 @@ public class FedoraAcl extends ContentExposingResource {
             }
             throw new PathNotFoundRuntimeException(exc.getMessage(), exc);
         } finally {
-            transaction().commitIfShortLived();
+            transaction().releaseResourceLocksIfShortLived();
         }
         return noContent().build();
     }

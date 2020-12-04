@@ -984,7 +984,7 @@ public class FedoraLdpTest {
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(createResourceService).perform(
-                eq(mockTransaction.getId()),
+                eq(mockTransaction),
                 anyString(),
                 eq(pathId),
                 isNull(),
@@ -1017,7 +1017,7 @@ public class FedoraLdpTest {
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
 
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
-        verify(replacePropertiesService).perform(eq(mockTransaction.getId()), anyString(), eq(pathId),
+        verify(replacePropertiesService).perform(eq(mockTransaction), anyString(), eq(pathId),
                 any(Model.class));
     }
 
@@ -1056,7 +1056,7 @@ public class FedoraLdpTest {
                 .thenReturn(mockNonRdfSourceDescription);
         testObj.updateSparql(toInputStream("INSERT DATA { <> <http://some/predicate> \"xyz\" }", UTF_8));
         verify(updatePropertiesService).updateProperties(
-                eq(mockTransaction.getId()),
+                eq(mockTransaction),
                 anyString(),
                 eq(binaryDescId),
                 contains("<http://some/predicate> \"xyz\"")
@@ -1123,7 +1123,7 @@ public class FedoraLdpTest {
                 toInputStream("_:a <info:b> _:c .", UTF_8), null, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(createResourceService).perform(
-                eq(mockTransaction.getId()),
+                eq(mockTransaction),
                 anyString(),
                 eq(finalId),
                any(),
@@ -1142,7 +1142,7 @@ public class FedoraLdpTest {
                 nonRDFSourceLink, null);
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
             verify(createResourceService).perform(
-                    eq(mockTransaction.getId()),
+                    eq(mockTransaction),
                     any(),
                     eq(finalId),
                     eq(APPLICATION_OCTET_STREAM),
@@ -1164,7 +1164,7 @@ public class FedoraLdpTest {
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final RuntimeException ex = new RuntimeException(new IOException("root exception", new IOException(
                     FedoraLdp.INSUFFICIENT_SPACE_IDENTIFYING_MESSAGE)));
-            doThrow(ex).when(createResourceService).perform(anyString(), anyString(), eq(finalId), anyString(),
+            doThrow(ex).when(createResourceService).perform(any(), anyString(), eq(finalId), anyString(),
                     anyString(), any(Long.class), anyList(), isNull(), any(InputStream.class), isNull());
 
             testObj.createObject(null, APPLICATION_OCTET_STREAM_TYPE, "b", content, nonRDFSourceLink, null);

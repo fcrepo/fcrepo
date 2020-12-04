@@ -25,6 +25,7 @@ import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.models.WebacAcl;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.kernel.api.services.MembershipService;
@@ -107,6 +108,15 @@ public class DeleteResourceServiceImplTest {
     @Mock
     private MembershipService membershipService;
 
+    @Mock
+    private ResourceHeaders resourceHeaders;
+    @Mock
+    private ResourceHeaders childHeaders;
+    @Mock
+    private ResourceHeaders descHeaders;
+    @Mock
+    private ResourceHeaders aclHeaders;
+
     @Captor
     private ArgumentCaptor<DeleteResourceOperation> operationCaptor;
 
@@ -132,6 +142,11 @@ public class DeleteResourceServiceImplTest {
         setField(service, "referenceService", referenceService);
         setField(service, "membershipService", membershipService);
         when(container.getFedoraId()).thenReturn(RESOURCE_ID);
+
+        when(pSession.getHeaders(RESOURCE_ID, null)).thenReturn(resourceHeaders);
+        when(pSession.getHeaders(CHILD_RESOURCE_ID, null)).thenReturn(childHeaders);
+        when(pSession.getHeaders(RESOURCE_DESCRIPTION_ID, null)).thenReturn(descHeaders);
+        when(pSession.getHeaders(RESOURCE_ACL_ID, null)).thenReturn(aclHeaders);
     }
 
     @After
@@ -174,6 +189,9 @@ public class DeleteResourceServiceImplTest {
         assertEquals(RESOURCE_ID, operations.get(1).getResourceId());
 
         assertEquals(0, containmentIndex.getContains(tx.getId(), RESOURCE_ID).count());
+
+        verify(tx).lockResource(RESOURCE_ID);
+        verify(tx).lockResource(CHILD_RESOURCE_ID);
     }
 
     private void verifyResourceOperation(final FedoraId fedoraID,
@@ -216,5 +234,10 @@ public class DeleteResourceServiceImplTest {
         assertEquals(RESOURCE_DESCRIPTION_ID, operations.get(0).getResourceId());
         assertEquals(RESOURCE_ACL_ID, operations.get(1).getResourceId());
         assertEquals(RESOURCE_ID, operations.get(2).getResourceId());
+
+        verify(tx).lockResource(RESOURCE_ID);
+        verify(tx).lockResource(RESOURCE_DESCRIPTION_ID);
+        verify(tx).lockResource(RESOURCE_ACL_ID);
     }
+
 }

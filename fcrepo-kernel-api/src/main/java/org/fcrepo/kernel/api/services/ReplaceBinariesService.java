@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ExternalContent;
 
@@ -34,7 +35,7 @@ public interface ReplaceBinariesService {
     /**
      * Replace an existing binary.
      *
-     * @param txId The transaction ID for the request.
+     * @param tx The transaction for the request.
      * @param userPrincipal the user performing the service
      * @param fedoraId The internal identifier of the parent.
      * @param filename The filename of the binary.
@@ -44,7 +45,7 @@ public interface ReplaceBinariesService {
      * @param contentBody The request body or null if none.
      * @param externalContent The external content handler or null if none.
      */
-    void perform(String txId,
+    void perform(Transaction tx,
                  String userPrincipal,
                  FedoraId fedoraId,
                  String filename,

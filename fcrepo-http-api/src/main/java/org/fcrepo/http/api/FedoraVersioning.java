@@ -157,6 +157,8 @@ public class FedoraVersioning extends ContentExposingResource {
         } catch (final Exception e) {
             checkForInsufficientStorageException(e, e);
             return null; // not reachable
+        } finally {
+            transaction.releaseResourceLocksIfShortLived();
         }
     }
 

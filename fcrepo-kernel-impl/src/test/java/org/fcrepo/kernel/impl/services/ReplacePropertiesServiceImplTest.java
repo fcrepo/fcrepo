@@ -17,17 +17,6 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
-
-import java.time.Instant;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -36,10 +25,10 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.vocabulary.DC;
 import org.fcrepo.kernel.api.RdfCollectors;
+import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
@@ -57,6 +46,17 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.time.Instant;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * DeleteResourceServiceTest
@@ -76,9 +76,6 @@ public class ReplacePropertiesServiceImplTest {
 
     @Mock
     private PersistentStorageSessionManager psManager;
-
-    @Mock
-    private FedoraResource resource;
 
     @Mock
     private EventAccumulator eventAccumulator;
@@ -119,7 +116,6 @@ public class ReplacePropertiesServiceImplTest {
         when(tx.getId()).thenReturn(TX_ID);
         when(psManager.getSession(anyString())).thenReturn(pSession);
         when(pSession.getHeaders(any(FedoraId.class), nullable(Instant.class))).thenReturn(headers);
-        when(resource.getId()).thenReturn(FEDORA_ID.getFullId());
     }
 
     @Test
@@ -127,9 +123,10 @@ public class ReplacePropertiesServiceImplTest {
         final Model model = ModelFactory.createDefaultModel();
         RDFDataMgr.read(model, IOUtils.toInputStream(RDF, "UTF-8"), Lang.NTRIPLES);
 
-        final FedoraId fedoraID = FedoraId.create(resource.getId());
+        when(headers.getInteractionModel()).thenReturn(RdfLexicon.RDF_SOURCE.toString());
 
-        service.perform(tx.getId(), USER_PRINCIPAL, fedoraID, model);
+        service.perform(tx, USER_PRINCIPAL, FEDORA_ID, model);
+        verify(tx).lockResource(FEDORA_ID);
         verify(pSession).persist(operationCaptor.capture());
         assertEquals(FEDORA_ID, operationCaptor.getValue().getResourceId());
         final RdfStream stream = operationCaptor.getValue().getTriples();
@@ -142,5 +139,26 @@ public class ReplacePropertiesServiceImplTest {
                 ResourceFactory.createProperty("http://purl.org/dc/elements/1.1/title"),
                 "fancy title"));
     }
+
+    @Test
+    public void lockRelatedResourcesOnBinaryDescInAg() throws Exception {
+        final Model model = ModelFactory.createDefaultModel();
+        RDFDataMgr.read(model, IOUtils.toInputStream(RDF, "UTF-8"), Lang.NTRIPLES);
+
+        final var agId = FedoraId.create("ag");
+        final var binaryId = agId.resolve("bin");
+        final var descId = binaryId.asDescription();
+
+        when(headers.getInteractionModel()).thenReturn(RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI);
+        when(headers.getArchivalGroupId()).thenReturn(agId);
+
+        service.perform(tx, USER_PRINCIPAL, descId, model);
+        verify(tx).lockResource(agId);
+        verify(tx).lockResource(binaryId);
+        verify(tx).lockResource(descId);
+        verify(pSession).persist(operationCaptor.capture());
+        assertEquals(descId, operationCaptor.getValue().getResourceId());
+    }
+
 }
 

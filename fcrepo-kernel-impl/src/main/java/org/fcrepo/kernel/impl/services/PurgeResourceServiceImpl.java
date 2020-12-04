@@ -58,6 +58,10 @@ public class PurgeResourceServiceImpl extends AbstractDeleteResourceService impl
         final ResourceOperation purgeOp = deleteResourceFactory.purgeBuilder(resourceId)
                 .userPrincipal(userPrincipal)
                 .build();
+
+        lockArchivalGroupResource(tx, pSession, resourceId);
+        tx.lockResource(resourceId);
+
         pSession.persist(purgeOp);
         containmentIndex.purgeResource(tx.getId(), resourceId);
         recordEvent(tx.getId(), resourceId, purgeOp);

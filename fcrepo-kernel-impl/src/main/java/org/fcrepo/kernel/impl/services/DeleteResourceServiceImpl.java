@@ -59,6 +59,10 @@ public class DeleteResourceServiceImpl extends AbstractDeleteResourceService imp
         final ResourceOperation deleteOp = deleteResourceFactory.deleteBuilder(fedoraId)
                 .userPrincipal(userPrincipal)
                 .build();
+
+        lockArchivalGroupResource(tx, pSession, fedoraId);
+        tx.lockResource(fedoraId);
+
         pSession.persist(deleteOp);
         membershipService.resourceDeleted(tx.getId(), fedoraId);
         containmentIndex.removeResource(tx.getId(), fedoraId);

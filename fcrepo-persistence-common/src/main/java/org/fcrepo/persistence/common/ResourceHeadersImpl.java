@@ -35,6 +35,8 @@ public class ResourceHeadersImpl implements ResourceHeaders {
 
     private FedoraId parent;
 
+    private FedoraId archivalGroupId;
+
     private String stateToken;
 
     private String interactionModel;
@@ -89,6 +91,18 @@ public class ResourceHeadersImpl implements ResourceHeaders {
      */
     public void setParent(final FedoraId parent) {
         this.parent = parent;
+    }
+
+    @Override
+    public FedoraId getArchivalGroupId() {
+        return archivalGroupId;
+    }
+
+    /**
+     * @param archivalGroupId the archivalGroupId to set
+     */
+    public void setArchivalGroupId(final FedoraId archivalGroupId) {
+        this.archivalGroupId = archivalGroupId;
     }
 
     @Override
@@ -295,6 +309,31 @@ public class ResourceHeadersImpl implements ResourceHeaders {
      */
     public void setContentPath(final String contentPath) {
         this.contentPath = contentPath;
+    }
+
+    @Override
+    public String toString() {
+        return "ResourceHeadersImpl{" +
+                "id=" + id +
+                ", parent=" + parent +
+                ", archivalGroupId=" + archivalGroupId +
+                ", stateToken='" + stateToken + '\'' +
+                ", interactionModel='" + interactionModel + '\'' +
+                ", mimeType='" + mimeType + '\'' +
+                ", filename='" + filename + '\'' +
+                ", contentSize=" + contentSize +
+                ", digests=" + digests +
+                ", externalUrl='" + externalUrl + '\'' +
+                ", externalHandling='" + externalHandling + '\'' +
+                ", createdDate=" + createdDate +
+                ", createdBy='" + createdBy + '\'' +
+                ", lastModifiedDate=" + lastModifiedDate +
+                ", lastModifiedBy='" + lastModifiedBy + '\'' +
+                ", archivalGroup=" + archivalGroup +
+                ", objectRoot=" + objectRoot +
+                ", deleted=" + deleted +
+                ", contentPath='" + contentPath + '\'' +
+                '}';
     }
 
 }

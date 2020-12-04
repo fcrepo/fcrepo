@@ -49,10 +49,13 @@ class CreateNonRdfSourcePersister extends AbstractNonRdfSourcePersister {
             throws PersistentStorageException {
         final var resourceId = operation.getResourceId();
         log.debug("persisting {} to {}", resourceId, session);
-        final var rootObjectId = resolveRootObjectId(resourceId, session);
+
+        final var archivalGroupId = findArchivalGroupInAncestry(resourceId, session);
+        final var rootObjectId = archivalGroupId.orElseGet(resourceId::asBaseId);
         final String ocflId = mapToOcflId(session.getId(), rootObjectId);
         final OcflObjectSession ocflObjectSession = session.findOrCreateSession(ocflId);
-        persistNonRDFSource(operation, ocflObjectSession, rootObjectId.asBaseId());
+
+        persistNonRDFSource(operation, ocflObjectSession, rootObjectId.asBaseId(), archivalGroupId.isPresent());
         ocflIndex.addMapping(session.getId(), resourceId.asResourceId(), rootObjectId.asBaseId(), ocflId);
     }
 }

@@ -15,31 +15,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.services;
 
-import org.apache.jena.rdf.model.Model;
-import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.exception.MalformedRdfException;
+package org.fcrepo.kernel.api.lock;
+
+import org.fcrepo.kernel.api.exception.ConcurrentUpdateException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 /**
- * @author peichman
- * @since 6.0.0
+ * Responsible for managing write locks on Fedora resources
+ *
+ * @author pwinckles
  */
-public interface ReplacePropertiesService {
+public interface ResourceLockManager {
 
     /**
-     * Replace the properties of this object with the properties from the given
-     * model
+     * Acquires a lock on the resource, associating it to the txId. If the lock is held by a different transaction,
+     * an exception is thrown. If the lock is already held by the same transaction, then it returns successfully.
      *
-     * @param tx the Transaction
-     * @param userPrincipal the user performing the service
-     * @param fedoraId the internal Id of the fedora resource to update
-     * @param inputModel the model built from the body of the request
-     * @throws MalformedRdfException if malformed rdf exception occurred
+     * @param txId the transaction id to associate the lock to
+     * @param resourceId the resource to lock
+     * @throws ConcurrentUpdateException when lock cannot be acquired
      */
-    void perform(Transaction tx,
-                 String userPrincipal,
-                 FedoraId fedoraId,
-                 Model inputModel) throws MalformedRdfException;
+    void acquire(final String txId, final FedoraId resourceId);
+
+    /**
+     * Releases all of the locks held by the transaction
+     *
+     * @param txId the transaction id
+     */
+    void releaseAll(final String txId);
+
 }

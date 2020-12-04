@@ -38,8 +38,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
-import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.HttpHeaders.ALLOW;
+import static javax.ws.rs.core.Response.noContent;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -86,11 +86,15 @@ public class FedoraTombstones extends ContentExposingResource {
             // If the resource is not deleted there is no tombstone.
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        final Tombstone tombstone = (Tombstone) resource;
-        LOGGER.info("Delete tombstone: {}", resource.getFedoraId());
-        purgeResourceService.perform(transaction(), tombstone.getDeletedObject(), getUserPrincipal());
-        transaction().commitIfShortLived();
-        return noContent().build();
+        try {
+            final Tombstone tombstone = (Tombstone) resource;
+            LOGGER.info("Delete tombstone: {}", resource.getFedoraId());
+            purgeResourceService.perform(transaction(), tombstone.getDeletedObject(), getUserPrincipal());
+            transaction().commitIfShortLived();
+            return noContent().build();
+        } finally {
+            transaction().releaseResourceLocksIfShortLived();
+        }
     }
 
     /*

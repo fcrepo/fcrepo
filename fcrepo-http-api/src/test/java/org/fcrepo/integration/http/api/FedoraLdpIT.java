@@ -57,7 +57,6 @@ import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ModelFactory.createModelForGraph;
-import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeN3;
@@ -70,12 +69,15 @@ import static org.apache.jena.vocabulary.DC_11.title;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_FIXITY;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
@@ -112,9 +114,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
 import static org.fcrepo.kernel.api.models.ExternalContent.COPY;
 import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
 import static org.fcrepo.kernel.api.models.ExternalContent.REDIRECT;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -147,12 +146,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-import java.util.Random;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Variant;
+
+import org.fcrepo.http.commons.domain.RDFMediaType;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
@@ -187,8 +189,6 @@ import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.DC_11;
 import org.apache.jena.vocabulary.RDF;
-import org.fcrepo.http.commons.domain.RDFMediaType;
-import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -4328,9 +4328,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    // TODO Test flaps in travis, causing more PUTs to succeed some of the time, possibly
-    // because the etag is timestamp based. Should also make sure the correct failure status returned
-    @Ignore("Handle multiple requests correctly - https://jira.lyrasis.org/browse/FCREPO-3123")
     public void testConcurrentUpdatesToBinary() throws IOException, InterruptedException {
         // create a binary
         final String path = getRandomUniqueId();
@@ -4346,18 +4343,18 @@ public class FedoraLdpIT extends AbstractResourceIT {
             binaryEtag = response.getFirstHeader("ETag").getValue();
         }
 
-        final PutThread[] threads = new PutThread[] {
-                new PutThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 1")),
-                new PutThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 2")),
-                new PutThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 3")),
-                new PutThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 4"))  };
+        final RequestThread[] threads = new RequestThread[] {
+                new RequestThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 1")),
+                new RequestThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 2")),
+                new RequestThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 3")),
+                new RequestThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 4"))  };
 
-        for (final PutThread t : threads) {
+        for (final RequestThread t : threads) {
             t.start();
         }
 
-        final List<PutThread> successfulThreads = new ArrayList<>();
-        for (final PutThread t : threads) {
+        final List<RequestThread> successfulThreads = new ArrayList<>();
+        for (final RequestThread t : threads) {
             t.join(1000);
             assertFalse("Thread " + t.getId() + " could not perform its operation in time!", t.isAlive());
             final int status = t.response.getStatusLine().getStatusCode();
@@ -4370,22 +4367,22 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals("Only one PUT request should have been successful!", 1, successfulThreads.size());
     }
 
-    private class PutThread extends Thread {
+    private static class RequestThread extends Thread {
 
-        private final HttpPut put;
+        private final HttpUriRequest request;
 
         private HttpResponse response;
 
-        public PutThread(final HttpPut put) {
-            this.put = put;
+        public RequestThread(final HttpUriRequest request) {
+            this.request = request;
         }
 
         @Override
         public void run() {
             try {
-                response = execute(put);
+                response = execute(request);
             } catch (final IOException e) {
-                LOGGER.error("Thread " + Thread.currentThread().getId() + ", failed to PUT resource!", e);
+                LOGGER.error("Thread " + Thread.currentThread().getId() + ", failed to request!", e);
             }
 
         }
@@ -4397,80 +4394,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         put.setHeader("If-Match", etag);
         return put;
     }
-
-    @Test
-    @Ignore("Handle multiple requests correctly - https://jira.lyrasis.org/browse/FCREPO-3123")
-    public void testConcurrentPatches() throws IOException, InterruptedException {
-        // create a resource
-        final String path = getRandomUniqueId();
-        executeAndClose(putObjMethod(path));
-        final int[] responseCodes = new int[4];
-        final Thread t1 = new Thread(() -> {
-            responseCodes[0] = patchWithSparql(path,
-                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'one' . }");
-        });
-        final Thread t2 = new Thread(() -> {
-            responseCodes[1] = patchWithSparql(path,
-                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'two' . }");
-        });
-        final Thread t3 = new Thread(() -> {
-            responseCodes[2] = patchWithSparql(path,
-                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'three' . }");
-        });
-        final Thread t4 = new Thread(() -> {
-            responseCodes[3] = patchWithSparql(path,
-                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'four' . }");
-        });
-        t1.start();
-        t2.start();
-        t3.start();
-        t4.start();
-        t1.join();
-        t2.join();
-        t3.join();
-        t4.join();
-        assertEquals("Patch should have succeeded!", 204, responseCodes[0]);
-        assertEquals("Patch should have succeeded!", 204, responseCodes[1]);
-        assertEquals("Patch should have succeeded!", 204, responseCodes[2]);
-        assertEquals("Patch should have succeeded!", 204, responseCodes[3]);
-        try (final CloseableDataset dataset = getDataset(getObjMethod(path))) {
-            final DatasetGraph graphStore = dataset.asDatasetGraph();
-            final List<String> missingDcIdentifiers
-                    = new ArrayList<>(Arrays.asList("one", "two", "three", "four"));
-            final Iterator<Quad> dcIdentifierIt = graphStore.find(ANY, createURI(serverAddress + path),
-                    createProperty("http://purl.org/dc/elements/1.1/identifier").asNode(), ANY);
-            while (dcIdentifierIt.hasNext()) {
-                final String value = dcIdentifierIt.next().getObject().getLiteralValue().toString();
-                assertTrue("Unexpected dc:identifier found: " + value, missingDcIdentifiers.remove(value));
-            }
-            assertTrue("All of the dc:identifiers should have been applied! (missing "
-            + Arrays.toString(missingDcIdentifiers.toArray()) + ")", missingDcIdentifiers.isEmpty());
-
-            assertTrue("Added property must exist!", graphStore.contains(ANY, createURI(serverAddress + path),
-                    createProperty("http://purl.org/dc/elements/1.1/identifier").asNode(), createLiteral("one")));
-            assertTrue("Added property must exist!", graphStore.contains(ANY, createURI(serverAddress + path),
-                    createProperty("http://purl.org/dc/elements/1.1/identifier").asNode(), createLiteral("two")));
-            assertTrue("Added property must exist!", graphStore.contains(ANY, createURI(serverAddress + path),
-                    createProperty("http://purl.org/dc/elements/1.1/identifier").asNode(), createLiteral("three")));
-            assertTrue("Added property must exist!", graphStore.contains(ANY, createURI(serverAddress + path),
-                    createProperty("http://purl.org/dc/elements/1.1/identifier").asNode(), createLiteral("four")));
-        }
-    }
-
-    private int patchWithSparql(final String path, final String sparqlUpdate) {
-        try {
-            final HttpPatch patch = new HttpPatch(serverAddress + path);
-            patch.addHeader(CONTENT_TYPE, "application/sparql-update");
-            patch.setEntity(new StringEntity(sparqlUpdate));
-            final CloseableHttpResponse r = client.execute(patch);
-            final int code = r.getStatusLine().getStatusCode();
-            r.close();
-            return code;
-        } catch (final IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
 
     @Test
     public void testBinaryLastModified() throws Exception {

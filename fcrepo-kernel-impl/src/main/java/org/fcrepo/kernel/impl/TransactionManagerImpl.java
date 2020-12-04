@@ -22,6 +22,7 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.TransactionClosedException;
 import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
+import org.fcrepo.kernel.api.lock.ResourceLockManager;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
@@ -73,6 +74,9 @@ public class TransactionManagerImpl implements TransactionManager {
 
     @Inject
     private MembershipService membershipService;
+
+    @Inject
+    private ResourceLockManager resourceLockManager;
 
     private TransactionTemplate transactionTemplate;
 
@@ -178,4 +182,9 @@ public class TransactionManagerImpl implements TransactionManager {
     protected TransactionTemplate getTransactionTemplate() {
         return transactionTemplate;
     }
+
+    protected ResourceLockManager getResourceLockManager() {
+        return resourceLockManager;
+    }
+
 }

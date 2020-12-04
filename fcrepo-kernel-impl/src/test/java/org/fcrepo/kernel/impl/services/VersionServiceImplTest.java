@@ -18,8 +18,10 @@
 
 package org.fcrepo.kernel.impl.services;
 
+import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.impl.operations.VersionResourceOperationFactoryImpl;
@@ -58,6 +60,9 @@ public class VersionServiceImplTest {
     @Mock
     private Transaction transaction;
 
+    @Mock
+    private ResourceHeaders headers;
+
     private final String TX_ID = "tx1";
 
     @Before
@@ -76,9 +81,56 @@ public class VersionServiceImplTest {
         final var fedoraId = FedoraId.create("info:fedora/test");
         final var user = "me";
 
+        when(session.getHeaders(fedoraId, null)).thenReturn(headers);
+        when(headers.getInteractionModel()).thenReturn(RdfLexicon.RDF_SOURCE.toString());
+
         service.createVersion(transaction, fedoraId, user);
 
         final var captor = ArgumentCaptor.forClass(ResourceOperation.class);
+        verify(transaction).lockResource(fedoraId);
+        verify(session).persist(captor.capture());
+        final var captured = captor.getValue();
+
+        assertEquals(fedoraId, captured.getResourceId());
+        assertEquals(user, captured.getUserPrincipal());
+    }
+
+    @Test
+    public void createPersistOperationBinaryDesc() throws PersistentStorageException {
+        final var fedoraId = FedoraId.create("info:fedora/test").asDescription();
+        final var user = "me";
+
+        when(session.getHeaders(fedoraId, null)).thenReturn(headers);
+        when(headers.getInteractionModel()).thenReturn(RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI);
+
+        service.createVersion(transaction, fedoraId, user);
+
+        final var captor = ArgumentCaptor.forClass(ResourceOperation.class);
+        verify(transaction).lockResource(fedoraId);
+        verify(transaction).lockResource(fedoraId.asBaseId());
+        verify(session).persist(captor.capture());
+        final var captured = captor.getValue();
+
+        assertEquals(fedoraId, captured.getResourceId());
+        assertEquals(user, captured.getUserPrincipal());
+    }
+
+    @Test
+    public void createPersistOperationAgPart() throws PersistentStorageException {
+        final var agId = FedoraId.create("ag");
+        final var fedoraId = agId.resolve("test");
+        final var user = "me";
+
+        when(session.getHeaders(fedoraId, null)).thenReturn(headers);
+        when(headers.getArchivalGroupId()).thenReturn(agId);
+        when(headers.getInteractionModel()).thenReturn(RdfLexicon.NON_RDF_SOURCE.toString());
+
+        service.createVersion(transaction, fedoraId, user);
+
+        final var captor = ArgumentCaptor.forClass(ResourceOperation.class);
+        verify(transaction).lockResource(agId);
+        verify(transaction).lockResource(fedoraId.asDescription());
+        verify(transaction).lockResource(fedoraId);
         verify(session).persist(captor.capture());
         final var captured = captor.getValue();
 
