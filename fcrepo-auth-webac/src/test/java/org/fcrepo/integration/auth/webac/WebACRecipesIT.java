@@ -23,6 +23,7 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_FORBIDDEN;
@@ -50,6 +51,7 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 import javax.ws.rs.core.Link;
+import javax.ws.rs.core.Response;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
@@ -2216,6 +2218,88 @@ public class WebACRecipesIT extends AbstractResourceIT {
         setAuth(getAdminChild, username);
         getAdminChild.addHeader("Prefer", "return=representation; include=\"" + EMBED_CONTAINED + "\"");
         assertEquals(FORBIDDEN.getStatusCode(), getStatus(getAdminChild));
+    }
+
+    @Test
+    public void testDeepDeleteAllowed() throws Exception {
+        final String targetResource = "/rest/" + getRandomUniqueId();
+        final String username = "user88";
+        // Make a basic container.
+        final String targetUri = ingestObj(targetResource);
+        final String readwriteString = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                "<#readauthz> a acl:Authorization ;\n" +
+                "   acl:agent \"" + username + "\" ;\n" +
+                "   acl:mode acl:Read, acl:Write ;\n" +
+                "   acl:accessTo <" + targetResource + "> ;\n" +
+                "   acl:default <" + targetResource + "> .";
+        // Allow user to read and write this object.
+        ingestAclString(targetUri, readwriteString, "fedoraAdmin");
+
+        final String child1 = targetResource + "/" + getRandomUniqueId();
+        final String child2 = targetResource + "/" + getRandomUniqueId();
+        final String child1_1 = child1 + "/" + getRandomUniqueId();
+        final String child2_1 = child2 + "/" + getRandomUniqueId();
+        ingestObj(child1);
+        ingestObj(child2);
+        ingestObj(child1_1);
+        ingestObj(child2_1);
+
+        assertGetRequest(targetUri, username, OK);
+        assertGetRequest(serverAddress + child1, username, OK);
+        assertGetRequest(serverAddress + child2, username, OK);
+        assertGetRequest(serverAddress + child1_1, username, OK);
+        assertGetRequest(serverAddress + child2_1, username, OK);
+
+        final var delete = new HttpDelete(targetUri);
+        setAuth(delete, username);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(delete));
+    }
+
+    @Test
+    public void testDeepDeleteFailed() throws Exception {
+        final String targetResource = "/rest/" + getRandomUniqueId();
+        final String username = "user88";
+        // Make a basic container.
+        final String targetUri = ingestObj(targetResource);
+        final String readwriteString = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                "<#readauthz> a acl:Authorization ;\n" +
+                "   acl:agent \"" + username + "\" ;\n" +
+                "   acl:mode acl:Read, acl:Write ;\n" +
+                "   acl:accessTo <" + targetResource + "> ;\n" +
+                "   acl:default <" + targetResource + "> .";
+        // Allow user to read and write this object.
+        ingestAclString(targetUri, readwriteString, "fedoraAdmin");
+
+        final String child1 = targetResource + "/" + getRandomUniqueId();
+        final String child2 = targetResource + "/" + getRandomUniqueId();
+        final String child1_1 = child1 + "/" + getRandomUniqueId();
+        final String child2_1 = child2 + "/" + getRandomUniqueId();
+        ingestObj(child1);
+        ingestObj(child2);
+        ingestObj(child1_1);
+        final String child2_1_URI = ingestObj(child2_1);
+        final String noAccessString = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                "<#readauthz> a acl:Authorization ;\n" +
+                "   acl:agent \"fedoraAdmin\" ;\n" +
+                "   acl:mode acl:Read, acl:Write ;\n" +
+                "   acl:accessTo <" + child2_1 + "> .";
+        ingestAclString(child2_1_URI, noAccessString, "fedoraAdmin");
+
+        assertGetRequest(targetUri, username, OK);
+        assertGetRequest(serverAddress + child1, username, OK);
+        assertGetRequest(serverAddress + child2, username, OK);
+        assertGetRequest(serverAddress + child1_1, username, OK);
+        assertGetRequest(serverAddress + child2_1, username, FORBIDDEN);
+
+        final var delete = new HttpDelete(targetUri);
+        setAuth(delete, username);
+        assertEquals(FORBIDDEN.getStatusCode(), getStatus(delete));
+    }
+
+    private void assertGetRequest(final String uri, final String username, final Response.Status expectedResponse) {
+        final var getTarget = new HttpGet(uri);
+        setAuth(getTarget, username);
+        assertEquals(expectedResponse.getStatusCode(), getStatus(getTarget));
     }
 
     /**
