@@ -58,6 +58,21 @@ import com.google.common.net.PercentEscaper;
 public class FedoraId {
 
     /**
+     * These are strings that can cause problems with our storage layout
+     */
+    private static final Set<String> FORBIDDEN_ID_PART_STRINGS = Set.of(
+            "fcr-root",
+            ".fcrepo",
+            "fcr-container.nt"
+    );
+    private static final Set<String> FORBIDDEN_ID_PART_SUFFIXES = Set.of(
+            "~fcr-desc",
+            "~fcr-acl",
+            "~fcr-desc.nt",
+            "~fcr-acl.nt"
+    );
+
+    /**
      * The Fedora ID with prefix and extensions. eg info:fedora/object1/another/fcr:versions/20000101121212
      */
     private final String fullId;
@@ -103,6 +118,7 @@ public class FedoraId {
         this.fullPath = this.fullId.substring(FEDORA_ID_PREFIX.length());
         checkForInvalidPath();
         this.baseId = processIdentifier();
+        enforceStorageLayoutNamingConstraints();
         this.encodedFullId = fedoraIdEscaper.escape(this.fullId);
     }
 
@@ -567,6 +583,29 @@ public class FedoraId {
                 throw new InvalidResourceIdentifierException(String.format("Path is invalid: %s", fullPath));
             }
         }
+    }
+
+    /**
+     * Ensures that the Fedora ID does not violate any naming restrictions that are in place prevent collisions on disk.
+     * These restrictions are based on the following naming conventions:
+     *      https://wiki.lyrasis.org/display/FF/Design+-+Fedora+OCFL+Object+Structure
+     *
+     * All ids should be validated on resource creation
+     */
+    private void enforceStorageLayoutNamingConstraints() {
+        final var finalPart = StringUtils.substringAfterLast(baseId, "/");
+
+        if (FORBIDDEN_ID_PART_STRINGS.contains(finalPart)) {
+            throw new InvalidResourceIdentifierException(
+                    String.format("Invalid resource ID. IDs may not contain the string '%s'.", finalPart));
+        }
+
+        FORBIDDEN_ID_PART_SUFFIXES.forEach(suffix -> {
+            if (finalPart.endsWith(suffix) && !finalPart.equals(suffix)) {
+                throw new InvalidResourceIdentifierException(
+                        String.format("Invalid resource ID. IDs may not end with '%s'.", suffix));
+            }
+        });
     }
 
     private String appendHashIfPresent(final String original) {

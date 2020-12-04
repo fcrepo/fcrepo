@@ -66,7 +66,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -102,7 +101,6 @@ import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
 import org.fcrepo.kernel.api.exception.GhostNodeException;
 import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
-import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
@@ -155,18 +153,6 @@ public class FedoraLdp extends ContentExposingResource {
 
     @Inject
     protected ReplaceBinariesService replaceBinariesService;
-
-    private static final Set<String> FORBIDDEN_ID_PART_STRINGS = Set.of(
-            "fcr-root",
-            ".fcrepo",
-            "fcr-container.nt"
-    );
-    private static final Set<String> FORBIDDEN_ID_PART_SUFFIXES = Set.of(
-            "~fcr-desc",
-            "~fcr-acl",
-            "~fcr-desc.nt",
-            "~fcr-acl.nt"
-    );
 
     /**
      * Default JAX-RS entry point
@@ -399,6 +385,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         try {
             final List<String> links = unpackLinks(rawLinks);
+
             if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
                 handleRequestDisallowedOnMemento();
 
@@ -411,7 +398,6 @@ public class FedoraLdp extends ContentExposingResource {
             final String interactionModel = checkInteractionModel(links);
 
             final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath());
-            validateFedoraId(fedoraId);
             final boolean resourceExists = doesResourceExist(transaction, fedoraId, true);
 
             if (resourceExists) {
@@ -613,7 +599,6 @@ public class FedoraLdp extends ContentExposingResource {
 
             final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath());
             final FedoraId newFedoraId = mintNewPid(fedoraId, slug);
-            validateFedoraId(newFedoraId);
             final var providedContentType = getSimpleContentType(requestContentType);
 
             LOGGER.info("POST to create resource with ID: {}, slug: {}", newFedoraId.getFullIdPath(), slug);
@@ -714,32 +699,6 @@ public class FedoraLdp extends ContentExposingResource {
         final Collection<URI> checksumResults = fixityService.getFixity(binary, preferredDigests);
         return checksumResults.stream().map(uri -> uri.toString().replaceFirst("urn:", "")
                 .replaceFirst(":", "=").replaceFirst("sha1=", "sha=")).collect(Collectors.joining(","));
-    }
-
-    /**
-     * Ensures that the Fedora ID does not violate any naming restrictions that are in place prevent collisions on disk.
-     * These restrictions are based on the following naming conventions:
-     *      https://wiki.lyrasis.org/display/FF/Design+-+Fedora+OCFL+Object+Structure
-     *
-     * All ids should be validated on resource creation
-     *
-     * @param fedoraId the id to validate
-     */
-    private void validateFedoraId(final FedoraId fedoraId) {
-        final var baseId = fedoraId.getBaseId();
-        final var finalPart = StringUtils.substringAfterLast(baseId, "/");
-
-        if (FORBIDDEN_ID_PART_STRINGS.contains(finalPart)) {
-            throw new InvalidResourceIdentifierException(
-                    String.format("Invalid resource ID. IDs may not contain the string '%s'.", finalPart));
-        }
-
-        FORBIDDEN_ID_PART_SUFFIXES.forEach(suffix -> {
-            if (finalPart.endsWith(suffix) && !finalPart.equals(suffix)) {
-                throw new InvalidResourceIdentifierException(
-                        String.format("Invalid resource ID. IDs may not end with '%s'.", suffix));
-            }
-        });
     }
 
     private static void ensureArchivalGroupHeaderNotPresentForBinaries(final List<String> links) {
