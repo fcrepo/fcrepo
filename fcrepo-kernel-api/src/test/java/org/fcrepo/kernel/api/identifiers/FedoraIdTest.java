@@ -17,16 +17,6 @@
  */
 package org.fcrepo.kernel.api.identifiers;
 
-import org.fcrepo.kernel.api.FedoraTypes;
-import org.fcrepo.kernel.api.exception.InvalidMementoPathException;
-import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
-import org.junit.Test;
-
-import java.time.Instant;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
@@ -36,6 +26,18 @@ import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMAT
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import org.fcrepo.kernel.api.FedoraTypes;
+import org.fcrepo.kernel.api.exception.InvalidMementoPathException;
+import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
+
+import org.junit.Test;
 
 /**
  * @author pwinckles
@@ -450,7 +452,7 @@ public class FedoraIdTest {
         final String withColon = "/object/test:prefix";
         final var withColonId = FedoraId.create(withColon);
         assertEquals(FEDORA_ID_PREFIX + withColon, withColonId.getEncodedFullId());
-        assertEquals( FEDORA_ID_PREFIX + withColon, withColonId.getFullId());
+        assertEquals(FEDORA_ID_PREFIX + withColon, withColonId.getFullId());
         // Hashes are not encoded.
         final String withHash = "/object/with#hash";
         final var withHashId = FedoraId.create(withHash);
@@ -483,7 +485,18 @@ public class FedoraIdTest {
         final var with_encoded_space_id = FedoraId.create(with_encoded_space);
         assertEquals(FEDORA_ID_PREFIX + "/object/has%2520a%2520space", with_encoded_space_id.getEncodedFullId());
         assertEquals(FEDORA_ID_PREFIX + with_encoded_space, with_encoded_space_id.getFullId());
+    }
 
+    @Test
+    public void verifyStorageNamingRestrictions() {
+        assertIdStringConstraint(".fcrepo");
+        assertIdStringConstraint("fcr-root");
+        assertIdStringConstraint("fcr-container.nt");
+
+        assertIdSuffixConstraint("~fcr-desc");
+        assertIdSuffixConstraint("~fcr-acl");
+        assertIdSuffixConstraint("~fcr-desc.nt");
+        assertIdSuffixConstraint("~fcr-acl.nt");
     }
 
     private void assertAsMemento(final String original, final String expected) {
@@ -569,4 +582,26 @@ public class FedoraIdTest {
         assertEquals(fullID, fedoraID.getFullId());
         assertEquals(shortID, fedoraID.getBaseId());
     }
+
+    private void assertIdStringConstraint(final String id) {
+        assertInvalidId(id);
+        FedoraId.create(id + "-suffix");
+        FedoraId.create("prefix-" + id);
+    }
+
+    private void assertIdSuffixConstraint(final String suffix) {
+        assertInvalidId("prefix" + suffix);
+        FedoraId.create(suffix);
+        FedoraId.create(suffix + "-suffix");
+    }
+
+    private void assertInvalidId(final String id) {
+        try {
+            FedoraId.create(id);
+            fail("should have thrown an exception creating id: " + id);
+        } catch (final InvalidResourceIdentifierException e) {
+            // expected exception
+        }
+    }
+
 }

@@ -44,12 +44,12 @@ public class InvalidResourceIdentifierExceptionMapper implements
 
     @Override
     public Response toResponse(final InvalidResourceIdentifierException e) {
-        LOGGER.warn("Invalid resource identifier", e);
+        debugException(this, e, LOGGER);
         return status(BAD_REQUEST).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
     }
 
     public Response toResponse(final String msg, final InvalidResourceIdentifierException e) {
-        LOGGER.warn("Invalid resource identifier", e);
+        debugException(this, e, LOGGER);
         return status(BAD_REQUEST).entity(msg).type(TEXT_PLAIN_WITH_CHARSET).build();
     }
 }
