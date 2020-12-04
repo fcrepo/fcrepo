@@ -18,10 +18,12 @@
 package org.fcrepo.persistence.ocfl;
 
 
+import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
+import org.fcrepo.kernel.api.operations.VersionResourceOperationFactory;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -55,6 +57,12 @@ public class RepositoryInitializer {
     @Inject
     private IndexBuilder indexBuilder;
 
+    @Inject
+    private VersionResourceOperationFactory versionResourceOperationFactory;
+
+    @Inject
+    private OcflPropsConfig config;
+
     /**
      * Initializes the repository
      */
@@ -62,7 +70,7 @@ public class RepositoryInitializer {
     public void initialize() {
         //check that the root is initialized
         final PersistentStorageSession session = this.sessionManager.getSession("initializationSession" +
-                                                                                 System.currentTimeMillis());
+                System.currentTimeMillis());
 
         indexBuilder.rebuildIfNecessary();
 
@@ -78,8 +86,15 @@ public class RepositoryInitializer {
                         .parentId(root).build();
 
                 session.persist(operation);
+
+                //if auto versioning is not enabled, be sure to create an immutable version
+                if (!config.isAutoVersioningEnabled()) {
+                    final var versionOperation = this.versionResourceOperationFactory.createBuilder(root).build();
+                    session.persist(versionOperation);
+                }
                 session.commit();
-                LOGGER.info("Successfully create repository root ({}).", root);
+
+                LOGGER.info("Successfully created repository root ({}).", root);
             }
 
         } catch (final PersistentStorageException ex) {
