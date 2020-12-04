@@ -672,7 +672,7 @@ public abstract class AbstractResourceIT {
     protected static void assertNotFound(final String id) {
         final String location = serverAddress + id;
         assertThat("Expected object to return 404", getStatus(new HttpHead(location)), is(NOT_FOUND.getStatusCode()));
-        assertThat("Expected object to return 4040", getStatus(new HttpGet(location)), is(NOT_FOUND.getStatusCode()));
+        assertThat("Expected object to return 404", getStatus(new HttpGet(location)), is(NOT_FOUND.getStatusCode()));
     }
 
     protected static void assertNotDeleted(final String id) {

@@ -75,16 +75,20 @@ public class FedoraReindex extends FedoraBaseResource {
         try {
             final var transaction = transaction();
             final var id = FedoraId.create(externalPath);
-            if (doesResourceExist(transaction, id, false)) {
+            if (doesResourceExist(transaction, id, true)) {
                 //TODO : remove this block once reindexing of existing resources is supported.
                 return status(HttpStatus.SC_CONFLICT, "Reindexing of existing resources is not currently supported. " +
                         "Only resources that have not yet been indexed are allowed.").build();
             } else {
-                this.reindexService.reindexByFedoraId(transaction().getId(), getUserPrincipal(), id.asBaseId());
-                transaction.commitIfShortLived();
-                final var message = format("successfully reindexed %s", id.getBaseId());
-                LOGGER.info(message);
-                return status(HttpStatus.SC_NO_CONTENT, message).build();
+                try {
+                    this.reindexService.reindexByFedoraId(transaction().getId(), getUserPrincipal(), id.asBaseId());
+                    transaction.commitIfShortLived();
+                    final var message = format("successfully reindexed %s", id.getBaseId());
+                    LOGGER.info(message);
+                    return status(HttpStatus.SC_NO_CONTENT, message).build();
+                } finally {
+                    transaction().releaseResourceLocksIfShortLived();
+                }
             }
 
         } catch (Exception ex) {
