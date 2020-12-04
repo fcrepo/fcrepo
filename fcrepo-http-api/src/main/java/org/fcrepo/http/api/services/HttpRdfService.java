@@ -23,7 +23,6 @@ import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.vocabulary.RDF.Init.type;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.api.RdfLexicon.restrictedType;
-import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -57,6 +56,7 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedMediaTypeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
@@ -115,12 +115,12 @@ public class HttpRdfService {
      * @throws MalformedRdfException in case rdf json cannot be parsed
      * @throws BadRequestException in the case where the RDF syntax is bad
      */
-    public Model bodyToInternalModel(final String extResourceId, final InputStream stream,
+    public Model bodyToInternalModel(final FedoraId extResourceId, final InputStream stream,
                                      final MediaType contentType, final HttpIdentifierConverter idTranslator,
                                      final boolean lenientHandling)
                                      throws RepositoryRuntimeException, BadRequestException {
         final List<ConstraintViolationException> exceptions = new ArrayList<>();
-        final Model model = parseBodyAsModel(stream, contentType, extResourceId);
+        final Model model = parseBodyAsModel(stream, contentType, extResourceId.getEncodedFullId());
         final List<Statement> insertStatements = new ArrayList<>();
         final StmtIterator stmtIterator = model.listStatements();
 
@@ -169,27 +169,6 @@ public class HttpRdfService {
         return model;
     }
 
-     /**
-     * Parse the request body to a RdfStream, with the URI to Fedora ID translations done.
-     *
-     * @param extResourceId the external ID of the Fedora resource
-     * @param stream the input stream containing the RDF
-     * @param contentType the media type of the RDF
-     * @param idTranslator the identifier convert
-     * @param lenientHandling whether the request had a handling=lenient prefer header.
-     * @return RdfStream containing triples from request body, with Fedora IDs in them
-     * @throws MalformedRdfException in case rdf json cannot be parsed
-     * @throws BadRequestException in the case where the RDF syntax is bad
-     */
-    public RdfStream bodyToInternalStream(final String extResourceId, final InputStream stream,
-                                          final MediaType contentType, final HttpIdentifierConverter idTranslator,
-                                          final boolean lenientHandling)
-                                          throws RepositoryRuntimeException, BadRequestException {
-        final Model model = bodyToInternalModel(extResourceId, stream, contentType, idTranslator, lenientHandling);
-
-        return fromModel(model.getResource(idTranslator.toInternalId(extResourceId)).asNode(), model);
-    }
-
     /**
      * Takes a PATCH request body and translates any subjects and objects that are in the domain of the repository
      * to use internal IDs.
@@ -198,9 +177,9 @@ public class HttpRdfService {
      * @param idTranslator an ID converter for the current context.
      * @return the converted PATCH request.
      */
-    public String patchRequestToInternalString(final String resourceId, final String requestBody,
+    public String patchRequestToInternalString(final FedoraId resourceId, final String requestBody,
                                                final HttpIdentifierConverter idTranslator) {
-        final UpdateRequest request = UpdateFactory.create(requestBody, resourceId);
+        final UpdateRequest request = UpdateFactory.create(requestBody, resourceId.getEncodedFullId());
         final List<Update> updates = request.getOperations();
         final SparqlTranslateVisitor visitor = new SparqlTranslateVisitor(idTranslator);
         for (final Update update : updates) {

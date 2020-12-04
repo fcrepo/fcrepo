@@ -17,11 +17,12 @@
  */
 package org.fcrepo.kernel.api.identifiers;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
-import org.apache.commons.lang3.StringUtils;
-import org.fcrepo.kernel.api.exception.InvalidMementoPathException;
-import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
 
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -31,12 +32,15 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
+import org.fcrepo.kernel.api.exception.InvalidMementoPathException;
+import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.google.common.escape.Escaper;
+import com.google.common.net.PercentEscaper;
 
 /**
  * Class to store contextual information about a Fedora ID.
@@ -68,6 +72,11 @@ public class FedoraId {
      */
     private final String fullPath;
 
+    /**
+     * The Fedora ID prefix and extensions URL encoded.
+     */
+    private final String encodedFullId;
+
     private String hashUri;
     private boolean isRepositoryRoot = false;
     private boolean isNonRdfSourceDescription = false;
@@ -81,6 +90,8 @@ public class FedoraId {
     private final static Set<Pattern> extensions = Set.of(FCR_TOMBSTONE, FCR_METADATA, FCR_ACL, FCR_VERSIONS)
             .stream().map(Pattern::compile).collect(Collectors.toSet());
 
+    private final static Escaper fedoraIdEscaper = new PercentEscaper("-._~!$'()*,;&=@:+/?#", false);
+
     /**
      * Basic constructor.
      * @param fullId The full identifier or null if root.
@@ -92,6 +103,7 @@ public class FedoraId {
         this.fullPath = this.fullId.substring(FEDORA_ID_PREFIX.length());
         checkForInvalidPath();
         this.baseId = processIdentifier();
+        this.encodedFullId = fedoraIdEscaper.escape(this.fullId);
     }
 
     /**
@@ -246,6 +258,13 @@ public class FedoraId {
      */
     public String getFullIdPath() {
         return fullPath;
+    }
+
+    /**
+     * @return The encoded full ID.
+     */
+    public String getEncodedFullId() {
+        return encodedFullId;
     }
 
     /**

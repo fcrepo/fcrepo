@@ -439,6 +439,53 @@ public class FedoraIdTest {
         assertAsAcl("original/child#sad", "original/child/" + FCR_ACL);
     }
 
+    @Test
+    public void testEncodedId() {
+        // Slashes are not encoded.
+        final String normal = "/object/child";
+        final var normalId = FedoraId.create(normal);
+        assertEquals(FEDORA_ID_PREFIX + normal, normalId.getEncodedFullId());
+        assertEquals(FEDORA_ID_PREFIX + normal, normalId.getFullId());
+        // Colons are not encoded.
+        final String withColon = "/object/test:prefix";
+        final var withColonId = FedoraId.create(withColon);
+        assertEquals(FEDORA_ID_PREFIX + withColon, withColonId.getEncodedFullId());
+        assertEquals( FEDORA_ID_PREFIX + withColon, withColonId.getFullId());
+        // Hashes are not encoded.
+        final String withHash = "/object/with#hash";
+        final var withHashId = FedoraId.create(withHash);
+        assertEquals(FEDORA_ID_PREFIX + withHash, withHashId.getEncodedFullId());
+        assertEquals(FEDORA_ID_PREFIX + withHash, withHashId.getFullId());
+        // Query string characters (? & =) are not encoded.
+        final String withQueryString = "/object/with?query=parameters&for=uris";
+        final var withQueryStringId = FedoraId.create(withQueryString);
+        assertEquals(FEDORA_ID_PREFIX + withQueryString, withQueryStringId.getEncodedFullId());
+        assertEquals(FEDORA_ID_PREFIX + withQueryString, withQueryStringId.getFullId());
+        // Plus and minus (hyphens) signs are not encoded
+        final String plus_sign = "/object/one+two/three-four";
+        final var plus_signId = FedoraId.create(plus_sign);
+        assertEquals(FEDORA_ID_PREFIX + plus_sign, plus_signId.getEncodedFullId());
+        assertEquals(FEDORA_ID_PREFIX + plus_sign, plus_signId.getFullId());
+        // Remaining URI sub-deliminators are not encoded
+        final String sub_delims = "/object/with!/some$weird/possibly'unstable/group(ing)/all*/comma,comma/and;this";
+        final var sub_delimsId = FedoraId.create(sub_delims);
+        assertEquals(FEDORA_ID_PREFIX + sub_delims, sub_delimsId.getEncodedFullId());
+        assertEquals(FEDORA_ID_PREFIX + sub_delims, sub_delimsId.getFullId());
+
+        // Spaces ARE encoded.
+        final String with_space = "/object/has a space";
+        final var with_space_id = FedoraId.create(with_space);
+        assertEquals(FEDORA_ID_PREFIX + "/object/has%20a%20space", with_space_id.getEncodedFullId());
+        assertEquals(FEDORA_ID_PREFIX + with_space, with_space_id.getFullId());
+
+        // Encoded spaces are double encoded
+        final String with_encoded_space = "/object/has%20a%20space";
+        final var with_encoded_space_id = FedoraId.create(with_encoded_space);
+        assertEquals(FEDORA_ID_PREFIX + "/object/has%2520a%2520space", with_encoded_space_id.getEncodedFullId());
+        assertEquals(FEDORA_ID_PREFIX + with_encoded_space, with_encoded_space_id.getFullId());
+
+    }
+
     private void assertAsMemento(final String original, final String expected) {
         final var id = FedoraId.create(original);
         assertEquals(FedoraTypes.FEDORA_ID_PREFIX + "/" + expected,

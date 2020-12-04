@@ -3446,16 +3446,70 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore
-    public void testUpdateObjectWithSpaces() throws IOException {
+    public void testUpdateObjectWithSpacesPost() throws IOException {
         final String id = getRandomUniqueId() + " 2";
+        final String expectedUri = serverAddress + id.replace(" ", "%20");
+        final String notExpectedUri = expectedUri.replace("%", "%25");
         try (final CloseableHttpResponse createResponse = createObject(id)) {
             final String subjectURI = getLocation(createResponse);
+            assertEquals(expectedUri, subjectURI);
             final HttpPatch updateObjectGraphMethod = new HttpPatch(subjectURI);
             updateObjectGraphMethod.addHeader(CONTENT_TYPE, "application/sparql-update");
             updateObjectGraphMethod.setEntity(new StringEntity(
                     "INSERT { <> <http://purl.org/dc/elements/1.1/title> \"test\" } WHERE {}"));
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(updateObjectGraphMethod));
+        }
+        final HttpGet httpGet = new HttpGet(expectedUri);
+        try (final var dataset = getDataset(httpGet)) {
+            final var graph  = dataset.asDatasetGraph();
+            // Ensure the graph has an encoded URI too.
+            assertTrue(graph.contains(
+                    ANY,
+                    createURI(expectedUri),
+                    ANY,
+                    ANY
+            ));
+            // Ensure it does not have a double encoded URI.
+            assertFalse(graph.contains(
+                    ANY,
+                    createURI(notExpectedUri),
+                    ANY,
+                    ANY
+            ));
+        }
+    }
+
+    @Test
+    public void testUpdateObjectWithSpacesPut() throws IOException {
+        final String id = getRandomUniqueId() + "%202";
+        final String expectedUri = serverAddress + id;
+        final String notExpectedUri = expectedUri.replace("%", "%25");
+        try (final CloseableHttpResponse createResponse = execute(putObjMethod(id))) {
+            final String subjectURI = getLocation(createResponse);
+            assertEquals(expectedUri, subjectURI);
+            final HttpPatch updateObjectGraphMethod = new HttpPatch(subjectURI);
+            updateObjectGraphMethod.addHeader(CONTENT_TYPE, "application/sparql-update");
+            updateObjectGraphMethod.setEntity(new StringEntity(
+                    "INSERT { <> <http://purl.org/dc/elements/1.1/title> \"test\" } WHERE {}"));
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(updateObjectGraphMethod));
+        }
+        final HttpGet httpGet = new HttpGet(expectedUri);
+        try (final var dataset = getDataset(httpGet)) {
+            final var graph  = dataset.asDatasetGraph();
+            // Ensure the graph has an encoded URI too.
+            assertTrue(graph.contains(
+                    ANY,
+                    createURI(expectedUri),
+                    ANY,
+                    ANY
+            ));
+            // Ensure it does not have a double encoded URI.
+            assertFalse(graph.contains(
+                    ANY,
+                    createURI(notExpectedUri),
+                    ANY,
+                    ANY
+            ));
         }
     }
 

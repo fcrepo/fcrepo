@@ -461,7 +461,7 @@ public class FedoraLdp extends ContentExposingResource {
                 }
             } else {
                 final var contentType = requestContentType != null ? requestContentType : DEFAULT_RDF_CONTENT_TYPE;
-                final Model model = httpRdfService.bodyToInternalModel(fedoraId.getFullId(), requestBodyStream,
+                final Model model = httpRdfService.bodyToInternalModel(fedoraId, requestBodyStream,
                         contentType, identifierConverter(), hasLenientPreferHeader());
 
                 if (resourceExists) {
@@ -523,7 +523,7 @@ public class FedoraLdp extends ContentExposingResource {
             evaluateRequestPreconditions(request, servletResponse, resource(), transaction);
 
             LOGGER.info("PATCH for '{}'", externalPath);
-            final String newRequest = httpRdfService.patchRequestToInternalString(resource().getFedoraId().getFullId(),
+            final String newRequest = httpRdfService.patchRequestToInternalString(resource().getFedoraId(),
                     requestBody, identifierConverter());
             LOGGER.debug("PATCH request translated to '{}'", newRequest);
             patchResourcewithSparql(resource(), newRequest);
@@ -627,7 +627,7 @@ public class FedoraLdp extends ContentExposingResource {
                         extContent);
             } else {
                 final var contentType = requestContentType != null ? requestContentType : DEFAULT_RDF_CONTENT_TYPE;
-                final Model model = httpRdfService.bodyToInternalModel(newFedoraId.getFullId(), requestBodyStream,
+                final Model model = httpRdfService.bodyToInternalModel(newFedoraId, requestBodyStream,
                         contentType, identifierConverter(), hasLenientPreferHeader());
                 createResourceService.perform(transaction,
                         getUserPrincipal(),
