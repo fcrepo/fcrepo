@@ -62,17 +62,6 @@ public class HttpIdentifierConverter {
     }
 
     /**
-     * TODO: This constructor should be removed!
-     * ..it is only used so that Spring can create this class... since it is unclear where the `UriBuilder` will come
-     * ..from when this class is expected to be injected into `ContentExposingResource.java`
-     */
-    public HttpIdentifierConverter() {
-        // nothing :(
-        this.uriBuilder = null;
-        this.uriTemplate = null;
-    }
-
-    /**
      * Convert an external URI to an internal ID.
      *
      * @param httpUri the external URI.
@@ -116,15 +105,7 @@ public class HttpIdentifierConverter {
             // If it starts with our prefix, strip the prefix and any leading slashes and use it as the path
             // part of the URI.
             final String path = fedoraId.substring(FEDORA_ID_PREFIX.length()).replaceFirst("\\/", "");
-            final UriBuilder uri = uriBuilder();
-            if (path.contains("#")) {
-                final String[] split = path.split("#", 2);
-                uri.resolveTemplate("path", split[0], false);
-                uri.fragment(split[1]);
-            } else {
-                uri.resolveTemplate("path", path, false);
-            }
-            return uri.build().toString();
+            return buildUri(path);
         }
         throw new IllegalArgumentException("Cannot translate IDs without our prefix");
     }
@@ -167,19 +148,7 @@ public class HttpIdentifierConverter {
             realPath = path;
         }
 
-        final UriBuilder uri = uriBuilder();
-
-        if (realPath.contains("#")) {
-
-            final String[] split = realPath.split("#", 2);
-
-            uri.resolveTemplate("path", split[0], false);
-            uri.fragment(split[1]);
-        } else {
-            uri.resolveTemplate("path", realPath, false);
-
-        }
-        return uri.build().toString();
+        return buildUri(realPath);
     }
 
     /**
@@ -188,7 +157,24 @@ public class HttpIdentifierConverter {
      * @return the FedoraId.
      */
     public FedoraId pathToInternalId(final String externalPath) {
-        return FedoraId.create(toInternalId(toDomain(externalPath)));
+        return FedoraId.create(externalPath);
+    }
+
+    /**
+     * Utility to build a URL.
+     * @param path the path from the internal Id.
+     * @return an external URI.
+     */
+    private String buildUri(final String path) {
+        final UriBuilder uri = uriBuilder();
+        if (path.contains("#")) {
+            final String[] split = path.split("#", 2);
+            uri.resolveTemplateFromEncoded("path", split[0]);
+            uri.fragment(split[1]);
+        } else {
+            uri.resolveTemplateFromEncoded("path", path);
+        }
+        return uri.build().toString();
     }
 
     /**
