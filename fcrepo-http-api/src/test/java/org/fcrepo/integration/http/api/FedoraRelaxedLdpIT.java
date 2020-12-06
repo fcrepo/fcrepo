@@ -58,7 +58,10 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import static java.util.Calendar.getInstance;
+import static java.util.Spliterator.IMMUTABLE;
+import static java.util.Spliterators.spliteratorUnknownSize;
 import static java.util.TimeZone.getTimeZone;
+import static java.util.stream.StreamSupport.stream;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
@@ -81,7 +84,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED_PROPERTIES_MODE;
-import static org.fcrepo.kernel.api.utils.StreamUtils.iteratorToStream;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -332,8 +334,9 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         try (final CloseableDataset d = getDataset(new HttpGet(containedBinaryDescriptionURI))) {
             final Model model = createDefaultModel();
             model.read(new ByteArrayInputStream(containedBinaryDescriptionBody.getBytes()), "", "N3");
-            final GraphDifferencer diff = new GraphDifferencer(model,
-                    iteratorToStream(d.getDefaultModel().listStatements()).map(Statement::asTriple));
+            final Stream<Statement> statements =
+                    stream(spliteratorUnknownSize(d.getDefaultModel().listStatements(), IMMUTABLE), false);
+            final GraphDifferencer diff = new GraphDifferencer(model, statements.map(Statement::asTriple));
             sparqlUpdate = buildSparqlUpdate(diff.difference(), diff.notCommon(), CREATED_BY, CREATED_DATE,
                     LAST_MODIFIED_BY, LAST_MODIFIED_DATE);
         }
