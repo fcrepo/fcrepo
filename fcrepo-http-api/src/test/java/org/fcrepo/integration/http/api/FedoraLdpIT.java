@@ -3795,7 +3795,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore("Need embed resources - FCREPO-3525")
     public void testEmbeddedContainedResources() throws IOException {
         final String id = getRandomUniqueId();
         final String binaryId = "binary0";
