@@ -703,10 +703,9 @@ public class FedoraLdp extends ContentExposingResource {
             return;
         }
 
-        if (links.stream().map(l -> Link.valueOf(l))
+        if (links.stream().map(Link::valueOf)
                       .filter(l -> l.getUri().toString().equals(ARCHIVAL_GROUP.getURI()))
-                      .filter(l -> l.getRel().equals("type"))
-                      .findFirst().isPresent()) {
+                      .anyMatch(l -> l.getRel().equals("type"))) {
             throw new ClientErrorException("Binary resources cannot be created as an" +
                     " ArchiveGroup. Please remove the ArchiveGroup link header and try again", BAD_REQUEST);
         }
@@ -769,8 +768,9 @@ public class FedoraLdp extends ContentExposingResource {
             }
 
             return digestPairs.entrySet().stream().filter(entry -> entry.getValue() > 0)
-                .filter(entry -> ContentDigest.DIGEST_ALGORITHM.isSupportedAlgorithm(entry.getKey()))
-                .map(entry -> entry.getKey()).collect(Collectors.toSet());
+                    .map(Map.Entry::getKey)
+                    .filter(ContentDigest.DIGEST_ALGORITHM::isSupportedAlgorithm)
+                    .collect(Collectors.toSet());
         } catch (final NumberFormatException e) {
             throw new ClientErrorException("Invalid 'Want-Digest' header value: " + wantDigest, SC_BAD_REQUEST, e);
         } catch (final RuntimeException e) {
@@ -797,6 +797,11 @@ public class FedoraLdp extends ContentExposingResource {
     private FedoraId mintNewPid(final FedoraId fedoraId, final String slug) {
         final String pid;
 
+        if (isGhostNode(transaction(), fedoraId)) {
+            LOGGER.debug("Resource with path {} is an immutable resource; it cannot be POSTed to.", fedoraId);
+            throw new CannotCreateResourceException("Cannot create resource as child of the immutable resource at " +
+                    fedoraId.getFullIdPath());
+        }
         if (!isBlank(slug)) {
             pid = slug;
         } else if (pidMinter != null) {
