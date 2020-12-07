@@ -84,7 +84,9 @@ public class FedoraReindex extends FedoraBaseResource {
                         "Only resources that have not yet been indexed are allowed.").build();
             } else {
                 try {
-                    this.reindexService.reindexByFedoraId(transaction().getId(), getUserPrincipal(), id.asBaseId());
+                    final var baseId = id.asBaseId();
+                    transaction.lockResource(baseId);
+                    this.reindexService.reindexByFedoraId(transaction().getId(), getUserPrincipal(), baseId);
                     transaction.commitIfShortLived();
                     final var message = format("successfully reindexed %s", id.getBaseId());
                     LOGGER.info(message);
