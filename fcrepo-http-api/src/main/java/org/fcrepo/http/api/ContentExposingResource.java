@@ -17,94 +17,11 @@
  */
 package org.fcrepo.http.api;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
-import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.jena.atlas.web.ContentType;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Resource;
-import org.fcrepo.http.api.services.HttpRdfService;
-import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
-import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
-import org.fcrepo.http.commons.domain.MultiPrefer;
-import org.fcrepo.http.commons.domain.PreferTag;
-import org.fcrepo.http.commons.domain.Range;
-import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
-import org.fcrepo.http.commons.responses.RangeRequestInputStream;
-import org.fcrepo.http.commons.responses.RdfNamespacedStream;
-import org.fcrepo.kernel.api.FedoraTypes;
-import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.TransactionUtils;
-import org.fcrepo.kernel.api.exception.InsufficientStorageException;
-import org.fcrepo.kernel.api.exception.InvalidChecksumException;
-import org.fcrepo.kernel.api.exception.PathNotFoundException;
-import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
-import org.fcrepo.kernel.api.exception.PreconditionException;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
-import org.fcrepo.kernel.api.exception.TombstoneException;
-import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.models.Binary;
-import org.fcrepo.kernel.api.models.Container;
-import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.api.models.TimeMap;
-import org.fcrepo.kernel.api.models.Tombstone;
-import org.fcrepo.kernel.api.models.WebacAcl;
-import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
-import org.fcrepo.kernel.api.services.CreateResourceService;
-import org.fcrepo.kernel.api.services.DeleteResourceService;
-import org.fcrepo.kernel.api.services.ReplacePropertiesService;
-import org.fcrepo.kernel.api.services.ResourceTripleService;
-import org.fcrepo.kernel.api.services.UpdatePropertiesService;
-import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
-import org.fcrepo.kernel.api.utils.ContentDigest;
-import org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM;
-import org.glassfish.jersey.media.multipart.ContentDisposition;
-import org.jvnet.hk2.annotations.Optional;
-import org.slf4j.Logger;
-
-import javax.inject.Inject;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.BeanParam;
-import javax.ws.rs.ClientErrorException;
-import javax.ws.rs.core.CacheControl;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.EntityTag;
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import static com.google.common.base.Strings.nullToEmpty;
 import static java.net.URI.create;
 import static java.text.MessageFormat.format;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Stream.empty;
-
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
@@ -125,6 +42,7 @@ import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Variant.mediaTypes;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.riot.WebContent.ctSPARQLUpdate;
@@ -148,6 +66,88 @@ import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
 import static org.fcrepo.kernel.api.models.ExternalContent.REDIRECT;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.inject.Inject;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.BeanParam;
+import javax.ws.rs.ClientErrorException;
+import javax.ws.rs.core.CacheControl;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.Link;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
+
+import org.fcrepo.http.api.services.HttpRdfService;
+import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
+import org.fcrepo.http.commons.domain.MultiPrefer;
+import org.fcrepo.http.commons.domain.PreferTag;
+import org.fcrepo.http.commons.domain.Range;
+import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
+import org.fcrepo.http.commons.responses.RangeRequestInputStream;
+import org.fcrepo.http.commons.responses.RdfNamespacedStream;
+import org.fcrepo.kernel.api.FedoraTypes;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionUtils;
+import org.fcrepo.kernel.api.exception.InsufficientStorageException;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.exception.PreconditionException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
+import org.fcrepo.kernel.api.exception.TombstoneException;
+import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.Binary;
+import org.fcrepo.kernel.api.models.Container;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.api.models.TimeMap;
+import org.fcrepo.kernel.api.models.Tombstone;
+import org.fcrepo.kernel.api.models.WebacAcl;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
+import org.fcrepo.kernel.api.services.CreateResourceService;
+import org.fcrepo.kernel.api.services.DeleteResourceService;
+import org.fcrepo.kernel.api.services.ReplacePropertiesService;
+import org.fcrepo.kernel.api.services.ResourceTripleService;
+import org.fcrepo.kernel.api.services.UpdatePropertiesService;
+import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
+import org.fcrepo.kernel.api.utils.ContentDigest;
+import org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM;
+
+import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.jena.atlas.web.ContentType;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.glassfish.jersey.media.multipart.ContentDisposition;
+import org.jvnet.hk2.annotations.Optional;
+import org.slf4j.Logger;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
 
 /**
  * An abstract class that sits between AbstractResource and any resource that
@@ -972,17 +972,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
     }
 
-    protected IdentifierConverter<Resource, FedoraResource> idTranslator;
-
-    protected IdentifierConverter<Resource, FedoraResource> translator() {
-        if (idTranslator == null) {
-            idTranslator = new HttpResourceConverter(transaction(),
-                    uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));
-        }
-
-        return idTranslator;
-    }
-
     /**
      * This is a helper method for using the idTranslator to convert this resource into an associated Jena Node.
      *
@@ -990,7 +979,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @return the Jena node
      */
     protected Node asNode(final FedoraResource resource) {
-        return translator().reverse().convert(resource).asNode();
+        return createURI(resource.getFedoraId().getFullId());
     }
 
     /**
@@ -998,8 +987,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @param externalPath the external path
      * @return the fedora resource at the external path
      */
-    @VisibleForTesting
-    public FedoraResource getResourceFromPath(final String externalPath) {
+    private FedoraResource getResourceFromPath(final String externalPath) {
         final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath);
 
         try {

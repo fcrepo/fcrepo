@@ -653,11 +653,8 @@ public class FedoraLdp extends ContentExposingResource {
         super.addResourceHttpHeaders(resource);
 
         if (!transaction().isShortLived()) {
-            final String canonical = translator().reverse()
-                    .convert(resource)
-                    .toString()
+            final String canonical = identifierConverter().toExternalId(resource.getFedoraId().getFullId())
                     .replaceFirst("/tx:[^/]+", "");
-
 
             servletResponse.addHeader(LINK, "<" + canonical + ">;rel=\"canonical\"");
 
