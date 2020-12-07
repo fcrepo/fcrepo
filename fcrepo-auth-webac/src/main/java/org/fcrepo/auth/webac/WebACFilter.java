@@ -97,6 +97,7 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_CONTROL;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
 import static org.fcrepo.auth.webac.WebACAuthorizingRealm.URIS_TO_AUTHORIZE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_TX;
@@ -206,8 +207,8 @@ public class WebACFilter extends RequestContextFilter {
         try {
             FedoraId.create(identifierConverter(httpRequest).toInternalId(requestUrl));
         } catch (final InvalidResourceIdentifierException e) {
-            response.sendError(SC_BAD_REQUEST,
-                    String.format("Path contains empty element! %s", httpRequest.getRequestURI()));
+            printException(response, SC_BAD_REQUEST, e);
+            return;
         } catch (final IllegalArgumentException e) {
             // No Fedora request path provided, so just continue along.
         }
@@ -245,6 +246,25 @@ public class WebACFilter extends RequestContextFilter {
 
         // proceed to the next filter
         chain.doFilter(httpRequest, response);
+    }
+
+    /**
+     * Displays the message from the exception to the screen.
+     * @param response the servlet response
+     * @param e the exception being handled
+     * @throws IOException if problems opening the output writer.
+     */
+    private void printException(final HttpServletResponse response, final int responseCode, final Throwable e)
+            throws IOException {
+        final var message = e.getMessage();
+        response.resetBuffer();
+        response.setStatus(responseCode);
+        response.setContentType(TEXT_PLAIN_WITH_CHARSET);
+        response.setContentLength(message.length());
+        response.setCharacterEncoding("UTF-8");
+        final var write = response.getWriter();
+        write.write(message);
+        write.flush();
     }
 
     private Subject getFoafAgentSubject() {
