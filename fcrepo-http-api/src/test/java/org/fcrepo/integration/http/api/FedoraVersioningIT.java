@@ -1021,6 +1021,9 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     public void testDatetimeNegotiationLDPRv() throws Exception {
         final String startDatetime = MEMENTO_RFC_1123_FORMATTER.format(Instant.now().atZone(ZoneOffset.UTC));
 
+        // Make sure the start time is before the first memento
+        TimeUnit.SECONDS.sleep(1);
+
         final CloseableHttpClient customClient = createClient(true);
 
         final String uri = createVersionedContainer(id);
