@@ -3379,7 +3379,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testUpdateObjectWithSpaces() throws IOException {
     public void testUpdateObjectWithSpacesPost() throws IOException {
         final String id = getRandomUniqueId() + " 2";
         final String expectedUri = serverAddress + id.replace(" ", "%20");
