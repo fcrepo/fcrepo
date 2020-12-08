@@ -58,7 +58,7 @@ public class TransactionImpl implements Transaction {
     private static final RetryPolicy<Object> DB_RETRY = new RetryPolicy<>()
             .handleIf(e -> {
                 return e instanceof DeadlockLoserDataAccessException
-                        || e.getCause() != null && e.getCause() instanceof DeadlockLoserDataAccessException;
+                        || (e.getCause() != null && e.getCause() instanceof DeadlockLoserDataAccessException);
             })
             .withBackoff(50, 1000, ChronoUnit.MILLIS, 1.5)
             .withJitter(0.1)
