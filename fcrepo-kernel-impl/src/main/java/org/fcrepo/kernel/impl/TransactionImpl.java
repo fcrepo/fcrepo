@@ -17,6 +17,13 @@
  */
 package org.fcrepo.kernel.impl;
 
+import static java.time.Duration.ofMillis;
+import static java.time.Duration.ofMinutes;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 import org.fcrepo.common.lang.CheckedRunnable;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
@@ -28,15 +35,14 @@ import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.persistence.api.PersistentStorageSession;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DeadlockLoserDataAccessException;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.time.Duration;
-import java.time.Instant;
-
-import static java.time.Duration.ofMillis;
-import static java.time.Duration.ofMinutes;
+import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.RetryPolicy;
 
 /**
  * The Fedora Transaction implementation
@@ -48,6 +54,15 @@ public class TransactionImpl implements Transaction {
     public static final String TIMEOUT_SYSTEM_PROPERTY = "fcrepo.session.timeout";
 
     private static final Logger log = LoggerFactory.getLogger(TransactionImpl.class);
+
+    private static final RetryPolicy<Object> DB_RETRY = new RetryPolicy<>()
+            .handleIf(e -> {
+                return e instanceof DeadlockLoserDataAccessException
+                        || e.getCause() != null && e.getCause() instanceof DeadlockLoserDataAccessException;
+            })
+            .withBackoff(50, 1000, ChronoUnit.MILLIS, 1.5)
+            .withJitter(0.1)
+            .withMaxRetries(5);
 
     private static final Duration DEFAULT_TIMEOUT = ofMinutes(3);
 
@@ -87,14 +102,21 @@ public class TransactionImpl implements Transaction {
         }
         try {
             log.debug("Committing transaction {}", id);
-            // Cannot use transactional annotations because this class is not managed by spring
-            getTransactionTemplate().executeWithoutResult(status -> {
-                this.getPersistentSession().commit();
-                this.getContainmentIndex().commitTransaction(id);
-                this.getReferenceService().commitTransaction(id);
-                this.getMembershipService().commitTransaction(id);
-                this.getEventAccumulator().emitEvents(id, baseUri, userAgent);
+            // MySQL can deadlock when update db records and it must be retried. Unfortunately, the entire transaction
+            // must be retried because something marks the transaction for rollback when the exception is thrown
+            // regardless if you then retry at the query level.
+            Failsafe.with(DB_RETRY).run(() -> {
+                // Cannot use transactional annotations because this class is not managed by spring
+                getTransactionTemplate().executeWithoutResult(status -> {
+                    this.getContainmentIndex().commitTransaction(id);
+                    this.getReferenceService().commitTransaction(id);
+                    this.getMembershipService().commitTransaction(id);
+                    this.getPersistentSession().prepare();
+                    // storage session must be committed last because mutable head changes cannot be rolled back
+                    this.getPersistentSession().commit();
+                });
             });
+            this.getEventAccumulator().emitEvents(id, baseUri, userAgent);
             this.committed = true;
             releaseLocks();
         } catch (final Exception ex) {

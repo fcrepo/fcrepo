@@ -32,6 +32,7 @@
     <commons-lang.version>3.11</commons-lang.version>
     <narayana-jta.version>5.9.0.Final</narayana-jta.version>
     <jetty.version>9.4.34.v20201102</jetty.version>
+    <failsafe.version>2.4.0</failsafe.version>
     <guava.version>30.0-jre</guava.version>
     <h2database.version>1.4.195</h2database.version>
     <hk2.version>2.6.1</hk2.version>
@@ -334,6 +335,11 @@
         <groupId>com.github.ben-manes.caffeine</groupId>
         <artifactId>caffeine</artifactId>
         <version>${caffeine.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>net.jodah</groupId>
+        <artifactId>failsafe</artifactId>
+        <version>${failsafe.version}</version>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>

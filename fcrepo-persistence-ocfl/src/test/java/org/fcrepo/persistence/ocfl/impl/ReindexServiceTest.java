@@ -93,6 +93,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         createResource(session, parentId, true);
         createChildResourceRdf(session, parentId, childId);
 
+        session.prepare();
         session.commit();
 
         assertHasOcflId(parentIdPart, parentId);
@@ -129,6 +130,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         createResource(session, resource1, true);
         createChildResourceNonRdf(session, resource1, resource2);
 
+        session.prepare();
         session.commit();
 
         assertHasOcflId("resource1", resource1);
@@ -162,6 +164,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         createResource(session, resource1, false);
         createChildResourceNonRdf(session, resource1, resource2);
 
+        session.prepare();
         session.commit();
 
         assertHasOcflId("resource1", resource1);
@@ -194,6 +197,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         createResource(session, resource1, true);
         createChildResourceNonRdf(session, resource1, resource2);
 
+        session.prepare();
         session.commit();
 
         assertHasOcflId("resource1", resource1);
@@ -203,6 +207,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
 
         deleteResource(session2, resource2);
 
+        session2.prepare();
         session2.commit();
 
         ocflIndex.reset();
@@ -243,6 +248,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
 
         when(containerResult.getItems()).thenReturn(result);
 
+        session.prepare();
         session.commit();
 
         ocflIndex.reset();

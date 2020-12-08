@@ -53,6 +53,7 @@ public class ReindexManagerTest extends AbstractReindexerTest {
         createResource(session, resource1, true);
         createChildResourceNonRdf(session, resource1, resource2);
 
+        session.prepare();
         session.commit();
 
         assertHasOcflId("resource1", resource1);

@@ -291,7 +291,7 @@ public class TransactionsIT extends AbstractResourceIT {
     }
 
     @Test
-    public void rollbackFailsWhenAutoVersioningNotUsed() throws IOException {
+    public void rollbackSucceedsWhenAutoVersioningNotUsedAndFailureInDbCommit() throws IOException {
         objectSessionFactory.setDefaultCommitType(CommitType.UNVERSIONED);
 
         final String txLocation1 = createTransaction();
@@ -321,10 +321,10 @@ public class TransactionsIT extends AbstractResourceIT {
         assertEquals("Rolled back transaction should be gone",
                 GONE.getStatusCode(), getStatus(new HttpGet(txLocation2)));
 
-        // bin1 was not rolled back because it has an active mutable head
-        assertBinaryContent("test 1 -- updated!", bin1, null);
+        // bin1 was not changed
+        assertBinaryContent("test 1", bin1, null);
 
-        // bin2 was rolled back because it does not have a mutable head
+        // bin2 was rolled back
         assertEquals("Expected to not find our object after rollback",
                 NOT_FOUND.getStatusCode(), getStatus(new HttpGet(serverAddress + bin2)));
         assertObjectDoesNotExistOnDisk(FedoraId.create(bin2));
