@@ -112,7 +112,11 @@ public class TransactionImpl implements Transaction {
                     this.getReferenceService().commitTransaction(id);
                     this.getMembershipService().commitTransaction(id);
                     this.getPersistentSession().prepare();
-                    // storage session must be committed last because mutable head changes cannot be rolled back
+                    // The storage session must be committed last because mutable head changes cannot be rolled back.
+                    // The db transaction will remain open until all changes have been written to OCFL. If the changes
+                    // are large, or are going to S3, this could take some time. In which case, it is possible the
+                    // db's connection timeout may need to be adjusted so that the connection is not closed while
+                    // waiting for the OCFL changes to be committed.
                     this.getPersistentSession().commit();
                 });
             });
