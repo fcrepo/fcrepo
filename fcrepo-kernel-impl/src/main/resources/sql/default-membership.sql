@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS membership (
     object_id varchar(503) NOT NULL,
     source_id varchar(503) NOT NULL,
     start_time timestamp,
-    end_time timestamp
+    end_time timestamp,
+    last_updated timestamp
 );
 
 -- Create an index to speed searches for a resource.
@@ -25,6 +26,10 @@ CREATE INDEX IF NOT EXISTS membership_idx1b
 CREATE INDEX IF NOT EXISTS membership_idx2
     ON membership (source_id);
 
+-- Create an index to speed retrieval of last_updated times
+CREATE INDEX IF NOT EXISTS membership_idx3
+    ON membership (subject_id, last_updated);
+
 -- Holds operations to add or delete records from the REFERENCE table.
 CREATE TABLE IF NOT EXISTS membership_tx_operations (
     subject_id varchar(503) NOT NULL,
@@ -33,6 +38,7 @@ CREATE TABLE IF NOT EXISTS membership_tx_operations (
     source_id varchar(503) NOT NULL,
     start_time timestamp,
     end_time timestamp,
+    last_updated timestamp,
     tx_id varchar(36) NOT NULL,
     operation varchar(10) NOT NULL,
     force_flag varchar(10)
@@ -48,3 +54,10 @@ CREATE INDEX IF NOT EXISTS membership_tx_operations_idx1a
 -- Create an index to speed finding records related to a transaction.
 CREATE INDEX IF NOT EXISTS membership_tx_operations_idx2
     ON membership_tx_operations (tx_id);
+
+CREATE INDEX IF NOT EXISTS membership_tx_operations_idx3
+    ON membership_tx_operations (source_id);
+
+-- Create an index to speed retrieval of last_updated times
+CREATE INDEX IF NOT EXISTS membership_tx_operations_idx3
+    ON membership_tx_operations (subject_id, last_updated);

@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.api.services;
 
+import java.time.Instant;
+
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
@@ -67,6 +69,14 @@ public interface MembershipService {
      * @param containerId ID of the container
      */
     void populateMembershipHistory(final String txId, final FedoraId containerId);
+
+    /**
+     * Get the timestamp of the most recent member added or removed, or null if none.
+     * @param txId transaction id or null if none
+     * @param fedoraId the resource id
+     * @return the timestamp or null
+     */
+    Instant getLastUpdatedTimestamp(final String txId, final FedoraId fedoraId);
 
     /**
      * Commit any pending membership changes.

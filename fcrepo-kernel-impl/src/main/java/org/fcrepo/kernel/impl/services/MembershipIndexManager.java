@@ -81,6 +81,7 @@ public class MembershipIndexManager {
     private static final String SOURCE_ID_PARAM = "sourceId";
     private static final String START_TIME_PARAM = "startTime";
     private static final String END_TIME_PARAM = "endTime";
+    private static final String LAST_UPDATED_PARAM = "lastUpdated";
     private static final String OPERATION_PARAM = "operation";
     private static final String FORCE_PARAM = "forceFlag";
     private static final String OBJECT_ID_PARAM = "objectId";
@@ -141,15 +142,43 @@ public class MembershipIndexManager {
             " ORDER BY property, object_id" +
             " LIMIT :limit OFFSET :offSet";
 
+    private static final String SELECT_LAST_UPDATED =
+            "SELECT max(last_updated) as last_updated" +
+            " FROM membership" +
+            " WHERE subject_id = :subjectId";
+
+    private static final String SELECT_LAST_UPDATED_IN_TX =
+            "SELECT max(updated) as last_updated" +
+            " FROM (" +
+                " SELECT max(last_updated) as updated" +
+                " FROM membership m" +
+                " WHERE subject_id = :subjectId" +
+                    " AND NOT EXISTS (" +
+                        " SELECT 1" +
+                        " FROM membership_tx_operations mto" +
+                        " WHERE mto.subject_id = :subjectId" +
+                            " AND mto.source_id = m.source_id" +
+                            " AND mto.object_id = m.object_id" +
+                            " AND mto.tx_id = :txId" +
+                            " AND mto.operation = :deleteOp)" +
+                " UNION" +
+                " SELECT max(last_updated) as updated" +
+                " FROM membership_tx_operations" +
+                " WHERE subject_id = :subjectId" +
+                    " AND tx_id = :txId" +
+            ")";
+
     private static final String INSERT_MEMBERSHIP_IN_TX =
             "INSERT INTO membership_tx_operations" +
-            " (subject_id, property, object_id, source_id, start_time, end_time, tx_id, operation)" +
-            " VALUES (:subjectId, :property, :targetId, :sourceId, :startTime, :endTime, :txId, :operation)";
+            " (subject_id, property, object_id, source_id, start_time, end_time, last_updated, tx_id, operation)" +
+            " VALUES" +
+            " (:subjectId, :property, :targetId, :sourceId, :startTime, :endTime, :lastUpdated, :txId, :operation)";
 
     private static final String END_EXISTING_MEMBERSHIP =
             "INSERT INTO membership_tx_operations" +
-            " (subject_id, property, object_id, source_id, start_time, end_time, tx_id, operation)" +
-            " SELECT m.subject_id, m.property, m.object_id, m.source_id, m.start_time, :endTime, :txId, :deleteOp" +
+            " (subject_id, property, object_id, source_id, start_time, end_time, last_updated, tx_id, operation)" +
+            " SELECT m.subject_id, m.property, m.object_id, m.source_id, m.start_time," +
+                    " :endTime, :endTime, :txId, :deleteOp" +
             " FROM membership m" +
             " WHERE m.source_id = :sourceId" +
                 " AND m.end_time = :noEndTime" +
@@ -176,8 +205,8 @@ public class MembershipIndexManager {
     // Add "delete" entries for all existing membership from the given source, if not already deleted
     private static final String END_EXISTING_FOR_SOURCE =
             "INSERT INTO membership_tx_operations" +
-            " (subject_id, property, object_id, source_id, start_time, end_time, tx_id, operation)" +
-            " SELECT subject_id, property, object_id, source_id, start_time, :endTime, :txId, :deleteOp" +
+            " (subject_id, property, object_id, source_id, start_time, end_time, last_updated, tx_id, operation)" +
+            " SELECT subject_id, property, object_id, source_id, start_time, :endTime, :endTime, :txId, :deleteOp" +
             " FROM membership m" +
             " WHERE source_id = :sourceId" +
                 " AND end_time = :noEndTime" +
@@ -192,9 +221,10 @@ public class MembershipIndexManager {
                     ")";
 
     private static final String DELETE_EXISTING_FOR_SOURCE_AFTER =
-            "INSERT INTO membership_tx_operations" +
-            " (subject_id, property, object_id, source_id, start_time, end_time, tx_id, operation, force_flag)" +
-            " SELECT subject_id, property, object_id, source_id, start_time, end_time, :txId, :deleteOp, :forceFlag" +
+            "INSERT INTO membership_tx_operations(subject_id, property, object_id, source_id," +
+                    " start_time, end_time, last_updated, tx_id, operation, force_flag)" +
+            " SELECT subject_id, property, object_id, source_id, start_time, end_time," +
+                    " last_updated, :txId, :deleteOp, :forceFlag" +
             " FROM membership m" +
             " WHERE m.source_id = :sourceId" +
                 " AND (m.start_time >= :startTime" +
@@ -238,7 +268,17 @@ public class MembershipIndexManager {
                     " AND m.property = mto.property" +
                     " AND m.object_id = mto.object_id" +
                     " AND mto.operation = :deleteOp" +
-                " )" +
+                " )," +
+                " last_updated = (" +
+                    " SELECT mto.end_time" +
+                    " FROM membership_tx_operations mto" +
+                    " WHERE mto.tx_id = :txId" +
+                        " AND m.source_id = mto.source_id" +
+                        " AND m.subject_id = mto.subject_id" +
+                        " AND m.property = mto.property" +
+                        " AND m.object_id = mto.object_id" +
+                        " AND mto.operation = :deleteOp" +
+                    " )" +
             " WHERE EXISTS (" +
                 "SELECT TRUE" +
                 " FROM membership_tx_operations mto" +
@@ -252,7 +292,7 @@ public class MembershipIndexManager {
 
     private static final String COMMIT_ENDS_POSTGRES =
             "UPDATE membership" +
-            " SET end_time = mto.end_time" +
+            " SET end_time = mto.end_time, last_updated = mto.end_time" +
             " FROM membership_tx_operations mto" +
             " WHERE mto.tx_id = :txId" +
                 " AND mto.operation = :deleteOp" +
@@ -269,7 +309,7 @@ public class MembershipIndexManager {
                 " AND m.subject_id = mto.subject_id" +
                 " AND m.property = mto.property" +
                 " AND m.object_id = mto.object_id" +
-            " SET m.end_time = mto.end_time" +
+            " SET m.end_time = mto.end_time, m.last_updated = mto.end_time" +
             " WHERE mto.tx_id = :txId" +
                 " AND mto.operation = :deleteOp";
 
@@ -283,8 +323,8 @@ public class MembershipIndexManager {
     // Transfer all "add" operations from tx to committed membership, unless the entry already exists
     private static final String COMMIT_ADDS =
             "INSERT INTO membership" +
-            " (subject_id, property, object_id, source_id, start_time, end_time)" +
-            " SELECT subject_id, property, object_id, source_id, start_time, end_time" +
+            " (subject_id, property, object_id, source_id, start_time, end_time, last_updated)" +
+            " SELECT subject_id, property, object_id, source_id, start_time, end_time, last_updated" +
             " FROM membership_tx_operations mto" +
             " WHERE mto.tx_id = :txId" +
                 " AND mto.operation = :addOp" +
@@ -479,15 +519,25 @@ public class MembershipIndexManager {
      */
     public void addMembership(final String txId, final FedoraId sourceId, final Triple membership,
             final Instant startTime, final Instant endTime) {
-        final var endTimestamp = endTime == null ? NO_END_TIMESTAMP : formatInstant(endTime);
+        final Timestamp endTimestamp;
+        final Timestamp lastUpdated;
+        final Timestamp startTimestamp = formatInstant(startTime);
+        if (endTime == null) {
+            endTimestamp = NO_END_TIMESTAMP;
+            lastUpdated = startTimestamp;
+        } else {
+            endTimestamp = formatInstant(endTime);
+            lastUpdated = endTimestamp;
+        }
         // Add the new membership operation
         final Map<String, Object> parameterSource = Map.of(
                 SUBJECT_ID_PARAM, membership.getSubject().getURI(),
                 PROPERTY_PARAM, membership.getPredicate().getURI(),
                 TARGET_ID_PARAM, membership.getObject().getURI(),
                 SOURCE_ID_PARAM, sourceId.getFullId(),
-                START_TIME_PARAM, formatInstant(startTime),
+                START_TIME_PARAM, startTimestamp,
                 END_TIME_PARAM, endTimestamp,
+                LAST_UPDATED_PARAM, lastUpdated,
                 TX_ID_PARAM, txId,
                 OPERATION_PARAM, ADD_OPERATION);
 
@@ -523,6 +573,22 @@ public class MembershipIndexManager {
         }
 
         return StreamSupport.stream(new MembershipIterator(query, parameterSource, membershipMapper), false);
+    }
+
+    public Instant getLastUpdated(final String txId, final FedoraId subjectId) {
+        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+        parameterSource.addValue(SUBJECT_ID_PARAM, subjectId.getFullId());
+        parameterSource.addValue(NO_END_TIME_PARAM, NO_END_TIMESTAMP);
+        final String lastUpdatedQuery;
+        if (txId == null) {
+            lastUpdatedQuery = SELECT_LAST_UPDATED;
+        } else {
+            lastUpdatedQuery = SELECT_LAST_UPDATED_IN_TX;
+            parameterSource.addValue(TX_ID_PARAM, txId);
+            parameterSource.addValue(DELETE_OP_PARAM, DELETE_OPERATION);
+        }
+
+        return jdbcTemplate.queryForObject(lastUpdatedQuery, parameterSource, Instant.class);
     }
 
     /**
@@ -578,13 +644,13 @@ public class MembershipIndexManager {
      * Log all membership entries, for debugging usage only
      */
     public void logMembership() {
-        log.info("source_id, subject_id, property, object_id, start_time, end_time");
+        log.info("source_id, subject_id, property, object_id, start_time, end_time, last_updated");
         jdbcTemplate.query(SELECT_ALL_MEMBERSHIP, new RowCallbackHandler() {
             @Override
             public void processRow(final ResultSet rs) throws SQLException {
-                log.info("{}, {}, {}, {}, {}, {}", rs.getString("source_id"), rs.getString("subject_id"),
+                log.info("{}, {}, {}, {}, {}, {}, {}", rs.getString("source_id"), rs.getString("subject_id"),
                         rs.getString("property"), rs.getString("object_id"), rs.getTimestamp("start_time"),
-                        rs.getTimestamp("end_time"));
+                        rs.getTimestamp("end_time"), rs.getTimestamp("last_updated"));
             }
         });
     }
@@ -593,14 +659,16 @@ public class MembershipIndexManager {
      * Log all membership operations, for debugging usage only
      */
     public void logOperations() {
-        log.info("source_id, subject_id, property, object_id, start_time, end_time, tx_id, operation, force_flag");
+        log.info("source_id, subject_id, property, object_id, start_time, end_time,"
+                + " last_updated, tx_id, operation, force_flag");
         jdbcTemplate.query(SELECT_ALL_OPERATIONS, new RowCallbackHandler() {
             @Override
             public void processRow(final ResultSet rs) throws SQLException {
-                log.info("{}, {}, {}, {}, {}, {}, {}, {}, {}",
+                log.info("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}",
                         rs.getString("source_id"), rs.getString("subject_id"), rs.getString("property"),
                         rs.getString("object_id"), rs.getTimestamp("start_time"), rs.getTimestamp("end_time"),
-                        rs.getString("tx_id"), rs.getString("operation"), rs.getString("force_flag"));
+                        rs.getTimestamp("last_updated"), rs.getString("tx_id"), rs.getString("operation"),
+                        rs.getString("force_flag"));
             }
         });
     }
