@@ -147,8 +147,17 @@ public class MembershipIndexManager {
             " FROM membership" +
             " WHERE subject_id = :subjectId";
 
+    // For mementos, use the start_time instead of last_updated as the
+    // end_time reflects when the next version starts
+    private static final String SELECT_LAST_UPDATED_MEMENTO =
+            "SELECT max(start_time)" +
+            " FROM membership" +
+            " WHERE subject_id = :subjectId" +
+                " AND start_time <= :mementoTime" +
+                " AND end_time > :mementoTime";
+
     private static final String SELECT_LAST_UPDATED_IN_TX =
-            "SELECT max(updated) as last_updated" +
+            "SELECT max(combined.updated) as last_updated" +
             " FROM (" +
                 " SELECT max(last_updated) as updated" +
                 " FROM membership m" +
@@ -166,7 +175,7 @@ public class MembershipIndexManager {
                 " FROM membership_tx_operations" +
                 " WHERE subject_id = :subjectId" +
                     " AND tx_id = :txId" +
-            ")";
+            ") combined";
 
     private static final String INSERT_MEMBERSHIP_IN_TX =
             "INSERT INTO membership_tx_operations" +
@@ -305,7 +314,6 @@ public class MembershipIndexManager {
             "UPDATE membership m" +
             " INNER JOIN membership_tx_operations mto ON" +
                 " m.source_id = mto.source_id" +
-                " AND m.subject_id = mto.subject_id" +
                 " AND m.subject_id = mto.subject_id" +
                 " AND m.property = mto.property" +
                 " AND m.object_id = mto.object_id" +
@@ -577,13 +585,19 @@ public class MembershipIndexManager {
 
     public Instant getLastUpdated(final String txId, final FedoraId subjectId) {
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-        parameterSource.addValue(SUBJECT_ID_PARAM, subjectId.getFullId());
+
         parameterSource.addValue(NO_END_TIME_PARAM, NO_END_TIMESTAMP);
         final String lastUpdatedQuery;
-        if (txId == null) {
+        if (subjectId.isMemento()) {
+            lastUpdatedQuery = SELECT_LAST_UPDATED_MEMENTO;
+            parameterSource.addValue(SUBJECT_ID_PARAM, subjectId.getBaseId());
+            parameterSource.addValue(MEMENTO_TIME_PARAM, formatInstant(subjectId.getMementoInstant()));
+        } else if (txId == null) {
             lastUpdatedQuery = SELECT_LAST_UPDATED;
+            parameterSource.addValue(SUBJECT_ID_PARAM, subjectId.getFullId());
         } else {
             lastUpdatedQuery = SELECT_LAST_UPDATED_IN_TX;
+            parameterSource.addValue(SUBJECT_ID_PARAM, subjectId.getFullId());
             parameterSource.addValue(TX_ID_PARAM, txId);
             parameterSource.addValue(DELETE_OP_PARAM, DELETE_OPERATION);
         }
