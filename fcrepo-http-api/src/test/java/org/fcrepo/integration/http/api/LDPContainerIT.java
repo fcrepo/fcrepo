@@ -17,10 +17,12 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -56,6 +58,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -284,6 +287,51 @@ public class LDPContainerIT extends AbstractResourceIT {
                 " WHERE { <> ldp:hasMemberRelation ?memRel}"));
         assertEquals("Patch with sparql update did not allow non SMT relation in indirect container!",
                 NO_CONTENT.getStatusCode(), getStatus(patch));
+    }
+
+    @Test
+    @Ignore("Needs updated eTags - FCREPO-3541")
+    public void testETagOnDeletedLdpIndirectContainerChild() throws Exception {
+        final String id = getRandomUniqueId();
+        final String members = id + "/members";
+        final String child = members + "/child";
+
+        createObjectAndClose(id);
+
+        // Create the IndirectContainer
+        final HttpPut createContainer = new HttpPut(serverAddress + members);
+        createContainer.addHeader(CONTENT_TYPE, "text/turtle");
+        createContainer.addHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
+        final String membersRDF = "<> <http://www.w3.org/ns/ldp#hasMemberRelation> <info:fedora/test/hasTitle> ; "
+            + "<http://www.w3.org/ns/ldp#insertedContentRelation> <http://www.w3.org/2004/02/skos/core#prefLabel>; "
+            + "<http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + id + "> . ";
+        createContainer.setEntity(new StringEntity(membersRDF));
+        assertEquals("Membership container not created!", CREATED.getStatusCode(), getStatus(createContainer));
+
+        // Create a child with the appropriate property
+        final HttpPut createChild = new HttpPut(serverAddress + child);
+        createChild.addHeader(CONTENT_TYPE, "text/turtle");
+        final String childRDF = "<> <http://www.w3.org/2004/02/skos/core#prefLabel> \"A title\".";
+        createChild.setEntity(new StringEntity(childRDF));
+        assertEquals("Child container not created!", CREATED.getStatusCode(), getStatus(createChild));
+
+        final HttpGet get = new HttpGet(serverAddress + id);
+        final String etag1;
+        try (final CloseableHttpResponse response = execute(get)) {
+            etag1 = response.getFirstHeader("ETag").getValue();
+            IOUtils.toString(response.getEntity().getContent(), UTF_8);
+        }
+
+        assertEquals("Child resource not deleted!", NO_CONTENT.getStatusCode(),
+                getStatus(new HttpDelete(serverAddress + child)));
+
+        final String etag2;
+        try (final CloseableHttpResponse response = execute(get)) {
+            etag2 = response.getFirstHeader("ETag").getValue();
+            IOUtils.toString(response.getEntity().getContent(), UTF_8);
+        }
+
+        assertNotEquals("ETag didn't change!", etag1, etag2);
     }
 
     private void createIndirectContainer(final String indirectId, final String membershipURI) throws Exception {
@@ -897,6 +945,43 @@ public class LDPContainerIT extends AbstractResourceIT {
         putPropertiesWithEtag(memberUri, deweakify(committedMemberEtag), Status.NO_CONTENT);
 
         assertNotEquals("Etag must update after modification", committedMemberEtag, getEtag(membershipRescURI));
+    }
+
+    @Test
+    public void testETagOnDeletedLdpDirectContainerChild() throws Exception {
+        final String membershipRescId = getRandomUniqueId();
+        final String members = membershipRescId + "/members";
+        final String child = members + "/child";
+
+        createObjectAndClose(membershipRescId);
+
+        final String etag0 = getEtag(serverAddress + membershipRescId);
+
+        // Create the DirectContainer
+        final HttpPut createContainer = new HttpPut(serverAddress + members);
+        createContainer.addHeader(CONTENT_TYPE, "text/turtle");
+        createContainer.addHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
+        final String membersRDF = "<> <http://www.w3.org/ns/ldp#hasMemberRelation> <http://pcdm.org/models#hasMember>;"
+            + " <http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + membershipRescId + "> . ";
+        createContainer.setEntity(new StringEntity(membersRDF));
+        assertEquals("Membership container not created!", CREATED.getStatusCode(), getStatus(createContainer));
+
+        // Create the child resource
+        createObjectAndClose(child);
+
+        final String etag1 = getEtag(serverAddress + membershipRescId);
+        assertNotEquals("Adding child must change etag of membership resc", etag0, etag1);
+
+        // Wait a second so that the creation and deletion of the child are not simultaneous
+        TimeUnit.SECONDS.sleep(1);
+
+        // Delete the child resource
+        assertEquals("Child resource not deleted!", NO_CONTENT.getStatusCode(),
+                getStatus(new HttpDelete(serverAddress + child)));
+
+        final String etag2 = getEtag(serverAddress + membershipRescId);
+
+        assertNotEquals("ETag didn't change!", etag1, etag2);
     }
 
     private void putPropertiesWithEtag(final String rescUri, final String etag, final Status status)

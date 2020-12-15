@@ -104,4 +104,5 @@ public class ResourceTripleServiceImpl implements ResourceTripleService {
 
         return streams.stream().reduce(empty(), Stream::concat);
     }
+
 }
