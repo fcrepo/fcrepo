@@ -99,7 +99,14 @@ public interface PersistentStorageSession {
             throws PersistentStorageException;
 
     /**
-     * Commits any changes in the current sesssion to persistent storage.
+     * Does anything that's necessary to prepare the session to be committed, for example committing database
+     * changes. This method MUST be called before commit(). If prepare() fails, then the session should be rolled back.
+     * @throws PersistentStorageException if an error is encountered
+     */
+    void prepare() throws PersistentStorageException;
+
+    /**
+     * Commits any changes in the current session to persistent storage.
      * @throws PersistentStorageException Error during commit.
      */
     void commit() throws PersistentStorageException;

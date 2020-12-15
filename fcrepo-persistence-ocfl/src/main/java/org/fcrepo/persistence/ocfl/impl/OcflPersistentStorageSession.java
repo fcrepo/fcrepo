@@ -91,8 +91,10 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
 
     private enum State {
         COMMIT_NOT_STARTED(true),
-        COMMIT_STARTED(false),
+        PREPARE_STARTED(false),
+        PREPARED(true),
         PREPARE_FAILED(true),
+        COMMIT_STARTED(false),
         COMMITTED(true),
         COMMIT_FAILED(true),
         ROLLING_BACK(false),
@@ -186,10 +188,18 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
 
     private void ensureCommitNotStarted() throws PersistentSessionClosedException {
         if (!state.equals(State.COMMIT_NOT_STARTED)) {
-            throw new PersistentSessionClosedException("The session cannot be committed in the  " + state + " state");
+            throw new PersistentSessionClosedException(
+                    String.format("Storage session %s is already closed", sessionId));
         }
     }
 
+    private void ensurePrepared() throws PersistentSessionClosedException {
+        if (!state.equals(State.PREPARED)) {
+            throw new PersistentStorageException(
+                    String.format("Storage session %s cannot be committed because it is not in the correct state: %s",
+                            sessionId, state));
+        }
+    }
 
     OcflObjectSession findOrCreateSession(final String ocflId) {
         return this.sessionMap.computeIfAbsent(ocflId, key -> {
@@ -262,15 +272,15 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
     }
 
     @Override
-    public synchronized void commit() throws PersistentStorageException {
+    public synchronized void prepare() {
         ensureCommitNotStarted();
         if (isReadOnly()) {
             // No changes to commit.
             return;
         }
 
-        this.state = State.COMMIT_STARTED;
-        LOGGER.trace("Starting storage session {} commit", sessionId);
+        this.state = State.PREPARE_STARTED;
+        LOGGER.debug("Starting storage session {} prepare for commit", sessionId);
 
         synchronized (this.phaser) {
             if (this.phaser.getRegisteredParties() > 0) {
@@ -280,9 +290,29 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
 
         LOGGER.trace("All persisters are complete in session {}", sessionId);
 
+        try {
+            fedoraOcflIndex.commit(sessionId);
+            state = State.PREPARED;
+        } catch (RuntimeException e) {
+            state = State.PREPARE_FAILED;
+            throw new PersistentStorageException(String.format("Failed to prepare storage session <%s> for commit",
+                    sessionId), e);
+        }
+    }
+
+    @Override
+    public synchronized void commit() throws PersistentStorageException {
+        ensurePrepared();
+        if (isReadOnly()) {
+            // No changes to commit.
+            return;
+        }
+
+        this.state = State.COMMIT_STARTED;
+        LOGGER.debug("Starting storage session {} commit", sessionId);
+
         // order map for testing
         final var sessions = new TreeMap<>(sessionMap);
-
         commitObjectSessions(sessions);
 
         LOGGER.debug("Committed storage session {}", sessionId);
@@ -290,8 +320,6 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
 
     private void commitObjectSessions(final Map<String, OcflObjectSession> sessions)
             throws PersistentStorageException {
-        LOGGER.trace("Committing session {}", sessionId);
-
         this.sessionsToRollback = new HashMap<>(sessionMap.size());
 
         for (final var entry : sessions.entrySet()) {
@@ -300,7 +328,6 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
             try {
                 session.commit();
                 sessionsToRollback.put(id, session);
-                fedoraOcflIndex.commit(sessionId);
             } catch (final Exception e) {
                 this.state = State.COMMIT_FAILED;
                 throw new PersistentStorageException(String.format("Failed to commit object <%s> in session <%s>",

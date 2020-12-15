@@ -248,6 +248,7 @@ public class OcflPersistentStorageSessionTest {
         final var originalModifiedDate = headers.getLastModifiedDate();
         assertNotNull("Headers must contain modified date", originalModifiedDate);
 
+        session.prepare();
         //commit to OCFL
         session.commit();
 
@@ -294,7 +295,7 @@ public class OcflPersistentStorageSessionTest {
 
         //perform the create rdf operation
         session.persist(rdfSourceOperation);
-
+        session.prepare();
         //commit to OCFL
         session.commit();
 
@@ -314,7 +315,7 @@ public class OcflPersistentStorageSessionTest {
 
         //perform the create rdf operation
         session.persist(rdfSourceOperation);
-
+        session.prepare();
         //commit to OCFL
         session.commit();
 
@@ -334,7 +335,7 @@ public class OcflPersistentStorageSessionTest {
 
         //perform the create rdf operation
         session.persist(rdfSourceOperation);
-
+        session.prepare();
         //commit to OCFL
         session.commit();
 
@@ -354,7 +355,7 @@ public class OcflPersistentStorageSessionTest {
 
         //perform the create rdf operation
         session.persist(rdfSourceOperation);
-
+        session.prepare();
         //commit to OCFL
         session.commit();
 
@@ -362,6 +363,39 @@ public class OcflPersistentStorageSessionTest {
         try {
             session.commit();
             fail("second session.commit(...) invocation should have failed.");
+        } catch (final PersistentStorageException ex) {
+            //expected failure
+        }
+    }
+
+    @Test
+    public void commitFailsIfNotPrepared() throws Exception {
+        mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+        mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
+
+        //perform the create rdf operation
+        session.persist(rdfSourceOperation);
+
+        try {
+            session.commit();
+            fail("commit should have failed because prepare() was not called");
+        } catch (final PersistentStorageException ex) {
+            //expected failure
+        }
+    }
+
+    @Test
+    public void prepareFailsIfAlreadyPrepared() throws Exception {
+        mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+        mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
+
+        //perform the create rdf operation
+        session.persist(rdfSourceOperation);
+        session.prepare();
+
+        try {
+            session.prepare();
+            fail("prepare should have failed because prepare() was already called");
         } catch (final PersistentStorageException ex) {
             //expected failure
         }
@@ -420,6 +454,7 @@ public class OcflPersistentStorageSessionTest {
 
         //get triples should now fail because the session is effectively closed.
         try {
+            session1.prepare();
             session1.commit();
             fail("session1.commit(...) invocation should fail.");
         } catch (final PersistentStorageException ex) {
@@ -453,6 +488,7 @@ public class OcflPersistentStorageSessionTest {
         final CountDownLatch latch = new CountDownLatch(1);
         new Thread(() -> {
             try {
+                session1.prepare();
                 session1.commit();
             } catch (final PersistentStorageException e) {
                 fail("The commit() should not fail.");
@@ -486,6 +522,7 @@ public class OcflPersistentStorageSessionTest {
         //persist the operation
         try {
             session1.persist(rdfSourceOperation);
+            session1.prepare();
             session1.commit();
         } catch (final PersistentStorageException e) {
             fail("Operation should not fail.");
@@ -527,6 +564,7 @@ public class OcflPersistentStorageSessionTest {
         }
 
         try {
+            session1.prepare();
             session1.commit();
             fail("Operation should fail.");
         } catch (final PersistentStorageException e) {
@@ -558,7 +596,7 @@ public class OcflPersistentStorageSessionTest {
 
         //perform the create rdf operation
         session.persist(rdfSourceOperation);
-
+        session.prepare();
         //commit to new version
         session.commit();
 
@@ -594,6 +632,7 @@ public class OcflPersistentStorageSessionTest {
 
         mockResourceOperation(createArchivalGroupOperation, RESOURCE_ID);
         session.persist(createArchivalGroupOperation);
+        session.prepare();
         session.commit();
 
         final var childId = RESOURCE_ID.resolve("child");
@@ -610,6 +649,7 @@ public class OcflPersistentStorageSessionTest {
                 .thenReturn(RESOURCE_ID);
 
         session2.persist(rdfSourceOperation);
+        session2.prepare();
         session2.commit();
 
         final var session3 = createSession(index, objectSessionFactory);
@@ -631,7 +671,7 @@ public class OcflPersistentStorageSessionTest {
 
         // perform the create non-rdf source operation
         session.persist(binOperation);
-
+        session.prepare();
         // commit to OCFL
         session.commit();
 
@@ -651,7 +691,7 @@ public class OcflPersistentStorageSessionTest {
 
         // perform the create non-rdf source operation
         session.persist(binOperation);
-
+        session.prepare();
         // commit to OCFL
         session.commit();
 
@@ -672,6 +712,7 @@ public class OcflPersistentStorageSessionTest {
         final var binOperation = mockNonRdfSourceOperation(BINARY_CONTENT, USER_PRINCIPAL, RESOURCE_ID);
         // perform the create non-rdf source operation
         session.persist(binOperation);
+        session.prepare();
         // commit to OCFL
         session.commit();
 
@@ -712,6 +753,7 @@ public class OcflPersistentStorageSessionTest {
         final DefaultRdfStream userStream = new DefaultRdfStream(resourceUri, userTriples);
         mockResourceOperation(rdfSourceOperation, userStream, USER_PRINCIPAL, RESOURCE_ID);
         session.persist(rdfSourceOperation);
+        session.prepare();
         session.commit();
 
         // read-only read resource

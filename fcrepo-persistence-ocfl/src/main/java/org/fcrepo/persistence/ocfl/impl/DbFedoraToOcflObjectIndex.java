@@ -111,7 +111,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
             " (" + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ", " +
             TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + ")" +
             " VALUES (:fedoraId, :fedoraRootId, :ocflId, :transactionId, :operation) ON DUPLICATE KEY UPDATE " +
-            FEDORA_ROOT_ID_COLUMN + " = VALUES(" + FEDORA_ID_COLUMN + "), " + OCFL_ID_COLUMN + " = VALUES(" +
+            FEDORA_ROOT_ID_COLUMN + " = VALUES(" + FEDORA_ROOT_ID_COLUMN + "), " + OCFL_ID_COLUMN + " = VALUES(" +
             OCFL_ID_COLUMN + "), " + OPERATION_COLUMN + " = VALUES(" + OPERATION_COLUMN + ")";
 
     private static final String UPSERT_MAPPING_TX_H2 = "MERGE INTO " + TRANSACTION_OPERATIONS_TABLE +
@@ -143,7 +143,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
             FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + " FROM " +
             TRANSACTION_OPERATIONS_TABLE + " WHERE " + OPERATION_COLUMN + " = 'add' AND " + TRANSACTION_ID_COLUMN +
             " = :transactionId ON DUPLICATE KEY UPDATE " +
-            FEDORA_ROOT_ID_COLUMN + " = VALUES(" + FEDORA_ID_COLUMN + "), " + OCFL_ID_COLUMN + " = VALUES(" +
+            FEDORA_ROOT_ID_COLUMN + " = VALUES(" + FEDORA_ROOT_ID_COLUMN + "), " + OCFL_ID_COLUMN + " = VALUES(" +
             OCFL_ID_COLUMN + ")";
 
     private static final String COMMIT_ADD_MAPPING_H2 = "MERGE INTO " + MAPPING_TABLE +
@@ -293,6 +293,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     @Transactional
     @Override
     public void commit(@Nonnull final String sessionId) {
+        LOGGER.debug("Committing FedoraToOcfl index changes from transaction {}", sessionId);
         final Map<String, String> map = Map.of("transactionId", sessionId);
         try {
             jdbcTemplate.update(COMMIT_DELETE_RECORDS, map);

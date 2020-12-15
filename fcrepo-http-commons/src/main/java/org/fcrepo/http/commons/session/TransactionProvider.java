@@ -74,14 +74,14 @@ public class TransactionProvider implements Factory<Transaction> {
         if (!transaction.isShortLived()) {
             transaction.refresh();
         }
-        LOGGER.trace("Providing new transaction {}", transaction);
+        LOGGER.trace("Providing new transaction {}", transaction.getId());
         return transaction;
     }
 
     @Override
     public void dispose(final Transaction transaction) {
         if (transaction.isShortLived()) {
-            LOGGER.trace("Disposing transaction {}", transaction);
+            LOGGER.trace("Disposing transaction {}", transaction.getId());
             transaction.expire();
         }
     }

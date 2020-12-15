@@ -18,8 +18,10 @@
 
 package org.fcrepo.persistence.ocfl.impl;
 
-import io.micrometer.core.instrument.Metrics;
-import io.micrometer.core.instrument.Timer;
+import java.io.InputStream;
+import java.time.Instant;
+import java.util.List;
+
 import org.fcrepo.common.metrics.MetricsHelper;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -28,9 +30,8 @@ import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
-import java.io.InputStream;
-import java.time.Instant;
-import java.util.List;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Timer;
 
 /**
  * PersistentStorageSession wrapper for collecting metrics
@@ -46,6 +47,7 @@ public class OcflPersistentStorageSessionMetrics implements PersistentStorageSes
     private static final Timer getTriplesTimer = Metrics.timer(METRIC_NAME, OPERATION, "getTriples");
     private static final Timer listVersionsTimer = Metrics.timer(METRIC_NAME, OPERATION, "listVersions");
     private static final Timer getContentTimer = Metrics.timer(METRIC_NAME, OPERATION, "getContent");
+    private static final Timer prepareTimer = Metrics.timer(METRIC_NAME, OPERATION, "prepare");
     private static final Timer commitTimer = Metrics.timer(METRIC_NAME, OPERATION, "commit");
     private static final Timer rollbackTimer = Metrics.timer(METRIC_NAME, OPERATION, "rollback");
 
@@ -98,17 +100,18 @@ public class OcflPersistentStorageSessionMetrics implements PersistentStorageSes
     }
 
     @Override
+    public void prepare() throws PersistentStorageException {
+        prepareTimer.record(delegate::prepare);
+    }
+
+    @Override
     public void commit() throws PersistentStorageException {
-        commitTimer.record(() -> {
-            delegate.commit();
-        });
+        commitTimer.record(delegate::commit);
     }
 
     @Override
     public void rollback() throws PersistentStorageException {
-        rollbackTimer.record(() -> {
-            delegate.rollback();
-        });
+        rollbackTimer.record(delegate::rollback);
     }
 
 }

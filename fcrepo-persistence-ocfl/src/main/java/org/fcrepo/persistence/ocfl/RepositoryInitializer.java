@@ -92,6 +92,7 @@ public class RepositoryInitializer {
                     final var versionOperation = this.versionResourceOperationFactory.createBuilder(root).build();
                     session.persist(versionOperation);
                 }
+                session.prepare();
                 session.commit();
 
                 LOGGER.info("Successfully created repository root ({}).", root);

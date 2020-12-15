@@ -17,38 +17,6 @@
  */
 package org.fcrepo.integration.http.api;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.HttpResponseException;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpHead;
-import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.util.EntityUtils;
-import org.fcrepo.common.lang.CheckedRunnable;
-import org.fcrepo.http.commons.test.util.CloseableDataset;
-import org.fcrepo.kernel.api.ContainmentIndex;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.storage.ocfl.CommitType;
-import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.springframework.test.context.TestExecutionListeners;
-
-import javax.ws.rs.core.Response.Status;
-import java.io.IOException;
-import java.time.format.DateTimeParseException;
-import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import static java.lang.Math.min;
 import static java.lang.Thread.sleep;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
@@ -81,6 +49,43 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.time.format.DateTimeParseException;
+import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.ws.rs.core.Response.Status;
+
+import org.fcrepo.common.lang.CheckedRunnable;
+import org.fcrepo.config.OcflPropsConfig;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.storage.ocfl.CommitType;
+import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.HttpResponseException;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.springframework.test.context.TestExecutionListeners;
+
 /**
  * <p>TransactionsIT class.</p>
  *
@@ -99,11 +104,13 @@ public class TransactionsIT extends AbstractResourceIT {
 
     private DefaultOcflObjectSessionFactory objectSessionFactory;
     private ContainmentIndex containmentIndex;
+    private OcflPropsConfig ocflConfig;
 
     @Before
     public void setup() {
         objectSessionFactory = getBean(DefaultOcflObjectSessionFactory.class);
         containmentIndex = getBean("containmentIndex", ContainmentIndex.class);
+        ocflConfig = getBean(OcflPropsConfig.class);
     }
 
     @After
@@ -291,7 +298,7 @@ public class TransactionsIT extends AbstractResourceIT {
     }
 
     @Test
-    public void rollbackFailsWhenAutoVersioningNotUsed() throws IOException {
+    public void rollbackSucceedsWhenAutoVersioningNotUsedAndFailureInDbCommit() throws IOException {
         objectSessionFactory.setDefaultCommitType(CommitType.UNVERSIONED);
 
         final String txLocation1 = createTransaction();
@@ -321,13 +328,107 @@ public class TransactionsIT extends AbstractResourceIT {
         assertEquals("Rolled back transaction should be gone",
                 GONE.getStatusCode(), getStatus(new HttpGet(txLocation2)));
 
-        // bin1 was not rolled back because it has an active mutable head
-        assertBinaryContent("test 1 -- updated!", bin1, null);
+        // bin1 was not changed
+        assertBinaryContent("test 1", bin1, null);
 
-        // bin2 was rolled back because it does not have a mutable head
+        // bin2 was rolled back
         assertEquals("Expected to not find our object after rollback",
                 NOT_FOUND.getStatusCode(), getStatus(new HttpGet(serverAddress + bin2)));
         assertObjectDoesNotExistOnDisk(FedoraId.create(bin2));
+    }
+
+    @Test
+    public void rollbackFailsWhenAutoVersioningNotUsedAndFailureInOcflCommit() throws IOException {
+        objectSessionFactory.setDefaultCommitType(CommitType.UNVERSIONED);
+
+        final String txLocation1 = createTransaction();
+
+        // need prefix so they're ordered deterministically
+        final var bin1 = "1" + UUID.randomUUID().toString();
+        final var bin2 = "2" + UUID.randomUUID().toString();
+        final var bin3 = "3" + UUID.randomUUID().toString();
+
+        putBinary(bin1, txLocation1, "test 1");
+        putBinary(bin3, txLocation1, "test 3");
+
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation1)));
+
+        assertBinaryContent("test 1", bin1, null);
+        assertBinaryContent("test 3", bin3, null);
+
+        final String txLocation2 = createTransaction();
+
+        putBinary(bin1, txLocation2, "test 1 -- updated!");
+        putBinary(bin2, txLocation2, "test 2 -- I'm new!");
+        putBinary(bin3, txLocation2, "test 3 -- updated!");
+
+        assertBinaryContent("test 1 -- updated!", bin1, txLocation2);
+        assertBinaryContent("test 2 -- I'm new!", bin2, txLocation2);
+
+        corruptStagedBinary(bin3);
+
+        // Commit transaction -- should fail
+        assertEquals(CONFLICT.getStatusCode(), getStatus(new HttpPut(txLocation2)));
+
+        assertEquals("Rolled back transaction should be gone",
+                GONE.getStatusCode(), getStatus(new HttpGet(txLocation2)));
+
+        // bin1 was not rolled back
+        assertBinaryContent("test 1 -- updated!", bin1, null);
+
+        // bin2 was rolled back
+        assertEquals("Expected to not find our object after rollback",
+                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(serverAddress + bin2)));
+        assertObjectDoesNotExistOnDisk(FedoraId.create(bin2));
+
+        // bin1 was not committed
+        assertBinaryContent("test 3", bin3, null);
+    }
+
+    @Test
+    public void rollbackSucceedsWhenAutoVersioningUsedAndFailureInOcflCommit() throws IOException {
+        final String txLocation1 = createTransaction();
+
+        // need prefix so they're ordered deterministically
+        final var bin1 = "1" + UUID.randomUUID().toString();
+        final var bin2 = "2" + UUID.randomUUID().toString();
+        final var bin3 = "3" + UUID.randomUUID().toString();
+
+        putBinary(bin1, txLocation1, "test 1");
+        putBinary(bin3, txLocation1, "test 3");
+
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation1)));
+
+        assertBinaryContent("test 1", bin1, null);
+        assertBinaryContent("test 3", bin3, null);
+
+        final String txLocation2 = createTransaction();
+
+        putBinary(bin1, txLocation2, "test 1 -- updated!");
+        putBinary(bin2, txLocation2, "test 2 -- I'm new!");
+        putBinary(bin3, txLocation2, "test 3 -- updated!");
+
+        assertBinaryContent("test 1 -- updated!", bin1, txLocation2);
+        assertBinaryContent("test 2 -- I'm new!", bin2, txLocation2);
+
+        corruptStagedBinary(bin3);
+
+        // Commit transaction -- should fail
+        assertEquals(CONFLICT.getStatusCode(), getStatus(new HttpPut(txLocation2)));
+
+        assertEquals("Rolled back transaction should be gone",
+                GONE.getStatusCode(), getStatus(new HttpGet(txLocation2)));
+
+        // bin1 was rolled back
+        assertBinaryContent("test 1", bin1, null);
+
+        // bin2 was rolled back
+        assertEquals("Expected to not find our object after rollback",
+                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(serverAddress + bin2)));
+        assertObjectDoesNotExistOnDisk(FedoraId.create(bin2));
+
+        // bin1 was not committed
+        assertBinaryContent("test 3", bin3, null);
     }
 
     @Test
@@ -948,6 +1049,22 @@ public class TransactionsIT extends AbstractResourceIT {
         final var txId = UUID.randomUUID().toString();
         containmentIndex.addContainedBy(txId, FedoraId.getRepositoryRootId(), FedoraId.create(resourceId));
         containmentIndex.commitTransaction(txId);
+    }
+
+    private void corruptStagedBinary(final String resourceId) {
+        final var lastPart = resourceId.contains("/") ?
+                StringUtils.substringAfterLast(resourceId, "/") : resourceId;
+        final var stagingRoot = ocflConfig.getFedoraOcflStaging();
+        try {
+            final var binary = Files.find(stagingRoot, 10, (file, attrs) -> {
+                return attrs.isRegularFile() &&
+                        file.getFileName().toString().equals(lastPart);
+            }).findFirst().get();
+
+            Files.writeString(binary, "corrupted!");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
 }

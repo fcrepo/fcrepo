@@ -109,7 +109,7 @@ public class NonRdfSourcesPersistenceIT {
                 .build();
 
         storageSession.persist(op);
-
+        storageSession.prepare();
         storageSession.commit();
 
         final var readSession = sessionManager.getReadOnlySession();
@@ -135,7 +135,7 @@ public class NonRdfSourcesPersistenceIT {
                 .build();
 
         storageSession.persist(op);
-
+        storageSession.prepare();
         storageSession.commit();
 
         final var readSession = sessionManager.getReadOnlySession();
@@ -215,7 +215,7 @@ public class NonRdfSourcesPersistenceIT {
                 .build();
 
         storageSession.persist(updateOp);
-
+        storageSession.prepare();
         storageSession.commit();
 
         final var readSession = sessionManager.getReadOnlySession();
@@ -242,6 +242,7 @@ public class NonRdfSourcesPersistenceIT {
             .build();
 
         storageSession.persist(op);
+        storageSession.prepare();
         storageSession.commit();
 
         final var updateOp = nonRdfSourceOpFactory.updateInternalBinaryBuilder(
@@ -283,7 +284,7 @@ public class NonRdfSourcesPersistenceIT {
                 .build();
 
         storageSession.persist(op);
-
+        storageSession.prepare();
         storageSession.commit();
 
         final var readSession = sessionManager.getReadOnlySession();
@@ -317,13 +318,14 @@ public class NonRdfSourcesPersistenceIT {
                 .build();
 
         storageSession.persist(op);
-
+        storageSession.prepare();
         storageSession.commit();
 
         final var deleteOp = deleteResourceOpFactory.deleteBuilder(rescId).build();
 
         final var deleteSession = startWriteSession();
         deleteSession.persist(deleteOp);
+        deleteSession.prepare();
         deleteSession.commit();
 
         final var readSession = sessionManager.getReadOnlySession();
@@ -360,6 +362,7 @@ public class NonRdfSourcesPersistenceIT {
         Files.write(stagedFile, "oops".getBytes(), StandardOpenOption.APPEND);
 
         try {
+            storageSession.prepare();
             storageSession.commit();
             fail("Expected commit to fail to due fixity failure");
         } catch (final PersistentStorageException e) {
