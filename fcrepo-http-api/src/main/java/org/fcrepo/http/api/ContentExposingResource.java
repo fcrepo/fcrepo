@@ -663,7 +663,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             date = resource.getLastModifiedDate();
         } else {
             // Use a weak ETag for the LDP-RS
-            final String txId = transaction == null ? null : transaction.getId();
+            final String txId = TransactionUtils.openTxId(transaction);
             etag = new EntityTag(etagService.getRdfResourceEtag(txId, resource, getLdpPreferTag(),
                     headers.getAcceptableMediaTypes()), true);
             date = resource.getLastModifiedDate();
@@ -725,7 +725,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             date = resource.getLastModifiedDate();
         } else {
             // Use a strong ETag for the LDP-RS when validating If-(None)-Match headers
-            final String txId = transaction == null ? null : transaction.getId();
+            final String txId = TransactionUtils.openTxId(transaction);
             etag = new EntityTag(etagService.getRdfResourceEtag(txId, resource, getLdpPreferTag(),
                     headers.getAcceptableMediaTypes()), false);
             date = resource.getLastModifiedDate();
