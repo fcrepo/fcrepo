@@ -17,28 +17,23 @@
  */
 package org.fcrepo.integration.http.api;
 
-import org.fcrepo.config.OcflPropsConfig;
+import org.apache.commons.io.FileUtils;
 import org.springframework.test.annotation.DirtiesContext.HierarchyMode;
 import org.springframework.test.context.TestContext;
 
+import java.nio.file.Path;
+
 /**
- * Isolate RebuildIT from the rest of the IT contexts.
+ * Isolate ReindexITs from the rest of the IT contexts as well as tests within ReindexIT.
  *
- * @author pwinckles
+ * @author dbernstein
  */
-public class RebuildTestExecutionListener extends BaseTestExecutionListener {
+public class ReindexExecutionListener extends BaseTestExecutionListener {
 
     @Override
-    public void beforeTestClass(final TestContext testContext) {
+    public void afterTestMethod(final TestContext testContext) throws Exception {
+        FileUtils.deleteDirectory(Path.of("target/fcrepo-home/data/ocfl-root").toFile());
         cleanDb(testContext);
-        System.setProperty(OcflPropsConfig.FCREPO_OCFL_ROOT, "target/test-classes/test-rebuild-ocfl/ocfl-root");
-        testContext.markApplicationContextDirty(HierarchyMode.EXHAUSTIVE);
-    }
-
-    @Override
-    public void afterTestClass(final TestContext testContext) {
-        cleanDb(testContext);
-        System.clearProperty(OcflPropsConfig.FCREPO_OCFL_ROOT);
         testContext.markApplicationContextDirty(HierarchyMode.EXHAUSTIVE);
     }
 }

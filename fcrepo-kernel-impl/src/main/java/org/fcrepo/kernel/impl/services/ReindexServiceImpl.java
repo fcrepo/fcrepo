@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.ReindexResourceOperationFactory;
 import org.fcrepo.kernel.api.services.ReindexService;
@@ -34,6 +35,9 @@ import javax.inject.Inject;
 public class ReindexServiceImpl extends AbstractService implements ReindexService {
 
     @Inject
+    private TransactionManager transactionManager;
+
+    @Inject
     private PersistentStorageSessionManager persistentStorageSessionManager;
 
     @Inject
@@ -41,8 +45,10 @@ public class ReindexServiceImpl extends AbstractService implements ReindexServic
 
     @Override
     public void reindexByFedoraId(final String txId, final String principal, final FedoraId fedoraId) {
-        final var operation = resourceOperationFactory.create(fedoraId).userPrincipal(principal).build();
+        final var tx = transactionManager.get(txId);
         final var psession = persistentStorageSessionManager.getSession(txId);
+        final var operation = resourceOperationFactory.create(fedoraId).userPrincipal(principal).build();
+        tx.lockResource(fedoraId);
         psession.persist(operation);
     }
 }

@@ -35,7 +35,7 @@ import static org.junit.Assert.assertEquals;
  * @since 12/01/20
  */
 @TestExecutionListeners(
-        listeners = {LinuxTestIsolationExecutionListener.class},
+        listeners = {ReindexExecutionListener.class},
         mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class FedoraReindexIT extends AbstractResourceIT {
 

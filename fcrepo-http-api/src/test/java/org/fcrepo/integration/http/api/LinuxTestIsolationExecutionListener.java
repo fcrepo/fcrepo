@@ -19,10 +19,8 @@ package org.fcrepo.integration.http.api;
 
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import org.apache.commons.lang3.SystemUtils;
-import org.fcrepo.http.commons.test.util.ContainerWrapper;
 import org.fcrepo.persistence.ocfl.RepositoryInitializer;
 import org.springframework.test.context.TestContext;
-import org.springframework.test.context.support.AbstractTestExecutionListener;
 
 /**
  * Listener that baselines the DB and OCFL repo between every test.
@@ -30,7 +28,7 @@ import org.springframework.test.context.support.AbstractTestExecutionListener;
  *
  * @author pwinckles
  */
-public class LinuxTestIsolationExecutionListener extends AbstractTestExecutionListener {
+public class LinuxTestIsolationExecutionListener extends BaseTestExecutionListener {
 
     @Override
     public void beforeTestMethod(final TestContext testContext) {
@@ -43,10 +41,5 @@ public class LinuxTestIsolationExecutionListener extends AbstractTestExecutionLi
         }
     }
 
-    private <T> T getBean(final TestContext testContext, final Class<T> clazz) {
-        final var containerWrapper = testContext.getApplicationContext()
-                .getBean(ContainerWrapper.class);
-        return containerWrapper.getSpringAppContext().getBean(clazz);
-    }
 
 }

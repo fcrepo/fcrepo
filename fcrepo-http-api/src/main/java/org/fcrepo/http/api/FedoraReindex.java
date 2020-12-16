@@ -85,7 +85,6 @@ public class FedoraReindex extends FedoraBaseResource {
             } else {
                 try {
                     final var baseId = id.asBaseId();
-                    transaction.lockResource(baseId);
                     this.reindexService.reindexByFedoraId(transaction().getId(), getUserPrincipal(), baseId);
                     transaction.commitIfShortLived();
                     final var message = format("successfully reindexed %s", id.getBaseId());
