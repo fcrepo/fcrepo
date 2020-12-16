@@ -18,27 +18,20 @@
 package org.fcrepo.integration.http.api;
 
 import org.fcrepo.http.commons.test.util.ContainerWrapper;
-import org.fcrepo.kernel.api.ContainmentIndex;
-import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.search.api.SearchIndex;
+import org.fcrepo.persistence.ocfl.impl.ReindexService;
 import org.springframework.test.context.TestContext;
 import org.springframework.test.context.support.AbstractTestExecutionListener;
 
 /**
- * A base class test execution listener class.
+ * A base class for hosting methods shared by other TestExecutionListeners.
  *
- * @author pwinkles
+ * @author pwinckles
  */
 public class BaseTestExecutionListener extends AbstractTestExecutionListener {
 
     protected void cleanDb(final TestContext testContext) {
-        final ContainmentIndex containmentIndex = getBean(testContext, "containmentIndex");
-        final FedoraToOcflObjectIndex ocflIndex = getBean(testContext, "ocflIndex");
-        final SearchIndex searchIndex = getBean(testContext, "searchIndex");
-
-        containmentIndex.reset();
-        ocflIndex.reset();
-        searchIndex.reset();
+        final ReindexService reindexService = getBean(testContext, ReindexService.class);
+        reindexService.reset();
     }
 
     protected <T> T getBean(final TestContext testContext, final String name) {

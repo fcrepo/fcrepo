@@ -65,7 +65,7 @@ import org.springframework.test.context.TestExecutionListeners;
  * @author 4/20/2018
  */
 @TestExecutionListeners(
-        listeners = { LinuxTestIsolationExecutionListener.class },
+        listeners = { TestIsolationExecutionListener.class },
         mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class FedoraAclIT extends AbstractResourceIT {
 

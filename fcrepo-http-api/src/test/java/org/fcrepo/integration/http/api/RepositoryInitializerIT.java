@@ -49,7 +49,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 @DirtiesContext(classMode = ClassMode.BEFORE_CLASS)
 @TestExecutionListeners(listeners = {
         DependencyInjectionTestExecutionListener.class,
-        LinuxTestIsolationExecutionListener.class,
+        TestIsolationExecutionListener.class,
         DirtyContextBeforeAndAfterClassTestExecutionListener.class
 }, mergeMode = MergeMode.MERGE_WITH_DEFAULTS)
 public class RepositoryInitializerIT extends AbstractResourceIT {

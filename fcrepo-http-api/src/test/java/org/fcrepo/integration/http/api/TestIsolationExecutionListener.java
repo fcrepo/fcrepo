@@ -18,7 +18,6 @@
 package org.fcrepo.integration.http.api;
 
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
-import org.apache.commons.lang3.SystemUtils;
 import org.fcrepo.persistence.ocfl.RepositoryInitializer;
 import org.springframework.test.context.TestContext;
 
@@ -28,18 +27,13 @@ import org.springframework.test.context.TestContext;
  *
  * @author pwinckles
  */
-public class LinuxTestIsolationExecutionListener extends BaseTestExecutionListener {
+public class TestIsolationExecutionListener extends BaseTestExecutionListener {
 
     @Override
-    public void beforeTestMethod(final TestContext testContext) {
-        if (!SystemUtils.IS_OS_WINDOWS) {
-            final var ocflRepo = getBean(testContext, MutableOcflRepository.class);
-            final var initializer = getBean(testContext, RepositoryInitializer.class);
-
-            ocflRepo.listObjectIds().forEach(ocflRepo::purgeObject);
-            initializer.initialize();
-        }
+    public void beforeTestMethod(final TestContext testContext) throws Exception {
+        final var ocflRepo = getBean(testContext, MutableOcflRepository.class);
+        ocflRepo.listObjectIds().forEach(ocflRepo::purgeObject);
+        final var initializer = getBean(testContext, RepositoryInitializer.class);
+        initializer.initialize();
     }
-
-
 }

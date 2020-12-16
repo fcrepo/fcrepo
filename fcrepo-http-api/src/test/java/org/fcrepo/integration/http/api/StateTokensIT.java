@@ -39,7 +39,7 @@ import org.springframework.test.context.TestExecutionListeners;
  * @author dbernstein
  */
 @TestExecutionListeners(
-        listeners = { LinuxTestIsolationExecutionListener.class },
+        listeners = { TestIsolationExecutionListener.class },
         mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class StateTokensIT extends AbstractResourceIT {
 
