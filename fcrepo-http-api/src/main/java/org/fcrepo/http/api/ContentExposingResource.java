@@ -97,6 +97,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 
+import org.fcrepo.http.api.services.EtagService;
 import org.fcrepo.http.api.services.HttpRdfService;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.domain.MultiPrefer;
@@ -213,6 +214,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected UpdatePropertiesService updatePropertiesService;
 
     @Inject
+    protected EtagService etagService;
+
+    @Inject
     protected HttpRdfService httpRdfService;
 
     @Inject
@@ -277,17 +281,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      */
     private RdfStream getResourceTriples(final int limit, final FedoraResource resource) {
 
-        final PreferTag returnPreference;
-
-        if (prefer != null && prefer.hasReturn()) {
-            returnPreference = prefer.getReturn();
-        } else if (prefer != null && prefer.hasHandling()) {
-            returnPreference = prefer.getHandling();
-        } else {
-            returnPreference = PreferTag.emptyTag();
-        }
-
-        final LdpPreferTag ldpPreferences = new LdpPreferTag(returnPreference);
+        final LdpPreferTag ldpPreferences = getLdpPreferTag();
 
         final List<Stream<Triple>> embedStreams = new ArrayList<>();
 
@@ -314,6 +308,20 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
 
         return rdfStream;
+    }
+
+    private LdpPreferTag getLdpPreferTag() {
+        final PreferTag returnPreference;
+
+        if (prefer != null && prefer.hasReturn()) {
+            returnPreference = prefer.getReturn();
+        } else if (prefer != null && prefer.hasHandling()) {
+            returnPreference = prefer.getHandling();
+        } else {
+            returnPreference = PreferTag.emptyTag();
+        }
+
+        return new LdpPreferTag(returnPreference);
     }
 
     /**
@@ -655,7 +663,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             date = resource.getLastModifiedDate();
         } else {
             // Use a weak ETag for the LDP-RS
-            etag = new EntityTag(resource.getEtagValue(), true);
+            final String txId = TransactionUtils.openTxId(transaction);
+            etag = new EntityTag(etagService.getRdfResourceEtag(txId, resource, getLdpPreferTag(),
+                    headers.getAcceptableMediaTypes()), true);
             date = resource.getLastModifiedDate();
         }
 
@@ -667,7 +677,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             //State Tokens, while not used for caching per se,  nevertheless belong
             //here since we can conveniently reuse the value of the etag for
             //our state token
-            servletResponse.addHeader("X-State-Token", etag.getValue());
+            servletResponse.addHeader("X-State-Token", resource.getStateToken());
         }
 
         if (date != null) {
@@ -715,7 +725,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             date = resource.getLastModifiedDate();
         } else {
             // Use a strong ETag for the LDP-RS when validating If-(None)-Match headers
-            etag = new EntityTag(resource.getEtagValue());
+            final String txId = TransactionUtils.openTxId(transaction);
+            etag = new EntityTag(etagService.getRdfResourceEtag(txId, resource, getLdpPreferTag(),
+                    headers.getAcceptableMediaTypes()), false);
             date = resource.getLastModifiedDate();
         }
 

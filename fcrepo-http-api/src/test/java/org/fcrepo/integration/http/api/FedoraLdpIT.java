@@ -152,6 +152,7 @@ import javax.ws.rs.core.Variant;
 
 import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.fcrepo.kernel.api.RdfLexicon;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
@@ -1601,14 +1602,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final var response = execute(postObjMethod())) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
             parentUri = getLocation(response);
-            createdEtag = response.getFirstHeader("ETag").getValue();
+            createdEtag = getEtag(response);
         }
 
         // Create one child and see the parent's ETag changes
         final String oneChildEtag;
         assertEquals(CREATED.getStatusCode(), getStatus(new HttpPost(parentUri)));
         try (final var response = execute(new HttpGet(parentUri))) {
-            oneChildEtag = response.getFirstHeader("ETag").getValue();
+            oneChildEtag = getEtag(response);
             assertEquals(OK.getStatusCode(), getStatus(response));
             assertNotEquals(createdEtag, oneChildEtag);
         }
@@ -1624,103 +1625,30 @@ public class FedoraLdpIT extends AbstractResourceIT {
             otherChild = getLocation(response);
         }
         // See the parent's ETag changes again.
-        try (final var response = execute(new HttpGet(parentUri))) {
-            assertEquals(OK.getStatusCode(), getStatus(response));
-            final var currentETag = response.getFirstHeader("ETag").getValue();
-            assertNotEquals(createdEtag, currentETag);
-            assertNotEquals(oneChildEtag, currentETag);
-        }
+        final var currentETag = getEtag(parentUri);
+        assertNotEquals(createdEtag, currentETag);
+        assertNotEquals(oneChildEtag, currentETag);
+
+        TimeUnit.SECONDS.sleep(1);
+
         // Delete the second child.
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(otherChild)));
         // See the parent's ETag change again.
-        try (final var response = execute(new HttpGet(parentUri))) {
-            assertEquals(OK.getStatusCode(), getStatus(response));
-            final var currentETag = response.getFirstHeader("ETag").getValue();
-            assertNotEquals(createdEtag, currentETag);
-            assertNotEquals(oneChildEtag, currentETag);
-        }
-    }
+        final var currentETag2 = getEtag(parentUri);
+        assertNotEquals(createdEtag, currentETag2);
+        assertNotEquals(oneChildEtag, currentETag2);
+        assertNotEquals(currentETag, currentETag2);
 
-    @Test
-@Ignore("Needs updated eTags - FCREPO-3541")
-    public void testETagOnDeletedLdpDirectContainerChild() throws Exception {
-        final String id = getRandomUniqueId();
-        final String members = id + "/members";
-        final String child = members + "/child";
-
-        createObjectAndClose(id);
-
-        // Create the DirectContainer
-        final HttpPut createContainer = new HttpPut(serverAddress + members);
-        createContainer.addHeader(CONTENT_TYPE, "text/turtle");
-        createContainer.addHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
-        final String membersRDF = "<> <http://www.w3.org/ns/ldp#hasMemberRelation> <http://pcdm.org/models#hasMember>; "
-            + "<http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + id + "> . ";
-        createContainer.setEntity(new StringEntity(membersRDF));
-        assertEquals("Membership container not created!", CREATED.getStatusCode(), getStatus(createContainer));
-
-        // Create the child resource
-        createObjectAndClose(child);
-
-        final HttpGet get = new HttpGet(serverAddress + id);
-        final String etag1;
-        try (final CloseableHttpResponse response = execute(get)) {
-            etag1 = response.getFirstHeader("ETag").getValue();
-        }
-
-        assertEquals("Child resource not deleted!", NO_CONTENT.getStatusCode(),
-                getStatus(new HttpDelete(serverAddress + child)));
-        final String etag2;
-        try (final CloseableHttpResponse response = execute(get)) {
-            etag2 = response.getFirstHeader("ETag").getValue();
-        }
-
-        assertNotEquals("ETag didn't change!", etag1, etag2);
-    }
-
-    @Test
-@Ignore("Needs updated eTags - FCREPO-3541")
-    public void testETagOnDeletedLdpIndirectContainerChild() throws Exception {
-        final String id = getRandomUniqueId();
-        final String members = id + "/members";
-        final String child = members + "/child";
-
-        createObjectAndClose(id);
-
-        // Create the IndirectContainer
-        final HttpPut createContainer = new HttpPut(serverAddress + members);
-        createContainer.addHeader(CONTENT_TYPE, "text/turtle");
-        createContainer.addHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
-        final String membersRDF = "<> <http://www.w3.org/ns/ldp#hasMemberRelation> <info:fedora/test/hasTitle> ; "
-            + "<http://www.w3.org/ns/ldp#insertedContentRelation> <http://www.w3.org/2004/02/skos/core#prefLabel>; "
-            + "<http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + id + "> . ";
-        createContainer.setEntity(new StringEntity(membersRDF));
-        assertEquals("Membership container not created!", CREATED.getStatusCode(), getStatus(createContainer));
-
-        // Create a child with the appropriate property
-        final HttpPut createChild = new HttpPut(serverAddress + child);
-        createChild.addHeader(CONTENT_TYPE, "text/turtle");
-        final String childRDF = "<> <http://www.w3.org/2004/02/skos/core#prefLabel> \"A title\".";
-        createChild.setEntity(new StringEntity(childRDF));
-        assertEquals("Child container not created!", CREATED.getStatusCode(), getStatus(createChild));
-
-        final HttpGet get = new HttpGet(serverAddress + id);
-        final String etag1;
-        try (final CloseableHttpResponse response = execute(get)) {
-            etag1 = response.getFirstHeader("ETag").getValue();
-            IOUtils.toString(response.getEntity().getContent(), UTF_8);
-        }
-
-        assertEquals("Child resource not deleted!", NO_CONTENT.getStatusCode(),
-                getStatus(new HttpDelete(serverAddress + child)));
-
-        final String etag2;
-        try (final CloseableHttpResponse response = execute(get)) {
-            etag2 = response.getFirstHeader("ETag").getValue();
-            IOUtils.toString(response.getEntity().getContent(), UTF_8);
-        }
-
-        assertNotEquals("ETag didn't change!", etag1, etag2);
+        // Request parent with containment omitted, etag should change
+        final var httpGetOmitContainment = new HttpGet(parentUri);
+        final String preferHeader2 = "return=representation; omit=\"" +
+                RdfLexicon.PREFER_CONTAINMENT.getURI() + "\"";
+        httpGetOmitContainment.setHeader("Prefer", preferHeader2);
+        final String omitEtag = getEtag(httpGetOmitContainment);
+        assertEquals("Etag should match the etag before adding a child", createdEtag, omitEtag);
+        assertNotEquals(oneChildEtag, omitEtag);
+        assertNotEquals(currentETag, omitEtag);
+        assertNotEquals(currentETag2, omitEtag);
     }
 
     @Test
@@ -2389,10 +2317,16 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String id = getRandomUniqueId();
         final Node resource = createURI(serverAddress + id);
         createObjectAndClose(id, BASIC_CONTAINER_LINK_HEADER);
+        final String initialEtag = getEtag(serverAddress + id);
         createObjectAndClose(id + "/a");
+        final String withChildEtag = getEtag(serverAddress + id);
+        assertNotEquals(initialEtag, withChildEtag);
         final HttpGet getObjMethod = getObjMethod(id);
         getObjMethod.addHeader("Prefer", "return=representation; "
                 + "omit=\"http://www.w3.org/ns/ldp#PreferContainment http://www.w3.org/ns/ldp#PreferMembership\"");
+        final String omitEtag = getEtag(getObjMethod);
+        assertEquals(initialEtag, omitEtag);
+        assertNotEquals(withChildEtag, omitEtag);
         try (final CloseableDataset dataset = getDataset(getObjMethod)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertTrue("Expected server managed", graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext());
@@ -2411,6 +2345,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testGetObjectOmitContainment() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
+        final String initialEtag = getEtag(serverAddress + id);
         final String location = serverAddress + id;
         final String updateString = "<> <" + MEMBERSHIP_RESOURCE.getURI() +
                 "> <" + location + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_MEMBER + "> .";
@@ -2420,9 +2355,15 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertTrue(getLinkHeaders(getObjMethod(id + "/a")).contains(DIRECT_CONTAINER_LINK_HEADER));
         createObject(id + "/a/1");
 
+        final String withMemberEtag = getEtag(serverAddress + id);
+        assertNotEquals(initialEtag, withMemberEtag);
+
         final HttpGet getObjMethod = getObjMethod(id);
         getObjMethod
                 .addHeader("Prefer", "return=representation; omit=\"http://www.w3.org/ns/ldp#PreferContainment\"");
+        final String omitEtag = getEtag(getObjMethod);
+        assertNotEquals("Should not match initial because of membership", initialEtag, omitEtag);
+        assertNotEquals(withMemberEtag, omitEtag);
         try (final CloseableDataset dataset = getDataset(getObjMethod)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             final Node resource = createURI(serverAddress + id);
@@ -2443,6 +2384,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testGetObjectOmitServerManaged() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
+
         final String location = serverAddress + id;
         final String updateString = "<> <" + MEMBERSHIP_RESOURCE.getURI() +
                 "> <" + location + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_MEMBER + "> .";
@@ -2452,9 +2394,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertTrue(getLinkHeaders(getObjMethod(id + "/a")).contains(DIRECT_CONTAINER_LINK_HEADER));
         createObject(id + "/a/1");
 
+        final String withMemberEtag = getEtag(serverAddress + id);
+
         final HttpGet getObjMethod = getObjMethod(id);
         getObjMethod.addHeader("Prefer",
                 "return=representation; omit=\"http://fedora.info/definitions/v4/repository#ServerManaged\"");
+        assertNotEquals("Etag should not match with SMTs excluded", withMemberEtag, getEtag(getObjMethod));
         try (final CloseableDataset dataset = getDataset(getObjMethod)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             final Node resource = createURI(serverAddress + id);
@@ -2491,10 +2436,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertTrue(getLinkHeaders(getObjMethod(id + "/a")).contains(DIRECT_CONTAINER_LINK_HEADER));
         createObject(id + "/a/1");
 
+        final String withMemberEtag = getEtag(serverAddress + id);
+
         final HttpGet getObjMethod = getObjMethod(id);
         getObjMethod.addHeader("Prefer",
                 "return=representation; omit=\"http://fedora.info/definitions/v4/repository#ServerManaged\"; " +
                 "include=\"http://www.w3.org/ns/ldp#PreferContainment\"");
+        assertNotEquals("Etag should not match with SMTs excluded", withMemberEtag, getEtag(getObjMethod));
         try (final CloseableDataset dataset = getDataset(getObjMethod)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             final Node resource = createURI(serverAddress + id);
@@ -2506,10 +2454,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testGetLDPRmOmitServerManaged() throws IOException {
         final String versionedResourceURI = createVersionedRDFResource();
         final String mementoResourceURI = getLocation(new HttpPost(versionedResourceURI + "/fcr:versions"));
+        final String mementoEtag = getEtag(mementoResourceURI);
 
         final HttpGet mementoGetMethod = new HttpGet(mementoResourceURI);
         mementoGetMethod.addHeader("Prefer",
                 "return=representation; omit=\"http://fedora.info/definitions/v4/repository#ServerManaged\"");
+        assertNotEquals(mementoEtag, getEtag(mementoGetMethod));
         try (final CloseableDataset dataset = getDataset(mementoGetMethod)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             final Node resource = createURI(versionedResourceURI);
@@ -2761,9 +2711,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 resourcea + "> <info:xyz#some-other-property> <" + resourceb + "> } WHERE {}"));
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(updateObjectGraphMethod));
 
-        final HttpGet getObjMethod = new HttpGet(resourceb);
+        final String withoutRefsEtag = getEtag(resourceb);
 
+        final HttpGet getObjMethod = new HttpGet(resourceb);
         getObjMethod.addHeader("Prefer", INBOUND_REFERENCE_PREFER_HEADER);
+
+        assertNotEquals(withoutRefsEtag, getEtag(getObjMethod));
+
         try (final CloseableDataset dataset = getDataset(getObjMethod)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertTrue(graph.contains(ANY,
@@ -2796,8 +2750,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
         setProperty(binaryUri.replace(serverAddress, "") + "/" + FCR_METADATA, referenceProp.getURI(),
                 URI.create(containerUri));
 
+        final String withoutRefsEtag = getEtag(containerUri);
+
         final HttpGet getContainer = new HttpGet(containerUri);
         getContainer.setHeader("Prefer", INBOUND_REFERENCE_PREFER_HEADER);
+
+        assertNotEquals(withoutRefsEtag, getEtag(getContainer));
         try (final CloseableDataset dataset = getDataset(getContainer)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertTrue(graph.contains(ANY, NodeFactory.createURI(binaryUri), referenceProp,
@@ -3810,8 +3768,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 "INSERT { <> <http://purl.org/dc/elements/1.1/title> 'this is a title' } WHERE {}"));
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(httpPatch));
 
+        final String withoutEmbedEtag = getEtag(serverAddress + id);
+
         final HttpGet httpGet = getObjMethod(id);
         httpGet.setHeader("Prefer", preferEmbed);
+        assertNotEquals(withoutEmbedEtag, getEtag(httpGet));
         try (final CloseableHttpResponse response = execute(httpGet)) {
             final Collection<String> preferenceApplied = getHeader(response, "Preference-Applied");
             assertTrue("Preference-Applied header doesn't match", preferenceApplied.contains(preferEmbed));

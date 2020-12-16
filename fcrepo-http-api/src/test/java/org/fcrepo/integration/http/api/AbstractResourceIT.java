@@ -57,6 +57,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import javax.inject.Inject;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response.Status;
 import javax.xml.bind.DatatypeConverter;
@@ -380,6 +381,39 @@ public abstract class AbstractResourceIT {
             EntityUtils.consume(response.getEntity());
             return response.getFirstHeader(CONTENT_TYPE).getValue();
         }
+    }
+
+    /**
+     * Get the etag of the given URI, as returned from a HEAD request
+     *
+     * @param uri uri of the resource
+     * @return etag
+     * @throws IOException
+     */
+    protected String getEtag(final String uri) throws IOException {
+        return getEtag(new HttpHead(uri));
+    }
+
+    /**
+     * Get the etag returned when executing the provided method
+     * @param method method to execute
+     * @return etag
+     * @throws IOException
+     */
+    protected String getEtag(final HttpUriRequest method) throws IOException {
+        try (final CloseableHttpResponse response = execute(method)) {
+            return getEtag(response);
+        }
+    }
+
+    /**
+     * Get the etag header value present in the provided response
+     * @param response response
+     * @return etag header value or null
+     */
+    protected String getEtag(final HttpResponse response) {
+        final var etag = response.getFirstHeader(HttpHeaders.ETAG);
+        return etag == null ? null : etag.getValue();
     }
 
     protected static Collection<String> getLinkHeaders(final HttpResponse response) {

@@ -24,6 +24,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
+
+import org.fcrepo.http.api.services.EtagService;
 import org.fcrepo.http.api.services.HttpRdfService;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.http.commons.domain.MultiPrefer;
@@ -140,6 +142,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -244,6 +247,9 @@ public class FedoraLdpTest {
     @Mock
     private ResourceTripleService resourceTripleService;
 
+    @Mock
+    private EtagService etagService;
+
     private final List<URI> typeList = new ArrayList<>();
 
     private static final Logger log = getLogger(FedoraLdpTest.class);
@@ -276,6 +282,7 @@ public class FedoraLdpTest {
         setField(testObj, "replacePropertiesService", replacePropertiesService);
         setField(testObj, "updatePropertiesService", updatePropertiesService);
         setField(testObj, "resourceHelper", resourceHelper);
+        setField(testObj, "etagService", etagService);
 
         when(rdfNamespaceRegistry.getNamespaces()).thenReturn(new HashMap<>());
 
@@ -320,6 +327,8 @@ public class FedoraLdpTest {
             return null;
         }).when(preferTag).addResponseHeaders(mockResponse);
 
+        when(etagService.getRdfResourceEtag(nullable(String.class), any(FedoraResource.class),
+                nullable(LdpTriplePreferences.class), any())).thenReturn("etagval");
     }
 
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) {

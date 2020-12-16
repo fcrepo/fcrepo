@@ -21,6 +21,7 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -41,6 +42,8 @@ import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -50,6 +53,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response.Status;
 
@@ -57,6 +61,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -280,6 +285,42 @@ public class LDPContainerIT extends AbstractResourceIT {
                 " WHERE { <> ldp:hasMemberRelation ?memRel}"));
         assertEquals("Patch with sparql update did not allow non SMT relation in indirect container!",
                 NO_CONTENT.getStatusCode(), getStatus(patch));
+    }
+
+    @Test
+    @Ignore("Needs updated eTags - FCREPO-3410")
+    public void testETagOnDeletedLdpIndirectContainerChild() throws Exception {
+        final String id = getRandomUniqueId();
+        final String members = id + "/members";
+        final String child = members + "/child";
+
+        createObjectAndClose(id);
+
+        // Create the IndirectContainer
+        final HttpPut createContainer = new HttpPut(serverAddress + members);
+        createContainer.addHeader(CONTENT_TYPE, "text/turtle");
+        createContainer.addHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
+        final String membersRDF = "<> <http://www.w3.org/ns/ldp#hasMemberRelation> <info:fedora/test/hasTitle> ; "
+            + "<http://www.w3.org/ns/ldp#insertedContentRelation> <http://www.w3.org/2004/02/skos/core#prefLabel>; "
+            + "<http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + id + "> . ";
+        createContainer.setEntity(new StringEntity(membersRDF));
+        assertEquals("Membership container not created!", CREATED.getStatusCode(), getStatus(createContainer));
+
+        // Create a child with the appropriate property
+        final HttpPut createChild = new HttpPut(serverAddress + child);
+        createChild.addHeader(CONTENT_TYPE, "text/turtle");
+        final String childRDF = "<> <http://www.w3.org/2004/02/skos/core#prefLabel> \"A title\".";
+        createChild.setEntity(new StringEntity(childRDF));
+        assertEquals("Child container not created!", CREATED.getStatusCode(), getStatus(createChild));
+
+        final String etag1 = getEtag(serverAddress + id);
+
+        assertEquals("Child resource not deleted!", NO_CONTENT.getStatusCode(),
+                getStatus(new HttpDelete(serverAddress + child)));
+
+        final String etag2 = getEtag(serverAddress + id);
+
+        assertNotEquals("ETag didn't change!", etag1, etag2);
     }
 
     private void createIndirectContainer(final String indirectId, final String membershipURI) throws Exception {
@@ -578,17 +619,25 @@ public class LDPContainerIT extends AbstractResourceIT {
 
         assertHasNoMembership(membershipRescId, PCDM_HAS_MEMBER_PROP);
 
+        final String initialEtag = getEtag(membershipRescURI);
+
         // First version will have no membership
         TimeUnit.MILLISECONDS.sleep(1500);
 
         final var member1Id = createBasicContainer(directId, "member1");
         final var member2Id = createBasicContainer(directId, "member2");
 
+        final String afterPropEtag1 = getEtag(membershipRescURI);
+        assertNotEquals("Etag must change after additions", initialEtag, afterPropEtag1);
+
         // Trigger an update of the membership resource to create version with two members
         setProperty(membershipRescId, DC.subject.getURI(), "Updated");
 
         assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id, member2Id);
         assertHasNoMembershipWhenOmitted(membershipRescId, PCDM_HAS_MEMBER_PROP);
+
+        final String afterPropEtag2 = getEtag(membershipRescURI);
+        assertNotEquals("Etag must change after modification", afterPropEtag1, afterPropEtag2);
 
         TimeUnit.MILLISECONDS.sleep(1500);
 
@@ -606,8 +655,14 @@ public class LDPContainerIT extends AbstractResourceIT {
 
         assertHasMembers(membershipRescId, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
         assertHasNoMembershipWhenOmitted(membershipRescId, RdfLexicon.LDP_MEMBER);
+
+        final String afterRelChangeEtag = getEtag(membershipRescURI);
+        assertNotEquals("Etag must change after relation changes", afterPropEtag2, afterRelChangeEtag);
+
         // Update membership resc to create version where the membership rel has changed
         setProperty(membershipRescId, DC.subject.getURI(), "Updated again");
+
+        final String afterRelChangeEtag2 = getEtag(membershipRescURI);
 
         TimeUnit.MILLISECONDS.sleep(1500);
 
@@ -617,15 +672,21 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertHasMembers(membershipRescId, RdfLexicon.LDP_MEMBER, member2Id);
         assertHasNoMembershipWhenOmitted(membershipRescId, PCDM_HAS_MEMBER_PROP);
 
+        final String afterDeleteEtag = getEtag(membershipRescURI);
+        assertNotEquals("Etag must change after member delete", afterRelChangeEtag2, afterDeleteEtag);
+
         final var mementos = listMementoIds(membershipRescId);
         assertEquals(3, mementos.size());
 
         // verify membership at each of the mementos of the membership resource
         assertMementoHasNoMembership(mementos.get(0), PCDM_HAS_MEMBER_PROP);
+        assertEquals(initialEtag, getEtag(serverAddress + mementos.get(0)));
 
         assertMementoHasMembers(mementos.get(1), PCDM_HAS_MEMBER_PROP, member1Id, member2Id);
+        assertEquals(afterPropEtag2, getEtag(serverAddress + mementos.get(1)));
 
         assertMementoHasMembers(mementos.get(2), RdfLexicon.LDP_MEMBER, member1Id, member2Id);
+        assertEquals(afterRelChangeEtag2, getEtag(serverAddress + mementos.get(2)));
 
         assertHasMembers(membershipRescId, RdfLexicon.LDP_MEMBER, member2Id);
     }
@@ -711,6 +772,233 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id, member2Id);
         assertEquals("Rolled back transaction should be gone",
                 GONE.getStatusCode(), getStatus(new HttpGet(txUri2)));
+    }
+
+    @Test
+    public void testEtagForDirectContainerHasMember() throws Exception {
+        final var membershipRescId = createBasicContainer();
+        final var membershipRescURI = serverAddress + membershipRescId;
+
+        final var directId = createDirectContainer(membershipRescURI);
+
+        // Capture baseline etag before any membership is added
+        final String initialEtag = getEtag(membershipRescURI);
+        final String initialGetEtag = getEtag(new HttpGet(membershipRescURI));
+        assertEquals("HEAD and basic GET should produce same etag", initialEtag, initialGetEtag);
+
+        // Add member in transaction
+        final var txUri = createTransaction();
+
+        createBasicContainer(directId, "member1", txUri);
+
+        final String txMembershipEtag = getEtag(addTxTo(new HttpHead(membershipRescURI), txUri));
+
+        assertEquals("Etag outside of tx must be unchanged", initialEtag, getEtag(membershipRescURI));
+        assertNotEquals("Etag within the tx must have changed", initialEtag, txMembershipEtag);
+
+        // Commit tx
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txUri)));
+
+        final String committedMembershipEtag = getEtag(membershipRescURI);
+        assertEquals("Committed etag must match pre-commit etag", txMembershipEtag, committedMembershipEtag);
+        assertNotEquals("Committed etag must not match original etag", initialEtag, committedMembershipEtag);
+
+        assertEquals("Committed GET and HEAD etags must match",
+                committedMembershipEtag, getEtag(new HttpGet(membershipRescURI)));
+
+        // Verify that etag of membership resource is the same when excluding membership as before there was any
+        final String excludeMembershipEtag = getEtag(getOmitMembership(membershipRescURI));
+        assertEquals("Etag without membership should match initial etag", initialEtag, excludeMembershipEtag);
+    }
+
+    @Test
+    public void testEtagForDirectContainerHasMemberPatch() throws Exception {
+        final var membershipRescId = createBasicContainer();
+        final var membershipRescURI = serverAddress + membershipRescId;
+
+        final var directId = createDirectContainer(membershipRescURI);
+
+        // Capture baseline etag before any membership is added
+        final String initialEtag = getEtag(membershipRescURI);
+
+        createBasicContainer(directId, "member1");
+
+        final String committedMembershipEtag = getEtag(membershipRescURI);
+        assertNotEquals("Committed etag must not match original etag", initialEtag, committedMembershipEtag);
+
+        // Update the membership resource using the etags
+        addTitleWithEtag(membershipRescURI, "title1", deweakify(initialEtag), Status.PRECONDITION_FAILED);
+        addTitleWithEtag(membershipRescURI, "title2", deweakify(committedMembershipEtag), Status.NO_CONTENT);
+
+        assertNotEquals("Etag must update after modification", committedMembershipEtag, getEtag(membershipRescURI));
+    }
+
+    @Test
+    public void testEtagForDirectContainerHasMemberPut() throws Exception {
+        final var membershipRescId = createBasicContainer();
+        final var membershipRescURI = serverAddress + membershipRescId;
+
+        final var directId = createDirectContainer(membershipRescURI);
+
+        // Capture baseline etag before any membership is added
+        final String initialEtag = getEtag(membershipRescURI);
+
+        createBasicContainer(directId, "member1");
+
+        final String committedMembershipEtag = getEtag(membershipRescURI);
+        assertNotEquals("Committed etag must not match original etag", initialEtag, committedMembershipEtag);
+
+        // Update the membership resource using the etags
+        putPropertiesWithEtag(membershipRescURI, deweakify(initialEtag), Status.PRECONDITION_FAILED);
+        putPropertiesWithEtag(membershipRescURI, deweakify(committedMembershipEtag), Status.NO_CONTENT);
+
+        assertNotEquals("Etag must update after modification", committedMembershipEtag, getEtag(membershipRescURI));
+    }
+
+    @Test
+    public void testEtagForDirectContainerIsMemberOf() throws Exception {
+        final var membershipRescId = createBasicContainer();
+        final var membershipRescURI = serverAddress + membershipRescId;
+
+        final var directId = createDirectContainer(membershipRescURI, EX_IS_MEMBER_PROP, true);
+
+        // Capture starting etag for membership resource
+        final String membershipEtag = getEtag(membershipRescURI);
+        assertNotNull(membershipEtag);
+
+        // Add member in transaction
+        final var txUri = createTransaction();
+
+        final var memberId = createBasicContainer(directId, "member1", txUri);
+        final var memberUri = serverAddress + memberId;
+
+        final String txMemberEtag = getEtag(addTxTo(new HttpHead(memberUri), txUri));
+        assertNotNull("Member etag must not be null in tx", txMemberEtag);
+
+        // Commit tx
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txUri)));
+
+        final String committedMemberEtag = getEtag(memberUri);
+        assertEquals("Committed etag must match pre-commit etag", txMemberEtag, committedMemberEtag);
+
+        assertEquals("Membership resc etag must not change", membershipEtag, getEtag(membershipRescURI));
+
+        // Verify etag varies appropriately when excluding membership
+        final String excludeMemberEtag = getEtag(getOmitMembership(memberUri));
+        assertNotEquals("Etag for member must change when excluding membership",
+                committedMemberEtag, excludeMemberEtag);
+
+        final String excludeMembershipEtag = getEtag(getOmitMembership(membershipRescURI));
+        assertEquals("Etag for membership resc should not change when excluding membership",
+                membershipEtag, excludeMembershipEtag);
+
+        // Update the member resource using the etags
+        addTitleWithEtag(memberUri, "title1", deweakify(excludeMemberEtag), Status.PRECONDITION_FAILED);
+        addTitleWithEtag(memberUri, "title2", deweakify(committedMemberEtag), Status.NO_CONTENT);
+    }
+
+    @Test
+    public void testEtagForDirectContainerIsMemberOfPatch() throws Exception {
+        final var membershipRescId = createBasicContainer();
+        final var membershipRescURI = serverAddress + membershipRescId;
+
+        final var directId = createDirectContainer(membershipRescURI, EX_IS_MEMBER_PROP, true);
+
+        final var memberId = createBasicContainer(directId, "member1");
+        final var memberUri = serverAddress + memberId;
+
+        final String committedMemberEtag = getEtag(memberUri);
+        assertNotNull("Member resource must have etag", committedMemberEtag);
+
+        // Update the member resource using the etags
+        addTitleWithEtag(memberUri, "title1", deweakify("W/\"fake\""), Status.PRECONDITION_FAILED);
+        addTitleWithEtag(memberUri, "title2", deweakify(committedMemberEtag), Status.NO_CONTENT);
+
+        assertNotEquals("Etag must update after modification", committedMemberEtag, getEtag(membershipRescURI));
+    }
+
+    @Test
+    public void testEtagForDirectContainerIsMemberOfPut() throws Exception {
+        final var membershipRescId = createBasicContainer();
+        final var membershipRescURI = serverAddress + membershipRescId;
+
+        final var directId = createDirectContainer(membershipRescURI, EX_IS_MEMBER_PROP, true);
+
+        final var memberId = createBasicContainer(directId, "member1");
+        final var memberUri = serverAddress + memberId;
+
+        final String committedMemberEtag = getEtag(memberUri);
+        assertNotNull("Member resource must have etag", committedMemberEtag);
+
+        putPropertiesWithEtag(memberUri, deweakify("W/\"fake\""), Status.PRECONDITION_FAILED);
+        putPropertiesWithEtag(memberUri, deweakify(committedMemberEtag), Status.NO_CONTENT);
+
+        assertNotEquals("Etag must update after modification", committedMemberEtag, getEtag(membershipRescURI));
+    }
+
+    @Test
+    public void testETagOnDeletedLdpDirectContainerChild() throws Exception {
+        final String membershipRescId = getRandomUniqueId();
+        final String members = membershipRescId + "/members";
+        final String child = members + "/child";
+
+        createObjectAndClose(membershipRescId);
+
+        final String etag0 = getEtag(serverAddress + membershipRescId);
+
+        // Create the DirectContainer
+        final HttpPut createContainer = new HttpPut(serverAddress + members);
+        createContainer.addHeader(CONTENT_TYPE, "text/turtle");
+        createContainer.addHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
+        final String membersRDF = "<> <http://www.w3.org/ns/ldp#hasMemberRelation> <http://pcdm.org/models#hasMember>;"
+            + " <http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + membershipRescId + "> . ";
+        createContainer.setEntity(new StringEntity(membersRDF));
+        assertEquals("Membership container not created!", CREATED.getStatusCode(), getStatus(createContainer));
+
+        // Create the child resource
+        createObjectAndClose(child);
+
+        final String etag1 = getEtag(serverAddress + membershipRescId);
+        assertNotEquals("Adding child must change etag of membership resc", etag0, etag1);
+
+        // Wait a second so that the creation and deletion of the child are not simultaneous
+        TimeUnit.SECONDS.sleep(1);
+
+        // Delete the child resource
+        assertEquals("Child resource not deleted!", NO_CONTENT.getStatusCode(),
+                getStatus(new HttpDelete(serverAddress + child)));
+
+        final String etag2 = getEtag(serverAddress + membershipRescId);
+
+        assertNotEquals("ETag didn't change!", etag1, etag2);
+    }
+
+    private void putPropertiesWithEtag(final String rescUri, final String etag, final Status status)
+            throws IOException {
+        final HttpPut replaceMethod = new HttpPut(rescUri);
+        replaceMethod.setHeader(HttpHeaders.IF_MATCH, etag);
+        replaceMethod.addHeader(CONTENT_TYPE, "text/n3");
+        replaceMethod.setEntity(new StringEntity("<" + rescUri + "> <info:test#label> \"foo\""));
+        try (final CloseableHttpResponse response = execute(replaceMethod)) {
+            assertEquals(status.getStatusCode(), getStatus(response));
+        }
+    }
+
+    private void addTitleWithEtag(final String rescUri, final String title, final String etag, final Status status)
+            throws IOException {
+        final HttpPatch postProp = new HttpPatch(rescUri);
+        postProp.setHeader(CONTENT_TYPE, "application/sparql-update");
+        postProp.setHeader(HttpHeaders.IF_MATCH, etag);
+        final String updateString =
+                "INSERT { <" + rescUri + "> <" + DC.title.getURI() + "> \"" + title + "\" } WHERE { }";
+        postProp.setEntity(new StringEntity(updateString));
+        try (final CloseableHttpResponse dcResp = execute(postProp)) {
+            assertEquals(dcResp.getStatusLine().toString(), status.getStatusCode(), getStatus(dcResp));
+        }
+    }
+
+    private String deweakify(final String etag) {
+        return etag.replaceFirst("W/", "");
     }
 
     private String toId(final String rescUri) {
@@ -808,12 +1096,16 @@ public class LDPContainerIT extends AbstractResourceIT {
 
     private Model getModelOmitMembership(final String pid) throws Exception {
         final Model model = createDefaultModel();
-        final var httpGet = new HttpGet(serverAddress + pid);
-        httpGet.addHeader("Prefer", "return=representation; omit=\"" + PREFER_MEMBERSHIP + "\"");
-        try (final CloseableHttpResponse response = execute(httpGet)) {
+        try (final CloseableHttpResponse response = execute(getOmitMembership(serverAddress + pid))) {
             model.read(response.getEntity().getContent(), serverAddress + pid, "TURTLE");
         }
         return model;
+    }
+
+    private HttpGet getOmitMembership(final String uri) {
+        final var httpGet = new HttpGet(uri);
+        httpGet.addHeader("Prefer", "return=representation; omit=\"" + PREFER_MEMBERSHIP + "\"");
+        return httpGet;
     }
 
     private String createBasicContainer() {

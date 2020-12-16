@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS membership (
     object_id varchar(503) NOT NULL,
     source_id varchar(503) NOT NULL,
     start_time datetime,
-    end_time datetime
+    end_time datetime,
+    last_updated datetime
 );
 
 -- Create an index to speed searches for a resource.
@@ -54,6 +55,14 @@ SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
 PREPARE stmt FROM @sqlstmt;
 EXECUTE stmt;
 
+-- Create an index to speed retrieval of last_updated times
+SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
+    WHERE table_name = 'membership' AND index_name = 'membership_idx5' AND table_schema = database());
+SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
+    'CREATE INDEX membership_idx5 ON membership (subject_id, last_updated)');
+PREPARE stmt FROM @sqlstmt;
+EXECUTE stmt;
+
 -- Holds operations to add or delete records from the REFERENCE table.
 CREATE TABLE IF NOT EXISTS membership_tx_operations (
     subject_id varchar(503) NOT NULL,
@@ -62,6 +71,7 @@ CREATE TABLE IF NOT EXISTS membership_tx_operations (
     source_id varchar(503) NOT NULL,
     start_time datetime,
     end_time datetime,
+    last_updated datetime,
     tx_id varchar(36) NOT NULL,
     operation varchar(10) NOT NULL,
     force_flag varchar(10)
@@ -101,5 +111,13 @@ SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
     WHERE table_name = 'membership_tx_operations' AND index_name = 'membership_tx_operations_idx4' AND table_schema = database());
 SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
     'CREATE INDEX membership_tx_operations_idx4 ON membership_tx_operations (end_time)');
+PREPARE stmt FROM @sqlstmt;
+EXECUTE stmt;
+
+-- Create an index to speed retrieval of last_updated times
+SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
+    WHERE table_name = 'membership_tx_operations' AND index_name = 'membership_tx_operations_idx5' AND table_schema = database());
+SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
+    'CREATE INDEX membership_tx_operations_idx5 ON membership_tx_operations (subject_id, last_updated)');
 PREPARE stmt FROM @sqlstmt;
 EXECUTE stmt;

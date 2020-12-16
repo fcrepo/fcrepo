@@ -419,6 +419,11 @@ public class MembershipServiceImpl implements MembershipService {
         }
     }
 
+    @Override
+    public Instant getLastUpdatedTimestamp(final String txId, final FedoraId fedoraId) {
+        return indexManager.getLastUpdated(txId, fedoraId);
+    }
+
     /**
      * @param indexManager the indexManager to set
      */
