@@ -80,6 +80,7 @@ public class FedoraReindex extends FedoraBaseResource {
             final var id = FedoraId.create(externalPath);
             if (doesResourceExist(transaction, id, true)) {
                 //TODO : remove this block once reindexing of existing resources is supported.
+                //       c.f.  https://jira.lyrasis.org/browse/FCREPO-3553
                 return status(HttpStatus.SC_CONFLICT, "Reindexing of existing resources is not currently supported. " +
                         "Only resources that have not yet been indexed are allowed.").build();
             } else {
