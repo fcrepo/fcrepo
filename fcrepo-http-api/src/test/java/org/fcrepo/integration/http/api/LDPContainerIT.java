@@ -17,7 +17,6 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -58,7 +57,6 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response.Status;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -290,7 +288,7 @@ public class LDPContainerIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("Needs updated eTags - FCREPO-3541")
+    @Ignore("Needs updated eTags - FCREPO-3410")
     public void testETagOnDeletedLdpIndirectContainerChild() throws Exception {
         final String id = getRandomUniqueId();
         final String members = id + "/members";
@@ -315,21 +313,12 @@ public class LDPContainerIT extends AbstractResourceIT {
         createChild.setEntity(new StringEntity(childRDF));
         assertEquals("Child container not created!", CREATED.getStatusCode(), getStatus(createChild));
 
-        final HttpGet get = new HttpGet(serverAddress + id);
-        final String etag1;
-        try (final CloseableHttpResponse response = execute(get)) {
-            etag1 = response.getFirstHeader("ETag").getValue();
-            IOUtils.toString(response.getEntity().getContent(), UTF_8);
-        }
+        final String etag1 = getEtag(serverAddress + id);
 
         assertEquals("Child resource not deleted!", NO_CONTENT.getStatusCode(),
                 getStatus(new HttpDelete(serverAddress + child)));
 
-        final String etag2;
-        try (final CloseableHttpResponse response = execute(get)) {
-            etag2 = response.getFirstHeader("ETag").getValue();
-            IOUtils.toString(response.getEntity().getContent(), UTF_8);
-        }
+        final String etag2 = getEtag(serverAddress + id);
 
         assertNotEquals("ETag didn't change!", etag1, etag2);
     }

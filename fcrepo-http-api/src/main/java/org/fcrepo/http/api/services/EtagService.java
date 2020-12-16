@@ -52,7 +52,7 @@ public class EtagService {
     /**
      * Produces etag for a request for an RDF resource. It is based on factors related to the
      * current state of the resource, as well as request options which change the
-     * representation of the reosurce.
+     * representation of the resource.
      *
      * @param txId transaction id
      * @param resource resource
