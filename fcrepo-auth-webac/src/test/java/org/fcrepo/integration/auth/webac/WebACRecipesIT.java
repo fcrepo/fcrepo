@@ -78,7 +78,7 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.integration.http.api.AbstractResourceIT;
-import org.fcrepo.integration.http.api.LinuxTestIsolationExecutionListener;
+import org.fcrepo.integration.http.api.TestIsolationExecutionListener;
 import org.glassfish.grizzly.utils.Charsets;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -94,7 +94,7 @@ import org.springframework.test.context.TestExecutionListeners;
  * @since September 4, 2015
  */
 @TestExecutionListeners(
-        listeners = { LinuxTestIsolationExecutionListener.class },
+        listeners = { TestIsolationExecutionListener.class },
         mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class WebACRecipesIT extends AbstractResourceIT {
 

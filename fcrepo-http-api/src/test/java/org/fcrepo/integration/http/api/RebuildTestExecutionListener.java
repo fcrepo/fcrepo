@@ -18,20 +18,15 @@
 package org.fcrepo.integration.http.api;
 
 import org.fcrepo.config.OcflPropsConfig;
-import org.fcrepo.http.commons.test.util.ContainerWrapper;
-import org.fcrepo.kernel.api.ContainmentIndex;
-import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.search.api.SearchIndex;
 import org.springframework.test.annotation.DirtiesContext.HierarchyMode;
 import org.springframework.test.context.TestContext;
-import org.springframework.test.context.support.AbstractTestExecutionListener;
 
 /**
  * Isolate RebuildIT from the rest of the IT contexts.
  *
  * @author pwinckles
  */
-public class RebuildTestExecutionListener extends AbstractTestExecutionListener {
+public class RebuildTestExecutionListener extends BaseTestExecutionListener {
 
     @Override
     public void beforeTestClass(final TestContext testContext) {
@@ -46,21 +41,4 @@ public class RebuildTestExecutionListener extends AbstractTestExecutionListener 
         System.clearProperty(OcflPropsConfig.FCREPO_OCFL_ROOT);
         testContext.markApplicationContextDirty(HierarchyMode.EXHAUSTIVE);
     }
-
-    private void cleanDb(final TestContext testContext) {
-        final ContainmentIndex containmentIndex = getBean(testContext, "containmentIndex");
-        final FedoraToOcflObjectIndex ocflIndex = getBean(testContext, "ocflIndex");
-        final SearchIndex searchIndex = getBean(testContext, "searchIndex");
-
-        containmentIndex.reset();
-        ocflIndex.reset();
-        searchIndex.reset();
-    }
-
-    private <T> T getBean(final TestContext testContext, final String name) {
-        final var containerWrapper = testContext.getApplicationContext()
-                .getBean(ContainerWrapper.class);
-        return (T) containerWrapper.getSpringAppContext().getBean(name);
-    }
-
 }

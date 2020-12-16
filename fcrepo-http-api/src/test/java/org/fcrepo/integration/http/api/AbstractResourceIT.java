@@ -88,6 +88,7 @@ import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.GONE;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
@@ -666,6 +667,12 @@ public abstract class AbstractResourceIT {
         final String location = serverAddress + id;
         assertThat("Expected object to be deleted", getStatus(new HttpHead(location)), is(GONE.getStatusCode()));
         assertThat("Expected object to be deleted", getStatus(new HttpGet(location)), is(GONE.getStatusCode()));
+    }
+
+    protected static void assertNotFound(final String id) {
+        final String location = serverAddress + id;
+        assertThat("Expected object to return 404", getStatus(new HttpHead(location)), is(NOT_FOUND.getStatusCode()));
+        assertThat("Expected object to return 404", getStatus(new HttpGet(location)), is(NOT_FOUND.getStatusCode()));
     }
 
     protected static void assertNotDeleted(final String id) {

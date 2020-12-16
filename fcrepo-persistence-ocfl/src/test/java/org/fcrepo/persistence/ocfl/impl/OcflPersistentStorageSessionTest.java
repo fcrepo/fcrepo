@@ -98,6 +98,9 @@ public class OcflPersistentStorageSessionTest {
     private FedoraToOcflObjectIndex index;
 
     @Mock
+    private ReindexService reindexService;
+
+    @Mock
     private FedoraOcflMapping mapping;
 
     @Mock
@@ -172,7 +175,7 @@ public class OcflPersistentStorageSessionTest {
     private OcflPersistentStorageSession createSession(final FedoraToOcflObjectIndex index,
                                                        final OcflObjectSessionFactory objectSessionFactory) {
         final var sessionId = UUID.randomUUID().toString();
-        return new OcflPersistentStorageSession(sessionId, index, objectSessionFactory);
+        return new OcflPersistentStorageSession(sessionId, index, objectSessionFactory, reindexService);
     }
 
     private void mockNoIndex(final FedoraId resourceId) throws FedoraOcflMappingNotFoundException {
@@ -763,7 +766,7 @@ public class OcflPersistentStorageSessionTest {
                 .<String, OcflObjectSession>build()
                 .asMap();
 
-        final var readOnlySession = new OcflPersistentStorageSession(null, index, objectSessionFactory);
+        final var readOnlySession = new OcflPersistentStorageSession(null, index, objectSessionFactory, reindexService);
         ReflectionTestUtils.setField(readOnlySession, "sessionMap", sessionMap);
 
         readOnlySession.getHeaders(RESOURCE_ID, null);

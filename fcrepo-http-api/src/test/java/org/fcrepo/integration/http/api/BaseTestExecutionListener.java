@@ -17,36 +17,34 @@
  */
 package org.fcrepo.integration.http.api;
 
-import edu.wisc.library.ocfl.api.MutableOcflRepository;
-import org.apache.commons.lang3.SystemUtils;
 import org.fcrepo.http.commons.test.util.ContainerWrapper;
-import org.fcrepo.persistence.ocfl.RepositoryInitializer;
+import org.fcrepo.persistence.ocfl.impl.ReindexService;
 import org.springframework.test.context.TestContext;
 import org.springframework.test.context.support.AbstractTestExecutionListener;
 
 /**
- * Listener that baselines the DB and OCFL repo between every test.
- * It does not baseline on Windows due to difficulties associated with deleting and immediately recreating directories.
+ * A base class for hosting methods shared by other TestExecutionListeners.
  *
  * @author pwinckles
  */
-public class LinuxTestIsolationExecutionListener extends AbstractTestExecutionListener {
+public class BaseTestExecutionListener extends AbstractTestExecutionListener {
 
-    @Override
-    public void beforeTestMethod(final TestContext testContext) {
-        if (!SystemUtils.IS_OS_WINDOWS) {
-            final var ocflRepo = getBean(testContext, MutableOcflRepository.class);
-            final var initializer = getBean(testContext, RepositoryInitializer.class);
-
-            ocflRepo.listObjectIds().forEach(ocflRepo::purgeObject);
-            initializer.initialize();
-        }
+    protected void cleanDb(final TestContext testContext) {
+        final ReindexService reindexService = getBean(testContext, ReindexService.class);
+        reindexService.reset();
     }
 
-    private <T> T getBean(final TestContext testContext, final Class<T> clazz) {
+    protected <T> T getBean(final TestContext testContext, final String name) {
+        final var containerWrapper = testContext.getApplicationContext()
+                .getBean(ContainerWrapper.class);
+        return (T) containerWrapper.getSpringAppContext().getBean(name);
+    }
+
+    protected <T> T getBean(final TestContext testContext, final Class<T> clazz) {
         final var containerWrapper = testContext.getApplicationContext()
                 .getBean(ContainerWrapper.class);
         return containerWrapper.getSpringAppContext().getBean(clazz);
     }
+
 
 }

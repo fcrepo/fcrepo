@@ -79,6 +79,8 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
 
     private final Map<String, OcflObjectSession> sessionMap;
 
+    private final ReindexService reindexSerivce;
+
     private Map<String, OcflObjectSession> sessionsToRollback;
 
     private final Phaser phaser = new Phaser();
@@ -118,10 +120,12 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
      */
     protected OcflPersistentStorageSession(final String sessionId,
                                            final FedoraToOcflObjectIndex fedoraOcflIndex,
-                                           final OcflObjectSessionFactory objectSessionFactory) {
+                                           final OcflObjectSessionFactory objectSessionFactory,
+                                           final ReindexService reindexService) {
         this.sessionId = sessionId;
         this.fedoraOcflIndex = fedoraOcflIndex;
         this.objectSessionFactory = objectSessionFactory;
+        this.reindexSerivce = reindexService;
         this.sessionsToRollback = new HashMap<>();
 
         if (sessionId == null) {
@@ -143,6 +147,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         persisterList.add(new DeleteResourcePersister(this.fedoraOcflIndex));
         persisterList.add(new CreateVersionPersister(this.fedoraOcflIndex));
         persisterList.add(new PurgeResourcePersister(this.fedoraOcflIndex));
+        persisterList.add(new ReindexResourcePersister(this.reindexSerivce));
 
     }
 
@@ -153,8 +158,9 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
      * @param objectSessionFactory the session factory
      */
     protected OcflPersistentStorageSession(final FedoraToOcflObjectIndex fedoraOcflIndex,
-                                           final OcflObjectSessionFactory objectSessionFactory) {
-        this(null, fedoraOcflIndex, objectSessionFactory);
+                                           final OcflObjectSessionFactory objectSessionFactory,
+                                           final ReindexService reindexService) {
+        this(null, fedoraOcflIndex, objectSessionFactory, reindexService);
     }
 
     @Override

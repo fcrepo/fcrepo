@@ -52,6 +52,9 @@ public class OcflPersistentSessionManager implements PersistentStorageSessionMan
     @Inject
     private FedoraToOcflObjectIndex ocflIndex;
 
+    @Inject
+    private ReindexService reindexService;
+
     /**
      * Default constructor
      */
@@ -72,7 +75,8 @@ public class OcflPersistentSessionManager implements PersistentStorageSessionMan
                     new OcflPersistentStorageSession(
                             key,
                             ocflIndex,
-                            objectSessionFactory));
+                            objectSessionFactory,
+                            reindexService));
         });
     }
 
@@ -85,7 +89,7 @@ public class OcflPersistentSessionManager implements PersistentStorageSessionMan
                 localSession = this.readOnlySession;
                 if (localSession == null) {
                     this.readOnlySession = new OcflPersistentStorageSessionMetrics(
-                            new OcflPersistentStorageSession(ocflIndex, objectSessionFactory));
+                            new OcflPersistentStorageSession(ocflIndex, objectSessionFactory, reindexService));
                     localSession = this.readOnlySession;
                 }
             }

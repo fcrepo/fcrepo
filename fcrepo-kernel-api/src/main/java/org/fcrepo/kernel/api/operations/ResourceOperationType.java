@@ -24,5 +24,5 @@ package org.fcrepo.kernel.api.operations;
  * @author bbpennel
  */
 public enum ResourceOperationType {
-    UPDATE, CREATE, DELETE, PURGE, FOLLOW
+    UPDATE, CREATE, DELETE, PURGE, FOLLOW, REINDEX
 }

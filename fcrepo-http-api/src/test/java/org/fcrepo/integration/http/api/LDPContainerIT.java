@@ -82,7 +82,7 @@ import org.springframework.test.context.TestExecutionListeners;
  * @author bbpennel
  */
 @TestExecutionListeners(
-        listeners = { LinuxTestIsolationExecutionListener.class },
+        listeners = { TestIsolationExecutionListener.class },
         mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class LDPContainerIT extends AbstractResourceIT {
 
