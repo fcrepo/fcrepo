@@ -145,11 +145,11 @@ public class ReindexService {
             });
 
             if (rootId.get() == null) {
-                throw new IllegalStateException(String.format("Failed find to the root resource in object identified" +
-                        " by %s. Please ensure both that the object ID you are attempting to index refers to a " +
-                        "corresponding valid Fedora-flavored object in the OCFL repository. Also be sure that " +
-                        "the object ID corresponds with the object root resource (as opposed to child resources " +
-                        "within the object).", ocflId));
+                throw new IllegalStateException(String.format("Failed to find the root resource in object " +
+                        "identified by %s. Please ensure that the object ID you are attempting to index " +
+                        "refers to a corresponding valid Fedora-flavored object in the OCFL repository. Additionally " +
+                        "be sure that the object ID corresponds with the object root resource (as opposed to child " +
+                        "resources within the object).", ocflId));
             }
 
             fedoraIds.forEach(fedoraIdentifier -> {
