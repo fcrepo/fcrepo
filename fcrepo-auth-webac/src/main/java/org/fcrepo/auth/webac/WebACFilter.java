@@ -18,68 +18,10 @@
 
 package org.fcrepo.auth.webac;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import org.apache.commons.io.IOUtils;
-import org.apache.jena.atlas.RuntimeIOException;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
-import org.apache.jena.query.QueryParseException;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.RDFReader;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RiotException;
-import org.apache.jena.sparql.core.Quad;
-import org.apache.jena.sparql.modify.request.UpdateData;
-import org.apache.jena.sparql.modify.request.UpdateDataDelete;
-import org.apache.jena.sparql.modify.request.UpdateModify;
-import org.apache.jena.update.UpdateFactory;
-import org.apache.jena.update.UpdateRequest;
-import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.subject.PrincipalCollection;
-import org.apache.shiro.subject.SimplePrincipalCollection;
-import org.apache.shiro.subject.Subject;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
-import org.fcrepo.http.commons.domain.MultiPrefer;
-import org.fcrepo.http.commons.domain.SinglePrefer;
-import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
-import org.fcrepo.http.commons.session.TransactionProvider;
-import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.TransactionManager;
-import org.fcrepo.kernel.api.TransactionUtils;
-import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
-import org.fcrepo.kernel.api.exception.MalformedRdfException;
-import org.fcrepo.kernel.api.exception.PathNotFoundException;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.ResourceFactory;
-import org.slf4j.Logger;
-import org.springframework.web.filter.RequestContextFilter;
-
-import javax.inject.Inject;
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriBuilder;
-import java.io.IOException;
-import java.net.URI;
-import java.security.Principal;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toList;
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
+import static javax.servlet.http.HttpServletResponse.SC_CONFLICT;
 import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
@@ -107,6 +49,69 @@ import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.net.URI;
+import java.security.Principal;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.inject.Inject;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.core.Link;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriBuilder;
+
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
+import org.fcrepo.http.commons.domain.MultiPrefer;
+import org.fcrepo.http.commons.domain.SinglePrefer;
+import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
+import org.fcrepo.http.commons.session.TransactionProvider;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.TransactionUtils;
+import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.jena.atlas.RuntimeIOException;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.QueryParseException;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFReader;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RiotException;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.modify.request.UpdateData;
+import org.apache.jena.sparql.modify.request.UpdateDataDelete;
+import org.apache.jena.sparql.modify.request.UpdateModify;
+import org.apache.jena.update.UpdateFactory;
+import org.apache.jena.update.UpdateRequest;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.PrincipalCollection;
+import org.apache.shiro.subject.SimplePrincipalCollection;
+import org.apache.shiro.subject.Subject;
+import org.slf4j.Logger;
+import org.springframework.web.filter.RequestContextFilter;
+
+import com.fasterxml.jackson.core.JsonParseException;
 
 /**
  * @author peichman
@@ -196,6 +201,14 @@ public class WebACFilter extends RequestContextFilter {
     @Override
     protected void doFilterInternal(final HttpServletRequest request, final HttpServletResponse response,
                                     final FilterChain chain) throws ServletException, IOException {
+
+        // Ensure we are not trying to operate on a closed or invalid transaction.
+        try {
+            transaction(request);
+        } catch (final TransactionRuntimeException e) {
+            printException(response, SC_CONFLICT, e);
+            return;
+        }
         final Subject currentUser = SecurityUtils.getSubject();
         HttpServletRequest httpRequest = request;
         if (isSparqlUpdate(httpRequest) || isRdfRequest(httpRequest)) {
