@@ -92,8 +92,7 @@
 
     <dependency>
       <groupId>org.glassfish.jersey.ext</groupId>
-      <artifactId>jersey-spring3</artifactId>
-      <version>${jersey.version}</version>
+      <artifactId>jersey-spring5</artifactId>
     </dependency>
     <dependency>
       <groupId>junit</groupId>

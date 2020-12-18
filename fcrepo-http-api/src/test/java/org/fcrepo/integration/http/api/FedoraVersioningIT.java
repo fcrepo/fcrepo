@@ -27,9 +27,9 @@ import static javax.ws.rs.core.HttpHeaders.LOCATION;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.FOUND;
 import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
-import static javax.ws.rs.core.Response.Status.FOUND;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -41,24 +41,24 @@ import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.vocabulary.DC_11.title;
 import static org.apache.jena.vocabulary.RDF.type;
-import static org.fcrepo.http.api.FedoraLdp.ACCEPT_DATETIME;
+import static org.fcrepo.http.api.ContentExposingResource.ACCEPT_DATETIME;
 import static org.fcrepo.http.api.FedoraVersioning.MEMENTO_DATETIME_HEADER;
 import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_LINK_FORMAT;
-import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
+import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_FIXITY;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
@@ -94,7 +94,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.core.Link;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
@@ -128,6 +127,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import com.google.common.collect.ImmutableList;
 
 /**
  * @author lsitu
@@ -1118,9 +1119,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final String descriptionUri = subjectUri + "/fcr:metadata";
 
         final String containerBody = createContainerMementoBodyContent(containerSubjectUri, "text/n3");
-        final HttpPost createMethod = postObjMethod(descriptionUri);
-        createMethod.addHeader(CONTENT_TYPE, "text/n3");
-        createMethod.setEntity(new StringEntity(containerBody));
+        final HttpPost createMethod = createMementoRequest(descriptionUri, MEMENTO_DATETIME, "text/n3", containerBody);
 
         // Attempt to create memento with partial record
         try (final CloseableHttpResponse response = execute(createMethod)) {
@@ -1226,7 +1225,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         // Create memento body
         final String body = createContainerMementoBodyContent(subjectUri, N3);
 
-        final HttpPost postReq = postObjMethod(serverAddress + id + "/" + FCR_VERSIONS);
+        final HttpPost postReq = postObjMethod(id + "/" + FCR_VERSIONS);
         postReq.addHeader(MEMENTO_DATETIME_HEADER, invalidDate);
         postReq.addHeader(CONTENT_TYPE, N3);
         postReq.setEntity(new StringEntity(body));
@@ -1812,7 +1811,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         return null;
     }
 
-    private String createMemento(final String subjectUri, final String mementoDateTime, final String contentType,
+    private HttpPost createMementoRequest(final String subjectUri, final String mementoDateTime, final String contentType,
             final String body) throws Exception {
         final HttpPost createVersionMethod = new HttpPost(subjectUri + "/" + FCR_VERSIONS);
         if (contentType != null) {
@@ -1824,6 +1823,12 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         if (mementoDateTime != null && !mementoDateTime.isEmpty()) {
             createVersionMethod.addHeader(MEMENTO_DATETIME_HEADER, mementoDateTime);
         }
+        return createVersionMethod;
+    }
+
+    private String createMemento(final String subjectUri, final String mementoDateTime, final String contentType,
+            final String body) throws Exception {
+        final HttpPost createVersionMethod = createMementoRequest(subjectUri, mementoDateTime, contentType, body);
 
         // Create new memento of resource with updated body
         try (final CloseableHttpResponse response = execute(createVersionMethod)) {

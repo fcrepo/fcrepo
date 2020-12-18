@@ -140,9 +140,8 @@
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.ext</groupId>
-      <artifactId>jersey-spring3</artifactId>
+      <artifactId>jersey-spring5</artifactId>
       <scope>test</scope>
-      <version>${jersey.version}</version>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>

@@ -17,17 +17,17 @@
  */
 package org.fcrepo.http.api.responses;
 
+import static com.google.common.collect.ImmutableMap.builder;
 import static java.lang.System.getProperty;
 import static java.util.stream.Stream.of;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
-import static com.google.common.collect.ImmutableMap.builder;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.sparql.util.graph.GraphUtils.multiValueURI;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -43,6 +43,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
 import javax.annotation.PostConstruct;
 import javax.jcr.PathNotFoundException;
 import javax.servlet.http.HttpServletRequest;
@@ -53,7 +54,6 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
@@ -77,6 +77,8 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
 
+import com.google.common.collect.ImmutableMap;
+
 /**
  * Simple HTML provider for RdfNamespacedStreams
  *
@@ -87,7 +89,6 @@ import org.slf4j.Logger;
 @Provider
 @Produces({TEXT_HTML_WITH_CHARSET})
 public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespacedStream> {
-
 
     @javax.ws.rs.core.Context
     UriInfo uriInfo;

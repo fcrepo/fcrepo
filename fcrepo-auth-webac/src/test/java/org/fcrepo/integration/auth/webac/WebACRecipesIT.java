@@ -18,16 +18,14 @@
 package org.fcrepo.integration.auth.webac;
 
 import static java.util.Arrays.stream;
-
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.OK;
-
+import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.apache.http.HttpStatus.SC_FORBIDDEN;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
-import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.apache.jena.vocabulary.DC_11.title;
 import static org.fcrepo.auth.webac.WebACRolesProvider.GROUP_AGENT_BASE_URI_PROPERTY;
 import static org.fcrepo.http.api.FedoraAcl.ROOT_AUTHORIZATION_PROPERTY;
@@ -42,6 +40,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Optional;
+
 import javax.ws.rs.core.Link;
 
 import org.apache.commons.codec.binary.Base64;
@@ -52,6 +51,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -1895,6 +1895,8 @@ public class WebACRecipesIT extends AbstractResourceIT {
 
     @Test
     public void testRequestWithEmptyPath() throws Exception {
+        // Ensure HttpClient does not remove empty paths
+        final RequestConfig config = RequestConfig.custom().setNormalizeUri(false).build();
         final String username = "testUser92";
         final String parent = getRandomUniqueId();
         final HttpPost postParent = postObjMethod();
@@ -1950,14 +1952,17 @@ public class WebACRecipesIT extends AbstractResourceIT {
         // Admin bypasses ACL resolution gets 409.
         final HttpGet getAdminRequest = getObjMethod(parent + "//" + child);
         setAuth(getAdminRequest, "fedoraAdmin");
+        getAdminRequest.setConfig(config);
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(getAdminRequest));
         // Bad request, empty path in the middle.
         final HttpGet getUserRequest = getObjMethod(parent + "//" + child);
         setAuth(getUserRequest, username);
+        getUserRequest.setConfig(config);
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(getUserRequest));
         // Bad request, empty path at the end.
         final HttpGet getUserRequest2 = getObjMethod(parent + "/" + child + "//");
         setAuth(getUserRequest2, username);
+        getUserRequest2.setConfig(config);
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(getUserRequest2));
         // On the front side extra slashes seem to get stripped off, so no testing here.
     }
