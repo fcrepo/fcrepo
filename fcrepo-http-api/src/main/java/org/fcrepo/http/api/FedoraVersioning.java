@@ -19,9 +19,11 @@ package org.fcrepo.http.api;
 
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
+import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_LINK_FORMAT;
@@ -56,6 +58,7 @@ import javax.jcr.ItemExistsException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.OPTIONS;
@@ -70,7 +73,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import com.google.common.annotations.VisibleForTesting;
+
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
@@ -85,6 +88,8 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
+
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * @author cabeer
@@ -311,6 +316,20 @@ public class FedoraVersioning extends ContentExposingResource {
                 readLock.release();
             }
         }
+    }
+
+    /**
+     * Can't delete TimeMaps
+     *
+     * @return the response to a delete request.
+     */
+    @DELETE
+    @Produces({TEXT_PLAIN_WITH_CHARSET})
+    public Response delete() {
+        final FedoraResource theTimeMap = resource().getTimeMap();
+        addResourceHttpHeaders(theTimeMap);
+        final String message = "Timemaps are deleted with their associated resource.";
+        return status(METHOD_NOT_ALLOWED).entity(message).type(TEXT_PLAIN_WITH_CHARSET).build();
     }
 
     /**

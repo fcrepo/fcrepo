@@ -20,17 +20,17 @@ package org.fcrepo.http.commons.responses;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 import static org.apache.jena.riot.Lang.JSONLD;
 import static org.apache.jena.riot.Lang.RDFXML;
-import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
-import static org.apache.jena.riot.RDFLanguages.getRegisteredLanguages;
-import static org.apache.jena.riot.RDFFormat.RDFXML_PLAIN;
 import static org.apache.jena.riot.RDFFormat.JSONLD_COMPACT_FLAT;
 import static org.apache.jena.riot.RDFFormat.JSONLD_EXPAND_FLAT;
 import static org.apache.jena.riot.RDFFormat.JSONLD_FLATTEN_FLAT;
+import static org.apache.jena.riot.RDFFormat.RDFXML_PLAIN;
+import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+import static org.apache.jena.riot.RDFLanguages.getRegisteredLanguages;
 import static org.apache.jena.riot.system.StreamRDFWriter.defaultSerialization;
 import static org.apache.jena.riot.system.StreamRDFWriter.getWriterStream;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
-import static org.slf4j.LoggerFactory.getLogger;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.OutputStream;
 import java.util.HashMap;
@@ -38,24 +38,26 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.StreamingOutput;
 
-import com.google.common.util.concurrent.AbstractFuture;
-import org.apache.jena.riot.RiotException;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.NsIterator;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.RiotException;
 import org.apache.jena.riot.system.StreamRDF;
 import org.fcrepo.kernel.api.RdfStream;
 import org.slf4j.Logger;
+
+import com.google.common.util.concurrent.AbstractFuture;
 
 /**
  * Serializes an {@link RdfStream}.
@@ -149,7 +151,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
 
     private static void serializeNTriples(final RdfStream rdfStream, final RDFFormat format,
             final OutputStream output) {
-        final StreamRDF stream = new SynchonizedStreamRDFWrapper(getWriterStream(output, format));
+        final StreamRDF stream = new SynchonizedStreamRDFWrapper(getWriterStream(output, format.getLang()));
         stream.start();
         rdfStream.forEach(stream::triple);
         stream.finish();
@@ -160,7 +162,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
 
         final Set<String> namespacesPresent = new HashSet<>();
 
-        final StreamRDF stream = new SynchonizedStreamRDFWrapper(getWriterStream(output, format));
+        final StreamRDF stream = new SynchonizedStreamRDFWrapper(getWriterStream(output, format.getLang()));
         stream.start();
         // Must read the rdf stream before writing out ns prefixes, otherwise the prefixes come after the triples
         final List<Triple> tripleList = rdfStream.peek(t -> {

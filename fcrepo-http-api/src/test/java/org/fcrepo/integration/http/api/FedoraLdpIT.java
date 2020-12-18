@@ -136,6 +136,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Variant;
@@ -144,6 +145,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -3533,8 +3535,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @Test
     public void testPathWithEmptySegment() {
+        // Ensure HttpClient does not remove empty paths
+        final RequestConfig config = RequestConfig.custom().setNormalizeUri(false).build();
         final String badLocation = "test/me/mb/er/s//members/9528a300-22da-40f2-bf3c-5b345d71affb";
-        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(headObjMethod(badLocation)));
+        final HttpHead getEmpty = headObjMethod(badLocation);
+        getEmpty.setConfig(config);
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(getEmpty));
     }
 
     private static Optional<Instant> getDateFromModel(final Model model, final Resource subj, final Property pred)
