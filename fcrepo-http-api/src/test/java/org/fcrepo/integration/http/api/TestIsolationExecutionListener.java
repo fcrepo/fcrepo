@@ -17,8 +17,14 @@
  */
 package org.fcrepo.integration.http.api;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
+
+import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.persistence.ocfl.RepositoryInitializer;
+
+import org.apache.commons.io.FileUtils;
 import org.springframework.test.context.TestContext;
 
 /**
@@ -32,7 +38,24 @@ public class TestIsolationExecutionListener extends BaseTestExecutionListener {
     @Override
     public void beforeTestMethod(final TestContext testContext) throws Exception {
         final var ocflRepo = getBean(testContext, MutableOcflRepository.class);
-        ocflRepo.listObjectIds().forEach(ocflRepo::purgeObject);
+        final var ocflConfig = getBean(testContext, OcflPropsConfig.class);
+
+        final var hasError = new AtomicBoolean(false);
+
+        ocflRepo.listObjectIds().forEach(object -> {
+            try {
+                ocflRepo.purgeObject(object);
+            } catch (RuntimeException e) {
+                // Recursive deletes don't behave well on Windows and it's possible for the above to error out.
+            }
+        });
+
+        if (hasError.get()) {
+            // If one of the purge operations failed, attempt to nuke everything. Maybe it'll work second time round?
+            // We still need the purgeObject calls first so that objects are removed from the ocfl-java cache.
+            FileUtils.cleanDirectory(ocflConfig.getOcflRepoRoot().toFile());
+        }
+
         final var initializer = getBean(testContext, RepositoryInitializer.class);
         initializer.initialize();
     }
