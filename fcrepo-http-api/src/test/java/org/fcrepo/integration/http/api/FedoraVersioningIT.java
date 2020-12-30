@@ -1021,15 +1021,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         final CloseableHttpClient customClient = createClient(true);
 
-        createVersionedContainer(id);
-
-        final String version1Uri;
-
-        try (final CloseableDataset dataset = getDataset(getObjMethod(id + "/" + FCR_VERSIONS))) {
-            final DatasetGraph results = dataset.asDatasetGraph();
-            final var contains = results.find(Node.ANY, Node.ANY, CONTAINS.asNode(), Node.ANY);
-            version1Uri = contains.next().getObject().getURI();
-        }
+        final String version1Uri = createVersionedContainerReturnMementoUri(id);
 
         TimeUnit.SECONDS.sleep(1);
 
@@ -1633,6 +1625,16 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(createMethod)) {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
             return response.getFirstHeader(LOCATION).getValue();
+        }
+    }
+
+    private String createVersionedContainerReturnMementoUri(final String id) throws Exception {
+        createVersionedContainer(id);
+
+        try (final CloseableDataset dataset = getDataset(getObjMethod(id + "/" + FCR_VERSIONS))) {
+            final DatasetGraph results = dataset.asDatasetGraph();
+            final var contains = results.find(Node.ANY, Node.ANY, CONTAINS.asNode(), Node.ANY);
+            return contains.next().getObject().getURI();
         }
     }
 

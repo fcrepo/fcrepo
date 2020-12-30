@@ -47,6 +47,7 @@ public class TestIsolationExecutionListener extends BaseTestExecutionListener {
                 ocflRepo.purgeObject(object);
             } catch (RuntimeException e) {
                 // Recursive deletes don't behave well on Windows and it's possible for the above to error out.
+                hasError.set(true);
             }
         });
 
