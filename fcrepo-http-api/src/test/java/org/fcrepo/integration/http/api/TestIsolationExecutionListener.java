@@ -17,15 +17,18 @@
  */
 package org.fcrepo.integration.http.api;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import edu.wisc.library.ocfl.api.MutableOcflRepository;
 
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.persistence.ocfl.RepositoryInitializer;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.test.context.TestContext;
+
+import edu.wisc.library.ocfl.api.MutableOcflRepository;
 
 /**
  * Listener that baselines the DB and OCFL repo between every test.
@@ -54,7 +57,15 @@ public class TestIsolationExecutionListener extends BaseTestExecutionListener {
         if (hasError.get()) {
             // If one of the purge operations failed, attempt to nuke everything. Maybe it'll work second time round?
             // We still need the purgeObject calls first so that objects are removed from the ocfl-java cache.
-            FileUtils.cleanDirectory(ocflConfig.getOcflRepoRoot().toFile());
+            try (final var files = Files.list(ocflConfig.getOcflRepoRoot())) {
+                files.filter(Files::isDirectory).forEach(childDir -> {
+                    try {
+                        FileUtils.cleanDirectory(childDir.toFile());
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
+            }
         }
 
         final var initializer = getBean(testContext, RepositoryInitializer.class);
