@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS membership (
     property varchar(503) NOT NULL,
     object_id varchar(503) NOT NULL,
     source_id varchar(503) NOT NULL,
+    proxy_id varchar(503) NOT NULL,
     start_time datetime,
     end_time datetime,
     last_updated datetime
@@ -63,12 +64,21 @@ SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
 PREPARE stmt FROM @sqlstmt;
 EXECUTE stmt;
 
+-- Create an index to speed searches for proxy.
+SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
+    WHERE table_name = 'membership' AND index_name = 'membership_idx6' AND table_schema = database());
+SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
+    'CREATE INDEX membership_idx6 ON membership (proxy_id)');
+PREPARE stmt FROM @sqlstmt;
+EXECUTE stmt;
+
 -- Holds operations to add or delete records from the REFERENCE table.
 CREATE TABLE IF NOT EXISTS membership_tx_operations (
     subject_id varchar(503) NOT NULL,
     property varchar(503) NOT NULL,
     object_id varchar(503) NOT NULL,
     source_id varchar(503) NOT NULL,
+    proxy_id varchar(503) NOT NULL,
     start_time datetime,
     end_time datetime,
     last_updated datetime,
@@ -119,5 +129,12 @@ SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
     WHERE table_name = 'membership_tx_operations' AND index_name = 'membership_tx_operations_idx5' AND table_schema = database());
 SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
     'CREATE INDEX membership_tx_operations_idx5 ON membership_tx_operations (subject_id, last_updated)');
+PREPARE stmt FROM @sqlstmt;
+EXECUTE stmt;
+
+SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
+    WHERE table_name = 'membership_tx_operations' AND index_name = 'membership_tx_operations_idx6' AND table_schema = database());
+SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
+    'CREATE INDEX membership_tx_operations_idx6 ON membership_tx_operations (proxy_id)');
 PREPARE stmt FROM @sqlstmt;
 EXECUTE stmt;

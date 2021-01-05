@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS membership (
     property varchar(503) NOT NULL,
     object_id varchar(503) NOT NULL,
     source_id varchar(503) NOT NULL,
+    proxy_id varchar(503) NOT NULL,
     start_time timestamp,
     end_time timestamp,
     last_updated timestamp
@@ -30,12 +31,17 @@ CREATE INDEX IF NOT EXISTS membership_idx2
 CREATE INDEX IF NOT EXISTS membership_idx3
     ON membership (subject_id, last_updated);
 
+-- Create an index to speed searches by proxy id.
+CREATE INDEX IF NOT EXISTS membership_idx4
+    ON membership (proxy_id);
+
 -- Holds operations to add or delete records from the REFERENCE table.
 CREATE TABLE IF NOT EXISTS membership_tx_operations (
     subject_id varchar(503) NOT NULL,
     property varchar(503) NOT NULL,
     object_id varchar(503) NOT NULL,
     source_id varchar(503) NOT NULL,
+    proxy_id varchar(503) NOT NULL,
     start_time timestamp,
     end_time timestamp,
     last_updated timestamp,
@@ -59,5 +65,8 @@ CREATE INDEX IF NOT EXISTS membership_tx_operations_idx3
     ON membership_tx_operations (source_id);
 
 -- Create an index to speed retrieval of last_updated times
-CREATE INDEX IF NOT EXISTS membership_tx_operations_idx3
+CREATE INDEX IF NOT EXISTS membership_tx_operations_idx4
     ON membership_tx_operations (subject_id, last_updated);
+
+CREATE INDEX IF NOT EXISTS membership_tx_operations_idx5
+    ON membership_tx_operations (proxy_id);
