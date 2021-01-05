@@ -1021,9 +1021,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         final CloseableHttpClient customClient = createClient(true);
 
-        final String uri = createVersionedContainer(id);
-
-        final String version1Uri = createMemento(uri);
+        final String version1Uri = createVersionedContainerReturnMementoUri(id);
 
         TimeUnit.SECONDS.sleep(1);
 
@@ -1046,6 +1044,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             verifyMementoUri("Did not get Location header", version1Uri, response.getFirstHeader(LOCATION).getValue());
             assertEquals("Did not get Content-Length == 0", "0", response.getFirstHeader(CONTENT_LENGTH).getValue());
         }
+
+        TimeUnit.SECONDS.sleep(1);
 
         // Request datetime more recent than both mementos
         final String afterDatetime = MEMENTO_RFC_1123_FORMATTER.format(Instant.now().atZone(ZoneOffset.UTC));
@@ -1625,6 +1625,16 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(createMethod)) {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
             return response.getFirstHeader(LOCATION).getValue();
+        }
+    }
+
+    private String createVersionedContainerReturnMementoUri(final String id) throws Exception {
+        createVersionedContainer(id);
+
+        try (final CloseableDataset dataset = getDataset(getObjMethod(id + "/" + FCR_VERSIONS))) {
+            final DatasetGraph results = dataset.asDatasetGraph();
+            final var contains = results.find(Node.ANY, Node.ANY, CONTAINS.asNode(), Node.ANY);
+            return contains.next().getObject().getURI();
         }
     }
 
