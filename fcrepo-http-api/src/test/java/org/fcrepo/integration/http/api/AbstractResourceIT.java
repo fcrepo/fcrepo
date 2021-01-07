@@ -18,6 +18,7 @@
 package org.fcrepo.integration.http.api;
 
 import com.google.common.base.Strings;
+
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;

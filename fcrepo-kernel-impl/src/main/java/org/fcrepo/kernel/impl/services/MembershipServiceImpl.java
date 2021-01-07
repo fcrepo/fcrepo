@@ -22,6 +22,8 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
@@ -48,6 +50,7 @@ import java.util.stream.Collectors;
 
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 
 /**
  * Implementation of a service which updates and persists membership properties for resources
@@ -85,11 +88,10 @@ public class MembershipServiceImpl implements MembershipService {
         }
 
         final var parentResc = getParentResource(fedoraResc);
-        final var containerType = getContainerType(parentResc);
+        final var containerProperties = new DirectContainerProperties(parentResc);
 
-        if (containerType != null) {
-            final var parentRdfResc = getRdfResource(parentResc);
-            final var newMembership = generateMembership(parentRdfResc, fedoraResc, containerType);
+        if (containerProperties.containerType != null) {
+            final var newMembership = generateMembership(containerProperties, fedoraResc);
             indexManager.addMembership(txId, parentResc.getFedoraId(), fedoraResc.getFedoraId(),
                     newMembership, fedoraResc.getCreatedDate());
         }
@@ -99,13 +101,13 @@ public class MembershipServiceImpl implements MembershipService {
     @Transactional
     public void resourceModified(final String txId, final FedoraId fedoraId) {
         final var fedoraResc = getFedoraResource(txId, fedoraId);
-        final var containerType = getContainerType(fedoraResc);
+        final var containerProperties = new DirectContainerProperties(fedoraResc);
 
-        if (ContainerType.Direct.equals(containerType)) {
+        if (containerProperties.containerType != null) {
             log.debug("Modified DirectContainer {}, recomputing generated membership relations", fedoraId);
 
             if (propsConfig.isAutoVersioningEnabled()) {
-                modifyDCAutoversioned(txId, fedoraResc);
+                modifyDCAutoversioned(txId, fedoraResc, containerProperties);
             } else {
                 modifyDCOnDemandVersioning(txId, fedoraResc);
             }
@@ -114,12 +116,10 @@ public class MembershipServiceImpl implements MembershipService {
         // TODO handle modification of IndirectContainers and proxies
     }
 
-    private void modifyDCAutoversioned(final String txId, final FedoraResource dcResc) {
+    private void modifyDCAutoversioned(final String txId, final FedoraResource dcResc,
+            final DirectContainerProperties containerProperties) {
         final var dcId = dcResc.getFedoraId();
-        final var dcRdfResc = getRdfResource(dcResc);
-
         final var dcLastModified = dcResc.getLastModifiedDate();
-
         // Delete/end existing membership from this container
         indexManager.endMembershipForSource(txId, dcResc.getFedoraId(), dcLastModified);
 
@@ -127,7 +127,7 @@ public class MembershipServiceImpl implements MembershipService {
         dcResc.getChildren()
                 .filter(child -> !(child instanceof Tombstone))
                 .forEach(child -> {
-                    final var newMembership = generateMembership(dcRdfResc, child, ContainerType.Direct);
+                    final var newMembership = generateMembership(containerProperties, child);
                     indexManager.addMembership(txId, dcId, child.getFedoraId(),
                             newMembership, dcLastModified);
                 });
@@ -148,31 +148,30 @@ public class MembershipServiceImpl implements MembershipService {
         populateMembershipHistory(txId, dcResc, lastVersionDatetime);
     }
 
-    private Triple generateMembership(final Resource dcRdfResc, final FedoraResource childResc,
-            final ContainerType containerType) {
+    private Triple generateMembership(final DirectContainerProperties properties, final FedoraResource childResc) {
         final var childRdfResc = getRdfResource(childResc.getFedoraId());
 
-        final var membershipResc = getMembershipResource(dcRdfResc);
-        final var memberOfRel = getMemberOfRelation(dcRdfResc);
-        final var hasMemberRel = getHasMemberRelation(dcRdfResc);
-
         final Node memberNode;
-        if (ContainerType.Indirect.equals(containerType)) {
-            final var insertedContentRelation = getInsertedContentRelation(dcRdfResc);
-            if (insertedContentRelation.equals(RdfLexicon.MEMBER_SUBJECT)) {
+        if (ContainerType.Indirect.equals(properties.containerType)) {
+            // Special case to use child as the member subject
+            if (properties.insertedContentRelation.equals(RdfLexicon.MEMBER_SUBJECT)) {
                 memberNode = childRdfResc.asNode();
             } else {
                 // get the member node from the child resource's insertedContentRelation property
-                // TODO handle missing or invalid relation
-                final Resource memberResc = childRdfResc.getPropertyResourceValue(insertedContentRelation);
-                memberNode = memberResc.asNode();
+                final var childModelResc = getRdfResource(childResc);
+                final Statement stmt = childModelResc.getProperty(properties.insertedContentRelation);
+                // Ignore the child if it is missing the insertedContentRelation or its object is not a resource
+                if (stmt == null || !(stmt.getObject() instanceof Resource)) {
+                    return null;
+                }
+                memberNode = stmt.getResource().asNode();
             }
         } else {
             memberNode = childRdfResc.asNode();
         }
 
-        return generateMembershipTriple(membershipResc.asNode(), memberNode,
-                hasMemberRel.asNode(), memberOfRel == null ? null : memberOfRel.asNode());
+        return generateMembershipTriple(properties.membershipResource, memberNode,
+                properties.hasMemberRelation, properties.isMemberOfRelation);
     }
 
     private Triple generateMembershipTriple(final Node membership, final Node member,
@@ -184,21 +183,6 @@ public class MembershipServiceImpl implements MembershipService {
         }
     }
 
-    private ContainerType getContainerType(final FedoraResource fedoraResc) {
-        if (!(fedoraResc instanceof Container)) {
-            return null;
-        }
-        if (fedoraResc.hasType(RdfLexicon.INDIRECT_CONTAINER.getURI())) {
-            return ContainerType.Indirect;
-        }
-
-        if (fedoraResc.hasType(RdfLexicon.DIRECT_CONTAINER.getURI())) {
-            return ContainerType.Direct;
-        }
-
-        return null;
-    }
-
     private Resource getRdfResource(final FedoraResource fedoraResc) {
         final var model = fedoraResc.getTriples().collect(toModel());
         return model.getResource(fedoraResc.getFedoraId().getFullId());
@@ -206,40 +190,6 @@ public class MembershipServiceImpl implements MembershipService {
 
     private Resource getRdfResource(final FedoraId fedoraId) {
         return org.apache.jena.rdf.model.ResourceFactory.createResource(fedoraId.getFullId());
-    }
-
-    /**
-     * @param resc
-     * @return the ldp:isMemberOfRelation property for the given resource, or null if none is specified
-     */
-    private Resource getMemberOfRelation(final Resource resc) {
-        final var memberOfRelStmt = resc.getProperty(RdfLexicon.IS_MEMBER_OF_RELATION);
-        if (memberOfRelStmt != null) {
-            return memberOfRelStmt.getResource();
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * @param resc
-     * @return the ldp:hasMemberRelation property for the given resource, or ldp:member if none is specified
-     */
-    private Resource getHasMemberRelation(final Resource resc) {
-        final var hasMemberStmt = resc.getProperty(RdfLexicon.HAS_MEMBER_RELATION);
-        if (hasMemberStmt != null) {
-            return hasMemberStmt.getResource();
-        } else {
-            return RdfLexicon.LDP_MEMBER;
-        }
-    }
-
-    private Resource getMembershipResource(final Resource containerResc) {
-        return containerResc.getPropertyResourceValue(RdfLexicon.MEMBERSHIP_RESOURCE);
-    }
-
-    private Property getInsertedContentRelation(final Resource containerResc) {
-        return (Property) containerResc.getPropertyResourceValue(RdfLexicon.INSERTED_CONTENT_RELATION);
     }
 
     private FedoraResource getFedoraResource(final String txId, final FedoraId fedoraId) {
@@ -284,12 +234,10 @@ public class MembershipServiceImpl implements MembershipService {
         final var parentContainerType = getContainerType(parentResc);
 
         if (parentContainerType != null) {
-            final var parentRdfResc = getRdfResource(parentResc);
-            final var deletedMembership = generateMembership(parentRdfResc, fedoraResc, parentContainerType);
             log.debug("Ending membership in tx {} for {} at {}",
                     txId, parentResc.getFedoraId(), fedoraResc.getLastModifiedDate());
-            indexManager.endMembership(txId, parentResc.getFedoraId(), fedoraResc.getFedoraId(),
-                    deletedMembership, fedoraResc.getLastModifiedDate());
+            indexManager.endMembershipFromChild(txId, parentResc.getFedoraId(), fedoraResc.getFedoraId(),
+                    fedoraResc.getLastModifiedDate());
         }
     }
 
@@ -328,7 +276,7 @@ public class MembershipServiceImpl implements MembershipService {
         final FedoraResource fedoraResc = getFedoraResource(txId, containerId);
         final var containerType = getContainerType(fedoraResc);
 
-        if (ContainerType.Direct.equals(containerType)) {
+        if (containerType != null) {
             populateMembershipHistory(txId, fedoraResc, null);
         }
     }
@@ -372,6 +320,7 @@ public class MembershipServiceImpl implements MembershipService {
             }
             // Index each addition or change to the membership generated by this member
             timelineStream.forEach(e -> {
+                generateMembership(e, member);
                 // Start time of the membership is the later of member creation or membership resc memento time
                 indexManager.addMembership(txId, containerId, member.getFedoraId(),
                         generateMembershipTriple(e.membershipResource,
@@ -441,6 +390,8 @@ public class MembershipServiceImpl implements MembershipService {
         public Node membershipResource;
         public Node hasMemberRelation;
         public Node isMemberOfRelation;
+        public Property insertedContentRelation;
+        public ContainerType containerType;
         public Instant startDatetime;
         public Instant endDatetime = NO_END_INSTANT;
 
@@ -448,6 +399,10 @@ public class MembershipServiceImpl implements MembershipService {
          * @param fedoraResc resource/memento from which the properties will be extracted
          */
         public DirectContainerProperties(final FedoraResource fedoraResc) {
+            this.containerType = getContainerType(fedoraResc);
+            if (containerType == null) {
+                return;
+            }
             startDatetime = fedoraResc.isMemento() ?
                     fedoraResc.getMementoDatetime() : fedoraResc.getLastModifiedDate();
             fedoraResc.getTriples().forEach(triple -> {
@@ -457,9 +412,26 @@ public class MembershipServiceImpl implements MembershipService {
                     hasMemberRelation = triple.getObject();
                 } else if (RdfLexicon.IS_MEMBER_OF_RELATION.asNode().equals(triple.getPredicate())) {
                     isMemberOfRelation = triple.getObject();
+                } else if (RdfLexicon.INSERTED_CONTENT_RELATION.asNode().equals(triple.getPredicate())) {
+                    insertedContentRelation = createProperty(triple.getObject().getURI());
                 }
             });
         }
+    }
+
+    private static ContainerType getContainerType(final FedoraResource fedoraResc) {
+        if (!(fedoraResc instanceof Container)) {
+            return null;
+        }
+        if (fedoraResc.hasType(RdfLexicon.INDIRECT_CONTAINER.getURI())) {
+            return ContainerType.Indirect;
+        }
+
+        if (fedoraResc.hasType(RdfLexicon.DIRECT_CONTAINER.getURI())) {
+            return ContainerType.Direct;
+        }
+
+        return null;
     }
 
     @Override

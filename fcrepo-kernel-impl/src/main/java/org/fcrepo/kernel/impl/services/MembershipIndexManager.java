@@ -192,10 +192,7 @@ public class MembershipIndexManager {
             " FROM membership m" +
             " WHERE m.source_id = :sourceId" +
                 " AND m.proxy_id = :proxyId" +
-                " AND m.end_time = :noEndTime" +
-                " AND m.subject_id = :subjectId" +
-                " AND m.property = :property" +
-                " AND m.object_id = :objectId";
+                " AND m.end_time = :noEndTime";
 
     private static final String CLEAR_ENTRY_IN_TX =
             "DELETE FROM membership_tx_operations" +
@@ -205,6 +202,14 @@ public class MembershipIndexManager {
                 " AND subject_id = :subjectId" +
                 " AND property = :property" +
                 " AND object_id = :objectId" +
+                " AND operation = :operation" +
+                " AND force_flag IS NULL";
+
+    private static final String CLEAR_FOR_PROXY_IN_TX =
+            "DELETE FROM membership_tx_operations" +
+            " WHERE source_id = :sourceId" +
+                " AND tx_id = :txId" +
+                " AND proxy_id = :proxyId" +
                 " AND operation = :operation" +
                 " AND force_flag IS NULL";
 
@@ -400,38 +405,31 @@ public class MembershipIndexManager {
     }
 
     /**
-     * End a membership entry, setting an end time if committed, or clearing from the current tx
-     * if it was newly added.
+     * End a membership from the child of a Direct/IndirectContainer, setting an end time if committed,
+     * or clearing from the current tx if it was newly added.
      *
      * @param txId transaction id
      * @param sourceId ID of the direct/indirect container whose membership should be ended
      * @param proxyId ID of the proxy producing this membership, when applicable
-     * @param membership membership triple to end
      * @param endTime the time the resource was deleted, generally its last modified
      */
     @Transactional
-    public void endMembership(final String txId, final FedoraId sourceId, final FedoraId proxyId,
-            final Triple membership, final Instant endTime) {
+    public void endMembershipFromChild(final String txId, final FedoraId sourceId, final FedoraId proxyId,
+            final Instant endTime) {
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue(TX_ID_PARAM, txId);
         parameterSource.addValue(SOURCE_ID_PARAM, sourceId.getFullId());
-        addProxyParameter(parameterSource, proxyId);
-        parameterSource.addValue(SUBJECT_ID_PARAM, membership.getSubject().getURI());
-        parameterSource.addValue(PROPERTY_PARAM, membership.getPredicate().getURI());
-        parameterSource.addValue(OBJECT_ID_PARAM, membership.getObject().getURI());
+        parameterSource.addValue(PROXY_ID_PARAM, proxyId.getFullId());
         parameterSource.addValue(OPERATION_PARAM, ADD_OPERATION);
 
-        final int affected = jdbcTemplate.update(CLEAR_ENTRY_IN_TX, parameterSource);
+        final int affected = jdbcTemplate.update(CLEAR_FOR_PROXY_IN_TX, parameterSource);
 
         // If no rows were deleted, then assume we need to delete permanent entry
         if (affected == 0) {
             final MapSqlParameterSource parameterSource2 = new MapSqlParameterSource();
             parameterSource2.addValue(TX_ID_PARAM, txId);
             parameterSource2.addValue(SOURCE_ID_PARAM, sourceId.getFullId());
-            addProxyParameter(parameterSource2, proxyId);
-            parameterSource2.addValue(SUBJECT_ID_PARAM, membership.getSubject().getURI());
-            parameterSource2.addValue(PROPERTY_PARAM, membership.getPredicate().getURI());
-            parameterSource2.addValue(OBJECT_ID_PARAM, membership.getObject().getURI());
+            parameterSource2.addValue(PROXY_ID_PARAM, proxyId.getFullId());
             parameterSource2.addValue(END_TIME_PARAM, formatInstant(endTime));
             parameterSource2.addValue(NO_END_TIME_PARAM, NO_END_TIMESTAMP);
             parameterSource2.addValue(DELETE_OP_PARAM, DELETE_OPERATION);
@@ -518,11 +516,14 @@ public class MembershipIndexManager {
     @Transactional
     public void addMembership(final String txId, final FedoraId sourceId, final FedoraId proxyId,
             final Triple membership, final Instant startTime) {
+        if (membership == null) {
+            return;
+        }
         // Clear any existing delete operation for this membership
         final MapSqlParameterSource parametersDelete = new MapSqlParameterSource();
         parametersDelete.addValue(TX_ID_PARAM, txId);
         parametersDelete.addValue(SOURCE_ID_PARAM, sourceId.getFullId());
-        addProxyParameter(parametersDelete, proxyId);
+        parametersDelete.addValue(PROXY_ID_PARAM, proxyId.getFullId());
         parametersDelete.addValue(SUBJECT_ID_PARAM, membership.getSubject().getURI());
         parametersDelete.addValue(PROPERTY_PARAM, membership.getPredicate().getURI());
         parametersDelete.addValue(OBJECT_ID_PARAM, membership.getObject().getURI());
@@ -561,7 +562,7 @@ public class MembershipIndexManager {
         parameterSource.addValue(PROPERTY_PARAM, membership.getPredicate().getURI());
         parameterSource.addValue(TARGET_ID_PARAM, membership.getObject().getURI());
         parameterSource.addValue(SOURCE_ID_PARAM, sourceId.getFullId());
-        addProxyParameter(parameterSource, proxyId);
+        parameterSource.addValue(PROXY_ID_PARAM, proxyId.getFullId());
         parameterSource.addValue(START_TIME_PARAM, startTimestamp);
         parameterSource.addValue(END_TIME_PARAM, endTimestamp);
         parameterSource.addValue(LAST_UPDATED_PARAM, lastUpdated);
@@ -569,10 +570,6 @@ public class MembershipIndexManager {
         parameterSource.addValue(OPERATION_PARAM, ADD_OPERATION);
 
         jdbcTemplate.update(INSERT_MEMBERSHIP_IN_TX, parameterSource);
-    }
-
-    private void addProxyParameter(final MapSqlParameterSource parameters, final FedoraId proxyId) {
-        parameters.addValue(PROXY_ID_PARAM, proxyId == null ? null : proxyId.getFullId());
     }
 
     /**
@@ -685,7 +682,7 @@ public class MembershipIndexManager {
         jdbcTemplate.query(SELECT_ALL_MEMBERSHIP, new RowCallbackHandler() {
             @Override
             public void processRow(final ResultSet rs) throws SQLException {
-                log.info("{}, {}, {}, {}, {}, {}, {}",
+                log.info("{}, {}, {}, {}, {}, {}, {}, {}",
                         rs.getString("source_id"), rs.getString("proxy_id"), rs.getString("subject_id"),
                         rs.getString("property"), rs.getString("object_id"), rs.getTimestamp("start_time"),
                         rs.getTimestamp("end_time"), rs.getTimestamp("last_updated"));
@@ -702,7 +699,7 @@ public class MembershipIndexManager {
         jdbcTemplate.query(SELECT_ALL_OPERATIONS, new RowCallbackHandler() {
             @Override
             public void processRow(final ResultSet rs) throws SQLException {
-                log.info("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}",
+                log.info("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}",
                         rs.getString("source_id"), rs.getString("proxy_id"), rs.getString("subject_id"),
                         rs.getString("property"), rs.getString("object_id"), rs.getTimestamp("start_time"),
                         rs.getTimestamp("end_time"), rs.getTimestamp("last_updated"), rs.getString("tx_id"),
