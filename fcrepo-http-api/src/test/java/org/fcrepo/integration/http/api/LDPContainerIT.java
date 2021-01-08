@@ -313,6 +313,95 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertNotEquals("ETag didn't change!", etag1, etag2);
     }
 
+    // Ensure that membership is generated/manager when an IndirectContainer is also a proxy
+    @Test
+    public void indirectContainerWithIndirectContainerChild() throws Exception {
+        final String membershipId = createBasicContainer();
+        final String membershipUri = serverAddress + membershipId;
+
+        // Create the parent IndirectContainer
+        final String parentIndirectId = createIndirectContainer(membershipUri);
+
+        // Create members
+        final String member1Id = createBasicContainer();
+        final String member1Uri = serverAddress + member1Id;
+        final String member2Id = createBasicContainer();
+        final String member2Uri = serverAddress + member2Id;
+
+        // Create the nested child IndirectContainer,
+        final String childIndirectId = parentIndirectId + "/childIndirect";
+        createIndirectContainer(childIndirectId, membershipUri, PCDM_HAS_MEMBER_PROP, PROXY_FOR.getURI(), false);
+
+        // Add a proxy into the child container
+        final String proxyId = childIndirectId + "/proxy1";
+        createProxy(proxyId, member1Uri);
+
+        assertHasMembers(membershipId, PCDM_HAS_MEMBER_PROP, member1Id);
+
+        // Make the nested child into a proxy itself by adding the insertedContentRelation
+        final HttpPatch patch = patchObjMethod(childIndirectId);
+        patch.setHeader(CONTENT_TYPE, "application/sparql-update");
+        patch.setEntity(new StringEntity(
+                "PREFIX ldp: <http://www.w3.org/ns/ldp#>" +
+                " INSERT { <> <" + PROXY_FOR + "> <" + member2Uri + "> }" +
+                " WHERE {}"));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
+
+        assertHasMembers(membershipId, PCDM_HAS_MEMBER_PROP, member1Id, member2Id);
+
+        // Change the hasMemberRelation of the child container
+        final HttpPatch patch2 = patchObjMethod(childIndirectId);
+        patch2.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patch2.setEntity(new StringEntity(
+                "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
+                "DELETE { <> ldp:hasMemberRelation <" + PCDM_HAS_MEMBER + "> . }" +
+                "INSERT { <> ldp:hasMemberRelation ldp:member } WHERE {}\n"));
+        try (final CloseableHttpResponse response = execute(patch2)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+        }
+
+        assertHasMembers(membershipId, PCDM_HAS_MEMBER_PROP, member2Id);
+        assertHasMembers(membershipId, RdfLexicon.LDP_MEMBER, member1Id);
+    }
+
+    @Test
+    public void testETagLdpIndirectContainerChildIsMemberOf() throws Exception {
+        final String membershipId = createBasicContainer();
+        final String membershipUri = serverAddress + membershipId;
+
+        // Create the IndirectContainer
+        final String indirectId = createIndirectContainerIsMemberOf(membershipUri);
+
+        final String proxyId = indirectId + "/proxy1";
+        final String proxyUri = serverAddress + proxyId;
+
+        // Create member
+        final String memberId = createBasicContainer();
+        final String memberUri = serverAddress + memberId;
+
+        final String etag0 = getEtag(memberUri);
+
+        // Create proxy to the member
+        createProxy(proxyId, memberUri);
+
+        assertIsMemberOf(memberId, EX_IS_MEMBER_PROP, membershipId);
+
+        final String etag1 = getEtag(memberUri);
+        assertNotEquals("ETag didn't change!", etag0, etag1);
+
+        // Wait a second so that the creation and deletion of the child are not simultaneous
+        TimeUnit.SECONDS.sleep(1);
+
+        assertEquals("Child resource not deleted!", NO_CONTENT.getStatusCode(),
+                getStatus(new HttpDelete(proxyUri)));
+
+        assertHasNoMembership(memberId, EX_IS_MEMBER_PROP);
+
+        final String etag2 = getEtag(memberUri);
+
+        assertNotEquals("ETag didn't change!", etag1, etag2);
+    }
+
     @Test
     public void testIndirectContainerInsertedContentRelationMemberSubject() throws Exception {
         final String membershipId = createBasicContainer();
@@ -667,6 +756,102 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertNotEquals("Etag must update after modification", committedMembershipEtag, getEtag(membershipRescURI));
     }
 
+    @Test
+    public void indirectContainerModifyProxyReferencedMember() throws Exception {
+        final var membershipRescId = createBasicContainer();
+        final var membershipRescURI = serverAddress + membershipRescId;
+
+        final var indirectId = createIndirectContainer(membershipRescURI);
+
+        assertHasNoMembership(membershipRescId, PCDM_HAS_MEMBER_PROP);
+
+        // Create the members
+        final String member1Id = createBasicContainer();
+        final String member1Uri = serverAddress + member1Id;
+        final String member2Id = createBasicContainer();
+        final String member2Uri = serverAddress + member2Id;
+
+        // Create proxies to member1
+        final String proxy1Id = indirectId + "/proxy1";
+        createProxy(proxy1Id, member1Uri);
+
+        assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id);
+        assertHasNoMembershipWhenOmitted(membershipRescId, PCDM_HAS_MEMBER_PROP);
+
+        // Change the proxy to reference member2 instead
+        final HttpPatch patch = patchObjMethod(proxy1Id);
+        patch.setHeader(CONTENT_TYPE, "application/sparql-update");
+        patch.setEntity(new StringEntity(
+                "DELETE { <> <" + PROXY_FOR + "> ?existing . }" +
+                " INSERT { <> <" + PROXY_FOR + "> <" + member2Uri + "> }" +
+                " WHERE { <> <" + PROXY_FOR + "> ?existing}"));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
+
+        assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member2Id);
+    }
+
+    @Test
+    public void indirectContainerRemoveProxyReferencedMember() throws Exception {
+        final var membershipRescId = createBasicContainer();
+        final var membershipRescURI = serverAddress + membershipRescId;
+
+        final var indirectId = createIndirectContainer(membershipRescURI);
+
+        assertHasNoMembership(membershipRescId, PCDM_HAS_MEMBER_PROP);
+
+        // Create the members
+        final String member1Id = createBasicContainer();
+        final String member1Uri = serverAddress + member1Id;
+
+        // Create proxies to member1
+        final String proxy1Id = indirectId + "/proxy1";
+        createProxy(proxy1Id, member1Uri);
+
+        assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id);
+        assertHasNoMembershipWhenOmitted(membershipRescId, PCDM_HAS_MEMBER_PROP);
+
+        // Change the proxy to remove the member reference
+        final HttpPatch patch = patchObjMethod(proxy1Id);
+        patch.setHeader(CONTENT_TYPE, "application/sparql-update");
+        patch.setEntity(new StringEntity(
+                "DELETE { <> <" + PROXY_FOR + "> ?existing . }" +
+                " WHERE { <> <" + PROXY_FOR + "> ?existing}"));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
+
+        assertHasNoMembership(membershipRescId, PCDM_HAS_MEMBER_PROP);
+    }
+
+    @Test
+    public void indirectContainerMultipleProxyForSameMember() throws Exception {
+        final var membershipRescId = createBasicContainer();
+        final var membershipRescURI = serverAddress + membershipRescId;
+
+        final var indirectId = createIndirectContainer(membershipRescURI);
+
+        assertHasNoMembership(membershipRescId, PCDM_HAS_MEMBER_PROP);
+
+        // Create the members
+        final String member1Id = createBasicContainer();
+        final String member1Uri = serverAddress + member1Id;
+
+        // Create proxies to member1
+        final String proxy1Id = indirectId + "/proxy1";
+        createProxy(proxy1Id, member1Uri);
+        final String proxy2Id = indirectId + "/proxy2";
+        createProxy(proxy2Id, member1Uri);
+
+        assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id);
+        assertHasNoMembershipWhenOmitted(membershipRescId, PCDM_HAS_MEMBER_PROP);
+
+        // Delete 1 proxy, membership should remain
+        executeAndClose(deleteObjMethod(proxy1Id));
+        assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id);
+
+        // Delete both proxies, membership should be gone
+        executeAndClose(deleteObjMethod(proxy2Id));
+        assertHasNoMembership(membershipRescId, PCDM_HAS_MEMBER_PROP);
+    }
+
     private String createIndirectContainer(final String membershipURI) throws Exception {
         return createIndirectContainer(membershipURI, PCDM_HAS_MEMBER_PROP, PROXY_FOR.getURI(), false);
     }
@@ -678,6 +863,13 @@ public class LDPContainerIT extends AbstractResourceIT {
     private String createIndirectContainer(final String membershipURI, final Property hasMemberRelation,
             final String insertedContentRelation, final boolean isMemberOf) throws Exception {
         final String indirectId = getRandomUniqueId();
+        return createIndirectContainer(indirectId, membershipURI, hasMemberRelation,
+                insertedContentRelation, isMemberOf);
+    }
+
+    private String createIndirectContainer(final String indirectId, final String membershipURI,
+            final Property hasMemberRelation, final String insertedContentRelation, final boolean isMemberOf)
+                    throws Exception {
         final HttpPut putIndirect = putObjMethod(indirectId);
         putIndirect.setHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
         putIndirect.addHeader(CONTENT_TYPE, "text/turtle");

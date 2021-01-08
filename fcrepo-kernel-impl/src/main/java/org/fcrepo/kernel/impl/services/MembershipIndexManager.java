@@ -210,7 +210,6 @@ public class MembershipIndexManager {
             " WHERE source_id = :sourceId" +
                 " AND tx_id = :txId" +
                 " AND proxy_id = :proxyId" +
-                " AND operation = :operation" +
                 " AND force_flag IS NULL";
 
     private static final String CLEAR_ALL_ADDED_FOR_SOURCE_IN_TX =
@@ -246,6 +245,16 @@ public class MembershipIndexManager {
                     " last_updated, :txId, :deleteOp, :forceFlag" +
             " FROM membership m" +
             " WHERE m.source_id = :sourceId" +
+                " AND (m.start_time >= :startTime" +
+                " OR m.end_time >= :startTime)";
+
+    private static final String DELETE_EXISTING_FOR_PROXY_AFTER =
+            "INSERT INTO membership_tx_operations(subject_id, property, object_id, source_id," +
+                    " proxy_id, start_time, end_time, last_updated, tx_id, operation, force_flag)" +
+            " SELECT subject_id, property, object_id, source_id, proxy_id, start_time, end_time," +
+                    " last_updated, :txId, :deleteOp, :forceFlag" +
+            " FROM membership m" +
+            " WHERE m.proxy_id = :proxyId" +
                 " AND (m.start_time >= :startTime" +
                 " OR m.end_time >= :startTime)";
 
@@ -420,7 +429,6 @@ public class MembershipIndexManager {
         parameterSource.addValue(TX_ID_PARAM, txId);
         parameterSource.addValue(SOURCE_ID_PARAM, sourceId.getFullId());
         parameterSource.addValue(PROXY_ID_PARAM, proxyId.getFullId());
-        parameterSource.addValue(OPERATION_PARAM, ADD_OPERATION);
 
         final int affected = jdbcTemplate.update(CLEAR_FOR_PROXY_IN_TX, parameterSource);
 
@@ -435,6 +443,30 @@ public class MembershipIndexManager {
             parameterSource2.addValue(DELETE_OP_PARAM, DELETE_OPERATION);
             jdbcTemplate.update(END_EXISTING_MEMBERSHIP, parameterSource2);
         }
+    }
+
+    @Transactional
+    public void deleteMembershipForProxyAfter(final String txId, final FedoraId sourceId, final FedoraId proxyId,
+            final Instant afterTime) {
+        // Clear all membership added in this transaction
+        final var parameterSource =  Map.of(
+                TX_ID_PARAM, txId,
+                SOURCE_ID_PARAM, sourceId.getFullId(),
+                PROXY_ID_PARAM, proxyId.getFullId(),
+                OPERATION_PARAM, ADD_OPERATION);
+
+        jdbcTemplate.update(CLEAR_FOR_PROXY_IN_TX, parameterSource);
+
+        final var afterTimestamp = afterTime == null ? NO_START_TIMESTAMP : formatInstant(afterTime);
+
+        // Delete all existing membership entries that start after or end after the given timestamp
+        final Map<String, Object> parameterSource2 = Map.of(
+                TX_ID_PARAM, txId,
+                PROXY_ID_PARAM, proxyId.getFullId(),
+                START_TIME_PARAM, afterTimestamp,
+                FORCE_PARAM, FORCE_FLAG,
+                DELETE_OP_PARAM, DELETE_OPERATION);
+        jdbcTemplate.update(DELETE_EXISTING_FOR_PROXY_AFTER, parameterSource2);
     }
 
     /**
