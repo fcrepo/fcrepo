@@ -82,7 +82,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.test.context.TestExecutionListeners;
 
@@ -490,7 +489,6 @@ public class TransactionsIT extends AbstractResourceIT {
      *
      * @throws IOException exception thrown during this function
      */
-    @Ignore("Pending PATCH implementation")
     @Test
     public void testIngestNewWithSparqlPatchWithinTransaction() throws IOException {
         final String objectInTxCommit = getRandomUniqueId();
@@ -614,7 +612,6 @@ public class TransactionsIT extends AbstractResourceIT {
      * @throws IOException exception thrown during this function
      */
     @Test
-    @Ignore("Until we implement some kind of record level locking.")
     public void testTransactionAndConcurrentConflictingUpdate() throws IOException {
         final String preserveProperty = "preserve";
         final String preserveValue = "true";
@@ -928,7 +925,7 @@ public class TransactionsIT extends AbstractResourceIT {
         try {
             runnable.run();
             fail("Request should fail because the resource should be locked by another transaction.");
-        } catch (HttpResponseException e) {
+        } catch (final HttpResponseException e) {
             assertEquals(CONFLICT.getStatusCode(), e.getStatusCode());
             assertTrue("concurrent update exception",
                     e.getReasonPhrase().contains("updated by another transaction"));
@@ -1062,7 +1059,7 @@ public class TransactionsIT extends AbstractResourceIT {
             }).findFirst().get();
 
             Files.writeString(binary, "corrupted!");
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
     }
