@@ -71,7 +71,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.time.Duration;
@@ -89,6 +88,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Link;
+
+import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.fcrepo.storage.ocfl.CommitType;
+import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -116,16 +119,14 @@ import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.DC;
 import org.apache.jena.vocabulary.RDF;
-import org.fcrepo.http.commons.test.util.CloseableDataset;
-import org.fcrepo.storage.ocfl.CommitType;
-import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.springframework.test.context.TestExecutionListeners;
+
+import com.google.common.collect.ImmutableList;
 
 /**
  * @author lsitu
@@ -395,7 +396,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("No past containment is stored - FCREPO-3450")
     public void testMementoContainmentReferences() throws Exception {
         createVersionedContainer(id);
 
