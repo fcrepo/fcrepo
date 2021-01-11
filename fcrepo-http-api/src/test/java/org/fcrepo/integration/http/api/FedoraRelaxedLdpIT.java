@@ -39,7 +39,6 @@ import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.kernel.api.utils.GraphDifferencer;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.TestExecutionListeners;
@@ -110,8 +109,6 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         System.setProperty(SERVER_MANAGED_PROPERTIES_MODE, "relaxed");
     }
 
-
-    @Ignore //TODO Fix this test
     @Test
     public void testBasicPutRoundtrip() throws IOException {
         final String subjectURI;
@@ -133,7 +130,6 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(put));
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testCreateResourceWithSpecificCreationInformationIsAllowed() throws IOException {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
@@ -151,7 +147,6 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testUpdateNonRdfResourceWithSpecificInformationIsAllowed() throws IOException {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
@@ -179,7 +174,6 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testValidSparqlUpdate() throws IOException {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
@@ -210,7 +204,6 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testInvalidSparqlUpdate() throws IOException {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
@@ -240,7 +233,6 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testUpdateResourceWithSpecificModificationInformationIsAllowed() throws IOException {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
@@ -270,7 +262,6 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
      * Tests a lossless roundtrip of a resource.
      * @throws IOException if an error occurs while reading or writing to repository over HTTP
      */
-    @Ignore //TODO Fix this test
     @Test
     public void testRoundtripping() throws IOException {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
@@ -306,7 +297,6 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
             containedBinaryDescriptionBody = EntityUtils.toString(response.getEntity());
         }
 
-
         // delete the container and its tombstone
         try (final CloseableHttpResponse response = execute(new HttpDelete(containerURI))) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
@@ -316,7 +306,6 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
                 assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(tombstone.getUri())));
             }
         }
-
 
         // post the container from the export
         final String containerRdf = filterRdf(containerBody, CREATED_BY, CREATED_DATE, LAST_MODIFIED_BY,
