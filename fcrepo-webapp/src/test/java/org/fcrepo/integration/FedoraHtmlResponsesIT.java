@@ -103,7 +103,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
                         namespaceLabel);
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testCreateNewNodeWithProvidedId() throws IOException {
         createAndVerifyObjectWithIdFromRootPage(newPid());
@@ -140,7 +139,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testCreateNewNodeWithGeneratedId() throws IOException {
 
@@ -155,7 +153,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         assertTrue("Didn't see new information in page!", !page1.asText().equals(page.asText()));
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testCreateNewBasicContainer() throws IOException {
         final HtmlPage newPage = createAndVerifyObjectWithIdFromRootPage(newPid(), "basic container");
@@ -163,7 +160,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
                 "http://www.w3.org/ns/ldp#BasicContainer"));
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testCreateNewDirectContainer() throws IOException {
         final HtmlPage newPage = createAndVerifyObjectWithIdFromRootPage(newPid(), "direct container");
@@ -171,7 +167,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
                 "http://www.w3.org/ns/ldp#DirectContainer"));
     }
 
-    @Ignore // TODO FIX THIS TEST
+    @Ignore("Needs indirectContainers - FCREPO-3410")
     @Test
     public void testCreateNewIndirectContainer() throws IOException {
         final HtmlPage newPage = createAndVerifyObjectWithIdFromRootPage(newPid(), "indirect container");
@@ -180,7 +176,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("The htmlunit web client can't handle the HTML5 file API")
     public void testCreateNewDatastream() throws IOException {
 
         final String pid = randomUUID().toString();
@@ -229,7 +224,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         assertEquals(NOT_FOUND.getStatusCode(), status);
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testCreateNewObjectAndDeleteIt() throws IOException {
         final boolean throwExceptionOnFailingStatusCode = webClient.getOptions().isThrowExceptionOnFailingStatusCode();
@@ -249,7 +243,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         webClient.getOptions().setThrowExceptionOnFailingStatusCode(throwExceptionOnFailingStatusCode);
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testVersionsListWorksWhenNoVersionsPresent() throws IOException {
         final boolean throwExceptionOnFailingStatusCode = webClient.getOptions().isThrowExceptionOnFailingStatusCode();
@@ -271,7 +264,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
      *
      * @throws IOException exception thrown during this function
      */
-    @Ignore
     @Test
     public void testVersionCreationAndNavigation() throws IOException {
         final String pid = randomUUID().toString();
@@ -343,7 +335,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore
     public void testCreateNewObjectAndSetProperties() throws IOException {
         final String pid = createNewObject();
 
@@ -360,7 +351,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("htmlunit can't see links in the HTML5 <nav> element..")
     public void testSparqlSearch() throws IOException {
         final HtmlPage page = webClient.getPage(serverAddress);
 
