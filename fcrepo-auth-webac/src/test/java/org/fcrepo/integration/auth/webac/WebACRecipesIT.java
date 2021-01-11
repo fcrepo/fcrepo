@@ -18,24 +18,24 @@
 package org.fcrepo.integration.auth.webac;
 
 import static java.util.Arrays.stream;
-
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
-
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
+import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_FORBIDDEN;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
-import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.apache.jena.vocabulary.DC_11.title;
 import static org.fcrepo.auth.webac.WebACRolesProvider.GROUP_AGENT_BASE_URI_PROPERTY;
 import static org.fcrepo.auth.webac.WebACRolesProvider.USER_AGENT_BASE_URI_PROPERTY;
 import static org.fcrepo.http.api.FedoraAcl.ROOT_AUTHORIZATION_PROPERTY;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_TX;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
@@ -52,6 +52,10 @@ import java.util.regex.Pattern;
 
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
+
+import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.fcrepo.integration.http.api.AbstractResourceIT;
+import org.fcrepo.integration.http.api.TestIsolationExecutionListener;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
@@ -76,9 +80,6 @@ import org.apache.http.message.AbstractHttpMessage;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.core.DatasetGraph;
-import org.fcrepo.http.commons.test.util.CloseableDataset;
-import org.fcrepo.integration.http.api.AbstractResourceIT;
-import org.fcrepo.integration.http.api.TestIsolationExecutionListener;
 import org.glassfish.grizzly.utils.Charsets;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -2296,9 +2297,55 @@ public class WebACRecipesIT extends AbstractResourceIT {
         assertEquals(FORBIDDEN.getStatusCode(), getStatus(delete));
     }
 
+    @Test
+    public void testTransactionExceptions() throws Exception {
+        // Ensure both admin and users get 409 for invalid transaction ids.
+        final var invalidIx = serverAddress + FCR_TX + "/fake";
+        assertGetRequest(serverAddress, "fedoraAdmin", invalidIx, CONFLICT);
+        assertGetRequest(serverAddress, "testuser", invalidIx, CONFLICT);
+        // Ensure both admin and users get 409 for a non-existant transactions.
+        final var fakeTx = serverAddress + FCR_TX + "/" + getRandomUniqueId();
+        assertGetRequest(serverAddress, "fedoraAdmin", fakeTx, CONFLICT);
+        assertGetRequest(serverAddress, "testuser", fakeTx, CONFLICT);
+        // Create a transaction.
+        final var postTx = postObjMethod(FCR_TX);
+        setAuth(postTx, "fedoraAdmin");
+        final String txId;
+        try (final var response = execute(postTx)) {
+            assertEquals(SC_CREATED, getStatus(response));
+            txId = getLocation(response);
+        }
+        // Create an object in the transaction.
+        final var postObj = postObjMethod();
+        setAuth(postObj, "fedoraAdmin");
+        addTxTo(postObj, txId);
+        final String targetUri;
+        try (final var response = execute(postObj)) {
+            assertEquals(SC_CREATED, getStatus(response));
+            targetUri = getLocation(response);
+        }
+        // Test the transaction works.
+        assertGetRequest(targetUri, "testuser", txId, OK);
+        // Commit the transaction
+        final var commit = new HttpPut(txId);
+        setAuth(commit, "fedoraAdmin");
+        assertEquals(SC_NO_CONTENT, getStatus(commit));
+        // Now try to get the transaction again, expect 409 Conflict..
+        assertGetRequest(targetUri, "fedoraAdmin", txId, CONFLICT);
+        assertGetRequest(targetUri, "testuser", txId, CONFLICT);
+    }
+
     private void assertGetRequest(final String uri, final String username, final Response.Status expectedResponse) {
+        assertGetRequest(uri, username, null, expectedResponse);
+    }
+
+    private void assertGetRequest(final String uri, final String username, final String txId,
+                                  final Response.Status expectedResponse) {
         final var getTarget = new HttpGet(uri);
         setAuth(getTarget, username);
+        if (txId != null) {
+            addTxTo(getTarget, txId);
+        }
         assertEquals(expectedResponse.getStatusCode(), getStatus(getTarget));
     }
 
