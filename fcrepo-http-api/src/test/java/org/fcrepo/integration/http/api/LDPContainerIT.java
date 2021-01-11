@@ -408,7 +408,8 @@ public class LDPContainerIT extends AbstractResourceIT {
         final String membershipUri = serverAddress + membershipId;
 
         // Create the IndirectContainer
-        final String indirectId = createIndirectContainer(membershipUri, PCDM_HAS_MEMBER_PROP, MEMBER_SUBJECT.getURI(), false);
+        final String indirectId = createIndirectContainer(membershipUri, PCDM_HAS_MEMBER_PROP,
+                MEMBER_SUBJECT.getURI(), false);
         // Create the member resource, not as a proxy
         final String memberId = createBasicContainer(indirectId, "member1");
 
