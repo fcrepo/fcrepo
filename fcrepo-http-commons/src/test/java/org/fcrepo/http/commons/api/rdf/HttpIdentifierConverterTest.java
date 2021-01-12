@@ -52,7 +52,7 @@ public class HttpIdentifierConverterTest {
     @Before
     public void setUp() {
         uriBuilder = UriBuilder.fromUri(uriTemplate);
-        converter = new HttpIdentifierConverter(uriBuilder);
+        converter = new HttpIdentifierConverter(uriBuilder, "");
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -304,6 +304,30 @@ public class HttpIdentifierConverterTest {
         final String externalOriginal2 = "object/child";
         final FedoraId id2 = converter.pathToInternalId(externalOriginal2);
         assertEquals(internal, id2);
+    }
+
+    /**
+     * This test is to check how Jena interprets relative URIs as info:/context/objectId
+     */
+    @Test
+    public void testInternalRelative() {
+        final HttpIdentifierConverter idConverter = new HttpIdentifierConverter(UriBuilder.fromUri("http://localhost" +
+                ":8080/rest/{path: .*}"), "");
+        final String validUri1 = "info:/rest/testID";
+        assertTrue(idConverter.inExternalDomain(validUri1));
+        final String invalidUri1 = "info:/someContext/rest/testID";
+        assertFalse(idConverter.inExternalDomain(invalidUri1));
+
+        final HttpIdentifierConverter idConverter2 = new HttpIdentifierConverter(UriBuilder.fromUri("http://localhost" +
+                ":8080/someContext/rest/{path: .*}"), "/someContext");
+        final String validUri2 = "info:/someContext/rest/testID";
+        assertTrue(idConverter2.inExternalDomain(validUri2));
+        final String invalidUri2 = "info:/rest/testID";
+        assertFalse(idConverter2.inExternalDomain(invalidUri2));
+        final String invalidUri3 = "info:/someContext/testID";
+        assertFalse(idConverter2.inExternalDomain(invalidUri3));
+        final String invalidUri4 = "info:/testID";
+        assertFalse(idConverter2.inExternalDomain(invalidUri4));
     }
 
     /**

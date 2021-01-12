@@ -155,7 +155,7 @@ abstract class AbstractJmsIT implements MessageListener {
     protected abstract Destination createDestination() throws JMSException;
 
     private final HttpIdentifierConverter identifierConverter = new HttpIdentifierConverter(
-            UriBuilder.fromUri(TEST_BASE_URL + "/{path: .*}"));
+            UriBuilder.fromUri(TEST_BASE_URL + "/{path: .*}"), "");
 
     @Test(timeout = TIMEOUT)
     public void testIngestion() {

@@ -84,7 +84,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.BeanParam;
@@ -180,7 +179,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;
-    @Context protected ServletContext context;
 
     @Inject
     @Optional

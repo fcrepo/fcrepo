@@ -30,6 +30,7 @@ import org.fcrepo.kernel.api.models.ResourceHelper;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.SecurityContext;
@@ -55,6 +56,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
     protected ResourceHelper resourceHelper;
 
     @Context protected HttpServletRequest servletRequest;
+    @Context protected ServletContext context;
 
     @Inject
     protected TransactionManager txManager;
@@ -68,7 +70,8 @@ abstract public class FedoraBaseResource extends AbstractResource {
     protected HttpIdentifierConverter identifierConverter() {
         if (identifierConverter == null) {
             identifierConverter = new HttpIdentifierConverter(
-                    uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));
+                    uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class),
+                    context.getContextPath());
         }
 
         return identifierConverter;

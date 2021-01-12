@@ -47,6 +47,7 @@ import java.util.Map;
 import java.util.Properties;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
@@ -113,6 +114,11 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
     @Inject
     private FedoraPropsConfig fedoraPropsConfig;
 
+    @Inject
+    private ServletContext context;
+
+    private String contextPath = "";
+
     private boolean autoVersioningEnabled;
 
     private HttpIdentifierConverter identifierConverter;
@@ -128,7 +134,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
         if (identifierConverter == null) {
             final UriBuilder uriBuilder =
                     uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class);
-            identifierConverter = new HttpIdentifierConverter(uriBuilder);
+            identifierConverter = new HttpIdentifierConverter(uriBuilder, contextPath);
         }
         return identifierConverter;
     }
@@ -177,6 +183,8 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
         }
         velocity.init(properties);
         LOGGER.trace("Velocity engine initialized.");
+
+        contextPath = context.getContextPath();
 
         LOGGER.trace("Assembling a map of node primary types -> templates...");
         final ImmutableMap.Builder<String, Template> templatesMapBuilder = builder();

@@ -56,7 +56,7 @@ public class TombstoneExceptionMapperTest {
 
     private static final String SERVER_URI = "http://localhost:8080/rest(.*)";
 
-    private final HttpIdentifierConverter idConverter = new HttpIdentifierConverter(UriBuilder.fromUri(SERVER_URI));
+    private final HttpIdentifierConverter idConverter = new HttpIdentifierConverter(UriBuilder.fromUri(SERVER_URI), "");
 
     @Before
     public void setUp() {

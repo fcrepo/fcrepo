@@ -53,7 +53,7 @@ public class FedoraSearchTest {
     @Before
     public void setUp() {
         uriBuilder = UriBuilder.fromUri(uriTemplate);
-        converter = new HttpIdentifierConverter(uriBuilder);
+        converter = new HttpIdentifierConverter(uriBuilder, "");
     }
 
     @Test

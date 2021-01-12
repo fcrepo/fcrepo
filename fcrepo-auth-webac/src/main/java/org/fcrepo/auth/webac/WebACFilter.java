@@ -160,7 +160,7 @@ public class WebACFilter extends RequestContextFilter {
      */
     public static HttpIdentifierConverter identifierConverter(final HttpServletRequest request) {
         final var uriBuild = UriBuilder.fromUri(getBaseUri(request)).path("/{path: .*}");
-        return new HttpIdentifierConverter(uriBuild);
+        return new HttpIdentifierConverter(uriBuild, "");
     }
 
     /**

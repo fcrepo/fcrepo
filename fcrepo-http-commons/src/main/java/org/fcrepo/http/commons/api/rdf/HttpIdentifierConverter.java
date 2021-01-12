@@ -17,6 +17,7 @@
  */
 package org.fcrepo.http.commons.api.rdf;
 
+import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -43,9 +44,15 @@ public class HttpIdentifierConverter {
 
     private static final Logger LOGGER = getLogger(HttpIdentifierConverter.class);
 
+    private static final String DEFAULT_CONTEXT = "/rest";
+
     private final UriBuilder uriBuilder;
 
     private final UriTemplate uriTemplate;
+
+    private final String contextPath;
+
+    private String internalUriPath;
 
     private static String trimTrailingSlashes(final String string) {
         return string.replaceAll("/+$", "");
@@ -54,11 +61,17 @@ public class HttpIdentifierConverter {
     /**
      * Create a new identifier converter within the given session with the given URI template
      * @param uriBuilder the uri builder
+     * @param contextPath the context path of the URI
      */
-    public HttpIdentifierConverter(final UriBuilder uriBuilder) {
-
+    public HttpIdentifierConverter(final UriBuilder uriBuilder, final String contextPath) {
+        if (!isEmpty(contextPath)) {
+            this.contextPath = (!contextPath.startsWith("/") ? "/" : "") + contextPath + DEFAULT_CONTEXT;
+        } else {
+            this.contextPath = DEFAULT_CONTEXT;
+        }
         this.uriBuilder = uriBuilder;
         this.uriTemplate = new UriTemplate(uriBuilder.toTemplate());
+        internalUriPath = internalIdPrefix() + this.contextPath;
     }
 
     /**
@@ -190,7 +203,7 @@ public class HttpIdentifierConverter {
             return "/" + values.get("path");
         } else if (isRootWithoutTrailingSlash(httpUri)) {
             return "/";
-        } else if (httpUri.startsWith("info:/rest")) {
+        } else if (httpUri.startsWith(internalUriPath)) {
             return mapInternalRestUri(httpUri);
         }
         return null;
@@ -210,17 +223,15 @@ public class HttpIdentifierConverter {
     }
 
     /**
-     * Takes internal URIs starting with info:/rest and makes full URLs to convert. These URIs come when RDF contains
-     * a URI like </rest/someResource>. This gets converted to info:/rest/someResource as it is a URI but with no
-     * scheme.
+     * Takes internal URIs starting with info:(context path) and makes them into full URLs. Leaves any relative
+     * URI not starting with the defined context path alone. These URIs come when RDF contains a URI like
+     * </rest/someResource>. This gets converted to info:/rest/someResource as it is a URI but with no scheme.
      * @param httpUri the partial URI
      * @return the path part of the url
      */
     private String mapInternalRestUri(final String httpUri) {
-        // This uri started with </rest...> and is an internal URI.
-        final String internalRestString = internalIdPrefix() + "/rest";
-        if (httpUri.startsWith(internalRestString)) {
-            String realpath = httpUri.substring(internalRestString.length());
+        if (httpUri.startsWith(internalUriPath)) {
+            String realpath = httpUri.substring(internalUriPath.length());
             if (realpath.startsWith("/")) {
                 realpath = realpath.substring(1);
             }
