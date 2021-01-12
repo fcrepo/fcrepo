@@ -257,7 +257,8 @@ public class MembershipServiceImpl implements MembershipService {
         }
 
         final var resourceContainerType = getContainerType(fedoraResc);
-        if (ContainerType.Direct.equals(resourceContainerType)) {
+        if (resourceContainerType != null) {
+            log.debug("Ending membership for deleted Direct/IndirectContainer {} in {}", fedoraId, txId);
             indexManager.endMembershipForSource(txId, fedoraId, fedoraResc.getLastModifiedDate());
         }
 
@@ -266,7 +267,7 @@ public class MembershipServiceImpl implements MembershipService {
         final var parentContainerType = getContainerType(parentResc);
 
         if (parentContainerType != null) {
-            log.debug("Ending membership in tx {} for {} at {}",
+            log.debug("Ending membership for deleted proxy or member in tx {} for {} at {}",
                     txId, parentResc.getFedoraId(), fedoraResc.getLastModifiedDate());
             indexManager.endMembershipFromChild(txId, parentResc.getFedoraId(), fedoraResc.getFedoraId(),
                     fedoraResc.getLastModifiedDate());

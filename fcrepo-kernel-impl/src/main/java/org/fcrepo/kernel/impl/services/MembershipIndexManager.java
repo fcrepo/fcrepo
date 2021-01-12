@@ -85,7 +85,6 @@ public class MembershipIndexManager {
     private static final String LAST_UPDATED_PARAM = "lastUpdated";
     private static final String OPERATION_PARAM = "operation";
     private static final String FORCE_PARAM = "forceFlag";
-    private static final String OBJECT_ID_PARAM = "objectId";
     private static final String LIMIT_PARAM = "limit";
     private static final String OFFSET_PARAM = "offSet";
 
@@ -193,17 +192,6 @@ public class MembershipIndexManager {
             " WHERE m.source_id = :sourceId" +
                 " AND m.proxy_id = :proxyId" +
                 " AND m.end_time = :noEndTime";
-
-    private static final String CLEAR_ENTRY_IN_TX =
-            "DELETE FROM membership_tx_operations" +
-            " WHERE source_id = :sourceId" +
-                " AND tx_id = :txId" +
-                " AND proxy_id = :proxyId" +
-                " AND subject_id = :subjectId" +
-                " AND property = :property" +
-                " AND object_id = :objectId" +
-                " AND operation = :operation" +
-                " AND force_flag IS NULL";
 
     private static final String CLEAR_FOR_PROXY_IN_TX =
             "DELETE FROM membership_tx_operations" +
@@ -551,19 +539,6 @@ public class MembershipIndexManager {
         if (membership == null) {
             return;
         }
-        // Clear any existing delete operation for this membership
-        final MapSqlParameterSource parametersDelete = new MapSqlParameterSource();
-        parametersDelete.addValue(TX_ID_PARAM, txId);
-        parametersDelete.addValue(SOURCE_ID_PARAM, sourceId.getFullId());
-        parametersDelete.addValue(PROXY_ID_PARAM, proxyId.getFullId());
-        parametersDelete.addValue(SUBJECT_ID_PARAM, membership.getSubject().getURI());
-        parametersDelete.addValue(PROPERTY_PARAM, membership.getPredicate().getURI());
-        parametersDelete.addValue(OBJECT_ID_PARAM, membership.getObject().getURI());
-        parametersDelete.addValue(OPERATION_PARAM, DELETE_OPERATION);
-
-        jdbcTemplate.update(CLEAR_ENTRY_IN_TX, parametersDelete);
-
-        // Add the new membership operation
         addMembership(txId, sourceId, proxyId, membership, startTime, null);
     }
 
@@ -576,6 +551,7 @@ public class MembershipIndexManager {
      * @param startTime time the membership triple was added
      * @param endTime time the membership triple ends, or never if not provided
      */
+    @Transactional
     public void addMembership(final String txId, final FedoraId sourceId, final FedoraId proxyId,
             final Triple membership, final Instant startTime, final Instant endTime) {
         final Timestamp endTimestamp;

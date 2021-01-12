@@ -524,6 +524,38 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertHasNoMembership(member2Id, EX_IS_MEMBER_PROP);
     }
 
+    // Verify that bug involving committing delete transactions after modifying a proxy is fixed
+    @Test
+    public void indirectContainerDeleteProxyAfterModifying() throws Exception {
+        final var membershipRescId = createBasicContainer();
+        final var membershipRescURI = serverAddress + membershipRescId;
+
+        final var indirect1Id = createIndirectContainer(membershipRescURI);
+
+        assertHasNoMembership(membershipRescId, PCDM_HAS_MEMBER_PROP);
+
+        // Create the members
+        final String member1Id = createBasicContainer();
+        final String member1Uri = serverAddress + member1Id;
+
+        // Create proxies to members
+        final String proxy1Id = indirect1Id + "/proxy1";
+        createProxy(proxy1Id, member1Uri);
+
+        assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id);
+
+        Thread.sleep(1050l);
+
+        // Edit the proxy in a way that doesn't change membership
+        setProperty(proxy1Id, DC.title.getURI(), "Proxying");
+
+        assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id);
+
+        executeAndClose(deleteObjMethod(proxy1Id));
+
+        assertHasNoMembership(membershipRescId, PCDM_HAS_MEMBER_PROP);
+    }
+
     @Test
     public void indirectContainerHasMemberMembershipHistory() throws Exception {
         final var membershipRescId = createBasicContainer();
