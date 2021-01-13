@@ -398,6 +398,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     @Test
     public void testMementoContainmentReferences() throws Exception {
         createVersionedContainer(id);
+        TimeUnit.SECONDS.sleep(1);
 
         final String childUri = subjectUri + "/x";
         createObjectAndClose(id + "/x");
@@ -405,6 +406,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         // create memento
         final String mementoUri = createMemento(subjectUri);
 
+        TimeUnit.SECONDS.sleep(1);
         // Remove the child resource
         assertEquals("Expected delete to succeed",
                 NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(childUri)));
