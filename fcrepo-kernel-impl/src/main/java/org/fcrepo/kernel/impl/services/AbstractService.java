@@ -210,7 +210,7 @@ public abstract class AbstractService {
                     }
                 } else {
                     throw new MalformedRdfException("Indirect containers must specify an"
-                            + " ldp:insertedContentRelation with a property as the object");
+                            + " ldp:insertedContentRelation property with a URI property as the object");
                 }
             }
         });

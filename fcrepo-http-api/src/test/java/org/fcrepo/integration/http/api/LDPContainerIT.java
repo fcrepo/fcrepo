@@ -544,7 +544,7 @@ public class LDPContainerIT extends AbstractResourceIT {
 
         assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id);
 
-        Thread.sleep(1050l);
+        TimeUnit.MILLISECONDS.sleep(1050l);
 
         // Edit the proxy in a way that doesn't change membership
         setProperty(proxy1Id, DC.title.getURI(), "Proxying");
@@ -647,7 +647,7 @@ public class LDPContainerIT extends AbstractResourceIT {
     }
 
     @Test
-    public void indirectContaineIsMemberOfMembershipHistory() throws Exception {
+    public void indirectContainerIsMemberOfMembershipHistory() throws Exception {
         final var membershipRescId = createBasicContainer();
         final var membershipRescURI = serverAddress + membershipRescId;
 
