@@ -524,7 +524,8 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertHasNoMembership(member2Id, EX_IS_MEMBER_PROP);
     }
 
-    // Verify that bug involving committing delete transactions after modifying a proxy is fixed
+    // Verify that committing delete transactions works after modifying a proxy
+    // without actually changing the produced membership triples.
     @Test
     public void indirectContainerDeleteProxyAfterModifying() throws Exception {
         final var membershipRescId = createBasicContainer();
