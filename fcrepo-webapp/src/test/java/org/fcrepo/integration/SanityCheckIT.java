@@ -71,8 +71,7 @@ public class SanityCheckIT {
     * The context path of the application (including the leading "/"), set as
     * system property by maven-failsafe-plugin.
     */
-    private static final String CONTEXT_PATH = System
-            .getProperty("fcrepo.test.context.path");
+    private static final String CONTEXT_PATH = System.getProperty("fcrepo.test.context.path");
 
     private Logger logger;
 
@@ -84,7 +83,7 @@ public class SanityCheckIT {
     private static final String HOSTNAME = "localhost";
 
     private static final String serverAddress = "http://" + HOSTNAME + ":" +
-            SERVER_PORT + CONTEXT_PATH;
+            SERVER_PORT + CONTEXT_PATH + (CONTEXT_PATH.endsWith("/") ? "" : "/") + "rest";
 
     private static final HttpClient client;
 
@@ -98,7 +97,7 @@ public class SanityCheckIT {
 
     @Test
     public void doASanityCheck() throws IOException {
-        executeAndVerify(new HttpGet(serverAddress + "rest/"), SC_OK);
+        executeAndVerify(new HttpGet(serverAddress), SC_OK);
     }
 
     private HttpResponse executeAndVerify(final HttpUriRequest method, final int statusCode) throws IOException {
@@ -112,7 +111,7 @@ public class SanityCheckIT {
     @Test
     public void testConstraintLink() throws Exception {
         // Create a resource
-        final HttpPost post = new HttpPost(serverAddress + "rest/");
+        final HttpPost post = new HttpPost(serverAddress);
         final HttpResponse postResponse = executeAndVerify(post, SC_CREATED);
 
         final String location = postResponse.getFirstHeader("Location").getValue();
@@ -129,6 +128,7 @@ public class SanityCheckIT {
         final HttpPut put = new HttpPut(location);
         put.setEntity(new StringEntity(body));
         put.setHeader(CONTENT_TYPE, "text/turtle");
+        put.setHeader("Prefer", "handling=lenient");
         executeAndVerify(put, SC_NO_CONTENT);
 
         // Update a server managed property in the resource body... not allowed!
@@ -160,7 +160,7 @@ public class SanityCheckIT {
     @Test
     public void testCannotCreateResourceConstraintLink() throws Exception {
         // Create a ldp:Resource resource, this should fail
-        final HttpPost post = new HttpPost(serverAddress + "rest/");
+        final HttpPost post = new HttpPost(serverAddress);
         post.setHeader(LINK,"<http://www.w3.org/ns/ldp#Resource>; rel=\"type\"");
         final HttpResponse postResponse = executeAndVerify(post, SC_BAD_REQUEST);
 
