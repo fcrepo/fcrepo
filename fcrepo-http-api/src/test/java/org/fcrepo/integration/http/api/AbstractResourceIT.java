@@ -602,7 +602,10 @@ public abstract class AbstractResourceIT {
 
     private CloseableHttpResponse setProperty(final String id, final String txId, final String propertyUri,
                                               final String value) throws IOException {
-        final HttpPatch postProp = new HttpPatch(serverAddress + (txId != null ? txId + "/" : "") + id);
+        final HttpPatch postProp = new HttpPatch(serverAddress + id);
+        if (txId != null) {
+            addTxTo(postProp, txId);
+        }
         postProp.setHeader(CONTENT_TYPE, "application/sparql-update");
         final String updateString =
                 "INSERT { <" + serverAddress + id.replace("/" + FCR_METADATA, "") +

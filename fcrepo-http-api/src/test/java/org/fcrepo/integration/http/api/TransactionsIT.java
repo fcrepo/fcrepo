@@ -19,6 +19,7 @@ package org.fcrepo.integration.http.api;
 
 import static java.lang.Math.min;
 import static java.lang.Thread.sleep;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
@@ -44,7 +45,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.impl.TransactionImpl.TIMEOUT_SYSTEM_PROPERTY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -82,7 +82,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.test.context.TestExecutionListeners;
 
@@ -490,19 +489,15 @@ public class TransactionsIT extends AbstractResourceIT {
      *
      * @throws IOException exception thrown during this function
      */
-    @Ignore("Pending PATCH implementation")
     @Test
     public void testIngestNewWithSparqlPatchWithinTransaction() throws IOException {
-        final String objectInTxCommit = getRandomUniqueId();
-
         /* create new tx */
         final String txLocation = createTransaction();
 
-        final HttpPost postNew = addTxTo(new HttpPost(serverAddress), txLocation);
+        final HttpPost postNew = new HttpPost(serverAddress);
         final String newObjectLocation;
         try (final CloseableHttpResponse resp = execute(postNew)) {
             assertEquals(CREATED.getStatusCode(), getStatus(resp));
-            assertHasAtomicId(txLocation, resp);
             newObjectLocation = getLocation(resp);
         }
 
@@ -530,7 +525,7 @@ public class TransactionsIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation)));
 
         /* it must exist after commit */
-        try (final CloseableDataset dataset = getDataset(new HttpGet(serverAddress + objectInTxCommit))) {
+        try (final CloseableDataset dataset = getDataset(new HttpGet(newObjectLocation))) {
             assertTrue("The inserted triple does not exist after the transaction has committed",
                     dataset.asDatasetGraph().contains(ANY, ANY, title.asNode(), createLiteral(newTitle)));
         }
@@ -614,36 +609,46 @@ public class TransactionsIT extends AbstractResourceIT {
      * @throws IOException exception thrown during this function
      */
     @Test
-    @Ignore("Until we implement some kind of record level locking.")
     public void testTransactionAndConcurrentConflictingUpdate() throws IOException {
         final String preserveProperty = "preserve";
         final String preserveValue = "true";
 
         /* create the object in question */
-        final String objId = getRandomUniqueId();
-        createObject(objId);
+        final String objectLocation;
+        try (final var response = execute(new HttpPost(serverAddress))) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            objectLocation = getLocation(response);
+        }
 
          /* create the deleter transaction */
         final String deleterTxLocation = createTransaction();
-        final String deleterTxId = deleterTxLocation.substring(serverAddress.length());
 
         /* assert that the object is eligible for delete in the transaction */
-        verifyProperty("No preserve property should be set!", objId, deleterTxId, preserveProperty, preserveValue,
-                false);
+        verifyProperty("No preserve property should be set!", objectLocation, deleterTxLocation, preserveProperty,
+                preserveValue, false);
 
         /* delete that object in the transaction */
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(deleterTxLocation + "/" + objId)));
+        final var delete = new HttpDelete(objectLocation);
+        addTxTo(delete, deleterTxLocation);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(delete));
 
         /* fetch the object-deleted-in-tx outside of the tx */
         assertEquals("Expected to find our object outside the scope of the tx,"
                 + " despite it being deleted in the uncommitted transaction.",
-                OK.getStatusCode(), getStatus(new HttpGet(serverAddress + objId)));
+                OK.getStatusCode(), getStatus(new HttpGet(objectLocation)));
 
-        /* mark the object as not deletable outside the context of the transaction */
-        setProperty(objId, preserveProperty, preserveValue);
+        /* Try to mark the object as not deletable outside the context of the transaction */
+        final HttpPatch postProp = new HttpPatch(objectLocation);
+        postProp.setHeader(CONTENT_TYPE, "application/sparql-update");
+        final String updateString =
+                "INSERT { <" + objectLocation +
+                        "> <" + preserveProperty + "> " + preserveValue + " } WHERE { }";
+        postProp.setEntity(new StringEntity(updateString, UTF_8));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(postProp));
+
         /* commit that transaction */
-        assertNotEquals("Transaction is not atomic with regards to the object!",
-                NO_CONTENT.getStatusCode(), getStatus(new HttpPost(deleterTxLocation + "/fcr:tx/fcr:commit")));
+        assertEquals("Transaction is still atomic with regards to the object!",
+                NO_CONTENT.getStatusCode(), getStatus(new HttpPut(deleterTxLocation)));
     }
 
     @Test
@@ -928,19 +933,22 @@ public class TransactionsIT extends AbstractResourceIT {
         try {
             runnable.run();
             fail("Request should fail because the resource should be locked by another transaction.");
-        } catch (HttpResponseException e) {
+        } catch (final HttpResponseException e) {
             assertEquals(CONFLICT.getStatusCode(), e.getStatusCode());
             assertTrue("concurrent update exception",
                     e.getReasonPhrase().contains("updated by another transaction"));
         }
     }
 
-    private void verifyProperty(final String assertionMessage, final String pid, final String txId,
+    private void verifyProperty(final String assertionMessage, final String uri, final String txId,
             final String propertyUri, final String propertyValue, final boolean shouldExist) throws IOException {
-        final HttpGet getObjCommitted = new HttpGet(serverAddress + (txId != null ? txId + "/" : "") + pid);
+        final HttpGet getObjCommitted = new HttpGet(uri);
+        if (txId != null) {
+            addTxTo(getObjCommitted, txId);
+        }
         try (final CloseableDataset dataset = getDataset(getObjCommitted)) {
             final boolean exists = dataset.asDatasetGraph().contains(ANY,
-                    createURI(serverAddress + pid), createURI(propertyUri), createLiteral(propertyValue));
+                    createURI(serverAddress + uri), createURI(propertyUri), createLiteral(propertyValue));
             if (shouldExist) {
                 assertTrue(assertionMessage, exists);
             } else {
@@ -1062,7 +1070,7 @@ public class TransactionsIT extends AbstractResourceIT {
             }).findFirst().get();
 
             Files.writeString(binary, "corrupted!");
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
     }
