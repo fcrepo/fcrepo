@@ -94,6 +94,8 @@ public class MembershipServiceImplTest {
 
     private final static Property OTHER_HAS_MEMBER = createProperty("http://example.com/anotherHasMember");
 
+    public static final Property PROXY_FOR = createProperty("http://example.com/proxyFor");
+
     @Inject
     private PersistentStorageSessionManager pSessionManager;
     @Mock
@@ -756,7 +758,7 @@ public class MembershipServiceImplTest {
         mockGetHeaders(txId, dcId.asMemento(versionChangeTime), populateHeaders(dcId, rootId,
                 RdfLexicon.DIRECT_CONTAINER, CREATED_DATE, versionChangeTime), rootId);
 
-        // Change memebership resource after having created version
+        // Change membership resource after having created version
         final var afterVersionChangeTime = Instant.parse("2019-11-13T14:00:00.0Z");
         mockGetHeaders(txId, dcId, populateHeaders(dcId, rootId,
                 RdfLexicon.DIRECT_CONTAINER, CREATED_DATE, afterVersionChangeTime), rootId);
@@ -827,8 +829,6 @@ public class MembershipServiceImplTest {
         assertNotNull(msRescUpdated1);
         assertNull(indexManager.getLastUpdated(null, member1Id));
 
-        indexManager.logMembership();
-
         // Change the membership direction from a ldp:hasMemberRelation to a ldp:isMemberOfRelation
         mockGetTriplesForDC(dcId, LAST_MODIFIED_DATE, membershipRescId, MEMBER_OF, true);
         membershipService.resourceModified(txId, dcId);
@@ -847,8 +847,6 @@ public class MembershipServiceImplTest {
         assertNotNull(msRescUpdated2);
         assertNotEquals(msRescUpdated1, msRescUpdated2);
 
-        indexManager.logMembership();
-
         // Reverse the membership direction again
         mockGetTriplesForDC(dcId, LAST_MODIFIED_DATE2, membershipRescId, OTHER_HAS_MEMBER, false);
         mockGetHeaders(txId, dcId, rootId, RdfLexicon.DIRECT_CONTAINER, CREATED_DATE, LAST_MODIFIED_DATE2);
@@ -862,8 +860,6 @@ public class MembershipServiceImplTest {
 
         assertCommittedMembershipCount(member1Id, 0);
         assertHasMembersNoTx(membershipRescId, OTHER_HAS_MEMBER, member1Id);
-
-        indexManager.logMembership();
 
         final var memRescUpdated2 = indexManager.getLastUpdated(null, member1Id);
         assertNotNull(memRescUpdated2);
@@ -1346,6 +1342,85 @@ public class MembershipServiceImplTest {
         assertHasMembersNoTx(membershipRescId, OTHER_HAS_MEMBER, member2Id);
     }
 
+    @Test
+    public void changeMembershipResource_ForIDC_ManualVersioning() throws Exception {
+        setField(propsConfig, "autoVersioningEnabled", Boolean.FALSE);
+
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(txId, membershipRescId);
+
+        final var membershipResc2Id = mintFedoraId();
+        mockGetHeaders(populateHeaders(membershipResc2Id, BASIC_CONTAINER));
+        membershipService.resourceCreated(txId, membershipResc2Id);
+
+        final var idcId = createIndirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceCreated(txId, idcId);
+
+        final var member1Id = createDCMember(rootId, BASIC_CONTAINER);
+
+        createProxy(idcId, member1Id, CREATED_DATE, true);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(membershipRescId, 1);
+        assertCommittedMembershipCount(membershipResc2Id, 0);
+
+        // Change the membership resource for the IDC without creating a version
+        mockListVersion(idcId);
+        mockGetTriplesForDC(idcId, CREATED_DATE, membershipResc2Id, RdfLexicon.LDP_MEMBER, false, PROXY_FOR, true);
+        membershipService.resourceModified(txId, idcId);
+
+        assertHasMembersNoTx(membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
+        assertHasMembers(txId, membershipResc2Id, RdfLexicon.LDP_MEMBER, member1Id);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(membershipRescId, 0);
+        assertHasMembersNoTx(membershipResc2Id, RdfLexicon.LDP_MEMBER, member1Id);
+
+        // Change membership property without versioning
+        mockGetTriplesForDC(idcId, CREATED_DATE, membershipResc2Id, OTHER_HAS_MEMBER, false, PROXY_FOR, true);
+        membershipService.resourceModified(txId, idcId);
+
+        assertHasMembersNoTx(membershipResc2Id, RdfLexicon.LDP_MEMBER, member1Id);
+        assertHasMembers(txId, membershipResc2Id, OTHER_HAS_MEMBER, member1Id);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(membershipRescId, 0);
+        assertHasMembersNoTx(membershipResc2Id, OTHER_HAS_MEMBER, member1Id);
+
+        // Create version from former head version
+        final var versionChangeTime = Instant.parse("2019-11-13T12:00:00.0Z");
+        mockListVersion(idcId, versionChangeTime);
+        // New head state matches previous head state for the moment
+        mockGetTriplesForDC(idcId, versionChangeTime, membershipResc2Id, OTHER_HAS_MEMBER, false, PROXY_FOR, false);
+        mockGetHeaders(txId, idcId.asMemento(versionChangeTime), populateHeaders(idcId, rootId,
+                RdfLexicon.INDIRECT_CONTAINER, CREATED_DATE, versionChangeTime), rootId);
+
+        // Change membership resource after having created version
+        final var afterVersionChangeTime = Instant.parse("2019-11-13T14:00:00.0Z");
+        mockGetHeaders(txId, idcId, populateHeaders(idcId, rootId,
+                RdfLexicon.INDIRECT_CONTAINER, CREATED_DATE, afterVersionChangeTime), rootId);
+        mockGetTriplesForDC(idcId, afterVersionChangeTime, membershipRescId, OTHER_HAS_MEMBER, false, PROXY_FOR, true);
+        membershipService.resourceModified(txId, idcId);
+
+        // Membership resc 2 should still have a member prior to the version creation/last property update
+        assertHasMembers(txId, membershipResc2Id.asMemento(CREATED_DATE), OTHER_HAS_MEMBER,
+                member1Id);
+        assertUncommittedMembershipCount(txId, membershipResc2Id, 0);
+        assertHasMembersNoTx(membershipResc2Id, OTHER_HAS_MEMBER, member1Id);
+        assertHasMembers(txId, membershipRescId, OTHER_HAS_MEMBER, member1Id);
+
+        membershipService.commitTransaction(txId);
+
+        assertCommittedMembershipCount(membershipResc2Id, 0);
+        assertHasMembersNoTx(membershipResc2Id.asMemento(CREATED_DATE), OTHER_HAS_MEMBER,
+                member1Id);
+        assertCommittedMembershipCount(membershipRescId.asMemento(CREATED_DATE), 0);
+        assertHasMembersNoTx(membershipRescId, OTHER_HAS_MEMBER, member1Id);
+    }
+
     private void mockListVersion(final FedoraId fedoraId, final Instant... versions) {
         when(psSession.listVersions(fedoraId.asResourceId())).thenReturn(Arrays.asList(versions));
     }
@@ -1454,6 +1529,35 @@ public class MembershipServiceImplTest {
         return headers;
     }
 
+    private FedoraId createIndirectContainer(final FedoraId membershipRescId, final Property relation,
+            final boolean useIsMemberOf) {
+        return createIndirectContainer(rootId, membershipRescId, relation, useIsMemberOf);
+    }
+
+    private FedoraId createIndirectContainer(final FedoraId parentId, final FedoraId membershipRescId,
+            final Property relation, final boolean useIsMemberOf) {
+        final var dcId = mintFedoraId();
+        mockGetHeaders(populateHeaders(dcId, parentId, RdfLexicon.INDIRECT_CONTAINER));
+        mockGetTriplesForDC(dcId, CREATED_DATE, membershipRescId, relation, useIsMemberOf, PROXY_FOR, false);
+        return dcId;
+    }
+
+    private FedoraId createProxy(final FedoraId idcId, final FedoraId memberId,
+            final Instant lastModified, final boolean isHead) {
+        final var proxyId = mintFedoraId();
+        mockGetHeaders(txId, proxyId, idcId, BASIC_CONTAINER, lastModified, lastModified);
+        final var model = ModelFactory.createDefaultModel();
+        final var proxyRdfResc = model.getResource(proxyId.getBaseId());
+        final var memberRdfResc = model.getResource(memberId.getFullId());
+        proxyRdfResc.addProperty(PROXY_FOR, memberRdfResc);
+        mockGetTriplesForDC(proxyId, null, model);
+        if (!isHead) {
+            mockGetTriplesForDC(proxyId, lastModified, model);
+        }
+        membershipService.resourceCreated(txId, proxyId);
+        return memberId;
+    }
+
     private FedoraId createDirectContainer(final FedoraId membershipRescId, final Property relation,
             final boolean useIsMemberOf) {
         return createDirectContainer(rootId, membershipRescId, relation, useIsMemberOf);
@@ -1479,6 +1583,12 @@ public class MembershipServiceImplTest {
 
     private void mockGetTriplesForDC(final FedoraId dcId, final Instant startTime, final FedoraId membershipRescId,
             final Property relation, final boolean useIsMemberOf, final boolean isHead) {
+        mockGetTriplesForDC(dcId, startTime, membershipRescId, relation, useIsMemberOf, null, isHead);
+    }
+
+    private void mockGetTriplesForDC(final FedoraId dcId, final Instant startTime, final FedoraId membershipRescId,
+            final Property relation, final boolean useIsMemberOf, final Property insertedContentRelation,
+            final boolean isHead) {
         final var model = ModelFactory.createDefaultModel();
         final var dcRdfResc = model.getResource(dcId.getBaseId());
         final var membershipRdfResc = model.getResource(membershipRescId.getFullId());
@@ -1489,6 +1599,9 @@ public class MembershipServiceImplTest {
             } else {
                 dcRdfResc.addProperty(RdfLexicon.HAS_MEMBER_RELATION, relation);
             }
+        }
+        if (insertedContentRelation != null) {
+            dcRdfResc.addProperty(RdfLexicon.INSERTED_CONTENT_RELATION, insertedContentRelation);
         }
 
         mockGetTriplesForDC(dcId, null, model);

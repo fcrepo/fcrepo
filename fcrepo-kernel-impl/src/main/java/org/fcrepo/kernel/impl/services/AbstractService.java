@@ -46,6 +46,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 import static org.apache.jena.graph.NodeFactory.createURI;
@@ -55,6 +56,7 @@ import static org.apache.jena.rdf.model.ResourceFactory.createStatement;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.RdfLexicon.DEFAULT_INTERACTION_MODEL;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
+import static org.fcrepo.kernel.api.RdfLexicon.INSERTED_CONTENT_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS_FULL;
 import static org.fcrepo.kernel.api.RdfLexicon.IS_MEMBER_OF_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
@@ -148,13 +150,15 @@ public abstract class AbstractService {
      */
     protected void ensureValidDirectContainer(final FedoraId fedoraId, final String interactionModel,
             final Model model) {
+        final boolean isIndirect = RdfLexicon.INDIRECT_CONTAINER.getURI().equals(interactionModel);
         if (!(RdfLexicon.DIRECT_CONTAINER.getURI().equals(interactionModel)
-                || RdfLexicon.INDIRECT_CONTAINER.getURI().equals(interactionModel))) {
+                || isIndirect)) {
             return;
         }
         final var dcResc = model.getResource(fedoraId.getFullId());
         final AtomicBoolean hasMembershipResc = new AtomicBoolean(false);
         final AtomicBoolean hasRelation = new AtomicBoolean(false);
+        final AtomicInteger insertedContentRelationCount = new AtomicInteger(0);
 
         dcResc.listProperties().forEachRemaining(stmt -> {
             final var predicate = stmt.getPredicate();
@@ -193,9 +197,32 @@ public abstract class AbstractService {
                             + " ldp:hasMemberRelation or ldp:isMemberOfRelation properties,"
                             + " with a predicate as the object");
                 }
+            } else if (isIndirect && INSERTED_CONTENT_RELATION.equals(predicate)) {
+                insertedContentRelationCount.incrementAndGet();
+                final RDFNode obj = stmt.getObject();
+                if (obj.isURIResource()) {
+                    final String uri = obj.asResource().getURI();
+                    // Throw exception if object is a server-managed property
+                    if (isManagedPredicate.test(createProperty(uri))) {
+                        throw new ServerManagedPropertyException(String.format(
+                                "%s cannot take a server managed property as an object: property value = %s.",
+                                predicate.getLocalName(), uri));
+                    }
+                } else {
+                    throw new MalformedRdfException("Indirect containers must specify an"
+                            + " ldp:insertedContentRelation property with a URI property as the object");
+                }
             }
         });
 
+        if (isIndirect) {
+            if (insertedContentRelationCount.get() > 1) {
+                throw new MalformedRdfException("Indirect containers must contain exactly one triple"
+                        + " with the predicate ldp:insertedContentRelation and a property as the object.");
+            } else if (insertedContentRelationCount.get() == 0) {
+                dcResc.addProperty(INSERTED_CONTENT_RELATION, RdfLexicon.MEMBER_SUBJECT);
+            }
+        }
         if (!hasMembershipResc.get()) {
             dcResc.addProperty(MEMBERSHIP_RESOURCE, dcResc);
         }

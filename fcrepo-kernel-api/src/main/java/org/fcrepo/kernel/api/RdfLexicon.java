@@ -186,8 +186,6 @@ public final class RdfLexicon {
 
     // EXTERNAL CONTENT
     public static final Property EXTERNAL_CONTENT = createProperty(FCREPO_API_NAMESPACE + "ExternalContent");
-    public static final Property PROXY_FOR = createProperty(REPOSITORY_NAMESPACE + "proxyFor");
-    public static final Property REDIRECTS_TO = createProperty(REPOSITORY_NAMESPACE + "redirectsTo");
 
     // RDF EXTRACTION
     public static final Property INBOUND_REFERENCES = createProperty(FCREPO_API_NAMESPACE + "PreferInboundReferences");
