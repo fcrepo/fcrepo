@@ -17,19 +17,19 @@
  */
 package org.fcrepo.http.commons.api.rdf;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.slf4j.LoggerFactory.getLogger;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
-
-import javax.ws.rs.core.UriBuilder;
 
 import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.ws.rs.core.UriBuilder;
+
 import org.fcrepo.kernel.api.identifiers.FedoraId;
+
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
 
@@ -44,15 +44,15 @@ public class HttpIdentifierConverter {
 
     private static final Logger LOGGER = getLogger(HttpIdentifierConverter.class);
 
-    private static final String DEFAULT_CONTEXT = "/rest";
-
     private final UriBuilder uriBuilder;
 
     private final UriTemplate uriTemplate;
 
-    private final String contextPath;
+    private final String contextServletPath;
 
-    private String internalUriPath;
+    private final String internalUriPrefix;
+
+    private final String internalUriPath;
 
     private static String trimTrailingSlashes(final String string) {
         return string.replaceAll("/+$", "");
@@ -61,17 +61,19 @@ public class HttpIdentifierConverter {
     /**
      * Create a new identifier converter within the given session with the given URI template
      * @param uriBuilder the uri builder
-     * @param contextPath the context path of the URI
+     * @param contextServletPath the context and servlet path of the URI
      */
-    public HttpIdentifierConverter(final UriBuilder uriBuilder, final String contextPath) {
-        if (!isEmpty(contextPath)) {
-            this.contextPath = (!contextPath.startsWith("/") ? "/" : "") + contextPath + DEFAULT_CONTEXT;
+    public HttpIdentifierConverter(final UriBuilder uriBuilder, final String contextServletPath) {
+        if (!isEmpty(contextServletPath)) {
+            this.contextServletPath = contextServletPath.startsWith("/") ? contextServletPath.substring(1) :
+                    contextServletPath;
         } else {
-            this.contextPath = DEFAULT_CONTEXT;
+            this.contextServletPath = "";
         }
         this.uriBuilder = uriBuilder;
         this.uriTemplate = new UriTemplate(uriBuilder.toTemplate());
-        internalUriPath = internalIdPrefix() + this.contextPath;
+        internalUriPrefix = internalIdPrefix() + "/";
+        internalUriPath = internalUriPrefix + this.contextServletPath;
     }
 
     /**
@@ -104,6 +106,29 @@ public class HttpIdentifierConverter {
     public boolean inExternalDomain(final String httpUri) {
         LOGGER.trace("Checking if http URI {} is in domain", httpUri);
         return getPath(httpUri) != null;
+    }
+
+    /**
+     * Make a URI into an absolute URI (if relative), an internal ID (if in repository domain) or leave it alone.
+     * @param httpUri the URI
+     * @return an absolute URI, the original URI or an internal ID.
+     */
+    public String translateUri(final String httpUri) {
+        if (inExternalDomain(httpUri)) {
+            return toInternalId(httpUri);
+        } else if (httpUri.startsWith(internalUriPrefix) || httpUri.startsWith("/")) {
+            // Is a relative URI.
+            final String uriPath;
+            if (httpUri.startsWith(internalUriPrefix)) {
+                uriPath = httpUri.substring(internalUriPrefix.length() - 1);
+            } else {
+                uriPath = httpUri;
+            }
+            // Build a fake URI using the hostname so we can resolve against it.
+            final var uri = uriBuilder.build("placeholder");
+            return uri.resolve(uriPath).toString();
+        }
+        return httpUri;
     }
 
     /**
@@ -203,7 +228,9 @@ public class HttpIdentifierConverter {
             return "/" + values.get("path");
         } else if (isRootWithoutTrailingSlash(httpUri)) {
             return "/";
-        } else if (httpUri.startsWith(internalUriPath)) {
+        } else if (httpUri.startsWith(internalUriPath) || httpUri.startsWith("/" + this.contextServletPath)) {
+            // relative URI with info:/<context> at the beginning or
+            // relative URI with /<context> at the beginning
             return mapInternalRestUri(httpUri);
         }
         return null;
@@ -223,15 +250,20 @@ public class HttpIdentifierConverter {
     }
 
     /**
-     * Takes internal URIs starting with info:(context path) and makes them into full URLs. Leaves any relative
-     * URI not starting with the defined context path alone. These URIs come when RDF contains a URI like
-     * </rest/someResource>. This gets converted to info:/rest/someResource as it is a URI but with no scheme.
+     * Takes internal URIs starting with info:(context path) or just the context path and makes them into full URLs.
+     * Leaves any relative URI not starting with the defined context path alone. These URIs come when RDF contains a URI
+     * like </rest/someResource>. This gets converted to info:/rest/someResource as it is a URI but with no scheme.
      * @param httpUri the partial URI
      * @return the path part of the url
      */
     private String mapInternalRestUri(final String httpUri) {
-        if (httpUri.startsWith(internalUriPath)) {
-            String realpath = httpUri.substring(internalUriPath.length());
+        if (httpUri.startsWith(internalUriPath) || httpUri.startsWith("/" + this.contextServletPath)) {
+            String realpath;
+            if (httpUri.startsWith(internalUriPath)) {
+                realpath = httpUri.substring(internalUriPath.length());
+            } else {
+                realpath = httpUri.substring(this.contextServletPath.length() + 1);
+            }
             if (realpath.startsWith("/")) {
                 realpath = realpath.substring(1);
             }

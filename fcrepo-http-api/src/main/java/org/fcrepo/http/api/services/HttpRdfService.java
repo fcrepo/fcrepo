@@ -134,15 +134,13 @@ public class HttpRdfService {
                     checkForDisallowedRdf(stmt);
                     if (stmt.getSubject().isURIResource()) {
                         final String originalSubj = stmt.getSubject().getURI();
-                        final String subj = idTranslator.inExternalDomain(originalSubj) ?
-                                idTranslator.toInternalId(originalSubj) : originalSubj;
+                        final String subj = idTranslator.translateUri(originalSubj);
 
                         RDFNode obj = stmt.getObject();
                         if (stmt.getObject().isURIResource()) {
                             final String objString = stmt.getObject().asResource().getURI();
-                            if (idTranslator.inExternalDomain(objString)) {
-                                obj = model.getResource(idTranslator.toInternalId(objString));
-                            }
+                            final String objUri = idTranslator.translateUri(objString);
+                            obj = model.getResource(objUri);
                         }
 
                         if (!subj.equals(originalSubj) || !obj.equals(stmt.getObject())) {

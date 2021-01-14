@@ -71,7 +71,8 @@ abstract public class FedoraBaseResource extends AbstractResource {
         if (identifierConverter == null) {
             identifierConverter = new HttpIdentifierConverter(
                     uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class),
-                    context.getContextPath());
+                    servletRequest.getContextPath() + servletRequest.getServletPath()
+            );
         }
 
         return identifierConverter;

@@ -4980,6 +4980,35 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertIdSuffixConstraint("~fcr-acl.nt");
     }
 
+    @Test
+    public void testMapRelativeUris() throws Exception {
+        final HttpPost post = postObjMethod();
+        final String body = "<> <http://example.org/related> </fcrepo/rest/test1> ; <http://example.org/related> " +
+                "</rest/test1> ; <http://example.org/related> <http://something.else/outThere> .";
+        post.setHeader(CONTENT_TYPE, "text/turtle");
+        post.setEntity(new StringEntity(body, UTF_8));
+        final String location;
+        try (final var response = execute(post)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            location = getLocation(response);
+        }
+        final HttpGet get = new HttpGet(location);
+        try (final var dataset = getDataset(get)) {
+            final var graph = dataset.asDatasetGraph();
+            final var nodeIter = graph.find(ANY, ANY, createURI("http://example.org/related"), ANY);
+            int nodeCounter = 0;
+            final List<String> expectedUris = List.of(serverAddress + "fcrepo/rest/test1",
+                    serverAddress + "rest/test1", "http://something.else/outThere");
+            while (nodeIter.hasNext()) {
+                final var quad = nodeIter.next();
+                nodeCounter += 1;
+                assertTrue(expectedUris.contains(quad.getObject().getURI()));
+            }
+            assertEquals(3, nodeCounter);
+        }
+
+    }
+
     private void assertIdStringConstraint(final String id) throws IOException {
         assertInvalidId(id);
         assertValidId(id + "-suffix");

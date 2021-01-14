@@ -312,22 +312,45 @@ public class HttpIdentifierConverterTest {
     @Test
     public void testInternalRelative() {
         final HttpIdentifierConverter idConverter = new HttpIdentifierConverter(UriBuilder.fromUri("http://localhost" +
-                ":8080/rest/{path: .*}"), "");
+                ":8080/rest/{path: .*}"), "/rest");
         final String validUri1 = "info:/rest/testID";
         assertTrue(idConverter.inExternalDomain(validUri1));
         final String invalidUri1 = "info:/someContext/rest/testID";
         assertFalse(idConverter.inExternalDomain(invalidUri1));
 
         final HttpIdentifierConverter idConverter2 = new HttpIdentifierConverter(UriBuilder.fromUri("http://localhost" +
-                ":8080/someContext/rest/{path: .*}"), "/someContext");
-        final String validUri2 = "info:/someContext/rest/testID";
+                ":8080/someContext/{path: .*}"), "/someContext");
+        final String validUri2 = "info:/someContext/testID";
         assertTrue(idConverter2.inExternalDomain(validUri2));
         final String invalidUri2 = "info:/rest/testID";
         assertFalse(idConverter2.inExternalDomain(invalidUri2));
         final String invalidUri3 = "info:/someContext/testID";
-        assertFalse(idConverter2.inExternalDomain(invalidUri3));
+        assertTrue(idConverter2.inExternalDomain(invalidUri3));
         final String invalidUri4 = "info:/testID";
         assertFalse(idConverter2.inExternalDomain(invalidUri4));
+    }
+
+    @Test
+    public void testNonInternalRelative() {
+        final String hostname = "http://localhost:8080";
+        final HttpIdentifierConverter idConverter = new HttpIdentifierConverter(UriBuilder.fromUri(hostname +
+                "/rest/{path: .*}"), "/rest");
+        // Full URIs not in the repository domain are not converted
+        final String uri1 = "http://example.org/whatever";
+        assertEquals(uri1, idConverter.translateUri(uri1));
+
+        // Relative URIs are mapped to the hostname
+        final String uri2 = "/fcrepo/rest/testObject";
+        assertEquals(hostname + uri2, idConverter.translateUri(uri2));
+
+        final String uri3 = "/testThing";
+        assertEquals(hostname + uri3, idConverter.translateUri(uri3));
+
+        final String uri4 = "/rest/someThing";
+        assertEquals(FEDORA_ID_PREFIX + "/someThing", idConverter.translateUri(uri4));
+
+        final String uri5 = "info:/rest/someThing";
+        assertEquals(FEDORA_ID_PREFIX + "/someThing", idConverter.translateUri(uri5));
     }
 
     /**

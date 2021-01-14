@@ -93,11 +93,9 @@ public class HttpRdfServiceTest {
 
     @Before
     public void setup() {
-        when(idTranslator.toInternalId(FEDORA_URI_1)).thenReturn(FEDORA_ID_1.getFullId());
-        when(idTranslator.toInternalId(FEDORA_URI_2)).thenReturn(FEDORA_ID_2.getFullId());
-        when(idTranslator.inExternalDomain(FEDORA_URI_1)).thenReturn(true);
-        when(idTranslator.inExternalDomain(FEDORA_URI_2)).thenReturn(true);
-        when(idTranslator.inExternalDomain(NON_FEDORA_URI)).thenReturn(false);
+        when(idTranslator.translateUri(FEDORA_URI_1)).thenReturn(FEDORA_ID_1.getFullId());
+        when(idTranslator.translateUri(FEDORA_URI_2)).thenReturn(FEDORA_ID_2.getFullId());
+        when(idTranslator.translateUri(NON_FEDORA_URI)).thenReturn(NON_FEDORA_URI);
 
         when(idTranslator.toExternalId(FEDORA_ID_1.getFullId())).thenReturn(FEDORA_URI_1);
         when(idTranslator.toExternalId(FEDORA_ID_2.getFullId())).thenReturn(FEDORA_URI_2);
@@ -106,6 +104,9 @@ public class HttpRdfServiceTest {
         when(idTranslator.inInternalDomain(NON_FEDORA_URI)).thenReturn(false);
 
         when(resource.getId()).thenReturn(FEDORA_ID_1.getFullId());
+
+        when(idTranslator.translateUri("http://other.com/resource")).thenReturn("http://other.com/resource");
+        when(idTranslator.translateUri(FEDORA_ID_1.getFullId())).thenReturn(FEDORA_ID_1.getFullId());
 
         log.debug("Rdf is: {}", RDF);
     }

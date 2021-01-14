@@ -240,9 +240,8 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
     private Node translateId(final Node externalNode) {
         if (externalNode.isURI()) {
             final String externalId = externalNode.getURI();
-            if (idTranslator.inExternalDomain(externalId)) {
-                return NodeFactory.createURI(idTranslator.toInternalId(externalId));
-            }
+            final String newUri = idTranslator.translateUri(externalId);
+            return NodeFactory.createURI(newUri);
         }
         return externalNode;
     }
