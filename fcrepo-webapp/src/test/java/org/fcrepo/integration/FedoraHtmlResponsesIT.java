@@ -43,7 +43,6 @@ import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.entity.StringEntity;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.gargoylesoftware.htmlunit.DefaultCredentialsProvider;
@@ -167,7 +166,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
                 "http://www.w3.org/ns/ldp#DirectContainer"));
     }
 
-    @Ignore("Needs indirectContainers - FCREPO-3410")
     @Test
     public void testCreateNewIndirectContainer() throws IOException {
         final HtmlPage newPage = createAndVerifyObjectWithIdFromRootPage(newPid(), "indirect container");
@@ -180,7 +178,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
         // can't do this with javascript, because HTMLUnit doesn't speak the HTML5 file api
         final HtmlPage page = javascriptlessWebClient.getPage(serverAddress);
-        final HtmlForm form = (HtmlForm)page.getElementById("action_create");
 
         final HtmlSelect type = (HtmlSelect)page.getElementById("new_mixin");
         type.getOptionByValue("binary").setSelected(true);
