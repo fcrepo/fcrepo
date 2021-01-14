@@ -43,7 +43,7 @@
                 <div class="panel-heading">
                     <h4 class="panel-title">Properties</h4>
                 </div>
-                <div class="panel-body">
+                <div id="metadata" class="panel-body">
                     #triples($topic)
                 </div>
             </div>

@@ -21,15 +21,19 @@ import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.parseInt;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.google.common.base.Strings;
+import java.util.Objects;
+
+import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.junit.Before;
 import org.slf4j.Logger;
 
-import java.util.Objects;
+import com.google.common.base.Strings;
 
 /**
  * Base class for ITs
@@ -64,8 +68,11 @@ public abstract class AbstractResourceIT {
     protected static final HttpClient client = createClient();
 
     private static HttpClient createClient() {
+        final Credentials credentials = new UsernamePasswordCredentials("fedoraAdmin", "fedoraAdmin");
+        final CredentialsProvider credsProvider = new BasicCredentialsProvider();
+        credsProvider.setCredentials(AuthScope.ANY, credentials);
         return HttpClientBuilder.create().setMaxConnPerRoute(MAX_VALUE)
-                .setMaxConnTotal(MAX_VALUE).build();
+                .setMaxConnTotal(MAX_VALUE).setDefaultCredentialsProvider(credsProvider).build();
     }
 
 }

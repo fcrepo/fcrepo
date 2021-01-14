@@ -330,7 +330,7 @@
      label1.setAttribute('for', 'condition_' + count);
      label1.setAttribute('class', 'control-label');
      label1.textContent="Field";
-     wrapper.append(label1);
+     wrapper.appendChild(label1);
      let localfield = document.createElement('select');
      localfield.setAttribute('id', 'condition_' + count);
      fields.forEach(function(f) {
@@ -340,14 +340,14 @@
              o.setAttribute('selected', 'true');
          }
          o.textContent=f;
-         localfield.append(o);
+         localfield.appendChild(o);
      });
-     wrapper.append(localfield);
+     wrapper.appendChild(localfield);
      let label2 = document.createElement('label');
      label2.setAttribute('for', 'operator_' + count);
      label2.setAttribute('class', 'control-label');
      label2.textContent="Operator";
-     wrapper.append(label2);
+     wrapper.appendChild(label2);
      let localoperator = document.createElement('select');
      localoperator.setAttribute('id', 'operator_' + count);
      operators.forEach(function(f) {
@@ -357,16 +357,16 @@
              o.setAttribute('selected', 'true');
          }
          o.textContent=f;
-         localoperator.append(o);
+         localoperator.appendChild(o);
      });
-     wrapper.append(localoperator);
+     wrapper.appendChild(localoperator);
      let br = document.createElement('br');
-     wrapper.append(br);
+     wrapper.appendChild(br);
      let label3 = document.createElement('label');
      label3.setAttribute('for', 'search_value_' + count);
      label3.setAttribute('class', 'control-label');
      label3.textContent="Query term";
-     wrapper.append(label3);
+     wrapper.appendChild(label3);
      let localvalue = document.createElement('input');
      localvalue.setAttribute('type', 'text');
      localvalue.setAttribute('id', 'search_value_' + count);
@@ -375,7 +375,7 @@
      if (condition['value'] != null && condition['value'] != '') {
          localvalue.setAttribute('value', condition['value']);
      }
-     wrapper.append(localvalue);
+     wrapper.appendChild(localvalue);
      theForm.insertBefore(wrapper, beforeNode);
   }
 
@@ -383,8 +383,8 @@
    * Encode comparison operators in conditions.
    */
   function encodeSearchCondition(condition) {
-      return encodeURIComponent(condition).replaceAll('<', '%3C').replaceAll('=', '%3D').replaceAll('>', '%3E')
-      .replaceAll('%26', '&');
+      return encodeURIComponent(condition).replace('/</g', '%3C').replace('/=/g', '%3D').replace('/>/g', '%3E')
+      .replace('/%26/g', '&');
   }
 
   /*
