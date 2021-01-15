@@ -18,6 +18,8 @@
 package org.fcrepo.kernel.impl.services;
 
 import static java.util.stream.Stream.empty;
+import static org.fcrepo.kernel.api.rdf.LdpTriplePreferences.preferChoice.EXCLUDE;
+import static org.fcrepo.kernel.api.rdf.LdpTriplePreferences.preferChoice.INCLUDE;
 
 import javax.inject.Inject;
 
@@ -64,25 +66,23 @@ public class ResourceTripleServiceImpl implements ResourceTripleService {
                                              final LdpTriplePreferences preferences, final int limit) {
         final List<Stream<Triple>> streams = new ArrayList<>();
 
-        if (!preferences.preferNoUserRdf()) {
-            // provide user RDF only if we didn't receive an omit=ldp:PreferMinimalContainer
+        // Provide user RDF if we didn't ask for omit=ldp:PreferMinimalContainer.
+        if (!preferences.preferMinimal().equals(EXCLUDE)) {
             streams.add(resource.getTriples());
         }
-        if (preferences.getMinimal()) {
-            if (preferences.prefersServerManaged())  {
-                streams.add(this.managedPropertiesService.get(resource));
-                //TODO Implement minimal return preference (https://jira.lyrasis.org/browse/FCREPO-3334)
-                //streams.add(getTriples(resource, MINIMAL));
-            }
-        } else {
+        // Provide server-managed triples if we didn't ask for omit=fedora:ServerManaged or
+        // omit=ldp:PreferMinimalContainer
+        if (!preferences.preferMinimal().equals(EXCLUDE) && !preferences.prefersServerManaged().equals(EXCLUDE)) {
+            streams.add(this.managedPropertiesService.get(resource));
+        }
+        // If we didn't ask for a include=ldp:PreferMinimalContainer explicitly
+        if (!preferences.preferMinimal().equals(INCLUDE)) {
 
-            // Additional server-managed triples about this resource
-            if (preferences.prefersServerManaged()) {
-                streams.add(this.managedPropertiesService.get(resource));
-            }
-
-            // containment triples about this resource
-            if (preferences.prefersContainment()) {
+            // containment triples about this resource, return by default. Containment is server managed so also
+            // check for that prefer tag.
+            if (preferences.prefersContainment().equals(INCLUDE) ||
+                    (!preferences.prefersServerManaged().equals(EXCLUDE) &&
+                    !preferences.prefersContainment().equals(EXCLUDE))) {
                 if (limit == -1) {
                     streams.add(this.containmentTriplesService.get(tx, resource));
                 } else {
@@ -90,16 +90,15 @@ public class ResourceTripleServiceImpl implements ResourceTripleService {
                 }
             }
 
-            // LDP container membership triples for this resource
-            if (preferences.prefersMembership()) {
+            // LDP container membership triples for this resource, returned by default.
+            if (!preferences.prefersMembership().equals(EXCLUDE)) {
                 streams.add(membershipService.getMembership(tx.getId(), resource.getFedoraId()));
             }
 
-            // Include inbound references to this object
-            if (preferences.prefersReferences()) {
+            // Include inbound references to this object, NOT returned by default.
+            if (preferences.prefersReferences().equals(INCLUDE)) {
                 streams.add(referenceService.getInboundReferences(tx.getId(), resource));
             }
-
         }
 
         return streams.stream().reduce(empty(), Stream::concat);

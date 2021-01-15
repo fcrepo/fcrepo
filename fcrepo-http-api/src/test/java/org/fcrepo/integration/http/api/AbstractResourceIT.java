@@ -45,6 +45,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
@@ -94,6 +95,7 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.vocabulary.DC_11.title;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
@@ -101,6 +103,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
@@ -126,9 +129,12 @@ public abstract class AbstractResourceIT {
 
     protected static final String NON_RDF_SOURCE_LINK_HEADER = "<" + NON_RDF_SOURCE.getURI() + ">;rel=\"type\"";
     protected static final String BASIC_CONTAINER_LINK_HEADER = "<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\"";
+    protected static final String DIRECT_CONTAINER_LINK_HEADER = "<" + DIRECT_CONTAINER.getURI() + ">; rel=\"type\"";
 
     private static final String OMIT_SERVER_PREFER_HEADER = "return=representation; omit=\"" + PREFER_SERVER_MANAGED +
             "\"";
+
+    protected static final Node DCTITLE = title.asNode();
 
     @Inject
     private ContainerWrapper containerWrapper;
@@ -390,7 +396,7 @@ public abstract class AbstractResourceIT {
      *
      * @param uri uri of the resource
      * @return etag
-     * @throws IOException
+     * @throws IOException if the uri is invalid
      */
     protected String getEtag(final String uri) throws IOException {
         return getEtag(new HttpHead(uri));
@@ -400,7 +406,7 @@ public abstract class AbstractResourceIT {
      * Get the etag returned when executing the provided method
      * @param method method to execute
      * @return etag
-     * @throws IOException
+     * @throws IOException in case of a problem or the connection was aborted
      */
     protected String getEtag(final HttpUriRequest method) throws IOException {
         try (final CloseableHttpResponse response = execute(method)) {

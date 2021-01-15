@@ -128,6 +128,7 @@ import org.fcrepo.kernel.api.models.TimeMap;
 import org.fcrepo.kernel.api.models.Tombstone;
 import org.fcrepo.kernel.api.models.WebacAcl;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.rdf.LdpTriplePreferences.preferChoice;
 import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
 import org.fcrepo.kernel.api.services.CreateResourceService;
 import org.fcrepo.kernel.api.services.DeleteResourceService;
@@ -289,7 +290,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 transaction(), resource, ldpPreferences, limit));
 
         // Embed the children of this object
-        if (ldpPreferences.prefersEmbed()) {
+        if (ldpPreferences.prefersEmbed().equals(preferChoice.INCLUDE)) {
             final var containedResources = resourceFactory.getChildren(
                     TransactionUtils.openTxId(transaction()),
                     resource.getFedoraId());
@@ -302,7 +303,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 embedStreams.stream().reduce(empty(), Stream::concat)
         );
 
-        if (httpTripleUtil != null && ldpPreferences.prefersServerManaged()) {
+        if (httpTripleUtil != null &&
+                !ldpPreferences.prefersServerManaged().equals(preferChoice.EXCLUDE)) {
             // Adds fixity service triple to all resources and transaction triple to repo root.
             return httpTripleUtil.addHttpComponentModelsForResourceToStream(rdfStream, resource, uriInfo);
         }

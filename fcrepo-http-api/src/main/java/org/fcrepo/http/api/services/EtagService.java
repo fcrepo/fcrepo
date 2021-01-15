@@ -74,21 +74,21 @@ public class EtagService {
 
         // Factor in preferences which change which triples are included in the response
         etag.append('|');
-        if (prefers.prefersContainment()) {
+        if (!prefers.prefersContainment().equals(LdpTriplePreferences.preferChoice.EXCLUDE)) {
             final var lastUpdated = containmentIndex.containmentLastUpdated(txId, resource.getFedoraId());
             if (lastUpdated != null) {
                 etag.append(lastUpdated);
             }
         }
         etag.append('|');
-        if (prefers.prefersMembership()) {
+        if (!prefers.prefersMembership().equals(LdpTriplePreferences.preferChoice.EXCLUDE)) {
             final var lastUpdated = membershipService.getLastUpdatedTimestamp(txId, resource.getFedoraId());
             if (lastUpdated != null) {
                 etag.append(lastUpdated);
             }
         }
         addComponent(etag, prefers.prefersEmbed());
-        addComponent(etag, prefers.preferNoUserRdf());
+        addComponent(etag, prefers.preferMinimal());
         addComponent(etag, prefers.prefersReferences());
         addComponent(etag, prefers.prefersServerManaged());
 

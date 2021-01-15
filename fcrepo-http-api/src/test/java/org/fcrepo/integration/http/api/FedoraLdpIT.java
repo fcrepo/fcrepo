@@ -80,7 +80,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
@@ -219,14 +218,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     private static final Node rdfType = type.asNode();
 
-    private static final Node DCTITLE = title.asNode();
-
     private static final Resource PCDM_FILE_TYPE = createResource("http://pcdm.org/models#File");
 
     private static final String CONTAINER_LINK_HEADER = "<" + CONTAINER.getURI() + ">; rel=\"type\"";
 
     private static final String BASIC_CONTAINER_LINK_HEADER = "<" + BASIC_CONTAINER.getURI() + ">; rel=\"type\"";
-    private static final String DIRECT_CONTAINER_LINK_HEADER = "<" + DIRECT_CONTAINER.getURI() + ">; rel=\"type\"";
     private static final String INDIRECT_CONTAINER_LINK_HEADER = "<" + INDIRECT_CONTAINER.getURI() + ">; rel=\"type\"";
     private static final String ARCHIVAL_GROUP_LINK_HEADER = "<" + ARCHIVAL_GROUP.getURI() + ">; rel=\"type\"";
 
@@ -2252,254 +2248,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
-    @Test
-    public void testGetObjectGraphMinimal() throws IOException {
-        final String uri;
-        final HttpPost httpPost = postObjMethod();
-        httpPost.setHeader("Link", BASIC_CONTAINER_LINK_HEADER);
-        httpPost.setHeader(CONTENT_TYPE, "text/turtle");
-        httpPost.setEntity(new StringEntity("<> <" + DCTITLE.getURI() + "> \"The title\" ."));
-        try (final CloseableHttpResponse response = execute(httpPost)) {
-            assertEquals(CREATED.getStatusCode(), getStatus(response));
-            uri = getLocation(response);
-        }
-        final Node resource = createURI(uri);
-        // Create a contained child.
-        final HttpPut httpPut = new HttpPut(uri + "/a");
-        assertEquals(CREATED.getStatusCode(), getStatus(httpPut));
 
-        final HttpGet getObjMethod = new HttpGet(uri);
-        final String preferHeader = "return=minimal";
-        getObjMethod.addHeader("Prefer", preferHeader);
-        try (final CloseableHttpResponse response = execute(getObjMethod);
-             final CloseableDataset dataset = getDataset(response)) {
-            assertEquals(OK.getStatusCode(), getStatus(response));
-            final DatasetGraph graph = dataset.asDatasetGraph();
-            assertFalse("Didn't expect members", graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
-            final Collection<String> preferenceApplied = getHeader(response, "Preference-Applied");
-            assertTrue("Preference-Applied header doesn't matched", preferenceApplied.contains(preferHeader));
-            assertTrue("Missing a user RDF triple", graph.contains(ANY, resource, DCTITLE, ANY));
-        }
-        // Now test with include preference
-        final HttpGet httpGet = new HttpGet(uri);
-        final String preferHeader2 = "return=representation; include=\"" +
-                PREFER_MINIMAL_CONTAINER.getURI() + "\"";
-        httpGet.setHeader("Prefer", preferHeader2);
-        try (final CloseableHttpResponse response = execute(httpGet);
-             final CloseableDataset dataset = getDataset(response)) {
-            assertEquals(OK.getStatusCode(), getStatus(response));
-            final DatasetGraph graph = dataset.asDatasetGraph();
-            assertFalse("Didn't expect members", graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
-            final Collection<String> preferenceApplied = getHeader(response, "Preference-Applied");
-            assertTrue("Preference-Applied header doesn't matched",
-                    preferenceApplied.contains(preferHeader2));
-            assertTrue("Missing a user RDF triple", graph.contains(ANY, resource, DCTITLE, ANY));
-        }
-        // Now try with Omit minimal
-        final HttpGet getOmit = new HttpGet(uri);
-        final String preferOmitHeader = "return=representation; omit=\"" + PREFER_MINIMAL_CONTAINER + "\"";
-        getOmit.addHeader("Prefer", preferOmitHeader);
-        try (final CloseableHttpResponse response = execute(getOmit);
-             final CloseableDataset dataset = getDataset(response)) {
-            assertEquals(OK.getStatusCode(), getStatus(response));
-            final DatasetGraph graph = dataset.asDatasetGraph();
-            assertTrue("Expected members", graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
-            final Collection<String> preferenceApplied = getHeader(response, "Preference-Applied");
-            assertTrue("Preference-Applied header doesn't matched",
-                    preferenceApplied.contains(preferOmitHeader));
-            assertFalse("Should not return user RDF triples", graph.contains(ANY, resource, DCTITLE, ANY));
-        }
-    }
-
-    @Test
-    public void testGetObjectOmitMembership() throws IOException {
-        final String id = getRandomUniqueId();
-        final Node resource = createURI(serverAddress + id);
-        createObjectAndClose(id, BASIC_CONTAINER_LINK_HEADER);
-        final String initialEtag = getEtag(serverAddress + id);
-        createObjectAndClose(id + "/a");
-        final String withChildEtag = getEtag(serverAddress + id);
-        assertNotEquals(initialEtag, withChildEtag);
-        final HttpGet getObjMethod = getObjMethod(id);
-        getObjMethod.addHeader("Prefer", "return=representation; "
-                + "omit=\"http://www.w3.org/ns/ldp#PreferContainment http://www.w3.org/ns/ldp#PreferMembership\"");
-        final String omitEtag = getEtag(getObjMethod);
-        assertEquals(initialEtag, omitEtag);
-        assertNotEquals(withChildEtag, omitEtag);
-        try (final CloseableDataset dataset = getDataset(getObjMethod)) {
-            final DatasetGraph graph = dataset.asDatasetGraph();
-            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, BASIC_CONTAINER.asNode()).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, RDF_SOURCE.asNode()).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, FEDORA_CONTAINER.asNode()).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, FEDORA_RESOURCE.asNode()).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext());
-            assertTrue("Expected server managed",
-                    graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext());
-            assertFalse("Expected no members", graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
-        }
-    }
-
-    @Test
-    public void testGetObjectOmitContainment() throws IOException {
-        final String id = getRandomUniqueId();
-        createObjectAndClose(id);
-        final String initialEtag = getEtag(serverAddress + id);
-        final String location = serverAddress + id;
-        final String updateString = "<> <" + MEMBERSHIP_RESOURCE.getURI() +
-                "> <" + location + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_MEMBER + "> .";
-        final HttpPut put = putObjMethod(id + "/a", "text/turtle", updateString);
-        put.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
-        assertEquals(CREATED.getStatusCode(), getStatus(put));
-        assertTrue(getLinkHeaders(getObjMethod(id + "/a")).contains(DIRECT_CONTAINER_LINK_HEADER));
-        createObject(id + "/a/1");
-
-        final String withMemberEtag = getEtag(serverAddress + id);
-        assertNotEquals(initialEtag, withMemberEtag);
-
-        final HttpGet getObjMethod = getObjMethod(id);
-        getObjMethod
-                .addHeader("Prefer", "return=representation; omit=\"http://www.w3.org/ns/ldp#PreferContainment\"");
-        final String omitEtag = getEtag(getObjMethod);
-        assertNotEquals("Should not match initial because of membership", initialEtag, omitEtag);
-        assertNotEquals(withMemberEtag, omitEtag);
-        try (final CloseableDataset dataset = getDataset(getObjMethod)) {
-            final DatasetGraph graph = dataset.asDatasetGraph();
-            final Node resource = createURI(serverAddress + id);
-            assertTrue("Didn't find member resources", graph.find(ANY, resource, LDP_MEMBER.asNode(), ANY).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, BASIC_CONTAINER.asNode()).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, RDF_SOURCE.asNode()).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, FEDORA_CONTAINER.asNode()).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, FEDORA_RESOURCE.asNode()).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext());
-            assertTrue("Expected server managed",
-                    graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext());
-            assertFalse("Expected nothing contained", graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
-        }
-    }
-
-    @Test
-    public void testGetObjectOmitServerManaged() throws IOException {
-        final String id = getRandomUniqueId();
-        createObjectAndClose(id);
-
-        final String location = serverAddress + id;
-        final String updateString = "<> <" + MEMBERSHIP_RESOURCE.getURI() +
-                "> <" + location + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_MEMBER + "> .";
-        final HttpPut put = putObjMethod(id + "/a", "text/turtle", updateString);
-        put.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
-        assertEquals(CREATED.getStatusCode(), getStatus(put));
-        assertTrue(getLinkHeaders(getObjMethod(id + "/a")).contains(DIRECT_CONTAINER_LINK_HEADER));
-        createObject(id + "/a/1");
-
-        final String withMemberEtag = getEtag(serverAddress + id);
-
-        final HttpGet getObjMethod = getObjMethod(id);
-        getObjMethod.addHeader("Prefer",
-                "return=representation; omit=\"http://fedora.info/definitions/v4/repository#ServerManaged\"");
-        assertNotEquals("Etag should not match with SMTs excluded", withMemberEtag, getEtag(getObjMethod));
-        try (final CloseableDataset dataset = getDataset(getObjMethod)) {
-            final DatasetGraph graph = dataset.asDatasetGraph();
-            final Node resource = createURI(serverAddress + id);
-            assertTrue("Didn't find member resources", graph.find(ANY, resource, LDP_MEMBER.asNode(), ANY).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, ANY, BASIC_CONTAINER.asNode()).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, ANY, RDF_SOURCE.asNode()).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, ANY, FEDORA_CONTAINER.asNode()).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, ANY, FEDORA_RESOURCE.asNode()).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext());
-        }
-    }
-
-    @Test
-    public void testGetObjectIncludeContainmentAndOmitServerManaged() throws IOException {
-        final String id = getRandomUniqueId();
-        createObjectAndClose(id);
-        final String location = serverAddress + id;
-        final String updateString = "<> <" + MEMBERSHIP_RESOURCE.getURI() +
-                "> <" + location + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_MEMBER + "> .";
-        final HttpPut put = putObjMethod(id + "/a", "text/turtle", updateString);
-        put.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
-        assertEquals(CREATED.getStatusCode(), getStatus(put));
-        assertTrue(getLinkHeaders(getObjMethod(id + "/a")).contains(DIRECT_CONTAINER_LINK_HEADER));
-        createObject(id + "/a/1");
-
-        final String withMemberEtag = getEtag(serverAddress + id);
-
-        final HttpGet getObjMethod = getObjMethod(id);
-        getObjMethod.addHeader("Prefer",
-                "return=representation; omit=\"http://fedora.info/definitions/v4/repository#ServerManaged\"; " +
-                "include=\"http://www.w3.org/ns/ldp#PreferContainment\"");
-        assertNotEquals("Etag should not match with SMTs excluded", withMemberEtag, getEtag(getObjMethod));
-        try (final CloseableDataset dataset = getDataset(getObjMethod)) {
-            final DatasetGraph graph = dataset.asDatasetGraph();
-            final Node resource = createURI(serverAddress + id);
-            assertTrue("Didn't find ldp containment", graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
-        }
-    }
-
-    @Test
-    public void testGetLDPRmOmitServerManaged() throws IOException {
-        final String versionedResourceURI = createVersionedRDFResource();
-        final String mementoResourceURI = getLocation(new HttpPost(versionedResourceURI + "/fcr:versions"));
-        final String mementoEtag = getEtag(mementoResourceURI);
-
-        final HttpGet mementoGetMethod = new HttpGet(mementoResourceURI);
-        mementoGetMethod.addHeader("Prefer",
-                "return=representation; omit=\"http://fedora.info/definitions/v4/repository#ServerManaged\"");
-        assertNotEquals(mementoEtag, getEtag(mementoGetMethod));
-        try (final CloseableDataset dataset = getDataset(mementoGetMethod)) {
-            final DatasetGraph graph = dataset.asDatasetGraph();
-            final Node resource = createURI(versionedResourceURI);
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, ANY, RDF_SOURCE.asNode()).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, ANY, FEDORA_CONTAINER.asNode()).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, ANY, FEDORA_RESOURCE.asNode()).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext());
-        }
-    }
-
-    @Test
-    public void testGetLDPRmWithoutOmitServerManager() throws IOException {
-        final String versionedResourceURI = createVersionedRDFResource();
-        final String mementoResourceURI = getLocation(new HttpPost(versionedResourceURI + "/fcr:versions"));
-
-        final HttpGet mementoGetMethod = new HttpGet(mementoResourceURI);
-        try (final CloseableDataset dataset = getDataset(mementoGetMethod)) {
-            final DatasetGraph graph = dataset.asDatasetGraph();
-            final Node resource = createURI(versionedResourceURI);
-            assertTrue("Expected server managed",
-                    graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext());
-            assertTrue("Expected server managed",
-                    graph.find(ANY, resource, ANY, RDF_SOURCE.asNode()).hasNext());
-            assertTrue("Expected server managed",
-                    graph.find(ANY, resource, ANY, FEDORA_CONTAINER.asNode()).hasNext());
-            assertTrue("Expected server managed",
-                    graph.find(ANY, resource, ANY, FEDORA_RESOURCE.asNode()).hasNext());
-            assertTrue("Expected server managed",
-                    graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext());
-            assertTrue("Expected server managed",
-                    graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext());
-        }
-    }
 
     @Test
     public void testPatchToCreateDirectContainerInSparqlUpdateFails() throws IOException {
@@ -2664,7 +2413,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 "> <" + resource + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_MEMBER + "> .";
         final HttpPut put1 = putObjMethod(pid + "/a", "text/turtle", ttl1);
         put1.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
-        put1.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
+        put1.addHeader("Prefer", "handling=lenient");
         assertEquals("Changed the basic container ixn to direct container!",
                 CONFLICT.getStatusCode(), getStatus(put1));
 
@@ -2679,7 +2428,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String ttl2 = "<> <" + title + "> \"this is a title\"";
         final HttpPut put2 = putObjMethod(pid + "/b", "text/turtle", ttl2);
         put2.setHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
-        put2.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
+        put2.addHeader("Prefer", "handling=lenient");
         assertEquals("Changed the direct container ixn to basic container",
                 CONFLICT.getStatusCode(), getStatus(put2));
 
@@ -2688,7 +2437,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 + "<" + INSERTED_CONTENT_RELATION + "> <info:proxy/for> .\n";
         final HttpPut put3 = putObjMethod(pid + "/b", "text/turtle", ttl3);
         put3.setHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
-        put3.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
+        put3.addHeader("Prefer", "handling=lenient");
         assertEquals("Changed the direct container ixn to indirect container!",
                 CONFLICT.getStatusCode(), getStatus(put3));
     }
@@ -3645,12 +3394,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
         final HttpPut replaceMethod = new HttpPut(subjectURI);
         replaceMethod.addHeader(CONTENT_TYPE, "text/turtle");
-        replaceMethod.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
+        replaceMethod.addHeader("Prefer", "handling=lenient");
         replaceMethod.setEntity(new StringEntity("<> <" + DCTITLE.getURI() + "> \"xyz\""));
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(replaceMethod));
 
         final HttpGet get = new HttpGet(subjectURI);
-        get.addHeader("Prefer", "return=minimal");
+        get.addHeader("Prefer", "return=representation; include=\"" + PREFER_MINIMAL_CONTAINER + "\"");
         try (final CloseableDataset dataset = getDataset(get)) {
             assertTrue(dataset.asDatasetGraph().contains(ANY, ANY, DCTITLE, createLiteral("xyz")));
         }
@@ -3678,77 +3427,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(httpPut)) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
             checkForLinkHeader(response, location + "/" + FCR_ACL, "acl");
-        }
-    }
-
-    @Test
-    public void testEmbeddedContainedResources() throws IOException {
-        final String id = getRandomUniqueId();
-        final String binaryId = "binary0";
-        final String preferEmbed =
-                "return=representation; include=\"" + EMBED_CONTAINED + "\"";
-
-        assertEquals(CREATED.getStatusCode(), getStatus(putObjMethod(id)));
-        assertEquals(CREATED.getStatusCode(), getStatus(putDSMethod(id, binaryId, "some test content")));
-
-        final HttpPatch httpPatch = patchObjMethod(id + "/" + binaryId + "/fcr:metadata");
-        httpPatch.addHeader(CONTENT_TYPE, "application/sparql-update");
-        httpPatch.setEntity(new StringEntity(
-                "INSERT { <> <http://purl.org/dc/elements/1.1/title> 'this is a title' } WHERE {}"));
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(httpPatch));
-
-        final String withoutEmbedEtag = getEtag(serverAddress + id);
-
-        final HttpGet httpGet = getObjMethod(id);
-        httpGet.setHeader("Prefer", preferEmbed);
-        assertNotEquals(withoutEmbedEtag, getEtag(httpGet));
-        try (final CloseableHttpResponse response = execute(httpGet)) {
-            final Collection<String> preferenceApplied = getHeader(response, "Preference-Applied");
-            assertTrue("Preference-Applied header doesn't match", preferenceApplied.contains(preferEmbed));
-
-            final DatasetGraph graphStore = getDataset(response).asDatasetGraph();
-            assertTrue("Property on child binary should be found!" + graphStore, graphStore.contains(ANY,
-                    createURI(serverAddress + id + "/" + binaryId),
-                    title.asNode(), createLiteral("this is a title")));
-        }
-    }
-
-    @Test
-    public void testEmbeddedContainedResourcesNotToDeep() throws IOException {
-        final String id = getRandomUniqueId();
-        final String level1 = id + "/" + getRandomUniqueId();
-        final String level2 = level1 + "/" + getRandomUniqueId();
-        final String preferEmbed =
-                "return=representation; include=\"" + EMBED_CONTAINED + "\"";
-
-        assertEquals(CREATED.getStatusCode(), getStatus(putObjMethod(id)));
-
-        final HttpPut putLevel1 = putObjMethod(level1);
-        putLevel1.addHeader(CONTENT_TYPE, "text/turtle");
-        putLevel1.setEntity(new StringEntity("<> <" + title + "> \"First level\"", UTF_8));
-        assertEquals(CREATED.getStatusCode(), getStatus(putLevel1));
-
-        final HttpPut putLevel2 = putObjMethod(level2);
-        putLevel2.addHeader(CONTENT_TYPE, "text/turtle");
-        putLevel2.setEntity(new StringEntity("<> <" + title + "> \"Second level\"", UTF_8));
-        assertEquals(CREATED.getStatusCode(), getStatus(putLevel2));
-
-        final HttpGet httpGet = getObjMethod(id);
-        httpGet.setHeader("Prefer", preferEmbed);
-        try (final CloseableHttpResponse response = execute(httpGet)) {
-            final Collection<String> preferenceApplied = getHeader(response, "Preference-Applied");
-            assertTrue("Preference-Applied header doesn't match", preferenceApplied.contains(preferEmbed));
-
-            final DatasetGraph graphStore = getDataset(response).asDatasetGraph();
-            assertTrue("Property on child binary should be found!" + graphStore, graphStore.contains(ANY,
-                    createURI(serverAddress + level1),
-                    title.asNode(), createLiteral("First level")));
-            assertFalse("Property from embedded resource's own child should not be found.",
-                    graphStore.contains(ANY,
-                            createURI(serverAddress + level2),
-                            title.asNode(), createLiteral("Second level")
-                    )
-            );
         }
     }
 

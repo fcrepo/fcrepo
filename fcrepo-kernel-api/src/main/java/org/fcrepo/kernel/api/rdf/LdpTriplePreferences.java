@@ -25,37 +25,48 @@ package org.fcrepo.kernel.api.rdf;
 public interface LdpTriplePreferences {
 
     /**
-     * @return Whether to return a minimal container.
+     * What the prefer tag choice is.
      */
-    boolean getMinimal();
+    enum preferChoice {
+        INCLUDE("Include"),
+        EXCLUDE("Exclude"),
+        SILENT("Silent");
+
+        private String value;
+
+        preferChoice(final String value) {
+            this.value = value;
+        }
+    }
 
     /**
-     * @return Whether this prefer tag demands membership triples.
+     * @return Whether this preference tag asks to include or omit a minimal container or is silent.
      */
-    boolean prefersMembership();
+    preferChoice preferMinimal();
 
     /**
-     * @return Whether this prefer tag demands containment triples.
+     * @return Whether this preference tag asks to include or omit membership triples or is silent.
      */
-    boolean prefersContainment();
+    preferChoice prefersMembership();
 
     /**
-     * @return Whether this prefer tag demands references triples.
+     * @return Whether this preference tag asks to include or omit containment triples or is silent.
      */
-    boolean prefersReferences();
+    preferChoice prefersContainment();
 
     /**
-     * @return Whether this prefer tag demands embedded triples.
+     * @return Whether this preference tag asks to include or omit reference triples or is silent.
      */
-    boolean prefersEmbed();
+    preferChoice prefersReferences();
 
     /**
-     * @return Whether this prefer tag demands server managed properties.
+     * @return Whether this preference tag asks to include or omit embedded triples or is silent.
      */
-    boolean prefersServerManaged();
+    preferChoice prefersEmbed();
 
     /**
-     * @return Whether this prefer tag demands no minimal container, ie. no user RDF.
+     * @return Whether this preference tag asks to include or omit server managed triples or is silent.
      */
-    boolean preferNoUserRdf();
+    preferChoice prefersServerManaged();
+
 }

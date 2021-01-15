@@ -32,6 +32,8 @@ import java.util.Optional;
 import org.fcrepo.http.commons.domain.PreferTag;
 import org.fcrepo.kernel.api.rdf.LdpTriplePreferences;
 
+import org.apache.jena.rdf.model.Property;
+
 /**
  * A subclass of {@link PreferTag} that contemplates the possible preferences for Linked Data Platform requests.
  *
@@ -39,19 +41,21 @@ import org.fcrepo.kernel.api.rdf.LdpTriplePreferences;
  */
 public class LdpPreferTag extends PreferTag implements LdpTriplePreferences {
 
-    private final boolean getMinimal;
+    private final preferChoice minimal;
 
-    private final boolean membership;
+    private final preferChoice membership;
 
-    private final boolean containment;
+    private final preferChoice containment;
 
-    private final boolean references;
+    private final preferChoice references;
 
-    private final boolean embed;
+    private final preferChoice embed;
 
-    private final boolean managedProperties;
+    private final preferChoice managedProperties;
 
-    private final boolean noMinimal;
+    final List<String> includes;
+
+    final List<String> omits;
 
     /**
      * Standard constructor.
@@ -63,65 +67,64 @@ public class LdpPreferTag extends PreferTag implements LdpTriplePreferences {
 
         final Optional<String> include = ofNullable(preferTag.getParams().get("include"));
         final Optional<String> omit = ofNullable(preferTag.getParams().get("omit"));
-        final Optional<String> received = ofNullable(preferTag.getParams().get("received"));
 
-        final List<String> includes = asList(include.orElse(" ").split(" "));
-        final List<String> omits = asList(omit.orElse(" ").split(" "));
+        includes = asList(include.orElse(" ").split(" "));
+        omits = asList(omit.orElse(" ").split(" "));
 
-        getMinimal = preferTag.getValue().equals("minimal") || received.orElse("").equals("minimal");
+        minimal = getChoice(PREFER_MINIMAL_CONTAINER);
 
-        final boolean preferMinimalContainer = (!omits.contains(PREFER_MINIMAL_CONTAINER.toString()) &&
-                (includes.contains(PREFER_MINIMAL_CONTAINER.toString()) || getMinimal));
+        membership = getChoice(PREFER_MEMBERSHIP);
 
-        noMinimal = omits.contains(PREFER_MINIMAL_CONTAINER.toString());
+        containment = getChoice(PREFER_CONTAINMENT);
 
-        membership = (!preferMinimalContainer && !omits.contains(PREFER_MEMBERSHIP.toString())) ||
-                includes.contains(PREFER_MEMBERSHIP.toString());
+        references = getChoice(INBOUND_REFERENCES);
 
-        containment = (!preferMinimalContainer && !omits.contains(PREFER_CONTAINMENT.toString()) &&
-                !omits.contains(PREFER_SERVER_MANAGED.toString()))
-                || includes.contains(PREFER_CONTAINMENT.toString());
+        embed = getChoice(EMBED_CONTAINED);
 
-        references = includes.contains(INBOUND_REFERENCES.toString());
+        managedProperties = getChoice(PREFER_SERVER_MANAGED);
+    }
 
-        embed = includes.contains(EMBED_CONTAINED.toString());
-
-        managedProperties = includes.contains(PREFER_SERVER_MANAGED.toString())
-                || (!omits.contains(PREFER_SERVER_MANAGED.toString()) && !getMinimal);
+    /**
+     * Determine what this tag's place in the Prefer header is.
+     * @param tag the tag to look for
+     * @return Whether the tag was included, omitted or not mentioned.
+     */
+    private preferChoice getChoice(final Property tag) {
+        if (includes.contains(tag.toString())) {
+            return preferChoice.INCLUDE;
+        } else if (omits.contains(tag.toString())) {
+            return preferChoice.EXCLUDE;
+        }
+        return preferChoice.SILENT;
     }
 
     @Override
-    public boolean getMinimal() {
-        return getMinimal;
+    public preferChoice preferMinimal() {
+        return minimal;
     }
 
     @Override
-    public boolean prefersMembership() {
+    public preferChoice prefersMembership() {
         return membership;
     }
 
     @Override
-    public boolean prefersContainment() {
+    public preferChoice prefersContainment() {
         return containment;
     }
 
     @Override
-    public boolean prefersReferences() {
+    public preferChoice prefersReferences() {
         return references;
     }
 
     @Override
-    public boolean prefersEmbed() {
+    public preferChoice prefersEmbed() {
         return embed;
     }
 
     @Override
-    public boolean prefersServerManaged() {
+    public preferChoice prefersServerManaged() {
         return managedProperties;
-    }
-
-    @Override
-    public boolean preferNoUserRdf() {
-        return noMinimal;
     }
 }
