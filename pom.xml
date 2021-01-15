@@ -727,6 +727,7 @@
                 <append>true</append>
                 <excludes>
                   <exclude>**/*CSS3ParserTokenManager*</exclude>
+                  <exclude>**/*StyleAttributes*</exclude>
                 </excludes>
               </configuration>
             </execution>
