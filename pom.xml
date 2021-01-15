@@ -36,7 +36,7 @@
     <guava.version>30.0-jre</guava.version>
     <h2database.version>1.4.195</h2database.version>
     <hk2.version>2.6.1</hk2.version>
-    <htmlunit.version>2.33</htmlunit.version>
+    <htmlunit.version>2.45.0</htmlunit.version>
     <httpclient.version>4.5.13</httpclient.version>
     <httpmime.version>4.5.13</httpmime.version>
     <httpcore.version>4.4.13</httpcore.version>
@@ -727,6 +727,7 @@
                 <append>true</append>
                 <excludes>
                   <exclude>**/*CSS3ParserTokenManager*</exclude>
+                  <exclude>**/*StyleAttributes*</exclude>
                 </excludes>
               </configuration>
             </execution>

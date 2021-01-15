@@ -17,14 +17,13 @@
  */
 package org.fcrepo.integration;
 
-import static com.gargoylesoftware.htmlunit.BrowserVersion.FIREFOX_60;
+import static com.gargoylesoftware.htmlunit.BrowserVersion.FIREFOX;
 import static com.google.common.collect.Lists.transform;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -32,19 +31,18 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
-import com.gargoylesoftware.htmlunit.html.DomElement;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.entity.BasicHttpEntity;
+import org.apache.http.entity.StringEntity;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.gargoylesoftware.htmlunit.DefaultCredentialsProvider;
@@ -55,6 +53,7 @@ import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.SilentCssErrorHandler;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.DomAttr;
+import com.gargoylesoftware.htmlunit.html.DomElement;
 import com.gargoylesoftware.htmlunit.html.DomText;
 import com.gargoylesoftware.htmlunit.html.HtmlButton;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
@@ -103,7 +102,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
                         namespaceLabel);
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testCreateNewNodeWithProvidedId() throws IOException {
         createAndVerifyObjectWithIdFromRootPage(newPid());
@@ -140,7 +138,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testCreateNewNodeWithGeneratedId() throws IOException {
 
@@ -155,7 +152,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         assertTrue("Didn't see new information in page!", !page1.asText().equals(page.asText()));
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testCreateNewBasicContainer() throws IOException {
         final HtmlPage newPage = createAndVerifyObjectWithIdFromRootPage(newPid(), "basic container");
@@ -163,7 +159,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
                 "http://www.w3.org/ns/ldp#BasicContainer"));
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testCreateNewDirectContainer() throws IOException {
         final HtmlPage newPage = createAndVerifyObjectWithIdFromRootPage(newPid(), "direct container");
@@ -171,7 +166,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
                 "http://www.w3.org/ns/ldp#DirectContainer"));
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testCreateNewIndirectContainer() throws IOException {
         final HtmlPage newPage = createAndVerifyObjectWithIdFromRootPage(newPid(), "indirect container");
@@ -180,36 +174,34 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("The htmlunit web client can't handle the HTML5 file API")
-    public void testCreateNewDatastream() throws IOException {
-
-        final String pid = randomUUID().toString();
+    public void testCreateNewDatastream() throws Exception {
 
         // can't do this with javascript, because HTMLUnit doesn't speak the HTML5 file api
-        final HtmlPage page = webClient.getPage(serverAddress);
-        final HtmlForm form = (HtmlForm)page.getElementById("action_create");
-
-        final HtmlInput slug = form.getInputByName("slug");
-        slug.setValueAttribute(pid);
+        final HtmlPage page = javascriptlessWebClient.getPage(serverAddress);
 
         final HtmlSelect type = (HtmlSelect)page.getElementById("new_mixin");
         type.getOptionByValue("binary").setSelected(true);
 
-        final HtmlFileInput fileInput = (HtmlFileInput)page.getElementById("datastream_payload");
+        final HtmlFileInput fileInput = (HtmlFileInput)page.getElementById("binary_payload");
         fileInput.setData("abcdef".getBytes());
         fileInput.setContentType("application/pdf");
 
-        final HtmlButton button = form.getFirstByXPath("button");
+        final HtmlButton button = (HtmlButton)page.getElementById("btn_action_create");
         button.click();
 
-        final HtmlPage page1 = javascriptlessWebClient.getPage(serverAddress + pid);
-        assertEquals(serverAddress + pid, page1.getTitleText());
+        // Without Javascript you end up at a blank page with just the newly generated URI as text.
+        final Page resultPage = javascriptlessWebClient.getCurrentWindow().getEnclosedPage();
+        final String newUri = resultPage.getWebResponse().getContentAsString();
+
+        final Page page1 = javascriptlessWebClient.getPage(newUri + "/" + FCR_METADATA);
+        assertTrue(page1.isHtmlPage());
+        assertEquals(newUri, ((HtmlPage)page1).getTitleText());
     }
 
     @Test
     public void testCreateNewDatastreamWithNoFileAttached() throws IOException {
 
-        final String pid = randomUUID().toString();
+        final String pid = newPid();
 
         // can't do this with javascript, because HTMLUnit doesn't speak the HTML5 file api
         final HtmlPage page = webClient.getPage(serverAddress);
@@ -229,7 +221,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         assertEquals(NOT_FOUND.getStatusCode(), status);
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testCreateNewObjectAndDeleteIt() throws IOException {
         final boolean throwExceptionOnFailingStatusCode = webClient.getOptions().isThrowExceptionOnFailingStatusCode();
@@ -249,7 +240,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         webClient.getOptions().setThrowExceptionOnFailingStatusCode(throwExceptionOnFailingStatusCode);
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testVersionsListWorksWhenNoVersionsPresent() throws IOException {
         final boolean throwExceptionOnFailingStatusCode = webClient.getOptions().isThrowExceptionOnFailingStatusCode();
@@ -271,11 +261,12 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
      *
      * @throws IOException exception thrown during this function
      */
-    @Ignore
     @Test
-    public void testVersionCreationAndNavigation() throws IOException {
-        final String pid = randomUUID().toString();
+    public void testVersionCreationAndNavigation() throws Exception {
+        final String pid = newPid();
         createAndVerifyObjectWithIdFromRootPage(pid);
+
+        TimeUnit.SECONDS.sleep(1);
 
         final String updateSparql = "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
                 "PREFIX fedora: <" + REPOSITORY_NAMESPACE + ">\n" +
@@ -288,6 +279,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
                      objectPage.getFirstByXPath("//span[@property='http://purl.org/dc/elements/1.1/title']/text()")
                              .toString());
 
+        TimeUnit.SECONDS.sleep(1);
         final String updateSparql2 = "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
                 "\n" +
                 "DELETE { <> dc:title ?t }\n" +
@@ -299,7 +291,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
                 javascriptlessWebClient.getPage(serverAddress + pid + "/fcr:versions");
         final List<DomAttr> versionLinks =
             castList(versions.getByXPath("//a[@class='version_link']/@href"));
-        assertEquals("There should be two revisions.", 2, versionLinks.size());
+        assertEquals("There should be three versions.", 3, versionLinks.size());
 
         // get the labels
         // will look like "Version from 2013-00-0T00:00:00.000Z"
@@ -312,13 +304,13 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
                      chronological ? "are" : "are not", labels.get(0).asText(), labels.get(1).asText());
 
         final HtmlPage firstRevision =
-                javascriptlessWebClient.getPage(versionLinks.get(chronological ? 0 : 1)
+                javascriptlessWebClient.getPage(versionLinks.get(chronological ? 1 : 2)
                     .getNodeValue());
         final List<DomText> v1Titles =
             castList(firstRevision
                     .getByXPath("//span[@property='http://purl.org/dc/elements/1.1/title']/text()"));
         final HtmlPage secondRevision =
-                javascriptlessWebClient.getPage(versionLinks.get(chronological ? 1 : 0)
+                javascriptlessWebClient.getPage(versionLinks.get(chronological ? 2 : 1)
                     .getNodeValue());
         final List<DomText> v2Titles =
             castList(secondRevision
@@ -334,8 +326,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     private static void postSparqlUpdateUsingHttpClient(final String sparql, final String pid) throws IOException {
         final HttpPatch method = new HttpPatch(serverAddress + pid);
         method.addHeader(CONTENT_TYPE, "application/sparql-update");
-        final BasicHttpEntity entity = new BasicHttpEntity();
-        entity.setContent(new ByteArrayInputStream(sparql.getBytes()));
+        final StringEntity entity = new StringEntity(sparql, StandardCharsets.UTF_8);
         method.setEntity(entity);
         final HttpResponse response = client.execute(method);
         assertEquals("Expected successful response.", 204,
@@ -343,11 +334,10 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore
-    public void testCreateNewObjectAndSetProperties() throws IOException {
+    public void testCreateNewObjectAndSetProperties() throws Exception {
         final String pid = createNewObject();
 
-        final HtmlPage page = javascriptlessWebClient.getPage(serverAddress + pid);
+        final HtmlPage page = webClient.getPage(serverAddress + pid);
         final HtmlForm form = (HtmlForm)page.getElementById("action_sparql_update");
         final HtmlTextArea sparql_update_query = (HtmlTextArea)page.getElementById("sparql_update_query");
         sparql_update_query.setText("INSERT { <> <info:some-predicate> 'asdf' } WHERE { }");
@@ -355,21 +345,20 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         final HtmlButton button = form.getFirstByXPath("button");
         button.click();
 
-        final HtmlPage page1 = javascriptlessWebClient.getPage(serverAddress + pid);
+        final HtmlPage page1 = webClient.getPage(serverAddress + pid);
         assertTrue(page1.getElementById("metadata").asText().contains("some-predicate"));
     }
 
     @Test
-    @Ignore("htmlunit can't see links in the HTML5 <nav> element..")
-    public void testSparqlSearch() throws IOException {
+    public void testSimpleSearch() throws Exception {
         final HtmlPage page = webClient.getPage(serverAddress);
-
-        logger.error(page.toString());
         page.getAnchorByText("Search").click();
 
-        final HtmlForm form = (HtmlForm)page.getElementById("action_sparql_select");
-        final HtmlTextArea q = form.getTextAreaByName("q");
-        q.setText("SELECT ?subject WHERE { ?subject a <" + FEDORA_RESOURCE + "> }");
+        final HtmlPage searchPage = (HtmlPage)webClient.getCurrentWindow().getEnclosedPage();
+
+        final HtmlForm form = (HtmlForm)searchPage.getElementById("action_search");
+        final HtmlInput q = (HtmlInput)searchPage.getElementById("search_value_1");
+        q.setValueAttribute("info:fedora/*");
         final HtmlButton button = form.getFirstByXPath("button");
         button.click();
     }
@@ -382,7 +371,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
     private String createNewObject() throws IOException {
 
-        final String pid = randomUUID().toString();
+        final String pid = newPid();
 
         final HtmlPage page = webClient.getPage(serverAddress);
         final HtmlForm form = page.getFormByName("action_create");
@@ -395,8 +384,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
         webClient.waitForBackgroundJavaScript(1000);
         webClient.waitForBackgroundJavaScriptStartingBefore(10000);
-
-
         return pid;
     }
 
@@ -408,7 +395,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
     private WebClient getDefaultWebClient() {
 
-        final WebClient webClient = new WebClient(FIREFOX_60);
+        final WebClient webClient = new WebClient(FIREFOX);
         webClient.addRequestHeader(ACCEPT, "text/html");
         webClient.setCredentialsProvider(getFedoraAdminCredentials());
         webClient.waitForBackgroundJavaScript(1000);
@@ -416,7 +403,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         webClient.setAjaxController(new NicelyResynchronizingAjaxController());
         //Suppress warning from IncorrectnessListener
         webClient.setIncorrectnessListener(new SuppressWarningIncorrectnessListener());
-
         //Suppress css warning with the silent error handler.
         webClient.setCssErrorHandler(new SilentCssErrorHandler());
         return webClient;
@@ -434,6 +420,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         public void notify(final String arg0, final Object arg1) {
 
         }
-      }
+    }
 
 }
