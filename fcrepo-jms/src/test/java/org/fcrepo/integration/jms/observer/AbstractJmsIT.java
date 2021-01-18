@@ -17,14 +17,42 @@
  */
 package org.fcrepo.integration.jms.observer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jayway.awaitility.Duration;
-import com.jayway.awaitility.core.ConditionTimeoutException;
-import org.apache.activemq.ActiveMQConnectionFactory;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.vocabulary.RDF;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.UUID.randomUUID;
+import static javax.jms.Session.AUTO_ACKNOWLEDGE;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.awaitility.Awaitility.await;
+import static org.awaitility.Durations.ONE_HUNDRED_MILLISECONDS;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.observer.EventType.INBOUND_REFERENCE;
+import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_CREATION;
+import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_DELETION;
+import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_MODIFICATION;
+import static org.junit.Assert.fail;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+
+import javax.inject.Inject;
+import javax.jms.Connection;
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageConsumer;
+import javax.jms.MessageListener;
+import javax.jms.Session;
+import javax.jms.TextMessage;
+import javax.ws.rs.core.UriBuilder;
+
 import org.fcrepo.event.serialization.JsonLDEventMessage;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.Transaction;
@@ -40,6 +68,12 @@ import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.kernel.api.services.ReplaceBinariesService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
+
+import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.vocabulary.RDF;
+import org.awaitility.core.ConditionTimeoutException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,44 +81,8 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
-import javax.inject.Inject;
-import javax.jms.Connection;
-import javax.jms.Destination;
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.MessageConsumer;
-import javax.jms.MessageListener;
-import javax.jms.Session;
-import javax.jms.TextMessage;
-import javax.ws.rs.core.UriBuilder;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-
-import static com.jayway.awaitility.Awaitility.await;
-import static com.jayway.awaitility.Duration.ONE_HUNDRED_MILLISECONDS;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.UUID.randomUUID;
-
-import static javax.jms.Session.AUTO_ACKNOWLEDGE;
-
-import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
-import static org.apache.jena.rdf.model.ResourceFactory.createResource;
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.kernel.api.observer.EventType.INBOUND_REFERENCE;
-import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_CREATION;
-import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_DELETION;
-import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_MODIFICATION;
-import static org.junit.Assert.fail;
-import static org.slf4j.LoggerFactory.getLogger;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * <p>
@@ -322,7 +320,7 @@ abstract class AbstractJmsIT implements MessageListener {
 
     private void awaitNoMessageOrFail(final String id, final String eventType, final String resourceType) {
         try {
-            await().atMost(new Duration(TIMEOUT, TimeUnit.MILLISECONDS)).until(() -> messages.stream().anyMatch(msg -> {
+            await().atMost(TIMEOUT, TimeUnit.MILLISECONDS).until(() -> messages.stream().anyMatch(msg -> {
                 try {
                     return checkForMatchingMessage(msg, id, eventType, resourceType);
                 } catch (final JMSException | JsonProcessingException e) {
