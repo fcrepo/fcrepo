@@ -70,6 +70,18 @@ public class FedoraReindexIT extends AbstractResourceIT {
     }
 
     @Test
+    public void reindexFailsWhenObjectInvalid() throws Exception {
+        final var fedoraId = "container1";
+
+        assertNotFound(fedoraId);
+
+        prepareContentForSideLoading("src/test/resources/reindex-test-invalid");
+        doReindex(fedoraId, HttpStatus.SC_BAD_REQUEST);
+
+        assertNotFound(fedoraId);
+    }
+
+    @Test
     public void testReindexNonExistentObject() throws Exception {
         final var fedoraId = "container1";
         //validate that the fedora resource is not found (404)

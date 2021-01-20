@@ -19,6 +19,8 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
+
+import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
@@ -34,6 +36,7 @@ import org.fcrepo.search.api.Condition;
 import org.fcrepo.search.api.InvalidQueryException;
 import org.fcrepo.search.api.SearchIndex;
 import org.fcrepo.search.api.SearchParameters;
+import org.fcrepo.storage.ocfl.validation.ObjectValidator;
 import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,12 +90,21 @@ public class ReindexService {
     @Inject
     private MembershipService membershipService;
 
+    @Inject
+    private ObjectValidator objectValidator;
+
+    @Inject
+    private FedoraPropsConfig config;
+
     private static final Logger LOGGER = getLogger(ReindexService.class);
 
     private int membershipPageSize = 500;
 
     public void indexOcflObject(final String txId, final String ocflId) {
         LOGGER.debug("Indexing ocflId {} in transaction {}", ocflId, txId);
+
+        objectValidator.validate(ocflId, config.isRebuildFixityCheck());
+
         try (final var session = ocflObjectSessionFactory.newSession(ocflId)) {
             final var rootId = new AtomicReference<FedoraId>();
             final var fedoraIds = new ArrayList<FedoraId>();

@@ -17,35 +17,40 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
-import edu.wisc.library.ocfl.api.MutableOcflRepository;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
-import org.apache.commons.lang3.StringUtils;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createFilesystemRepository;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createS3Repository;
+
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+
+import javax.inject.Inject;
+import javax.sql.DataSource;
+
 import org.fcrepo.config.MetricsConfig;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.config.Storage;
 import org.fcrepo.storage.ocfl.CommitType;
 import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
+import org.fcrepo.storage.ocfl.validation.ObjectValidator;
 import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
 import org.fcrepo.storage.ocfl.ResourceHeaders;
 import org.fcrepo.storage.ocfl.cache.Cache;
 import org.fcrepo.storage.ocfl.cache.CaffeineCache;
 import org.fcrepo.storage.ocfl.cache.NoOpCache;
+
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import com.github.benmanes.caffeine.cache.Caffeine;
+
+import edu.wisc.library.ocfl.api.MutableOcflRepository;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-
-import javax.inject.Inject;
-import javax.sql.DataSource;
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createFilesystemRepository;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createS3Repository;
 
 /**
  * A Configuration for OCFL dependencies
@@ -99,6 +104,12 @@ public class OcflPersistenceConfig {
                 "Authored by Fedora 6",
                 "fedoraAdmin",
                 "info:fedora/fedoraAdmin");
+    }
+
+    @Bean
+    public ObjectValidator objectValidator() throws IOException {
+        final var objectMapper = OcflPersistentStorageUtils.objectMapper();
+        return new ObjectValidator(repository(), objectMapper.readerFor(ResourceHeaders.class));
     }
 
     private CommitType commitType() {

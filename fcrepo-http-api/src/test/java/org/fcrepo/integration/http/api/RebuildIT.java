@@ -18,27 +18,8 @@
 package org.fcrepo.integration.http.api;
 
 
-import edu.wisc.library.ocfl.api.OcflRepository;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.jena.graph.Node;
-import org.apache.jena.sparql.core.Quad;
-import org.fcrepo.http.commons.test.util.CloseableDataset;
-import org.fcrepo.kernel.api.FedoraTypes;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.test.context.TestExecutionListeners;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-
 import static java.text.MessageFormat.format;
 import static java.util.Arrays.asList;
-
 import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.jena.graph.Node.ANY;
@@ -50,21 +31,52 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.springframework.test.util.AssertionErrors.assertTrue;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.fcrepo.kernel.api.FedoraTypes;
+import org.fcrepo.persistence.ocfl.RepositoryInitializer;
+import org.fcrepo.persistence.ocfl.impl.ReindexService;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.core.Quad;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.test.context.TestExecutionListeners;
+
+import edu.wisc.library.ocfl.api.OcflRepository;
+
 /**
  * @author awooods
  * @since 2020-03-04
  */
-@TestExecutionListeners(listeners = { RebuildTestExecutionListener.class },
+@TestExecutionListeners(listeners = { TestIsolationExecutionListener.class },
         mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class RebuildIT extends AbstractResourceIT {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RebuildIT.class);
 
     private OcflRepository ocflRepository;
+    private RepositoryInitializer initializer;
+    private ReindexService reindexService;
 
     @Before
     public void setUp() {
         ocflRepository = getBean(OcflRepository.class);
+        initializer = getBean(RepositoryInitializer.class);
+        reindexService = getBean(ReindexService.class);
     }
 
     /**
@@ -81,6 +93,7 @@ public class RebuildIT extends AbstractResourceIT {
      */
     @Test
     public void testRebuildOcfl() {
+        rebuild("test-rebuild-ocfl/ocfl-root");
 
         // Optional debugging
         if (LOGGER.isDebugEnabled()) {
@@ -92,11 +105,11 @@ public class RebuildIT extends AbstractResourceIT {
                 ocflRepository.containsObject(FedoraTypes.FEDORA_ID_PREFIX));
         assertContains("binary");
         assertContains("test");
-        assertContains("test_child");
+        assertContains("test/child");
         assertContains("test/deleted-child");
         assertContains("archival-group");
-        assertContains("test_nested-archival-group");
-        assertContains("test_nested-binary");
+        assertContains("test/nested-archival-group");
+        assertContains("test/nested-binary");
 
         assertNotContains("archival-group_binary");
         assertNotContains("archival-group_container");
@@ -105,6 +118,8 @@ public class RebuildIT extends AbstractResourceIT {
 
     @Test
     public void testRebuildWebapp() throws Exception {
+        rebuild("test-rebuild-ocfl/ocfl-root");
+
         // Test against the Fedora API
         assertEquals(OK.getStatusCode(), getStatus(getObjMethod("")));
         assertEquals(OK.getStatusCode(), getStatus(getObjMethod("test")));
@@ -138,6 +153,14 @@ public class RebuildIT extends AbstractResourceIT {
 
         verifyContainment(mementoUri, testUri, asList("child", "nested-archival-group",
                 "nested-binary", "deleted-child"));
+    }
+
+    @Test
+    public void rebuildFailsWhenObjectFailsValidation() {
+        rebuild("test-rebuild-invalid");
+
+        assertEquals(HttpStatus.SC_NOT_FOUND, getStatus(getObjMethod("test")));
+        assertEquals(HttpStatus.SC_NOT_FOUND, getStatus(getObjMethod("binary")));
     }
 
     private void verifyContainment(final String subjectUri, final List<String> children) throws Exception {
@@ -205,6 +228,24 @@ public class RebuildIT extends AbstractResourceIT {
         final var fedoraId = FedoraTypes.FEDORA_ID_PREFIX + "/" + id;
         assertFalse("Should NOT contain object with id: " + fedoraId,
                 ocflRepository.containsObject(fedoraId));
+    }
+
+    private void rebuild(final String name) {
+        copyToOcfl(name);
+        reindexService.reset();
+        initializer.initialize();
+    }
+
+    private void copyToOcfl(final String name) {
+        try {
+            // this is necessary so that the cache is cleared
+            ocflRepository.listObjectIds().forEach(ocflRepository::purgeObject);
+            final var root = Paths.get("target/fcrepo-home/data/ocfl-root");
+            FileUtils.cleanDirectory(root.toFile());
+            FileUtils.copyDirectory(Paths.get("src/test/resources", name).toFile(), root.toFile());
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
 }

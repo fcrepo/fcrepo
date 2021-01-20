@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -34,17 +35,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.search.api.Condition;
 import org.fcrepo.search.api.SearchParameters;
+import org.fcrepo.storage.ocfl.exception.ValidationException;
+import org.fcrepo.storage.ocfl.validation.ObjectValidator;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
 
 /**
  * ReindexService tests.
@@ -58,6 +62,12 @@ public class ReindexServiceTest extends AbstractReindexerTest {
     private ReindexManager reindexManager;
 
     private ReindexService reindexService;
+
+    @Mock
+    private ObjectValidator objectValidator;
+
+    @Mock
+    private FedoraPropsConfig fedoraConfig;
 
     private final String session1Id = "session1";
     private final FedoraId resource1 = FedoraId.create("info:fedora/resource1");
@@ -76,6 +86,8 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         setField(reindexService, "ocflIndex", ocflIndex);
         setField(reindexService, "ocflObjectSessionFactory", ocflObjectSessionFactory);
         setField(reindexService, "persistentStorageSessionManager", persistentStorageSessionManager);
+        setField(reindexService, "objectValidator", objectValidator);
+        setField(reindexService, "config", fedoraConfig);
         when(searchIndex.doSearch(any(SearchParameters.class))).thenReturn(containerResult);
 
         when(propsConfig.getReindexingThreads()).thenReturn(2L);
@@ -265,4 +277,38 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         verify(membershipService, times(numberContainers)).populateMembershipHistory(anyString(), any(FedoraId.class));
         verify(membershipService).commitTransaction(anyString());
     }
+
+    @Test
+    public void failRebuildWhenObjectFailsValidation() throws Exception {
+        final String parentIdPart = getRandomId();
+        final String childIdPart = getRandomId();
+        final var parentId = FedoraId.create(parentIdPart);
+        final var childId = parentId.resolve(childIdPart);
+        final var session = persistentStorageSessionManager.getSession(session1Id);
+
+        createResource(session, parentId, true);
+        createChildResourceRdf(session, parentId, childId);
+
+        session.prepare();
+        session.commit();
+
+        assertHasOcflId(parentIdPart, parentId);
+        assertHasOcflId(parentIdPart, childId);
+
+        ocflIndex.reset();
+
+        assertDoesNotHaveOcflId(parentId);
+        assertDoesNotHaveOcflId(childId);
+
+        doThrow(new ValidationException(List.of("validation errors")))
+                .when(objectValidator).validate(parentId.getFullId(), false);
+
+        reindexManager.start();
+        reindexManager.commit();
+        reindexManager.shutdown();
+
+        assertDoesNotHaveOcflId(parentId);
+        assertDoesNotHaveOcflId(childId);
+    }
+
 }

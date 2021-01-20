@@ -48,6 +48,7 @@ public class FedoraPropsConfig extends BasePropsConfig {
     private static final String FCREPO_ACTIVEMQ_DIRECTORY = "fcrepo.activemq.directory";
     private static final String FCREPO_SESSION_TIMEOUT = "fcrepo.session.timeout";
     private static final String FCREPO_VELOCITY_RUNTIME_LOG = "fcrepo.velocity.runtime.log";
+    private static final String FCREPO_REBUILD_VALIDATION_FIXITY = "fcrepo.rebuild.validation.fixity";
 
     private static final String DATA_DIR_DEFAULT_VALUE = "data";
     private static final String ACTIVE_MQ_DIR_DEFAULT_VALUE = "ActiveMQ/kahadb";
@@ -86,6 +87,9 @@ public class FedoraPropsConfig extends BasePropsConfig {
     @Value("${" + FCREPO_VELOCITY_RUNTIME_LOG + ": " +
             "#{fedoraPropsConfig.fedoraHome.resolve('velocity.log').toAbsolutePath().toString()}}")
     private String velocityLog;
+
+    @Value("${" + FCREPO_REBUILD_VALIDATION_FIXITY + ":true}")
+    private boolean rebuildFixityCheck;
 
     @PostConstruct
     private void postConstruct() throws IOException {
@@ -194,4 +198,12 @@ public class FedoraPropsConfig extends BasePropsConfig {
     public String getVelocityLog() {
         return velocityLog;
     }
+
+    /**
+     * @return true if the rebuild validation should also check file fixity
+     */
+    public boolean isRebuildFixityCheck() {
+        return rebuildFixityCheck;
+    }
+
 }
