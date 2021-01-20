@@ -25,11 +25,11 @@ import org.fcrepo.common.metrics.MetricsHelper;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.storage.ocfl.CommitType;
-import org.fcrepo.storage.ocfl.NotFoundException;
 import org.fcrepo.storage.ocfl.OcflObjectSession;
 import org.fcrepo.storage.ocfl.OcflVersionInfo;
 import org.fcrepo.storage.ocfl.ResourceContent;
 import org.fcrepo.storage.ocfl.ResourceHeaders;
+import org.fcrepo.storage.ocfl.exception.NotFoundException;
 
 import java.io.InputStream;
 import java.time.OffsetDateTime;
