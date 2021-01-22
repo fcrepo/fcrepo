@@ -76,7 +76,7 @@ public class RootTestResource extends AbstractResource {
     }
 
     private HttpIdentifierConverter identifierConverter() {
-        return new HttpIdentifierConverter(uriInfo.getBaseUriBuilder().clone().path(RootTestResource.class), "");
+        return new HttpIdentifierConverter(uriInfo.getBaseUriBuilder().clone().path(RootTestResource.class));
     }
 
 }

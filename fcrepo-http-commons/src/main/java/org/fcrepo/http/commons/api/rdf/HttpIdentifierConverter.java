@@ -18,7 +18,6 @@
 package org.fcrepo.http.commons.api.rdf;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -48,32 +47,17 @@ public class HttpIdentifierConverter {
 
     private final UriTemplate uriTemplate;
 
-    private final String contextServletPath;
-
-    private final String internalUriPrefix;
-
-    private final String internalUriPath;
-
     private static String trimTrailingSlashes(final String string) {
         return string.replaceAll("/+$", "");
     }
 
     /**
-     * Create a new identifier converter within the given session with the given URI template
+     * Create a new identifier converter within the given URI template and given context/servlet path.
      * @param uriBuilder the uri builder
-     * @param contextServletPath the context and servlet path of the URI
      */
-    public HttpIdentifierConverter(final UriBuilder uriBuilder, final String contextServletPath) {
-        if (!isEmpty(contextServletPath)) {
-            this.contextServletPath = contextServletPath.startsWith("/") ? contextServletPath.substring(1) :
-                    contextServletPath;
-        } else {
-            this.contextServletPath = "";
-        }
+    public HttpIdentifierConverter(final UriBuilder uriBuilder) {
         this.uriBuilder = uriBuilder;
         this.uriTemplate = new UriTemplate(uriBuilder.toTemplate());
-        internalUriPrefix = internalIdPrefix() + "/";
-        internalUriPath = internalUriPrefix + this.contextServletPath;
     }
 
     /**
@@ -83,11 +67,27 @@ public class HttpIdentifierConverter {
      * @return the internal identifier.
      */
     public String toInternalId(final String httpUri) {
-        LOGGER.trace("Translating http URI {} to Fedora ID", httpUri);
+        return toInternalId(httpUri, false);
+    }
+
+    /**
+     * Convert an external URI to an internal ID.
+     *
+     * @param httpUri the external URI.
+     * @param encoded whether the internal ID is encoded or not.
+     * @return the internal identifier.
+     */
+    public String toInternalId(final String httpUri, final boolean encoded) {
+        LOGGER.trace("Translating http URI {} to Fedora ID with encoded set to {}", httpUri, encoded);
 
         final String path = getPath(httpUri);
         if (path != null) {
-            final String decodedPath = URLDecoder.decode(path, UTF_8);
+            final String decodedPath;
+            if (!encoded) {
+                decodedPath = URLDecoder.decode(path, UTF_8);
+            } else {
+                decodedPath = path;
+            }
             final String fedoraId = trimTrailingSlashes(decodedPath);
 
             return FEDORA_ID_PREFIX + fedoraId;
@@ -109,24 +109,19 @@ public class HttpIdentifierConverter {
     }
 
     /**
-     * Make a URI into an absolute URI (if relative), an internal ID (if in repository domain) or leave it alone.
+     * Make a URI into an absolute URI (if relative), an internal encoded ID (if in repository domain) or leave it
+     * alone.
      * @param httpUri the URI
      * @return an absolute URI, the original URI or an internal ID.
      */
     public String translateUri(final String httpUri) {
         if (inExternalDomain(httpUri)) {
-            return toInternalId(httpUri);
-        } else if (httpUri.startsWith(internalUriPrefix) || httpUri.startsWith("/")) {
+            return toInternalId(httpUri, true);
+        } else if (httpUri.startsWith("/")) {
             // Is a relative URI.
-            final String uriPath;
-            if (httpUri.startsWith(internalUriPrefix)) {
-                uriPath = httpUri.substring(internalUriPrefix.length() - 1);
-            } else {
-                uriPath = httpUri;
-            }
             // Build a fake URI using the hostname so we can resolve against it.
             final var uri = uriBuilder.build("placeholder");
-            return uri.resolve(uriPath).toString();
+            return uri.resolve(httpUri).toString();
         }
         return httpUri;
     }
@@ -228,10 +223,6 @@ public class HttpIdentifierConverter {
             return "/" + values.get("path");
         } else if (isRootWithoutTrailingSlash(httpUri)) {
             return "/";
-        } else if (httpUri.startsWith(internalUriPath) || httpUri.startsWith("/" + this.contextServletPath)) {
-            // relative URI with info:/<context> at the beginning or
-            // relative URI with /<context> at the beginning
-            return mapInternalRestUri(httpUri);
         }
         return null;
     }
@@ -247,42 +238,6 @@ public class HttpIdentifierConverter {
 
         return uriTemplate.match(httpUri + "/", values) && values.containsKey("path") &&
             values.get("path").isEmpty();
-    }
-
-    /**
-     * Takes internal URIs starting with info:(context path) or just the context path and makes them into full URLs.
-     * Leaves any relative URI not starting with the defined context path alone. These URIs come when RDF contains a URI
-     * like </rest/someResource>. This gets converted to info:/rest/someResource as it is a URI but with no scheme.
-     * @param httpUri the partial URI
-     * @return the path part of the url
-     */
-    private String mapInternalRestUri(final String httpUri) {
-        if (httpUri.startsWith(internalUriPath) || httpUri.startsWith("/" + this.contextServletPath)) {
-            String realpath;
-            if (httpUri.startsWith(internalUriPath)) {
-                realpath = httpUri.substring(internalUriPath.length());
-            } else {
-                realpath = httpUri.substring(this.contextServletPath.length() + 1);
-            }
-            if (realpath.startsWith("/")) {
-                realpath = realpath.substring(1);
-            }
-            final String fullUri = uriBuilder.build(realpath).toString();
-            return getPath(fullUri);
-        }
-        return null;
-    }
-
-    /**
-     * Figure out what identifier you get when providing a absolute URL without hostname.
-     * @return the identifier.
-     */
-    private String internalIdPrefix() {
-        String internalPrefix = FEDORA_ID_PREFIX;
-        if (internalPrefix.contains(":")) {
-            internalPrefix = internalPrefix.substring(0, internalPrefix.indexOf(":") + 1);
-        }
-        return internalPrefix;
     }
 
 }

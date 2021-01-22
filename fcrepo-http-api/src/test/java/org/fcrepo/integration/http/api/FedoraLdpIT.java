@@ -4984,7 +4984,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testMapRelativeUris() throws Exception {
         final HttpPost post = postObjMethod();
         final String body = "<> <http://example.org/related> </fcrepo/rest/test1> ; <http://example.org/related> " +
-                "</rest/test1> ; <http://example.org/related> <http://something.else/outThere> .";
+                "</rest/test1> ; <http://example.org/related> <http://something.else/outThere> ; " +
+                "<http://example.org/related> <test1> .";
         post.setHeader(CONTENT_TYPE, "text/turtle");
         post.setEntity(new StringEntity(body, UTF_8));
         final String location;
@@ -4998,13 +4999,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final var nodeIter = graph.find(ANY, ANY, createURI("http://example.org/related"), ANY);
             int nodeCounter = 0;
             final List<String> expectedUris = List.of(serverAddress + "fcrepo/rest/test1",
-                    serverAddress + "rest/test1", "http://something.else/outThere");
+                    serverAddress + "rest/test1", "http://something.else/outThere", serverAddress + "test1");
             while (nodeIter.hasNext()) {
                 final var quad = nodeIter.next();
                 nodeCounter += 1;
                 assertTrue(expectedUris.contains(quad.getObject().getURI()));
             }
-            assertEquals(3, nodeCounter);
+            assertEquals(4, nodeCounter);
         }
 
     }

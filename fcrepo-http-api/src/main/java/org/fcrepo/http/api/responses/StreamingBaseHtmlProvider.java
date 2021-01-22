@@ -116,8 +116,6 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
     @Inject
     private FedoraPropsConfig fedoraPropsConfig;
 
-    private String contextPath = "";
-
     private boolean autoVersioningEnabled;
 
     private HttpIdentifierConverter identifierConverter;
@@ -133,7 +131,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
         if (identifierConverter == null) {
             final UriBuilder uriBuilder =
                     uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class);
-            identifierConverter = new HttpIdentifierConverter(uriBuilder, contextPath);
+            identifierConverter = new HttpIdentifierConverter(uriBuilder);
         }
         return identifierConverter;
     }
@@ -204,8 +202,6 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
                         final MediaType mediaType,
                         final MultivaluedMap<String, Object> httpHeaders,
                         final OutputStream entityStream) throws IOException {
-        contextPath = request.getContextPath() + request.getServletPath();
-
         final Node subject = ViewHelpers.getContentNode(nsStream.stream.topic());
 
         final Model model = nsStream.stream.collect(toModel());

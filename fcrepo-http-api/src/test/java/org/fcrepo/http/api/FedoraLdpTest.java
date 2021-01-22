@@ -176,7 +176,7 @@ public class FedoraLdpTest {
             Link.fromUri(NON_RDF_SOURCE.toString()).rel("type").build().toString());
 
     private final HttpIdentifierConverter identifierConverter = new HttpIdentifierConverter(
-            getUriInfoImpl().getBaseUriBuilder().clone().path("/{path: .*}"), "");
+            getUriInfoImpl().getBaseUriBuilder().clone().path("/{path: .*}"));
 
     private final InputStream emptyStream = IOUtils.toInputStream("", Charsets.UTF_8);
 
