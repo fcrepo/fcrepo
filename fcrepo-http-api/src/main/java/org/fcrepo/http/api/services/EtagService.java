@@ -74,23 +74,23 @@ public class EtagService {
 
         // Factor in preferences which change which triples are included in the response
         etag.append('|');
-        if (!prefers.prefersContainment().equals(LdpTriplePreferences.preferChoice.EXCLUDE)) {
+        if (prefers.displayContainment()) {
             final var lastUpdated = containmentIndex.containmentLastUpdated(txId, resource.getFedoraId());
             if (lastUpdated != null) {
                 etag.append(lastUpdated);
             }
         }
         etag.append('|');
-        if (!prefers.prefersMembership().equals(LdpTriplePreferences.preferChoice.EXCLUDE)) {
+        if (prefers.displayMembership()) {
             final var lastUpdated = membershipService.getLastUpdatedTimestamp(txId, resource.getFedoraId());
             if (lastUpdated != null) {
                 etag.append(lastUpdated);
             }
         }
-        addComponent(etag, prefers.prefersEmbed());
-        addComponent(etag, prefers.preferMinimal());
-        addComponent(etag, prefers.prefersReferences());
-        addComponent(etag, prefers.prefersServerManaged());
+        addComponent(etag, prefers.displayEmbed());
+        addComponent(etag, prefers.displayUserRdf());
+        addComponent(etag, prefers.displayReferences());
+        addComponent(etag, prefers.displayServerManaged());
 
         // Compute a digest of all these components to use as the etag
         final String etagMd5 = DigestUtils.md5Hex(etag.toString()).toUpperCase();

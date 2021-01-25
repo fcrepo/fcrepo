@@ -48,7 +48,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.kernel.api.rdf.LdpTriplePreferences.preferChoice.INCLUDE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -775,7 +774,7 @@ public class WebACFilter extends RequestContextFilter {
         final MultiPrefer multiPrefer = new MultiPrefer(preferTagSet);
         if (multiPrefer.hasReturn()) {
             final LdpPreferTag ldpPreferences = new LdpPreferTag(multiPrefer.getReturn());
-            return ldpPreferences.prefersEmbed().equals(INCLUDE);
+            return ldpPreferences.displayEmbed();
         }
         return false;
     }

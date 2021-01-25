@@ -18,16 +18,13 @@
 package org.fcrepo.kernel.impl.services;
 
 import static java.util.stream.Stream.empty;
-import static org.fcrepo.kernel.api.rdf.LdpTriplePreferences.preferChoice.EXCLUDE;
-import static org.fcrepo.kernel.api.rdf.LdpTriplePreferences.preferChoice.INCLUDE;
-
-import javax.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.apache.jena.graph.Triple;
+import javax.inject.Inject;
+
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.LdpTriplePreferences;
@@ -36,6 +33,8 @@ import org.fcrepo.kernel.api.services.ManagedPropertiesService;
 import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.kernel.api.services.ResourceTripleService;
+
+import org.apache.jena.graph.Triple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -67,38 +66,33 @@ public class ResourceTripleServiceImpl implements ResourceTripleService {
         final List<Stream<Triple>> streams = new ArrayList<>();
 
         // Provide user RDF if we didn't ask for omit=ldp:PreferMinimalContainer.
-        if (!preferences.preferMinimal().equals(EXCLUDE)) {
+        if (preferences.displayUserRdf()) {
             streams.add(resource.getTriples());
         }
         // Provide server-managed triples if we didn't ask for omit=fedora:ServerManaged or
         // omit=ldp:PreferMinimalContainer
-        if (!preferences.preferMinimal().equals(EXCLUDE) && !preferences.prefersServerManaged().equals(EXCLUDE)) {
+        if (preferences.displayServerManaged()) {
             streams.add(this.managedPropertiesService.get(resource));
         }
-        // If we didn't ask for a include=ldp:PreferMinimalContainer explicitly
-        if (!preferences.preferMinimal().equals(INCLUDE)) {
-
-            // containment triples about this resource, return by default. Containment is server managed so also
-            // check for that prefer tag.
-            if (preferences.prefersContainment().equals(INCLUDE) ||
-                    (!preferences.prefersServerManaged().equals(EXCLUDE) &&
-                    !preferences.prefersContainment().equals(EXCLUDE))) {
-                if (limit == -1) {
-                    streams.add(this.containmentTriplesService.get(tx, resource));
-                } else {
-                    streams.add(this.containmentTriplesService.get(tx, resource).limit(limit));
-                }
+        // containment triples about this resource, return by default. Containment is server managed so also
+        // check for that prefer tag.
+        if (preferences.displayContainment()) {
+            if (limit == -1) {
+                streams.add(this.containmentTriplesService.get(tx, resource));
+            } else {
+                streams.add(this.containmentTriplesService.get(tx, resource).limit(limit));
             }
+        }
 
-            // LDP container membership triples for this resource, returned by default.
-            if (!preferences.prefersMembership().equals(EXCLUDE)) {
-                streams.add(membershipService.getMembership(tx.getId(), resource.getFedoraId()));
-            }
+        // LDP container membership triples for this resource, returned by default. Membership is server managed so
+        // also check that tag.
+        if (preferences.displayMembership()) {
+            streams.add(membershipService.getMembership(tx.getId(), resource.getFedoraId()));
+        }
 
-            // Include inbound references to this object, NOT returned by default.
-            if (preferences.prefersReferences().equals(INCLUDE)) {
-                streams.add(referenceService.getInboundReferences(tx.getId(), resource));
-            }
+        // Include inbound references to this object, NOT returned by default.
+        if (preferences.displayReferences()) {
+            streams.add(referenceService.getInboundReferences(tx.getId(), resource));
         }
 
         return streams.stream().reduce(empty(), Stream::concat);

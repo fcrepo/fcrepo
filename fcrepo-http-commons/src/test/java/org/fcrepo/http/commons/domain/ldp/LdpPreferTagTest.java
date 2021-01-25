@@ -22,10 +22,10 @@ import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_CONTAINMENT;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MINIMAL_CONTAINER;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.fcrepo.http.commons.domain.PreferTag;
-import org.fcrepo.kernel.api.rdf.LdpTriplePreferences.preferChoice;
 
 import org.junit.Test;
 
@@ -37,17 +37,30 @@ public class LdpPreferTagTest {
     private LdpPreferTag testObj;
 
     @Test
+    public void testDefaultDecisions() {
+        final PreferTag prefer = PreferTag.emptyTag();
+        testObj = new LdpPreferTag(prefer);
+
+        assertTrue(testObj.displayUserRdf());
+        assertTrue(testObj.displayServerManaged());
+        assertFalse(testObj.displayReferences());
+        assertTrue(testObj.displayContainment());
+        assertTrue(testObj.displayMembership());
+        assertFalse(testObj.displayEmbed());
+    }
+
+    @Test
     public void testMinimalContainer() {
         final PreferTag prefer
                 = new PreferTag("return=representation; include=\"" + PREFER_MINIMAL_CONTAINER + "\"");
         testObj = new LdpPreferTag(prefer);
 
-        assertEquals(preferChoice.INCLUDE, testObj.preferMinimal());
-        assertEquals(preferChoice.SILENT, testObj.prefersServerManaged());
-        assertEquals(preferChoice.SILENT, testObj.prefersReferences());
-        assertEquals(preferChoice.SILENT, testObj.prefersContainment());
-        assertEquals(preferChoice.SILENT, testObj.prefersMembership());
-        assertEquals(preferChoice.SILENT, testObj.prefersEmbed());
+        assertTrue(testObj.displayUserRdf());
+        assertTrue(testObj.displayServerManaged());
+        assertFalse(testObj.displayReferences());
+        assertFalse(testObj.displayContainment());
+        assertFalse(testObj.displayMembership());
+        assertFalse(testObj.displayEmbed());
     }
 
     @Test
@@ -57,12 +70,12 @@ public class LdpPreferTagTest {
                                                                     + PREFER_MEMBERSHIP + "\"");
         testObj = new LdpPreferTag(prefer);
 
-        assertEquals(preferChoice.INCLUDE, testObj.preferMinimal());
-        assertEquals(preferChoice.SILENT, testObj.prefersServerManaged());
-        assertEquals(preferChoice.SILENT, testObj.prefersReferences());
-        assertEquals(preferChoice.SILENT, testObj.prefersContainment());
-        assertEquals(preferChoice.INCLUDE, testObj.prefersMembership());
-        assertEquals(preferChoice.SILENT, testObj.prefersEmbed());
+        assertTrue(testObj.displayUserRdf());
+        assertTrue(testObj.displayServerManaged());
+        assertFalse(testObj.displayReferences());
+        assertFalse(testObj.displayContainment());
+        assertTrue(testObj.displayMembership());
+        assertFalse(testObj.displayEmbed());
     }
 
     @Test
@@ -72,12 +85,12 @@ public class LdpPreferTagTest {
                                                                     + PREFER_CONTAINMENT + "\"");
         testObj = new LdpPreferTag(prefer);
 
-        assertEquals(preferChoice.INCLUDE, testObj.preferMinimal());
-        assertEquals(preferChoice.SILENT, testObj.prefersServerManaged());
-        assertEquals(preferChoice.SILENT, testObj.prefersReferences());
-        assertEquals(preferChoice.INCLUDE, testObj.prefersContainment());
-        assertEquals(preferChoice.SILENT, testObj.prefersMembership());
-        assertEquals(preferChoice.SILENT, testObj.prefersEmbed());
+        assertTrue(testObj.displayUserRdf());
+        assertTrue(testObj.displayServerManaged());
+        assertFalse(testObj.displayReferences());
+        assertTrue(testObj.displayContainment());
+        assertFalse(testObj.displayMembership());
+        assertFalse(testObj.displayEmbed());
     }
 
     @Test
@@ -87,12 +100,12 @@ public class LdpPreferTagTest {
                                                                     + PREFER_CONTAINMENT + "\"");
         testObj = new LdpPreferTag(prefer);
 
-        assertEquals(preferChoice.SILENT, testObj.preferMinimal());
-        assertEquals(preferChoice.SILENT, testObj.prefersServerManaged());
-        assertEquals(preferChoice.SILENT, testObj.prefersReferences());
-        assertEquals(preferChoice.INCLUDE, testObj.prefersContainment());
-        assertEquals(preferChoice.INCLUDE, testObj.prefersMembership());
-        assertEquals(preferChoice.SILENT, testObj.prefersEmbed());
+        assertTrue(testObj.displayUserRdf());
+        assertTrue(testObj.displayServerManaged());
+        assertFalse(testObj.displayReferences());
+        assertTrue(testObj.displayContainment());
+        assertTrue(testObj.displayMembership());
+        assertFalse(testObj.displayEmbed());
     }
 
     @Test
@@ -102,12 +115,12 @@ public class LdpPreferTagTest {
                                                                  + PREFER_CONTAINMENT + "\"");
         testObj = new LdpPreferTag(prefer);
 
-        assertEquals(preferChoice.SILENT, testObj.preferMinimal());
-        assertEquals(preferChoice.SILENT, testObj.prefersServerManaged());
-        assertEquals(preferChoice.SILENT, testObj.prefersReferences());
-        assertEquals(preferChoice.EXCLUDE, testObj.prefersContainment());
-        assertEquals(preferChoice.EXCLUDE, testObj.prefersMembership());
-        assertEquals(preferChoice.SILENT, testObj.prefersEmbed());
+        assertTrue(testObj.displayUserRdf());
+        assertTrue(testObj.displayServerManaged());
+        assertFalse(testObj.displayReferences());
+        assertFalse(testObj.displayContainment());
+        assertFalse(testObj.displayMembership());
+        assertFalse(testObj.displayEmbed());
     }
 
     @Test
@@ -116,33 +129,23 @@ public class LdpPreferTagTest {
                 = new PreferTag("return=representation; include=\"" + INBOUND_REFERENCES + "\"");
         testObj = new LdpPreferTag(prefer);
 
-        assertEquals(preferChoice.SILENT, testObj.preferMinimal());
-        assertEquals(preferChoice.SILENT, testObj.prefersServerManaged());
-        assertEquals(preferChoice.INCLUDE, testObj.prefersReferences());
-        assertEquals(preferChoice.SILENT, testObj.prefersContainment());
-        assertEquals(preferChoice.SILENT, testObj.prefersMembership());
-        assertEquals(preferChoice.SILENT, testObj.prefersEmbed());
-    }
-
-    @Test
-    public void testEmbedDefault() {
-        testObj = new LdpPreferTag(PreferTag.emptyTag());
-        assertEquals(preferChoice.SILENT, testObj.preferMinimal());
-        assertEquals(preferChoice.SILENT, testObj.prefersServerManaged());
-        assertEquals(preferChoice.SILENT, testObj.prefersReferences());
-        assertEquals(preferChoice.SILENT, testObj.prefersContainment());
-        assertEquals(preferChoice.SILENT, testObj.prefersMembership());
-        assertEquals(preferChoice.SILENT, testObj.prefersEmbed());
+        assertTrue(testObj.displayUserRdf());
+        assertTrue(testObj.displayServerManaged());
+        assertTrue(testObj.displayReferences());
+        assertTrue(testObj.displayContainment());
+        assertTrue(testObj.displayMembership());
+        assertFalse(testObj.displayEmbed());
     }
 
     @Test
     public void testEmbedContained() {
         testObj = new LdpPreferTag(new PreferTag("return=representation; include=\"" + EMBED_CONTAINED + "\""));
-        assertEquals(preferChoice.SILENT, testObj.preferMinimal());
-        assertEquals(preferChoice.SILENT, testObj.prefersServerManaged());
-        assertEquals(preferChoice.SILENT, testObj.prefersReferences());
-        assertEquals(preferChoice.SILENT, testObj.prefersContainment());
-        assertEquals(preferChoice.SILENT, testObj.prefersMembership());
-        assertEquals(preferChoice.INCLUDE, testObj.prefersEmbed());
+
+        assertTrue(testObj.displayUserRdf());
+        assertTrue(testObj.displayServerManaged());
+        assertFalse(testObj.displayReferences());
+        assertTrue(testObj.displayContainment());
+        assertTrue(testObj.displayMembership());
+        assertTrue(testObj.displayEmbed());
     }
 }

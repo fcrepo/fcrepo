@@ -25,6 +25,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.PREFER_CONTAINMENT;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MINIMAL_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_SERVER_MANAGED;
+import static org.fcrepo.kernel.api.rdf.LdpTriplePreferences.preferChoice.EXCLUDE;
+import static org.fcrepo.kernel.api.rdf.LdpTriplePreferences.preferChoice.INCLUDE;
 
 import java.util.List;
 import java.util.Optional;
@@ -99,32 +101,58 @@ public class LdpPreferTag extends PreferTag implements LdpTriplePreferences {
     }
 
     @Override
-    public preferChoice preferMinimal() {
-        return minimal;
+    public boolean displayUserRdf() {
+        // Displayed by default unless we asked to exclude minimal container.
+        return !minimal.equals(EXCLUDE);
     }
 
     @Override
-    public preferChoice prefersMembership() {
-        return membership;
+    public boolean displayMembership() {
+        // Displayed by default unless we specifically asked for it or didn't specifically ask for a minimal container
+        // AND ( we didn't exclude either managed properties or membership ).
+        return membership.equals(INCLUDE) || notIncludeMinimal() && (
+                        notExcludeManaged() && !membership.equals(EXCLUDE)
+        );
     }
 
     @Override
-    public preferChoice prefersContainment() {
-        return containment;
+    public boolean displayContainment() {
+        // Displayed by default unless we specifically asked for it or didn't specifically ask for a minimal container
+        // AND ( we didn't exclude either managed properties or containment ).
+        return containment.equals(INCLUDE) || notIncludeMinimal() && (
+                        notExcludeManaged() && !containment.equals(EXCLUDE)
+        );
     }
 
     @Override
-    public preferChoice prefersReferences() {
-        return references;
+    public boolean displayReferences() {
+        // If we did ask for references. (Not shown by default).
+        return references.equals(INCLUDE);
     }
 
     @Override
-    public preferChoice prefersEmbed() {
-        return embed;
+    public boolean displayEmbed() {
+        // If we did ask for embedded resources. (Not shown by default).
+        return embed.equals(preferChoice.INCLUDE);
     }
 
     @Override
-    public preferChoice prefersServerManaged() {
-        return managedProperties;
+    public boolean displayServerManaged() {
+        // Displayed by default, unless excluded minimal container or managed properties.
+        return !minimal.equals(EXCLUDE) && notExcludeManaged();
+    }
+
+    /**
+     * @return whether we did not explicitly ask for a minimal container.
+     */
+    private boolean notIncludeMinimal() {
+        return !minimal.equals(INCLUDE);
+    }
+
+    /**
+     * @return whether we did not explicitly exclude managed properties.
+     */
+    private boolean notExcludeManaged() {
+        return !managedProperties.equals(EXCLUDE);
     }
 }

@@ -18,7 +18,7 @@
 package org.fcrepo.kernel.api.rdf;
 
 /**
- * Kernel level API to hold the LdpPreferTag decisions.
+ * Kernel level API to hold the LdpPreferTag and internal logic decisions.
  * @author whikloj
  * @since 6.0.0
  */
@@ -28,45 +28,39 @@ public interface LdpTriplePreferences {
      * What the prefer tag choice is.
      */
     enum preferChoice {
-        INCLUDE("Include"),
-        EXCLUDE("Exclude"),
-        SILENT("Silent");
-
-        private String value;
-
-        preferChoice(final String value) {
-            this.value = value;
-        }
+        INCLUDE,
+        EXCLUDE,
+        SILENT
     }
 
     /**
-     * @return Whether this preference tag asks to include or omit a minimal container or is silent.
+     * @return Whether to display user rdf based on this preference tag and internal defaults.
      */
-    preferChoice preferMinimal();
+    boolean displayUserRdf();
 
     /**
-     * @return Whether this preference tag asks to include or omit membership triples or is silent.
+     * @return Whether to display membership triples based on this preference tag and internal defaults.
      */
-    preferChoice prefersMembership();
+    boolean displayMembership();
 
     /**
-     * @return Whether this preference tag asks to include or omit containment triples or is silent.
+     * @return Whether to display containment triples based on this preference tag and internal defaults.
      */
-    preferChoice prefersContainment();
+    boolean displayContainment();
 
     /**
-     * @return Whether this preference tag asks to include or omit reference triples or is silent.
+     * @return Whether to display inbound reference triples based on this preference tag and internal defaults.
      */
-    preferChoice prefersReferences();
+    boolean displayReferences();
 
     /**
-     * @return Whether this preference tag asks to include or omit embedded triples or is silent.
+     * @return Whether to display contained resources' triples based on this preference tag and internal defaults.
      */
-    preferChoice prefersEmbed();
+    boolean displayEmbed();
 
     /**
-     * @return Whether this preference tag asks to include or omit server managed triples or is silent.
+     * @return Whether to display server managed triples based on this preference tag and internal defaults.
      */
-    preferChoice prefersServerManaged();
+    boolean displayServerManaged();
 
 }

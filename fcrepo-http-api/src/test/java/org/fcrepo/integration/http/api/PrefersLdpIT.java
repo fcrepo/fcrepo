@@ -288,7 +288,8 @@ public class PrefersLdpIT extends AbstractResourceIT {
             assertFalse(graph.contains(systemManagedPropertyTriple));
             // Containment is consider system managed.
             assertFalse(graph.contains(containmentTriple));
-            assertTrue(graph.contains(membershipTriple));
+            // Membership is considered system managed.
+            assertFalse(graph.contains(membershipTriple));
             assertFalse(graph.contains(inboundReferenceTriple));
             assertFalse(graph.contains(embededTriple));
         }
@@ -306,7 +307,7 @@ public class PrefersLdpIT extends AbstractResourceIT {
             assertTrue(graph.contains(userRdfTriple));
             assertFalse(graph.contains(systemManagedPropertyTriple));
             assertTrue(graph.contains(containmentTriple));
-            assertTrue(graph.contains(membershipTriple));
+            assertFalse(graph.contains(membershipTriple));
             assertFalse(graph.contains(inboundReferenceTriple));
             assertFalse(graph.contains(embededTriple));
         }
@@ -537,7 +538,8 @@ public class PrefersLdpIT extends AbstractResourceIT {
         try (final CloseableDataset dataset = getDataset(getObjMethod)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             final Node resource = createURI(serverAddress + id);
-            assertTrue("Didn't find member resources", graph.find(ANY, resource, LDP_MEMBER.asNode(), ANY).hasNext());
+            // Membership is now consider system managed and so is removed with the rest.
+            assertFalse("Didn't find member resources", graph.find(ANY, resource, LDP_MEMBER.asNode(), ANY).hasNext());
             assertFalse("Expected nothing server managed",
                     graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
             assertFalse("Expected nothing server managed",
