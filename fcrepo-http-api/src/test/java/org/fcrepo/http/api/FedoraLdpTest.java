@@ -68,7 +68,6 @@ import org.slf4j.Logger;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
@@ -183,9 +182,6 @@ public class FedoraLdpTest {
     @Mock
     private Request mockRequest;
 
-    @Mock
-    private HttpServletRequest mockServletRequest;
-
     private HttpServletResponse mockResponse;
 
     @Mock
@@ -287,10 +283,6 @@ public class FedoraLdpTest {
         setField(testObj, "updatePropertiesService", updatePropertiesService);
         setField(testObj, "resourceHelper", resourceHelper);
         setField(testObj, "etagService", etagService);
-        setField(testObj, "servletRequest", mockServletRequest);
-
-        when(mockServletRequest.getContextPath()).thenReturn("/fcrepo");
-        when(mockServletRequest.getServletPath()).thenReturn("");
 
         when(rdfNamespaceRegistry.getNamespaces()).thenReturn(new HashMap<>());
 

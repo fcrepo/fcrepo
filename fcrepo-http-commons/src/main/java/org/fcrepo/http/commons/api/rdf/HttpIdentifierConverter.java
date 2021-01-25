@@ -52,7 +52,7 @@ public class HttpIdentifierConverter {
     }
 
     /**
-     * Create a new identifier converter within the given URI template and given context/servlet path.
+     * Create a new identifier converter with the given URI template.
      * @param uriBuilder the uri builder
      */
     public HttpIdentifierConverter(final UriBuilder uriBuilder) {

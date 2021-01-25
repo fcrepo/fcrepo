@@ -4984,8 +4984,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testMapRelativeUris() throws Exception {
         final HttpPost post = postObjMethod();
         final String body = "<> <http://example.org/related> </fcrepo/rest/test1> ; <http://example.org/related> " +
-                "</rest/test1> ; <http://example.org/related> <http://something.else/outThere> ; " +
-                "<http://example.org/related> <test1> .";
+                "</rest/test2> ; <http://example.org/related> <http://something.else/outThere> ; " +
+                "<http://example.org/related> <test3> .";
         post.setHeader(CONTENT_TYPE, "text/turtle");
         post.setEntity(new StringEntity(body, UTF_8));
         final String location;
@@ -4999,7 +4999,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final var nodeIter = graph.find(ANY, ANY, createURI("http://example.org/related"), ANY);
             int nodeCounter = 0;
             final List<String> expectedUris = List.of(serverAddress + "fcrepo/rest/test1",
-                    serverAddress + "rest/test1", "http://something.else/outThere", serverAddress + "test1");
+                    serverAddress + "rest/test2", "http://something.else/outThere", serverAddress + "test3");
             while (nodeIter.hasNext()) {
                 final var quad = nodeIter.next();
                 nodeCounter += 1;
@@ -5007,7 +5007,47 @@ public class FedoraLdpIT extends AbstractResourceIT {
             }
             assertEquals(4, nodeCounter);
         }
+    }
 
+    @Test
+    public void testMapRelativeUrisDeeper() throws Exception {
+        final String location1;
+        final HttpPost post = postObjMethod();
+        try (final var response = execute(post)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            location1 = getLocation(response);
+        }
+        final String location2;
+        final HttpPost post2 = new HttpPost(location1);
+        try (final var response = execute(post2)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            location2 = getLocation(response);
+        }
+        final HttpPost post3 = new HttpPost(location2);
+        final String body = "<> <http://example.org/related> </fcrepo/rest/test1> ; <http://example.org/related> " +
+                "</rest/test2> ; <http://example.org/related> <http://something.else/outThere> ; " +
+                "<http://example.org/related> <test3> .";
+        post3.setHeader(CONTENT_TYPE, "text/turtle");
+        post3.setEntity(new StringEntity(body, UTF_8));
+        final String location3;
+        try (final var response = execute(post3)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            location3 = getLocation(response);
+        }
+        final HttpGet get = new HttpGet(location3);
+        try (final var dataset = getDataset(get)) {
+            final var graph = dataset.asDatasetGraph();
+            final var nodeIter = graph.find(ANY, ANY, createURI("http://example.org/related"), ANY);
+            int nodeCounter = 0;
+            final List<String> expectedUris = List.of(serverAddress + "fcrepo/rest/test1",
+                    serverAddress + "rest/test2", "http://something.else/outThere", location2 + "/test3");
+            while (nodeIter.hasNext()) {
+                final var quad = nodeIter.next();
+                nodeCounter += 1;
+                assertTrue(expectedUris.contains(quad.getObject().getURI()));
+            }
+            assertEquals(4, nodeCounter);
+        }
     }
 
     private void assertIdStringConstraint(final String id) throws IOException {

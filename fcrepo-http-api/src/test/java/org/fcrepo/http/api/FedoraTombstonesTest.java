@@ -30,7 +30,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
@@ -61,9 +60,6 @@ public class FedoraTombstonesTest {
 
     @Mock
     private Request mockRequest;
-
-    @Mock
-    private HttpServletRequest mockServletRequest;
 
     @Mock
     private ServletContext mockServletContext;
@@ -97,10 +93,7 @@ public class FedoraTombstonesTest {
         setField(testObj, "securityContext", mockSecurityContext);
         setField(testObj, "request", mockRequest);
         setField(testObj, "context", mockServletContext);
-        setField(testObj, "servletRequest", mockServletRequest);
 
-        when(mockServletRequest.getContextPath()).thenReturn("/fcrepo");
-        when(mockServletRequest.getServletPath()).thenReturn("");
         when(resourceFactory.getResource((Transaction)any(), eq(fedoraId))).thenReturn(mockTombstone);
         when(mockTombstone.getDeletedObject()).thenReturn(mockDeletedObj);
     }

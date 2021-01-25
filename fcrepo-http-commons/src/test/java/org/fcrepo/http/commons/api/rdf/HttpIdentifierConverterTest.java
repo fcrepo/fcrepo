@@ -25,16 +25,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.util.UUID;
-
-import javax.ws.rs.core.UriBuilder;
-
 import org.fcrepo.kernel.api.identifiers.FedoraId;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import javax.ws.rs.core.UriBuilder;
+
+import java.util.UUID;
 
 /**
  * @author whikloj
