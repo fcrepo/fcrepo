@@ -120,7 +120,8 @@ public class HttpRdfService {
                                      final boolean lenientHandling)
                                      throws RepositoryRuntimeException, BadRequestException {
         final List<ConstraintViolationException> exceptions = new ArrayList<>();
-        final Model model = parseBodyAsModel(stream, contentType, extResourceId.getEncodedFullId());
+        final String externalURI = idTranslator.toExternalId(extResourceId.getFullId());
+        final Model model = parseBodyAsModel(stream, contentType, externalURI);
         final List<Statement> insertStatements = new ArrayList<>();
         final StmtIterator stmtIterator = model.listStatements();
 
@@ -134,15 +135,13 @@ public class HttpRdfService {
                     checkForDisallowedRdf(stmt);
                     if (stmt.getSubject().isURIResource()) {
                         final String originalSubj = stmt.getSubject().getURI();
-                        final String subj = idTranslator.inExternalDomain(originalSubj) ?
-                                idTranslator.toInternalId(originalSubj) : originalSubj;
+                        final String subj = idTranslator.translateUri(originalSubj);
 
                         RDFNode obj = stmt.getObject();
                         if (stmt.getObject().isURIResource()) {
                             final String objString = stmt.getObject().asResource().getURI();
-                            if (idTranslator.inExternalDomain(objString)) {
-                                obj = model.getResource(idTranslator.toInternalId(objString));
-                            }
+                            final String objUri = idTranslator.translateUri(objString);
+                            obj = model.getResource(objUri);
                         }
 
                         if (!subj.equals(originalSubj) || !obj.equals(stmt.getObject())) {
@@ -179,7 +178,8 @@ public class HttpRdfService {
      */
     public String patchRequestToInternalString(final FedoraId resourceId, final String requestBody,
                                                final HttpIdentifierConverter idTranslator) {
-        final UpdateRequest request = UpdateFactory.create(requestBody, resourceId.getEncodedFullId());
+        final String externalURI = idTranslator.toExternalId(resourceId.getFullId());
+        final UpdateRequest request = UpdateFactory.create(requestBody, externalURI);
         final List<Update> updates = request.getOperations();
         final SparqlTranslateVisitor visitor = new SparqlTranslateVisitor(idTranslator);
         for (final Update update : updates) {
