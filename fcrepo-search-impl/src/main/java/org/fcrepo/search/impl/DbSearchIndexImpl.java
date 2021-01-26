@@ -191,7 +191,7 @@ public class DbSearchIndexImpl implements SearchIndex {
         }
 
         final var sql =
-                new StringBuilder("SELECT " + String.join(",", fields) + " FROM " + SIMPLE_SEARCH_TABLE + " s");
+                new StringBuilder("SELECT %PLACEHOLDER% FROM " + SIMPLE_SEARCH_TABLE + " s");
 
         if (containsRDFTypeField) {
             sql.append(rdfTables);
@@ -214,6 +214,9 @@ public class DbSearchIndexImpl implements SearchIndex {
                 }
             }
         }
+
+        final String countQuery = sql.toString().replace("%PLACEHOLDER%", "count(*) as count");
+
         sql.append(" ORDER BY " + parameters.getOrderBy() + " " + parameters.getOrder());
         sql.append(" LIMIT :limit OFFSET :offset");
 
@@ -240,8 +243,11 @@ public class DbSearchIndexImpl implements SearchIndex {
             }
         };
 
-        final List<Map<String, Object>> items = jdbcTemplate.query(sql.toString(), parameterSource, rowMapper);
-        final var pagination = new PaginationInfo(parameters.getMaxResults(), parameters.getOffset());
+        final String selectQuery = sql.toString().replace("%PLACEHOLDER%", String.join(",", fields));
+        final Integer totalResults = jdbcTemplate.queryForObject(countQuery, parameterSource, Integer.class);
+        final List<Map<String, Object>> items = jdbcTemplate.query(selectQuery, parameterSource, rowMapper);
+        final var pagination = new PaginationInfo(parameters.getMaxResults(), parameters.getOffset(),
+                (totalResults != null ? totalResults : 0));
         LOGGER.debug("Search query with parameters: {} - {}", sql, parameters);
         return new SearchResult(items, pagination);
     }

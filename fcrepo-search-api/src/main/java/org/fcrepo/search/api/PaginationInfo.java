@@ -29,6 +29,8 @@ public class PaginationInfo {
     private int offset = -1;
     @JsonProperty
     private int maxResults = -1;
+    @JsonProperty
+    private int totalResults;
 
     /**
      * Default constructor
@@ -40,25 +42,32 @@ public class PaginationInfo {
      *
      * @param maxResults max results asked off
      * @param offset     offset of the first result item
+     * @param totalResults The total number of results
      */
-    public PaginationInfo(final int maxResults, final int offset) {
+    public PaginationInfo(final int maxResults, final int offset, final int totalResults) {
         this.maxResults = maxResults;
         this.offset = offset;
+        this.totalResults = totalResults;
     }
 
     /**
-     * The max results of the original query
-     * @return
+     * @return The max results of the original query
      */
     public int getMaxResults() {
         return maxResults;
     }
 
     /**
-     * The offset specified by original query
-     * @return
+     * @return The offset specified by original query
      */
     public int getOffset() {
         return offset;
+    }
+
+    /**
+     * @return The total number of results for this query.
+     */
+    public int getTotalResults() {
+        return this.totalResults;
     }
 }
