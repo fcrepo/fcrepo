@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
@@ -64,6 +65,8 @@ import static org.junit.Assert.assertTrue;
         listeners = { TestIsolationExecutionListener.class },
         mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class FedoraSearchIT extends AbstractResourceIT {
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private String getSearchEndpoint() {
         return serverAddress + "fcr:search?";
@@ -110,7 +113,6 @@ public class FedoraSearchIT extends AbstractResourceIT {
         final List<String> notFound = new ArrayList<>();
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            final ObjectMapper objectMapper = new ObjectMapper();
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
             assertNotNull(result);
             assertNotNull(result.getPagination());
@@ -140,14 +142,13 @@ public class FedoraSearchIT extends AbstractResourceIT {
             final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition);
             try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
                 assertEquals(OK.getStatusCode(), getStatus(response));
-                final ObjectMapper objectMapper = new ObjectMapper();
                 final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                         SearchResult.class);
                 assertEquals("expected " + count + " items where condition = " + condition, count,
                         result.getItems().size());
 
-                result.getItems().stream().map(x -> x.get(FEDORA_ID.toString()))
-                        .forEach(x -> assertTrue(x.toString().startsWith(urlPrefix)));
+                assertTrue(result.getItems().stream().map(x -> x.get(FEDORA_ID.toString()))
+                        .allMatch(x -> x.toString().startsWith(urlPrefix)));
             }
         }
     }
@@ -160,7 +161,6 @@ public class FedoraSearchIT extends AbstractResourceIT {
         String modified = null;
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            final ObjectMapper objectMapper = new ObjectMapper();
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
             assertEquals("expected 1 item where condition = " + condition, 1,
@@ -179,7 +179,6 @@ public class FedoraSearchIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            final ObjectMapper objectMapper = new ObjectMapper();
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
             assertEquals("expected 1 item where condition = " + condition, 1,
@@ -196,7 +195,6 @@ public class FedoraSearchIT extends AbstractResourceIT {
         final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition);
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            final ObjectMapper objectMapper = new ObjectMapper();
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
             assertEquals("expected 1 item where condition = " + condition, 1,
@@ -210,7 +208,6 @@ public class FedoraSearchIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            final ObjectMapper objectMapper = new ObjectMapper();
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
             assertEquals("expected 0 items where condition = " + condition, 0,
@@ -237,7 +234,6 @@ public class FedoraSearchIT extends AbstractResourceIT {
                 getSearchEndpoint() + "condition=" + encode(fedoraIdCondition) + "&" + lessThanNow;
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            final ObjectMapper objectMapper = new ObjectMapper();
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
             assertEquals("expected no results", 0,
@@ -248,7 +244,6 @@ public class FedoraSearchIT extends AbstractResourceIT {
                 getSearchEndpoint() + "condition=" + encode(fedoraIdCondition) + "&" + greaterThanTomorrow;
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            final ObjectMapper objectMapper = new ObjectMapper();
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
             assertEquals("expected no results", 0,
@@ -259,28 +254,26 @@ public class FedoraSearchIT extends AbstractResourceIT {
         searchUrl = getSearchEndpoint() + "condition=" + encode(fedoraIdCondition) + "&" + greaterThanNow;
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            final ObjectMapper objectMapper = new ObjectMapper();
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
             assertEquals("expected " + count + " results", count,
                     result.getItems().size());
 
-            result.getItems().stream().map(x -> x.get("fedora_id"))
-                    .forEach(x -> assertTrue(x.toString().equals(fedoraId)));
+            assertTrue(result.getItems().stream().map(x -> x.get("fedora_id"))
+                    .allMatch(x -> x.toString().equals(fedoraId)));
         }
 
         // ensure that less than tomorrow returns a result
         searchUrl = getSearchEndpoint() + "condition=" + encode(fedoraIdCondition) + "&" + lessThanTomorrow;
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            final ObjectMapper objectMapper = new ObjectMapper();
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
             assertEquals("expected " + count + " results", count,
                     result.getItems().size());
 
-            result.getItems().stream().map(x -> x.get("fedora_id"))
-                    .forEach(x -> assertTrue(x.toString().equals(fedoraId)));
+            assertTrue(result.getItems().stream().map(x -> x.get("fedora_id"))
+                    .allMatch(x -> x.toString().equals(fedoraId)));
         }
 
         // ensure that between now and tomorrow returns a result.
@@ -288,13 +281,12 @@ public class FedoraSearchIT extends AbstractResourceIT {
                 "&" + lessThanTomorrow;
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            final ObjectMapper objectMapper = new ObjectMapper();
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
             assertEquals("expected " + count + " results ", count,
                     result.getItems().size());
-            result.getItems().stream().map(x -> x.get("fedora_id"))
-                    .forEach(x -> assertTrue(x.toString().equals(fedoraId)));
+            assertTrue(result.getItems().stream().map(x -> x.get("fedora_id"))
+                    .allMatch(x -> x.toString().equals(fedoraId)));
         }
     }
 
@@ -324,13 +316,12 @@ public class FedoraSearchIT extends AbstractResourceIT {
         final var count = 1;
         createResources(id, count);
         final var fields = fieldList.stream()
-                .map(x -> x.toString()).collect(Collectors.toList());
+                .map(Condition.Field::toString).collect(Collectors.toList());
         final String searchUrl =
                 getSearchEndpoint() + "condition=" + encode("fedora_id=" + id + "*") + "&fields=" + String.join(",",
                         fields);
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            final ObjectMapper objectMapper = new ObjectMapper();
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
             final var items = result.getItems();
             assertEquals("expected " + count + " items", count, items.size());
@@ -354,7 +345,6 @@ public class FedoraSearchIT extends AbstractResourceIT {
                 getSearchEndpoint() + "condition=" + encode(condition) + "&max_results=" + maxResults + "&offset=2";
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            final ObjectMapper objectMapper = new ObjectMapper();
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
             assertEquals(maxResults, result.getItems().size());
             final var returnedIds =
@@ -378,7 +368,6 @@ public class FedoraSearchIT extends AbstractResourceIT {
                 getSearchEndpoint() + "condition=" + encode(condition) + "&condition=" + encode(contentSizeCondition);
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            final ObjectMapper objectMapper = new ObjectMapper();
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
             assertEquals(2, result.getItems().size());
         }
@@ -389,7 +378,6 @@ public class FedoraSearchIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl2))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            final ObjectMapper objectMapper = new ObjectMapper();
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
             assertEquals(1, result.getItems().size());
         }
@@ -409,7 +397,6 @@ public class FedoraSearchIT extends AbstractResourceIT {
                         "&condition=" + encode(matchingMimetypeCondition);
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            final ObjectMapper objectMapper = new ObjectMapper();
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
 
             assertEquals(1, result.getItems().size());
@@ -421,7 +408,6 @@ public class FedoraSearchIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl2))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            final ObjectMapper objectMapper = new ObjectMapper();
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
             assertEquals(0, result.getItems().size());
         }
@@ -433,7 +419,6 @@ public class FedoraSearchIT extends AbstractResourceIT {
         final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition);
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            final ObjectMapper objectMapper = new ObjectMapper();
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
             assertNotNull(result);
             assertNotNull(result.getPagination());
@@ -458,7 +443,6 @@ public class FedoraSearchIT extends AbstractResourceIT {
         final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition);
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            final ObjectMapper objectMapper = new ObjectMapper();
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
             assertEquals(resources, result.getItems().stream()
                     .map(x -> x.get("fedora_id")).collect(Collectors.toList()));
@@ -474,7 +458,6 @@ public class FedoraSearchIT extends AbstractResourceIT {
         final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition) + "&order=desc";
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            final ObjectMapper objectMapper = new ObjectMapper();
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
             assertEquals(resources, result.getItems().stream()
                     .map(x -> x.get("fedora_id")).collect(Collectors.toList()));
@@ -497,14 +480,13 @@ public class FedoraSearchIT extends AbstractResourceIT {
                 "text")));
 
         final var resources =
-                Arrays.asList(resourceA, resourceC, resourceB).stream().map(x -> serverAddress + x)
+                Stream.of(resourceA, resourceC, resourceB).map(x -> serverAddress + x)
                         .collect(Collectors.toList());
         final var condition = FEDORA_ID + "=" + resourceId + "/*";
         final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition) +
                 "&order_by=mime_type&order=desc";
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            final ObjectMapper objectMapper = new ObjectMapper();
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
             assertEquals(resources, result.getItems().stream()
                     .map(x -> x.get("fedora_id")).collect(Collectors.toList()));
@@ -536,7 +518,6 @@ public class FedoraSearchIT extends AbstractResourceIT {
                 getSearchEndpoint() + "condition=" + encode(condition) + "&condition=" + encode(rdfTypeCondition);
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            final ObjectMapper objectMapper = new ObjectMapper();
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
             assertEquals(1, result.getItems().size());
         }
@@ -547,7 +528,6 @@ public class FedoraSearchIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl2))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            final ObjectMapper objectMapper = new ObjectMapper();
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
             assertEquals(0, result.getItems().size());
         }
@@ -563,7 +543,6 @@ public class FedoraSearchIT extends AbstractResourceIT {
         final var resources = createResources(prefix, 6);
         final var condition = FEDORA_ID + "=" + prefix + "*";
         final var maxResults = 2;
-        final ObjectMapper objectMapper = new ObjectMapper();
         final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition) + "&max_results=" + maxResults;
         try (final var response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
@@ -589,7 +568,6 @@ public class FedoraSearchIT extends AbstractResourceIT {
         final var resources2 = createResources(prefix2, 6);
         final var condition = FEDORA_ID + "=" + prefix + "*";
         final var maxResults = 5;
-        final ObjectMapper objectMapper = new ObjectMapper();
         final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition) + "&max_results=" + maxResults;
         try (final var response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
@@ -608,6 +586,30 @@ public class FedoraSearchIT extends AbstractResourceIT {
             assertEquals(6, result.getPagination().getTotalResults());
             assertTrue(result.getItems().stream().allMatch(r -> resources.contains(r.get("fedora_id").toString()) &&
                     !resources2.contains(r.get("fedora_id").toString())));
+        }
+    }
+
+    @Test
+    public void testUnderScoreEscaping() throws Exception {
+        final String prefix = "test_total_";
+        final String prefix2 = "test_total2_";
+        final String resource1;
+        final String resource2;
+        try (final var response = createObject(prefix + "-1")) {
+            resource1 = getLocation(response);
+        }
+        try (final var response = createObject(prefix2 + "-1")) {
+            resource2 = getLocation(response);
+        }
+        final var condition = FEDORA_ID + "=" + prefix + "*";
+
+        final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition) + "&max_results=2";
+        try (final var response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
+            assertEquals(1, result.getItems().size());
+            assertEquals(1, result.getPagination().getTotalResults());
+            assertEquals(resource1, result.getItems().get(0).get("fedora_id"));
         }
     }
 }
