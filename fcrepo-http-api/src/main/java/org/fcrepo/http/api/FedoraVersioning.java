@@ -21,6 +21,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.micrometer.core.annotation.Timed;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.LinkFormatStream;
+import org.fcrepo.kernel.api.exception.CannotCreateMementoException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -126,7 +127,8 @@ public class FedoraVersioning extends ContentExposingResource {
         }
 
         if (headers.getHeaderString(MEMENTO_DATETIME_HEADER) != null) {
-            throw new BadRequestException("date-time header is no longer supported on versioning.");
+            throw new CannotCreateMementoException(MEMENTO_DATETIME_HEADER +
+                    " header is no longer supported on versioning.");
         }
 
         final var transaction = transaction();

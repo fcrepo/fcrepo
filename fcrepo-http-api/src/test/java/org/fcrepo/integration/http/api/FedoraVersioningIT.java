@@ -18,6 +18,7 @@
 package org.fcrepo.integration.http.api;
 
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
+import static java.util.Arrays.asList;
 import static java.util.Arrays.sort;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
@@ -33,6 +34,7 @@ import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
@@ -80,7 +82,6 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -148,7 +149,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     private static final Resource TEST_TYPE_RESOURCE = createResource("http://example.com/custom_type");
 
-    private final List<String> rdfTypes = new ArrayList<>(Arrays.asList(POSSIBLE_RDF_RESPONSE_VARIANTS_STRING));
+    private final List<String> rdfTypes = new ArrayList<>(asList(POSSIBLE_RDF_RESPONSE_VARIANTS_STRING));
 
     private String subjectUri;
     private String id;
@@ -309,6 +310,21 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             assertMementoEqualsOriginal(mementoUri);
         }
     }
+
+    @Test
+    public void testCreateVersionWithAcceptDatetime() throws Exception {
+        final String mementoDateTime =
+                MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
+        createVersionedContainer(id);
+        final var post = postObjMethod(id + "/fcr:versions");
+        post.addHeader(MEMENTO_DATETIME_HEADER, mementoDateTime);
+        try (final CloseableHttpResponse response = execute(post)) {
+            assertEquals("Operation should return " + SC_BAD_REQUEST + " status", SC_BAD_REQUEST,
+                    response.getStatusLine().getStatusCode());
+            assertConstrainedByPresent(response);
+        }
+    }
+
 
     @Test
     public void testCreateVersionFromResourceWithHashURI() throws Exception {
@@ -728,7 +744,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             // verify headers in link format.
             verifyTimeMapHeaders(response, uri);
             final var responseBody = EntityUtils.toString(response.getEntity());
-            final List<String> bodyList = Arrays.asList(responseBody.split("," + System.lineSeparator()));
+            final List<String> bodyList = asList(responseBody.split("," + System.lineSeparator()));
             //the links from the body are not
 
             Link selfLink = null;
