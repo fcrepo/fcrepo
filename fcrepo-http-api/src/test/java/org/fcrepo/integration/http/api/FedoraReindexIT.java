@@ -27,7 +27,6 @@ import org.springframework.test.context.TestExecutionListeners;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 
@@ -48,7 +47,6 @@ public class FedoraReindexIT extends AbstractResourceIT {
         final var dest = Path.of("target/fcrepo-home/data/ocfl-root").toFile();
         LOGGER.info("copying {} to {}", src.toString(), dest.toString());
         FileUtils.copyDirectory(src, dest);
-        TimeUnit.SECONDS.sleep(5);
     }
 
     @Test
