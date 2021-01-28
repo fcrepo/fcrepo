@@ -36,6 +36,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -242,9 +243,13 @@ public class RebuildIT extends AbstractResourceIT {
             ocflRepository.listObjectIds().forEach(ocflRepository::purgeObject);
             final var root = Paths.get("target/fcrepo-home/data/ocfl-root");
             FileUtils.cleanDirectory(root.toFile());
+            TimeUnit.SECONDS.sleep(5);
             FileUtils.copyDirectory(Paths.get("src/test/resources", name).toFile(), root.toFile());
+            TimeUnit.SECONDS.sleep(5);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
