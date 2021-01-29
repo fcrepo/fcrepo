@@ -133,7 +133,7 @@ public class LdpPreferTag extends PreferTag implements LdpTriplePreferences {
     @Override
     public boolean displayEmbed() {
         // If we did ask for embedded resources. (Not shown by default).
-        return embed.equals(preferChoice.INCLUDE);
+        return embed.equals(INCLUDE);
     }
 
     @Override
