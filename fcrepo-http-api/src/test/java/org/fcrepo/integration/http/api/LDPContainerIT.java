@@ -25,6 +25,10 @@ import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.awaitility.Awaitility.await;
 import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_LINK_FORMAT;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
@@ -36,9 +40,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.LDP_MEMBER;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBER_SUBJECT;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MEMBERSHIP;
-import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
-import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
-import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -56,6 +57,8 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response.Status;
 
+import org.fcrepo.kernel.api.RdfLexicon;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -72,7 +75,6 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.DC;
 import org.apache.jena.vocabulary.RDF;
-import org.fcrepo.kernel.api.RdfLexicon;
 import org.junit.Test;
 import org.springframework.test.context.TestExecutionListeners;
 
@@ -699,8 +701,12 @@ public class LDPContainerIT extends AbstractResourceIT {
 
         final var member2Mementos = listMementoIds(member2Id);
         assertEquals(2, member2Mementos.size());
-        assertMementoIsMemberOf(member2Mementos.get(0), EX_IS_MEMBER_PROP, membershipRescId);
-        assertMementoIsMemberOf(member2Mementos.get(1), RdfLexicon.LDP_MEMBER, membershipRescId);
+        await().atMost(2, TimeUnit.SECONDS).until(() -> {
+            assertMementoIsMemberOf(member2Mementos.get(0), EX_IS_MEMBER_PROP, membershipRescId);
+            assertMementoIsMemberOf(member2Mementos.get(1), RdfLexicon.LDP_MEMBER, membershipRescId);
+            return true;
+        });
+
         assertIsMemberOf(member2Id, RdfLexicon.LDP_MEMBER, membershipRescId);
 
         final var member3Mementos = listMementoIds(member3Id);

@@ -17,9 +17,6 @@
  */
 package org.fcrepo.http.commons.domain.ldp;
 
-import org.fcrepo.http.commons.domain.PreferTag;
-import org.junit.Test;
-
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_CONTAINMENT;
@@ -28,6 +25,10 @@ import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MINIMAL_CONTAINER;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import org.fcrepo.http.commons.domain.PreferTag;
+
+import org.junit.Test;
+
 /**
  * @author cabeer
  */
@@ -35,17 +36,17 @@ public class LdpPreferTagTest {
 
     private LdpPreferTag testObj;
 
-
     @Test
-    public void testMinimalHandling() {
-        testObj = new LdpPreferTag(new PreferTag("handling=lenient; received=\"minimal\""));
+    public void testDefaultDecisions() {
+        final PreferTag prefer = PreferTag.emptyTag();
+        testObj = new LdpPreferTag(prefer);
 
-        assertFalse(testObj.prefersServerManaged());
-        assertFalse(testObj.prefersContainment());
-        assertFalse(testObj.prefersMembership());
-        assertFalse(testObj.prefersEmbed());
-        assertFalse(testObj.prefersReferences());
-
+        assertTrue(testObj.displayUserRdf());
+        assertTrue(testObj.displayServerManaged());
+        assertFalse(testObj.displayReferences());
+        assertTrue(testObj.displayContainment());
+        assertTrue(testObj.displayMembership());
+        assertFalse(testObj.displayEmbed());
     }
 
     @Test
@@ -54,11 +55,12 @@ public class LdpPreferTagTest {
                 = new PreferTag("return=representation; include=\"" + PREFER_MINIMAL_CONTAINER + "\"");
         testObj = new LdpPreferTag(prefer);
 
-        assertTrue(testObj.prefersServerManaged());
-        assertFalse(testObj.prefersReferences());
-        assertFalse(testObj.prefersContainment());
-        assertFalse(testObj.prefersMembership());
-        assertFalse(testObj.prefersEmbed());
+        assertTrue(testObj.displayUserRdf());
+        assertTrue(testObj.displayServerManaged());
+        assertFalse(testObj.displayReferences());
+        assertFalse(testObj.displayContainment());
+        assertFalse(testObj.displayMembership());
+        assertFalse(testObj.displayEmbed());
     }
 
     @Test
@@ -68,7 +70,12 @@ public class LdpPreferTagTest {
                                                                     + PREFER_MEMBERSHIP + "\"");
         testObj = new LdpPreferTag(prefer);
 
-        assertTrue(testObj.prefersMembership());
+        assertTrue(testObj.displayUserRdf());
+        assertTrue(testObj.displayServerManaged());
+        assertFalse(testObj.displayReferences());
+        assertFalse(testObj.displayContainment());
+        assertTrue(testObj.displayMembership());
+        assertFalse(testObj.displayEmbed());
     }
 
     @Test
@@ -78,7 +85,12 @@ public class LdpPreferTagTest {
                                                                     + PREFER_CONTAINMENT + "\"");
         testObj = new LdpPreferTag(prefer);
 
-        assertTrue(testObj.prefersContainment());
+        assertTrue(testObj.displayUserRdf());
+        assertTrue(testObj.displayServerManaged());
+        assertFalse(testObj.displayReferences());
+        assertTrue(testObj.displayContainment());
+        assertFalse(testObj.displayMembership());
+        assertFalse(testObj.displayEmbed());
     }
 
     @Test
@@ -88,8 +100,12 @@ public class LdpPreferTagTest {
                                                                     + PREFER_CONTAINMENT + "\"");
         testObj = new LdpPreferTag(prefer);
 
-        assertTrue(testObj.prefersMembership());
-        assertTrue(testObj.prefersContainment());
+        assertTrue(testObj.displayUserRdf());
+        assertTrue(testObj.displayServerManaged());
+        assertFalse(testObj.displayReferences());
+        assertTrue(testObj.displayContainment());
+        assertTrue(testObj.displayMembership());
+        assertFalse(testObj.displayEmbed());
     }
 
     @Test
@@ -99,8 +115,12 @@ public class LdpPreferTagTest {
                                                                  + PREFER_CONTAINMENT + "\"");
         testObj = new LdpPreferTag(prefer);
 
-        assertFalse(testObj.prefersMembership());
-        assertFalse(testObj.prefersContainment());
+        assertTrue(testObj.displayUserRdf());
+        assertTrue(testObj.displayServerManaged());
+        assertFalse(testObj.displayReferences());
+        assertFalse(testObj.displayContainment());
+        assertFalse(testObj.displayMembership());
+        assertFalse(testObj.displayEmbed());
     }
 
     @Test
@@ -109,18 +129,23 @@ public class LdpPreferTagTest {
                 = new PreferTag("return=representation; include=\"" + INBOUND_REFERENCES + "\"");
         testObj = new LdpPreferTag(prefer);
 
-        assertTrue(testObj.prefersReferences());
-    }
-
-    @Test
-    public void testEmbedDefault() {
-        testObj = new LdpPreferTag(PreferTag.emptyTag());
-        assertFalse(testObj.prefersEmbed());
+        assertTrue(testObj.displayUserRdf());
+        assertTrue(testObj.displayServerManaged());
+        assertTrue(testObj.displayReferences());
+        assertTrue(testObj.displayContainment());
+        assertTrue(testObj.displayMembership());
+        assertFalse(testObj.displayEmbed());
     }
 
     @Test
     public void testEmbedContained() {
         testObj = new LdpPreferTag(new PreferTag("return=representation; include=\"" + EMBED_CONTAINED + "\""));
-        assertTrue(testObj.prefersEmbed());
+
+        assertTrue(testObj.displayUserRdf());
+        assertTrue(testObj.displayServerManaged());
+        assertFalse(testObj.displayReferences());
+        assertTrue(testObj.displayContainment());
+        assertTrue(testObj.displayMembership());
+        assertTrue(testObj.displayEmbed());
     }
 }

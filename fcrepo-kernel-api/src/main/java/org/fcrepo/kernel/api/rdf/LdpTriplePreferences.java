@@ -18,44 +18,49 @@
 package org.fcrepo.kernel.api.rdf;
 
 /**
- * Kernel level API to hold the LdpPreferTag decisions.
+ * Kernel level API to hold the LdpPreferTag and internal logic decisions.
  * @author whikloj
  * @since 6.0.0
  */
 public interface LdpTriplePreferences {
 
     /**
-     * @return Whether to return a minimal container.
+     * What the prefer tag choice is.
      */
-    boolean getMinimal();
+    enum preferChoice {
+        INCLUDE,
+        EXCLUDE,
+        SILENT
+    }
 
     /**
-     * @return Whether this prefer tag demands membership triples.
+     * @return Whether to display user rdf based on this preference tag and internal defaults.
      */
-    boolean prefersMembership();
+    boolean displayUserRdf();
 
     /**
-     * @return Whether this prefer tag demands containment triples.
+     * @return Whether to display membership triples based on this preference tag and internal defaults.
      */
-    boolean prefersContainment();
+    boolean displayMembership();
 
     /**
-     * @return Whether this prefer tag demands references triples.
+     * @return Whether to display containment triples based on this preference tag and internal defaults.
      */
-    boolean prefersReferences();
+    boolean displayContainment();
 
     /**
-     * @return Whether this prefer tag demands embedded triples.
+     * @return Whether to display inbound reference triples based on this preference tag and internal defaults.
      */
-    boolean prefersEmbed();
+    boolean displayReferences();
 
     /**
-     * @return Whether this prefer tag demands server managed properties.
+     * @return Whether to display contained resources' triples based on this preference tag and internal defaults.
      */
-    boolean prefersServerManaged();
+    boolean displayEmbed();
 
     /**
-     * @return Whether this prefer tag demands no minimal container, ie. no user RDF.
+     * @return Whether to display server managed triples based on this preference tag and internal defaults.
      */
-    boolean preferNoUserRdf();
+    boolean displayServerManaged();
+
 }

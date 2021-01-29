@@ -774,7 +774,7 @@ public class WebACFilter extends RequestContextFilter {
         final MultiPrefer multiPrefer = new MultiPrefer(preferTagSet);
         if (multiPrefer.hasReturn()) {
             final LdpPreferTag ldpPreferences = new LdpPreferTag(multiPrefer.getReturn());
-            return ldpPreferences.prefersEmbed();
+            return ldpPreferences.displayEmbed();
         }
         return false;
     }
