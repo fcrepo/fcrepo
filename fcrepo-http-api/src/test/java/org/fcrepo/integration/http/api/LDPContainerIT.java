@@ -666,6 +666,8 @@ public class LDPContainerIT extends AbstractResourceIT {
         final String member3Id = getRandomUniqueId();
         final String member3Uri = serverAddress + member3Id;
 
+        TimeUnit.SECONDS.sleep(1);
+
         // Create proxies to members
         final String proxy1Id = indirectId + "/proxy1";
         createProxy(proxy1Id, member1Uri);
@@ -673,6 +675,8 @@ public class LDPContainerIT extends AbstractResourceIT {
         createProxy(proxy2Id, member2Uri);
         final String proxy3Id = indirectId + "/proxy3";
         createProxy(proxy3Id, member3Uri);
+
+        TimeUnit.SECONDS.sleep(1);
 
         // Create member3 after its proxy
         createBasicContainer(null, member3Id);
@@ -695,14 +699,14 @@ public class LDPContainerIT extends AbstractResourceIT {
 
         final var member1Mementos = listMementoIds(member1Id);
         assertEquals(1, member1Mementos.size());
-        assertMementoIsMemberOf(member1Mementos.get(0), EX_IS_MEMBER_PROP, membershipRescId);
+        assertHasNoMembership(member1Mementos.get(0), EX_IS_MEMBER_PROP);
         assertHasNoMembership(member1Id, EX_IS_MEMBER_PROP);
         assertIsMemberOf(member1Id, RdfLexicon.LDP_MEMBER, membershipRescId);
 
         final var member2Mementos = listMementoIds(member2Id);
         assertEquals(2, member2Mementos.size());
         await().atMost(2, TimeUnit.SECONDS).until(() -> {
-            assertMementoIsMemberOf(member2Mementos.get(0), EX_IS_MEMBER_PROP, membershipRescId);
+            assertHasNoMembership(member2Mementos.get(0), EX_IS_MEMBER_PROP);
             assertMementoIsMemberOf(member2Mementos.get(1), RdfLexicon.LDP_MEMBER, membershipRescId);
             return true;
         });
