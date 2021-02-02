@@ -25,14 +25,14 @@ CREATE INDEX IF NOT EXISTS containment_idx4
 
 --- Create an index to speed searches for fedora_id using LIKE if your Locale is not C.
 DO
-  '
+  $$
   BEGIN
-  IF (SELECT setting FROM pg_settings WHERE name = ''lc_collate'') <> ''C'' THEN
-    RAISE NOTICE ''lc_collate is not C, adding secondary index to resources.'';
+  IF (SELECT setting FROM pg_settings WHERE name = 'lc_collate') <> 'C' THEN
+    RAISE NOTICE 'lc_collate is not C, adding secondary index to resources.';
     CREATE INDEX IF NOT EXISTS containment_idx5 ON containment (fedora_id varchar_pattern_ops);
   END IF;
   END
-  ' LANGUAGE PLPGSQL;
+  $$ LANGUAGE PLPGSQL;
 
 -- Holds operations to add or delete records from the RESOURCES_TABLE.
 CREATE TABLE IF NOT EXISTS containment_transactions (

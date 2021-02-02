@@ -17,33 +17,17 @@
  */
 package org.fcrepo.search.impl;
 
-import org.fcrepo.common.db.DbPlatform;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.ResourceFactory;
-import org.fcrepo.kernel.api.models.ResourceHeaders;
-import org.fcrepo.search.api.Condition;
-import org.fcrepo.search.api.InvalidQueryException;
-import org.fcrepo.search.api.PaginationInfo;
-import org.fcrepo.search.api.SearchIndex;
-import org.fcrepo.search.api.SearchParameters;
-import org.fcrepo.search.api.SearchResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
-import org.springframework.jdbc.datasource.init.DatabasePopulatorUtils;
-import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+import static java.time.format.DateTimeFormatter.ISO_INSTANT;
+import static java.util.Collections.EMPTY_LIST;
+import static org.fcrepo.common.db.DbPlatform.H2;
+import static org.fcrepo.common.db.DbPlatform.MARIADB;
+import static org.fcrepo.common.db.DbPlatform.MYSQL;
+import static org.fcrepo.common.db.DbPlatform.POSTGRESQL;
+import static org.fcrepo.search.api.Condition.Field.CONTENT_SIZE;
+import static org.fcrepo.search.api.Condition.Field.FEDORA_ID;
+import static org.fcrepo.search.api.Condition.Field.MIME_TYPE;
+import static org.fcrepo.search.api.Condition.Field.RDF_TYPE;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
-import javax.sql.DataSource;
 import java.net.URI;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -58,16 +42,31 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static java.time.format.DateTimeFormatter.ISO_INSTANT;
-import static java.util.Collections.EMPTY_LIST;
-import static org.fcrepo.common.db.DbPlatform.H2;
-import static org.fcrepo.common.db.DbPlatform.MARIADB;
-import static org.fcrepo.common.db.DbPlatform.MYSQL;
-import static org.fcrepo.common.db.DbPlatform.POSTGRESQL;
-import static org.fcrepo.search.api.Condition.Field.CONTENT_SIZE;
-import static org.fcrepo.search.api.Condition.Field.FEDORA_ID;
-import static org.fcrepo.search.api.Condition.Field.MIME_TYPE;
-import static org.fcrepo.search.api.Condition.Field.RDF_TYPE;
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.sql.DataSource;
+
+import org.fcrepo.common.db.DbPlatform;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.search.api.Condition;
+import org.fcrepo.search.api.InvalidQueryException;
+import org.fcrepo.search.api.PaginationInfo;
+import org.fcrepo.search.api.SearchIndex;
+import org.fcrepo.search.api.SearchParameters;
+import org.fcrepo.search.api.SearchResult;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 
 /**
@@ -100,14 +99,7 @@ public class DbSearchIndexImpl implements SearchIndex {
             "search_rdf_type rt  WHERE rrt.rdf_type_id = rt.id group by rrt.resource_id) r, " +
             "(SELECT rrt.resource_id from search_resource_rdf_type rrt, search_rdf_type rt " +
             "WHERE rt.rdf_type_uri like :rdf_type_uri and rrt.rdf_type_id = rt.id group by rrt.resource_id) r_filter";
-    private static final String DEFAULT_DDL = "sql/default-search-index.sql";
 
-    private static final Map<DbPlatform, String> DDL_MAP = Map.of(
-            MYSQL, DEFAULT_DDL,
-            H2, DEFAULT_DDL,
-            POSTGRESQL, "sql/postgresql-search-index.sql",
-            MARIADB, DEFAULT_DDL
-    );
     public static final String SEARCH_RESOURCE_RDF_TYPE_TABLE = "search_resource_rdf_type";
     public static final String RESOURCE_ID_PARAM = "resource_id";
     public static final String RDF_TYPE_ID_PARAM = "rdf_type_id";
@@ -167,11 +159,6 @@ public class DbSearchIndexImpl implements SearchIndex {
     @PostConstruct
     public void setup() {
         this.dbPlatForm = DbPlatform.fromDataSource(this.dataSource);
-        final var ddl = lookupDdl();
-        LOGGER.debug("Applying ddl: {}", ddl);
-        DatabasePopulatorUtils.execute(
-                new ResourceDatabasePopulator(new DefaultResourceLoader().getResource("classpath:" + ddl)),
-                this.dataSource);
         this.jdbcTemplate = getNamedParameterJdbcTemplate();
 
         jdbcInsertResource = new SimpleJdbcInsert(this.jdbcTemplate.getJdbcTemplate())
@@ -180,10 +167,6 @@ public class DbSearchIndexImpl implements SearchIndex {
 
         this.rdfTables = RDF_TYPE_TABLE.replace(GROUP_CONCAT_FUNCTION,
                 isPostgres() ? POSTGRES_GROUP_CONCAT_FUNCTION : DEFAULT_GROUP_CONCAT_FUNCTION);
-    }
-
-    private String lookupDdl() {
-        return DDL_MAP.get(dbPlatForm);
     }
 
     private NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {

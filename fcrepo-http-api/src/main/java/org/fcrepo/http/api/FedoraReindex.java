@@ -17,12 +17,11 @@
  */
 package org.fcrepo.http.api;
 
-import io.micrometer.core.annotation.Timed;
-import org.apache.http.HttpStatus;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.services.ReindexService;
-import org.slf4j.Logger;
-import org.springframework.context.annotation.Scope;
+import static java.lang.String.format;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.Response.status;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
@@ -35,11 +34,14 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
-import static java.lang.String.format;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.Response.status;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.services.ReindexService;
+
+import org.apache.http.HttpStatus;
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
+
+import io.micrometer.core.annotation.Timed;
 
 /**
  * @author dbernstein
@@ -90,13 +92,13 @@ public class FedoraReindex extends FedoraBaseResource {
                     transaction.commitIfShortLived();
                     final var message = format("successfully reindexed %s", id.getBaseId());
                     LOGGER.info(message);
-                    return status(HttpStatus.SC_NO_CONTENT, message).build();
+                    return status(HttpStatus.SC_NO_CONTENT).entity(message).build();
                 } finally {
                     transaction().releaseResourceLocksIfShortLived();
                 }
             }
 
-        } catch (Exception ex) {
+        } catch (final Exception ex) {
             throw new BadRequestException(ex.getMessage(), ex);
         }
     }

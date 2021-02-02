@@ -31,8 +31,9 @@
     <commons-io.version>2.8.0</commons-io.version>
     <commons-lang.version>3.11</commons-lang.version>
     <narayana-jta.version>5.9.0.Final</narayana-jta.version>
-    <jetty.version>9.4.34.v20201102</jetty.version>
     <failsafe.version>2.4.0</failsafe.version>
+    <flyway.version>7.5.2</flyway.version>
+    <flyway.test.version>7.0.0</flyway.test.version>
     <guava.version>30.0-jre</guava.version>
     <h2database.version>1.4.195</h2database.version>
     <hk2.version>2.6.1</hk2.version>
@@ -50,6 +51,7 @@
     <jboss-logging.version>3.3.2.Final</jboss-logging.version>
     <jena.version>3.16.0</jena.version>
     <jersey.version>2.32</jersey.version>
+    <jetty.version>9.4.34.v20201102</jetty.version>
     <jgroups.version>5.0.4.Final</jgroups.version>
     <jsonld.version>0.13.2</jsonld.version>
     <logback.version>1.2.3</logback.version>
@@ -488,6 +490,22 @@
             <artifactId>checker-qual</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.flywaydb</groupId>
+        <artifactId>flyway-core</artifactId>
+        <version>${flyway.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.flywaydb.flyway-test-extensions</groupId>
+        <artifactId>flyway-test-extensions</artifactId>
+        <version>${flyway.test.version}</version>
+        <type>pom</type>
+      </dependency>
+      <dependency>
+        <groupId>org.flywaydb.flyway-test-extensions</groupId>
+        <artifactId>flyway-spring-test</artifactId>
+        <version>${flyway.test.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.shiro</groupId>

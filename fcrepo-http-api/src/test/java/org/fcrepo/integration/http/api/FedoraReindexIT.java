@@ -17,18 +17,18 @@
  */
 package org.fcrepo.integration.http.api;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.HttpPost;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.test.context.TestExecutionListeners;
+import static org.apache.http.HttpStatus.SC_CONFLICT;
+import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
-import static org.junit.Assert.assertEquals;
+import org.apache.commons.io.FileUtils;
+import org.apache.http.HttpStatus;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.test.context.TestExecutionListeners;
 
 /**
  * @author dbernstein
@@ -56,17 +56,13 @@ public class FedoraReindexIT extends AbstractResourceIT {
         assertNotFound(fedoraId);
 
         prepareContentForSideLoading("src/test/resources/reindex-test");
-        final HttpPost httpPost = doReindex(fedoraId, HttpStatus.SC_NO_CONTENT);
+        doReindex(fedoraId, HttpStatus.SC_NO_CONTENT);
 
         //validate the the fedora resource is found (200)
         assertNotDeleted(fedoraId);
 
         //verify that attempting to index an already existing resource returns a CONFLICT.
-        try (final var response = execute(httpPost)) {
-            assertEquals("expected " + HttpStatus.SC_CONFLICT + " on retry after successful indexing",
-                    HttpStatus.SC_CONFLICT,
-                    response.getStatusLine().getStatusCode());
-        }
+        doReindex(fedoraId, SC_CONFLICT);
     }
 
     @Test
@@ -107,14 +103,11 @@ public class FedoraReindexIT extends AbstractResourceIT {
         assertNotFound(parentId);
     }
 
-    private HttpPost doReindex(final String fedoraId, final int expectedStatus) throws IOException {
+    private void doReindex(final String fedoraId, final int expectedStatus) throws IOException {
         //invoke reindex command
         final var httpPost = postObjMethod(getReindexEndpoint(fedoraId));
 
-        try (final var response = execute(httpPost)) {
-            assertEquals("expected " + expectedStatus, expectedStatus, response.getStatusLine().getStatusCode());
-        }
-        return httpPost;
+        assertEquals(expectedStatus, getStatus(httpPost));
     }
 
     private String getReindexEndpoint(final String fedoraId) {

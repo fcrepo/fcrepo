@@ -57,6 +57,9 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import javax.inject.Inject;
+import javax.sql.DataSource;
+
 /**
  * @author bbpennel
  */
@@ -89,6 +92,9 @@ public class NonRdfSourcesPersistenceIT {
 
     @Autowired
     private OcflPropsConfig ocflPropsConfig;
+
+    @Inject
+    private DataSource dataSource;
 
     private FedoraId rescId;
 

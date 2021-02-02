@@ -18,33 +18,31 @@
 
 package org.fcrepo.persistence.ocfl.impl;
 
-import com.google.common.base.Preconditions;
+import java.util.Collections;
+import java.util.Map;
+
+import javax.annotation.Nonnull;
+import javax.annotation.PostConstruct;
+import javax.sql.DataSource;
+
 import org.fcrepo.common.db.DbPlatform;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.datasource.init.DatabasePopulatorUtils;
-import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import javax.annotation.Nonnull;
-import javax.annotation.PostConstruct;
-import javax.sql.DataSource;
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * Maps Fedora IDs to the OCFL IDs of the OCFL objects the Fedora resource is stored in. This implementation is backed
@@ -56,13 +54,6 @@ import java.util.Map;
 public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DbFedoraToOcflObjectIndex.class);
-
-    private static final Map<DbPlatform, String> DDL_MAP = Map.of(
-            DbPlatform.MYSQL, "sql/mysql-ocfl-index.sql",
-            DbPlatform.H2, "sql/default-ocfl-index.sql",
-            DbPlatform.POSTGRESQL, "sql/default-ocfl-index.sql",
-            DbPlatform.MARIADB, "sql/default-ocfl-index.sql"
-    );
 
     private static final String MAPPING_TABLE = "ocfl_id_map";
 
@@ -202,19 +193,6 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     @PostConstruct
     public void setup() {
         dbPlatform = DbPlatform.fromDataSource(dataSource);
-
-        Preconditions.checkArgument(UPSERT_MAPPING_TX_MAP.containsKey(dbPlatform),
-                "Missing SQL mapping for %s", dbPlatform);
-        Preconditions.checkArgument(COMMIT_ADD_MAPPING_MAP.containsKey(dbPlatform),
-                "Missing SQL mapping for %s", dbPlatform);
-        Preconditions.checkArgument(DDL_MAP.containsKey(dbPlatform),
-                "Missing DDL mapping for %s", dbPlatform);
-
-        final var ddl = DDL_MAP.get(dbPlatform);
-        LOGGER.info("Applying ddl: {}", ddl);
-        DatabasePopulatorUtils.execute(
-                new ResourceDatabasePopulator(new DefaultResourceLoader().getResource("classpath:" + ddl)),
-                dataSource);
     }
 
     @Override

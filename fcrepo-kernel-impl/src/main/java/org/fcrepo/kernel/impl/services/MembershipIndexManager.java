@@ -37,22 +37,19 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 import javax.transaction.Transactional;
+
+import org.fcrepo.common.db.DbPlatform;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
-import org.fcrepo.common.db.DbPlatform;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.slf4j.Logger;
-import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.datasource.init.DatabasePopulatorUtils;
-import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.stereotype.Component;
-
-import com.google.common.base.Preconditions;
 
 /**
  * Manager for the membership index
@@ -376,29 +373,12 @@ public class MembershipIndexManager {
 
     private DbPlatform dbPlatform;
 
-    private static final Map<DbPlatform, String> DDL_MAP = Map.of(
-            DbPlatform.MYSQL, "sql/mysql-membership.sql",
-            DbPlatform.H2, "sql/default-membership.sql",
-            DbPlatform.POSTGRESQL, "sql/default-membership.sql",
-            DbPlatform.MARIADB, "sql/mariadb-membership.sql"
-    );
-
     private static final int MEMBERSHIP_LIMIT = 50000;
 
     @PostConstruct
     public void setUp() {
         jdbcTemplate = new NamedParameterJdbcTemplate(getDataSource());
-
         dbPlatform = DbPlatform.fromDataSource(dataSource);
-
-        Preconditions.checkArgument(DDL_MAP.containsKey(dbPlatform),
-                "Missing DDL mapping for %s", dbPlatform);
-
-        final var ddl = DDL_MAP.get(dbPlatform);
-        log.debug("Applying ddl: {}", ddl);
-        DatabasePopulatorUtils.execute(
-                new ResourceDatabasePopulator(new DefaultResourceLoader().getResource("classpath:" + ddl)),
-                dataSource);
     }
 
     /**

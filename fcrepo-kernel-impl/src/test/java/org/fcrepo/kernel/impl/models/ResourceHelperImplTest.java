@@ -81,7 +81,7 @@ public class ResourceHelperImplTest {
 
     @Before
     public void setup() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         fedoraIdStr = FEDORA_ID_PREFIX + "/" + UUID.randomUUID().toString();
         fedoraId = FedoraId.create(fedoraIdStr);
         fedoraMementoIdStr = fedoraIdStr + "/fcr:versions/20000102120000";

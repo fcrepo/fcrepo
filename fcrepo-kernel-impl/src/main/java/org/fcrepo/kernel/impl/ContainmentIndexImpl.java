@@ -17,25 +17,8 @@
  */
 package org.fcrepo.kernel.impl;
 
-import com.google.common.base.Preconditions;
-import org.fcrepo.common.db.DbPlatform;
-import org.fcrepo.kernel.api.ContainmentIndex;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.slf4j.Logger;
-import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.datasource.init.DatabasePopulatorUtils;
-import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
-import javax.annotation.Nonnull;
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
-import javax.sql.DataSource;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -52,8 +35,22 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.annotation.Nonnull;
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.sql.DataSource;
+
+import org.fcrepo.common.db.DbPlatform;
+import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+
+import org.slf4j.Logger;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author peichman
@@ -379,13 +376,6 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             " WHERE " + FEDORA_ID_COLUMN + " LIKE :resourceId AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
             OPERATION_COLUMN + " = 'delete')";
 
-    private static final Map<DbPlatform, String> DDL_MAP = Map.of(
-            DbPlatform.MYSQL, "sql/mysql-containment.sql",
-            DbPlatform.H2, "sql/default-containment.sql",
-            DbPlatform.POSTGRESQL, "sql/postgres-containment.sql",
-            DbPlatform.MARIADB, "sql/default-containment.sql"
-    );
-
     private static final String SELECT_LAST_UPDATED = "SELECT " + UPDATED_COLUMN + " FROM " + RESOURCES_TABLE +
             " WHERE " + FEDORA_ID_COLUMN + " = :resourceId";
 
@@ -413,17 +403,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     @PostConstruct
     private void setup() {
         jdbcTemplate = getNamedParameterJdbcTemplate();
-
         dbPlatform = DbPlatform.fromDataSource(dataSource);
-
-        Preconditions.checkArgument(DDL_MAP.containsKey(dbPlatform),
-                "Missing DDL mapping for %s", dbPlatform);
-
-        final var ddl = DDL_MAP.get(dbPlatform);
-        LOGGER.info("Applying ddl: {}", ddl);
-        DatabasePopulatorUtils.execute(
-                new ResourceDatabasePopulator(new DefaultResourceLoader().getResource("classpath:" + ddl)),
-                dataSource);
     }
 
     private NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
@@ -612,9 +592,9 @@ public class ContainmentIndexImpl implements ContainmentIndex {
                 parameterSource.addValue("transactionId", txId);
                 final List<String> changedParents = jdbcTemplate.queryForList(GET_UPDATED_RESOURCES, parameterSource,
                         String.class);
-                jdbcTemplate.update(COMMIT_PURGE_RECORDS, parameterSource);
-                jdbcTemplate.update(COMMIT_DELETE_RECORDS.get(dbPlatform), parameterSource);
-                jdbcTemplate.update(COMMIT_ADD_RECORDS, parameterSource);
+                final int purged = jdbcTemplate.update(COMMIT_PURGE_RECORDS, parameterSource);
+                final int deleted = jdbcTemplate.update(COMMIT_DELETE_RECORDS.get(dbPlatform), parameterSource);
+                final int added = jdbcTemplate.update(COMMIT_ADD_RECORDS, parameterSource);
                 for (final var parent : changedParents) {
                     final var updated = jdbcTemplate.queryForObject(SELECT_LAST_UPDATED_IN_TX,
                             Map.of("resourceId", parent, "transactionId", txId), Instant.class);
@@ -624,6 +604,8 @@ public class ContainmentIndexImpl implements ContainmentIndex {
                     }
                 }
                 jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, parameterSource);
+                LOGGER.debug("Commit of tx {} complete with {} adds, {} deletes and {} purges",
+                        txId, added, deleted, purged);
             } catch (final Exception e) {
                 LOGGER.warn("Unable to commit containment index transaction {}: {}", txId, e.getMessage());
                 throw new RepositoryRuntimeException("Unable to commit containment index transaction", e);
