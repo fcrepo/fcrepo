@@ -642,7 +642,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
 
     @Test
     public void testCopyUnreachableHttpContent() throws Exception {
-        final String nonexistentPath = "http://" + getRandomUniqueId() + ".example.com/";
+        final String nonexistentPath = "https://" + getRandomUniqueId() + "-non-existent-domain.com/";
 
         // create a copy of it
         final HttpPost httpPost = postObjMethod();
@@ -674,7 +674,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
 
     @Test
     public void testProxyUnreachableHttpContent() throws Exception {
-        final String nonexistentPath = "http://" + getRandomUniqueId() + ".example.com/";
+        final String nonexistentPath = "https://" + getRandomUniqueId() + "-non-existent-domain.com/";
 
         // create a copy of it
         final HttpPost httpPost = postObjMethod();
@@ -690,7 +690,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
 
     @Test
     public void testRedirectUnreachableHttpContent() throws Exception {
-        final String nonexistentPath = "http://" + getRandomUniqueId() + ".example.com/";
+        final String nonexistentPath = "https://" + getRandomUniqueId() + "-non-existent-domain.com/";
 
         // create a copy of it
         final HttpPost httpPost = postObjMethod();
