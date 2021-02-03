@@ -189,7 +189,7 @@ public final class RdfLexicon {
 
     // RDF EXTRACTION
     public static final Property INBOUND_REFERENCES = createProperty(FCREPO_API_NAMESPACE + "PreferInboundReferences");
-    public static final Property PREFER_SERVER_MANAGED = createProperty(REPOSITORY_NAMESPACE + "ServerManaged");
+    public static final Property PREFER_SERVER_MANAGED = createProperty(FCREPO_API_NAMESPACE + "ServerManaged");
     public static final Property PREFER_MINIMAL_CONTAINER = createProperty(LDP_NAMESPACE +
             "PreferMinimalContainer");
     public static final Property PREFER_CONTAINMENT = createProperty(LDP_NAMESPACE + "PreferContainment");
