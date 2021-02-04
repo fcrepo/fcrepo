@@ -20,24 +20,18 @@ package org.fcrepo.kernel.impl.services;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.annotation.Nonnull;
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
-import javax.sql.DataSource;
-import javax.transaction.Transactional;
-
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.base.Preconditions;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.graph.Triple;
-import org.apache.jena.sparql.core.Quad;
-import org.fcrepo.common.db.DbPlatform;
+import javax.annotation.Nonnull;
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.sql.DataSource;
+import javax.transaction.Transactional;
+
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -49,15 +43,17 @@ import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.kernel.impl.operations.ReferenceOperation;
 import org.fcrepo.kernel.impl.operations.ReferenceOperationBuilder;
+
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.core.Quad;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.datasource.init.DatabasePopulatorUtils;
-import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.stereotype.Component;
 
 /**
@@ -168,27 +164,9 @@ public class ReferenceServiceImpl implements ReferenceService {
 
     private static final String TRUNCATE_TABLE = "TRUNCATE TABLE " + TABLE_NAME;
 
-    private static final Map<DbPlatform, String> DDL_MAP = Map.of(
-            DbPlatform.MYSQL, "sql/mysql-references.sql",
-            DbPlatform.H2, "sql/default-references.sql",
-            DbPlatform.POSTGRESQL, "sql/default-references.sql",
-            DbPlatform.MARIADB, "sql/default-references.sql"
-    );
-
     @PostConstruct
     public void setUp() {
         jdbcTemplate = new NamedParameterJdbcTemplate(getDataSource());
-
-        final var dbPlatform = DbPlatform.fromDataSource(dataSource);
-
-        Preconditions.checkArgument(DDL_MAP.containsKey(dbPlatform),
-                "Missing DDL mapping for %s", dbPlatform);
-
-        final var ddl = DDL_MAP.get(dbPlatform);
-        LOGGER.info("Applying ddl: {}", ddl);
-        DatabasePopulatorUtils.execute(
-                new ResourceDatabasePopulator(new DefaultResourceLoader().getResource("classpath:" + ddl)),
-                dataSource);
     }
 
     @Override

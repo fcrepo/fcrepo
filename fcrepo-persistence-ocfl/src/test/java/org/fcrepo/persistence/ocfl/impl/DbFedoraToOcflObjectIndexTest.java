@@ -17,19 +17,21 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
 
 import java.util.UUID;
+
+import org.fcrepo.config.FlywayFactory;
+import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
+
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 /**
  * @author dbernstein
@@ -48,10 +50,11 @@ public class DbFedoraToOcflObjectIndexTest {
     private static DbFedoraToOcflObjectIndex index;
 
     @BeforeClass
-    public static void beforeClass() {
+    public static void beforeClass() throws Exception {
         dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName("org.h2.jdbcx.JdbcDataSource");
         dataSource.setUrl("jdbc:h2:mem:index;DB_CLOSE_DELAY=-1");
+        FlywayFactory.create().setDataSource(dataSource).setDatabaseType("h2").getObject();
         index = new DbFedoraToOcflObjectIndex(dataSource);
         index.setup();
     }

@@ -18,7 +18,11 @@
 
 package org.fcrepo.config;
 
-import com.mchange.v2.c3p0.ComboPooledDataSource;
+import java.util.Map;
+
+import javax.sql.DataSource;
+
+import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,9 +31,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import javax.sql.DataSource;
-import java.beans.PropertyVetoException;
-import java.util.Map;
+import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 /**
  * @author pwinckles
@@ -73,7 +75,7 @@ public class DatabaseConfig extends BasePropsConfig {
     );
 
     @Bean
-    public DataSource dataSource() throws PropertyVetoException {
+    public DataSource dataSource() throws Exception {
         final var driver = identifyDbDriver();
 
         LOGGER.debug("JDBC URL: {}", dbUrl);
@@ -88,17 +90,27 @@ public class DatabaseConfig extends BasePropsConfig {
         dataSource.setMaxPoolSize(maxPoolSize);
         dataSource.setIdleConnectionTestPeriod(idleConnectionTestPeriod);
         dataSource.setTestConnectionOnCheckout(testConnectionOnCheckout);
+
+        flyway(dataSource);
+
         return dataSource;
     }
 
-    private String identifyDbDriver() {
+    /**
+     * Get the database type in use
+     * @return database type from the connect url.
+     */
+    private String getDbType() {
         final var parts = dbUrl.split(":");
 
         if (parts.length < 2) {
             throw new IllegalArgumentException("Invalid DB url: " + dbUrl);
         }
+        return parts[1].toLowerCase();
+    }
 
-        final var driver = DB_DRIVER_MAP.get(parts[1].toLowerCase());
+    private String identifyDbDriver() {
+        final var driver = DB_DRIVER_MAP.get(getDbType());
 
         if (driver == null) {
             throw new IllegalStateException("No database driver found for: " + dbUrl);
@@ -112,6 +124,12 @@ public class DatabaseConfig extends BasePropsConfig {
         final var txManager = new DataSourceTransactionManager();
         txManager.setDataSource(dataSource);
         return txManager;
+    }
+
+    @Bean
+    public Flyway flyway(final DataSource source) throws Exception {
+        LOGGER.debug("Instantiating a new flyway bean");
+        return FlywayFactory.create().setDataSource(source).setDatabaseType(getDbType()).getObject();
     }
 
 }

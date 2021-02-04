@@ -26,6 +26,7 @@ import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.persistence.ocfl.RepositoryInitializer;
 
 import org.apache.commons.io.FileUtils;
+import org.flywaydb.core.Flyway;
 import org.springframework.test.context.TestContext;
 
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
@@ -42,13 +43,17 @@ public class TestIsolationExecutionListener extends BaseTestExecutionListener {
     public void beforeTestMethod(final TestContext testContext) throws Exception {
         final var ocflRepo = getBean(testContext, MutableOcflRepository.class);
         final var ocflConfig = getBean(testContext, OcflPropsConfig.class);
+        final var flyway = getBean(testContext, Flyway.class);
+
+        flyway.clean();
+        flyway.migrate();
 
         final var hasError = new AtomicBoolean(false);
 
         ocflRepo.listObjectIds().forEach(object -> {
             try {
                 ocflRepo.purgeObject(object);
-            } catch (RuntimeException e) {
+            } catch (final RuntimeException e) {
                 // Recursive deletes don't behave well on Windows and it's possible for the above to error out.
                 hasError.set(true);
             }
@@ -61,7 +66,7 @@ public class TestIsolationExecutionListener extends BaseTestExecutionListener {
                 files.filter(Files::isDirectory).forEach(childDir -> {
                     try {
                         FileUtils.cleanDirectory(childDir.toFile());
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         throw new UncheckedIOException(e);
                     }
                 });

@@ -42,13 +42,18 @@ import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.services.ReferenceService;
+
+import org.flywaydb.test.FlywayTestExecutionListener;
+import org.flywaydb.test.annotation.FlywayTest;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 
 /**
  * Reference Service Tests
@@ -56,6 +61,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration("/containmentIndexTest.xml")
+@TestExecutionListeners({DependencyInjectionTestExecutionListener.class, FlywayTestExecutionListener.class })
 public class ReferenceServiceImplTest {
 
     @Inject
@@ -87,8 +93,9 @@ public class ReferenceServiceImplTest {
     private static final String TEST_USER = "someUser";
 
     @Before
+    @FlywayTest
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         transactionId = UUID.randomUUID().toString();
         subject1Id = FedoraId.create(UUID.randomUUID().toString());
         subject2Id = FedoraId.create(UUID.randomUUID().toString());
@@ -97,7 +104,6 @@ public class ReferenceServiceImplTest {
         subject1 =  ResourceFactory.createResource(subject1Id.getFullId());
         subject2 = ResourceFactory.createResource(subject2Id.getFullId());
         target = ResourceFactory.createResource(targetId.getFullId());
-        referenceService.reset();
     }
 
     @Test

@@ -209,7 +209,12 @@
       <artifactId>awaitility</artifactId>
       <scope>test</scope>
     </dependency>
-    <!-- This dependency is for compile-time: it keeps this module independent 
+    <dependency>
+      <groupId>org.flywaydb.flyway-test-extensions</groupId>
+      <artifactId>flyway-spring-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- This dependency is for compile-time: it keeps this module independent
       of any given choice of JAX-RS implementation. It must be _after_ the test 
       gear. Otherwise it will get loaded during test phase, but because this is 
       just an API, the tests will not be able to execute. -->
