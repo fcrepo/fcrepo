@@ -17,35 +17,6 @@
  */
 package org.fcrepo.integration.persistence.ocfl.impl;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.fcrepo.config.OcflPropsConfig;
-import org.fcrepo.kernel.api.exception.InvalidChecksumException;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.operations.DeleteResourceOperationFactory;
-import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
-import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
-import org.fcrepo.persistence.api.PersistentStorageSession;
-import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
-import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.ocfl.impl.OcflPersistentSessionManager;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
@@ -57,8 +28,35 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import javax.inject.Inject;
-import javax.sql.DataSource;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.fcrepo.config.OcflPropsConfig;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.operations.DeleteResourceOperationFactory;
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
+import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.ocfl.impl.OcflPersistentSessionManager;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
  * @author bbpennel
@@ -92,9 +90,6 @@ public class NonRdfSourcesPersistenceIT {
 
     @Autowired
     private OcflPropsConfig ocflPropsConfig;
-
-    @Inject
-    private DataSource dataSource;
 
     private FedoraId rescId;
 

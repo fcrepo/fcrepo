@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
@@ -92,7 +91,7 @@ public class DatabaseConfig extends BasePropsConfig {
         dataSource.setIdleConnectionTestPeriod(idleConnectionTestPeriod);
         dataSource.setTestConnectionOnCheckout(testConnectionOnCheckout);
 
-        FlywayFactory.create().setDataSource(dataSource).setDatabaseType(getDbType()).getObject();
+        flyway(dataSource);
 
         return dataSource;
     }
@@ -128,9 +127,9 @@ public class DatabaseConfig extends BasePropsConfig {
     }
 
     @Bean
-    @DependsOn("dataSource")
-    public Flyway flyway() throws Exception {
-        return FlywayFactory.create().setDataSource(dataSource()).setDatabaseType(getDbType()).getObject();
+    public Flyway flyway(final DataSource source) throws Exception {
+        LOGGER.debug("Instantiating a new flyway bean");
+        return FlywayFactory.create().setDataSource(source).setDatabaseType(getDbType()).getObject();
     }
 
 }
