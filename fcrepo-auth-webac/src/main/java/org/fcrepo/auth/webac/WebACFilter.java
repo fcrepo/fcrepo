@@ -172,12 +172,15 @@ public class WebACFilter extends RequestContextFilter {
         final String host = request.getScheme() + "://" + request.getServerName() +
                 (request.getServerPort() != 80 ? ":" + request.getServerPort() : "") + "/";
         final String requestUrl = request.getRequestURL().toString();
-        final String contextPath = request.getContextPath() + request.getServletPath();
+        final String contextPath = request.getContextPath();
+        final String servletPath = request.getServletPath();
+        final String combinedPath = contextPath + (!servletPath.equalsIgnoreCase("/index.html") ?
+                servletPath : "");
         final String baseUri;
-        if (contextPath.length() == 0) {
+        if (combinedPath.length() == 0 || !requestUrl.contains(combinedPath)) {
             baseUri = host;
         } else {
-            baseUri = requestUrl.split(contextPath)[0] + contextPath + "/";
+            baseUri = requestUrl.split(combinedPath)[0] + combinedPath + "/";
         }
         return URI.create(baseUri);
     }
