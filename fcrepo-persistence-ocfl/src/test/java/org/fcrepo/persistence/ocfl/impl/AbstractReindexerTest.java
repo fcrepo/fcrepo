@@ -40,6 +40,8 @@ import java.util.UUID;
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.ResourceFactory;
+
+import org.fcrepo.config.DigestAlgorithm;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.FedoraTypes;
@@ -106,13 +108,15 @@ public class AbstractReindexerTest {
     protected final FedoraId resource1 = FedoraId.create("resource1");
     protected final FedoraId resource2 =  resource1.resolve("resource2");
 
+    private static final DigestAlgorithm DEFAULT_FEDORA_ALGORITHM = DigestAlgorithm.SHA512;
+
     public void setup() throws Exception {
         final var targetDir = Paths.get("target");
         final var dataDir = targetDir.resolve("test-fcrepo-data-" + currentTimeMillis());
         final var repoDir = dataDir.resolve("ocfl-repo");
         final var workDir = dataDir.resolve("ocfl-work");
 
-        repository = createFilesystemRepository(repoDir, workDir);
+        repository = createFilesystemRepository(repoDir, workDir, DEFAULT_FEDORA_ALGORITHM);
 
         ocflIndex = new TestOcflObjectIndex();
         ocflIndex.reset();
