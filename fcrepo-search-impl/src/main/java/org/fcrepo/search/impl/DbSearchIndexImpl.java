@@ -265,6 +265,9 @@ public class DbSearchIndexImpl implements SearchIndex {
                 final String whereClause;
                 if (object.contains("*")) {
                     object = convertToSqlLikeWildcard(object);
+                    if (object.contains("_")) {
+                        object = object.replaceAll("_", "\\\\_");
+                    }
                     whereClause = field + " like :" + paramName;
                 } else {
                     whereClause = field + " = :" + paramName;
