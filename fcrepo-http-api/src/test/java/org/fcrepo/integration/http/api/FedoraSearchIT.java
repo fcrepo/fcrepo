@@ -556,4 +556,58 @@ public class FedoraSearchIT extends AbstractResourceIT {
     private String encode(final String value) {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
+
+    @Test
+    public void testTotalResults() throws Exception {
+        final String prefix = "test_total_";
+        final var resources = createResources(prefix, 6);
+        final var condition = FEDORA_ID + "=" + prefix + "*";
+        final var maxResults = 2;
+        final ObjectMapper objectMapper = new ObjectMapper();
+        final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition) + "&max_results=" + maxResults;
+        try (final var response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
+            assertEquals(2, result.getItems().size());
+            assertEquals(6, result.getPagination().getTotalResults());
+        }
+        // Try the next offset and see the total is the same
+        final String searchUrl2 = searchUrl + "&offset=2";
+        try (final var response = execute(new HttpGet(searchUrl2))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
+            assertEquals(2, result.getItems().size());
+            assertEquals(6, result.getPagination().getTotalResults());
+        }
+    }
+
+    @Test
+    public void testTotalResultsMore() throws Exception {
+        final String prefix = "test_total1_";
+        final String prefix2 = "test_total2_";
+        final var resources = createResources(prefix, 6);
+        final var resources2 = createResources(prefix2, 6);
+        final var condition = FEDORA_ID + "=" + prefix + "*";
+        final var maxResults = 5;
+        final ObjectMapper objectMapper = new ObjectMapper();
+        final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition) + "&max_results=" + maxResults;
+        try (final var response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
+            assertEquals(5, result.getItems().size());
+            assertEquals(6, result.getPagination().getTotalResults());
+            assertTrue(result.getItems().stream().allMatch(r -> resources.contains(r.get("fedora_id").toString()) &&
+                    !resources2.contains(r.get("fedora_id").toString())));
+        }
+        // Try the next offset and see the total is the same
+        final String searchUrl2 = searchUrl + "&offset=5";
+        try (final var response = execute(new HttpGet(searchUrl2))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
+            assertEquals(1, result.getItems().size());
+            assertEquals(6, result.getPagination().getTotalResults());
+            assertTrue(result.getItems().stream().allMatch(r -> resources.contains(r.get("fedora_id").toString()) &&
+                    !resources2.contains(r.get("fedora_id").toString())));
+        }
+    }
 }
