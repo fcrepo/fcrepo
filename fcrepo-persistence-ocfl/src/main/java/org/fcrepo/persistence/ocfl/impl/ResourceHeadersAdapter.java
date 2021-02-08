@@ -77,9 +77,11 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
         kernelHeaders.setInteractionModel(storageHeaders.getInteractionModel());
         kernelHeaders.setLastModifiedBy(storageHeaders.getLastModifiedBy());
         kernelHeaders.setLastModifiedDate(storageHeaders.getLastModifiedDate());
+        kernelHeaders.setMementoCreatedDate(storageHeaders.getMementoCreatedDate());
         kernelHeaders.setMimeType(storageHeaders.getMimeType());
         kernelHeaders.setObjectRoot(storageHeaders.isObjectRoot());
         kernelHeaders.setStateToken(storageHeaders.getStateToken());
+        kernelHeaders.setHeadersVersion(storageHeaders.getHeadersVersion());
     }
 
     /**
@@ -111,9 +113,11 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
         storageHeaders.withInteractionModel(kernelHeaders.getInteractionModel());
         storageHeaders.withLastModifiedBy(kernelHeaders.getLastModifiedBy());
         storageHeaders.withLastModifiedDate(kernelHeaders.getLastModifiedDate());
+        storageHeaders.withMementoCreatedDate(kernelHeaders.getMementoCreatedDate());
         storageHeaders.withMimeType(kernelHeaders.getMimeType());
         storageHeaders.withObjectRoot(kernelHeaders.isObjectRoot());
         storageHeaders.withStateToken(kernelHeaders.getStateToken());
+        storageHeaders.withHeadersVersion(kernelHeaders.getHeadersVersion());
     }
 
     /**
@@ -319,6 +323,19 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
         storageHeaders.withLastModifiedBy(lastModifiedBy);
     }
 
+    @Override
+    public Instant getMementoCreatedDate() {
+        return kernelHeaders.getMementoCreatedDate();
+    }
+
+    /**
+     * @param mementoCreatedDate the mementoCreatedDate to set
+     */
+    public void setMementoCreatedDate(final Instant mementoCreatedDate) {
+        kernelHeaders.setMementoCreatedDate(mementoCreatedDate);
+        storageHeaders.withMementoCreatedDate(mementoCreatedDate);
+    }
+
     /**
      * @param externalUrl the externalUrl to set
      */
@@ -396,6 +413,19 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
     public void setContentPath(final String contentPath) {
         kernelHeaders.setContentPath(contentPath);
         storageHeaders.withContentPath(contentPath);
+    }
+
+    @Override
+    public String getHeadersVersion() {
+        return kernelHeaders.getHeadersVersion();
+    }
+
+    /**
+     * @param headersVersion the headers version to set
+     */
+    public void setHeadersVersion(final String headersVersion) {
+        kernelHeaders.setHeadersVersion(headersVersion);
+        storageHeaders.withHeadersVersion(headersVersion);
     }
 
 }

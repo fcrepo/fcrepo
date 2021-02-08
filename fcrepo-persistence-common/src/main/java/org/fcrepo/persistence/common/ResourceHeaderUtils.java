@@ -17,13 +17,15 @@
  */
 package org.fcrepo.persistence.common;
 
-import org.apache.commons.codec.digest.DigestUtils;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-
 import java.net.URI;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Collection;
+
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
+
+import org.apache.commons.codec.digest.DigestUtils;
 
 /**
  * Helper utilities for populate resource headers
@@ -49,6 +51,7 @@ public class ResourceHeaderUtils {
     public static ResourceHeadersImpl newResourceHeaders(final FedoraId parentId, final FedoraId fedoraId,
                                                          final String interactionModel) {
         final ResourceHeadersImpl headers = new ResourceHeadersImpl();
+        headers.setHeadersVersion(ResourceHeaders.V1_0);
         headers.setId(fedoraId);
         headers.setParent(parentId);
         headers.setInteractionModel(interactionModel);
@@ -84,6 +87,7 @@ public class ResourceHeaderUtils {
         }
         headers.setCreatedDate(instant);
         headers.setCreatedBy(userPrincipal);
+        headers.setMementoCreatedDate(instant);
     }
 
     /**
@@ -114,6 +118,7 @@ public class ResourceHeaderUtils {
         }
         headers.setLastModifiedDate(instant);
         headers.setLastModifiedBy(userPrincipal);
+        headers.setMementoCreatedDate(instant);
 
         final String stateToken = DigestUtils.md5Hex(String.valueOf(instant.toEpochMilli())).toUpperCase();
         headers.setStateToken(stateToken);
