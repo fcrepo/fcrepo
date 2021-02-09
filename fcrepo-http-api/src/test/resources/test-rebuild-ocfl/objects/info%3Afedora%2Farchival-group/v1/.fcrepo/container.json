@@ -1,0 +1,17 @@
+{
+  "parent": "info:fedora/archival-group",
+  "id": "info:fedora/archival-group/container",
+  "archivalGroupId": "info:fedora/archival-group",
+  "lastModifiedDate": "2020-04-14T03:44:03.039072Z",
+  "mementoCreatedDate": "2020-04-14T03:44:03.039072Z",
+  "interactionModel": "http://www.w3.org/ns/ldp#BasicContainer",
+  "createdDate": "2020-04-14T03:44:03.039072Z",
+  "stateToken": "A540F60440502FB7A01F21B54FF257C2",
+  "archivalGroup": false,
+  "objectRoot": false,
+  "contentPath": "container/fcr-container.nt",
+  "digests": [
+    "urn:sha512:cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e"
+  ],
+  "headersVersion": "1.0"
+}

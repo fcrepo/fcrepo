@@ -1,0 +1,17 @@
+{
+  "id": "info:fedora/test/deleted-child",
+  "parent": "info:fedora/test",
+  "stateToken": "81C025E9FCFC480CF972BA6C2E36F11E",
+  "interactionModel": "http://www.w3.org/ns/ldp#BasicContainer",
+  "contentSize": -1,
+  "digests": [],
+  "createdDate": "2020-04-14T03:43:00.765231Z",
+  "createdBy": "fedoraAdmin",
+  "lastModifiedDate": "2020-04-14T03:46:00.765231Z",
+  "mementoCreatedDate": "2020-04-14T03:46:00.765231Z",
+  "lastModifiedBy": "fedoraAdmin",
+  "archivalGroup": false,
+  "objectRoot": true,
+  "deleted": true,
+  "headersVersion": "1.0"
+}

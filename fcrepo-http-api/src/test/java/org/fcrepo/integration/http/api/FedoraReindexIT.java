@@ -21,14 +21,22 @@ import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
-import java.nio.file.Path;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
-import org.apache.commons.io.FileUtils;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+
 import org.apache.http.HttpStatus;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.TestExecutionListeners;
+
+import edu.wisc.library.ocfl.api.OcflOption;
+import edu.wisc.library.ocfl.api.OcflRepository;
+import edu.wisc.library.ocfl.api.model.ObjectVersionId;
+import edu.wisc.library.ocfl.api.model.VersionNum;
 
 /**
  * @author dbernstein
@@ -41,12 +49,27 @@ public class FedoraReindexIT extends AbstractResourceIT {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FedoraReindexIT.class);
 
-    private void prepareContentForSideLoading(final String testObjectPath) throws Exception {
-        //move ocfl directory into place on disk
-        final var src = Path.of(testObjectPath).toFile();
-        final var dest = Path.of("target/fcrepo-home/data/ocfl-root").toFile();
-        LOGGER.info("copying {} to {}", src.toString(), dest.toString());
-        FileUtils.copyDirectory(src, dest);
+    private OcflRepository ocflRepository;
+
+    @Before
+    public void setUp() {
+        ocflRepository = getBean(OcflRepository.class);
+    }
+
+    private void prepareContentForSideLoading(final String objectId, final String name) {
+        final var id = FedoraId.create(objectId).getFullId();
+        final var dir = Paths.get("src/test/resources", name);
+        var currentVersion = VersionNum.fromInt(1);
+        var currentDir = dir.resolve(currentVersion.toString());
+
+        ocflRepository.purgeObject(id);
+
+        while (Files.exists(currentDir)) {
+            ocflRepository.putObject(ObjectVersionId.head(id), currentDir,
+                    null, OcflOption.OVERWRITE);
+            currentVersion = currentVersion.nextVersionNum();
+            currentDir = dir.resolve(currentVersion.toString());
+        }
     }
 
     @Test
@@ -55,7 +78,7 @@ public class FedoraReindexIT extends AbstractResourceIT {
         //validate that the fedora resource is not found (404)
         assertNotFound(fedoraId);
 
-        prepareContentForSideLoading("src/test/resources/reindex-test");
+        prepareContentForSideLoading(fedoraId, "reindex-test");
         doReindex(fedoraId, HttpStatus.SC_NO_CONTENT);
 
         //validate the the fedora resource is found (200)
@@ -71,7 +94,7 @@ public class FedoraReindexIT extends AbstractResourceIT {
 
         assertNotFound(fedoraId);
 
-        prepareContentForSideLoading("src/test/resources/reindex-test-invalid");
+        prepareContentForSideLoading(fedoraId, "reindex-test-invalid");
         doReindex(fedoraId, HttpStatus.SC_BAD_REQUEST);
 
         assertNotFound(fedoraId);
@@ -90,7 +113,7 @@ public class FedoraReindexIT extends AbstractResourceIT {
         final var parentId = "archival-group";
         final var fedoraId = parentId + "/child1";
 
-        prepareContentForSideLoading("src/test/resources/reindex-test-ag");
+        prepareContentForSideLoading(fedoraId, "reindex-test-ag");
 
         //validate that the fedora resource is not found (404)
         assertNotFound(fedoraId);
