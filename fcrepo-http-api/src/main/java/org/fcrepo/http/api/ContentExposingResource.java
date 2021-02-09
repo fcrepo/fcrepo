@@ -136,7 +136,7 @@ import org.fcrepo.kernel.api.services.ResourceTripleService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.api.utils.ContentDigest;
-import org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM;
+import org.fcrepo.config.DigestAlgorithm;
 
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPut;
@@ -940,7 +940,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         try {
             final var digestPairs = RFC3230_SPLITTER.split(nullToEmpty(digest));
             final var unsupportedAlgs = digestPairs.keySet().stream()
-                    .filter(Predicate.not(DIGEST_ALGORITHM::isSupportedAlgorithm))
+                    .filter(Predicate.not(DigestAlgorithm::isSupportedAlgorithm))
                     .collect(Collectors.toSet());
 
             // If you have one or more digests that are all valid or no digests.

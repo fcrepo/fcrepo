@@ -18,16 +18,19 @@
 
 package org.fcrepo.config;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import javax.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-
-import javax.annotation.PostConstruct;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Objects;
 
 /**
  * Fedora's OCFL related configuration properties
@@ -48,6 +51,8 @@ public class OcflPropsConfig extends BasePropsConfig {
     private static final String OCFL_STAGING = "staging";
     private static final String OCFL_ROOT = "ocfl-root";
     private static final String OCFL_TEMP = "ocfl-temp";
+
+    private static final String FCREPO_PERSISTENCE_ALGORITHM = "fcrepo.persistence.defaultDigestAlgorithm";
 
     @Value("${" + FCREPO_OCFL_STAGING + ":#{fedoraPropsConfig.fedoraData.resolve('" + OCFL_STAGING + "')}}")
     private Path fedoraOcflStaging;
@@ -101,6 +106,19 @@ public class OcflPropsConfig extends BasePropsConfig {
     @Value("${fcrepo.ocfl.reindex.failOnError:true}")
     private boolean reindexFailOnError;
 
+    @Value("${" + FCREPO_PERSISTENCE_ALGORITHM + ":sha512}")
+    private String FCREPO_DIGEST_ALGORITHM_VALUE;
+
+    private DigestAlgorithm FCREPO_DIGEST_ALGORITHM;
+
+    /**
+     * List of valid choices for fcrepo.persistence.defaultDigestAlgorithm
+     */
+    private static final List<DigestAlgorithm> FCREPO_VALID_DIGEST_ALGORITHMS = List.of(
+            DigestAlgorithm.SHA256,
+            DigestAlgorithm.SHA512
+    );
+
     private static final long availableThreads = Runtime.getRuntime().availableProcessors();
 
     @PostConstruct
@@ -133,6 +151,16 @@ public class OcflPropsConfig extends BasePropsConfig {
             LOGGER.info("Fedora OCFL S3 bucket: {}", ocflS3Bucket);
             LOGGER.info("Fedora OCFL S3 prefix: {}", ocflS3Prefix);
         }
+        FCREPO_DIGEST_ALGORITHM = DigestAlgorithm.fromAlgorithm(FCREPO_DIGEST_ALGORITHM_VALUE);
+        // Throw error if the configured default digest is not known to fedora or is not a valid option
+        if (DigestAlgorithm.MISSING.equals(FCREPO_DIGEST_ALGORITHM) ||
+                !FCREPO_VALID_DIGEST_ALGORITHMS.contains(FCREPO_DIGEST_ALGORITHM)) {
+            throw new IllegalArgumentException(String.format("Invalid %s property configured: %s, must be one of %s",
+                    FCREPO_PERSISTENCE_ALGORITHM, FCREPO_DIGEST_ALGORITHM_VALUE,
+                    FCREPO_VALID_DIGEST_ALGORITHMS.stream().map(DigestAlgorithm::getAlgorithm)
+                            .collect(Collectors.joining(", "))));
+        }
+        LOGGER.info("Fedora OCFL digest algorithm: {}", FCREPO_DIGEST_ALGORITHM.getAlgorithm());
     }
 
     /**
@@ -390,5 +418,12 @@ public class OcflPropsConfig extends BasePropsConfig {
      */
     private static long computeDefaultReindexThreads() {
         return availableThreads - 1;
+    }
+
+    /**
+     * @return the configured OCFL digest algorithm
+     */
+    public DigestAlgorithm getDefaultDigestAlgorithm() {
+        return FCREPO_DIGEST_ALGORITHM;
     }
 }

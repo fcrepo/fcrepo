@@ -37,7 +37,7 @@ import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.FixityService;
-import org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM;
+import org.fcrepo.config.DigestAlgorithm;
 import org.fcrepo.persistence.common.MultiDigestInputStreamWrapper;
 import org.springframework.stereotype.Component;
 
@@ -65,7 +65,7 @@ public class FixityServiceImpl extends AbstractService implements FixityService 
     public Collection<URI> getFixity(final Binary binary, final Collection<String> algorithms)
             throws UnsupportedAlgorithmException {
         final var digestAlgs = algorithms.stream()
-                .map(DIGEST_ALGORITHM::fromAlgorithm)
+                .map(DigestAlgorithm::fromAlgorithm)
                 .collect(Collectors.toList());
 
         try (final var content = binary.getContent()) {
@@ -97,7 +97,7 @@ public class FixityServiceImpl extends AbstractService implements FixityService 
         final var digestAlgs = existingDigestList.stream()
                 .map(URI::toString)
                 .map(a -> a.replace("urn:", "").split(":")[0])
-                .map(DIGEST_ALGORITHM::fromAlgorithm)
+                .map(DigestAlgorithm::fromAlgorithm)
                 .collect(Collectors.toList());
 
         try (final var content = binary.getContent()) {

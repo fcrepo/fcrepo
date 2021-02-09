@@ -39,7 +39,7 @@ import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.utils.ContentDigest;
-import org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM;
+import org.fcrepo.config.DigestAlgorithm;
 
 /**
  * Wrapper for an InputStream that allows for the computation and evaluation
@@ -67,7 +67,7 @@ public class MultiDigestInputStreamWrapper {
      * @param wantDigests list of additional digest algorithms to compute for the input stream
      */
     public MultiDigestInputStreamWrapper(final InputStream sourceStream, final Collection<URI> digests,
-            final Collection<DIGEST_ALGORITHM> wantDigests) {
+            final Collection<DigestAlgorithm> wantDigests) {
         this.sourceStream = sourceStream;
         algToDigest = new HashMap<>();
         algToDigestStream = new HashMap<>();
@@ -82,9 +82,9 @@ public class MultiDigestInputStreamWrapper {
 
         // Merge the list of wanted digest algorithms with set of provided digests
         if (wantDigests != null) {
-            for (final DIGEST_ALGORITHM wantDigest : wantDigests) {
-                if (!algToDigest.containsKey(wantDigest.algorithm)) {
-                    algToDigest.put(wantDigest.algorithm, null);
+            for (final DigestAlgorithm wantDigest : wantDigests) {
+                if (!algToDigest.containsKey(wantDigest.getAlgorithm())) {
+                    algToDigest.put(wantDigest.getAlgorithm(), null);
                 }
             }
         }
@@ -160,11 +160,11 @@ public class MultiDigestInputStreamWrapper {
      * @param alg algorithm of the digest to retrieve
      * @return the calculated digest, or null if no digest of that type was calculated
      */
-    public String getDigest(final DIGEST_ALGORITHM alg) {
+    public String getDigest(final DigestAlgorithm alg) {
         calculateDigests();
 
         return computedDigests.entrySet().stream()
-                .filter(entry -> alg.algorithm.equals(entry.getKey()))
+                .filter(entry -> alg.getAlgorithm().equals(entry.getKey()))
                 .map(Entry::getValue)
                 .findFirst()
                 .orElse(null);

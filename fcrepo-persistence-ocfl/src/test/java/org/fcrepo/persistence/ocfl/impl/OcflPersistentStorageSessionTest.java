@@ -22,6 +22,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.vocabulary.DC;
+
+import org.fcrepo.config.DigestAlgorithm;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -147,6 +149,8 @@ public class OcflPersistentStorageSessionTest {
     @Mock
     private ResourceOperation unsupportedOperation;
 
+    private static final DigestAlgorithm DEFAULT_FEDORA_ALGORITHM = DigestAlgorithm.SHA512;
+
     @Before
     public void setUp() throws Exception {
         stagingDir = tempFolder.newFolder("ocfl-staging").toPath();
@@ -154,7 +158,7 @@ public class OcflPersistentStorageSessionTest {
         final var workDir = tempFolder.newFolder("ocfl-work").toPath();
 
         final var objectMapper = OcflPersistentStorageUtils.objectMapper();
-        final var repository = createFilesystemRepository(repoDir, workDir);
+        final var repository = createFilesystemRepository(repoDir, workDir, DEFAULT_FEDORA_ALGORITHM);
         objectSessionFactory = new DefaultOcflObjectSessionFactory(repository, stagingDir,
                 objectMapper,
                 new NoOpCache<>(),

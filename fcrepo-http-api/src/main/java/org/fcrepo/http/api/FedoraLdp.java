@@ -114,7 +114,8 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.services.FixityService;
 import org.fcrepo.kernel.api.services.ReplaceBinariesService;
-import org.fcrepo.kernel.api.utils.ContentDigest;
+import org.fcrepo.config.DigestAlgorithm;
+
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -769,7 +770,7 @@ public class FedoraLdp extends ContentExposingResource {
 
             return digestPairs.entrySet().stream().filter(entry -> entry.getValue() > 0)
                     .map(Map.Entry::getKey)
-                    .filter(ContentDigest.DIGEST_ALGORITHM::isSupportedAlgorithm)
+                    .filter(DigestAlgorithm::isSupportedAlgorithm)
                     .collect(Collectors.toSet());
         } catch (final NumberFormatException e) {
             throw new ClientErrorException("Invalid 'Want-Digest' header value: " + wantDigest, SC_BAD_REQUEST, e);

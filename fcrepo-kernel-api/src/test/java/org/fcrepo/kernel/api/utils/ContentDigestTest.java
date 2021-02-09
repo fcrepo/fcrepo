@@ -18,12 +18,13 @@
 package org.fcrepo.kernel.api.utils;
 
 import static java.net.URI.create;
-import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
+import static org.fcrepo.config.DigestAlgorithm.SHA1;
 import static org.fcrepo.kernel.api.utils.ContentDigest.asURI;
 import static org.fcrepo.kernel.api.utils.ContentDigest.getAlgorithm;
 import static org.junit.Assert.assertEquals;
 
-import org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM;
+import org.fcrepo.config.DigestAlgorithm;
+
 import org.junit.Test;
 
 /**
@@ -36,7 +37,7 @@ public class ContentDigestTest {
     @Test
     public void testSHA_1() {
         assertEquals("Failed to produce a proper content digest URI!",
-                create("urn:sha1:fake"), asURI(SHA1.algorithm, "fake"));
+                create("urn:sha1:fake"), asURI(SHA1.getAlgorithm(), "fake"));
     }
 
     @Test
@@ -47,8 +48,8 @@ public class ContentDigestTest {
 
     @Test
     public void testGetAlgorithm() {
-        assertEquals("Failed to produce a proper digest algorithm!", SHA1.algorithm,
-                getAlgorithm(asURI(SHA1.algorithm, "fake")));
+        assertEquals("Failed to produce a proper digest algorithm!", SHA1.getAlgorithm(),
+                getAlgorithm(asURI(SHA1.getAlgorithm(), "fake")));
     }
 
     @Test
@@ -65,12 +66,12 @@ public class ContentDigestTest {
 
     @Test
     public void testFromAlgorithm() {
-        assertEquals(DIGEST_ALGORITHM.SHA1, DIGEST_ALGORITHM.fromAlgorithm("SHA"));
-        assertEquals(DIGEST_ALGORITHM.SHA1, DIGEST_ALGORITHM.fromAlgorithm("sha-1"));
+        assertEquals(DigestAlgorithm.SHA1, DigestAlgorithm.fromAlgorithm("SHA"));
+        assertEquals(DigestAlgorithm.SHA1, DigestAlgorithm.fromAlgorithm("sha-1"));
     }
 
     @Test
     public void testFromAlgorithmMissing() {
-        assertEquals(DIGEST_ALGORITHM.MISSING, DIGEST_ALGORITHM.fromAlgorithm("what"));
+        assertEquals(DigestAlgorithm.MISSING, DigestAlgorithm.fromAlgorithm("what"));
     }
 }

@@ -17,9 +17,26 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS;
+import static org.apache.jena.riot.RDFFormat.NTRIPLES;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.function.Consumer;
+
+import javax.sql.DataSource;
+
+import org.apache.commons.lang3.SystemUtils;
+import org.apache.http.impl.auth.UnsupportedDigestAlgorithmException;
+import org.apache.jena.riot.RDFFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import edu.wisc.library.ocfl.api.DigestAlgorithmRegistry;
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import edu.wisc.library.ocfl.api.OcflConfig;
@@ -31,23 +48,7 @@ import edu.wisc.library.ocfl.core.path.constraint.ContentPathConstraints;
 import edu.wisc.library.ocfl.core.path.mapper.LogicalPathMappers;
 import edu.wisc.library.ocfl.core.storage.cloud.CloudOcflStorage;
 import edu.wisc.library.ocfl.core.storage.filesystem.FileSystemOcflStorage;
-import org.apache.commons.lang3.SystemUtils;
-import org.apache.http.impl.auth.UnsupportedDigestAlgorithmException;
-import org.apache.jena.riot.RDFFormat;
-import org.fcrepo.kernel.api.utils.ContentDigest;
-import org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.s3.S3Client;
-
-import javax.sql.DataSource;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.function.Consumer;
-
-import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS;
-import static org.apache.jena.riot.RDFFormat.NTRIPLES;
 
 /**
  * A set of utility functions for supporting OCFL persistence activities.
@@ -87,17 +88,20 @@ public class OcflPersistentStorageUtils {
      * Create a new ocfl repository backed by the filesystem
      * @param ocflStorageRootDir The ocfl storage root directory
      * @param ocflWorkDir The ocfl work directory
+     * @param algorithm the algorithm for the OCFL repository
      * @return the repository
      */
     public static MutableOcflRepository createFilesystemRepository(final Path ocflStorageRootDir,
-                                                                   final Path ocflWorkDir) throws IOException {
+                                                                   final Path ocflWorkDir,
+                                                                   final org.fcrepo.config.DigestAlgorithm algorithm)
+            throws IOException {
         Files.createDirectories(ocflStorageRootDir);
 
         final var storage = FileSystemOcflStorage.builder().repositoryRoot(ocflStorageRootDir).build();
 
         return createRepository(ocflWorkDir, builder -> {
             builder.storage(storage);
-        });
+        }, algorithm);
     }
 
     /**
@@ -108,13 +112,16 @@ public class OcflPersistentStorageUtils {
      * @param bucket the bucket to store objects in
      * @param prefix the prefix within the bucket to store objects under
      * @param ocflWorkDir the local directory to stage objects in
+     * @param algorithm the algorithm for the OCFL repository
      * @return the repository
      */
     public static MutableOcflRepository createS3Repository(final DataSource dataSource,
                                                            final S3Client s3Client,
                                                            final String bucket,
                                                            final String prefix,
-                                                           final Path ocflWorkDir) throws IOException {
+                                                           final Path ocflWorkDir,
+                                                           final org.fcrepo.config.DigestAlgorithm algorithm)
+            throws IOException {
         Files.createDirectories(ocflWorkDir);
 
         final var storage = CloudOcflStorage.builder()
@@ -130,19 +137,19 @@ public class OcflPersistentStorageUtils {
                     .objectLock(lock -> lock.dataSource(dataSource))
                     .objectDetailsDb(db -> db.dataSource(dataSource))
                     .storage(storage);
-        });
+        }, algorithm);
     }
 
     private static MutableOcflRepository createRepository(final Path ocflWorkDir,
-                                                          final Consumer<OcflRepositoryBuilder> configurer)
+                                                          final Consumer<OcflRepositoryBuilder> configurer,
+                                                          final org.fcrepo.config.DigestAlgorithm algorithm)
             throws IOException {
         Files.createDirectories(ocflWorkDir);
 
-        final var defaultFcrepoAlg = ContentDigest.DEFAULT_DIGEST_ALGORITHM;
-        final DigestAlgorithm ocflDigestAlg = translateFedoraDigestToOcfl(defaultFcrepoAlg);
+        final DigestAlgorithm ocflDigestAlg = translateFedoraDigestToOcfl(algorithm);
         if (ocflDigestAlg == null) {
             throw new UnsupportedDigestAlgorithmException(
-                    "Unable to map Fedora default digest algorithm " + defaultFcrepoAlg + " into OCFL");
+                    "Unable to map Fedora default digest algorithm " + algorithm + " into OCFL");
         }
 
         final var logicalPathMapper = SystemUtils.IS_OS_WINDOWS ?
@@ -175,7 +182,7 @@ public class OcflPersistentStorageUtils {
      * @param fcrepoAlg fedora digest algorithm
      * @return OCFL client DigestAlgorithm, or null if no match could be made
      */
-    public static DigestAlgorithm translateFedoraDigestToOcfl(final DIGEST_ALGORITHM fcrepoAlg) {
+    public static DigestAlgorithm translateFedoraDigestToOcfl(final org.fcrepo.config.DigestAlgorithm fcrepoAlg) {
         return fcrepoAlg.getAliases().stream()
                 .map(alias -> DigestAlgorithmRegistry.getAlgorithm(alias))
                 .filter(alg -> alg != null)
