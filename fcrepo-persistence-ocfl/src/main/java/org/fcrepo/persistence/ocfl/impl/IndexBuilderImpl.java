@@ -17,25 +17,23 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import java.time.Duration;
-import java.time.Instant;
-
-import javax.inject.Inject;
-
+import edu.wisc.library.ocfl.api.OcflRepository;
+import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.IndexBuilder;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import edu.wisc.library.ocfl.api.OcflRepository;
+import javax.inject.Inject;
+import java.time.Duration;
+import java.time.Instant;
 
 /**
  * An implementation of {@link IndexBuilder}.  This implementation rebuilds the following indexable state derived
@@ -71,6 +69,9 @@ public class IndexBuilderImpl implements IndexBuilder {
 
     @Inject
     private OcflPropsConfig ocflPropsConfig;
+
+    @Inject
+    private FedoraPropsConfig fedoraPropsConfig;
 
     @Override
     public void rebuildIfNecessary() {
@@ -110,12 +111,13 @@ public class IndexBuilderImpl implements IndexBuilder {
 
     private boolean shouldRebuild() {
         final var repoRoot = getRepoRootMapping();
-
-        if (repoRoot == null) {
+        if (fedoraPropsConfig.isRebuildOnStart()) {
             return true;
+        } else if (repoRoot == null) {
+            return true;
+        } else {
+            return !repoContainsRootObject(repoRoot);
         }
-
-        return !repoContainsRootObject(repoRoot);
     }
 
     private String getRepoRootMapping() {

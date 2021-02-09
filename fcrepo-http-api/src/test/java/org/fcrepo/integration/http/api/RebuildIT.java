@@ -18,6 +18,47 @@
 package org.fcrepo.integration.http.api;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import edu.wisc.library.ocfl.api.OcflOption;
+import edu.wisc.library.ocfl.api.OcflRepository;
+import edu.wisc.library.ocfl.api.model.ObjectVersionId;
+import edu.wisc.library.ocfl.api.model.VersionInfo;
+import edu.wisc.library.ocfl.api.model.VersionNum;
+import org.apache.commons.io.FileUtils;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.core.Quad;
+import org.fcrepo.config.FedoraPropsConfig;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.fcrepo.kernel.api.FedoraTypes;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.persistence.ocfl.RepositoryInitializer;
+import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
+import org.fcrepo.persistence.ocfl.impl.ReindexService;
+import org.fcrepo.storage.ocfl.ResourceHeaders;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.test.context.TestExecutionListeners;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.ZoneOffset;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
 import static java.text.MessageFormat.format;
 import static java.util.Arrays.asList;
 import static javax.ws.rs.core.Response.Status.GONE;
@@ -29,45 +70,8 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 import static org.springframework.test.util.AssertionErrors.assertTrue;
-
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.time.ZoneOffset;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-
-import org.fcrepo.http.commons.test.util.CloseableDataset;
-import org.fcrepo.kernel.api.FedoraTypes;
-import org.fcrepo.persistence.ocfl.RepositoryInitializer;
-import org.fcrepo.persistence.ocfl.impl.ReindexService;
-import org.fcrepo.storage.ocfl.ResourceHeaders;
-
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.jena.graph.Node;
-import org.apache.jena.sparql.core.Quad;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.test.context.TestExecutionListeners;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
-import edu.wisc.library.ocfl.api.OcflOption;
-import edu.wisc.library.ocfl.api.OcflRepository;
-import edu.wisc.library.ocfl.api.model.ObjectVersionId;
-import edu.wisc.library.ocfl.api.model.VersionInfo;
-import edu.wisc.library.ocfl.api.model.VersionNum;
 
 /**
  * @author awooods
@@ -78,18 +82,27 @@ import edu.wisc.library.ocfl.api.model.VersionNum;
 public class RebuildIT extends AbstractResourceIT {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RebuildIT.class);
+    public static final String TARGET_FCREPO_HOME_DATA_OCFL_ROOT = "target/fcrepo-home/data/ocfl-root";
 
     private OcflRepository ocflRepository;
     private RepositoryInitializer initializer;
     private ReindexService reindexService;
     private ObjectMapper objectMapper;
+    private FedoraPropsConfig fedoraPropsConfig;
+    private FedoraToOcflObjectIndex index;
 
-    @Before
-    public void setUp() {
+    private void setBeans() {
         ocflRepository = getBean(OcflRepository.class);
         initializer = getBean(RepositoryInitializer.class);
         reindexService = getBean(ReindexService.class);
         objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+        fedoraPropsConfig = getBean(FedoraPropsConfig.class);
+        index = getBean("ocflIndexImpl", FedoraToOcflObjectIndex.class);
+    }
+
+    @Before
+    public void setUp() {
+        setBeans();
     }
 
     /**
@@ -127,6 +140,59 @@ public class RebuildIT extends AbstractResourceIT {
         assertNotContains("archival-group_binary");
         assertNotContains("archival-group_container");
         assertNotContains("junk");
+    }
+
+    @Test
+    public void testRebuildOnStart() throws Exception {
+        assertFalse("rebuild on start is disabled", fedoraPropsConfig.isRebuildOnStart());
+        rebuild("test-rebuild-ocfl/objects");
+
+        // Optional debugging
+        if (LOGGER.isDebugEnabled()) {
+            ocflRepository.listObjectIds().forEach(id -> LOGGER.debug("Object id: {}", id));
+        }
+
+        assertTrue("Should contain object with id: " + FedoraTypes.FEDORA_ID_PREFIX,
+                ocflRepository.containsObject(FedoraTypes.FEDORA_ID_PREFIX));
+        assertContains("binary");
+        assertContains("test");
+
+        final var binaryId = FedoraTypes.FEDORA_ID_PREFIX + "/binary";
+        final var objectVersionFile = this.ocflRepository.getObject(ObjectVersionId.head(binaryId)).getFile("binary");
+        final var path = objectVersionFile.getStorageRelativePath();
+        //delete ocfl object from disk:  path is "<object root dir>/v1/content/binary" therefore resolve the great
+        //grandparent directory
+        final var ocflObjectDirectory =
+                Path.of(TARGET_FCREPO_HOME_DATA_OCFL_ROOT, path)
+                        .toFile().getParentFile().getParentFile().getParentFile();
+        FileUtils.deleteDirectory(ocflObjectDirectory);
+
+        this.index.getMapping(null, FedoraId.create(binaryId));
+
+        //set rebuild on start flag before initializing
+        restartContainer();
+        setBeans();
+        initializer.initialize();
+
+        //ocfl knows it is now gone
+        assertNotContains("binary");
+
+        //but the index does not know is it gone because no rebuild occurred.
+        this.index.getMapping(null, FedoraId.create(binaryId));
+
+        //restart the container again, but initialize after setting the rebuild on start
+        restartContainer();
+        setBeans();
+        fedoraPropsConfig.setRebuildOnStart(true);
+        initializer.initialize();
+
+        try {
+            this.index.getMapping(null, FedoraId.create(binaryId));
+            fail("Expected failure to retrieve mapping");
+        } catch (final FedoraOcflMappingNotFoundException ex) {
+            //intentionally left blank
+        }
+
     }
 
     @Test

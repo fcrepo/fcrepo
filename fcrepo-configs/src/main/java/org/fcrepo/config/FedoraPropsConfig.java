@@ -49,6 +49,8 @@ public class FedoraPropsConfig extends BasePropsConfig {
     private static final String FCREPO_SESSION_TIMEOUT = "fcrepo.session.timeout";
     private static final String FCREPO_VELOCITY_RUNTIME_LOG = "fcrepo.velocity.runtime.log";
     private static final String FCREPO_REBUILD_VALIDATION_FIXITY = "fcrepo.rebuild.validation.fixity";
+    private static final String FCREPO_REBUILD_ON_START = "fcrepo.rebuild.on.start";
+
 
     private static final String DATA_DIR_DEFAULT_VALUE = "data";
     private static final String ACTIVE_MQ_DIR_DEFAULT_VALUE = "ActiveMQ/kahadb";
@@ -90,6 +92,9 @@ public class FedoraPropsConfig extends BasePropsConfig {
 
     @Value("${" + FCREPO_REBUILD_VALIDATION_FIXITY + ":true}")
     private boolean rebuildFixityCheck;
+
+    @Value("${" + FCREPO_REBUILD_ON_START + ":false}")
+    private boolean rebuildOnStart;
 
     @PostConstruct
     private void postConstruct() throws IOException {
@@ -206,4 +211,17 @@ public class FedoraPropsConfig extends BasePropsConfig {
         return rebuildFixityCheck;
     }
 
+    /**
+     * @return true if the internal indices should be rebuilt when Fedora starts up.
+     */
+    public boolean isRebuildOnStart() {
+        return rebuildOnStart;
+    }
+
+    /**
+     * @param rebuildOnStart A boolean flag indicating whether or not to rebuild on start
+     */
+    public void setRebuildOnStart(final boolean rebuildOnStart) {
+        this.rebuildOnStart = rebuildOnStart;
+    }
 }

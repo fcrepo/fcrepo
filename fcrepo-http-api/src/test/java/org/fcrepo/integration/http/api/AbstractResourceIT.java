@@ -137,11 +137,15 @@ public abstract class AbstractResourceIT {
     protected static final Node DCTITLE = title.asNode();
 
     @Inject
-    private ContainerWrapper containerWrapper;
+    protected ContainerWrapper containerWrapper;
 
     @Inject
     private static FedoraPropsConfig propsConfig;
 
+    protected void restartContainer() throws Exception {
+        this.containerWrapper.stop();
+        this.containerWrapper.start();
+    }
     /**
      * Decode the Digest header
      * @param digestHeader the digest header value.
