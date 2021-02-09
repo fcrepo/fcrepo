@@ -25,7 +25,6 @@ import edu.wisc.library.ocfl.api.OcflRepository;
 import edu.wisc.library.ocfl.api.model.ObjectVersionId;
 import edu.wisc.library.ocfl.api.model.VersionInfo;
 import edu.wisc.library.ocfl.api.model.VersionNum;
-import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.jena.graph.Node;
@@ -51,7 +50,6 @@ import java.io.UncheckedIOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZoneOffset;
 import java.util.Collections;
@@ -157,17 +155,11 @@ public class RebuildIT extends AbstractResourceIT {
         assertContains("binary");
         assertContains("test");
 
-        final var binaryId = FedoraTypes.FEDORA_ID_PREFIX + "/binary";
-        final var objectVersionFile = this.ocflRepository.getObject(ObjectVersionId.head(binaryId)).getFile("binary");
-        final var path = objectVersionFile.getStorageRelativePath();
-        //delete ocfl object from disk:  path is "<object root dir>/v1/content/binary" therefore resolve the great
-        //grandparent directory
-        final var ocflObjectDirectory =
-                Path.of(TARGET_FCREPO_HOME_DATA_OCFL_ROOT, path)
-                        .toFile().getParentFile().getParentFile().getParentFile();
-        FileUtils.deleteDirectory(ocflObjectDirectory);
+        final var binaryId = FedoraId.create(FedoraTypes.FEDORA_ID_PREFIX + "/binary");
+        this.ocflRepository.purgeObject(binaryId.getFullId());
 
-        this.index.getMapping(null, FedoraId.create(binaryId));
+        //verify that the index st
+        this.index.getMapping(null, binaryId);
 
         //set rebuild on start flag before initializing
         restartContainer();
@@ -178,7 +170,7 @@ public class RebuildIT extends AbstractResourceIT {
         assertNotContains("binary");
 
         //but the index does not know is it gone because no rebuild occurred.
-        this.index.getMapping(null, FedoraId.create(binaryId));
+        this.index.getMapping(null, binaryId);
 
         //restart the container again, but initialize after setting the rebuild on start
         restartContainer();
@@ -187,7 +179,7 @@ public class RebuildIT extends AbstractResourceIT {
         initializer.initialize();
 
         try {
-            this.index.getMapping(null, FedoraId.create(binaryId));
+            this.index.getMapping(null, binaryId);
             fail("Expected failure to retrieve mapping");
         } catch (final FedoraOcflMappingNotFoundException ex) {
             //intentionally left blank
