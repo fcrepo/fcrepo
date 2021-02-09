@@ -33,7 +33,11 @@ import static org.springframework.test.util.AssertionErrors.assertTrue;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,8 +47,8 @@ import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.persistence.ocfl.RepositoryInitializer;
 import org.fcrepo.persistence.ocfl.impl.ReindexService;
+import org.fcrepo.storage.ocfl.ResourceHeaders;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.jena.graph.Node;
@@ -56,7 +60,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.TestExecutionListeners;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
+import edu.wisc.library.ocfl.api.OcflOption;
 import edu.wisc.library.ocfl.api.OcflRepository;
+import edu.wisc.library.ocfl.api.model.ObjectVersionId;
+import edu.wisc.library.ocfl.api.model.VersionInfo;
+import edu.wisc.library.ocfl.api.model.VersionNum;
 
 /**
  * @author awooods
@@ -71,12 +82,14 @@ public class RebuildIT extends AbstractResourceIT {
     private OcflRepository ocflRepository;
     private RepositoryInitializer initializer;
     private ReindexService reindexService;
+    private ObjectMapper objectMapper;
 
     @Before
     public void setUp() {
         ocflRepository = getBean(OcflRepository.class);
         initializer = getBean(RepositoryInitializer.class);
         reindexService = getBean(ReindexService.class);
+        objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
     }
 
     /**
@@ -93,7 +106,7 @@ public class RebuildIT extends AbstractResourceIT {
      */
     @Test
     public void testRebuildOcfl() {
-        rebuild("test-rebuild-ocfl/ocfl-root");
+        rebuild("test-rebuild-ocfl/objects");
 
         // Optional debugging
         if (LOGGER.isDebugEnabled()) {
@@ -118,7 +131,7 @@ public class RebuildIT extends AbstractResourceIT {
 
     @Test
     public void testRebuildWebapp() throws Exception {
-        rebuild("test-rebuild-ocfl/ocfl-root");
+        rebuild("test-rebuild-ocfl/objects");
 
         // Test against the Fedora API
         assertEquals(OK.getStatusCode(), getStatus(getObjMethod("")));
@@ -240,9 +253,29 @@ public class RebuildIT extends AbstractResourceIT {
         try {
             // this is necessary so that the cache is cleared
             ocflRepository.listObjectIds().forEach(ocflRepository::purgeObject);
-            final var root = Paths.get("target/fcrepo-home/data/ocfl-root");
-            FileUtils.cleanDirectory(root.toFile());
-            FileUtils.copyDirectory(Paths.get("src/test/resources", name).toFile(), root.toFile());
+
+            try (final var list = Files.list(Paths.get("src/test/resources", name))) {
+                list.filter(Files::isDirectory).forEach(dir -> {
+                    final var objectId = URLDecoder.decode(dir.getFileName().toString(), StandardCharsets.UTF_8);
+                    var currentVersion = VersionNum.fromInt(1);
+                    var currentDir = dir.resolve(currentVersion.toString());
+
+                    while (Files.exists(currentDir)) {
+                        try {
+                            final var headers = objectMapper.readValue(
+                                    currentDir.resolve(".fcrepo/fcr-root.json").toFile(), ResourceHeaders.class);
+                            ocflRepository.putObject(ObjectVersionId.head(objectId), currentDir,
+                                    new VersionInfo().setCreated(
+                                            headers.getLastModifiedDate().atOffset(ZoneOffset.UTC)),
+                                    OcflOption.OVERWRITE);
+                            currentVersion = currentVersion.nextVersionNum();
+                            currentDir = dir.resolve(currentVersion.toString());
+                        } catch (IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
+                    }
+                });
+            }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

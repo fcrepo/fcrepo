@@ -1,0 +1,21 @@
+{
+  "parent": "info:fedora",
+  "id": "info:fedora/binary",
+  "lastModifiedDate": "2020-04-14T03:41:21.641012Z",
+  "mementoCreatedDate": "2020-04-14T03:41:21.641012Z",
+  "filename": "",
+  "mimeType": "text/plain",
+  "interactionModel": "http://www.w3.org/ns/ldp#NonRDFSource",
+  "createdBy": "fedoraAdmin",
+  "createdDate": "2020-04-14T03:41:21.641012Z",
+  "lastModifiedBy": "fedoraAdmin",
+  "stateToken": "FB2B44D6782C20E54C57094B3F1AE0BE",
+  "contentSize": 4,
+  "digests": [
+    "urn:sha512:ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff"
+  ],
+  "archivalGroup": false,
+  "objectRoot": true,
+  "contentPath": "binary",
+  "headersVersion": "1.0"
+}

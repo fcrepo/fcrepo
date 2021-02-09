@@ -43,6 +43,7 @@ public class ResourceHeadersAdapterTest {
         kernelHeaders.setParent(FedoraId.getRepositoryRootId());
         kernelHeaders.setId(FedoraId.create("info:fedora/blah"));
         kernelHeaders.setMimeType("text/plain");
+        kernelHeaders.setMementoCreatedDate(Instant.now());
         kernelHeaders.setLastModifiedDate(Instant.now());
         kernelHeaders.setLastModifiedBy("modifiedBy");
         kernelHeaders.setInteractionModel(BASIC_CONTAINER.toString());
@@ -56,6 +57,7 @@ public class ResourceHeadersAdapterTest {
         kernelHeaders.setContentSize(100L);
         kernelHeaders.setContentPath("contentPath");
         kernelHeaders.setArchivalGroup(true);
+        kernelHeaders.setHeadersVersion("1.0");
 
         final ResourceHeaders storageHeaders = new ResourceHeadersAdapter(kernelHeaders).asStorageHeaders();
 
@@ -68,6 +70,7 @@ public class ResourceHeadersAdapterTest {
         assertEquals(kernelHeaders.getMimeType(), roundTrip.getMimeType());
         assertEquals(kernelHeaders.getLastModifiedBy(), roundTrip.getLastModifiedBy());
         assertEquals(kernelHeaders.getLastModifiedDate(), roundTrip.getLastModifiedDate());
+        assertEquals(kernelHeaders.getMementoCreatedDate(), roundTrip.getMementoCreatedDate());
         assertEquals(kernelHeaders.getInteractionModel(), roundTrip.getInteractionModel());
         assertEquals(kernelHeaders.isObjectRoot(), roundTrip.isObjectRoot());
         assertEquals(kernelHeaders.getFilename(), roundTrip.getFilename());
@@ -79,6 +82,7 @@ public class ResourceHeadersAdapterTest {
         assertEquals(kernelHeaders.getContentSize(), roundTrip.getContentSize());
         assertEquals(kernelHeaders.getContentPath(), roundTrip.getContentPath());
         assertEquals(kernelHeaders.isArchivalGroup(), roundTrip.isArchivalGroup());
+        assertEquals(kernelHeaders.getHeadersVersion(), roundTrip.getHeadersVersion());
     }
 
 }

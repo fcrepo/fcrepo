@@ -61,6 +61,8 @@ public class ResourceHeadersImpl implements ResourceHeaders {
 
     private String lastModifiedBy;
 
+    private Instant mementoCreatedDate;
+
     private boolean archivalGroup;
 
     private boolean objectRoot;
@@ -68,6 +70,8 @@ public class ResourceHeadersImpl implements ResourceHeaders {
     private boolean deleted;
 
     private String contentPath;
+
+    private String headersVersion;
 
     @Override
     public FedoraId getId() {
@@ -237,6 +241,18 @@ public class ResourceHeadersImpl implements ResourceHeaders {
         this.lastModifiedBy = lastModifiedby;
     }
 
+    @Override
+    public Instant getMementoCreatedDate() {
+        return mementoCreatedDate;
+    }
+
+    /**
+     * @param mementoCreatedDate the mementoCreateDate to set
+     */
+    public void setMementoCreatedDate(final Instant mementoCreatedDate) {
+        this.mementoCreatedDate = mementoCreatedDate;
+    }
+
     /**
      * @param externalUrl the externalUrl to set
      */
@@ -312,6 +328,18 @@ public class ResourceHeadersImpl implements ResourceHeaders {
     }
 
     @Override
+    public String getHeadersVersion() {
+        return headersVersion;
+    }
+
+    /**
+     * @param headersVersion the headers version
+     */
+    public void setHeadersVersion(final String headersVersion) {
+        this.headersVersion = headersVersion;
+    }
+
+    @Override
     public String toString() {
         return "ResourceHeadersImpl{" +
                 "id=" + id +
@@ -329,10 +357,12 @@ public class ResourceHeadersImpl implements ResourceHeaders {
                 ", createdBy='" + createdBy + '\'' +
                 ", lastModifiedDate=" + lastModifiedDate +
                 ", lastModifiedBy='" + lastModifiedBy + '\'' +
+                ", mementoCreatedDate=" + mementoCreatedDate +
                 ", archivalGroup=" + archivalGroup +
                 ", objectRoot=" + objectRoot +
                 ", deleted=" + deleted +
                 ", contentPath='" + contentPath + '\'' +
+                ", headersVersion='" + headersVersion + '\'' +
                 '}';
     }
 

@@ -1,0 +1,16 @@
+{
+  "parent": "info:fedora",
+  "id": "info:fedora/test",
+  "lastModifiedDate": "2020-04-14T03:45:00.765231Z",
+  "mementoCreatedDate": "2020-04-14T03:45:00.765231Z",
+  "interactionModel": "http://www.w3.org/ns/ldp#BasicContainer",
+  "createdDate": "2020-04-14T03:42:00.765231Z",
+  "stateToken": "6763672ED325A4B632B450545518B34B",
+  "archivalGroup": false,
+  "objectRoot": true,
+  "contentPath": "fcr-container.nt",
+  "digests": [
+    "urn:sha512:2710c7cb53bf38bda55e16b3b87868a650c822c65324b874e71046b59ba0b9f153ddf001dda8adcd7d1de57337bb522ff1cb68e3b3d9c1935be56ee00b2139bf"
+  ],
+  "headersVersion": "1.0"
+}

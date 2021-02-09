@@ -1422,26 +1422,25 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 "INSERT { <> <http://purl.org/dc/elements/1.1/title> 'this is a title' } WHERE {}"));
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(httpPatch));
 
-        // Next, check headers for the binary; they should have changed as binaries and their descriptions are
-        // versioned together.
+        // Next, check headers for the binary; they should not have changed
         final HttpHead head1 = new HttpHead(binaryLocation);
         try (final CloseableHttpResponse response = execute(head1)) {
             binaryEtag2 = response.getFirstHeader("ETag").getValue();
             binaryLastModed2 = response.getFirstHeader("Last-Modified").getValue();
         }
 
-        assertNotEquals("ETags should not be the same", binaryEtag1, binaryEtag2);
-        assertNotEquals("Last-Modified should not be the same", binaryLastModed1, binaryLastModed2);
+        assertEquals("ETags should be the same", binaryEtag1, binaryEtag2);
+        assertEquals("Last-Modified should be the same", binaryLastModed1, binaryLastModed2);
 
         final HttpGet get6 = new HttpGet(binaryLocation);
         get6.addHeader("If-Match", binaryEtag1);
-        assertEquals("Expected 412 Precondition Failed", PRECONDITION_FAILED.getStatusCode(), getStatus(get6));
+        assertEquals("Expected 200", OK.getStatusCode(), getStatus(get6));
 
         final HttpGet get7 = new HttpGet(binaryLocation);
         get7.addHeader("If-Unmodified-Since", binaryLastModed1);
-        assertEquals("Expected 412 Precondition Failed", PRECONDITION_FAILED.getStatusCode(), getStatus(get7));
+        assertEquals("Expected 200", OK.getStatusCode(), getStatus(get7));
 
-        // Next, check headers for the description; they should also have changed
+        // Next, check headers for the description; they should have changed
         final HttpHead head2 = new HttpHead(descLocation);
         try (final CloseableHttpResponse response = execute(head2)) {
             descEtag2 = response.getFirstHeader("ETag").getValue();
@@ -1483,15 +1482,15 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertNotEquals("ETags should have changed", binaryEtag1, binaryEtag3);
         assertNotEquals("Last-Modified should have changed", binaryLastModed1, binaryLastModed3);
 
-        // Next, check headers for the description; they should have changed
+        // Next, check headers for the description; they should not have changed
         final HttpHead head3 = new HttpHead(descLocation);
         try (final CloseableHttpResponse response = execute(head3)) {
             descEtag3 = response.getFirstHeader("ETag").getValue();
             descLastModed3 = response.getFirstHeader("Last-Modified").getValue();
         }
 
-        assertNotEquals("ETags should have changed", descEtag2, descEtag3);
-        assertNotEquals("Last-Modified should have changed", descLastModed2, descLastModed3);
+        assertEquals("ETags should have changed", descEtag2, descEtag3);
+        assertEquals("Last-Modified should have changed", descLastModed2, descLastModed3);
     }
 
     @Test

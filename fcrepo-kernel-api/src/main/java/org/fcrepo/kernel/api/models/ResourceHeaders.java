@@ -30,6 +30,8 @@ import java.util.Collection;
  */
 public interface ResourceHeaders {
 
+    String V1_0 = "1.0";
+
     /**
      * Get the identifier for the described resource.
      *
@@ -137,6 +139,16 @@ public interface ResourceHeaders {
     String getLastModifiedBy();
 
     /**
+     * Get the date a memento for this resource was created. This field should generally be kept in sync with the
+     * last modified date, but they may not be the same, in the case that a memento was created as a result of an
+     * update to a different resource. Additionally, this date is NOT the same as the actual memento timestamp, which
+     * is determined by the timestamp on the OCFL version.
+     *
+     * @return memento created date
+     */
+    Instant getMementoCreatedDate();
+
+    /**
      * Determine whether a resource is an Archival Group
      * @return Archival Group status
      */
@@ -159,5 +171,10 @@ public interface ResourceHeaders {
      * @return path the content file
      */
     String getContentPath();
+
+    /**
+     * @return the header version
+     */
+    String getHeadersVersion();
 
 }
