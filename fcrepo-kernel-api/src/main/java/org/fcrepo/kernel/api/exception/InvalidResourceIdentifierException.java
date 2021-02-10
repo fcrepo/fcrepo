@@ -20,8 +20,6 @@ package org.fcrepo.kernel.api.exception;
 /**
  * This exception is used for invalid resource identifiers, such as when a resource path has empty segments.
  * Note: This exception is *not* used for valid identifiers that point to non-existent resources.
- * Additionally, the notion of "valid" will depend on the {@link org.fcrepo.kernel.api.identifiers.IdentifierConverter}
- * chain in use.
  *
  * @author awoods
  * @since July 14, 2015

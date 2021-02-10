@@ -45,7 +45,7 @@ import com.google.common.eventbus.Subscribe;
  * @author awoods
  * @author acoburn
  */
-abstract class AbstractJMSPublisher {
+public abstract class AbstractJMSPublisher {
 
     @Inject
     private EventBus eventBus;

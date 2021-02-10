@@ -15,35 +15,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.identifiers;
 
-import com.google.common.base.Converter;
+package org.fcrepo.config;
 
 /**
- * Translates internal {@link String} identifiers to internal {@link String}
- * identifiers.
  *
- * @author ajs6f
- * @since Apr 1, 2014
+ *
+ * @author pwinckles
  */
-public abstract class InternalIdentifierConverter extends Converter<String, String> {
+public enum JmsDestination {
 
-    /*
-     * (non-Javadoc)
-     * @see com.google.common.base.Converter#doForward(java.lang.Object)
-     */
-    @Override
-    protected String doForward(final String a) {
-        return a;
+    TOPIC("topic"),
+    QUEUE("queue");
+
+    private final String value;
+
+    JmsDestination(final String value) {
+        this.value = value;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see com.google.common.base.Converter#doBackward(java.lang.Object)
-     */
+    public String getValue() {
+        return value;
+    }
+
+    public static JmsDestination fromString(final String value) {
+        for (final var destination : values()) {
+            if (destination.value.equalsIgnoreCase(value)) {
+                return destination;
+            }
+        }
+        throw new IllegalArgumentException("Unknown JMS destination: " + value);
+    }
+
     @Override
-    protected String doBackward(final String b) {
-        return b;
+    public String toString() {
+        return value;
     }
 
 }

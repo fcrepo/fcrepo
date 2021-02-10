@@ -13,13 +13,7 @@
   <context:annotation-config />
   <context:component-scan base-package="org.fcrepo" />
 
-  <bean name="authenticationProvider" class="org.fcrepo.auth.common.ShiroAuthenticationProvider"/>
-
   <bean id="connectionManager" class="org.apache.http.impl.conn.PoolingHttpClientConnectionManager"/>
-
-  <!-- Identifier translation chain -->
-  <util:list id="translationChain" value-type="org.fcrepo.kernel.api.identifiers.InternalIdentifierConverter">
-  </util:list>
 
   <!-- Configuration of namespace prefixes -->
   <bean name="rdfNamespaceRegistry" class="org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry"

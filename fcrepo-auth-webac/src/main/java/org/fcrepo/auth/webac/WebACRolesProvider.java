@@ -18,7 +18,6 @@
 package org.fcrepo.auth.webac;
 
 import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 
 import org.fcrepo.config.AuthPropsConfig;
@@ -27,7 +26,6 @@ import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.ResourceFactory;
@@ -232,9 +230,6 @@ public class WebACRolesProvider {
      *  Any out-of-domain URIs are silently ignored.
      */
     private List<String> dereferenceAgentGroups(final Transaction transaction, final Collection<String> agentGroups) {
-        //TODO figure out where the translator should be coming from.
-        final IdentifierConverter<Resource, FedoraResource> translator = null;
-
         final List<String> members = agentGroups.stream().flatMap(agentGroup -> {
             if (agentGroup.startsWith(FEDORA_ID_PREFIX)) {
                 //strip off trailing hash.
@@ -246,7 +241,7 @@ public class WebACRolesProvider {
                 try {
                     final FedoraId fedoraId = FedoraId.create(agentGroupNoHash);
                     final FedoraResource resource = resourceFactory.getResource(transaction, fedoraId);
-                    return getAgentMembers(translator, resource, hashedSuffix);
+                    return getAgentMembers(resource, hashedSuffix);
                 } catch (final PathNotFoundException e) {
                     throw new PathNotFoundRuntimeException(e.getMessage(), e);
                 }
@@ -268,9 +263,7 @@ public class WebACRolesProvider {
     /**
      * Given a FedoraResource, return a list of agents.
      */
-    private Stream<String> getAgentMembers(final IdentifierConverter<Resource, FedoraResource> translator,
-                                                  final FedoraResource resource, final String hashPortion) {
-
+    private Stream<String> getAgentMembers(final FedoraResource resource, final String hashPortion) {
         //resolve list of triples, accounting for hash-uris.
         final List<Triple> triples = resource.getTriples().filter(
             triple -> hashPortion == null || triple.getSubject().getURI().endsWith(hashPortion)).collect(toList());
@@ -330,8 +323,6 @@ public class WebACRolesProvider {
                                                               final boolean ancestorAcl) {
 
         final List<WebACAuthorization> authorizations = new ArrayList<>();
-        //TODO figure out where the translator should be coming from
-        final IdentifierConverter<Resource, FedoraResource> translator = null;
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("ACL: {}", aclResource.getPath());

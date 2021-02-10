@@ -43,7 +43,7 @@ public class JMSQueuePublisher extends AbstractJMSPublisher {
      *
      * @param queueName the name of the queue
      */
-    private JMSQueuePublisher(final String queueName) {
+    public JMSQueuePublisher(final String queueName) {
         this.queueName = queueName;
     }
 

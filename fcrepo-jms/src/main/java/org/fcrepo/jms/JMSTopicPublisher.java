@@ -43,7 +43,7 @@ public class JMSTopicPublisher extends AbstractJMSPublisher {
      *
      * @param topicName the name of the topic
      */
-    private JMSTopicPublisher(final String topicName) {
+    public JMSTopicPublisher(final String topicName) {
         this.topicName = topicName;
     }
 
