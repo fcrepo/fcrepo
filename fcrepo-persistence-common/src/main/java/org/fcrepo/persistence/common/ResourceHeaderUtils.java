@@ -118,10 +118,30 @@ public class ResourceHeaderUtils {
         }
         headers.setLastModifiedDate(instant);
         headers.setLastModifiedBy(userPrincipal);
-        headers.setMementoCreatedDate(instant);
+        touchMementoCreateHeaders(headers, instant);
 
         final String stateToken = DigestUtils.md5Hex(String.valueOf(instant.toEpochMilli())).toUpperCase();
         headers.setStateToken(stateToken);
+    }
+
+    /**
+     * Update the mementoCreatedDate header
+     * @param headers headers object to update.
+     * @param versionDate time this version is created.
+     */
+    public static void touchMementoCreateHeaders(final ResourceHeadersImpl headers, final Instant versionDate) {
+        final Instant instant;
+        if (versionDate == null) {
+            final ZonedDateTime now = ZonedDateTime.now();
+            instant = now.toInstant();
+        } else {
+            instant = versionDate;
+        }
+        headers.setMementoCreatedDate(instant);
+    }
+
+    public static void touchMementoCreateHeaders(final ResourceHeadersImpl headers) {
+        touchMementoCreateHeaders(headers, null);
     }
 
     /**

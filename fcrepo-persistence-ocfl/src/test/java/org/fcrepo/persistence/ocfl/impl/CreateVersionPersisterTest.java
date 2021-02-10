@@ -18,6 +18,15 @@
 
 package org.fcrepo.persistence.ocfl.impl;
 
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.Duration;
+import java.time.Instant;
+
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateVersionResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
@@ -28,6 +37,7 @@ import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.storage.ocfl.CommitType;
 import org.fcrepo.storage.ocfl.OcflObjectSession;
 import org.fcrepo.storage.ocfl.ResourceHeaders;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,16 +45,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.time.Duration;
-import java.time.Instant;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * @author pwinckles
@@ -145,9 +145,8 @@ public class CreateVersionPersisterTest {
     private void verifyHeaders(final OcflObjectSession objectSession) {
         verify(objectSession).writeHeaders(headersCaptor.capture());
         final var actualHeaders = headersCaptor.getValue();
-        assertNotNull(actualHeaders.getStateToken());
         assertTrue("Timestamp should be within 1 second of now",
-                Duration.between(actualHeaders.getLastModifiedDate(), Instant.now())
+                Duration.between(actualHeaders.getMementoCreatedDate(), Instant.now())
                         .compareTo(Duration.ofSeconds(1)) < 0);
     }
 

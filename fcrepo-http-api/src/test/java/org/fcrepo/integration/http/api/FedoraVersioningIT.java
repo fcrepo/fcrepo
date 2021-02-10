@@ -17,6 +17,7 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.sort;
@@ -82,6 +83,7 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -94,6 +96,7 @@ import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.storage.ocfl.CommitType;
 import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -1571,6 +1574,55 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             assertTrue(graph.contains(ANY, parentNode, CONTAINS.asNode(), createURI(child2Uri)));
             assertFalse(graph.contains(ANY, parentNode, CONTAINS.asNode(), createURI(child3Uri)));
         }
+    }
+
+    @Test
+    public void testCreateMementoNotAffectModifiedDate() throws Exception {
+        final String url;
+        try (final var response = execute(postObjMethod())) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            url = getLocation(response);
+        }
+        final var get1 = new HttpGet(url);
+        get1.addHeader(ACCEPT, "application/n-triples");
+        final String originalTriples;
+        try (final var response = execute(get1)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            originalTriples = IOUtils.toString(response.getEntity().getContent(), UTF_8);
+        }
+        // Create a new version without changing anything
+        final var postV = new HttpPost(url + "/" + FCR_VERSIONS);
+        final String memento;
+        try (final var response = execute(postV)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            memento = getLocation(response);
+        }
+        // Get the memento last modified
+        final String mementoTriples;
+        final var getMemento = new HttpGet(memento);
+        getMemento.addHeader(ACCEPT, "application/n-triples");
+        try (final var response = execute(getMemento)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            mementoTriples = IOUtils.toString(response.getEntity().getContent(), UTF_8);
+        }
+        // Lastly get the resource last modified again
+        final var get2 = new HttpGet(url);
+        get2.addHeader(ACCEPT, "application/n-triples");
+        final String updatedTriples;
+        try (final var response = execute(get2)) {
+            updatedTriples = IOUtils.toString(response.getEntity().getContent(), UTF_8);
+        }
+        // Assert they are all the same
+        confirmResponseBodyNTriplesAreEqual(originalTriples, mementoTriples);
+        confirmResponseBodyNTriplesAreEqual(updatedTriples, mementoTriples);
+    }
+
+    private void confirmResponseBodyNTriplesAreEqual(final String responseBodyA, final String responseBodyB) {
+        final String[] aTriples = responseBodyA.split(".(\\r\\n|\\r|\\n)");
+        final String[] bTriples = responseBodyB.split(".(\\r\\n|\\r|\\n)");
+        Arrays.stream(aTriples).map(String::trim).sorted().toArray(unused -> aTriples);
+        Arrays.stream(bTriples).map(String::trim).sorted().toArray(unused -> bTriples);
+        assertArrayEquals(aTriples, bTriples);
     }
 
     private void createVersionedExternalBinaryMemento(final String rescId, final String handling,

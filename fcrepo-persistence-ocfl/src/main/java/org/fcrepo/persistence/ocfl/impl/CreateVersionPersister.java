@@ -65,7 +65,7 @@ public class CreateVersionPersister extends AbstractPersister {
         // still versioned
         final var headers = new ResourceHeadersAdapter(ocflObjectSession.readHeaders(resourceId.getResourceId()))
                 .asKernelHeaders();
-        ResourceHeaderUtils.touchModificationHeaders(headers, operation.getUserPrincipal());
+        ResourceHeaderUtils.touchMementoCreateHeaders(headers);
 
         ocflObjectSession.writeHeaders(new ResourceHeadersAdapter(headers).asStorageHeaders());
         // The version is not actually created until the session is committed
