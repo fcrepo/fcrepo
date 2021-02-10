@@ -80,7 +80,6 @@ import static org.springframework.test.util.AssertionErrors.assertTrue;
 public class RebuildIT extends AbstractResourceIT {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RebuildIT.class);
-    public static final String TARGET_FCREPO_HOME_DATA_OCFL_ROOT = "target/fcrepo-home/data/ocfl-root";
 
     private OcflRepository ocflRepository;
     private RepositoryInitializer initializer;
