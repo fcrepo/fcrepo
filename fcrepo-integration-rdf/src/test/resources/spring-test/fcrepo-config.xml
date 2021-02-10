@@ -20,10 +20,6 @@
   
   <bean class="org.fcrepo.kernel.api.TransactionManager"/>
 
-  <!-- Identifier translation chain -->
-  <util:list id="translationChain" value-type="org.fcrepo.kernel.api.identifiers.InternalIdentifierConverter">
-  </util:list>
-
   <context:annotation-config/>
 
   <context:component-scan base-package="org.fcrepo"/>

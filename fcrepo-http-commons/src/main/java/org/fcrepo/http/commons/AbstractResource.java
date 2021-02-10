@@ -24,11 +24,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.UriInfo;
 
-import org.apache.jena.rdf.model.Resource;
-
 import org.fcrepo.config.FedoraPropsConfig;
-import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.services.TimeMapService;
 import org.fcrepo.kernel.api.services.VersionService;
@@ -85,20 +81,4 @@ public class AbstractResource {
     //  ConfigurableHierarchicalSupplier(int length, count) instead.
     protected UniqueValueSupplier defaultPidMinter = new ConfigurableHierarchicalSupplier();
 
-    /**
-     * Convert a JAX-RS list of PathSegments to a JCR path
-     *
-     * @param idTranslator the id translator
-     * @param originalPath the original path
-     * @return String jcr path
-     */
-    public static String toPath(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                                final String originalPath) {
-
-        final Resource resource = idTranslator.toDomain(originalPath);
-
-        final String path = idTranslator.asString(resource);
-
-        return path.isEmpty() ? "/" : path;
-    }
 }

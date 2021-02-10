@@ -18,16 +18,18 @@
 
 package org.fcrepo.config;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
-
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+
+import javax.annotation.PostConstruct;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
 
 /**
  * General Fedora properties
@@ -53,6 +55,9 @@ public class FedoraPropsConfig extends BasePropsConfig {
     private static final String FCREPO_REBUILD_ON_START = "fcrepo.rebuild.on.start";
     private static final String FCREPO_JMS_BASEURL = "fcrepo.jms.baseUrl";
     private static final String FCREPO_SERVER_MANAGED_PROPS_MODE = "fcrepo.properties.management";
+    private static final String FCREPO_JMS_DESTINATION_TYPE = "fcrepo.jms.destination.type";
+    private static final String FCREPO_JMS_DESTINATION_NAME = "fcrepo.jms.destination.name";
+    public static final String FCREPO_JMS_ENABLED = "fcrepo.jms.enabled";
 
     private static final String DATA_DIR_DEFAULT_VALUE = "data";
     private static final String LOG_DIR_DEFAULT_VALUE = "logs";
@@ -77,7 +82,7 @@ public class FedoraPropsConfig extends BasePropsConfig {
     private String stompPort;
 
     @Value("${" + FCREPO_ACTIVEMQ_CONFIGURATION + ":classpath:/config/activemq.xml}")
-    private String activeMQConfiguration;
+    private Resource activeMQConfiguration;
 
     @Value("${" + FCREPO_ACTIVEMQ_DIRECTORY + ":#{fedoraPropsConfig.fedoraData.resolve('" +
             ACTIVE_MQ_DIR_DEFAULT_VALUE + "').toAbsolutePath().toString()}}")
@@ -110,6 +115,13 @@ public class FedoraPropsConfig extends BasePropsConfig {
     private String serverManagedPropsModeStr;
     private ServerManagedPropsMode serverManagedPropsMode;
 
+    @Value("${" + FCREPO_JMS_DESTINATION_TYPE + ":topic}")
+    private String jmsDestinationTypeStr;
+    private JmsDestination jmsDestinationType;
+
+    @Value("${" + FCREPO_JMS_DESTINATION_NAME + ":fedora}")
+    private String jmsDestinationName;
+
     @PostConstruct
     private void postConstruct() throws IOException {
         LOGGER.info("Fedora home: {}", fedoraHome);
@@ -123,6 +135,7 @@ public class FedoraPropsConfig extends BasePropsConfig {
         Files.createDirectories(fedoraData);
         serverManagedPropsMode = ServerManagedPropsMode.fromString(serverManagedPropsModeStr);
         sessionTimeout = Duration.ofMillis(sessionTimeoutLong);
+        jmsDestinationType = JmsDestination.fromString(jmsDestinationTypeStr);
     }
 
     /**
@@ -195,7 +208,7 @@ public class FedoraPropsConfig extends BasePropsConfig {
     /**
      * @return The path to the ActiveMQ xml spring configuration.
      */
-    public String getActiveMQConfiguration() {
+    public Resource getActiveMQConfiguration() {
         return activeMQConfiguration;
     }
 
@@ -274,6 +287,20 @@ public class FedoraPropsConfig extends BasePropsConfig {
      */
     public void setServerManagedPropsMode(final ServerManagedPropsMode serverManagedPropsMode) {
         this.serverManagedPropsMode = serverManagedPropsMode;
+    }
+
+    /**
+     * @return the jms destination type
+     */
+    public JmsDestination getJmsDestinationType() {
+        return jmsDestinationType;
+    }
+
+    /**
+     * @return the jms destination name
+     */
+    public String getJmsDestinationName() {
+        return jmsDestinationName;
     }
 
 }
