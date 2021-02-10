@@ -64,7 +64,8 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
             ensureValidDirectContainer(fedoraId, interactionModel, inputModel);
             ensureValidACLAuthorization(inputModel);
 
-            final ResourceOperation updateOp = factory.updateBuilder(fedoraId)
+            final ResourceOperation updateOp = factory.updateBuilder(fedoraId,
+                    fedoraPropsConfig.getServerManagedPropsMode())
                 .relaxedProperties(inputModel)
                 .userPrincipal(userPrincipal)
                 .triples(fromModel(inputModel.createResource(fedoraId.getFullId()).asNode(), inputModel))

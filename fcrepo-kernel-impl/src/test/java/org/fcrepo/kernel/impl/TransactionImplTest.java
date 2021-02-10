@@ -96,7 +96,7 @@ public class TransactionImplTest {
             ((Consumer)invocationOnMock.getArgument(0)).accept(null);
             return null;
         }).when(transactionTemplate).executeWithoutResult(any());
-        testTx = new TransactionImpl("123", txManager);
+        testTx = new TransactionImpl("123", txManager, Duration.ofMillis(180000));
     }
 
     @Test

@@ -42,7 +42,6 @@ import static org.fcrepo.http.commons.session.TransactionConstants.TX_COMMIT_REL
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_ENDPOINT_REL;
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
-import static org.fcrepo.kernel.impl.TransactionImpl.TIMEOUT_SYSTEM_PROPERTY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -52,6 +51,7 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.time.Duration;
 import java.time.format.DateTimeParseException;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -159,7 +159,7 @@ public class TransactionsIT extends AbstractResourceIT {
 
         /* create a short-lived tx */
         final long testTimeout = min(500, REAP_INTERVAL / 2);
-        System.setProperty(TIMEOUT_SYSTEM_PROPERTY, Long.toString(testTimeout));
+        propsConfig.setSessionTimeout(Duration.ofMillis(testTimeout));
 
         /* create a tx */
         final String location = createTransaction();
@@ -174,7 +174,7 @@ public class TransactionsIT extends AbstractResourceIT {
         try {
             assertEquals("Transaction did not expire", GONE.getStatusCode(), getStatus(new HttpGet(location)));
         } finally {
-            System.clearProperty(TIMEOUT_SYSTEM_PROPERTY);
+            propsConfig.setSessionTimeout(Duration.ofMillis(180000));
         }
     }
 

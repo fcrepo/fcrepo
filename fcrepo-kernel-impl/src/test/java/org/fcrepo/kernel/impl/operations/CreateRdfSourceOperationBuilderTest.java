@@ -23,7 +23,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED_PROPERTIES_MODE;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -38,6 +37,8 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.ResourceFactory;
+
+import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateRdfSourceOperation;
@@ -82,7 +83,8 @@ public class CreateRdfSourceOperationBuilderTest {
 
     @Before
     public void setUp() {
-        builder = new CreateRdfSourceOperationBuilderImpl(RESOURCE_ID, RDF_SOURCE.toString());
+        builder = new CreateRdfSourceOperationBuilderImpl(RESOURCE_ID, RDF_SOURCE.toString(),
+                ServerManagedPropsMode.STRICT);
         model = ModelFactory.createDefaultModel();
         model.add(
                 ResourceFactory.createResource(RESOURCE_ID.getResourceId()),
@@ -175,12 +177,9 @@ public class CreateRdfSourceOperationBuilderTest {
 
 
     private RdfSourceOperation buildOperationWithRelaxProperties(final Model model) {
-        try {
-            System.setProperty(SERVER_MANAGED_PROPERTIES_MODE, "relaxed");
-            return builder.relaxedProperties(model).build();
-        } finally {
-            System.clearProperty(SERVER_MANAGED_PROPERTIES_MODE);
-        }
+        builder = new CreateRdfSourceOperationBuilderImpl(RESOURCE_ID, RDF_SOURCE.toString(),
+                ServerManagedPropsMode.RELAXED);
+        return builder.relaxedProperties(model).build();
     }
 
     @Test

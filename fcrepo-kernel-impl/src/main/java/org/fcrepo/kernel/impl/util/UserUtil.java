@@ -35,8 +35,6 @@ public class UserUtil {
     private static final Logger LOGGER = getLogger(UserUtil.class);
 
     @VisibleForTesting
-    public static final String USER_AGENT_BASE_URI_PROPERTY = "fcrepo.auth.webac.userAgent.baseUri";
-    @VisibleForTesting
     public static final String DEFAULT_USER_AGENT_BASE_URI = "info:fedora/local-user#";
 
     private UserUtil() {
@@ -45,9 +43,10 @@ public class UserUtil {
     /**
      * Returns the user agent based on the session user id.
      * @param sessionUserId the acting user's id for this session
+     * @param userAgentBaseUri the user agent base uri, optional
      * @return the uri of the user agent
      */
-    public static URI getUserURI(final String sessionUserId) {
+    public static URI getUserURI(final String sessionUserId, final String userAgentBaseUri) {
         // user id could be in format <anonymous>, remove < at the beginning and the > at the end in this case.
         final String userId = (sessionUserId == null ? "anonymous" : sessionUserId).replaceAll("^<|>$", "");
         try {
@@ -56,10 +55,10 @@ public class UserUtil {
             if (uri.isAbsolute() || uri.isOpaque()) {
                 return uri;
             } else {
-                return buildDefaultURI(userId);
+                return buildDefaultURI(userId, userAgentBaseUri);
             }
         } catch (final IllegalArgumentException e) {
-            return buildDefaultURI(userId);
+            return buildDefaultURI(userId, userAgentBaseUri);
         }
     }
 
@@ -68,15 +67,15 @@ public class UserUtil {
      * @param userId of which a URI will be created
      * @return URI
      */
-    private static URI buildDefaultURI(final String userId) {
+    private static URI buildDefaultURI(final String userId, final String userAgentBaseUri) {
+        var baseUri = userAgentBaseUri;
         // Construct the default URI for the user ID that is not a URI.
-        String userAgentBaseUri = System.getProperty(USER_AGENT_BASE_URI_PROPERTY);
         if (isNullOrEmpty(userAgentBaseUri)) {
             // use the default local user agent base uri
-            userAgentBaseUri = DEFAULT_USER_AGENT_BASE_URI;
+            baseUri = DEFAULT_USER_AGENT_BASE_URI;
         }
 
-        final String userAgentUri = userAgentBaseUri + userId;
+        final String userAgentUri = baseUri + userId;
 
         LOGGER.trace("Default URI is created for user {}: {}", userId, userAgentUri);
         return URI.create(userAgentUri);

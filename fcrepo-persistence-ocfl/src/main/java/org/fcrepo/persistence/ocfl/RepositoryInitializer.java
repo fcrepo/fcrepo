@@ -18,6 +18,7 @@
 package org.fcrepo.persistence.ocfl;
 
 
+import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -63,6 +64,9 @@ public class RepositoryInitializer {
     @Inject
     private OcflPropsConfig config;
 
+    @Inject
+    private FedoraPropsConfig fedoraPropsConfig;
+
     /**
      * Initializes the repository
      */
@@ -82,7 +86,7 @@ public class RepositoryInitializer {
             } catch (final PersistentItemNotFoundException e) {
                 LOGGER.info("Repository root ({}) not found. Creating...", root);
                 final RdfSourceOperation operation = this.operationFactory.createBuilder(root,
-                        BASIC_CONTAINER.getURI())
+                        BASIC_CONTAINER.getURI(), fedoraPropsConfig.getServerManagedPropsMode())
                         .parentId(root).build();
 
                 session.persist(operation);

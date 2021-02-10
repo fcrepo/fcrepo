@@ -25,9 +25,10 @@ import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.VCARD_GROUP;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE_VALUE;
-import static org.fcrepo.http.api.FedoraAcl.ROOT_AUTHORIZATION_PROPERTY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
+
+import org.fcrepo.config.AuthPropsConfig;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceFactory;
@@ -38,6 +39,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.net.URI;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -92,11 +94,14 @@ public class WebACRolesProviderTest {
     @Rule
     public final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
 
+    private AuthPropsConfig propsConfig;
+
     @Before
     public void setUp() throws RepositoryException {
-
+        propsConfig = new AuthPropsConfig();
         roleProvider = new WebACRolesProvider();
         setField(roleProvider, "resourceFactory", mockResourceFactory);
+        setField(roleProvider, "authPropsConfig", propsConfig);
 
         when(mockResource.getDescribedResource()).thenReturn(mockResource);
         when(mockResource.getDescription()).thenReturn(mockResource);
@@ -186,7 +191,7 @@ public class WebACRolesProviderTest {
         when(mockAclResource.getTriples())
                 .thenReturn(getRdfStreamFromResource(acl, TTL));
 
-        System.setProperty(ROOT_AUTHORIZATION_PROPERTY, "./target/test-classes/test-root-authorization2.ttl");
+        propsConfig.setRootAuthAclPath(Paths.get("./target/test-classes/test-root-authorization2.ttl"));
 
         // The default root ACL should be used for authorization instead of the parent ACL
         final String rootAgent = "user06a";
@@ -563,7 +568,7 @@ public class WebACRolesProviderTest {
                 singletonList(FEDORA_RESOURCE_URI));
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
 
-        System.setProperty(ROOT_AUTHORIZATION_PROPERTY, "./target/test-classes/logback-test.xml");
+        propsConfig.setRootAuthAclPath(Paths.get("./target/test-classes/logback-test.xml"));
         roleProvider.getRoles(mockResource, mockTransaction);
     }
 
@@ -576,9 +581,8 @@ public class WebACRolesProviderTest {
         when(mockResource.getTypes()).thenReturn(
                 singletonList(FEDORA_RESOURCE_URI));
 
-        System.setProperty(ROOT_AUTHORIZATION_PROPERTY, "./target/test-classes/test-root-authorization.ttl");
+        propsConfig.setRootAuthAclPath(Paths.get("./target/test-classes/test-root-authorization.ttl"));
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
-        System.clearProperty(ROOT_AUTHORIZATION_PROPERTY);
 
         assertEquals("There should be exactly one agent", 1, roles.size());
         assertEquals("The agent should have one mode", 1, roles.get(agent1).size());

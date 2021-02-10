@@ -20,6 +20,7 @@ package org.fcrepo.integration.persistence.ocfl.impl;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.config.OcflPropsConfig;
+import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.DeleteResourceOperationFactory;
@@ -270,7 +271,8 @@ public class NonRdfSourcesPersistenceIT {
 
     @Test
     public void createInternalNonRdfResourceInAG() throws Exception {
-        final var agOp = rdfSourceOpFactory.createBuilder(rescId, BASIC_CONTAINER.getURI())
+        final var agOp = rdfSourceOpFactory
+                .createBuilder(rescId, BASIC_CONTAINER.getURI(), ServerManagedPropsMode.RELAXED)
                 .archivalGroup(true)
                 .parentId(FedoraId.getRepositoryRootId())
                 .build();

@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl;
 
+import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.exception.TransactionClosedException;
 import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
@@ -26,7 +27,6 @@ import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,6 +43,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
+
+import java.time.Duration;
 
 /**
  * <p>TransactionTest class.</p>
@@ -80,8 +82,12 @@ public class TransactionManagerImplTest {
     @Mock
     private TransactionTemplate transactionTemplate;
 
+    private FedoraPropsConfig fedoraPropsConfig;
+
     @Before
     public void setUp() {
+        fedoraPropsConfig = new FedoraPropsConfig();
+        fedoraPropsConfig.setSessionTimeout(Duration.ofMillis(180000));
         testTxManager = new TransactionManagerImpl();
         when(pssManager.getSession(any())).thenReturn(psSession);
         setField(testTxManager, "pSessionManager", pssManager);
@@ -91,12 +97,8 @@ public class TransactionManagerImplTest {
         setField(testTxManager, "membershipService", membershipService);
         setField(testTxManager, "platformTransactionManager", platformTransactionManager);
         setField(testTxManager, "transactionTemplate", transactionTemplate);
+        setField(testTxManager, "fedoraPropsConfig", fedoraPropsConfig);
         testTx = (TransactionImpl) testTxManager.create();
-    }
-
-    @After
-    public void cleanup() {
-        System.clearProperty(TransactionImpl.TIMEOUT_SYSTEM_PROPERTY);
     }
 
     @Test
@@ -130,7 +132,7 @@ public class TransactionManagerImplTest {
 
     @Test
     public void testCleanupClosedTransactions() {
-        System.setProperty(TransactionImpl.TIMEOUT_SYSTEM_PROPERTY, "10000");
+        fedoraPropsConfig.setSessionTimeout(Duration.ofMillis(10000));
 
         final var commitTx = testTxManager.create();
         commitTx.commit();
@@ -203,7 +205,7 @@ public class TransactionManagerImplTest {
     // them around until the next cleanup call so that they can be queried.
     @Test
     public void testCleanupExpiringTransaction() throws Exception {
-        System.setProperty(TransactionImpl.TIMEOUT_SYSTEM_PROPERTY, "0");
+        fedoraPropsConfig.setSessionTimeout(Duration.ofMillis(0));
 
         final var expiringTx = testTxManager.create();
 

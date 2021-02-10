@@ -35,6 +35,8 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
+
+import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.kernel.api.utils.GraphDifferencer;
 import org.junit.After;
@@ -83,7 +85,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED_PROPERTIES_MODE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -107,7 +108,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
 
     @Before
     public void switchToRelaxedMode() {
-        System.setProperty(SERVER_MANAGED_PROPERTIES_MODE, "relaxed");
+        propsConfig.setServerManagedPropsMode(ServerManagedPropsMode.RELAXED);
     }
 
 
@@ -136,7 +137,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
     @Ignore //TODO Fix this test
     @Test
     public void testCreateResourceWithSpecificCreationInformationIsAllowed() throws IOException {
-        assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
+        assertEquals(ServerManagedPropsMode.RELAXED, propsConfig.getServerManagedPropsMode()); // sanity check
         final String subjectURI;
         try (final CloseableHttpResponse response = postResourceWithTTL(
                 getTTLThatUpdatesServerManagedTriples(providedUsername, providedDate, null, null))) {
@@ -154,7 +155,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
     @Ignore //TODO Fix this test
     @Test
     public void testUpdateNonRdfResourceWithSpecificInformationIsAllowed() throws IOException {
-        assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
+        assertEquals(ServerManagedPropsMode.RELAXED, propsConfig.getServerManagedPropsMode()); // sanity check
 
         final String subjectURI;
         try (final CloseableHttpResponse response = postBinaryResource(serverAddress, "this is the binary")) {
@@ -182,7 +183,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
     @Ignore //TODO Fix this test
     @Test
     public void testValidSparqlUpdate() throws IOException {
-        assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
+        assertEquals(ServerManagedPropsMode.RELAXED, propsConfig.getServerManagedPropsMode()); // sanity check
 
         final String subjectURI;
         try (final CloseableHttpResponse response = postResourceWithTTL(
@@ -213,7 +214,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
     @Ignore //TODO Fix this test
     @Test
     public void testInvalidSparqlUpdate() throws IOException {
-        assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
+        assertEquals(ServerManagedPropsMode.RELAXED, propsConfig.getServerManagedPropsMode()); // sanity check
 
         final String subjectURI;
         try (final CloseableHttpResponse response = execute(postObjMethod())) {
@@ -243,7 +244,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
     @Ignore //TODO Fix this test
     @Test
     public void testUpdateResourceWithSpecificModificationInformationIsAllowed() throws IOException {
-        assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
+        assertEquals(ServerManagedPropsMode.RELAXED, propsConfig.getServerManagedPropsMode()); // sanity check
 
         final String subjectURI;
         try (final CloseableHttpResponse response = createObject()) {
@@ -273,7 +274,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
     @Ignore //TODO Fix this test
     @Test
     public void testRoundtripping() throws IOException {
-        assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
+        assertEquals(ServerManagedPropsMode.RELAXED, propsConfig.getServerManagedPropsMode()); // sanity check
 
         // POST a resource with one user-managed triple
         final String containerURI;
@@ -356,7 +357,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
 
     @After
     public void switchToStrictMode() {
-        System.clearProperty(SERVER_MANAGED_PROPERTIES_MODE);
+        propsConfig.setServerManagedPropsMode(ServerManagedPropsMode.STRICT);
     }
 
     private void assertIdentical(final String uri, final String originalRdf) throws IOException {

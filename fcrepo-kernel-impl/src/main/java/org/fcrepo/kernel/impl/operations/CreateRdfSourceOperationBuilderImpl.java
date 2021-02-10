@@ -18,6 +18,8 @@
 package org.fcrepo.kernel.impl.operations;
 
 import org.apache.jena.rdf.model.Model;
+
+import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateRdfSourceOperation;
@@ -39,9 +41,12 @@ public class CreateRdfSourceOperationBuilderImpl extends AbstractRdfSourceOperat
      *
      * @param resourceId the internal identifier.
      * @param interactionModel interaction model
+     * @param serverManagedPropsMode server managed props mode
      */
-    public CreateRdfSourceOperationBuilderImpl(final FedoraId resourceId, final String interactionModel) {
-        super(resourceId, interactionModel);
+    public CreateRdfSourceOperationBuilderImpl(final FedoraId resourceId,
+                                               final String interactionModel,
+                                               final ServerManagedPropsMode serverManagedPropsMode) {
+        super(resourceId, interactionModel, serverManagedPropsMode);
     }
 
     @Override

@@ -21,7 +21,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED_PROPERTIES_MODE;
 
 import java.time.Instant;
 import java.util.Date;
@@ -29,6 +28,8 @@ import java.util.Date;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
+
+import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
@@ -67,9 +68,14 @@ public abstract class AbstractRdfSourceOperationBuilder implements RdfSourceOper
 
     protected Instant createdDate;
 
-    protected AbstractRdfSourceOperationBuilder(final FedoraId rescId, final String model) {
+    protected ServerManagedPropsMode serverManagedPropsMode;
+
+    protected AbstractRdfSourceOperationBuilder(final FedoraId rescId,
+                                                final String model,
+                                                final ServerManagedPropsMode serverManagedPropsMode) {
         resourceId = rescId;
         interactionModel = model;
+        this.serverManagedPropsMode = serverManagedPropsMode;
     }
 
     @Override
@@ -87,7 +93,7 @@ public abstract class AbstractRdfSourceOperationBuilder implements RdfSourceOper
     @Override
     public RdfSourceOperationBuilder relaxedProperties(final Model model) {
         // Has no affect if the server is not in relaxed mode
-        if (model != null && isRelaxed()) {
+        if (model != null && serverManagedPropsMode == ServerManagedPropsMode.RELAXED) {
             final var resc = model.getResource(resourceId.getResourceId());
             final var createdDateVal = getPropertyAsInstant(resc, CREATED_DATE);
             if (createdDateVal != null) {
@@ -133,7 +139,4 @@ public abstract class AbstractRdfSourceOperationBuilder implements RdfSourceOper
         return null;
     }
 
-    private static boolean isRelaxed() {
-        return "relaxed".equals(System.getProperty(SERVER_MANAGED_PROPERTIES_MODE));
-    }
 }

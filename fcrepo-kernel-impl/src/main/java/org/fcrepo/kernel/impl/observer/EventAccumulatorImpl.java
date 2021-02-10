@@ -21,6 +21,8 @@ package org.fcrepo.kernel.impl.observer;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.eventbus.EventBus;
+
+import org.fcrepo.config.AuthPropsConfig;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
@@ -56,6 +58,9 @@ public class EventAccumulatorImpl implements EventAccumulator {
     @Inject
     private EventBus eventBus;
 
+    @Inject
+    private AuthPropsConfig authPropsConfig;
+
     public EventAccumulatorImpl() {
         this.transactionEventMap = new ConcurrentHashMap<>();
     }
@@ -68,7 +73,8 @@ public class EventAccumulatorImpl implements EventAccumulator {
 
         final var events = transactionEventMap.computeIfAbsent(transactionId, key ->
                 MultimapBuilder.hashKeys().arrayListValues().build());
-        final var eventBuilder = ResourceOperationEventBuilder.fromResourceOperation(fedoraId, operation);
+        final var eventBuilder = ResourceOperationEventBuilder.fromResourceOperation(
+                fedoraId, operation, authPropsConfig.getUserAgentBaseUri());
         events.put(fedoraId, eventBuilder);
     }
 

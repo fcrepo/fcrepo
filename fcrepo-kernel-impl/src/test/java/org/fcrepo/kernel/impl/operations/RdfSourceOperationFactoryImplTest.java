@@ -19,6 +19,7 @@ package org.fcrepo.kernel.impl.operations;
 
 import static org.junit.Assert.assertEquals;
 
+import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
@@ -48,7 +49,8 @@ public class RdfSourceOperationFactoryImplTest {
     @Test
     public void testCreateBuilder() {
         final String model = "some-interaction-model";
-        final RdfSourceOperationBuilder builder = factory.createBuilder(randomId, model);
+        final RdfSourceOperationBuilder builder = factory.createBuilder(randomId, model,
+                ServerManagedPropsMode.RELAXED);
         assertEquals(CreateRdfSourceOperationBuilderImpl.class, builder.getClass());
     }
 }

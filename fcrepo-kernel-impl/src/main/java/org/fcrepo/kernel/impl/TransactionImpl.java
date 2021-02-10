@@ -17,9 +17,6 @@
  */
 package org.fcrepo.kernel.impl;
 
-import static java.time.Duration.ofMillis;
-import static java.time.Duration.ofMinutes;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -51,8 +48,6 @@ import net.jodah.failsafe.RetryPolicy;
  */
 public class TransactionImpl implements Transaction {
 
-    public static final String TIMEOUT_SYSTEM_PROPERTY = "fcrepo.session.timeout";
-
     private static final Logger log = LoggerFactory.getLogger(TransactionImpl.class);
 
     private static final RetryPolicy<Object> DB_RETRY = new RetryPolicy<>()
@@ -63,8 +58,6 @@ public class TransactionImpl implements Transaction {
             .withBackoff(50, 1000, ChronoUnit.MILLIS, 1.5)
             .withJitter(0.1)
             .withMaxRetries(5);
-
-    private static final Duration DEFAULT_TIMEOUT = ofMinutes(3);
 
     private final String id;
 
@@ -84,13 +77,18 @@ public class TransactionImpl implements Transaction {
 
     private String userAgent;
 
-    protected TransactionImpl(final String id, final TransactionManagerImpl txManager) {
+    private Duration sessionTimeout;
+
+    protected TransactionImpl(final String id,
+                              final TransactionManagerImpl txManager,
+                              final Duration sessionTimeout) {
         if (id == null || id.isEmpty()) {
             throw new IllegalArgumentException("Transaction id should not be empty!");
         }
         this.id = id;
         this.txManager = txManager;
-        this.expiration = Instant.now().plus(timeout());
+        this.sessionTimeout = sessionTimeout;
+        this.expiration = Instant.now().plus(sessionTimeout);
     }
 
     @Override
@@ -223,7 +221,7 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public void refresh() {
-        updateExpiry(timeout());
+        updateExpiry(sessionTimeout);
     }
 
     @Override
@@ -246,17 +244,6 @@ public class TransactionImpl implements Transaction {
     @Override
     public void setUserAgent(final String userAgent) {
         this.userAgent = userAgent;
-    }
-
-    private Duration timeout() {
-        // Get the configured timeout
-        final String timeoutProperty = System.getProperty(TIMEOUT_SYSTEM_PROPERTY);
-        if (timeoutProperty != null) {
-            return ofMillis(Long.parseLong(timeoutProperty));
-        } else {
-            // Otherwise, use the default timeout
-            return DEFAULT_TIMEOUT;
-        }
     }
 
     private PersistentStorageSession getPersistentSession() {

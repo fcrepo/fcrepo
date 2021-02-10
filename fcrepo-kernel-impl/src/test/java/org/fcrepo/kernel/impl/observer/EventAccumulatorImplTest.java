@@ -19,6 +19,9 @@
 package org.fcrepo.kernel.impl.observer;
 
 import com.google.common.eventbus.EventBus;
+
+import org.fcrepo.config.AuthPropsConfig;
+import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -80,11 +83,15 @@ public class EventAccumulatorImplTest {
 
     private ArgumentCaptor<Event> eventCaptor;
 
+    private AuthPropsConfig authPropsConfig;
+
     @Before
     public void setup() {
+        authPropsConfig = new AuthPropsConfig();
         accumulator = new EventAccumulatorImpl();
         setField(accumulator, "resourceFactory", resourceFactory);
         setField(accumulator, "eventBus", eventBus);
+        setField(accumulator, "authPropsConfig", authPropsConfig);
         eventCaptor = ArgumentCaptor.forClass(Event.class);
     }
 
@@ -287,13 +294,14 @@ public class EventAccumulatorImplTest {
     }
 
     private ResourceOperation createOp(final FedoraId fedoraId) {
-        return new RdfSourceOperationFactoryImpl().createBuilder(fedoraId, RDF_SOURCE.toString())
+        return new RdfSourceOperationFactoryImpl().createBuilder(fedoraId, RDF_SOURCE.toString(),
+                ServerManagedPropsMode.RELAXED)
                 .userPrincipal(USER)
                 .build();
     }
 
     private ResourceOperation updateOp(final FedoraId fedoraId) {
-        return new RdfSourceOperationFactoryImpl().updateBuilder(fedoraId)
+        return new RdfSourceOperationFactoryImpl().updateBuilder(fedoraId, ServerManagedPropsMode.RELAXED)
                 .userPrincipal(USER)
                 .build();
     }

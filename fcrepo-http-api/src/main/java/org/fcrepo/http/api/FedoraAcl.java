@@ -22,6 +22,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shared.JenaException;
+
+import org.fcrepo.config.AuthPropsConfig;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
@@ -55,10 +57,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Files;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
@@ -95,8 +97,6 @@ public class FedoraAcl extends ContentExposingResource {
 
     private static final Logger LOGGER = getLogger(FedoraAcl.class);
 
-    public static final String ROOT_AUTHORIZATION_PROPERTY = "fcrepo.auth.webac.authorization";
-
     private static final String ROOT_AUTHORIZATION_LOCATION = "/root-authorization.ttl";
 
     @Context protected Request request;
@@ -104,6 +104,9 @@ public class FedoraAcl extends ContentExposingResource {
     @Context protected UriInfo uriInfo;
 
     @PathParam("path") protected String externalPath;
+
+    @Inject
+    private AuthPropsConfig authPropsConfig;
 
     @Inject
     private WebacAclService webacAclService;
@@ -262,7 +265,7 @@ public class FedoraAcl extends ContentExposingResource {
                 final String aclUri = identifierConverter().toExternalId(aclId.getFullId());
 
                 final RdfStream defaultRdfStream = DefaultRdfStream.fromModel(createResource(aclUri).asNode(),
-                    getDefaultAcl(aclUri));
+                    getDefaultAcl(aclUri, authPropsConfig.getRootAuthAclPath()));
                 final RdfStream rdfStream = httpRdfService.bodyToExternalStream(aclUri,
                         defaultRdfStream, identifierConverter());
                 final var output = new RdfNamespacedStream(
@@ -316,21 +319,21 @@ public class FedoraAcl extends ContentExposingResource {
      * Retrieve the default root ACL from a user specified location if it exists,
      * otherwise the one provided by Fedora will be used.
      * @param baseUri the URI of the default ACL
+     * @param customRootAcl the path to a custom root acl to use, optional
      * @return Model the rdf model of the default root ACL
      */
-    public static Model getDefaultAcl(final String baseUri) {
-        final String rootAcl = System.getProperty(ROOT_AUTHORIZATION_PROPERTY);
+    public static Model getDefaultAcl(final String baseUri, final java.nio.file.Path customRootAcl) {
         final Model model = createDefaultModel();
 
-        if (rootAcl != null && new File(rootAcl).isFile()) {
+        if (customRootAcl != null && Files.isRegularFile(customRootAcl)) {
             try {
-                LOGGER.debug("Getting root authorization from file: {}", rootAcl);
+                LOGGER.debug("Getting root authorization from file: {}", customRootAcl);
 
-                RDFDataMgr.read(model, rootAcl, baseUri, null);
+                RDFDataMgr.read(model, customRootAcl.toString(), baseUri, null);
 
                 return model;
             } catch (final JenaException ex) {
-                throw new RuntimeException("Error parsing the default root ACL " + rootAcl + ".", ex);
+                throw new RuntimeException("Error parsing the default root ACL " + customRootAcl + ".", ex);
             }
         }
 

@@ -152,7 +152,8 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         final var descId = binaryId.asDescription();
         final var createOp = rdfSourceOperationFactory.createBuilder(
                     descId,
-                    FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI
+                    FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI,
+                    fedoraPropsConfig.getServerManagedPropsMode()
                 ).userPrincipal(userPrincipal)
                 .parentId(binaryId)
                 .build();
@@ -185,7 +186,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         ensureValidDirectContainer(fedoraId, interactionModel, model);
 
         final RdfSourceOperation createOp = rdfSourceOperationFactory
-                .createBuilder(fedoraId, interactionModel)
+                .createBuilder(fedoraId, interactionModel, fedoraPropsConfig.getServerManagedPropsMode())
                 .parentId(parentId)
                 .triples(stream)
                 .relaxedProperties(model)

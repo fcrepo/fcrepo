@@ -155,8 +155,6 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
 
     private static final ViewHelpers VIEW_HELPERS = ViewHelpers.getInstance();
 
-    private String velocityLog;
-
     private static final Logger LOGGER =
         getLogger(StreamingBaseHtmlProvider.class);
 
@@ -164,7 +162,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
     void init() throws IOException {
         LOGGER.trace("Velocity engine initializing...");
         final Properties properties = new Properties();
-        velocityLog = fedoraPropsConfig.getVelocityLog();
+        final var velocityLog = fedoraPropsConfig.getVelocityLog().toString();
         autoVersioningEnabled = ocflPropsConfig.isAutoVersioningEnabled();
         LOGGER.debug("Setting Velocity runtime log: {}", velocityLog);
         properties.setProperty("runtime.log", velocityLog);

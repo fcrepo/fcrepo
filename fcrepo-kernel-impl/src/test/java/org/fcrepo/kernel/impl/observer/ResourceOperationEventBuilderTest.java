@@ -18,6 +18,7 @@
 
 package org.fcrepo.kernel.impl.observer;
 
+import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.observer.Event;
 import org.fcrepo.kernel.api.observer.EventType;
@@ -49,11 +50,11 @@ public class ResourceOperationEventBuilderTest {
     @Test
     public void buildCreateEventFromCreateRdfOperation() {
         final var operation = new RdfSourceOperationFactoryImpl()
-                .createBuilder(FEDORA_ID, RDF_SOURCE.toString())
+                .createBuilder(FEDORA_ID, RDF_SOURCE.toString(), ServerManagedPropsMode.RELAXED)
                 .userPrincipal(USER)
                 .build();
 
-        final var event = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, operation)
+        final var event = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, operation, null)
                 .withBaseUrl(BASE_URL)
                 .build();
 
@@ -69,7 +70,7 @@ public class ResourceOperationEventBuilderTest {
                 .userPrincipal(user)
                 .build();
 
-        final var event = ResourceOperationEventBuilder.fromResourceOperation(fedoraId, operation)
+        final var event = ResourceOperationEventBuilder.fromResourceOperation(fedoraId, operation, null)
                 .withBaseUrl(BASE_URL)
                 .build();
 
@@ -87,7 +88,7 @@ public class ResourceOperationEventBuilderTest {
                 .userPrincipal(USER)
                 .build();
 
-        final var event = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, operation)
+        final var event = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, operation, null)
                 .withBaseUrl(BASE_URL)
                 .build();
 
@@ -100,7 +101,7 @@ public class ResourceOperationEventBuilderTest {
                 .userPrincipal(USER)
                 .build();
 
-        final var event = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, operation)
+        final var event = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, operation, null)
                 .withBaseUrl(BASE_URL)
                 .build();
 
@@ -109,11 +110,12 @@ public class ResourceOperationEventBuilderTest {
 
     @Test
     public void buildUpdateEventFromUpdateRdfOperation() {
-        final var operation = new RdfSourceOperationFactoryImpl().updateBuilder(FEDORA_ID)
+        final var operation = new RdfSourceOperationFactoryImpl()
+                .updateBuilder(FEDORA_ID, ServerManagedPropsMode.RELAXED)
                 .userPrincipal(USER)
                 .build();
 
-        final var event = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, operation)
+        final var event = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, operation, null)
                 .withBaseUrl(BASE_URL)
                 .build();
 
@@ -127,7 +129,7 @@ public class ResourceOperationEventBuilderTest {
                 .userPrincipal(USER)
                 .build();
 
-        final var event = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, operation)
+        final var event = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, operation, null)
                 .withBaseUrl(BASE_URL)
                 .build();
 
@@ -137,11 +139,12 @@ public class ResourceOperationEventBuilderTest {
     @Test
     public void mergeValidObjects() {
         final var createOperation = new RdfSourceOperationFactoryImpl()
-                .createBuilder(FEDORA_ID, RDF_SOURCE.toString())
+                .createBuilder(FEDORA_ID, RDF_SOURCE.toString(), ServerManagedPropsMode.RELAXED)
                 .userPrincipal(USER)
                 .build();
 
-        final var createEventBuilder = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, createOperation)
+        final var createEventBuilder = ResourceOperationEventBuilder
+                .fromResourceOperation(FEDORA_ID, createOperation, null)
                 .withBaseUrl(BASE_URL);
 
         final var updateOperation = new NonRdfSourceOperationFactoryImpl()
@@ -149,7 +152,8 @@ public class ResourceOperationEventBuilderTest {
                 .userPrincipal(USER)
                 .build();
 
-        final var updateEventBuilder = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, updateOperation)
+        final var updateEventBuilder = ResourceOperationEventBuilder
+                .fromResourceOperation(FEDORA_ID, updateOperation, null)
                 .withBaseUrl(BASE_URL);
         final var updateEvent = updateEventBuilder.build();
 
@@ -173,7 +177,7 @@ public class ResourceOperationEventBuilderTest {
         final var userAgent = "user-agent";
         final var resourceTypes = Set.of("resource-type");
 
-        final var event = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, operation)
+        final var event = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, operation, null)
                 .withBaseUrl(baseUrl)
                 .withUserAgent(userAgent)
                 .withResourceTypes(resourceTypes)

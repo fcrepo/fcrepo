@@ -21,7 +21,7 @@
         <!-- **********************************
                         MODESHAPE configuration
                  ********************************** -->
-        
+
     <!-- To use Authentication:
       1. Comment out the above bean definition.
       2. Uncomment this bean definition.
@@ -30,7 +30,7 @@
     -->
 
     <bean name="authenticationProvider" class="org.fcrepo.auth.common.ShiroAuthenticationProvider"/>
-        
+
 
 
     <!-- **************************
@@ -143,7 +143,7 @@
         c:regex="" c:xpath="/response/ids/value"/>
     -->
 
-    
+
     <!-- Identifier translation chain -->
     <util:list id="translationChain" value-type="org.fcrepo.kernel.api.identifiers.InternalIdentifierConverter">
       <!-- Use AppleTreeConverter to hide Fedora's Pairtree hierarchy from public view

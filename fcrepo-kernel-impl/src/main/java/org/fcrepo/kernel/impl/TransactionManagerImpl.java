@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl;
 
+import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
@@ -78,6 +79,9 @@ public class TransactionManagerImpl implements TransactionManager {
     @Inject
     private ResourceLockManager resourceLockManager;
 
+    @Inject
+    private FedoraPropsConfig fedoraPropsConfig;
+
     private TransactionTemplate transactionTemplate;
 
     @PostConstruct
@@ -131,7 +135,7 @@ public class TransactionManagerImpl implements TransactionManager {
         while (transactions.containsKey(txId)) {
             txId = randomUUID().toString();
         }
-        final Transaction tx = new TransactionImpl(txId, this);
+        final Transaction tx = new TransactionImpl(txId, this, fedoraPropsConfig.getSessionTimeout());
         transactions.put(txId, tx);
         return tx;
     }

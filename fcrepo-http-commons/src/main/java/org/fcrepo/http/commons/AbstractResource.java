@@ -26,6 +26,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.jena.rdf.model.Resource;
 
+import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.ResourceFactory;
@@ -42,6 +43,9 @@ import org.jvnet.hk2.annotations.Optional;
  * @author ajs6f
  */
 public class AbstractResource {
+
+    @Inject
+    protected FedoraPropsConfig fedoraPropsConfig;
 
     /**
      * Useful for constructing URLs

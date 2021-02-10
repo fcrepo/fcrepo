@@ -27,6 +27,7 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 
 /**
  * General Fedora properties
@@ -50,9 +51,11 @@ public class FedoraPropsConfig extends BasePropsConfig {
     private static final String FCREPO_VELOCITY_RUNTIME_LOG = "fcrepo.velocity.runtime.log";
     private static final String FCREPO_REBUILD_VALIDATION_FIXITY = "fcrepo.rebuild.validation.fixity";
     private static final String FCREPO_REBUILD_ON_START = "fcrepo.rebuild.on.start";
-
+    private static final String FCREPO_JMS_BASEURL = "fcrepo.jms.baseUrl";
+    private static final String FCREPO_SERVER_MANAGED_PROPS_MODE = "fcrepo.properties.management";
 
     private static final String DATA_DIR_DEFAULT_VALUE = "data";
+    private static final String LOG_DIR_DEFAULT_VALUE = "logs";
     private static final String ACTIVE_MQ_DIR_DEFAULT_VALUE = "ActiveMQ/kahadb";
 
     @Value("${" + FCREPO_HOME_PROPERTY + ":" + DEFAULT_FCREPO_HOME_VALUE + "}")
@@ -60,6 +63,9 @@ public class FedoraPropsConfig extends BasePropsConfig {
 
     @Value("#{fedoraPropsConfig.fedoraHome.resolve('" + DATA_DIR_DEFAULT_VALUE + "')}")
     private Path fedoraData;
+
+    @Value("#{fedoraPropsConfig.fedoraHome.resolve('" + LOG_DIR_DEFAULT_VALUE + "')}")
+    private Path fedoraLogs;
 
     @Value("${" + FCREPO_JMS_HOST + ":localhost}")
     private String jmsHost;
@@ -84,17 +90,25 @@ public class FedoraPropsConfig extends BasePropsConfig {
     private String externalContentAllowed;
 
     @Value("${" + FCREPO_SESSION_TIMEOUT + ":180000}")
-    private String sessionTimeout;
+    private Long sessionTimeoutLong;
+    private Duration sessionTimeout;
 
-    @Value("${" + FCREPO_VELOCITY_RUNTIME_LOG + ": " +
-            "#{fedoraPropsConfig.fedoraHome.resolve('velocity.log').toAbsolutePath().toString()}}")
-    private String velocityLog;
+    @Value("${" + FCREPO_VELOCITY_RUNTIME_LOG + ":" +
+            "#{fedoraPropsConfig.fedoraLogs.resolve('velocity.log').toString()}}")
+    private Path velocityLog;
 
     @Value("${" + FCREPO_REBUILD_VALIDATION_FIXITY + ":true}")
     private boolean rebuildFixityCheck;
 
     @Value("${" + FCREPO_REBUILD_ON_START + ":false}")
     private boolean rebuildOnStart;
+
+    @Value("${" + FCREPO_JMS_BASEURL + ":#{null}}")
+    private String jmsBaseUrl;
+
+    @Value("${" + FCREPO_SERVER_MANAGED_PROPS_MODE + ":strict}")
+    private String serverManagedPropsModeStr;
+    private ServerManagedPropsMode serverManagedPropsMode;
 
     @PostConstruct
     private void postConstruct() throws IOException {
@@ -107,6 +121,8 @@ public class FedoraPropsConfig extends BasePropsConfig {
                     " Fedora home can be configured by setting the %s property.", fedoraHome, FCREPO_HOME_PROPERTY), e);
         }
         Files.createDirectories(fedoraData);
+        serverManagedPropsMode = ServerManagedPropsMode.fromString(serverManagedPropsModeStr);
+        sessionTimeout = Duration.ofMillis(sessionTimeoutLong);
     }
 
     /**
@@ -130,6 +146,13 @@ public class FedoraPropsConfig extends BasePropsConfig {
      */
     public Path getFedoraData() {
         return fedoraData;
+    }
+
+    /**
+     * @return Path to Fedora home logs directory
+     */
+    public Path getFedoraLogs() {
+        return fedoraLogs;
     }
 
     /**
@@ -193,14 +216,21 @@ public class FedoraPropsConfig extends BasePropsConfig {
     /**
      * @return The timeout in milliseconds of the persistence session
      */
-    public String getSessionTimeout() {
+    public Duration getSessionTimeout() {
         return sessionTimeout;
+    }
+
+    /**
+     * @param sessionTimeout the session timeout duration
+     */
+    public void setSessionTimeout(final Duration sessionTimeout) {
+        this.sessionTimeout = sessionTimeout;
     }
 
     /**
      * @return The path to the velocity log.
      */
-    public String getVelocityLog() {
+    public Path getVelocityLog() {
         return velocityLog;
     }
 
@@ -224,4 +254,26 @@ public class FedoraPropsConfig extends BasePropsConfig {
     public void setRebuildOnStart(final boolean rebuildOnStart) {
         this.rebuildOnStart = rebuildOnStart;
     }
+
+    /**
+     * @return the JMS base url, if specified
+     */
+    public String getJmsBaseUrl() {
+        return jmsBaseUrl;
+    }
+
+    /**
+     * @return the server managed properties mode, default strict
+     */
+    public ServerManagedPropsMode getServerManagedPropsMode() {
+        return serverManagedPropsMode;
+    }
+
+    /**
+     * @param serverManagedPropsMode the server managed props mode
+     */
+    public void setServerManagedPropsMode(final ServerManagedPropsMode serverManagedPropsMode) {
+        this.serverManagedPropsMode = serverManagedPropsMode;
+    }
+
 }

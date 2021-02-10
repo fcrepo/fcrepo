@@ -31,7 +31,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED_PROPERTIES_MODE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
@@ -57,6 +56,9 @@ import java.util.UUID;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+
+import org.fcrepo.config.FedoraPropsConfig;
+import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
@@ -175,6 +177,8 @@ public class CreateResourceServiceImplTest {
 
     private final FedoraId rootId = FedoraId.getRepositoryRootId();
 
+    private FedoraPropsConfig propsConfig = new FedoraPropsConfig();
+
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
@@ -186,6 +190,7 @@ public class CreateResourceServiceImplTest {
         setField(createResourceService, "eventAccumulator", eventAccumulator);
         setField(createResourceService, "referenceService", referenceService);
         setField(createResourceService, "membershipService", membershipService);
+        setField(createResourceService, "fedoraPropsConfig", propsConfig);
         when(psManager.getSession(ArgumentMatchers.any())).thenReturn(psSession);
         when(transaction.getId()).thenReturn(TX_ID);
         // Always try to clean up root.
@@ -349,13 +354,9 @@ public class CreateResourceServiceImplTest {
         when(psSession.getHeaders(childId, null)).thenThrow(PersistentItemNotFoundException.class);
 
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
-        try {
-            System.setProperty(SERVER_MANAGED_PROPERTIES_MODE, "relaxed");
-            createResourceService.perform(transaction, USER_PRINCIPAL, childId, null, model);
-            cleanupList.add(fedoraId);
-        } finally {
-            System.clearProperty(SERVER_MANAGED_PROPERTIES_MODE);
-        }
+        propsConfig.setServerManagedPropsMode(ServerManagedPropsMode.RELAXED);
+        createResourceService.perform(transaction, USER_PRINCIPAL, childId, null, model);
+        cleanupList.add(fedoraId);
 
         verify(psSession).persist(operationCaptor.capture());
 
