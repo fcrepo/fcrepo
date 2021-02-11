@@ -26,6 +26,7 @@ import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrincipal;
+import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.commons.session.TransactionProvider;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
@@ -78,6 +79,9 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     public static final String URIS_TO_AUTHORIZE = "URIS_TO_AUTHORIZE";
 
     @Inject
+    private FedoraPropsConfig fedoraPropsConfig;
+
+    @Inject
     private HttpServletRequest request;
 
     @Inject
@@ -98,7 +102,8 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
         if (txId == null) {
             return null;
         }
-        final var txProvider = new TransactionProvider(transactionManager, request, getBaseUri(request));
+        final var txProvider = new TransactionProvider(transactionManager, request,
+                getBaseUri(request), fedoraPropsConfig.getJmsBaseUrl());
         return txProvider.provide();
     }
 

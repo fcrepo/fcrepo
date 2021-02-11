@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateRdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
@@ -33,13 +34,16 @@ import org.springframework.stereotype.Component;
 public class RdfSourceOperationFactoryImpl implements RdfSourceOperationFactory {
 
     @Override
-    public CreateRdfSourceOperationBuilder createBuilder(final FedoraId rescId, final String interactionModel) {
-        return new CreateRdfSourceOperationBuilderImpl(rescId, interactionModel);
+    public CreateRdfSourceOperationBuilder createBuilder(final FedoraId rescId,
+                                                         final String interactionModel,
+                                                         final ServerManagedPropsMode serverManagedPropsMode) {
+        return new CreateRdfSourceOperationBuilderImpl(rescId, interactionModel, serverManagedPropsMode);
     }
 
     @Override
-    public RdfSourceOperationBuilder updateBuilder(final FedoraId rescId) {
-        return new UpdateRdfSourceOperationBuilder(rescId);
+    public RdfSourceOperationBuilder updateBuilder(final FedoraId rescId,
+                                                   final ServerManagedPropsMode serverManagedPropsMode) {
+        return new UpdateRdfSourceOperationBuilder(rescId, serverManagedPropsMode);
     }
 
 }

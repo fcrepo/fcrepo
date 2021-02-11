@@ -49,6 +49,8 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+
+import org.fcrepo.config.AuthPropsConfig;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.http.commons.test.util.ContainerWrapper;
@@ -139,8 +141,9 @@ public abstract class AbstractResourceIT {
     @Inject
     protected ContainerWrapper containerWrapper;
 
-    @Inject
-    private static FedoraPropsConfig propsConfig;
+    protected FedoraPropsConfig propsConfig;
+
+    protected AuthPropsConfig authPropsConfig;
 
     protected void restartContainer() throws Exception {
         this.containerWrapper.stop();
@@ -159,6 +162,8 @@ public abstract class AbstractResourceIT {
     @Before
     public void setLogger() {
         logger = getLogger(this.getClass());
+        propsConfig = getBean(FedoraPropsConfig.class);
+        authPropsConfig = getBean(AuthPropsConfig.class);
     }
 
     private static final int SERVER_PORT = parseInt(Objects.requireNonNullElse(

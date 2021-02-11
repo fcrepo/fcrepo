@@ -202,8 +202,6 @@ public final class RdfLexicon {
     // WEBAC
     public static final String WEBAC_ACCESS_CONTROL_VALUE = WEBAC_NAMESPACE_VALUE + "accessControl";
 
-    public static final String SERVER_MANAGED_PROPERTIES_MODE = "fcrepo.properties.management";
-
     public static final String WEBAC_ACCESS_TO = WEBAC_NAMESPACE_VALUE + "accessTo";
 
     public static final String WEBAC_ACCESS_TO_CLASS = WEBAC_NAMESPACE_VALUE + "accessToClass";
@@ -225,15 +223,6 @@ public final class RdfLexicon {
 
     private static Predicate<Property> hasMementoNamespace =
         p -> !p.isAnon() && p.getNameSpace().startsWith(MEMENTO_NAMESPACE);
-
-    // Server managed properties which may be overridden by clients when the server is in "relaxed" mode
-    private static final Set<Property> relaxableProperties = of(LAST_MODIFIED_BY, LAST_MODIFIED_DATE, CREATED_BY,
-            CREATED_DATE);
-
-    // Detects if a server managed property is allowed to be updated in "relaxed" mode
-    public static final Predicate<Property> isRelaxed =
-            p -> relaxableProperties.contains(p)
-                    && ("relaxed".equals(System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)));
 
     /**
      * Detects whether an RDF property is managed by the repository.

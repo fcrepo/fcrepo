@@ -22,6 +22,8 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.context.Context;
 import org.apache.velocity.tools.generic.EscapeTool;
+
+import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.api.FedoraSearch;
 import org.fcrepo.http.commons.responses.ViewHelpers;
 import org.fcrepo.search.api.Condition;
@@ -49,7 +51,6 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
-import static java.lang.System.getProperty;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -68,6 +69,9 @@ public class SearchResultProvider implements MessageBodyWriter<SearchResult> {
 
     @Inject
     HttpServletRequest request;
+
+    @Inject
+    private FedoraPropsConfig fedoraPropsConfig;
 
     private static final EscapeTool escapeTool = new EscapeTool();
 
@@ -88,15 +92,10 @@ public class SearchResultProvider implements MessageBodyWriter<SearchResult> {
     void init() throws IOException {
         LOGGER.trace("Velocity engine initializing...");
         final Properties properties = new Properties();
-        final String fcrepoHome = getProperty("fcrepo.home");
-        final String velocityLog = getProperty("fcrepo.velocity.runtime.log");
-        if (velocityLog != null) {
-            LOGGER.debug("Setting Velocity runtime log: {}", velocityLog);
-            properties.setProperty("runtime.log", velocityLog);
-        } else if (fcrepoHome != null) {
-            LOGGER.debug("Using fcrepo.home directory for the velocity log");
-            properties.setProperty("runtime.log", fcrepoHome + getProperty("file.separator") + "velocity.log");
-        }
+        final var velocityLog = fedoraPropsConfig.getVelocityLog().toString();
+        LOGGER.debug("Setting Velocity runtime log: {}", velocityLog);
+        properties.setProperty("runtime.log", velocityLog);
+
         final URL propertiesUrl = getClass().getResource(velocityPropertiesLocation);
 
         LOGGER.debug("Using Velocity configuration from {}", propertiesUrl);

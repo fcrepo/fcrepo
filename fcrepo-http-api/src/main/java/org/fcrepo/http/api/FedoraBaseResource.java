@@ -115,7 +115,8 @@ abstract public class FedoraBaseResource extends AbstractResource {
 
     protected Transaction transaction() {
         if (transaction == null) {
-            txProvider = new TransactionProvider(txManager, servletRequest, uriInfo.getBaseUri());
+            txProvider = new TransactionProvider(txManager, servletRequest,
+                    uriInfo.getBaseUri(), fedoraPropsConfig.getJmsBaseUrl());
             transaction = txProvider.provide();
         }
         return transaction;

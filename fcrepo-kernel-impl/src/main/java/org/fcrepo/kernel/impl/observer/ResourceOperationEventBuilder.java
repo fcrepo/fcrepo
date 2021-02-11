@@ -44,16 +44,19 @@ public class ResourceOperationEventBuilder implements EventBuilder {
     private String userAgent;
     private String baseUrl;
     private Instant date;
+    private String userAgentBaseUri;
 
     /**
      * Creates a new EventBuilder based on an ResourceOperation
      *
      * @param fedoraId the FedoraId the operation is on
      * @param operation the ResourceOperation to create an event for
+     * @param userAgentBaseUri the base uri of the user agent, optional
      * @return new builder
      */
     public static ResourceOperationEventBuilder fromResourceOperation(final FedoraId fedoraId,
-                                                                      final ResourceOperation operation) {
+                                                                      final ResourceOperation operation,
+                                                                      final String userAgentBaseUri) {
         final var builder = new ResourceOperationEventBuilder();
         builder.fedoraId = fedoraId;
         builder.date = Instant.now();
@@ -61,6 +64,7 @@ public class ResourceOperationEventBuilder implements EventBuilder {
         builder.userID = operation.getUserPrincipal();
         builder.types = new HashSet<>();
         builder.types.add(mapOperationToEventType(operation));
+        builder.userAgentBaseUri = userAgentBaseUri;
         return builder;
     }
 
@@ -139,7 +143,7 @@ public class ResourceOperationEventBuilder implements EventBuilder {
     public Event build() {
         URI userUri = null;
         if (userID != null) {
-            userUri = UserUtil.getUserURI(userID);
+            userUri = UserUtil.getUserURI(userID, userAgentBaseUri);
         }
         return new EventImpl(fedoraId, types, resourceTypes, userID, userUri, userAgent, baseUrl, date);
     }

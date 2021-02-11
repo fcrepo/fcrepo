@@ -30,9 +30,6 @@ import static org.apache.http.HttpStatus.SC_FORBIDDEN;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.jena.vocabulary.DC_11.title;
-import static org.fcrepo.auth.webac.WebACRolesProvider.GROUP_AGENT_BASE_URI_PROPERTY;
-import static org.fcrepo.auth.webac.WebACRolesProvider.USER_AGENT_BASE_URI_PROPERTY;
-import static org.fcrepo.http.api.FedoraAcl.ROOT_AUTHORIZATION_PROPERTY;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_TX;
@@ -46,6 +43,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -53,6 +51,7 @@ import java.util.regex.Pattern;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
 
+import org.fcrepo.auth.webac.WebACRolesProvider;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.integration.http.api.AbstractResourceIT;
 import org.fcrepo.integration.http.api.TestIsolationExecutionListener;
@@ -81,6 +80,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.glassfish.grizzly.utils.Charsets;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -107,6 +107,16 @@ public class WebACRecipesIT extends AbstractResourceIT {
     private final ContentType turtleContentType = ContentType.create("text/turtle", "UTF-8");
 
     private final ContentType sparqlContentType = ContentType.create("application/sparql-update", "UTF-8");
+
+    private WebACRolesProvider rolesProvider;
+
+    @Before
+    public void setup() {
+        this.rolesProvider = getBean(WebACRolesProvider.class);
+        authPropsConfig.setRootAuthAclPath(null);
+        rolesProvider.setGroupBaseUri(null);
+        rolesProvider.setUserBaseUri(null);
+    }
 
     /**
      * Convenience method to create an ACL with 0 or more authorization resources in the repository.
@@ -620,12 +630,12 @@ public class WebACRecipesIT extends AbstractResourceIT {
         setAuth(requestGet3, "user06b");
         assertEquals(HttpStatus.SC_OK, getStatus(requestGet3));
 
-        System.setProperty(ROOT_AUTHORIZATION_PROPERTY, "./target/test-classes/test-root-authorization2.ttl");
+        authPropsConfig.setRootAuthAclPath(Paths.get("./target/test-classes/test-root-authorization2.ttl"));
         logger.debug("Can username 'user06a' read {} (overridden system ACL)", id);
         final HttpGet requestGet4 = getObjMethod(id);
         setAuth(requestGet4, "user06a");
         assertEquals(HttpStatus.SC_OK, getStatus(requestGet4));
-        System.clearProperty(ROOT_AUTHORIZATION_PROPERTY);
+        authPropsConfig.setRootAuthAclPath(null);
 
         // Add ACL to root
         final String rootURI = getObjMethod("/rest").getURI().toString();
@@ -667,7 +677,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
                 HttpStatus.SC_OK, getStatus(requestGet2));
 
         // Test the default root ACL is inherited for authorization while the parent ACL with no acl:default is ignored
-        System.setProperty(ROOT_AUTHORIZATION_PROPERTY, "./target/test-classes/test-root-authorization2.ttl");
+        authPropsConfig.setRootAuthAclPath(Paths.get("./target/test-classes/test-root-authorization2.ttl"));
         final HttpGet requestGet3 = getObjMethod(id);
         setAuth(requestGet3, "user06a");
         assertEquals("Agent user06a can't inherit read persmssion from root ACL to read resource " + testObj + "!",
@@ -792,8 +802,8 @@ public class WebACRecipesIT extends AbstractResourceIT {
                 getStatus(adminUnauthorizedDelegatedGet2));
 
         // Now test with the system property in effect
-        System.setProperty(USER_AGENT_BASE_URI_PROPERTY, "info:user/");
-        System.setProperty(GROUP_AGENT_BASE_URI_PROPERTY, "info:group/");
+        rolesProvider.setUserBaseUri("info:user/");
+        rolesProvider.setGroupBaseUri("info:group/");
 
         final HttpGet adminDelegatedGet3 = getObjMethod(targetPath);
         setAuth(adminDelegatedGet3, "fedoraAdmin");
@@ -805,9 +815,6 @@ public class WebACRecipesIT extends AbstractResourceIT {
         adminUnauthorizedDelegatedGet3.addHeader("On-Behalf-Of", "info:user/fakeuser");
         assertEquals("delegated fakeuser cannot read object", HttpStatus.SC_FORBIDDEN,
                 getStatus(adminUnauthorizedDelegatedGet3));
-
-        System.clearProperty(USER_AGENT_BASE_URI_PROPERTY);
-        System.clearProperty(GROUP_AGENT_BASE_URI_PROPERTY);
     }
 
     @Test
@@ -848,8 +855,8 @@ public class WebACRecipesIT extends AbstractResourceIT {
         setAuth(requestGet2, "smith123");
         assertEquals(HttpStatus.SC_OK, getStatus(requestGet2));
 
-        System.setProperty(USER_AGENT_BASE_URI_PROPERTY, "info:user/");
-        System.setProperty(GROUP_AGENT_BASE_URI_PROPERTY, "info:group/");
+        rolesProvider.setUserBaseUri("info:user/");
+        rolesProvider.setGroupBaseUri("info:group/");
 
         logger.debug("Can username 'smith123' read {} (overridden system ACL)", id);
         final HttpGet requestGet3 = getObjMethod(id);
@@ -861,8 +868,8 @@ public class WebACRecipesIT extends AbstractResourceIT {
         setAuth(requestGet4, "group123");
         assertEquals(HttpStatus.SC_OK, getStatus(requestGet4));
 
-        System.clearProperty(USER_AGENT_BASE_URI_PROPERTY);
-        System.clearProperty(GROUP_AGENT_BASE_URI_PROPERTY);
+        rolesProvider.setUserBaseUri(null);
+        rolesProvider.setGroupBaseUri(null);
 
         // Add ACL to object
         ingestAcl("fedoraAdmin", "/acls/16/acl.ttl", testObj + "/fcr:acl");
@@ -876,8 +883,8 @@ public class WebACRecipesIT extends AbstractResourceIT {
         setAuth(requestGet6, "smith123");
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet6));
 
-        System.setProperty(USER_AGENT_BASE_URI_PROPERTY, "info:user/");
-        System.setProperty(GROUP_AGENT_BASE_URI_PROPERTY, "info:group/");
+        rolesProvider.setUserBaseUri("info:user/");
+        rolesProvider.setGroupBaseUri("info:group/");
 
         logger.debug("Can username 'smith123' read {} (ACL, system properties present)", id);
         final HttpGet requestGet7 = getObjMethod(id);
@@ -888,9 +895,6 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final HttpGet requestGet8 = getObjMethod(id);
         setAuth(requestGet8, "group123");
         assertEquals(HttpStatus.SC_OK, getStatus(requestGet8));
-
-        System.clearProperty(USER_AGENT_BASE_URI_PROPERTY);
-        System.clearProperty(GROUP_AGENT_BASE_URI_PROPERTY);
     }
 
     @Test
@@ -1222,7 +1226,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
 
     @Test
     public void testAgentGroupWithMembersAsURIs() throws Exception {
-        System.setProperty(USER_AGENT_BASE_URI_PROPERTY, "http://example.com/");
+        rolesProvider.setUserBaseUri("http://example.com/");
         ingestTurtleResource("fedoraAdmin", "/acls/agent-group-list-with-member-uris.ttl",
                              serverAddress + "/rest/agent-group-list-with-member-uris");
         final String authorized = ingestObj("/rest/agent-group-with-vcard-member-as-uri");

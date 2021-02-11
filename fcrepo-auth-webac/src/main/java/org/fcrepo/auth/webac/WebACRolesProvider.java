@@ -20,6 +20,8 @@ package org.fcrepo.auth.webac;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
+
+import org.fcrepo.config.AuthPropsConfig;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
@@ -34,6 +36,7 @@ import org.fcrepo.kernel.api.models.WebacAcl;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import java.net.URI;
 import java.util.ArrayList;
@@ -85,10 +88,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Component
 public class WebACRolesProvider {
 
-    public static final String GROUP_AGENT_BASE_URI_PROPERTY = "fcrepo.auth.webac.groupAgent.baseUri";
-
-    public static final String USER_AGENT_BASE_URI_PROPERTY = "fcrepo.auth.webac.userAgent.baseUri";
-
     private static final Logger LOGGER = getLogger(WebACRolesProvider.class);
 
     private static final org.apache.jena.graph.Node RDF_TYPE_NODE = createURI(RDF_NAMESPACE + "type");
@@ -96,7 +95,19 @@ public class WebACRolesProvider {
     private static final org.apache.jena.graph.Node VCARD_MEMBER_NODE = createURI(VCARD_MEMBER_VALUE);
 
     @Inject
+    private AuthPropsConfig authPropsConfig;
+
+    @Inject
     private ResourceFactory resourceFactory;
+
+    private String userBaseUri;
+    private String groupBaseUri;
+
+    @PostConstruct
+    public void setup() {
+        this.userBaseUri = authPropsConfig.getUserAgentBaseUri();
+        this.groupBaseUri = authPropsConfig.getGroupAgentBaseUri();
+    }
 
     /**
      * Get the roles assigned to this Node.
@@ -257,7 +268,7 @@ public class WebACRolesProvider {
     /**
      * Given a FedoraResource, return a list of agents.
      */
-    private static Stream<String> getAgentMembers(final IdentifierConverter<Resource, FedoraResource> translator,
+    private Stream<String> getAgentMembers(final IdentifierConverter<Resource, FedoraResource> translator,
                                                   final FedoraResource resource, final String hashPortion) {
 
         //resolve list of triples, accounting for hash-uris.
@@ -271,14 +282,13 @@ public class WebACRolesProvider {
             return triples.stream()
                           .filter(triple -> triple.predicateMatches(VCARD_MEMBER_NODE))
                           .map(Triple::getObject).flatMap(WebACRolesProvider::nodeToStringStream)
-                                                 .map(WebACRolesProvider::stripUserAgentBaseURI);
+                                                 .map(this::stripUserAgentBaseURI);
         } else {
             return empty();
         }
     }
 
-    private static String stripUserAgentBaseURI(final String object) {
-        final String userBaseUri = System.getProperty(USER_AGENT_BASE_URI_PROPERTY);
+    private String stripUserAgentBaseURI(final String object) {
         if (userBaseUri != null && object.startsWith(userBaseUri)) {
             return object.substring(userBaseUri.length());
         }
@@ -316,7 +326,7 @@ public class WebACRolesProvider {
      *                    resource
      * @return a list of acl:Authorization objects
      */
-    private static List<WebACAuthorization> getAuthorizations(final FedoraResource aclResource,
+    private List<WebACAuthorization> getAuthorizations(final FedoraResource aclResource,
                                                               final boolean ancestorAcl) {
 
         final List<WebACAuthorization> authorizations = new ArrayList<>();
@@ -390,7 +400,7 @@ public class WebACRolesProvider {
      * @param resource the Fedora resource
      * @param ancestorAcl the flag for looking up ACL from ancestor hierarchy resources
      */
-    static Optional<ACLHandle> getEffectiveAcl(final FedoraResource resource, final boolean ancestorAcl) {
+    Optional<ACLHandle> getEffectiveAcl(final FedoraResource resource, final boolean ancestorAcl) {
         try {
 
             final FedoraResource aclResource = resource.getAcl();
@@ -425,11 +435,12 @@ public class WebACRolesProvider {
         }
     }
 
-    private static List<WebACAuthorization> getDefaultAuthorizations() {
+    private List<WebACAuthorization> getDefaultAuthorizations() {
         final Map<String, List<String>> aclTriples = new HashMap<>();
         final List<WebACAuthorization> authorizations = new ArrayList<>();
 
-        getDefaultAcl(null).listStatements().mapWith(Statement::asTriple).forEachRemaining(triple -> {
+        getDefaultAcl(null, authPropsConfig.getRootAuthAclPath())
+                .listStatements().mapWith(Statement::asTriple).forEachRemaining(triple -> {
             if (hasAclPredicate.test(triple)) {
                 final String predicate = triple.getPredicate().getURI();
                 final List<String> values = aclTriples.computeIfAbsent(predicate,
@@ -445,10 +456,7 @@ public class WebACRolesProvider {
         return authorizations;
     }
 
-    private static Stream<String> additionalAgentValues(final org.apache.jena.graph.Node object) {
-        final String groupBaseUri = System.getProperty(GROUP_AGENT_BASE_URI_PROPERTY);
-        final String userBaseUri = System.getProperty(USER_AGENT_BASE_URI_PROPERTY);
-
+    private Stream<String> additionalAgentValues(final org.apache.jena.graph.Node object) {
         if (object.isURI()) {
             final String uri = object.getURI();
             if (userBaseUri != null && uri.startsWith(userBaseUri)) {
@@ -458,5 +466,19 @@ public class WebACRolesProvider {
             }
         }
         return empty();
+    }
+
+    /**
+     * @param userBaseUri the user base uri
+     */
+    public void setUserBaseUri(final String userBaseUri) {
+        this.userBaseUri = userBaseUri;
+    }
+
+    /**
+     * @param groupBaseUri the group base uri
+     */
+    public void setGroupBaseUri(final String groupBaseUri) {
+        this.groupBaseUri = groupBaseUri;
     }
 }

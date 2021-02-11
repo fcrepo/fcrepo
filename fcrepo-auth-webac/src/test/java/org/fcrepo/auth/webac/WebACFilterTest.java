@@ -38,6 +38,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
+import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -150,8 +151,11 @@ public class WebACFilterTest {
 
     private Subject mockSubject;
 
+    private FedoraPropsConfig propsConfig;
+
     @Before
     public void setupRequest() throws Exception {
+        propsConfig = new FedoraPropsConfig();
         SecurityUtils.setSecurityManager(mockSecurityManager);
 
         mockSubject = Mockito.mock(Subject.class);
@@ -171,6 +175,7 @@ public class WebACFilterTest {
         request.addHeader(ATOMIC_ID_HEADER, transactionUri);
 
         setField(webacFilter, "transactionManager", mockTransactionManager);
+        setField(webacFilter, "fedoraPropsConfig", propsConfig);
 
         mockContainer = Mockito.mock(Container.class);
         mockChildContainer = Mockito.mock(Container.class);

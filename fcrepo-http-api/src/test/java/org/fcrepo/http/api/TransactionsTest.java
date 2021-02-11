@@ -37,6 +37,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
+import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
@@ -85,8 +86,11 @@ public class TransactionsTest {
     @Mock
     private SecurityContext mockSecurityContext;
 
+    private FedoraPropsConfig propsConfig;
+
     @Before
     public void setUp() {
+        propsConfig = new FedoraPropsConfig();
         testObj = new Transactions();
         mockTransaction.setShortLived(false);
         when(mockTxManager.create()).thenReturn(mockTransaction);
@@ -100,6 +104,7 @@ public class TransactionsTest {
 
         setField(testObj, "txManager", mockTxManager);
         setField(testObj, "uriInfo", mockUriInfo);
+        setField(testObj, "fedoraPropsConfig", propsConfig);
     }
 
     @Test

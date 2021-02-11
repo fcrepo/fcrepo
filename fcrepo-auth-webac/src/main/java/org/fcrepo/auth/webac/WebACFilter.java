@@ -70,6 +70,7 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 
+import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.http.commons.domain.MultiPrefer;
 import org.fcrepo.http.commons.domain.SinglePrefer;
@@ -140,6 +141,9 @@ public class WebACFilter extends RequestContextFilter {
             new SimplePrincipalCollection(FOAF_AGENT_PRINCIPAL, WebACAuthorizingRealm.class.getCanonicalName());
 
     private static Subject FOAF_AGENT_SUBJECT;
+
+    @Inject
+    private FedoraPropsConfig fedoraPropsConfig;
 
     @Inject
     private ResourceFactory resourceFactory;
@@ -292,7 +296,8 @@ public class WebACFilter extends RequestContextFilter {
         if (txId == null) {
             return null;
         }
-        final var txProvider = new TransactionProvider(transactionManager, request, getBaseUri(request));
+        final var txProvider = new TransactionProvider(transactionManager, request,
+                getBaseUri(request), fedoraPropsConfig.getJmsBaseUrl());
         return txProvider.provide();
     }
 

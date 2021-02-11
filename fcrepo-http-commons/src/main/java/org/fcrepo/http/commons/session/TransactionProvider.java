@@ -44,8 +44,6 @@ public class TransactionProvider implements Factory<Transaction> {
 
     private static final Logger LOGGER = getLogger(TransactionProvider.class);
 
-    static final String JMS_BASEURL_PROP = "fcrepo.jms.baseUrl";
-
     private final TransactionManager txManager;
 
     private final HttpServletRequest request;
@@ -54,18 +52,24 @@ public class TransactionProvider implements Factory<Transaction> {
 
     private final URI baseUri;
 
+    private final String jmsBaseUrl;
+
     /**
      * Create a new transaction provider for a request
      * @param txManager the transaction manager
      * @param request the request
      * @param baseUri base uri for the application
+     * @param jmsBaseUrl base url to use for jms, optional
      */
-    public TransactionProvider(final TransactionManager txManager, final HttpServletRequest request,
-            final URI baseUri) {
+    public TransactionProvider(final TransactionManager txManager,
+                               final HttpServletRequest request,
+                               final URI baseUri,
+                               final String jmsBaseUrl) {
         this.txManager = txManager;
         this.request = request;
         this.txIdPattern = Pattern.compile("(^|" + baseUri + TX_PREFIX + ")([0-9a-f\\-]+)$");
         this.baseUri = baseUri;
+        this.jmsBaseUrl = jmsBaseUrl;
     }
 
     @Override
@@ -139,9 +143,8 @@ public class TransactionProvider implements Factory<Transaction> {
      * @return String the base Url
      */
     private String getBaseUrlProperty() {
-        final String propBaseURL = System.getProperty(JMS_BASEURL_PROP, "");
-        if (propBaseURL.length() > 0 && propBaseURL.startsWith("http")) {
-            final URI propBaseUri = URI.create(propBaseURL);
+        if (StringUtils.isNotBlank(jmsBaseUrl) && jmsBaseUrl.startsWith("http")) {
+            final URI propBaseUri = URI.create(jmsBaseUrl);
             if (propBaseUri.getPort() < 0) {
                 return JerseyUriBuilder.fromUri(baseUri).port(-1).uri(propBaseUri).toString();
             }

@@ -34,7 +34,6 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 
 import static java.net.URI.create;
-import static org.fcrepo.http.commons.session.TransactionProvider.JMS_BASEURL_PROP;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -60,8 +59,8 @@ public class TransactionProviderTest {
         when(transactionManager.create()).thenReturn(transaction);
     }
 
-    private TransactionProvider createProvider(final UriInfo uriInfo) {
-        return new TransactionProvider(transactionManager, request, uriInfo.getBaseUri());
+    private TransactionProvider createProvider(final UriInfo uriInfo, final String jmsBaseUrl) {
+        return new TransactionProvider(transactionManager, request, uriInfo.getBaseUri(), jmsBaseUrl);
     }
 
     @Test
@@ -78,7 +77,7 @@ public class TransactionProviderTest {
 
         when(request.getHeader("user-agent")).thenReturn(expectedUserAgent);
 
-        createProvider(info).provide();
+        createProvider(info, "").provide();
 
         verify(transaction).setBaseUri(expectedBaseUrl);
         verify(transaction).setUserAgent(expectedUserAgent);
@@ -86,8 +85,8 @@ public class TransactionProviderTest {
     }
 
     /**
-     * Demonstrates that when the {@link TransactionProvider#JMS_BASEURL_PROP fcrepo.jms.baseUrl} system property is not
-     * set, the url used for JMS messages is the same as the base url found in the {@code UriInfo}.
+     * Demonstrates that when the jmsBaseUrl is not set, the url used for JMS messages is the same as the base url
+     * found in the {@code UriInfo}.
      * <p>
      * Implementation note: this test requires a concrete instance of {@link UriInfo}, because it is the interaction of
      * {@code javax.ws.rs.core.UriBuilder} and {@code TransactionProvider} that is being tested.
@@ -104,15 +103,15 @@ public class TransactionProviderTest {
 
         final String expectedBaseUrl = baseUri.toString();
 
-        createProvider(info).provide();
+        createProvider(info, "").provide();
 
         verify(transaction).setBaseUri(expectedBaseUrl);
         verify(info).getBaseUri();
     }
 
     /**
-     * Demonstrates that the host supplied by the {@link TransactionProvider#JMS_BASEURL_PROP fcrepo.jms.baseUrl} system
-     * property is used as the as the base url for JMS messages, and not the base url found in {@code UriInfo}.
+     * Demonstrates that the host supplied by the jmsBaseUrl is used as the as the base url for JMS messages, and not
+     * the base url found in {@code UriInfo}.
      * <p>
      * Note: the path from the request is preserved, the host from the fcrepo.jms.baseUrl is used
      * </p>
@@ -132,17 +131,15 @@ public class TransactionProviderTest {
 
         final String baseUrl = "http://example.org";
         final String expectedBaseUrl = baseUrl + baseUri.getPath();
-        System.setProperty(JMS_BASEURL_PROP, baseUrl);
 
-        createProvider(info).provide();
+        createProvider(info, baseUrl).provide();
 
         verify(transaction).setBaseUri(expectedBaseUrl);
-        System.clearProperty(JMS_BASEURL_PROP);
     }
 
     /**
-     * Demonstrates that the host and port supplied by the {@link TransactionProvider#JMS_BASEURL_PROP
-     * fcrepo.jms.baseUrl} system property is used as the as the base url for JMS messages, and not the base url found
+     * Demonstrates that the host and port supplied by the jmsBaseUrl is used as the as the base url for JMS messages,
+     * and not the base url found
      * in {@code UriInfo}.
      * <p>
      * Note: the path from the request is preserved, but the host and port from the request is overridden by the values
@@ -164,17 +161,15 @@ public class TransactionProviderTest {
 
         final String baseUrl = "http://example.org:9090";
         final String expectedBaseUrl = baseUrl + baseUri.getPath();
-        System.setProperty(JMS_BASEURL_PROP, baseUrl);
 
-        createProvider(info).provide();
+        createProvider(info, baseUrl).provide();
 
         verify(transaction).setBaseUri(expectedBaseUrl);
-        System.clearProperty(JMS_BASEURL_PROP);
     }
 
     /**
-     * Demonstrates that the url supplied by the {@link TransactionProvider#JMS_BASEURL_PROP fcrepo.jms.baseUrl} system
-     * property is used as the as the base url for JMS messages, and not the base url found in {@code UriInfo}.
+     * Demonstrates that the url supplied by the jmsBaseUrl is used as the as the base url for JMS messages, and not
+     * the base url found in {@code UriInfo}.
      * <p>
      * Note: the host and path from the request is overridden by the values from fcrepo.jms.baseUrl
      * </p>
@@ -193,17 +188,15 @@ public class TransactionProviderTest {
         final UriInfo info = spy(req.getUriInfo());
 
         final String expectedBaseUrl = "http://example.org/fcrepo/rest";
-        System.setProperty(JMS_BASEURL_PROP, expectedBaseUrl);
 
-        createProvider(info).provide();
+        createProvider(info, expectedBaseUrl).provide();
 
         verify(transaction).setBaseUri(expectedBaseUrl);
-        System.clearProperty(JMS_BASEURL_PROP);
     }
 
     /**
-     * Demonstrates that when the the base url in {@code UriInfo} contains a port number, and the base url defined by
-     * {@link TransactionProvider#JMS_BASEURL_PROP fcrepo.jms.baseUrl} does <em>not</em> contain a port number, that the
+     * Demonstrates that when the the base url in {@code UriInfo} contains a port number, and the base url does
+     * <em>not</em> contain a port number, that the
      * base url for JMS messages does not contain a port number.
      * <p>
      * Note: the host, port, and path from the request is overridden by values from fcrepo.jms.baseUrl
@@ -223,12 +216,10 @@ public class TransactionProviderTest {
         final UriInfo info = spy(req.getUriInfo());
 
         final String expectedBaseUrl = "http://example.org/fcrepo/rest/";
-        System.setProperty(JMS_BASEURL_PROP, expectedBaseUrl);
 
-        createProvider(info).provide();
+        createProvider(info, expectedBaseUrl).provide();
 
         verify(transaction).setBaseUri(expectedBaseUrl);
-        System.clearProperty(JMS_BASEURL_PROP);
     }
 
 }

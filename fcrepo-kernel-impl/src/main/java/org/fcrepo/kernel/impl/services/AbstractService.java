@@ -19,10 +19,11 @@ package org.fcrepo.kernel.impl.services;
 
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Statement;
+
+import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.Transaction;
@@ -41,7 +42,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -84,8 +84,6 @@ public abstract class AbstractService {
 
     private static final Node WEBAC_ACCESS_TO_CLASS_URI = createURI(WEBAC_ACCESS_TO_CLASS);
 
-    protected final List<Triple> serverManagedProperties = new ArrayList<>();
-
     @Autowired
     @Qualifier("containmentIndex")
     protected ContainmentIndex containmentIndex;
@@ -99,6 +97,9 @@ public abstract class AbstractService {
 
     @Inject
     protected MembershipService membershipService;
+
+    @Inject
+    protected FedoraPropsConfig fedoraPropsConfig;
 
     /**
      * Utility to determine the correct interaction model from elements of a request.

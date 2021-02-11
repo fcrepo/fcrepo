@@ -24,6 +24,8 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.vocabulary.DC;
+
+import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.RdfCollectors;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
@@ -100,6 +102,8 @@ public class ReplacePropertiesServiceImplTest {
     @Captor
     private ArgumentCaptor<UpdateRdfSourceOperation> operationCaptor;
 
+    private FedoraPropsConfig propsConfig;
+
     private static final FedoraId FEDORA_ID = FedoraId.create("info:fedora/resource1");
     private static final String TX_ID = "tx-1234";
     private static final String RDF =
@@ -108,11 +112,13 @@ public class ReplacePropertiesServiceImplTest {
 
     @Before
     public void setup() {
+        propsConfig = new FedoraPropsConfig();
         factory = new RdfSourceOperationFactoryImpl();
         setField(service, "factory", factory);
         setField(service, "eventAccumulator", eventAccumulator);
         setField(service, "referenceService", referenceService);
         setField(service, "membershipService", membershipService);
+        setField(service, "fedoraPropsConfig", propsConfig);
         when(tx.getId()).thenReturn(TX_ID);
         when(psManager.getSession(anyString())).thenReturn(pSession);
         when(pSession.getHeaders(any(FedoraId.class), nullable(Instant.class))).thenReturn(headers);
