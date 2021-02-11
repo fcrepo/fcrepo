@@ -40,7 +40,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * @author pwinckles (I definitely did not write these)
+ * @author pwinckles
  */
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class TransactionProviderTest {
