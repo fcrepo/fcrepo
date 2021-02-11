@@ -23,12 +23,12 @@
     </bean>
 
     <!-- Containment Index to test -->
-    <bean id="containmentIndex" class="org.fcrepo.kernel.impl.ContainmentIndexImpl">
+    <bean id="containmentIndex" class="org.fcrepo.kernel.impl.ContainmentIndexImpl" depends-on="flyway">
         <property name="dataSource" ref="dataSource"/>
     </bean>
 
     <!-- ReferenceService index to test -->
-    <bean id="referenceIndex" class="org.fcrepo.kernel.impl.services.ReferenceServiceImpl">
+    <bean id="referenceIndex" class="org.fcrepo.kernel.impl.services.ReferenceServiceImpl" depends-on="flyway">
         <property name="dataSource" ref="dataSource" />
     </bean>
 
