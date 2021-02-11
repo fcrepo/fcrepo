@@ -34,7 +34,6 @@ import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
