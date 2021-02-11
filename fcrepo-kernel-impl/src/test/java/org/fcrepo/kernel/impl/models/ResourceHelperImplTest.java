@@ -35,7 +35,6 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
 
-import org.flywaydb.core.Flyway;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -65,9 +64,6 @@ public class ResourceHelperImplTest {
 
     @Inject
     private ContainmentIndex containmentIndex;
-
-    @Inject
-    private Flyway flyway;
 
     @InjectMocks
     private ResourceHelperImpl resourceHelper;
