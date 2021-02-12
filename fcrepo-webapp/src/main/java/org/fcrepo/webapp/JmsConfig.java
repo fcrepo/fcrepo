@@ -18,6 +18,8 @@
 
 package org.fcrepo.webapp;
 
+import javax.annotation.PostConstruct;
+
 import org.fcrepo.config.ConditionOnPropertyBoolean;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.config.JmsDestination;
@@ -29,6 +31,8 @@ import org.fcrepo.jms.JMSTopicPublisher;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.xbean.BrokerFactoryBean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -43,10 +47,17 @@ import org.springframework.context.annotation.DependsOn;
 @Conditional(JmsConfig.JmsEnabled.class)
 public class JmsConfig {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(JmsConfig.class);
+
     static class JmsEnabled extends ConditionOnPropertyBoolean {
         JmsEnabled() {
             super(FedoraPropsConfig.FCREPO_JMS_ENABLED, true);
         }
+    }
+
+    @PostConstruct
+    public void postConstruct() {
+        LOGGER.info("JMS messaging enabled");
     }
 
     /**
