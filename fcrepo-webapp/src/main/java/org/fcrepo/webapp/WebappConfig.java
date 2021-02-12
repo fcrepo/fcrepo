@@ -69,6 +69,7 @@ public class WebappConfig {
      */
     @Bean
     public EventBus eventBus() {
+        // TODO this should be an async event bus: https://jira.lyrasis.org/browse/FCREPO-3587
         return new EventBus();
     }
 
