@@ -21,6 +21,7 @@ package org.fcrepo.webapp;
 import java.util.HashSet;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.Filter;
 
 import org.fcrepo.auth.common.ContainerRolesPrincipalProvider;
@@ -40,6 +41,8 @@ import org.apache.shiro.spring.LifecycleBeanPostProcessor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.shiro.web.mgt.WebSecurityManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -53,6 +56,8 @@ import org.springframework.core.annotation.Order;
 @Configuration
 @Conditional(AuthConfig.AuthEnabled.class)
 public class AuthConfig {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthConfig.class);
 
     static class AuthEnabled extends ConditionOnPropertyBoolean {
         AuthEnabled() {
@@ -75,6 +80,11 @@ public class AuthConfig {
         }
     }
 
+    @PostConstruct
+    public void postConstruct() {
+        LOGGER.info("Auth enabled");
+    }
+
     /**
      * Optional PrincipalProvider filter that will inspect the request header, "some-header", for user role values
      *
@@ -85,6 +95,7 @@ public class AuthConfig {
     @Order(1)
     @Conditional(AuthConfig.HeaderPrincipalEnabled.class)
     public PrincipalProvider headerProvider(final AuthPropsConfig propsConfig) {
+        LOGGER.info("Auth header principal provider enabled");
         final var provider = new HttpHeaderPrincipalProvider();
         provider.setHeaderName(propsConfig.getAuthPrincipalHeaderName());
         provider.setSeparator(propsConfig.getAuthPrincipalHeaderSeparator());
@@ -101,6 +112,7 @@ public class AuthConfig {
     @Order(2)
     @Conditional(AuthConfig.RolesPrincipalEnabled.class)
     public PrincipalProvider containerRolesProvider(final AuthPropsConfig propsConfig) {
+        LOGGER.info("Auth roles principal provider enabled");
         final var provider = new ContainerRolesPrincipalProvider();
         provider.setRoleNames(new HashSet<>(propsConfig.getAuthPrincipalRolesList()));
         return provider;
@@ -118,6 +130,7 @@ public class AuthConfig {
     @Order(3)
     @Conditional(AuthConfig.DelegatePrincipalEnabled.class)
     public PrincipalProvider delegatedPrincipalProvider() {
+        LOGGER.info("Auth delegate principal provider enabled");
         return new DelegateHeaderPrincipalProvider();
     }
 

@@ -23,7 +23,7 @@ import org.springframework.context.annotation.ConditionContext;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 
 /**
- * This condition looks at property values and returns true if they match expectations.
+ * This condition returns the value of boolean properties to disable or enable beans.
  *
  * Implementations must provide a no-arg constructor.
  *
