@@ -17,6 +17,7 @@
  */
 package org.fcrepo.http.api.services;
 
+import static org.fcrepo.config.ServerManagedPropsMode.STRICT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
@@ -39,6 +40,8 @@ import org.junit.Test;
 import java.io.InputStream;
 import java.io.ByteArrayInputStream;
 import org.junit.runner.RunWith;
+
+import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -59,10 +62,13 @@ public class HttpRdfServiceTest {
     private static final Logger log = getLogger(HttpRdfService.class);
 
     @Mock
-    HttpIdentifierConverter idTranslator;
+    private HttpIdentifierConverter idTranslator;
 
     @Mock
-    FedoraResource resource;
+    private FedoraResource resource;
+
+    @Mock
+    private FedoraPropsConfig fedoraPropsConfig;
 
     @InjectMocks
     private HttpRdfService httpRdfService;
@@ -93,6 +99,7 @@ public class HttpRdfServiceTest {
 
     @Before
     public void setup() {
+        when(fedoraPropsConfig.getServerManagedPropsMode()).thenReturn(STRICT);
         when(idTranslator.translateUri(FEDORA_URI_1)).thenReturn(FEDORA_ID_1.getFullId());
         when(idTranslator.translateUri(FEDORA_URI_2)).thenReturn(FEDORA_ID_2.getFullId());
         when(idTranslator.translateUri(NON_FEDORA_URI)).thenReturn(NON_FEDORA_URI);

@@ -17,18 +17,28 @@
  */
 package org.fcrepo.kernel.api.utils;
 
-import org.apache.jena.datatypes.xsd.XSDDateTime;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Statement;
-import org.fcrepo.kernel.api.exception.MalformedRdfException;
-
-import java.util.Calendar;
-
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.vocabulary.RDF.Init.type;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
+import static org.fcrepo.kernel.api.RdfLexicon.restrictedType;
+
+import java.util.Calendar;
+
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
+import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
+
+import org.apache.jena.datatypes.xsd.XSDDateTime;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 
 /**
  * Some server managed triples can have the prohibition on user-management overridden.  While
@@ -36,73 +46,82 @@ import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
  * request to override them.
  *
  * @author Mike Durbin
+ * @author whikloj
  */
 public class RelaxedPropertiesHelper {
 
     /**
      * Gets the created date (if any) that was included in the statements.
-     * @param statements statements to consider
+     * @param model model to consider
+     * @param resource the resource we are looking for properties of
      * @return the date that should be set for the CREATED_DATE or null if it should be
      *         untouched
      */
-    public static Calendar getCreatedDate(final Iterable<Statement> statements) {
-        return extractSingleCalendarValue(statements, CREATED_DATE);
+    public static Calendar getCreatedDate(final Model model, final Resource resource) {
+        final Iterable<Statement> iter = getIterable(model, resource, CREATED_DATE);
+        return extractSingleCalendarValue(iter, CREATED_DATE);
     }
 
     /**
      * Gets the created by user (if any) that is included within the statements.
-     * @param statements statements to consider
-     * @return the date that should be set for the CREATED_BY or null if it should be
+     * @param model the model to consider
+     * @param resource the resource we are looking for properties of
+     * @return the string that should be set for the CREATED_BY or null if it should be
      *         untouched
      */
-    public static String getCreatedBy(final Iterable<Statement> statements) {
-        return extractSingleStringValue(statements, CREATED_BY);
+    public static String getCreatedBy(final Model model, final Resource resource) {
+        final Iterable<Statement> iter = getIterable(model, resource, CREATED_BY);
+        return extractSingleStringValue(iter, CREATED_BY);
     }
 
     /**
      * Gets the modified date (if any) that was included within the statements.
-     * @param statements statements to consider
+     * @param model model to consider
+     * @param resource the resource we are looking for properties of
      * @return the date that should be set for the LAST_MODIFIED_DATE or null if it should be
      *         untouched
      */
-    public static Calendar getModifiedDate(final Iterable<Statement> statements) {
-        return extractSingleCalendarValue(statements, LAST_MODIFIED_DATE);
+    public static Calendar getModifiedDate(final Model model, final Resource resource) {
+        final Iterable<Statement> iter = getIterable(model, resource, LAST_MODIFIED_DATE);
+        return extractSingleCalendarValue(iter, LAST_MODIFIED_DATE);
     }
 
     /**
      * Gets the modified by user (if any) that was included within the statements.
-     * @param statements statements to consider
-     * @return the date that should be set for the MODIFIED_BY or null if it should be
+     * @param model model to consider
+     * @param resource the resource we are looking for properties of
+     * @return the string that should be set for the MODIFIED_BY or null if it should be
      *         untouched
      */
-    public static String getModifiedBy(final Iterable<Statement> statements) {
-       return extractSingleStringValue(statements, LAST_MODIFIED_BY);
+    public static String getModifiedBy(final Model model, final Resource resource) {
+        final Iterable<Statement> iter = getIterable(model, resource, LAST_MODIFIED_BY);
+        return extractSingleStringValue(iter, LAST_MODIFIED_BY);
     }
 
-    private static String extractSingleStringValue(final Iterable<Statement> statements, final Property predicate) {
+    private static String extractSingleStringValue(final Iterable<Statement> statements,
+                                                   final Property predicate) {
         String username = null;
         for (final Statement added : statements) {
-            if (added.getPredicate().equals(predicate)) {
-                if (username == null) {
-                    username = added.getObject().asLiteral().getString();
-                } else {
-                    throw new MalformedRdfException(predicate + " may only appear once!");
-                }
+            if (username == null) {
+                username = added.getObject().asLiteral().getString();
+            } else {
+                throw new MalformedRdfException(predicate + " may only appear once!");
             }
         }
         return username;
     }
 
-    private static Calendar extractSingleCalendarValue(final Iterable<Statement> statements,
-                                                       final Property predicate) {
+    private static Calendar extractSingleCalendarValue(final Iterable<Statement> statements, final Property predicate) {
         Calendar cal = null;
         for (final Statement added : statements) {
-            if (added.getPredicate().equals(predicate)) {
-                if (cal == null) {
+            if (cal == null) {
+                try {
                     cal = RelaxedPropertiesHelper.parseExpectedXsdDateTimeValue(added.getObject());
-                } else {
-                    throw new MalformedRdfException(predicate + " may only appear once!");
+                } catch (final IllegalArgumentException e) {
+                    throw new MalformedRdfException("Expected a xsd:datetime for " + predicate, e);
                 }
+            } else {
+                throw new MalformedRdfException(predicate + " may only appear once!");
             }
         }
         return cal;
@@ -120,6 +139,36 @@ public class RelaxedPropertiesHelper {
             return ((XSDDateTime) value).asCalendar();
         } else {
             throw new IllegalArgumentException("Expected an xsd:dateTime!");
+        }
+    }
+
+    private static Iterable<Statement> getIterable(final Model model,
+                                                   final Resource resource,
+                                                   final Property predicate) {
+        final var iterator = model.listStatements(resource, predicate, (String)null);
+        return () -> iterator;
+    }
+
+
+    /**
+     * Several tests for invalid or disallowed RDF statements.
+     * @param triple the triple to check.
+     */
+    public static void checkTripleForDisallowed(final Triple triple) {
+        if (triple.getPredicate().equals(type().asNode()) && !triple.getObject().isURI()) {
+            // The object of a rdf:type triple is not a URI.
+            throw new MalformedRdfException(
+                    String.format("Invalid rdf:type: %s", triple.getObject()));
+        } else if (restrictedType.test(triple)) {
+            // The object of a rdf:type triple has a restricted namespace.
+            throw new ServerManagedTypeException(
+                    String.format("The server managed type (%s) cannot be modified by the client.",
+                            triple.getObject()));
+        } else if (isManagedPredicate.test(createProperty(triple.getPredicate().getURI()))) {
+            // The predicate is server managed.
+            throw new ServerManagedPropertyException(
+                    String.format("The server managed predicate (%s) cannot be modified by the client.",
+                            triple.getPredicate()));
         }
     }
 

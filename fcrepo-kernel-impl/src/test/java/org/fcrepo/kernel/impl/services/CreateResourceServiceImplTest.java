@@ -48,12 +48,14 @@ import java.nio.file.Files;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.jena.datatypes.xsd.XSDDateTime;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 
@@ -338,16 +340,21 @@ public class CreateResourceServiceImplTest {
     @Test
     public void testRdfSetRelaxedProperties_Post() throws Exception {
         final var createdDate = Instant.parse("2019-11-12T10:00:30.0Z");
+        final var calendar = Calendar.getInstance();
+        calendar.setTime(Date.from(createdDate));
+        final var createdDateXsd = new XSDDateTime(calendar);
         final var lastModifiedDate = Instant.parse("2019-11-12T14:11:05.0Z");
+        calendar.setTime(Date.from(lastModifiedDate));
+        final var lastModifiedDateXsd = new XSDDateTime(calendar);
         final String relaxedUser = "relaxedUser";
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("testSlug");
         containmentIndex.addContainedBy(TX_ID, rootId, fedoraId);
 
         final var resc = model.getResource(childId.getFullId());
-        resc.addLiteral(LAST_MODIFIED_DATE, Date.from(lastModifiedDate));
+        resc.addLiteral(LAST_MODIFIED_DATE, lastModifiedDateXsd);
         resc.addLiteral(LAST_MODIFIED_BY, relaxedUser);
-        resc.addLiteral(CREATED_DATE, Date.from(createdDate));
+        resc.addLiteral(CREATED_DATE, createdDateXsd);
         resc.addLiteral(CREATED_BY, relaxedUser);
 
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);

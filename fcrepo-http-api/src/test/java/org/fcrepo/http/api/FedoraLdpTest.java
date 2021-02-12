@@ -25,6 +25,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 
+import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.api.services.EtagService;
 import org.fcrepo.http.api.services.HttpRdfService;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
@@ -110,6 +111,7 @@ import static javax.ws.rs.core.Response.Status.TEMPORARY_REDIRECT;
 import static org.apache.commons.io.IOUtils.toInputStream;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.fcrepo.config.ServerManagedPropsMode.STRICT;
 import static org.fcrepo.http.api.ContentExposingResource.buildLink;
 import static org.fcrepo.http.api.ContentExposingResource.getSimpleContentType;
 import static org.fcrepo.http.api.FedoraLdp.HTTP_HEADER_ACCEPT_PATCH;
@@ -250,6 +252,9 @@ public class FedoraLdpTest {
     @Mock
     private EtagService etagService;
 
+    @Mock
+    private FedoraPropsConfig fedoraPropsConfig;
+
     private final List<URI> typeList = new ArrayList<>();
 
     private static final Logger log = getLogger(FedoraLdpTest.class);
@@ -261,6 +266,8 @@ public class FedoraLdpTest {
         mockResponse = new MockHttpServletResponse();
 
         final HttpRdfService httpRdfService = new HttpRdfService();
+        setField(httpRdfService, "fedoraPropsConfig", fedoraPropsConfig);
+        when(fedoraPropsConfig.getServerManagedPropsMode()).thenReturn(STRICT);
 
         setField(testObj, "request", mockRequest);
         setField(testObj, "servletResponse", mockResponse);
