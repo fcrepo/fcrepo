@@ -18,17 +18,21 @@
 
 package org.fcrepo.config;
 
+import org.springframework.context.annotation.Condition;
+import org.springframework.context.annotation.ConditionContext;
+import org.springframework.core.type.AnnotatedTypeMetadata;
+
 /**
- * This condition enables a bean/configuration when the specified property is true
+ * This condition enables a bean/configuration when the specified property is false
  *
  * Implementations must provide a no-arg constructor.
  *
  * @author pwinckles
  */
-public abstract class ConditionOnPropertyTrue extends ConditionOnProperty<Boolean> {
+public abstract class ConditionOnPropertyFalse extends ConditionOnProperty<Boolean> {
 
-    public ConditionOnPropertyTrue(final String name, final boolean defaultValue) {
-        super(name, true, defaultValue, Boolean.class);
+    public ConditionOnPropertyFalse(final String name, final boolean defaultValue) {
+        super(name, false, defaultValue, Boolean.class);
     }
 
 }

@@ -32,6 +32,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class AuthPropsConfig extends BasePropsConfig {
 
+    public static final String FCREPO_AUTH_ENABLED = "fcrepo.auth.enabled";
     public static final String FCREPO_AUTH_PRINCIPAL_HEADER_ENABLED = "fcrepo.auth.principal.header.enabled";
     private static final String FCREPO_AUTH_PRINCIPAL_HEADER_NAME = "fcrepo.auth.principal.header.name";
     private static final String FCREPO_AUTH_PRINCIPAL_HEADER_SEPARATOR = "fcrepo.auth.principal.header.separator";
@@ -50,20 +51,18 @@ public class AuthPropsConfig extends BasePropsConfig {
     @Value("${" + FCREPO_GROUP_AGENT_BASE_URI + ":#{null}}")
     private String groupAgentBaseUri;
 
-    @Value("${" + FCREPO_AUTH_PRINCIPAL_HEADER_ENABLED + ":false}")
-    private boolean authPrincipalHeaderEnabled;
-
-    @Value("${" + FCREPO_AUTH_PRINCIPAL_ROLES_ENABLED + ":false}")
-    private boolean authPrincipalRolesEnabled;
-
     @Value("${" + FCREPO_AUTH_PRINCIPAL_DELEGATE_ENABLED + ":true}")
     private boolean authPrincipalDelegateEnabled;
 
+    @Value("${" + FCREPO_AUTH_PRINCIPAL_HEADER_ENABLED + ":false}")
+    private boolean authPrincipalHeaderEnabled;
     @Value("${" + FCREPO_AUTH_PRINCIPAL_HEADER_NAME + ":some-header}")
     private String authPrincipalHeaderName;
     @Value("${" + FCREPO_AUTH_PRINCIPAL_HEADER_SEPARATOR + ":,}")
     private String authPrincipalHeaderSeparator;
 
+    @Value("${" + FCREPO_AUTH_PRINCIPAL_ROLES_ENABLED + ":false}")
+    private boolean authPrincipalRolesEnabled;
     @Value("#{'${" + FCREPO_AUTH_PRINCIPAL_ROLES_LIST + ":tomcat-role-1,tomcat-role-2}'.split(',')}")
     private List<String> authPrincipalRolesList;
 
