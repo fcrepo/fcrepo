@@ -32,7 +32,7 @@ import org.fcrepo.auth.common.ServletContainerAuthenticatingRealm;
 import org.fcrepo.auth.webac.WebACAuthorizingRealm;
 import org.fcrepo.auth.webac.WebACFilter;
 import org.fcrepo.config.AuthPropsConfig;
-import org.fcrepo.config.ConditionOnPropertyBoolean;
+import org.fcrepo.config.ConditionOnPropertyTrue;
 
 import org.apache.shiro.realm.AuthenticatingRealm;
 import org.apache.shiro.realm.AuthorizingRealm;
@@ -53,21 +53,27 @@ import org.springframework.core.annotation.Order;
  * @author pwinckles
  */
 @Configuration
+@Conditional(AuthConfig.AuthorizationEnabled.class)
 public class AuthConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthConfig.class);
 
-    static class HeaderPrincipalEnabled extends ConditionOnPropertyBoolean {
+    static class AuthorizationEnabled extends ConditionOnPropertyTrue {
+        AuthorizationEnabled() {
+            super(AuthPropsConfig.FCREPO_AUTH_ENABLED, true);
+        }
+    }
+    static class HeaderPrincipalEnabled extends ConditionOnPropertyTrue {
         HeaderPrincipalEnabled() {
             super(AuthPropsConfig.FCREPO_AUTH_PRINCIPAL_HEADER_ENABLED, false);
         }
     }
-    static class RolesPrincipalEnabled extends ConditionOnPropertyBoolean {
+    static class RolesPrincipalEnabled extends ConditionOnPropertyTrue {
         RolesPrincipalEnabled() {
             super(AuthPropsConfig.FCREPO_AUTH_PRINCIPAL_ROLES_ENABLED, false);
         }
     }
-    static class DelegatePrincipalEnabled extends ConditionOnPropertyBoolean {
+    static class DelegatePrincipalEnabled extends ConditionOnPropertyTrue {
         DelegatePrincipalEnabled() {
             super(AuthPropsConfig.FCREPO_AUTH_PRINCIPAL_DELEGATE_ENABLED, true);
         }
@@ -80,7 +86,7 @@ public class AuthConfig {
      * @return header principal provider
      */
     @Bean
-    @Order(1)
+    @Order(3)
     @Conditional(AuthConfig.HeaderPrincipalEnabled.class)
     public PrincipalProvider headerProvider(final AuthPropsConfig propsConfig) {
         LOGGER.info("Auth header principal provider enabled");
@@ -97,7 +103,7 @@ public class AuthConfig {
      * @return roles principal provider
      */
     @Bean
-    @Order(2)
+    @Order(4)
     @Conditional(AuthConfig.RolesPrincipalEnabled.class)
     public PrincipalProvider containerRolesProvider(final AuthPropsConfig propsConfig) {
         LOGGER.info("Auth roles principal provider enabled");
@@ -115,7 +121,7 @@ public class AuthConfig {
      * @return delegate principal provider
      */
     @Bean
-    @Order(3)
+    @Order(5)
     @Conditional(AuthConfig.DelegatePrincipalEnabled.class)
     public PrincipalProvider delegatedPrincipalProvider() {
         LOGGER.info("Auth delegate principal provider enabled");
@@ -166,6 +172,7 @@ public class AuthConfig {
      * @return Authentication Filter
      */
     @Bean
+    @Order(1)
     public Filter servletContainerAuthFilter() {
         return new ServletContainerAuthFilter();
     }
@@ -174,6 +181,7 @@ public class AuthConfig {
      * @return Authorization Filter
      */
     @Bean
+    @Order(2)
     public Filter webACFilter() {
         return new WebACFilter();
     }
