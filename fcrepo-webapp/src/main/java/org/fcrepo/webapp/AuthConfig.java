@@ -54,16 +54,10 @@ import org.springframework.core.annotation.Order;
  * @author pwinckles
  */
 @Configuration
-@Conditional(AuthConfig.AuthEnabled.class)
 public class AuthConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthConfig.class);
 
-    static class AuthEnabled extends ConditionOnPropertyBoolean {
-        AuthEnabled() {
-            super(AuthPropsConfig.FCREPO_AUTH_ENABLED, true);
-        }
-    }
     static class HeaderPrincipalEnabled extends ConditionOnPropertyBoolean {
         HeaderPrincipalEnabled() {
             super(AuthPropsConfig.FCREPO_AUTH_PRINCIPAL_HEADER_ENABLED, false);
