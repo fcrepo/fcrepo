@@ -21,7 +21,6 @@ package org.fcrepo.webapp;
 import java.util.HashSet;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
 import javax.servlet.Filter;
 
 import org.fcrepo.auth.common.ContainerRolesPrincipalProvider;
