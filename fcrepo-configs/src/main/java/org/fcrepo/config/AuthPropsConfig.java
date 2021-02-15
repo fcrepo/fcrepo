@@ -32,7 +32,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class AuthPropsConfig extends BasePropsConfig {
 
-    public static final String FCREPO_AUTH_ENABLED = "fcrepo.auth.enabled";
     public static final String FCREPO_AUTH_PRINCIPAL_HEADER_ENABLED = "fcrepo.auth.principal.header.enabled";
     private static final String FCREPO_AUTH_PRINCIPAL_HEADER_NAME = "fcrepo.auth.principal.header.name";
     private static final String FCREPO_AUTH_PRINCIPAL_HEADER_SEPARATOR = "fcrepo.auth.principal.header.separator";
