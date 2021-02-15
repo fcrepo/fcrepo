@@ -47,7 +47,6 @@ public class AuthPropsConfig extends BasePropsConfig {
 
     @Value("${" + FCREPO_USER_AGENT_BASE_URI + ":#{null}}")
     private String userAgentBaseUri;
-
     @Value("${" + FCREPO_GROUP_AGENT_BASE_URI + ":#{null}}")
     private String groupAgentBaseUri;
 
@@ -62,7 +61,6 @@ public class AuthPropsConfig extends BasePropsConfig {
 
     @Value("${" + FCREPO_AUTH_PRINCIPAL_HEADER_NAME + ":some-header}")
     private String authPrincipalHeaderName;
-
     @Value("${" + FCREPO_AUTH_PRINCIPAL_HEADER_SEPARATOR + ":,}")
     private String authPrincipalHeaderSeparator;
 

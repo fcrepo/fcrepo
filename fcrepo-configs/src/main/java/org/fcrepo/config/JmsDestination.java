@@ -19,7 +19,7 @@
 package org.fcrepo.config;
 
 /**
- *
+ * Indicates if a JMS topic or queue is the destination
  *
  * @author pwinckles
  */
