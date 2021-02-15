@@ -20,7 +20,7 @@ package org.fcrepo.webapp;
 
 import javax.annotation.PostConstruct;
 
-import org.fcrepo.config.ConditionOnPropertyBoolean;
+import org.fcrepo.config.ConditionOnPropertyTrue;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.config.JmsDestination;
 import org.fcrepo.jms.AbstractJMSPublisher;
@@ -49,7 +49,7 @@ public class JmsConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JmsConfig.class);
 
-    static class JmsEnabled extends ConditionOnPropertyBoolean {
+    static class JmsEnabled extends ConditionOnPropertyTrue {
         JmsEnabled() {
             super(FedoraPropsConfig.FCREPO_JMS_ENABLED, true);
         }
