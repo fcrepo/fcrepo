@@ -74,11 +74,6 @@ public class AuthConfig {
         }
     }
 
-    @PostConstruct
-    public void postConstruct() {
-        LOGGER.info("Auth enabled");
-    }
-
     /**
      * Optional PrincipalProvider filter that will inspect the request header, "some-header", for user role values
      *
@@ -115,7 +110,7 @@ public class AuthConfig {
     /**
      * delegatedPrincipleProvider filter allows a single user to be passed in the header "On-Behalf-Of",
      *            this is to be used as the actor making the request when authenticating.
-     *            NOTE: On users with the role fedoraAdmin can delegate to another user.
+     *            NOTE: Only users with the role fedoraAdmin can delegate to another user.
      *            NOTE: Only supported in WebAC authentication
      *
      * @return delegate principal provider
@@ -129,9 +124,9 @@ public class AuthConfig {
     }
 
     /**
-     * Define the Shiro Realm implementation you want to use to connect to your back-end
+     * WebAC Authorization Realm
      *
-     * @return authroization realm
+     * @return authorization  realm
      */
     @Bean
     public AuthorizingRealm webACAuthorizingRealm() {
