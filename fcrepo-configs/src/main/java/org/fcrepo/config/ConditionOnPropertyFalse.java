@@ -18,10 +18,6 @@
 
 package org.fcrepo.config;
 
-import org.springframework.context.annotation.Condition;
-import org.springframework.context.annotation.ConditionContext;
-import org.springframework.core.type.AnnotatedTypeMetadata;
-
 /**
  * This condition enables a bean/configuration when the specified property is false
  *
