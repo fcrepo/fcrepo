@@ -38,7 +38,6 @@
       </init-param>
   </filter>
 
-
 	<listener>
 		<listener-class>org.fcrepo.http.commons.FedoraContextLoaderListener</listener-class>
 	</listener>
@@ -88,10 +87,9 @@
     <url-pattern>/static/*</url-pattern>
   </filter-mapping>
 
-  <!--Uncomment section below to enable Basic-Authentication-->
   <security-constraint>
     <web-resource-collection>
-      <web-resource-name>Fedora4</web-resource-name>
+      <web-resource-name>Fedora</web-resource-name>
       <url-pattern>/*</url-pattern>
       <http-method>DELETE</http-method>
       <http-method>PUT</http-method>
@@ -114,6 +112,5 @@
     <auth-method>BASIC</auth-method>
     <realm-name>fcrepo</realm-name>
   </login-config>
-
 
 </web-app>
