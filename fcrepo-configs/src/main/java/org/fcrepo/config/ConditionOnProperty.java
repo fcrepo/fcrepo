@@ -20,8 +20,10 @@ package org.fcrepo.config;
 
 import java.util.Objects;
 
-import org.springframework.context.annotation.Condition;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.ConditionContext;
+import org.springframework.context.annotation.ConfigurationCondition;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 
 /**
@@ -31,7 +33,9 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
  *
  * @author pwinckles
  */
-public abstract class ConditionOnProperty<T> implements Condition {
+public abstract class ConditionOnProperty<T> implements ConfigurationCondition {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConditionOnProperty.class);
 
     private final String name;
     private final T expected;
@@ -47,7 +51,14 @@ public abstract class ConditionOnProperty<T> implements Condition {
 
     @Override
     public boolean matches(final ConditionContext context, final AnnotatedTypeMetadata metadata) {
+        LOGGER.debug("Prop {}: {}", name, context.getEnvironment().getProperty(name));
         return Objects.equals(expected, context.getEnvironment().getProperty(name, clazz, defaultValue));
     }
 
+    @Override
+    public ConfigurationPhase getConfigurationPhase() {
+        // This forces spring to not evaluate these conditions until after it has loaded other @Configuration classes,
+        // ensuring that the properties have been loaded.
+        return ConfigurationPhase.REGISTER_BEAN;
+    }
 }
