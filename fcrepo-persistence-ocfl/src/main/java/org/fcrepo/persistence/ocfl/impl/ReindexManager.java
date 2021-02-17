@@ -25,11 +25,14 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import org.fcrepo.config.OcflPropsConfig;
 import org.slf4j.Logger;
+
+import com.google.common.base.Stopwatch;
 
 /**
  * Class to coordinate the index rebuilding tasks.
@@ -39,6 +42,8 @@ import org.slf4j.Logger;
 public class ReindexManager {
 
     private static final Logger LOGGER = getLogger(ReindexManager.class);
+
+    private static final long REPORTING_INTERVAL_SECS = 300;
 
     private final String transactionId;
 
@@ -59,6 +64,8 @@ public class ReindexManager {
     private final boolean failOnError;
 
     private Instant startTime;
+
+    private Stopwatch stopwatch;
 
     /**
      * Basic constructor
@@ -87,6 +94,7 @@ public class ReindexManager {
      */
     public void start() throws InterruptedException {
         startTime = Instant.now();
+        stopwatch = Stopwatch.createStarted();
         try {
             workers.forEach(ReindexWorker::start);
             for (final var worker : workers) {
@@ -126,12 +134,11 @@ public class ReindexManager {
      * @param batchErrors how many items had an error in the last batch.
      */
     public void updateComplete(final int batchSuccessful, final int batchErrors) {
-        final var now = Instant.now();
-        final var duration = Duration.between(startTime, now);
         final var completed = completedCount.addAndGet(batchSuccessful);
         final var errored = errorCount.addAndGet(batchErrors);
-        LOGGER.info("Index rebuild progress: Complete: {}; Errored: {}; Time: {}; Rate: {}/s",
-                completed, errored, getDurationMessage(duration), (completed + errored) / duration.getSeconds());
+        if (shouldReport()) {
+            reportStatus(completed, errored);
+        }
     }
 
     /**
@@ -170,8 +177,23 @@ public class ReindexManager {
         ocflStream.close();
     }
 
+    private synchronized void reportStatus(final int complete, final int errored) {
+        if (shouldReport()) {
+            stopwatch.reset().start();
+            final var now = Instant.now();
+            final var duration = Duration.between(startTime, now);
+            LOGGER.info("Index rebuild progress: Complete: {}; Errored: {}; Time: {}; Rate: {}/s",
+                    complete, errored, getDurationMessage(duration), (complete + errored) / duration.getSeconds());
+        }
+    }
+
+    private boolean shouldReport() {
+        return startTime != null && stopwatch != null
+                && stopwatch.elapsed(TimeUnit.SECONDS) > REPORTING_INTERVAL_SECS;
+    }
+
     private String getDurationMessage(final Duration duration) {
-        String message = String.format("%d seconds", duration.toSecondsPart());
+        String message = String.format("%d secs", duration.toSecondsPart());
         if (duration.getSeconds() > 60) {
             message = String.format("%d mins, ", duration.toMinutesPart()) + message;
         }
