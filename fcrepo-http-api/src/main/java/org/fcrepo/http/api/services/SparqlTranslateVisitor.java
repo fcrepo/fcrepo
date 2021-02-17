@@ -170,11 +170,10 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
                     } catch (final ServerManagedPropertyException | ServerManagedTypeException exc) {
                         if (!isRelaxedMode) {
                             exceptions.add(exc);
+                            return;
                         }
-                    } finally {
-                        // Still translate in case we don't throw the exceptions.
-                        basicPattern.add(translateTriple(t.asTriple()));
                     }
+                    basicPattern.add(translateTriple(t.asTriple()));
                 }
             });
             return new ElementPathBlock(basicPattern);
@@ -196,15 +195,14 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
                 if (!isRelaxedMode) {
                     // Swallow these exceptions to throw together later.
                     exceptions.add(exc);
+                    continue;
                 }
-            } finally {
-                // Still translate in case we don't throw the exceptions. ie. relaxed mode
-                final Node subject = translateId(q.getSubject());
-                final Node object = translateId(q.getObject());
-                final Quad quad = new Quad(q.getGraph(), subject, q.getPredicate(), object);
-                LOGGER.trace("Translated quad is: {}", quad);
-                newQuads.add(quad);
             }
+            final Node subject = translateId(q.getSubject());
+            final Node object = translateId(q.getObject());
+            final Quad quad = new Quad(q.getGraph(), subject, q.getPredicate(), object);
+            LOGGER.trace("Translated quad is: {}", quad);
+            newQuads.add(quad);
         }
         return newQuads;
     }

@@ -183,7 +183,7 @@ public class CreateResourceServiceImplTest {
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         rdfSourceOperationFactory = new RdfSourceOperationFactoryImpl();
         setField(createResourceService, "rdfSourceOperationFactory", rdfSourceOperationFactory);
         nonRdfSourceOperationFactory = new NonRdfSourceOperationFactoryImpl();
@@ -193,6 +193,7 @@ public class CreateResourceServiceImplTest {
         setField(createResourceService, "referenceService", referenceService);
         setField(createResourceService, "membershipService", membershipService);
         setField(createResourceService, "fedoraPropsConfig", propsConfig);
+        propsConfig.setServerManagedPropsMode(ServerManagedPropsMode.STRICT);
         when(psManager.getSession(ArgumentMatchers.any())).thenReturn(psSession);
         when(transaction.getId()).thenReturn(TX_ID);
         // Always try to clean up root.

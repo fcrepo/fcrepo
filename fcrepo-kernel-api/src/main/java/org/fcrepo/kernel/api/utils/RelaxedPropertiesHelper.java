@@ -34,7 +34,6 @@ import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 
 import org.apache.jena.datatypes.xsd.XSDDateTime;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
@@ -52,63 +51,59 @@ public class RelaxedPropertiesHelper {
 
     /**
      * Gets the created date (if any) that was included in the statements.
-     * @param model model to consider
      * @param resource the resource we are looking for properties of
      * @return the date that should be set for the CREATED_DATE or null if it should be
      *         untouched
      */
-    public static Calendar getCreatedDate(final Model model, final Resource resource) {
-        final Iterable<Statement> iter = getIterable(model, resource, CREATED_DATE);
+    public static Calendar getCreatedDate(final Resource resource) {
+        final Iterable<Statement> iter = getIterable(resource, CREATED_DATE);
         return extractSingleCalendarValue(iter, CREATED_DATE);
     }
 
     /**
      * Gets the created by user (if any) that is included within the statements.
-     * @param model the model to consider
      * @param resource the resource we are looking for properties of
      * @return the string that should be set for the CREATED_BY or null if it should be
      *         untouched
      */
-    public static String getCreatedBy(final Model model, final Resource resource) {
-        final Iterable<Statement> iter = getIterable(model, resource, CREATED_BY);
+    public static String getCreatedBy(final Resource resource) {
+        final Iterable<Statement> iter = getIterable(resource, CREATED_BY);
         return extractSingleStringValue(iter, CREATED_BY);
     }
 
     /**
      * Gets the modified date (if any) that was included within the statements.
-     * @param model model to consider
      * @param resource the resource we are looking for properties of
      * @return the date that should be set for the LAST_MODIFIED_DATE or null if it should be
      *         untouched
      */
-    public static Calendar getModifiedDate(final Model model, final Resource resource) {
-        final Iterable<Statement> iter = getIterable(model, resource, LAST_MODIFIED_DATE);
+    public static Calendar getModifiedDate(final Resource resource) {
+        final Iterable<Statement> iter = getIterable(resource, LAST_MODIFIED_DATE);
         return extractSingleCalendarValue(iter, LAST_MODIFIED_DATE);
     }
 
     /**
      * Gets the modified by user (if any) that was included within the statements.
-     * @param model model to consider
      * @param resource the resource we are looking for properties of
      * @return the string that should be set for the MODIFIED_BY or null if it should be
      *         untouched
      */
-    public static String getModifiedBy(final Model model, final Resource resource) {
-        final Iterable<Statement> iter = getIterable(model, resource, LAST_MODIFIED_BY);
+    public static String getModifiedBy(final Resource resource) {
+        final Iterable<Statement> iter = getIterable(resource, LAST_MODIFIED_BY);
         return extractSingleStringValue(iter, LAST_MODIFIED_BY);
     }
 
     private static String extractSingleStringValue(final Iterable<Statement> statements,
                                                    final Property predicate) {
-        String username = null;
+        String textValue = null;
         for (final Statement added : statements) {
-            if (username == null) {
-                username = added.getObject().asLiteral().getString();
+            if (textValue == null) {
+                textValue = added.getObject().asLiteral().getString();
             } else {
                 throw new MalformedRdfException(predicate + " may only appear once!");
             }
         }
-        return username;
+        return textValue;
     }
 
     private static Calendar extractSingleCalendarValue(final Iterable<Statement> statements, final Property predicate) {
@@ -142,13 +137,10 @@ public class RelaxedPropertiesHelper {
         }
     }
 
-    private static Iterable<Statement> getIterable(final Model model,
-                                                   final Resource resource,
-                                                   final Property predicate) {
-        final var iterator = model.listStatements(resource, predicate, (String)null);
+    private static Iterable<Statement> getIterable(final Resource resource, final Property predicate) {
+        final var iterator = resource.listProperties(predicate);
         return () -> iterator;
     }
-
 
     /**
      * Several tests for invalid or disallowed RDF statements.

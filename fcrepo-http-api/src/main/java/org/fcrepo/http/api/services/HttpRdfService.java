@@ -145,28 +145,27 @@ public class HttpRdfService {
                 } catch (final ServerManagedPropertyException | ServerManagedTypeException exc) {
                     if (!fedoraPropsConfig.getServerManagedPropsMode().equals(RELAXED)) {
                         exceptions.add(exc);
+                        continue;
                     }
-                } finally {
-                    // Still need to convert the model, incase we are not throwing the exceptions above.
-                    if (stmt.getSubject().isURIResource()) {
-                        final String originalSubj = stmt.getSubject().getURI();
-                        final String subj = idTranslator.translateUri(originalSubj);
+                }
+                if (stmt.getSubject().isURIResource()) {
+                    final String originalSubj = stmt.getSubject().getURI();
+                    final String subj = idTranslator.translateUri(originalSubj);
 
-                        RDFNode obj = stmt.getObject();
-                        if (stmt.getObject().isURIResource()) {
-                            final String objString = stmt.getObject().asResource().getURI();
-                            final String objUri = idTranslator.translateUri(objString);
-                            obj = model.getResource(objUri);
-                        }
-
-                        if (!subj.equals(originalSubj) || !obj.equals(stmt.getObject())) {
-                            insertStatements.add(new StatementImpl(model.getResource(subj), stmt.getPredicate(), obj));
-
-                            stmtIterator.remove();
-                        }
-                    } else {
-                        log.debug("Subject {} is not a URI resource, skipping", stmt.getSubject());
+                    RDFNode obj = stmt.getObject();
+                    if (stmt.getObject().isURIResource()) {
+                        final String objString = stmt.getObject().asResource().getURI();
+                        final String objUri = idTranslator.translateUri(objString);
+                        obj = model.getResource(objUri);
                     }
+
+                    if (!subj.equals(originalSubj) || !obj.equals(stmt.getObject())) {
+                        insertStatements.add(new StatementImpl(model.getResource(subj), stmt.getPredicate(), obj));
+
+                        stmtIterator.remove();
+                    }
+                } else {
+                    log.debug("Subject {} is not a URI resource, skipping", stmt.getSubject());
                 }
             }
         }

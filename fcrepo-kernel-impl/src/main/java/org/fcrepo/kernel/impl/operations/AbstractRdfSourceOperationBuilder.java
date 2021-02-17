@@ -85,15 +85,19 @@ public abstract class AbstractRdfSourceOperationBuilder implements RdfSourceOper
 
     @Override
     public RdfSourceOperationBuilder triples(final RdfStream triples) {
-        // Filter out server managed properties, they should only matter to the relaxedProperties method.
-        this.tripleStream = new DefaultRdfStream(triples.topic(), triples.filter(t -> {
-            try {
-                checkTripleForDisallowed(t);
-            } catch (final Exception e) {
-                return false;
-            }
-            return true;
-        }));
+        if (this.serverManagedPropsMode.equals(ServerManagedPropsMode.RELAXED)) {
+            // Filter out server managed properties, they should only matter to the relaxedProperties method.
+            this.tripleStream = new DefaultRdfStream(triples.topic(), triples.filter(t -> {
+                try {
+                    checkTripleForDisallowed(t);
+                } catch (final Exception e) {
+                    return false;
+                }
+                return true;
+            }));
+        } else {
+            this.tripleStream = triples;
+        }
         return this;
     }
 
@@ -103,19 +107,19 @@ public abstract class AbstractRdfSourceOperationBuilder implements RdfSourceOper
         if (model != null && serverManagedPropsMode == ServerManagedPropsMode.RELAXED) {
             final var resc = model.getResource(resourceId.getResourceId());
 
-            final var createdDateVal = getCreatedDate(model, resc);
+            final var createdDateVal = getCreatedDate(resc);
             if (createdDateVal != null) {
                 this.createdDate = createdDateVal.toInstant();
             }
-            final var createdByVal = getCreatedBy(model, resc);
+            final var createdByVal = getCreatedBy(resc);
             if (createdByVal != null) {
                 this.createdBy = createdByVal;
             }
-            final var modifiedDate = getModifiedDate(model, resc);
+            final var modifiedDate = getModifiedDate(resc);
             if (modifiedDate != null) {
                 this.lastModifiedDate = modifiedDate.toInstant();
             }
-            final var modifiedBy = getModifiedBy(model, resc);
+            final var modifiedBy = getModifiedBy(resc);
             if (modifiedBy != null) {
                 this.lastModifiedBy = modifiedBy;
             }
