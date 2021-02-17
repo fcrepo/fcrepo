@@ -66,6 +66,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createFilesystemRepository;
@@ -211,11 +212,18 @@ public class OcflPersistentStorageSessionTest {
                                        final String userPrincipal, final FedoraId resourceId) {
         when(rdfSourceOperation.getTriples()).thenReturn(userStream);
         when(rdfSourceOperation.getResourceId()).thenReturn(FedoraId.create(resourceId.getFullId()));
-        when(((CreateResourceOperation) rdfSourceOperation).getParentId()).thenReturn(FedoraId.getRepositoryRootId());
         when(rdfSourceOperation.getType()).thenReturn(CREATE);
         when(rdfSourceOperation.getUserPrincipal()).thenReturn(userPrincipal);
-        when(((CreateResourceOperation) rdfSourceOperation).getInteractionModel())
-                .thenReturn(BASIC_CONTAINER.toString());
+        if (resourceId.isDescription()) {
+            when(((CreateResourceOperation) rdfSourceOperation).getParentId()).thenReturn(resourceId.asBaseId());
+            when(((CreateResourceOperation) rdfSourceOperation).getInteractionModel())
+                    .thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI);
+        } else {
+            when(((CreateResourceOperation) rdfSourceOperation).getParentId())
+                    .thenReturn(FedoraId.getRepositoryRootId());
+            when(((CreateResourceOperation) rdfSourceOperation).getInteractionModel())
+                    .thenReturn(BASIC_CONTAINER.toString());
+        }
     }
 
     private void mockResourceOperation(final RdfSourceOperation rdfSourceOperation, final FedoraId resourceId) {
@@ -794,6 +802,7 @@ public class OcflPersistentStorageSessionTest {
         when(((CreateResourceOperation) binOperation).getParentId()).thenReturn(FedoraId.getRepositoryRootId());
         when(binOperation.getType()).thenReturn(CREATE);
         when(binOperation.getUserPrincipal()).thenReturn(userPrincipal);
+        when(binOperation.getMimeType()).thenReturn("text/plain");
         when(((CreateResourceOperation) binOperation).getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         return binOperation;
     }

@@ -159,11 +159,7 @@ public class AbstractReindexerTest {
         when(((CreateResourceOperation) operation).getParentId()).thenReturn(FedoraId.getRepositoryRootId());
         when(operation.getType()).thenReturn(CREATE);
         when(((CreateResourceOperation)operation).isArchivalGroup()).thenReturn(isArchivalGroup);
-        if (isArchivalGroup) {
-            when(((CreateResourceOperation) operation).getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
-        } else {
-            when(((CreateResourceOperation) operation).getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
-        }
+        when(((CreateResourceOperation) operation).getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         session.persist(operation);
     }
 

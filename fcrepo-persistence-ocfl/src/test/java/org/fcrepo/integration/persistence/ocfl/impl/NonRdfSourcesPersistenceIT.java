@@ -181,6 +181,7 @@ public class NonRdfSourcesPersistenceIT {
         final var op = nonRdfSourceOpFactory.createInternalBinaryBuilder(
                     rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
                 .contentDigests(new ArrayList<>(List.of(URI.create("urn:sha1:ohnothisisbad"))))
+                .parentId(FedoraId.getRepositoryRootId())
                 .mimeType("text/plain")
                 .build();
 
@@ -192,6 +193,7 @@ public class NonRdfSourcesPersistenceIT {
         final var op = nonRdfSourceOpFactory.createInternalBinaryBuilder(
                     rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
                 .contentDigests(asList(URI.create("urn:sha-512:ohnothisisbad"), CONTENT_SHA1))
+                .parentId(FedoraId.getRepositoryRootId())
                 .mimeType("text/plain")
                 .build();
 
