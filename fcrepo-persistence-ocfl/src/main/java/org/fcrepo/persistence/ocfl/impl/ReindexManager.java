@@ -19,6 +19,8 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -46,15 +48,17 @@ public class ReindexManager {
 
     private final Stream<String> ocflStream;
 
-    private AtomicInteger completedCount;
+    private final AtomicInteger completedCount;
 
-    private AtomicInteger errorCount;
+    private final AtomicInteger errorCount;
 
     private final ReindexService reindexService;
 
     private final long batchSize;
 
     private final boolean failOnError;
+
+    private Instant startTime;
 
     /**
      * Basic constructor
@@ -82,6 +86,7 @@ public class ReindexManager {
      * @throws InterruptedException on an indexing error in a thread.
      */
     public void start() throws InterruptedException {
+        startTime = Instant.now();
         try {
             workers.forEach(ReindexWorker::start);
             for (final var worker : workers) {
@@ -121,8 +126,12 @@ public class ReindexManager {
      * @param batchErrors how many items had an error in the last batch.
      */
     public void updateComplete(final int batchSuccessful, final int batchErrors) {
-        completedCount.addAndGet(batchSuccessful);
-        errorCount.addAndGet(batchErrors);
+        final var now = Instant.now();
+        final var duration = Duration.between(startTime, now);
+        final var completed = completedCount.addAndGet(batchSuccessful);
+        final var errored = errorCount.addAndGet(batchErrors);
+        LOGGER.info("Index rebuild progress: Complete: {}; Errored: {}; Time: {}; Rate: {}/s",
+                completed, errored, getDurationMessage(duration), (completed + errored) / duration.getSeconds());
     }
 
     /**
@@ -159,5 +168,16 @@ public class ReindexManager {
      */
     public void shutdown() {
         ocflStream.close();
+    }
+
+    private String getDurationMessage(final Duration duration) {
+        String message = String.format("%d seconds", duration.toSecondsPart());
+        if (duration.getSeconds() > 60) {
+            message = String.format("%d mins, ", duration.toMinutesPart()) + message;
+        }
+        if (duration.getSeconds() > 3600) {
+            message = String.format("%d hours, ", duration.toHoursPart()) + message;
+        }
+        return message;
     }
 }
