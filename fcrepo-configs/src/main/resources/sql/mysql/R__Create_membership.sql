@@ -7,9 +7,9 @@ CREATE TABLE IF NOT EXISTS membership (
     object_id varchar(503) NOT NULL,
     source_id varchar(503) NOT NULL,
     proxy_id varchar(503) NOT NULL,
-    start_time datetime,
-    end_time datetime,
-    last_updated datetime
+    start_time timestamp,
+    end_time timestamp,
+    last_updated timestamp
 );
 
 -- Create an index to speed searches for a resource.
@@ -79,9 +79,9 @@ CREATE TABLE IF NOT EXISTS membership_tx_operations (
     object_id varchar(503) NOT NULL,
     source_id varchar(503) NOT NULL,
     proxy_id varchar(503) NOT NULL,
-    start_time datetime,
-    end_time datetime,
-    last_updated datetime,
+    start_time timestamp,
+    end_time timestamp,
+    last_updated timestamp,
     tx_id varchar(36) NOT NULL,
     operation varchar(10) NOT NULL,
     force_flag varchar(10)
