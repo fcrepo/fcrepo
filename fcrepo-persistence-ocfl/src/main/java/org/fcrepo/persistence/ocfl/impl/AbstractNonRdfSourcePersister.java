@@ -81,6 +81,10 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
                         resourceId.equals(rootIdentifier),
                         isArchivalPart ? rootIdentifier : null));
 
+        // This covers the case where a resource may have been temporarily deleted if it was changed from an internal
+        // non-RDF resource to an external non-RDF resource
+        headers.setDeleted(false);
+
         if (forExternalBinary(nonRdfSourceOperation)) {
             objectSession.writeResource(headers.asStorageHeaders(), null);
         } else {

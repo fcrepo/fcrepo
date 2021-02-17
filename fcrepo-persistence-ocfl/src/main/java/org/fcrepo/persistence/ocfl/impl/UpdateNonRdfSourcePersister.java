@@ -22,6 +22,8 @@ import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.storage.ocfl.OcflObjectSession;
+import org.fcrepo.storage.ocfl.ResourceHeaders;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +62,9 @@ class UpdateNonRdfSourcePersister extends AbstractNonRdfSourcePersister {
             // Read the resource headers prior to updating how the existing resource is stored
             final var headers = objSession.readHeaders(resourceId.getResourceId());
             if (headers.getExternalUrl() == null) {
-                objSession.deleteContentFile(headers);
+                // must mark as deleted here so that the headers a valid
+                objSession.deleteContentFile(ResourceHeaders.builder(headers)
+                        .withDeleted(true).build());
             }
         }
 

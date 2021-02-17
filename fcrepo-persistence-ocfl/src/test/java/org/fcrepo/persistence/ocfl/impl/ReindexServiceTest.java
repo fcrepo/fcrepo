@@ -300,7 +300,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         assertDoesNotHaveOcflId(parentId);
         assertDoesNotHaveOcflId(childId);
 
-        doThrow(new ValidationException(List.of("validation errors")))
+        doThrow(ValidationException.create(List.of("validation errors")))
                 .when(objectValidator).validate(parentId.getFullId(), false);
 
         reindexManager.start();
