@@ -17,48 +17,6 @@
  */
 package org.fcrepo.integration.http.api;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.util.EntityUtils;
-import org.apache.jena.datatypes.xsd.XSDDatatype;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
-import org.apache.jena.query.Dataset;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.StmtIterator;
-import org.apache.jena.sparql.core.DatasetGraph;
-import org.apache.jena.sparql.core.Quad;
-
-import org.fcrepo.config.ServerManagedPropsMode;
-import org.fcrepo.http.commons.test.util.CloseableDataset;
-import org.fcrepo.kernel.api.utils.GraphDifferencer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
-import javax.ws.rs.core.Link;
-import javax.xml.bind.DatatypeConverter;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.stream.Stream;
-
 import static java.util.Calendar.getInstance;
 import static java.util.Spliterator.IMMUTABLE;
 import static java.util.Spliterators.spliteratorUnknownSize;
@@ -88,6 +46,51 @@ import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.stream.Stream;
+
+import javax.ws.rs.core.Link;
+import javax.xml.bind.DatatypeConverter;
+
+import org.fcrepo.config.ServerManagedPropsMode;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.fcrepo.kernel.api.utils.GraphDifferencer;
+
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
+import org.apache.jena.datatypes.xsd.XSDDatatype;
+import org.apache.jena.datatypes.xsd.XSDDateTime;
+import org.apache.jena.datatypes.xsd.impl.XSDDateTimeType;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.Quad;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.test.context.TestExecutionListeners;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
  * @author Mike Durbin
@@ -112,7 +115,6 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
     }
 
 
-    @Ignore //TODO Fix this test
     @Test
     public void testBasicPutRoundtrip() throws IOException {
         final String subjectURI;
@@ -134,7 +136,6 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(put));
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testCreateResourceWithSpecificCreationInformationIsAllowed() throws IOException {
         assertEquals(ServerManagedPropsMode.RELAXED, propsConfig.getServerManagedPropsMode()); // sanity check
@@ -152,7 +153,6 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testUpdateNonRdfResourceWithSpecificInformationIsAllowed() throws IOException {
         assertEquals(ServerManagedPropsMode.RELAXED, propsConfig.getServerManagedPropsMode()); // sanity check
@@ -180,7 +180,6 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testValidSparqlUpdate() throws IOException {
         assertEquals(ServerManagedPropsMode.RELAXED, propsConfig.getServerManagedPropsMode()); // sanity check
@@ -211,7 +210,6 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testInvalidSparqlUpdate() throws IOException {
         assertEquals(ServerManagedPropsMode.RELAXED, propsConfig.getServerManagedPropsMode()); // sanity check
@@ -241,7 +239,6 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore //TODO Fix this test
     @Test
     public void testUpdateResourceWithSpecificModificationInformationIsAllowed() throws IOException {
         assertEquals(ServerManagedPropsMode.RELAXED, propsConfig.getServerManagedPropsMode()); // sanity check
@@ -271,7 +268,6 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
      * Tests a lossless roundtrip of a resource.
      * @throws IOException if an error occurs while reading or writing to repository over HTTP
      */
-    @Ignore //TODO Fix this test
     @Test
     public void testRoundtripping() throws IOException {
         assertEquals(ServerManagedPropsMode.RELAXED, propsConfig.getServerManagedPropsMode()); // sanity check
@@ -368,13 +364,52 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
                 final Iterator<Quad> originalQuadIt = originalGraph.find();
                 while (originalQuadIt.hasNext()) {
                     final Quad q = originalQuadIt.next();
-                    assertTrue(q + " should be preserved through a roundtrip! \nOriginal RDF: " + originalRdf
-                            + "\nRoundtripped Graph:\n" + roundtrippedGraph, roundtrippedGraph.contains(q));
+                    if (!assertQuadsAreSimilar(q, roundtrippedGraph)) {
+                        fail(q + " should be preserved through a roundtrip! \nOriginal RDF: " + originalRdf
+                                + "\nRoundtripped Graph:\n" + roundtrippedGraph);
+                    }
                     roundtrippedGraph.delete(q);
                 }
                 assertTrue("Roundtripped graph had extra quads! " + roundtrippedGraph, roundtrippedGraph.isEmpty());
             }
         }
+    }
+
+    /**
+     * In roundtripping XSDDateTimes get truncated to 3 digits of microseconds. This checks that if the quad doesn't
+     * match and is a XSDDateTime that it is within .001 of a second.
+     *
+     * @param testQuad the quad to check
+     * @param checkGraph the graph to verify against
+     * @return true if the quad is exact or very close, false if not.
+     */
+    private boolean assertQuadsAreSimilar(final Quad testQuad, final DatasetGraph checkGraph) {
+        if (checkGraph.contains(testQuad)) {
+            return true;
+        } else if (testQuad.getObject().isLiteral() &&
+                testQuad.getObject().getLiteral().getDatatype() instanceof XSDDateTimeType) {
+            final var testLiteral = (XSDDateTime)testQuad.getObject().getLiteralValue();
+            if (checkGraph.contains(ANY, testQuad.getSubject(), testQuad.getPredicate(), ANY)) {
+                final var roundTripIter =
+                        checkGraph.find(ANY, testQuad.getSubject(), testQuad.getPredicate(), ANY);
+                while (roundTripIter.hasNext()) {
+                    final var dateStmt = roundTripIter.next();
+                    final var comparisonVal = (XSDDateTime) dateStmt.getObject().getLiteralValue();
+                    if (testLiteral.getYears() == comparisonVal.getYears() &&
+                        testLiteral.getMonths() == comparisonVal.getMonths() &&
+                        testLiteral.getDays() == comparisonVal.getDays() &&
+                        testLiteral.getHours() == comparisonVal.getHours() &&
+                        testLiteral.getMinutes() == comparisonVal.getMinutes() &&
+                        testLiteral.getFullSeconds() == comparisonVal.getFullSeconds() &&
+                        Math.abs(testLiteral.getSeconds() - comparisonVal.getSeconds()) < .001) {
+                            // Delete here as it won't actually match the quad
+                            checkGraph.delete(dateStmt);
+                            return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     private String buildSparqlUpdate(final Stream<Triple> toRemove, final Stream<Triple> toAdd,
@@ -466,9 +501,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
     private CloseableHttpResponse putResourceWithTTL(final String uri, final String ttl)
             throws IOException {
         final HttpPut httpPut = new HttpPut(uri);
-        httpPut.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
         httpPut.addHeader(CONTENT_TYPE, "text/turtle");
-        httpPut.addHeader(LINK, "<" + BASIC_CONTAINER.toString() + ">; rel=\"type\"");
         httpPut.setEntity(new StringEntity(ttl));
         return execute(httpPut);
     }

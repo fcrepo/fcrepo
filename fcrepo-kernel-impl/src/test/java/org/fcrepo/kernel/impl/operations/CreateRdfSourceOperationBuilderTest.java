@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.impl.operations;
 
 import static junit.framework.TestCase.assertTrue;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
@@ -31,19 +32,25 @@ import static org.junit.Assert.assertNull;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.time.Instant;
+import java.util.Calendar;
 import java.util.Date;
-
-import org.apache.jena.graph.Node;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.ResourceFactory;
 
 import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.CreateRdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
+
+import org.apache.jena.datatypes.xsd.XSDDateTime;
+import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -65,24 +72,33 @@ public class CreateRdfSourceOperationBuilderTest {
 
     private static final FedoraId RESOURCE_ID = FedoraId.create("info:fedora/test-subject");
 
-    private final Node id = ResourceFactory.createResource(RESOURCE_ID.getResourceId()).asNode();
+    private static final Resource id = ResourceFactory.createResource(RESOURCE_ID.getResourceId());
+    private static final Node id_node = id.asNode();
 
     private static final String PROPERTY_ID = "http://example.org/isLinkedTo/";
 
-    private final Node prop = ResourceFactory.createProperty(PROPERTY_ID).asNode();
+    private static final Property prop = ResourceFactory.createProperty(PROPERTY_ID);
 
     private static final String OBJECT_VALUE = "Somebody";
 
-    private final Node object = ResourceFactory.createPlainLiteral(OBJECT_VALUE).asNode();
+    private static final RDFNode object = ResourceFactory.createPlainLiteral(OBJECT_VALUE);
 
     private final Instant CREATED_INSTANT = Instant.parse("2019-11-12T10:00:30.0Z");
+    private XSDDateTime Created_xsddatetime;
 
     private final Instant MODIFIED_INSTANT = Instant.parse("2019-11-12T14:11:05.0Z");
+    private XSDDateTime Modified_xsddatetime;
 
     private final String USER_PRINCIPAL = "fedoraUser";
 
+    private final Calendar calendar = Calendar.getInstance();
+
     @Before
     public void setUp() {
+        calendar.setTime(Date.from(CREATED_INSTANT));
+        Created_xsddatetime = new XSDDateTime(calendar);
+        calendar.setTime(Date.from(MODIFIED_INSTANT));
+        Modified_xsddatetime = new XSDDateTime(calendar);
         builder = new CreateRdfSourceOperationBuilderImpl(RESOURCE_ID, RDF_SOURCE.toString(),
                 ServerManagedPropsMode.STRICT);
         model = ModelFactory.createDefaultModel();
@@ -93,23 +109,34 @@ public class CreateRdfSourceOperationBuilderTest {
         );
         final OutputStream outputStream = new ByteArrayOutputStream();
         model.write(outputStream, "TURTLE");
-        stream = fromModel(id, model);
+        stream = fromModel(id_node, model);
     }
 
     @Test
     public void testStream() {
         final RdfSourceOperation op = builder.triples(stream).build();
         assertEquals(CreateRdfSourceOperationImpl.class, op.getClass());
-        assertTrue(op.getTriples().anyMatch(t -> t.matches(id, prop, object)));
-        assertEquals(stream, op.getTriples());
+        final var newModel = op.getTriples().collect(toModel());
+        assertTrue(newModel.contains(id, prop, object));
+        assertModelsMatch(model, newModel);
+    }
+
+    private void assertModelsMatch(final Model expected, final Model test) {
+        final var stmtIter = expected.listStatements();
+        while (stmtIter.hasNext()) {
+            final var testStmt = stmtIter.nextStatement();
+            assertTrue(test.contains(testStmt));
+            test.remove(testStmt);
+        }
+        assertTrue(test.isEmpty());
     }
 
     @Test
     public void testRelaxedPropertiesAllFields() {
         final var resc = model.getResource(RESOURCE_ID.getResourceId());
-        resc.addLiteral(LAST_MODIFIED_DATE, Date.from(MODIFIED_INSTANT));
+        resc.addLiteral(LAST_MODIFIED_DATE, Modified_xsddatetime);
         resc.addLiteral(LAST_MODIFIED_BY, USER_PRINCIPAL);
-        resc.addLiteral(CREATED_DATE, Date.from(CREATED_INSTANT));
+        resc.addLiteral(CREATED_DATE, Created_xsddatetime);
         resc.addLiteral(CREATED_BY, USER_PRINCIPAL);
 
         final RdfSourceOperation op = buildOperationWithRelaxProperties(model);
@@ -120,10 +147,26 @@ public class CreateRdfSourceOperationBuilderTest {
         assertEquals(MODIFIED_INSTANT, op.getLastModifiedDate());
     }
 
-    @Test
+    @Test(expected = MalformedRdfException.class)
     public void testRelaxedPropertiesNonDate() {
         final var resc = model.getResource(RESOURCE_ID.getResourceId());
         resc.addLiteral(LAST_MODIFIED_DATE, "Notadate");
+        resc.addLiteral(LAST_MODIFIED_BY, USER_PRINCIPAL);
+        resc.addLiteral(CREATED_DATE, Created_xsddatetime);
+        resc.addLiteral(CREATED_BY, USER_PRINCIPAL);
+
+        final RdfSourceOperation op = buildOperationWithRelaxProperties(model);
+
+        assertEquals(USER_PRINCIPAL, op.getCreatedBy());
+        assertEquals(USER_PRINCIPAL, op.getLastModifiedBy());
+        assertNull(op.getCreatedDate());
+        assertNull(op.getLastModifiedDate());
+    }
+
+    @Test(expected = MalformedRdfException.class)
+    public void testRelaxedPropertiesNonDate2() {
+        final var resc = model.getResource(RESOURCE_ID.getResourceId());
+        resc.addLiteral(LAST_MODIFIED_DATE, Modified_xsddatetime);
         resc.addLiteral(LAST_MODIFIED_BY, USER_PRINCIPAL);
         resc.addLiteral(CREATED_DATE, "Notadate");
         resc.addLiteral(CREATED_BY, USER_PRINCIPAL);
@@ -139,9 +182,9 @@ public class CreateRdfSourceOperationBuilderTest {
     @Test
     public void testRelaxedPropertiesNotRelaxed() {
         final var resc = model.getResource(RESOURCE_ID.getResourceId());
-        resc.addLiteral(LAST_MODIFIED_DATE, Date.from(MODIFIED_INSTANT));
+        resc.addLiteral(LAST_MODIFIED_DATE, Modified_xsddatetime);
         resc.addLiteral(LAST_MODIFIED_BY, USER_PRINCIPAL);
-        resc.addLiteral(CREATED_DATE, Date.from(CREATED_INSTANT));
+        resc.addLiteral(CREATED_DATE, Created_xsddatetime);
         resc.addLiteral(CREATED_BY, USER_PRINCIPAL);
 
         // Relaxed system property not set

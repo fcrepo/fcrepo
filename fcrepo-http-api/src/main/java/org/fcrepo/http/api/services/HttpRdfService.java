@@ -20,46 +20,52 @@ package org.fcrepo.http.api.services;
 
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
-import static org.apache.jena.vocabulary.RDF.Init.type;
+import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+import static org.fcrepo.config.ServerManagedPropsMode.RELAXED;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.api.RdfLexicon.restrictedType;
-import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.checkTripleForDisallowed;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.MediaType;
-import org.apache.jena.atlas.RuntimeIOException;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.impl.StatementImpl;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.StmtIterator;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RiotException;
-import org.apache.jena.update.Update;
-import org.apache.jena.update.UpdateFactory;
-import org.apache.jena.update.UpdateRequest;
+
+import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.MultipleConstraintViolationException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedMediaTypeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+
+import org.apache.jena.atlas.RuntimeIOException;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.rdf.model.impl.StatementImpl;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RiotException;
+import org.apache.jena.update.Update;
+import org.apache.jena.update.UpdateFactory;
+import org.apache.jena.update.UpdateRequest;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.core.JsonParseException;
 
 /**
  * A service that will translate the resourceURI to Fedora ID in the Rdf InputStream
@@ -72,6 +78,9 @@ import org.springframework.stereotype.Component;
 public class HttpRdfService {
 
     private static final Logger log = getLogger(HttpRdfService.class);
+
+    @Inject
+    private FedoraPropsConfig fedoraPropsConfig;
 
     /**
      * Convert internal IDs to external URIs
@@ -133,27 +142,30 @@ public class HttpRdfService {
             } else {
                 try {
                     checkForDisallowedRdf(stmt);
-                    if (stmt.getSubject().isURIResource()) {
-                        final String originalSubj = stmt.getSubject().getURI();
-                        final String subj = idTranslator.translateUri(originalSubj);
-
-                        RDFNode obj = stmt.getObject();
-                        if (stmt.getObject().isURIResource()) {
-                            final String objString = stmt.getObject().asResource().getURI();
-                            final String objUri = idTranslator.translateUri(objString);
-                            obj = model.getResource(objUri);
-                        }
-
-                        if (!subj.equals(originalSubj) || !obj.equals(stmt.getObject())) {
-                            insertStatements.add(new StatementImpl(model.getResource(subj), stmt.getPredicate(), obj));
-
-                            stmtIterator.remove();
-                        }
-                    } else {
-                        log.debug("Subject {} is not a URI resource, skipping", stmt.getSubject());
-                    }
                 } catch (final ServerManagedPropertyException | ServerManagedTypeException exc) {
-                    exceptions.add(exc);
+                    if (!fedoraPropsConfig.getServerManagedPropsMode().equals(RELAXED)) {
+                        exceptions.add(exc);
+                        continue;
+                    }
+                }
+                if (stmt.getSubject().isURIResource()) {
+                    final String originalSubj = stmt.getSubject().getURI();
+                    final String subj = idTranslator.translateUri(originalSubj);
+
+                    RDFNode obj = stmt.getObject();
+                    if (stmt.getObject().isURIResource()) {
+                        final String objString = stmt.getObject().asResource().getURI();
+                        final String objUri = idTranslator.translateUri(objString);
+                        obj = model.getResource(objUri);
+                    }
+
+                    if (!subj.equals(originalSubj) || !obj.equals(stmt.getObject())) {
+                        insertStatements.add(new StatementImpl(model.getResource(subj), stmt.getPredicate(), obj));
+
+                        stmtIterator.remove();
+                    }
+                } else {
+                    log.debug("Subject {} is not a URI resource, skipping", stmt.getSubject());
                 }
             }
         }
@@ -181,7 +193,7 @@ public class HttpRdfService {
         final String externalURI = idTranslator.toExternalId(resourceId.getFullId());
         final UpdateRequest request = UpdateFactory.create(requestBody, externalURI);
         final List<Update> updates = request.getOperations();
-        final SparqlTranslateVisitor visitor = new SparqlTranslateVisitor(idTranslator);
+        final SparqlTranslateVisitor visitor = new SparqlTranslateVisitor(idTranslator, fedoraPropsConfig);
         for (final Update update : updates) {
             update.visit(visitor);
         }
@@ -241,28 +253,6 @@ public class HttpRdfService {
      */
     private static void checkForDisallowedRdf(final Statement statement) {
         checkTripleForDisallowed(statement.asTriple());
-    }
-
-    /**
-     * Several tests for invalid or disallowed RDF statements.
-     * @param triple the triple to check.
-     */
-    public static void checkTripleForDisallowed(final Triple triple) {
-        if (triple.getPredicate().equals(type().asNode()) && !triple.getObject().isURI()) {
-            // The object of a rdf:type triple is not a URI.
-            throw new MalformedRdfException(
-                    String.format("Invalid rdf:type: %s", triple.getObject()));
-        } else if (restrictedType.test(triple)) {
-            // The object of a rdf:type triple has a restricted namespace.
-            throw new ServerManagedTypeException(
-                    String.format("The server managed type (%s) cannot be modified by the client.",
-                            triple.getObject()));
-        } else if (isManagedPredicate.test(createProperty(triple.getPredicate().getURI()))) {
-            // The predicate is server managed.
-            throw new ServerManagedPropertyException(
-                    String.format("The server managed predicate (%s) cannot be modified by the client.",
-                            triple.getPredicate()));
-        }
     }
 
     /**

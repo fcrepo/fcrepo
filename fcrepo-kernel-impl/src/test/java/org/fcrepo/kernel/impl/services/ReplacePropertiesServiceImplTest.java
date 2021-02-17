@@ -17,15 +17,20 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.vocabulary.DC;
+import static org.apache.jena.vocabulary.DC_11.title;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
+
+import java.time.Instant;
 
 import org.fcrepo.config.FedoraPropsConfig;
+import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.RdfCollectors;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
@@ -40,6 +45,13 @@ import org.fcrepo.kernel.impl.operations.RdfSourceOperationFactoryImpl;
 import org.fcrepo.kernel.impl.operations.UpdateRdfSourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,17 +60,6 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.time.Instant;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * DeleteResourceServiceTest
@@ -107,8 +108,8 @@ public class ReplacePropertiesServiceImplTest {
     private static final FedoraId FEDORA_ID = FedoraId.create("info:fedora/resource1");
     private static final String TX_ID = "tx-1234";
     private static final String RDF =
-            "<" + FEDORA_ID + "> <" + DC.getURI() + "title> 'fancy title' .\n" +
-            "<" + FEDORA_ID + "> <" + DC.getURI() + "title> 'another fancy title' .";
+            "<" + FEDORA_ID + "> <" + title + "> 'fancy title' .\n" +
+            "<" + FEDORA_ID + "> <" + title + "> 'another fancy title' .";
 
     @Before
     public void setup() {
@@ -119,6 +120,7 @@ public class ReplacePropertiesServiceImplTest {
         setField(service, "referenceService", referenceService);
         setField(service, "membershipService", membershipService);
         setField(service, "fedoraPropsConfig", propsConfig);
+        propsConfig.setServerManagedPropsMode(ServerManagedPropsMode.STRICT);
         when(tx.getId()).thenReturn(TX_ID);
         when(psManager.getSession(anyString())).thenReturn(pSession);
         when(pSession.getHeaders(any(FedoraId.class), nullable(Instant.class))).thenReturn(headers);
@@ -139,10 +141,10 @@ public class ReplacePropertiesServiceImplTest {
         final Model captureModel = stream.collect(RdfCollectors.toModel());
 
         assertTrue(captureModel.contains(ResourceFactory.createResource(FEDORA_ID.getResourceId()),
-                ResourceFactory.createProperty("http://purl.org/dc/elements/1.1/title"),
+                ResourceFactory.createProperty(title.getURI()),
                 "another fancy title"));
         assertTrue(captureModel.contains(ResourceFactory.createResource(FEDORA_ID.getResourceId()),
-                ResourceFactory.createProperty("http://purl.org/dc/elements/1.1/title"),
+                ResourceFactory.createProperty(title.getURI()),
                 "fancy title"));
     }
 

@@ -17,22 +17,21 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
-import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
-import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
-import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
+import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.checkTripleForDisallowed;
+import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getCreatedBy;
+import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getCreatedDate;
+import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getModifiedBy;
+import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getModifiedDate;
 
 import java.time.Instant;
-import java.util.Date;
-
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.Resource;
 
 import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+
+import org.apache.jena.rdf.model.Model;
 
 /**
  * Abstract builder for interacting with an Rdf Source Operation Builder
@@ -86,7 +85,19 @@ public abstract class AbstractRdfSourceOperationBuilder implements RdfSourceOper
 
     @Override
     public RdfSourceOperationBuilder triples(final RdfStream triples) {
-        this.tripleStream = triples;
+        if (this.serverManagedPropsMode.equals(ServerManagedPropsMode.RELAXED)) {
+            // Filter out server managed properties, they should only matter to the relaxedProperties method.
+            this.tripleStream = new DefaultRdfStream(triples.topic(), triples.filter(t -> {
+                try {
+                    checkTripleForDisallowed(t);
+                } catch (final Exception e) {
+                    return false;
+                }
+                return true;
+            }));
+        } else {
+            this.tripleStream = triples;
+        }
         return this;
     }
 
@@ -95,19 +106,20 @@ public abstract class AbstractRdfSourceOperationBuilder implements RdfSourceOper
         // Has no affect if the server is not in relaxed mode
         if (model != null && serverManagedPropsMode == ServerManagedPropsMode.RELAXED) {
             final var resc = model.getResource(resourceId.getResourceId());
-            final var createdDateVal = getPropertyAsInstant(resc, CREATED_DATE);
+
+            final var createdDateVal = getCreatedDate(resc);
             if (createdDateVal != null) {
-                this.createdDate = createdDateVal;
+                this.createdDate = createdDateVal.toInstant();
             }
-            final var createdByVal = getStringProperty(resc, CREATED_BY);
+            final var createdByVal = getCreatedBy(resc);
             if (createdByVal != null) {
                 this.createdBy = createdByVal;
             }
-            final var modifiedDate = getPropertyAsInstant(resc, LAST_MODIFIED_DATE);
+            final var modifiedDate = getModifiedDate(resc);
             if (modifiedDate != null) {
-                this.lastModifiedDate = modifiedDate;
+                this.lastModifiedDate = modifiedDate.toInstant();
             }
-            final var modifiedBy = getStringProperty(resc, LAST_MODIFIED_BY);
+            final var modifiedBy = getModifiedBy(resc);
             if (modifiedBy != null) {
                 this.lastModifiedBy = modifiedBy;
             }
@@ -115,28 +127,4 @@ public abstract class AbstractRdfSourceOperationBuilder implements RdfSourceOper
 
         return this;
     }
-
-    private static String getStringProperty(final Resource resc, final Property property) {
-        if (resc.hasProperty(property)) {
-            return resc.getProperty(property).getString();
-        }
-
-        return null;
-    }
-
-    private static Instant getPropertyAsInstant(final Resource resc, final Property property) {
-        if (resc.hasProperty(property)) {
-            final var propObj = resc.getProperty(property).getObject();
-
-            if (propObj.isLiteral()) {
-                final var literalValue = propObj.asLiteral().getValue();
-                if (literalValue instanceof Date) {
-                    return ((Date) literalValue).toInstant();
-                }
-            }
-        }
-
-        return null;
-    }
-
 }

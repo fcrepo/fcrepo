@@ -17,13 +17,22 @@
  */
 package org.fcrepo.http.api.services;
 
-import static org.fcrepo.http.api.services.HttpRdfService.checkTripleForDisallowed;
+import static org.fcrepo.config.ServerManagedPropsMode.RELAXED;
+import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.checkTripleForDisallowed;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import org.fcrepo.config.FedoraPropsConfig;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
+import org.fcrepo.kernel.api.exception.ConstraintViolationException;
+import org.fcrepo.kernel.api.exception.MultipleConstraintViolationException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
+import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -44,12 +53,6 @@ import org.apache.jena.sparql.syntax.ElementPathBlock;
 import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
-import org.fcrepo.kernel.api.exception.ConstraintViolationException;
-import org.fcrepo.kernel.api.exception.MultipleConstraintViolationException;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
-import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.slf4j.Logger;
 
 /**
@@ -64,8 +67,11 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
 
     private HttpIdentifierConverter idTranslator;
 
-    public SparqlTranslateVisitor(final HttpIdentifierConverter identifierConverter) {
+    private boolean isRelaxedMode;
+
+    public SparqlTranslateVisitor(final HttpIdentifierConverter identifierConverter, final FedoraPropsConfig config) {
         idTranslator = identifierConverter;
+        isRelaxedMode = config.getServerManagedPropsMode().equals(RELAXED);
     }
 
     private List<ConstraintViolationException> exceptions = new ArrayList<>();
@@ -160,10 +166,14 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
             tripleIter.forEachRemaining(t -> {
                 if (t.isTriple()) {
                     try {
-                        basicPattern.add(translateTriple(t.asTriple()));
+                        checkTripleForDisallowed(t.asTriple());
                     } catch (final ServerManagedPropertyException | ServerManagedTypeException exc) {
-                        exceptions.add(exc);
+                        if (!isRelaxedMode) {
+                            exceptions.add(exc);
+                            return;
+                        }
                     }
+                    basicPattern.add(translateTriple(t.asTriple()));
                 }
             });
             return new ElementPathBlock(basicPattern);
@@ -180,16 +190,19 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
         final List<Quad> newQuads = new ArrayList<>();
         for (final Quad q : quadsList) {
             try {
-                final Node subject = translateId(q.getSubject());
-                final Node object = translateId(q.getObject());
                 checkTripleForDisallowed(q.asTriple());
-                final Quad quad = new Quad(q.getGraph(), subject, q.getPredicate(), object);
-                LOGGER.trace("Translated quad is: {}", quad);
-                newQuads.add(quad);
             } catch (final ServerManagedPropertyException | ServerManagedTypeException exc) {
-                // Swallow these exceptions to throw together later.
-                exceptions.add(exc);
+                if (!isRelaxedMode) {
+                    // Swallow these exceptions to throw together later.
+                    exceptions.add(exc);
+                    continue;
+                }
             }
+            final Node subject = translateId(q.getSubject());
+            final Node object = translateId(q.getObject());
+            final Quad quad = new Quad(q.getGraph(), subject, q.getPredicate(), object);
+            LOGGER.trace("Translated quad is: {}", quad);
+            newQuads.add(quad);
         }
         return newQuads;
     }
@@ -202,7 +215,6 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
     private Triple translateTriple(final Triple triple) {
         final Node subject = translateId(triple.getSubject());
         final Node object = translateId(triple.getObject());
-        checkTripleForDisallowed(triple);
         return Triple.create(subject, triple.getPredicate(), object);
     }
 
