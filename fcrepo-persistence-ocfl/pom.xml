@@ -75,6 +75,17 @@
       <groupId>edu.wisc.library.ocfl</groupId>
       <artifactId>ocfl-java-aws</artifactId>
       <version>${ocfl-java.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>software.amazon.awssdk</groupId>
+          <artifactId>s3</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>s3</artifactId>
+      <version>${aws.version}</version>
       <!--
       These are convergence issues stemming from within the AWS SDK. These deps must be manually kept up-to-date
       -->
@@ -97,17 +108,17 @@
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-handler</artifactId>
-      <version>4.1.53.Final</version>
+      <version>${netty.version}</version>
     </dependency>
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-codec-http</artifactId>
-      <version>4.1.53.Final</version>
+      <version>${netty.version}</version>
     </dependency>
     <dependency>
       <groupId>org.reactivestreams</groupId>
       <artifactId>reactive-streams</artifactId>
-      <version>1.0.2</version>
+      <version>${reactivestrams.version}</version>
     </dependency>
 
     <dependency>
