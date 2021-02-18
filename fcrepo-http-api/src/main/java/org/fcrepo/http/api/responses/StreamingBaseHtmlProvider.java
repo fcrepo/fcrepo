@@ -41,6 +41,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -232,7 +233,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
 
         // the contract of MessageBodyWriter<T> is _not_ to close the stream
         // after writing to it
-        final Writer outWriter = new OutputStreamWriter(entityStream);
+        final Writer outWriter = new OutputStreamWriter(entityStream, StandardCharsets.UTF_8);
         nodeTypeTemplate.merge(context, outWriter);
         outWriter.flush();
     }

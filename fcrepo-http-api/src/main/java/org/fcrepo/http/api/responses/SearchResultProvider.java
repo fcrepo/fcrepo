@@ -37,6 +37,7 @@ import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Properties;
 
@@ -140,7 +141,7 @@ public class SearchResultProvider implements MessageBodyWriter<SearchResult> {
         context.put("searchResults", result);
 
         // The contract of MessageBodyWriter<T> is _not_ to close the stream after writing to it
-        final PrintWriter writer = new PrintWriter(entityStream);
+        final PrintWriter writer = new PrintWriter(entityStream, false, StandardCharsets.UTF_8);
         template.merge(context, writer);
         writer.flush();
     }

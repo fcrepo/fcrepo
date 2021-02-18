@@ -23,6 +23,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
@@ -59,7 +60,7 @@ public class LinkFormatProvider implements MessageBodyWriter<LinkFormatStream> {
         final OutputStream entityStream)
             throws WebApplicationException {
 
-        final PrintWriter writer = new PrintWriter(entityStream);
+        final PrintWriter writer = new PrintWriter(entityStream, false, StandardCharsets.UTF_8);
         links.getStream().forEach(l -> {
             writer.println(l.toString() + ",");
         });

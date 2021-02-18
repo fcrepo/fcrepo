@@ -119,7 +119,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
             write(rdfStream, output, format, mediaType, namespaces);
         } catch (final RiotException e) {
             setException(e);
-            LOGGER.debug("Error serializing RDF", e.getMessage());
+            LOGGER.debug("Error serializing RDF: {}", e.getMessage());
             throw new WebApplicationException(e);
         }
     }

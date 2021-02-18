@@ -56,7 +56,6 @@ import org.fcrepo.kernel.api.services.CreateResourceService;
 import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.ResourceTripleService;
-import org.fcrepo.kernel.api.services.TimeMapService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -205,9 +204,6 @@ public class FedoraLdpTest {
     private ResourceHelper resourceHelper;
 
     @Mock
-    private TimeMapService mockTimeMapService;
-
-    @Mock
     private FedoraHttpConfiguration mockHttpConfiguration;
 
     @Mock
@@ -274,7 +270,6 @@ public class FedoraLdpTest {
         setField(testObj, "uriInfo", getUriInfoImpl());
         setField(testObj, "headers", mockHeaders);
         setField(testObj, "resourceFactory", resourceFactory);
-        setField(testObj, "timeMapService", mockTimeMapService);
         setField(testObj, "httpConfiguration", mockHttpConfiguration);
         setField(testObj, "transaction", mockTransaction);
         setField(testObj, "securityContext", mockSecurityContext);

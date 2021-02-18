@@ -125,12 +125,11 @@ public class MembershipServiceImpl implements MembershipService {
     private void modifyProxy(final String txId, final FedoraResource proxyResc,
             final DirectContainerProperties containerProperties) {
         final var lastModified = proxyResc.getLastModifiedDate();
+
         if (propsConfig.isAutoVersioningEnabled()) {
             // end existing stuff
             indexManager.endMembershipFromChild(txId, containerProperties.id, proxyResc.getFedoraId(), lastModified);
             // add new membership
-            indexManager.addMembership(txId, containerProperties.id, proxyResc.getFedoraId(),
-                    generateMembership(containerProperties, proxyResc), lastModified);
         } else {
             final var mementoDatetimes = proxyResc.getTimeMap().listMementoDatetimes();
             final Instant lastVersionDatetime;
@@ -143,9 +142,10 @@ public class MembershipServiceImpl implements MembershipService {
             }
             indexManager.deleteMembershipForProxyAfter(txId, containerProperties.id,
                     proxyResc.getFedoraId(), lastVersionDatetime);
-            indexManager.addMembership(txId, containerProperties.id, proxyResc.getFedoraId(),
-                    generateMembership(containerProperties, proxyResc), lastModified);
         }
+
+        indexManager.addMembership(txId, containerProperties.id, proxyResc.getFedoraId(),
+                generateMembership(containerProperties, proxyResc), lastModified);
     }
 
     private void modifyDCAutoversioned(final String txId, final FedoraResource dcResc,

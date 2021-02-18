@@ -94,7 +94,7 @@ public class ExternalContentHandler implements ExternalContent {
         }
 
         if (contentSize == null) {
-            contentSize = -1l;
+            contentSize = -1L;
         }
     }
 

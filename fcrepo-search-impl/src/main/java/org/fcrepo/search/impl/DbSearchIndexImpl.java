@@ -227,13 +227,12 @@ public class DbSearchIndexImpl implements SearchIndex {
             @Override
             public Map<String, Object> mapRow(final ResultSet rs, final int rowNum) throws SQLException {
                 final Map<String, Object> map = new HashMap<>();
-                for (final String f : fields) {
-                    final var fieldStr = f.toString();
+                for (final String fieldStr : fields) {
                     var value = rs.getObject(fieldStr);
                     if (value instanceof Timestamp) {
                         //format as iso instant if timestamp
                         value = ISO_INSTANT.format(Instant.ofEpochMilli(((Timestamp) value).getTime()));
-                    } else if (f.equals(RDF_TYPE.toString())) {
+                    } else if (fieldStr.equals(RDF_TYPE.toString())) {
                         //convert the comma-separate string to an array for rdf_type
                         value = value.toString().split(",");
                     }
@@ -444,8 +443,8 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     @Override
     public void reset() {
-        try (final var conn = this.dataSource.getConnection()) {
-            final var statement = conn.createStatement();
+        try (final var conn = this.dataSource.getConnection();
+             final var statement = conn.createStatement()) {
             for (final var sql : toggleForeignKeyChecks(false)) {
                 statement.addBatch(sql);
             }

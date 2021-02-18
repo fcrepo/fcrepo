@@ -18,10 +18,9 @@
 package org.fcrepo.event.serialization;
 
 import java.io.ByteArrayOutputStream;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.jena.rdf.model.Model;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.observer.Event;
 
 /**
@@ -38,13 +37,9 @@ public class TurtleSerializer implements EventSerializer {
      */
     @Override
     public String serialize(final Event evt) {
-        try {
-            final Model model = EventSerializer.toModel(evt);
-            final ByteArrayOutputStream out = new ByteArrayOutputStream();
-            model.write(out, "TTL");
-            return out.toString("UTF-8");
-        } catch (final UnsupportedEncodingException ex) {
-            throw new RepositoryRuntimeException(ex.getMessage(), ex);
-        }
+        final Model model = EventSerializer.toModel(evt);
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        model.write(out, "TTL");
+        return out.toString(StandardCharsets.UTF_8);
     }
 }

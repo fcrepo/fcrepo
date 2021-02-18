@@ -25,8 +25,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.PREFER_CONTAINMENT;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MINIMAL_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_SERVER_MANAGED;
-import static org.fcrepo.kernel.api.rdf.LdpTriplePreferences.preferChoice.EXCLUDE;
-import static org.fcrepo.kernel.api.rdf.LdpTriplePreferences.preferChoice.INCLUDE;
+import static org.fcrepo.kernel.api.rdf.LdpTriplePreferences.PreferChoice.EXCLUDE;
+import static org.fcrepo.kernel.api.rdf.LdpTriplePreferences.PreferChoice.INCLUDE;
 
 import java.util.List;
 import java.util.Optional;
@@ -43,17 +43,17 @@ import org.apache.jena.rdf.model.Property;
  */
 public class LdpPreferTag extends PreferTag implements LdpTriplePreferences {
 
-    private final preferChoice minimal;
+    private final PreferChoice minimal;
 
-    private final preferChoice membership;
+    private final PreferChoice membership;
 
-    private final preferChoice containment;
+    private final PreferChoice containment;
 
-    private final preferChoice references;
+    private final PreferChoice references;
 
-    private final preferChoice embed;
+    private final PreferChoice embed;
 
-    private final preferChoice managedProperties;
+    private final PreferChoice managedProperties;
 
     final List<String> includes;
 
@@ -91,13 +91,13 @@ public class LdpPreferTag extends PreferTag implements LdpTriplePreferences {
      * @param tag the tag to look for
      * @return Whether the tag was included, omitted or not mentioned.
      */
-    private preferChoice getChoice(final Property tag) {
+    private PreferChoice getChoice(final Property tag) {
         if (includes.contains(tag.toString())) {
-            return preferChoice.INCLUDE;
+            return PreferChoice.INCLUDE;
         } else if (omits.contains(tag.toString())) {
-            return preferChoice.EXCLUDE;
+            return PreferChoice.EXCLUDE;
         }
-        return preferChoice.SILENT;
+        return PreferChoice.SILENT;
     }
 
     @Override

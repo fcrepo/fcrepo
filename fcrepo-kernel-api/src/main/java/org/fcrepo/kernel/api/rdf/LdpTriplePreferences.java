@@ -27,7 +27,7 @@ public interface LdpTriplePreferences {
     /**
      * What the prefer tag choice is.
      */
-    enum preferChoice {
+    enum PreferChoice {
         INCLUDE,
         EXCLUDE,
         SILENT

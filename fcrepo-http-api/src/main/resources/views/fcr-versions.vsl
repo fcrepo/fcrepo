@@ -29,6 +29,7 @@
         #else
             <p>No versions have been created for this resource.</p>
         #end
+     </div>
   </div>
 </body>
 </html>
