@@ -18,6 +18,9 @@
 
 package org.fcrepo.webapp;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.api.ExternalContentHandlerFactory;
 import org.fcrepo.http.api.ExternalContentPathValidator;
@@ -29,6 +32,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
+import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 
 /**
@@ -69,8 +73,15 @@ public class WebappConfig {
      */
     @Bean
     public EventBus eventBus() {
-        // TODO this should be an async event bus: https://jira.lyrasis.org/browse/FCREPO-3587
-        return new EventBus();
+        return new AsyncEventBus(eventBusExecutor());
+    }
+
+    /**
+     * @return executor intended to be used by the Guava event bus
+     */
+    @Bean
+    public ExecutorService eventBusExecutor() {
+        return Executors.newCachedThreadPool();
     }
 
     /**
