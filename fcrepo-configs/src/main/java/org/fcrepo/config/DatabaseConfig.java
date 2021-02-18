@@ -18,8 +18,12 @@
 
 package org.fcrepo.config;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Map;
 
+import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 
 import org.flywaydb.core.Flyway;
@@ -28,6 +32,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.core.convert.converter.ConverterRegistry;
+import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
@@ -73,6 +80,19 @@ public class DatabaseConfig extends BasePropsConfig {
             "mariadb", "org.mariadb.jdbc.Driver",
             "mysql", "com.mysql.cj.jdbc.Driver"
     );
+
+    @PostConstruct
+    public void setup() {
+        ((ConverterRegistry) DefaultConversionService.getSharedInstance())
+                // Adds a converter for mapping local datetimes to instants. This is dubious and not supported
+                // by default because you must make an assumption about the timezone
+                .addConverter(new Converter<LocalDateTime, Instant>() {
+                    @Override
+                    public Instant convert(LocalDateTime source) {
+                        return source.toInstant(ZoneOffset.UTC);
+                    }
+                });
+    }
 
     @Bean
     public DataSource dataSource() throws Exception {
