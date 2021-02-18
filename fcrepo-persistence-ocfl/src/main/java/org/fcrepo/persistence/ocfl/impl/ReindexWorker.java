@@ -20,7 +20,6 @@ package org.fcrepo.persistence.ocfl.impl;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -87,17 +86,15 @@ public class ReindexWorker implements Runnable {
 
             int completed = 0;
             int errors = 0;
-            long reportingInterval = REPORTING_INTERVAL_SECS + jitter();
 
             for (final var id : ids) {
                 if (!running) {
                     break;
                 }
-                if (stopwatch.elapsed(TimeUnit.SECONDS) > reportingInterval) {
+                if (stopwatch.elapsed(TimeUnit.SECONDS) > REPORTING_INTERVAL_SECS) {
                     manager.updateComplete(completed, errors);
                     completed = 0;
                     errors = 0;
-                    reportingInterval = REPORTING_INTERVAL_SECS + jitter();
                     stopwatch.reset().start();
                 }
                 try {
@@ -127,7 +124,4 @@ public class ReindexWorker implements Runnable {
         this.running = false;
     }
 
-    private int jitter() {
-        return ThreadLocalRandom.current().nextInt(15);
-    }
 }
