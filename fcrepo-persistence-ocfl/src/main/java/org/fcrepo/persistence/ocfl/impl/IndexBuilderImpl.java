@@ -83,7 +83,7 @@ public class IndexBuilderImpl implements IndexBuilder {
     }
 
     private void rebuild() {
-        LOGGER.info("Initiating index rebuild.");
+        LOGGER.info("Initiating index rebuild. This may take a while. Progress will be logged periodically.");
 
         reindexService.reset();
 
