@@ -20,8 +20,11 @@ package org.fcrepo.persistence.ocfl.impl;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
+
+import com.google.common.base.Stopwatch;
 
 /**
  * A reindexing worker thread.
@@ -30,6 +33,9 @@ import org.slf4j.Logger;
 public class ReindexWorker implements Runnable {
 
     private static final Logger LOGGER = getLogger(ReindexWorker.class);
+
+    private static final long REPORTING_INTERVAL_SECS = 30;
+
     private Thread t;
     private ReindexManager manager;
     private ReindexService service;
@@ -70,17 +76,26 @@ public class ReindexWorker implements Runnable {
 
     @Override
     public void run() {
+        final var stopwatch = Stopwatch.createStarted();
         while (running) {
             final List<String> ids = manager.getIds();
             if (ids.isEmpty()) {
                 stopThread();
                 break;
             }
+
             int completed = 0;
             int errors = 0;
+
             for (final var id : ids) {
                 if (!running) {
                     break;
+                }
+                if (stopwatch.elapsed(TimeUnit.SECONDS) > REPORTING_INTERVAL_SECS) {
+                    manager.updateComplete(completed, errors);
+                    completed = 0;
+                    errors = 0;
+                    stopwatch.reset().start();
                 }
                 try {
                     service.indexOcflObject(transactionId, id);
@@ -108,4 +123,5 @@ public class ReindexWorker implements Runnable {
     public void stopThread() {
         this.running = false;
     }
+
 }

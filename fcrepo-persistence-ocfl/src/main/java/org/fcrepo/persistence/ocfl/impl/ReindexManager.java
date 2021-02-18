@@ -19,14 +19,18 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import org.fcrepo.config.OcflPropsConfig;
+
 import org.slf4j.Logger;
 
 /**
@@ -38,6 +42,8 @@ public class ReindexManager {
 
     private static final Logger LOGGER = getLogger(ReindexManager.class);
 
+    private static final long REPORTING_INTERVAL_SECS = 300;
+
     private final String transactionId;
 
     private final List<ReindexWorker> workers;
@@ -46,9 +52,9 @@ public class ReindexManager {
 
     private final Stream<String> ocflStream;
 
-    private AtomicInteger completedCount;
+    private final AtomicInteger completedCount;
 
-    private AtomicInteger errorCount;
+    private final AtomicInteger errorCount;
 
     private final ReindexService reindexService;
 
@@ -82,6 +88,7 @@ public class ReindexManager {
      * @throws InterruptedException on an indexing error in a thread.
      */
     public void start() throws InterruptedException {
+        final var reporter = startReporter();
         try {
             workers.forEach(ReindexWorker::start);
             for (final var worker : workers) {
@@ -91,6 +98,8 @@ public class ReindexManager {
             LOGGER.error("Error while rebuilding index", e);
             stop();
             throw e;
+        } finally {
+            reporter.interrupt();
         }
     }
 
@@ -159,5 +168,39 @@ public class ReindexManager {
      */
     public void shutdown() {
         ocflStream.close();
+    }
+
+    private Thread startReporter() {
+        final var reporter = new Thread(() -> {
+            final var startTime = Instant.now();
+            try {
+                while (true) {
+                    TimeUnit.SECONDS.sleep(REPORTING_INTERVAL_SECS);
+                    final var complete = completedCount.get();
+                    final var errored = errorCount.get();
+                    final var now = Instant.now();
+                    final var duration = Duration.between(startTime, now);
+                    LOGGER.info("Index rebuild progress: Complete: {}; Errored: {}; Time: {}; Rate: {}/s",
+                            complete, errored, getDurationMessage(duration),
+                            (complete + errored) / duration.getSeconds());
+                }
+            } catch (InterruptedException e) {
+                // processing has completed exit normally
+            }
+        });
+
+        reporter.start();
+        return reporter;
+    }
+
+    private String getDurationMessage(final Duration duration) {
+        String message = String.format("%d secs", duration.toSecondsPart());
+        if (duration.getSeconds() > 60) {
+            message = String.format("%d mins, ", duration.toMinutesPart()) + message;
+        }
+        if (duration.getSeconds() > 3600) {
+            message = String.format("%d hours, ", duration.toHoursPart()) + message;
+        }
+        return message;
     }
 }
