@@ -180,7 +180,8 @@ public class ReindexManager {
                     final var now = Instant.now();
                     final var duration = Duration.between(startTime, now);
                     LOGGER.info("Index rebuild progress: Complete: {}; Errored: {}; Time: {}; Rate: {}/s",
-                            complete, errored, getDurationMessage(duration), (complete + errored) / duration.getSeconds());
+                            complete, errored, getDurationMessage(duration),
+                            (complete + errored) / duration.getSeconds());
                 }
             } catch (InterruptedException e) {
                 // processing has completed exit normally
