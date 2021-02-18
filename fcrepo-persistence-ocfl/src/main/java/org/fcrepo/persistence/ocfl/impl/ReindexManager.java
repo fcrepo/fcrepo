@@ -94,11 +94,12 @@ public class ReindexManager {
             for (final var worker : workers) {
                 worker.join();
             }
-            reporter.interrupt();
         } catch (final Exception e) {
             LOGGER.error("Error while rebuilding index", e);
             stop();
             throw e;
+        } finally {
+            reporter.interrupt();
         }
     }
 
