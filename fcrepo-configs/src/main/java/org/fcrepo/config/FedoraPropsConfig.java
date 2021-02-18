@@ -102,7 +102,7 @@ public class FedoraPropsConfig extends BasePropsConfig {
             "#{fedoraPropsConfig.fedoraLogs.resolve('velocity.log').toString()}}")
     private Path velocityLog;
 
-    @Value("${" + FCREPO_REBUILD_VALIDATION_FIXITY + ":true}")
+    @Value("${" + FCREPO_REBUILD_VALIDATION_FIXITY + ":false}")
     private boolean rebuildFixityCheck;
 
     @Value("${" + FCREPO_REBUILD_ON_START + ":false}")
