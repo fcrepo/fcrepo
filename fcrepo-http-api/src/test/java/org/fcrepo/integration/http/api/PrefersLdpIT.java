@@ -142,29 +142,6 @@ public class PrefersLdpIT extends AbstractResourceIT {
     }
 
     /**
-     * Create a Prefer header
-     * @param includes String of include URIs or null if none
-     * @param omits String of omit URIs or null if none
-     * @return The Prefer header.
-     */
-    private String preferLink(final String includes, final String omits) {
-        if (includes != null || omits != null) {
-            String link = "return=representation; ";
-            if (includes != null) {
-                link += "include=\"" + includes + "\"";
-            }
-            if (includes != null && omits != null) {
-                link += "; ";
-            }
-            if (omits != null) {
-                link += "omit=\"" + omits + "\"";
-            }
-            return link;
-        }
-        return "";
-    }
-
-    /**
      * Generate a common set of triples for the Prefer header tests.
      * @throws Exception problems with a http request.
      */

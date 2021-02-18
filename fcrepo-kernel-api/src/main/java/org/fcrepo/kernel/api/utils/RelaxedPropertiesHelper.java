@@ -147,8 +147,9 @@ public class RelaxedPropertiesHelper {
      * @param triple the triple to check.
      */
     public static void checkTripleForDisallowed(final Triple triple) {
-        if (triple.getPredicate().equals(type().asNode()) && !triple.getObject().isURI()) {
-            // The object of a rdf:type triple is not a URI.
+        if (triple.getPredicate().equals(type().asNode()) && !triple.getObject().isVariable() &&
+                !triple.getObject().isURI()) {
+            // The object of a rdf:type triple is not a variable and not a URI.
             throw new MalformedRdfException(
                     String.format("Invalid rdf:type: %s", triple.getObject()));
         } else if (restrictedType.test(triple)) {

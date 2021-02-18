@@ -21,7 +21,7 @@ package org.fcrepo.http.api.services;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
-import static org.fcrepo.config.ServerManagedPropsMode.RELAXED;
+import static org.fcrepo.config.ServerManagedPropsMode.STRICT;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.api.RdfLexicon.restrictedType;
 import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.checkTripleForDisallowed;
@@ -136,17 +136,26 @@ public class HttpRdfService {
 
         while (stmtIterator.hasNext()) {
             final Statement stmt = stmtIterator.nextStatement();
-            if (lenientHandling && stmtIsServerManaged(stmt)) {
+            if (lenientHandling && stmtIsServerManaged(stmt) &&
+                    fedoraPropsConfig.getServerManagedPropsMode().equals(STRICT)) {
                 // Remove any statement that touches a server managed property or namespace.
                 stmtIterator.remove();
             } else {
                 try {
                     checkForDisallowedRdf(stmt);
-                } catch (final ServerManagedPropertyException | ServerManagedTypeException exc) {
-                    if (!fedoraPropsConfig.getServerManagedPropsMode().equals(RELAXED)) {
+                } catch (final ServerManagedPropertyException exc) {
+                    if (fedoraPropsConfig.getServerManagedPropsMode().equals(STRICT)) {
                         exceptions.add(exc);
                         continue;
                     }
+                } catch (final ServerManagedTypeException exc) {
+                    if (lenientHandling) {
+                        // Remove the invalid statement because client specified lenient handling.
+                        stmtIterator.remove();
+                    } else {
+                        exceptions.add(exc);
+                    }
+                    continue;
                 }
                 if (stmt.getSubject().isURIResource()) {
                     final String originalSubj = stmt.getSubject().getURI();

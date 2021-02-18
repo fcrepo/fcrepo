@@ -17,6 +17,7 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static java.time.format.DateTimeFormatter.ISO_INSTANT;
 import static java.util.Calendar.getInstance;
 import static java.util.Spliterator.IMMUTABLE;
 import static java.util.Spliterators.spliteratorUnknownSize;
@@ -26,6 +27,7 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -37,12 +39,15 @@ import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ModelFactory.createModelForGraph;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_SERVER_MANAGED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -51,6 +56,8 @@ import static org.junit.Assert.fail;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashSet;
@@ -71,6 +78,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
@@ -83,8 +91,11 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.vocabulary.RDF;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -133,6 +144,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         final HttpPut put = new HttpPut(subjectURI);
         put.setEntity(new StringEntity(body));
         put.setHeader(CONTENT_TYPE, "text/turtle");
+        put.addHeader("Prefer", "handling=lenient");
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(put));
     }
 
@@ -349,6 +361,108 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
 
         assertIdentical(containerURI, containerBody);
         assertIdentical(containedBinaryDescriptionURI, containedBinaryDescriptionBody);
+    }
+
+    @Test
+    public void testChangeInteractionModelPutRdf() throws Exception {
+        final var postBinary = postObjMethod();
+        postBinary.setHeader(CONTENT_TYPE, "text/plain");
+        postBinary.setEntity(new StringEntity("some test data"));
+        final String binaryUri;
+        // Create a binary
+        try (final var response = execute(postBinary)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            binaryUri = getLocation(response);
+        }
+        final Node binaryNode = createURI(binaryUri);
+        final String oldCreatedDate;
+        // Get the binary description
+        try (final var dataset = getDataset(new HttpGet(binaryUri + "/" + FCR_METADATA))) {
+            final var graph = dataset.asDatasetGraph();
+            // Assert it has a NonRDFSource type
+            assertTrue(graph.contains(ANY, binaryNode, RDF.type.asNode(), NON_RDF_SOURCE.asNode()));
+            final var iter = graph.find(ANY, binaryNode, CREATED_DATE.asNode(), ANY);
+            assertTrue(iter.hasNext());
+            final var stmt = iter.next();
+            // We'll change the createdDate
+            oldCreatedDate = ((XSDDateTime) stmt.getObject().getLiteralValue()).toString();
+        }
+        // Now GET without server managed properties
+        final ByteArrayOutputStream newModel = new ByteArrayOutputStream();
+        final var newDate = ISO_INSTANT.format(Instant.now());
+        final var getDesc = new HttpGet(binaryUri + "/" + FCR_METADATA);
+        getDesc.addHeader("Prefer", preferLink(null, PREFER_SERVER_MANAGED.getURI()));
+        try (final var dataset = getDataset(getDesc)) {
+            final var graph = dataset.asDatasetGraph();
+            // Now add some fields to the new model
+            final var newGraph = graph.getDefaultGraph();
+            newGraph.add(Triple.create(binaryNode, RDF.type.asNode(), DIRECT_CONTAINER.asNode()));
+            newGraph.add(Triple.create(binaryNode, CREATED_DATE.asNode(),
+                    createLiteral(newDate, XSDDateTimeType.XSDdateTime)));
+            RDFDataMgr.write(newModel, newGraph, RDFFormat.NTRIPLES_UTF8);
+        }
+        // Now PUT this new graph back
+        final var putBinaryDescription = new HttpPut(binaryUri + "/" + FCR_METADATA);
+        putBinaryDescription.setHeader(CONTENT_TYPE, "application/n-triples");
+        putBinaryDescription.setEntity(new ByteArrayEntity(newModel.toByteArray()));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(putBinaryDescription));
+        // Check that the date didn't change either.
+        try (final var dataset = getDataset(new HttpGet(binaryUri + "/" + FCR_METADATA))) {
+            final var graph = dataset.asDatasetGraph();
+            // Assert it has a NonRDFSource type
+            assertTrue(graph.contains(ANY, binaryNode, RDF.type.asNode(), NON_RDF_SOURCE.asNode()));
+            assertTrue(graph.contains(ANY, binaryNode, CREATED_DATE.asNode(),
+                    createLiteral(oldCreatedDate, XSDDateTimeType.XSDdateTime)));
+            assertFalse(graph.contains(ANY, binaryNode, RDF.type.asNode(), DIRECT_CONTAINER.asNode()));
+            assertFalse(graph.contains(ANY, binaryNode, CREATED_DATE.asNode(),
+                    createLiteral(newDate, XSDDateTimeType.XSDdateTime)));
+        }
+    }
+
+    @Test
+    public void testChangeInteractionModelPatchRdf() throws Exception {
+        final var postBinary = postObjMethod();
+        postBinary.setHeader(CONTENT_TYPE, "text/plain");
+        postBinary.setEntity(new StringEntity("some test data"));
+        final String binaryUri;
+        // Create a binary
+        try (final var response = execute(postBinary)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            binaryUri = getLocation(response);
+        }
+        final Node binaryNode = createURI(binaryUri);
+        final String oldCreatedDate;
+        // Get the binary description
+        try (final var dataset = getDataset(new HttpGet(binaryUri + "/" + FCR_METADATA))) {
+            final var graph = dataset.asDatasetGraph();
+            // Assert it has a NonRDFSource type
+            assertTrue(graph.contains(ANY, binaryNode, RDF.type.asNode(), NON_RDF_SOURCE.asNode()));
+            final var iter = graph.find(ANY, binaryNode, CREATED_DATE.asNode(), ANY);
+            assertTrue(iter.hasNext());
+            final var stmt = iter.next();
+            // We'll change the createdDate
+            oldCreatedDate = ((XSDDateTime) stmt.getObject().getLiteralValue()).toString();
+        }
+        // Now PUT this new graph back
+        final var newDate = ISO_INSTANT.format(Instant.now().atZone(ZoneOffset.UTC));
+        final var patchBinaryDescription = new HttpPatch(binaryUri + "/" + FCR_METADATA);
+        patchBinaryDescription.setHeader(CONTENT_TYPE, "application/sparql-update");
+        patchBinaryDescription.setEntity(new StringEntity("DELETE { <> <" + RDF.type + "> ?type ; " +
+                "<" + CREATED_DATE + "> ?date . } INSERT { <> <" + RDF.type + "> <" + DIRECT_CONTAINER + "> ; " +
+                "<" + CREATED_DATE + "> \"" + newDate + "\"^^<" +
+                XSDDateTimeType.XSDdateTime.getURI() + "> . } WHERE { <> <" + RDF.type + "> ?type ; " +
+                "<" + CREATED_DATE + "> ?date . } "));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(patchBinaryDescription));
+        // Check that the date didn't change either.
+        try (final var dataset = getDataset(new HttpGet(binaryUri + "/" + FCR_METADATA))) {
+            final var graph = dataset.asDatasetGraph();
+            // Assert it has a NonRDFSource type
+            assertTrue(graph.contains(ANY, binaryNode, RDF.type.asNode(), NON_RDF_SOURCE.asNode()));
+            assertTrue(graph.contains(ANY, binaryNode, CREATED_DATE.asNode(),
+                    createLiteral(oldCreatedDate, XSDDateTimeType.XSDdateTime)));
+            assertFalse(graph.contains(ANY, binaryNode, CREATED_DATE.asNode(),
+                    createLiteral(newDate, XSDDateTimeType.XSDdateTime)));
+        }
     }
 
     @After

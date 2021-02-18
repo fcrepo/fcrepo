@@ -191,12 +191,15 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
         for (final Quad q : quadsList) {
             try {
                 checkTripleForDisallowed(q.asTriple());
-            } catch (final ServerManagedPropertyException | ServerManagedTypeException exc) {
+            } catch (final ServerManagedPropertyException exc) {
                 if (!isRelaxedMode) {
                     // Swallow these exceptions to throw together later.
                     exceptions.add(exc);
                     continue;
                 }
+            } catch (final ServerManagedTypeException exc) {
+                exceptions.add(exc);
+                continue;
             }
             final Node subject = translateId(q.getSubject());
             final Node object = translateId(q.getObject());
