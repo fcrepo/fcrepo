@@ -88,7 +88,7 @@ public class DatabaseConfig extends BasePropsConfig {
                 // by default because you must make an assumption about the timezone
                 .addConverter(new Converter<LocalDateTime, Instant>() {
                     @Override
-                    public Instant convert(LocalDateTime source) {
+                    public Instant convert(final LocalDateTime source) {
                         return source.toInstant(ZoneOffset.UTC);
                     }
                 });
