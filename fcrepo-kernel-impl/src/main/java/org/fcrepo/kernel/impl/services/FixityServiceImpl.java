@@ -92,7 +92,7 @@ public class FixityServiceImpl extends AbstractService implements FixityService 
 
         // Built for more than one digest in anticipation of FCREPO-3419
         final List<URI> existingDigestList = new ArrayList<>();
-        existingDigestList.add(binary.getContentDigest());
+        existingDigestList.addAll(binary.getContentDigests());
 
         final var digestAlgs = existingDigestList.stream()
                 .map(URI::toString)
