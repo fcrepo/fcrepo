@@ -17,6 +17,7 @@
  */
 package org.fcrepo.http.api;
 
+import static javax.ws.rs.core.HttpHeaders.ALLOW;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
@@ -32,15 +33,23 @@ import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.HEAD;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.OPTIONS;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Link;
+import javax.ws.rs.core.Response;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.micrometer.core.annotation.Timed;
+
+import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.RdfStream;
@@ -61,6 +70,8 @@ import org.springframework.context.annotation.Scope;
 public class FedoraFixity extends ContentExposingResource {
 
     private static final Logger LOGGER = getLogger(FedoraFixity.class);
+
+    private static final String OPTIONS_VALUES = "OPTIONS, GET";
 
     @PathParam("path") protected String externalPath;
 
@@ -115,5 +126,37 @@ public class FedoraFixity extends ContentExposingResource {
     @Override
     protected String externalPath() {
         return externalPath;
+    }
+
+    @OPTIONS
+    public Response options() {
+        return Response.ok().header(ALLOW, OPTIONS_VALUES).build();
+    }
+    /*
+     * These methods are disallowed, but need to exist here or the path gets caught by the FedoraLdp path matcher.
+     */
+    @HEAD
+    public Response get() {
+        return methodNotAllowed();
+    }
+    @POST
+    public Response post() {
+        return methodNotAllowed();
+    }
+    @PUT
+    public Response put() {
+        return methodNotAllowed();
+    }
+    @PATCH
+    public Response patch() {
+        return methodNotAllowed();
+    }
+    @DELETE
+    public Response delete() {
+        return methodNotAllowed();
+    }
+
+    private Response methodNotAllowed() {
+        return Response.status(Response.Status.METHOD_NOT_ALLOWED).header(ALLOW, OPTIONS_VALUES).build();
     }
 }

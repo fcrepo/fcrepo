@@ -17,6 +17,7 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
@@ -71,7 +72,6 @@ import org.springframework.test.context.TestExecutionListeners;
 public class FedoraFixityIT extends AbstractResourceIT {
 
     private static final RDFDatatype IntegerType = TypeMapper.getInstance().getTypeByClass(Integer.class);
-    private static final RDFDatatype StringType = TypeMapper.getInstance().getTypeByClass(String.class);
 
     private OcflPropsConfig ocflConfig;
     private OcflRepository ocflRepo;
@@ -194,6 +194,18 @@ public class FedoraFixityIT extends AbstractResourceIT {
             assertTrue(graphStore.contains(ANY, ANY, HAS_MESSAGE_DIGEST.asNode(), ANY));
             assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(), createLiteral("3", IntegerType)));
         }
+    }
+
+    @Test
+    public void testInvalidMethods() throws Exception {
+        final String id = getRandomUniqueId();
+        final String fixityId = id + "/" + FCR_FIXITY;
+        createDatastream(id,"foo");
+        assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), getStatus(patchObjMethod(fixityId)));
+        assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), getStatus(deleteObjMethod(fixityId)));
+        assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), getStatus(putObjMethod(fixityId)));
+        assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), getStatus(postObjMethod(fixityId)));
+        assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), getStatus(headObjMethod(fixityId)));
     }
 
     private static String postVersion(final String path) throws IOException {
