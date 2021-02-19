@@ -97,13 +97,11 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
     }
 
     @Override
-    public URI getContentDigest() {
-        // Returning the first digest for the time being
+    public Collection<URI> getContentDigests() {
         if (digests == null) {
             return null;
         }
-        final var digest = digests.stream().findFirst();
-        return digest.orElse(null);
+        return digests;
     }
 
     @Override

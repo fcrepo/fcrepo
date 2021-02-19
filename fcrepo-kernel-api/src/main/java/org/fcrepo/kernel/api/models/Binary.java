@@ -19,6 +19,7 @@ package org.fcrepo.kernel.api.models;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.util.Collection;
 
 /**
  * @author cabeer
@@ -40,7 +41,7 @@ public interface Binary extends FedoraResource {
      * Get the pre-calculated content digest for the binary payload
      * @return a URI with the format algorithm:value
      */
-    URI getContentDigest();
+    Collection<URI> getContentDigests();
 
     /**
      * @return Whether or not this binary is a proxy to another resource

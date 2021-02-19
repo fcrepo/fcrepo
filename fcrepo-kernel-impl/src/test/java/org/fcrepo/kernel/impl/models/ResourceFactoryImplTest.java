@@ -412,7 +412,7 @@ public class ResourceFactoryImplTest {
         final Binary binary = (Binary) resc;
         assertEquals(CONTENT_SIZE, binary.getContentSize());
         assertEquals(MIME_TYPE, binary.getMimeType());
-        assertEquals(DIGEST, binary.getContentDigest());
+        assertEquals(DIGEST, binary.getContentDigests().stream().findFirst().get());
         assertEquals(FILENAME, binary.getFilename());
     }
 

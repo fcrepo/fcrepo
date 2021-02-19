@@ -82,9 +82,12 @@ public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {
             if (binary.getMimeType() != null) {
                 triples.add(Triple.create(subject, HAS_MIME_TYPE.asNode(), createLiteral(binary.getMimeType())));
             }
-            if (binary.getContentDigest() != null) {
-                triples.add(Triple.create(subject, HAS_MESSAGE_DIGEST.asNode(),
-                        createURI(binary.getContentDigest().toString())));
+            if (binary.getContentDigests() != null) {
+                for (var digest : binary.getContentDigests()) {
+                    triples.add(Triple.create(subject, HAS_MESSAGE_DIGEST.asNode(),
+                            createURI(digest.toString())));
+                }
+
             }
         }
 

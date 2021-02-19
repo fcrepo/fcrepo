@@ -148,10 +148,11 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Variant;
 
-import org.fcrepo.http.commons.domain.RDFMediaType;
-import org.fcrepo.http.commons.test.util.CloseableDataset;
-import org.fcrepo.kernel.api.RdfLexicon;
-
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Iterators;
+import nu.validator.htmlparser.sax.HtmlParser;
+import nu.validator.saxtree.TreeBuilder;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -186,6 +187,9 @@ import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.DC_11;
 import org.apache.jena.vocabulary.RDF;
+import org.fcrepo.http.commons.domain.RDFMediaType;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.fcrepo.kernel.api.RdfLexicon;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -195,13 +199,6 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Iterators;
-
-import nu.validator.htmlparser.sax.HtmlParser;
-import nu.validator.saxtree.TreeBuilder;
 
 /**
  * @author cabeer
@@ -1879,16 +1876,38 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testIngestWithBinaryAndTwoValidHeadersDigestHeaders() {
+    public void testIngestWithBinaryAndTwoValidHeadersDigestHeaders() throws Exception {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
+        final var md5 = "6668675a91f39ca1afe46c084e8406ba";
+        final var sha256 = "7b115a72978fe138287c1a6dfe6cc1afce4720fb3610a81d32e4ad518700c923";
         method.addHeader(CONTENT_TYPE, "application/octet-stream");
-        method.addHeader("Digest", "md5=6668675a91f39ca1afe46c084e8406ba," +
-                " sha-256=7b115a72978fe138287c1a6dfe6cc1afce4720fb3610a81d32e4ad518700c923");
+        method.addHeader("Digest", "md5=" + md5 + "," +
+                " sha-256=" + sha256);
         method.setEntity(new FileEntity(img));
         method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
 
-        assertEquals("Should be a 201 Created!", CREATED.getStatusCode(), getStatus(method));
+        final String location;
+        try (final CloseableHttpResponse response = execute(method)) {
+            assertEquals("Should be a 201 Created!", CREATED.getStatusCode(), getStatus(method));
+            location = getLocation(response);
+        }
+
+        // verify that both headers are returned in the metadata.
+        try (final var response = execute(new HttpGet(location + "/" + FCR_METADATA))) {
+            try (final var dataset = getDataset(response)) {
+                final var graph = dataset.asDatasetGraph();
+                final var model = createModelForGraph(graph.getDefaultGraph());
+                final var nodeUri = createResource(location);
+                final var stmts = model.listStatements(nodeUri, HAS_MESSAGE_DIGEST, (String) null);
+                final var digests = new ArrayList<String>();
+                while (stmts.hasNext()) {
+                    digests.add(stmts.nextStatement().getObject().asResource().getURI());
+                }
+                assertTrue("contains md5", digests.contains("urn:md5:" + md5));
+                assertTrue("contains sha-256", digests.contains("urn:sha-256:" + sha256));
+            }
+        }
     }
 
     @Test
