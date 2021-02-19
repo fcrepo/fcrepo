@@ -9,10 +9,10 @@ Updated: February 19, 2021
 ![Build](https://github.com/fcrepo/fcrepo/workflows/Build/badge.svg)
 
 [JavaDocs](http://docs.fcrepo.org/) | 
-[Fedora Wiki](https://wiki.duraspace.org/display/FF) | 
-[Use cases](https://wiki.duraspace.org/display/FF/Use+Cases) |
-[Technical Docs](https://wiki.duraspace.org/display/FEDORA6x/) |
-[REST API](https://wiki.duraspace.org/display/FEDORA6x/RESTful+HTTP+API)
+[Fedora Wiki](https://wiki.lyrasis.org/display/FF) | 
+[Use cases](https://wiki.lyrasis.org/display/FF/Use+Cases) |
+[Technical Docs](https://wiki.lyrasis.org/display/FEDORA6x/) |
+[REST API](https://wiki.lyrasis.org/display/FEDORA6x/RESTful+HTTP+API)
 
 Fedora is a robust, modular, open source repository system for the management and dissemination of digital content.
 It is especially suited for digital libraries and archives, both for access and preservation. It is also used to
