@@ -224,11 +224,21 @@ public final class RdfLexicon {
     private static Predicate<Property> hasMementoNamespace =
         p -> !p.isAnon() && p.getNameSpace().startsWith(MEMENTO_NAMESPACE);
 
+    // Set of relaxable server managed properties
+    private static final Set<Property> serverManagedRelaxableProperties = Set.of(
+            CREATED_DATE, CREATED_BY, LAST_MODIFIED_DATE, LAST_MODIFIED_BY
+    );
+
     /**
      * Detects whether an RDF property is managed by the repository.
      */
     public static final Predicate<Property> isManagedPredicate =
-            hasFedoraNamespace.or(hasMementoNamespace).or(p -> serverManagedProperties.contains(p));
+            hasFedoraNamespace.or(hasMementoNamespace).or(serverManagedProperties::contains);
+
+    /**
+     * Tests if a property is relaxable (if the server is in relaxed mode).
+     */
+    public static final Predicate<Property> isRelaxablePredicate = serverManagedRelaxableProperties::contains;
 
     // VERSIONING
     /**

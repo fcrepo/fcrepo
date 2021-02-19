@@ -83,7 +83,6 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -1615,14 +1614,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         // Assert they are all the same
         confirmResponseBodyNTriplesAreEqual(originalTriples, mementoTriples);
         confirmResponseBodyNTriplesAreEqual(updatedTriples, mementoTriples);
-    }
-
-    private void confirmResponseBodyNTriplesAreEqual(final String responseBodyA, final String responseBodyB) {
-        final String[] aTriples = responseBodyA.split(".(\\r\\n|\\r|\\n)");
-        final String[] bTriples = responseBodyB.split(".(\\r\\n|\\r|\\n)");
-        Arrays.stream(aTriples).map(String::trim).sorted().toArray(unused -> aTriples);
-        Arrays.stream(bTriples).map(String::trim).sorted().toArray(unused -> bTriples);
-        assertArrayEquals(aTriples, bTriples);
     }
 
     private void createVersionedExternalBinaryMemento(final String rescId, final String handling,

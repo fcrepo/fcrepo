@@ -17,12 +17,14 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
 import static java.util.Calendar.getInstance;
 import static java.util.Spliterator.IMMUTABLE;
 import static java.util.Spliterators.spliteratorUnknownSize;
 import static java.util.TimeZone.getTimeZone;
 import static java.util.stream.StreamSupport.stream;
+import static javax.ws.rs.core.HttpHeaders.ALLOW;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
@@ -44,6 +46,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
@@ -57,7 +60,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.Instant;
-import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashSet;
@@ -72,6 +75,7 @@ import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.kernel.api.utils.GraphDifferencer;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -375,7 +379,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
             binaryUri = getLocation(response);
         }
         final Node binaryNode = createURI(binaryUri);
-        final String oldCreatedDate;
+        final String oldDate;
         // Get the binary description
         try (final var dataset = getDataset(new HttpGet(binaryUri + "/" + FCR_METADATA))) {
             final var graph = dataset.asDatasetGraph();
@@ -385,11 +389,14 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
             assertTrue(iter.hasNext());
             final var stmt = iter.next();
             // We'll change the createdDate
-            oldCreatedDate = ((XSDDateTime) stmt.getObject().getLiteralValue()).toString();
+            oldDate = stmt.getObject().getLiteralValue().toString();
         }
         // Now GET without server managed properties
         final ByteArrayOutputStream newModel = new ByteArrayOutputStream();
-        final var newDate = ISO_INSTANT.format(Instant.now());
+        final var newDate = "2000-01-01T00:00:00Z";
+        // Instant one day after the day we are trying to set.
+        final var newDatePlusOneInstant = Instant.from(ISO_INSTANT.parse(newDate))
+                .plus(1, ChronoUnit.DAYS);
         final var getDesc = new HttpGet(binaryUri + "/" + FCR_METADATA);
         getDesc.addHeader("Prefer", preferLink(null, PREFER_SERVER_MANAGED.getURI()));
         try (final var dataset = getDataset(getDesc)) {
@@ -411,8 +418,18 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
             final var graph = dataset.asDatasetGraph();
             // Assert it has a NonRDFSource type
             assertTrue(graph.contains(ANY, binaryNode, RDF.type.asNode(), NON_RDF_SOURCE.asNode()));
+            final var dateIter = graph.find(ANY, binaryNode, CREATED_DATE.asNode(), ANY);
+            // Assert at least one date
+            assertTrue(dateIter.hasNext());
+            final var graphDate = dateIter.next();
+            // Assert only one date
+            assertFalse(dateIter.hasNext());
+            final var graphDateInstant =
+                    Instant.from(ISO_INSTANT.parse(graphDate.getObject().getLiteralValue().toString()));
+            // Assert the date is after the date we tried to set
+            assertTrue(graphDateInstant.isAfter(newDatePlusOneInstant));
             assertTrue(graph.contains(ANY, binaryNode, CREATED_DATE.asNode(),
-                    createLiteral(oldCreatedDate, XSDDateTimeType.XSDdateTime)));
+                    createLiteral(oldDate, XSDDateTimeType.XSDdateTime)));
             assertFalse(graph.contains(ANY, binaryNode, RDF.type.asNode(), DIRECT_CONTAINER.asNode()));
             assertFalse(graph.contains(ANY, binaryNode, CREATED_DATE.asNode(),
                     createLiteral(newDate, XSDDateTimeType.XSDdateTime)));
@@ -431,21 +448,19 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
             binaryUri = getLocation(response);
         }
         final Node binaryNode = createURI(binaryUri);
-        final String oldCreatedDate;
         // Get the binary description
         try (final var dataset = getDataset(new HttpGet(binaryUri + "/" + FCR_METADATA))) {
             final var graph = dataset.asDatasetGraph();
             // Assert it has a NonRDFSource type
             assertTrue(graph.contains(ANY, binaryNode, RDF.type.asNode(), NON_RDF_SOURCE.asNode()));
-            final var iter = graph.find(ANY, binaryNode, CREATED_DATE.asNode(), ANY);
-            assertTrue(iter.hasNext());
-            final var stmt = iter.next();
-            // We'll change the createdDate
-            oldCreatedDate = ((XSDDateTime) stmt.getObject().getLiteralValue()).toString();
+            assertTrue(graph.contains(ANY, binaryNode, CREATED_DATE.asNode(), ANY));
         }
         // Now PUT this new graph back
-        final var newDate = ISO_INSTANT.format(Instant.now().atZone(ZoneOffset.UTC));
-        final var patchBinaryDescription = new HttpPatch(binaryUri + "/" + FCR_METADATA);
+        final var newDate = "2000-01-01T00:00:00Z";
+        // Instant one day after the day we are trying to set.
+        final var newDatePlusOneInstant = Instant.from(ISO_INSTANT.parse(newDate))
+                .plus(1, ChronoUnit.DAYS);
+                final var patchBinaryDescription = new HttpPatch(binaryUri + "/" + FCR_METADATA);
         patchBinaryDescription.setHeader(CONTENT_TYPE, "application/sparql-update");
         patchBinaryDescription.setEntity(new StringEntity("DELETE { <> <" + RDF.type + "> ?type ; " +
                 "<" + CREATED_DATE + "> ?date . } INSERT { <> <" + RDF.type + "> <" + DIRECT_CONTAINER + "> ; " +
@@ -458,11 +473,92 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
             final var graph = dataset.asDatasetGraph();
             // Assert it has a NonRDFSource type
             assertTrue(graph.contains(ANY, binaryNode, RDF.type.asNode(), NON_RDF_SOURCE.asNode()));
-            assertTrue(graph.contains(ANY, binaryNode, CREATED_DATE.asNode(),
-                    createLiteral(oldCreatedDate, XSDDateTimeType.XSDdateTime)));
-            assertFalse(graph.contains(ANY, binaryNode, CREATED_DATE.asNode(),
-                    createLiteral(newDate, XSDDateTimeType.XSDdateTime)));
+            assertFalse(graph.contains(ANY, binaryNode, RDF.type.asNode(), DIRECT_CONTAINER.asNode()));
+            final var dateIter = graph.find(ANY, binaryNode, CREATED_DATE.asNode(), ANY);
+            // Assert at least one date
+            assertTrue(dateIter.hasNext());
+            final var graphDate = dateIter.next();
+            // Assert only one date
+            assertFalse(dateIter.hasNext());
+            final var graphDateInstant =
+                    Instant.from(ISO_INSTANT.parse(graphDate.getObject().getLiteralValue().toString()));
+            // Assert the date is after the date we tried to set
+            assertTrue(graphDateInstant.isAfter(newDatePlusOneInstant));
         }
+    }
+
+    @Test
+    public void testPutNonRelaxablePredicates() throws Exception {
+        final var postBinary = postObjMethod();
+        postBinary.setHeader(CONTENT_TYPE, "text/plain");
+        postBinary.setEntity(new StringEntity("some test data"));
+        final String binaryUri;
+        // Create a binary
+        try (final var response = execute(postBinary)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            binaryUri = getLocation(response);
+        }
+        final String binaryDescription = binaryUri + "/" + FCR_METADATA;
+        // Get the original body.
+        final var getObj = new HttpGet(binaryDescription);
+        getObj.addHeader(ALLOW, "application/n-triples");
+        final String originalBody;
+        try (final var response = execute(getObj)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            originalBody = IOUtils.toString(response.getEntity().getContent(), UTF_8);
+        }
+        // Can't set a non-relaxable property, even in relaxed mode.
+        final var put = new HttpPut(binaryDescription);
+        put.setHeader(CONTENT_TYPE, "application/n-triples");
+        put.setEntity(new StringEntity("<" + binaryUri + "> <" + HAS_MESSAGE_DIGEST + "> \"not a real digest\" .\n" +
+                "<" + binaryUri + "> <" + CREATED_BY + "> \"some-test-user\" ."));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(put));
+
+        // Get the body again.
+        final String newBody;
+        try (final var response = execute(getObj)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            newBody = IOUtils.toString(response.getEntity().getContent(), UTF_8);
+        }
+        confirmResponseBodyNTriplesAreEqual(originalBody, newBody);
+    }
+
+    @Test
+    public void testPatchNonRelaxablePredicates() throws Exception {
+        final var postBinary = postObjMethod();
+        postBinary.setHeader(CONTENT_TYPE, "text/plain");
+        postBinary.setEntity(new StringEntity("some test data"));
+        final String binaryUri;
+        // Create a binary
+        try (final var response = execute(postBinary)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            binaryUri = getLocation(response);
+        }
+        final String binaryDescription = binaryUri + "/" + FCR_METADATA;
+        // Get the original body.
+        final var getObj = new HttpGet(binaryDescription);
+        getObj.addHeader(ALLOW, "application/n-triples");
+        final String originalBody;
+        try (final var response = execute(getObj)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            originalBody = IOUtils.toString(response.getEntity().getContent(), UTF_8);
+        }
+
+        // Can't patch a non-relaxable property, even in relaxed mode.
+        final var patch = new HttpPatch(binaryDescription);
+        patch.setHeader(CONTENT_TYPE, "application/sparql-update");
+        patch.setEntity(new StringEntity("DELETE { <> <" + HAS_MESSAGE_DIGEST + "> ?digest } INSERT { " +
+                "<> <" + HAS_MESSAGE_DIGEST + "> \"fake-digest\". } WHERE { <> <" + HAS_MESSAGE_DIGEST +
+                "> ?digest }"));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(patch));
+
+        // Get the body again.
+        final String newBody;
+        try (final var response = execute(getObj)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            newBody = IOUtils.toString(response.getEntity().getContent(), UTF_8);
+        }
+        confirmResponseBodyNTriplesAreEqual(originalBody, newBody);
     }
 
     @After

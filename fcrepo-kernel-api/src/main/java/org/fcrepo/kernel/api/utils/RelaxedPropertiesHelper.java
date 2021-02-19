@@ -24,11 +24,13 @@ import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
+import static org.fcrepo.kernel.api.RdfLexicon.isRelaxablePredicate;
 import static org.fcrepo.kernel.api.RdfLexicon.restrictedType;
 
 import java.util.Calendar;
 
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.RelaxableServerManagedPropertyException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 
@@ -159,9 +161,13 @@ public class RelaxedPropertiesHelper {
                             triple.getObject()));
         } else if (isManagedPredicate.test(createProperty(triple.getPredicate().getURI()))) {
             // The predicate is server managed.
-            throw new ServerManagedPropertyException(
-                    String.format("The server managed predicate (%s) cannot be modified by the client.",
-                            triple.getPredicate()));
+            final var message = String.format("The server managed predicate (%s) cannot be modified by the client.",
+                    triple.getPredicate());
+            if (isRelaxablePredicate.test(createProperty(triple.getPredicate().getURI()))) {
+                // It is a relaxable predicate so throw the appropriate exception.
+                throw new RelaxableServerManagedPropertyException(message);
+            }
+            throw new ServerManagedPropertyException(message);
         }
     }
 

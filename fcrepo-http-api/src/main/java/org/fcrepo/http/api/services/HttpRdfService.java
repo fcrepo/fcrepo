@@ -41,6 +41,7 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.MultipleConstraintViolationException;
+import org.fcrepo.kernel.api.exception.RelaxableServerManagedPropertyException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
@@ -143,12 +144,12 @@ public class HttpRdfService {
             } else {
                 try {
                     checkForDisallowedRdf(stmt);
-                } catch (final ServerManagedPropertyException exc) {
+                } catch (final RelaxableServerManagedPropertyException exc) {
                     if (fedoraPropsConfig.getServerManagedPropsMode().equals(STRICT)) {
                         exceptions.add(exc);
                         continue;
                     }
-                } catch (final ServerManagedTypeException exc) {
+                } catch (final ServerManagedTypeException | ServerManagedPropertyException exc) {
                     if (lenientHandling) {
                         // Remove the invalid statement because client specified lenient handling.
                         stmtIterator.remove();

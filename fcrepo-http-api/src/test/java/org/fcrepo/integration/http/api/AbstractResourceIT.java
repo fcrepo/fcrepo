@@ -113,6 +113,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_SERVER_MANAGED;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -812,7 +813,7 @@ public abstract class AbstractResourceIT {
      * @param omits String of omit URIs or null if none
      * @return The Prefer header.
      */
-    protected String preferLink(final String includes, final String omits) {
+    protected static String preferLink(final String includes, final String omits) {
         if (includes != null || omits != null) {
             String link = "return=representation; ";
             if (includes != null) {
@@ -827,5 +828,18 @@ public abstract class AbstractResourceIT {
             return link;
         }
         return "";
+    }
+
+    /**
+     * Compare two N-Triple response bodies to determine if they are identical
+     * @param responseBodyA the first n-triple body
+     * @param responseBodyB the second n-triple body
+     */
+    protected static void confirmResponseBodyNTriplesAreEqual(final String responseBodyA, final String responseBodyB) {
+        final String[] aTriples = responseBodyA.split(".(\\r\\n|\\r|\\n)");
+        final String[] bTriples = responseBodyB.split(".(\\r\\n|\\r|\\n)");
+        Arrays.stream(aTriples).map(String::trim).sorted().toArray(unused -> aTriples);
+        Arrays.stream(bTriples).map(String::trim).sorted().toArray(unused -> bTriples);
+        assertArrayEquals(aTriples, bTriples);
     }
 }
