@@ -60,6 +60,7 @@ import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEA
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_ENDPOINT_REL;
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_PREFIX;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.models.ExternalContent.COPY;
 import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
@@ -78,6 +79,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -177,6 +179,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     // Note: This pattern is intentionally loose, matching invalid memento strings, for error handling purposes
     private static final Pattern MEMENTO_PATH_PATTERN = Pattern.compile(".*/" + FedoraTypes.FCR_VERSIONS + "/(.*)$");
+
+    private static final String FCR_PREFIX = "fcr:";
+    private static final Set<String> ALLOWED_FCR_PARTS = Set.of(FCR_METADATA, FCR_ACL);
 
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;
@@ -917,14 +922,16 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     /**
-     * Check if a path has a segment prefixed with fedora:
+     * Check if a path has a segment prefixed with fcr: that is not fcr:metadata or fcr:acl
      *
      * @param externalPath the path.
      */
     protected static void hasRestrictedPath(final String externalPath) {
         final String[] pathSegments = externalPath.split("/");
-        if (Arrays.stream(pathSegments).anyMatch(p -> p.startsWith("fedora:"))) {
-            throw new ServerManagedTypeException("Path cannot contain a fedora: prefixed segment.");
+        for (final var part : pathSegments) {
+            if (part.startsWith(FCR_PREFIX) && !ALLOWED_FCR_PARTS.contains(part)) {
+                throw new ServerManagedTypeException("Path cannot contain a fcr: prefixed segment.");
+            }
         }
     }
 

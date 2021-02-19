@@ -380,18 +380,18 @@ public class FedoraLdp extends ContentExposingResource {
                    PathNotFoundException {
         LOGGER.info("PUT to create resource with ID: {}", externalPath());
 
+        if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
+            handleRequestDisallowedOnMemento();
+
+            return status(METHOD_NOT_ALLOWED).build();
+        }
+
         hasRestrictedPath(externalPath);
 
         final var transaction = transaction();
 
         try {
             final List<String> links = unpackLinks(rawLinks);
-
-            if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
-                handleRequestDisallowedOnMemento();
-
-                return status(METHOD_NOT_ALLOWED).build();
-            }
 
             // If request is an external binary, verify link header before proceeding
             final ExternalContent extContent = extContentHandlerFactory.createFromLinks(links);
@@ -496,15 +496,13 @@ public class FedoraLdp extends ContentExposingResource {
     @Consumes({contentTypeSPARQLUpdate})
     public Response updateSparql(final InputStream requestBodyStream)
             throws IOException {
-        hasRestrictedPath(externalPath);
-
-        final var transaction = transaction();
-
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
             handleRequestDisallowedOnMemento();
 
             return status(METHOD_NOT_ALLOWED).build();
         }
+
+        hasRestrictedPath(externalPath);
 
         if (null == requestBodyStream) {
             throw new BadRequestException("SPARQL-UPDATE requests must have content!");
@@ -514,6 +512,8 @@ public class FedoraLdp extends ContentExposingResource {
             throw new BadRequestException(resource().getFedoraId().getFullIdPath() +
                     " is not a valid object to receive a PATCH");
         }
+
+        final var transaction = transaction();
 
         try {
             final String requestBody = IOUtils.toString(requestBodyStream, UTF_8);
