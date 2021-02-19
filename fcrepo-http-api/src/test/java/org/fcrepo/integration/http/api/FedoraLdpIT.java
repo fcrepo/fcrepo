@@ -4061,31 +4061,40 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testPostFedoraSlug() throws IOException {
+    public void testPostFcrSlug() throws IOException {
         final HttpPost httpPost = postObjMethod("/");
-        httpPost.addHeader("Slug", "fedora:path");
+        httpPost.addHeader("Slug", "fcr:path");
         try (final CloseableHttpResponse response = execute(httpPost)) {
-            assertEquals("Must not be able to POST with fedora namespaced Slug!", CONFLICT.getStatusCode(),
+            assertEquals("Must not be able to POST with fcr namespaced Slug!", CONFLICT.getStatusCode(),
                 getStatus(response));
         }
     }
 
     @Test
-    public void testPutFedoraPath() throws IOException {
-        final HttpPut httpPut = putObjMethod("/fedora:path");
+    public void testPutFcrPath() throws IOException {
+        final HttpPut httpPut = putObjMethod("/fcr:path");
         try (final CloseableHttpResponse response = execute(httpPut)) {
-            assertEquals("Must not be able to PUT with fedora namespaced path!", CONFLICT.getStatusCode(),
+            assertEquals("Must not be able to PUT with fcr namespaced path!", CONFLICT.getStatusCode(),
                 getStatus(response));
         }
     }
 
     @Test
-    public void testDeleteWithFedoraPath() throws IOException {
-        final String id = getRandomUniqueId() + "/fedora:delete";
+    public void testPutFcrTx() throws IOException {
+        final HttpPut httpPut = putObjMethod("hello/fcr:fixity");
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals("Must not be able to PUT with fcr namespaced path!", CONFLICT.getStatusCode(),
+                getStatus(response));
+        }
+    }
+
+    @Test
+    public void testDeleteWithFcrPath() throws IOException {
+        final String id = getRandomUniqueId() + "/fcr:delete";
         final HttpDelete httpDelete = deleteObjMethod(id);
         httpDelete.addHeader("Depth", "infinity");
         try (final CloseableHttpResponse response = execute(httpDelete)) {
-            assertEquals("Must not be able to DELETE with fedora namespaced path!", CONFLICT.getStatusCode(),
+            assertEquals("Must not be able to DELETE with fcr namespaced path!", CONFLICT.getStatusCode(),
                 getStatus(response));
         }
     }
@@ -4554,7 +4563,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @Test
     public void testLongIdentifier1() throws IOException {
-        final String url = genLongUrl(serverAddress,476);
+        final String url = genLongUrl(serverAddress,475);
         final HttpPost postMethod = new HttpPost(url);
         postMethod.setHeader("Slug", getRandomUniqueId());
         try (final CloseableHttpResponse response = execute(postMethod)) {
