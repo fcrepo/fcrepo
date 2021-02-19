@@ -4654,6 +4654,17 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
+    @Test
+    public void testNonExistantFcrMetadata() throws Exception {
+        final var id = getRandomUniqueId();
+        // Ensure the object does not exist
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(getObjMethod(id)));
+        // Ensure the metadata of a non-existant object also doesn't exist.
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(getObjMethod(id + "/" + FCR_METADATA)));
+        // Ensure you can't PUT at non-existant binary.
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(putObjMethod(id + "/" + FCR_METADATA)));
+    }
+
     private void assertIdStringConstraint(final String id) throws IOException {
         assertInvalidId(id);
         assertValidId(id + "-suffix");

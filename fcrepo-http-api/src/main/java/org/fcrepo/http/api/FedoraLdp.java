@@ -420,6 +420,11 @@ public class FedoraLdp extends ContentExposingResource {
                 throw new GhostNodeException("Resource path " + externalPath() + " is an immutable resource.");
             }
 
+            if (!resourceExists && fedoraId.isDescription()) {
+                // Can't PUT a description to a non-existant binary.
+                throw new PathNotFoundException("Binary at path " + fedoraId.asBaseId().getFullIdPath() + " not found");
+            }
+
             final var providedContentType = getSimpleContentType(requestContentType);
 
             boolean created = false;
