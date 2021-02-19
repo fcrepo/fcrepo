@@ -4563,7 +4563,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @Test
     public void testLongIdentifier1() throws IOException {
-        final String url = genLongUrl(serverAddress,475);
+        final String url = genLongUrl(serverAddress,476);
         final HttpPost postMethod = new HttpPost(url);
         postMethod.setHeader("Slug", getRandomUniqueId());
         try (final CloseableHttpResponse response = execute(postMethod)) {
