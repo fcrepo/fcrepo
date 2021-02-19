@@ -20,8 +20,8 @@ package org.fcrepo.http.api;
 import static javax.ws.rs.core.HttpHeaders.ALLOW;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
@@ -46,17 +46,19 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
 
-import com.google.common.annotations.VisibleForTesting;
-import io.micrometer.core.annotation.Timed;
-
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.services.FixityService;
+
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import io.micrometer.core.annotation.Timed;
 
 /**
  * Run a fixity check on a path
@@ -107,7 +109,8 @@ public class FedoraFixity extends ContentExposingResource {
     public RdfNamespacedStream getDatastreamFixity() {
 
         if (!(resource() instanceof Binary)) {
-            throw new NotFoundException(resource() + " is not a binary");
+            throw new NotFoundException("Error: Resource at " + resource().getFedoraId().getFullIdPath() + " is not a" +
+                    " binary");
         }
 
         final Link.Builder resourceLink = Link.fromUri(RESOURCE.getURI()).rel("type");
