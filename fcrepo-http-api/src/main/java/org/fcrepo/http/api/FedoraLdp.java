@@ -49,6 +49,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_TYPE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_OCTET_STREAM_TYPE;
 
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODEL_RESOURCES;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
@@ -422,7 +423,13 @@ public class FedoraLdp extends ContentExposingResource {
 
             if (!resourceExists && fedoraId.isDescription()) {
                 // Can't PUT a description to a non-existant binary.
-                throw new PathNotFoundException("Binary at path " + fedoraId.asBaseId().getFullIdPath() + " not found");
+                final String message;
+                if (fedoraId.asBaseId().isRepositoryRoot()) {
+                    message = "The root of the repository is not a binary, so /" + FCR_METADATA + " does not exist.";
+                } else {
+                    message = "Binary at path " + fedoraId.asBaseId().getFullIdPath() + " not found";
+                }
+                throw new PathNotFoundException(message);
             }
 
             final var providedContentType = getSimpleContentType(requestContentType);
