@@ -4081,7 +4081,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @Test
     public void testPostFcrSlug() throws IOException {
-        final HttpPost httpPost = postObjMethod("/");
+        final HttpPost httpPost = postObjMethod();
         httpPost.addHeader("Slug", "fcr:path");
         try (final CloseableHttpResponse response = execute(httpPost)) {
             assertEquals("Must not be able to POST with fcr namespaced Slug!", CONFLICT.getStatusCode(),
@@ -4100,7 +4100,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @Test
     public void testPutFcrTx() throws IOException {
-        final HttpPut httpPut = putObjMethod("hello/fcr:fixity");
+        final HttpPut httpPut = putObjMethod("hello/fcr:tx");
         try (final CloseableHttpResponse response = execute(httpPut)) {
             assertEquals("Must not be able to PUT with fcr namespaced path!", CONFLICT.getStatusCode(),
                 getStatus(response));
