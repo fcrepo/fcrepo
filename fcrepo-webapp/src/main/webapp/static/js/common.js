@@ -201,7 +201,6 @@
   function createVersionSnapshot(e) {
       const uri = document.getElementById('main').getAttribute('resource');
       const d = new Date();
-      const name = 'version.' + d.getFullYear().toString() + (d.getMonth()+1).toString() + d.getDate().toString() + d.getHours() + d.getMinutes() + d.getSeconds();
 
       http('POST', uri + '/fcr:versions', function(res) {
         if (res.status == 201) {

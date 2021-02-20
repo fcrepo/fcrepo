@@ -86,7 +86,7 @@ public abstract class RDFMediaType extends MediaType {
             RDF_XML_TYPE, TURTLE_TYPE, N3_TYPE, N3_ALT2_TYPE, NTRIPLES_TYPE,
             TEXT_PLAIN_TYPE, TURTLE_X_TYPE, JSON_LD_TYPE).add().build();
 
-    public static final String POSSIBLE_RDF_RESPONSE_VARIANTS_STRING[] = {
+    public static final String[] POSSIBLE_RDF_RESPONSE_VARIANTS_STRING = {
         TURTLE_WITH_CHARSET, N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES,
         TEXT_PLAIN_WITH_CHARSET, TURTLE_X, JSON_LD };
 

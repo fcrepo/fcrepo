@@ -137,7 +137,7 @@ public class HttpIdentifierConverter {
         if (inInternalDomain(fedoraId)) {
             // If it starts with our prefix, strip the prefix and any leading slashes and use it as the path
             // part of the URI.
-            final String path = fedoraId.substring(FEDORA_ID_PREFIX.length()).replaceFirst("\\/", "");
+            final String path = fedoraId.substring(FEDORA_ID_PREFIX.length()).replaceFirst("/", "");
             return buildUri(path);
         }
         throw new IllegalArgumentException("Cannot translate IDs without our prefix");

@@ -123,12 +123,6 @@ public class FedoraResourceImpl implements FedoraResource {
     }
 
     @Override
-    public String getPath() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
     public Stream<FedoraResource> getChildren(final Boolean recursive) {
         return Stream.empty();
     }
@@ -315,12 +309,6 @@ public class FedoraResourceImpl implements FedoraResource {
         } catch (final PersistentStorageException e) {
             throw new RepositoryRuntimeException(e.getMessage(), e);
         }
-    }
-
-    @Override
-    public Boolean isNew() {
-        // TODO Auto-generated method stub
-        return null;
     }
 
     @Override

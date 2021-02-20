@@ -288,10 +288,8 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         this.state = State.PREPARE_STARTED;
         LOGGER.debug("Starting storage session {} prepare for commit", sessionId);
 
-        synchronized (this.phaser) {
-            if (this.phaser.getRegisteredParties() > 0) {
-                this.phaser.awaitAdvance(0);
-            }
+        if (this.phaser.getRegisteredParties() > 0) {
+            this.phaser.awaitAdvance(0);
         }
 
         LOGGER.trace("All persisters are complete in session {}", sessionId);
@@ -365,14 +363,12 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
             //we must ensure that all persist operations are complete before we close any
             //ocfl object sessions. If the commit had been started then this synchronization step
             //will have already occurred and is thus unnecessary.
-            synchronized (this.phaser) {
-                if (this.phaser.getRegisteredParties() > 0) {
-                    try {
-                        this.phaser.awaitAdvanceInterruptibly(0, AWAIT_TIMEOUT, MILLISECONDS);
-                    } catch (final InterruptedException | TimeoutException e) {
-                        throw new PersistentStorageException(
-                                "Waiting for operations to complete took too long, rollback failed");
-                    }
+            if (this.phaser.getRegisteredParties() > 0) {
+                try {
+                    this.phaser.awaitAdvanceInterruptibly(0, AWAIT_TIMEOUT, MILLISECONDS);
+                } catch (final InterruptedException | TimeoutException e) {
+                    throw new PersistentStorageException(
+                            "Waiting for operations to complete took too long, rollback failed");
                 }
             }
         }

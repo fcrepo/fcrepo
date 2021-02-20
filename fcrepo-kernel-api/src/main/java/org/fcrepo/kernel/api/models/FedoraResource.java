@@ -57,15 +57,6 @@ public interface FedoraResource {
     FedoraResource getParent() throws PathNotFoundException;
 
     /**
-     * Get the path to the resource
-     *
-     * @return path
-     * @deprecated use getId()
-     */
-    @Deprecated
-    String getPath();
-
-    /**
      * Get the children of this resource
      * @return a stream of Fedora resources
      */
@@ -202,14 +193,6 @@ public interface FedoraResource {
      * @return the RDF properties of this object.
      */
     RdfStream getTriples();
-
-    /**
-     * Check if a resource was created in this session
-     *
-     * @return if resource created in this session
-     */
-    @Deprecated
-    Boolean isNew();
 
     /**
      * Construct an ETag value for the resource.

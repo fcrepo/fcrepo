@@ -115,7 +115,7 @@ public class WebACRolesProvider {
      * @return a set of roles for each principal
      */
     public Map<String, Collection<String>> getRoles(final FedoraResource resource, final Transaction transaction) {
-        LOGGER.debug("Getting agent roles for: {}", resource.getPath());
+        LOGGER.debug("Getting agent roles for: {}", resource.getId());
 
         // Get the effective ACL by searching the target node and any ancestors.
         final Optional<ACLHandle> effectiveAcl = getEffectiveAcl(resource, false);
@@ -325,7 +325,7 @@ public class WebACRolesProvider {
         final List<WebACAuthorization> authorizations = new ArrayList<>();
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("ACL: {}", aclResource.getPath());
+            LOGGER.debug("ACL: {}", aclResource.getId());
         }
 
         if (aclResource.isAcl()) {
@@ -356,7 +356,7 @@ public class WebACRolesProvider {
                     });
             // Create a WebACAuthorization object from the provided triples.
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Adding acl:Authorization from {}", aclResource.getPath());
+                LOGGER.debug("Adding acl:Authorization from {}", aclResource.getId());
             }
             authMap.values().forEach(aclTriples -> {
                 final WebACAuthorization authorization = createAuthorizationFromMap(aclTriples);
@@ -417,7 +417,7 @@ public class WebACRolesProvider {
                 LOGGER.debug("No ACLs defined on this node or in parent hierarchy");
                 return Optional.empty();
             } else {
-                LOGGER.trace("Checking parent resource for ACL. No ACL found at {}", resource.getPath());
+                LOGGER.trace("Checking parent resource for ACL. No ACL found at {}", resource.getId());
                 return getEffectiveAcl(container, true);
             }
         } catch (final RepositoryException ex) {

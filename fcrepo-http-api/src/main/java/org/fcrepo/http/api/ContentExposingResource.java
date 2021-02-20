@@ -81,7 +81,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -108,7 +107,6 @@ import org.fcrepo.http.commons.domain.Range;
 import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
-import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionUtils;
@@ -136,7 +134,6 @@ import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.ResourceTripleService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
-import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.fcrepo.config.DigestAlgorithm;
 
@@ -175,11 +172,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     static final String HTTP_HEADER_ACCEPT_PATCH = "Accept-Patch";
 
-    private static final Pattern TRAILING_SLASH_REGEX = Pattern.compile("/+$");
-
-    // Note: This pattern is intentionally loose, matching invalid memento strings, for error handling purposes
-    private static final Pattern MEMENTO_PATH_PATTERN = Pattern.compile(".*/" + FedoraTypes.FCR_VERSIONS + "/(.*)$");
-
     private static final String FCR_PREFIX = "fcr:";
     private static final Set<String> ALLOWED_FCR_PARTS = Set.of(FCR_METADATA, FCR_ACL);
 
@@ -193,10 +185,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     @BeanParam
     protected MultiPrefer prefer;
-
-    @Inject
-    @Optional
-    StoragePolicyDecisionPoint storagePolicyDecisionPoint;
 
     private FedoraResource fedoraResource;
 
@@ -664,14 +652,14 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         if (resource instanceof Binary) {
             // Use a strong ETag for LDP-NR
             etag = new EntityTag(resource.getEtagValue());
-            date = resource.getLastModifiedDate();
         } else {
             // Use a weak ETag for the LDP-RS
             final String txId = TransactionUtils.openTxId(transaction);
             etag = new EntityTag(etagService.getRdfResourceEtag(txId, resource, getLdpPreferTag(),
                     headers.getAcceptableMediaTypes()), true);
-            date = resource.getLastModifiedDate();
         }
+
+        date = resource.getLastModifiedDate();
 
         if (!etag.getValue().isEmpty()) {
             servletResponse.addHeader("ETag", etag.toString());
@@ -726,14 +714,14 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         if (resource instanceof Binary) {
             // Use a strong ETag for the LDP-NR
             etag = new EntityTag(resource.getEtagValue());
-            date = resource.getLastModifiedDate();
         } else {
             // Use a strong ETag for the LDP-RS when validating If-(None)-Match headers
             final String txId = TransactionUtils.openTxId(transaction);
             etag = new EntityTag(etagService.getRdfResourceEtag(txId, resource, getLdpPreferTag(),
                     headers.getAcceptableMediaTypes()), false);
-            date = resource.getLastModifiedDate();
         }
+
+        date = resource.getLastModifiedDate();
 
         if (date != null) {
             roundedDate = date.minusMillis(date.toEpochMilli() % 1000);
@@ -828,9 +816,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         } else if (prefer.getReturn().getValue().equals("minimal")) {
             return builder.build();
         } else {
-            if (prefer != null) {
-                prefer.getReturn().addResponseHeaders(servletResponse);
-            }
+            prefer.getReturn().addResponseHeaders(servletResponse);
             final RdfNamespacedStream rdfStream = new RdfNamespacedStream(
                 new DefaultRdfStream(asNode(resource), getResourceTriples(resource)),
                 namespaceRegistry.getNamespaces());
@@ -876,7 +862,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             return MediaType.valueOf(((Binary) resource).getMimeType());
         } catch (final IllegalArgumentException e) {
             LOGGER.warn("Syntactically incorrect MediaType encountered on resource {}: '{}'",
-                    resource.getPath(), ((Binary)resource).getMimeType());
+                    resource.getId(), ((Binary)resource).getMimeType());
             return MediaType.APPLICATION_OCTET_STREAM_TYPE;
         }
     }
