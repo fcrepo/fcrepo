@@ -143,12 +143,35 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             OPERATION_COLUMN + " = 'add') ORDER BY x." + FEDORA_ID_COLUMN + " LIMIT :containsLimit OFFSET :offSet";
 
     /*
-     * Insert a parent child relationship to the transaction operation table.
+     * Upsert a parent child relationship to the transaction operation table.
      */
-    private static final String INSERT_CHILD_IN_TRANSACTION = "INSERT INTO " + TRANSACTION_OPERATIONS_TABLE +
+    private static final String UPSERT_RECORDS_POSTGRESQL = "INSERT INTO " + TRANSACTION_OPERATIONS_TABLE +
             " ( " + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ", " +
-            TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + " ) VALUES (:parent, :child, :startTime, :endTime, " +
-            ":transactionId, 'add')";
+            TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + ") VALUES (:parent, :child, :startTime, :endTime, " +
+            ":transactionId, :operation) ON CONFLICT ( " +  FEDORA_ID_COLUMN + ", " + TRANSACTION_ID_COLUMN + ") " +
+            "DO UPDATE SET " + PARENT_COLUMN + " = EXCLUDED." + PARENT_COLUMN + ", " +
+            START_TIME_COLUMN + " = EXCLUDED." + START_TIME_COLUMN + ", " + END_TIME_COLUMN + " = EXCLUDED." +
+            END_TIME_COLUMN + ", " + OPERATION_COLUMN + " = EXCLUDED." + OPERATION_COLUMN;
+
+    private static final String UPSERT_RECORDS_MYSQL_MARIA = "INSERT INTO " + TRANSACTION_OPERATIONS_TABLE +
+            " (" + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ", " +
+            TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + ") VALUES (:parent, :child, :startTime, :endTime, " +
+            ":transactionId, :operation) ON DUPLICATE KEY UPDATE " +
+            PARENT_COLUMN + " = VALUES(" + PARENT_COLUMN + "), " + START_TIME_COLUMN + " = VALUES(" +
+            START_TIME_COLUMN + "), " + END_TIME_COLUMN + " = VALUES(" + END_TIME_COLUMN + "), " + OPERATION_COLUMN +
+            " = VALUES(" + OPERATION_COLUMN + ")";
+
+    private static final String UPSERT_RECORDS_H2 = "MERGE INTO " + TRANSACTION_OPERATIONS_TABLE +
+            " (" + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ", " +
+            TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + ") KEY (" + FEDORA_ID_COLUMN + ", " +
+            TRANSACTION_ID_COLUMN + ") VALUES (:parent, :child, :startTime, :endTime, :transactionId, :operation)";
+
+    private static final Map<DbPlatform, String> UPSERT_MAPPING = Map.of(
+            DbPlatform.H2, UPSERT_RECORDS_H2,
+            DbPlatform.MYSQL, UPSERT_RECORDS_MYSQL_MARIA,
+            DbPlatform.MARIADB, UPSERT_RECORDS_MYSQL_MARIA,
+            DbPlatform.POSTGRESQL, UPSERT_RECORDS_POSTGRESQL
+    );
 
     /*
      * Remove an insert row from the transaction operation table for this parent child relationship.
@@ -158,32 +181,11 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             + " = :transactionId AND " + OPERATION_COLUMN + " = 'add'";
 
     /*
-     * Add a parent child relationship deletion to the transaction operation table.
-     */
-    private static final String DELETE_CHILD_IN_TRANSACTION = "INSERT INTO " + TRANSACTION_OPERATIONS_TABLE +
-            " ( " + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + END_TIME_COLUMN + ", " + TRANSACTION_ID_COLUMN +
-            ", " + OPERATION_COLUMN + " ) VALUES (:parent, :child, :endTime, :transactionId, 'delete')";
-
-    /*
-     * Add a parent child relationship purge to the transaction operation table.
-     */
-    private static final String PURGE_CHILD_IN_TRANSACTION = "INSERT INTO " + TRANSACTION_OPERATIONS_TABLE +
-            " ( " + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN +
-            " ) VALUES (:parent, :child, :transactionId, 'purge')";
-
-    /*
      * Remove a mark as deleted row from the transaction operation table for this child relationship (no parent).
      */
     private static final String UNDO_DELETE_CHILD_IN_TRANSACTION_NO_PARENT = "DELETE FROM " +
             TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN
             + " = :transactionId AND " + OPERATION_COLUMN + " = 'delete'";
-
-    /*
-     * Remove a purge row from the transaction operation table for this parent child relationship.
-     */
-    private static final String UNDO_PURGE_CHILD_IN_TRANSACTION = "DELETE FROM " + TRANSACTION_OPERATIONS_TABLE +
-            " WHERE " + PARENT_COLUMN + " = :parent AND " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN
-            + " = :transactionId AND " + OPERATION_COLUMN + " = 'purge'";
 
     /*
      * Is this parent child relationship being added in this transaction?
@@ -199,13 +201,6 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child " +
             " AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " = 'delete'";
 
-    /*
-     * Is this parent child relationship being purged in this transaction?
-     */
-    private static final String IS_CHILD_PURGED_IN_TRANSACTION = "SELECT TRUE FROM " + TRANSACTION_OPERATIONS_TABLE +
-            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + PARENT_COLUMN + " = :parent" +
-            " AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " = 'purge'";
-
    /*
     * Delete all rows from the transaction operation table for this transaction.
     */
@@ -215,11 +210,35 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     /*
      * Add to the main table all rows from the transaction operation table marked 'add' for this transaction.
      */
-    private static final String COMMIT_ADD_RECORDS = "INSERT INTO " + RESOURCES_TABLE + " ( " + FEDORA_ID_COLUMN + ", "
-            + PARENT_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + " ) SELECT " + FEDORA_ID_COLUMN +
-            ", " + PARENT_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + " FROM " +
-            TRANSACTION_OPERATIONS_TABLE + " WHERE " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
-            OPERATION_COLUMN + " = 'add'";
+    private static final String COMMIT_ADD_RECORDS_POSTGRESQL = "INSERT INTO " + RESOURCES_TABLE +
+            " ( " + FEDORA_ID_COLUMN + ", " + PARENT_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ") " +
+            "SELECT " + FEDORA_ID_COLUMN + ", " + PARENT_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN +
+            " FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + OPERATION_COLUMN + " = 'add' AND " +
+            TRANSACTION_ID_COLUMN + " = :transactionId ON CONFLICT ( " +  FEDORA_ID_COLUMN + " )" +
+            " DO UPDATE SET " + PARENT_COLUMN + " = EXCLUDED." + PARENT_COLUMN + ", " +
+            START_TIME_COLUMN + " = EXCLUDED." + START_TIME_COLUMN + ", " + END_TIME_COLUMN + " = EXCLUDED." +
+            END_TIME_COLUMN;
+
+    private static final String COMMIT_ADD_RECORDS_MYSQL_MARIA = "INSERT INTO " + RESOURCES_TABLE +
+            " (" + FEDORA_ID_COLUMN + ", " + PARENT_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ") " +
+            "SELECT " + FEDORA_ID_COLUMN + ", " + PARENT_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN +
+            " FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + OPERATION_COLUMN + " = 'add' AND " +
+            TRANSACTION_ID_COLUMN + " = :transactionId ON DUPLICATE KEY UPDATE " +
+            PARENT_COLUMN + " = VALUES(" + PARENT_COLUMN + "), " + START_TIME_COLUMN + " = VALUES(" +
+            START_TIME_COLUMN + "), " + END_TIME_COLUMN + " = VALUES(" + END_TIME_COLUMN + ")";
+
+    private static final String COMMIT_ADD_RECORDS_H2 = "MERGE INTO " + RESOURCES_TABLE +
+            " (" + FEDORA_ID_COLUMN + ", " + PARENT_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ") " +
+            "KEY (" + FEDORA_ID_COLUMN + ") SELECT " + FEDORA_ID_COLUMN + ", " + PARENT_COLUMN + ", " +
+            START_TIME_COLUMN + ", " + END_TIME_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " +
+            OPERATION_COLUMN + " = 'add' AND " + TRANSACTION_ID_COLUMN + " = :transactionId";
+
+    private static final Map<DbPlatform, String> COMMIT_ADD_RECORDS_MAP = Map.of(
+            DbPlatform.H2, COMMIT_ADD_RECORDS_H2,
+            DbPlatform.MYSQL, COMMIT_ADD_RECORDS_MYSQL_MARIA,
+            DbPlatform.MARIADB, COMMIT_ADD_RECORDS_MYSQL_MARIA,
+            DbPlatform.POSTGRESQL, COMMIT_ADD_RECORDS_POSTGRESQL
+    );
 
     /*
      * Add an end time to the rows in the main table that match all rows from transaction operation table marked
@@ -397,6 +416,12 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             TRANSACTION_OPERATIONS_TABLE + " WHERE " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
             OPERATION_COLUMN + " in ('add', 'delete')";
 
+    /*
+     * Get the startTime for the specified resource from the main table, if it exists.
+     */
+    private static final String GET_START_TIME = "SELECT " + START_TIME_COLUMN + " FROM " + RESOURCES_TABLE +
+            " WHERE " + FEDORA_ID_COLUMN + " = :child";
+
     /**
      * Connect to the database
      */
@@ -489,19 +514,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
         LOGGER.debug("Adding: parent: {}, child: {}, in txn: {}, start time {}, end time {}", parentID, childID, txId,
                 formatInstant(startTime), formatInstant(endTime));
-
-        parameterSource.addValue("parent", parentID);
-        parameterSource.addValue("child", childID);
-        parameterSource.addValue("transactionId", txId);
-        parameterSource.addValue("startTime", formatInstant(startTime));
-        parameterSource.addValue("endTime", formatInstant(endTime));
-        final boolean purgedInTxn = !jdbcTemplate.queryForList(IS_CHILD_PURGED_IN_TRANSACTION, parameterSource)
-                .isEmpty();
-        if (purgedInTxn) {
-            // We purged it, but are re-adding it so remove the purge operation.
-            jdbcTemplate.update(UNDO_PURGE_CHILD_IN_TRANSACTION, parameterSource);
-        }
-        jdbcTemplate.update(INSERT_CHILD_IN_TRANSACTION, parameterSource);
+        doUpsert(txId, parentID, childID, startTime, endTime, "add");
     }
 
     @Override
@@ -512,13 +525,12 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         parameterSource.addValue("parent", parentID);
         parameterSource.addValue("child", childID);
         parameterSource.addValue("transactionId", txId);
-        parameterSource.addValue("endTime", formatInstant(Instant.now()));
         final boolean addedInTxn = !jdbcTemplate.queryForList(IS_CHILD_ADDED_IN_TRANSACTION, parameterSource)
                 .isEmpty();
         if (addedInTxn) {
             jdbcTemplate.update(UNDO_INSERT_CHILD_IN_TRANSACTION, parameterSource);
         } else {
-            jdbcTemplate.update(DELETE_CHILD_IN_TRANSACTION, parameterSource);
+            doUpsert(txId, parentID, childID, null, Instant.now(), "delete");
         }
     }
 
@@ -537,9 +549,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             if (parent != null) {
                 LOGGER.debug("Marking containment relationship between parent ({}) and child ({}) deleted", parent,
                         resourceID);
-                parameterSource.addValue("parent", parent);
-                parameterSource.addValue("endTime", formatInstant(Instant.now()));
-                jdbcTemplate.update(DELETE_CHILD_IN_TRANSACTION, parameterSource);
+                doUpsert(txId, parent, resourceID, null, Instant.now(), "delete");
             }
         }
     }
@@ -558,9 +568,33 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         }
         if (parent != null) {
             LOGGER.debug("Removing containment relationship between parent ({}) and child ({})", parent, resourceID);
-            parameterSource.addValue("parent", parent);
-            jdbcTemplate.update(PURGE_CHILD_IN_TRANSACTION, parameterSource);
+            doUpsert(txId, parent, resourceID, null, null, "purge");
         }
+    }
+
+    /**
+     * Do the Upsert action to the transaction table.
+     * @param txId the transaction id
+     * @param parentId the containing resource id
+     * @param resourceId the contained resource id
+     * @param startTime the instant the relationship started, if null get the current time from the main table.
+     * @param endTime the instant the relationship ended or null for none.
+     * @param operation the operation to perform.
+     */
+    private void doUpsert(final String txId, final String parentId, final String resourceId, final Instant startTime,
+                          final Instant endTime, final String operation) {
+        final var parameterSource = new MapSqlParameterSource();
+        parameterSource.addValue("child", resourceId);
+        parameterSource.addValue("transactionId", txId);
+        parameterSource.addValue("parent", parentId);
+        if (startTime == null) {
+            parameterSource.addValue("startTime", formatInstant(getCurrentStartTime(resourceId)));
+        } else {
+            parameterSource.addValue("startTime", formatInstant(startTime));
+        }
+        parameterSource.addValue("endTime", formatInstant(endTime));
+        parameterSource.addValue("operation", operation);
+        jdbcTemplate.update(UPSERT_MAPPING.get(dbPlatform), parameterSource);
     }
 
     /**
@@ -594,7 +628,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
                         String.class);
                 final int purged = jdbcTemplate.update(COMMIT_PURGE_RECORDS, parameterSource);
                 final int deleted = jdbcTemplate.update(COMMIT_DELETE_RECORDS.get(dbPlatform), parameterSource);
-                final int added = jdbcTemplate.update(COMMIT_ADD_RECORDS, parameterSource);
+                final int added = jdbcTemplate.update(COMMIT_ADD_RECORDS_MAP.get(dbPlatform), parameterSource);
                 for (final var parent : changedParents) {
                     final var updated = jdbcTemplate.queryForObject(SELECT_LAST_UPDATED_IN_TX,
                             Map.of("resourceId", parent, "transactionId", txId), Instant.class);
@@ -727,6 +761,17 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      */
     public void setDataSource(final DataSource dataSource) {
         this.dataSource = dataSource;
+    }
+
+    /**
+     * Get the current startTime for the resource
+     * @param resourceId id of the resource
+     * @return start time or null if no committed record.
+     */
+    private Instant getCurrentStartTime(final String resourceId) {
+        return jdbcTemplate.queryForObject(GET_START_TIME, Map.of(
+                "child", resourceId
+        ), Instant.class);
     }
 
     /**
