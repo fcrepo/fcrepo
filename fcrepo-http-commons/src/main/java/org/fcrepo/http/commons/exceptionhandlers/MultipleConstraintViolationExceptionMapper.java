@@ -32,6 +32,9 @@ import javax.ws.rs.ext.Provider;
 
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 import org.fcrepo.kernel.api.exception.MultipleConstraintViolationException;
+import org.fcrepo.kernel.api.exception.RelaxableServerManagedPropertyException;
+import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
+
 import org.slf4j.Logger;
 
 /**
@@ -57,7 +60,16 @@ public class MultipleConstraintViolationExceptionMapper extends
         final String msg = e.getMessage();
         final Response.ResponseBuilder response = status(CONFLICT).entity(msg).type(TEXT_PLAIN_WITH_CHARSET);
         final Link[] constraintLinks = e.getExceptionTypes().stream().map(ConstraintViolationException::getClass)
-                .distinct().map(c -> buildConstraintLink(c, context, uriInfo))
+                .distinct().map(c -> {
+                    // Avoid building a link with the relaxable sub-class which would require another constraint RDF
+                    // file.
+                    if (c.equals(RelaxableServerManagedPropertyException.class)) {
+                        return ServerManagedPropertyException.class;
+                    }
+                    return c;
+                }).map(c -> buildConstraintLink(c,
+                        context,
+                        uriInfo))
                 .toArray(Link[]::new);
         return response.links(constraintLinks).build();
     }

@@ -30,6 +30,7 @@ import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 import org.fcrepo.kernel.api.exception.MultipleConstraintViolationException;
+import org.fcrepo.kernel.api.exception.RelaxableServerManagedPropertyException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
@@ -191,12 +192,15 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
         for (final Quad q : quadsList) {
             try {
                 checkTripleForDisallowed(q.asTriple());
-            } catch (final ServerManagedPropertyException | ServerManagedTypeException exc) {
+            } catch (final RelaxableServerManagedPropertyException exc) {
                 if (!isRelaxedMode) {
                     // Swallow these exceptions to throw together later.
                     exceptions.add(exc);
                     continue;
                 }
+            } catch (final ServerManagedTypeException | ServerManagedPropertyException exc) {
+                exceptions.add(exc);
+                continue;
             }
             final Node subject = translateId(q.getSubject());
             final Node object = translateId(q.getObject());

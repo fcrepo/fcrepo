@@ -20,6 +20,8 @@ package org.fcrepo.webapp;
 import org.fcrepo.kernel.api.exception.MultipleConstraintViolationException;
 import org.junit.Assert;
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
+import org.fcrepo.kernel.api.exception.RelaxableServerManagedPropertyException;
+
 import org.junit.Test;
 import org.reflections.Reflections;
 
@@ -39,9 +41,12 @@ public class ConstraintExceptionsTest {
                 reflections.getSubTypesOf(ConstraintViolationException.class);
         // Multiple is a wrapper to hold other constraint violations, it has no static file.
         subTypes.remove(MultipleConstraintViolationException.class);
+        // Relaxable is a sub-type of ServerManagedPropertyException to specially handle relaxable properties, it has
+        // no static file.
+        subTypes.remove(RelaxableServerManagedPropertyException.class);
         subTypes.add(ConstraintViolationException.class);
 
-        for (final Class c : subTypes) {
+        for (final Class<? extends ConstraintViolationException> c : subTypes) {
             final File file = new File("src/main/webapp/static/constraints/" + c.getSimpleName() + ".rdf");
             Assert.assertTrue("Expected to find: " + file.getPath(), file.exists());
         }
