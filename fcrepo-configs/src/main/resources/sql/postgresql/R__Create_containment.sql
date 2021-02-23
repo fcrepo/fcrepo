@@ -41,7 +41,8 @@ CREATE TABLE IF NOT EXISTS containment_transactions (
     start_time timestamp NULL,
     end_time timestamp NULL,
     transaction_id varchar(255) NOT NULL,
-    operation varchar(10) NOT NULL
+    operation varchar(10) NOT NULL,
+    UNIQUE (fedora_id, transaction_id)
 );
 
 -- Create an index to speed searches for records related to adding/excluding transaction records
