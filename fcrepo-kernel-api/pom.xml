@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo</artifactId>
-    <version>6.0.0-beta-1</version>
+    <version>6.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>fcrepo-kernel-api</artifactId>
   <name>Fedora Repository Kernel API</name>
@@ -37,7 +37,7 @@
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-configs</artifactId>
-      <version>6.0.0-beta-1</version>
+      <version>6.0.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
