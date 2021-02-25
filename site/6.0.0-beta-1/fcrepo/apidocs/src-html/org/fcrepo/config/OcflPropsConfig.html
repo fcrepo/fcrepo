@@ -1,0 +1,503 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * Licensed to DuraSpace under one or more contributor license agreements.</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * See the NOTICE file distributed with this work for additional information</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * regarding copyright ownership.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> *</a>
+<span class="sourceLineNo">006</span><a id="line.6"> * DuraSpace licenses this file to you under the Apache License,</a>
+<span class="sourceLineNo">007</span><a id="line.7"> * Version 2.0 (the "License"); you may not use this file except in</a>
+<span class="sourceLineNo">008</span><a id="line.8"> * compliance with the License.  You may obtain a copy of the License at</a>
+<span class="sourceLineNo">009</span><a id="line.9"> *</a>
+<span class="sourceLineNo">010</span><a id="line.10"> *     http://www.apache.org/licenses/LICENSE-2.0</a>
+<span class="sourceLineNo">011</span><a id="line.11"> *</a>
+<span class="sourceLineNo">012</span><a id="line.12"> * Unless required by applicable law or agreed to in writing, software</a>
+<span class="sourceLineNo">013</span><a id="line.13"> * distributed under the License is distributed on an "AS IS" BASIS,</a>
+<span class="sourceLineNo">014</span><a id="line.14"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<span class="sourceLineNo">015</span><a id="line.15"> * See the License for the specific language governing permissions and</a>
+<span class="sourceLineNo">016</span><a id="line.16"> * limitations under the License.</a>
+<span class="sourceLineNo">017</span><a id="line.17"> */</a>
+<span class="sourceLineNo">018</span><a id="line.18"></a>
+<span class="sourceLineNo">019</span><a id="line.19">package org.fcrepo.config;</a>
+<span class="sourceLineNo">020</span><a id="line.20"></a>
+<span class="sourceLineNo">021</span><a id="line.21">import java.io.IOException;</a>
+<span class="sourceLineNo">022</span><a id="line.22">import java.nio.file.Files;</a>
+<span class="sourceLineNo">023</span><a id="line.23">import java.nio.file.Path;</a>
+<span class="sourceLineNo">024</span><a id="line.24">import java.util.List;</a>
+<span class="sourceLineNo">025</span><a id="line.25">import java.util.Objects;</a>
+<span class="sourceLineNo">026</span><a id="line.26">import java.util.stream.Collectors;</a>
+<span class="sourceLineNo">027</span><a id="line.27"></a>
+<span class="sourceLineNo">028</span><a id="line.28">import javax.annotation.PostConstruct;</a>
+<span class="sourceLineNo">029</span><a id="line.29"></a>
+<span class="sourceLineNo">030</span><a id="line.30">import org.slf4j.Logger;</a>
+<span class="sourceLineNo">031</span><a id="line.31">import org.slf4j.LoggerFactory;</a>
+<span class="sourceLineNo">032</span><a id="line.32">import org.springframework.beans.factory.annotation.Value;</a>
+<span class="sourceLineNo">033</span><a id="line.33">import org.springframework.context.annotation.Configuration;</a>
+<span class="sourceLineNo">034</span><a id="line.34"></a>
+<span class="sourceLineNo">035</span><a id="line.35">/**</a>
+<span class="sourceLineNo">036</span><a id="line.36"> * Fedora's OCFL related configuration properties</a>
+<span class="sourceLineNo">037</span><a id="line.37"> *</a>
+<span class="sourceLineNo">038</span><a id="line.38"> * @author pwinckles</a>
+<span class="sourceLineNo">039</span><a id="line.39"> * @since 6.0.0</a>
+<span class="sourceLineNo">040</span><a id="line.40"> */</a>
+<span class="sourceLineNo">041</span><a id="line.41">@Configuration</a>
+<span class="sourceLineNo">042</span><a id="line.42">public class OcflPropsConfig extends BasePropsConfig {</a>
+<span class="sourceLineNo">043</span><a id="line.43"></a>
+<span class="sourceLineNo">044</span><a id="line.44">    private static final Logger LOGGER = LoggerFactory.getLogger(OcflPropsConfig.class);</a>
+<span class="sourceLineNo">045</span><a id="line.45"></a>
+<span class="sourceLineNo">046</span><a id="line.46">    public static final String FCREPO_OCFL_STAGING = "fcrepo.ocfl.staging";</a>
+<span class="sourceLineNo">047</span><a id="line.47">    public static final String FCREPO_OCFL_ROOT = "fcrepo.ocfl.root";</a>
+<span class="sourceLineNo">048</span><a id="line.48">    public static final String FCREPO_OCFL_TEMP = "fcrepo.ocfl.temp";</a>
+<span class="sourceLineNo">049</span><a id="line.49">    private static final String FCREPO_OCFL_S3_BUCKET = "fcrepo.ocfl.s3.bucket";</a>
+<span class="sourceLineNo">050</span><a id="line.50"></a>
+<span class="sourceLineNo">051</span><a id="line.51">    private static final String OCFL_STAGING = "staging";</a>
+<span class="sourceLineNo">052</span><a id="line.52">    private static final String OCFL_ROOT = "ocfl-root";</a>
+<span class="sourceLineNo">053</span><a id="line.53">    private static final String OCFL_TEMP = "ocfl-temp";</a>
+<span class="sourceLineNo">054</span><a id="line.54"></a>
+<span class="sourceLineNo">055</span><a id="line.55">    private static final String FCREPO_PERSISTENCE_ALGORITHM = "fcrepo.persistence.defaultDigestAlgorithm";</a>
+<span class="sourceLineNo">056</span><a id="line.56"></a>
+<span class="sourceLineNo">057</span><a id="line.57">    @Value("${" + FCREPO_OCFL_STAGING + ":#{fedoraPropsConfig.fedoraData.resolve('" + OCFL_STAGING + "')}}")</a>
+<span class="sourceLineNo">058</span><a id="line.58">    private Path fedoraOcflStaging;</a>
+<span class="sourceLineNo">059</span><a id="line.59"></a>
+<span class="sourceLineNo">060</span><a id="line.60">    @Value("${" + FCREPO_OCFL_ROOT + ":#{fedoraPropsConfig.fedoraData.resolve('" + OCFL_ROOT + "')}}")</a>
+<span class="sourceLineNo">061</span><a id="line.61">    private Path ocflRepoRoot;</a>
+<span class="sourceLineNo">062</span><a id="line.62"></a>
+<span class="sourceLineNo">063</span><a id="line.63">    @Value("${" + FCREPO_OCFL_TEMP + ":#{fedoraPropsConfig.fedoraData.resolve('" + OCFL_TEMP + "')}}")</a>
+<span class="sourceLineNo">064</span><a id="line.64">    private Path ocflTemp;</a>
+<span class="sourceLineNo">065</span><a id="line.65"></a>
+<span class="sourceLineNo">066</span><a id="line.66">    /**</a>
+<span class="sourceLineNo">067</span><a id="line.67">     * Controls whether changes are committed to new OCFL versions or to a mutable HEAD</a>
+<span class="sourceLineNo">068</span><a id="line.68">     */</a>
+<span class="sourceLineNo">069</span><a id="line.69">    @Value("${fcrepo.autoversioning.enabled:true}")</a>
+<span class="sourceLineNo">070</span><a id="line.70">    private boolean autoVersioningEnabled;</a>
+<span class="sourceLineNo">071</span><a id="line.71"></a>
+<span class="sourceLineNo">072</span><a id="line.72">    @Value("${fcrepo.storage:ocfl-fs}")</a>
+<span class="sourceLineNo">073</span><a id="line.73">    private String storageStr;</a>
+<span class="sourceLineNo">074</span><a id="line.74">    private Storage storage;</a>
+<span class="sourceLineNo">075</span><a id="line.75"></a>
+<span class="sourceLineNo">076</span><a id="line.76">    @Value("${fcrepo.aws.access-key:}")</a>
+<span class="sourceLineNo">077</span><a id="line.77">    private String awsAccessKey;</a>
+<span class="sourceLineNo">078</span><a id="line.78"></a>
+<span class="sourceLineNo">079</span><a id="line.79">    @Value("${fcrepo.aws.secret-key:}")</a>
+<span class="sourceLineNo">080</span><a id="line.80">    private String awsSecretKey;</a>
+<span class="sourceLineNo">081</span><a id="line.81"></a>
+<span class="sourceLineNo">082</span><a id="line.82">    @Value("${fcrepo.aws.region:}")</a>
+<span class="sourceLineNo">083</span><a id="line.83">    private String awsRegion;</a>
+<span class="sourceLineNo">084</span><a id="line.84"></a>
+<span class="sourceLineNo">085</span><a id="line.85">    @Value("${" + FCREPO_OCFL_S3_BUCKET + ":}")</a>
+<span class="sourceLineNo">086</span><a id="line.86">    private String ocflS3Bucket;</a>
+<span class="sourceLineNo">087</span><a id="line.87"></a>
+<span class="sourceLineNo">088</span><a id="line.88">    @Value("${fcrepo.ocfl.s3.prefix:}")</a>
+<span class="sourceLineNo">089</span><a id="line.89">    private String ocflS3Prefix;</a>
+<span class="sourceLineNo">090</span><a id="line.90"></a>
+<span class="sourceLineNo">091</span><a id="line.91">    @Value("${fcrepo.resource-header-cache.enable:true}")</a>
+<span class="sourceLineNo">092</span><a id="line.92">    private boolean resourceHeadersCacheEnabled;</a>
+<span class="sourceLineNo">093</span><a id="line.93"></a>
+<span class="sourceLineNo">094</span><a id="line.94">    @Value("${fcrepo.resource-header-cache.max-size:512}")</a>
+<span class="sourceLineNo">095</span><a id="line.95">    private long resourceHeadersCacheMaxSize;</a>
+<span class="sourceLineNo">096</span><a id="line.96"></a>
+<span class="sourceLineNo">097</span><a id="line.97">    @Value("${fcrepo.resource-header-cache.expire-after-seconds:600}")</a>
+<span class="sourceLineNo">098</span><a id="line.98">    private long resourceHeadersCacheExpireAfterSeconds;</a>
+<span class="sourceLineNo">099</span><a id="line.99"></a>
+<span class="sourceLineNo">100</span><a id="line.100">    @Value("${fcrepo.ocfl.reindex.threads:-1}")</a>
+<span class="sourceLineNo">101</span><a id="line.101">    private long reindexThreads;</a>
+<span class="sourceLineNo">102</span><a id="line.102"></a>
+<span class="sourceLineNo">103</span><a id="line.103">    @Value("${fcrepo.ocfl.reindex.batchSize:100}")</a>
+<span class="sourceLineNo">104</span><a id="line.104">    private long reindexBatchSize;</a>
+<span class="sourceLineNo">105</span><a id="line.105"></a>
+<span class="sourceLineNo">106</span><a id="line.106">    @Value("${fcrepo.ocfl.reindex.failOnError:true}")</a>
+<span class="sourceLineNo">107</span><a id="line.107">    private boolean reindexFailOnError;</a>
+<span class="sourceLineNo">108</span><a id="line.108"></a>
+<span class="sourceLineNo">109</span><a id="line.109">    @Value("${" + FCREPO_PERSISTENCE_ALGORITHM + ":sha512}")</a>
+<span class="sourceLineNo">110</span><a id="line.110">    private String FCREPO_DIGEST_ALGORITHM_VALUE;</a>
+<span class="sourceLineNo">111</span><a id="line.111"></a>
+<span class="sourceLineNo">112</span><a id="line.112">    private DigestAlgorithm FCREPO_DIGEST_ALGORITHM;</a>
+<span class="sourceLineNo">113</span><a id="line.113"></a>
+<span class="sourceLineNo">114</span><a id="line.114">    /**</a>
+<span class="sourceLineNo">115</span><a id="line.115">     * List of valid choices for fcrepo.persistence.defaultDigestAlgorithm</a>
+<span class="sourceLineNo">116</span><a id="line.116">     */</a>
+<span class="sourceLineNo">117</span><a id="line.117">    private static final List&lt;DigestAlgorithm&gt; FCREPO_VALID_DIGEST_ALGORITHMS = List.of(</a>
+<span class="sourceLineNo">118</span><a id="line.118">            DigestAlgorithm.SHA256,</a>
+<span class="sourceLineNo">119</span><a id="line.119">            DigestAlgorithm.SHA512</a>
+<span class="sourceLineNo">120</span><a id="line.120">    );</a>
+<span class="sourceLineNo">121</span><a id="line.121"></a>
+<span class="sourceLineNo">122</span><a id="line.122">    private static final long availableThreads = Runtime.getRuntime().availableProcessors();</a>
+<span class="sourceLineNo">123</span><a id="line.123"></a>
+<span class="sourceLineNo">124</span><a id="line.124">    @PostConstruct</a>
+<span class="sourceLineNo">125</span><a id="line.125">    private void postConstruct() throws IOException {</a>
+<span class="sourceLineNo">126</span><a id="line.126">        if (reindexThreads &lt; 0L) {</a>
+<span class="sourceLineNo">127</span><a id="line.127">            reindexThreads = computeDefaultReindexThreads();</a>
+<span class="sourceLineNo">128</span><a id="line.128">        } else {</a>
+<span class="sourceLineNo">129</span><a id="line.129">            reindexThreads = checkReindexThreadLimit(reindexThreads);</a>
+<span class="sourceLineNo">130</span><a id="line.130">        }</a>
+<span class="sourceLineNo">131</span><a id="line.131">        storage = Storage.fromString(storageStr);</a>
+<span class="sourceLineNo">132</span><a id="line.132">        LOGGER.info("Fedora storage type: {}", storage);</a>
+<span class="sourceLineNo">133</span><a id="line.133">        LOGGER.info("Fedora staging: {}", fedoraOcflStaging);</a>
+<span class="sourceLineNo">134</span><a id="line.134">        LOGGER.info("Fedora OCFL temp: {}", ocflTemp);</a>
+<span class="sourceLineNo">135</span><a id="line.135">        LOGGER.info("Fedora OCFL reindexing threads: {}", reindexThreads);</a>
+<span class="sourceLineNo">136</span><a id="line.136">        LOGGER.info("Fedora OCFL reindexing batch size: {}", reindexBatchSize);</a>
+<span class="sourceLineNo">137</span><a id="line.137">        LOGGER.info("Fedora OCFL reindexing fail on error: {}", reindexFailOnError);</a>
+<span class="sourceLineNo">138</span><a id="line.138">        Files.createDirectories(fedoraOcflStaging);</a>
+<span class="sourceLineNo">139</span><a id="line.139">        Files.createDirectories(ocflTemp);</a>
+<span class="sourceLineNo">140</span><a id="line.140"></a>
+<span class="sourceLineNo">141</span><a id="line.141">        if (storage == Storage.OCFL_FILESYSTEM) {</a>
+<span class="sourceLineNo">142</span><a id="line.142">            LOGGER.info("Fedora OCFL root: {}", ocflRepoRoot);</a>
+<span class="sourceLineNo">143</span><a id="line.143">            Files.createDirectories(ocflRepoRoot);</a>
+<span class="sourceLineNo">144</span><a id="line.144">        } else if (storage == Storage.OCFL_S3) {</a>
+<span class="sourceLineNo">145</span><a id="line.145">            Objects.requireNonNull(ocflS3Bucket,</a>
+<span class="sourceLineNo">146</span><a id="line.146">                    String.format("The property %s must be set when OCFL S3 storage is used", FCREPO_OCFL_S3_BUCKET));</a>
+<span class="sourceLineNo">147</span><a id="line.147"></a>
+<span class="sourceLineNo">148</span><a id="line.148">            LOGGER.info("Fedora AWS access key: {}", awsAccessKey);</a>
+<span class="sourceLineNo">149</span><a id="line.149">            LOGGER.info("Fedora AWS secret key set: {}", Objects.isNull(awsSecretKey));</a>
+<span class="sourceLineNo">150</span><a id="line.150">            LOGGER.info("Fedora AWS region: {}", awsRegion);</a>
+<span class="sourceLineNo">151</span><a id="line.151">            LOGGER.info("Fedora OCFL S3 bucket: {}", ocflS3Bucket);</a>
+<span class="sourceLineNo">152</span><a id="line.152">            LOGGER.info("Fedora OCFL S3 prefix: {}", ocflS3Prefix);</a>
+<span class="sourceLineNo">153</span><a id="line.153">        }</a>
+<span class="sourceLineNo">154</span><a id="line.154">        FCREPO_DIGEST_ALGORITHM = DigestAlgorithm.fromAlgorithm(FCREPO_DIGEST_ALGORITHM_VALUE);</a>
+<span class="sourceLineNo">155</span><a id="line.155">        // Throw error if the configured default digest is not known to fedora or is not a valid option</a>
+<span class="sourceLineNo">156</span><a id="line.156">        if (DigestAlgorithm.MISSING.equals(FCREPO_DIGEST_ALGORITHM) ||</a>
+<span class="sourceLineNo">157</span><a id="line.157">                !FCREPO_VALID_DIGEST_ALGORITHMS.contains(FCREPO_DIGEST_ALGORITHM)) {</a>
+<span class="sourceLineNo">158</span><a id="line.158">            throw new IllegalArgumentException(String.format("Invalid %s property configured: %s, must be one of %s",</a>
+<span class="sourceLineNo">159</span><a id="line.159">                    FCREPO_PERSISTENCE_ALGORITHM, FCREPO_DIGEST_ALGORITHM_VALUE,</a>
+<span class="sourceLineNo">160</span><a id="line.160">                    FCREPO_VALID_DIGEST_ALGORITHMS.stream().map(DigestAlgorithm::getAlgorithm)</a>
+<span class="sourceLineNo">161</span><a id="line.161">                            .collect(Collectors.joining(", "))));</a>
+<span class="sourceLineNo">162</span><a id="line.162">        }</a>
+<span class="sourceLineNo">163</span><a id="line.163">        LOGGER.info("Fedora OCFL digest algorithm: {}", FCREPO_DIGEST_ALGORITHM.getAlgorithm());</a>
+<span class="sourceLineNo">164</span><a id="line.164">    }</a>
+<span class="sourceLineNo">165</span><a id="line.165"></a>
+<span class="sourceLineNo">166</span><a id="line.166">    /**</a>
+<span class="sourceLineNo">167</span><a id="line.167">     * @return Path to directory Fedora stages resources before moving them into OCFL</a>
+<span class="sourceLineNo">168</span><a id="line.168">     */</a>
+<span class="sourceLineNo">169</span><a id="line.169">    public Path getFedoraOcflStaging() {</a>
+<span class="sourceLineNo">170</span><a id="line.170">        return fedoraOcflStaging;</a>
+<span class="sourceLineNo">171</span><a id="line.171">    }</a>
+<span class="sourceLineNo">172</span><a id="line.172"></a>
+<span class="sourceLineNo">173</span><a id="line.173">    /**</a>
+<span class="sourceLineNo">174</span><a id="line.174">     * Sets the path to the Fedora staging directory -- should only be used for testing purposes.</a>
+<span class="sourceLineNo">175</span><a id="line.175">     *</a>
+<span class="sourceLineNo">176</span><a id="line.176">     * @param fedoraOcflStaging Path to Fedora staging directory</a>
+<span class="sourceLineNo">177</span><a id="line.177">     */</a>
+<span class="sourceLineNo">178</span><a id="line.178">    public void setFedoraOcflStaging(final Path fedoraOcflStaging) {</a>
+<span class="sourceLineNo">179</span><a id="line.179">        this.fedoraOcflStaging = fedoraOcflStaging;</a>
+<span class="sourceLineNo">180</span><a id="line.180">    }</a>
+<span class="sourceLineNo">181</span><a id="line.181"></a>
+<span class="sourceLineNo">182</span><a id="line.182">    /**</a>
+<span class="sourceLineNo">183</span><a id="line.183">     * @return Path to OCFL root directory</a>
+<span class="sourceLineNo">184</span><a id="line.184">     */</a>
+<span class="sourceLineNo">185</span><a id="line.185">    public Path getOcflRepoRoot() {</a>
+<span class="sourceLineNo">186</span><a id="line.186">        return ocflRepoRoot;</a>
+<span class="sourceLineNo">187</span><a id="line.187">    }</a>
+<span class="sourceLineNo">188</span><a id="line.188"></a>
+<span class="sourceLineNo">189</span><a id="line.189">    /**</a>
+<span class="sourceLineNo">190</span><a id="line.190">     * Sets the path to the Fedora OCFL root directory -- should only be used for testing purposes.</a>
+<span class="sourceLineNo">191</span><a id="line.191">     *</a>
+<span class="sourceLineNo">192</span><a id="line.192">     * @param ocflRepoRoot Path to Fedora OCFL root directory</a>
+<span class="sourceLineNo">193</span><a id="line.193">     */</a>
+<span class="sourceLineNo">194</span><a id="line.194">    public void setOcflRepoRoot(final Path ocflRepoRoot) {</a>
+<span class="sourceLineNo">195</span><a id="line.195">        this.ocflRepoRoot = ocflRepoRoot;</a>
+<span class="sourceLineNo">196</span><a id="line.196">    }</a>
+<span class="sourceLineNo">197</span><a id="line.197"></a>
+<span class="sourceLineNo">198</span><a id="line.198">    /**</a>
+<span class="sourceLineNo">199</span><a id="line.199">     * @return Path to the temp directory used by the OCFL client</a>
+<span class="sourceLineNo">200</span><a id="line.200">     */</a>
+<span class="sourceLineNo">201</span><a id="line.201">    public Path getOcflTemp() {</a>
+<span class="sourceLineNo">202</span><a id="line.202">        return ocflTemp;</a>
+<span class="sourceLineNo">203</span><a id="line.203">    }</a>
+<span class="sourceLineNo">204</span><a id="line.204"></a>
+<span class="sourceLineNo">205</span><a id="line.205">    /**</a>
+<span class="sourceLineNo">206</span><a id="line.206">     * Sets the path to the OCFL temp directory -- should only be used for testing purposes.</a>
+<span class="sourceLineNo">207</span><a id="line.207">     *</a>
+<span class="sourceLineNo">208</span><a id="line.208">     * @param ocflTemp Path to OCFL temp directory</a>
+<span class="sourceLineNo">209</span><a id="line.209">     */</a>
+<span class="sourceLineNo">210</span><a id="line.210">    public void setOcflTemp(final Path ocflTemp) {</a>
+<span class="sourceLineNo">211</span><a id="line.211">        this.ocflTemp = ocflTemp;</a>
+<span class="sourceLineNo">212</span><a id="line.212">    }</a>
+<span class="sourceLineNo">213</span><a id="line.213"></a>
+<span class="sourceLineNo">214</span><a id="line.214">    /**</a>
+<span class="sourceLineNo">215</span><a id="line.215">     * @return true if every update should create a new OCFL version; false if the mutable HEAD should be used</a>
+<span class="sourceLineNo">216</span><a id="line.216">     */</a>
+<span class="sourceLineNo">217</span><a id="line.217">    public boolean isAutoVersioningEnabled() {</a>
+<span class="sourceLineNo">218</span><a id="line.218">        return autoVersioningEnabled;</a>
+<span class="sourceLineNo">219</span><a id="line.219">    }</a>
+<span class="sourceLineNo">220</span><a id="line.220"></a>
+<span class="sourceLineNo">221</span><a id="line.221">    /**</a>
+<span class="sourceLineNo">222</span><a id="line.222">     * Determines whether or not new OCFL versions are created on every update.</a>
+<span class="sourceLineNo">223</span><a id="line.223">     *</a>
+<span class="sourceLineNo">224</span><a id="line.224">     * @param autoVersioningEnabled true to create new versions on every update</a>
+<span class="sourceLineNo">225</span><a id="line.225">     */</a>
+<span class="sourceLineNo">226</span><a id="line.226">    public void setAutoVersioningEnabled(final boolean autoVersioningEnabled) {</a>
+<span class="sourceLineNo">227</span><a id="line.227">        this.autoVersioningEnabled = autoVersioningEnabled;</a>
+<span class="sourceLineNo">228</span><a id="line.228">    }</a>
+<span class="sourceLineNo">229</span><a id="line.229"></a>
+<span class="sourceLineNo">230</span><a id="line.230">    /**</a>
+<span class="sourceLineNo">231</span><a id="line.231">     * @return Indicates the storage type. ocfl-fs is the default</a>
+<span class="sourceLineNo">232</span><a id="line.232">     */</a>
+<span class="sourceLineNo">233</span><a id="line.233">    public Storage getStorage() {</a>
+<span class="sourceLineNo">234</span><a id="line.234">        return storage;</a>
+<span class="sourceLineNo">235</span><a id="line.235">    }</a>
+<span class="sourceLineNo">236</span><a id="line.236"></a>
+<span class="sourceLineNo">237</span><a id="line.237">    /**</a>
+<span class="sourceLineNo">238</span><a id="line.238">     * @param storage storage to use</a>
+<span class="sourceLineNo">239</span><a id="line.239">     */</a>
+<span class="sourceLineNo">240</span><a id="line.240">    public void setStorage(final Storage storage) {</a>
+<span class="sourceLineNo">241</span><a id="line.241">        this.storage = storage;</a>
+<span class="sourceLineNo">242</span><a id="line.242">    }</a>
+<span class="sourceLineNo">243</span><a id="line.243"></a>
+<span class="sourceLineNo">244</span><a id="line.244">    /**</a>
+<span class="sourceLineNo">245</span><a id="line.245">     * @return the aws access key to use, may be null</a>
+<span class="sourceLineNo">246</span><a id="line.246">     */</a>
+<span class="sourceLineNo">247</span><a id="line.247">    public String getAwsAccessKey() {</a>
+<span class="sourceLineNo">248</span><a id="line.248">        return awsAccessKey;</a>
+<span class="sourceLineNo">249</span><a id="line.249">    }</a>
+<span class="sourceLineNo">250</span><a id="line.250"></a>
+<span class="sourceLineNo">251</span><a id="line.251">    /**</a>
+<span class="sourceLineNo">252</span><a id="line.252">     * @param awsAccessKey the aws access key to use</a>
+<span class="sourceLineNo">253</span><a id="line.253">     */</a>
+<span class="sourceLineNo">254</span><a id="line.254">    public void setAwsAccessKey(final String awsAccessKey) {</a>
+<span class="sourceLineNo">255</span><a id="line.255">        this.awsAccessKey = awsAccessKey;</a>
+<span class="sourceLineNo">256</span><a id="line.256">    }</a>
+<span class="sourceLineNo">257</span><a id="line.257"></a>
+<span class="sourceLineNo">258</span><a id="line.258">    /**</a>
+<span class="sourceLineNo">259</span><a id="line.259">     * @return the aws secret key to use, may be null</a>
+<span class="sourceLineNo">260</span><a id="line.260">     */</a>
+<span class="sourceLineNo">261</span><a id="line.261">    public String getAwsSecretKey() {</a>
+<span class="sourceLineNo">262</span><a id="line.262">        return awsSecretKey;</a>
+<span class="sourceLineNo">263</span><a id="line.263">    }</a>
+<span class="sourceLineNo">264</span><a id="line.264"></a>
+<span class="sourceLineNo">265</span><a id="line.265">    /**</a>
+<span class="sourceLineNo">266</span><a id="line.266">     * @param awsSecretKey the aws secret key to use</a>
+<span class="sourceLineNo">267</span><a id="line.267">     */</a>
+<span class="sourceLineNo">268</span><a id="line.268">    public void setAwsSecretKey(final String awsSecretKey) {</a>
+<span class="sourceLineNo">269</span><a id="line.269">        this.awsSecretKey = awsSecretKey;</a>
+<span class="sourceLineNo">270</span><a id="line.270">    }</a>
+<span class="sourceLineNo">271</span><a id="line.271"></a>
+<span class="sourceLineNo">272</span><a id="line.272">    /**</a>
+<span class="sourceLineNo">273</span><a id="line.273">     * @return the aws region to use, may be null</a>
+<span class="sourceLineNo">274</span><a id="line.274">     */</a>
+<span class="sourceLineNo">275</span><a id="line.275">    public String getAwsRegion() {</a>
+<span class="sourceLineNo">276</span><a id="line.276">        return awsRegion;</a>
+<span class="sourceLineNo">277</span><a id="line.277">    }</a>
+<span class="sourceLineNo">278</span><a id="line.278"></a>
+<span class="sourceLineNo">279</span><a id="line.279">    /**</a>
+<span class="sourceLineNo">280</span><a id="line.280">     * @param awsRegion the aws region to use</a>
+<span class="sourceLineNo">281</span><a id="line.281">     */</a>
+<span class="sourceLineNo">282</span><a id="line.282">    public void setAwsRegion(final String awsRegion) {</a>
+<span class="sourceLineNo">283</span><a id="line.283">        this.awsRegion = awsRegion;</a>
+<span class="sourceLineNo">284</span><a id="line.284">    }</a>
+<span class="sourceLineNo">285</span><a id="line.285"></a>
+<span class="sourceLineNo">286</span><a id="line.286">    /**</a>
+<span class="sourceLineNo">287</span><a id="line.287">     * @return the s3 bucket to store objects in</a>
+<span class="sourceLineNo">288</span><a id="line.288">     */</a>
+<span class="sourceLineNo">289</span><a id="line.289">    public String getOcflS3Bucket() {</a>
+<span class="sourceLineNo">290</span><a id="line.290">        return ocflS3Bucket;</a>
+<span class="sourceLineNo">291</span><a id="line.291">    }</a>
+<span class="sourceLineNo">292</span><a id="line.292"></a>
+<span class="sourceLineNo">293</span><a id="line.293">    /**</a>
+<span class="sourceLineNo">294</span><a id="line.294">     * @param ocflS3Bucket sets the s3 bucket to store objects in</a>
+<span class="sourceLineNo">295</span><a id="line.295">     */</a>
+<span class="sourceLineNo">296</span><a id="line.296">    public void setOcflS3Bucket(final String ocflS3Bucket) {</a>
+<span class="sourceLineNo">297</span><a id="line.297">        this.ocflS3Bucket = ocflS3Bucket;</a>
+<span class="sourceLineNo">298</span><a id="line.298">    }</a>
+<span class="sourceLineNo">299</span><a id="line.299"></a>
+<span class="sourceLineNo">300</span><a id="line.300">    /**</a>
+<span class="sourceLineNo">301</span><a id="line.301">     * @return the s3 prefix to store objects under, may be null</a>
+<span class="sourceLineNo">302</span><a id="line.302">     */</a>
+<span class="sourceLineNo">303</span><a id="line.303">    public String getOcflS3Prefix() {</a>
+<span class="sourceLineNo">304</span><a id="line.304">        return ocflS3Prefix;</a>
+<span class="sourceLineNo">305</span><a id="line.305">    }</a>
+<span class="sourceLineNo">306</span><a id="line.306"></a>
+<span class="sourceLineNo">307</span><a id="line.307">    /**</a>
+<span class="sourceLineNo">308</span><a id="line.308">     * @param ocflS3Prefix the prefix to store objects under</a>
+<span class="sourceLineNo">309</span><a id="line.309">     */</a>
+<span class="sourceLineNo">310</span><a id="line.310">    public void setOcflS3Prefix(final String ocflS3Prefix) {</a>
+<span class="sourceLineNo">311</span><a id="line.311">        this.ocflS3Prefix = ocflS3Prefix;</a>
+<span class="sourceLineNo">312</span><a id="line.312">    }</a>
+<span class="sourceLineNo">313</span><a id="line.313"></a>
+<span class="sourceLineNo">314</span><a id="line.314">    /**</a>
+<span class="sourceLineNo">315</span><a id="line.315">     * @return whether or not to enable the resource headers cache</a>
+<span class="sourceLineNo">316</span><a id="line.316">     */</a>
+<span class="sourceLineNo">317</span><a id="line.317">    public boolean isResourceHeadersCacheEnabled() {</a>
+<span class="sourceLineNo">318</span><a id="line.318">        return resourceHeadersCacheEnabled;</a>
+<span class="sourceLineNo">319</span><a id="line.319">    }</a>
+<span class="sourceLineNo">320</span><a id="line.320"></a>
+<span class="sourceLineNo">321</span><a id="line.321">    /**</a>
+<span class="sourceLineNo">322</span><a id="line.322">     * @param resourceHeadersCacheEnabled whether or not to enable the resource headers cache</a>
+<span class="sourceLineNo">323</span><a id="line.323">     */</a>
+<span class="sourceLineNo">324</span><a id="line.324">    public void setResourceHeadersCacheEnabled(final boolean resourceHeadersCacheEnabled) {</a>
+<span class="sourceLineNo">325</span><a id="line.325">        this.resourceHeadersCacheEnabled = resourceHeadersCacheEnabled;</a>
+<span class="sourceLineNo">326</span><a id="line.326">    }</a>
+<span class="sourceLineNo">327</span><a id="line.327"></a>
+<span class="sourceLineNo">328</span><a id="line.328">    /**</a>
+<span class="sourceLineNo">329</span><a id="line.329">     * @return maximum number or resource headers in cache</a>
+<span class="sourceLineNo">330</span><a id="line.330">     */</a>
+<span class="sourceLineNo">331</span><a id="line.331">    public long getResourceHeadersCacheMaxSize() {</a>
+<span class="sourceLineNo">332</span><a id="line.332">        return resourceHeadersCacheMaxSize;</a>
+<span class="sourceLineNo">333</span><a id="line.333">    }</a>
+<span class="sourceLineNo">334</span><a id="line.334"></a>
+<span class="sourceLineNo">335</span><a id="line.335">    /**</a>
+<span class="sourceLineNo">336</span><a id="line.336">     * @param resourceHeadersCacheMaxSize maximum number of resource headers in cache</a>
+<span class="sourceLineNo">337</span><a id="line.337">     */</a>
+<span class="sourceLineNo">338</span><a id="line.338">    public void setResourceHeadersCacheMaxSize(final long resourceHeadersCacheMaxSize) {</a>
+<span class="sourceLineNo">339</span><a id="line.339">        this.resourceHeadersCacheMaxSize = resourceHeadersCacheMaxSize;</a>
+<span class="sourceLineNo">340</span><a id="line.340">    }</a>
+<span class="sourceLineNo">341</span><a id="line.341"></a>
+<span class="sourceLineNo">342</span><a id="line.342">    /**</a>
+<span class="sourceLineNo">343</span><a id="line.343">     * @return number of seconds to wait before expiring a resource header from the cache</a>
+<span class="sourceLineNo">344</span><a id="line.344">     */</a>
+<span class="sourceLineNo">345</span><a id="line.345">    public long getResourceHeadersCacheExpireAfterSeconds() {</a>
+<span class="sourceLineNo">346</span><a id="line.346">        return resourceHeadersCacheExpireAfterSeconds;</a>
+<span class="sourceLineNo">347</span><a id="line.347">    }</a>
+<span class="sourceLineNo">348</span><a id="line.348"></a>
+<span class="sourceLineNo">349</span><a id="line.349">    /**</a>
+<span class="sourceLineNo">350</span><a id="line.350">     * @param resourceHeadersCacheExpireAfterSeconds</a>
+<span class="sourceLineNo">351</span><a id="line.351">     *      number of seconds to wait before expiring a resource header from the cache</a>
+<span class="sourceLineNo">352</span><a id="line.352">     */</a>
+<span class="sourceLineNo">353</span><a id="line.353">    public void setResourceHeadersCacheExpireAfterSeconds(final long resourceHeadersCacheExpireAfterSeconds) {</a>
+<span class="sourceLineNo">354</span><a id="line.354">        this.resourceHeadersCacheExpireAfterSeconds = resourceHeadersCacheExpireAfterSeconds;</a>
+<span class="sourceLineNo">355</span><a id="line.355">    }</a>
+<span class="sourceLineNo">356</span><a id="line.356"></a>
+<span class="sourceLineNo">357</span><a id="line.357">    /**</a>
+<span class="sourceLineNo">358</span><a id="line.358">     * @param threads</a>
+<span class="sourceLineNo">359</span><a id="line.359">     *   number of threads to use when rebuilding from Fedora OCFL on disk.</a>
+<span class="sourceLineNo">360</span><a id="line.360">     */</a>
+<span class="sourceLineNo">361</span><a id="line.361">    public void setReindexingThreads(final long threads) {</a>
+<span class="sourceLineNo">362</span><a id="line.362">        this.reindexThreads = checkReindexThreadLimit(threads);</a>
+<span class="sourceLineNo">363</span><a id="line.363">    }</a>
+<span class="sourceLineNo">364</span><a id="line.364"></a>
+<span class="sourceLineNo">365</span><a id="line.365">    /**</a>
+<span class="sourceLineNo">366</span><a id="line.366">     * @return number of threads to use when rebuilding from Fedora OCFL on disk.</a>
+<span class="sourceLineNo">367</span><a id="line.367">     */</a>
+<span class="sourceLineNo">368</span><a id="line.368">    public long getReindexingThreads() {</a>
+<span class="sourceLineNo">369</span><a id="line.369">        return this.reindexThreads;</a>
+<span class="sourceLineNo">370</span><a id="line.370">    }</a>
+<span class="sourceLineNo">371</span><a id="line.371"></a>
+<span class="sourceLineNo">372</span><a id="line.372">    /**</a>
+<span class="sourceLineNo">373</span><a id="line.373">     * @return number of OCFL ids for a the reindexing manager to hand out at once.</a>
+<span class="sourceLineNo">374</span><a id="line.374">     */</a>
+<span class="sourceLineNo">375</span><a id="line.375">    public long getReindexBatchSize() {</a>
+<span class="sourceLineNo">376</span><a id="line.376">        return reindexBatchSize;</a>
+<span class="sourceLineNo">377</span><a id="line.377">    }</a>
+<span class="sourceLineNo">378</span><a id="line.378"></a>
+<span class="sourceLineNo">379</span><a id="line.379">    /**</a>
+<span class="sourceLineNo">380</span><a id="line.380">     * @param reindexBatchSize</a>
+<span class="sourceLineNo">381</span><a id="line.381">     *   number of OCFL ids for a the reindexing manager to hand out at once.</a>
+<span class="sourceLineNo">382</span><a id="line.382">     */</a>
+<span class="sourceLineNo">383</span><a id="line.383">    public void setReindexBatchSize(final long reindexBatchSize) {</a>
+<span class="sourceLineNo">384</span><a id="line.384">        this.reindexBatchSize = reindexBatchSize;</a>
+<span class="sourceLineNo">385</span><a id="line.385">    }</a>
+<span class="sourceLineNo">386</span><a id="line.386"></a>
+<span class="sourceLineNo">387</span><a id="line.387">    /**</a>
+<span class="sourceLineNo">388</span><a id="line.388">     * @return whether to stop the entire reindexing process if a single object fails.</a>
+<span class="sourceLineNo">389</span><a id="line.389">     */</a>
+<span class="sourceLineNo">390</span><a id="line.390">    public boolean isReindexFailOnError() {</a>
+<span class="sourceLineNo">391</span><a id="line.391">        return reindexFailOnError;</a>
+<span class="sourceLineNo">392</span><a id="line.392">    }</a>
+<span class="sourceLineNo">393</span><a id="line.393"></a>
+<span class="sourceLineNo">394</span><a id="line.394">    /**</a>
+<span class="sourceLineNo">395</span><a id="line.395">     * @param reindexFailOnError</a>
+<span class="sourceLineNo">396</span><a id="line.396">     *   whether to stop the entire reindexing process if a single object fails.</a>
+<span class="sourceLineNo">397</span><a id="line.397">     */</a>
+<span class="sourceLineNo">398</span><a id="line.398">    public void setReindexFailOnError(final boolean reindexFailOnError) {</a>
+<span class="sourceLineNo">399</span><a id="line.399">        this.reindexFailOnError = reindexFailOnError;</a>
+<span class="sourceLineNo">400</span><a id="line.400">    }</a>
+<span class="sourceLineNo">401</span><a id="line.401"></a>
+<span class="sourceLineNo">402</span><a id="line.402">    /**</a>
+<span class="sourceLineNo">403</span><a id="line.403">     * Check we don't create too few reindexing threads.</a>
+<span class="sourceLineNo">404</span><a id="line.404">     * @param threads the number of threads requested.</a>
+<span class="sourceLineNo">405</span><a id="line.405">     * @return higher of the requested amount or 1</a>
+<span class="sourceLineNo">406</span><a id="line.406">     */</a>
+<span class="sourceLineNo">407</span><a id="line.407">    private long checkReindexThreadLimit(final long threads) {</a>
+<span class="sourceLineNo">408</span><a id="line.408">       if (threads &lt;= 0) {</a>
+<span class="sourceLineNo">409</span><a id="line.409">            LOGGER.warn("Can't have fewer than 1 reindexing thread, setting to 1.");</a>
+<span class="sourceLineNo">410</span><a id="line.410">            return 1;</a>
+<span class="sourceLineNo">411</span><a id="line.411">        } else {</a>
+<span class="sourceLineNo">412</span><a id="line.412">            return threads;</a>
+<span class="sourceLineNo">413</span><a id="line.413">        }</a>
+<span class="sourceLineNo">414</span><a id="line.414">    }</a>
+<span class="sourceLineNo">415</span><a id="line.415"></a>
+<span class="sourceLineNo">416</span><a id="line.416">    /**</a>
+<span class="sourceLineNo">417</span><a id="line.417">     * @return number of available processors minus 1.</a>
+<span class="sourceLineNo">418</span><a id="line.418">     */</a>
+<span class="sourceLineNo">419</span><a id="line.419">    private static long computeDefaultReindexThreads() {</a>
+<span class="sourceLineNo">420</span><a id="line.420">        return availableThreads - 1;</a>
+<span class="sourceLineNo">421</span><a id="line.421">    }</a>
+<span class="sourceLineNo">422</span><a id="line.422"></a>
+<span class="sourceLineNo">423</span><a id="line.423">    /**</a>
+<span class="sourceLineNo">424</span><a id="line.424">     * @return the configured OCFL digest algorithm</a>
+<span class="sourceLineNo">425</span><a id="line.425">     */</a>
+<span class="sourceLineNo">426</span><a id="line.426">    public DigestAlgorithm getDefaultDigestAlgorithm() {</a>
+<span class="sourceLineNo">427</span><a id="line.427">        return FCREPO_DIGEST_ALGORITHM;</a>
+<span class="sourceLineNo">428</span><a id="line.428">    }</a>
+<span class="sourceLineNo">429</span><a id="line.429">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>

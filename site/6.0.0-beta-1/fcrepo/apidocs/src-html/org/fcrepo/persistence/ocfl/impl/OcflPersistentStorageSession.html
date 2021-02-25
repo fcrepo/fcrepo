@@ -1,0 +1,578 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * Licensed to DuraSpace under one or more contributor license agreements.</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * See the NOTICE file distributed with this work for additional information</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * regarding copyright ownership.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> *</a>
+<span class="sourceLineNo">006</span><a id="line.6"> * DuraSpace licenses this file to you under the Apache License,</a>
+<span class="sourceLineNo">007</span><a id="line.7"> * Version 2.0 (the "License"); you may not use this file except in</a>
+<span class="sourceLineNo">008</span><a id="line.8"> * compliance with the License.  You may obtain a copy of the License at</a>
+<span class="sourceLineNo">009</span><a id="line.9"> *</a>
+<span class="sourceLineNo">010</span><a id="line.10"> *     http://www.apache.org/licenses/LICENSE-2.0</a>
+<span class="sourceLineNo">011</span><a id="line.11"> *</a>
+<span class="sourceLineNo">012</span><a id="line.12"> * Unless required by applicable law or agreed to in writing, software</a>
+<span class="sourceLineNo">013</span><a id="line.13"> * distributed under the License is distributed on an "AS IS" BASIS,</a>
+<span class="sourceLineNo">014</span><a id="line.14"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<span class="sourceLineNo">015</span><a id="line.15"> * See the License for the specific language governing permissions and</a>
+<span class="sourceLineNo">016</span><a id="line.16"> * limitations under the License.</a>
+<span class="sourceLineNo">017</span><a id="line.17"> */</a>
+<span class="sourceLineNo">018</span><a id="line.18">package org.fcrepo.persistence.ocfl.impl;</a>
+<span class="sourceLineNo">019</span><a id="line.19"></a>
+<span class="sourceLineNo">020</span><a id="line.20">import com.github.benmanes.caffeine.cache.Caffeine;</a>
+<span class="sourceLineNo">021</span><a id="line.21">import org.apache.jena.rdf.model.Model;</a>
+<span class="sourceLineNo">022</span><a id="line.22">import org.apache.jena.riot.RDFDataMgr;</a>
+<span class="sourceLineNo">023</span><a id="line.23">import org.fcrepo.kernel.api.RdfStream;</a>
+<span class="sourceLineNo">024</span><a id="line.24">import org.fcrepo.kernel.api.identifiers.FedoraId;</a>
+<span class="sourceLineNo">025</span><a id="line.25">import org.fcrepo.kernel.api.models.ResourceHeaders;</a>
+<span class="sourceLineNo">026</span><a id="line.26">import org.fcrepo.kernel.api.operations.ResourceOperation;</a>
+<span class="sourceLineNo">027</span><a id="line.27">import org.fcrepo.kernel.api.rdf.DefaultRdfStream;</a>
+<span class="sourceLineNo">028</span><a id="line.28">import org.fcrepo.persistence.api.PersistentStorageSession;</a>
+<span class="sourceLineNo">029</span><a id="line.29">import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;</a>
+<span class="sourceLineNo">030</span><a id="line.30">import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;</a>
+<span class="sourceLineNo">031</span><a id="line.31">import org.fcrepo.persistence.api.exceptions.PersistentStorageException;</a>
+<span class="sourceLineNo">032</span><a id="line.32">import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;</a>
+<span class="sourceLineNo">033</span><a id="line.33">import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;</a>
+<span class="sourceLineNo">034</span><a id="line.34">import org.fcrepo.persistence.ocfl.api.Persister;</a>
+<span class="sourceLineNo">035</span><a id="line.35">import org.fcrepo.storage.ocfl.OcflObjectSession;</a>
+<span class="sourceLineNo">036</span><a id="line.36">import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;</a>
+<span class="sourceLineNo">037</span><a id="line.37">import org.fcrepo.storage.ocfl.OcflVersionInfo;</a>
+<span class="sourceLineNo">038</span><a id="line.38">import org.slf4j.Logger;</a>
+<span class="sourceLineNo">039</span><a id="line.39">import org.slf4j.LoggerFactory;</a>
+<span class="sourceLineNo">040</span><a id="line.40"></a>
+<span class="sourceLineNo">041</span><a id="line.41">import java.io.IOException;</a>
+<span class="sourceLineNo">042</span><a id="line.42">import java.io.InputStream;</a>
+<span class="sourceLineNo">043</span><a id="line.43">import java.time.Instant;</a>
+<span class="sourceLineNo">044</span><a id="line.44">import java.util.ArrayList;</a>
+<span class="sourceLineNo">045</span><a id="line.45">import java.util.Collections;</a>
+<span class="sourceLineNo">046</span><a id="line.46">import java.util.HashMap;</a>
+<span class="sourceLineNo">047</span><a id="line.47">import java.util.List;</a>
+<span class="sourceLineNo">048</span><a id="line.48">import java.util.Map;</a>
+<span class="sourceLineNo">049</span><a id="line.49">import java.util.TreeMap;</a>
+<span class="sourceLineNo">050</span><a id="line.50">import java.util.concurrent.ConcurrentHashMap;</a>
+<span class="sourceLineNo">051</span><a id="line.51">import java.util.concurrent.Phaser;</a>
+<span class="sourceLineNo">052</span><a id="line.52">import java.util.concurrent.TimeUnit;</a>
+<span class="sourceLineNo">053</span><a id="line.53">import java.util.concurrent.TimeoutException;</a>
+<span class="sourceLineNo">054</span><a id="line.54">import java.util.stream.Collectors;</a>
+<span class="sourceLineNo">055</span><a id="line.55"></a>
+<span class="sourceLineNo">056</span><a id="line.56">import static java.lang.String.format;</a>
+<span class="sourceLineNo">057</span><a id="line.57">import static java.util.concurrent.TimeUnit.MILLISECONDS;</a>
+<span class="sourceLineNo">058</span><a id="line.58">import static org.apache.jena.graph.NodeFactory.createURI;</a>
+<span class="sourceLineNo">059</span><a id="line.59">import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;</a>
+<span class="sourceLineNo">060</span><a id="line.60"></a>
+<span class="sourceLineNo">061</span><a id="line.61">/**</a>
+<span class="sourceLineNo">062</span><a id="line.62"> * OCFL Persistent Storage class.</a>
+<span class="sourceLineNo">063</span><a id="line.63"> *</a>
+<span class="sourceLineNo">064</span><a id="line.64"> * @author whikloj</a>
+<span class="sourceLineNo">065</span><a id="line.65"> * @since 2019-09-20</a>
+<span class="sourceLineNo">066</span><a id="line.66"> */</a>
+<span class="sourceLineNo">067</span><a id="line.67">public class OcflPersistentStorageSession implements PersistentStorageSession {</a>
+<span class="sourceLineNo">068</span><a id="line.68"></a>
+<span class="sourceLineNo">069</span><a id="line.69">    private static final Logger LOGGER = LoggerFactory.getLogger(OcflPersistentStorageSession.class);</a>
+<span class="sourceLineNo">070</span><a id="line.70"></a>
+<span class="sourceLineNo">071</span><a id="line.71">    private static final long AWAIT_TIMEOUT = 30000L;</a>
+<span class="sourceLineNo">072</span><a id="line.72"></a>
+<span class="sourceLineNo">073</span><a id="line.73">    /**</a>
+<span class="sourceLineNo">074</span><a id="line.74">     * Externally generated id for the session.</a>
+<span class="sourceLineNo">075</span><a id="line.75">     */</a>
+<span class="sourceLineNo">076</span><a id="line.76">    private final String sessionId;</a>
+<span class="sourceLineNo">077</span><a id="line.77"></a>
+<span class="sourceLineNo">078</span><a id="line.78">    private final FedoraToOcflObjectIndex fedoraOcflIndex;</a>
+<span class="sourceLineNo">079</span><a id="line.79"></a>
+<span class="sourceLineNo">080</span><a id="line.80">    private final Map&lt;String, OcflObjectSession&gt; sessionMap;</a>
+<span class="sourceLineNo">081</span><a id="line.81"></a>
+<span class="sourceLineNo">082</span><a id="line.82">    private final ReindexService reindexSerivce;</a>
+<span class="sourceLineNo">083</span><a id="line.83"></a>
+<span class="sourceLineNo">084</span><a id="line.84">    private Map&lt;String, OcflObjectSession&gt; sessionsToRollback;</a>
+<span class="sourceLineNo">085</span><a id="line.85"></a>
+<span class="sourceLineNo">086</span><a id="line.86">    private final Phaser phaser = new Phaser();</a>
+<span class="sourceLineNo">087</span><a id="line.87"></a>
+<span class="sourceLineNo">088</span><a id="line.88">    private final List&lt;Persister&gt; persisterList = new ArrayList&lt;&gt;();</a>
+<span class="sourceLineNo">089</span><a id="line.89"></a>
+<span class="sourceLineNo">090</span><a id="line.90">    private State state = State.COMMIT_NOT_STARTED;</a>
+<span class="sourceLineNo">091</span><a id="line.91"></a>
+<span class="sourceLineNo">092</span><a id="line.92">    private final OcflObjectSessionFactory objectSessionFactory;</a>
+<span class="sourceLineNo">093</span><a id="line.93"></a>
+<span class="sourceLineNo">094</span><a id="line.94">    private enum State {</a>
+<span class="sourceLineNo">095</span><a id="line.95">        COMMIT_NOT_STARTED(true),</a>
+<span class="sourceLineNo">096</span><a id="line.96">        PREPARE_STARTED(false),</a>
+<span class="sourceLineNo">097</span><a id="line.97">        PREPARED(true),</a>
+<span class="sourceLineNo">098</span><a id="line.98">        PREPARE_FAILED(true),</a>
+<span class="sourceLineNo">099</span><a id="line.99">        COMMIT_STARTED(false),</a>
+<span class="sourceLineNo">100</span><a id="line.100">        COMMITTED(true),</a>
+<span class="sourceLineNo">101</span><a id="line.101">        COMMIT_FAILED(true),</a>
+<span class="sourceLineNo">102</span><a id="line.102">        ROLLING_BACK(false),</a>
+<span class="sourceLineNo">103</span><a id="line.103">        ROLLED_BACK(false),</a>
+<span class="sourceLineNo">104</span><a id="line.104">        ROLLBACK_FAILED(false);</a>
+<span class="sourceLineNo">105</span><a id="line.105"></a>
+<span class="sourceLineNo">106</span><a id="line.106">        final boolean rollbackAllowed;</a>
+<span class="sourceLineNo">107</span><a id="line.107"></a>
+<span class="sourceLineNo">108</span><a id="line.108">        State(final boolean rollbackAllowed) {</a>
+<span class="sourceLineNo">109</span><a id="line.109">            this.rollbackAllowed = rollbackAllowed;</a>
+<span class="sourceLineNo">110</span><a id="line.110">        }</a>
+<span class="sourceLineNo">111</span><a id="line.111"></a>
+<span class="sourceLineNo">112</span><a id="line.112">    }</a>
+<span class="sourceLineNo">113</span><a id="line.113"></a>
+<span class="sourceLineNo">114</span><a id="line.114">    /**</a>
+<span class="sourceLineNo">115</span><a id="line.115">     * Constructor</a>
+<span class="sourceLineNo">116</span><a id="line.116">     *</a>
+<span class="sourceLineNo">117</span><a id="line.117">     * @param sessionId            session id.</a>
+<span class="sourceLineNo">118</span><a id="line.118">     * @param fedoraOcflIndex      the index</a>
+<span class="sourceLineNo">119</span><a id="line.119">     * @param objectSessionFactory the session factory</a>
+<span class="sourceLineNo">120</span><a id="line.120">     */</a>
+<span class="sourceLineNo">121</span><a id="line.121">    protected OcflPersistentStorageSession(final String sessionId,</a>
+<span class="sourceLineNo">122</span><a id="line.122">                                           final FedoraToOcflObjectIndex fedoraOcflIndex,</a>
+<span class="sourceLineNo">123</span><a id="line.123">                                           final OcflObjectSessionFactory objectSessionFactory,</a>
+<span class="sourceLineNo">124</span><a id="line.124">                                           final ReindexService reindexService) {</a>
+<span class="sourceLineNo">125</span><a id="line.125">        this.sessionId = sessionId;</a>
+<span class="sourceLineNo">126</span><a id="line.126">        this.fedoraOcflIndex = fedoraOcflIndex;</a>
+<span class="sourceLineNo">127</span><a id="line.127">        this.objectSessionFactory = objectSessionFactory;</a>
+<span class="sourceLineNo">128</span><a id="line.128">        this.reindexSerivce = reindexService;</a>
+<span class="sourceLineNo">129</span><a id="line.129">        this.sessionsToRollback = new HashMap&lt;&gt;();</a>
+<span class="sourceLineNo">130</span><a id="line.130"></a>
+<span class="sourceLineNo">131</span><a id="line.131">        if (sessionId == null) {</a>
+<span class="sourceLineNo">132</span><a id="line.132">            // The read-only session is never closed, so it needs to periodically expire object sessions</a>
+<span class="sourceLineNo">133</span><a id="line.133">            this.sessionMap = Caffeine.newBuilder()</a>
+<span class="sourceLineNo">134</span><a id="line.134">                    .maximumSize(512)</a>
+<span class="sourceLineNo">135</span><a id="line.135">                    .expireAfterAccess(10, TimeUnit.MINUTES)</a>
+<span class="sourceLineNo">136</span><a id="line.136">                    .&lt;String, OcflObjectSession&gt;build()</a>
+<span class="sourceLineNo">137</span><a id="line.137">                    .asMap();</a>
+<span class="sourceLineNo">138</span><a id="line.138">        } else {</a>
+<span class="sourceLineNo">139</span><a id="line.139">            this.sessionMap = new ConcurrentHashMap&lt;&gt;();</a>
+<span class="sourceLineNo">140</span><a id="line.140">        }</a>
+<span class="sourceLineNo">141</span><a id="line.141"></a>
+<span class="sourceLineNo">142</span><a id="line.142">        //load the persister list if empty</a>
+<span class="sourceLineNo">143</span><a id="line.143">        persisterList.add(new CreateRdfSourcePersister(this.fedoraOcflIndex));</a>
+<span class="sourceLineNo">144</span><a id="line.144">        persisterList.add(new UpdateRdfSourcePersister(this.fedoraOcflIndex));</a>
+<span class="sourceLineNo">145</span><a id="line.145">        persisterList.add(new CreateNonRdfSourcePersister(this.fedoraOcflIndex));</a>
+<span class="sourceLineNo">146</span><a id="line.146">        persisterList.add(new UpdateNonRdfSourcePersister(this.fedoraOcflIndex));</a>
+<span class="sourceLineNo">147</span><a id="line.147">        persisterList.add(new DeleteResourcePersister(this.fedoraOcflIndex));</a>
+<span class="sourceLineNo">148</span><a id="line.148">        persisterList.add(new CreateVersionPersister(this.fedoraOcflIndex));</a>
+<span class="sourceLineNo">149</span><a id="line.149">        persisterList.add(new PurgeResourcePersister(this.fedoraOcflIndex));</a>
+<span class="sourceLineNo">150</span><a id="line.150">        persisterList.add(new ReindexResourcePersister(this.reindexSerivce));</a>
+<span class="sourceLineNo">151</span><a id="line.151"></a>
+<span class="sourceLineNo">152</span><a id="line.152">    }</a>
+<span class="sourceLineNo">153</span><a id="line.153"></a>
+<span class="sourceLineNo">154</span><a id="line.154">    /**</a>
+<span class="sourceLineNo">155</span><a id="line.155">     * Constructor</a>
+<span class="sourceLineNo">156</span><a id="line.156">     *</a>
+<span class="sourceLineNo">157</span><a id="line.157">     * @param fedoraOcflIndex      the index</a>
+<span class="sourceLineNo">158</span><a id="line.158">     * @param objectSessionFactory the session factory</a>
+<span class="sourceLineNo">159</span><a id="line.159">     */</a>
+<span class="sourceLineNo">160</span><a id="line.160">    protected OcflPersistentStorageSession(final FedoraToOcflObjectIndex fedoraOcflIndex,</a>
+<span class="sourceLineNo">161</span><a id="line.161">                                           final OcflObjectSessionFactory objectSessionFactory,</a>
+<span class="sourceLineNo">162</span><a id="line.162">                                           final ReindexService reindexService) {</a>
+<span class="sourceLineNo">163</span><a id="line.163">        this(null, fedoraOcflIndex, objectSessionFactory, reindexService);</a>
+<span class="sourceLineNo">164</span><a id="line.164">    }</a>
+<span class="sourceLineNo">165</span><a id="line.165"></a>
+<span class="sourceLineNo">166</span><a id="line.166">    @Override</a>
+<span class="sourceLineNo">167</span><a id="line.167">    public String getId() {</a>
+<span class="sourceLineNo">168</span><a id="line.168">        return this.sessionId;</a>
+<span class="sourceLineNo">169</span><a id="line.169">    }</a>
+<span class="sourceLineNo">170</span><a id="line.170"></a>
+<span class="sourceLineNo">171</span><a id="line.171">    @Override</a>
+<span class="sourceLineNo">172</span><a id="line.172">    public void persist(final ResourceOperation operation) throws PersistentStorageException {</a>
+<span class="sourceLineNo">173</span><a id="line.173">        actionNeedsWrite();</a>
+<span class="sourceLineNo">174</span><a id="line.174">        ensureCommitNotStarted();</a>
+<span class="sourceLineNo">175</span><a id="line.175"></a>
+<span class="sourceLineNo">176</span><a id="line.176">        try {</a>
+<span class="sourceLineNo">177</span><a id="line.177">            phaser.register();</a>
+<span class="sourceLineNo">178</span><a id="line.178"></a>
+<span class="sourceLineNo">179</span><a id="line.179">            //resolve the persister based on the operation</a>
+<span class="sourceLineNo">180</span><a id="line.180">            final var persister = persisterList.stream().filter(p -&gt; p.handle(operation)).findFirst().orElse(null);</a>
+<span class="sourceLineNo">181</span><a id="line.181"></a>
+<span class="sourceLineNo">182</span><a id="line.182">            if (persister == null) {</a>
+<span class="sourceLineNo">183</span><a id="line.183">                throw new UnsupportedOperationException(format("The %s is not yet supported", operation.getClass()));</a>
+<span class="sourceLineNo">184</span><a id="line.184">            }</a>
+<span class="sourceLineNo">185</span><a id="line.185"></a>
+<span class="sourceLineNo">186</span><a id="line.186">            //perform the operation</a>
+<span class="sourceLineNo">187</span><a id="line.187">            persister.persist(this, operation);</a>
+<span class="sourceLineNo">188</span><a id="line.188"></a>
+<span class="sourceLineNo">189</span><a id="line.189">        } finally {</a>
+<span class="sourceLineNo">190</span><a id="line.190">            phaser.arriveAndDeregister();</a>
+<span class="sourceLineNo">191</span><a id="line.191">        }</a>
+<span class="sourceLineNo">192</span><a id="line.192"></a>
+<span class="sourceLineNo">193</span><a id="line.193">    }</a>
+<span class="sourceLineNo">194</span><a id="line.194"></a>
+<span class="sourceLineNo">195</span><a id="line.195">    private void ensureCommitNotStarted() throws PersistentSessionClosedException {</a>
+<span class="sourceLineNo">196</span><a id="line.196">        if (!state.equals(State.COMMIT_NOT_STARTED)) {</a>
+<span class="sourceLineNo">197</span><a id="line.197">            throw new PersistentSessionClosedException(</a>
+<span class="sourceLineNo">198</span><a id="line.198">                    String.format("Storage session %s is already closed", sessionId));</a>
+<span class="sourceLineNo">199</span><a id="line.199">        }</a>
+<span class="sourceLineNo">200</span><a id="line.200">    }</a>
+<span class="sourceLineNo">201</span><a id="line.201"></a>
+<span class="sourceLineNo">202</span><a id="line.202">    private void ensurePrepared() throws PersistentSessionClosedException {</a>
+<span class="sourceLineNo">203</span><a id="line.203">        if (!state.equals(State.PREPARED)) {</a>
+<span class="sourceLineNo">204</span><a id="line.204">            throw new PersistentStorageException(</a>
+<span class="sourceLineNo">205</span><a id="line.205">                    String.format("Storage session %s cannot be committed because it is not in the correct state: %s",</a>
+<span class="sourceLineNo">206</span><a id="line.206">                            sessionId, state));</a>
+<span class="sourceLineNo">207</span><a id="line.207">        }</a>
+<span class="sourceLineNo">208</span><a id="line.208">    }</a>
+<span class="sourceLineNo">209</span><a id="line.209"></a>
+<span class="sourceLineNo">210</span><a id="line.210">    OcflObjectSession findOrCreateSession(final String ocflId) {</a>
+<span class="sourceLineNo">211</span><a id="line.211">        return this.sessionMap.computeIfAbsent(ocflId, key -&gt; {</a>
+<span class="sourceLineNo">212</span><a id="line.212">            return new FcrepoOcflObjectSessionWrapper(this.objectSessionFactory.newSession(key));</a>
+<span class="sourceLineNo">213</span><a id="line.213">        });</a>
+<span class="sourceLineNo">214</span><a id="line.214">    }</a>
+<span class="sourceLineNo">215</span><a id="line.215"></a>
+<span class="sourceLineNo">216</span><a id="line.216">    @Override</a>
+<span class="sourceLineNo">217</span><a id="line.217">    public ResourceHeaders getHeaders(final FedoraId identifier, final Instant version)</a>
+<span class="sourceLineNo">218</span><a id="line.218">            throws PersistentStorageException {</a>
+<span class="sourceLineNo">219</span><a id="line.219"></a>
+<span class="sourceLineNo">220</span><a id="line.220">        ensureCommitNotStarted();</a>
+<span class="sourceLineNo">221</span><a id="line.221"></a>
+<span class="sourceLineNo">222</span><a id="line.222">        final FedoraOcflMapping mapping = getFedoraOcflMapping(identifier);</a>
+<span class="sourceLineNo">223</span><a id="line.223">        final OcflObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());</a>
+<span class="sourceLineNo">224</span><a id="line.224"></a>
+<span class="sourceLineNo">225</span><a id="line.225">        final var versionId = resolveVersionNumber(objSession, identifier, version);</a>
+<span class="sourceLineNo">226</span><a id="line.226">        final var headers = objSession.readHeaders(identifier.getResourceId(), versionId);</a>
+<span class="sourceLineNo">227</span><a id="line.227"></a>
+<span class="sourceLineNo">228</span><a id="line.228">        return new ResourceHeadersAdapter(headers).asKernelHeaders();</a>
+<span class="sourceLineNo">229</span><a id="line.229">    }</a>
+<span class="sourceLineNo">230</span><a id="line.230"></a>
+<span class="sourceLineNo">231</span><a id="line.231">    private FedoraOcflMapping getFedoraOcflMapping(final FedoraId identifier) throws PersistentStorageException {</a>
+<span class="sourceLineNo">232</span><a id="line.232">        try {</a>
+<span class="sourceLineNo">233</span><a id="line.233">            return fedoraOcflIndex.getMapping(sessionId, identifier);</a>
+<span class="sourceLineNo">234</span><a id="line.234">        } catch (final FedoraOcflMappingNotFoundException e) {</a>
+<span class="sourceLineNo">235</span><a id="line.235">            throw new PersistentItemNotFoundException(e.getMessage());</a>
+<span class="sourceLineNo">236</span><a id="line.236">        }</a>
+<span class="sourceLineNo">237</span><a id="line.237">    }</a>
+<span class="sourceLineNo">238</span><a id="line.238"></a>
+<span class="sourceLineNo">239</span><a id="line.239">    @Override</a>
+<span class="sourceLineNo">240</span><a id="line.240">    public RdfStream getTriples(final FedoraId identifier, final Instant version)</a>
+<span class="sourceLineNo">241</span><a id="line.241">            throws PersistentStorageException {</a>
+<span class="sourceLineNo">242</span><a id="line.242">        ensureCommitNotStarted();</a>
+<span class="sourceLineNo">243</span><a id="line.243"></a>
+<span class="sourceLineNo">244</span><a id="line.244">        try (final InputStream is = getBinaryContent(identifier, version)) {</a>
+<span class="sourceLineNo">245</span><a id="line.245">            final Model model = createDefaultModel();</a>
+<span class="sourceLineNo">246</span><a id="line.246">            RDFDataMgr.read(model, is, OcflPersistentStorageUtils.getRdfFormat().getLang());</a>
+<span class="sourceLineNo">247</span><a id="line.247">            final FedoraId topic = resolveTopic(identifier);</a>
+<span class="sourceLineNo">248</span><a id="line.248">            return DefaultRdfStream.fromModel(createURI(topic.getFullId()), model);</a>
+<span class="sourceLineNo">249</span><a id="line.249">        } catch (final IOException ex) {</a>
+<span class="sourceLineNo">250</span><a id="line.250">            throw new PersistentStorageException(format("unable to read %s ;  version = %s", identifier, version), ex);</a>
+<span class="sourceLineNo">251</span><a id="line.251">        }</a>
+<span class="sourceLineNo">252</span><a id="line.252">    }</a>
+<span class="sourceLineNo">253</span><a id="line.253"></a>
+<span class="sourceLineNo">254</span><a id="line.254">    @Override</a>
+<span class="sourceLineNo">255</span><a id="line.255">    public List&lt;Instant&gt; listVersions(final FedoraId fedoraIdentifier) throws PersistentStorageException {</a>
+<span class="sourceLineNo">256</span><a id="line.256">        final var mapping = getFedoraOcflMapping(fedoraIdentifier);</a>
+<span class="sourceLineNo">257</span><a id="line.257">        final var objSession = findOrCreateSession(mapping.getOcflObjectId());</a>
+<span class="sourceLineNo">258</span><a id="line.258"></a>
+<span class="sourceLineNo">259</span><a id="line.259">        return objSession.listVersions(fedoraIdentifier.getResourceId()).stream()</a>
+<span class="sourceLineNo">260</span><a id="line.260">                .map(OcflVersionInfo::getCreated)</a>
+<span class="sourceLineNo">261</span><a id="line.261">                .collect(Collectors.toList());</a>
+<span class="sourceLineNo">262</span><a id="line.262">    }</a>
+<span class="sourceLineNo">263</span><a id="line.263"></a>
+<span class="sourceLineNo">264</span><a id="line.264">    @Override</a>
+<span class="sourceLineNo">265</span><a id="line.265">    public InputStream getBinaryContent(final FedoraId identifier, final Instant version)</a>
+<span class="sourceLineNo">266</span><a id="line.266">            throws PersistentStorageException {</a>
+<span class="sourceLineNo">267</span><a id="line.267">        ensureCommitNotStarted();</a>
+<span class="sourceLineNo">268</span><a id="line.268"></a>
+<span class="sourceLineNo">269</span><a id="line.269">        final var mapping = getFedoraOcflMapping(identifier);</a>
+<span class="sourceLineNo">270</span><a id="line.270">        final var objSession = findOrCreateSession(mapping.getOcflObjectId());</a>
+<span class="sourceLineNo">271</span><a id="line.271"></a>
+<span class="sourceLineNo">272</span><a id="line.272">        final var versionNumber = resolveVersionNumber(objSession, identifier, version);</a>
+<span class="sourceLineNo">273</span><a id="line.273"></a>
+<span class="sourceLineNo">274</span><a id="line.274">        return objSession.readContent(identifier.getResourceId(), versionNumber)</a>
+<span class="sourceLineNo">275</span><a id="line.275">                .getContentStream()</a>
+<span class="sourceLineNo">276</span><a id="line.276">                .orElseThrow(() -&gt; new PersistentItemNotFoundException("No binary content found for resource "</a>
+<span class="sourceLineNo">277</span><a id="line.277">                        + identifier.getFullId()));</a>
+<span class="sourceLineNo">278</span><a id="line.278">    }</a>
+<span class="sourceLineNo">279</span><a id="line.279"></a>
+<span class="sourceLineNo">280</span><a id="line.280">    @Override</a>
+<span class="sourceLineNo">281</span><a id="line.281">    public synchronized void prepare() {</a>
+<span class="sourceLineNo">282</span><a id="line.282">        ensureCommitNotStarted();</a>
+<span class="sourceLineNo">283</span><a id="line.283">        if (isReadOnly()) {</a>
+<span class="sourceLineNo">284</span><a id="line.284">            // No changes to commit.</a>
+<span class="sourceLineNo">285</span><a id="line.285">            return;</a>
+<span class="sourceLineNo">286</span><a id="line.286">        }</a>
+<span class="sourceLineNo">287</span><a id="line.287"></a>
+<span class="sourceLineNo">288</span><a id="line.288">        this.state = State.PREPARE_STARTED;</a>
+<span class="sourceLineNo">289</span><a id="line.289">        LOGGER.debug("Starting storage session {} prepare for commit", sessionId);</a>
+<span class="sourceLineNo">290</span><a id="line.290"></a>
+<span class="sourceLineNo">291</span><a id="line.291">        if (this.phaser.getRegisteredParties() &gt; 0) {</a>
+<span class="sourceLineNo">292</span><a id="line.292">            this.phaser.awaitAdvance(0);</a>
+<span class="sourceLineNo">293</span><a id="line.293">        }</a>
+<span class="sourceLineNo">294</span><a id="line.294"></a>
+<span class="sourceLineNo">295</span><a id="line.295">        LOGGER.trace("All persisters are complete in session {}", sessionId);</a>
+<span class="sourceLineNo">296</span><a id="line.296"></a>
+<span class="sourceLineNo">297</span><a id="line.297">        try {</a>
+<span class="sourceLineNo">298</span><a id="line.298">            fedoraOcflIndex.commit(sessionId);</a>
+<span class="sourceLineNo">299</span><a id="line.299">            state = State.PREPARED;</a>
+<span class="sourceLineNo">300</span><a id="line.300">        } catch (RuntimeException e) {</a>
+<span class="sourceLineNo">301</span><a id="line.301">            state = State.PREPARE_FAILED;</a>
+<span class="sourceLineNo">302</span><a id="line.302">            throw new PersistentStorageException(String.format("Failed to prepare storage session &lt;%s&gt; for commit",</a>
+<span class="sourceLineNo">303</span><a id="line.303">                    sessionId), e);</a>
+<span class="sourceLineNo">304</span><a id="line.304">        }</a>
+<span class="sourceLineNo">305</span><a id="line.305">    }</a>
+<span class="sourceLineNo">306</span><a id="line.306"></a>
+<span class="sourceLineNo">307</span><a id="line.307">    @Override</a>
+<span class="sourceLineNo">308</span><a id="line.308">    public synchronized void commit() throws PersistentStorageException {</a>
+<span class="sourceLineNo">309</span><a id="line.309">        ensurePrepared();</a>
+<span class="sourceLineNo">310</span><a id="line.310">        if (isReadOnly()) {</a>
+<span class="sourceLineNo">311</span><a id="line.311">            // No changes to commit.</a>
+<span class="sourceLineNo">312</span><a id="line.312">            return;</a>
+<span class="sourceLineNo">313</span><a id="line.313">        }</a>
+<span class="sourceLineNo">314</span><a id="line.314"></a>
+<span class="sourceLineNo">315</span><a id="line.315">        this.state = State.COMMIT_STARTED;</a>
+<span class="sourceLineNo">316</span><a id="line.316">        LOGGER.debug("Starting storage session {} commit", sessionId);</a>
+<span class="sourceLineNo">317</span><a id="line.317"></a>
+<span class="sourceLineNo">318</span><a id="line.318">        // order map for testing</a>
+<span class="sourceLineNo">319</span><a id="line.319">        final var sessions = new TreeMap&lt;&gt;(sessionMap);</a>
+<span class="sourceLineNo">320</span><a id="line.320">        commitObjectSessions(sessions);</a>
+<span class="sourceLineNo">321</span><a id="line.321"></a>
+<span class="sourceLineNo">322</span><a id="line.322">        LOGGER.debug("Committed storage session {}", sessionId);</a>
+<span class="sourceLineNo">323</span><a id="line.323">    }</a>
+<span class="sourceLineNo">324</span><a id="line.324"></a>
+<span class="sourceLineNo">325</span><a id="line.325">    private void commitObjectSessions(final Map&lt;String, OcflObjectSession&gt; sessions)</a>
+<span class="sourceLineNo">326</span><a id="line.326">            throws PersistentStorageException {</a>
+<span class="sourceLineNo">327</span><a id="line.327">        this.sessionsToRollback = new HashMap&lt;&gt;(sessionMap.size());</a>
+<span class="sourceLineNo">328</span><a id="line.328"></a>
+<span class="sourceLineNo">329</span><a id="line.329">        for (final var entry : sessions.entrySet()) {</a>
+<span class="sourceLineNo">330</span><a id="line.330">            final var id = entry.getKey();</a>
+<span class="sourceLineNo">331</span><a id="line.331">            final var session = entry.getValue();</a>
+<span class="sourceLineNo">332</span><a id="line.332">            try {</a>
+<span class="sourceLineNo">333</span><a id="line.333">                session.commit();</a>
+<span class="sourceLineNo">334</span><a id="line.334">                sessionsToRollback.put(id, session);</a>
+<span class="sourceLineNo">335</span><a id="line.335">            } catch (final Exception e) {</a>
+<span class="sourceLineNo">336</span><a id="line.336">                this.state = State.COMMIT_FAILED;</a>
+<span class="sourceLineNo">337</span><a id="line.337">                throw new PersistentStorageException(String.format("Failed to commit object &lt;%s&gt; in session &lt;%s&gt;",</a>
+<span class="sourceLineNo">338</span><a id="line.338">                        id, sessionId), e);</a>
+<span class="sourceLineNo">339</span><a id="line.339">            }</a>
+<span class="sourceLineNo">340</span><a id="line.340">        }</a>
+<span class="sourceLineNo">341</span><a id="line.341"></a>
+<span class="sourceLineNo">342</span><a id="line.342">        state = State.COMMITTED;</a>
+<span class="sourceLineNo">343</span><a id="line.343">    }</a>
+<span class="sourceLineNo">344</span><a id="line.344"></a>
+<span class="sourceLineNo">345</span><a id="line.345">    @Override</a>
+<span class="sourceLineNo">346</span><a id="line.346">    public void rollback() throws PersistentStorageException {</a>
+<span class="sourceLineNo">347</span><a id="line.347">        if (isReadOnly()) {</a>
+<span class="sourceLineNo">348</span><a id="line.348">            // No changes to rollback</a>
+<span class="sourceLineNo">349</span><a id="line.349">            return;</a>
+<span class="sourceLineNo">350</span><a id="line.350">        }</a>
+<span class="sourceLineNo">351</span><a id="line.351"></a>
+<span class="sourceLineNo">352</span><a id="line.352">        if (!state.rollbackAllowed) {</a>
+<span class="sourceLineNo">353</span><a id="line.353">            throw new PersistentStorageException("This session cannot be rolled back in this state: " + state);</a>
+<span class="sourceLineNo">354</span><a id="line.354">        }</a>
+<span class="sourceLineNo">355</span><a id="line.355"></a>
+<span class="sourceLineNo">356</span><a id="line.356">        final boolean commitWasStarted = this.state != State.COMMIT_NOT_STARTED;</a>
+<span class="sourceLineNo">357</span><a id="line.357"></a>
+<span class="sourceLineNo">358</span><a id="line.358">        this.state = State.ROLLING_BACK;</a>
+<span class="sourceLineNo">359</span><a id="line.359">        LOGGER.debug("Rolling back storage session {}", sessionId);</a>
+<span class="sourceLineNo">360</span><a id="line.360"></a>
+<span class="sourceLineNo">361</span><a id="line.361">        if (!commitWasStarted) {</a>
+<span class="sourceLineNo">362</span><a id="line.362">            //if the commit had not been started at the time this method was invoked</a>
+<span class="sourceLineNo">363</span><a id="line.363">            //we must ensure that all persist operations are complete before we close any</a>
+<span class="sourceLineNo">364</span><a id="line.364">            //ocfl object sessions. If the commit had been started then this synchronization step</a>
+<span class="sourceLineNo">365</span><a id="line.365">            //will have already occurred and is thus unnecessary.</a>
+<span class="sourceLineNo">366</span><a id="line.366">            if (this.phaser.getRegisteredParties() &gt; 0) {</a>
+<span class="sourceLineNo">367</span><a id="line.367">                try {</a>
+<span class="sourceLineNo">368</span><a id="line.368">                    this.phaser.awaitAdvanceInterruptibly(0, AWAIT_TIMEOUT, MILLISECONDS);</a>
+<span class="sourceLineNo">369</span><a id="line.369">                } catch (final InterruptedException | TimeoutException e) {</a>
+<span class="sourceLineNo">370</span><a id="line.370">                    throw new PersistentStorageException(</a>
+<span class="sourceLineNo">371</span><a id="line.371">                            "Waiting for operations to complete took too long, rollback failed");</a>
+<span class="sourceLineNo">372</span><a id="line.372">                }</a>
+<span class="sourceLineNo">373</span><a id="line.373">            }</a>
+<span class="sourceLineNo">374</span><a id="line.374">        }</a>
+<span class="sourceLineNo">375</span><a id="line.375"></a>
+<span class="sourceLineNo">376</span><a id="line.376">        closeUncommittedSessions();</a>
+<span class="sourceLineNo">377</span><a id="line.377"></a>
+<span class="sourceLineNo">378</span><a id="line.378">        if (commitWasStarted) {</a>
+<span class="sourceLineNo">379</span><a id="line.379">            rollbackCommittedSessions();</a>
+<span class="sourceLineNo">380</span><a id="line.380">        }</a>
+<span class="sourceLineNo">381</span><a id="line.381"></a>
+<span class="sourceLineNo">382</span><a id="line.382">        this.state = State.ROLLED_BACK;</a>
+<span class="sourceLineNo">383</span><a id="line.383">        LOGGER.trace("Successfully rolled back storage session {}", sessionId);</a>
+<span class="sourceLineNo">384</span><a id="line.384">    }</a>
+<span class="sourceLineNo">385</span><a id="line.385"></a>
+<span class="sourceLineNo">386</span><a id="line.386">    /**</a>
+<span class="sourceLineNo">387</span><a id="line.387">     * Resolve an instant to a version</a>
+<span class="sourceLineNo">388</span><a id="line.388">     *</a>
+<span class="sourceLineNo">389</span><a id="line.389">     * @param objSession session</a>
+<span class="sourceLineNo">390</span><a id="line.390">     * @param fedoraId the FedoraId of the resource</a>
+<span class="sourceLineNo">391</span><a id="line.391">     * @param version version time</a>
+<span class="sourceLineNo">392</span><a id="line.392">     * @return name of version</a>
+<span class="sourceLineNo">393</span><a id="line.393">     * @throws PersistentStorageException thrown if version not found</a>
+<span class="sourceLineNo">394</span><a id="line.394">     */</a>
+<span class="sourceLineNo">395</span><a id="line.395">    private String resolveVersionNumber(final OcflObjectSession objSession,</a>
+<span class="sourceLineNo">396</span><a id="line.396">                                       final FedoraId fedoraId,</a>
+<span class="sourceLineNo">397</span><a id="line.397">                                       final Instant version)</a>
+<span class="sourceLineNo">398</span><a id="line.398">            throws PersistentStorageException {</a>
+<span class="sourceLineNo">399</span><a id="line.399">        if (version != null) {</a>
+<span class="sourceLineNo">400</span><a id="line.400">            final var versions = objSession.listVersions(fedoraId.getResourceId());</a>
+<span class="sourceLineNo">401</span><a id="line.401">            // reverse order so that the most recent version is matched first</a>
+<span class="sourceLineNo">402</span><a id="line.402">            Collections.reverse(versions);</a>
+<span class="sourceLineNo">403</span><a id="line.403">            return versions.stream()</a>
+<span class="sourceLineNo">404</span><a id="line.404">                    .filter(vd -&gt; vd.getCreated().equals(version))</a>
+<span class="sourceLineNo">405</span><a id="line.405">                    .map(OcflVersionInfo::getVersionNumber)</a>
+<span class="sourceLineNo">406</span><a id="line.406">                    .findFirst()</a>
+<span class="sourceLineNo">407</span><a id="line.407">                    .orElseThrow(() -&gt; {</a>
+<span class="sourceLineNo">408</span><a id="line.408">                        return new PersistentItemNotFoundException(format(</a>
+<span class="sourceLineNo">409</span><a id="line.409">                                "There is no version in %s with a created date matching %s",</a>
+<span class="sourceLineNo">410</span><a id="line.410">                                fedoraId, version));</a>
+<span class="sourceLineNo">411</span><a id="line.411">                    });</a>
+<span class="sourceLineNo">412</span><a id="line.412">        }</a>
+<span class="sourceLineNo">413</span><a id="line.413"></a>
+<span class="sourceLineNo">414</span><a id="line.414">        return null;</a>
+<span class="sourceLineNo">415</span><a id="line.415">    }</a>
+<span class="sourceLineNo">416</span><a id="line.416"></a>
+<span class="sourceLineNo">417</span><a id="line.417">    private void closeUncommittedSessions() {</a>
+<span class="sourceLineNo">418</span><a id="line.418">        this.sessionMap.entrySet().stream()</a>
+<span class="sourceLineNo">419</span><a id="line.419">                .filter(entry -&gt; !sessionsToRollback.containsKey(entry.getKey()))</a>
+<span class="sourceLineNo">420</span><a id="line.420">                .map(Map.Entry::getValue)</a>
+<span class="sourceLineNo">421</span><a id="line.421">                .forEach(OcflObjectSession::abort);</a>
+<span class="sourceLineNo">422</span><a id="line.422">    }</a>
+<span class="sourceLineNo">423</span><a id="line.423"></a>
+<span class="sourceLineNo">424</span><a id="line.424">    private void rollbackCommittedSessions() throws PersistentStorageException {</a>
+<span class="sourceLineNo">425</span><a id="line.425">        final List&lt;String&gt; rollbackFailures = new ArrayList&lt;&gt;(this.sessionsToRollback.size());</a>
+<span class="sourceLineNo">426</span><a id="line.426"></a>
+<span class="sourceLineNo">427</span><a id="line.427">        for (final var entry : this.sessionsToRollback.entrySet()) {</a>
+<span class="sourceLineNo">428</span><a id="line.428">            final var id = entry.getKey();</a>
+<span class="sourceLineNo">429</span><a id="line.429">            final var session = entry.getValue();</a>
+<span class="sourceLineNo">430</span><a id="line.430"></a>
+<span class="sourceLineNo">431</span><a id="line.431">            try {</a>
+<span class="sourceLineNo">432</span><a id="line.432">                session.rollback();</a>
+<span class="sourceLineNo">433</span><a id="line.433">            } catch (final Exception e) {</a>
+<span class="sourceLineNo">434</span><a id="line.434">                rollbackFailures.add(String.format("Failed to rollback object &lt;%s&gt; in session &lt;%s&gt;: %s",</a>
+<span class="sourceLineNo">435</span><a id="line.435">                        id, session.sessionId(), e.getMessage()));</a>
+<span class="sourceLineNo">436</span><a id="line.436">            }</a>
+<span class="sourceLineNo">437</span><a id="line.437">        }</a>
+<span class="sourceLineNo">438</span><a id="line.438"></a>
+<span class="sourceLineNo">439</span><a id="line.439">        try {</a>
+<span class="sourceLineNo">440</span><a id="line.440">            fedoraOcflIndex.rollback(sessionId);</a>
+<span class="sourceLineNo">441</span><a id="line.441">        } catch (final Exception e) {</a>
+<span class="sourceLineNo">442</span><a id="line.442">            rollbackFailures.add(String.format("Failed to rollback OCFL index updates in transaction &lt;%s&gt;: %s",</a>
+<span class="sourceLineNo">443</span><a id="line.443">                    sessionId, e.getMessage()));</a>
+<span class="sourceLineNo">444</span><a id="line.444">        }</a>
+<span class="sourceLineNo">445</span><a id="line.445"></a>
+<span class="sourceLineNo">446</span><a id="line.446">        //throw an exception if any sessions could not be rolled back.</a>
+<span class="sourceLineNo">447</span><a id="line.447">        if (rollbackFailures.size() &gt; 0) {</a>
+<span class="sourceLineNo">448</span><a id="line.448">            state = State.ROLLBACK_FAILED;</a>
+<span class="sourceLineNo">449</span><a id="line.449">            final StringBuilder builder = new StringBuilder()</a>
+<span class="sourceLineNo">450</span><a id="line.450">                    .append("Unable to rollback storage session ")</a>
+<span class="sourceLineNo">451</span><a id="line.451">                    .append(sessionId)</a>
+<span class="sourceLineNo">452</span><a id="line.452">                    .append(" completely due to the following errors: \n");</a>
+<span class="sourceLineNo">453</span><a id="line.453"></a>
+<span class="sourceLineNo">454</span><a id="line.454">            for (final String failures : rollbackFailures) {</a>
+<span class="sourceLineNo">455</span><a id="line.455">                builder.append("\t").append(failures).append("\n");</a>
+<span class="sourceLineNo">456</span><a id="line.456">            }</a>
+<span class="sourceLineNo">457</span><a id="line.457"></a>
+<span class="sourceLineNo">458</span><a id="line.458">            throw new PersistentStorageException(builder.toString());</a>
+<span class="sourceLineNo">459</span><a id="line.459">        }</a>
+<span class="sourceLineNo">460</span><a id="line.460">    }</a>
+<span class="sourceLineNo">461</span><a id="line.461"></a>
+<span class="sourceLineNo">462</span><a id="line.462">    /**</a>
+<span class="sourceLineNo">463</span><a id="line.463">     * Check if we are in a read-only session.</a>
+<span class="sourceLineNo">464</span><a id="line.464">     *</a>
+<span class="sourceLineNo">465</span><a id="line.465">     * @return whether we are read-only (ie. no transaction).</a>
+<span class="sourceLineNo">466</span><a id="line.466">     */</a>
+<span class="sourceLineNo">467</span><a id="line.467">    private boolean isReadOnly() {</a>
+<span class="sourceLineNo">468</span><a id="line.468">        return this.sessionId == null;</a>
+<span class="sourceLineNo">469</span><a id="line.469">    }</a>
+<span class="sourceLineNo">470</span><a id="line.470"></a>
+<span class="sourceLineNo">471</span><a id="line.471">    /**</a>
+<span class="sourceLineNo">472</span><a id="line.472">     * Utility to throw exception if trying to perform write operation on read-only session.</a>
+<span class="sourceLineNo">473</span><a id="line.473">     */</a>
+<span class="sourceLineNo">474</span><a id="line.474">    private void actionNeedsWrite() throws PersistentStorageException {</a>
+<span class="sourceLineNo">475</span><a id="line.475">        if (isReadOnly()) {</a>
+<span class="sourceLineNo">476</span><a id="line.476">            throw new PersistentStorageException("Session is read-only");</a>
+<span class="sourceLineNo">477</span><a id="line.477">        }</a>
+<span class="sourceLineNo">478</span><a id="line.478">    }</a>
+<span class="sourceLineNo">479</span><a id="line.479"></a>
+<span class="sourceLineNo">480</span><a id="line.480">    /**</a>
+<span class="sourceLineNo">481</span><a id="line.481">     * Returns the RDF topic to be returned for a given resource identifier</a>
+<span class="sourceLineNo">482</span><a id="line.482">     * For example:  passing info:fedora/resource1/fcr:metadata would return</a>
+<span class="sourceLineNo">483</span><a id="line.483">     *  info:fedora/resource1 since  info:fedora/resource1 would be the expected</a>
+<span class="sourceLineNo">484</span><a id="line.484">     *  topic.</a>
+<span class="sourceLineNo">485</span><a id="line.485">     * @param fedoraIdentifier The fedora identifier</a>
+<span class="sourceLineNo">486</span><a id="line.486">     * @return The resolved topic</a>
+<span class="sourceLineNo">487</span><a id="line.487">     */</a>
+<span class="sourceLineNo">488</span><a id="line.488">    private FedoraId resolveTopic(final FedoraId fedoraIdentifier) {</a>
+<span class="sourceLineNo">489</span><a id="line.489">        if (fedoraIdentifier.isDescription()) {</a>
+<span class="sourceLineNo">490</span><a id="line.490">            return fedoraIdentifier.asBaseId();</a>
+<span class="sourceLineNo">491</span><a id="line.491">        } else {</a>
+<span class="sourceLineNo">492</span><a id="line.492">            return fedoraIdentifier;</a>
+<span class="sourceLineNo">493</span><a id="line.493">        }</a>
+<span class="sourceLineNo">494</span><a id="line.494">    }</a>
+<span class="sourceLineNo">495</span><a id="line.495"></a>
+<span class="sourceLineNo">496</span><a id="line.496">    @Override</a>
+<span class="sourceLineNo">497</span><a id="line.497">    public String toString() {</a>
+<span class="sourceLineNo">498</span><a id="line.498">        return "OcflPersistentStorageSession{" +</a>
+<span class="sourceLineNo">499</span><a id="line.499">                "sessionId='" + sessionId + '\'' +</a>
+<span class="sourceLineNo">500</span><a id="line.500">                ", state=" + state +</a>
+<span class="sourceLineNo">501</span><a id="line.501">                '}';</a>
+<span class="sourceLineNo">502</span><a id="line.502">    }</a>
+<span class="sourceLineNo">503</span><a id="line.503"></a>
+<span class="sourceLineNo">504</span><a id="line.504">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>

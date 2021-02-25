@@ -1,0 +1,201 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * Licensed to DuraSpace under one or more contributor license agreements.</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * See the NOTICE file distributed with this work for additional information</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * regarding copyright ownership.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> *</a>
+<span class="sourceLineNo">006</span><a id="line.6"> * DuraSpace licenses this file to you under the Apache License,</a>
+<span class="sourceLineNo">007</span><a id="line.7"> * Version 2.0 (the "License"); you may not use this file except in</a>
+<span class="sourceLineNo">008</span><a id="line.8"> * compliance with the License.  You may obtain a copy of the License at</a>
+<span class="sourceLineNo">009</span><a id="line.9"> *</a>
+<span class="sourceLineNo">010</span><a id="line.10"> *     http://www.apache.org/licenses/LICENSE-2.0</a>
+<span class="sourceLineNo">011</span><a id="line.11"> *</a>
+<span class="sourceLineNo">012</span><a id="line.12"> * Unless required by applicable law or agreed to in writing, software</a>
+<span class="sourceLineNo">013</span><a id="line.13"> * distributed under the License is distributed on an "AS IS" BASIS,</a>
+<span class="sourceLineNo">014</span><a id="line.14"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<span class="sourceLineNo">015</span><a id="line.15"> * See the License for the specific language governing permissions and</a>
+<span class="sourceLineNo">016</span><a id="line.16"> * limitations under the License.</a>
+<span class="sourceLineNo">017</span><a id="line.17"> */</a>
+<span class="sourceLineNo">018</span><a id="line.18">package org.fcrepo.persistence.ocfl.impl;</a>
+<span class="sourceLineNo">019</span><a id="line.19"></a>
+<span class="sourceLineNo">020</span><a id="line.20">import static org.slf4j.LoggerFactory.getLogger;</a>
+<span class="sourceLineNo">021</span><a id="line.21"></a>
+<span class="sourceLineNo">022</span><a id="line.22">import java.util.List;</a>
+<span class="sourceLineNo">023</span><a id="line.23">import java.util.concurrent.TimeUnit;</a>
+<span class="sourceLineNo">024</span><a id="line.24"></a>
+<span class="sourceLineNo">025</span><a id="line.25">import org.slf4j.Logger;</a>
+<span class="sourceLineNo">026</span><a id="line.26"></a>
+<span class="sourceLineNo">027</span><a id="line.27">import com.google.common.base.Stopwatch;</a>
+<span class="sourceLineNo">028</span><a id="line.28"></a>
+<span class="sourceLineNo">029</span><a id="line.29">/**</a>
+<span class="sourceLineNo">030</span><a id="line.30"> * A reindexing worker thread.</a>
+<span class="sourceLineNo">031</span><a id="line.31"> * @author whikloj</a>
+<span class="sourceLineNo">032</span><a id="line.32"> */</a>
+<span class="sourceLineNo">033</span><a id="line.33">public class ReindexWorker implements Runnable {</a>
+<span class="sourceLineNo">034</span><a id="line.34"></a>
+<span class="sourceLineNo">035</span><a id="line.35">    private static final Logger LOGGER = getLogger(ReindexWorker.class);</a>
+<span class="sourceLineNo">036</span><a id="line.36"></a>
+<span class="sourceLineNo">037</span><a id="line.37">    private static final long REPORTING_INTERVAL_SECS = 30;</a>
+<span class="sourceLineNo">038</span><a id="line.38"></a>
+<span class="sourceLineNo">039</span><a id="line.39">    private Thread t;</a>
+<span class="sourceLineNo">040</span><a id="line.40">    private ReindexManager manager;</a>
+<span class="sourceLineNo">041</span><a id="line.41">    private ReindexService service;</a>
+<span class="sourceLineNo">042</span><a id="line.42">    private String transactionId;</a>
+<span class="sourceLineNo">043</span><a id="line.43">    private boolean running = true;</a>
+<span class="sourceLineNo">044</span><a id="line.44">    private boolean failOnError;</a>
+<span class="sourceLineNo">045</span><a id="line.45"></a>
+<span class="sourceLineNo">046</span><a id="line.46">    /**</a>
+<span class="sourceLineNo">047</span><a id="line.47">     * Basic Constructor</a>
+<span class="sourceLineNo">048</span><a id="line.48">     * @param reindexManager the manager service.</a>
+<span class="sourceLineNo">049</span><a id="line.49">     * @param reindexService the reindexing service.</a>
+<span class="sourceLineNo">050</span><a id="line.50">     * @param txId the transaction id.</a>
+<span class="sourceLineNo">051</span><a id="line.51">     * @param failOnError whether the thread should fail on an error or log and continue.</a>
+<span class="sourceLineNo">052</span><a id="line.52">     */</a>
+<span class="sourceLineNo">053</span><a id="line.53">    public ReindexWorker(final ReindexManager reindexManager, final ReindexService reindexService,</a>
+<span class="sourceLineNo">054</span><a id="line.54">                         final String txId, final boolean failOnError) {</a>
+<span class="sourceLineNo">055</span><a id="line.55">        manager = reindexManager;</a>
+<span class="sourceLineNo">056</span><a id="line.56">        service = reindexService;</a>
+<span class="sourceLineNo">057</span><a id="line.57">        transactionId = txId;</a>
+<span class="sourceLineNo">058</span><a id="line.58">        this.failOnError = failOnError;</a>
+<span class="sourceLineNo">059</span><a id="line.59">        t = new Thread(this, "ReindexWorker");</a>
+<span class="sourceLineNo">060</span><a id="line.60">    }</a>
+<span class="sourceLineNo">061</span><a id="line.61"></a>
+<span class="sourceLineNo">062</span><a id="line.62">    /**</a>
+<span class="sourceLineNo">063</span><a id="line.63">     * Join the thread.</a>
+<span class="sourceLineNo">064</span><a id="line.64">     * @throws InterruptedException if the current thread is interrupted.</a>
+<span class="sourceLineNo">065</span><a id="line.65">     */</a>
+<span class="sourceLineNo">066</span><a id="line.66">    public void join() throws InterruptedException {</a>
+<span class="sourceLineNo">067</span><a id="line.67">        t.join();</a>
+<span class="sourceLineNo">068</span><a id="line.68">    }</a>
+<span class="sourceLineNo">069</span><a id="line.69"></a>
+<span class="sourceLineNo">070</span><a id="line.70">    /**</a>
+<span class="sourceLineNo">071</span><a id="line.71">     * Start the thread with this Runnable</a>
+<span class="sourceLineNo">072</span><a id="line.72">     */</a>
+<span class="sourceLineNo">073</span><a id="line.73">    public void start() {</a>
+<span class="sourceLineNo">074</span><a id="line.74">        t.start();</a>
+<span class="sourceLineNo">075</span><a id="line.75">    }</a>
+<span class="sourceLineNo">076</span><a id="line.76"></a>
+<span class="sourceLineNo">077</span><a id="line.77">    @Override</a>
+<span class="sourceLineNo">078</span><a id="line.78">    public void run() {</a>
+<span class="sourceLineNo">079</span><a id="line.79">        final var stopwatch = Stopwatch.createStarted();</a>
+<span class="sourceLineNo">080</span><a id="line.80">        while (running) {</a>
+<span class="sourceLineNo">081</span><a id="line.81">            final List&lt;String&gt; ids = manager.getIds();</a>
+<span class="sourceLineNo">082</span><a id="line.82">            if (ids.isEmpty()) {</a>
+<span class="sourceLineNo">083</span><a id="line.83">                stopThread();</a>
+<span class="sourceLineNo">084</span><a id="line.84">                break;</a>
+<span class="sourceLineNo">085</span><a id="line.85">            }</a>
+<span class="sourceLineNo">086</span><a id="line.86"></a>
+<span class="sourceLineNo">087</span><a id="line.87">            int completed = 0;</a>
+<span class="sourceLineNo">088</span><a id="line.88">            int errors = 0;</a>
+<span class="sourceLineNo">089</span><a id="line.89"></a>
+<span class="sourceLineNo">090</span><a id="line.90">            for (final var id : ids) {</a>
+<span class="sourceLineNo">091</span><a id="line.91">                if (!running) {</a>
+<span class="sourceLineNo">092</span><a id="line.92">                    break;</a>
+<span class="sourceLineNo">093</span><a id="line.93">                }</a>
+<span class="sourceLineNo">094</span><a id="line.94">                if (stopwatch.elapsed(TimeUnit.SECONDS) &gt; REPORTING_INTERVAL_SECS) {</a>
+<span class="sourceLineNo">095</span><a id="line.95">                    manager.updateComplete(completed, errors);</a>
+<span class="sourceLineNo">096</span><a id="line.96">                    completed = 0;</a>
+<span class="sourceLineNo">097</span><a id="line.97">                    errors = 0;</a>
+<span class="sourceLineNo">098</span><a id="line.98">                    stopwatch.reset().start();</a>
+<span class="sourceLineNo">099</span><a id="line.99">                }</a>
+<span class="sourceLineNo">100</span><a id="line.100">                try {</a>
+<span class="sourceLineNo">101</span><a id="line.101">                    service.indexOcflObject(transactionId, id);</a>
+<span class="sourceLineNo">102</span><a id="line.102">                    completed += 1;</a>
+<span class="sourceLineNo">103</span><a id="line.103">                } catch (final Exception e) {</a>
+<span class="sourceLineNo">104</span><a id="line.104">                    errors += 1;</a>
+<span class="sourceLineNo">105</span><a id="line.105">                    if (failOnError) {</a>
+<span class="sourceLineNo">106</span><a id="line.106">                        stopThread();</a>
+<span class="sourceLineNo">107</span><a id="line.107">                        manager.updateComplete(completed, errors);</a>
+<span class="sourceLineNo">108</span><a id="line.108">                        manager.stop();</a>
+<span class="sourceLineNo">109</span><a id="line.109">                        service.cleanupSession(transactionId);</a>
+<span class="sourceLineNo">110</span><a id="line.110">                        throw e;</a>
+<span class="sourceLineNo">111</span><a id="line.111">                    }</a>
+<span class="sourceLineNo">112</span><a id="line.112">                    LOGGER.error("Reindexing of OCFL id {} failed", id, e);</a>
+<span class="sourceLineNo">113</span><a id="line.113">                }</a>
+<span class="sourceLineNo">114</span><a id="line.114">            }</a>
+<span class="sourceLineNo">115</span><a id="line.115">            manager.updateComplete(completed, errors);</a>
+<span class="sourceLineNo">116</span><a id="line.116">            service.cleanupSession(transactionId);</a>
+<span class="sourceLineNo">117</span><a id="line.117">        }</a>
+<span class="sourceLineNo">118</span><a id="line.118">    }</a>
+<span class="sourceLineNo">119</span><a id="line.119"></a>
+<span class="sourceLineNo">120</span><a id="line.120">    /**</a>
+<span class="sourceLineNo">121</span><a id="line.121">     * Stop this thread from running once it has completed its current batch.</a>
+<span class="sourceLineNo">122</span><a id="line.122">     */</a>
+<span class="sourceLineNo">123</span><a id="line.123">    public void stopThread() {</a>
+<span class="sourceLineNo">124</span><a id="line.124">        this.running = false;</a>
+<span class="sourceLineNo">125</span><a id="line.125">    }</a>
+<span class="sourceLineNo">126</span><a id="line.126"></a>
+<span class="sourceLineNo">127</span><a id="line.127">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>
