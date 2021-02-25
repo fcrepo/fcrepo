@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes","url":"allclasses-index.html"},{"p":"org.fcrepo.common.lang","l":"CheckedRunnable"},{"p":"org.fcrepo.common.db","l":"DbPlatform"},{"p":"org.fcrepo.common.metrics","l":"MetricsHelper"},{"p":"org.fcrepo.common.lang","l":"UncheckedCallable"}]

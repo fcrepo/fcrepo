@@ -1,0 +1,28 @@
+-classpath
+'/Users/danielbernstein/.m2/repository/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar:/Users/danielbernstein/.m2/repository/io/micrometer/micrometer-core/1.6.4/micrometer-core-1.6.4.jar:/Users/danielbernstein/.m2/repository/org/hdrhistogram/HdrHistogram/2.1.12/HdrHistogram-2.1.12.jar'
+-encoding
+'UTF-8'
+-protected
+-quiet
+-source
+'11'
+-sourcepath
+'/Users/danielbernstein/release/fcrepo/fcrepo-common/src/main/java'
+-author
+-bottom
+'Copyright &#169; 2013&#x2013;2021 <a href="http://www.duraspace.org/">DuraSpace, Inc.</a>. All rights reserved.'
+-charset
+'UTF-8'
+-d
+'/Users/danielbernstein/release/fcrepo/fcrepo-common/target/site/apidocs'
+-docencoding
+'UTF-8'
+-doctitle
+'Fedora Repository Common Module 6.0.0-beta-1 API'
+-linkoffline
+'https://docs.oracle.com/en/java/javase/11/docs/api' '/Users/danielbernstein/release/fcrepo/fcrepo-common/target/javadoc-bundle-options'
+-linksource
+-use
+-version
+-windowtitle
+'Fedora Repository Common Module 6.0.0-beta-1 API'
