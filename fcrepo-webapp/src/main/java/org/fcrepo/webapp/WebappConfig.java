@@ -76,8 +76,8 @@ public class WebappConfig {
      * @return event bus
      */
     @Bean
-    public EventBus eventBus() {
-        return new AsyncEventBus(eventBusExecutor());
+    public EventBus eventBus(final FedoraPropsConfig propsConfig) {
+        return new AsyncEventBus(eventBusExecutor(propsConfig));
     }
 
     /**
