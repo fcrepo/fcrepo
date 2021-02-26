@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FedoraReindex.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">FedoraReindex.java</span></div><h1>FedoraReindex.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api;
+
+import static java.lang.String.format;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.Response.status;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Response;
+
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.services.ReindexService;
+
+import org.apache.http.HttpStatus;
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
+
+import io.micrometer.core.annotation.Timed;
+
+/**
+ * @author dbernstein
+ * @since 12/01/20
+ */
+@Timed
+@Scope(&quot;request&quot;)
+@Path(&quot;/{path: (.+/)?}fcr:reindex&quot;)
+public class FedoraReindex extends FedoraBaseResource {
+
+<span class="fc" id="L55">    private static final Logger LOGGER = getLogger(FedoraReindex.class);</span>
+
+    @Inject
+    private ReindexService reindexService;
+
+    @PathParam(&quot;path&quot;)
+    protected String externalPath;
+
+    /**
+     * Default JAX-RS entry point
+     */
+    public FedoraReindex() {
+<span class="fc" id="L67">        super();</span>
+<span class="fc" id="L68">    }</span>
+
+    /**
+     * Reindex a fedora resource.
+     *
+     * @return A response
+     */
+    @POST
+    @Produces({APPLICATION_JSON + &quot;;qs=1.0&quot;,
+            TEXT_PLAIN_WITH_CHARSET})
+    public Response reindexObject() {
+<span class="fc" id="L79">        LOGGER.info(&quot;receiving reindex request for fedora_id = {}&quot;, externalPath);</span>
+        try {
+<span class="fc" id="L81">            final var transaction = transaction();</span>
+<span class="fc" id="L82">            final var id = FedoraId.create(externalPath);</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">            if (doesResourceExist(transaction, id, true)) {</span>
+                //TODO : remove this block once reindexing of existing resources is supported.
+                //       c.f.  https://jira.lyrasis.org/browse/FCREPO-3553
+<span class="fc" id="L86">                return status(HttpStatus.SC_CONFLICT, &quot;Reindexing of existing resources is not currently supported. &quot; +</span>
+<span class="fc" id="L87">                        &quot;Only resources that have not yet been indexed are allowed.&quot;).build();</span>
+            } else {
+                try {
+<span class="fc" id="L90">                    final var baseId = id.asBaseId();</span>
+<span class="fc" id="L91">                    this.reindexService.reindexByFedoraId(transaction().getId(), getUserPrincipal(), baseId);</span>
+<span class="fc" id="L92">                    transaction.commitIfShortLived();</span>
+<span class="fc" id="L93">                    final var message = format(&quot;successfully reindexed %s&quot;, id.getBaseId());</span>
+<span class="fc" id="L94">                    LOGGER.info(message);</span>
+<span class="fc" id="L95">                    return status(HttpStatus.SC_NO_CONTENT).entity(message).build();</span>
+                } finally {
+<span class="fc" id="L97">                    transaction().releaseResourceLocksIfShortLived();</span>
+                }
+            }
+
+<span class="fc" id="L101">        } catch (final Exception ex) {</span>
+<span class="fc" id="L102">            throw new BadRequestException(ex.getMessage(), ex);</span>
+        }
+    }
+
+    @DELETE
+    public Response delete() {
+<span class="fc" id="L108">        return methodNotAllowed();</span>
+    }
+
+    @PUT
+    public Response put() {
+<span class="fc" id="L113">        return methodNotAllowed();</span>
+    }
+
+    @GET
+    public Response get() {
+<span class="fc" id="L118">        return methodNotAllowed();</span>
+    }
+
+    private Response methodNotAllowed() {
+<span class="fc" id="L122">        return status(HttpStatus.SC_METHOD_NOT_ALLOWED).build();</span>
+    }
+
+
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

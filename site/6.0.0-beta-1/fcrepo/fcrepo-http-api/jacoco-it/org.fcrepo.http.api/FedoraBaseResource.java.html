@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FedoraBaseResource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">FedoraBaseResource.java</span></div><h1>FedoraBaseResource.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api;
+
+import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
+import org.fcrepo.http.commons.session.TransactionProvider;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.ResourceHelper;
+import org.slf4j.Logger;
+
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.SecurityContext;
+import java.security.Principal;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * @author cabeer
+ * @since 10/5/14
+ */
+<span class="fc" id="L44">abstract public class FedoraBaseResource extends AbstractResource {</span>
+
+<span class="fc" id="L46">    private static final Logger LOGGER = getLogger(FedoraBaseResource.class);</span>
+
+    @Context
+    protected SecurityContext securityContext;
+
+    @Inject
+    protected ResourceFactory resourceFactory;
+
+    @Inject
+    protected ResourceHelper resourceHelper;
+
+    @Context protected HttpServletRequest servletRequest;
+
+    @Inject
+    protected TransactionManager txManager;
+
+    private TransactionProvider txProvider;
+
+    private Transaction transaction;
+
+    protected HttpIdentifierConverter identifierConverter;
+
+    protected HttpIdentifierConverter identifierConverter() {
+<span class="fc bfc" id="L69" title="All 2 branches covered.">        if (identifierConverter == null) {</span>
+<span class="fc" id="L70">            identifierConverter = new HttpIdentifierConverter(</span>
+<span class="fc" id="L71">                    uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));</span>
+        }
+
+<span class="fc" id="L74">        return identifierConverter;</span>
+    }
+
+    /**
+     * Gets a fedora resource by id. Uses the provided transaction if it is uncommitted,
+     * or uses a new transaction.
+     *
+     * @param transaction the fedora transaction
+     * @param fedoraId    identifier of the resource
+     * @return the requested FedoraResource
+     */
+    protected FedoraResource getFedoraResource(final Transaction transaction, final FedoraId fedoraId)
+            throws PathNotFoundException {
+<span class="fc" id="L87">        return resourceFactory.getResource(transaction, fedoraId);</span>
+    }
+
+    /**
+     * @param transaction the transaction in which to check
+     * @param fedoraId identifier of the object to check
+     * @param includeDeleted Whether to check for deleted resources too.
+     * @return Returns true if an object with the provided id exists
+     */
+    protected boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId,
+                                        final boolean includeDeleted) {
+<span class="fc" id="L98">        return resourceHelper.doesResourceExist(transaction, fedoraId, includeDeleted);</span>
+    }
+
+    /**
+     *
+     * @param transaction the transaction in which to check
+     * @param fedoraId identifier of the object to check
+     * @return Returns true if object does not exist but whose ID starts other resources that do exist.
+     */
+    protected boolean isGhostNode(final Transaction transaction, final FedoraId fedoraId) {
+<span class="fc" id="L108">        return resourceHelper.isGhostNode(transaction, fedoraId);</span>
+    }
+
+    protected String getUserPrincipal() {
+<span class="fc" id="L112">        final Principal p = securityContext.getUserPrincipal();</span>
+<span class="pc bpc" id="L113" title="1 of 2 branches missed.">        return p == null ? null : p.getName();</span>
+    }
+
+    protected Transaction transaction() {
+<span class="fc bfc" id="L117" title="All 2 branches covered.">        if (transaction == null) {</span>
+<span class="fc" id="L118">            txProvider = new TransactionProvider(txManager, servletRequest,</span>
+<span class="fc" id="L119">                    uriInfo.getBaseUri(), fedoraPropsConfig.getJmsBaseUrl());</span>
+<span class="fc" id="L120">            transaction = txProvider.provide();</span>
+        }
+<span class="fc" id="L122">        return transaction;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
