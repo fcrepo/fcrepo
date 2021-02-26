@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>FedoraSearch.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository WebAC Authorization Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">FedoraSearch.java</span></div><h1>FedoraSearch.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api;
+
+import io.micrometer.core.annotation.Timed;
+import org.apache.commons.lang3.StringUtils;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
+import org.fcrepo.search.api.Condition;
+import org.fcrepo.search.api.InvalidConditionExpressionException;
+import org.fcrepo.search.api.InvalidQueryException;
+import org.fcrepo.search.api.SearchIndex;
+import org.fcrepo.search.api.SearchParameters;
+import org.fcrepo.search.api.SearchResult;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Scope;
+
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Response;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.Response.ok;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * @author dbernstein
+ * @since 05/06/20
+ */
+@Timed
+@Scope(&quot;request&quot;)
+@Path(&quot;/fcr:search&quot;)
+public class FedoraSearch extends FedoraBaseResource {
+
+<span class="fc" id="L62">    private static final Logger LOGGER = getLogger(FedoraSearch.class);</span>
+
+    @Autowired
+    @Qualifier(&quot;searchIndex&quot;)
+    private SearchIndex searchIndex;
+
+    /**
+     * Default JAX-RS entry point
+     */
+    public FedoraSearch() {
+<span class="fc" id="L72">        super();</span>
+<span class="fc" id="L73">    }</span>
+
+    /**
+     * Perform simple search on the repository
+     *
+     * @param conditions The conditions constraining the query
+     * @param fields     The fields to return in results
+     * @param maxResults The max number of results to return
+     * @param offset     The zero-based offset of the first result to be returned
+     * @param order      The order: ie &quot;asc&quot; or &quot;desc&quot;
+     * @param orderBy    The field by which to order the results
+     * @return A response object with the search results
+     */
+    @GET
+    @Produces({APPLICATION_JSON + &quot;;qs=1.0&quot;,
+            TEXT_PLAIN_WITH_CHARSET,
+            TEXT_HTML_WITH_CHARSET})
+    public Response doSearch(@QueryParam(value = &quot;condition&quot;) final List&lt;String&gt; conditions,
+                             @QueryParam(value = &quot;fields&quot;) final String fields,
+                             @DefaultValue(&quot;100&quot;) @QueryParam(&quot;max_results&quot;) final int maxResults,
+                             @DefaultValue(&quot;0&quot;) @QueryParam(&quot;offset&quot;) final int offset,
+                             @DefaultValue(&quot;asc&quot;) @QueryParam(&quot;order&quot;) final String order,
+                             @DefaultValue(&quot;fedora_id&quot;) @QueryParam(&quot;order_by&quot;) final String orderBy) {
+
+<span class="fc" id="L97">        LOGGER.info(&quot;GET on search with conditions: {}, and fields: {}&quot;, conditions, fields);</span>
+        try {
+<span class="fc" id="L99">            final var conditionList = new ArrayList&lt;Condition&gt;();</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">            for (final String condition : conditions) {</span>
+<span class="fc" id="L101">                final var parsedCondition = parse(condition, identifierConverter());</span>
+<span class="fc" id="L102">                conditionList.add(parsedCondition);</span>
+<span class="fc" id="L103">            }</span>
+
+<span class="fc" id="L105">            List&lt;Condition.Field&gt; parsedFields = null;</span>
+<span class="pc bpc" id="L106" title="1 of 4 branches missed.">            if (StringUtils.isBlank(fields) || fields.equals(&quot;*&quot;)) {</span>
+<span class="fc" id="L107">                parsedFields = Arrays.asList(Condition.Field.values());</span>
+            } else {
+<span class="fc" id="L109">                parsedFields = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L110" title="All 2 branches covered.">                for (final String field : fields.split(&quot;,&quot;)) {</span>
+                    try {
+<span class="fc" id="L112">                        parsedFields.add(Condition.Field.fromString(field));</span>
+<span class="nc" id="L113">                    } catch (final Exception e) {</span>
+<span class="nc" id="L114">                        throw new InvalidQueryException(&quot;The field \&quot;&quot; + field + &quot;\&quot; is not a valid output field.&quot;);</span>
+<span class="fc" id="L115">                    }</span>
+                }
+            }
+
+            final Condition.Field orderByField;
+            try {
+<span class="fc" id="L121">                orderByField = Condition.Field.fromString(orderBy);</span>
+<span class="nc" id="L122">            } catch (final Exception e) {</span>
+<span class="nc" id="L123">                throw new InvalidQueryException(&quot;The order_by field must contain a valid value such as &quot; +</span>
+<span class="nc" id="L124">                        StringUtils.join(Condition.Field.values(), &quot;,&quot;));</span>
+<span class="fc" id="L125">            }</span>
+
+<span class="pc bpc" id="L127" title="1 of 4 branches missed.">            if (!(order.equalsIgnoreCase(&quot;asc&quot;) || order.equalsIgnoreCase(&quot;desc&quot;))) {</span>
+<span class="nc" id="L128">                throw new InvalidQueryException(&quot;The order field is invalid:  valid values are \&quot;asc\&quot; and \&quot;desc\&quot;&quot;);</span>
+            }
+
+<span class="fc" id="L131">            final var params = new SearchParameters(parsedFields, conditionList, maxResults, offset, orderByField,</span>
+                    order);
+<span class="fc" id="L133">            final Response.ResponseBuilder builder = ok();</span>
+<span class="fc" id="L134">            final var result = this.searchIndex.doSearch(params);</span>
+<span class="fc" id="L135">            final var translatedResults = translateResults(result);</span>
+
+<span class="fc" id="L137">            builder.entity(translatedResults);</span>
+<span class="fc" id="L138">            return builder.build();</span>
+<span class="fc" id="L139">        } catch (final InvalidConditionExpressionException | InvalidQueryException ex) {</span>
+<span class="fc" id="L140">            throw new BadRequestException(ex.getMessage(), ex);</span>
+        }
+    }
+
+    private SearchResult translateResults(final SearchResult result) {
+<span class="fc" id="L145">        result.getItems().forEach(item -&gt; {</span>
+<span class="fc" id="L146">            final var key = Condition.Field.FEDORA_ID.toString();</span>
+<span class="fc" id="L147">            final var fedoraId = item.get(key);</span>
+<span class="fc bfc" id="L148" title="All 2 branches covered.">            if (fedoraId != null) {</span>
+<span class="fc" id="L149">                item.put(key, identifierConverter().toExternalId(fedoraId.toString()));</span>
+            }
+<span class="fc" id="L151">        });</span>
+<span class="fc" id="L152">        return result;</span>
+    }
+
+    /**
+     * Parses the url decoded value of a single parameter passed by the
+     * http layer into a {@link Condition}.
+     *
+     * @param expression The url decoded value of the condition parameter.
+     * @return the parsed {@link Condition} object.
+     */
+    protected static Condition parse(final String expression, final HttpIdentifierConverter converter)
+            throws InvalidConditionExpressionException {
+<span class="fc" id="L164">        final Condition condition = Condition.fromExpression(expression);</span>
+<span class="fc bfc" id="L165" title="All 2 branches covered.">        if (condition.getField().equals(Condition.Field.FEDORA_ID)) {</span>
+            //convert the object value to an internal identifier stem where appropriate
+<span class="fc" id="L167">            final var object = condition.getObject();</span>
+<span class="fc" id="L168">            final var field = condition.getField();</span>
+<span class="fc" id="L169">            final var operator = condition.getOperator();</span>
+<span class="fc bfc" id="L170" title="All 4 branches covered.">            if (!object.startsWith(FEDORA_ID_PREFIX) &amp;&amp; isExternalUrl(object)) {</span>
+<span class="fc" id="L171">                return Condition.fromEnums(field, operator, converter.toInternalId(object));</span>
+<span class="fc bfc" id="L172" title="All 2 branches covered.">            } else if (object.startsWith(&quot;/&quot;)) {</span>
+<span class="fc" id="L173">                return Condition.fromEnums(field, operator, FEDORA_ID_PREFIX + object);</span>
+<span class="fc bfc" id="L174" title="All 4 branches covered.">            } else if (!object.startsWith(FEDORA_ID_PREFIX) &amp;&amp; !object.equals(&quot;*&quot;)) {</span>
+<span class="fc" id="L175">                return Condition.fromEnums(field, operator, FEDORA_ID_PREFIX + &quot;/&quot; + object);</span>
+            }
+        }
+
+<span class="fc" id="L179">        return condition;</span>
+    }
+
+    private static boolean isExternalUrl(final String str) {
+        try {
+<span class="fc" id="L184">            new URL(str);</span>
+<span class="fc" id="L185">            return true;</span>
+<span class="fc" id="L186">        } catch (final Exception ex) {</span>
+<span class="fc" id="L187">            return false;</span>
+        }
+    }
+
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
