@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes","url":"allclasses-index.html"},{"p":"org.fcrepo.search.impl","l":"DbSearchIndexImpl"},{"p":"org.fcrepo.search.impl","l":"InstantParser"},{"p":"org.fcrepo.search.impl","l":"SearchIndexMetrics"},{"p":"org.fcrepo.search.impl","l":"SearchIndexUpdater"}]

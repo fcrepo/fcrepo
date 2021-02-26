@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>TransactionManagerImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Search Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl</a> &gt; <span class="el_source">TransactionManagerImpl.java</span></div><h1>TransactionManagerImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl;
+
+import org.fcrepo.config.FedoraPropsConfig;
+import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.TransactionClosedException;
+import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
+import org.fcrepo.kernel.api.lock.ResourceLockManager;
+import org.fcrepo.kernel.api.observer.EventAccumulator;
+import org.fcrepo.kernel.api.services.MembershipService;
+import org.fcrepo.kernel.api.services.ReferenceService;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static java.util.UUID.randomUUID;
+
+/**
+ * The Fedora Transaction Manager implementation
+ *
+ * @author mohideen
+ */
+@Component
+public class TransactionManagerImpl implements TransactionManager {
+
+<span class="fc" id="L55">    private static final Logger LOGGER = LoggerFactory.getLogger(TransactionManagerImpl.class);</span>
+
+    private final Map&lt;String, Transaction&gt; transactions;
+
+    @Inject
+    private PlatformTransactionManager platformTransactionManager;
+
+    @Autowired
+    @Qualifier(&quot;containmentIndex&quot;)
+    private ContainmentIndex containmentIndex;
+
+    @Inject
+    private PersistentStorageSessionManager pSessionManager;
+
+    @Inject
+    private EventAccumulator eventAccumulator;
+
+    @Autowired
+    @Qualifier(&quot;referenceService&quot;)
+    private ReferenceService referenceService;
+
+    @Inject
+    private MembershipService membershipService;
+
+    @Inject
+    private ResourceLockManager resourceLockManager;
+
+    @Inject
+    private FedoraPropsConfig fedoraPropsConfig;
+
+    private TransactionTemplate transactionTemplate;
+
+    @PostConstruct
+    public void postConstruct() {
+<span class="nc" id="L89">        transactionTemplate = new TransactionTemplate(platformTransactionManager);</span>
+<span class="nc" id="L90">    }</span>
+
+<span class="fc" id="L92">    TransactionManagerImpl() {</span>
+<span class="fc" id="L93">        transactions = new ConcurrentHashMap&lt;&gt;();</span>
+<span class="fc" id="L94">    }</span>
+
+    /**
+     * Periodically scan for closed transactions for cleanup
+     */
+    @Scheduled(fixedDelayString = &quot;#{fedoraPropsConfig.sessionTimeout}&quot;)
+    public void cleanupClosedTransactions() {
+<span class="fc" id="L101">        LOGGER.trace(&quot;Cleaning up expired transactions&quot;);</span>
+
+<span class="fc" id="L103">        final var txIt = transactions.entrySet().iterator();</span>
+<span class="fc bfc" id="L104" title="All 2 branches covered.">        while (txIt.hasNext()) {</span>
+<span class="fc" id="L105">            final var txEntry = txIt.next();</span>
+<span class="fc" id="L106">            final var tx = txEntry.getValue();</span>
+
+            // Cleanup if transaction is closed and past its expiration time
+<span class="fc bfc" id="L109" title="All 4 branches covered.">            if (tx.isCommitted() || tx.isRolledBack()) {</span>
+<span class="fc bfc" id="L110" title="All 2 branches covered.">                if (tx.hasExpired()) {</span>
+<span class="fc" id="L111">                    txIt.remove();</span>
+                }
+<span class="fc bfc" id="L113" title="All 2 branches covered.">            } else if (tx.hasExpired()) {</span>
+<span class="fc" id="L114">                LOGGER.debug(&quot;Rolling back expired transaction {}&quot;, tx.getId());</span>
+                try {
+                    // If the tx has expired but is not already closed, then rollback
+                    // but don't immediately remove it from the list of transactions
+                    // so that the rolled back status can be checked
+<span class="fc" id="L119">                    tx.rollback();</span>
+<span class="nc" id="L120">                } catch (final RuntimeException e) {</span>
+<span class="nc" id="L121">                    LOGGER.error(&quot;Failed to rollback expired transaction {}&quot;, tx.getId(), e);</span>
+<span class="fc" id="L122">                }</span>
+            }
+
+<span class="fc bfc" id="L125" title="All 2 branches covered.">            if (tx.hasExpired()) {</span>
+                // By this point the session as already been committed or rolledback by the transaction
+<span class="fc" id="L127">                pSessionManager.removeSession(tx.getId());</span>
+            }
+<span class="fc" id="L129">        }</span>
+<span class="fc" id="L130">    }</span>
+
+    @Override
+    public synchronized Transaction create() {
+<span class="fc" id="L134">        String txId = randomUUID().toString();</span>
+<span class="pc bpc" id="L135" title="1 of 2 branches missed.">        while (transactions.containsKey(txId)) {</span>
+<span class="nc" id="L136">            txId = randomUUID().toString();</span>
+        }
+<span class="fc" id="L138">        final Transaction tx = new TransactionImpl(txId, this, fedoraPropsConfig.getSessionTimeout());</span>
+<span class="fc" id="L139">        transactions.put(txId, tx);</span>
+<span class="fc" id="L140">        return tx;</span>
+    }
+
+    @Override
+    public Transaction get(final String transactionId) {
+<span class="fc bfc" id="L145" title="All 2 branches covered.">        if (transactions.containsKey(transactionId)) {</span>
+<span class="fc" id="L146">            final Transaction transaction = transactions.get(transactionId);</span>
+<span class="fc bfc" id="L147" title="All 2 branches covered.">            if (transaction.hasExpired()) {</span>
+<span class="fc" id="L148">                transaction.rollback();</span>
+<span class="fc" id="L149">                throw new TransactionClosedException(&quot;Transaction with transactionId: &quot; + transactionId +</span>
+<span class="fc" id="L150">                    &quot; expired at &quot; + transaction.getExpires() + &quot;!&quot;);</span>
+            }
+<span class="fc bfc" id="L152" title="All 2 branches covered.">            if (transaction.isCommitted()) {</span>
+<span class="fc" id="L153">                throw new TransactionClosedException(&quot;Transaction with transactionId: &quot; + transactionId +</span>
+                        &quot; has already been committed.&quot;);
+            }
+<span class="fc bfc" id="L156" title="All 2 branches covered.">            if (transaction.isRolledBack()) {</span>
+<span class="fc" id="L157">                throw new TransactionClosedException(&quot;Transaction with transactionId: &quot; + transactionId +</span>
+                        &quot; has already been rolled back.&quot;);
+            }
+<span class="fc" id="L160">            return transaction;</span>
+        } else {
+<span class="fc" id="L162">            throw new TransactionNotFoundException(&quot;No Transaction found with transactionId: &quot; + transactionId);</span>
+        }
+    }
+
+    protected PersistentStorageSessionManager getPersistentStorageSessionManager() {
+<span class="fc" id="L167">        return pSessionManager;</span>
+    }
+
+    protected ContainmentIndex getContainmentIndex() {
+<span class="fc" id="L171">        return containmentIndex;</span>
+    }
+
+    protected EventAccumulator getEventAccumulator() {
+<span class="fc" id="L175">        return eventAccumulator;</span>
+    }
+
+    protected ReferenceService getReferenceService() {
+<span class="fc" id="L179">        return referenceService;</span>
+    }
+
+    protected MembershipService getMembershipService() {
+<span class="fc" id="L183">        return membershipService;</span>
+    }
+
+    protected TransactionTemplate getTransactionTemplate() {
+<span class="fc" id="L187">        return transactionTemplate;</span>
+    }
+
+    protected ResourceLockManager getResourceLockManager() {
+<span class="fc" id="L191">        return resourceLockManager;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

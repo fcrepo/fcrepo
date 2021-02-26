@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ResourceFactoryImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Search Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.models</a> &gt; <span class="el_source">ResourceFactoryImpl.java</span></div><h1>ResourceFactoryImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.models;
+
+import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionUtils;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.ResourceTypeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.Binary;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
+
+import java.time.Instant;
+import java.util.stream.Stream;
+
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_WEBAC_ACL_URI;
+import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * Implementation of ResourceFactory interface.
+ *
+ * @author whikloj
+ * @since 2019-09-23
+ */
+@Component
+<span class="fc" id="L61">public class ResourceFactoryImpl implements ResourceFactory {</span>
+
+<span class="fc" id="L63">    private static final Logger LOGGER = getLogger(ResourceFactoryImpl.class);</span>
+
+    @Inject
+    private PersistentStorageSessionManager persistentStorageSessionManager;
+
+    @Autowired
+    @Qualifier(&quot;containmentIndex&quot;)
+    private ContainmentIndex containmentIndex;
+
+    @Override
+    public FedoraResource getResource(final FedoraId fedoraID)
+            throws PathNotFoundException {
+<span class="fc" id="L75">        return instantiateResource(null, fedoraID);</span>
+    }
+
+    @Override
+    public FedoraResource getResource(final Transaction transaction, final FedoraId fedoraID)
+            throws PathNotFoundException {
+<span class="fc" id="L81">        return getResource(TransactionUtils.openTxId(transaction), fedoraID);</span>
+    }
+
+    @Override
+    public FedoraResource getResource(final String transactionId, final FedoraId fedoraID)
+            throws PathNotFoundException {
+<span class="fc" id="L87">        return instantiateResource(transactionId, fedoraID);</span>
+    }
+
+    @Override
+    public &lt;T extends FedoraResource&gt; T getResource(final FedoraId identifier,
+                                                    final Class&lt;T&gt; clazz) throws PathNotFoundException {
+<span class="fc" id="L93">        return clazz.cast(getResource((Transaction)null, identifier));</span>
+    }
+
+    @Override
+    public &lt;T extends FedoraResource&gt; T getResource(final Transaction transaction, final FedoraId identifier,
+                                                    final Class&lt;T&gt; clazz) throws PathNotFoundException {
+<span class="fc" id="L99">        return clazz.cast(getResource(transaction, identifier));</span>
+    }
+
+
+    @Override
+    public FedoraResource getContainer(final String transactionId, final FedoraId resourceId) {
+<span class="nc" id="L105">        final String containerId = containmentIndex.getContainedBy(transactionId, resourceId);</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">        if (containerId == null) {</span>
+<span class="nc" id="L107">            return null;</span>
+        }
+        try {
+<span class="nc" id="L110">            return getResource(transactionId, FedoraId.create(containerId));</span>
+<span class="nc" id="L111">        } catch (final PathNotFoundException exc) {</span>
+<span class="nc" id="L112">            return null;</span>
+        }
+    }
+
+    /**
+     * Returns the appropriate FedoraResource class for an object based on the provided headers
+     *
+     * @param headers headers for the resource being constructed
+     * @return FedoraResource class
+     */
+    private Class&lt;? extends FedoraResourceImpl&gt; getClassForTypes(final ResourceHeaders headers) {
+<span class="fc" id="L123">        final var ixModel = headers.getInteractionModel();</span>
+<span class="fc bfc" id="L124" title="All 4 branches covered.">        if (BASIC_CONTAINER.getURI().equals(ixModel) || INDIRECT_CONTAINER.getURI().equals(ixModel)</span>
+<span class="fc bfc" id="L125" title="All 2 branches covered.">                || DIRECT_CONTAINER.getURI().equals(ixModel)) {</span>
+<span class="fc" id="L126">            return ContainerImpl.class;</span>
+        }
+<span class="fc bfc" id="L128" title="All 2 branches covered.">        if (NON_RDF_SOURCE.getURI().equals(ixModel)) {</span>
+<span class="fc" id="L129">            return BinaryImpl.class;</span>
+        }
+<span class="fc bfc" id="L131" title="All 2 branches covered.">        if (FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI.equals(ixModel)) {</span>
+<span class="fc" id="L132">            return NonRdfSourceDescriptionImpl.class;</span>
+        }
+<span class="pc bpc" id="L134" title="1 of 2 branches missed.">        if (FEDORA_WEBAC_ACL_URI.equals(ixModel)) {</span>
+<span class="nc" id="L135">            return WebacAclImpl.class;</span>
+        }
+        // TODO add the rest of the types
+<span class="fc" id="L138">        throw new ResourceTypeException(&quot;Could not identify the resource type for interaction model &quot; + ixModel);</span>
+    }
+
+    /**
+     * Instantiates a new FedoraResource object of the given class.
+     *
+     * @param transactionId the transaction id
+     * @param identifier    identifier for the new instance
+     * @return new FedoraResource instance
+     * @throws PathNotFoundException
+     */
+    private FedoraResource instantiateResource(final String transactionId,
+                                               final FedoraId identifier)
+            throws PathNotFoundException {
+        try {
+            // For descriptions and ACLs we need the actual endpoint.
+<span class="fc" id="L154">            final var psSession = getSession(transactionId);</span>
+<span class="fc bfc" id="L155" title="All 2 branches covered.">            final Instant versionDateTime = identifier.isMemento() ? identifier.getMementoInstant() : null;</span>
+<span class="fc" id="L156">            final var headers = psSession.getHeaders(identifier, versionDateTime);</span>
+
+            // Determine the appropriate class from headers
+<span class="fc" id="L159">            final var createClass = getClassForTypes(headers);</span>
+
+            // Retrieve standard constructor
+<span class="fc" id="L162">            final var constructor = createClass.getConstructor(</span>
+                    FedoraId.class,
+                    String.class,
+                    PersistentStorageSessionManager.class,
+                    ResourceFactory.class);
+
+            // If identifier is to a TimeMap we need to avoid creating a original resource with a Timemap FedoraId
+<span class="pc bpc" id="L169" title="1 of 2 branches missed.">            final var instantiationId = identifier.isTimemap() ?</span>
+<span class="pc" id="L170">                    FedoraId.create(identifier.getResourceId()) : identifier;</span>
+
+<span class="fc" id="L172">            final var rescImpl = constructor.newInstance(instantiationId, transactionId,</span>
+                    persistentStorageSessionManager, this);
+<span class="fc" id="L174">            populateResourceHeaders(rescImpl, headers, versionDateTime);</span>
+
+<span class="fc bfc" id="L176" title="All 2 branches covered.">            if (headers.isDeleted()) {</span>
+<span class="fc" id="L177">                final var rootId = FedoraId.create(identifier.getBaseId());</span>
+<span class="fc" id="L178">                final var tombstone = new TombstoneImpl(rootId, transactionId, persistentStorageSessionManager,</span>
+                        this, rescImpl);
+<span class="fc" id="L180">                tombstone.setLastModifiedDate(headers.getLastModifiedDate());</span>
+<span class="fc" id="L181">                return tombstone;</span>
+<span class="pc bpc" id="L182" title="1 of 2 branches missed.">            } else if (identifier.isTimemap()) {</span>
+                // If identifier is a TimeMap, now we can return the virtual resource.
+<span class="nc" id="L184">                return rescImpl.getTimeMap();</span>
+            }
+<span class="fc" id="L186">            return rescImpl;</span>
+<span class="nc" id="L187">        } catch (final SecurityException | ReflectiveOperationException e) {</span>
+<span class="nc" id="L188">            throw new RepositoryRuntimeException(&quot;Unable to construct object&quot;, e);</span>
+<span class="fc" id="L189">        } catch (final PersistentItemNotFoundException e) {</span>
+<span class="fc" id="L190">            throw new PathNotFoundException(e.getMessage(), e);</span>
+<span class="fc" id="L191">        } catch (final PersistentStorageException e) {</span>
+<span class="fc" id="L192">            throw new RepositoryRuntimeException(e.getMessage(), e);</span>
+        }
+    }
+
+    private void populateResourceHeaders(final FedoraResourceImpl resc,
+                                         final ResourceHeaders headers, final Instant version) {
+<span class="fc" id="L198">        resc.setCreatedBy(headers.getCreatedBy());</span>
+<span class="fc" id="L199">        resc.setCreatedDate(headers.getCreatedDate());</span>
+<span class="fc" id="L200">        resc.setLastModifiedBy(headers.getLastModifiedBy());</span>
+<span class="fc" id="L201">        resc.setLastModifiedDate(headers.getLastModifiedDate());</span>
+<span class="fc" id="L202">        resc.setParentId(headers.getParent());</span>
+<span class="fc" id="L203">        resc.setEtag(headers.getStateToken());</span>
+<span class="fc" id="L204">        resc.setStateToken(headers.getStateToken());</span>
+<span class="fc" id="L205">        resc.setIsArchivalGroup(headers.isArchivalGroup());</span>
+<span class="fc" id="L206">        resc.setInteractionModel(headers.getInteractionModel());</span>
+
+        // If there's a version, then it's a memento
+<span class="fc bfc" id="L209" title="All 2 branches covered.">        if (version != null) {</span>
+<span class="fc" id="L210">            resc.setIsMemento(true);</span>
+<span class="fc" id="L211">            resc.setMementoDatetime(version);</span>
+        }
+
+<span class="fc bfc" id="L214" title="All 2 branches covered.">        if (resc instanceof Binary) {</span>
+<span class="fc" id="L215">            final var binary = (BinaryImpl) resc;</span>
+<span class="fc" id="L216">            binary.setContentSize(headers.getContentSize());</span>
+<span class="fc" id="L217">            binary.setExternalHandling(headers.getExternalHandling());</span>
+<span class="fc" id="L218">            binary.setExternalUrl(headers.getExternalUrl());</span>
+<span class="fc" id="L219">            binary.setDigests(headers.getDigests());</span>
+<span class="fc" id="L220">            binary.setFilename(headers.getFilename());</span>
+<span class="fc" id="L221">            binary.setMimeType(headers.getMimeType());</span>
+        }
+<span class="fc" id="L223">    }</span>
+
+    /**
+     * Get a session for this interaction.
+     *
+     * @param transactionId The supplied transaction id.
+     * @return a storage session.
+     */
+    private PersistentStorageSession getSession(final String transactionId) {
+        final PersistentStorageSession session;
+<span class="fc bfc" id="L233" title="All 2 branches covered.">        if (transactionId == null) {</span>
+<span class="fc" id="L234">            session = persistentStorageSessionManager.getReadOnlySession();</span>
+        } else {
+<span class="fc" id="L236">            session = persistentStorageSessionManager.getSession(transactionId);</span>
+        }
+<span class="fc" id="L238">        return session;</span>
+    }
+
+    @Override
+    public Stream&lt;FedoraResource&gt; getChildren(final String transactionId, final FedoraId resourceId) {
+<span class="fc" id="L243">        return containmentIndex.getContains(transactionId, resourceId)</span>
+<span class="fc" id="L244">            .map(childId -&gt; {</span>
+                try {
+<span class="fc" id="L246">                    return getResource(transactionId, FedoraId.create(childId));</span>
+<span class="nc" id="L247">                } catch (final PathNotFoundException e) {</span>
+<span class="nc" id="L248">                    throw new PathNotFoundRuntimeException(e.getMessage(), e);</span>
+                }
+            });
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

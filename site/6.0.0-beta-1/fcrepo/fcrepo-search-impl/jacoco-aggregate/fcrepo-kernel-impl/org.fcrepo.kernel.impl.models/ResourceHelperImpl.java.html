@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ResourceHelperImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Search Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.models</a> &gt; <span class="el_source">ResourceHelperImpl.java</span></div><h1>ResourceHelperImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.models;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.inject.Inject;
+
+import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionUtils;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.kernel.api.models.ResourceHelper;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.common.ResourceHeadersImpl;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
+/**
+ * Utility class for helper methods.
+ * @author whikloj
+ * @since 6.0.0
+ */
+@Component
+<span class="fc" id="L47">public class ResourceHelperImpl implements ResourceHelper {</span>
+
+<span class="fc" id="L49">    private static final Logger LOGGER = getLogger(ResourceHeadersImpl.class);</span>
+
+    @Inject
+    private PersistentStorageSessionManager persistentStorageSessionManager;
+
+    @Autowired
+    @Qualifier(&quot;containmentIndex&quot;)
+    private ContainmentIndex containmentIndex;
+
+    @Override
+    public boolean isGhostNode(final Transaction transaction, final FedoraId resourceId) {
+<span class="fc bfc" id="L60" title="All 2 branches covered.">        if (!doesResourceExist(transaction, resourceId, true)) {</span>
+<span class="fc" id="L61">            return containmentIndex.hasResourcesStartingWith(TransactionUtils.openTxId(transaction), resourceId);</span>
+        }
+<span class="fc" id="L63">        return false;</span>
+    }
+
+    @Override
+    public boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId,
+                                     final boolean includeDeleted) {
+<span class="fc" id="L69">        final String transactionId = TransactionUtils.openTxId(transaction);</span>
+<span class="pc bpc" id="L70" title="1 of 2 branches missed.">        if (fedoraId.isRepositoryRoot()) {</span>
+            // Root always exists.
+<span class="nc" id="L72">            return true;</span>
+        }
+<span class="pc bpc" id="L74" title="1 of 4 branches missed.">        if (!(fedoraId.isMemento() || fedoraId.isAcl())) {</span>
+            // containment index doesn't handle versions and only tells us if the resource (not acl) is there,
+            // so don't bother checking for them.
+<span class="fc" id="L77">            return containmentIndex.resourceExists(transactionId, fedoraId, includeDeleted);</span>
+        } else {
+
+<span class="fc" id="L80">            final PersistentStorageSession psSession = getSession(transactionId);</span>
+
+            try {
+                // Resource ID for metadata or ACL contains their individual endopoints (ie. fcr:metadata, fcr:acl)
+<span class="nc" id="L84">                final ResourceHeaders headers = psSession.getHeaders(fedoraId, fedoraId.getMementoInstant());</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">                return !headers.isDeleted();</span>
+<span class="nc" id="L86">            } catch (final PersistentItemNotFoundException e) {</span>
+                // Object doesn't exist.
+<span class="nc" id="L88">                return false;</span>
+<span class="fc" id="L89">            } catch (final PersistentStorageException e) {</span>
+                // Other error, pass along.
+<span class="fc" id="L91">                throw new RepositoryRuntimeException(e.getMessage(), e);</span>
+            }
+        }
+    }
+
+    /**
+     * Get a session for this interaction.
+     *
+     * @param transactionId The supplied transaction id.
+     * @return a storage session.
+     */
+    private PersistentStorageSession getSession(final String transactionId) {
+        final PersistentStorageSession session;
+<span class="fc bfc" id="L104" title="All 2 branches covered.">        if (transactionId == null) {</span>
+<span class="fc" id="L105">            session = persistentStorageSessionManager.getReadOnlySession();</span>
+        } else {
+<span class="fc" id="L107">            session = persistentStorageSessionManager.getSession(transactionId);</span>
+        }
+<span class="fc" id="L109">        return session;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>AbstractRdfSourceOperationBuilder.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Search Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.operations</a> &gt; <span class="el_source">AbstractRdfSourceOperationBuilder.java</span></div><h1>AbstractRdfSourceOperationBuilder.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.operations;
+
+import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.checkTripleForDisallowed;
+import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getCreatedBy;
+import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getCreatedDate;
+import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getModifiedBy;
+import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getModifiedDate;
+
+import java.time.Instant;
+
+import org.fcrepo.config.ServerManagedPropsMode;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+
+import org.apache.jena.rdf.model.Model;
+
+/**
+ * Abstract builder for interacting with an Rdf Source Operation Builder
+ * @author bseeger
+ */
+public abstract class AbstractRdfSourceOperationBuilder implements RdfSourceOperationBuilder {
+
+    /**
+     * Holds the stream of user's triples.
+     */
+    protected RdfStream tripleStream;
+
+    /**
+     * String of the resource ID.
+     */
+    protected final FedoraId resourceId;
+
+    /**
+     * The interaction model of this resource, null in case of update.
+     */
+    protected final String interactionModel;
+
+    /**
+     * Principal of the user performing the operation
+     */
+    protected String userPrincipal;
+
+    protected String lastModifiedBy;
+
+    protected String createdBy;
+
+    protected Instant lastModifiedDate;
+
+    protected Instant createdDate;
+
+    protected ServerManagedPropsMode serverManagedPropsMode;
+
+    protected AbstractRdfSourceOperationBuilder(final FedoraId rescId,
+                                                final String model,
+<span class="fc" id="L74">                                                final ServerManagedPropsMode serverManagedPropsMode) {</span>
+<span class="fc" id="L75">        resourceId = rescId;</span>
+<span class="fc" id="L76">        interactionModel = model;</span>
+<span class="fc" id="L77">        this.serverManagedPropsMode = serverManagedPropsMode;</span>
+<span class="fc" id="L78">    }</span>
+
+    @Override
+    public RdfSourceOperationBuilder userPrincipal(final String userPrincipal) {
+<span class="fc" id="L82">        this.userPrincipal = userPrincipal;</span>
+<span class="fc" id="L83">        return this;</span>
+    }
+
+    @Override
+    public RdfSourceOperationBuilder triples(final RdfStream triples) {
+<span class="fc bfc" id="L88" title="All 2 branches covered.">        if (this.serverManagedPropsMode.equals(ServerManagedPropsMode.RELAXED)) {</span>
+            // Filter out server managed properties, they should only matter to the relaxedProperties method.
+<span class="fc" id="L90">            this.tripleStream = new DefaultRdfStream(triples.topic(), triples.filter(t -&gt; {</span>
+                try {
+<span class="nc" id="L92">                    checkTripleForDisallowed(t);</span>
+<span class="nc" id="L93">                } catch (final Exception e) {</span>
+<span class="nc" id="L94">                    return false;</span>
+<span class="nc" id="L95">                }</span>
+<span class="nc" id="L96">                return true;</span>
+            }));
+        } else {
+<span class="fc" id="L99">            this.tripleStream = triples;</span>
+        }
+<span class="fc" id="L101">        return this;</span>
+    }
+
+    @Override
+    public RdfSourceOperationBuilder relaxedProperties(final Model model) {
+        // Has no affect if the server is not in relaxed mode
+<span class="pc bpc" id="L107" title="1 of 4 branches missed.">        if (model != null &amp;&amp; serverManagedPropsMode == ServerManagedPropsMode.RELAXED) {</span>
+<span class="fc" id="L108">            final var resc = model.getResource(resourceId.getResourceId());</span>
+
+<span class="fc" id="L110">            final var createdDateVal = getCreatedDate(resc);</span>
+<span class="fc bfc" id="L111" title="All 2 branches covered.">            if (createdDateVal != null) {</span>
+<span class="fc" id="L112">                this.createdDate = createdDateVal.toInstant();</span>
+            }
+<span class="fc" id="L114">            final var createdByVal = getCreatedBy(resc);</span>
+<span class="fc bfc" id="L115" title="All 2 branches covered.">            if (createdByVal != null) {</span>
+<span class="fc" id="L116">                this.createdBy = createdByVal;</span>
+            }
+<span class="fc" id="L118">            final var modifiedDate = getModifiedDate(resc);</span>
+<span class="fc bfc" id="L119" title="All 2 branches covered.">            if (modifiedDate != null) {</span>
+<span class="fc" id="L120">                this.lastModifiedDate = modifiedDate.toInstant();</span>
+            }
+<span class="fc" id="L122">            final var modifiedBy = getModifiedBy(resc);</span>
+<span class="fc bfc" id="L123" title="All 2 branches covered.">            if (modifiedBy != null) {</span>
+<span class="fc" id="L124">                this.lastModifiedBy = modifiedBy;</span>
+            }
+        }
+
+<span class="fc" id="L128">        return this;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

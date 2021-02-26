@@ -1,0 +1,491 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>MembershipServiceImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Search Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.services</a> &gt; <span class="el_source">MembershipServiceImpl.java</span></div><h1>MembershipServiceImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.services;
+
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+
+import org.fcrepo.config.OcflPropsConfig;
+import org.fcrepo.kernel.api.RdfLexicon;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.Binary;
+import org.fcrepo.kernel.api.models.Container;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.Tombstone;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.services.MembershipService;
+import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
+import javax.transaction.Transactional;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+
+/**
+ * Implementation of a service which updates and persists membership properties for resources
+ *
+ * @author bbpennel
+ * @since 6.0.0
+ */
+@Component
+<span class="fc" id="L62">public class MembershipServiceImpl implements MembershipService {</span>
+<span class="fc" id="L63">    private static final Logger log = getLogger(MembershipServiceImpl.class);</span>
+
+<span class="fc" id="L65">    public static final Instant NO_END_INSTANT = Instant.parse(&quot;9999-12-31T00:00:00.000Z&quot;);</span>
+
+    @Inject
+    private MembershipIndexManager indexManager;
+
+    @Inject
+    private ResourceFactory resourceFactory;
+
+    @Inject
+    private OcflPropsConfig propsConfig;
+
+<span class="fc" id="L76">    private enum ContainerType {</span>
+<span class="fc" id="L77">        Direct, Indirect;</span>
+    }
+
+    @Override
+    @Transactional
+    public void resourceCreated(final String txId, final FedoraId fedoraId) {
+<span class="fc" id="L83">        final var fedoraResc = getFedoraResource(txId, fedoraId);</span>
+
+        // Only need to compute membership for created containers and binaries
+<span class="pc bpc" id="L86" title="1 of 4 branches missed.">        if (!(fedoraResc instanceof Container || fedoraResc instanceof Binary)) {</span>
+<span class="nc" id="L87">            return;</span>
+        }
+
+<span class="fc" id="L90">        final var parentResc = getParentResource(fedoraResc);</span>
+<span class="fc" id="L91">        final var containerProperties = new DirectContainerProperties(parentResc);</span>
+
+<span class="fc bfc" id="L93" title="All 2 branches covered.">        if (containerProperties.containerType != null) {</span>
+<span class="fc" id="L94">            final var newMembership = generateMembership(containerProperties, fedoraResc);</span>
+<span class="fc" id="L95">            indexManager.addMembership(txId, parentResc.getFedoraId(), fedoraResc.getFedoraId(),</span>
+<span class="fc" id="L96">                    newMembership, fedoraResc.getCreatedDate());</span>
+        }
+<span class="fc" id="L98">    }</span>
+
+    @Override
+    @Transactional
+    public void resourceModified(final String txId, final FedoraId fedoraId) {
+<span class="fc" id="L103">        final var fedoraResc = getFedoraResource(txId, fedoraId);</span>
+<span class="fc" id="L104">        final var containerProperties = new DirectContainerProperties(fedoraResc);</span>
+
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">        if (containerProperties.containerType != null) {</span>
+<span class="fc" id="L107">            log.debug(&quot;Modified DirectContainer {}, recomputing generated membership relations&quot;, fedoraId);</span>
+
+<span class="fc bfc" id="L109" title="All 2 branches covered.">            if (propsConfig.isAutoVersioningEnabled()) {</span>
+<span class="fc" id="L110">                modifyDCAutoversioned(txId, fedoraResc, containerProperties);</span>
+            } else {
+<span class="fc" id="L112">                modifyDCOnDemandVersioning(txId, fedoraResc);</span>
+            }
+        }
+
+<span class="fc" id="L116">        final var parentResc = getParentResource(fedoraResc);</span>
+<span class="fc" id="L117">        final var parentProperties = new DirectContainerProperties(parentResc);</span>
+
+        // Handle updates of proxies in IndirectContainer
+<span class="pc bpc" id="L120" title="1 of 2 branches missed.">        if (ContainerType.Indirect.equals(parentProperties.containerType)) {</span>
+<span class="nc" id="L121">            modifyProxy(txId, fedoraResc, parentProperties);</span>
+        }
+<span class="fc" id="L123">    }</span>
+
+    private void modifyProxy(final String txId, final FedoraResource proxyResc,
+            final DirectContainerProperties containerProperties) {
+<span class="nc" id="L127">        final var lastModified = proxyResc.getLastModifiedDate();</span>
+
+<span class="nc bnc" id="L129" title="All 2 branches missed.">        if (propsConfig.isAutoVersioningEnabled()) {</span>
+            // end existing stuff
+<span class="nc" id="L131">            indexManager.endMembershipFromChild(txId, containerProperties.id, proxyResc.getFedoraId(), lastModified);</span>
+            // add new membership
+        } else {
+<span class="nc" id="L134">            final var mementoDatetimes = proxyResc.getTimeMap().listMementoDatetimes();</span>
+            final Instant lastVersionDatetime;
+<span class="nc bnc" id="L136" title="All 2 branches missed.">            if (mementoDatetimes.size() == 0) {</span>
+                // If no previous versions of proxy, then cleanup and repopulate everything
+<span class="nc" id="L138">                lastVersionDatetime = null;</span>
+            } else {
+                // If at least one past version, then reindex membership involving the last version and after
+<span class="nc" id="L141">                lastVersionDatetime = mementoDatetimes.get(mementoDatetimes.size() - 1);</span>
+            }
+<span class="nc" id="L143">            indexManager.deleteMembershipForProxyAfter(txId, containerProperties.id,</span>
+<span class="nc" id="L144">                    proxyResc.getFedoraId(), lastVersionDatetime);</span>
+        }
+
+<span class="nc" id="L147">        indexManager.addMembership(txId, containerProperties.id, proxyResc.getFedoraId(),</span>
+<span class="nc" id="L148">                generateMembership(containerProperties, proxyResc), lastModified);</span>
+<span class="nc" id="L149">    }</span>
+
+    private void modifyDCAutoversioned(final String txId, final FedoraResource dcResc,
+            final DirectContainerProperties containerProperties) {
+<span class="fc" id="L153">        final var dcId = dcResc.getFedoraId();</span>
+<span class="fc" id="L154">        final var dcLastModified = dcResc.getLastModifiedDate();</span>
+        // Delete/end existing membership from this container
+<span class="fc" id="L156">        indexManager.endMembershipForSource(txId, dcResc.getFedoraId(), dcLastModified);</span>
+
+        // Add updated membership properties for all non-tombstone children
+<span class="fc" id="L159">        dcResc.getChildren()</span>
+<span class="fc bfc" id="L160" title="All 2 branches covered.">                .filter(child -&gt; !(child instanceof Tombstone))</span>
+<span class="fc" id="L161">                .forEach(child -&gt; {</span>
+<span class="fc" id="L162">                    final var newMembership = generateMembership(containerProperties, child);</span>
+<span class="fc" id="L163">                    indexManager.addMembership(txId, dcId, child.getFedoraId(),</span>
+                            newMembership, dcLastModified);
+<span class="fc" id="L165">                });</span>
+<span class="fc" id="L166">    }</span>
+
+    private void modifyDCOnDemandVersioning(final String txId, final FedoraResource dcResc) {
+<span class="fc" id="L169">        final var dcId = dcResc.getFedoraId();</span>
+<span class="fc" id="L170">        final var mementoDatetimes = dcResc.getTimeMap().listMementoDatetimes();</span>
+        final Instant lastVersionDatetime;
+<span class="fc bfc" id="L172" title="All 2 branches covered.">        if (mementoDatetimes.size() == 0) {</span>
+            // If no previous versions of DC, then cleanup and repopulate everything
+<span class="fc" id="L174">            lastVersionDatetime = null;</span>
+        } else {
+            // If at least one past version, then reindex membership involving the last version and after
+<span class="fc" id="L177">            lastVersionDatetime = mementoDatetimes.get(mementoDatetimes.size() - 1);</span>
+        }
+<span class="fc" id="L179">        indexManager.deleteMembershipForSourceAfter(txId, dcId, lastVersionDatetime);</span>
+<span class="fc" id="L180">        populateMembershipHistory(txId, dcResc, lastVersionDatetime);</span>
+<span class="fc" id="L181">    }</span>
+
+    private Triple generateMembership(final DirectContainerProperties properties, final FedoraResource childResc) {
+<span class="fc" id="L184">        final var childRdfResc = getRdfResource(childResc.getFedoraId());</span>
+
+        final Node memberNode;
+<span class="fc bfc" id="L187" title="All 2 branches covered.">        if (ContainerType.Indirect.equals(properties.containerType)) {</span>
+            // Special case to use child as the member subject
+<span class="pc bpc" id="L189" title="1 of 2 branches missed.">            if (RdfLexicon.MEMBER_SUBJECT.equals(properties.insertedContentRelation)) {</span>
+<span class="nc" id="L190">                memberNode = childRdfResc.asNode();</span>
+            } else {
+                // get the member node from the child resource's insertedContentRelation property
+<span class="fc" id="L193">                final var childModelResc = getRdfResource(childResc);</span>
+<span class="fc" id="L194">                final Statement stmt = childModelResc.getProperty(properties.insertedContentRelation);</span>
+                // Ignore the child if it is missing the insertedContentRelation or its object is not a resource
+<span class="pc bpc" id="L196" title="2 of 4 branches missed.">                if (stmt == null || !(stmt.getObject() instanceof Resource)) {</span>
+<span class="nc" id="L197">                    return null;</span>
+                }
+<span class="fc" id="L199">                memberNode = stmt.getResource().asNode();</span>
+<span class="fc" id="L200">            }</span>
+        } else {
+<span class="fc" id="L202">            memberNode = childRdfResc.asNode();</span>
+        }
+
+<span class="fc" id="L205">        return generateMembershipTriple(properties.membershipResource, memberNode,</span>
+                properties.hasMemberRelation, properties.isMemberOfRelation);
+    }
+
+    private Triple generateMembershipTriple(final Node membership, final Node member,
+            final Node hasMemberRel, final Node memberOfRel) {
+<span class="fc bfc" id="L211" title="All 2 branches covered.">        if (memberOfRel != null) {</span>
+<span class="fc" id="L212">            return new Triple(member, memberOfRel, membership);</span>
+        } else {
+<span class="fc" id="L214">            return new Triple(membership, hasMemberRel, member);</span>
+        }
+    }
+
+    private Resource getRdfResource(final FedoraResource fedoraResc) {
+<span class="fc" id="L219">        final var model = fedoraResc.getTriples().collect(toModel());</span>
+<span class="fc" id="L220">        return model.getResource(fedoraResc.getFedoraId().getFullId());</span>
+    }
+
+    private Resource getRdfResource(final FedoraId fedoraId) {
+<span class="fc" id="L224">        return org.apache.jena.rdf.model.ResourceFactory.createResource(fedoraId.getFullId());</span>
+    }
+
+    private FedoraResource getFedoraResource(final String txId, final FedoraId fedoraId) {
+        try {
+<span class="fc" id="L229">            return resourceFactory.getResource(txId, fedoraId);</span>
+<span class="fc" id="L230">        } catch (final PathNotFoundException e) {</span>
+<span class="fc" id="L231">            throw new PathNotFoundRuntimeException(e.getMessage(), e);</span>
+        }
+    }
+
+    private FedoraResource getParentResource(final FedoraResource resc) {
+        try {
+<span class="fc" id="L237">            return resc.getParent();</span>
+<span class="nc" id="L238">        } catch (final PathNotFoundException e) {</span>
+<span class="nc" id="L239">            throw new PathNotFoundRuntimeException(e.getMessage(), e);</span>
+        }
+    }
+
+    @Override
+    @Transactional
+    public void resourceDeleted(final String txId, final FedoraId fedoraId) {
+        // delete DirectContainer, end all membership for that source
+        FedoraResource fedoraResc;
+        try {
+<span class="fc" id="L249">            fedoraResc = getFedoraResource(txId, fedoraId);</span>
+<span class="fc" id="L250">        } catch (final PathNotFoundRuntimeException e) {</span>
+<span class="fc" id="L251">            log.debug(&quot;Deleted resource {} does not have a tombstone, cleanup any references&quot;, fedoraId);</span>
+<span class="fc" id="L252">            indexManager.deleteMembershipReferences(txId, fedoraId);</span>
+<span class="fc" id="L253">            return;</span>
+<span class="fc" id="L254">        }</span>
+<span class="fc bfc" id="L255" title="All 2 branches covered.">        if (fedoraResc instanceof Tombstone) {</span>
+<span class="fc" id="L256">            fedoraResc = ((Tombstone) fedoraResc).getDeletedObject();</span>
+        }
+
+<span class="fc" id="L259">        final var resourceContainerType = getContainerType(fedoraResc);</span>
+<span class="fc bfc" id="L260" title="All 2 branches covered.">        if (resourceContainerType != null) {</span>
+<span class="fc" id="L261">            log.debug(&quot;Ending membership for deleted Direct/IndirectContainer {} in {}&quot;, fedoraId, txId);</span>
+<span class="fc" id="L262">            indexManager.endMembershipForSource(txId, fedoraId, fedoraResc.getLastModifiedDate());</span>
+        }
+
+        // delete child of DirectContainer, clear from tx and end existing
+<span class="fc" id="L266">        final var parentResc = getParentResource(fedoraResc);</span>
+<span class="fc" id="L267">        final var parentContainerType = getContainerType(parentResc);</span>
+
+<span class="fc bfc" id="L269" title="All 2 branches covered.">        if (parentContainerType != null) {</span>
+<span class="fc" id="L270">            log.debug(&quot;Ending membership for deleted proxy or member in tx {} for {} at {}&quot;,</span>
+<span class="fc" id="L271">                    txId, parentResc.getFedoraId(), fedoraResc.getLastModifiedDate());</span>
+<span class="fc" id="L272">            indexManager.endMembershipFromChild(txId, parentResc.getFedoraId(), fedoraResc.getFedoraId(),</span>
+<span class="fc" id="L273">                    fedoraResc.getLastModifiedDate());</span>
+        }
+<span class="fc" id="L275">    }</span>
+
+    @Override
+    public RdfStream getMembership(final String txId, final FedoraId fedoraId) {
+        final FedoraId subjectId;
+<span class="fc bfc" id="L280" title="All 2 branches covered.">        if (fedoraId.isDescription()) {</span>
+<span class="fc" id="L281">            subjectId = fedoraId.asBaseId();</span>
+        } else {
+<span class="fc" id="L283">            subjectId = fedoraId;</span>
+        }
+<span class="fc" id="L285">        final var subject = NodeFactory.createURI(subjectId.getBaseId());</span>
+<span class="fc" id="L286">        final var membershipStream = indexManager.getMembership(txId, subjectId);</span>
+<span class="fc" id="L287">        return new DefaultRdfStream(subject, membershipStream);</span>
+    }
+
+    @Transactional
+    @Override
+    public void commitTransaction(final String txId) {
+<span class="fc" id="L293">        indexManager.commitTransaction(txId);</span>
+<span class="fc" id="L294">    }</span>
+
+    @Override
+    public void rollbackTransaction(final String txId) {
+<span class="fc" id="L298">        indexManager.deleteTransaction(txId);</span>
+<span class="fc" id="L299">    }</span>
+
+    @Override
+    public void reset() {
+<span class="fc" id="L303">        indexManager.clearIndex();</span>
+<span class="fc" id="L304">    }</span>
+
+    @Override
+    @Transactional
+    public void populateMembershipHistory(final String txId, final FedoraId containerId) {
+<span class="fc" id="L309">        final FedoraResource fedoraResc = getFedoraResource(txId, containerId);</span>
+<span class="fc" id="L310">        final var containerType = getContainerType(fedoraResc);</span>
+
+<span class="pc bpc" id="L312" title="1 of 2 branches missed.">        if (containerType != null) {</span>
+<span class="fc" id="L313">            populateMembershipHistory(txId, fedoraResc, null);</span>
+        }
+<span class="fc" id="L315">    }</span>
+
+    private void populateMembershipHistory(final String txId, final FedoraResource fedoraResc,
+            final Instant afterTime) {
+<span class="fc" id="L319">        final var containerId = fedoraResc.getFedoraId();</span>
+<span class="fc" id="L320">        final var propertyTimeline = makePropertyTimeline(fedoraResc);</span>
+        final List&lt;DirectContainerProperties&gt; timeline;
+        // If provided, filter the timeline to just entries active on or after the specified time
+<span class="fc bfc" id="L323" title="All 2 branches covered.">        if (afterTime != null) {</span>
+<span class="fc bfc" id="L324" title="All 2 branches covered.">            timeline = propertyTimeline.stream().filter(e -&gt; e.startDatetime.compareTo(afterTime) &gt;= 0</span>
+<span class="pc bpc" id="L325" title="1 of 2 branches missed.">                    || e.endDatetime.compareTo(afterTime) &gt;= 0)</span>
+<span class="fc" id="L326">                .collect(Collectors.toList());</span>
+        } else {
+<span class="fc" id="L328">            timeline = propertyTimeline;</span>
+        }
+
+        // get all the members of the DC and index the history for each, accounting for changes to the DC
+<span class="fc" id="L332">        fedoraResc.getChildren().forEach(member -&gt; {</span>
+<span class="fc" id="L333">            final var memberDeleted = member instanceof Tombstone;</span>
+<span class="fc" id="L334">            log.debug(&quot;Populating membership history for DirectContainer {}member {}&quot;,</span>
+<span class="fc bfc" id="L335" title="All 2 branches covered.">                    memberDeleted ? &quot;deleted &quot; : &quot;&quot;, member.getFedoraId());</span>
+            final Instant memberCreated;
+            // Get the creation time from the deleted object if the member is a tombstone
+<span class="fc bfc" id="L338" title="All 2 branches covered.">            if (memberDeleted) {</span>
+<span class="fc" id="L339">                memberCreated = ((Tombstone) member).getDeletedObject().getCreatedDate();</span>
+            } else {
+<span class="fc" id="L341">                memberCreated = member.getCreatedDate();</span>
+            }
+<span class="fc" id="L343">            final var memberModified = member.getLastModifiedDate();</span>
+<span class="fc bfc" id="L344" title="All 2 branches covered.">            final var memberEnd = memberDeleted ? memberModified : NO_END_INSTANT;</span>
+
+            // Reduce timeline to just states in effect after the member was created
+<span class="fc" id="L347">            var timelineStream = timeline.stream()</span>
+<span class="fc bfc" id="L348" title="All 2 branches covered.">                    .filter(e -&gt; e.endDatetime.compareTo(memberCreated) &gt; 0);</span>
+            // If the member was deleted, then reduce timeline to states before the deletion
+<span class="fc bfc" id="L350" title="All 2 branches covered.">            if (memberDeleted) {</span>
+<span class="fc bfc" id="L351" title="All 2 branches covered.">                timelineStream = timelineStream.filter(e -&gt; e.startDatetime.compareTo(memberModified) &lt; 0);</span>
+            }
+            // Index each addition or change to the membership generated by this member
+<span class="fc" id="L354">            timelineStream.forEach(e -&gt; {</span>
+                // Start time of the membership is the later of member creation or membership resc memento time
+<span class="fc" id="L356">                indexManager.addMembership(txId, containerId, member.getFedoraId(),</span>
+<span class="fc" id="L357">                        generateMembership(e, member),</span>
+<span class="fc" id="L358">                        instantMax(memberCreated, e.startDatetime),</span>
+<span class="fc" id="L359">                        instantMin(memberEnd, e.endDatetime));</span>
+<span class="fc" id="L360">            });</span>
+<span class="fc" id="L361">        });</span>
+<span class="fc" id="L362">    }</span>
+
+    private Instant instantMax(final Instant first, final Instant second) {
+<span class="fc bfc" id="L365" title="All 2 branches covered.">        if (first.isAfter(second)) {</span>
+<span class="fc" id="L366">            return first;</span>
+        } else {
+<span class="fc" id="L368">            return second;</span>
+        }
+    }
+
+    private Instant instantMin(final Instant first, final Instant second) {
+<span class="fc bfc" id="L373" title="All 2 branches covered.">        if (first.isBefore(second)) {</span>
+<span class="fc" id="L374">            return first;</span>
+        } else {
+<span class="fc" id="L376">            return second;</span>
+        }
+    }
+
+    /**
+     * Creates a timeline of states for a DirectContainer, tracking changes to its
+     * properties that impact membership.
+     * @param fedoraResc resource subject of the timeline
+     * @return timeline
+     */
+    private List&lt;DirectContainerProperties&gt; makePropertyTimeline(final FedoraResource fedoraResc) {
+<span class="fc" id="L387">        final var entryList = fedoraResc.getTimeMap().getChildren()</span>
+<span class="fc" id="L388">                .map(memento -&gt; new DirectContainerProperties(memento))</span>
+<span class="fc" id="L389">                .collect(Collectors.toCollection(ArrayList::new));</span>
+        // For versioning on demand, add the head version to the timeline
+<span class="fc bfc" id="L391" title="All 2 branches covered.">        if (!propsConfig.isAutoVersioningEnabled()) {</span>
+<span class="fc" id="L392">            entryList.add(new DirectContainerProperties(fedoraResc));</span>
+        }
+        // First entry starts at creation time of the resource
+<span class="fc" id="L395">        entryList.get(0).startDatetime = fedoraResc.getCreatedDate();</span>
+
+        // Reduce timeline to entries where significant properties change
+<span class="fc" id="L398">        final var changeEntries = new ArrayList&lt;DirectContainerProperties&gt;();</span>
+<span class="fc" id="L399">        var curr = entryList.get(0);</span>
+<span class="fc" id="L400">        changeEntries.add(curr);</span>
+<span class="fc bfc" id="L401" title="All 2 branches covered.">        for (int i = 1; i &lt; entryList.size(); i++) {</span>
+<span class="fc" id="L402">            final var next = entryList.get(i);</span>
+<span class="fc bfc" id="L403" title="All 2 branches covered.">            if (!Objects.equals(next.membershipResource, curr.membershipResource)</span>
+<span class="pc bpc" id="L404" title="1 of 2 branches missed.">                    || !Objects.equals(next.hasMemberRelation, curr.hasMemberRelation)</span>
+<span class="nc bnc" id="L405" title="All 2 branches missed.">                    || !Objects.equals(next.isMemberOfRelation, curr.isMemberOfRelation)) {</span>
+                // Adjust the end the previous entry before the next state begins
+<span class="fc" id="L407">                curr.endDatetime = next.startDatetime;</span>
+<span class="fc" id="L408">                changeEntries.add(next);</span>
+<span class="fc" id="L409">                curr = next;</span>
+            }
+        }
+<span class="fc" id="L412">        return changeEntries;</span>
+    }
+
+    /**
+     * The properties of a Direct or Indirect Container at a point in time.
+     * @author bbpennel
+     */
+    private static class DirectContainerProperties {
+        public Node membershipResource;
+        public Node hasMemberRelation;
+        public Node isMemberOfRelation;
+        public Property insertedContentRelation;
+        public FedoraId id;
+        public ContainerType containerType;
+        public Instant startDatetime;
+<span class="fc" id="L427">        public Instant endDatetime = NO_END_INSTANT;</span>
+
+        /**
+         * @param fedoraResc resource/memento from which the properties will be extracted
+         */
+<span class="fc" id="L432">        public DirectContainerProperties(final FedoraResource fedoraResc) {</span>
+<span class="fc" id="L433">            this.containerType = getContainerType(fedoraResc);</span>
+<span class="fc bfc" id="L434" title="All 2 branches covered.">            if (containerType == null) {</span>
+<span class="fc" id="L435">                return;</span>
+            }
+<span class="fc" id="L437">            id = fedoraResc.getFedoraId();</span>
+<span class="fc bfc" id="L438" title="All 2 branches covered.">            startDatetime = fedoraResc.isMemento() ?</span>
+<span class="fc" id="L439">                    fedoraResc.getMementoDatetime() : fedoraResc.getLastModifiedDate();</span>
+<span class="fc" id="L440">            fedoraResc.getTriples().forEach(triple -&gt; {</span>
+<span class="fc bfc" id="L441" title="All 2 branches covered.">                if (RdfLexicon.MEMBERSHIP_RESOURCE.asNode().equals(triple.getPredicate())) {</span>
+<span class="fc" id="L442">                    membershipResource = triple.getObject();</span>
+<span class="fc bfc" id="L443" title="All 2 branches covered.">                } else if (RdfLexicon.HAS_MEMBER_RELATION.asNode().equals(triple.getPredicate())) {</span>
+<span class="fc" id="L444">                    hasMemberRelation = triple.getObject();</span>
+<span class="fc bfc" id="L445" title="All 2 branches covered.">                } else if (RdfLexicon.IS_MEMBER_OF_RELATION.asNode().equals(triple.getPredicate())) {</span>
+<span class="fc" id="L446">                    isMemberOfRelation = triple.getObject();</span>
+<span class="pc bpc" id="L447" title="1 of 2 branches missed.">                } else if (RdfLexicon.INSERTED_CONTENT_RELATION.asNode().equals(triple.getPredicate())) {</span>
+<span class="fc" id="L448">                    insertedContentRelation = createProperty(triple.getObject().getURI());</span>
+                }
+<span class="fc" id="L450">            });</span>
+<span class="fc bfc" id="L451" title="All 4 branches covered.">            if (hasMemberRelation == null &amp;&amp; isMemberOfRelation == null) {</span>
+<span class="fc" id="L452">                hasMemberRelation = RdfLexicon.LDP_MEMBER.asNode();</span>
+            }
+<span class="fc" id="L454">        }</span>
+    }
+
+    private static ContainerType getContainerType(final FedoraResource fedoraResc) {
+<span class="fc bfc" id="L458" title="All 2 branches covered.">        if (!(fedoraResc instanceof Container)) {</span>
+<span class="fc" id="L459">            return null;</span>
+        }
+<span class="fc bfc" id="L461" title="All 2 branches covered.">        if (fedoraResc.hasType(RdfLexicon.INDIRECT_CONTAINER.getURI())) {</span>
+<span class="fc" id="L462">            return ContainerType.Indirect;</span>
+        }
+
+<span class="fc bfc" id="L465" title="All 2 branches covered.">        if (fedoraResc.hasType(RdfLexicon.DIRECT_CONTAINER.getURI())) {</span>
+<span class="fc" id="L466">            return ContainerType.Direct;</span>
+        }
+
+<span class="fc" id="L469">        return null;</span>
+    }
+
+    @Override
+    public Instant getLastUpdatedTimestamp(final String txId, final FedoraId fedoraId) {
+<span class="fc" id="L474">        return indexManager.getLastUpdated(txId, fedoraId);</span>
+    }
+
+    /**
+     * @param indexManager the indexManager to set
+     */
+    public void setMembershipIndexManager(final MembershipIndexManager indexManager) {
+<span class="nc" id="L481">        this.indexManager = indexManager;</span>
+<span class="nc" id="L482">    }</span>
+
+    /**
+     * @param resourceFactory the resourceFactory to set
+     */
+    public void setResourceFactory(final ResourceFactory resourceFactory) {
+<span class="nc" id="L488">        this.resourceFactory = resourceFactory;</span>
+<span class="nc" id="L489">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

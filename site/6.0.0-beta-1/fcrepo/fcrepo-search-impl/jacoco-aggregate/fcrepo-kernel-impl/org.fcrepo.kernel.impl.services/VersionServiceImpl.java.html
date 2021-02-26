@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>VersionServiceImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Search Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.services</a> &gt; <span class="el_source">VersionServiceImpl.java</span></div><h1>VersionServiceImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.services;
+
+import com.google.common.annotations.VisibleForTesting;
+import org.fcrepo.kernel.api.RdfLexicon;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.operations.VersionResourceOperationFactory;
+import org.fcrepo.kernel.api.services.VersionService;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
+
+/**
+ * Implementation of {@link VersionService}
+ *
+ * @author dbernstein
+ */
+@Component
+<span class="fc" id="L39">public class VersionServiceImpl extends AbstractService implements VersionService {</span>
+
+    @Inject
+    private PersistentStorageSessionManager psManager;
+
+    @Inject
+    private VersionResourceOperationFactory versionOperationFactory;
+
+    @Override
+    public void createVersion(final Transaction transaction, final FedoraId fedoraId, final String userPrincipal) {
+<span class="fc" id="L49">        final var session = psManager.getSession(transaction.getId());</span>
+<span class="fc" id="L50">        final var operation = versionOperationFactory.createBuilder(fedoraId)</span>
+<span class="fc" id="L51">                .userPrincipal(userPrincipal)</span>
+<span class="fc" id="L52">                .build();</span>
+
+<span class="fc" id="L54">        lockArchivalGroupResource(transaction, session, fedoraId);</span>
+<span class="fc" id="L55">        final var headers = session.getHeaders(fedoraId, null);</span>
+<span class="fc bfc" id="L56" title="All 2 branches covered.">        if (RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI.equals(headers.getInteractionModel())) {</span>
+<span class="fc" id="L57">            transaction.lockResource(fedoraId.asBaseId());</span>
+        }
+<span class="fc bfc" id="L59" title="All 2 branches covered.">        if (RdfLexicon.NON_RDF_SOURCE.toString().equals(headers.getInteractionModel())) {</span>
+<span class="fc" id="L60">            transaction.lockResource(fedoraId.asDescription());</span>
+        }
+<span class="fc" id="L62">        transaction.lockResource(fedoraId);</span>
+
+        try {
+<span class="fc" id="L65">            session.persist(operation);</span>
+<span class="fc" id="L66">            recordEvent(transaction.getId(), fedoraId, operation);</span>
+<span class="nc" id="L67">        } catch (final PersistentStorageException e) {</span>
+<span class="nc" id="L68">            throw new RepositoryRuntimeException(String.format(&quot;Failed to create new version of %s&quot;,</span>
+<span class="nc" id="L69">                    fedoraId.getResourceId()), e);</span>
+<span class="fc" id="L70">        }</span>
+<span class="fc" id="L71">    }</span>
+
+    @VisibleForTesting
+    void setPsManager(final PersistentStorageSessionManager psManager) {
+<span class="fc" id="L75">        this.psManager = psManager;</span>
+<span class="fc" id="L76">    }</span>
+
+    @VisibleForTesting
+    void setVersionOperationFactory(final VersionResourceOperationFactory versionOperationFactory) {
+<span class="fc" id="L80">        this.versionOperationFactory = versionOperationFactory;</span>
+<span class="fc" id="L81">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

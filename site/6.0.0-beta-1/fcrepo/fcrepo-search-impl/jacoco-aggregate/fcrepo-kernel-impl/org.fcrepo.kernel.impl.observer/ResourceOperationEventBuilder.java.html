@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ResourceOperationEventBuilder.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Search Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.observer</a> &gt; <span class="el_source">ResourceOperationEventBuilder.java</span></div><h1>ResourceOperationEventBuilder.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.kernel.impl.observer;
+
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.observer.Event;
+import org.fcrepo.kernel.api.observer.EventType;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.kernel.impl.util.UserUtil;
+
+import java.net.URI;
+import java.time.Instant;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+
+/**
+ * Converts a ResourceOperation into an Event.
+ *
+ * @author pwinckles
+ */
+public class ResourceOperationEventBuilder implements EventBuilder {
+
+    private FedoraId fedoraId;
+    private Set&lt;EventType&gt; types;
+    private Set&lt;String&gt; resourceTypes;
+    private String userID;
+    private String userAgent;
+    private String baseUrl;
+    private Instant date;
+    private String userAgentBaseUri;
+
+    /**
+     * Creates a new EventBuilder based on an ResourceOperation
+     *
+     * @param fedoraId the FedoraId the operation is on
+     * @param operation the ResourceOperation to create an event for
+     * @param userAgentBaseUri the base uri of the user agent, optional
+     * @return new builder
+     */
+    public static ResourceOperationEventBuilder fromResourceOperation(final FedoraId fedoraId,
+                                                                      final ResourceOperation operation,
+                                                                      final String userAgentBaseUri) {
+<span class="fc" id="L60">        final var builder = new ResourceOperationEventBuilder();</span>
+<span class="fc" id="L61">        builder.fedoraId = fedoraId;</span>
+<span class="fc" id="L62">        builder.date = Instant.now();</span>
+<span class="fc" id="L63">        builder.resourceTypes = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L64">        builder.userID = operation.getUserPrincipal();</span>
+<span class="fc" id="L65">        builder.types = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L66">        builder.types.add(mapOperationToEventType(operation));</span>
+<span class="fc" id="L67">        builder.userAgentBaseUri = userAgentBaseUri;</span>
+<span class="fc" id="L68">        return builder;</span>
+    }
+
+    private static EventType mapOperationToEventType(final ResourceOperation operation) {
+<span class="pc bpc" id="L72" title="3 of 6 branches missed.">        switch (operation.getType()) {</span>
+            case CREATE:
+<span class="fc" id="L74">                return EventType.RESOURCE_CREATION;</span>
+            case UPDATE:
+<span class="fc" id="L76">                return EventType.RESOURCE_MODIFICATION;</span>
+            case DELETE:
+<span class="fc" id="L78">                return EventType.RESOURCE_DELETION;</span>
+            case PURGE:
+<span class="nc" id="L80">                return EventType.RESOURCE_PURGE;</span>
+            case FOLLOW:
+<span class="nc" id="L82">                return EventType.INBOUND_REFERENCE;</span>
+            default:
+<span class="nc" id="L84">                throw new IllegalStateException(</span>
+<span class="nc" id="L85">                        String.format(&quot;There is no EventType mapping for ResourceOperation type %s on operation %s&quot;,</span>
+<span class="nc" id="L86">                                operation.getType(), operation));</span>
+        }
+    }
+
+    private ResourceOperationEventBuilder() {
+        // Intentionally left blank
+    }
+
+    @Override
+    public EventBuilder merge(final EventBuilder other) {
+<span class="pc bpc" id="L96" title="1 of 2 branches missed.">        if (other == null) {</span>
+<span class="nc" id="L97">            return this;</span>
+        }
+
+<span class="pc bpc" id="L100" title="1 of 2 branches missed.">        if (!(other instanceof ResourceOperationEventBuilder)) {</span>
+<span class="nc" id="L101">            throw new IllegalStateException(</span>
+<span class="nc" id="L102">                    String.format(&quot;Cannot merge EventBuilders because they are different types &lt;%s&gt; and &lt;%s&gt;&quot;,</span>
+<span class="nc" id="L103">                            this.getClass(), other.getClass()));</span>
+        }
+
+<span class="fc" id="L106">        final var otherCast = (ResourceOperationEventBuilder) other;</span>
+
+<span class="pc bpc" id="L108" title="1 of 2 branches missed.">        if (!this.fedoraId.equals(otherCast.fedoraId)) {</span>
+<span class="nc" id="L109">            throw new IllegalStateException(</span>
+<span class="nc" id="L110">                    String.format(&quot;Cannot merge events because they are for different resources: &lt;%s&gt; and &lt;%s&gt;&quot;,</span>
+                            this, otherCast));
+        }
+
+<span class="fc" id="L114">        this.types.addAll(otherCast.types);</span>
+<span class="fc" id="L115">        this.resourceTypes.addAll(otherCast.resourceTypes);</span>
+
+<span class="pc bpc" id="L117" title="1 of 2 branches missed.">        if (this.date.isBefore(otherCast.date)) {</span>
+<span class="fc" id="L118">            this.date = otherCast.date;</span>
+        }
+
+<span class="fc" id="L121">        return this;</span>
+    }
+
+    @Override
+    public EventBuilder withResourceTypes(final Set&lt;String&gt; resourceTypes) {
+<span class="fc" id="L126">        this.resourceTypes = Objects.requireNonNullElse(resourceTypes, new HashSet&lt;&gt;());</span>
+<span class="fc" id="L127">        return this;</span>
+    }
+
+    @Override
+    public EventBuilder withBaseUrl(final String baseUrl) {
+<span class="fc" id="L132">        this.baseUrl = baseUrl;</span>
+<span class="fc" id="L133">        return this;</span>
+    }
+
+    @Override
+    public EventBuilder withUserAgent(final String userAgent) {
+<span class="fc" id="L138">        this.userAgent = userAgent;</span>
+<span class="fc" id="L139">        return this;</span>
+    }
+
+    @Override
+    public Event build() {
+<span class="fc" id="L144">        URI userUri = null;</span>
+<span class="pc bpc" id="L145" title="1 of 2 branches missed.">        if (userID != null) {</span>
+<span class="fc" id="L146">            userUri = UserUtil.getUserURI(userID, userAgentBaseUri);</span>
+        }
+<span class="fc" id="L148">        return new EventImpl(fedoraId, types, resourceTypes, userID, userUri, userAgent, baseUrl, date);</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L153">        return &quot;ResourceOperationEventBuilder{&quot; +</span>
+                &quot;fedoraId=&quot; + fedoraId +
+                &quot;, types=&quot; + types +
+                &quot;, resourceTypes=&quot; + resourceTypes +
+                &quot;, userID='&quot; + userID + '\'' +
+                &quot;, userAgent='&quot; + userAgent + '\'' +
+                &quot;, baseUrl='&quot; + baseUrl + '\'' +
+                &quot;, date=&quot; + date +
+                '}';
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
