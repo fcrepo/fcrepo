@@ -1,0 +1,279 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * Licensed to DuraSpace under one or more contributor license agreements.</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * See the NOTICE file distributed with this work for additional information</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * regarding copyright ownership.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> *</a>
+<span class="sourceLineNo">006</span><a id="line.6"> * DuraSpace licenses this file to you under the Apache License,</a>
+<span class="sourceLineNo">007</span><a id="line.7"> * Version 2.0 (the "License"); you may not use this file except in</a>
+<span class="sourceLineNo">008</span><a id="line.8"> * compliance with the License.  You may obtain a copy of the License at</a>
+<span class="sourceLineNo">009</span><a id="line.9"> *</a>
+<span class="sourceLineNo">010</span><a id="line.10"> *     http://www.apache.org/licenses/LICENSE-2.0</a>
+<span class="sourceLineNo">011</span><a id="line.11"> *</a>
+<span class="sourceLineNo">012</span><a id="line.12"> * Unless required by applicable law or agreed to in writing, software</a>
+<span class="sourceLineNo">013</span><a id="line.13"> * distributed under the License is distributed on an "AS IS" BASIS,</a>
+<span class="sourceLineNo">014</span><a id="line.14"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<span class="sourceLineNo">015</span><a id="line.15"> * See the License for the specific language governing permissions and</a>
+<span class="sourceLineNo">016</span><a id="line.16"> * limitations under the License.</a>
+<span class="sourceLineNo">017</span><a id="line.17"> */</a>
+<span class="sourceLineNo">018</span><a id="line.18">package org.fcrepo.kernel.impl.models;</a>
+<span class="sourceLineNo">019</span><a id="line.19"></a>
+<span class="sourceLineNo">020</span><a id="line.20">import org.fcrepo.kernel.api.RdfStream;</a>
+<span class="sourceLineNo">021</span><a id="line.21">import org.fcrepo.kernel.api.exception.ItemNotFoundException;</a>
+<span class="sourceLineNo">022</span><a id="line.22">import org.fcrepo.kernel.api.exception.PathNotFoundException;</a>
+<span class="sourceLineNo">023</span><a id="line.23">import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;</a>
+<span class="sourceLineNo">024</span><a id="line.24">import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;</a>
+<span class="sourceLineNo">025</span><a id="line.25">import org.fcrepo.kernel.api.identifiers.FedoraId;</a>
+<span class="sourceLineNo">026</span><a id="line.26">import org.fcrepo.kernel.api.models.Binary;</a>
+<span class="sourceLineNo">027</span><a id="line.27">import org.fcrepo.kernel.api.models.ExternalContent;</a>
+<span class="sourceLineNo">028</span><a id="line.28">import org.fcrepo.kernel.api.models.FedoraResource;</a>
+<span class="sourceLineNo">029</span><a id="line.29">import org.fcrepo.kernel.api.models.ResourceFactory;</a>
+<span class="sourceLineNo">030</span><a id="line.30">import org.fcrepo.persistence.api.PersistentStorageSessionManager;</a>
+<span class="sourceLineNo">031</span><a id="line.31">import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;</a>
+<span class="sourceLineNo">032</span><a id="line.32">import org.fcrepo.persistence.api.exceptions.PersistentStorageException;</a>
+<span class="sourceLineNo">033</span><a id="line.33"></a>
+<span class="sourceLineNo">034</span><a id="line.34">import java.io.IOException;</a>
+<span class="sourceLineNo">035</span><a id="line.35">import java.io.InputStream;</a>
+<span class="sourceLineNo">036</span><a id="line.36">import java.net.URI;</a>
+<span class="sourceLineNo">037</span><a id="line.37">import java.util.Collection;</a>
+<span class="sourceLineNo">038</span><a id="line.38">import java.util.List;</a>
+<span class="sourceLineNo">039</span><a id="line.39"></a>
+<span class="sourceLineNo">040</span><a id="line.40">import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_BINARY;</a>
+<span class="sourceLineNo">041</span><a id="line.41">import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;</a>
+<span class="sourceLineNo">042</span><a id="line.42"></a>
+<span class="sourceLineNo">043</span><a id="line.43"></a>
+<span class="sourceLineNo">044</span><a id="line.44">/**</a>
+<span class="sourceLineNo">045</span><a id="line.45"> * Implementation of a Non-RDF resource.</a>
+<span class="sourceLineNo">046</span><a id="line.46"> *</a>
+<span class="sourceLineNo">047</span><a id="line.47"> * @author bbpennel</a>
+<span class="sourceLineNo">048</span><a id="line.48"> */</a>
+<span class="sourceLineNo">049</span><a id="line.49">public class BinaryImpl extends FedoraResourceImpl implements Binary {</a>
+<span class="sourceLineNo">050</span><a id="line.50"></a>
+<span class="sourceLineNo">051</span><a id="line.51">    private static final URI FEDORA_BINARY_URI = URI.create(FEDORA_BINARY.getURI());</a>
+<span class="sourceLineNo">052</span><a id="line.52"></a>
+<span class="sourceLineNo">053</span><a id="line.53">    private String externalHandling;</a>
+<span class="sourceLineNo">054</span><a id="line.54"></a>
+<span class="sourceLineNo">055</span><a id="line.55">    private String externalUrl;</a>
+<span class="sourceLineNo">056</span><a id="line.56"></a>
+<span class="sourceLineNo">057</span><a id="line.57">    private Long contentSize;</a>
+<span class="sourceLineNo">058</span><a id="line.58"></a>
+<span class="sourceLineNo">059</span><a id="line.59">    private String filename;</a>
+<span class="sourceLineNo">060</span><a id="line.60"></a>
+<span class="sourceLineNo">061</span><a id="line.61">    private String mimeType;</a>
+<span class="sourceLineNo">062</span><a id="line.62"></a>
+<span class="sourceLineNo">063</span><a id="line.63">    private Collection&lt;URI&gt; digests;</a>
+<span class="sourceLineNo">064</span><a id="line.64"></a>
+<span class="sourceLineNo">065</span><a id="line.65">    /**</a>
+<span class="sourceLineNo">066</span><a id="line.66">     * Construct the binary</a>
+<span class="sourceLineNo">067</span><a id="line.67">     *</a>
+<span class="sourceLineNo">068</span><a id="line.68">     * @param fedoraID fedora identifier</a>
+<span class="sourceLineNo">069</span><a id="line.69">     * @param txId transaction id</a>
+<span class="sourceLineNo">070</span><a id="line.70">     * @param pSessionManager session manager</a>
+<span class="sourceLineNo">071</span><a id="line.71">     * @param resourceFactory resource factory</a>
+<span class="sourceLineNo">072</span><a id="line.72">     */</a>
+<span class="sourceLineNo">073</span><a id="line.73">    public BinaryImpl(final FedoraId fedoraID, final String txId,</a>
+<span class="sourceLineNo">074</span><a id="line.74">                      final PersistentStorageSessionManager pSessionManager, final ResourceFactory resourceFactory) {</a>
+<span class="sourceLineNo">075</span><a id="line.75">        super(fedoraID, txId, pSessionManager, resourceFactory);</a>
+<span class="sourceLineNo">076</span><a id="line.76">    }</a>
+<span class="sourceLineNo">077</span><a id="line.77"></a>
+<span class="sourceLineNo">078</span><a id="line.78">    @Override</a>
+<span class="sourceLineNo">079</span><a id="line.79">    public InputStream getContent() {</a>
+<span class="sourceLineNo">080</span><a id="line.80">        try {</a>
+<span class="sourceLineNo">081</span><a id="line.81">            if (isProxy() || isRedirect()) {</a>
+<span class="sourceLineNo">082</span><a id="line.82">                return URI.create(getExternalURL()).toURL().openStream();</a>
+<span class="sourceLineNo">083</span><a id="line.83">            } else {</a>
+<span class="sourceLineNo">084</span><a id="line.84">                return getSession().getBinaryContent(getFedoraId().asResourceId(), getMementoDatetime());</a>
+<span class="sourceLineNo">085</span><a id="line.85">            }</a>
+<span class="sourceLineNo">086</span><a id="line.86">        } catch (final PersistentItemNotFoundException e) {</a>
+<span class="sourceLineNo">087</span><a id="line.87">            throw new ItemNotFoundException("Unable to find content for " + getId()</a>
+<span class="sourceLineNo">088</span><a id="line.88">                    + " version " + getMementoDatetime(), e);</a>
+<span class="sourceLineNo">089</span><a id="line.89">        } catch (final PersistentStorageException | IOException e) {</a>
+<span class="sourceLineNo">090</span><a id="line.90">            throw new RepositoryRuntimeException(e.getMessage(), e);</a>
+<span class="sourceLineNo">091</span><a id="line.91">        }</a>
+<span class="sourceLineNo">092</span><a id="line.92">    }</a>
+<span class="sourceLineNo">093</span><a id="line.93"></a>
+<span class="sourceLineNo">094</span><a id="line.94">    @Override</a>
+<span class="sourceLineNo">095</span><a id="line.95">    public long getContentSize() {</a>
+<span class="sourceLineNo">096</span><a id="line.96">        return contentSize;</a>
+<span class="sourceLineNo">097</span><a id="line.97">    }</a>
+<span class="sourceLineNo">098</span><a id="line.98"></a>
+<span class="sourceLineNo">099</span><a id="line.99">    @Override</a>
+<span class="sourceLineNo">100</span><a id="line.100">    public Collection&lt;URI&gt; getContentDigests() {</a>
+<span class="sourceLineNo">101</span><a id="line.101">        if (digests == null) {</a>
+<span class="sourceLineNo">102</span><a id="line.102">            return null;</a>
+<span class="sourceLineNo">103</span><a id="line.103">        }</a>
+<span class="sourceLineNo">104</span><a id="line.104">        return digests;</a>
+<span class="sourceLineNo">105</span><a id="line.105">    }</a>
+<span class="sourceLineNo">106</span><a id="line.106"></a>
+<span class="sourceLineNo">107</span><a id="line.107">    @Override</a>
+<span class="sourceLineNo">108</span><a id="line.108">    public Boolean isProxy() {</a>
+<span class="sourceLineNo">109</span><a id="line.109">        return PROXY.equals(externalHandling);</a>
+<span class="sourceLineNo">110</span><a id="line.110">    }</a>
+<span class="sourceLineNo">111</span><a id="line.111"></a>
+<span class="sourceLineNo">112</span><a id="line.112">    @Override</a>
+<span class="sourceLineNo">113</span><a id="line.113">    public Boolean isRedirect() {</a>
+<span class="sourceLineNo">114</span><a id="line.114">        return ExternalContent.REDIRECT.equals(externalHandling);</a>
+<span class="sourceLineNo">115</span><a id="line.115">    }</a>
+<span class="sourceLineNo">116</span><a id="line.116"></a>
+<span class="sourceLineNo">117</span><a id="line.117">    @Override</a>
+<span class="sourceLineNo">118</span><a id="line.118">    public String getExternalURL() {</a>
+<span class="sourceLineNo">119</span><a id="line.119">        return externalUrl;</a>
+<span class="sourceLineNo">120</span><a id="line.120">    }</a>
+<span class="sourceLineNo">121</span><a id="line.121"></a>
+<span class="sourceLineNo">122</span><a id="line.122">    @Override</a>
+<span class="sourceLineNo">123</span><a id="line.123">    public String getMimeType() {</a>
+<span class="sourceLineNo">124</span><a id="line.124">        return mimeType;</a>
+<span class="sourceLineNo">125</span><a id="line.125">    }</a>
+<span class="sourceLineNo">126</span><a id="line.126"></a>
+<span class="sourceLineNo">127</span><a id="line.127">    @Override</a>
+<span class="sourceLineNo">128</span><a id="line.128">    public String getFilename() {</a>
+<span class="sourceLineNo">129</span><a id="line.129">        return filename;</a>
+<span class="sourceLineNo">130</span><a id="line.130">    }</a>
+<span class="sourceLineNo">131</span><a id="line.131"></a>
+<span class="sourceLineNo">132</span><a id="line.132">    @Override</a>
+<span class="sourceLineNo">133</span><a id="line.133">    public FedoraResource getDescription() {</a>
+<span class="sourceLineNo">134</span><a id="line.134">        try {</a>
+<span class="sourceLineNo">135</span><a id="line.135">            final FedoraId descId = getFedoraId().asDescription();</a>
+<span class="sourceLineNo">136</span><a id="line.136">            if (this.isMemento()) {</a>
+<span class="sourceLineNo">137</span><a id="line.137">                final var descIdAsMemento = descId.asMemento(getMementoDatetime());</a>
+<span class="sourceLineNo">138</span><a id="line.138">                return resourceFactory.getResource(txId, descIdAsMemento);</a>
+<span class="sourceLineNo">139</span><a id="line.139">            }</a>
+<span class="sourceLineNo">140</span><a id="line.140">            return resourceFactory.getResource(txId, descId);</a>
+<span class="sourceLineNo">141</span><a id="line.141">        } catch (final PathNotFoundException e) {</a>
+<span class="sourceLineNo">142</span><a id="line.142">            throw new PathNotFoundRuntimeException(e.getMessage(), e);</a>
+<span class="sourceLineNo">143</span><a id="line.143">        }</a>
+<span class="sourceLineNo">144</span><a id="line.144">    }</a>
+<span class="sourceLineNo">145</span><a id="line.145"></a>
+<span class="sourceLineNo">146</span><a id="line.146">    /**</a>
+<span class="sourceLineNo">147</span><a id="line.147">     * @param externalHandling the externalHandling to set</a>
+<span class="sourceLineNo">148</span><a id="line.148">     */</a>
+<span class="sourceLineNo">149</span><a id="line.149">    protected void setExternalHandling(final String externalHandling) {</a>
+<span class="sourceLineNo">150</span><a id="line.150">        this.externalHandling = externalHandling;</a>
+<span class="sourceLineNo">151</span><a id="line.151">    }</a>
+<span class="sourceLineNo">152</span><a id="line.152"></a>
+<span class="sourceLineNo">153</span><a id="line.153">    /**</a>
+<span class="sourceLineNo">154</span><a id="line.154">     * @param externalUrl the externalUrl to set</a>
+<span class="sourceLineNo">155</span><a id="line.155">     */</a>
+<span class="sourceLineNo">156</span><a id="line.156">    protected void setExternalUrl(final String externalUrl) {</a>
+<span class="sourceLineNo">157</span><a id="line.157">        this.externalUrl = externalUrl;</a>
+<span class="sourceLineNo">158</span><a id="line.158">    }</a>
+<span class="sourceLineNo">159</span><a id="line.159"></a>
+<span class="sourceLineNo">160</span><a id="line.160">    /**</a>
+<span class="sourceLineNo">161</span><a id="line.161">     * @param contentSize the contentSize to set</a>
+<span class="sourceLineNo">162</span><a id="line.162">     */</a>
+<span class="sourceLineNo">163</span><a id="line.163">    protected void setContentSize(final Long contentSize) {</a>
+<span class="sourceLineNo">164</span><a id="line.164">        this.contentSize = contentSize;</a>
+<span class="sourceLineNo">165</span><a id="line.165">    }</a>
+<span class="sourceLineNo">166</span><a id="line.166"></a>
+<span class="sourceLineNo">167</span><a id="line.167">    /**</a>
+<span class="sourceLineNo">168</span><a id="line.168">     * @param filename the filename to set</a>
+<span class="sourceLineNo">169</span><a id="line.169">     */</a>
+<span class="sourceLineNo">170</span><a id="line.170">    protected void setFilename(final String filename) {</a>
+<span class="sourceLineNo">171</span><a id="line.171">        this.filename = filename;</a>
+<span class="sourceLineNo">172</span><a id="line.172">    }</a>
+<span class="sourceLineNo">173</span><a id="line.173"></a>
+<span class="sourceLineNo">174</span><a id="line.174">    /**</a>
+<span class="sourceLineNo">175</span><a id="line.175">     * @param mimeType the mimeType to set</a>
+<span class="sourceLineNo">176</span><a id="line.176">     */</a>
+<span class="sourceLineNo">177</span><a id="line.177">    protected void setMimeType(final String mimeType) {</a>
+<span class="sourceLineNo">178</span><a id="line.178">        this.mimeType = mimeType;</a>
+<span class="sourceLineNo">179</span><a id="line.179">    }</a>
+<span class="sourceLineNo">180</span><a id="line.180"></a>
+<span class="sourceLineNo">181</span><a id="line.181">    /**</a>
+<span class="sourceLineNo">182</span><a id="line.182">     * @param digests the digests to set</a>
+<span class="sourceLineNo">183</span><a id="line.183">     */</a>
+<span class="sourceLineNo">184</span><a id="line.184">    protected void setDigests(final Collection&lt;URI&gt; digests) {</a>
+<span class="sourceLineNo">185</span><a id="line.185">        this.digests = digests;</a>
+<span class="sourceLineNo">186</span><a id="line.186">    }</a>
+<span class="sourceLineNo">187</span><a id="line.187"></a>
+<span class="sourceLineNo">188</span><a id="line.188">    @Override</a>
+<span class="sourceLineNo">189</span><a id="line.189">    public List&lt;URI&gt; getSystemTypes(final boolean forRdf) {</a>
+<span class="sourceLineNo">190</span><a id="line.190">        var types = resolveSystemTypes(forRdf);</a>
+<span class="sourceLineNo">191</span><a id="line.191"></a>
+<span class="sourceLineNo">192</span><a id="line.192">        if (types == null) {</a>
+<span class="sourceLineNo">193</span><a id="line.193">            types = super.getSystemTypes(forRdf);</a>
+<span class="sourceLineNo">194</span><a id="line.194">            // Add fedora:Binary type.</a>
+<span class="sourceLineNo">195</span><a id="line.195">            types.add(FEDORA_BINARY_URI);</a>
+<span class="sourceLineNo">196</span><a id="line.196">        }</a>
+<span class="sourceLineNo">197</span><a id="line.197"></a>
+<span class="sourceLineNo">198</span><a id="line.198">        return types;</a>
+<span class="sourceLineNo">199</span><a id="line.199">    }</a>
+<span class="sourceLineNo">200</span><a id="line.200"></a>
+<span class="sourceLineNo">201</span><a id="line.201">    @Override</a>
+<span class="sourceLineNo">202</span><a id="line.202">    public RdfStream getTriples() {</a>
+<span class="sourceLineNo">203</span><a id="line.203">        return getDescription().getTriples();</a>
+<span class="sourceLineNo">204</span><a id="line.204">    }</a>
+<span class="sourceLineNo">205</span><a id="line.205">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>
