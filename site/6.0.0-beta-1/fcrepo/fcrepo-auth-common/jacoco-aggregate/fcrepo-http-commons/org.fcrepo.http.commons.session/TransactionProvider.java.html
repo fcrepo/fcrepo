@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>TransactionProvider.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Authorization Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-commons</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.commons.session</a> &gt; <span class="el_source">TransactionProvider.java</span></div><h1>TransactionProvider.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.commons.session;
+
+import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
+import static org.fcrepo.http.commons.session.TransactionConstants.TX_PREFIX;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.net.URI;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.lang3.StringUtils;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
+import org.glassfish.hk2.api.Factory;
+import org.glassfish.jersey.uri.internal.JerseyUriBuilder;
+import org.slf4j.Logger;
+
+/**
+ * Provide a fedora tranasction within the current request context
+ *
+ * @author awoods
+ */
+public class TransactionProvider implements Factory&lt;Transaction&gt; {
+
+<span class="fc" id="L45">    private static final Logger LOGGER = getLogger(TransactionProvider.class);</span>
+
+    private final TransactionManager txManager;
+
+    private final HttpServletRequest request;
+
+    private final Pattern txIdPattern;
+
+    private final URI baseUri;
+
+    private final String jmsBaseUrl;
+
+    /**
+     * Create a new transaction provider for a request
+     * @param txManager the transaction manager
+     * @param request the request
+     * @param baseUri base uri for the application
+     * @param jmsBaseUrl base url to use for jms, optional
+     */
+    public TransactionProvider(final TransactionManager txManager,
+                               final HttpServletRequest request,
+                               final URI baseUri,
+<span class="fc" id="L67">                               final String jmsBaseUrl) {</span>
+<span class="fc" id="L68">        this.txManager = txManager;</span>
+<span class="fc" id="L69">        this.request = request;</span>
+<span class="fc" id="L70">        this.txIdPattern = Pattern.compile(&quot;(^|&quot; + baseUri + TX_PREFIX + &quot;)([0-9a-f\\-]+)$&quot;);</span>
+<span class="fc" id="L71">        this.baseUri = baseUri;</span>
+<span class="fc" id="L72">        this.jmsBaseUrl = jmsBaseUrl;</span>
+<span class="fc" id="L73">    }</span>
+
+    @Override
+    public Transaction provide() {
+<span class="fc" id="L77">        final Transaction transaction = getTransactionForRequest();</span>
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">        if (!transaction.isShortLived()) {</span>
+<span class="fc" id="L79">            transaction.refresh();</span>
+        }
+<span class="fc" id="L81">        LOGGER.trace(&quot;Providing new transaction {}&quot;, transaction.getId());</span>
+<span class="fc" id="L82">        return transaction;</span>
+    }
+
+    @Override
+    public void dispose(final Transaction transaction) {
+<span class="nc bnc" id="L87" title="All 2 branches missed.">        if (transaction.isShortLived()) {</span>
+<span class="nc" id="L88">            LOGGER.trace(&quot;Disposing transaction {}&quot;, transaction.getId());</span>
+<span class="nc" id="L89">            transaction.expire();</span>
+        }
+<span class="nc" id="L91">    }</span>
+
+    /**
+     * Returns the transaction for the Request. If the request has ATOMIC_ID_HEADER header,
+     * the transaction corresponding to that ID is returned, otherwise, a new transaction is
+     * created.
+     *
+     * @return the transaction for the request
+     */
+    public Transaction getTransactionForRequest() {
+<span class="fc" id="L101">        String txId = null;</span>
+        // Transaction id either comes from header or is the path
+<span class="fc" id="L103">        String txUri = request.getHeader(ATOMIC_ID_HEADER);</span>
+<span class="pc bpc" id="L104" title="1 of 2 branches missed.">        if (!StringUtils.isEmpty(txUri)) {</span>
+<span class="nc" id="L105">            final Matcher txMatcher = txIdPattern.matcher(txUri);</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">            if (txMatcher.matches()) {</span>
+<span class="nc" id="L107">                txId = txMatcher.group(2);</span>
+            } else {
+<span class="nc" id="L109">                throw new TransactionRuntimeException(&quot;Invalid transaction id&quot;);</span>
+            }
+<span class="nc" id="L111">        } else {</span>
+<span class="fc" id="L112">            txUri = request.getPathInfo();</span>
+<span class="pc bpc" id="L113" title="1 of 2 branches missed.">            if (txUri != null) {</span>
+<span class="nc" id="L114">                final Matcher txMatcher = txIdPattern.matcher(txUri);</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">                if (txMatcher.matches()) {</span>
+<span class="nc" id="L116">                    txId = txMatcher.group(2);</span>
+                }
+            }
+        }
+
+<span class="pc bpc" id="L121" title="1 of 2 branches missed.">        if (!StringUtils.isEmpty(txId)) {</span>
+<span class="nc" id="L122">            return txManager.get(txId);</span>
+        } else {
+<span class="fc" id="L124">            final var transaction = txManager.create();</span>
+<span class="fc" id="L125">            transaction.setUserAgent(request.getHeader(&quot;user-agent&quot;));</span>
+<span class="fc" id="L126">            transaction.setBaseUri(resolveBaseUri());</span>
+<span class="fc" id="L127">            return transaction;</span>
+        }
+    }
+
+    private String resolveBaseUri() {
+<span class="fc" id="L132">        final String baseURL = getBaseUrlProperty();</span>
+<span class="fc bfc" id="L133" title="All 2 branches covered.">        if (baseURL.length() &gt; 0) {</span>
+<span class="fc" id="L134">            return baseURL;</span>
+        }
+<span class="fc" id="L136">        return baseUri.toString();</span>
+    }
+
+    /**
+     * Produce a baseURL for JMS events using the system property fcrepo.jms.baseUrl of the form http[s]://host[:port],
+     * if it exists.
+     *
+     * @return String the base Url
+     */
+    private String getBaseUrlProperty() {
+<span class="pc bpc" id="L146" title="1 of 4 branches missed.">        if (StringUtils.isNotBlank(jmsBaseUrl) &amp;&amp; jmsBaseUrl.startsWith(&quot;http&quot;)) {</span>
+<span class="fc" id="L147">            final URI propBaseUri = URI.create(jmsBaseUrl);</span>
+<span class="fc bfc" id="L148" title="All 2 branches covered.">            if (propBaseUri.getPort() &lt; 0) {</span>
+<span class="fc" id="L149">                return JerseyUriBuilder.fromUri(baseUri).port(-1).uri(propBaseUri).toString();</span>
+            }
+<span class="fc" id="L151">            return JerseyUriBuilder.fromUri(baseUri).uri(propBaseUri).toString();</span>
+        }
+<span class="fc" id="L153">        return &quot;&quot;;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
