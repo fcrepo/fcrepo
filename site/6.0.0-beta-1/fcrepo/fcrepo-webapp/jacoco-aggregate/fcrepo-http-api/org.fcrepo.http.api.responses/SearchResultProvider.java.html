@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>SearchResultProvider.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api.responses</a> &gt; <span class="el_source">SearchResultProvider.java</span></div><h1>SearchResultProvider.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api.responses;
+
+import org.apache.velocity.Template;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.VelocityEngine;
+import org.apache.velocity.context.Context;
+import org.apache.velocity.tools.generic.EscapeTool;
+
+import org.fcrepo.config.FedoraPropsConfig;
+import org.fcrepo.http.api.FedoraSearch;
+import org.fcrepo.http.commons.responses.ViewHelpers;
+import org.fcrepo.search.api.Condition;
+import org.fcrepo.search.api.SearchResult;
+import org.slf4j.Logger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Properties;
+
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.ext.MessageBodyWriter;
+import javax.ws.rs.ext.Provider;
+
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * HTML writer for search results
+ *
+ * @author awoods
+ * @since 2020-08-04
+ */
+@Provider
+@Produces({TEXT_HTML_WITH_CHARSET})
+<span class="fc" id="L66">public class SearchResultProvider implements MessageBodyWriter&lt;SearchResult&gt; {</span>
+
+    @Inject
+    UriInfo uriInfo;
+
+    @Inject
+    HttpServletRequest request;
+
+    @Inject
+    private FedoraPropsConfig fedoraPropsConfig;
+
+<span class="fc" id="L77">    private static final EscapeTool escapeTool = new EscapeTool();</span>
+
+<span class="fc" id="L79">    private final VelocityEngine velocity = new VelocityEngine();</span>
+
+    // Location in the classpath where Velocity templates are to be found.
+    private static final String templatesLocation = &quot;/views&quot;;
+
+    private static final String templateFilenameExtension = &quot;.vsl&quot;;
+
+    private static final String velocityPropertiesLocation = &quot;/velocity.properties&quot;;
+
+<span class="fc" id="L88">    private static final ViewHelpers VIEW_HELPERS = ViewHelpers.getInstance();</span>
+
+<span class="fc" id="L90">    private static final Logger LOGGER = getLogger(SearchResultProvider.class);</span>
+
+    @PostConstruct
+    void init() throws IOException {
+<span class="fc" id="L94">        LOGGER.trace(&quot;Velocity engine initializing...&quot;);</span>
+<span class="fc" id="L95">        final Properties properties = new Properties();</span>
+<span class="fc" id="L96">        final var velocityLog = fedoraPropsConfig.getVelocityLog().toString();</span>
+<span class="fc" id="L97">        LOGGER.debug(&quot;Setting Velocity runtime log: {}&quot;, velocityLog);</span>
+<span class="fc" id="L98">        properties.setProperty(&quot;runtime.log&quot;, velocityLog);</span>
+
+<span class="fc" id="L100">        final URL propertiesUrl = getClass().getResource(velocityPropertiesLocation);</span>
+
+<span class="fc" id="L102">        LOGGER.debug(&quot;Using Velocity configuration from {}&quot;, propertiesUrl);</span>
+<span class="fc" id="L103">        try (final InputStream propertiesStream = propertiesUrl.openStream()) {</span>
+<span class="fc" id="L104">            properties.load(propertiesStream);</span>
+        }
+<span class="fc" id="L106">        velocity.init(properties);</span>
+<span class="fc" id="L107">        LOGGER.trace(&quot;Velocity engine initialized.&quot;);</span>
+<span class="fc" id="L108">    }</span>
+
+    @Override
+    public boolean isWriteable(final Class&lt;?&gt; type,
+                               final Type genericType,
+                               final Annotation[] annotations,
+                               final MediaType mediaType) {
+<span class="fc" id="L115">        return SearchResult.class.isAssignableFrom(type);</span>
+    }
+
+    @Override
+    public long getSize(final SearchResult result,
+                        final Class&lt;?&gt; type,
+                        final Type genericType,
+                        final Annotation[] annotations,
+                        final MediaType mediaType) {
+<span class="nc" id="L124">        return -1;</span>
+    }
+
+    @Override
+    public void writeTo(final SearchResult result,
+                        final Class&lt;?&gt; type,
+                        final Type genericType,
+                        final Annotation[] annotations,
+                        final MediaType mediaType,
+                        final MultivaluedMap&lt;String, Object&gt; httpHeaders,
+                        final OutputStream entityStream)
+            throws WebApplicationException {
+
+<span class="nc" id="L137">        final Template template = velocity.getTemplate(getTemplateLocation(&quot;search&quot;));</span>
+
+        final Context context;
+<span class="nc" id="L140">        context = getContext();</span>
+<span class="nc" id="L141">        context.put(&quot;searchResults&quot;, result);</span>
+
+        // The contract of MessageBodyWriter&lt;T&gt; is _not_ to close the stream after writing to it
+<span class="nc" id="L144">        final PrintWriter writer = new PrintWriter(entityStream, false, StandardCharsets.UTF_8);</span>
+<span class="nc" id="L145">        template.merge(context, writer);</span>
+<span class="nc" id="L146">        writer.flush();</span>
+<span class="nc" id="L147">    }</span>
+
+    private Context getContext() {
+
+<span class="nc" id="L151">        final Context context = new VelocityContext();</span>
+<span class="nc" id="L152">        final String[] baseUrl = uriInfo.getBaseUri().getPath().split(&quot;/&quot;);</span>
+<span class="nc bnc" id="L153" title="All 2 branches missed.">        if (baseUrl.length &gt; 0) {</span>
+<span class="nc" id="L154">            final String staticBaseUrl = String.join(&quot;/&quot;, Arrays.copyOf(baseUrl, baseUrl.length - 1));</span>
+<span class="nc" id="L155">            context.put(&quot;staticBaseUrl&quot;, staticBaseUrl);</span>
+<span class="nc" id="L156">        } else {</span>
+<span class="nc" id="L157">            context.put(&quot;staticBaseUrl&quot;, &quot;/&quot;);</span>
+        }
+<span class="nc" id="L159">        final var searchPage = uriInfo.getBaseUriBuilder().clone().path(FedoraSearch.class).toString();</span>
+<span class="nc" id="L160">        context.put(&quot;searchPage&quot;, searchPage);</span>
+<span class="nc" id="L161">        context.put(&quot;fields&quot;,</span>
+<span class="nc" id="L162">                Arrays.stream(Condition.Field.values()).map(Condition.Field::toString).toArray(String[]::new));</span>
+<span class="nc" id="L163">        context.put(&quot;operators&quot;, Arrays.stream(Condition.Operator.values()).map(Condition.Operator::getStringValue)</span>
+<span class="nc" id="L164">                .toArray(String[]::new));</span>
+<span class="nc" id="L165">        context.put(&quot;isOriginalResource&quot;, null);</span>
+<span class="nc" id="L166">        context.put(&quot;helpers&quot;, VIEW_HELPERS);</span>
+<span class="nc" id="L167">        context.put(&quot;esc&quot;, escapeTool);</span>
+<span class="nc" id="L168">        context.put(&quot;uriInfo&quot;, uriInfo);</span>
+<span class="nc" id="L169">        return context;</span>
+    }
+
+    private static String getTemplateLocation(final String templateName) {
+<span class="nc" id="L173">        return templatesLocation + &quot;/&quot; + templateName.replace(':', '-') + templateFilenameExtension;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

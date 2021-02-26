@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>OcflPropsConfig.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-configs</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.config</a> &gt; <span class="el_source">OcflPropsConfig.java</span></div><h1>OcflPropsConfig.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.config;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import javax.annotation.PostConstruct;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+
+/**
+ * Fedora's OCFL related configuration properties
+ *
+ * @author pwinckles
+ * @since 6.0.0
+ */
+@Configuration
+<span class="fc" id="L42">public class OcflPropsConfig extends BasePropsConfig {</span>
+
+<span class="fc" id="L44">    private static final Logger LOGGER = LoggerFactory.getLogger(OcflPropsConfig.class);</span>
+
+    public static final String FCREPO_OCFL_STAGING = &quot;fcrepo.ocfl.staging&quot;;
+    public static final String FCREPO_OCFL_ROOT = &quot;fcrepo.ocfl.root&quot;;
+    public static final String FCREPO_OCFL_TEMP = &quot;fcrepo.ocfl.temp&quot;;
+    private static final String FCREPO_OCFL_S3_BUCKET = &quot;fcrepo.ocfl.s3.bucket&quot;;
+
+    private static final String OCFL_STAGING = &quot;staging&quot;;
+    private static final String OCFL_ROOT = &quot;ocfl-root&quot;;
+    private static final String OCFL_TEMP = &quot;ocfl-temp&quot;;
+
+    private static final String FCREPO_PERSISTENCE_ALGORITHM = &quot;fcrepo.persistence.defaultDigestAlgorithm&quot;;
+
+    @Value(&quot;${&quot; + FCREPO_OCFL_STAGING + &quot;:#{fedoraPropsConfig.fedoraData.resolve('&quot; + OCFL_STAGING + &quot;')}}&quot;)
+    private Path fedoraOcflStaging;
+
+    @Value(&quot;${&quot; + FCREPO_OCFL_ROOT + &quot;:#{fedoraPropsConfig.fedoraData.resolve('&quot; + OCFL_ROOT + &quot;')}}&quot;)
+    private Path ocflRepoRoot;
+
+    @Value(&quot;${&quot; + FCREPO_OCFL_TEMP + &quot;:#{fedoraPropsConfig.fedoraData.resolve('&quot; + OCFL_TEMP + &quot;')}}&quot;)
+    private Path ocflTemp;
+
+    /**
+     * Controls whether changes are committed to new OCFL versions or to a mutable HEAD
+     */
+    @Value(&quot;${fcrepo.autoversioning.enabled:true}&quot;)
+    private boolean autoVersioningEnabled;
+
+    @Value(&quot;${fcrepo.storage:ocfl-fs}&quot;)
+    private String storageStr;
+    private Storage storage;
+
+    @Value(&quot;${fcrepo.aws.access-key:}&quot;)
+    private String awsAccessKey;
+
+    @Value(&quot;${fcrepo.aws.secret-key:}&quot;)
+    private String awsSecretKey;
+
+    @Value(&quot;${fcrepo.aws.region:}&quot;)
+    private String awsRegion;
+
+    @Value(&quot;${&quot; + FCREPO_OCFL_S3_BUCKET + &quot;:}&quot;)
+    private String ocflS3Bucket;
+
+    @Value(&quot;${fcrepo.ocfl.s3.prefix:}&quot;)
+    private String ocflS3Prefix;
+
+    @Value(&quot;${fcrepo.resource-header-cache.enable:true}&quot;)
+    private boolean resourceHeadersCacheEnabled;
+
+    @Value(&quot;${fcrepo.resource-header-cache.max-size:512}&quot;)
+    private long resourceHeadersCacheMaxSize;
+
+    @Value(&quot;${fcrepo.resource-header-cache.expire-after-seconds:600}&quot;)
+    private long resourceHeadersCacheExpireAfterSeconds;
+
+    @Value(&quot;${fcrepo.ocfl.reindex.threads:-1}&quot;)
+    private long reindexThreads;
+
+    @Value(&quot;${fcrepo.ocfl.reindex.batchSize:100}&quot;)
+    private long reindexBatchSize;
+
+    @Value(&quot;${fcrepo.ocfl.reindex.failOnError:true}&quot;)
+    private boolean reindexFailOnError;
+
+    @Value(&quot;${&quot; + FCREPO_PERSISTENCE_ALGORITHM + &quot;:sha512}&quot;)
+    private String FCREPO_DIGEST_ALGORITHM_VALUE;
+
+    private DigestAlgorithm FCREPO_DIGEST_ALGORITHM;
+
+    /**
+     * List of valid choices for fcrepo.persistence.defaultDigestAlgorithm
+     */
+<span class="fc" id="L117">    private static final List&lt;DigestAlgorithm&gt; FCREPO_VALID_DIGEST_ALGORITHMS = List.of(</span>
+            DigestAlgorithm.SHA256,
+            DigestAlgorithm.SHA512
+    );
+
+<span class="fc" id="L122">    private static final long availableThreads = Runtime.getRuntime().availableProcessors();</span>
+
+    @PostConstruct
+    private void postConstruct() throws IOException {
+<span class="pc bpc" id="L126" title="1 of 2 branches missed.">        if (reindexThreads &lt; 0L) {</span>
+<span class="fc" id="L127">            reindexThreads = computeDefaultReindexThreads();</span>
+        } else {
+<span class="nc" id="L129">            reindexThreads = checkReindexThreadLimit(reindexThreads);</span>
+        }
+<span class="fc" id="L131">        storage = Storage.fromString(storageStr);</span>
+<span class="fc" id="L132">        LOGGER.info(&quot;Fedora storage type: {}&quot;, storage);</span>
+<span class="fc" id="L133">        LOGGER.info(&quot;Fedora staging: {}&quot;, fedoraOcflStaging);</span>
+<span class="fc" id="L134">        LOGGER.info(&quot;Fedora OCFL temp: {}&quot;, ocflTemp);</span>
+<span class="fc" id="L135">        LOGGER.info(&quot;Fedora OCFL reindexing threads: {}&quot;, reindexThreads);</span>
+<span class="fc" id="L136">        LOGGER.info(&quot;Fedora OCFL reindexing batch size: {}&quot;, reindexBatchSize);</span>
+<span class="fc" id="L137">        LOGGER.info(&quot;Fedora OCFL reindexing fail on error: {}&quot;, reindexFailOnError);</span>
+<span class="fc" id="L138">        Files.createDirectories(fedoraOcflStaging);</span>
+<span class="fc" id="L139">        Files.createDirectories(ocflTemp);</span>
+
+<span class="pc bpc" id="L141" title="1 of 2 branches missed.">        if (storage == Storage.OCFL_FILESYSTEM) {</span>
+<span class="fc" id="L142">            LOGGER.info(&quot;Fedora OCFL root: {}&quot;, ocflRepoRoot);</span>
+<span class="fc" id="L143">            Files.createDirectories(ocflRepoRoot);</span>
+<span class="nc bnc" id="L144" title="All 2 branches missed.">        } else if (storage == Storage.OCFL_S3) {</span>
+<span class="nc" id="L145">            Objects.requireNonNull(ocflS3Bucket,</span>
+<span class="nc" id="L146">                    String.format(&quot;The property %s must be set when OCFL S3 storage is used&quot;, FCREPO_OCFL_S3_BUCKET));</span>
+
+<span class="nc" id="L148">            LOGGER.info(&quot;Fedora AWS access key: {}&quot;, awsAccessKey);</span>
+<span class="nc" id="L149">            LOGGER.info(&quot;Fedora AWS secret key set: {}&quot;, Objects.isNull(awsSecretKey));</span>
+<span class="nc" id="L150">            LOGGER.info(&quot;Fedora AWS region: {}&quot;, awsRegion);</span>
+<span class="nc" id="L151">            LOGGER.info(&quot;Fedora OCFL S3 bucket: {}&quot;, ocflS3Bucket);</span>
+<span class="nc" id="L152">            LOGGER.info(&quot;Fedora OCFL S3 prefix: {}&quot;, ocflS3Prefix);</span>
+        }
+<span class="fc" id="L154">        FCREPO_DIGEST_ALGORITHM = DigestAlgorithm.fromAlgorithm(FCREPO_DIGEST_ALGORITHM_VALUE);</span>
+        // Throw error if the configured default digest is not known to fedora or is not a valid option
+<span class="pc bpc" id="L156" title="1 of 2 branches missed.">        if (DigestAlgorithm.MISSING.equals(FCREPO_DIGEST_ALGORITHM) ||</span>
+<span class="pc bpc" id="L157" title="1 of 2 branches missed.">                !FCREPO_VALID_DIGEST_ALGORITHMS.contains(FCREPO_DIGEST_ALGORITHM)) {</span>
+<span class="nc" id="L158">            throw new IllegalArgumentException(String.format(&quot;Invalid %s property configured: %s, must be one of %s&quot;,</span>
+                    FCREPO_PERSISTENCE_ALGORITHM, FCREPO_DIGEST_ALGORITHM_VALUE,
+<span class="nc" id="L160">                    FCREPO_VALID_DIGEST_ALGORITHMS.stream().map(DigestAlgorithm::getAlgorithm)</span>
+<span class="nc" id="L161">                            .collect(Collectors.joining(&quot;, &quot;))));</span>
+        }
+<span class="fc" id="L163">        LOGGER.info(&quot;Fedora OCFL digest algorithm: {}&quot;, FCREPO_DIGEST_ALGORITHM.getAlgorithm());</span>
+<span class="fc" id="L164">    }</span>
+
+    /**
+     * @return Path to directory Fedora stages resources before moving them into OCFL
+     */
+    public Path getFedoraOcflStaging() {
+<span class="fc" id="L170">        return fedoraOcflStaging;</span>
+    }
+
+    /**
+     * Sets the path to the Fedora staging directory -- should only be used for testing purposes.
+     *
+     * @param fedoraOcflStaging Path to Fedora staging directory
+     */
+    public void setFedoraOcflStaging(final Path fedoraOcflStaging) {
+<span class="nc" id="L179">        this.fedoraOcflStaging = fedoraOcflStaging;</span>
+<span class="nc" id="L180">    }</span>
+
+    /**
+     * @return Path to OCFL root directory
+     */
+    public Path getOcflRepoRoot() {
+<span class="fc" id="L186">        return ocflRepoRoot;</span>
+    }
+
+    /**
+     * Sets the path to the Fedora OCFL root directory -- should only be used for testing purposes.
+     *
+     * @param ocflRepoRoot Path to Fedora OCFL root directory
+     */
+    public void setOcflRepoRoot(final Path ocflRepoRoot) {
+<span class="nc" id="L195">        this.ocflRepoRoot = ocflRepoRoot;</span>
+<span class="nc" id="L196">    }</span>
+
+    /**
+     * @return Path to the temp directory used by the OCFL client
+     */
+    public Path getOcflTemp() {
+<span class="fc" id="L202">        return ocflTemp;</span>
+    }
+
+    /**
+     * Sets the path to the OCFL temp directory -- should only be used for testing purposes.
+     *
+     * @param ocflTemp Path to OCFL temp directory
+     */
+    public void setOcflTemp(final Path ocflTemp) {
+<span class="nc" id="L211">        this.ocflTemp = ocflTemp;</span>
+<span class="nc" id="L212">    }</span>
+
+    /**
+     * @return true if every update should create a new OCFL version; false if the mutable HEAD should be used
+     */
+    public boolean isAutoVersioningEnabled() {
+<span class="fc" id="L218">        return autoVersioningEnabled;</span>
+    }
+
+    /**
+     * Determines whether or not new OCFL versions are created on every update.
+     *
+     * @param autoVersioningEnabled true to create new versions on every update
+     */
+    public void setAutoVersioningEnabled(final boolean autoVersioningEnabled) {
+<span class="nc" id="L227">        this.autoVersioningEnabled = autoVersioningEnabled;</span>
+<span class="nc" id="L228">    }</span>
+
+    /**
+     * @return Indicates the storage type. ocfl-fs is the default
+     */
+    public Storage getStorage() {
+<span class="fc" id="L234">        return storage;</span>
+    }
+
+    /**
+     * @param storage storage to use
+     */
+    public void setStorage(final Storage storage) {
+<span class="nc" id="L241">        this.storage = storage;</span>
+<span class="nc" id="L242">    }</span>
+
+    /**
+     * @return the aws access key to use, may be null
+     */
+    public String getAwsAccessKey() {
+<span class="nc" id="L248">        return awsAccessKey;</span>
+    }
+
+    /**
+     * @param awsAccessKey the aws access key to use
+     */
+    public void setAwsAccessKey(final String awsAccessKey) {
+<span class="nc" id="L255">        this.awsAccessKey = awsAccessKey;</span>
+<span class="nc" id="L256">    }</span>
+
+    /**
+     * @return the aws secret key to use, may be null
+     */
+    public String getAwsSecretKey() {
+<span class="nc" id="L262">        return awsSecretKey;</span>
+    }
+
+    /**
+     * @param awsSecretKey the aws secret key to use
+     */
+    public void setAwsSecretKey(final String awsSecretKey) {
+<span class="nc" id="L269">        this.awsSecretKey = awsSecretKey;</span>
+<span class="nc" id="L270">    }</span>
+
+    /**
+     * @return the aws region to use, may be null
+     */
+    public String getAwsRegion() {
+<span class="nc" id="L276">        return awsRegion;</span>
+    }
+
+    /**
+     * @param awsRegion the aws region to use
+     */
+    public void setAwsRegion(final String awsRegion) {
+<span class="nc" id="L283">        this.awsRegion = awsRegion;</span>
+<span class="nc" id="L284">    }</span>
+
+    /**
+     * @return the s3 bucket to store objects in
+     */
+    public String getOcflS3Bucket() {
+<span class="nc" id="L290">        return ocflS3Bucket;</span>
+    }
+
+    /**
+     * @param ocflS3Bucket sets the s3 bucket to store objects in
+     */
+    public void setOcflS3Bucket(final String ocflS3Bucket) {
+<span class="nc" id="L297">        this.ocflS3Bucket = ocflS3Bucket;</span>
+<span class="nc" id="L298">    }</span>
+
+    /**
+     * @return the s3 prefix to store objects under, may be null
+     */
+    public String getOcflS3Prefix() {
+<span class="nc" id="L304">        return ocflS3Prefix;</span>
+    }
+
+    /**
+     * @param ocflS3Prefix the prefix to store objects under
+     */
+    public void setOcflS3Prefix(final String ocflS3Prefix) {
+<span class="nc" id="L311">        this.ocflS3Prefix = ocflS3Prefix;</span>
+<span class="nc" id="L312">    }</span>
+
+    /**
+     * @return whether or not to enable the resource headers cache
+     */
+    public boolean isResourceHeadersCacheEnabled() {
+<span class="fc" id="L318">        return resourceHeadersCacheEnabled;</span>
+    }
+
+    /**
+     * @param resourceHeadersCacheEnabled whether or not to enable the resource headers cache
+     */
+    public void setResourceHeadersCacheEnabled(final boolean resourceHeadersCacheEnabled) {
+<span class="nc" id="L325">        this.resourceHeadersCacheEnabled = resourceHeadersCacheEnabled;</span>
+<span class="nc" id="L326">    }</span>
+
+    /**
+     * @return maximum number or resource headers in cache
+     */
+    public long getResourceHeadersCacheMaxSize() {
+<span class="nc" id="L332">        return resourceHeadersCacheMaxSize;</span>
+    }
+
+    /**
+     * @param resourceHeadersCacheMaxSize maximum number of resource headers in cache
+     */
+    public void setResourceHeadersCacheMaxSize(final long resourceHeadersCacheMaxSize) {
+<span class="nc" id="L339">        this.resourceHeadersCacheMaxSize = resourceHeadersCacheMaxSize;</span>
+<span class="nc" id="L340">    }</span>
+
+    /**
+     * @return number of seconds to wait before expiring a resource header from the cache
+     */
+    public long getResourceHeadersCacheExpireAfterSeconds() {
+<span class="nc" id="L346">        return resourceHeadersCacheExpireAfterSeconds;</span>
+    }
+
+    /**
+     * @param resourceHeadersCacheExpireAfterSeconds
+     *      number of seconds to wait before expiring a resource header from the cache
+     */
+    public void setResourceHeadersCacheExpireAfterSeconds(final long resourceHeadersCacheExpireAfterSeconds) {
+<span class="nc" id="L354">        this.resourceHeadersCacheExpireAfterSeconds = resourceHeadersCacheExpireAfterSeconds;</span>
+<span class="nc" id="L355">    }</span>
+
+    /**
+     * @param threads
+     *   number of threads to use when rebuilding from Fedora OCFL on disk.
+     */
+    public void setReindexingThreads(final long threads) {
+<span class="nc" id="L362">        this.reindexThreads = checkReindexThreadLimit(threads);</span>
+<span class="nc" id="L363">    }</span>
+
+    /**
+     * @return number of threads to use when rebuilding from Fedora OCFL on disk.
+     */
+    public long getReindexingThreads() {
+<span class="fc" id="L369">        return this.reindexThreads;</span>
+    }
+
+    /**
+     * @return number of OCFL ids for a the reindexing manager to hand out at once.
+     */
+    public long getReindexBatchSize() {
+<span class="fc" id="L376">        return reindexBatchSize;</span>
+    }
+
+    /**
+     * @param reindexBatchSize
+     *   number of OCFL ids for a the reindexing manager to hand out at once.
+     */
+    public void setReindexBatchSize(final long reindexBatchSize) {
+<span class="nc" id="L384">        this.reindexBatchSize = reindexBatchSize;</span>
+<span class="nc" id="L385">    }</span>
+
+    /**
+     * @return whether to stop the entire reindexing process if a single object fails.
+     */
+    public boolean isReindexFailOnError() {
+<span class="fc" id="L391">        return reindexFailOnError;</span>
+    }
+
+    /**
+     * @param reindexFailOnError
+     *   whether to stop the entire reindexing process if a single object fails.
+     */
+    public void setReindexFailOnError(final boolean reindexFailOnError) {
+<span class="nc" id="L399">        this.reindexFailOnError = reindexFailOnError;</span>
+<span class="nc" id="L400">    }</span>
+
+    /**
+     * Check we don't create too few reindexing threads.
+     * @param threads the number of threads requested.
+     * @return higher of the requested amount or 1
+     */
+    private long checkReindexThreadLimit(final long threads) {
+<span class="nc bnc" id="L408" title="All 2 branches missed.">       if (threads &lt;= 0) {</span>
+<span class="nc" id="L409">            LOGGER.warn(&quot;Can't have fewer than 1 reindexing thread, setting to 1.&quot;);</span>
+<span class="nc" id="L410">            return 1;</span>
+        } else {
+<span class="nc" id="L412">            return threads;</span>
+        }
+    }
+
+    /**
+     * @return number of available processors minus 1.
+     */
+    private static long computeDefaultReindexThreads() {
+<span class="fc" id="L420">        return availableThreads - 1;</span>
+    }
+
+    /**
+     * @return the configured OCFL digest algorithm
+     */
+    public DigestAlgorithm getDefaultDigestAlgorithm() {
+<span class="fc" id="L427">        return FCREPO_DIGEST_ALGORITHM;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

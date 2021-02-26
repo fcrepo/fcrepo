@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>InstantParser.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-search-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.search.impl</a> &gt; <span class="el_source">InstantParser.java</span></div><h1>InstantParser.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.search.impl;
+
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
+import java.util.ArrayList;
+import java.util.List;
+
+import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
+import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
+
+/**
+ * A utility class for parsing a variety of different date/time formats into an Instant.
+ *
+ * @author dbernstein
+ */
+public class InstantParser {
+
+<span class="fc" id="L39">    private static final List&lt;DateTimeFormatter&gt; VALID_DATE_FORMATS = new ArrayList&lt;&gt;();</span>
+
+    static {
+<span class="fc" id="L42">        VALID_DATE_FORMATS.add(ISO_DATE_TIME);</span>
+<span class="fc" id="L43">        VALID_DATE_FORMATS.add(ISO_OFFSET_DATE_TIME);</span>
+<span class="fc" id="L44">        VALID_DATE_FORMATS.add(RFC_1123_DATE_TIME);</span>
+<span class="fc" id="L45">        final var zoneId = ZoneOffset.UTC;</span>
+<span class="fc" id="L46">        VALID_DATE_FORMATS.add(new DateTimeFormatterBuilder().appendPattern(&quot;yyyy-MM-dd&quot;)</span>
+<span class="fc" id="L47">                .parseDefaulting(ChronoField.NANO_OF_DAY, 0).toFormatter().withZone(zoneId));</span>
+<span class="fc" id="L48">        VALID_DATE_FORMATS.add(new DateTimeFormatterBuilder().appendPattern(&quot;yyyyMMdd&quot;)</span>
+<span class="fc" id="L49">                .parseDefaulting(ChronoField.NANO_OF_DAY, 0).toFormatter().withZone(zoneId));</span>
+<span class="fc" id="L50">        VALID_DATE_FORMATS.add(new DateTimeFormatterBuilder().appendPattern(&quot;yyyy-MM-dd HH:mm:ss&quot;)</span>
+<span class="fc" id="L51">                .parseDefaulting(ChronoField.NANO_OF_DAY, 0).toFormatter().withZone(zoneId));</span>
+<span class="fc" id="L52">        VALID_DATE_FORMATS.add(new DateTimeFormatterBuilder().appendPattern(&quot;yyyyMMdd HH:mm:ss&quot;)</span>
+<span class="fc" id="L53">                .parseDefaulting(ChronoField.NANO_OF_DAY, 0).toFormatter().withZone(zoneId));</span>
+<span class="fc" id="L54">    }</span>
+
+    private InstantParser() { }
+
+    /**
+     * Parse a datestring into an instant.  If timezone or time information is missing, UTC is assumed.
+     *
+     * @param dateString The date string
+     * @return an instant
+     */
+    public static Instant parse(final String dateString) {
+<span class="fc bfc" id="L65" title="All 2 branches covered.">        for (final DateTimeFormatter formatter : VALID_DATE_FORMATS) {</span>
+            try {
+<span class="fc" id="L67">                final var temporalAccessor = formatter.parse(dateString);</span>
+<span class="fc" id="L68">                return Instant.from(temporalAccessor);</span>
+<span class="fc" id="L69">            } catch (final Exception e) {</span>
+                //ignore failures - if no date string is parsable, an error is thrown below
+            }
+<span class="fc" id="L72">        }</span>
+<span class="fc" id="L73">        throw new IllegalArgumentException(&quot;Invalid date format: \&quot;&quot; + dateString + &quot;\&quot;&quot;);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

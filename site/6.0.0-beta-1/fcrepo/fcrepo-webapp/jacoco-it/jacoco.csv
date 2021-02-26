@@ -1,0 +1,12 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+Fedora Repository Deployable Web Application,org.fcrepo.webapp,JmsConfig.JmsEnabled,5,0,0,0,2,0,1,0,1,0
+Fedora Repository Deployable Web Application,org.fcrepo.webapp,AuthConfig.RolesPrincipalEnabled,5,0,0,0,2,0,1,0,1,0
+Fedora Repository Deployable Web Application,org.fcrepo.webapp,NoAuthConfig.AuthorizationDisabled,5,0,0,0,2,0,1,0,1,0
+Fedora Repository Deployable Web Application,org.fcrepo.webapp,WebappConfig,58,0,0,0,18,0,7,0,7,0
+Fedora Repository Deployable Web Application,org.fcrepo.webapp,NoAuthConfig,15,0,0,0,4,0,3,0,3,0
+Fedora Repository Deployable Web Application,org.fcrepo.webapp,AuthConfig.HeaderPrincipalEnabled,5,0,0,0,2,0,1,0,1,0
+Fedora Repository Deployable Web Application,org.fcrepo.webapp,AuthConfig.AuthorizationEnabled,5,0,0,0,2,0,1,0,1,0
+Fedora Repository Deployable Web Application,org.fcrepo.webapp,AuthConfig.DelegatePrincipalEnabled,5,0,0,0,2,0,1,0,1,0
+Fedora Repository Deployable Web Application,org.fcrepo.webapp,JmsConfig,66,0,2,0,16,0,8,0,7,0
+Fedora Repository Deployable Web Application,org.fcrepo.webapp,AuthConfig,124,0,6,0,34,0,16,0,13,0
+Fedora Repository Deployable Web Application,org.fcrepo.webapp,NoAuthConfig.new OncePerRequestFilter() {...},11,0,0,0,3,0,2,0,2,0

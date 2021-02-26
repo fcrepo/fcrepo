@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>DatabaseConfig.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-configs</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.config</a> &gt; <span class="el_source">DatabaseConfig.java</span></div><h1>DatabaseConfig.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.config;
+
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Map;
+
+import javax.annotation.PostConstruct;
+import javax.sql.DataSource;
+
+import org.flywaydb.core.Flyway;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.core.convert.converter.ConverterRegistry;
+import org.springframework.core.convert.support.DefaultConversionService;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+
+/**
+ * @author pwinckles
+ */
+@EnableTransactionManagement
+@Configuration
+<span class="fc" id="L48">public class DatabaseConfig extends BasePropsConfig {</span>
+
+<span class="fc" id="L50">    private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseConfig.class);</span>
+
+    private static final String H2_FILE = &quot;fcrepo-h2&quot;;
+
+    @Value(&quot;${fcrepo.db.url:#{'jdbc:h2:'&quot; +
+            &quot; + fedoraPropsConfig.fedoraData.resolve('&quot; + H2_FILE + &quot;').toAbsolutePath().toString()&quot; +
+            &quot; + ';FILE_LOCK=SOCKET'}}&quot;)
+    private String dbUrl;
+
+    @Value(&quot;${fcrepo.db.user:}&quot;)
+    private String dbUser;
+
+    @Value(&quot;${fcrepo.db.password:}&quot;)
+    private String dbPassword;
+
+    @Value(&quot;${fcrepo.db.max.pool.size:15}&quot;)
+    private Integer maxPoolSize;
+
+    @Value(&quot;${fcrepo.db.connection.checkout.timeout:10000}&quot;)
+    private Integer checkoutTimeout;
+
+    @Value(&quot;${fcrepo.db.connection.idle.test.period:300}&quot;)
+    private Integer idleConnectionTestPeriod;
+
+    @Value(&quot;${fcrepo.db.connection.test.on.checkout:true}&quot;)
+    private boolean testConnectionOnCheckout;
+
+<span class="fc" id="L77">    private static final Map&lt;String, String&gt; DB_DRIVER_MAP = Map.of(</span>
+            &quot;h2&quot;, &quot;org.h2.Driver&quot;,
+            &quot;postgresql&quot;, &quot;org.postgresql.Driver&quot;,
+            &quot;mariadb&quot;, &quot;org.mariadb.jdbc.Driver&quot;,
+            &quot;mysql&quot;, &quot;com.mysql.cj.jdbc.Driver&quot;
+    );
+
+    @PostConstruct
+    public void setup() {
+<span class="fc" id="L86">        ((ConverterRegistry) DefaultConversionService.getSharedInstance())</span>
+                // Adds a converter for mapping local datetimes to instants. This is dubious and not supported
+                // by default because you must make an assumption about the timezone
+<span class="fc" id="L89">                .addConverter(new Converter&lt;LocalDateTime, Instant&gt;() {</span>
+                    @Override
+                    public Instant convert(final LocalDateTime source) {
+<span class="nc" id="L92">                        return source.toInstant(ZoneOffset.UTC);</span>
+                    }
+                });
+<span class="fc" id="L95">    }</span>
+
+    @Bean
+    public DataSource dataSource() throws Exception {
+<span class="fc" id="L99">        final var driver = identifyDbDriver();</span>
+
+<span class="fc" id="L101">        LOGGER.debug(&quot;JDBC URL: {}&quot;, dbUrl);</span>
+<span class="fc" id="L102">        LOGGER.debug(&quot;Using database driver: {}&quot;, driver);</span>
+
+<span class="fc" id="L104">        final var dataSource = new ComboPooledDataSource();</span>
+<span class="fc" id="L105">        dataSource.setDriverClass(driver);</span>
+<span class="fc" id="L106">        dataSource.setJdbcUrl(dbUrl);</span>
+<span class="fc" id="L107">        dataSource.setUser(dbUser);</span>
+<span class="fc" id="L108">        dataSource.setPassword(dbPassword);</span>
+<span class="fc" id="L109">        dataSource.setCheckoutTimeout(checkoutTimeout);</span>
+<span class="fc" id="L110">        dataSource.setMaxPoolSize(maxPoolSize);</span>
+<span class="fc" id="L111">        dataSource.setIdleConnectionTestPeriod(idleConnectionTestPeriod);</span>
+<span class="fc" id="L112">        dataSource.setTestConnectionOnCheckout(testConnectionOnCheckout);</span>
+
+<span class="fc" id="L114">        flyway(dataSource);</span>
+
+<span class="fc" id="L116">        return dataSource;</span>
+    }
+
+    /**
+     * Get the database type in use
+     * @return database type from the connect url.
+     */
+    private String getDbType() {
+<span class="fc" id="L124">        final var parts = dbUrl.split(&quot;:&quot;);</span>
+
+<span class="pc bpc" id="L126" title="1 of 2 branches missed.">        if (parts.length &lt; 2) {</span>
+<span class="nc" id="L127">            throw new IllegalArgumentException(&quot;Invalid DB url: &quot; + dbUrl);</span>
+        }
+<span class="fc" id="L129">        return parts[1].toLowerCase();</span>
+    }
+
+    private String identifyDbDriver() {
+<span class="fc" id="L133">        final var driver = DB_DRIVER_MAP.get(getDbType());</span>
+
+<span class="pc bpc" id="L135" title="1 of 2 branches missed.">        if (driver == null) {</span>
+<span class="nc" id="L136">            throw new IllegalStateException(&quot;No database driver found for: &quot; + dbUrl);</span>
+        }
+
+<span class="fc" id="L139">        return driver;</span>
+    }
+
+    @Bean
+    public DataSourceTransactionManager txManager(final DataSource dataSource) {
+<span class="fc" id="L144">        final var txManager = new DataSourceTransactionManager();</span>
+<span class="fc" id="L145">        txManager.setDataSource(dataSource);</span>
+<span class="fc" id="L146">        return txManager;</span>
+    }
+
+    @Bean
+    public Flyway flyway(final DataSource source) throws Exception {
+<span class="fc" id="L151">        LOGGER.debug(&quot;Instantiating a new flyway bean&quot;);</span>
+<span class="fc" id="L152">        return FlywayFactory.create().setDataSource(source).setDatabaseType(getDbType()).getObject();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

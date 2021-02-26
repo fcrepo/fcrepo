@@ -1,0 +1,841 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>WebACFilter.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-auth-webac</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.webac</a> &gt; <span class="el_source">WebACFilter.java</span></div><h1>WebACFilter.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.auth.webac;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.stream.Collectors.toList;
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
+import static javax.servlet.http.HttpServletResponse.SC_CONFLICT;
+import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+import static org.apache.jena.riot.WebContent.contentTypeJSONLD;
+import static org.apache.jena.riot.WebContent.contentTypeN3;
+import static org.apache.jena.riot.WebContent.contentTypeNTriples;
+import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.apache.jena.riot.WebContent.contentTypeTurtle;
+import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_ADMIN_ROLE;
+import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_USER_ROLE;
+import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_APPEND;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_CONTROL;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
+import static org.fcrepo.auth.webac.WebACAuthorizingRealm.URIS_TO_AUTHORIZE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_TX;
+import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
+import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.net.URI;
+import java.security.Principal;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.inject.Inject;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.core.Link;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriBuilder;
+
+import org.fcrepo.config.FedoraPropsConfig;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
+import org.fcrepo.http.commons.domain.MultiPrefer;
+import org.fcrepo.http.commons.domain.SinglePrefer;
+import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
+import org.fcrepo.http.commons.session.TransactionProvider;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.TransactionUtils;
+import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.jena.atlas.RuntimeIOException;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.QueryParseException;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFReader;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RiotException;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.modify.request.UpdateData;
+import org.apache.jena.sparql.modify.request.UpdateDataDelete;
+import org.apache.jena.sparql.modify.request.UpdateModify;
+import org.apache.jena.update.UpdateFactory;
+import org.apache.jena.update.UpdateRequest;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.PrincipalCollection;
+import org.apache.shiro.subject.SimplePrincipalCollection;
+import org.apache.shiro.subject.Subject;
+import org.slf4j.Logger;
+import org.springframework.web.filter.RequestContextFilter;
+
+import com.fasterxml.jackson.core.JsonParseException;
+
+/**
+ * @author peichman
+ */
+<span class="fc" id="L120">public class WebACFilter extends RequestContextFilter {</span>
+
+<span class="fc" id="L122">    private static final Logger log = getLogger(WebACFilter.class);</span>
+
+<span class="fc" id="L124">    private static final MediaType sparqlUpdate = MediaType.valueOf(contentTypeSPARQLUpdate);</span>
+
+<span class="fc" id="L126">    private static final Principal FOAF_AGENT_PRINCIPAL = new Principal() {</span>
+
+        @Override
+        public String getName() {
+<span class="fc" id="L130">            return FOAF_AGENT_VALUE;</span>
+        }
+
+        @Override
+        public String toString() {
+<span class="nc" id="L135">            return getName();</span>
+        }
+
+    };
+
+<span class="fc" id="L140">    private static final PrincipalCollection FOAF_AGENT_PRINCIPAL_COLLECTION =</span>
+<span class="fc" id="L141">            new SimplePrincipalCollection(FOAF_AGENT_PRINCIPAL, WebACAuthorizingRealm.class.getCanonicalName());</span>
+
+    private static Subject FOAF_AGENT_SUBJECT;
+
+    @Inject
+    private FedoraPropsConfig fedoraPropsConfig;
+
+    @Inject
+    private ResourceFactory resourceFactory;
+
+    @Inject
+    private TransactionManager transactionManager;
+
+<span class="fc" id="L154">    private static Set&lt;URI&gt; directOrIndirect = Set.of(INDIRECT_CONTAINER, DIRECT_CONTAINER).stream()</span>
+<span class="fc" id="L155">            .map(Resource::toString).map(URI::create).collect(Collectors.toSet());</span>
+
+<span class="fc" id="L157">    private static Set&lt;String&gt; rdfContentTypes = Set.of(contentTypeTurtle, contentTypeJSONLD, contentTypeN3,</span>
+            contentTypeRDFXML, contentTypeNTriples);
+
+    /**
+     * Generate a HttpIdentifierConverter from the request URL.
+     * @param request the servlet request.
+     * @return a converter.
+     */
+    public static HttpIdentifierConverter identifierConverter(final HttpServletRequest request) {
+<span class="fc" id="L166">        final var uriBuild = UriBuilder.fromUri(getBaseUri(request)).path(&quot;/{path: .*}&quot;);</span>
+<span class="fc" id="L167">        return new HttpIdentifierConverter(uriBuild);</span>
+    }
+
+    /**
+     * Calculate a base Uri for this request.
+     * @param request the incoming request
+     * @return the URI
+     */
+    public static URI getBaseUri(final HttpServletRequest request) {
+<span class="fc" id="L176">        final String host = request.getScheme() + &quot;://&quot; + request.getServerName() +</span>
+<span class="fc bfc" id="L177" title="All 2 branches covered.">                (request.getServerPort() != 80 ? &quot;:&quot; + request.getServerPort() : &quot;&quot;) + &quot;/&quot;;</span>
+<span class="fc" id="L178">        final String requestUrl = request.getRequestURL().toString();</span>
+<span class="fc" id="L179">        final String contextPath = request.getContextPath() + request.getServletPath();</span>
+        final String baseUri;
+<span class="fc bfc" id="L181" title="All 2 branches covered.">        if (contextPath.length() == 0) {</span>
+<span class="fc" id="L182">            baseUri = host;</span>
+        } else {
+<span class="fc" id="L184">            baseUri = requestUrl.split(contextPath)[0] + contextPath + &quot;/&quot;;</span>
+        }
+<span class="fc" id="L186">        return URI.create(baseUri);</span>
+    }
+
+    /**
+     * Add URIs to collect permissions information for.
+     *
+     * @param httpRequest the request.
+     * @param uri the uri to check.
+     */
+    private void addURIToAuthorize(final HttpServletRequest httpRequest, final URI uri) {
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L197">        Set&lt;URI&gt; targetURIs = (Set&lt;URI&gt;) httpRequest.getAttribute(URIS_TO_AUTHORIZE);</span>
+<span class="fc bfc" id="L198" title="All 2 branches covered.">        if (targetURIs == null) {</span>
+<span class="fc" id="L199">            targetURIs = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L200">            httpRequest.setAttribute(URIS_TO_AUTHORIZE, targetURIs);</span>
+        }
+<span class="fc" id="L202">        targetURIs.add(uri);</span>
+<span class="fc" id="L203">    }</span>
+
+    @Override
+    protected void doFilterInternal(final HttpServletRequest request, final HttpServletResponse response,
+                                    final FilterChain chain) throws ServletException, IOException {
+
+        // Ensure we are not trying to operate on a closed or invalid transaction.
+        try {
+<span class="fc" id="L211">            transaction(request);</span>
+<span class="fc" id="L212">        } catch (final TransactionRuntimeException e) {</span>
+<span class="fc" id="L213">            printException(response, SC_CONFLICT, e);</span>
+<span class="fc" id="L214">            return;</span>
+<span class="fc" id="L215">        }</span>
+<span class="fc" id="L216">        final Subject currentUser = SecurityUtils.getSubject();</span>
+<span class="fc" id="L217">        HttpServletRequest httpRequest = request;</span>
+<span class="fc bfc" id="L218" title="All 4 branches covered.">        if (isSparqlUpdate(httpRequest) || isRdfRequest(httpRequest)) {</span>
+            // If this is a sparql request or contains RDF.
+<span class="fc" id="L220">            httpRequest = new CachedHttpRequest(httpRequest);</span>
+        }
+
+<span class="fc" id="L223">        final String requestUrl = httpRequest.getRequestURL().toString();</span>
+        try {
+<span class="fc" id="L225">            FedoraId.create(identifierConverter(httpRequest).toInternalId(requestUrl));</span>
+<span class="fc" id="L226">        } catch (final InvalidResourceIdentifierException e) {</span>
+<span class="fc" id="L227">            printException(response, SC_BAD_REQUEST, e);</span>
+<span class="fc" id="L228">            return;</span>
+<span class="nc" id="L229">        } catch (final IllegalArgumentException e) {</span>
+            // No Fedora request path provided, so just continue along.
+<span class="fc" id="L231">        }</span>
+
+        // add the request URI to the list of URIs to retrieve the ACLs for
+<span class="fc" id="L234">        addURIToAuthorize(httpRequest, URI.create(requestUrl));</span>
+
+<span class="fc bfc" id="L236" title="All 2 branches covered.">        if (currentUser.isAuthenticated()) {</span>
+<span class="fc" id="L237">            log.debug(&quot;User is authenticated&quot;);</span>
+<span class="fc bfc" id="L238" title="All 2 branches covered.">            if (currentUser.hasRole(FEDORA_ADMIN_ROLE)) {</span>
+<span class="fc" id="L239">                log.debug(&quot;User has fedoraAdmin role&quot;);</span>
+<span class="pc bpc" id="L240" title="1 of 2 branches missed.">            } else if (currentUser.hasRole(FEDORA_USER_ROLE)) {</span>
+<span class="fc" id="L241">                log.debug(&quot;User has fedoraUser role&quot;);</span>
+                // non-admins are subject to permission checks
+<span class="fc bfc" id="L243" title="All 2 branches covered.">                if (!isAuthorized(currentUser, httpRequest)) {</span>
+                    // if the user is not authorized, set response to forbidden
+<span class="fc" id="L245">                    response.sendError(SC_FORBIDDEN);</span>
+<span class="fc" id="L246">                    return;</span>
+                }
+            } else {
+<span class="nc" id="L249">                log.debug(&quot;User has no recognized servlet container role&quot;);</span>
+                // missing a container role, return forbidden
+<span class="nc" id="L251">                response.sendError(SC_FORBIDDEN);</span>
+<span class="nc" id="L252">                return;</span>
+            }
+        } else {
+<span class="fc" id="L255">            log.debug(&quot;User is NOT authenticated&quot;);</span>
+            // anonymous users are subject to permission checks
+<span class="fc bfc" id="L257" title="All 2 branches covered.">            if (!isAuthorized(getFoafAgentSubject(), httpRequest)) {</span>
+                // if anonymous user is not authorized, set response to forbidden
+<span class="fc" id="L259">                response.sendError(SC_FORBIDDEN);</span>
+<span class="fc" id="L260">                return;</span>
+            }
+        }
+
+        // proceed to the next filter
+<span class="fc" id="L265">        chain.doFilter(httpRequest, response);</span>
+<span class="fc" id="L266">    }</span>
+
+    /**
+     * Displays the message from the exception to the screen.
+     * @param response the servlet response
+     * @param e the exception being handled
+     * @throws IOException if problems opening the output writer.
+     */
+    private void printException(final HttpServletResponse response, final int responseCode, final Throwable e)
+            throws IOException {
+<span class="fc" id="L276">        final var message = e.getMessage();</span>
+<span class="fc" id="L277">        response.resetBuffer();</span>
+<span class="fc" id="L278">        response.setStatus(responseCode);</span>
+<span class="fc" id="L279">        response.setContentType(TEXT_PLAIN_WITH_CHARSET);</span>
+<span class="fc" id="L280">        response.setContentLength(message.length());</span>
+<span class="fc" id="L281">        response.setCharacterEncoding(&quot;UTF-8&quot;);</span>
+<span class="fc" id="L282">        final var write = response.getWriter();</span>
+<span class="fc" id="L283">        write.write(message);</span>
+<span class="fc" id="L284">        write.flush();</span>
+<span class="fc" id="L285">    }</span>
+
+    private Subject getFoafAgentSubject() {
+<span class="fc bfc" id="L288" title="All 2 branches covered.">        if (FOAF_AGENT_SUBJECT == null) {</span>
+<span class="fc" id="L289">            FOAF_AGENT_SUBJECT = new Subject.Builder().principals(FOAF_AGENT_PRINCIPAL_COLLECTION).buildSubject();</span>
+        }
+<span class="fc" id="L291">        return FOAF_AGENT_SUBJECT;</span>
+    }
+
+    private Transaction transaction(final HttpServletRequest request) {
+<span class="fc" id="L295">        final String txId = request.getHeader(ATOMIC_ID_HEADER);</span>
+<span class="fc bfc" id="L296" title="All 2 branches covered.">        if (txId == null) {</span>
+<span class="fc" id="L297">            return null;</span>
+        }
+<span class="fc" id="L299">        final var txProvider = new TransactionProvider(transactionManager, request,</span>
+<span class="fc" id="L300">                getBaseUri(request), fedoraPropsConfig.getJmsBaseUrl());</span>
+<span class="fc" id="L301">        return txProvider.provide();</span>
+    }
+
+    private String getContainerUrl(final HttpServletRequest servletRequest) {
+<span class="fc" id="L305">        final String pathInfo = servletRequest.getPathInfo();</span>
+<span class="fc" id="L306">        final String baseUrl = servletRequest.getRequestURL().toString().replace(pathInfo, &quot;&quot;);</span>
+<span class="fc" id="L307">        final String[] paths = pathInfo.split(&quot;/&quot;);</span>
+<span class="fc" id="L308">        final String[] parentPaths = java.util.Arrays.copyOfRange(paths, 0, paths.length - 1);</span>
+<span class="fc" id="L309">        return baseUrl + String.join(&quot;/&quot;, parentPaths);</span>
+    }
+
+    private FedoraResource getContainer(final HttpServletRequest servletRequest) {
+<span class="fc" id="L313">        final FedoraResource resource = resource(servletRequest);</span>
+<span class="fc bfc" id="L314" title="All 2 branches covered.">        if (resource != null) {</span>
+<span class="fc" id="L315">            return resource(servletRequest).getContainer();</span>
+        }
+<span class="fc" id="L317">        final String parentURI = getContainerUrl(servletRequest);</span>
+<span class="fc" id="L318">        return resource(servletRequest, getIdFromRequest(servletRequest, parentURI));</span>
+    }
+
+    private FedoraResource resource(final HttpServletRequest servletRequest) {
+<span class="fc" id="L322">        return resource(servletRequest, getIdFromRequest(servletRequest));</span>
+    }
+
+    private FedoraResource resource(final HttpServletRequest servletRequest, final FedoraId resourceId) {
+        try {
+<span class="fc" id="L327">            return this.resourceFactory.getResource(transaction(servletRequest), resourceId);</span>
+<span class="fc" id="L328">        } catch (final PathNotFoundException e) {</span>
+<span class="fc" id="L329">            return null;</span>
+        }
+    }
+
+    private FedoraId getIdFromRequest(final HttpServletRequest servletRequest) {
+<span class="fc" id="L334">        final String httpURI = servletRequest.getRequestURL().toString();</span>
+<span class="fc" id="L335">        return getIdFromRequest(servletRequest, httpURI);</span>
+    }
+
+    private FedoraId getIdFromRequest(final HttpServletRequest request, final String httpURI) {
+<span class="fc" id="L339">        return FedoraId.create(identifierConverter(request).toInternalId(httpURI));</span>
+    }
+
+    private boolean isAuthorized(final Subject currentUser, final HttpServletRequest httpRequest) throws IOException {
+<span class="fc" id="L343">        final String requestURL = httpRequest.getRequestURL().toString();</span>
+<span class="fc" id="L344">        final boolean isAcl = requestURL.endsWith(FCR_ACL);</span>
+<span class="pc bpc" id="L345" title="1 of 4 branches missed.">        final boolean isTxEndpoint = requestURL.endsWith(FCR_TX) || requestURL.endsWith(FCR_TX + &quot;/&quot;);</span>
+<span class="fc" id="L346">        final URI requestURI = URI.create(requestURL);</span>
+<span class="fc" id="L347">        log.debug(&quot;Request URI is {}&quot;, requestURI);</span>
+<span class="fc" id="L348">        final FedoraResource resource = resource(httpRequest);</span>
+<span class="fc" id="L349">        final FedoraResource container = getContainer(httpRequest);</span>
+
+        // WebAC permissions
+<span class="fc" id="L352">        final WebACPermission toRead = new WebACPermission(WEBAC_MODE_READ, requestURI);</span>
+<span class="fc" id="L353">        final WebACPermission toWrite = new WebACPermission(WEBAC_MODE_WRITE, requestURI);</span>
+<span class="fc" id="L354">        final WebACPermission toAppend = new WebACPermission(WEBAC_MODE_APPEND, requestURI);</span>
+<span class="fc" id="L355">        final WebACPermission toControl = new WebACPermission(WEBAC_MODE_CONTROL, requestURI);</span>
+
+<span class="pc bpc" id="L357" title="1 of 6 branches missed.">        switch (httpRequest.getMethod()) {</span>
+        case &quot;OPTIONS&quot;:
+        case &quot;HEAD&quot;:
+        case &quot;GET&quot;:
+<span class="fc bfc" id="L361" title="All 2 branches covered.">            if (isAcl) {</span>
+<span class="fc bfc" id="L362" title="All 2 branches covered.">                if (currentUser.isPermitted(toControl)) {</span>
+<span class="fc" id="L363">                    log.debug(&quot;GET allowed by {} permission&quot;, toControl);</span>
+<span class="fc" id="L364">                    return true;</span>
+                } else {
+<span class="fc" id="L366">                    log.debug(&quot;GET prohibited without {} permission&quot;, toControl);</span>
+<span class="fc" id="L367">                    return false;</span>
+                }
+            } else {
+<span class="fc bfc" id="L370" title="All 2 branches covered.">                if (currentUser.isPermitted(toRead)) {</span>
+<span class="fc bfc" id="L371" title="All 2 branches covered.">                    if (!isAuthorizedForEmbeddedRequest(httpRequest, currentUser, resource)) {</span>
+<span class="fc" id="L372">                        log.debug(&quot;GET/HEAD/OPTIONS request to {} denied, user {} not authorized for an embedded &quot; +</span>
+<span class="fc" id="L373">                                &quot;resource&quot;, requestURL, currentUser.toString());</span>
+<span class="fc" id="L374">                        return false;</span>
+                    }
+<span class="fc" id="L376">                    return true;</span>
+                }
+<span class="fc" id="L378">                return false;</span>
+            }
+        case &quot;PUT&quot;:
+<span class="fc bfc" id="L381" title="All 2 branches covered.">            if (isAcl) {</span>
+<span class="fc bfc" id="L382" title="All 2 branches covered.">                if (currentUser.isPermitted(toControl)) {</span>
+<span class="fc" id="L383">                    log.debug(&quot;PUT allowed by {} permission&quot;, toControl);</span>
+<span class="fc" id="L384">                    return true;</span>
+                } else {
+<span class="fc" id="L386">                    log.debug(&quot;PUT prohibited without {} permission&quot;, toControl);</span>
+<span class="fc" id="L387">                    return false;</span>
+                }
+<span class="fc bfc" id="L389" title="All 2 branches covered.">            } else if (currentUser.isPermitted(toWrite)) {</span>
+<span class="pc bpc" id="L390" title="1 of 2 branches missed.">                if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {</span>
+<span class="nc" id="L391">                    log.debug(&quot;PUT denied, not authorized to write to membershipRelation&quot;);</span>
+<span class="nc" id="L392">                    return false;</span>
+                }
+<span class="fc" id="L394">                log.debug(&quot;PUT allowed by {} permission&quot;, toWrite);</span>
+<span class="fc" id="L395">                return true;</span>
+            } else {
+<span class="fc bfc" id="L397" title="All 2 branches covered.">                if (resource != null) {</span>
+                    // can't PUT to an existing resource without acl:Write permission
+<span class="fc" id="L399">                    log.debug(&quot;PUT prohibited to existing resource without {} permission&quot;, toWrite);</span>
+<span class="fc" id="L400">                    return false;</span>
+                } else {
+                    // find nearest parent resource and verify that user has acl:Append on it
+                    // this works because when the authorizations are inherited, it is the target request URI that is
+                    // added as the resource, not the accessTo or other URI in the original authorization
+<span class="fc" id="L405">                    log.debug(&quot;Resource doesn't exist; checking parent resources for acl:Append permission&quot;);</span>
+<span class="pc bpc" id="L406" title="1 of 2 branches missed.">                    if (currentUser.isPermitted(toAppend)) {</span>
+<span class="pc bpc" id="L407" title="1 of 2 branches missed.">                        if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {</span>
+<span class="nc" id="L408">                            log.debug(&quot;PUT denied, not authorized to write to membershipRelation&quot;);</span>
+<span class="nc" id="L409">                            return false;</span>
+                        }
+<span class="fc" id="L411">                        log.debug(&quot;PUT allowed for new resource by inherited {} permission&quot;, toAppend);</span>
+<span class="fc" id="L412">                        return true;</span>
+                    } else {
+<span class="nc" id="L414">                        log.debug(&quot;PUT prohibited for new resource without inherited {} permission&quot;, toAppend);</span>
+<span class="nc" id="L415">                        return false;</span>
+                    }
+                }
+            }
+        case &quot;POST&quot;:
+<span class="pc bpc" id="L420" title="1 of 4 branches missed.">            if (isTxEndpoint &amp;&amp; currentUser.isAuthenticated()) {</span>
+<span class="fc" id="L421">                final String currentUsername = ((Principal) currentUser.getPrincipal()).getName();</span>
+<span class="fc" id="L422">                log.debug(&quot;POST allowed to transaction endpoint for authenticated user {}&quot;, currentUsername);</span>
+<span class="fc" id="L423">                return true;</span>
+            }
+<span class="fc bfc" id="L425" title="All 2 branches covered.">            if (currentUser.isPermitted(toWrite)) {</span>
+<span class="pc bpc" id="L426" title="1 of 2 branches missed.">                if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {</span>
+<span class="nc" id="L427">                    log.debug(&quot;POST denied, not authorized to write to membershipRelation&quot;);</span>
+<span class="nc" id="L428">                    return false;</span>
+                }
+<span class="fc" id="L430">                log.debug(&quot;POST allowed by {} permission&quot;, toWrite);</span>
+<span class="fc" id="L431">                return true;</span>
+            }
+<span class="pc bpc" id="L433" title="1 of 2 branches missed.">            if (resource != null) {</span>
+<span class="fc bfc" id="L434" title="All 2 branches covered.">                if (isBinaryOrDescription(resource)) {</span>
+                    // LDP-NR
+                    // user without the acl:Write permission cannot POST to binaries
+<span class="fc" id="L437">                    log.debug(&quot;POST prohibited to binary resource without {} permission&quot;, toWrite);</span>
+<span class="fc" id="L438">                    return false;</span>
+                } else {
+                    // LDP-RS
+                    // user with the acl:Append permission may POST to containers
+<span class="fc bfc" id="L442" title="All 2 branches covered.">                    if (currentUser.isPermitted(toAppend)) {</span>
+<span class="pc bpc" id="L443" title="1 of 2 branches missed.">                        if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {</span>
+<span class="nc" id="L444">                            log.debug(&quot;POST denied, not authorized to write to membershipRelation&quot;);</span>
+<span class="nc" id="L445">                            return false;</span>
+                        }
+<span class="fc" id="L447">                        log.debug(&quot;POST allowed to container by {} permission&quot;, toAppend);</span>
+<span class="fc" id="L448">                        return true;</span>
+                    } else {
+<span class="fc" id="L450">                        log.debug(&quot;POST prohibited to container without {} permission&quot;, toAppend);</span>
+<span class="fc" id="L451">                        return false;</span>
+                    }
+                }
+            } else {
+                // prohibit POST to non-existent resources without the acl:Write permission
+<span class="nc" id="L456">                log.debug(&quot;POST prohibited to non-existent resource without {} permission&quot;, toWrite);</span>
+<span class="nc" id="L457">                return false;</span>
+            }
+        case &quot;DELETE&quot;:
+<span class="fc bfc" id="L460" title="All 2 branches covered.">            if (isAcl) {</span>
+<span class="fc bfc" id="L461" title="All 2 branches covered.">                if (currentUser.isPermitted(toControl)) {</span>
+<span class="fc" id="L462">                    log.debug(&quot;DELETE allowed by {} permission&quot;, toControl);</span>
+<span class="fc" id="L463">                    return true;</span>
+                } else {
+<span class="fc" id="L465">                    log.debug(&quot;DELETE prohibited without {} permission&quot;, toControl);</span>
+<span class="fc" id="L466">                    return false;</span>
+                }
+            } else {
+<span class="pc bpc" id="L469" title="1 of 2 branches missed.">                if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {</span>
+<span class="nc" id="L470">                    log.debug(&quot;DELETE denied, not authorized to write to membershipRelation&quot;);</span>
+<span class="nc" id="L471">                    return false;</span>
+<span class="fc bfc" id="L472" title="All 2 branches covered.">                } else if (currentUser.isPermitted(toWrite)) {</span>
+<span class="fc bfc" id="L473" title="All 2 branches covered.">                    if (!isAuthorizedForContainedResources(resource, WEBAC_MODE_WRITE, httpRequest, currentUser,</span>
+                            true)) {
+<span class="fc" id="L475">                        log.debug(&quot;DELETE denied, not authorized to write to a descendant of {}&quot;, resource);</span>
+<span class="fc" id="L476">                        return false;</span>
+                    }
+<span class="fc" id="L478">                    return true;</span>
+                }
+<span class="fc" id="L480">                return false;</span>
+            }
+        case &quot;PATCH&quot;:
+
+<span class="fc bfc" id="L484" title="All 2 branches covered.">            if (isAcl) {</span>
+<span class="fc bfc" id="L485" title="All 2 branches covered.">                if (currentUser.isPermitted(toControl)) {</span>
+<span class="fc" id="L486">                    log.debug(&quot;PATCH allowed by {} permission&quot;, toControl);</span>
+<span class="fc" id="L487">                    return true;</span>
+                } else {
+<span class="fc" id="L489">                    log.debug(&quot;PATCH prohibited without {} permission&quot;, toControl);</span>
+<span class="fc" id="L490">                    return false;</span>
+                }
+<span class="fc bfc" id="L492" title="All 2 branches covered.">            } else if (currentUser.isPermitted(toWrite)) {</span>
+<span class="pc bpc" id="L493" title="1 of 2 branches missed.">                if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {</span>
+<span class="nc" id="L494">                    log.debug(&quot;PATCH denied, not authorized to write to membershipRelation&quot;);</span>
+<span class="nc" id="L495">                    return false;</span>
+                }
+<span class="fc" id="L497">                return true;</span>
+            } else {
+<span class="fc bfc" id="L499" title="All 2 branches covered.">                if (currentUser.isPermitted(toAppend)) {</span>
+<span class="pc bpc" id="L500" title="1 of 2 branches missed.">                    if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {</span>
+<span class="nc" id="L501">                        log.debug(&quot;PATCH denied, not authorized to write to membershipRelation&quot;);</span>
+<span class="nc" id="L502">                        return false;</span>
+                    }
+<span class="fc" id="L504">                    return isPatchContentPermitted(httpRequest);</span>
+                }
+            }
+<span class="fc" id="L507">            return false;</span>
+        default:
+<span class="nc" id="L509">            return false;</span>
+        }
+    }
+
+    private boolean isPatchContentPermitted(final HttpServletRequest httpRequest) throws IOException {
+<span class="fc bfc" id="L514" title="All 2 branches covered.">        if (!isSparqlUpdate(httpRequest)) {</span>
+<span class="fc" id="L515">            log.debug(&quot;Cannot verify authorization on NON-SPARQL Patch request.&quot;);</span>
+<span class="fc" id="L516">            return false;</span>
+        }
+<span class="pc bpc" id="L518" title="1 of 2 branches missed.">        if (httpRequest.getInputStream() != null) {</span>
+<span class="fc" id="L519">            boolean noDeletes = false;</span>
+            try {
+<span class="fc bfc" id="L521" title="All 2 branches covered.">                noDeletes = !hasDeleteClause(IOUtils.toString(httpRequest.getInputStream(), UTF_8));</span>
+<span class="nc" id="L522">            } catch (final QueryParseException ex) {</span>
+<span class="nc" id="L523">                log.error(&quot;Cannot verify authorization! Exception while inspecting SPARQL query!&quot;, ex);</span>
+<span class="fc" id="L524">            }</span>
+<span class="fc" id="L525">            return noDeletes;</span>
+        } else {
+<span class="nc" id="L527">            log.debug(&quot;Authorizing SPARQL request with no content.&quot;);</span>
+<span class="nc" id="L528">            return true;</span>
+        }
+    }
+
+    private boolean hasDeleteClause(final String sparqlString) {
+<span class="fc" id="L533">        final UpdateRequest sparqlUpdate = UpdateFactory.create(sparqlString);</span>
+<span class="fc" id="L534">        return sparqlUpdate.getOperations().stream()</span>
+<span class="fc" id="L535">                .filter(update -&gt; update instanceof UpdateDataDelete)</span>
+<span class="fc" id="L536">                .map(update -&gt; (UpdateDataDelete) update)</span>
+<span class="fc bfc" id="L537" title="All 4 branches covered.">                .anyMatch(update -&gt; update.getQuads().size() &gt; 0) ||</span>
+<span class="fc" id="L538">                sparqlUpdate.getOperations().stream().filter(update -&gt; (update instanceof UpdateModify))</span>
+<span class="fc" id="L539">                .peek(update -&gt; log.debug(&quot;Inspecting update statement for DELETE clause: {}&quot;, update.toString()))</span>
+<span class="fc" id="L540">                .map(update -&gt; (UpdateModify)update)</span>
+<span class="fc" id="L541">                .filter(UpdateModify::hasDeleteClause)</span>
+<span class="fc bfc" id="L542" title="All 4 branches covered.">                .anyMatch(update -&gt; update.getDeleteQuads().size() &gt; 0);</span>
+    }
+
+    private boolean isSparqlUpdate(final HttpServletRequest request) {
+        try {
+<span class="fc bfc" id="L547" title="All 2 branches covered.">            return request.getMethod().equals(&quot;PATCH&quot;) &amp;&amp;</span>
+<span class="pc bpc" id="L548" title="1 of 2 branches missed.">                    sparqlUpdate.isCompatible(MediaType.valueOf(request</span>
+<span class="fc" id="L549">                            .getContentType()));</span>
+<span class="fc" id="L550">        } catch (final IllegalArgumentException e) {</span>
+<span class="fc" id="L551">            return false;</span>
+        }
+    }
+
+    /**
+     * Does the request's content-type match one of the RDF types.
+     *
+     * @param request the http servlet request
+     * @return whether the content-type matches.
+     */
+    private boolean isRdfRequest(final HttpServletRequest request) {
+<span class="fc bfc" id="L562" title="All 4 branches covered.">        return request.getContentType() != null &amp;&amp; rdfContentTypes.contains(request.getContentType());</span>
+    }
+
+    /**
+     * Is the request to create an indirect or direct container.
+     *
+     * @param request The current request
+     * @return whether we are acting on/creating an indirect/direct container.
+     */
+    private boolean isPayloadIndirectOrDirect(final HttpServletRequest request) {
+<span class="fc" id="L572">        return Collections.list(request.getHeaders(&quot;Link&quot;)).stream().map(Link::valueOf).map(Link::getUri)</span>
+<span class="fc" id="L573">                .anyMatch(l -&gt; directOrIndirect.contains(l));</span>
+    }
+
+    /**
+     * Is the current resource a direct or indirect container
+     *
+     * @param resource the resource to check
+     * @return whether it is a direct or indirect container.
+     */
+    private boolean isResourceIndirectOrDirect(final FedoraResource resource) {
+<span class="fc bfc" id="L583" title="All 4 branches covered.">        return resource != null &amp;&amp; resource.getTypes().stream().anyMatch(l -&gt; directOrIndirect.contains(l));</span>
+    }
+
+    /**
+     * Check if we are authorized to access the target of membershipRelation if required. Really this is a test for
+     * failure. The default is true because we might not be looking at an indirect or direct container.
+     *
+     * @param request The current request
+     * @param currentUser The current principal
+     * @param resource The resource
+     * @param container The container
+     * @return Whether we are creating an indirect/direct container and can write the membershipRelation
+     * @throws IOException when getting request's inputstream
+     */
+    private boolean isAuthorizedForMembershipResource(final HttpServletRequest request, final Subject currentUser,
+                                                      final FedoraResource resource, final FedoraResource container)
+            throws IOException {
+<span class="fc bfc" id="L600" title="All 4 branches covered.">        if (resource != null &amp;&amp; request.getMethod().equalsIgnoreCase(&quot;POST&quot;)) {</span>
+            // Check resource if it exists and we are POSTing to it.
+<span class="pc bpc" id="L602" title="1 of 2 branches missed.">            if (isResourceIndirectOrDirect(resource)) {</span>
+<span class="nc" id="L603">                final URI membershipResource = getHasMemberFromResource(request);</span>
+<span class="nc" id="L604">                addURIToAuthorize(request, membershipResource);</span>
+<span class="nc bnc" id="L605" title="All 2 branches missed.">                if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, membershipResource))) {</span>
+<span class="nc" id="L606">                    return false;</span>
+                }
+<span class="nc" id="L608">            }</span>
+<span class="fc bfc" id="L609" title="All 2 branches covered.">        } else if (request.getMethod().equalsIgnoreCase(&quot;PUT&quot;)) {</span>
+            // PUT to a URI check that the immediate container is not direct or indirect.
+<span class="pc bpc" id="L611" title="1 of 2 branches missed.">            if (isResourceIndirectOrDirect(container)) {</span>
+<span class="nc" id="L612">                final URI membershipResource = getHasMemberFromResource(request, container);</span>
+<span class="nc" id="L613">                addURIToAuthorize(request, membershipResource);</span>
+<span class="nc bnc" id="L614" title="All 2 branches missed.">                if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, membershipResource))) {</span>
+<span class="nc" id="L615">                    return false;</span>
+                }
+<span class="nc" id="L617">            }</span>
+<span class="fc bfc" id="L618" title="All 4 branches covered.">        } else if (isSparqlUpdate(request) &amp;&amp; isResourceIndirectOrDirect(resource)) {</span>
+            // PATCH to a direct/indirect might change the ldp:membershipResource
+<span class="fc" id="L620">            final URI membershipResource = getHasMemberFromPatch(request);</span>
+<span class="pc bpc" id="L621" title="1 of 2 branches missed.">            if (membershipResource != null) {</span>
+<span class="fc" id="L622">                log.debug(&quot;Found membership resource: {}&quot;, membershipResource);</span>
+                // add the membership URI to the list URIs to retrieve ACLs for
+<span class="fc" id="L624">                addURIToAuthorize(request, membershipResource);</span>
+<span class="pc bpc" id="L625" title="1 of 2 branches missed.">                if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, membershipResource))) {</span>
+<span class="nc" id="L626">                    return false;</span>
+                }
+            }
+<span class="fc bfc" id="L629" title="All 2 branches covered.">        } else if (request.getMethod().equalsIgnoreCase(&quot;DELETE&quot;)) {</span>
+<span class="pc bpc" id="L630" title="1 of 2 branches missed.">            if (isResourceIndirectOrDirect(resource)) {</span>
+                // If we delete a direct/indirect container we have to have access to the ldp:membershipResource
+<span class="nc" id="L632">                final URI membershipResource = getHasMemberFromResource(request);</span>
+<span class="nc" id="L633">                addURIToAuthorize(request, membershipResource);</span>
+<span class="nc bnc" id="L634" title="All 2 branches missed.">                if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, membershipResource))) {</span>
+<span class="nc" id="L635">                    return false;</span>
+                }
+<span class="pc bpc" id="L637" title="1 of 2 branches missed.">            } else if (isResourceIndirectOrDirect(container)) {</span>
+                // or if we delete a child of a direct/indirect container we have to have access to the
+                // ldp:membershipResource
+<span class="nc" id="L640">                final URI membershipResource = getHasMemberFromResource(request, container);</span>
+<span class="nc" id="L641">                addURIToAuthorize(request, membershipResource);</span>
+<span class="nc bnc" id="L642" title="All 2 branches missed.">                if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, membershipResource))) {</span>
+<span class="nc" id="L643">                    return false;</span>
+                }
+            }
+        }
+
+<span class="fc bfc" id="L648" title="All 2 branches covered.">        if (isPayloadIndirectOrDirect(request)) {</span>
+            // Check if we are creating a direct/indirect container.
+<span class="fc" id="L650">            final URI membershipResource = getHasMemberFromRequest(request);</span>
+<span class="pc bpc" id="L651" title="1 of 2 branches missed.">            if (membershipResource != null) {</span>
+<span class="fc" id="L652">                log.debug(&quot;Found membership resource: {}&quot;, membershipResource);</span>
+                // add the membership URI to the list URIs to retrieve ACLs for
+<span class="fc" id="L654">                addURIToAuthorize(request, membershipResource);</span>
+<span class="pc bpc" id="L655" title="1 of 2 branches missed.">                if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, membershipResource))) {</span>
+<span class="nc" id="L656">                    return false;</span>
+                }
+            }
+        }
+        // Not indirect/directs or we are authorized.
+<span class="fc" id="L661">        return true;</span>
+    }
+
+    /**
+     * Get the memberRelation object from the contents.
+     *
+     * @param request The request.
+     * @return The URI of the memberRelation object
+     * @throws IOException when getting request's inputstream
+     */
+    private URI getHasMemberFromRequest(final HttpServletRequest request) throws IOException {
+<span class="fc" id="L672">        final String baseUri = request.getRequestURL().toString();</span>
+        final RDFReader reader;
+<span class="fc" id="L674">        final String contentType = request.getContentType();</span>
+<span class="fc" id="L675">        final Lang format = contentTypeToLang(contentType);</span>
+        final Model inputModel;
+        try {
+<span class="fc" id="L678">            inputModel = createDefaultModel();</span>
+<span class="fc" id="L679">            reader = inputModel.getReader(format.getName().toUpperCase());</span>
+<span class="fc" id="L680">            reader.read(inputModel, request.getInputStream(), baseUri);</span>
+<span class="fc" id="L681">            final Statement st = inputModel.getProperty(null, MEMBERSHIP_RESOURCE);</span>
+<span class="pc bpc" id="L682" title="1 of 2 branches missed.">            return (st != null ? URI.create(st.getObject().toString()) : null);</span>
+<span class="nc" id="L683">        } catch (final RiotException e) {</span>
+<span class="nc" id="L684">            throw new BadRequestException(&quot;RDF was not parsable: &quot; + e.getMessage(), e);</span>
+<span class="nc" id="L685">        } catch (final RuntimeIOException e) {</span>
+<span class="nc bnc" id="L686" title="All 2 branches missed.">            if (e.getCause() instanceof JsonParseException) {</span>
+<span class="nc" id="L687">                final var cause = e.getCause();</span>
+<span class="nc" id="L688">                throw new MalformedRdfException(cause.getMessage(), cause);</span>
+            }
+<span class="nc" id="L690">            throw new RepositoryRuntimeException(e.getMessage(), e);</span>
+        }
+    }
+
+    /**
+     * Get the membershipRelation from a PATCH request
+     *
+     * @param request the http request
+     * @return URI of the first ldp:membershipRelation object.
+     * @throws IOException converting the request body to a string.
+     */
+    private URI getHasMemberFromPatch(final HttpServletRequest request) throws IOException {
+<span class="fc" id="L702">        final String sparqlString = IOUtils.toString(request.getInputStream(), UTF_8);</span>
+<span class="fc" id="L703">        final String baseURI = request.getRequestURL().toString().replace(request.getContextPath(), &quot;&quot;).replaceAll(</span>
+<span class="fc" id="L704">                request.getPathInfo(), &quot;&quot;).replaceAll(&quot;rest$&quot;, &quot;&quot;);</span>
+<span class="fc" id="L705">        final UpdateRequest sparqlUpdate = UpdateFactory.create(sparqlString);</span>
+        // The INSERT|DELETE DATA quads
+<span class="fc" id="L707">        final Stream&lt;Quad&gt; insertDeleteData = sparqlUpdate.getOperations().stream()</span>
+<span class="fc" id="L708">                .filter(update -&gt; update instanceof UpdateData)</span>
+<span class="fc" id="L709">                .map(update -&gt; (UpdateData) update)</span>
+<span class="fc" id="L710">                .flatMap(update -&gt; update.getQuads().stream());</span>
+        // Get the UpdateModify instance to re-use below.
+<span class="fc" id="L712">        final List&lt;UpdateModify&gt; updateModifyStream = sparqlUpdate.getOperations().stream()</span>
+<span class="fc" id="L713">                .filter(update -&gt; (update instanceof UpdateModify))</span>
+<span class="fc" id="L714">                .peek(update -&gt; log.debug(&quot;Inspecting update statement for DELETE clause: {}&quot;, update.toString()))</span>
+<span class="fc" id="L715">                .map(update -&gt; (UpdateModify) update)</span>
+<span class="fc" id="L716">                .collect(toList());</span>
+        // The INSERT {} WHERE {} quads
+<span class="fc" id="L718">        final Stream&lt;Quad&gt; insertQuadData = updateModifyStream.stream()</span>
+<span class="fc" id="L719">                .flatMap(update -&gt; update.getInsertQuads().stream());</span>
+        // The DELETE {} WHERE {} quads
+<span class="fc" id="L721">        final Stream&lt;Quad&gt; deleteQuadData = updateModifyStream.stream()</span>
+<span class="pc" id="L722">                .flatMap(update -&gt; update.getDeleteQuads().stream());</span>
+        // The ldp:membershipResource triples.
+<span class="fc" id="L724">        return Stream.concat(Stream.concat(insertDeleteData, insertQuadData), deleteQuadData)</span>
+<span class="pc bpc" id="L725" title="1 of 2 branches missed.">                .filter(update -&gt; update.getPredicate().equals(MEMBERSHIP_RESOURCE.asNode()) &amp;&amp; update.getObject()</span>
+<span class="pc bpc" id="L726" title="1 of 2 branches missed.">                        .isURI())</span>
+<span class="fc" id="L727">                .map(update -&gt; update.getObject().getURI())</span>
+<span class="fc" id="L728">                .map(update -&gt; update.replace(&quot;file:///&quot;, baseURI))</span>
+<span class="fc" id="L729">                .findFirst().map(URI::create).orElse(null);</span>
+    }
+
+    /**
+     * Get ldp:membershipResource from an existing resource
+     *
+     * @param request the request
+     * @return URI of the ldp:membershipResource triple or null if not found.
+     */
+    private URI getHasMemberFromResource(final HttpServletRequest request) {
+<span class="nc" id="L739">        final FedoraResource resource = resource(request);</span>
+<span class="nc" id="L740">        return getHasMemberFromResource(request, resource);</span>
+    }
+
+    /**
+     * Get ldp:membershipResource from an existing resource
+     *
+     * @param request the request
+     * @param resource the FedoraResource
+     * @return URI of the ldp:membershipResource triple or null if not found.
+     */
+    private URI getHasMemberFromResource(final HttpServletRequest request, final FedoraResource resource) {
+<span class="nc" id="L751">        return resource.getTriples()</span>
+<span class="nc bnc" id="L752" title="All 2 branches missed.">                .filter(triple -&gt; triple.getPredicate().equals(MEMBERSHIP_RESOURCE.asNode()) &amp;&amp; triple.getObject()</span>
+<span class="nc bnc" id="L753" title="All 2 branches missed.">                        .isURI())</span>
+<span class="nc" id="L754">                .map(Triple::getObject).map(Node::getURI)</span>
+<span class="nc" id="L755">                .findFirst().map(URI::create).orElse(null);</span>
+    }
+
+    /**
+     * Determine if the resource is a binary or a binary description.
+     * @param resource the fedora resource to check
+     * @return true if a binary or binary description.
+     */
+    private static boolean isBinaryOrDescription(final FedoraResource resource) {
+<span class="fc" id="L764">        return resource.getTypes().stream().map(URI::toString)</span>
+<span class="fc bfc" id="L765" title="All 4 branches covered.">                .anyMatch(t -&gt; t.equals(NON_RDF_SOURCE.toString()) || t.equals(FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI));</span>
+    }
+
+    /**
+     * Determine if the request is for embedding container resource descriptions.
+     * @param request the request
+     * @return true if include the Prefer tag for http://www.w3.org/ns/oa#PreferContainedDescriptions
+     */
+    private static boolean isEmbeddedRequest(final HttpServletRequest request) {
+<span class="fc" id="L774">        final var preferTags = request.getHeaders(&quot;Prefer&quot;);</span>
+<span class="fc" id="L775">        final Set&lt;SinglePrefer&gt; preferTagSet = new HashSet&lt;&gt;();</span>
+<span class="fc bfc" id="L776" title="All 2 branches covered.">        while (preferTags.hasMoreElements()) {</span>
+<span class="fc" id="L777">            preferTagSet.add(new SinglePrefer(preferTags.nextElement()));</span>
+        }
+<span class="fc" id="L779">        final MultiPrefer multiPrefer = new MultiPrefer(preferTagSet);</span>
+<span class="fc bfc" id="L780" title="All 2 branches covered.">        if (multiPrefer.hasReturn()) {</span>
+<span class="fc" id="L781">            final LdpPreferTag ldpPreferences = new LdpPreferTag(multiPrefer.getReturn());</span>
+<span class="fc" id="L782">            return ldpPreferences.displayEmbed();</span>
+        }
+<span class="fc" id="L784">        return false;</span>
+    }
+
+    /**
+     * Is the user authorized to access the immediately contained resources of the requested resource.
+     * @param request the request
+     * @param currentUser the current user
+     * @param resource the resource being requested.
+     * @return true if authorized or not an embedded resource request on a container.
+     */
+    private boolean isAuthorizedForEmbeddedRequest(final HttpServletRequest request, final Subject currentUser,
+                                                      final FedoraResource resource) {
+<span class="fc bfc" id="L796" title="All 2 branches covered.">        if (isEmbeddedRequest(request)) {</span>
+<span class="fc" id="L797">            return isAuthorizedForContainedResources(resource, WEBAC_MODE_READ, request, currentUser, false);</span>
+        }
+        // Is not an embedded resource request
+<span class="fc" id="L800">        return true;</span>
+    }
+
+    /**
+     * Utility to check for a permission on the contained resources of a parent resource.
+     * @param resource the parent resource
+     * @param permission the permission required
+     * @param request the current request
+     * @param currentUser the current user
+     * @param deepTraversal whether to check children of children.
+     * @return true if we are allowed access to all descendants, false otherwise.
+     */
+    private boolean isAuthorizedForContainedResources(final FedoraResource resource, final URI permission,
+                                                      final HttpServletRequest request, final Subject currentUser,
+                                                      final boolean deepTraversal) {
+<span class="pc bpc" id="L815" title="1 of 2 branches missed.">        if (!isBinaryOrDescription(resource)) {</span>
+<span class="fc" id="L816">            final Transaction transaction = transaction(request);</span>
+<span class="fc" id="L817">            final Stream&lt;FedoraResource&gt; children = resourceFactory.getChildren(TransactionUtils.openTxId(transaction),</span>
+<span class="fc" id="L818">                    resource.getFedoraId());</span>
+<span class="fc" id="L819">            return children.noneMatch(resc -&gt; {</span>
+<span class="fc" id="L820">                final URI childURI = URI.create(resc.getFedoraId().getFullId());</span>
+<span class="fc" id="L821">                log.debug(&quot;Found embedded resource: {}&quot;, resc);</span>
+                // add the contained URI to the list URIs to retrieve ACLs for
+<span class="fc" id="L823">                addURIToAuthorize(request, childURI);</span>
+<span class="fc bfc" id="L824" title="All 2 branches covered.">                if (!currentUser.isPermitted(new WebACPermission(permission, childURI))) {</span>
+<span class="fc" id="L825">                    log.debug(&quot;Failed to access embedded resource: {}&quot;, childURI);</span>
+<span class="fc" id="L826">                    return true;</span>
+                }
+<span class="fc bfc" id="L828" title="All 2 branches covered.">                if (deepTraversal) {</span>
+                    // We invert this because the recursive noneMatch reports opposite what we want in here.
+                    // Here we want the true (no children failed) to become a false (no children matched a failure).
+<span class="fc bfc" id="L831" title="All 2 branches covered.">                    return !isAuthorizedForContainedResources(resc, permission, request, currentUser, deepTraversal);</span>
+                }
+<span class="fc" id="L833">                return false;</span>
+            });
+        }
+        // Is a binary or description.
+<span class="nc" id="L837">        return true;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

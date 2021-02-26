@@ -1,0 +1,420 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ReferenceServiceImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.services</a> &gt; <span class="el_source">ReferenceServiceImpl.java</span></div><h1>ReferenceServiceImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.services;
+
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.List;
+import java.util.Map;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.annotation.Nonnull;
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.sql.DataSource;
+import javax.transaction.Transactional;
+
+import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.api.observer.EventAccumulator;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.services.ReferenceService;
+import org.fcrepo.kernel.impl.operations.ReferenceOperation;
+import org.fcrepo.kernel.impl.operations.ReferenceOperationBuilder;
+
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.core.Quad;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Component;
+
+/**
+ * Implementation of reference service.
+ * @author whikloj
+ * @since 6.0.0
+ */
+@Component(&quot;referenceServiceImpl&quot;)
+<span class="fc" id="L65">public class ReferenceServiceImpl implements ReferenceService {</span>
+
+<span class="fc" id="L67">    private static final Logger LOGGER = getLogger(ReferenceServiceImpl.class);</span>
+
+    @Inject
+    private DataSource dataSource;
+
+    @Inject
+    private EventAccumulator eventAccumulator;
+
+    @Autowired
+    @Qualifier(&quot;containmentIndex&quot;)
+    private ContainmentIndex containmentIndex;
+
+    private NamedParameterJdbcTemplate jdbcTemplate;
+
+    private static final String TABLE_NAME = &quot;reference&quot;;
+
+    private static final String TRANSACTION_TABLE = &quot;reference_transaction_operations&quot;;
+
+    private static final String RESOURCE_COLUMN = &quot;fedora_id&quot;;
+
+    private static final String SUBJECT_COLUMN = &quot;subject_id&quot;;
+
+    private static final String PROPERTY_COLUMN = &quot;property&quot;;
+
+    private static final String TARGET_COLUMN = &quot;target_id&quot;;
+
+    private static final String OPERATION_COLUMN = &quot;operation&quot;;
+
+    private static final String TRANSACTION_COLUMN = &quot;transaction_id&quot;;
+
+    private static final String SELECT_INBOUND = &quot;SELECT &quot; + SUBJECT_COLUMN + &quot;, &quot; + PROPERTY_COLUMN + &quot; FROM &quot; +
+            TABLE_NAME + &quot; WHERE &quot; + TARGET_COLUMN + &quot; = :targetId&quot;;
+
+    private static final String SELECT_INBOUND_IN_TRANSACTION = &quot;SELECT x.&quot; + SUBJECT_COLUMN + &quot;, x.&quot; +
+            PROPERTY_COLUMN + &quot; FROM &quot; + &quot;(SELECT &quot; + SUBJECT_COLUMN + &quot;, &quot; + PROPERTY_COLUMN + &quot; FROM &quot; + TABLE_NAME +
+            &quot; WHERE &quot; + TARGET_COLUMN + &quot; = :targetId UNION &quot; + &quot;SELECT &quot; + SUBJECT_COLUMN + &quot;, &quot; + PROPERTY_COLUMN +
+            &quot; FROM &quot; + TRANSACTION_TABLE + &quot; WHERE &quot; + TARGET_COLUMN + &quot; = :targetId AND &quot;
+            + TRANSACTION_COLUMN + &quot; = :transactionId AND &quot; + OPERATION_COLUMN + &quot; = 'add') x WHERE NOT EXISTS &quot; +
+            &quot;(SELECT 1 FROM &quot; + TRANSACTION_TABLE + &quot; WHERE &quot; + TARGET_COLUMN + &quot; = :targetId AND &quot; +
+            OPERATION_COLUMN + &quot; = 'delete')&quot;;
+
+    private static final String SELECT_OUTBOUND = &quot;SELECT &quot; + SUBJECT_COLUMN + &quot;, &quot; + TARGET_COLUMN + &quot;, &quot; +
+            PROPERTY_COLUMN + &quot; FROM &quot; + TABLE_NAME + &quot; WHERE &quot; + RESOURCE_COLUMN + &quot; = :resourceId&quot;;
+
+    private static final String SELECT_OUTBOUND_IN_TRANSACTION = &quot;SELECT x.&quot; + SUBJECT_COLUMN + &quot;, x.&quot; + TARGET_COLUMN +
+            &quot;, x.&quot; + PROPERTY_COLUMN + &quot; FROM &quot; + &quot;(SELECT &quot; + SUBJECT_COLUMN + &quot;, &quot; + TARGET_COLUMN + &quot;, &quot; +
+            PROPERTY_COLUMN + &quot; FROM &quot; + TABLE_NAME + &quot; WHERE &quot; + RESOURCE_COLUMN + &quot; = :resourceId UNION &quot; +
+            &quot;SELECT &quot; + SUBJECT_COLUMN + &quot;, &quot; + TARGET_COLUMN + &quot;, &quot; + PROPERTY_COLUMN + &quot; FROM &quot; + TRANSACTION_TABLE +
+            &quot; WHERE &quot; + RESOURCE_COLUMN + &quot; = :resourceId &quot; + &quot;AND &quot; + TRANSACTION_COLUMN + &quot; = :transactionId AND &quot; +
+            OPERATION_COLUMN + &quot; = 'add') x WHERE NOT EXISTS (SELECT 1 FROM &quot; + TRANSACTION_TABLE + &quot; WHERE &quot; +
+            RESOURCE_COLUMN + &quot; = :resourceId AND &quot; + OPERATION_COLUMN + &quot; = 'delete')&quot;;
+
+    private static final String INSERT_REFERENCE_IN_TRANSACTION = &quot;INSERT INTO &quot; + TRANSACTION_TABLE + &quot;(&quot; +
+            RESOURCE_COLUMN + &quot;, &quot; + SUBJECT_COLUMN + &quot;, &quot; + PROPERTY_COLUMN + &quot;, &quot; + TARGET_COLUMN + &quot;, &quot; +
+            TRANSACTION_COLUMN + &quot;, &quot; + OPERATION_COLUMN + &quot;) VALUES (:resourceId, :subjectId, :property, :targetId, &quot; +
+            &quot;:transactionId, 'add')&quot;;
+
+    private static final String UNDO_INSERT_REFERENCE_IN_TRANSACTION = &quot;DELETE FROM &quot; + TRANSACTION_TABLE + &quot; WHERE &quot; +
+            RESOURCE_COLUMN + &quot; = :resourceId AND &quot; + SUBJECT_COLUMN + &quot; = :subjectId AND &quot; + PROPERTY_COLUMN +
+            &quot; = :property AND &quot; + TARGET_COLUMN + &quot; = :targetId AND &quot; + TRANSACTION_COLUMN + &quot; = :transactionId AND &quot; +
+            OPERATION_COLUMN + &quot; = 'add'&quot;;
+
+    private static final String DELETE_REFERENCE_IN_TRANSACTION = &quot;INSERT INTO &quot; + TRANSACTION_TABLE + &quot;(&quot; +
+            RESOURCE_COLUMN + &quot;, &quot; + SUBJECT_COLUMN + &quot;, &quot; + PROPERTY_COLUMN + &quot;, &quot; + TARGET_COLUMN + &quot;, &quot; +
+            TRANSACTION_COLUMN + &quot;, &quot; + OPERATION_COLUMN + &quot;) VALUES (:resourceId, :subjectId, :property, :targetId, &quot; +
+            &quot;:transactionId, 'delete')&quot;;
+
+    private static final String UNDO_DELETE_REFERENCE_IN_TRANSACTION = &quot;DELETE FROM &quot; + TRANSACTION_TABLE + &quot; WHERE &quot; +
+            RESOURCE_COLUMN + &quot; = :resourceId AND &quot; + SUBJECT_COLUMN + &quot; = :subjectId AND &quot; + PROPERTY_COLUMN +
+            &quot; = :property AND &quot; + TARGET_COLUMN + &quot; = :targetId AND &quot; + TRANSACTION_COLUMN + &quot; = :transactionId AND &quot; +
+            OPERATION_COLUMN + &quot; = 'delete'&quot;;
+
+    private static final String IS_REFERENCE_ADDED_IN_TRANSACTION = &quot;SELECT TRUE FROM &quot; + TRANSACTION_TABLE + &quot; WHERE &quot;
+            + RESOURCE_COLUMN + &quot; = :resourceId AND &quot; + SUBJECT_COLUMN + &quot; = :subjectId AND &quot; + PROPERTY_COLUMN +
+            &quot; = :property AND &quot; + TARGET_COLUMN + &quot; = :targetId AND &quot; + TRANSACTION_COLUMN + &quot; = :transactionId AND &quot; +
+            OPERATION_COLUMN + &quot; = 'add'&quot;;
+
+    private static final String IS_REFERENCE_DELETED_IN_TRANSACTION = &quot;SELECT TRUE FROM &quot; + TRANSACTION_TABLE +
+            &quot; WHERE &quot; + RESOURCE_COLUMN + &quot; = :resourceId AND &quot; + SUBJECT_COLUMN + &quot; = :subjectId AND &quot; +
+            PROPERTY_COLUMN + &quot; = :property AND &quot; + TARGET_COLUMN + &quot; = :targetId AND &quot; + TRANSACTION_COLUMN +
+            &quot; = :transactionId AND &quot; + OPERATION_COLUMN + &quot; = 'delete'&quot;;
+
+    private static final String COMMIT_ADD_RECORDS = &quot;INSERT INTO &quot; + TABLE_NAME + &quot; ( &quot; + RESOURCE_COLUMN + &quot;, &quot; +
+            SUBJECT_COLUMN + &quot;, &quot; + PROPERTY_COLUMN + &quot;, &quot; + TARGET_COLUMN + &quot; ) SELECT &quot; + RESOURCE_COLUMN + &quot;, &quot; +
+            SUBJECT_COLUMN + &quot;, &quot; + PROPERTY_COLUMN + &quot;, &quot; + TARGET_COLUMN + &quot; FROM &quot; + TRANSACTION_TABLE + &quot; WHERE &quot; +
+            TRANSACTION_COLUMN + &quot; = :transactionId AND &quot; + OPERATION_COLUMN + &quot; = 'add'&quot;;
+
+    private static final String COMMIT_DELETE_RECORDS = &quot;DELETE FROM &quot; + TABLE_NAME + &quot; WHERE &quot; +
+            &quot;EXISTS (SELECT * FROM &quot; + TRANSACTION_TABLE + &quot; t WHERE t.&quot; +
+            TRANSACTION_COLUMN + &quot; = :transactionId AND t.&quot; +  OPERATION_COLUMN + &quot; = 'delete' AND&quot; +
+            &quot; t.&quot; + RESOURCE_COLUMN + &quot; = &quot; + TABLE_NAME + &quot;.&quot; + RESOURCE_COLUMN + &quot; AND&quot; +
+            &quot; t.&quot; + SUBJECT_COLUMN + &quot; = &quot; + TABLE_NAME + &quot;.&quot; + SUBJECT_COLUMN +
+            &quot; AND t.&quot; + PROPERTY_COLUMN + &quot; = &quot; + TABLE_NAME + &quot;.&quot; + PROPERTY_COLUMN +
+            &quot; AND t.&quot; + TARGET_COLUMN + &quot; = &quot; + TABLE_NAME + &quot;.&quot; + TARGET_COLUMN + &quot;)&quot;;
+
+    private static final String DELETE_TRANSACTION = &quot;DELETE FROM &quot; + TRANSACTION_TABLE + &quot; WHERE &quot; +
+            TRANSACTION_COLUMN + &quot; = :transactionId&quot;;
+
+    private static final String TRUNCATE_TABLE = &quot;TRUNCATE TABLE &quot; + TABLE_NAME;
+
+    @PostConstruct
+    public void setUp() {
+<span class="fc" id="L169">        jdbcTemplate = new NamedParameterJdbcTemplate(getDataSource());</span>
+<span class="fc" id="L170">    }</span>
+
+    @Override
+    public RdfStream getInboundReferences(final String txId, final FedoraResource resource) {
+<span class="fc" id="L174">        final String resourceId = resource.getFedoraId().getFullId();</span>
+<span class="fc" id="L175">        final Node subject = NodeFactory.createURI(resourceId);</span>
+<span class="fc" id="L176">        final Stream&lt;Triple&gt; stream = getReferencesInternal(txId, resourceId);</span>
+<span class="fc bfc" id="L177" title="All 2 branches covered.">        if (resource instanceof NonRdfSourceDescription) {</span>
+<span class="fc" id="L178">            final Stream&lt;Triple&gt; stream2 = getReferencesInternal(txId, resource.getFedoraId().getBaseId());</span>
+<span class="fc" id="L179">            return new DefaultRdfStream(subject, Stream.concat(stream, stream2));</span>
+        }
+<span class="fc" id="L181">        return new DefaultRdfStream(subject, stream);</span>
+    }
+
+    /**
+     * Get the inbound references for the resource Id and the transaction id.
+     * @param txId transaction id or null for none.
+     * @param targetId the id that will be the target of references.
+     * @return RDF stream of inbound references
+     */
+    private Stream&lt;Triple&gt; getReferencesInternal(final String txId, final String targetId) {
+<span class="fc" id="L191">        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();</span>
+<span class="fc" id="L192">        parameterSource.addValue(&quot;targetId&quot;, targetId);</span>
+<span class="fc" id="L193">        final Node targetNode = NodeFactory.createURI(targetId);</span>
+
+<span class="fc" id="L195">        final RowMapper&lt;Triple&gt; inboundMapper = (rs, rowNum) -&gt;</span>
+<span class="fc" id="L196">                Triple.create(NodeFactory.createURI(rs.getString(SUBJECT_COLUMN)),</span>
+<span class="fc" id="L197">                        NodeFactory.createURI(rs.getString(PROPERTY_COLUMN)),</span>
+                        targetNode);
+
+        final List&lt;Triple&gt; references;
+<span class="fc bfc" id="L201" title="All 2 branches covered.">        if (txId != null) {</span>
+            // we are in a transaction
+<span class="fc" id="L203">            parameterSource.addValue(&quot;transactionId&quot;, txId);</span>
+<span class="fc" id="L204">            references = jdbcTemplate.query(SELECT_INBOUND_IN_TRANSACTION, parameterSource, inboundMapper);</span>
+        } else {
+            // not in a transaction
+<span class="fc" id="L207">            references = jdbcTemplate.query(SELECT_INBOUND, parameterSource, inboundMapper);</span>
+        }
+<span class="fc" id="L209">        LOGGER.debug(&quot;getInboundReferences for {} in transaction {} found {} references&quot;,</span>
+<span class="fc" id="L210">                targetId, txId, references.size());</span>
+<span class="fc" id="L211">        return references.stream();</span>
+    }
+
+    @Override
+    public void deleteAllReferences(@Nonnull final String txId, final FedoraId resourceId) {
+<span class="fc" id="L216">        final List&lt;Quad&gt; deleteReferences = getOutboundReferences(txId, resourceId);</span>
+<span class="fc bfc" id="L217" title="All 2 branches covered.">        if (resourceId.isDescription()) {</span>
+            // Also get the binary references
+<span class="fc" id="L219">            deleteReferences.addAll(getOutboundReferences(txId, resourceId.asBaseId()));</span>
+        }
+        // Remove all the existing references.
+<span class="fc" id="L222">        deleteReferences.forEach(t -&gt; removeReference(txId, t));</span>
+<span class="fc" id="L223">    }</span>
+
+    /**
+     * Get a stream of quads of resources being referenced from the provided resource, the graph of the quad is the
+     * URI of the resource the reference is from.
+     * @param txId transaction Id or null if none.
+     * @param resourceId the resource Id.
+     * @return list of Quads
+     */
+    private List&lt;Quad&gt; getOutboundReferences(final String txId, final FedoraId resourceId) {
+<span class="fc" id="L233">        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();</span>
+<span class="fc" id="L234">        parameterSource.addValue(&quot;resourceId&quot;, resourceId.getFullId());</span>
+<span class="fc" id="L235">        final Node subjectNode = NodeFactory.createURI(resourceId.getFullId());</span>
+
+<span class="fc" id="L237">        final RowMapper&lt;Quad&gt; outboundMapper = (rs, rowNum) -&gt;</span>
+<span class="fc" id="L238">                Quad.create(subjectNode,</span>
+<span class="fc" id="L239">                        NodeFactory.createURI(rs.getString(SUBJECT_COLUMN)),</span>
+<span class="fc" id="L240">                        NodeFactory.createURI(rs.getString(PROPERTY_COLUMN)),</span>
+<span class="fc" id="L241">                        NodeFactory.createURI(rs.getString(TARGET_COLUMN)));</span>
+
+        final List&lt;Quad&gt; references;
+<span class="pc bpc" id="L244" title="1 of 2 branches missed.">        if (txId != null) {</span>
+            // we are in a transaction
+<span class="fc" id="L246">            parameterSource.addValue(&quot;transactionId&quot;, txId);</span>
+<span class="fc" id="L247">            references = jdbcTemplate.query(SELECT_OUTBOUND_IN_TRANSACTION, parameterSource, outboundMapper);</span>
+        } else {
+            // not in a transaction
+<span class="nc" id="L250">            references = jdbcTemplate.query(SELECT_OUTBOUND, parameterSource, outboundMapper);</span>
+        }
+<span class="fc" id="L252">        LOGGER.debug(&quot;getOutboundReferences for {} in transaction {} found {} references&quot;,</span>
+<span class="fc" id="L253">                resourceId, txId, references.size());</span>
+<span class="fc" id="L254">        return references;</span>
+    }
+
+    @Override
+    @Transactional
+    public void updateReferences(@Nonnull final String txId, final FedoraId resourceId, final String userPrincipal,
+                                 final RdfStream rdfStream) {
+        try {
+<span class="fc" id="L262">            final List&lt;Triple&gt; addReferences = getReferencesFromRdf(rdfStream).collect(Collectors.toList());</span>
+            // This predicate checks for items we are adding, so we don't bother to delete and then re-add them.
+<span class="fc bfc" id="L264" title="All 2 branches covered.">            final Predicate&lt;Quad&gt; notInAdds = q -&gt; !addReferences.contains(q.asTriple());</span>
+            // References from this resource.
+<span class="fc" id="L266">            final List&lt;Quad&gt; existingReferences = getOutboundReferences(txId, resourceId);</span>
+<span class="fc bfc" id="L267" title="All 2 branches covered.">            if (resourceId.isDescription()) {</span>
+                // Resource is a binary description so also get the binary references.
+<span class="fc" id="L269">                existingReferences.addAll(getOutboundReferences(txId, resourceId.asBaseId()));</span>
+            }
+            // Remove any existing references not being re-added.
+<span class="fc" id="L272">            existingReferences.stream().filter(notInAdds).forEach(t -&gt; removeReference(txId, t));</span>
+<span class="fc" id="L273">            final Node resourceNode = NodeFactory.createURI(resourceId.getFullId());</span>
+            // This predicate checks for references that didn't already exist in the database.
+<span class="fc bfc" id="L275" title="All 2 branches covered.">            final Predicate&lt;Triple&gt; alreadyExists = t -&gt; !existingReferences.contains(Quad.create(resourceNode, t));</span>
+            // Add the new references.
+<span class="fc" id="L277">            addReferences.stream().filter(alreadyExists).forEach(r -&gt;</span>
+<span class="fc" id="L278">                    addReference(txId, Quad.create(resourceNode, r), userPrincipal));</span>
+<span class="nc" id="L279">        } catch (final Exception e) {</span>
+<span class="nc" id="L280">            LOGGER.warn(&quot;Unable to update reference index for resource {} in transaction {}: {}&quot;,</span>
+<span class="nc" id="L281">                    resourceId.getFullId(), txId, e.getMessage());</span>
+<span class="nc" id="L282">            throw new RepositoryRuntimeException(&quot;Unable to update reference index&quot;, e);</span>
+<span class="fc" id="L283">        }</span>
+<span class="fc" id="L284">    }</span>
+
+    @Override
+    @Transactional
+    public void commitTransaction(final String txId) {
+        try {
+<span class="fc" id="L290">            final Map&lt;String, String&gt; parameterSource = Map.of(&quot;transactionId&quot;, txId);</span>
+<span class="fc" id="L291">            jdbcTemplate.update(COMMIT_DELETE_RECORDS, parameterSource);</span>
+<span class="fc" id="L292">            jdbcTemplate.update(COMMIT_ADD_RECORDS, parameterSource);</span>
+<span class="fc" id="L293">            jdbcTemplate.update(DELETE_TRANSACTION, parameterSource);</span>
+<span class="nc" id="L294">        } catch (final Exception e) {</span>
+<span class="nc" id="L295">            LOGGER.warn(&quot;Unable to commit reference index transaction {}: {}&quot;, txId, e.getMessage());</span>
+<span class="nc" id="L296">            throw new RepositoryRuntimeException(&quot;Unable to commit reference index transaction&quot;, e);</span>
+<span class="fc" id="L297">        }</span>
+<span class="fc" id="L298">    }</span>
+
+    @Override
+    public void rollbackTransaction(final String txId) {
+        try {
+<span class="fc" id="L303">            final Map&lt;String, String&gt; parameterSource = Map.of(&quot;transactionId&quot;, txId);</span>
+<span class="fc" id="L304">            jdbcTemplate.update(DELETE_TRANSACTION, parameterSource);</span>
+<span class="nc" id="L305">        } catch (final Exception e) {</span>
+<span class="nc" id="L306">            LOGGER.warn(&quot;Unable to rollback reference index transaction {}: {}&quot;, txId, e.getMessage());</span>
+<span class="nc" id="L307">            throw new RepositoryRuntimeException(&quot;Unable to rollback reference index transaction&quot;, e);</span>
+<span class="fc" id="L308">        }</span>
+<span class="fc" id="L309">    }</span>
+
+    @Override
+    public void reset() {
+        try {
+<span class="fc" id="L314">            jdbcTemplate.update(TRUNCATE_TABLE, Map.of());</span>
+<span class="nc" id="L315">        } catch (final Exception e) {</span>
+<span class="nc" id="L316">            LOGGER.warn(&quot;Unable to reset reference index: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L317">            throw new RepositoryRuntimeException(&quot;Unable to reset reference index&quot;, e);</span>
+<span class="fc" id="L318">        }</span>
+<span class="fc" id="L319">    }</span>
+
+    /**
+     * Remove a reference.
+     * @param txId transaction Id.
+     * @param reference the quad with the reference, is Quad(resourceId, subjectId, propertyId, targetId)
+     */
+    private void removeReference(@Nonnull final String txId, final Quad reference) {
+<span class="fc" id="L327">        final Map&lt;String, String&gt; parameterSource = Map.of(&quot;transactionId&quot;, txId,</span>
+<span class="fc" id="L328">                &quot;resourceId&quot;, reference.getGraph().getURI(),</span>
+<span class="fc" id="L329">                &quot;subjectId&quot;, reference.getSubject().getURI(),</span>
+<span class="fc" id="L330">                &quot;property&quot;, reference.getPredicate().getURI(),</span>
+<span class="fc" id="L331">                &quot;targetId&quot;, reference.getObject().getURI());</span>
+<span class="fc" id="L332">        final boolean addedInTx = !jdbcTemplate.queryForList(IS_REFERENCE_ADDED_IN_TRANSACTION, parameterSource)</span>
+<span class="pc bpc" id="L333" title="1 of 2 branches missed.">                .isEmpty();</span>
+<span class="pc bpc" id="L334" title="1 of 2 branches missed.">        if (addedInTx) {</span>
+<span class="nc" id="L335">            jdbcTemplate.update(UNDO_INSERT_REFERENCE_IN_TRANSACTION, parameterSource);</span>
+        } else {
+<span class="fc" id="L337">            jdbcTemplate.update(DELETE_REFERENCE_IN_TRANSACTION, parameterSource);</span>
+        }
+<span class="fc" id="L339">    }</span>
+
+    /**
+     * Add a reference
+     * @param txId the transaction Id.
+     * @param reference the quad with the reference, is is Quad(resourceId, subjectId, propertyId, targetId)
+     * @param userPrincipal the user adding the reference.
+     */
+    private void addReference(@Nonnull final String txId, final Quad reference, final String userPrincipal) {
+<span class="fc" id="L348">        final String targetId = reference.getObject().getURI();</span>
+<span class="fc" id="L349">        final Map&lt;String, String&gt; parameterSource = Map.of(&quot;transactionId&quot;, txId,</span>
+<span class="fc" id="L350">                &quot;resourceId&quot;, reference.getGraph().getURI(),</span>
+<span class="fc" id="L351">                &quot;subjectId&quot;, reference.getSubject().getURI(),</span>
+<span class="fc" id="L352">                &quot;property&quot;, reference.getPredicate().getURI(),</span>
+                &quot;targetId&quot;, targetId);
+<span class="fc" id="L354">        final boolean addedInTx = !jdbcTemplate.queryForList(IS_REFERENCE_DELETED_IN_TRANSACTION, parameterSource)</span>
+<span class="pc bpc" id="L355" title="1 of 2 branches missed.">                .isEmpty();</span>
+<span class="pc bpc" id="L356" title="1 of 2 branches missed.">        if (addedInTx) {</span>
+<span class="nc" id="L357">            jdbcTemplate.update(UNDO_DELETE_REFERENCE_IN_TRANSACTION, parameterSource);</span>
+        } else {
+<span class="fc" id="L359">            jdbcTemplate.update(INSERT_REFERENCE_IN_TRANSACTION, parameterSource);</span>
+<span class="fc" id="L360">            recordEvent(txId, targetId, userPrincipal);</span>
+        }
+<span class="fc" id="L362">    }</span>
+
+    /**
+     * Record the inbound reference event if the target exists.
+     * @param txId the transaction id.
+     * @param resourceId the id of the target of the inbound reference.
+     * @param userPrincipal the user making the reference.
+     */
+    private void recordEvent(final String txId, final String resourceId, final String userPrincipal) {
+<span class="fc" id="L371">        final FedoraId fedoraId = FedoraId.create(resourceId);</span>
+<span class="fc bfc" id="L372" title="All 2 branches covered.">        if (this.containmentIndex.resourceExists(txId, fedoraId, false)) {</span>
+<span class="fc" id="L373">            this.eventAccumulator.recordEventForOperation(txId, fedoraId, getOperation(fedoraId, userPrincipal));</span>
+        }
+<span class="fc" id="L375">    }</span>
+
+    /**
+     * Create a ReferenceOperation for the current add.
+     * @param id the target resource of the reference.
+     * @param user the user making the change
+     * @return a ReferenceOperation
+     */
+    private static ReferenceOperation getOperation(final FedoraId id, final String user) {
+<span class="fc" id="L384">        final ReferenceOperationBuilder builder = new ReferenceOperationBuilder(id);</span>
+<span class="fc" id="L385">        builder.userPrincipal(user);</span>
+<span class="fc" id="L386">        return builder.build();</span>
+    }
+
+    /**
+     * Utility to filter a RDFStream to just the URIs from subjects and objects within the repository.
+     * @param stream the provided stream
+     * @return stream of triples with internal references.
+     */
+    private Stream&lt;Triple&gt; getReferencesFromRdf(final RdfStream stream) {
+<span class="fc" id="L395">        final Predicate&lt;Triple&gt; isInternalReference = t -&gt; {</span>
+<span class="fc" id="L396">            final Node s = t.getSubject();</span>
+<span class="fc" id="L397">            final Node o = t.getObject();</span>
+<span class="fc bfc" id="L398" title="All 6 branches covered.">            return (s.isURI() &amp;&amp; s.getURI().startsWith(FEDORA_ID_PREFIX) &amp;&amp; o.isURI() &amp;&amp;</span>
+<span class="fc bfc" id="L399" title="All 2 branches covered.">                    o.getURI().startsWith(FEDORA_ID_PREFIX));</span>
+        };
+<span class="fc" id="L401">        return stream.filter(isInternalReference);</span>
+    }
+
+    /**
+     * Set the JDBC datastore.
+     * @param dataSource the dataStore.
+     */
+    public void setDataSource(final DataSource dataSource) {
+<span class="fc" id="L409">        this.dataSource = dataSource;</span>
+<span class="fc" id="L410">    }</span>
+
+    /**
+     * Get the JDBC datastore.
+     * @return the dataStore.
+     */
+    public DataSource getDataSource() {
+<span class="fc" id="L417">        return dataSource;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>EventImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.observer</a> &gt; <span class="el_source">EventImpl.java</span></div><h1>EventImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.kernel.impl.observer;
+
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.observer.Event;
+import org.fcrepo.kernel.api.observer.EventType;
+
+import java.net.URI;
+import java.time.Instant;
+import java.util.Set;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.UUID.randomUUID;
+
+/**
+ * An event that describes one or more actions that a user preformed on a resource.
+ *
+ * @author pwinckles
+ */
+public class EventImpl implements Event {
+
+    private final String eventId;
+    private final FedoraId fedoraId;
+    private final Set&lt;EventType&gt; types;
+    private final Set&lt;String&gt; resourceTypes;
+    private final String userID;
+    private final URI userURI;
+    private final String userAgent;
+    private final String baseUrl;
+    private final Instant date;
+
+    /**
+     * Create a new FedoraEvent
+     *
+     * @param fedoraId the FedoraId of the resource the event is on
+     * @param types a collection of Fedora EventTypes
+     * @param resourceTypes the rdf types of the corresponding resource
+     * @param userID the acting user for this event
+     * @param userURI the uri of the acting user for this event
+     * @param userAgent the user-agent associated with the request
+     * @param baseUrl the originating request's baseUrl
+     * @param date the timestamp for this event
+     */
+    public EventImpl(final FedoraId fedoraId, final Set&lt;EventType&gt; types,
+                     final Set&lt;String&gt; resourceTypes, final String userID,
+                     final URI userURI, final String userAgent, final String baseUrl,
+<span class="fc" id="L64">                     final Instant date) {</span>
+<span class="fc" id="L65">        this.eventId = &quot;urn:uuid:&quot; + randomUUID().toString();</span>
+<span class="fc" id="L66">        this.fedoraId = checkNotNull(fedoraId, &quot;fedoraId cannot be null&quot;);</span>
+<span class="fc" id="L67">        this.types = Set.copyOf(checkNotNull(types, &quot;types cannot be null&quot;));</span>
+<span class="fc" id="L68">        this.resourceTypes = Set.copyOf(checkNotNull(resourceTypes, &quot;resourceTypes cannot be null&quot;));</span>
+<span class="fc" id="L69">        this.userID = userID;</span>
+<span class="fc" id="L70">        this.userURI = userURI;</span>
+<span class="fc" id="L71">        this.userAgent = userAgent;</span>
+<span class="fc" id="L72">        checkNotNull(baseUrl, &quot;baseUrl cannot be null&quot;);</span>
+        // baseUrl is expected to not have a trailing slash
+<span class="fc" id="L74">        this.baseUrl = baseUrl.replaceAll(&quot;/+$&quot;, &quot;&quot;);</span>
+<span class="fc" id="L75">        this.date = checkNotNull(date, &quot;date cannot be null&quot;);</span>
+<span class="fc" id="L76">    }</span>
+
+    @Override
+    public FedoraId getFedoraId() {
+<span class="fc" id="L80">        return fedoraId;</span>
+    }
+
+    @Override
+    public Set&lt;EventType&gt; getTypes() {
+<span class="fc" id="L85">        return types;</span>
+    }
+
+    @Override
+    public Set&lt;String&gt; getResourceTypes() {
+<span class="fc" id="L90">        return resourceTypes;</span>
+    }
+
+    @Override
+    public String getPath() {
+<span class="fc" id="L95">        return fedoraId.getFullIdPath();</span>
+    }
+
+    @Override
+    public String getUserID() {
+<span class="fc" id="L100">        return userID;</span>
+    }
+
+    @Override
+    public Instant getDate() {
+<span class="fc" id="L105">        return date;</span>
+    }
+
+    @Override
+    public String getEventID() {
+<span class="fc" id="L110">        return eventId;</span>
+    }
+
+    @Override
+    public URI getUserURI() {
+<span class="fc" id="L115">        return userURI;</span>
+    }
+
+    @Override
+    public String getUserAgent() {
+<span class="fc" id="L120">        return userAgent;</span>
+    }
+
+    @Override
+    public String getBaseUrl() {
+<span class="fc" id="L125">        return baseUrl;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L130">        return &quot;EventImpl{&quot; +</span>
+                &quot;eventId='&quot; + eventId + '\'' +
+                &quot;, fedoraId=&quot; + fedoraId +
+                &quot;, types=&quot; + types +
+                &quot;, resourceTypes=&quot; + resourceTypes +
+                &quot;, userID='&quot; + userID + '\'' +
+                &quot;, userURI=&quot; + userURI +
+                &quot;, userAgent=&quot; + userAgent +
+                &quot;, baseUrl=&quot; + baseUrl +
+                &quot;, date=&quot; + date +
+                '}';
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

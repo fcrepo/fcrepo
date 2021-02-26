@@ -1,0 +1,432 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ResourceHeadersAdapter.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-persistence-ocfl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.persistence.ocfl.impl</a> &gt; <span class="el_source">ResourceHeadersAdapter.java</span></div><h1>ResourceHeadersAdapter.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.persistence.ocfl.impl;
+
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.persistence.common.ResourceHeadersImpl;
+
+import java.net.URI;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Objects;
+
+/**
+ * Adapter for converting between different ResourceHeader implementations.
+ *
+ * @author pwinckles
+ */
+public class ResourceHeadersAdapter implements ResourceHeaders {
+
+    private final ResourceHeadersImpl kernelHeaders;
+    private final org.fcrepo.storage.ocfl.ResourceHeaders.Builder storageHeaders;
+
+    /**
+     * Default constructor
+     */
+<span class="nc" id="L44">    public ResourceHeadersAdapter() {</span>
+<span class="nc" id="L45">        kernelHeaders = new ResourceHeadersImpl();</span>
+<span class="nc" id="L46">        storageHeaders = org.fcrepo.storage.ocfl.ResourceHeaders.builder();</span>
+<span class="nc" id="L47">    }</span>
+
+    /**
+     * @param storageHeaders storage headers to adapt
+     */
+<span class="fc" id="L52">    public ResourceHeadersAdapter(final org.fcrepo.storage.ocfl.ResourceHeaders storageHeaders) {</span>
+<span class="fc" id="L53">        this.storageHeaders = org.fcrepo.storage.ocfl.ResourceHeaders</span>
+<span class="fc" id="L54">                .builder(Objects.requireNonNull(storageHeaders, &quot;storageHeaders cannot be null&quot;));</span>
+<span class="fc" id="L55">        this.kernelHeaders = new ResourceHeadersImpl();</span>
+
+<span class="fc bfc" id="L57" title="All 2 branches covered.">        if (storageHeaders.getId() != null) {</span>
+<span class="fc" id="L58">            kernelHeaders.setId(FedoraId.create(storageHeaders.getId()));</span>
+        }
+<span class="fc bfc" id="L60" title="All 2 branches covered.">        if (storageHeaders.getParent() != null) {</span>
+<span class="fc" id="L61">            kernelHeaders.setParent(FedoraId.create(storageHeaders.getParent()));</span>
+        }
+<span class="fc bfc" id="L63" title="All 2 branches covered.">        if (storageHeaders.getArchivalGroupId() != null) {</span>
+<span class="fc" id="L64">            kernelHeaders.setArchivalGroupId(FedoraId.create(storageHeaders.getArchivalGroupId()));</span>
+        }
+<span class="fc" id="L66">        kernelHeaders.setArchivalGroup(storageHeaders.isArchivalGroup());</span>
+<span class="fc" id="L67">        kernelHeaders.setContentPath(storageHeaders.getContentPath());</span>
+<span class="fc" id="L68">        kernelHeaders.setContentSize(storageHeaders.getContentSize());</span>
+<span class="fc" id="L69">        kernelHeaders.setCreatedBy(storageHeaders.getCreatedBy());</span>
+<span class="fc" id="L70">        kernelHeaders.setCreatedDate(storageHeaders.getCreatedDate());</span>
+<span class="fc" id="L71">        kernelHeaders.setDeleted(storageHeaders.isDeleted());</span>
+<span class="fc" id="L72">        kernelHeaders.setDigests(new ArrayList&lt;&gt;(storageHeaders.getDigests()));</span>
+<span class="fc" id="L73">        this.storageHeaders.withDigests(kernelHeaders.getDigests());</span>
+<span class="fc" id="L74">        kernelHeaders.setExternalHandling(storageHeaders.getExternalHandling());</span>
+<span class="fc" id="L75">        kernelHeaders.setExternalUrl(storageHeaders.getExternalUrl());</span>
+<span class="fc" id="L76">        kernelHeaders.setFilename(storageHeaders.getFilename());</span>
+<span class="fc" id="L77">        kernelHeaders.setInteractionModel(storageHeaders.getInteractionModel());</span>
+<span class="fc" id="L78">        kernelHeaders.setLastModifiedBy(storageHeaders.getLastModifiedBy());</span>
+<span class="fc" id="L79">        kernelHeaders.setLastModifiedDate(storageHeaders.getLastModifiedDate());</span>
+<span class="fc" id="L80">        kernelHeaders.setMementoCreatedDate(storageHeaders.getMementoCreatedDate());</span>
+<span class="fc" id="L81">        kernelHeaders.setMimeType(storageHeaders.getMimeType());</span>
+<span class="fc" id="L82">        kernelHeaders.setObjectRoot(storageHeaders.isObjectRoot());</span>
+<span class="fc" id="L83">        kernelHeaders.setStateToken(storageHeaders.getStateToken());</span>
+<span class="fc" id="L84">        kernelHeaders.setHeadersVersion(storageHeaders.getHeadersVersion());</span>
+<span class="fc" id="L85">    }</span>
+
+    /**
+     * @param kernelHeaders kernel headers to adapt
+     */
+<span class="fc" id="L90">    public ResourceHeadersAdapter(final ResourceHeadersImpl kernelHeaders) {</span>
+<span class="fc" id="L91">        this.kernelHeaders = Objects.requireNonNull(kernelHeaders, &quot;kernelHeaders cannot be null&quot;);</span>
+<span class="fc" id="L92">        this.storageHeaders = org.fcrepo.storage.ocfl.ResourceHeaders.builder();</span>
+
+<span class="fc bfc" id="L94" title="All 2 branches covered.">        if (kernelHeaders.getId() != null) {</span>
+<span class="fc" id="L95">            storageHeaders.withId(kernelHeaders.getId().getFullId());</span>
+        }
+<span class="fc bfc" id="L97" title="All 2 branches covered.">        if (kernelHeaders.getParent() != null) {</span>
+<span class="fc" id="L98">            storageHeaders.withParent(kernelHeaders.getParent().getFullId());</span>
+        }
+<span class="fc bfc" id="L100" title="All 2 branches covered.">        if (kernelHeaders.getArchivalGroupId() != null) {</span>
+<span class="fc" id="L101">            storageHeaders.withArchivalGroupId(kernelHeaders.getArchivalGroupId().getFullId());</span>
+        }
+<span class="fc" id="L103">        storageHeaders.withArchivalGroup(kernelHeaders.isArchivalGroup());</span>
+<span class="fc" id="L104">        storageHeaders.withContentPath(kernelHeaders.getContentPath());</span>
+<span class="fc" id="L105">        storageHeaders.withContentSize(kernelHeaders.getContentSize());</span>
+<span class="fc" id="L106">        storageHeaders.withCreatedBy(kernelHeaders.getCreatedBy());</span>
+<span class="fc" id="L107">        storageHeaders.withCreatedDate(kernelHeaders.getCreatedDate());</span>
+<span class="fc" id="L108">        storageHeaders.withDeleted(kernelHeaders.isDeleted());</span>
+<span class="fc" id="L109">        storageHeaders.withDigests(kernelHeaders.getDigests());</span>
+<span class="fc" id="L110">        storageHeaders.withExternalHandling(kernelHeaders.getExternalHandling());</span>
+<span class="fc" id="L111">        storageHeaders.withExternalUrl(kernelHeaders.getExternalUrl());</span>
+<span class="fc" id="L112">        storageHeaders.withFilename(kernelHeaders.getFilename());</span>
+<span class="fc" id="L113">        storageHeaders.withInteractionModel(kernelHeaders.getInteractionModel());</span>
+<span class="fc" id="L114">        storageHeaders.withLastModifiedBy(kernelHeaders.getLastModifiedBy());</span>
+<span class="fc" id="L115">        storageHeaders.withLastModifiedDate(kernelHeaders.getLastModifiedDate());</span>
+<span class="fc" id="L116">        storageHeaders.withMementoCreatedDate(kernelHeaders.getMementoCreatedDate());</span>
+<span class="fc" id="L117">        storageHeaders.withMimeType(kernelHeaders.getMimeType());</span>
+<span class="fc" id="L118">        storageHeaders.withObjectRoot(kernelHeaders.isObjectRoot());</span>
+<span class="fc" id="L119">        storageHeaders.withStateToken(kernelHeaders.getStateToken());</span>
+<span class="fc" id="L120">        storageHeaders.withHeadersVersion(kernelHeaders.getHeadersVersion());</span>
+<span class="fc" id="L121">    }</span>
+
+    /**
+     * @return the headers as storage headers
+     */
+    public org.fcrepo.storage.ocfl.ResourceHeaders asStorageHeaders() {
+<span class="fc" id="L127">        return storageHeaders.build();</span>
+    }
+
+    /**
+     * @return the headers as kernel headers
+     */
+    public ResourceHeadersImpl asKernelHeaders() {
+<span class="fc" id="L134">        return kernelHeaders;</span>
+    }
+
+    private String idToString(final FedoraId id) {
+<span class="nc bnc" id="L138" title="All 2 branches missed.">        if (id == null) {</span>
+<span class="nc" id="L139">            return null;</span>
+        }
+<span class="nc" id="L141">        return id.getFullId();</span>
+    }
+
+    @Override
+    public FedoraId getId() {
+<span class="fc" id="L146">        return kernelHeaders.getId();</span>
+    }
+
+    /**
+     * @param id the fedora id to set
+     */
+    public void setId(final FedoraId id) {
+<span class="nc" id="L153">        kernelHeaders.setId(id);</span>
+<span class="nc" id="L154">        storageHeaders.withId(idToString(id));</span>
+<span class="nc" id="L155">    }</span>
+
+    @Override
+    public FedoraId getParent() {
+<span class="fc" id="L159">        return kernelHeaders.getParent();</span>
+    }
+
+    /**
+     * @param parent the parent to set
+     */
+    public void setParent(final FedoraId parent) {
+<span class="nc" id="L166">        kernelHeaders.setParent(parent);</span>
+<span class="nc" id="L167">        storageHeaders.withParent(idToString(parent));</span>
+<span class="nc" id="L168">    }</span>
+
+    @Override
+    public FedoraId getArchivalGroupId() {
+<span class="nc" id="L172">        return kernelHeaders.getArchivalGroupId();</span>
+    }
+
+    /**
+     * @param archivalGroupId the archivalGroupId to set
+     */
+    public void setArchivalGroupId(final FedoraId archivalGroupId) {
+<span class="nc" id="L179">        kernelHeaders.setArchivalGroupId(archivalGroupId);</span>
+<span class="nc" id="L180">        storageHeaders.withArchivalGroupId(idToString(archivalGroupId));</span>
+<span class="nc" id="L181">    }</span>
+
+    @Override
+    public String getStateToken() {
+<span class="nc" id="L185">        return kernelHeaders.getStateToken();</span>
+    }
+
+    /**
+     * @param stateToken the stateToken to set
+     */
+    public void setStateToken(final String stateToken) {
+<span class="nc" id="L192">        kernelHeaders.setStateToken(stateToken);</span>
+<span class="nc" id="L193">        storageHeaders.withStateToken(stateToken);</span>
+<span class="nc" id="L194">    }</span>
+
+    @Override
+    public String getInteractionModel() {
+<span class="fc" id="L198">        return kernelHeaders.getInteractionModel();</span>
+    }
+
+    /**
+     * @param interactionModel the interactionModel to set
+     */
+    public void setInteractionModel(final String interactionModel) {
+<span class="nc" id="L205">        kernelHeaders.setInteractionModel(interactionModel);</span>
+<span class="nc" id="L206">        storageHeaders.withInteractionModel(interactionModel);</span>
+<span class="nc" id="L207">    }</span>
+
+    @Override
+    public String getMimeType() {
+<span class="nc" id="L211">        return kernelHeaders.getMimeType();</span>
+    }
+
+    /**
+     * @param mimeType the mimeType to set
+     */
+    public void setMimeType(final String mimeType) {
+<span class="nc" id="L218">        kernelHeaders.setMimeType(mimeType);</span>
+<span class="nc" id="L219">        storageHeaders.withMimeType(mimeType);</span>
+<span class="nc" id="L220">    }</span>
+
+    @Override
+    public String getFilename() {
+<span class="nc" id="L224">        return kernelHeaders.getFilename();</span>
+    }
+
+    /**
+     * @param filename the filename to set
+     */
+    public void setFilename(final String filename) {
+<span class="nc" id="L231">        kernelHeaders.setFilename(filename);</span>
+<span class="nc" id="L232">        storageHeaders.withFilename(filename);</span>
+<span class="nc" id="L233">    }</span>
+
+    @Override
+    public long getContentSize() {
+<span class="nc" id="L237">        return kernelHeaders.getContentSize();</span>
+    }
+
+    /**
+     * @param contentSize the contentSize to set
+     */
+    public void setContentSize(final Long contentSize) {
+<span class="nc" id="L244">        kernelHeaders.setContentSize(contentSize);</span>
+<span class="nc" id="L245">        storageHeaders.withContentSize(contentSize);</span>
+<span class="nc" id="L246">    }</span>
+
+    @Override
+    public Collection&lt;URI&gt; getDigests() {
+<span class="nc" id="L250">        return kernelHeaders.getDigests();</span>
+    }
+
+    /**
+     * @param digests the digests to set
+     */
+    public void setDigests(final Collection&lt;URI&gt; digests) {
+<span class="nc" id="L257">        kernelHeaders.setDigests(digests);</span>
+<span class="nc" id="L258">        storageHeaders.withDigests(digests);</span>
+<span class="nc" id="L259">    }</span>
+
+    @Override
+    public String getExternalHandling() {
+<span class="nc" id="L263">        return kernelHeaders.getExternalHandling();</span>
+    }
+
+    /**
+     * @param externalHandling the externalHandling to set
+     */
+    public void setExternalHandling(final String externalHandling) {
+<span class="nc" id="L270">        kernelHeaders.setExternalHandling(externalHandling);</span>
+<span class="nc" id="L271">        storageHeaders.withExternalHandling(externalHandling);</span>
+<span class="nc" id="L272">    }</span>
+
+    @Override
+    public Instant getCreatedDate() {
+<span class="fc" id="L276">        return kernelHeaders.getCreatedDate();</span>
+    }
+
+    /**
+     * @param createdDate the createdDate to set
+     */
+    public void setCreatedDate(final Instant createdDate) {
+<span class="nc" id="L283">        kernelHeaders.setCreatedDate(createdDate);</span>
+<span class="nc" id="L284">        storageHeaders.withCreatedDate(createdDate);</span>
+<span class="nc" id="L285">    }</span>
+
+    @Override
+    public String getCreatedBy() {
+<span class="nc" id="L289">        return kernelHeaders.getCreatedBy();</span>
+    }
+
+    /**
+     * @param createdBy the createdBy to set
+     */
+    public void setCreatedBy(final String createdBy) {
+<span class="nc" id="L296">        kernelHeaders.setCreatedBy(createdBy);</span>
+<span class="nc" id="L297">        storageHeaders.withCreatedBy(createdBy);</span>
+<span class="nc" id="L298">    }</span>
+
+    @Override
+    public Instant getLastModifiedDate() {
+<span class="fc" id="L302">        return kernelHeaders.getLastModifiedDate();</span>
+    }
+
+    /**
+     * @param lastModifiedDate the lastModifiedDate to set
+     */
+    public void setLastModifiedDate(final Instant lastModifiedDate) {
+<span class="nc" id="L309">        kernelHeaders.setLastModifiedDate(lastModifiedDate);</span>
+<span class="nc" id="L310">        storageHeaders.withLastModifiedDate(lastModifiedDate);</span>
+<span class="nc" id="L311">    }</span>
+
+    @Override
+    public String getLastModifiedBy() {
+<span class="nc" id="L315">        return kernelHeaders.getLastModifiedBy();</span>
+    }
+
+    /**
+     * @param lastModifiedBy the lastModifiedBy to set
+     */
+    public void setLastModifiedBy(final String lastModifiedBy) {
+<span class="nc" id="L322">        kernelHeaders.setLastModifiedBy(lastModifiedBy);</span>
+<span class="nc" id="L323">        storageHeaders.withLastModifiedBy(lastModifiedBy);</span>
+<span class="nc" id="L324">    }</span>
+
+    @Override
+    public Instant getMementoCreatedDate() {
+<span class="nc" id="L328">        return kernelHeaders.getMementoCreatedDate();</span>
+    }
+
+    /**
+     * @param mementoCreatedDate the mementoCreatedDate to set
+     */
+    public void setMementoCreatedDate(final Instant mementoCreatedDate) {
+<span class="nc" id="L335">        kernelHeaders.setMementoCreatedDate(mementoCreatedDate);</span>
+<span class="nc" id="L336">        storageHeaders.withMementoCreatedDate(mementoCreatedDate);</span>
+<span class="nc" id="L337">    }</span>
+
+    /**
+     * @param externalUrl the externalUrl to set
+     */
+    public void setExternalUrl(final String externalUrl) {
+<span class="nc" id="L343">        kernelHeaders.setExternalUrl(externalUrl);</span>
+<span class="nc" id="L344">        storageHeaders.withExternalUrl(externalUrl);</span>
+<span class="nc" id="L345">    }</span>
+
+    @Override
+    public String getExternalUrl() {
+<span class="nc" id="L349">        return kernelHeaders.getExternalUrl();</span>
+    }
+
+    /**
+     *
+     * @param flag boolean flag
+     */
+    public void setArchivalGroup(final boolean flag) {
+<span class="nc" id="L357">        kernelHeaders.setArchivalGroup(flag);</span>
+<span class="nc" id="L358">        storageHeaders.withArchivalGroup(flag);</span>
+<span class="nc" id="L359">    }</span>
+
+    @Override
+    public boolean isArchivalGroup() {
+<span class="fc" id="L363">        return kernelHeaders.isArchivalGroup();</span>
+    }
+
+    /**
+     * @param flag boolean flag
+     */
+    public void setObjectRoot(final boolean flag) {
+<span class="nc" id="L370">        kernelHeaders.setObjectRoot(flag);</span>
+<span class="nc" id="L371">        storageHeaders.withObjectRoot(flag);</span>
+<span class="nc" id="L372">    }</span>
+
+    @Override
+    public boolean isObjectRoot() {
+<span class="pc bpc" id="L376" title="1 of 2 branches missed.">        if (isArchivalGroup()) {</span>
+<span class="nc" id="L377">            return true;</span>
+        } else {
+<span class="fc" id="L379">            return kernelHeaders.isObjectRoot();</span>
+        }
+    }
+
+    /**
+     * Set deleted status flag.
+     * @param deleted true if deleted (a tombstone).
+     */
+    public void setDeleted(final boolean deleted) {
+<span class="fc" id="L388">        kernelHeaders.setDeleted(deleted);</span>
+<span class="fc" id="L389">        storageHeaders.withDeleted(deleted);</span>
+<span class="fc" id="L390">    }</span>
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isDeleted() {
+<span class="fc" id="L397">        return kernelHeaders.isDeleted();</span>
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getContentPath() {
+<span class="nc" id="L405">        return kernelHeaders.getContentPath();</span>
+    }
+
+    /**
+     * Sets the path to the content file associated with the header file
+     *
+     * @param contentPath path to content file
+     */
+    public void setContentPath(final String contentPath) {
+<span class="nc" id="L414">        kernelHeaders.setContentPath(contentPath);</span>
+<span class="nc" id="L415">        storageHeaders.withContentPath(contentPath);</span>
+<span class="nc" id="L416">    }</span>
+
+    @Override
+    public String getHeadersVersion() {
+<span class="nc" id="L420">        return kernelHeaders.getHeadersVersion();</span>
+    }
+
+    /**
+     * @param headersVersion the headers version to set
+     */
+    public void setHeadersVersion(final String headersVersion) {
+<span class="nc" id="L427">        kernelHeaders.setHeadersVersion(headersVersion);</span>
+<span class="nc" id="L428">        storageHeaders.withHeadersVersion(headersVersion);</span>
+<span class="nc" id="L429">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

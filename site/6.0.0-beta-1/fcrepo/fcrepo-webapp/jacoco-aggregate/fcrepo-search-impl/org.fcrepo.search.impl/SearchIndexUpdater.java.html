@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>SearchIndexUpdater.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-search-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.search.impl</a> &gt; <span class="el_source">SearchIndexUpdater.java</span></div><h1>SearchIndexUpdater.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
+package org.fcrepo.search.impl;
+
+import com.google.common.collect.Sets;
+import com.google.common.eventbus.AllowConcurrentEvents;
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
+import org.fcrepo.kernel.api.models.ResourceHelper;
+import org.fcrepo.kernel.api.observer.Event;
+import org.fcrepo.kernel.api.observer.EventType;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.search.api.SearchIndex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.inject.Inject;
+import java.util.Set;
+
+import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_CREATION;
+import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_DELETION;
+import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_MODIFICATION;
+
+/**
+ * This class listens to events from the event bus and updates the search
+ * index accordingly.
+ *
+ * @author dbernstein
+ */
+@Component
+<span class="fc" id="L54">public class SearchIndexUpdater {</span>
+
+    @Inject
+    private EventBus eventBus;
+
+    @Autowired
+    @Qualifier(&quot;searchIndex&quot;)
+    private SearchIndex searchIndex;
+
+    @Inject
+    private ResourceHelper resourceHelper;
+
+    @Inject
+    private PersistentStorageSessionManager persistentStorageSessionManager;
+
+<span class="fc" id="L69">    private static Logger LOGGER = LoggerFactory.getLogger(SearchIndexUpdater.class);</span>
+<span class="fc" id="L70">    private static final Set&lt;EventType&gt; HANDLED_TYPES = Sets.newHashSet(RESOURCE_CREATION, RESOURCE_MODIFICATION,</span>
+            RESOURCE_DELETION);
+
+    @Subscribe
+    @AllowConcurrentEvents
+    public void onEvent(final Event event) {
+<span class="fc" id="L76">        LOGGER.debug(&quot;event={}&quot;, event);</span>
+        try {
+<span class="fc" id="L78">            final var fedoraId = event.getFedoraId();</span>
+<span class="fc" id="L79">            final var types = event.getTypes();</span>
+<span class="pc bpc" id="L80" title="1 of 4 branches missed.">            if (types.contains(RESOURCE_DELETION) &amp;&amp; !resourceHelper.doesResourceExist(null, fedoraId, false)) {</span>
+<span class="fc" id="L81">                this.searchIndex.removeFromIndex(fedoraId);</span>
+<span class="fc bfc" id="L82" title="All 4 branches covered.">            } else if (types.contains(RESOURCE_CREATION) || types.contains(RESOURCE_MODIFICATION)) {</span>
+<span class="fc" id="L83">                final var session = persistentStorageSessionManager.getReadOnlySession();</span>
+<span class="fc" id="L84">                final var headers = session.getHeaders(fedoraId, null);</span>
+<span class="fc" id="L85">                this.searchIndex.addUpdateIndex(headers);</span>
+            }
+<span class="nc" id="L87">        } catch (final PersistentStorageException e) {</span>
+<span class="nc" id="L88">            LOGGER.error(&quot;Failed to handle event: &quot; + event, e);</span>
+<span class="fc" id="L89">        }</span>
+<span class="fc" id="L90">    }</span>
+
+    /**
+     * Register listener
+     */
+    @PostConstruct
+    public void register() {
+<span class="fc" id="L97">        LOGGER.debug(&quot;Registering: {}&quot;, this.getClass().getCanonicalName());</span>
+<span class="fc" id="L98">        eventBus.register(this);</span>
+<span class="fc" id="L99">    }</span>
+
+    /**
+     * Unregister listener
+     */
+    @PreDestroy
+    public void releaseConnections() {
+<span class="fc" id="L106">        LOGGER.debug(&quot;Unregistering: {}&quot;, this.getClass().getCanonicalName());</span>
+<span class="fc" id="L107">        eventBus.unregister(this);</span>
+<span class="fc" id="L108">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
