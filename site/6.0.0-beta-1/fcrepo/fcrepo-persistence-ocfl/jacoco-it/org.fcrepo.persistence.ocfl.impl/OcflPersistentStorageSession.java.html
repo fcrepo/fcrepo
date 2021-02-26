@@ -1,0 +1,505 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OcflPersistentStorageSession.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository OCFL Persistence Impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.persistence.ocfl.impl</a> &gt; <span class="el_source">OcflPersistentStorageSession.java</span></div><h1>OcflPersistentStorageSession.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.persistence.ocfl.impl;
+
+import com.github.benmanes.caffeine.cache.Caffeine;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.RDFDataMgr;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
+import org.fcrepo.persistence.ocfl.api.Persister;
+import org.fcrepo.storage.ocfl.OcflObjectSession;
+import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
+import org.fcrepo.storage.ocfl.OcflVersionInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Phaser;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
+
+import static java.lang.String.format;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+
+/**
+ * OCFL Persistent Storage class.
+ *
+ * @author whikloj
+ * @since 2019-09-20
+ */
+public class OcflPersistentStorageSession implements PersistentStorageSession {
+
+<span class="fc" id="L69">    private static final Logger LOGGER = LoggerFactory.getLogger(OcflPersistentStorageSession.class);</span>
+
+    private static final long AWAIT_TIMEOUT = 30000L;
+
+    /**
+     * Externally generated id for the session.
+     */
+    private final String sessionId;
+
+    private final FedoraToOcflObjectIndex fedoraOcflIndex;
+
+    private final Map&lt;String, OcflObjectSession&gt; sessionMap;
+
+    private final ReindexService reindexSerivce;
+
+    private Map&lt;String, OcflObjectSession&gt; sessionsToRollback;
+
+<span class="fc" id="L86">    private final Phaser phaser = new Phaser();</span>
+
+<span class="fc" id="L88">    private final List&lt;Persister&gt; persisterList = new ArrayList&lt;&gt;();</span>
+
+<span class="fc" id="L90">    private State state = State.COMMIT_NOT_STARTED;</span>
+
+    private final OcflObjectSessionFactory objectSessionFactory;
+
+<span class="fc" id="L94">    private enum State {</span>
+<span class="fc" id="L95">        COMMIT_NOT_STARTED(true),</span>
+<span class="fc" id="L96">        PREPARE_STARTED(false),</span>
+<span class="fc" id="L97">        PREPARED(true),</span>
+<span class="fc" id="L98">        PREPARE_FAILED(true),</span>
+<span class="fc" id="L99">        COMMIT_STARTED(false),</span>
+<span class="fc" id="L100">        COMMITTED(true),</span>
+<span class="fc" id="L101">        COMMIT_FAILED(true),</span>
+<span class="fc" id="L102">        ROLLING_BACK(false),</span>
+<span class="fc" id="L103">        ROLLED_BACK(false),</span>
+<span class="fc" id="L104">        ROLLBACK_FAILED(false);</span>
+
+        final boolean rollbackAllowed;
+
+<span class="fc" id="L108">        State(final boolean rollbackAllowed) {</span>
+<span class="fc" id="L109">            this.rollbackAllowed = rollbackAllowed;</span>
+<span class="fc" id="L110">        }</span>
+
+    }
+
+    /**
+     * Constructor
+     *
+     * @param sessionId            session id.
+     * @param fedoraOcflIndex      the index
+     * @param objectSessionFactory the session factory
+     */
+    protected OcflPersistentStorageSession(final String sessionId,
+                                           final FedoraToOcflObjectIndex fedoraOcflIndex,
+                                           final OcflObjectSessionFactory objectSessionFactory,
+<span class="fc" id="L124">                                           final ReindexService reindexService) {</span>
+<span class="fc" id="L125">        this.sessionId = sessionId;</span>
+<span class="fc" id="L126">        this.fedoraOcflIndex = fedoraOcflIndex;</span>
+<span class="fc" id="L127">        this.objectSessionFactory = objectSessionFactory;</span>
+<span class="fc" id="L128">        this.reindexSerivce = reindexService;</span>
+<span class="fc" id="L129">        this.sessionsToRollback = new HashMap&lt;&gt;();</span>
+
+<span class="fc bfc" id="L131" title="All 2 branches covered.">        if (sessionId == null) {</span>
+            // The read-only session is never closed, so it needs to periodically expire object sessions
+<span class="fc" id="L133">            this.sessionMap = Caffeine.newBuilder()</span>
+<span class="fc" id="L134">                    .maximumSize(512)</span>
+<span class="fc" id="L135">                    .expireAfterAccess(10, TimeUnit.MINUTES)</span>
+<span class="fc" id="L136">                    .&lt;String, OcflObjectSession&gt;build()</span>
+<span class="fc" id="L137">                    .asMap();</span>
+        } else {
+<span class="fc" id="L139">            this.sessionMap = new ConcurrentHashMap&lt;&gt;();</span>
+        }
+
+        //load the persister list if empty
+<span class="fc" id="L143">        persisterList.add(new CreateRdfSourcePersister(this.fedoraOcflIndex));</span>
+<span class="fc" id="L144">        persisterList.add(new UpdateRdfSourcePersister(this.fedoraOcflIndex));</span>
+<span class="fc" id="L145">        persisterList.add(new CreateNonRdfSourcePersister(this.fedoraOcflIndex));</span>
+<span class="fc" id="L146">        persisterList.add(new UpdateNonRdfSourcePersister(this.fedoraOcflIndex));</span>
+<span class="fc" id="L147">        persisterList.add(new DeleteResourcePersister(this.fedoraOcflIndex));</span>
+<span class="fc" id="L148">        persisterList.add(new CreateVersionPersister(this.fedoraOcflIndex));</span>
+<span class="fc" id="L149">        persisterList.add(new PurgeResourcePersister(this.fedoraOcflIndex));</span>
+<span class="fc" id="L150">        persisterList.add(new ReindexResourcePersister(this.reindexSerivce));</span>
+
+<span class="fc" id="L152">    }</span>
+
+    /**
+     * Constructor
+     *
+     * @param fedoraOcflIndex      the index
+     * @param objectSessionFactory the session factory
+     */
+    protected OcflPersistentStorageSession(final FedoraToOcflObjectIndex fedoraOcflIndex,
+                                           final OcflObjectSessionFactory objectSessionFactory,
+                                           final ReindexService reindexService) {
+<span class="fc" id="L163">        this(null, fedoraOcflIndex, objectSessionFactory, reindexService);</span>
+<span class="fc" id="L164">    }</span>
+
+    @Override
+    public String getId() {
+<span class="fc" id="L168">        return this.sessionId;</span>
+    }
+
+    @Override
+    public void persist(final ResourceOperation operation) throws PersistentStorageException {
+<span class="fc" id="L173">        actionNeedsWrite();</span>
+<span class="fc" id="L174">        ensureCommitNotStarted();</span>
+
+        try {
+<span class="fc" id="L177">            phaser.register();</span>
+
+            //resolve the persister based on the operation
+<span class="fc" id="L180">            final var persister = persisterList.stream().filter(p -&gt; p.handle(operation)).findFirst().orElse(null);</span>
+
+<span class="pc bpc" id="L182" title="1 of 2 branches missed.">            if (persister == null) {</span>
+<span class="nc" id="L183">                throw new UnsupportedOperationException(format(&quot;The %s is not yet supported&quot;, operation.getClass()));</span>
+            }
+
+            //perform the operation
+<span class="fc" id="L187">            persister.persist(this, operation);</span>
+
+        } finally {
+<span class="fc" id="L190">            phaser.arriveAndDeregister();</span>
+        }
+
+<span class="fc" id="L193">    }</span>
+
+    private void ensureCommitNotStarted() throws PersistentSessionClosedException {
+<span class="pc bpc" id="L196" title="1 of 2 branches missed.">        if (!state.equals(State.COMMIT_NOT_STARTED)) {</span>
+<span class="nc" id="L197">            throw new PersistentSessionClosedException(</span>
+<span class="nc" id="L198">                    String.format(&quot;Storage session %s is already closed&quot;, sessionId));</span>
+        }
+<span class="fc" id="L200">    }</span>
+
+    private void ensurePrepared() throws PersistentSessionClosedException {
+<span class="pc bpc" id="L203" title="1 of 2 branches missed.">        if (!state.equals(State.PREPARED)) {</span>
+<span class="nc" id="L204">            throw new PersistentStorageException(</span>
+<span class="nc" id="L205">                    String.format(&quot;Storage session %s cannot be committed because it is not in the correct state: %s&quot;,</span>
+                            sessionId, state));
+        }
+<span class="fc" id="L208">    }</span>
+
+    OcflObjectSession findOrCreateSession(final String ocflId) {
+<span class="fc" id="L211">        return this.sessionMap.computeIfAbsent(ocflId, key -&gt; {</span>
+<span class="fc" id="L212">            return new FcrepoOcflObjectSessionWrapper(this.objectSessionFactory.newSession(key));</span>
+        });
+    }
+
+    @Override
+    public ResourceHeaders getHeaders(final FedoraId identifier, final Instant version)
+            throws PersistentStorageException {
+
+<span class="fc" id="L220">        ensureCommitNotStarted();</span>
+
+<span class="fc" id="L222">        final FedoraOcflMapping mapping = getFedoraOcflMapping(identifier);</span>
+<span class="fc" id="L223">        final OcflObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());</span>
+
+<span class="fc" id="L225">        final var versionId = resolveVersionNumber(objSession, identifier, version);</span>
+<span class="fc" id="L226">        final var headers = objSession.readHeaders(identifier.getResourceId(), versionId);</span>
+
+<span class="fc" id="L228">        return new ResourceHeadersAdapter(headers).asKernelHeaders();</span>
+    }
+
+    private FedoraOcflMapping getFedoraOcflMapping(final FedoraId identifier) throws PersistentStorageException {
+        try {
+<span class="fc" id="L233">            return fedoraOcflIndex.getMapping(sessionId, identifier);</span>
+<span class="fc" id="L234">        } catch (final FedoraOcflMappingNotFoundException e) {</span>
+<span class="fc" id="L235">            throw new PersistentItemNotFoundException(e.getMessage());</span>
+        }
+    }
+
+    @Override
+    public RdfStream getTriples(final FedoraId identifier, final Instant version)
+            throws PersistentStorageException {
+<span class="nc" id="L242">        ensureCommitNotStarted();</span>
+
+<span class="nc" id="L244">        try (final InputStream is = getBinaryContent(identifier, version)) {</span>
+<span class="nc" id="L245">            final Model model = createDefaultModel();</span>
+<span class="nc" id="L246">            RDFDataMgr.read(model, is, OcflPersistentStorageUtils.getRdfFormat().getLang());</span>
+<span class="nc" id="L247">            final FedoraId topic = resolveTopic(identifier);</span>
+<span class="nc" id="L248">            return DefaultRdfStream.fromModel(createURI(topic.getFullId()), model);</span>
+<span class="nc" id="L249">        } catch (final IOException ex) {</span>
+<span class="nc" id="L250">            throw new PersistentStorageException(format(&quot;unable to read %s ;  version = %s&quot;, identifier, version), ex);</span>
+        }
+    }
+
+    @Override
+    public List&lt;Instant&gt; listVersions(final FedoraId fedoraIdentifier) throws PersistentStorageException {
+<span class="nc" id="L256">        final var mapping = getFedoraOcflMapping(fedoraIdentifier);</span>
+<span class="nc" id="L257">        final var objSession = findOrCreateSession(mapping.getOcflObjectId());</span>
+
+<span class="nc" id="L259">        return objSession.listVersions(fedoraIdentifier.getResourceId()).stream()</span>
+<span class="nc" id="L260">                .map(OcflVersionInfo::getCreated)</span>
+<span class="nc" id="L261">                .collect(Collectors.toList());</span>
+    }
+
+    @Override
+    public InputStream getBinaryContent(final FedoraId identifier, final Instant version)
+            throws PersistentStorageException {
+<span class="fc" id="L267">        ensureCommitNotStarted();</span>
+
+<span class="fc" id="L269">        final var mapping = getFedoraOcflMapping(identifier);</span>
+<span class="fc" id="L270">        final var objSession = findOrCreateSession(mapping.getOcflObjectId());</span>
+
+<span class="fc" id="L272">        final var versionNumber = resolveVersionNumber(objSession, identifier, version);</span>
+
+<span class="fc" id="L274">        return objSession.readContent(identifier.getResourceId(), versionNumber)</span>
+<span class="fc" id="L275">                .getContentStream()</span>
+<span class="fc" id="L276">                .orElseThrow(() -&gt; new PersistentItemNotFoundException(&quot;No binary content found for resource &quot;</span>
+<span class="fc" id="L277">                        + identifier.getFullId()));</span>
+    }
+
+    @Override
+    public synchronized void prepare() {
+<span class="fc" id="L282">        ensureCommitNotStarted();</span>
+<span class="pc bpc" id="L283" title="1 of 2 branches missed.">        if (isReadOnly()) {</span>
+            // No changes to commit.
+<span class="nc" id="L285">            return;</span>
+        }
+
+<span class="fc" id="L288">        this.state = State.PREPARE_STARTED;</span>
+<span class="fc" id="L289">        LOGGER.debug(&quot;Starting storage session {} prepare for commit&quot;, sessionId);</span>
+
+<span class="pc bpc" id="L291" title="1 of 2 branches missed.">        if (this.phaser.getRegisteredParties() &gt; 0) {</span>
+<span class="nc" id="L292">            this.phaser.awaitAdvance(0);</span>
+        }
+
+<span class="fc" id="L295">        LOGGER.trace(&quot;All persisters are complete in session {}&quot;, sessionId);</span>
+
+        try {
+<span class="fc" id="L298">            fedoraOcflIndex.commit(sessionId);</span>
+<span class="fc" id="L299">            state = State.PREPARED;</span>
+<span class="nc" id="L300">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L301">            state = State.PREPARE_FAILED;</span>
+<span class="nc" id="L302">            throw new PersistentStorageException(String.format(&quot;Failed to prepare storage session &lt;%s&gt; for commit&quot;,</span>
+                    sessionId), e);
+<span class="fc" id="L304">        }</span>
+<span class="fc" id="L305">    }</span>
+
+    @Override
+    public synchronized void commit() throws PersistentStorageException {
+<span class="fc" id="L309">        ensurePrepared();</span>
+<span class="pc bpc" id="L310" title="1 of 2 branches missed.">        if (isReadOnly()) {</span>
+            // No changes to commit.
+<span class="nc" id="L312">            return;</span>
+        }
+
+<span class="fc" id="L315">        this.state = State.COMMIT_STARTED;</span>
+<span class="fc" id="L316">        LOGGER.debug(&quot;Starting storage session {} commit&quot;, sessionId);</span>
+
+        // order map for testing
+<span class="fc" id="L319">        final var sessions = new TreeMap&lt;&gt;(sessionMap);</span>
+<span class="fc" id="L320">        commitObjectSessions(sessions);</span>
+
+<span class="fc" id="L322">        LOGGER.debug(&quot;Committed storage session {}&quot;, sessionId);</span>
+<span class="fc" id="L323">    }</span>
+
+    private void commitObjectSessions(final Map&lt;String, OcflObjectSession&gt; sessions)
+            throws PersistentStorageException {
+<span class="fc" id="L327">        this.sessionsToRollback = new HashMap&lt;&gt;(sessionMap.size());</span>
+
+<span class="fc bfc" id="L329" title="All 2 branches covered.">        for (final var entry : sessions.entrySet()) {</span>
+<span class="fc" id="L330">            final var id = entry.getKey();</span>
+<span class="fc" id="L331">            final var session = entry.getValue();</span>
+            try {
+<span class="fc" id="L333">                session.commit();</span>
+<span class="fc" id="L334">                sessionsToRollback.put(id, session);</span>
+<span class="fc" id="L335">            } catch (final Exception e) {</span>
+<span class="fc" id="L336">                this.state = State.COMMIT_FAILED;</span>
+<span class="fc" id="L337">                throw new PersistentStorageException(String.format(&quot;Failed to commit object &lt;%s&gt; in session &lt;%s&gt;&quot;,</span>
+                        id, sessionId), e);
+<span class="fc" id="L339">            }</span>
+<span class="fc" id="L340">        }</span>
+
+<span class="fc" id="L342">        state = State.COMMITTED;</span>
+<span class="fc" id="L343">    }</span>
+
+    @Override
+    public void rollback() throws PersistentStorageException {
+<span class="pc bpc" id="L347" title="1 of 2 branches missed.">        if (isReadOnly()) {</span>
+            // No changes to rollback
+<span class="nc" id="L349">            return;</span>
+        }
+
+<span class="pc bpc" id="L352" title="1 of 2 branches missed.">        if (!state.rollbackAllowed) {</span>
+<span class="nc" id="L353">            throw new PersistentStorageException(&quot;This session cannot be rolled back in this state: &quot; + state);</span>
+        }
+
+<span class="pc bpc" id="L356" title="1 of 2 branches missed.">        final boolean commitWasStarted = this.state != State.COMMIT_NOT_STARTED;</span>
+
+<span class="fc" id="L358">        this.state = State.ROLLING_BACK;</span>
+<span class="fc" id="L359">        LOGGER.debug(&quot;Rolling back storage session {}&quot;, sessionId);</span>
+
+<span class="pc bpc" id="L361" title="1 of 2 branches missed.">        if (!commitWasStarted) {</span>
+            //if the commit had not been started at the time this method was invoked
+            //we must ensure that all persist operations are complete before we close any
+            //ocfl object sessions. If the commit had been started then this synchronization step
+            //will have already occurred and is thus unnecessary.
+<span class="pc bpc" id="L366" title="1 of 2 branches missed.">            if (this.phaser.getRegisteredParties() &gt; 0) {</span>
+                try {
+<span class="nc" id="L368">                    this.phaser.awaitAdvanceInterruptibly(0, AWAIT_TIMEOUT, MILLISECONDS);</span>
+<span class="nc" id="L369">                } catch (final InterruptedException | TimeoutException e) {</span>
+<span class="nc" id="L370">                    throw new PersistentStorageException(</span>
+                            &quot;Waiting for operations to complete took too long, rollback failed&quot;);
+<span class="nc" id="L372">                }</span>
+            }
+        }
+
+<span class="fc" id="L376">        closeUncommittedSessions();</span>
+
+<span class="pc bpc" id="L378" title="1 of 2 branches missed.">        if (commitWasStarted) {</span>
+<span class="nc" id="L379">            rollbackCommittedSessions();</span>
+        }
+
+<span class="fc" id="L382">        this.state = State.ROLLED_BACK;</span>
+<span class="fc" id="L383">        LOGGER.trace(&quot;Successfully rolled back storage session {}&quot;, sessionId);</span>
+<span class="fc" id="L384">    }</span>
+
+    /**
+     * Resolve an instant to a version
+     *
+     * @param objSession session
+     * @param fedoraId the FedoraId of the resource
+     * @param version version time
+     * @return name of version
+     * @throws PersistentStorageException thrown if version not found
+     */
+    private String resolveVersionNumber(final OcflObjectSession objSession,
+                                       final FedoraId fedoraId,
+                                       final Instant version)
+            throws PersistentStorageException {
+<span class="pc bpc" id="L399" title="1 of 2 branches missed.">        if (version != null) {</span>
+<span class="nc" id="L400">            final var versions = objSession.listVersions(fedoraId.getResourceId());</span>
+            // reverse order so that the most recent version is matched first
+<span class="nc" id="L402">            Collections.reverse(versions);</span>
+<span class="nc" id="L403">            return versions.stream()</span>
+<span class="nc" id="L404">                    .filter(vd -&gt; vd.getCreated().equals(version))</span>
+<span class="nc" id="L405">                    .map(OcflVersionInfo::getVersionNumber)</span>
+<span class="nc" id="L406">                    .findFirst()</span>
+<span class="nc" id="L407">                    .orElseThrow(() -&gt; {</span>
+<span class="nc" id="L408">                        return new PersistentItemNotFoundException(format(</span>
+                                &quot;There is no version in %s with a created date matching %s&quot;,
+                                fedoraId, version));
+                    });
+        }
+
+<span class="fc" id="L414">        return null;</span>
+    }
+
+    private void closeUncommittedSessions() {
+<span class="fc" id="L418">        this.sessionMap.entrySet().stream()</span>
+<span class="pc bpc" id="L419" title="1 of 2 branches missed.">                .filter(entry -&gt; !sessionsToRollback.containsKey(entry.getKey()))</span>
+<span class="fc" id="L420">                .map(Map.Entry::getValue)</span>
+<span class="fc" id="L421">                .forEach(OcflObjectSession::abort);</span>
+<span class="fc" id="L422">    }</span>
+
+    private void rollbackCommittedSessions() throws PersistentStorageException {
+<span class="nc" id="L425">        final List&lt;String&gt; rollbackFailures = new ArrayList&lt;&gt;(this.sessionsToRollback.size());</span>
+
+<span class="nc bnc" id="L427" title="All 2 branches missed.">        for (final var entry : this.sessionsToRollback.entrySet()) {</span>
+<span class="nc" id="L428">            final var id = entry.getKey();</span>
+<span class="nc" id="L429">            final var session = entry.getValue();</span>
+
+            try {
+<span class="nc" id="L432">                session.rollback();</span>
+<span class="nc" id="L433">            } catch (final Exception e) {</span>
+<span class="nc" id="L434">                rollbackFailures.add(String.format(&quot;Failed to rollback object &lt;%s&gt; in session &lt;%s&gt;: %s&quot;,</span>
+<span class="nc" id="L435">                        id, session.sessionId(), e.getMessage()));</span>
+<span class="nc" id="L436">            }</span>
+<span class="nc" id="L437">        }</span>
+
+        try {
+<span class="nc" id="L440">            fedoraOcflIndex.rollback(sessionId);</span>
+<span class="nc" id="L441">        } catch (final Exception e) {</span>
+<span class="nc" id="L442">            rollbackFailures.add(String.format(&quot;Failed to rollback OCFL index updates in transaction &lt;%s&gt;: %s&quot;,</span>
+<span class="nc" id="L443">                    sessionId, e.getMessage()));</span>
+<span class="nc" id="L444">        }</span>
+
+        //throw an exception if any sessions could not be rolled back.
+<span class="nc bnc" id="L447" title="All 2 branches missed.">        if (rollbackFailures.size() &gt; 0) {</span>
+<span class="nc" id="L448">            state = State.ROLLBACK_FAILED;</span>
+<span class="nc" id="L449">            final StringBuilder builder = new StringBuilder()</span>
+<span class="nc" id="L450">                    .append(&quot;Unable to rollback storage session &quot;)</span>
+<span class="nc" id="L451">                    .append(sessionId)</span>
+<span class="nc" id="L452">                    .append(&quot; completely due to the following errors: \n&quot;);</span>
+
+<span class="nc bnc" id="L454" title="All 2 branches missed.">            for (final String failures : rollbackFailures) {</span>
+<span class="nc" id="L455">                builder.append(&quot;\t&quot;).append(failures).append(&quot;\n&quot;);</span>
+<span class="nc" id="L456">            }</span>
+
+<span class="nc" id="L458">            throw new PersistentStorageException(builder.toString());</span>
+        }
+<span class="nc" id="L460">    }</span>
+
+    /**
+     * Check if we are in a read-only session.
+     *
+     * @return whether we are read-only (ie. no transaction).
+     */
+    private boolean isReadOnly() {
+<span class="pc bpc" id="L468" title="1 of 2 branches missed.">        return this.sessionId == null;</span>
+    }
+
+    /**
+     * Utility to throw exception if trying to perform write operation on read-only session.
+     */
+    private void actionNeedsWrite() throws PersistentStorageException {
+<span class="pc bpc" id="L475" title="1 of 2 branches missed.">        if (isReadOnly()) {</span>
+<span class="nc" id="L476">            throw new PersistentStorageException(&quot;Session is read-only&quot;);</span>
+        }
+<span class="fc" id="L478">    }</span>
+
+    /**
+     * Returns the RDF topic to be returned for a given resource identifier
+     * For example:  passing info:fedora/resource1/fcr:metadata would return
+     *  info:fedora/resource1 since  info:fedora/resource1 would be the expected
+     *  topic.
+     * @param fedoraIdentifier The fedora identifier
+     * @return The resolved topic
+     */
+    private FedoraId resolveTopic(final FedoraId fedoraIdentifier) {
+<span class="nc bnc" id="L489" title="All 2 branches missed.">        if (fedoraIdentifier.isDescription()) {</span>
+<span class="nc" id="L490">            return fedoraIdentifier.asBaseId();</span>
+        } else {
+<span class="nc" id="L492">            return fedoraIdentifier;</span>
+        }
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L498">        return &quot;OcflPersistentStorageSession{&quot; +</span>
+                &quot;sessionId='&quot; + sessionId + '\'' +
+                &quot;, state=&quot; + state +
+                '}';
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

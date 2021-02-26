@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OcflPersistentStorageSessionMetrics.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository OCFL Persistence Impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.persistence.ocfl.impl</a> &gt; <span class="el_source">OcflPersistentStorageSessionMetrics.java</span></div><h1>OcflPersistentStorageSessionMetrics.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.persistence.ocfl.impl;
+
+import java.io.InputStream;
+import java.time.Instant;
+import java.util.List;
+
+import org.fcrepo.common.metrics.MetricsHelper;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Timer;
+
+/**
+ * PersistentStorageSession wrapper for collecting metrics
+ *
+ * @author pwinckles
+ */
+public class OcflPersistentStorageSessionMetrics implements PersistentStorageSession {
+
+    private static final String METRIC_NAME = &quot;fcrepo.storage.ocfl.session&quot;;
+    private static final String OPERATION = &quot;operation&quot;;
+<span class="fc" id="L45">    private static final Timer persistTimer = Metrics.timer(METRIC_NAME, OPERATION, &quot;persist&quot;);</span>
+<span class="fc" id="L46">    private static final Timer getHeadersTimer = Metrics.timer(METRIC_NAME, OPERATION, &quot;getHeaders&quot;);</span>
+<span class="fc" id="L47">    private static final Timer getTriplesTimer = Metrics.timer(METRIC_NAME, OPERATION, &quot;getTriples&quot;);</span>
+<span class="fc" id="L48">    private static final Timer listVersionsTimer = Metrics.timer(METRIC_NAME, OPERATION, &quot;listVersions&quot;);</span>
+<span class="fc" id="L49">    private static final Timer getContentTimer = Metrics.timer(METRIC_NAME, OPERATION, &quot;getContent&quot;);</span>
+<span class="fc" id="L50">    private static final Timer prepareTimer = Metrics.timer(METRIC_NAME, OPERATION, &quot;prepare&quot;);</span>
+<span class="fc" id="L51">    private static final Timer commitTimer = Metrics.timer(METRIC_NAME, OPERATION, &quot;commit&quot;);</span>
+<span class="fc" id="L52">    private static final Timer rollbackTimer = Metrics.timer(METRIC_NAME, OPERATION, &quot;rollback&quot;);</span>
+
+    private final PersistentStorageSession delegate;
+
+<span class="fc" id="L56">    public OcflPersistentStorageSessionMetrics(final PersistentStorageSession delegate) {</span>
+<span class="fc" id="L57">        this.delegate = delegate;</span>
+<span class="fc" id="L58">    }</span>
+
+    @Override
+    public String getId() {
+<span class="nc" id="L62">        return delegate.getId();</span>
+    }
+
+    @Override
+    public void persist(final ResourceOperation operation) throws PersistentStorageException {
+<span class="fc" id="L67">        persistTimer.record(() -&gt; {</span>
+<span class="fc" id="L68">            delegate.persist(operation);</span>
+<span class="fc" id="L69">        });</span>
+<span class="fc" id="L70">    }</span>
+
+    @Override
+    public ResourceHeaders getHeaders(final FedoraId identifier, final Instant version)
+            throws PersistentStorageException {
+<span class="fc" id="L75">        return MetricsHelper.time(getHeadersTimer, () -&gt; {</span>
+<span class="fc" id="L76">            return delegate.getHeaders(identifier, version);</span>
+        });
+    }
+
+    @Override
+    public RdfStream getTriples(final FedoraId identifier, final Instant version) throws PersistentStorageException {
+<span class="nc" id="L82">        return MetricsHelper.time(getTriplesTimer, () -&gt; {</span>
+<span class="nc" id="L83">            return delegate.getTriples(identifier, version);</span>
+        });
+    }
+
+    @Override
+    public InputStream getBinaryContent(final FedoraId identifier, final Instant version)
+            throws PersistentStorageException {
+<span class="fc" id="L90">        return MetricsHelper.time(getContentTimer, () -&gt; {</span>
+<span class="fc" id="L91">            return delegate.getBinaryContent(identifier, version);</span>
+        });
+    }
+
+    @Override
+    public List&lt;Instant&gt; listVersions(final FedoraId identifier) throws PersistentStorageException {
+<span class="nc" id="L97">        return MetricsHelper.time(listVersionsTimer, () -&gt; {</span>
+<span class="nc" id="L98">            return delegate.listVersions(identifier);</span>
+        });
+    }
+
+    @Override
+    public void prepare() throws PersistentStorageException {
+<span class="fc" id="L104">        prepareTimer.record(delegate::prepare);</span>
+<span class="fc" id="L105">    }</span>
+
+    @Override
+    public void commit() throws PersistentStorageException {
+<span class="fc" id="L109">        commitTimer.record(delegate::commit);</span>
+<span class="fc" id="L110">    }</span>
+
+    @Override
+    public void rollback() throws PersistentStorageException {
+<span class="fc" id="L114">        rollbackTimer.record(delegate::rollback);</span>
+<span class="fc" id="L115">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

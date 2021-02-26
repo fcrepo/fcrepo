@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractNonRdfSourcePersister.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository OCFL Persistence Impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.persistence.ocfl.impl</a> &gt; <span class="el_source">AbstractNonRdfSourcePersister.java</span></div><h1>AbstractNonRdfSourcePersister.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.persistence.ocfl.impl;
+
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.kernel.api.operations.ResourceOperationType;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.common.MultiDigestInputStreamWrapper;
+import org.fcrepo.persistence.common.ResourceHeaderUtils;
+import org.fcrepo.persistence.common.ResourceHeadersImpl;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
+import org.fcrepo.storage.ocfl.OcflObjectSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.CollectionUtils;
+
+import java.util.Collections;
+
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
+
+/**
+ * This class implements the persistence of a NonRDFSource
+ *
+ * @author whikloj
+ * @since 6.0.0
+ */
+abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
+
+<span class="fc" id="L46">    private static final Logger log = LoggerFactory.getLogger(AbstractNonRdfSourcePersister.class);</span>
+
+    /**
+     * Constructor
+     */
+    protected AbstractNonRdfSourcePersister(final Class&lt;? extends ResourceOperation&gt; resourceOperation,
+                                  final ResourceOperationType resourceOperationType,
+                                  final FedoraToOcflObjectIndex index) {
+<span class="fc" id="L54">        super(resourceOperation, resourceOperationType, index);</span>
+<span class="fc" id="L55">    }</span>
+
+    /**
+     * This method handles the shared logic for writing the resource specified in the operation parameter to
+     * the OCFL Object Session.
+     *
+     * @param operation The operation to perform the persistence routine on
+     * @param objectSession The ocfl object session
+     * @param rootIdentifier The fedora object root identifier associated with the resource to be persisted.
+     * @param isArchivalPart indicates if the resource is an AG part resource, ignored on update
+     * @throws PersistentStorageException thrown if writing fails
+     */
+    protected void persistNonRDFSource(final ResourceOperation operation,
+                                       final OcflObjectSession objectSession,
+                                       final FedoraId rootIdentifier,
+                                       final boolean isArchivalPart)
+            throws PersistentStorageException {
+<span class="fc" id="L72">        final var resourceId = operation.getResourceId();</span>
+
+<span class="fc" id="L74">        log.debug(&quot;persisting NonRDFSource {} to OCFL&quot;, resourceId);</span>
+
+<span class="fc" id="L76">        final var nonRdfSourceOperation = (NonRdfSourceOperation) operation;</span>
+
+<span class="fc" id="L78">        final var headers = new ResourceHeadersAdapter(</span>
+<span class="fc" id="L79">                createHeaders(objectSession,</span>
+                        nonRdfSourceOperation,
+<span class="fc" id="L81">                        resourceId.equals(rootIdentifier),</span>
+<span class="fc bfc" id="L82" title="All 2 branches covered.">                        isArchivalPart ? rootIdentifier : null));</span>
+
+        // This covers the case where a resource may have been temporarily deleted if it was changed from an internal
+        // non-RDF resource to an external non-RDF resource
+<span class="fc" id="L86">        headers.setDeleted(false);</span>
+
+<span class="pc bpc" id="L88" title="1 of 2 branches missed.">        if (forExternalBinary(nonRdfSourceOperation)) {</span>
+<span class="nc" id="L89">            objectSession.writeResource(headers.asStorageHeaders(), null);</span>
+        } else {
+<span class="fc" id="L91">            final var providedDigests = nonRdfSourceOperation.getContentDigests();</span>
+
+            // Wrap binary stream in digest computing wrapper, requesting
+<span class="fc" id="L94">            final var multiDigestWrapper = new MultiDigestInputStreamWrapper(</span>
+<span class="fc" id="L95">                    nonRdfSourceOperation.getContentStream(),</span>
+                    providedDigests,
+<span class="fc" id="L97">                    Collections.emptyList());</span>
+<span class="fc" id="L98">            final var contentStream = multiDigestWrapper.getInputStream();</span>
+
+<span class="fc" id="L100">            objectSession.writeResource(headers.asStorageHeaders(), contentStream);</span>
+
+            // Verify that the content matches the provided digests
+<span class="fc bfc" id="L103" title="All 2 branches covered.">            if (!CollectionUtils.isEmpty(providedDigests)) {</span>
+<span class="fc" id="L104">                multiDigestWrapper.checkFixity();</span>
+            }
+        }
+<span class="fc" id="L107">    }</span>
+
+    /**
+     * Constructs a ResourceHeaders object populated with the properties provided by the
+     * operation, and merged with existing properties if appropriate.
+     *
+     * @param objSession the object session
+     * @param op the operation being persisted
+     * @param objectRoot flag indicating whether or not headerPath represents the object root resource
+     * @param archivalGroupId for AG parts, the id of the containg AG, otherwise null
+     * @return populated resource headers
+     */
+    private ResourceHeadersImpl createHeaders(final OcflObjectSession objSession,
+                                              final NonRdfSourceOperation op,
+                                              final boolean objectRoot,
+                                              final FedoraId archivalGroupId) throws PersistentStorageException {
+
+<span class="fc" id="L124">        final var headers = createCommonHeaders(objSession, op, objectRoot, archivalGroupId);</span>
+
+<span class="fc" id="L126">        ResourceHeaderUtils.populateBinaryHeaders(headers,</span>
+<span class="fc" id="L127">                op.getMimeType(),</span>
+<span class="fc" id="L128">                op.getFilename(),</span>
+<span class="fc" id="L129">                op.getContentSize(),</span>
+<span class="fc" id="L130">                op.getContentDigests());</span>
+
+<span class="pc bpc" id="L132" title="1 of 2 branches missed.">        if (forExternalBinary(op)) {</span>
+            // Clear any content path for externals
+<span class="nc" id="L134">            headers.setContentPath(null);</span>
+<span class="nc" id="L135">            ResourceHeaderUtils.populateExternalBinaryHeaders(headers,</span>
+<span class="nc" id="L136">                    op.getContentUri().toString(),</span>
+<span class="nc" id="L137">                    op.getExternalHandling());</span>
+        } else {
+<span class="fc bfc" id="L139" title="All 2 branches covered.">            if (!CREATE.equals(op.getType())) {</span>
+                // If performing an update of an internal binary, ensure that no external properties are retained
+<span class="fc" id="L141">                headers.setExternalHandling(null);</span>
+<span class="fc" id="L142">                headers.setExternalUrl(null);</span>
+            }
+        }
+
+<span class="fc" id="L146">        return headers;</span>
+    }
+
+    /**
+     * @param op the operation
+     * @return Returns true if the operation involved persisting an external binary
+     */
+    protected boolean forExternalBinary(final NonRdfSourceOperation op) {
+<span class="pc bpc" id="L154" title="3 of 4 branches missed.">        return op.getContentUri() != null &amp;&amp; op.getExternalHandling() != null;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
