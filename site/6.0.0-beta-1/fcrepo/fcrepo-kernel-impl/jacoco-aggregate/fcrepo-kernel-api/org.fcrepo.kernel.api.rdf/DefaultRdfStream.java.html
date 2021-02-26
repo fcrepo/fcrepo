@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>DefaultRdfStream.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Kernel Implementation</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.api.rdf</a> &gt; <span class="el_source">DefaultRdfStream.java</span></div><h1>DefaultRdfStream.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.api.rdf;
+
+import static java.util.Spliterator.IMMUTABLE;
+import static java.util.Spliterators.spliteratorUnknownSize;
+import static java.util.stream.Stream.empty;
+import static java.util.stream.StreamSupport.stream;
+
+import java.util.Comparator;
+import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Statement;
+import org.fcrepo.kernel.api.utils.WrappingStream;
+import org.fcrepo.kernel.api.RdfStream;
+
+/**
+ * Implementation of a context-bearing RDF stream
+ *
+ * @author acoburn
+ * @since Dec 6, 2015
+ */
+public class DefaultRdfStream extends WrappingStream&lt;Triple&gt; implements RdfStream {
+
+    private final Node node;
+
+    /**
+     * Create an RdfStream
+     * @param node the topic of the stream
+     */
+    public DefaultRdfStream(final Node node) {
+<span class="nc" id="L53">        this(node, empty());</span>
+<span class="nc" id="L54">    }</span>
+
+    /**
+     * Create an RdfStream
+     * @param node the topic of the stream
+     * @param stream the incoming stream
+     */
+<span class="fc" id="L61">    public DefaultRdfStream(final Node node, final Stream&lt;Triple&gt; stream) {</span>
+<span class="fc" id="L62">        Objects.requireNonNull(node);</span>
+<span class="fc" id="L63">        this.node = node;</span>
+<span class="fc" id="L64">        this.stream = stream;</span>
+<span class="fc" id="L65">    }</span>
+
+    /**
+     * Create an RdfStream from an existing Model.
+     * @param node The subject node
+     * @param model An input Model
+     * @return a new RdfStream object
+     */
+    public static RdfStream fromModel(final Node node, final Model model) {
+<span class="fc" id="L74">        return new DefaultRdfStream(node,</span>
+<span class="fc" id="L75">                stream(spliteratorUnknownSize(model.listStatements(), IMMUTABLE), false).map(Statement::asTriple));</span>
+    }
+
+    /**
+     * Concatenate a Triple stream to the existing stream
+     * @param stream additional triples
+     */
+    protected void concat(final Stream&lt;Triple&gt; stream) {
+<span class="nc" id="L83">        this.stream = Stream.concat(this.stream, stream);</span>
+<span class="nc" id="L84">    }</span>
+
+    @Override
+    public Node topic() {
+<span class="fc" id="L88">        return node;</span>
+    }
+
+    @Override
+    public RdfStream distinct() {
+<span class="nc" id="L93">        return new DefaultRdfStream(topic(), stream.distinct());</span>
+    }
+
+    @Override
+    public RdfStream filter(final Predicate&lt;? super Triple&gt; predicate) {
+<span class="fc" id="L98">        return new DefaultRdfStream(topic(), stream.filter(predicate));</span>
+    }
+
+    @Override
+    public RdfStream limit(final long maxSize) {
+<span class="nc" id="L103">        return new DefaultRdfStream(topic(), stream.limit(maxSize));</span>
+    }
+
+    @Override
+    public RdfStream peek(final Consumer&lt;? super Triple&gt; action) {
+<span class="nc" id="L108">        return new DefaultRdfStream(topic(), stream.peek(action));</span>
+    }
+
+    @Override
+    public RdfStream skip(final long n) {
+<span class="nc" id="L113">        return new DefaultRdfStream(topic(), stream.skip(n));</span>
+    }
+
+    @Override
+    public RdfStream sorted() {
+<span class="nc" id="L118">        return new DefaultRdfStream(topic(), stream.sorted());</span>
+    }
+
+    @Override
+    public RdfStream sorted(final Comparator&lt;? super Triple&gt; comparator) {
+<span class="nc" id="L123">        return new DefaultRdfStream(topic(), stream.sorted(comparator));</span>
+    }
+
+    @Override
+    public RdfStream onClose(final Runnable closeHandler) {
+<span class="nc" id="L128">        return new DefaultRdfStream(topic(), stream.onClose(closeHandler));</span>
+    }
+
+    @Override
+    public RdfStream parallel() {
+<span class="nc" id="L133">        return new DefaultRdfStream(topic(), stream.parallel());</span>
+    }
+
+    @Override
+    public RdfStream sequential() {
+<span class="fc" id="L138">        return new DefaultRdfStream(topic(), stream.sequential());</span>
+    }
+
+    @Override
+    public RdfStream unordered() {
+<span class="nc" id="L143">        return new DefaultRdfStream(topic(), stream.unordered());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
