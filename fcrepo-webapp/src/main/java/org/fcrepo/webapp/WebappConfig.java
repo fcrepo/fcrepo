@@ -28,6 +28,8 @@ import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
 
 import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -42,6 +44,8 @@ import com.google.common.eventbus.EventBus;
  */
 @Configuration
 public class WebappConfig {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(WebappConfig.class);
 
     /**
      * Task scheduler used for cleaning up transactions
@@ -80,8 +84,9 @@ public class WebappConfig {
      * @return executor intended to be used by the Guava event bus
      */
     @Bean
-    public ExecutorService eventBusExecutor() {
-        return Executors.newCachedThreadPool();
+    public ExecutorService eventBusExecutor(final FedoraPropsConfig propsConfig) {
+        LOGGER.debug("Event bus threads: {}", propsConfig);
+        return Executors.newFixedThreadPool(propsConfig.getEventBusThreads());
     }
 
     /**
