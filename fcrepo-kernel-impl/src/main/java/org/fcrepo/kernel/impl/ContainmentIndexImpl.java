@@ -251,7 +251,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             " = :transactionId AND t." +  OPERATION_COLUMN +
             " = 'delete' AND t." + PARENT_COLUMN + " = r." + PARENT_COLUMN + " AND r." +
             END_TIME_COLUMN + " IS NULL)" +
-            " WHERE EXISTS (SELECT * FROM " + TRANSACTION_OPERATIONS_TABLE + " t WHERE t." + FEDORA_ID_COLUMN +
+            " WHERE EXISTS (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE + " t WHERE t." + FEDORA_ID_COLUMN +
             " = r." + FEDORA_ID_COLUMN + " AND t." + TRANSACTION_ID_COLUMN + " = :transactionId AND t." +
             OPERATION_COLUMN + " = 'delete' AND t." + PARENT_COLUMN + " = r." + PARENT_COLUMN + " AND r." +
             END_TIME_COLUMN + " IS NULL)";
@@ -281,7 +281,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      * Remove from the main table all rows from transaction operation table marked 'purge' for this transaction.
      */
     private static final String COMMIT_PURGE_RECORDS = "DELETE FROM " + RESOURCES_TABLE + " WHERE " +
-            "EXISTS (SELECT * FROM " + TRANSACTION_OPERATIONS_TABLE + " t WHERE t." +
+            "EXISTS (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE + " t WHERE t." +
             TRANSACTION_ID_COLUMN + " = :transactionId AND t." +  OPERATION_COLUMN + " = 'purge' AND" +
             " t." + FEDORA_ID_COLUMN + " = " + RESOURCES_TABLE + "." + FEDORA_ID_COLUMN +
             " AND t." + PARENT_COLUMN + " = " + RESOURCES_TABLE + "." + PARENT_COLUMN + ")";

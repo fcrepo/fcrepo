@@ -18,6 +18,7 @@ SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
 PREPARE stmt FROM @sqlstmt;
 EXECUTE stmt;
 
+-- Create an index to select children of a memento
 SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
     WHERE table_name = 'containment' AND index_name = 'containment_idx2' AND table_schema = database());
 SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
@@ -25,6 +26,7 @@ SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
 PREPARE stmt FROM @sqlstmt;
 EXECUTE stmt;
 
+-- Index for resource exists queries
 SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
     WHERE table_name = 'containment' AND index_name = 'containment_idx3' AND table_schema = database());
 SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
@@ -32,12 +34,6 @@ SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
 PREPARE stmt FROM @sqlstmt;
 EXECUTE stmt;
 
-SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
-    WHERE table_name = 'containment' AND index_name = 'containment_idx4' AND table_schema = database());
-SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
-    'CREATE INDEX containment_idx4 ON containment (fedora_id, start_time, end_time)');
-PREPARE stmt FROM @sqlstmt;
-EXECUTE stmt;
 
 -- Holds operations to add or delete records from the RESOURCES_TABLE.
 CREATE TABLE IF NOT EXISTS containment_transactions (
@@ -47,7 +43,7 @@ CREATE TABLE IF NOT EXISTS containment_transactions (
     end_time datetime NULL,
     transaction_id varchar(255) NOT NULL,
     operation varchar(10) NOT NULL,
-    UNIQUE INDEX (fedora_id, transaction_id)
+    UNIQUE (fedora_id, transaction_id)
 );
 
 -- Create an index to speed searches for records related to adding/excluding transaction records
