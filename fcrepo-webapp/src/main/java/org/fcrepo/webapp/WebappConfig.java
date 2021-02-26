@@ -73,6 +73,7 @@ public class WebappConfig {
     /**
      * Fedora's lightweight internal event bus. Currently memory-resident.
      *
+     * @param propsConfig config
      * @return event bus
      */
     @Bean
@@ -81,6 +82,7 @@ public class WebappConfig {
     }
 
     /**
+     * @param propsConfig config
      * @return executor intended to be used by the Guava event bus
      */
     @Bean
