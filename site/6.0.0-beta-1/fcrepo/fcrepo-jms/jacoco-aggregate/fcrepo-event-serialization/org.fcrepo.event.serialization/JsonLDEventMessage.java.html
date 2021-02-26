@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>JsonLDEventMessage.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository JMS Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-event-serialization</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.event.serialization</a> &gt; <span class="el_source">JsonLDEventMessage.java</span></div><h1>JsonLDEventMessage.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.event.serialization;
+
+import static java.time.format.DateTimeFormatter.ISO_INSTANT;
+import static java.util.stream.Collectors.toList;
+
+import static org.fcrepo.kernel.api.RdfLexicon.ACTIVITY_STREAMS_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.PROV_NAMESPACE;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.fcrepo.kernel.api.observer.Event;
+
+import org.slf4j.Logger;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+/**
+ * A structure used for serializing a Event into JSON
+ * 
+ * @author acoburn
+ * @author dbernstein
+ * @author whikloj
+ */
+<span class="fc" id="L50">public class JsonLDEventMessage {</span>
+
+    @JsonIgnore
+<span class="fc" id="L53">    private static final Logger LOGGER = getLogger(JsonLDEventMessage.class);</span>
+
+    public static class ContextElement {
+
+        @JsonProperty(&quot;@id&quot;)
+        public final String id;
+
+        @JsonProperty(&quot;@type&quot;)
+        public final String type;
+
+<span class="fc" id="L63">        public ContextElement(final String id) {</span>
+<span class="fc" id="L64">            this.id = id;</span>
+<span class="fc" id="L65">            this.type = &quot;@id&quot;;</span>
+<span class="fc" id="L66">        }</span>
+
+<span class="nc" id="L68">        public ContextElement(final String id, final String type) {</span>
+<span class="nc" id="L69">            this.id = id;</span>
+<span class="nc" id="L70">            this.type = type;</span>
+<span class="nc" id="L71">        }</span>
+    }
+
+<span class="fc" id="L74">    public static class Context {</span>
+
+<span class="fc" id="L76">        public final String prov = &quot;http://www.w3.org/ns/prov#&quot;;</span>
+
+<span class="fc" id="L78">        public final String dcterms = &quot;http://purl.org/dc/terms/&quot;;</span>
+
+<span class="fc" id="L80">        public final String type = &quot;@type&quot;;</span>
+
+<span class="fc" id="L82">        public final String id = &quot;@id&quot;;</span>
+
+<span class="fc" id="L84">        public final ContextElement isPartOf = new ContextElement(&quot;dcterms:isPartOf&quot;);</span>
+
+    }
+
+    public static class Object {
+
+        @JsonProperty(&quot;type&quot;)
+        public List&lt;String&gt; type;
+
+        @JsonProperty(&quot;id&quot;)
+        public String id;
+
+        @JsonProperty(&quot;isPartOf&quot;)
+        public String isPartOf;
+
+<span class="fc" id="L99">        public Object() {</span>
+            // Needed to deserialize class.
+<span class="fc" id="L101">        }</span>
+
+<span class="fc" id="L103">        public Object(final String id, final List&lt;String&gt; type, final String isPartOf) {</span>
+<span class="fc" id="L104">            this.type = type;</span>
+<span class="fc" id="L105">            this.id = id;</span>
+<span class="fc" id="L106">            this.isPartOf = isPartOf;</span>
+<span class="fc" id="L107">        }</span>
+    }
+
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = &quot;type&quot;)
+    @JsonSubTypes({
+            @JsonSubTypes.Type(value = Application.class, name = &quot;Application&quot;),
+            @JsonSubTypes.Type(value = Person.class, name = &quot;Person&quot;) }
+    )
+    public static class Actor {
+        @JsonIgnore
+        public String type;
+
+<span class="fc" id="L119">        public Actor(final String type) {</span>
+<span class="fc" id="L120">            this.type = type;</span>
+<span class="fc" id="L121">        }</span>
+    }
+
+    public static class Application extends Actor {
+
+        @JsonProperty(&quot;name&quot;)
+        public String name;
+
+        public Application() {
+<span class="fc" id="L130">            super(&quot;Application&quot;);</span>
+<span class="fc" id="L131">        }</span>
+
+        public Application(final String name, final String type) {
+<span class="fc" id="L134">            super(type);</span>
+<span class="fc" id="L135">            this.name = name;</span>
+<span class="fc" id="L136">        }</span>
+    }
+
+    public static class Person extends Actor {
+
+        @JsonProperty(&quot;id&quot;)
+        public String id;
+
+        public Person() {
+<span class="fc" id="L145">            super(&quot;Person&quot;);</span>
+<span class="fc" id="L146">        }</span>
+
+        public Person(final String id, final String type) {
+<span class="fc" id="L149">            super(type);</span>
+<span class="fc" id="L150">            this.id = id;</span>
+<span class="fc" id="L151">        }</span>
+    }
+
+    @JsonProperty(&quot;id&quot;)
+    public String id;
+
+    @JsonProperty(&quot;type&quot;)
+    public List&lt;String&gt; type;
+
+    @JsonProperty(&quot;name&quot;)
+    public String name;
+
+    @JsonProperty(&quot;published&quot;)
+    public Instant published;
+
+
+    @JsonProperty(&quot;actor&quot;)
+    public List&lt;Actor&gt; actor;
+
+    @JsonProperty(&quot;object&quot;)
+    public Object object;
+
+    @JsonProperty(&quot;@context&quot;)
+    public List&lt;java.lang.Object&gt; context;
+
+    public void setPublished(final String published) {
+<span class="fc" id="L177">        this.published = Instant.from(ISO_INSTANT.parse(published));</span>
+<span class="fc" id="L178">    }</span>
+
+    /**
+     * Populate a JsonLDEventMessage from a Event
+     * 
+     * @param evt The Fedora event
+     * @return a JsonLDEventMessage
+     */
+    public static JsonLDEventMessage from(final Event evt) {
+
+<span class="fc" id="L188">        final String baseUrl = evt.getBaseUrl();</span>
+
+        // build objectId
+<span class="fc" id="L191">        final String objectId = baseUrl + evt.getPath();</span>
+        // build event types list
+<span class="fc" id="L193">        final List&lt;String&gt; types = evt.getTypes()</span>
+<span class="fc" id="L194">                .stream()</span>
+<span class="fc" id="L195">                .map(rdfType -&gt; rdfType.getTypeAbbreviated())</span>
+<span class="fc" id="L196">                .collect(toList());</span>
+        // comma-separated list for names of events (since name requires string rather than array)
+<span class="fc" id="L198">        final String name = String.join(&quot;, &quot;, evt.getTypes()</span>
+<span class="fc" id="L199">                .stream()</span>
+<span class="fc" id="L200">                .map(rdfType -&gt; rdfType.getName())</span>
+<span class="fc" id="L201">                .collect(toList()));</span>
+        // build resource types list
+<span class="fc" id="L203">        final List&lt;String&gt; resourceTypes = new ArrayList&lt;&gt;(evt.getResourceTypes());</span>
+<span class="pc bpc" id="L204" title="1 of 2 branches missed.">        if (!resourceTypes.contains(PROV_NAMESPACE + &quot;Entity&quot;)) {</span>
+<span class="fc" id="L205">            resourceTypes.add(PROV_NAMESPACE + &quot;Entity&quot;);</span>
+        }
+
+        // build actors list
+<span class="fc" id="L209">        final List&lt;Actor&gt; actor = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L210">        actor.add(new Person(Objects.toString(evt.getUserURI()), &quot;Person&quot;));</span>
+<span class="fc" id="L211">        final String softwareAgent = evt.getUserAgent();</span>
+<span class="fc bfc" id="L212" title="All 2 branches covered.">        if (softwareAgent != null) {</span>
+<span class="fc" id="L213">            actor.add(new Application(softwareAgent, &quot;Application&quot;));</span>
+        }
+
+<span class="fc" id="L216">        final JsonLDEventMessage msg = new JsonLDEventMessage();</span>
+
+<span class="fc" id="L218">        msg.id = evt.getEventID();</span>
+<span class="fc" id="L219">        msg.context = Arrays.asList(ACTIVITY_STREAMS_NAMESPACE, new Context());</span>
+<span class="fc" id="L220">        msg.actor = actor;</span>
+<span class="fc" id="L221">        msg.published = evt.getDate();</span>
+<span class="fc" id="L222">        msg.type = types;</span>
+<span class="fc" id="L223">        msg.name = name;</span>
+<span class="fc" id="L224">        msg.object = new Object(objectId, resourceTypes, baseUrl);</span>
+<span class="fc" id="L225">        return msg;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
