@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ConfigurableHierarchicalSupplier.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Persistence API Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.api.services.functions</a> &gt; <span class="el_source">ConfigurableHierarchicalSupplier.java</span></div><h1>ConfigurableHierarchicalSupplier.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.api.services.functions;
+
+import org.springframework.stereotype.Component;
+
+import static java.util.UUID.randomUUID;
+
+import java.util.StringJoiner;
+import java.util.stream.IntStream;
+
+/**
+ * Unique value minter that creates hierarchical IDs from a UUID
+ *
+ * @author rdfloyd
+ * @author whikloj
+ */
+@Component
+public class ConfigurableHierarchicalSupplier implements UniqueValueSupplier {
+
+    private static final int DEFAULT_LENGTH = 0;
+    private static final int DEFAULT_COUNT = 0;
+
+    private final int length;
+    private final int count;
+
+
+    /**
+     * Mint a hierarchical identifier with args to control length and count of the pairtree. A length or count of ZERO
+     * will return a non-hierarchical identifier.
+     *
+     * @param desiredLength the desired length of pairtree parts
+     * @param desiredCount the desired number of pairtree parts
+     */
+<span class="fc" id="L50">    public ConfigurableHierarchicalSupplier(final int desiredLength, final int desiredCount) {</span>
+<span class="fc" id="L51">        length = desiredLength;</span>
+<span class="fc" id="L52">        count = desiredCount;</span>
+<span class="fc" id="L53">    }</span>
+
+    /**
+     * Mint a unique identifier by default using defaults
+     *
+     */
+<span class="fc" id="L59">    public ConfigurableHierarchicalSupplier() {</span>
+<span class="fc" id="L60">        length = DEFAULT_LENGTH;</span>
+<span class="fc" id="L61">        count = DEFAULT_COUNT;</span>
+<span class="fc" id="L62">    }</span>
+
+    /**
+     * Mint a unique identifier as a UUID
+     *
+     * @return uuid
+     */
+    @Override
+    public String get() {
+
+<span class="fc" id="L72">        final String s = randomUUID().toString();</span>
+        final String id;
+
+<span class="pc bpc" id="L75" title="1 of 4 branches missed.">        if (count &gt; 0 &amp;&amp; length &gt; 0) {</span>
+<span class="fc" id="L76">            final StringJoiner joiner = new StringJoiner(&quot;/&quot;, &quot;&quot;, &quot;/&quot; + s);</span>
+
+<span class="fc" id="L78">            IntStream.rangeClosed(0, count - 1)</span>
+<span class="fc" id="L79">            .forEach(x -&gt; joiner.add(s.substring(x * length, (x + 1) * length)));</span>
+<span class="fc" id="L80">            id = joiner.toString();</span>
+<span class="fc" id="L81">        } else {</span>
+<span class="fc" id="L82">            id = s;</span>
+        }
+<span class="fc" id="L84">        return id;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

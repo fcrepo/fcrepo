@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>SubjectMappingUtil.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Persistence API Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.api.utils</a> &gt; <span class="el_source">SubjectMappingUtil.java</span></div><h1>SubjectMappingUtil.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.api.utils;
+
+import static org.apache.jena.graph.NodeFactory.createURI;
+
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+
+/**
+ * Utility for remapping subjects in rdf triples.
+ *
+ * @author bbpennel
+ */
+public class SubjectMappingUtil {
+
+    private SubjectMappingUtil() {
+        // Empty constructor for static utility class
+    }
+
+    /**
+     * Maps the subject of t from resourceUri to destinationUri to produce a new Triple.
+     * If the triple does not have the subject resourceUri, then the triple is unchanged.
+     *
+     * @param t triple to be remapped.
+     * @param resourceUri resource subject uri to be remapped.
+     * @param destinationUri subject uri for the resultant triple.
+     * @return triple with subject remapped to destinationUri or the original subject.
+     */
+    public static Triple mapSubject(final Triple t, final String resourceUri, final String destinationUri) {
+<span class="nc" id="L46">        final Node destinationNode = createURI(destinationUri);</span>
+<span class="nc" id="L47">        return mapSubject(t, resourceUri, destinationNode);</span>
+    }
+
+    /**
+     * Maps the subject of t from resourceUri to destinationNode to produce a new Triple.
+     * If the triple does not have the subject resourceUri, then the triple is unchanged.
+     *
+     * @param t triple to be remapped.
+     * @param resourceUri resource subject uri to be remapped.
+     * @param destinationNode subject node for the resultant triple.
+     * @return triple with subject remapped to destinationNode or the original subject.
+     */
+    public static Triple mapSubject(final Triple t, final String resourceUri, final Node destinationNode) {
+<span class="nc" id="L60">        final Node tripleSubj = t.getSubject();</span>
+<span class="nc" id="L61">        final String tripleSubjUri = tripleSubj.getURI();</span>
+        final Node subject;
+<span class="nc bnc" id="L63" title="All 2 branches missed.">        if (tripleSubjUri.equals(resourceUri)) {</span>
+<span class="nc" id="L64">            subject = destinationNode;</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">        } else if (tripleSubjUri.startsWith(resourceUri)) {</span>
+            // If the subject begins with the originating resource uri, such as a hash uri, then rebase
+            // the portions of the subject after the resource uri to the destination uri.
+<span class="nc" id="L68">            final String suffix = tripleSubjUri.substring(resourceUri.length());</span>
+<span class="nc" id="L69">            subject = createURI(destinationNode.getURI() + suffix);</span>
+<span class="nc" id="L70">        } else {</span>
+<span class="nc" id="L71">            subject = t.getSubject();</span>
+        }
+<span class="nc" id="L73">        return new Triple(subject, t.getPredicate(), t.getObject());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
