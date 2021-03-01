@@ -58,6 +58,7 @@ public class FedoraPropsConfig extends BasePropsConfig {
     private static final String FCREPO_JMS_DESTINATION_TYPE = "fcrepo.jms.destination.type";
     private static final String FCREPO_JMS_DESTINATION_NAME = "fcrepo.jms.destination.name";
     public static final String FCREPO_JMS_ENABLED = "fcrepo.jms.enabled";
+    private static final String FCREPO_EVENT_THREADS = "fcrepo.event.threads";
 
     private static final String DATA_DIR_DEFAULT_VALUE = "data";
     private static final String LOG_DIR_DEFAULT_VALUE = "logs";
@@ -121,6 +122,9 @@ public class FedoraPropsConfig extends BasePropsConfig {
 
     @Value("${" + FCREPO_JMS_DESTINATION_NAME + ":fedora}")
     private String jmsDestinationName;
+
+    @Value("${" + FCREPO_EVENT_THREADS + ":1}")
+    private int eventBusThreads;
 
     @PostConstruct
     private void postConstruct() throws IOException {
@@ -303,4 +307,14 @@ public class FedoraPropsConfig extends BasePropsConfig {
         return jmsDestinationName;
     }
 
+    /**
+     * @return the number of threads to allocate in the event bus thread pool
+     *         if this number is less than 1, 1 is returned
+     */
+    public int getEventBusThreads() {
+        if (eventBusThreads < 1) {
+            return 1;
+        }
+        return eventBusThreads;
+    }
 }

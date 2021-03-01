@@ -18,6 +18,9 @@
 
 package org.fcrepo.webapp;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.api.ExternalContentHandlerFactory;
 import org.fcrepo.http.api.ExternalContentPathValidator;
@@ -25,10 +28,13 @@ import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
 
 import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
+import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 
 /**
@@ -38,6 +44,8 @@ import com.google.common.eventbus.EventBus;
  */
 @Configuration
 public class WebappConfig {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(WebappConfig.class);
 
     /**
      * Task scheduler used for cleaning up transactions
@@ -65,12 +73,22 @@ public class WebappConfig {
     /**
      * Fedora's lightweight internal event bus. Currently memory-resident.
      *
+     * @param propsConfig config
      * @return event bus
      */
     @Bean
-    public EventBus eventBus() {
-        // TODO this should be an async event bus: https://jira.lyrasis.org/browse/FCREPO-3587
-        return new EventBus();
+    public EventBus eventBus(final FedoraPropsConfig propsConfig) {
+        return new AsyncEventBus(eventBusExecutor(propsConfig));
+    }
+
+    /**
+     * @param propsConfig config
+     * @return executor intended to be used by the Guava event bus
+     */
+    @Bean
+    public ExecutorService eventBusExecutor(final FedoraPropsConfig propsConfig) {
+        LOGGER.debug("Event bus threads: {}", propsConfig);
+        return Executors.newFixedThreadPool(propsConfig.getEventBusThreads());
     }
 
     /**
