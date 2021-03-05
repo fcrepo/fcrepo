@@ -106,6 +106,7 @@
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>${javadoc.plugin.version}</version>
           <configuration>
+            <source>8</source>
             <linksource>true</linksource>
             <quiet>true</quiet>
           </configuration>

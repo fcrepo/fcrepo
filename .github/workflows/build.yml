@@ -30,7 +30,11 @@ jobs:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
-    - name: Check java-opts
-      run: echo $JAVA_OPTS
+    - name: Set JAVA_OPTS
+      run: export JAVA_OPTS=-Xmx512m
+    - name: Build and test with Maven
+      run: mvn -Dfcrepo.streaming.parallel=true install -B -V
+      if: ${{ matrix.java == 8 }}
     - name: Build with Maven
-      run: mvn -Dfcrepo.streaming.parallel=true clean install -B -V
+      run: mvn clean install -B -DskipTests
+      if: ${{ matrix.java == 11 }}
