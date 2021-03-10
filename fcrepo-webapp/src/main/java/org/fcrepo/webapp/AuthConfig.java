@@ -33,11 +33,13 @@ import org.fcrepo.auth.webac.WebACAuthorizingRealm;
 import org.fcrepo.auth.webac.WebACFilter;
 import org.fcrepo.config.AuthPropsConfig;
 import org.fcrepo.config.ConditionOnPropertyTrue;
+import org.fcrepo.config.FedoraPropsConfig;
 
 import org.apache.shiro.realm.AuthenticatingRealm;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.spring.LifecycleBeanPostProcessor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
+import org.apache.shiro.web.filter.InvalidRequestFilter;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.shiro.web.mgt.WebSecurityManager;
 import org.slf4j.Logger;
@@ -184,6 +186,22 @@ public class AuthConfig {
     @Order(2)
     public Filter webACFilter() {
         return new WebACFilter();
+    }
+
+    /**
+     * Shiro's filter that rejects invalid requests. Can be configured to reject requests containing specific characters
+     *
+     * @param propsConfig config props
+     * @return invalid request filter
+     */
+    @Bean
+    @Order(6)
+    public Filter invalidRequest(final FedoraPropsConfig propsConfig) {
+        final var filter = new InvalidRequestFilter();
+        filter.setBlockNonAscii(!propsConfig.isPathAllowNonAscii());
+        filter.setBlockBackslash(!propsConfig.isPathAllowBackslash());
+        filter.setBlockBackslash(!propsConfig.isPathAllowSemicolon());
+        return filter;
     }
 
     /**

@@ -59,6 +59,9 @@ public class FedoraPropsConfig extends BasePropsConfig {
     private static final String FCREPO_JMS_DESTINATION_NAME = "fcrepo.jms.destination.name";
     public static final String FCREPO_JMS_ENABLED = "fcrepo.jms.enabled";
     private static final String FCREPO_EVENT_THREADS = "fcrepo.event.threads";
+    private static final String FCREPO_PATH_ALLOW_NON_ASCII = "fcrepo.path.allow.non-ascii";
+    private static final String FCREPO_PATH_ALLOW_BACKSLASH = "fcrepo.path.allow.backslash";
+    private static final String FCREPO_PATH_ALLOW_SEMICOLON = "fcrepo.path.allow.semicolon";
 
     private static final String DATA_DIR_DEFAULT_VALUE = "data";
     private static final String LOG_DIR_DEFAULT_VALUE = "logs";
@@ -125,6 +128,15 @@ public class FedoraPropsConfig extends BasePropsConfig {
 
     @Value("${" + FCREPO_EVENT_THREADS + ":1}")
     private int eventBusThreads;
+
+    @Value("${" + FCREPO_PATH_ALLOW_NON_ASCII + ":true}")
+    private boolean pathAllowNonAscii;
+
+    @Value("${" + FCREPO_PATH_ALLOW_BACKSLASH + ":true}")
+    private boolean pathAllowBackslash;
+
+    @Value("${" + FCREPO_PATH_ALLOW_SEMICOLON + ":true}")
+    private boolean pathAllowSemicolon;
 
     @PostConstruct
     private void postConstruct() throws IOException {
@@ -316,5 +328,26 @@ public class FedoraPropsConfig extends BasePropsConfig {
             return 1;
         }
         return eventBusThreads;
+    }
+
+    /**
+     * @return indicates if non-ascii chars should be allowed in URL paths
+     */
+    public boolean isPathAllowNonAscii() {
+        return pathAllowNonAscii;
+    }
+
+    /**
+     * @return indicates if backslash chars should be allowed in URL paths
+     */
+    public boolean isPathAllowBackslash() {
+        return pathAllowBackslash;
+    }
+
+    /**
+     * @return indicates if semicolon chars should be allowed in URL paths
+     */
+    public boolean isPathAllowSemicolon() {
+        return pathAllowSemicolon;
     }
 }
