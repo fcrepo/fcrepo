@@ -317,5 +317,4 @@ public class FedoraPropsConfig extends BasePropsConfig {
         }
         return eventBusThreads;
     }
-
 }
