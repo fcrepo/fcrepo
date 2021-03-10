@@ -417,7 +417,7 @@ public class OcflPropsConfig extends BasePropsConfig {
      * @return number of available processors minus 1.
      */
     private static long computeDefaultReindexThreads() {
-        return availableThreads - 1;
+        return Math.max(availableThreads - 1, 1);
     }
 
     /**

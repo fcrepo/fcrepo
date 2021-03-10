@@ -78,7 +78,15 @@ public class ReindexManager {
         workers = new ArrayList<>();
         completedCount = new AtomicInteger(0);
         errorCount = new AtomicInteger(0);
-        for (var foo = 0; foo < config.getReindexingThreads(); foo += 1) {
+
+        final var workerCount = config.getReindexingThreads();
+
+        if (workerCount < 1) {
+            throw new IllegalStateException(String.format("Reindexing requires at least 1 thread. Found: %s",
+                    workerCount));
+        }
+
+        for (var foo = 0; foo < workerCount; foo += 1) {
             workers.add(new ReindexWorker(this, this.reindexService, transactionId, this.failOnError));
         }
     }
