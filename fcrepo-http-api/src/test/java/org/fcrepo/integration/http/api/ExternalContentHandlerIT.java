@@ -38,7 +38,18 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.config.RequestConfig;
@@ -1081,6 +1092,59 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         final HttpDelete deleteTomb = new HttpDelete(rescLoc + "/fcr:tombstone");
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteTomb));
         assertTrue("External binary must exist after deleting tombstone", localFile.exists());
+    }
+
+    @Test
+    public void testProxyLocalFileConcurrent() throws Throwable {
+        final MessageDigest md = MessageDigest.getInstance("SHA-1");
+        final List<Thread> ingestThreads = new ArrayList<>();
+        for (int i = 0; i < 20; i++) {
+            // Generate random content
+            final byte[] contentBytes = new byte[4096 * 16];
+            new Random().nextBytes(contentBytes);
+            final File localFile = tempFolder.newFile();
+            FileUtils.writeByteArrayToFile(localFile, contentBytes);
+            final String sha1 = Hex.encodeHexString(md.digest(contentBytes));
+
+            ingestThreads.add(new Thread(() -> {
+                final String id = getRandomUniqueId();
+                final HttpPut httpPut = putObjMethod(id);
+                httpPut.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+                final String fileUri = localFile.toURI().toString();
+                httpPut.addHeader(LINK, getExternalContentLinkHeader(fileUri, "proxy", "text/plain"));
+                httpPut.addHeader("Digest", "sha=" + sha1);
+
+                try (final CloseableHttpResponse response = execute(httpPut)) {
+                    assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+                    final HttpGet get = new HttpGet(getLocation(response));
+                    try (final CloseableHttpResponse getResponse = execute(get)) {
+                        assertEquals(OK.getStatusCode(), getStatus(getResponse));
+                        assertContentLocation(getResponse, fileUri);
+                        assertContentLength(getResponse, contentBytes.length);
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }));
+        }
+
+        final ExecutorService executor = Executors.newFixedThreadPool(5);
+        try {
+            final List<Future<?>> futures = new ArrayList<>();
+            for (final Thread ingestThread : ingestThreads) {
+                futures.add(executor.submit(ingestThread));
+            }
+
+            try {
+                for (final Future<?> future : futures) {
+                    future.get(5, TimeUnit.SECONDS);
+                }
+            } catch (ExecutionException e) {
+                throw e.getCause();
+            }
+        } finally {
+            executor.shutdown();
+        }
     }
 
     private HttpPut setupExternalContentPut(final String externalLocation, final String handling,

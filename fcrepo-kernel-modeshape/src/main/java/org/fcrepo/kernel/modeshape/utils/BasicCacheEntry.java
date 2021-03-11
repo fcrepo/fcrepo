@@ -17,13 +17,8 @@
  */
 package org.fcrepo.kernel.modeshape.utils;
 
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
-import org.fcrepo.kernel.api.utils.CacheEntry;
-import org.fcrepo.kernel.api.utils.ContentDigest;
-import org.fcrepo.kernel.api.utils.FixityResult;
-
-import org.slf4j.Logger;
+import static java.util.Collections.singletonList;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,8 +31,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static java.util.Collections.singletonList;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
+import org.fcrepo.kernel.api.utils.CacheEntry;
+import org.fcrepo.kernel.api.utils.ContentDigest;
+import org.fcrepo.kernel.api.utils.FixityResult;
+import org.slf4j.Logger;
 
 /**
  * Cache entry that wraps a binary stream and provides
@@ -47,9 +46,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public abstract class BasicCacheEntry implements CacheEntry {
 
-    private static final int DEV_NULL_BUFFER_SIZE = 4096;
-
-    private static final byte[] devNull = new byte[DEV_NULL_BUFFER_SIZE];
+    private static final int BUFFER_SIZE = 4096;
 
     private static final Logger LOGGER = getLogger(BasicCacheEntry.class);
 
@@ -62,12 +59,12 @@ public abstract class BasicCacheEntry implements CacheEntry {
      */
     @Override
     public Collection<FixityResult> checkFixity(final String algorithm) {
-
         try (FixityInputStream fixityInputStream = new FixityInputStream(
                 this.getInputStream(), MessageDigest.getInstance(algorithm))) {
 
+            final byte[] readBytes = new byte[BUFFER_SIZE];
             // actually calculate the digest by consuming the stream
-            while (fixityInputStream.read(devNull) != -1) { }
+            while (fixityInputStream.read(readBytes) != -1) { }
 
             final URI calculatedChecksum =
                     ContentDigest.asURI(algorithm, fixityInputStream.getMessageDigest().digest());
@@ -113,7 +110,8 @@ public abstract class BasicCacheEntry implements CacheEntry {
             }
 
             // calculate the digest by consuming the stream
-            while (digestStream.read(devNull) != -1) { }
+            final byte[] readBytes = new byte[BUFFER_SIZE];
+            while (digestStream.read(readBytes) != -1) { }
 
             return digestInputStreams.entrySet().stream()
                 .map(entry -> ContentDigest.asURI(entry.getKey(), entry.getValue().getMessageDigest().digest()))
