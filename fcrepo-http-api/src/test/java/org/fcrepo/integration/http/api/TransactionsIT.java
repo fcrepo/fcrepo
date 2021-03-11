@@ -58,6 +58,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.sql.DataSource;
 import javax.ws.rs.core.Response.Status;
 
 import org.fcrepo.common.lang.CheckedRunnable;
@@ -84,6 +85,7 @@ import org.apache.http.util.EntityUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestExecutionListeners;
 
 /**
@@ -105,17 +107,24 @@ public class TransactionsIT extends AbstractResourceIT {
     private DefaultOcflObjectSessionFactory objectSessionFactory;
     private ContainmentIndex containmentIndex;
     private OcflPropsConfig ocflConfig;
+    private JdbcTemplate jdbcTemplate;
 
     @Before
     public void setup() {
         objectSessionFactory = getBean(DefaultOcflObjectSessionFactory.class);
         containmentIndex = getBean("containmentIndex", ContainmentIndex.class);
         ocflConfig = getBean(OcflPropsConfig.class);
+        final var dataSource = getBean(DataSource.class);
+        jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
     @After
     public void after() {
         objectSessionFactory.setDefaultCommitType(CommitType.NEW_VERSION);
+    }
+
+    private void dropContainment() {
+        jdbcTemplate.execute("DROP TABLE containment");
     }
 
     @Test
@@ -222,6 +231,45 @@ public class TransactionsIT extends AbstractResourceIT {
 
         assertEquals("Expected to not find our object in transaction after rollback",
                 CONFLICT.getStatusCode(), getStatus(addTxTo(new HttpGet(newLocation), txLocation)));
+    }
+
+    @Test
+    public void testRollbackShouldNotLeaveDbInPartiallyUpdatedState() throws IOException {
+        /* create a tx */
+        final String txLocation = createTransaction();
+
+        /* create a new object inside the tx */
+        final String newLocation;
+        final HttpPost postNew = new HttpPost(serverAddress);
+        postNew.addHeader(ATOMIC_ID_HEADER, txLocation);
+        try (final CloseableHttpResponse resp = execute(postNew)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(resp));
+            newLocation = getLocation(resp);
+        }
+
+        final var resourceId = StringUtils.substringAfterLast(newLocation, "/");
+
+        /* fetch the created tx from the endpoint */
+        try (final CloseableDataset dataset = getDataset(addTxTo(new HttpGet(newLocation), txLocation))) {
+            assertTrue(dataset.asDatasetGraph().contains(ANY, createURI(newLocation), ANY, ANY));
+        }
+        /* fetch the created tx from the endpoint */
+        assertEquals("Expected to not find our object within the scope of the transaction",
+                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(newLocation)));
+
+        // Drop the entire containment table in order to cause an error.
+        dropContainment();
+
+        // Commit transaction -- should fail
+        assertEquals(CONFLICT.getStatusCode(), getStatus(new HttpPut(txLocation)));
+
+        assertEquals("Rolled back transaction should be gone",
+                GONE.getStatusCode(), getStatus(new HttpGet(txLocation)));
+
+        assertEquals("Expected to not find our object after rollback",
+                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(newLocation)));
+
+        assertObjectDoesNotExistOnDisk(FedoraId.create(resourceId));
     }
 
     @Test
