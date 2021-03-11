@@ -180,4 +180,17 @@ public class SanityCheckIT {
         final HttpGet getLink = new HttpGet(linkURI);
         executeAndVerify(getLink, SC_OK);
     }
+
+    @Test
+    public void testUnicodeCharsAllowed() throws Exception {
+        final var id = "ÅŤéșţ!";
+        final var url = serverAddress + "/" + id;
+
+        final HttpPut put = new HttpPut(url);
+        put.setEntity(new StringEntity("testing"));
+        put.setHeader(CONTENT_TYPE, "text/plain");
+        executeAndVerify(put, SC_CREATED);
+
+        executeAndVerify(new HttpGet(url), SC_OK);
+    }
 }

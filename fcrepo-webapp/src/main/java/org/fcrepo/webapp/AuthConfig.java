@@ -38,6 +38,7 @@ import org.apache.shiro.realm.AuthenticatingRealm;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.spring.LifecycleBeanPostProcessor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
+import org.apache.shiro.web.filter.InvalidRequestFilter;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.shiro.web.mgt.WebSecurityManager;
 import org.slf4j.Logger;
@@ -184,6 +185,21 @@ public class AuthConfig {
     @Order(2)
     public Filter webACFilter() {
         return new WebACFilter();
+    }
+
+    /**
+     * Shiro's filter for rejecting invalid requests
+     *
+     * @return invalid request filter
+     */
+    @Bean
+    @Order(6)
+    public Filter invalidRequest() {
+        final var filter = new InvalidRequestFilter();
+        filter.setBlockNonAscii(false);
+        filter.setBlockBackslash(false);
+        filter.setBlockSemicolon(false);
+        return filter;
     }
 
     /**
