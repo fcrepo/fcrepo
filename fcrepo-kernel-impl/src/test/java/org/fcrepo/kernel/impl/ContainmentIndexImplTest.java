@@ -26,7 +26,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
@@ -40,7 +39,6 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
 import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 
@@ -397,23 +395,23 @@ public class ContainmentIndexImplTest {
         stubObject("transaction1");
         assertEquals(0, containmentIndex.getContains(null, parent1.getFedoraId()).count());
         assertEquals(0, containmentIndex.getContains(null, parent2.getFedoraId()).count());
+        // Add it to the first parent.
         containmentIndex.addContainedBy(transaction1.getId(), parent1.getFedoraId(), child1.getFedoraId());
+        assertEquals(0, containmentIndex.getContains(null, parent1.getFedoraId()).count());
+        assertEquals(0, containmentIndex.getContains(null, parent2.getFedoraId()).count());
+        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent1.getFedoraId()).count());
+        assertEquals(0, containmentIndex.getContains(transaction1.getId(), parent2.getFedoraId()).count());
+        // When you add it to the second parent, it is altered and the first relationship is overwritten.
         containmentIndex.addContainedBy(transaction1.getId(), parent2.getFedoraId(), child1.getFedoraId());
         assertEquals(0, containmentIndex.getContains(null, parent1.getFedoraId()).count());
         assertEquals(0, containmentIndex.getContains(null, parent2.getFedoraId()).count());
-        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent1.getFedoraId()).count());
+        assertEquals(0, containmentIndex.getContains(transaction1.getId(), parent1.getFedoraId()).count());
         assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent2.getFedoraId()).count());
-        try {
-            containmentIndex.commitTransaction(transaction1.getId());
-            // We should get an exception.
-            fail();
-        } catch (final RepositoryRuntimeException e) {
-            // This was an expected exception. Now continue the test.
-        }
+        containmentIndex.commitTransaction(transaction1.getId());
         // This should be rolled back so the additions should still be in the transaction operation table.
         assertEquals(0, containmentIndex.getContains(null, parent1.getFedoraId()).count());
-        assertEquals(0, containmentIndex.getContains(null, parent2.getFedoraId()).count());
-        assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent1.getFedoraId()).count());
+        assertEquals(1, containmentIndex.getContains(null, parent2.getFedoraId()).count());
+        assertEquals(0, containmentIndex.getContains(transaction1.getId(), parent1.getFedoraId()).count());
         assertEquals(1, containmentIndex.getContains(transaction1.getId(), parent2.getFedoraId()).count());
     }
 

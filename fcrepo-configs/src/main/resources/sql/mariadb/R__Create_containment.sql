@@ -20,9 +20,6 @@ CREATE INDEX IF NOT EXISTS containment_idx2
 CREATE INDEX IF NOT EXISTS containment_idx3
     ON containment (fedora_id, end_time);
 
-CREATE INDEX IF NOT EXISTS containment_idx4
-    ON containment (fedora_id, start_time, end_time);
-
 
 -- Holds operations to add or delete records from the RESOURCES_TABLE.
 CREATE TABLE IF NOT EXISTS containment_transactions (
@@ -31,7 +28,8 @@ CREATE TABLE IF NOT EXISTS containment_transactions (
     start_time datetime NULL,
     end_time datetime NULL,
     transaction_id varchar(255) NOT NULL,
-    operation varchar(10) NOT NULL
+    operation varchar(10) NOT NULL,
+    UNIQUE (fedora_id, transaction_id)
 );
 
 -- Create an index to speed searches for records related to adding/excluding transaction records

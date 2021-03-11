@@ -41,6 +41,7 @@ import static org.fcrepo.http.commons.session.TransactionConstants.EXPIRES_RFC_1
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_COMMIT_REL;
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_ENDPOINT_REL;
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_PREFIX;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -57,6 +58,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.sql.DataSource;
 import javax.ws.rs.core.Response.Status;
 
 import org.fcrepo.common.lang.CheckedRunnable;
@@ -83,6 +85,7 @@ import org.apache.http.util.EntityUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestExecutionListeners;
 
 /**
@@ -104,17 +107,24 @@ public class TransactionsIT extends AbstractResourceIT {
     private DefaultOcflObjectSessionFactory objectSessionFactory;
     private ContainmentIndex containmentIndex;
     private OcflPropsConfig ocflConfig;
+    private JdbcTemplate jdbcTemplate;
 
     @Before
     public void setup() {
         objectSessionFactory = getBean(DefaultOcflObjectSessionFactory.class);
         containmentIndex = getBean("containmentIndex", ContainmentIndex.class);
         ocflConfig = getBean(OcflPropsConfig.class);
+        final var dataSource = getBean(DataSource.class);
+        jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
     @After
     public void after() {
         objectSessionFactory.setDefaultCommitType(CommitType.NEW_VERSION);
+    }
+
+    private void dropContainment() {
+        jdbcTemplate.execute("DROP TABLE containment");
     }
 
     @Test
@@ -247,7 +257,8 @@ public class TransactionsIT extends AbstractResourceIT {
         assertEquals("Expected to not find our object within the scope of the transaction",
                 NOT_FOUND.getStatusCode(), getStatus(new HttpGet(newLocation)));
 
-        addConflictingContainmentRecord(resourceId);
+        // Drop the entire containment table in order to cause an error.
+        dropContainment();
 
         // Commit transaction -- should fail
         assertEquals(CONFLICT.getStatusCode(), getStatus(new HttpPut(txLocation)));
@@ -262,44 +273,43 @@ public class TransactionsIT extends AbstractResourceIT {
     }
 
     @Test
-    public void rollbackShouldRollbackAllObjectsModifiedInTransaction() throws IOException {
-        final String txLocation1 = createTransaction();
+    public void conflictingContainmentOverwritesObjectModifiedInTransactionRdf() throws IOException {
+        /* create a tx */
+        final String txLocation = createTransaction();
 
-        final var bin1 = UUID.randomUUID().toString();
-        final var bin2 = UUID.randomUUID().toString();
+        /* create a new object inside the tx */
+        final String newLocation;
+        final HttpPost postNew = new HttpPost(serverAddress);
+        postNew.addHeader(ATOMIC_ID_HEADER, txLocation);
+        try (final CloseableHttpResponse resp = execute(postNew)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(resp));
+            newLocation = getLocation(resp);
+        }
 
-        putBinary(bin1, txLocation1, "test 1");
+        final var resourceId = StringUtils.substringAfterLast(newLocation, "/");
 
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation1)));
+        /* fetch the created tx from the endpoint */
+        try (final CloseableDataset dataset = getDataset(addTxTo(new HttpGet(newLocation), txLocation))) {
+            assertTrue(dataset.asDatasetGraph().contains(ANY, createURI(newLocation), ANY, ANY));
+        }
+        /* fetch the created tx from the endpoint */
+        assertEquals("Expected to not find our object within the scope of the transaction",
+                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(newLocation)));
 
-        assertBinaryContent("test 1", bin1, null);
+        addConflictingContainmentRecord(resourceId);
 
-        final String txLocation2 = createTransaction();
+        // Commit transaction -- doesn't fail as the conflicting record overwrites the old one.
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation)));
 
-        putBinary(bin1, txLocation2, "test 1 -- updated!");
-        putBinary(bin2, txLocation2, "test 2 -- I'm new!");
+        assertEquals("Committed transaction should be gone",
+                GONE.getStatusCode(), getStatus(new HttpGet(txLocation)));
 
-        assertBinaryContent("test 1 -- updated!", bin1, txLocation2);
-        assertBinaryContent("test 2 -- I'm new!", bin2, txLocation2);
-
-        addConflictingContainmentRecord(bin2);
-
-        // Commit transaction -- should fail
-        assertEquals(CONFLICT.getStatusCode(), getStatus(new HttpPut(txLocation2)));
-
-        assertEquals("Rolled back transaction should be gone",
-                GONE.getStatusCode(), getStatus(new HttpGet(txLocation2)));
-
-        assertBinaryContent("test 1", bin1, null);
         assertEquals("Expected to not find our object after rollback",
-                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(serverAddress + bin2)));
-        assertObjectDoesNotExistOnDisk(FedoraId.create(bin2));
+                OK.getStatusCode(), getStatus(new HttpGet(newLocation)));
     }
 
     @Test
-    public void rollbackSucceedsWhenAutoVersioningNotUsedAndFailureInDbCommit() throws IOException {
-        objectSessionFactory.setDefaultCommitType(CommitType.UNVERSIONED);
-
+    public void conflictingContainmentOverwritesObjectModifiedInTransactionBinary() throws IOException {
         final String txLocation1 = createTransaction();
 
         final var bin1 = UUID.randomUUID().toString();
@@ -321,19 +331,14 @@ public class TransactionsIT extends AbstractResourceIT {
 
         addConflictingContainmentRecord(bin2);
 
-        // Commit transaction -- should fail
-        assertEquals(CONFLICT.getStatusCode(), getStatus(new HttpPut(txLocation2)));
+        // Commit transaction
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation2)));
 
-        assertEquals("Rolled back transaction should be gone",
+        assertEquals("Committed transaction should be gone",
                 GONE.getStatusCode(), getStatus(new HttpGet(txLocation2)));
 
-        // bin1 was not changed
-        assertBinaryContent("test 1", bin1, null);
-
-        // bin2 was rolled back
-        assertEquals("Expected to not find our object after rollback",
-                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(serverAddress + bin2)));
-        assertObjectDoesNotExistOnDisk(FedoraId.create(bin2));
+        assertBinaryContent("test 1 -- updated!", bin1, null);
+        assertBinaryContent("test 2 -- I'm new!", bin2, null);
     }
 
     @Test
@@ -927,6 +932,37 @@ public class TransactionsIT extends AbstractResourceIT {
         final var response = getResource(containerId, null);
         assertTrue("title should have been updated", response.contains("new title"));
         assertFalse("concurrent update should not have been applied", response.contains("concurrent update!"));
+    }
+
+    @Test
+    public void testDeleteAndRecreateInTransaction() throws Exception {
+        final String container;
+        // Create a container
+        try (final var response = execute(postObjMethod())) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            container = getLocation(response);
+        }
+        final String txLocation = createTransaction();
+        // Delete in a transaction
+        final var deleteInTx = new HttpDelete(container);
+        addTxTo(deleteInTx, txLocation);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteInTx));
+        // Ensure it is gone in the transaction
+        final var getInTx = new HttpDelete(container);
+        addTxTo(getInTx, txLocation);
+        assertEquals(GONE.getStatusCode(), getStatus(getInTx));
+        // Delete the tombstone in the transaction
+        final var deleteTombInTx = new HttpDelete(container + "/" + FCR_TOMBSTONE);
+        addTxTo(deleteTombInTx, txLocation);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteTombInTx));
+        // Ensure the container is completely gone
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(getInTx));
+        // Inside the transaction create the same container
+        final var putInTx = new HttpPut(container);
+        addTxTo(putInTx, txLocation);
+        assertEquals(CREATED.getStatusCode(), getStatus(putInTx));
+        // Commit the transaction
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation)));
     }
 
     private void assertConcurrentUpdate(final CheckedRunnable runnable) throws Exception {
