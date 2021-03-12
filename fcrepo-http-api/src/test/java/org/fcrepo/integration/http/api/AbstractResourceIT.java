@@ -71,6 +71,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
@@ -557,7 +559,7 @@ public abstract class AbstractResourceIT {
     private CloseableHttpResponse createObjectWithLinkHeader(final String pid, final String... linkHeaders) {
         final HttpPost httpPost = postObjMethod("/");
         if (isNotEmpty(pid)) {
-            httpPost.addHeader("Slug", pid);
+            httpPost.addHeader("Slug", URLEncoder.encode(pid, StandardCharsets.UTF_8));
         }
 
         if (linkHeaders != null && linkHeaders.length > 0) {
