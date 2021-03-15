@@ -46,6 +46,8 @@ import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static nu.validator.htmlparser.common.DoctypeExpectation.NO_DOCTYPE_ERRORS;
 import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.http.HttpStatus.SC_CREATED;
+import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.http.entity.ContentType.parse;
 import static org.apache.http.impl.client.cache.CacheConfig.DEFAULT;
 import static org.apache.jena.datatypes.TypeMapper.getInstance;
@@ -129,6 +131,7 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -4691,6 +4694,25 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(NOT_FOUND.getStatusCode(), getStatus(getObjMethod(id + "/" + FCR_METADATA)));
         // Ensure you can't PUT at non-existant binary.
         assertEquals(NOT_FOUND.getStatusCode(), getStatus(putObjMethod(id + "/" + FCR_METADATA)));
+    }
+
+    @Test
+    public void createObjectWithUnicodeInSlug() throws IOException {
+        final var id = "☞☕☜☑";
+        final var encodedId = URLEncoder.encode(id, UTF_8);
+
+        final String location;
+
+        try (final var response = createObject(id)) {
+            assertEquals(SC_CREATED, response.getStatusLine().getStatusCode());
+            location = getLocation(response);
+            assertTrue(String.format("Expected location to end with '/%s'. Found: %s", encodedId, location),
+                    location.endsWith("/" + encodedId));
+        }
+
+        try (final var response = execute(new HttpGet(location))) {
+            assertEquals(SC_OK, response.getStatusLine().getStatusCode());
+        }
     }
 
     private void assertIdStringConstraint(final String id) throws IOException {

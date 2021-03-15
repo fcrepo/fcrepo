@@ -60,6 +60,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URLDecoder;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Collection;
@@ -594,6 +595,7 @@ public class FedoraLdp extends ContentExposingResource {
                                  @HeaderParam("Digest") final String digest)
             throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException {
 
+        final var decodedSlug = slug != null ? URLDecoder.decode(slug, UTF_8) : null;
         final var transaction = transaction();
 
         try {
@@ -611,10 +613,10 @@ public class FedoraLdp extends ContentExposingResource {
             final String interactionModel = checkInteractionModel(links);
 
             final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath());
-            final FedoraId newFedoraId = mintNewPid(fedoraId, slug);
+            final FedoraId newFedoraId = mintNewPid(fedoraId, decodedSlug);
             final var providedContentType = getSimpleContentType(requestContentType);
 
-            LOGGER.info("POST to create resource with ID: {}, slug: {}", newFedoraId.getFullIdPath(), slug);
+            LOGGER.info("POST to create resource with ID: {}, slug: {}", newFedoraId.getFullIdPath(), decodedSlug);
 
             if (isBinary(interactionModel,
                     providedContentType,
