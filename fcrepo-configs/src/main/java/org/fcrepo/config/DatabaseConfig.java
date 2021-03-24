@@ -38,7 +38,6 @@ import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 /**
@@ -93,20 +92,20 @@ public class DatabaseConfig extends BasePropsConfig {
     public DataSource dataSource() throws Exception {
         final var driver = identifyDbDriver();
 
-        LOGGER.debug("JDBC URL: {}", dbUrl);
-        LOGGER.debug("Using database driver: {}", driver);
-
-        final var config = new HikariConfig();
-        config.setDriverClassName(driver);
-        config.setJdbcUrl(dbUrl);
-        config.setUsername(dbUser);
-        config.setPassword(dbPassword);
-        config.setConnectionTimeout(checkoutTimeout);
-        config.setMaximumPoolSize(maxPoolSize);
+        LOGGER.info("JDBC URL: {}", dbUrl);
+        LOGGER.info("JDBC User: {}", dbUser);
+        LOGGER.info("JDBC Password length: {}", dbPassword == null ? 0 : dbPassword.length());
+        LOGGER.info("Using database driver: {}", driver);
 
         // TODO mysql config https://github.com/brettwooldridge/HikariCP/wiki/MySQL-Configuration
 
-        final var dataSource = new HikariDataSource(config);
+        final var dataSource = new HikariDataSource();
+        dataSource.setDriverClassName(driver);
+        dataSource.setJdbcUrl(dbUrl);
+        dataSource.setUsername(dbUser);
+        dataSource.setPassword(dbPassword);
+        dataSource.setConnectionTimeout(checkoutTimeout);
+        dataSource.setMaximumPoolSize(maxPoolSize);
 
         flyway(dataSource);
 
