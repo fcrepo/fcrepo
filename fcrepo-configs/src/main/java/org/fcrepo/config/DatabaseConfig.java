@@ -38,7 +38,8 @@ import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import com.mchange.v2.c3p0.ComboPooledDataSource;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 /**
  * @author pwinckles
@@ -62,17 +63,11 @@ public class DatabaseConfig extends BasePropsConfig {
     @Value("${fcrepo.db.password:}")
     private String dbPassword;
 
-    @Value("${fcrepo.db.max.pool.size:15}")
+    @Value("${fcrepo.db.max.pool.size:10}")
     private Integer maxPoolSize;
 
-    @Value("${fcrepo.db.connection.checkout.timeout:10000}")
+    @Value("${fcrepo.db.connection.checkout.timeout:30000}")
     private Integer checkoutTimeout;
-
-    @Value("${fcrepo.db.connection.idle.test.period:300}")
-    private Integer idleConnectionTestPeriod;
-
-    @Value("${fcrepo.db.connection.test.on.checkout:true}")
-    private boolean testConnectionOnCheckout;
 
     private static final Map<String, String> DB_DRIVER_MAP = Map.of(
             "h2", "org.h2.Driver",
@@ -101,15 +96,17 @@ public class DatabaseConfig extends BasePropsConfig {
         LOGGER.debug("JDBC URL: {}", dbUrl);
         LOGGER.debug("Using database driver: {}", driver);
 
-        final var dataSource = new ComboPooledDataSource();
-        dataSource.setDriverClass(driver);
-        dataSource.setJdbcUrl(dbUrl);
-        dataSource.setUser(dbUser);
-        dataSource.setPassword(dbPassword);
-        dataSource.setCheckoutTimeout(checkoutTimeout);
-        dataSource.setMaxPoolSize(maxPoolSize);
-        dataSource.setIdleConnectionTestPeriod(idleConnectionTestPeriod);
-        dataSource.setTestConnectionOnCheckout(testConnectionOnCheckout);
+        final var config = new HikariConfig();
+        config.setDriverClassName(driver);
+        config.setJdbcUrl(dbUrl);
+        config.setUsername(dbUser);
+        config.setPassword(dbPassword);
+        config.setConnectionTimeout(checkoutTimeout);
+        config.setMaximumPoolSize(maxPoolSize);
+
+        // TODO mysql config https://github.com/brettwooldridge/HikariCP/wiki/MySQL-Configuration
+
+        final var dataSource = new HikariDataSource(config);
 
         flyway(dataSource);
 

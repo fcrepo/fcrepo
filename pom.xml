@@ -26,7 +26,6 @@
     <!-- Dependency version properties -->
     <activemq.version>5.16.0</activemq.version>
     <aws.version>2.16.0</aws.version>
-    <c3p0.version>0.9.5.5</c3p0.version>
     <caffeine.version>2.9.0</caffeine.version>
     <commons-codec.version>1.15</commons-codec.version>
     <commons-collections.version>3.2.2</commons-collections.version>
@@ -38,6 +37,7 @@
     <flyway.test.version>7.0.0</flyway.test.version>
     <guava.version>30.1-jre</guava.version>
     <h2database.version>1.4.195</h2database.version>
+    <hikari.version>4.0.3</hikari.version>
     <hk2.version>2.6.1</hk2.version>
     <htmlunit.version>2.45.0</htmlunit.version>
     <httpclient.version>4.5.13</httpclient.version>
@@ -470,9 +470,9 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>com.mchange</groupId>
-        <artifactId>c3p0</artifactId>
-        <version>${c3p0.version}</version>
+        <groupId>com.zaxxer</groupId>
+        <artifactId>HikariCP</artifactId>
+        <version>${hikari.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mariadb.jdbc</groupId>
