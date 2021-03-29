@@ -774,7 +774,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         ), Timestamp.class));
     }
 
-    private Instant fromTimestamp(Timestamp timestamp) {
+    private Instant fromTimestamp(final Timestamp timestamp) {
         if (timestamp != null) {
             return timestamp.toInstant();
         }

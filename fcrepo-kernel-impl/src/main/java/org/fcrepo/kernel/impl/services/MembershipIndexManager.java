@@ -610,7 +610,7 @@ public class MembershipIndexManager {
             parameterSource.addValue(DELETE_OP_PARAM, DELETE_OPERATION);
         }
 
-        var updated = jdbcTemplate.queryForObject(lastUpdatedQuery, parameterSource, Timestamp.class);
+        final var updated = jdbcTemplate.queryForObject(lastUpdatedQuery, parameterSource, Timestamp.class);
         if (updated != null) {
             return updated.toInstant();
         }
