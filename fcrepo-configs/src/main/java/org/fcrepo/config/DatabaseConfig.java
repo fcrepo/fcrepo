@@ -97,8 +97,6 @@ public class DatabaseConfig extends BasePropsConfig {
         LOGGER.info("JDBC Password length: {}", dbPassword == null ? 0 : dbPassword.length());
         LOGGER.info("Using database driver: {}", driver);
 
-        // TODO mysql config https://github.com/brettwooldridge/HikariCP/wiki/MySQL-Configuration
-
         final var dataSource = new HikariDataSource();
         dataSource.setDriverClassName(driver);
         dataSource.setJdbcUrl(dbUrl);

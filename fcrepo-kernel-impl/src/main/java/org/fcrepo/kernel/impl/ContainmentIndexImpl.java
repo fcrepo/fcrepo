@@ -631,10 +631,10 @@ public class ContainmentIndexImpl implements ContainmentIndex {
                 final int added = jdbcTemplate.update(COMMIT_ADD_RECORDS_MAP.get(dbPlatform), parameterSource);
                 for (final var parent : changedParents) {
                     final var updated = jdbcTemplate.queryForObject(SELECT_LAST_UPDATED_IN_TX,
-                            Map.of("resourceId", parent, "transactionId", txId), Instant.class);
+                            Map.of("resourceId", parent, "transactionId", txId), Timestamp.class);
                     if (updated != null) {
                         jdbcTemplate.update(UPDATE_LAST_UPDATED,
-                                Map.of("resourceId", parent, "updated", formatInstant(updated)));
+                                Map.of("resourceId", parent, "updated", updated));
                     }
                 }
                 jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, parameterSource);
@@ -741,7 +741,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             queryToUse = SELECT_LAST_UPDATED_IN_TX;
         }
         try {
-            return jdbcTemplate.queryForObject(queryToUse, parameterSource, Instant.class);
+            return fromTimestamp(jdbcTemplate.queryForObject(queryToUse, parameterSource, Timestamp.class));
         } catch (final EmptyResultDataAccessException e) {
             return null;
         }
@@ -769,9 +769,16 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      * @return start time or null if no committed record.
      */
     private Instant getCurrentStartTime(final String resourceId) {
-        return jdbcTemplate.queryForObject(GET_START_TIME, Map.of(
+        return fromTimestamp(jdbcTemplate.queryForObject(GET_START_TIME, Map.of(
                 "child", resourceId
-        ), Instant.class);
+        ), Timestamp.class));
+    }
+
+    private Instant fromTimestamp(Timestamp timestamp) {
+        if (timestamp != null) {
+            return timestamp.toInstant();
+        }
+        return null;
     }
 
     /**

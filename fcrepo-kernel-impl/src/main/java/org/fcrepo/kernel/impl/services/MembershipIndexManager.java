@@ -610,7 +610,11 @@ public class MembershipIndexManager {
             parameterSource.addValue(DELETE_OP_PARAM, DELETE_OPERATION);
         }
 
-        return jdbcTemplate.queryForObject(lastUpdatedQuery, parameterSource, Instant.class);
+        var updated = jdbcTemplate.queryForObject(lastUpdatedQuery, parameterSource, Timestamp.class);
+        if (updated != null) {
+            return updated.toInstant();
+        }
+        return null;
     }
 
     /**
