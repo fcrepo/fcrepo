@@ -26,6 +26,7 @@ import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.search.api.SearchIndex;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -72,6 +73,9 @@ public class TransactionImplTest {
     private ContainmentIndex containmentIndex;
 
     @Mock
+    private SearchIndex searchIndex;
+
+    @Mock
     private EventAccumulator eventAccumulator;
 
     @Mock
@@ -91,6 +95,7 @@ public class TransactionImplTest {
         when(txManager.getEventAccumulator()).thenReturn(eventAccumulator);
         when(txManager.getReferenceService()).thenReturn(referenceService);
         when(txManager.getMembershipService()).thenReturn(membershipService);
+        when(txManager.getSearchIndex()).thenReturn(this.searchIndex);
         when(txManager.getTransactionTemplate()).thenReturn(transactionTemplate);
         doAnswer(invocationOnMock -> {
             ((Consumer)invocationOnMock.getArgument(0)).accept(null);

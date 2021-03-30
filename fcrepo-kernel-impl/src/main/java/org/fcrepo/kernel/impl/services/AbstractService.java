@@ -37,6 +37,7 @@ import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.search.api.SearchIndex;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -97,6 +98,9 @@ public abstract class AbstractService {
 
     @Inject
     protected MembershipService membershipService;
+
+    @Inject
+    protected SearchIndex searchIndex;
 
     @Inject
     protected FedoraPropsConfig fedoraPropsConfig;

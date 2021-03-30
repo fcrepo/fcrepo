@@ -67,7 +67,7 @@ public class DeleteResourceServiceImpl extends AbstractDeleteResourceService imp
         membershipService.resourceDeleted(tx.getId(), fedoraId);
         containmentIndex.removeResource(tx.getId(), fedoraId);
         referenceService.deleteAllReferences(tx.getId(), fedoraId);
-
+        searchIndex.removeFromIndex(tx.getId(), fedoraId);
         recordEvent(tx.getId(), fedoraId, deleteOp);
         log.debug("deleted {}", fedoraId.getFullId());
     }

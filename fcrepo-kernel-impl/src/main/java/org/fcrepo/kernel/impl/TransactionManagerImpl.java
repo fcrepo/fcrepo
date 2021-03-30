@@ -28,6 +28,7 @@ import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.search.api.SearchIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,6 +76,9 @@ public class TransactionManagerImpl implements TransactionManager {
 
     @Inject
     private MembershipService membershipService;
+
+    @Inject
+    private SearchIndex searchIndex;
 
     @Inject
     private ResourceLockManager resourceLockManager;
@@ -170,6 +174,11 @@ public class TransactionManagerImpl implements TransactionManager {
     protected ContainmentIndex getContainmentIndex() {
         return containmentIndex;
     }
+
+    protected SearchIndex getSearchIndex() {
+        return searchIndex;
+    }
+
 
     protected EventAccumulator getEventAccumulator() {
         return eventAccumulator;

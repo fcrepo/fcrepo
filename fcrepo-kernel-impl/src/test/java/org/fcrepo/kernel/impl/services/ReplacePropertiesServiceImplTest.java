@@ -52,6 +52,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.fcrepo.search.api.SearchIndex;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -90,6 +91,9 @@ public class ReplacePropertiesServiceImplTest {
     private MembershipService membershipService;
 
     @Mock
+    private SearchIndex searchIndex;
+
+    @Mock
     private ResourceHeaders headers;
 
     @InjectMocks
@@ -119,6 +123,7 @@ public class ReplacePropertiesServiceImplTest {
         setField(service, "eventAccumulator", eventAccumulator);
         setField(service, "referenceService", referenceService);
         setField(service, "membershipService", membershipService);
+        setField(service, "searchIndex", searchIndex);
         setField(service, "fedoraPropsConfig", propsConfig);
         propsConfig.setServerManagedPropsMode(ServerManagedPropsMode.STRICT);
         when(tx.getId()).thenReturn(TX_ID);

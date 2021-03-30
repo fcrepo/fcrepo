@@ -29,23 +29,17 @@ public interface SearchIndex {
 
     /**
      * Adds or updates the index with the resource header information.
-     * @param resourceHeaders The resource headers associated with the resource
-
-     */
-    void addUpdateIndex(ResourceHeaders resourceHeaders);
-
-    /**
-     * Adds or updates the index with the resource header information.
-     * @param dbTxId The database transaction id
+     * @param transactionId The database transaction id
      * @param resourceHeaders The resource headers associated with the resource
      */
-    void addUpdateIndex(String dbTxId, ResourceHeaders resourceHeaders);
+    void addUpdateIndex(String transactionId, ResourceHeaders resourceHeaders);
 
     /**
      * Removes indexed fields associated with the specified Fedora ID
+     * @param transactionId The transaction ID
      * @param fedoraId The Fedora ID
      */
-    void removeFromIndex(FedoraId fedoraId);
+    void removeFromIndex(String transactionId, FedoraId fedoraId);
 
     /**
      * Performs a search based on the parameters and returns the result.
@@ -55,9 +49,21 @@ public interface SearchIndex {
      */
     SearchResult doSearch(SearchParameters parameters) throws InvalidQueryException;
 
-
     /**
      * Remove all persistent state associated with the index.
      */
     void reset();
+
+    /**
+     * Commit the changes made in the transaction.
+     * @param txId The transaction id.
+     */
+    void commitTransaction(final String txId);
+
+    /**
+     * Rollback the containment index changes in the transaction.
+     * @param txId The transaction id.
+     */
+    void rollbackTransaction(final String txId);
+
 }
