@@ -141,6 +141,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
             createDescription(tx, pSession, userPrincipal, fedoraId);
             addToContainmentIndex(tx, parentId, fedoraId);
             membershipService.resourceCreated(tx, fedoraId);
+            addToSearchIndex(tx, fedoraId, pSession);
             recordEvent(tx, fedoraId, createOp);
         } catch (final PersistentStorageException exc) {
             tx.fail();
@@ -207,6 +208,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
             updateReferences(tx, fedoraId, userPrincipal, model);
             addToContainmentIndex(tx, parentId, fedoraId);
             membershipService.resourceCreated(tx, fedoraId);
+            addToSearchIndex(tx, fedoraId, pSession);
             recordEvent(tx, fedoraId, createOp);
         } catch (final PersistentStorageException exc) {
             tx.fail();
@@ -216,6 +218,12 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
             throw e;
         }
 
+    }
+
+    private void addToSearchIndex(final Transaction tx, final FedoraId fedoraId,
+                                  final PersistentStorageSession persistentStorageSession) {
+        final var resourceHeaders = persistentStorageSession.getHeaders(fedoraId, null);
+        this.searchIndex.addUpdateIndex(tx, resourceHeaders);
     }
 
     /**

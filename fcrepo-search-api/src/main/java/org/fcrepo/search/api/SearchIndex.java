@@ -30,13 +30,6 @@ public interface SearchIndex {
 
     /**
      * Adds or updates the index with the resource header information.
-     * @param resourceHeaders The resource headers associated with the resource
-
-     */
-    void addUpdateIndex(ResourceHeaders resourceHeaders);
-
-    /**
-     * Adds or updates the index with the resource header information.
      * @param transaction The externally generated transaction.
      * @param resourceHeaders The resource headers associated with the resource
      */
@@ -44,9 +37,11 @@ public interface SearchIndex {
 
     /**
      * Removes indexed fields associated with the specified Fedora ID
-     * @param fedoraId The Fedora ID
+     *
+     * @param transaction The transaction
+     * @param fedoraId    The Fedora ID
      */
-    void removeFromIndex(FedoraId fedoraId);
+    void removeFromIndex(Transaction transaction, FedoraId fedoraId);
 
     /**
      * Performs a search based on the parameters and returns the result.
@@ -56,9 +51,23 @@ public interface SearchIndex {
      */
     SearchResult doSearch(SearchParameters parameters) throws InvalidQueryException;
 
-
     /**
      * Remove all persistent state associated with the index.
      */
     void reset();
+
+    /**
+     * Commit the changes made in the transaction.
+     *
+     * @param tx The transaction .
+     */
+    void commitTransaction(final Transaction tx);
+
+    /**
+     * Rollback the containment index changes in the transaction.
+     *
+     * @param tx The transaction.
+     */
+    void rollbackTransaction(final Transaction tx);
+
 }

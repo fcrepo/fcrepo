@@ -50,6 +50,7 @@ import org.fcrepo.kernel.impl.operations.UpdateNonRdfSourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.search.api.SearchIndex;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -96,6 +97,9 @@ public class ReplaceBinariesServiceImplTest {
     private PersistentStorageSession pSession;
 
     @Mock
+    private SearchIndex searchIndex;
+
+    @Mock
     private PersistentStorageSessionManager psManager;
 
     @Mock
@@ -119,6 +123,8 @@ public class ReplaceBinariesServiceImplTest {
         setField(service, "eventAccumulator", eventAccumulator);
         when(psManager.getSession(any(Transaction.class))).thenReturn(pSession);
         tx = TestTransactionHelper.mockTransaction(TX_ID, false);
+        setField(service, "searchIndex", searchIndex);
+        when(tx.getId()).thenReturn(TX_ID);
         when(pSession.getHeaders(FEDORA_ID, null)).thenReturn(headers);
     }
 

@@ -59,13 +59,6 @@ public class SearchIndexMetrics implements SearchIndex {
     private SearchIndex searchIndexImpl;
 
     @Override
-    public void addUpdateIndex(final ResourceHeaders resourceHeaders) {
-        addUpdateIndexTimer.record(() -> {
-            searchIndexImpl.addUpdateIndex(resourceHeaders);
-        });
-    }
-
-    @Override
     public void addUpdateIndex(final Transaction transaction, final ResourceHeaders resourceHeaders) {
         addUpdateIndexTimer.record(() -> {
             searchIndexImpl.addUpdateIndex(transaction, resourceHeaders);
@@ -73,9 +66,9 @@ public class SearchIndexMetrics implements SearchIndex {
     }
 
     @Override
-    public void removeFromIndex(final FedoraId fedoraId) {
+    public void removeFromIndex(final Transaction transaction, final FedoraId fedoraId) {
         removeFromIndexTimer.record(() -> {
-            searchIndexImpl.removeFromIndex(fedoraId);
+            searchIndexImpl.removeFromIndex(transaction, fedoraId);
         });
     }
 
@@ -96,4 +89,17 @@ public class SearchIndexMetrics implements SearchIndex {
         });
     }
 
+    @Override
+    public void commitTransaction(final Transaction tx) {
+        resetTimer.record(() -> {
+            searchIndexImpl.commitTransaction(tx);
+        });
+    }
+
+    @Override
+    public void rollbackTransaction(final Transaction tx) {
+        resetTimer.record(() -> {
+            searchIndexImpl.rollbackTransaction(tx);
+        });
+    }
 }
