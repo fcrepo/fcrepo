@@ -50,3 +50,31 @@ SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
 PREPARE stmt FROM @sqlstmt;
 EXECUTE stmt;
 
+SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
+    WHERE table_name = 'simple_search' AND index_name = 'simple_search_idx1' AND table_schema = database());
+SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
+    'CREATE INDEX simple_search_idx1 ON simple_search (created)');
+PREPARE stmt FROM @sqlstmt;
+EXECUTE stmt;
+
+SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
+    WHERE table_name = 'simple_search' AND index_name = 'simple_search_idx2' AND table_schema = database());
+SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
+    'CREATE INDEX simple_search_idx2 ON simple_search (modified)');
+PREPARE stmt FROM @sqlstmt;
+EXECUTE stmt;
+
+SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
+    WHERE table_name = 'simple_search' AND index_name = 'simple_search_idx3' AND table_schema = database());
+SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
+    'CREATE INDEX simple_search_idx3 ON simple_search (content_size)');
+PREPARE stmt FROM @sqlstmt;
+EXECUTE stmt;
+
+SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
+    WHERE table_name = 'simple_search' AND index_name = 'simple_search_idx4' AND table_schema = database());
+SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
+    'CREATE INDEX simple_search_idx4 ON simple_search (mime_type)');
+PREPARE stmt FROM @sqlstmt;
+EXECUTE stmt;
+

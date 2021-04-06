@@ -45,6 +45,14 @@ CREATE TABLE IF NOT EXISTS search_resource_rdf_type_transactions (
 CREATE INDEX IF NOT EXISTS search_resource_rdf_type_transactions_idx1
     ON search_resource_rdf_type_transactions (fedora_id, transaction_id);
 
+CREATE INDEX IF NOT EXISTS simple_search_idx1
+    ON simple_search (created);
 
+CREATE INDEX IF NOT EXISTS simple_search_idx2
+    ON simple_search (modified);
 
+CREATE INDEX IF NOT EXISTS simple_search_idx3
+    ON simple_search (content_size);
 
+CREATE INDEX IF NOT EXISTS simple_search_idx4
+    ON simple_search (mime_type);
