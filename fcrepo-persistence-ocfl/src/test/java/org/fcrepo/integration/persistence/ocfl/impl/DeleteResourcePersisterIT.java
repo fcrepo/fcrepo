@@ -18,8 +18,8 @@
 package org.fcrepo.integration.persistence.ocfl.impl;
 
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.UUID;
 
