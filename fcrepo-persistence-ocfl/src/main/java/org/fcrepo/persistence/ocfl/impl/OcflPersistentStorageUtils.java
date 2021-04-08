@@ -134,7 +134,6 @@ public class OcflPersistentStorageUtils {
 
         return createRepository(ocflWorkDir, builder -> {
             builder.contentPathConstraints(ContentPathConstraints.cloud())
-                    .objectLock(lock -> lock.dataSource(dataSource))
                     .objectDetailsDb(db -> db.dataSource(dataSource))
                     .storage(storage);
         }, algorithm);

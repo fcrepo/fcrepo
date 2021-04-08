@@ -21,6 +21,7 @@ import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.create
 import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createS3Repository;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -126,6 +127,14 @@ public class OcflPersistenceConfig {
 
         if (StringUtils.isNotBlank(ocflPropsConfig.getAwsRegion())) {
             builder.region(Region.of(ocflPropsConfig.getAwsRegion()));
+        }
+
+        if (StringUtils.isNotBlank(ocflPropsConfig.getS3Endpoint())) {
+            builder.endpointOverride(URI.create(ocflPropsConfig.getS3Endpoint()));
+        }
+
+        if (ocflPropsConfig.isPathStyleAccessEnabled()) {
+            builder.serviceConfiguration(config -> config.pathStyleAccessEnabled(true));
         }
 
         if (StringUtils.isNoneBlank(ocflPropsConfig.getAwsAccessKey(), ocflPropsConfig.getAwsSecretKey())) {
