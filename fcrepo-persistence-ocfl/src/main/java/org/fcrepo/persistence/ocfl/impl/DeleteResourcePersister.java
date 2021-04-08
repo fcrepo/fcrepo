@@ -21,6 +21,8 @@ import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.ResourceHeaderUtils;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
+import org.fcrepo.storage.ocfl.CommitType;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +58,9 @@ class DeleteResourcePersister extends AbstractPersister {
             ResourceHeaderUtils.touchModificationHeaders(headers, operation.getUserPrincipal());
 
             objectSession.deleteContentFile(new ResourceHeadersAdapter(headers).asStorageHeaders());
+            if (headers.getArchivalGroupId() == null) {
+                objectSession.commitType(CommitType.NEW_VERSION);
+            }
         } catch (final RuntimeException e) {
             throw new PersistentStorageException(
                     String.format("Failed to delete resource content for %s", resourceId), e);

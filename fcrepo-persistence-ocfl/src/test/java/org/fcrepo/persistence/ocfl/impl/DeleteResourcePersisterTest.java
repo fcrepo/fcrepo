@@ -22,6 +22,7 @@ import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
+import org.fcrepo.storage.ocfl.CommitType;
 import org.fcrepo.storage.ocfl.OcflObjectSession;
 import org.fcrepo.storage.ocfl.ResourceHeaders;
 import org.fcrepo.storage.ocfl.exception.NotFoundException;
@@ -44,6 +45,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -95,6 +97,7 @@ public class DeleteResourcePersisterTest {
                 parentId,
                 resourceId,
                 NON_RDF_SOURCE.toString());
+        headers.setArchivalGroupId(parentId);
         touchCreationHeaders(headers, null);
         touchModificationHeaders(headers, null);
 
@@ -109,6 +112,7 @@ public class DeleteResourcePersisterTest {
         persister.persist(psSession, operation);
 
         verify(session).deleteContentFile(headersCaptor.capture());
+        verify(session, never()).commitType(CommitType.NEW_VERSION);
 
         final var deleteHeaders = headersCaptor.getValue();
         assertEquals(resourceId.toString(), deleteHeaders.getId());
@@ -137,6 +141,7 @@ public class DeleteResourcePersisterTest {
         persister.persist(psSession, operation);
 
         verify(session).deleteContentFile(headersCaptor.capture());
+        verify(session).commitType(CommitType.NEW_VERSION);
 
         final var deleteHeaders = headersCaptor.getValue();
         assertEquals(resourceId.toString(), deleteHeaders.getId());
