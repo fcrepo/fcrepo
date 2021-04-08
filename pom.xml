@@ -59,7 +59,7 @@
     <logback.version>1.2.3</logback.version>
     <micrometer.version>1.6.4</micrometer.version>
     <netty.version>4.1.59.Final</netty.version>
-    <ocfl-java.version>1.0.1</ocfl-java.version>
+    <ocfl-java.version>1.0.3</ocfl-java.version>
     <prometheus.version>0.9.0</prometheus.version>
     <reactivestrams.version>1.0.2</reactivestrams.version>
     <shiro.version>1.7.1</shiro.version>
