@@ -33,6 +33,7 @@ import java.sql.Types;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -99,17 +100,19 @@ public class DbSearchIndexImpl implements SearchIndex {
     private static final String CREATED_PARAM = "created";
     private static final String RESOURCE_ID_PARAM = "resource_id";
     public static final String RDF_TYPE_URI_PARAM = "rdf_type_uri";
-    public static final String RDF_TYPES_PARAM = "rdf_types";
 
     public static final String TRANSACTION_ID_PARAM = "transaction_id";
     private static final String OPERATION_PARAM = "operation";
 
-    private static final String RDF_TYPE_JOIN_TABLE = ", (SELECT rrt.resource_id,  group_concat_function as rdf_type " +
+    private static final String RDF_TYPE_FILTER_SUB_TABLE = ", (SELECT rrt." + RESOURCE_ID_COLUMN + " from " +
+            SEARCH_RESOURCE_RDF_TYPE_TABLE + " rrt, " +
+            SEARCH_RDF_TYPE_TABLE + " rt, " + SIMPLE_SEARCH_TABLE + " s WHERE rrt.rdf_type_id = rt.id and s.id = " +
+            "rrt.resource_id and rt." + RDF_TYPE_URI_COLUMN + " like :" + RDF_TYPE_URI_PARAM +
+            " group by rrt." + RESOURCE_ID_COLUMN + ") r_filter";
+    private static final String RDF_TYPES_SUB_TABLE = ", (SELECT rrt.resource_id,  group_concat_function as rdf_type " +
             " from " + SEARCH_RESOURCE_RDF_TYPE_TABLE + " rrt, " +
-            "search_rdf_type rt  WHERE rrt.rdf_type_id = rt.id group by rrt.resource_id) r, " +
-            "(SELECT rrt." + RESOURCE_ID_COLUMN + " from " + SEARCH_RESOURCE_RDF_TYPE_TABLE + " rrt, " +
-            SEARCH_RDF_TYPE_TABLE + " rt WHERE rt.rdf_type_uri like :rdf_type_uri and " +
-            "rrt.rdf_type_id = rt.id group by rrt." + RESOURCE_ID_COLUMN + ") r_filter";
+            "search_rdf_type rt ," + SIMPLE_SEARCH_TABLE + " s " +
+            "WHERE rrt.rdf_type_id = rt.id group by rrt.resource_id) r ";
 
     private static final String GROUP_CONCAT_FUNCTION = "group_concat_function";
     private static final String POSTGRES_GROUP_CONCAT_FUNCTION = "STRING_AGG(rt.rdf_type_uri, ',')";
@@ -264,8 +267,6 @@ public class DbSearchIndexImpl implements SearchIndex {
     public void setup() {
         this.dbPlatForm = DbPlatform.fromDataSource(this.dataSource);
         this.jdbcTemplate = getNamedParameterJdbcTemplate();
-        this.rdfTablesSqlFragment = RDF_TYPE_JOIN_TABLE.replace(GROUP_CONCAT_FUNCTION,
-                isPostgres() ? POSTGRES_GROUP_CONCAT_FUNCTION : DEFAULT_GROUP_CONCAT_FUNCTION);
     }
 
     private NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
@@ -276,53 +277,29 @@ public class DbSearchIndexImpl implements SearchIndex {
     public SearchResult doSearch(final SearchParameters parameters) throws InvalidQueryException {
         //translate parameters into a SQL query
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-        final var whereClauses = new ArrayList<String>();
-        final var conditions = parameters.getConditions();
-        for (int i = 0; i < conditions.size(); i++) {
-            addWhereClause(i, parameterSource, whereClauses, conditions.get(i));
-        }
-
         final var fields = parameters.getFields().stream().map(Condition.Field::toString).collect(Collectors.toList());
-        final boolean containsRDFTypeField = fields.contains(RDF_TYPE.toString());
-        if (containsRDFTypeField) {
-            whereClauses.add("s.id = r.resource_id");
-            whereClauses.add("r.resource_id = r_filter.resource_id");
-        }
 
-        final var sql =
-                new StringBuilder("SELECT %PLACEHOLDER% FROM " + SIMPLE_SEARCH_TABLE + " s");
+        final var countQuery =
+                createSearchQuery(parameters, parameterSource, Arrays.asList("count(0) as count")).toString();
+        final var selectQuery = createSearchQuery(parameters, parameterSource, fields);
 
-        if (containsRDFTypeField) {
-            sql.append(rdfTablesSqlFragment);
-            var rdfTypeUriParamValue = "*";
-            for (final Condition condition: conditions) {
-                if (condition.getField().equals(RDF_TYPE)) {
-                    rdfTypeUriParamValue = condition.getObject();
-                    break;
-                }
-            }
-            parameterSource.addValue(RDF_TYPE_URI_PARAM, convertToSqlLikeWildcard(rdfTypeUriParamValue));
-        }
-
-        if (!whereClauses.isEmpty()) {
-            sql.append(" WHERE ");
-            for (final var it = whereClauses.iterator(); it.hasNext(); ) {
-                sql.append(it.next());
-                if (it.hasNext()) {
-                    sql.append(" AND ");
-                }
-            }
-        }
-
-        final String countQuery = sql.toString().replace("%PLACEHOLDER%", "count(*) as count");
-
-        sql.append(" ORDER BY " + parameters.getOrderBy() + " " + parameters.getOrder());
-        sql.append(" LIMIT :limit OFFSET :offset");
-
+        //add order by limit and offset to selectquery.
+        selectQuery.append(" ORDER BY " + parameters.getOrderBy() + " " + parameters.getOrder());
+        selectQuery.append(" LIMIT :limit OFFSET :offset");
         parameterSource.addValue("limit", parameters.getMaxResults());
         parameterSource.addValue("offset", parameters.getOffset());
 
-        final var rowMapper = new RowMapper<Map<String, Object>>() {
+        final RowMapper<Map<String, Object>> rowMapper = createRowMapper(fields);
+        final Integer totalResults = jdbcTemplate.queryForObject(countQuery, parameterSource, Integer.class);
+        final List<Map<String, Object>> items = jdbcTemplate.query(selectQuery.toString(), parameterSource, rowMapper);
+        final var pagination = new PaginationInfo(parameters.getMaxResults(), parameters.getOffset(),
+                (totalResults != null ? totalResults : 0));
+        LOGGER.debug("Search query with parameters: {} - {}", selectQuery.toString(), parameters);
+        return new SearchResult(items, pagination);
+    }
+
+    private RowMapper<Map<String, Object>> createRowMapper(final List<String> fields) {
+        return new RowMapper<Map<String, Object>>() {
             @Override
             public Map<String, Object> mapRow(final ResultSet rs, final int rowNum) throws SQLException {
                 final Map<String, Object> map = new HashMap<>();
@@ -340,14 +317,89 @@ public class DbSearchIndexImpl implements SearchIndex {
                 return map;
             }
         };
+    }
 
-        final String selectQuery = sql.toString().replace("%PLACEHOLDER%", String.join(",", fields));
-        final Integer totalResults = jdbcTemplate.queryForObject(countQuery, parameterSource, Integer.class);
-        final List<Map<String, Object>> items = jdbcTemplate.query(selectQuery, parameterSource, rowMapper);
-        final var pagination = new PaginationInfo(parameters.getMaxResults(), parameters.getOffset(),
-                (totalResults != null ? totalResults : 0));
-        LOGGER.debug("Search query with parameters: {} - {}", sql, parameters);
-        return new SearchResult(items, pagination);
+    private StringBuilder createSearchQuery(final SearchParameters parameters,
+                                            final MapSqlParameterSource parameterSource,
+                                            final List<String> selectedFields) throws InvalidQueryException {
+        final var whereClauses = new ArrayList<String>();
+        final var conditions = parameters.getConditions();
+
+        final var sql = new StringBuilder("SELECT " + String.join(",", selectedFields) +
+                " FROM " + SIMPLE_SEARCH_TABLE + " s");
+
+        final var hasRdfTypeCondition = conditions.stream().anyMatch(c -> c.getField().equals(RDF_TYPE));
+        final var containsRDFTypeField = selectedFields.contains(RDF_TYPE.toString());
+
+        final var subQueryWhereClauses = new ArrayList<String>();
+        for (int i = 0; i < conditions.size(); i++) {
+            addWhereClause(i, parameterSource, subQueryWhereClauses, conditions.get(i));
+        }
+
+        if (hasRdfTypeCondition) {
+            sql.append(", (SELECT rrt." + RESOURCE_ID_COLUMN + " from " +
+                    SEARCH_RESOURCE_RDF_TYPE_TABLE + " rrt, " +
+                    SEARCH_RDF_TYPE_TABLE + " rt, " + SIMPLE_SEARCH_TABLE + " s " +
+                    "WHERE rrt.rdf_type_id = rt.id and s.id = rrt.resource_id AND ");
+            for (String whereClause : subQueryWhereClauses) {
+                sql.append(whereClause);
+                sql.append(" AND ");
+            }
+
+            sql.append("rt." + RDF_TYPE_URI_COLUMN + " like :" + RDF_TYPE_URI_PARAM);
+            sql.append(" group by rrt." + RESOURCE_ID_COLUMN + ") r_filter");
+
+            whereClauses.add("s.id = r_filter.resource_id");
+            addRdfTypeParam(parameterSource, conditions);
+        }
+
+        if (containsRDFTypeField) {
+            final var groupFunction = isPostgres() ? POSTGRES_GROUP_CONCAT_FUNCTION : DEFAULT_GROUP_CONCAT_FUNCTION;
+            sql.append(", (SELECT rrt.resource_id, ");
+            sql.append(groupFunction + " as rdf_type ");
+            sql.append(" FROM " + SEARCH_RESOURCE_RDF_TYPE_TABLE + " rrt, " +
+                    "search_rdf_type rt ," + SIMPLE_SEARCH_TABLE + " s WHERE  s.id = rrt.resource_id AND " +
+                    "rrt.rdf_type_id = rt.id ");
+            for (String whereClause : subQueryWhereClauses) {
+                sql.append(" AND ");
+                sql.append(whereClause);
+            }
+
+            sql.append(" GROUP BY rrt.resource_id) r ");
+
+            if (hasRdfTypeCondition) {
+                whereClauses.add("r_filter.resource_id = r.resource_id");
+            } else {
+                whereClauses.add("s.id = r.resource_id");
+            }
+        }
+
+        if (!hasRdfTypeCondition && !containsRDFTypeField) {
+            whereClauses.addAll(subQueryWhereClauses);
+        }
+
+        if (!whereClauses.isEmpty()) {
+            sql.append(" WHERE ");
+            for (final var it = whereClauses.iterator(); it.hasNext(); ) {
+                sql.append(it.next());
+                if (it.hasNext()) {
+                    sql.append(" AND ");
+                }
+            }
+        }
+
+        return sql;
+    }
+
+    private void addRdfTypeParam(final MapSqlParameterSource parameterSource, final List<Condition> conditions) {
+        var rdfTypeUriParamValue = "*";
+        for (final Condition condition : conditions) {
+            if (condition.getField().equals(RDF_TYPE)) {
+                rdfTypeUriParamValue = condition.getObject();
+                break;
+            }
+        }
+        parameterSource.addValue(RDF_TYPE_URI_PARAM, convertToSqlLikeWildcard(rdfTypeUriParamValue));
     }
 
     private void addWhereClause(final int paramCount, final MapSqlParameterSource parameterSource,
