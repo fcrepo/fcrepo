@@ -88,7 +88,8 @@ public class OcflPersistenceConfig {
                     ocflPropsConfig.getOcflS3Bucket(),
                     ocflPropsConfig.getOcflS3Prefix(),
                     ocflPropsConfig.getOcflTemp(),
-                    ocflPropsConfig.getDefaultDigestAlgorithm());
+                    ocflPropsConfig.getDefaultDigestAlgorithm(),
+                    ocflPropsConfig.isOcflS3DbEnabled());
         } else {
             return createFilesystemRepository(ocflPropsConfig.getOcflRepoRoot(), ocflPropsConfig.getOcflTemp(),
                     ocflPropsConfig.getDefaultDigestAlgorithm());

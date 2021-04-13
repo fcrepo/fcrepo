@@ -115,6 +115,9 @@ public class OcflPropsConfig extends BasePropsConfig {
     @Value("${" + FCREPO_PERSISTENCE_ALGORITHM + ":sha512}")
     private String FCREPO_DIGEST_ALGORITHM_VALUE;
 
+    @Value("${fcrepo.ocfl.s3.db.enabled:true}")
+    private boolean ocflS3DbEnabled;
+
     private DigestAlgorithm FCREPO_DIGEST_ALGORITHM;
 
     /**
@@ -445,5 +448,12 @@ public class OcflPropsConfig extends BasePropsConfig {
      */
     public boolean isPathStyleAccessEnabled() {
         return pathStyleAccessEnabled;
+    }
+
+    /**
+     * @return true if the ocfl client should be configured to use a database when storing objects in S3
+     */
+    public boolean isOcflS3DbEnabled() {
+        return ocflS3DbEnabled;
     }
 }

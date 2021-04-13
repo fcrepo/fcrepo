@@ -113,6 +113,7 @@ public class OcflPersistentStorageUtils {
      * @param prefix the prefix within the bucket to store objects under
      * @param ocflWorkDir the local directory to stage objects in
      * @param algorithm the algorithm for the OCFL repository
+     * @param withDb true if the ocfl client should use a db
      * @return the repository
      */
     public static MutableOcflRepository createS3Repository(final DataSource dataSource,
@@ -120,7 +121,8 @@ public class OcflPersistentStorageUtils {
                                                            final String bucket,
                                                            final String prefix,
                                                            final Path ocflWorkDir,
-                                                           final org.fcrepo.config.DigestAlgorithm algorithm)
+                                                           final org.fcrepo.config.DigestAlgorithm algorithm,
+                                                           final boolean withDb)
             throws IOException {
         Files.createDirectories(ocflWorkDir);
 
@@ -134,8 +136,12 @@ public class OcflPersistentStorageUtils {
 
         return createRepository(ocflWorkDir, builder -> {
             builder.contentPathConstraints(ContentPathConstraints.cloud())
-                    .objectDetailsDb(db -> db.dataSource(dataSource))
                     .storage(storage);
+
+            if (withDb) {
+                builder.objectDetailsDb(db -> db.dataSource(dataSource));
+            }
+
         }, algorithm);
     }
 
