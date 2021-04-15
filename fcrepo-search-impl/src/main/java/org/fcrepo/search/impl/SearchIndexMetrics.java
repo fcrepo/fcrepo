@@ -53,6 +53,10 @@ public class SearchIndexMetrics implements SearchIndex {
             DB, SEARCH, OPERATION, "doSearch");
     private static final Timer resetTimer = Metrics.timer(METRIC_NAME,
             DB, SEARCH, OPERATION, "reset");
+    private static final Timer commitTransactionTimer = Metrics.timer(METRIC_NAME,
+            DB, SEARCH, OPERATION, "commitTransaction");
+    private static final Timer rollbackTransactionTimer = Metrics.timer(METRIC_NAME,
+            DB, SEARCH, OPERATION, "rollbackTransaction");
 
     @Autowired
     @Qualifier("searchIndexImpl")
@@ -91,14 +95,14 @@ public class SearchIndexMetrics implements SearchIndex {
 
     @Override
     public void commitTransaction(final Transaction tx) {
-        resetTimer.record(() -> {
+        commitTransactionTimer.record(() -> {
             searchIndexImpl.commitTransaction(tx);
         });
     }
 
     @Override
     public void rollbackTransaction(final Transaction tx) {
-        resetTimer.record(() -> {
+        rollbackTransactionTimer.record(() -> {
             searchIndexImpl.rollbackTransaction(tx);
         });
     }

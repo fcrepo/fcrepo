@@ -210,6 +210,54 @@ public class ReindexService {
     }
 
     /**
+     * Commit the records added from transaction.
+     * @param transaction the transaction.
+     */
+    public void commit(final Transaction transaction) {
+        try {
+            LOGGER.debug("Performing commit of transaction {}", transaction);
+            containmentIndex.commitTransaction(transaction);
+            ocflIndex.commit(transaction);
+            referenceService.commitTransaction(transaction);
+            searchIndex.commitTransaction(transaction);
+            LOGGER.debug("Finished commit of transaction {}", transaction);
+        } catch (final RuntimeException e) {
+            rollback(transaction);
+            throw e;
+        }
+    }
+
+    /**
+     * Quietly rollback all changes to the various indexes.
+     * @param transaction the transaction to rollback.
+     */
+    public void rollback(final Transaction transaction) {
+        execQuietly("Failed to reset searchIndex", () -> {
+            searchIndex.rollbackTransaction(transaction);
+            return null;
+        });
+
+        execQuietly("Failed to rollback containment index transaction " + transaction, () -> {
+            containmentIndex.rollbackTransaction(transaction);
+            return null;
+        });
+        execQuietly("Failed to rollback OCFL index transaction " + transaction, () -> {
+            ocflIndex.rollback(transaction);
+            return null;
+        });
+
+        execQuietly("Failed to rollback the reference index transaction " + transaction, () -> {
+            referenceService.rollbackTransaction(transaction);
+            return null;
+        });
+
+        execQuietly("Failed to rollback membership index transaction " + transaction, () -> {
+            membershipService.rollbackTransaction(transaction);
+            return null;
+        });
+    }
+
+    /**
      * Index all membership properties by querying for Direct containers, and then
      * trying population of the membership index for each one
      * @param transaction the transaction id.

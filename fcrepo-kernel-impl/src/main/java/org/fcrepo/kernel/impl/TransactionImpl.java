@@ -161,6 +161,10 @@ public class TransactionImpl implements Transaction {
         execQuietly("Failed to rollback membership index in transaction " + id, () -> {
             this.getMembershipService().rollbackTransaction(this);
         });
+        execQuietly("Failed to rollback search index in transaction " + id, () -> {
+            this.getSearchIndex().rollbackTransaction(this);
+        });
+
         execQuietly("Failed to rollback events in transaction " + id, () -> {
             this.getEventAccumulator().clearEvents(this);
         });

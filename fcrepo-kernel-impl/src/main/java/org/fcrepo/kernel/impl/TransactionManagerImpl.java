@@ -78,6 +78,7 @@ public class TransactionManagerImpl implements TransactionManager {
     private MembershipService membershipService;
 
     @Inject
+    @Qualifier("searchIndex")
     private SearchIndex searchIndex;
 
     @Inject
