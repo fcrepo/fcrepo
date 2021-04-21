@@ -26,6 +26,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
@@ -49,6 +50,8 @@ public class ContainerImplTest {
     private PersistentStorageSessionManager sessionManager;
     @Mock
     private ResourceFactory resourceFactory;
+    @Mock
+    private Transaction transaction;
 
     private final static String TX_ID = "transacted";
 
@@ -56,7 +59,9 @@ public class ContainerImplTest {
 
     @Before
     public void setup() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
+        when(transaction.getId()).thenReturn(UUID.randomUUID().toString());
+        when(transaction.isShortLived()).thenReturn(true);
         fedoraId = FedoraId.create(UUID.randomUUID().toString());
     }
 
@@ -66,9 +71,9 @@ public class ContainerImplTest {
         final var child2 = mock(Binary.class);
         final var childrenStream = Stream.of(child1, child2);
 
-        when(resourceFactory.getChildren(TX_ID, fedoraId)).thenReturn(childrenStream);
+        when(resourceFactory.getChildren(transaction, fedoraId)).thenReturn(childrenStream);
 
-        final Container container = new ContainerImpl(fedoraId, TX_ID, sessionManager, resourceFactory);
+        final Container container = new ContainerImpl(fedoraId, transaction, sessionManager, resourceFactory);
 
         final var resultStream = container.getChildren();
         final var childrenList = resultStream.collect(Collectors.toList());

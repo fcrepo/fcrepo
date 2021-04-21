@@ -18,6 +18,7 @@
 
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateVersionResourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.VersionResourceOperationFactory;
@@ -32,8 +33,8 @@ import org.springframework.stereotype.Component;
 public class VersionResourceOperationFactoryImpl implements VersionResourceOperationFactory {
 
     @Override
-    public CreateVersionResourceOperationBuilder createBuilder(final FedoraId rescId) {
-        return new CreateVersionResourceOperationBuilderImpl(rescId);
+    public CreateVersionResourceOperationBuilder createBuilder(final Transaction transaction, final FedoraId rescId) {
+        return new CreateVersionResourceOperationBuilderImpl(transaction, rescId);
     }
 
 }

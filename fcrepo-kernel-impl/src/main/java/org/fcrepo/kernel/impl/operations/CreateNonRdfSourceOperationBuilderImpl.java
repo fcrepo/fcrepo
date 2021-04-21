@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateNonRdfSourceOperationBuilder;
 
@@ -38,23 +39,27 @@ public class CreateNonRdfSourceOperationBuilderImpl extends AbstractNonRdfSource
     /**
      * Constructor for external binary.
      *
+     * @param transaction the transaction
      * @param rescId      the internal identifier
      * @param handling    the external content handling type.
      * @param externalUri the external content URI.
      */
-    protected CreateNonRdfSourceOperationBuilderImpl(final FedoraId rescId, final String handling,
-            final URI externalUri) {
-        super(rescId, handling, externalUri);
+    protected CreateNonRdfSourceOperationBuilderImpl(final Transaction transaction, final FedoraId rescId,
+                                                     final String handling,
+                                                     final URI externalUri) {
+        super(transaction, rescId, handling, externalUri);
     }
 
     /**
      * Constructor for internal binary.
      *
+     * @param transaction the transaction
      * @param rescId the internal identifier.
      * @param stream the content stream.
      */
-    protected CreateNonRdfSourceOperationBuilderImpl(final FedoraId rescId, final InputStream stream) {
-        super(rescId, stream);
+    protected CreateNonRdfSourceOperationBuilderImpl(final Transaction transaction, final FedoraId rescId,
+                                                     final InputStream stream) {
+        super(transaction, rescId, stream);
     }
 
     @Override
@@ -92,9 +97,9 @@ public class CreateNonRdfSourceOperationBuilderImpl extends AbstractNonRdfSource
     public CreateNonRdfSourceOperation build() {
         final CreateNonRdfSourceOperation operation;
         if (externalURI != null && externalType != null) {
-            operation = new CreateNonRdfSourceOperation(resourceId, externalURI, externalType);
+            operation = new CreateNonRdfSourceOperation(transaction, resourceId, externalURI, externalType);
         } else {
-            operation = new CreateNonRdfSourceOperation(resourceId, content);
+            operation = new CreateNonRdfSourceOperation(transaction, resourceId, content);
         }
 
         operation.setUserPrincipal(userPrincipal);

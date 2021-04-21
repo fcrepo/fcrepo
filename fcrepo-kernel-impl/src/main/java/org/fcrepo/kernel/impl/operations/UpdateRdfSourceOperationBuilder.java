@@ -20,6 +20,7 @@ package org.fcrepo.kernel.impl.operations;
 import org.apache.jena.rdf.model.Model;
 
 import org.fcrepo.config.ServerManagedPropsMode;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 
@@ -34,17 +35,18 @@ public class UpdateRdfSourceOperationBuilder extends AbstractRdfSourceOperationB
     /**
      * Constructor.
      *
+     * @param transaction the transaction/
      * @param resourceId the internal identifier.
      * @param serverManagedPropsMode server managed properties mode
      */
-    public UpdateRdfSourceOperationBuilder(final FedoraId resourceId,
+    public UpdateRdfSourceOperationBuilder(final Transaction transaction, final FedoraId resourceId,
                                            final ServerManagedPropsMode serverManagedPropsMode) {
-        super(resourceId, null, serverManagedPropsMode);
+        super(transaction, resourceId, null, serverManagedPropsMode);
     }
 
     @Override
     public RdfSourceOperation build() {
-        final var operation = new UpdateRdfSourceOperation(this.resourceId, this.tripleStream);
+        final var operation = new UpdateRdfSourceOperation(this.transaction, this.resourceId, this.tripleStream);
         operation.setUserPrincipal(userPrincipal);
         operation.setCreatedBy(createdBy);
         operation.setCreatedDate(createdDate);

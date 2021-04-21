@@ -17,6 +17,7 @@
  */
 package org.fcrepo.search.api;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 
@@ -36,10 +37,10 @@ public interface SearchIndex {
 
     /**
      * Adds or updates the index with the resource header information.
-     * @param dbTxId The database transaction id
+     * @param transaction The externally generated transaction.
      * @param resourceHeaders The resource headers associated with the resource
      */
-    void addUpdateIndex(String dbTxId, ResourceHeaders resourceHeaders);
+    void addUpdateIndex(Transaction transaction, ResourceHeaders resourceHeaders);
 
     /**
      * Removes indexed fields associated with the specified Fedora ID

@@ -17,9 +17,22 @@
  */
 package org.fcrepo.kernel.impl.models;
 
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_WEBAC_ACL_URI;
+import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.TransactionUtils.isLongRunningTx;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.time.Instant;
+import java.util.stream.Stream;
+
+import javax.inject.Inject;
+
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.TransactionUtils;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -33,23 +46,11 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-
-import javax.inject.Inject;
-
-import java.time.Instant;
-import java.util.stream.Stream;
-
-import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_WEBAC_ACL_URI;
-import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Implementation of ResourceFactory interface.
@@ -70,21 +71,15 @@ public class ResourceFactoryImpl implements ResourceFactory {
     private ContainmentIndex containmentIndex;
 
     @Override
-    public FedoraResource getResource(final FedoraId fedoraID)
-            throws PathNotFoundException {
-        return instantiateResource(null, fedoraID);
-    }
-
-    @Override
     public FedoraResource getResource(final Transaction transaction, final FedoraId fedoraID)
             throws PathNotFoundException {
-        return getResource(TransactionUtils.openTxId(transaction), fedoraID);
+        return instantiateResource(transaction, fedoraID, false);
     }
 
     @Override
-    public FedoraResource getResource(final String transactionId, final FedoraId fedoraID)
+    public FedoraResource getResourceInternal(final Transaction transaction, final FedoraId fedoraID)
             throws PathNotFoundException {
-        return instantiateResource(transactionId, fedoraID);
+        return instantiateResource(transaction, fedoraID, true);
     }
 
     @Override
@@ -101,13 +96,13 @@ public class ResourceFactoryImpl implements ResourceFactory {
 
 
     @Override
-    public FedoraResource getContainer(final String transactionId, final FedoraId resourceId) {
-        final String containerId = containmentIndex.getContainedBy(transactionId, resourceId);
+    public FedoraResource getContainer(final Transaction transaction, final FedoraId resourceId) {
+        final String containerId = containmentIndex.getContainedBy(transaction, resourceId);
         if (containerId == null) {
             return null;
         }
         try {
-            return getResource(transactionId, FedoraId.create(containerId));
+            return getResource(transaction, FedoraId.create(containerId));
         } catch (final PathNotFoundException exc) {
             return null;
         }
@@ -141,19 +136,27 @@ public class ResourceFactoryImpl implements ResourceFactory {
     /**
      * Instantiates a new FedoraResource object of the given class.
      *
-     * @param transactionId the transaction id
+     * @param transaction the transaction id
      * @param identifier    identifier for the new instance
+     * @param internal     true if this is an getResourceInternal request, false otherwise.
      * @return new FedoraResource instance
      * @throws PathNotFoundException
      */
-    private FedoraResource instantiateResource(final String transactionId,
-                                               final FedoraId identifier)
+    private FedoraResource instantiateResource(final Transaction transaction,
+                                               final FedoraId identifier,
+                                               final boolean internal)
             throws PathNotFoundException {
         try {
             // For descriptions and ACLs we need the actual endpoint.
-            final var psSession = getSession(transactionId);
+            final var psSession = getSession(transaction, internal);
             final Instant versionDateTime = identifier.isMemento() ? identifier.getMementoInstant() : null;
-            final var headers = psSession.getHeaders(identifier, versionDateTime);
+
+            final ResourceHeaders headers;
+            if (internal) {
+                headers = psSession.getHeadersInternal(identifier, versionDateTime);
+            } else {
+                headers = psSession.getHeaders(identifier, versionDateTime);
+            }
 
             // Determine the appropriate class from headers
             final var createClass = getClassForTypes(headers);
@@ -161,7 +164,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
             // Retrieve standard constructor
             final var constructor = createClass.getConstructor(
                     FedoraId.class,
-                    String.class,
+                    Transaction.class,
                     PersistentStorageSessionManager.class,
                     ResourceFactory.class);
 
@@ -169,13 +172,13 @@ public class ResourceFactoryImpl implements ResourceFactory {
             final var instantiationId = identifier.isTimemap() ?
                     FedoraId.create(identifier.getResourceId()) : identifier;
 
-            final var rescImpl = constructor.newInstance(instantiationId, transactionId,
+            final var rescImpl = constructor.newInstance(instantiationId, transaction,
                     persistentStorageSessionManager, this);
             populateResourceHeaders(rescImpl, headers, versionDateTime);
 
             if (headers.isDeleted()) {
                 final var rootId = FedoraId.create(identifier.getBaseId());
-                final var tombstone = new TombstoneImpl(rootId, transactionId, persistentStorageSessionManager,
+                final var tombstone = new TombstoneImpl(rootId, transaction, persistentStorageSessionManager,
                         this, rescImpl);
                 tombstone.setLastModifiedDate(headers.getLastModifiedDate());
                 return tombstone;
@@ -225,25 +228,30 @@ public class ResourceFactoryImpl implements ResourceFactory {
     /**
      * Get a session for this interaction.
      *
-     * @param transactionId The supplied transaction id.
+     * @param transaction The supplied transaction.
+     * @param internal   Is this a getResourceInternal request.
      * @return a storage session.
      */
-    private PersistentStorageSession getSession(final String transactionId) {
+    private PersistentStorageSession getSession(final Transaction transaction, final boolean internal) {
         final PersistentStorageSession session;
-        if (transactionId == null) {
-            session = persistentStorageSessionManager.getReadOnlySession();
+        if (internal) {
+            session = persistentStorageSessionManager.getSession(transaction);
         } else {
-            session = persistentStorageSessionManager.getSession(transactionId);
+            if (isLongRunningTx(transaction)) {
+                session = persistentStorageSessionManager.getSession(transaction);
+            } else {
+                session = persistentStorageSessionManager.getReadOnlySession();
+            }
         }
         return session;
     }
 
     @Override
-    public Stream<FedoraResource> getChildren(final String transactionId, final FedoraId resourceId) {
-        return containmentIndex.getContains(transactionId, resourceId)
+    public Stream<FedoraResource> getChildren(final Transaction transaction, final FedoraId resourceId) {
+        return containmentIndex.getContains(transaction, resourceId)
             .map(childId -> {
                 try {
-                    return getResource(transactionId, FedoraId.create(childId));
+                    return getResource(transaction, FedoraId.create(childId));
                 } catch (final PathNotFoundException e) {
                     throw new PathNotFoundRuntimeException(e.getMessage(), e);
                 }

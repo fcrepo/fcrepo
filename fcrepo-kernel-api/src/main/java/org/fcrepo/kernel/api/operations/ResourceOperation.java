@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.api.operations;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 /**
@@ -25,6 +26,13 @@ import org.fcrepo.kernel.api.identifiers.FedoraId;
  * @author bbpennel
  */
 public interface ResourceOperation {
+
+    /**
+     * The transaction the operation is in.
+     *
+     * @return the transaction.
+     */
+    Transaction getTransaction();
 
     /**
      * Id of the resource

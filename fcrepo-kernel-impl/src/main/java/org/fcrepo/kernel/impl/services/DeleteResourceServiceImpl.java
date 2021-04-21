@@ -17,8 +17,11 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import java.util.stream.Stream;
+
+import javax.inject.Inject;
+
 import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.TransactionUtils;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.operations.DeleteResourceOperationFactory;
@@ -26,12 +29,10 @@ import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-
-import javax.inject.Inject;
-import java.util.stream.Stream;
 
 /**
  * This class mediates delete operations between the kernel and persistent storage layers
@@ -48,7 +49,7 @@ public class DeleteResourceServiceImpl extends AbstractDeleteResourceService imp
 
     @Override
     protected Stream<String> getContained(final Transaction tx, final FedoraResource resource) {
-        return containmentIndex.getContains(TransactionUtils.openTxId(tx), resource.getFedoraId());
+        return containmentIndex.getContains(tx, resource.getFedoraId());
     }
 
     @Override
@@ -56,7 +57,7 @@ public class DeleteResourceServiceImpl extends AbstractDeleteResourceService imp
                             final FedoraId fedoraId, final String userPrincipal)
             throws PersistentStorageException {
         log.debug("starting delete of {}", fedoraId.getFullId());
-        final ResourceOperation deleteOp = deleteResourceFactory.deleteBuilder(fedoraId)
+        final ResourceOperation deleteOp = deleteResourceFactory.deleteBuilder(tx, fedoraId)
                 .userPrincipal(userPrincipal)
                 .build();
 
@@ -64,11 +65,11 @@ public class DeleteResourceServiceImpl extends AbstractDeleteResourceService imp
         tx.lockResource(fedoraId);
 
         pSession.persist(deleteOp);
-        membershipService.resourceDeleted(tx.getId(), fedoraId);
-        containmentIndex.removeResource(tx.getId(), fedoraId);
-        referenceService.deleteAllReferences(tx.getId(), fedoraId);
+        membershipService.resourceDeleted(tx, fedoraId);
+        containmentIndex.removeResource(tx, fedoraId);
+        referenceService.deleteAllReferences(tx, fedoraId);
 
-        recordEvent(tx.getId(), fedoraId, deleteOp);
+        recordEvent(tx, fedoraId, deleteOp);
         log.debug("deleted {}", fedoraId.getFullId());
     }
 

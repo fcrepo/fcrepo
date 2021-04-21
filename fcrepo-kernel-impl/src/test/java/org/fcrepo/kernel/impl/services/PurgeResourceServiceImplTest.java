@@ -17,6 +17,18 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
+
+import java.util.List;
+
+import javax.inject.Inject;
+
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -32,6 +44,7 @@ import org.fcrepo.kernel.impl.operations.DeleteResourceOperationFactoryImpl;
 import org.fcrepo.kernel.impl.operations.PurgeResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,17 +55,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
-import javax.inject.Inject;
-import java.util.List;
-
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * PurgeResourceServiceTest
@@ -116,18 +118,22 @@ public class PurgeResourceServiceImplTest {
     @InjectMocks
     private PurgeResourceServiceImpl service;
 
-    private static final FedoraId RESOURCE_ID =  FedoraId.create(FEDORA_ID_PREFIX + "test-resource");
-    private static final FedoraId CHILD_RESOURCE_ID = FedoraId.create(FEDORA_ID_PREFIX + "test-resource-child");
+    private static final FedoraId RESOURCE_ID =  FedoraId.create("test-resource");
+    private static final FedoraId CHILD_RESOURCE_ID = RESOURCE_ID.resolve("test-resource-child");
     private static final FedoraId RESOURCE_DESCRIPTION_ID =
             FedoraId.create(FEDORA_ID_PREFIX + "test-resource-description");
-    private static final FedoraId RESOURCE_ACL_ID = FedoraId.create(FEDORA_ID_PREFIX + "test-resource-acl");
+    private static final FedoraId RESOURCE_ACL_ID = FedoraId.create("test-resource-acl");
     private static final String TX_ID = "tx-1234";
 
     @Before
     public void setup() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         when(tx.getId()).thenReturn(TX_ID);
-        when(psManager.getSession(anyString())).thenReturn(pSession);
+        when(tx.isShortLived()).thenReturn(false);
+        when(tx.isCommitted()).thenReturn(false);
+        when(tx.isRolledBack()).thenReturn(false);
+        when(tx.hasExpired()).thenReturn(false);
+        when(psManager.getSession(any(Transaction.class))).thenReturn(pSession);
         final DeleteResourceOperationFactoryImpl factoryImpl = new DeleteResourceOperationFactoryImpl();
         setField(service, "deleteResourceFactory", factoryImpl);
         setField(service, "containmentIndex", containmentIndex);
@@ -158,9 +164,9 @@ public class PurgeResourceServiceImplTest {
         when(childContainer.getAcl()).thenReturn(null);
 
         when(resourceFactory.getResource(tx, CHILD_RESOURCE_ID)).thenReturn(childContainer);
-        containmentIndex.addContainedBy(tx.getId(), container.getFedoraId(), childContainer.getFedoraId());
-        containmentIndex.commitTransaction(tx.getId());
-        containmentIndex.removeContainedBy(tx.getId(), container.getFedoraId(), childContainer.getFedoraId());
+        containmentIndex.addContainedBy(tx, container.getFedoraId(), childContainer.getFedoraId());
+        containmentIndex.commitTransaction(tx);
+        containmentIndex.removeContainedBy(tx, container.getFedoraId(), childContainer.getFedoraId());
 
         when(container.isAcl()).thenReturn(false);
         when(container.getAcl()).thenReturn(null);
@@ -174,7 +180,7 @@ public class PurgeResourceServiceImplTest {
         assertEquals(CHILD_RESOURCE_ID, operations.get(0).getResourceId());
         assertEquals(RESOURCE_ID, operations.get(1).getResourceId());
 
-        assertEquals(0, containmentIndex.getContains(tx.getId(), RESOURCE_ID).count());
+        assertEquals(0, containmentIndex.getContains(tx, RESOURCE_ID).count());
 
         verify(tx).lockResource(RESOURCE_ID);
         verify(tx).lockResource(CHILD_RESOURCE_ID);

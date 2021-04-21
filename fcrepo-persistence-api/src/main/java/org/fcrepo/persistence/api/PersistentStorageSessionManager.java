@@ -17,6 +17,8 @@
  */
 package org.fcrepo.persistence.api;
 
+import org.fcrepo.kernel.api.Transaction;
+
 /**
  * Interface to access PersistentStorageSessions.
  *
@@ -29,10 +31,10 @@ public interface PersistentStorageSessionManager {
     /**
      * Retrieve a PersistentStorageSession.
      *
-     * @param sessionId the externally generated session ID.
+     * @param transaction the externally generated transaction.
      * @return the PersistentStorageSession instance.
      */
-    PersistentStorageSession getSession(final String sessionId);
+    PersistentStorageSession getSession(final Transaction transaction);
 
     /**
      * Retrieve a read-only PersistentStorageSession. Clients should expect

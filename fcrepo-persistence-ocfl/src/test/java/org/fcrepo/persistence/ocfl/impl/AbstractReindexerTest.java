@@ -45,6 +45,8 @@ import org.fcrepo.config.DigestAlgorithm;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.FedoraTypes;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
@@ -101,6 +103,12 @@ public class AbstractReindexerTest {
     @Mock
     protected OcflPropsConfig propsConfig;
 
+    @Mock
+    protected TransactionManager txManager;
+
+    @Mock
+    protected Transaction transaction;
+
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
 
@@ -115,6 +123,8 @@ public class AbstractReindexerTest {
         final var dataDir = targetDir.resolve("test-fcrepo-data-" + currentTimeMillis());
         final var repoDir = dataDir.resolve("ocfl-repo");
         final var workDir = dataDir.resolve("ocfl-work");
+        when(transaction.getId()).thenReturn(session1Id);
+        when(txManager.create()).thenReturn(transaction);
 
         repository = createFilesystemRepository(repoDir, workDir, DEFAULT_FEDORA_ALGORITHM);
 

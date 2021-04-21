@@ -20,6 +20,7 @@ package org.fcrepo.persistence.ocfl;
 
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.config.OcflPropsConfig;
+import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
@@ -67,14 +68,17 @@ public class RepositoryInitializer {
     @Inject
     private FedoraPropsConfig fedoraPropsConfig;
 
+    @Inject
+    private TransactionManager txManager;
+
     /**
      * Initializes the repository
      */
     @PostConstruct
     public void initialize() {
         //check that the root is initialized
-        final PersistentStorageSession session = this.sessionManager.getSession("initializationSession" +
-                System.currentTimeMillis());
+        final var transaction = txManager.create();
+        final PersistentStorageSession session = this.sessionManager.getSession(transaction);
 
         indexBuilder.rebuildIfNecessary();
 
@@ -85,7 +89,7 @@ public class RepositoryInitializer {
                 session.getHeaders(root, null);
             } catch (final PersistentItemNotFoundException e) {
                 LOGGER.info("Repository root ({}) not found. Creating...", root);
-                final RdfSourceOperation operation = this.operationFactory.createBuilder(root,
+                final RdfSourceOperation operation = this.operationFactory.createBuilder(transaction, root,
                         BASIC_CONTAINER.getURI(), fedoraPropsConfig.getServerManagedPropsMode())
                         .parentId(root).build();
 
@@ -93,7 +97,8 @@ public class RepositoryInitializer {
 
                 //if auto versioning is not enabled, be sure to create an immutable version
                 if (!config.isAutoVersioningEnabled()) {
-                    final var versionOperation = this.versionResourceOperationFactory.createBuilder(root).build();
+                    final var versionOperation = this.versionResourceOperationFactory
+                            .createBuilder(transaction, root).build();
                     session.persist(versionOperation);
                 }
                 session.prepare();

@@ -17,51 +17,6 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
-import org.apache.commons.io.IOUtils;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
-import org.apache.jena.vocabulary.DC;
-
-import org.fcrepo.config.DigestAlgorithm;
-import org.fcrepo.kernel.api.FedoraTypes;
-import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.operations.CreateRdfSourceOperation;
-import org.fcrepo.kernel.api.operations.CreateResourceOperation;
-import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
-import org.fcrepo.kernel.api.operations.RdfSourceOperation;
-import org.fcrepo.kernel.api.operations.ResourceOperation;
-import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.persistence.api.PersistentStorageSession;
-import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
-import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
-import org.fcrepo.storage.ocfl.CommitType;
-import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
-import org.fcrepo.storage.ocfl.OcflObjectSession;
-import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
-import org.fcrepo.storage.ocfl.cache.NoOpCache;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import java.io.ByteArrayInputStream;
-import java.nio.file.Path;
-import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
-
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
@@ -78,7 +33,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
@@ -86,6 +40,52 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
+
+import java.io.ByteArrayInputStream;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
+
+import org.fcrepo.config.DigestAlgorithm;
+import org.fcrepo.kernel.api.FedoraTypes;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.operations.CreateRdfSourceOperation;
+import org.fcrepo.kernel.api.operations.CreateResourceOperation;
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
+import org.fcrepo.kernel.api.operations.RdfSourceOperation;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
+import org.fcrepo.storage.ocfl.CommitType;
+import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
+import org.fcrepo.storage.ocfl.OcflObjectSession;
+import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
+import org.fcrepo.storage.ocfl.cache.NoOpCache;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.vocabulary.DC;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.stubbing.Answer;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 /**
  * Test class for {@link OcflPersistentStorageSession}
@@ -105,9 +105,6 @@ public class OcflPersistentStorageSessionTest {
 
     @Mock
     private FedoraOcflMapping mapping;
-
-    @Mock
-    private FedoraOcflMapping mapping2;
 
     @Mock
     private OcflObjectSessionFactory mockSessionFactory;
@@ -150,6 +147,9 @@ public class OcflPersistentStorageSessionTest {
     @Mock
     private ResourceOperation unsupportedOperation;
 
+    @Mock
+    private Transaction transaction;
+
     private static final DigestAlgorithm DEFAULT_FEDORA_ALGORITHM = DigestAlgorithm.SHA512;
 
     @Before
@@ -165,7 +165,7 @@ public class OcflPersistentStorageSessionTest {
                 new NoOpCache<>(),
                 CommitType.NEW_VERSION,
                 "Fedora 6 test", "fedoraAdmin", "info:fedora/fedoraAdmin");
-        session = createSession(index, objectSessionFactory);
+        session = createSession(index, objectSessionFactory, true);
 
         // Create rdf operations implement two interfaces
         rdfSourceOperation = mock(RdfSourceOperation.class, withSettings().extraInterfaces(
@@ -179,28 +179,40 @@ public class OcflPersistentStorageSessionTest {
 
     private OcflPersistentStorageSession createSession(final FedoraToOcflObjectIndex index,
                                                        final OcflObjectSessionFactory objectSessionFactory) {
-        final var sessionId = UUID.randomUUID().toString();
-        return new OcflPersistentStorageSession(sessionId, index, objectSessionFactory, reindexService);
+        return createSession(index, objectSessionFactory, false);
+
+    }
+
+    private OcflPersistentStorageSession createSession(final FedoraToOcflObjectIndex index,
+                                                       final OcflObjectSessionFactory objectSessionFactory,
+                                                       final boolean longRunning) {
+        final var tx = mockTransaction(longRunning);
+        return new OcflPersistentStorageSession(tx, index, objectSessionFactory, reindexService);
+    }
+
+    private Transaction mockTransaction(final boolean longRunning) {
+        final var tx = mock(Transaction.class);
+        if (longRunning) {
+            when(tx.isShortLived()).thenReturn(false);
+            when(tx.hasExpired()).thenReturn(false);
+            when(tx.isCommitted()).thenReturn(false);
+            when(tx.isRolledBack()).thenReturn(false);
+        } else {
+            when(tx.isShortLived()).thenReturn(true);
+        }
+        return tx;
     }
 
     private void mockNoIndex(final FedoraId resourceId) throws FedoraOcflMappingNotFoundException {
-        when(index.getMapping(any(), eq(resourceId)))
+        when(index.getMappingInternal(any(), eq(resourceId)))
                 .thenThrow(new FedoraOcflMappingNotFoundException(resourceId.getFullId()));
-    }
-
-    private void mockMappingAndIndexWithNoIndex(final String ocflObjectId, final FedoraId resourceId,
-                                                final FedoraId rootObjectId, final FedoraOcflMapping mapping)
-            throws FedoraOcflMappingNotFoundException {
-        mockMapping(ocflObjectId, rootObjectId, mapping);
-        when(index.getMapping(any(), eq(resourceId)))
-                .thenThrow(new FedoraOcflMappingNotFoundException(resourceId.getFullId()))
-                .thenReturn(mapping);
     }
 
     private void mockMappingAndIndex(final String ocflObjectId, final FedoraId resourceId, final FedoraId rootObjectId,
                                      final FedoraOcflMapping mapping) throws FedoraOcflMappingNotFoundException {
         mockMapping(ocflObjectId, rootObjectId, mapping);
-        when(index.getMapping(any(), eq(resourceId))).thenReturn(mapping);
+        when(index.getMapping(any(Transaction.class), eq(resourceId))).thenReturn(mapping);
+        when(index.getMappingInternal(any(Transaction.class), eq(resourceId))).thenReturn(mapping);
     }
 
     private void mockMapping(final String ocflObjectId, final FedoraId rootObjectId, final FedoraOcflMapping mapping) {
@@ -210,6 +222,7 @@ public class OcflPersistentStorageSessionTest {
 
     private void mockResourceOperation(final RdfSourceOperation rdfSourceOperation, final RdfStream userStream,
                                        final String userPrincipal, final FedoraId resourceId) {
+        when(rdfSourceOperation.getTransaction()).thenReturn(transaction);
         when(rdfSourceOperation.getTriples()).thenReturn(userStream);
         when(rdfSourceOperation.getResourceId()).thenReturn(FedoraId.create(resourceId.getFullId()));
         when(rdfSourceOperation.getType()).thenReturn(CREATE);
@@ -251,12 +264,12 @@ public class OcflPersistentStorageSessionTest {
         final var node = createURI(RESOURCE_ID.getFullId());
 
         //verify get triples within the transaction
-        var retrievedUserStream = session.getTriples(RESOURCE_ID, null);
+        var retrievedUserStream = session.getTriplesInternal(RESOURCE_ID, null);
         assertEquals(node, retrievedUserStream.topic());
         assertEquals(dcTitleTriple, retrievedUserStream.findFirst().get());
 
         //verify get server props within the transaction
-        final var headers = session.getHeaders(RESOURCE_ID, null);
+        final var headers = session.getHeadersInternal(RESOURCE_ID, null);
         assertEquals(USER_PRINCIPAL, headers.getCreatedBy());
         final var originalCreatedDate = headers.getCreatedDate();
         assertNotNull("Headers must contain created date", originalCreatedDate);
@@ -634,9 +647,9 @@ public class OcflPersistentStorageSessionTest {
     public void listVersionsOfAResourceContainedInAnArchivalGroup() throws Exception {
         final Node resourceUri = createURI(RESOURCE_ID.getFullId());
 
-        mockMapping(OCFL_RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+        mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
         final var mappingCount = new AtomicInteger(0);
-        when(index.getMapping(anyString(), eq(RESOURCE_ID))).thenAnswer(
+        when(index.getMappingInternal(any(Transaction.class), eq(RESOURCE_ID))).thenAnswer(
                 (Answer<FedoraOcflMapping>) invocationOnMock -> {
             final var current = mappingCount.getAndIncrement();
             if (current == 0) {
@@ -651,7 +664,8 @@ public class OcflPersistentStorageSessionTest {
         session.commit();
 
         final var childId = RESOURCE_ID.resolve("child");
-        when(index.getMapping(anyString(), eq(childId))).thenReturn(mapping);
+        when(index.getMapping(any(Transaction.class), eq(childId))).thenReturn(mapping);
+        when(index.getMappingInternal(any(Transaction.class), eq(childId))).thenReturn(mapping);
 
         final String title = "title";
         final var dcTitleTriple = Triple.create(resourceUri, DC.title.asNode(), createLiteral(title));
@@ -778,7 +792,9 @@ public class OcflPersistentStorageSessionTest {
                 .<String, OcflObjectSession>build()
                 .asMap();
 
-        final var readOnlySession = new OcflPersistentStorageSession(null, index, objectSessionFactory, reindexService);
+        final var shortTx = mockTransaction(false);
+        final var readOnlySession = new OcflPersistentStorageSession(shortTx, index, objectSessionFactory,
+                reindexService);
         ReflectionTestUtils.setField(readOnlySession, "sessionMap", sessionMap);
 
         readOnlySession.getHeaders(RESOURCE_ID, null);
@@ -795,6 +811,7 @@ public class OcflPersistentStorageSessionTest {
         final var binOperation = mock(NonRdfSourceOperation.class,
                 withSettings().extraInterfaces(CreateResourceOperation.class));
 
+        when(binOperation.getTransaction()).thenReturn(transaction);
         final var contentStream = new ByteArrayInputStream(content.getBytes());
         when(binOperation.getContentStream()).thenReturn(contentStream);
         when(binOperation.getContentSize()).thenReturn(-1L);

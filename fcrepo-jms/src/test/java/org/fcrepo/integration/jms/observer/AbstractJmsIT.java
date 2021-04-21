@@ -192,7 +192,7 @@ abstract class AbstractJmsIT implements MessageListener {
         });
 
         doInTx(tx -> {
-            final FedoraResource binaryResource = getResource(fedoraId);
+            final FedoraResource binaryResource = getResource(tx, fedoraId);
             deleteResourceService.perform(tx, binaryResource, USER);
             tx.commit();
             awaitMessageOrFail(externalId, RESOURCE_DELETION.getType(), null);
@@ -235,7 +235,7 @@ abstract class AbstractJmsIT implements MessageListener {
         });
 
         doInTx(tx -> {
-            final var resource = getResource(fedoraId);
+            final var resource = getResource(tx, fedoraId);
             deleteResourceService.perform(tx, resource, USER);
             tx.commit();
             awaitMessageOrFail(externalId, RESOURCE_DELETION.getType(), null);
@@ -388,9 +388,9 @@ abstract class AbstractJmsIT implements MessageListener {
         return new ByteArrayInputStream(value.getBytes(UTF_8));
     }
 
-    private FedoraResource getResource(final FedoraId fedoraId) {
+    private FedoraResource getResource(final Transaction transaction, final FedoraId fedoraId) {
         try {
-            return resourceFactory.getResource(fedoraId);
+            return resourceFactory.getResource(transaction, fedoraId);
         } catch (final PathNotFoundException e) {
             throw new RuntimeException(e);
         }

@@ -17,6 +17,7 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -71,6 +72,9 @@ public class DeleteResourcePersisterTest {
     @Mock
     private OcflPersistentStorageSession psSession;
 
+    @Mock
+    private Transaction transaction;
+
     @Captor
     private ArgumentCaptor<ResourceHeaders> headersCaptor;
 
@@ -106,7 +110,8 @@ public class DeleteResourcePersisterTest {
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
         when(mapping.getRootObjectIdentifier()).thenReturn(parentId);
         when(operation.getResourceId()).thenReturn(resourceId);
-        when(index.getMapping(eq(SESSION_ID), any())).thenReturn(mapping);
+        when(operation.getTransaction()).thenReturn(transaction);
+        when(index.getMappingInternal(eq(transaction), any())).thenReturn(mapping);
         when(session.containsResource(resourceId.getResourceId())).thenReturn(true);
 
         persister.persist(psSession, operation);
@@ -135,7 +140,8 @@ public class DeleteResourcePersisterTest {
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
         when(mapping.getRootObjectIdentifier()).thenReturn(parentId);
         when(operation.getResourceId()).thenReturn(resourceId);
-        when(index.getMapping(eq(SESSION_ID), any())).thenReturn(mapping);
+        when(operation.getTransaction()).thenReturn(transaction);
+        when(index.getMappingInternal(eq(transaction), any())).thenReturn(mapping);
         when(session.containsResource(resourceId.getResourceId())).thenReturn(false);
 
         persister.persist(psSession, operation);
@@ -147,7 +153,7 @@ public class DeleteResourcePersisterTest {
         assertEquals(resourceId.toString(), deleteHeaders.getId());
         assertTrue(deleteHeaders.isDeleted());
 
-        verify(index).removeMapping(SESSION_ID, resourceId);
+        verify(index).removeMapping(transaction, resourceId);
     }
 
     @Test(expected = PersistentStorageException.class)
@@ -155,7 +161,8 @@ public class DeleteResourcePersisterTest {
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
         when(mapping.getRootObjectIdentifier()).thenReturn(parentId);
         when(operation.getResourceId()).thenReturn(resourceId);
-        when(index.getMapping(eq(SESSION_ID), any())).thenReturn(mapping);
+        when(operation.getTransaction()).thenReturn(transaction);
+        when(index.getMappingInternal(eq(transaction), any())).thenReturn(mapping);
         when(session.readHeaders(resourceId.getResourceId())).thenThrow(NotFoundException.class);
         persister.persist(psSession, operation);
     }
@@ -165,7 +172,9 @@ public class DeleteResourcePersisterTest {
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
         when(mapping.getRootObjectIdentifier()).thenReturn(FedoraId.create("info:fedora/an-ocfl-object"));
         when(operation.getResourceId()).thenReturn(FedoraId.create("info:fedora/an-ocfl-object"));
-        when(index.getMapping(eq(SESSION_ID), any())).thenThrow(new FedoraOcflMappingNotFoundException("error"));
+        when(operation.getTransaction()).thenReturn(transaction);
+        when(index.getMappingInternal(eq(transaction), any()))
+                .thenThrow(new FedoraOcflMappingNotFoundException("error"));
 
         persister.persist(psSession, operation);
     }

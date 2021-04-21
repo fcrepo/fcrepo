@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.models;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -35,13 +36,13 @@ public class WebacAclImpl extends ContainerImpl implements WebacAcl {
     /**
      * Constructor
      * @param fedoraID the internal identifier
-     * @param txId the current transactionId
+     * @param transaction the current transactionId
      * @param pSessionManager a session manager
      * @param resourceFactory a resource factory instance.
      */
-    public WebacAclImpl(final FedoraId fedoraID, final String txId,
+    public WebacAclImpl(final FedoraId fedoraID, final Transaction transaction,
                         final PersistentStorageSessionManager pSessionManager, final ResourceFactory resourceFactory) {
-        super(fedoraID, txId, pSessionManager, resourceFactory);
+        super(fedoraID, transaction, pSessionManager, resourceFactory);
     }
 
     @Override
@@ -49,7 +50,7 @@ public class WebacAclImpl extends ContainerImpl implements WebacAcl {
         final var originalId = FedoraId.create(getFedoraId().getBaseId());
         try {
 
-            return resourceFactory.getResource(txId, originalId);
+            return resourceFactory.getResource(transaction, originalId);
         } catch (final PathNotFoundException exc) {
             throw new PathNotFoundRuntimeException(exc.getMessage(), exc);
         }

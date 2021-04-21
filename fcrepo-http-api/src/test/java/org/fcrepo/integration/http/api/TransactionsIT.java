@@ -48,6 +48,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -65,6 +67,7 @@ import org.fcrepo.common.lang.CheckedRunnable;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.storage.ocfl.CommitType;
 import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
@@ -1091,8 +1094,11 @@ public class TransactionsIT extends AbstractResourceIT {
 
     private void addConflictingContainmentRecord(final String resourceId) {
         final var txId = UUID.randomUUID().toString();
-        containmentIndex.addContainedBy(txId, FedoraId.getRepositoryRootId(), FedoraId.create(resourceId));
-        containmentIndex.commitTransaction(txId);
+        final var tx = mock(Transaction.class);
+        when(tx.getId()).thenReturn(txId);
+        when(tx.isShortLived()).thenReturn(true);
+        containmentIndex.addContainedBy(tx, FedoraId.getRepositoryRootId(), FedoraId.create(resourceId));
+        containmentIndex.commitTransaction(tx);
     }
 
     private void corruptStagedBinary(final String resourceId) {

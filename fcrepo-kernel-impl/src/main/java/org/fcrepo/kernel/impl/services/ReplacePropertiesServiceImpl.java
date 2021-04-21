@@ -54,9 +54,8 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
                         final String userPrincipal,
                         final FedoraId fedoraId,
                         final Model inputModel) throws MalformedRdfException {
-        final var txId = tx.getId();
         try {
-            final PersistentStorageSession pSession = this.psManager.getSession(txId);
+            final PersistentStorageSession pSession = this.psManager.getSession(tx);
 
             final var headers = pSession.getHeaders(fedoraId, null);
             final var interactionModel = headers.getInteractionModel();
@@ -64,7 +63,7 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
             ensureValidDirectContainer(fedoraId, interactionModel, inputModel);
             ensureValidACLAuthorization(inputModel);
 
-            final ResourceOperation updateOp = factory.updateBuilder(fedoraId,
+            final ResourceOperation updateOp = factory.updateBuilder(tx, fedoraId,
                     fedoraPropsConfig.getServerManagedPropsMode())
                 .relaxedProperties(inputModel)
                 .userPrincipal(userPrincipal)
@@ -78,9 +77,9 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
             }
 
             pSession.persist(updateOp);
-            updateReferences(txId, fedoraId, userPrincipal, inputModel);
-            membershipService.resourceModified(txId, fedoraId);
-            recordEvent(txId, fedoraId, updateOp);
+            updateReferences(tx, fedoraId, userPrincipal, inputModel);
+            membershipService.resourceModified(tx, fedoraId);
+            recordEvent(tx, fedoraId, updateOp);
         } catch (final PersistentStorageException ex) {
             throw new RepositoryRuntimeException(String.format("failed to replace resource %s",
                   fedoraId), ex);

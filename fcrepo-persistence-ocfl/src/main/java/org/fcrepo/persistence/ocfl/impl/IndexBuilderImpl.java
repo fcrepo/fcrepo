@@ -21,6 +21,7 @@ import edu.wisc.library.ocfl.api.OcflRepository;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
@@ -73,6 +74,9 @@ public class IndexBuilderImpl implements IndexBuilder {
     @Inject
     private FedoraPropsConfig fedoraPropsConfig;
 
+    @Inject
+    private TransactionManager txManager;
+
     @Override
     public void rebuildIfNecessary() {
         if (shouldRebuild()) {
@@ -88,16 +92,14 @@ public class IndexBuilderImpl implements IndexBuilder {
         reindexService.reset();
 
         final ReindexManager reindexManager = new ReindexManager(ocflRepository.listObjectIds(), reindexService,
-                ocflPropsConfig);
+                ocflPropsConfig, txManager);
 
         LOGGER.debug("Reading object ids...");
         final var startTime = Instant.now();
         try {
             reindexManager.start();
-            reindexManager.commit();
             LOGGER.info("Reindexing complete.");
         } catch (final InterruptedException e) {
-            reindexManager.rollback();
             throw new RuntimeException(e);
         } finally {
             reindexManager.shutdown();

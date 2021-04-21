@@ -21,6 +21,7 @@ package org.fcrepo.persistence.ocfl.impl;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Timer;
 import org.fcrepo.common.metrics.MetricsHelper;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
@@ -57,31 +58,42 @@ public class FedoraToOcflObjectIndexMetrics implements FedoraToOcflObjectIndex {
     private FedoraToOcflObjectIndex ocflIndexImpl;
 
     @Override
-    public FedoraOcflMapping getMapping(final String sessionId, final FedoraId fedoraResourceIdentifier)
+    public FedoraOcflMapping getMapping(final Transaction session, final FedoraId fedoraResourceIdentifier)
             throws FedoraOcflMappingNotFoundException {
         final var stopwatch = Timer.start();
         try  {
-            return ocflIndexImpl.getMapping(sessionId, fedoraResourceIdentifier);
+            return ocflIndexImpl.getMapping(session, fedoraResourceIdentifier);
         } finally {
             stopwatch.stop(getMappingTimer);
         }
     }
 
     @Override
-    public FedoraOcflMapping addMapping(final String sessionId,
+    public FedoraOcflMapping getMappingInternal(final Transaction session, final FedoraId fedoraResourceIdentifier)
+            throws FedoraOcflMappingNotFoundException {
+        final var stopwatch = Timer.start();
+        try  {
+            return ocflIndexImpl.getMappingInternal(session, fedoraResourceIdentifier);
+        } finally {
+            stopwatch.stop(getMappingTimer);
+        }
+    }
+
+    @Override
+    public FedoraOcflMapping addMapping(final Transaction session,
                                         final FedoraId fedoraResourceIdentifier,
                                         final FedoraId fedoraRootObjectIdentifier,
                                         final String ocflObjectId) {
         return MetricsHelper.time(addMappingTimer, () -> {
-            return ocflIndexImpl.addMapping(sessionId, fedoraResourceIdentifier,
+            return ocflIndexImpl.addMapping(session, fedoraResourceIdentifier,
                     fedoraRootObjectIdentifier, ocflObjectId);
         });
     }
 
     @Override
-    public void removeMapping(final String sessionId, final FedoraId fedoraResourceIdentifier) {
+    public void removeMapping(final Transaction session, final FedoraId fedoraResourceIdentifier) {
         removeMappingTimer.record(() -> {
-            ocflIndexImpl.removeMapping(sessionId, fedoraResourceIdentifier);
+            ocflIndexImpl.removeMapping(session, fedoraResourceIdentifier);
         });
     }
 
@@ -93,16 +105,16 @@ public class FedoraToOcflObjectIndexMetrics implements FedoraToOcflObjectIndex {
     }
 
     @Override
-    public void commit(final String sessionId) {
+    public void commit(final Transaction session) {
         commitTimer.record(() -> {
-            ocflIndexImpl.commit(sessionId);
+            ocflIndexImpl.commit(session);
         });
     }
 
     @Override
-    public void rollback(final String sessionId) {
+    public void rollback(final Transaction session) {
         rollbackTimer.record(() -> {
-            ocflIndexImpl.rollback(sessionId);
+            ocflIndexImpl.rollback(session);
         });
     }
 

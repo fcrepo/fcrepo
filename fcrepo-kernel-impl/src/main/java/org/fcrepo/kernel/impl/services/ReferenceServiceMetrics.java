@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Timer;
 import org.fcrepo.common.metrics.MetricsHelper;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.ReferenceService;
@@ -60,40 +61,40 @@ public class ReferenceServiceMetrics implements ReferenceService {
     private ReferenceService referenceServiceImpl;
 
     @Override
-    public RdfStream getInboundReferences(final String txId, final FedoraResource resource) {
+    public RdfStream getInboundReferences(final Transaction tx, final FedoraResource resource) {
         return MetricsHelper.time(getInboundReferences, () -> {
-            return referenceServiceImpl.getInboundReferences(txId, resource);
+            return referenceServiceImpl.getInboundReferences(tx, resource);
         });
     }
 
     @Override
-    public void deleteAllReferences(final String txId, final FedoraId resourceId) {
+    public void deleteAllReferences(final Transaction tx, final FedoraId resourceId) {
         deleteAllReferencesTimer.record(() -> {
-            referenceServiceImpl.deleteAllReferences(txId, resourceId);
+            referenceServiceImpl.deleteAllReferences(tx, resourceId);
         });
     }
 
     @Override
-    public void updateReferences(final String txId,
+    public void updateReferences(final Transaction tx,
                                  final FedoraId resourceId,
                                  final String userPrincipal,
                                  final RdfStream rdfStream) {
         updateReferencesTimer.record(() -> {
-            referenceServiceImpl.updateReferences(txId, resourceId, userPrincipal, rdfStream);
+            referenceServiceImpl.updateReferences(tx, resourceId, userPrincipal, rdfStream);
         });
     }
 
     @Override
-    public void commitTransaction(final String txId) {
+    public void commitTransaction(final Transaction tx) {
         commitTransactionTimer.record(() -> {
-            referenceServiceImpl.commitTransaction(txId);
+            referenceServiceImpl.commitTransaction(tx);
         });
     }
 
     @Override
-    public void rollbackTransaction(final String txId) {
+    public void rollbackTransaction(final Transaction tx) {
         rollbackTransactionTimer.record(() -> {
-            referenceServiceImpl.rollbackTransaction(txId);
+            referenceServiceImpl.rollbackTransaction(tx);
         });
     }
 

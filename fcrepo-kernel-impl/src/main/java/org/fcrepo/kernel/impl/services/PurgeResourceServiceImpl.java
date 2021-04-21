@@ -17,8 +17,11 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import java.util.stream.Stream;
+
+import javax.inject.Inject;
+
 import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.TransactionUtils;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.operations.DeleteResourceOperationFactory;
@@ -26,12 +29,10 @@ import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.services.PurgeResourceService;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-
-import javax.inject.Inject;
-import java.util.stream.Stream;
 
 /**
  * Implementation of purge resource service.
@@ -48,14 +49,14 @@ public class PurgeResourceServiceImpl extends AbstractDeleteResourceService impl
 
     @Override
     protected Stream<String> getContained(final Transaction tx, final FedoraResource resource) {
-        return containmentIndex.getContainsDeleted(TransactionUtils.openTxId(tx), resource.getFedoraId());
+        return containmentIndex.getContainsDeleted(tx, resource.getFedoraId());
     }
 
     @Override
     protected void doAction(final Transaction tx, final PersistentStorageSession pSession, final FedoraId resourceId,
                   final String userPrincipal) throws PersistentStorageException {
         log.debug("starting purge of {}", resourceId.getFullId());
-        final ResourceOperation purgeOp = deleteResourceFactory.purgeBuilder(resourceId)
+        final ResourceOperation purgeOp = deleteResourceFactory.purgeBuilder(tx, resourceId)
                 .userPrincipal(userPrincipal)
                 .build();
 
@@ -63,8 +64,8 @@ public class PurgeResourceServiceImpl extends AbstractDeleteResourceService impl
         tx.lockResource(resourceId);
 
         pSession.persist(purgeOp);
-        containmentIndex.purgeResource(tx.getId(), resourceId);
-        recordEvent(tx.getId(), resourceId, purgeOp);
+        containmentIndex.purgeResource(tx, resourceId);
+        recordEvent(tx, resourceId, purgeOp);
         log.debug("purged {}", resourceId.getFullId());
     }
 

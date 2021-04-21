@@ -329,7 +329,7 @@ public class FedoraLdpTest {
             return null;
         }).when(preferTag).addResponseHeaders(mockResponse);
 
-        when(etagService.getRdfResourceEtag(nullable(String.class), any(FedoraResource.class),
+        when(etagService.getRdfResourceEtag(nullable(Transaction.class), any(FedoraResource.class),
                 nullable(LdpTriplePreferences.class), any())).thenReturn("etagval");
     }
 

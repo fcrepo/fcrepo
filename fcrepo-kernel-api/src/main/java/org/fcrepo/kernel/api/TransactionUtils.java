@@ -35,4 +35,19 @@ public class TransactionUtils {
     public static String openTxId(final Transaction transaction) {
         return transaction == null || transaction.isCommitted() ? null : transaction.getId();
     }
+
+    /**
+     * Returns True if the transaction is
+     * - not null
+     * - not committed
+     * - not expired
+     * - not rolledback
+     * - not short lived
+     * @param transaction The transaction or null
+     * @return True if above statements are all true, false otherwise
+     */
+    public static boolean isLongRunningTx(final Transaction transaction) {
+        return !(transaction == null || transaction.isCommitted() || transaction.hasExpired() ||
+                transaction.isRolledBack() || transaction.isShortLived());
+    }
 }

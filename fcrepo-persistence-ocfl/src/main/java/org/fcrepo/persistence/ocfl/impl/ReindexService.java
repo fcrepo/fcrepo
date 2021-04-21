@@ -17,13 +17,28 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.riot.RDFDataMgr;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.getRdfFormat;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
+
+import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
 
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
@@ -36,27 +51,15 @@ import org.fcrepo.search.api.Condition;
 import org.fcrepo.search.api.InvalidQueryException;
 import org.fcrepo.search.api.SearchIndex;
 import org.fcrepo.search.api.SearchParameters;
-import org.fcrepo.storage.ocfl.validation.ObjectValidator;
 import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
+import org.fcrepo.storage.ocfl.validation.ObjectValidator;
+
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.RDFDataMgr;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-
-import javax.inject.Inject;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static org.apache.jena.graph.NodeFactory.createURI;
-import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
-import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.getRdfFormat;
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Service that does the reindexing for one OCFL object.
@@ -100,8 +103,8 @@ public class ReindexService {
 
     private int membershipPageSize = 500;
 
-    public void indexOcflObject(final String txId, final String ocflId) {
-        LOGGER.debug("Indexing ocflId {} in transaction {}", ocflId, txId);
+    public void indexOcflObject(final Transaction tx, final String ocflId) {
+        LOGGER.debug("Indexing ocflId {} in transaction {}", ocflId, tx.getId());
 
         objectValidator.validate(ocflId, config.isRebuildFixityCheck());
 
@@ -138,7 +141,7 @@ public class ReindexService {
                             if (content.isPresent()) {
                                 try (final var stream = content.get()) {
                                     final RdfStream rdf = parseRdf(fedoraId, stream);
-                                    this.referenceService.updateReferences(txId, fedoraId, null, rdf);
+                                    this.referenceService.updateReferences(tx, fedoraId, null, rdf);
                                 } catch (final IOException e) {
                                     LOGGER.warn("Content stream for {} closed prematurely, inbound references skipped.",
                                             fedoraId.getFullId());
@@ -147,11 +150,11 @@ public class ReindexService {
                             }
                         }
 
-                        this.containmentIndex.addContainedBy(txId, parentId, fedoraId, created, null);
+                        this.containmentIndex.addContainedBy(tx, parentId, fedoraId, created, null);
                         headersList.add(headers.asKernelHeaders());
                     } else {
                         final var deleted = headers.getLastModifiedDate();
-                        this.containmentIndex.addContainedBy(txId, parentId, fedoraId, created, deleted);
+                        this.containmentIndex.addContainedBy(tx, parentId, fedoraId, created, deleted);
                     }
                 }
             });
@@ -166,12 +169,12 @@ public class ReindexService {
 
             fedoraIds.forEach(fedoraIdentifier -> {
                 final var rootFedoraIdentifier = rootId.get();
-                ocflIndex.addMapping(txId, fedoraIdentifier, rootFedoraIdentifier, ocflId);
+                ocflIndex.addMapping(tx, fedoraIdentifier, rootFedoraIdentifier, ocflId);
                 LOGGER.debug("Rebuilt fedora-to-ocfl object index entry for {}", fedoraIdentifier);
             });
 
             headersList.forEach(headers -> {
-                searchIndex.addUpdateIndex(txId, headers);
+                searchIndex.addUpdateIndex(tx, headers);
                 LOGGER.debug("Rebuilt searchIndex for {}", headers.getId());
             });
         }
@@ -206,47 +209,42 @@ public class ReindexService {
 
     /**
      * Commit the records added from transaction.
-     * @param transactionId the id of the transaction.
+     * @param transaction the transaction.
      */
-    public void commit(final String transactionId) {
+    public void commit(final Transaction transaction) {
         try {
-            LOGGER.debug("Performing commit of transaction {}", transactionId);
-            containmentIndex.commitTransaction(transactionId);
-            ocflIndex.commit(transactionId);
-            referenceService.commitTransaction(transactionId);
-            LOGGER.debug("Finished commit of transaction {}", transactionId);
+            LOGGER.debug("Performing commit of transaction {}", transaction);
+            containmentIndex.commitTransaction(transaction);
+            ocflIndex.commit(transaction);
+            referenceService.commitTransaction(transaction);
+            LOGGER.debug("Finished commit of transaction {}", transaction);
         } catch (final RuntimeException e) {
-            rollback(transactionId);
+            rollback(transaction);
             throw e;
         }
     }
 
     /**
      * Quietly rollback all changes to the various indexes.
-     * @param transactionId the transaction to rollback.
+     * @param transaction the transaction to rollback.
      */
-    public void rollback(final String transactionId) {
+    public void rollback(final Transaction transaction) {
         execQuietly("Failed to reset searchIndex", () -> {
             searchIndex.reset();
             return null;
         });
 
-        execQuietly("Failed to rollback containment index transaction " + transactionId, () -> {
-            containmentIndex.rollbackTransaction(transactionId);
+        execQuietly("Failed to rollback containment index transaction " + transaction.getId(), () -> {
+            containmentIndex.rollbackTransaction(transaction);
             return null;
         });
-        execQuietly("Failed to rollback OCFL index transaction " + transactionId, () -> {
-            ocflIndex.rollback(transactionId);
-            return null;
-        });
-
-        execQuietly("Failed to rollback the reference index transaction " + transactionId, () -> {
-            referenceService.rollbackTransaction(transactionId);
+        execQuietly("Failed to rollback OCFL index transaction " + transaction.getId(), () -> {
+            ocflIndex.rollback(transaction);
             return null;
         });
 
-        execQuietly("Failed to rollback membership index transaction " + transactionId, () -> {
-            membershipService.rollbackTransaction(transactionId);
+        execQuietly("Failed to rollback the reference index transaction " + transaction.getId(), () -> {
+            referenceService.rollbackTransaction(transaction);
             return null;
         });
     }
@@ -254,10 +252,10 @@ public class ReindexService {
     /**
      * Index all membership properties by querying for Direct containers, and then
      * trying population of the membership index for each one
-     * @param txId the transaction id.
+     * @param transaction the transaction id.
      */
-    public void indexMembership(final String txId) {
-        LOGGER.debug("Starting indexMembership for transaction {}", txId);
+    public void indexMembership(final Transaction transaction) {
+        LOGGER.debug("Starting indexMembership for transaction {}", transaction);
         final var fields = List.of(Condition.Field.FEDORA_ID);
         final var conditions = List.of(Condition.fromEnums(Condition.Field.RDF_TYPE, Condition.Operator.EQ,
                 RdfLexicon.DIRECT_CONTAINER.getURI()));
@@ -275,7 +273,7 @@ public class ReindexService {
 
                 resultList.stream()
                         .map(entry -> FedoraId.create((String) entry.get(Condition.Field.FEDORA_ID.toString())))
-                        .forEach(containerId -> membershipService.populateMembershipHistory(txId, containerId));
+                        .forEach(containerId -> membershipService.populateMembershipHistory(transaction, containerId));
 
                 // Results are paged, so step through pages until we reach the last one
                 offset += membershipPageSize;
@@ -284,8 +282,19 @@ public class ReindexService {
         } catch (final InvalidQueryException e) {
             throw new RepositoryRuntimeException("Failed to repopulate membership history", e);
         }
-        membershipService.commitTransaction(txId);
-        LOGGER.debug("Finished indexMembership for transaction {}", txId);
+        membershipService.commitTransaction(transaction.getId());
+        LOGGER.debug("Finished indexMembership for transaction {}", transaction);
+    }
+
+    /**
+     * Rollback changes in the transaction.
+     * @param txId the transaction id.
+     */
+    public void rollbackMembership(@NotNull final String txId) {
+        execQuietly("Failed to rollback membership index transaction " + txId, () -> {
+            membershipService.rollbackTransaction(txId);
+            return null;
+        });
     }
 
     /**

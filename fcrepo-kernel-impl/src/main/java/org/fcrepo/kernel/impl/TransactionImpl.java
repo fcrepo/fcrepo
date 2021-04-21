@@ -106,8 +106,8 @@ public class TransactionImpl implements Transaction {
             Failsafe.with(DB_RETRY).run(() -> {
                 // Cannot use transactional annotations because this class is not managed by spring
                 getTransactionTemplate().executeWithoutResult(status -> {
-                    this.getContainmentIndex().commitTransaction(id);
-                    this.getReferenceService().commitTransaction(id);
+                    this.getContainmentIndex().commitTransaction(this);
+                    this.getReferenceService().commitTransaction(this);
                     this.getMembershipService().commitTransaction(id);
                     this.getPersistentSession().prepare();
                     // The storage session must be committed last because mutable head changes cannot be rolled back.
@@ -118,7 +118,7 @@ public class TransactionImpl implements Transaction {
                     this.getPersistentSession().commit();
                 });
             });
-            this.getEventAccumulator().emitEvents(id, baseUri, userAgent);
+            this.getEventAccumulator().emitEvents(this, baseUri, userAgent);
             this.committed = true;
             releaseLocks();
         } catch (final Exception ex) {
@@ -148,16 +148,16 @@ public class TransactionImpl implements Transaction {
             this.getPersistentSession().rollback();
         });
         execQuietly("Failed to rollback index in transaction " + id, () -> {
-            this.getContainmentIndex().rollbackTransaction(id);
+            this.getContainmentIndex().rollbackTransaction(this);
         });
         execQuietly("Failed to rollback reference index in transaction " + id, () -> {
-            this.getReferenceService().rollbackTransaction(id);
+            this.getReferenceService().rollbackTransaction(this);
         });
         execQuietly("Failed to rollback membership index in transaction " + id, () -> {
             this.getMembershipService().rollbackTransaction(id);
         });
         execQuietly("Failed to rollback events in transaction " + id, () -> {
-            this.getEventAccumulator().clearEvents(id);
+            this.getEventAccumulator().clearEvents(this);
         });
 
         releaseLocks();
@@ -247,7 +247,7 @@ public class TransactionImpl implements Transaction {
     }
 
     private PersistentStorageSession getPersistentSession() {
-        return this.txManager.getPersistentStorageSessionManager().getSession(this.id);
+        return this.txManager.getPersistentStorageSessionManager().getSession(this);
     }
 
     private void failIfExpired() {

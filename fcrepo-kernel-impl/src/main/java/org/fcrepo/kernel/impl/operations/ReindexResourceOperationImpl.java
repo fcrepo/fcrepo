@@ -17,7 +17,9 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.operations.ReindexResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.REINDEX;
@@ -28,14 +30,25 @@ import static org.fcrepo.kernel.api.operations.ResourceOperationType.REINDEX;
  *
  * @author dbernstein
  */
-public class ReindexResourceOperation extends AbstractResourceOperation {
+public class ReindexResourceOperationImpl extends AbstractResourceOperation implements ReindexResourceOperation {
 
-    protected ReindexResourceOperation(final FedoraId rescId) {
-        super(rescId);
+    private Transaction transaction;
+
+    protected ReindexResourceOperationImpl(final Transaction transaction, final FedoraId rescId) {
+        super(transaction, rescId);
     }
 
     @Override
     public ResourceOperationType getType() {
         return REINDEX;
+    }
+
+    public void setTransaction(final Transaction tx) {
+        transaction = tx;
+    }
+
+    @Override
+    public Transaction getTransaction() {
+        return transaction;
     }
 }

@@ -32,16 +32,6 @@ import org.fcrepo.kernel.api.identifiers.FedoraId;
 public interface ResourceFactory {
 
     /**
-     * Get a FedoraResource for existing resource without using a transaction.
-     *
-     * @param fedoraID The path or identifier for the resource.
-     * @return The resource.
-     * @throws PathNotFoundException If the identifier cannot be found.
-     */
-    public FedoraResource getResource(final FedoraId fedoraID)
-            throws PathNotFoundException;
-
-    /**
      * Get a FedoraResource for existing resource
      *
      * @param transaction The transaction associated with this request or null if not in a transaction.
@@ -53,14 +43,15 @@ public interface ResourceFactory {
             throws PathNotFoundException;
 
     /**
-     * Get a FedoraResource for existing resource
+     * Get a FedoraResource for existing resource, always uses the provided transaction to ensure loading resources
+     * not yet committed.
      *
-     * @param transactionId The transaction id associated with this request or null if not in a transaction.
+     * @param transaction The transaction associated with this request or null if not in a transaction.
      * @param fedoraID The identifier for the resource.
      * @return The resource.
      * @throws PathNotFoundException If the identifier cannot be found.
      */
-    public FedoraResource getResource(final String transactionId, final FedoraId fedoraID)
+    public FedoraResource getResourceInternal(final Transaction transaction, final FedoraId fedoraID)
             throws PathNotFoundException;
 
     /**
@@ -90,17 +81,17 @@ public interface ResourceFactory {
 
     /**
      * Get the containing resource (if exists).
-     * @param transactionId The current transaction id
+     * @param transaction The current transaction
      * @param resourceId The internal identifier
      * @return The containing resource or null if none.
      */
-    public FedoraResource getContainer(final String transactionId, final FedoraId resourceId);
+    public FedoraResource getContainer(final Transaction transaction, final FedoraId resourceId);
 
     /**
      * Get immediate children of the resource
-     * @param transactionId The transaction id
+     * @param transaction The transaction
      * @param resourceId Identifier of the resource
      * @return Stream of child resources
      */
-    public Stream<FedoraResource> getChildren(final String transactionId, final FedoraId resourceId);
+    public Stream<FedoraResource> getChildren(final Transaction transaction, final FedoraId resourceId);
 }

@@ -29,10 +29,13 @@ import java.net.URI;
 import java.util.Collection;
 
 import org.apache.commons.io.IOUtils;
+
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
 import org.junit.Test;
+import org.mockito.Mock;
 
 /**
  * @author bbpennel
@@ -49,12 +52,15 @@ public class UpdateNonRdfSourceOperationBuilderTest {
 
     private final Collection<URI> DIGESTS = asList(URI.create("urn:sha1:1234abcd"), URI.create("urn:md5:zyxw9876"));
 
+    @Mock
+    private Transaction tx;
+
     @Test
     public void buildExternalBinary() {
         final URI uri = URI.create("http://example.org/test/location");
 
         final NonRdfSourceOperationBuilder builder =
-                new UpdateNonRdfSourceOperationBuilder(RESOURCE_ID, PROXY, uri);
+                new UpdateNonRdfSourceOperationBuilder(tx, RESOURCE_ID, PROXY, uri);
         builder.mimeType(MIME_TYPE)
                 .contentDigests(DIGESTS)
                 .contentSize(FILESIZE)
@@ -76,7 +82,7 @@ public class UpdateNonRdfSourceOperationBuilderTest {
         final InputStream stream = toInputStream(contentString, UTF_8);
 
         final NonRdfSourceOperationBuilder builder =
-                new UpdateNonRdfSourceOperationBuilder(RESOURCE_ID, stream);
+                new UpdateNonRdfSourceOperationBuilder(tx, RESOURCE_ID, stream);
         builder.mimeType(MIME_TYPE)
                 .contentDigests(DIGESTS)
                 .contentSize(FILESIZE)

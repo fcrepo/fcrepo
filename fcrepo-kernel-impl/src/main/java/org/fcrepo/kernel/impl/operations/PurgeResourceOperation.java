@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 
@@ -28,8 +29,8 @@ import org.fcrepo.kernel.api.operations.ResourceOperationType;
  */
 public class PurgeResourceOperation extends AbstractResourceOperation {
 
-    protected PurgeResourceOperation(final FedoraId rescId) {
-        super(rescId);
+    protected PurgeResourceOperation(final Transaction transaction, final FedoraId rescId) {
+        super(transaction, rescId);
     }
 
     @Override

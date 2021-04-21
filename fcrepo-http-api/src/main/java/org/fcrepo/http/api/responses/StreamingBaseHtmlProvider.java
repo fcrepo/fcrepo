@@ -246,13 +246,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
      * @throws PathNotFoundException if the OCFL mapping is not found.
      */
     private FedoraResource getResourceFromSubject(final FedoraId resourceId) throws PathNotFoundException {
-
-        final var tx = transaction();
-        if (tx == null || tx.isCommitted()) {
-            return resourceFactory.getResource(resourceId);
-        } else {
-            return resourceFactory.getResource(tx.getId(), resourceId);
-        }
+        return resourceFactory.getResource(transaction(), resourceId);
     }
 
     private Context getContext(final Model model, final Node subject) {

@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -37,6 +38,7 @@ import java.util.UUID;
 
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.search.api.Condition;
@@ -69,7 +71,6 @@ public class ReindexServiceTest extends AbstractReindexerTest {
     @Mock
     private FedoraPropsConfig fedoraConfig;
 
-    private final String session1Id = "session1";
     private final FedoraId resource1 = FedoraId.create("info:fedora/resource1");
     private final FedoraId resource2 =  FedoraId.create(resource1 + "/resource2");
 
@@ -90,8 +91,9 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         setField(reindexService, "config", fedoraConfig);
         when(searchIndex.doSearch(any(SearchParameters.class))).thenReturn(containerResult);
 
+
         when(propsConfig.getReindexingThreads()).thenReturn(2L);
-        reindexManager = new ReindexManager(repository.listObjectIds(), reindexService, propsConfig);
+        reindexManager = new ReindexManager(repository.listObjectIds(), reindexService, propsConfig, txManager);
     }
 
     @Test
@@ -100,7 +102,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         final String childIdPart = getRandomId();
         final var parentId = FedoraId.create(parentIdPart);
         final var childId = parentId.resolve(childIdPart);
-        final var session = persistentStorageSessionManager.getSession(session1Id);
+        final var session = persistentStorageSessionManager.getSession(transaction);
 
         createResource(session, parentId, true);
         createChildResourceRdf(session, parentId, childId);
@@ -117,27 +119,27 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         assertDoesNotHaveOcflId(childId);
 
         reindexManager.start();
-        reindexManager.commit();
         reindexManager.shutdown();
 
         assertHasOcflId(parentIdPart, parentId);
         assertHasOcflId(parentIdPart, childId);
 
-        verify(containmentIndex).addContainedBy(anyString(), eq(FedoraId.getRepositoryRootId()), eq(parentId),
-                any(Instant.class), isNull());
-        verify(containmentIndex).addContainedBy(anyString(), eq(parentId), eq(childId), any(Instant.class), isNull());
-        verify(referenceService).updateReferences(anyString(), eq(childId), isNull(), any(RdfStream.class));
+        verify(containmentIndex).addContainedBy(any(Transaction.class), eq(FedoraId.getRepositoryRootId()),
+                eq(parentId), any(Instant.class), isNull());
+        verify(containmentIndex).addContainedBy(any(Transaction.class), eq(parentId), eq(childId), any(Instant.class),
+                isNull());
+        verify(referenceService).updateReferences(any(Transaction.class), eq(childId), isNull(), any(RdfStream.class));
         verify(searchIndex, times(2))
-                .addUpdateIndex(anyString(), any(org.fcrepo.kernel.api.models.ResourceHeaders.class));
+                .addUpdateIndex(any(Transaction.class), any(org.fcrepo.kernel.api.models.ResourceHeaders.class));
 
-        verify(containmentIndex).commitTransaction(anyString());
-        verify(referenceService).commitTransaction(anyString());
+        verify(containmentIndex).commitTransaction(any(Transaction.class));
+        verify(referenceService).commitTransaction(any(Transaction.class));
         verify(searchIndex).doSearch(any(SearchParameters.class));
     }
 
     @Test
     public void rebuildWhenRepoContainsArchivalGroupObject() throws Exception {
-        final var session = persistentStorageSessionManager.getSession(session1Id);
+        final var session = persistentStorageSessionManager.getSession(transaction);
 
         createResource(session, resource1, true);
         createChildResourceNonRdf(session, resource1, resource2);
@@ -154,24 +156,23 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         assertDoesNotHaveOcflId(resource2);
 
         reindexManager.start();
-        reindexManager.commit();
         reindexManager.shutdown();
 
         assertHasOcflId("resource1", resource1);
         assertHasOcflId("resource1", resource2);
 
-        verify(containmentIndex).addContainedBy(anyString(), eq(FedoraId.getRepositoryRootId()), eq(resource1),
+        verify(containmentIndex).addContainedBy(any(Transaction.class), eq(FedoraId.getRepositoryRootId()),
+                eq(resource1), any(Instant.class), isNull());
+        verify(containmentIndex).addContainedBy(any(Transaction.class), eq(resource1), eq(resource2),
                 any(Instant.class), isNull());
-        verify(containmentIndex).addContainedBy(anyString(), eq(resource1), eq(resource2), any(Instant.class),
-                isNull());
-        verify(searchIndex, times(2)).addUpdateIndex(isA(String.class), isA(
+        verify(searchIndex, times(2)).addUpdateIndex(any(Transaction.class), isA(
                 org.fcrepo.kernel.api.models.ResourceHeaders.class));
-        verify(containmentIndex).commitTransaction(anyString());
+        verify(containmentIndex).commitTransaction(any(Transaction.class));
     }
 
     @Test
     public void rebuildWhenRepoContainsNonArchivalGroupObject() throws Exception {
-        final var session = persistentStorageSessionManager.getSession(session1Id);
+        final var session = persistentStorageSessionManager.getSession(transaction);
 
         createResource(session, resource1, false);
         createChildResourceNonRdf(session, resource1, resource2);
@@ -188,23 +189,23 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         assertDoesNotHaveOcflId(resource2);
 
         reindexManager.start();
-        reindexManager.commit();
         reindexManager.shutdown();
 
         assertHasOcflId("resource1", resource1);
         assertHasOcflId("resource1/resource2", resource2);
 
-        verify(containmentIndex).addContainedBy(anyString(), eq(FedoraId.getRepositoryRootId()), eq(resource1),
+        verify(containmentIndex).addContainedBy(any(Transaction.class), eq(FedoraId.getRepositoryRootId()),
+                eq(resource1), any(Instant.class), isNull());
+        verify(containmentIndex).addContainedBy(any(Transaction.class), eq(resource1), eq(resource2),
                 any(Instant.class), isNull());
-        verify(containmentIndex).addContainedBy(anyString(), eq(resource1), eq(resource2), any(Instant.class),
-                isNull());
-        verify(containmentIndex).commitTransaction(anyString());
-        verify(searchIndex, times(2)).addUpdateIndex(isA(String.class), isA(ResourceHeaders.class));
+        verify(containmentIndex, times(2)).commitTransaction(any(Transaction.class));
+        verify(searchIndex, times(2)).addUpdateIndex(any(Transaction.class),
+                isA(ResourceHeaders.class));
     }
 
     @Test
     public void shouldNotAddDeletedResourcesToContainmentIndex() throws Exception {
-        final var session = persistentStorageSessionManager.getSession(session1Id);
+        final var session = persistentStorageSessionManager.getSession(transaction);
 
         createResource(session, resource1, true);
         createChildResourceNonRdf(session, resource1, resource2);
@@ -215,7 +216,9 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         assertHasOcflId("resource1", resource1);
         assertHasOcflId("resource1", resource2);
 
-        final var session2 = persistentStorageSessionManager.getSession("session2");
+        final var transaction2 = mock(Transaction.class);
+        when(transaction2.getId()).thenReturn("session2");
+        final var session2 = persistentStorageSessionManager.getSession(transaction2);
 
         deleteResource(session2, resource2);
 
@@ -228,18 +231,17 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         assertDoesNotHaveOcflId(resource2);
 
         reindexManager.start();
-        reindexManager.commit();
         reindexManager.shutdown();
 
         assertHasOcflId("resource1", resource1);
         assertHasOcflId("resource1", resource2);
 
-        verify(containmentIndex).addContainedBy(anyString(), eq(FedoraId.getRepositoryRootId()), eq(resource1),
+        verify(containmentIndex).addContainedBy(any(Transaction.class), eq(FedoraId.getRepositoryRootId()),
+                eq(resource1), any(Instant.class), isNull());
+        verify(containmentIndex, never()).addContainedBy(any(Transaction.class), eq(resource1), eq(resource2),
                 any(Instant.class), isNull());
-        verify(containmentIndex, never()).addContainedBy(anyString(), eq(resource1), eq(resource2),
-                any(Instant.class), isNull());
-        verify(containmentIndex).commitTransaction(anyString());
-        verify(searchIndex, times(1)).addUpdateIndex(anyString(), isA(ResourceHeaders.class));
+        verify(containmentIndex).commitTransaction(any(Transaction.class));
+        verify(searchIndex, times(1)).addUpdateIndex(any(Transaction.class), isA(ResourceHeaders.class));
     }
 
     // Verify that DirectContainers get membership rebuilt, and that querying/paging for resources works
@@ -248,7 +250,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         // Reduce the page size so the test doesn't take a while
         reindexService.setMembershipPageSize(5);
 
-        final var session = persistentStorageSessionManager.getSession(session1Id);
+        final var session = persistentStorageSessionManager.getSession(transaction);
 
         final int numberContainers = 18;
         final List<Map<String, Object>> result = new ArrayList<>();
@@ -266,15 +268,15 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         ocflIndex.reset();
 
         reindexManager.start();
-        reindexManager.commit();
         reindexManager.shutdown();
 
-        verify(containmentIndex, times(numberContainers)).addContainedBy(anyString(),
+        verify(containmentIndex, times(numberContainers)).addContainedBy(any(Transaction.class),
                 eq(FedoraId.getRepositoryRootId()), any(FedoraId.class), any(Instant.class), isNull());
-        verify(containmentIndex).commitTransaction(anyString());
-        verify(searchIndex, times(numberContainers)).addUpdateIndex(isA(String.class), isA(
+        verify(containmentIndex, times(numberContainers)).commitTransaction(any(Transaction.class));
+        verify(searchIndex, times(numberContainers)).addUpdateIndex(any(Transaction.class), isA(
                 org.fcrepo.kernel.api.models.ResourceHeaders.class));
-        verify(membershipService, times(numberContainers)).populateMembershipHistory(anyString(), any(FedoraId.class));
+        verify(membershipService, times(numberContainers)).populateMembershipHistory(any(Transaction.class),
+                any(FedoraId.class));
         verify(membershipService).commitTransaction(anyString());
     }
 
@@ -284,7 +286,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         final String childIdPart = getRandomId();
         final var parentId = FedoraId.create(parentIdPart);
         final var childId = parentId.resolve(childIdPart);
-        final var session = persistentStorageSessionManager.getSession(session1Id);
+        final var session = persistentStorageSessionManager.getSession(transaction);
 
         createResource(session, parentId, true);
         createChildResourceRdf(session, parentId, childId);
@@ -304,7 +306,6 @@ public class ReindexServiceTest extends AbstractReindexerTest {
                 .when(objectValidator).validate(parentId.getFullId(), false);
 
         reindexManager.start();
-        reindexManager.commit();
         reindexManager.shutdown();
 
         assertDoesNotHaveOcflId(parentId);

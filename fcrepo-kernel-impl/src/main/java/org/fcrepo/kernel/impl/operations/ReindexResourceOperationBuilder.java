@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.ResourceOperationBuilder;
 
@@ -32,16 +33,18 @@ public class ReindexResourceOperationBuilder extends AbstractResourceOperationBu
     /**
      * Construct the builder
      *
+     * @param tx the transaction
      * @param rescId identifier of the resource to reindex
      */
-    public ReindexResourceOperationBuilder(final FedoraId rescId) {
-        super(rescId);
+    public ReindexResourceOperationBuilder(final Transaction tx, final FedoraId rescId) {
+        super(tx, rescId);
     }
 
     @Override
-    public ReindexResourceOperation build() {
-        final var operation = new ReindexResourceOperation(rescId);
+    public ReindexResourceOperationImpl build() {
+        final var operation = new ReindexResourceOperationImpl(transaction, rescId);
         operation.setUserPrincipal(userPrincipal);
+        operation.setTransaction(transaction);
         return operation;
     }
 }

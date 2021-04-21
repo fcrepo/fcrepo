@@ -24,6 +24,7 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.vocabulary.DC;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
@@ -95,6 +96,9 @@ public class CreateRdfSourcePersisterTest {
     @Captor
     private ArgumentCaptor<ResourceHeaders> headersCaptor;
 
+    @Mock
+    private Transaction transaction;
+
     private CreateRdfSourcePersister persister;
 
     @Before
@@ -153,15 +157,15 @@ public class CreateRdfSourcePersisterTest {
         final var ocflId = "ocfl-id-1";
 
         final String sessionId = "some-id";
-        index.addMapping(sessionId, ROOT_RESOURCE_ID, ROOT_RESOURCE_ID, ocflId);
-        index.commit(sessionId);
+        index.addMapping(transaction, ROOT_RESOURCE_ID, ROOT_RESOURCE_ID, ocflId);
+        index.commit(transaction);
 
         when(operation.getResourceId()).thenReturn(RESOURCE_ID);
         when(((CreateResourceOperation) operation).getParentId()).thenReturn(FedoraId.getRepositoryRootId());
         when(((CreateResourceOperation) operation).getInteractionModel()).thenReturn(RDF_SOURCE.toString());
         when(operation.getTriples()).thenReturn(userTriplesStream);
-        when(psSession.getHeaders(RESOURCE_ID, null)).thenReturn(null);
-        when(psSession.getHeaders(ROOT_RESOURCE_ID, null)).thenReturn(parentHeaders);
+        when(psSession.getHeadersInternal(RESOURCE_ID, null)).thenReturn(null);
+        when(psSession.getHeadersInternal(ROOT_RESOURCE_ID, null)).thenReturn(parentHeaders);
 
         persister.persist(psSession, operation);
 

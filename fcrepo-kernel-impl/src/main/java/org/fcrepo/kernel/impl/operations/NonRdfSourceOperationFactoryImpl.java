@@ -20,6 +20,7 @@ package org.fcrepo.kernel.impl.operations;
 import java.io.InputStream;
 import java.net.URI;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateNonRdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
@@ -34,28 +35,32 @@ import org.springframework.stereotype.Component;
 public class NonRdfSourceOperationFactoryImpl implements NonRdfSourceOperationFactory {
 
     @Override
-    public UpdateNonRdfSourceOperationBuilder updateExternalBinaryBuilder(final FedoraId rescId,
-                                                                    final String handling,
-                                                                    final URI contentUri) {
-        return new UpdateNonRdfSourceOperationBuilder(rescId, handling, contentUri);
+    public UpdateNonRdfSourceOperationBuilder updateExternalBinaryBuilder(final Transaction transaction,
+                                                                          final FedoraId rescId,
+                                                                          final String handling,
+                                                                          final URI contentUri) {
+        return new UpdateNonRdfSourceOperationBuilder(transaction, rescId, handling, contentUri);
     }
 
     @Override
-    public UpdateNonRdfSourceOperationBuilder updateInternalBinaryBuilder(final FedoraId rescId,
+    public UpdateNonRdfSourceOperationBuilder updateInternalBinaryBuilder(final Transaction transaction,
+                                                                          final FedoraId rescId,
                                                                     final InputStream contentStream) {
-        return new UpdateNonRdfSourceOperationBuilder(rescId, contentStream);
+        return new UpdateNonRdfSourceOperationBuilder(transaction, rescId, contentStream);
     }
 
     @Override
-    public CreateNonRdfSourceOperationBuilder createExternalBinaryBuilder(final FedoraId rescId,
+    public CreateNonRdfSourceOperationBuilder createExternalBinaryBuilder(final Transaction transaction,
+                                                                          final FedoraId rescId,
             final String handling, final URI contentUri) {
-        return new CreateNonRdfSourceOperationBuilderImpl(rescId, handling, contentUri);
+        return new CreateNonRdfSourceOperationBuilderImpl(transaction, rescId, handling, contentUri);
     }
 
     @Override
-    public CreateNonRdfSourceOperationBuilder createInternalBinaryBuilder(final FedoraId rescId,
+    public CreateNonRdfSourceOperationBuilder createInternalBinaryBuilder(final Transaction transaction,
+                                                                          final FedoraId rescId,
             final InputStream contentStream) {
-        return new CreateNonRdfSourceOperationBuilderImpl(rescId, contentStream);
+        return new CreateNonRdfSourceOperationBuilderImpl(transaction, rescId, contentStream);
     }
 
 }

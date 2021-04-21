@@ -19,6 +19,7 @@
 package org.fcrepo.kernel.impl.observer;
 
 import org.fcrepo.config.ServerManagedPropsMode;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.observer.Event;
 import org.fcrepo.kernel.api.observer.EventType;
@@ -26,7 +27,12 @@ import org.fcrepo.kernel.impl.operations.DeleteResourceOperationFactoryImpl;
 import org.fcrepo.kernel.impl.operations.NonRdfSourceOperationFactoryImpl;
 import org.fcrepo.kernel.impl.operations.RdfSourceOperationFactoryImpl;
 import org.fcrepo.kernel.impl.operations.VersionResourceOperationFactoryImpl;
+
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.ByteArrayInputStream;
 import java.util.Set;
@@ -37,20 +43,30 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.when;
 
 /**
  * @author pwinckles
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ResourceOperationEventBuilderTest {
 
     private static final FedoraId FEDORA_ID = FedoraId.create("/test");
     private static final String USER = "user1";
     private static final String BASE_URL = "http://locahost/rest";
 
+    @Mock
+    private Transaction transaction;
+
+    @Before
+    public void setup() {
+        when(transaction.getId()).thenReturn("tx-123");
+    }
+
     @Test
     public void buildCreateEventFromCreateRdfOperation() {
         final var operation = new RdfSourceOperationFactoryImpl()
-                .createBuilder(FEDORA_ID, RDF_SOURCE.toString(), ServerManagedPropsMode.RELAXED)
+                .createBuilder(transaction, FEDORA_ID, RDF_SOURCE.toString(), ServerManagedPropsMode.RELAXED)
                 .userPrincipal(USER)
                 .build();
 
@@ -66,7 +82,7 @@ public class ResourceOperationEventBuilderTest {
         final var fedoraId = FedoraId.create("/test/ab/c");
         final var user = "user2";
         final var operation = new NonRdfSourceOperationFactoryImpl()
-                .createInternalBinaryBuilder(fedoraId, new ByteArrayInputStream(new byte[]{}))
+                .createInternalBinaryBuilder(transaction, fedoraId, new ByteArrayInputStream(new byte[]{}))
                 .userPrincipal(user)
                 .build();
 
@@ -84,7 +100,7 @@ public class ResourceOperationEventBuilderTest {
 
     @Test
     public void buildCreateEventFromVersionOperation() {
-        final var operation = new VersionResourceOperationFactoryImpl().createBuilder(FEDORA_ID)
+        final var operation = new VersionResourceOperationFactoryImpl().createBuilder(transaction, FEDORA_ID)
                 .userPrincipal(USER)
                 .build();
 
@@ -97,7 +113,7 @@ public class ResourceOperationEventBuilderTest {
 
     @Test
     public void buildDeleteEventFromDeleteOperation() {
-        final var operation = new DeleteResourceOperationFactoryImpl().deleteBuilder(FEDORA_ID)
+        final var operation = new DeleteResourceOperationFactoryImpl().deleteBuilder(transaction, FEDORA_ID)
                 .userPrincipal(USER)
                 .build();
 
@@ -111,7 +127,7 @@ public class ResourceOperationEventBuilderTest {
     @Test
     public void buildUpdateEventFromUpdateRdfOperation() {
         final var operation = new RdfSourceOperationFactoryImpl()
-                .updateBuilder(FEDORA_ID, ServerManagedPropsMode.RELAXED)
+                .updateBuilder(transaction, FEDORA_ID, ServerManagedPropsMode.RELAXED)
                 .userPrincipal(USER)
                 .build();
 
@@ -125,7 +141,7 @@ public class ResourceOperationEventBuilderTest {
     @Test
     public void buildUpdateEventFromUpdateNonRdfOperation() {
         final var operation = new NonRdfSourceOperationFactoryImpl()
-                .updateInternalBinaryBuilder(FEDORA_ID, new ByteArrayInputStream(new byte[]{}))
+                .updateInternalBinaryBuilder(transaction, FEDORA_ID, new ByteArrayInputStream(new byte[]{}))
                 .userPrincipal(USER)
                 .build();
 
@@ -139,7 +155,7 @@ public class ResourceOperationEventBuilderTest {
     @Test
     public void mergeValidObjects() {
         final var createOperation = new RdfSourceOperationFactoryImpl()
-                .createBuilder(FEDORA_ID, RDF_SOURCE.toString(), ServerManagedPropsMode.RELAXED)
+                .createBuilder(transaction, FEDORA_ID, RDF_SOURCE.toString(), ServerManagedPropsMode.RELAXED)
                 .userPrincipal(USER)
                 .build();
 
@@ -148,7 +164,7 @@ public class ResourceOperationEventBuilderTest {
                 .withBaseUrl(BASE_URL);
 
         final var updateOperation = new NonRdfSourceOperationFactoryImpl()
-                .updateInternalBinaryBuilder(FEDORA_ID, new ByteArrayInputStream(new byte[]{}))
+                .updateInternalBinaryBuilder(transaction, FEDORA_ID, new ByteArrayInputStream(new byte[]{}))
                 .userPrincipal(USER)
                 .build();
 
@@ -169,7 +185,7 @@ public class ResourceOperationEventBuilderTest {
     @Test
     public void populateOtherEventFields() {
         final var operation = new NonRdfSourceOperationFactoryImpl()
-                .updateInternalBinaryBuilder(FEDORA_ID, new ByteArrayInputStream(new byte[]{}))
+                .updateInternalBinaryBuilder(transaction, FEDORA_ID, new ByteArrayInputStream(new byte[]{}))
                 .userPrincipal(USER)
                 .build();
 

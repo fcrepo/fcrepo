@@ -17,24 +17,6 @@
  */
 package org.fcrepo.kernel.impl;
 
-import org.fcrepo.config.FedoraPropsConfig;
-import org.fcrepo.kernel.api.ContainmentIndex;
-import org.fcrepo.kernel.api.exception.TransactionClosedException;
-import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
-import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
-import org.fcrepo.kernel.api.observer.EventAccumulator;
-import org.fcrepo.kernel.api.services.MembershipService;
-import org.fcrepo.kernel.api.services.ReferenceService;
-import org.fcrepo.persistence.api.PersistentStorageSession;
-import org.fcrepo.persistence.api.PersistentStorageSessionManager;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -45,6 +27,25 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.time.Duration;
+
+import org.fcrepo.config.FedoraPropsConfig;
+import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.exception.TransactionClosedException;
+import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
+import org.fcrepo.kernel.api.lock.ResourceLockManager;
+import org.fcrepo.kernel.api.observer.EventAccumulator;
+import org.fcrepo.kernel.api.services.MembershipService;
+import org.fcrepo.kernel.api.services.ReferenceService;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * <p>TransactionTest class.</p>
@@ -82,6 +83,9 @@ public class TransactionManagerImplTest {
     @Mock
     private TransactionTemplate transactionTemplate;
 
+    @Mock
+    private ResourceLockManager resourceLockManager;
+
     private FedoraPropsConfig fedoraPropsConfig;
 
     @Before
@@ -98,6 +102,7 @@ public class TransactionManagerImplTest {
         setField(testTxManager, "platformTransactionManager", platformTransactionManager);
         setField(testTxManager, "transactionTemplate", transactionTemplate);
         setField(testTxManager, "fedoraPropsConfig", fedoraPropsConfig);
+        setField(testTxManager, "resourceLockManager", resourceLockManager);
         testTx = (TransactionImpl) testTxManager.create();
     }
 
@@ -114,12 +119,12 @@ public class TransactionManagerImplTest {
         assertEquals(testTx.getId(), tx.getId());
     }
 
-    @Test(expected = TransactionRuntimeException.class)
+    @Test(expected = TransactionNotFoundException.class)
     public void testGetTransactionWithInvalidID() {
         testTxManager.get("invalid-id");
     }
 
-    @Test(expected = TransactionRuntimeException.class)
+    @Test(expected = TransactionClosedException.class)
     public void testGetExpiredTransaction() throws Exception {
         testTx.expire();
         try {

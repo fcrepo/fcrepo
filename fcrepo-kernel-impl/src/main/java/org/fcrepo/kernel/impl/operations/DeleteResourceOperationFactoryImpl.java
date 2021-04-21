@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.DeleteResourceOperationFactory;
 import org.fcrepo.kernel.api.operations.ResourceOperationBuilder;
@@ -31,13 +32,13 @@ import org.springframework.stereotype.Component;
 public class DeleteResourceOperationFactoryImpl implements DeleteResourceOperationFactory {
 
     @Override
-    public DeleteResourceOperationBuilder deleteBuilder(final FedoraId rescId) {
-        return new DeleteResourceOperationBuilder(rescId);
+    public DeleteResourceOperationBuilder deleteBuilder(final Transaction transaction, final FedoraId rescId) {
+        return new DeleteResourceOperationBuilder(transaction, rescId);
     }
 
     @Override
-    public ResourceOperationBuilder purgeBuilder(final FedoraId rescId) {
-        return new PurgeResourceOperationBuilder(rescId);
+    public ResourceOperationBuilder purgeBuilder(final Transaction transaction, final FedoraId rescId) {
+        return new PurgeResourceOperationBuilder(transaction, rescId);
     }
 
 }

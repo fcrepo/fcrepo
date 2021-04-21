@@ -18,6 +18,8 @@
 package org.fcrepo.kernel.impl.services;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.fcrepo.kernel.api.TransactionUtils.isLongRunningTx;
+import static org.fcrepo.kernel.api.TransactionUtils.openTxId;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.List;
@@ -34,6 +36,7 @@ import javax.transaction.Transactional;
 
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -170,12 +173,12 @@ public class ReferenceServiceImpl implements ReferenceService {
     }
 
     @Override
-    public RdfStream getInboundReferences(final String txId, final FedoraResource resource) {
+    public RdfStream getInboundReferences(@Nonnull final Transaction tx, final FedoraResource resource) {
         final String resourceId = resource.getFedoraId().getFullId();
         final Node subject = NodeFactory.createURI(resourceId);
-        final Stream<Triple> stream = getReferencesInternal(txId, resourceId);
+        final Stream<Triple> stream = getReferencesInternal(tx, resourceId);
         if (resource instanceof NonRdfSourceDescription) {
-            final Stream<Triple> stream2 = getReferencesInternal(txId, resource.getFedoraId().getBaseId());
+            final Stream<Triple> stream2 = getReferencesInternal(tx, resource.getFedoraId().getBaseId());
             return new DefaultRdfStream(subject, Stream.concat(stream, stream2));
         }
         return new DefaultRdfStream(subject, stream);
@@ -183,11 +186,11 @@ public class ReferenceServiceImpl implements ReferenceService {
 
     /**
      * Get the inbound references for the resource Id and the transaction id.
-     * @param txId transaction id or null for none.
+     * @param tx transaction or null for none.
      * @param targetId the id that will be the target of references.
      * @return RDF stream of inbound references
      */
-    private Stream<Triple> getReferencesInternal(final String txId, final String targetId) {
+    private Stream<Triple> getReferencesInternal(final Transaction tx, final String targetId) {
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("targetId", targetId);
         final Node targetNode = NodeFactory.createURI(targetId);
@@ -198,38 +201,38 @@ public class ReferenceServiceImpl implements ReferenceService {
                         targetNode);
 
         final List<Triple> references;
-        if (txId != null) {
+        if (isLongRunningTx(tx)) {
             // we are in a transaction
-            parameterSource.addValue("transactionId", txId);
+            parameterSource.addValue("transactionId", tx.getId());
             references = jdbcTemplate.query(SELECT_INBOUND_IN_TRANSACTION, parameterSource, inboundMapper);
         } else {
             // not in a transaction
             references = jdbcTemplate.query(SELECT_INBOUND, parameterSource, inboundMapper);
         }
         LOGGER.debug("getInboundReferences for {} in transaction {} found {} references",
-                targetId, txId, references.size());
+                targetId, tx, references.size());
         return references.stream();
     }
 
     @Override
-    public void deleteAllReferences(@Nonnull final String txId, final FedoraId resourceId) {
-        final List<Quad> deleteReferences = getOutboundReferences(txId, resourceId);
+    public void deleteAllReferences(@Nonnull final Transaction tx, final FedoraId resourceId) {
+        final List<Quad> deleteReferences = getOutboundReferences(tx, resourceId);
         if (resourceId.isDescription()) {
             // Also get the binary references
-            deleteReferences.addAll(getOutboundReferences(txId, resourceId.asBaseId()));
+            deleteReferences.addAll(getOutboundReferences(tx, resourceId.asBaseId()));
         }
         // Remove all the existing references.
-        deleteReferences.forEach(t -> removeReference(txId, t));
+        deleteReferences.forEach(t -> removeReference(openTxId(tx), t));
     }
 
     /**
      * Get a stream of quads of resources being referenced from the provided resource, the graph of the quad is the
      * URI of the resource the reference is from.
-     * @param txId transaction Id or null if none.
+     * @param tx transaction Id or null if none.
      * @param resourceId the resource Id.
      * @return list of Quads
      */
-    private List<Quad> getOutboundReferences(final String txId, final FedoraId resourceId) {
+    private List<Quad> getOutboundReferences(final Transaction tx, final FedoraId resourceId) {
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("resourceId", resourceId.getFullId());
         final Node subjectNode = NodeFactory.createURI(resourceId.getFullId());
@@ -241,69 +244,69 @@ public class ReferenceServiceImpl implements ReferenceService {
                         NodeFactory.createURI(rs.getString(TARGET_COLUMN)));
 
         final List<Quad> references;
-        if (txId != null) {
-            // we are in a transaction
-            parameterSource.addValue("transactionId", txId);
+        if (isLongRunningTx(tx)) {
+            // we are in a long-running transaction
+            parameterSource.addValue("transactionId", tx.getId());
             references = jdbcTemplate.query(SELECT_OUTBOUND_IN_TRANSACTION, parameterSource, outboundMapper);
         } else {
-            // not in a transaction
+            // not in a transaction or in a short-lived transaction
             references = jdbcTemplate.query(SELECT_OUTBOUND, parameterSource, outboundMapper);
         }
         LOGGER.debug("getOutboundReferences for {} in transaction {} found {} references",
-                resourceId, txId, references.size());
+                resourceId, tx, references.size());
         return references;
     }
 
     @Override
     @Transactional
-    public void updateReferences(@Nonnull final String txId, final FedoraId resourceId, final String userPrincipal,
+    public void updateReferences(@Nonnull final Transaction tx, final FedoraId resourceId, final String userPrincipal,
                                  final RdfStream rdfStream) {
         try {
             final List<Triple> addReferences = getReferencesFromRdf(rdfStream).collect(Collectors.toList());
             // This predicate checks for items we are adding, so we don't bother to delete and then re-add them.
             final Predicate<Quad> notInAdds = q -> !addReferences.contains(q.asTriple());
             // References from this resource.
-            final List<Quad> existingReferences = getOutboundReferences(txId, resourceId);
+            final List<Quad> existingReferences = getOutboundReferences(tx, resourceId);
             if (resourceId.isDescription()) {
                 // Resource is a binary description so also get the binary references.
-                existingReferences.addAll(getOutboundReferences(txId, resourceId.asBaseId()));
+                existingReferences.addAll(getOutboundReferences(tx, resourceId.asBaseId()));
             }
             // Remove any existing references not being re-added.
-            existingReferences.stream().filter(notInAdds).forEach(t -> removeReference(txId, t));
+            existingReferences.stream().filter(notInAdds).forEach(t -> removeReference(openTxId(tx), t));
             final Node resourceNode = NodeFactory.createURI(resourceId.getFullId());
             // This predicate checks for references that didn't already exist in the database.
             final Predicate<Triple> alreadyExists = t -> !existingReferences.contains(Quad.create(resourceNode, t));
             // Add the new references.
             addReferences.stream().filter(alreadyExists).forEach(r ->
-                    addReference(txId, Quad.create(resourceNode, r), userPrincipal));
+                    addReference(tx, Quad.create(resourceNode, r), userPrincipal));
         } catch (final Exception e) {
             LOGGER.warn("Unable to update reference index for resource {} in transaction {}: {}",
-                    resourceId.getFullId(), txId, e.getMessage());
+                    resourceId.getFullId(), openTxId(tx), e.getMessage());
             throw new RepositoryRuntimeException("Unable to update reference index", e);
         }
     }
 
     @Override
     @Transactional
-    public void commitTransaction(final String txId) {
+    public void commitTransaction(final Transaction tx) {
         try {
-            final Map<String, String> parameterSource = Map.of("transactionId", txId);
+            final Map<String, String> parameterSource = Map.of("transactionId", openTxId(tx));
             jdbcTemplate.update(COMMIT_DELETE_RECORDS, parameterSource);
             jdbcTemplate.update(COMMIT_ADD_RECORDS, parameterSource);
             jdbcTemplate.update(DELETE_TRANSACTION, parameterSource);
         } catch (final Exception e) {
-            LOGGER.warn("Unable to commit reference index transaction {}: {}", txId, e.getMessage());
+            LOGGER.warn("Unable to commit reference index transaction {}: {}", tx, e.getMessage());
             throw new RepositoryRuntimeException("Unable to commit reference index transaction", e);
         }
     }
 
     @Override
-    public void rollbackTransaction(final String txId) {
+    public void rollbackTransaction(final Transaction tx) {
         try {
-            final Map<String, String> parameterSource = Map.of("transactionId", txId);
+            final Map<String, String> parameterSource = Map.of("transactionId", openTxId(tx));
             jdbcTemplate.update(DELETE_TRANSACTION, parameterSource);
         } catch (final Exception e) {
-            LOGGER.warn("Unable to rollback reference index transaction {}: {}", txId, e.getMessage());
+            LOGGER.warn("Unable to rollback reference index transaction {}: {}", tx, e.getMessage());
             throw new RepositoryRuntimeException("Unable to rollback reference index transaction", e);
         }
     }
@@ -340,13 +343,14 @@ public class ReferenceServiceImpl implements ReferenceService {
 
     /**
      * Add a reference
-     * @param txId the transaction Id.
+     * @param transaction the transaction Id.
      * @param reference the quad with the reference, is is Quad(resourceId, subjectId, propertyId, targetId)
      * @param userPrincipal the user adding the reference.
      */
-    private void addReference(@Nonnull final String txId, final Quad reference, final String userPrincipal) {
+    private void addReference(@Nonnull final Transaction transaction, final Quad reference,
+                              final String userPrincipal) {
         final String targetId = reference.getObject().getURI();
-        final Map<String, String> parameterSource = Map.of("transactionId", txId,
+        final Map<String, String> parameterSource = Map.of("transactionId", transaction.getId(),
                 "resourceId", reference.getGraph().getURI(),
                 "subjectId", reference.getSubject().getURI(),
                 "property", reference.getPredicate().getURI(),
@@ -357,31 +361,33 @@ public class ReferenceServiceImpl implements ReferenceService {
             jdbcTemplate.update(UNDO_DELETE_REFERENCE_IN_TRANSACTION, parameterSource);
         } else {
             jdbcTemplate.update(INSERT_REFERENCE_IN_TRANSACTION, parameterSource);
-            recordEvent(txId, targetId, userPrincipal);
+            recordEvent(transaction, targetId, userPrincipal);
         }
     }
 
     /**
      * Record the inbound reference event if the target exists.
-     * @param txId the transaction id.
+     * @param transaction the transaction.
      * @param resourceId the id of the target of the inbound reference.
      * @param userPrincipal the user making the reference.
      */
-    private void recordEvent(final String txId, final String resourceId, final String userPrincipal) {
+    private void recordEvent(final Transaction transaction, final String resourceId, final String userPrincipal) {
         final FedoraId fedoraId = FedoraId.create(resourceId);
-        if (this.containmentIndex.resourceExists(txId, fedoraId, false)) {
-            this.eventAccumulator.recordEventForOperation(txId, fedoraId, getOperation(fedoraId, userPrincipal));
+        if (this.containmentIndex.resourceExists(transaction, fedoraId, false)) {
+            this.eventAccumulator.recordEventForOperation(transaction, fedoraId, getOperation(transaction, fedoraId,
+                    userPrincipal));
         }
     }
 
     /**
      * Create a ReferenceOperation for the current add.
+     * @param tx the transaction for the current operation.
      * @param id the target resource of the reference.
      * @param user the user making the change
      * @return a ReferenceOperation
      */
-    private static ReferenceOperation getOperation(final FedoraId id, final String user) {
-        final ReferenceOperationBuilder builder = new ReferenceOperationBuilder(id);
+    private static ReferenceOperation getOperation(final Transaction tx, final FedoraId id, final String user) {
+        final ReferenceOperationBuilder builder = new ReferenceOperationBuilder(tx, id);
         builder.userPrincipal(user);
         return builder.build();
     }

@@ -20,6 +20,7 @@ package org.fcrepo.kernel.api.services;
 import java.time.Instant;
 
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 /**
@@ -41,42 +42,42 @@ public interface MembershipService {
     /**
      * Update membership properties based on the creation of the specified resource
      *
-     * @param txId transaction id
+     * @param transaction transaction
      * @param fedoraId ID of the object created
      */
-    void resourceCreated(final String txId, final FedoraId fedoraId);
+    void resourceCreated(final Transaction transaction, final FedoraId fedoraId);
 
     /**
      * Update membership properties based on the modification of the specified resource
      *
-     * @param txId transaction id
+     * @param transaction transaction
      * @param fedoraId ID of the object modified
      */
-    void resourceModified(final String txId, final FedoraId fedoraId);
+    void resourceModified(final Transaction transaction, final FedoraId fedoraId);
 
     /**
      * Update membership properties based on the deletion of the specified resource
      *
-     * @param txId transaction id
+     * @param transaction transaction
      * @param fedoraId ID of the object deleted
      */
-    void resourceDeleted(final String txId, final FedoraId fedoraId);
+    void resourceDeleted(final Transaction transaction, final FedoraId fedoraId);
 
     /**
      * Regenerate the membership history for specified Direct or Indirect container.
      *
-     * @param txId transaction id
+     * @param transaction transaction
      * @param containerId ID of the container
      */
-    void populateMembershipHistory(final String txId, final FedoraId containerId);
+    void populateMembershipHistory(final Transaction transaction, final FedoraId containerId);
 
     /**
      * Get the timestamp of the most recent member added or removed, or null if none.
-     * @param txId transaction id or null if none
+     * @param transaction transaction or null if none
      * @param fedoraId the resource id
      * @return the timestamp or null
      */
-    Instant getLastUpdatedTimestamp(final String txId, final FedoraId fedoraId);
+    Instant getLastUpdatedTimestamp(final Transaction transaction, final FedoraId fedoraId);
 
     /**
      * Commit any pending membership changes.

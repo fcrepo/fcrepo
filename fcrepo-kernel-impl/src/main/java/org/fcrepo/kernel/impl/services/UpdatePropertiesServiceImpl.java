@@ -57,9 +57,8 @@ public class UpdatePropertiesServiceImpl extends AbstractService implements Upda
     public void updateProperties(final Transaction tx, final String userPrincipal,
                                  final FedoraId fedoraId, final String sparqlUpdateStatement)
             throws MalformedRdfException, AccessDeniedException {
-        final var txId = tx.getId();
         try {
-            final var psession = persistentStorageSessionManager.getSession(txId);
+            final var psession = persistentStorageSessionManager.getSession(tx);
             final var triples = psession.getTriples(fedoraId, null);
             final Model model = triples.collect(toModel());
             final UpdateRequest request = UpdateFactory.create(sparqlUpdateStatement, fedoraId.getFullId());

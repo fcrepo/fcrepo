@@ -17,6 +17,7 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -60,6 +61,9 @@ public class PurgeResourcePersisterTest {
     @Mock
     private OcflPersistentStorageSession psSession;
 
+    @Mock
+    private Transaction transaction;
+
     private PurgeResourcePersister persister;
 
     private static String SESSION_ID = "SOME-SESSION-ID";
@@ -70,6 +74,8 @@ public class PurgeResourcePersisterTest {
         persister = new PurgeResourcePersister(this.index);
         when(psSession.getId()).thenReturn(SESSION_ID);
         when(psSession.findOrCreateSession(anyString())).thenReturn(session);
+        when(transaction.getId()).thenReturn(SESSION_ID);
+        when(operation.getTransaction()).thenReturn(transaction);
     }
 
     @Test
@@ -78,7 +84,7 @@ public class PurgeResourcePersisterTest {
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
         when(mapping.getRootObjectIdentifier()).thenReturn(FedoraId.create("info:fedora/an-ocfl-object"));
         when(operation.getResourceId()).thenReturn(resourceId);
-        when(index.getMapping(eq(SESSION_ID), any())).thenReturn(mapping);
+        when(index.getMappingInternal(eq(transaction), any())).thenReturn(mapping);
         persister.persist(psSession, operation);
         verify(session).deleteResource(resourceId.getResourceId());
     }
@@ -89,7 +95,7 @@ public class PurgeResourcePersisterTest {
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
         when(mapping.getRootObjectIdentifier()).thenReturn(FedoraId.create("info:fedora/an-ocfl-object"));
         when(operation.getResourceId()).thenReturn(resourceId);
-        when(index.getMapping(eq(SESSION_ID), any())).thenReturn(mapping);
+        when(index.getMappingInternal(eq(transaction), any())).thenReturn(mapping);
         doThrow(NotFoundException.class)
             .when(session).deleteResource(resourceId.getResourceId());
         persister.persist(psSession, operation);

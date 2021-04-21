@@ -19,6 +19,7 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import javax.annotation.Nonnull;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
@@ -41,7 +42,7 @@ public class TestOcflObjectIndex implements FedoraToOcflObjectIndex {
     private Map<FedoraId, FedoraOcflMapping> fedoraOcflMappingMap = Collections.synchronizedMap(new HashMap<>());
 
     @Override
-    public FedoraOcflMapping getMapping(final String transactionId, final FedoraId fedoraResourceIdentifier)
+    public FedoraOcflMapping getMapping(final Transaction transaction, final FedoraId fedoraResourceIdentifier)
             throws FedoraOcflMappingNotFoundException {
 
         LOGGER.debug("getting {}", fedoraResourceIdentifier);
@@ -54,7 +55,13 @@ public class TestOcflObjectIndex implements FedoraToOcflObjectIndex {
     }
 
     @Override
-    public FedoraOcflMapping addMapping(@Nonnull final String transactionId,
+    public FedoraOcflMapping getMappingInternal(final Transaction transaction, final FedoraId fedoraResourceIdentifier)
+            throws FedoraOcflMappingNotFoundException {
+        return getMapping(transaction, fedoraResourceIdentifier);
+    }
+
+    @Override
+    public FedoraOcflMapping addMapping(@Nonnull final Transaction transaction,
                                         final FedoraId fedoraResourceIdentifier,
                                         final FedoraId fedoraRootObjectResourceId,
                                         final String ocflObjectId) {
@@ -74,8 +81,8 @@ public class TestOcflObjectIndex implements FedoraToOcflObjectIndex {
     }
 
     @Override
-    public void removeMapping(@Nonnull final String transactionId, final FedoraId fedoraResourceIdentifier) {
-            fedoraOcflMappingMap.remove(fedoraResourceIdentifier);
+    public void removeMapping(@Nonnull final Transaction transaction, final FedoraId fedoraResourceIdentifier) {
+        fedoraOcflMappingMap.remove(fedoraResourceIdentifier);
     }
 
     @Override
@@ -84,12 +91,12 @@ public class TestOcflObjectIndex implements FedoraToOcflObjectIndex {
     }
 
     @Override
-    public void commit(@Nonnull final String sessionId) {
+    public void commit(@Nonnull final Transaction session) {
 
     }
 
     @Override
-    public void rollback(@Nonnull final String sessionId) {
+    public void rollback(@Nonnull final Transaction session) {
 
     }
 

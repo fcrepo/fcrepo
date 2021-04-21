@@ -17,26 +17,6 @@
  */
 package org.fcrepo.kernel.impl;
 
-import org.fcrepo.kernel.api.ContainmentIndex;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
-import org.fcrepo.kernel.api.observer.EventAccumulator;
-import org.fcrepo.kernel.api.services.MembershipService;
-import org.fcrepo.kernel.api.services.ReferenceService;
-import org.fcrepo.persistence.api.PersistentStorageSession;
-import org.fcrepo.persistence.api.PersistentStorageSessionManager;
-import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.transaction.support.TransactionTemplate;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.function.Consumer;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -46,6 +26,28 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.function.Consumer;
+
+import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.TransactionClosedException;
+import org.fcrepo.kernel.api.lock.ResourceLockManager;
+import org.fcrepo.kernel.api.observer.EventAccumulator;
+import org.fcrepo.kernel.api.services.MembershipService;
+import org.fcrepo.kernel.api.services.ReferenceService;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * <p>
@@ -83,20 +85,24 @@ public class TransactionImplTest {
     @Mock
     private TransactionTemplate transactionTemplate;
 
+    @Mock
+    private ResourceLockManager resourceLockManager;
+
     @Before
     public void setUp() {
-        when(pssManager.getSession("123")).thenReturn(psSession);
+        testTx = new TransactionImpl("123", txManager, Duration.ofMillis(180000));
+        when(pssManager.getSession(testTx)).thenReturn(psSession);
         when(txManager.getPersistentStorageSessionManager()).thenReturn(pssManager);
         when(txManager.getContainmentIndex()).thenReturn(containmentIndex);
         when(txManager.getEventAccumulator()).thenReturn(eventAccumulator);
         when(txManager.getReferenceService()).thenReturn(referenceService);
         when(txManager.getMembershipService()).thenReturn(membershipService);
         when(txManager.getTransactionTemplate()).thenReturn(transactionTemplate);
+        when(txManager.getResourceLockManager()).thenReturn(resourceLockManager);
         doAnswer(invocationOnMock -> {
             ((Consumer)invocationOnMock.getArgument(0)).accept(null);
             return null;
         }).when(transactionTemplate).executeWithoutResult(any());
-        testTx = new TransactionImpl("123", txManager, Duration.ofMillis(180000));
     }
 
     @Test
@@ -135,7 +141,7 @@ public class TransactionImplTest {
         verify(psSession, never()).commit();
     }
 
-    @Test(expected = TransactionRuntimeException.class)
+    @Test(expected = TransactionClosedException.class)
     public void testCommitExpired() throws Exception {
         testTx.expire();
         try {
@@ -145,7 +151,7 @@ public class TransactionImplTest {
         }
     }
 
-    @Test(expected = TransactionRuntimeException.class)
+    @Test(expected = TransactionClosedException.class)
     public void testCommitRolledbackTx() throws Exception {
         testTx.rollback();
         try {
@@ -188,19 +194,19 @@ public class TransactionImplTest {
 
     @Test
     public void shouldRollbackAllWhenContainmentThrowsException() throws Exception {
-        doThrow(new RuntimeException()).when(containmentIndex).rollbackTransaction(testTx.getId());
+        doThrow(new RuntimeException()).when(containmentIndex).rollbackTransaction(testTx);
         testTx.rollback();
         verifyRollback();
     }
 
     @Test
     public void shouldRollbackAllWhenEventsThrowsException() throws Exception {
-        doThrow(new RuntimeException()).when(eventAccumulator).clearEvents(testTx.getId());
+        doThrow(new RuntimeException()).when(eventAccumulator).clearEvents(testTx);
         testTx.rollback();
         verifyRollback();
     }
 
-    @Test(expected = TransactionRuntimeException.class)
+    @Test(expected = TransactionClosedException.class)
     public void testRollbackCommited() throws Exception {
         testTx.commit();
         try {
@@ -230,7 +236,7 @@ public class TransactionImplTest {
         assertTrue(testTx.getExpires().isAfter(previousExpiry));
     }
 
-    @Test(expected = TransactionRuntimeException.class)
+    @Test(expected = TransactionClosedException.class)
     public void testUpdateExpiryOnExpired() {
         testTx.expire();
         final Instant previousExpiry = testTx.getExpires();
@@ -248,7 +254,7 @@ public class TransactionImplTest {
         assertTrue(testTx.getExpires().isAfter(previousExpiry));
     }
 
-    @Test(expected = TransactionRuntimeException.class)
+    @Test(expected = TransactionClosedException.class)
     public void testRefreshOnExpired() {
         testTx.expire();
         final Instant previousExpiry = testTx.getExpires();
@@ -266,7 +272,7 @@ public class TransactionImplTest {
 
     private void verifyRollback() throws PersistentStorageException {
         verify(psSession).rollback();
-        verify(containmentIndex).rollbackTransaction(testTx.getId());
-        verify(eventAccumulator).clearEvents(testTx.getId());
+        verify(containmentIndex).rollbackTransaction(testTx);
+        verify(eventAccumulator).clearEvents(testTx);
     }
 }

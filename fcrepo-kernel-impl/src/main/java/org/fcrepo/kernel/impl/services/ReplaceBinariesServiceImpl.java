@@ -66,9 +66,8 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
                         final InputStream contentBody,
                         final long contentSize,
                         final ExternalContent externalContent) {
-        final var txId = tx.getId();
         try {
-            final PersistentStorageSession pSession = this.psManager.getSession(txId);
+            final PersistentStorageSession pSession = this.psManager.getSession(tx);
 
             String mimeType = contentType;
             long size = contentSize;
@@ -80,9 +79,9 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
                     contentInputStream = externalContent.fetchExternalContent();
                 }
 
-                builder = factory.updateInternalBinaryBuilder(fedoraId, contentInputStream);
+                builder = factory.updateInternalBinaryBuilder(tx, fedoraId, contentInputStream);
             } else {
-                builder = factory.updateExternalBinaryBuilder(fedoraId,
+                builder = factory.updateExternalBinaryBuilder(tx, fedoraId,
                         externalContent.getHandling(),
                         externalContent.getURI());
 
@@ -114,7 +113,7 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
             tx.lockResource(fedoraId.asDescription());
 
             pSession.persist(replaceOp);
-            recordEvent(txId, fedoraId, replaceOp);
+            recordEvent(tx, fedoraId, replaceOp);
         } catch (final PersistentStorageException ex) {
             throw new RepositoryRuntimeException(format("failed to replace binary %s",
                   fedoraId), ex);

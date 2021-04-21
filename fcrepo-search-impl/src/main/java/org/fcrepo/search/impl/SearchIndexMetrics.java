@@ -20,6 +20,8 @@ package org.fcrepo.search.impl;
 
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Timer;
+
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.search.api.InvalidQueryException;
@@ -64,9 +66,9 @@ public class SearchIndexMetrics implements SearchIndex {
     }
 
     @Override
-    public void addUpdateIndex(final String dbTxId, final ResourceHeaders resourceHeaders) {
+    public void addUpdateIndex(final Transaction transaction, final ResourceHeaders resourceHeaders) {
         addUpdateIndexTimer.record(() -> {
-            searchIndexImpl.addUpdateIndex(dbTxId, resourceHeaders);
+            searchIndexImpl.addUpdateIndex(transaction, resourceHeaders);
         });
     }
 

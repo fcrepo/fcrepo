@@ -17,6 +17,7 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import org.fcrepo.kernel.api.operations.ReindexResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.Persister;
@@ -54,9 +55,10 @@ class ReindexResourcePersister implements Persister {
     public void persist(final OcflPersistentStorageSession session, final ResourceOperation operation)
             throws PersistentStorageException {
         final var ocflId = operation.getResourceId().getBaseId();
+        final ReindexResourceOperation reindexOp = (ReindexResourceOperation) operation;
         try {
-            this.reindexService.indexOcflObject(session.getId(), ocflId);
-        } catch (Exception ex) {
+            this.reindexService.indexOcflObject(reindexOp.getTransaction(), ocflId);
+        } catch (final Exception ex) {
             throw new PersistentStorageException(ex.getMessage(), ex);
         }
     }

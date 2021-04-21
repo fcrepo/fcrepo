@@ -18,6 +18,7 @@
 
 package org.fcrepo.kernel.api.observer;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 
@@ -33,11 +34,11 @@ public interface EventAccumulator {
     /**
      * Registers a new event to a transaction.
      *
-     * @param transactionId the id of the transaction
+     * @param transaction the transaction
      * @param fedoraId the id of the affected resource
      * @param operation the operation affecting the resource
      */
-    void recordEventForOperation(String transactionId, FedoraId fedoraId, ResourceOperation operation);
+    void recordEventForOperation(Transaction transaction, FedoraId fedoraId, ResourceOperation operation);
 
     /**
      * Emits all of the events that were accumulated within the transaction. Multiple events affecting the same resource
@@ -46,18 +47,18 @@ public interface EventAccumulator {
      * <p>This method SHOULD NOT throw an exception if an event fails to be emitted. It should always attempt to emit
      * all events accumulated within a transaction.
      *
-     * @param transactionId the id of the transaction
+     * @param transaction the transaction
      * @param baseUrl the baseUrl of the requests
      * @param userAgent the user-agent of the user making the requests
      */
-    void emitEvents(String transactionId, String baseUrl, String userAgent);
+    void emitEvents(Transaction transaction, String baseUrl, String userAgent);
 
     /**
      * Removes all of a transaction's accumulated events without emitting them. This must be called when a transaction
      * is rolled back.
      *
-     * @param transactionId the id of the transaction
+     * @param transaction the id of the transaction
      */
-    void clearEvents(String transactionId);
+    void clearEvents(Transaction transaction);
 
 }

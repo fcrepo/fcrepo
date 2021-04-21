@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import static org.fcrepo.kernel.api.TransactionUtils.isLongRunningTx;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.sql.ResultSet;
@@ -39,6 +40,7 @@ import javax.sql.DataSource;
 import javax.transaction.Transactional;
 
 import org.fcrepo.common.db.DbPlatform;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 import org.apache.jena.graph.Node;
@@ -591,7 +593,7 @@ public class MembershipIndexManager {
         return StreamSupport.stream(new MembershipIterator(query, parameterSource, membershipMapper), false);
     }
 
-    public Instant getLastUpdated(final String txId, final FedoraId subjectId) {
+    public Instant getLastUpdated(final Transaction transaction, final FedoraId subjectId) {
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 
         parameterSource.addValue(NO_END_TIME_PARAM, NO_END_TIMESTAMP);
@@ -600,14 +602,14 @@ public class MembershipIndexManager {
             lastUpdatedQuery = SELECT_LAST_UPDATED_MEMENTO;
             parameterSource.addValue(SUBJECT_ID_PARAM, subjectId.getBaseId());
             parameterSource.addValue(MEMENTO_TIME_PARAM, formatInstant(subjectId.getMementoInstant()));
-        } else if (txId == null) {
-            lastUpdatedQuery = SELECT_LAST_UPDATED;
-            parameterSource.addValue(SUBJECT_ID_PARAM, subjectId.getFullId());
-        } else {
+        } else if (isLongRunningTx(transaction)) {
             lastUpdatedQuery = SELECT_LAST_UPDATED_IN_TX;
             parameterSource.addValue(SUBJECT_ID_PARAM, subjectId.getFullId());
-            parameterSource.addValue(TX_ID_PARAM, txId);
+            parameterSource.addValue(TX_ID_PARAM, transaction.getId());
             parameterSource.addValue(DELETE_OP_PARAM, DELETE_OPERATION);
+        } else {
+            lastUpdatedQuery = SELECT_LAST_UPDATED;
+            parameterSource.addValue(SUBJECT_ID_PARAM, subjectId.getFullId());
         }
 
         final var updated = jdbcTemplate.queryForObject(lastUpdatedQuery, parameterSource, Timestamp.class);
@@ -648,8 +650,8 @@ public class MembershipIndexManager {
     /**
      * Format an instant to a timestamp without milliseconds, due to precision
      * issues with memento datetimes.
-     * @param instant
-     * @return
+     * @param instant the instant
+     * @return a Timestamp
      */
     private Timestamp formatInstant(final Instant instant) {
         final var timestamp = Timestamp.from(instant);
@@ -669,7 +671,7 @@ public class MembershipIndexManager {
     /**
      * Log all membership entries, for debugging usage only
      */
-    public void logMembership() {
+    private void logMembership() {
         log.info("source_id, proxy_id, subject_id, property, object_id, start_time, end_time, last_updated");
         jdbcTemplate.query(SELECT_ALL_MEMBERSHIP, new RowCallbackHandler() {
             @Override
@@ -685,7 +687,7 @@ public class MembershipIndexManager {
     /**
      * Log all membership operations, for debugging usage only
      */
-    public void logOperations() {
+    private void logOperations() {
         log.info("source_id, proxy_id, subject_id, property, object_id, start_time, end_time,"
                 + " last_updated, tx_id, operation, force_flag");
         jdbcTemplate.query(SELECT_ALL_OPERATIONS, new RowCallbackHandler() {

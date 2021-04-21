@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Timer;
 import org.fcrepo.common.metrics.MetricsHelper;
 import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -77,85 +78,85 @@ public class ContainmentIndexMetrics implements ContainmentIndex {
     private ContainmentIndex containmentIndexImpl;
 
     @Override
-    public Stream<String> getContains(final String txId, final FedoraId fedoraId) {
+    public Stream<String> getContains(final Transaction tx, final FedoraId fedoraId) {
         return MetricsHelper.time(getContainsTimer, () -> {
-            return containmentIndexImpl.getContains(txId, fedoraId);
+            return containmentIndexImpl.getContains(tx, fedoraId);
         });
     }
 
     @Override
-    public Stream<String> getContainsDeleted(final String txId, final FedoraId fedoraId) {
+    public Stream<String> getContainsDeleted(final Transaction tx, final FedoraId fedoraId) {
         return MetricsHelper.time(getContainsDeletedTimer, () -> {
-            return containmentIndexImpl.getContainsDeleted(txId, fedoraId);
+            return containmentIndexImpl.getContainsDeleted(tx, fedoraId);
         });
     }
 
     @Override
-    public String getContainedBy(final String txID, final FedoraId resource) {
+    public String getContainedBy(final Transaction tx, final FedoraId resource) {
         return MetricsHelper.time(getContainsByTimer, () -> {
-            return containmentIndexImpl.getContainedBy(txID, resource);
+            return containmentIndexImpl.getContainedBy(tx, resource);
         });
     }
 
     @Override
-    public void removeContainedBy(final String txID, final FedoraId parent, final FedoraId child) {
+    public void removeContainedBy(final Transaction tx, final FedoraId parent, final FedoraId child) {
         removeContainedByTimer.record(() -> {
-            containmentIndexImpl.removeContainedBy(txID, parent, child);
+            containmentIndexImpl.removeContainedBy(tx, parent, child);
         });
     }
 
     @Override
-    public void removeResource(final String txID, final FedoraId resource) {
+    public void removeResource(final Transaction tx, final FedoraId resource) {
         removeResourceTimer.record(() -> {
-            containmentIndexImpl.removeResource(txID, resource);
+            containmentIndexImpl.removeResource(tx, resource);
         });
     }
 
     @Override
-    public void purgeResource(final String txID, final FedoraId resource) {
+    public void purgeResource(final Transaction tx, final FedoraId resource) {
         purgeResourceTimer.record(() -> {
-            containmentIndexImpl.purgeResource(txID, resource);
+            containmentIndexImpl.purgeResource(tx, resource);
         });
     }
 
     @Override
-    public void addContainedBy(final String txID, final FedoraId parent, final FedoraId child) {
+    public void addContainedBy(final Transaction tx, final FedoraId parent, final FedoraId child) {
         addContainedByTimer.record(() -> {
-            containmentIndexImpl.addContainedBy(txID, parent, child);
+            containmentIndexImpl.addContainedBy(tx, parent, child);
         });
     }
 
     @Override
-    public void addContainedBy(final String txId, final FedoraId parent, final FedoraId child,
+    public void addContainedBy(final Transaction tx, final FedoraId parent, final FedoraId child,
                                final Instant startTime, final Instant endTime) {
-        addContainedByTimer.record(() -> containmentIndexImpl.addContainedBy(txId, parent, child, startTime, endTime));
+        addContainedByTimer.record(() -> containmentIndexImpl.addContainedBy(tx, parent, child, startTime, endTime));
     }
 
     @Override
-    public void commitTransaction(final String txId) {
+    public void commitTransaction(final Transaction tx) {
         commitTransactionTimer.record(() -> {
-            containmentIndexImpl.commitTransaction(txId);
+            containmentIndexImpl.commitTransaction(tx);
         });
     }
 
     @Override
-    public void rollbackTransaction(final String txId) {
+    public void rollbackTransaction(final Transaction tx) {
         rollbackTransactionTimer.record(() -> {
-            containmentIndexImpl.rollbackTransaction(txId);
+            containmentIndexImpl.rollbackTransaction(tx);
         });
     }
 
     @Override
-    public boolean resourceExists(final String txID, final FedoraId fedoraId, final boolean includeDeleted) {
+    public boolean resourceExists(final Transaction tx, final FedoraId fedoraId, final boolean includeDeleted) {
         return MetricsHelper.time(resourceExistsTimer, () -> {
-            return containmentIndexImpl.resourceExists(txID, fedoraId, includeDeleted);
+            return containmentIndexImpl.resourceExists(tx, fedoraId, includeDeleted);
         });
     }
 
     @Override
-    public FedoraId getContainerIdByPath(final String txID, final FedoraId fedoraId, final boolean checkDeleted) {
+    public FedoraId getContainerIdByPath(final Transaction tx, final FedoraId fedoraId, final boolean checkDeleted) {
         return MetricsHelper.time(getContainerIdByPathTimer, () -> {
-            return containmentIndexImpl.getContainerIdByPath(txID, fedoraId, checkDeleted);
+            return containmentIndexImpl.getContainerIdByPath(tx, fedoraId, checkDeleted);
         });
     }
 
@@ -167,14 +168,14 @@ public class ContainmentIndexMetrics implements ContainmentIndex {
     }
 
     @Override
-    public boolean hasResourcesStartingWith(final String txId, final FedoraId fedoraId) {
+    public boolean hasResourcesStartingWith(final Transaction tx, final FedoraId fedoraId) {
         return MetricsHelper.time(hasResourcesStartingWithTimer, () ->
-                containmentIndexImpl.hasResourcesStartingWith(txId, fedoraId));
+                containmentIndexImpl.hasResourcesStartingWith(tx, fedoraId));
     }
 
     @Override
-    public Instant containmentLastUpdated(final String txId, final FedoraId fedoraId) {
+    public Instant containmentLastUpdated(final Transaction tx, final FedoraId fedoraId) {
         return MetricsHelper.time(containmentLastUpdateTimer, () ->
-                containmentIndexImpl.containmentLastUpdated(txId, fedoraId));
+                containmentIndexImpl.containmentLastUpdated(tx, fedoraId));
     }
 }

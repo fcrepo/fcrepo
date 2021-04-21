@@ -20,12 +20,17 @@ package org.fcrepo.kernel.impl.operations;
 import static org.junit.Assert.assertEquals;
 
 import org.apache.commons.io.IOUtils;
+
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ExternalContent;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -37,6 +42,7 @@ import java.util.stream.Stream;
 /**
  * @author bseeger
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class CreateNonRdfSourceOperationBuilderTest {
 
     private InputStream stream;
@@ -45,10 +51,13 @@ public class CreateNonRdfSourceOperationBuilderTest {
 
     final FedoraId resourceId = FedoraId.create("info:fedora/test-subject");
 
+    @Mock
+    private Transaction tx;
+
     @Before
     public void setUp() throws Exception {
         stream = IOUtils.toInputStream("This is some test data", "UTF-8");
-        internalBuilder = new CreateNonRdfSourceOperationBuilderImpl(resourceId, stream);
+        internalBuilder = new CreateNonRdfSourceOperationBuilderImpl(tx, resourceId, stream);
     }
 
     @Test
@@ -62,7 +71,7 @@ public class CreateNonRdfSourceOperationBuilderTest {
         final URI uri = URI.create("http://example.org/test/location");
         final String handling = ExternalContent.PROXY;
         final NonRdfSourceOperationBuilder builder =
-                new CreateNonRdfSourceOperationBuilderImpl(resourceId, handling, uri);
+                new CreateNonRdfSourceOperationBuilderImpl(tx, resourceId, handling, uri);
         final NonRdfSourceOperation op = builder.build();
         assertEquals(uri, op.getContentUri());
         assertEquals(handling, op.getExternalHandling());

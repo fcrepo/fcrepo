@@ -63,8 +63,6 @@ public class VersionServiceImplTest {
     @Mock
     private ResourceHeaders headers;
 
-    private final String TX_ID = "tx1";
-
     @Before
     public void setup() {
         service = new VersionServiceImpl();
@@ -72,8 +70,7 @@ public class VersionServiceImplTest {
         service.setPsManager(psManager);
         service.setVersionOperationFactory(new VersionResourceOperationFactoryImpl());
 
-        when(transaction.getId()).thenReturn(TX_ID);
-        when(psManager.getSession(TX_ID)).thenReturn(session);
+        when(psManager.getSession(transaction)).thenReturn(session);
     }
 
     @Test

@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.ResourceOperationBuilder;
 
@@ -32,15 +33,16 @@ public class DeleteResourceOperationBuilder extends AbstractResourceOperationBui
     /**
      * Construct the builder
      *
+     * @param transaction the transaction
      * @param rescId identifier of the resource to delete
      */
-    public DeleteResourceOperationBuilder(final FedoraId rescId) {
-        super(rescId);
+    public DeleteResourceOperationBuilder(final Transaction transaction, final FedoraId rescId) {
+        super(transaction, rescId);
     }
 
     @Override
     public DeleteResourceOperation build() {
-        final var operation = new DeleteResourceOperation(rescId);
+        final var operation = new DeleteResourceOperation(transaction, rescId);
         operation.setUserPrincipal(userPrincipal);
         return operation;
     }

@@ -17,6 +17,18 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
+
+import java.util.List;
+import java.util.UUID;
+
+import javax.inject.Inject;
+
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -34,6 +46,7 @@ import org.fcrepo.kernel.impl.operations.DeleteResourceOperation;
 import org.fcrepo.kernel.impl.operations.DeleteResourceOperationFactoryImpl;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,18 +58,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
-import javax.inject.Inject;
-
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * DeleteResourceServiceTest
@@ -131,10 +132,14 @@ public class DeleteResourceServiceImplTest {
 
     @Before
     public void setup() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         final String txId = UUID.randomUUID().toString();
         when(tx.getId()).thenReturn(txId);
-        when(psManager.getSession(anyString())).thenReturn(pSession);
+        when(tx.isShortLived()).thenReturn(false);
+        when(tx.isCommitted()).thenReturn(false);
+        when(tx.isRolledBack()).thenReturn(false);
+        when(tx.hasExpired()).thenReturn(false);
+        when(psManager.getSession(any(Transaction.class))).thenReturn(pSession);
         final DeleteResourceOperationFactoryImpl factoryImpl = new DeleteResourceOperationFactoryImpl();
         setField(service, "deleteResourceFactory", factoryImpl);
         setField(service, "containmentIndex", containmentIndex);
@@ -160,7 +165,7 @@ public class DeleteResourceServiceImplTest {
         when(container.getAcl()).thenReturn(null);
 
         service.perform(tx, container, USER);
-        containmentIndex.commitTransaction(tx.getId());
+        containmentIndex.commitTransaction(tx);
         verifyResourceOperation(RESOURCE_ID, operationCaptor, pSession);
     }
 
@@ -173,12 +178,12 @@ public class DeleteResourceServiceImplTest {
         when(childContainer.getAcl()).thenReturn(null);
 
         when(resourceFactory.getResource(tx, CHILD_RESOURCE_ID)).thenReturn(childContainer);
-        containmentIndex.addContainedBy(tx.getId(), container.getFedoraId(), childContainer.getFedoraId());
+        containmentIndex.addContainedBy(tx, container.getFedoraId(), childContainer.getFedoraId());
 
         when(container.isAcl()).thenReturn(false);
         when(container.getAcl()).thenReturn(null);
 
-        assertEquals(1, containmentIndex.getContains(tx.getId(), RESOURCE_ID).count());
+        assertEquals(1, containmentIndex.getContains(tx, RESOURCE_ID).count());
         service.perform(tx, container, USER);
 
         verify(pSession, times(2)).persist(operationCaptor.capture());
@@ -188,7 +193,7 @@ public class DeleteResourceServiceImplTest {
         assertEquals(CHILD_RESOURCE_ID, operations.get(0).getResourceId());
         assertEquals(RESOURCE_ID, operations.get(1).getResourceId());
 
-        assertEquals(0, containmentIndex.getContains(tx.getId(), RESOURCE_ID).count());
+        assertEquals(0, containmentIndex.getContains(tx, RESOURCE_ID).count());
 
         verify(tx).lockResource(RESOURCE_ID);
         verify(tx).lockResource(CHILD_RESOURCE_ID);

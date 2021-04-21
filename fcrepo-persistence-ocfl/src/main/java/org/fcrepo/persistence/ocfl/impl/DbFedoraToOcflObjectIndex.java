@@ -18,6 +18,9 @@
 
 package org.fcrepo.persistence.ocfl.impl;
 
+import static org.fcrepo.kernel.api.TransactionUtils.isLongRunningTx;
+import static org.fcrepo.kernel.api.TransactionUtils.openTxId;
+
 import java.util.Collections;
 import java.util.Map;
 
@@ -26,6 +29,7 @@ import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 
 import org.fcrepo.common.db.DbPlatform;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -196,13 +200,24 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     }
 
     @Override
-    public FedoraOcflMapping getMapping(final String transactionId, final FedoraId fedoraId)
+    public FedoraOcflMapping getMappingInternal(final Transaction transaction, final FedoraId fedoraId)
             throws FedoraOcflMappingNotFoundException {
+        return getMapping(transaction, fedoraId, true);
+    }
+
+    @Override
+    public FedoraOcflMapping getMapping(final Transaction transaction, final FedoraId fedoraId)
+            throws FedoraOcflMappingNotFoundException {
+        return getMapping(transaction, fedoraId, false);
+    }
+
+    private FedoraOcflMapping getMapping(final Transaction transaction, final FedoraId fedoraId,
+        final boolean internal) throws FedoraOcflMappingNotFoundException {
         try {
             final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
             parameterSource.addValue("fedoraId", fedoraId.getResourceId());
-            if (transactionId != null) {
-                parameterSource.addValue("transactionId", transactionId);
+            if (internal || isLongRunningTx(transaction)) {
+                parameterSource.addValue("transactionId", transaction.getId());
                 return jdbcTemplate.queryForObject(LOOKUP_MAPPING_IN_TRANSACTION, parameterSource,
                         GET_MAPPING_ROW_MAPPER);
             } else {
@@ -214,37 +229,37 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     }
 
     @Override
-    public FedoraOcflMapping addMapping(@Nonnull final String transactionId, final FedoraId fedoraId,
+    public FedoraOcflMapping addMapping(@Nonnull final Transaction transaction, final FedoraId fedoraId,
                                         final FedoraId fedoraRootId, final String ocflId) {
-        upsert(transactionId, fedoraId, "add", fedoraRootId, ocflId);
+        upsert(transaction, fedoraId, "add", fedoraRootId, ocflId);
         return new FedoraOcflMapping(fedoraRootId, ocflId);
     }
 
     @Override
-    public void removeMapping(@Nonnull final String transactionId, final FedoraId fedoraId) {
-        upsert(transactionId, fedoraId, "delete");
+    public void removeMapping(@Nonnull final Transaction transaction, final FedoraId fedoraId) {
+        upsert(transaction, fedoraId, "delete");
     }
 
-    private void upsert(final String transactionId, final FedoraId fedoraId, final String operation) {
-        upsert(transactionId, fedoraId, operation, null, null);
+    private void upsert(final Transaction transaction, final FedoraId fedoraId, final String operation) {
+        upsert(transaction, fedoraId, operation, null, null);
     }
 
     /**
      * Perform the upsert to the operations table.
      *
-     * @param transactionId the transaction/session id.
+     * @param transaction the transaction/session id.
      * @param fedoraId the resource id.
      * @param operation the operation we are performing (add or delete)
      * @param fedoraRootId the fedora root id (for add only)
      * @param ocflId the ocfl id (for add only).
      */
-    private void upsert(final String transactionId, final FedoraId fedoraId, final String operation,
+    private void upsert(final Transaction transaction, final FedoraId fedoraId, final String operation,
                         final FedoraId fedoraRootId, final String ocflId) {
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         parameterSource.addValue("fedoraId", fedoraId.getResourceId());
         parameterSource.addValue("fedoraRootId", fedoraRootId == null ? null : fedoraRootId.getResourceId());
         parameterSource.addValue("ocflId", ocflId);
-        parameterSource.addValue("transactionId", transactionId);
+        parameterSource.addValue("transactionId", openTxId(transaction));
         parameterSource.addValue("operation", operation);
         try {
             jdbcTemplate.update(UPSERT_MAPPING_TX_MAP.get(dbPlatform), parameterSource);
@@ -270,22 +285,22 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     @Transactional
     @Override
-    public void commit(@Nonnull final String sessionId) {
-        LOGGER.debug("Committing FedoraToOcfl index changes from transaction {}", sessionId);
-        final Map<String, String> map = Map.of("transactionId", sessionId);
+    public void commit(@Nonnull final Transaction transaction) {
+        LOGGER.debug("Committing FedoraToOcfl index changes from transaction {}", transaction.getId());
+        final Map<String, String> map = Map.of("transactionId", transaction.getId());
         try {
             jdbcTemplate.update(COMMIT_DELETE_RECORDS, map);
             jdbcTemplate.update(COMMIT_ADD_MAPPING_MAP.get(dbPlatform), map);
             jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, map);
         } catch (final Exception e) {
-            LOGGER.warn("Unable to commit FedoraToOcfl index transaction {}: {}", sessionId, e.getMessage());
+            LOGGER.warn("Unable to commit FedoraToOcfl index transaction {}: {}", transaction, e.getMessage());
             throw new RepositoryRuntimeException("Unable to commit FedoraToOcfl index transaction", e);
         }
     }
 
     @Override
-    public void rollback(@Nonnull final String sessionId) {
-        jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, Map.of("transactionId", sessionId));
+    public void rollback(@Nonnull final Transaction transaction) {
+        jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, Map.of("transactionId", transaction.getId()));
     }
 
 }

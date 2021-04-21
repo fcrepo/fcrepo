@@ -51,7 +51,7 @@ class UpdateNonRdfSourcePersister extends AbstractNonRdfSourcePersister {
             throws PersistentStorageException {
         final var resourceId = operation.getResourceId();
         log.debug("persisting {} to {}", resourceId, session);
-        final FedoraOcflMapping mapping = getMapping(session.getId(), resourceId);
+        final FedoraOcflMapping mapping = getMapping(operation.getTransaction(), resourceId);
         final var rootIdentifier = mapping.getRootObjectIdentifier();
 
         log.debug("retrieved mapping: {}", mapping);

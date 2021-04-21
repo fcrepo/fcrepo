@@ -78,7 +78,6 @@ import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.http.commons.session.TransactionProvider;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
-import org.fcrepo.kernel.api.TransactionUtils;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
@@ -814,8 +813,7 @@ public class WebACFilter extends RequestContextFilter {
                                                       final boolean deepTraversal) {
         if (!isBinaryOrDescription(resource)) {
             final Transaction transaction = transaction(request);
-            final Stream<FedoraResource> children = resourceFactory.getChildren(TransactionUtils.openTxId(transaction),
-                    resource.getFedoraId());
+            final Stream<FedoraResource> children = resourceFactory.getChildren(transaction, resource.getFedoraId());
             return children.noneMatch(resc -> {
                 final URI childURI = URI.create(resc.getFedoraId().getFullId());
                 log.debug("Found embedded resource: {}", resc);

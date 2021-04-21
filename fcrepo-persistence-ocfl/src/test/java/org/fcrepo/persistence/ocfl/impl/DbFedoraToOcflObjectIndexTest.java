@@ -20,10 +20,12 @@ package org.fcrepo.persistence.ocfl.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.when;
 
 import java.util.UUID;
 
 import org.fcrepo.config.FlywayFactory;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
@@ -31,6 +33,7 @@ import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 /**
@@ -49,6 +52,8 @@ public class DbFedoraToOcflObjectIndexTest {
     private static DriverManagerDataSource dataSource;
     private static DbFedoraToOcflObjectIndex index;
 
+    private Transaction session;
+
     @BeforeClass
     public static void beforeClass() throws Exception {
         dataSource = new DriverManagerDataSource();
@@ -62,26 +67,29 @@ public class DbFedoraToOcflObjectIndexTest {
     @Before
     public void setup() {
         index.reset();
+        session = Mockito.mock(Transaction.class);
+        when(session.getId()).thenReturn(UUID.randomUUID().toString());
+        when(session.isShortLived()).thenReturn(false);
+        when(session.isCommitted()).thenReturn(false);
     }
 
     @Test
     public void test() throws Exception {
-        final String sessId = UUID.randomUUID().toString();
-        index.addMapping(sessId, ROOT_RESOURCE_ID, ROOT_RESOURCE_ID, OCFL_ID);
-        index.addMapping(sessId, RESOURCE_ID_1, ROOT_RESOURCE_ID, OCFL_ID);
-        index.addMapping(sessId, RESOURCE_ID_2, ROOT_RESOURCE_ID, OCFL_ID);
-        index.addMapping(sessId, RESOURCE_ID_3, RESOURCE_ID_3, OCFL_ID_RESOURCE_3);
+        index.addMapping(session, ROOT_RESOURCE_ID, ROOT_RESOURCE_ID, OCFL_ID);
+        index.addMapping(session, RESOURCE_ID_1, ROOT_RESOURCE_ID, OCFL_ID);
+        index.addMapping(session, RESOURCE_ID_2, ROOT_RESOURCE_ID, OCFL_ID);
+        index.addMapping(session, RESOURCE_ID_3, RESOURCE_ID_3, OCFL_ID_RESOURCE_3);
 
-        final FedoraOcflMapping mapping1 = index.getMapping(sessId, RESOURCE_ID_1);
-        final FedoraOcflMapping mapping2 = index.getMapping(sessId, RESOURCE_ID_2);
-        final FedoraOcflMapping mapping3 = index.getMapping(sessId, ROOT_RESOURCE_ID);
+        final FedoraOcflMapping mapping1 = index.getMapping(session, RESOURCE_ID_1);
+        final FedoraOcflMapping mapping2 = index.getMapping(session, RESOURCE_ID_2);
+        final FedoraOcflMapping mapping3 = index.getMapping(session, ROOT_RESOURCE_ID);
 
         assertEquals(mapping1, mapping2);
         assertEquals(mapping2, mapping3);
 
         verifyMapping(mapping1, ROOT_RESOURCE_ID, OCFL_ID);
 
-        index.commit(sessId);
+        index.commit(session);
 
         final FedoraOcflMapping mapping1_1 = index.getMapping(null, RESOURCE_ID_1);
         final FedoraOcflMapping mapping1_2 = index.getMapping(null, RESOURCE_ID_2);
@@ -106,29 +114,28 @@ public class DbFedoraToOcflObjectIndexTest {
 
     @Test
     public void removeIndexWhenExists() throws FedoraOcflMappingNotFoundException {
-        final String sessId = UUID.randomUUID().toString();
-        final var mapping = index.addMapping(sessId, RESOURCE_ID_1, RESOURCE_ID_1, OCFL_ID);
+        final var mapping = index.addMapping(session, RESOURCE_ID_1, RESOURCE_ID_1, OCFL_ID);
 
-        assertEquals(mapping, index.getMapping(sessId, RESOURCE_ID_1));
+        assertEquals(mapping, index.getMapping(session, RESOURCE_ID_1));
         try {
             index.getMapping(null, RESOURCE_ID_1);
             fail("This mapping should not be accessible to everyone yet.");
         } catch (final FedoraOcflMappingNotFoundException e) {
             // This should happen and is okay.
         }
-        index.commit(sessId);
+        index.commit(session);
 
         assertEquals(mapping, index.getMapping(null, RESOURCE_ID_1));
 
-        index.removeMapping(sessId, RESOURCE_ID_1);
+        index.removeMapping(session, RESOURCE_ID_1);
 
         // Should still appear to outside the transaction.
         assertEquals(mapping, index.getMapping(null, RESOURCE_ID_1));
 
         // Should also still appear inside the transaction or we can't access files on disk.
-        assertEquals(mapping, index.getMapping(sessId, RESOURCE_ID_1));
+        assertEquals(mapping, index.getMapping(session, RESOURCE_ID_1));
 
-        index.commit(sessId);
+        index.commit(session);
 
         try {
             // No longer accessible to anyone.
@@ -141,9 +148,8 @@ public class DbFedoraToOcflObjectIndexTest {
 
     @Test
     public void removeIndexWhenNotExists() {
-        final String sessId = UUID.randomUUID().toString();
-        index.removeMapping(sessId, RESOURCE_ID_1);
-        index.commit(sessId);
+        index.removeMapping(session, RESOURCE_ID_1);
+        index.commit(session);
 
         try {
             index.getMapping(null, RESOURCE_ID_1);
@@ -155,11 +161,10 @@ public class DbFedoraToOcflObjectIndexTest {
 
     @Test
     public void testRollback() throws Exception {
-        final String sessId = UUID.randomUUID().toString();
-        index.addMapping(sessId, RESOURCE_ID_1, ROOT_RESOURCE_ID, OCFL_ID);
+        index.addMapping(session, RESOURCE_ID_1, ROOT_RESOURCE_ID, OCFL_ID);
 
         final FedoraOcflMapping expected = new FedoraOcflMapping(ROOT_RESOURCE_ID, OCFL_ID);
-        assertEquals(expected, index.getMapping(sessId, RESOURCE_ID_1));
+        assertEquals(expected, index.getMapping(session, RESOURCE_ID_1));
 
         try {
             // Not yet committed
@@ -169,10 +174,10 @@ public class DbFedoraToOcflObjectIndexTest {
             // The exception is expected.
         }
 
-        index.rollback(sessId);
+        index.rollback(session);
 
         try {
-            index.getMapping(sessId, RESOURCE_ID_1);
+            index.getMapping(session, RESOURCE_ID_1);
             fail();
         } catch (final FedoraOcflMappingNotFoundException e) {
             // The exception is expected.
@@ -188,8 +193,7 @@ public class DbFedoraToOcflObjectIndexTest {
         }
         try {
             final FedoraId tempid = FedoraId.create(root);
-            final String sessId = UUID.randomUUID().toString();
-            index.addMapping(sessId, tempid, ROOT_RESOURCE_ID, OCFL_ID);
+            index.addMapping(session, tempid, ROOT_RESOURCE_ID, OCFL_ID);
             fail();
         } catch (final InvalidResourceIdentifierException e) {
             //the exception is expected

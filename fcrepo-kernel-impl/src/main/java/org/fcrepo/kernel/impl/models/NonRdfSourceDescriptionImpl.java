@@ -20,6 +20,7 @@ package org.fcrepo.kernel.impl.models;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -49,15 +50,15 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
      * Construct a description resource
      *
      * @param fedoraID internal identifier
-     * @param txId transaction
+     * @param transaction transaction
      * @param pSessionManager session manager
      * @param resourceFactory resource factory
      */
     public NonRdfSourceDescriptionImpl(final FedoraId fedoraID,
-            final String txId,
+            final Transaction transaction,
             final PersistentStorageSessionManager pSessionManager,
             final ResourceFactory resourceFactory) {
-        super(fedoraID, txId, pSessionManager, resourceFactory);
+        super(fedoraID, transaction, pSessionManager, resourceFactory);
     }
 
     @Override
@@ -70,7 +71,7 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
         // Get a FedoraId for the binary
         final FedoraId describedId = FedoraId.create(this.getFedoraId().getBaseId());
         try {
-            return this.resourceFactory.getResource(txId, describedId);
+            return this.resourceFactory.getResource(transaction, describedId);
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e.getMessage(), e);
         }

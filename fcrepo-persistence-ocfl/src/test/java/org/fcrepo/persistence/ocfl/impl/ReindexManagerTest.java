@@ -18,9 +18,11 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+
+import org.fcrepo.kernel.api.Transaction;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -43,12 +45,13 @@ public class ReindexManagerTest extends AbstractReindexerTest {
     @Before
     public void setup() throws Exception {
         super.setup();
-        reindexManager = new ReindexManager(repository.listObjectIds(), reindexService, propsConfig);
+
+        reindexManager = new ReindexManager(repository.listObjectIds(), reindexService, propsConfig, txManager);
     }
 
     @Test
     public void testProcessAnObject() throws Exception {
-        final var session = persistentStorageSessionManager.getSession(session1Id);
+        final var session = persistentStorageSessionManager.getSession(transaction);
 
         createResource(session, resource1, true);
         createChildResourceNonRdf(session, resource1, resource2);
@@ -65,11 +68,9 @@ public class ReindexManagerTest extends AbstractReindexerTest {
         assertDoesNotHaveOcflId(resource2);
 
         reindexManager.start();
-        reindexManager.commit();
         reindexManager.shutdown();
 
-        verify(reindexService).indexOcflObject(anyString(), eq(FEDORA_ID_PREFIX + "/resource1"));
-        verify(reindexService).commit(anyString());
-        verify(reindexService).indexMembership(anyString());
+        verify(reindexService).indexOcflObject(any(Transaction.class), eq(FEDORA_ID_PREFIX + "/resource1"));
+        verify(reindexService).indexMembership(any(Transaction.class));
     }
 }

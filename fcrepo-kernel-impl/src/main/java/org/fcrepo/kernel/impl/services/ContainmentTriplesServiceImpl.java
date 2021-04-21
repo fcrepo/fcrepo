@@ -49,12 +49,8 @@ public class ContainmentTriplesServiceImpl implements ContainmentTriplesService 
         final var fedoraId = resource.getFedoraId();
         final var nodeUri = fedoraId.isMemento() ? fedoraId.getBaseId() : fedoraId.getFullId();
         final Node currentNode = createURI(nodeUri);
-        return containmentIndex.getContains(txId(tx), fedoraId).map(c ->
+        return containmentIndex.getContains(tx, fedoraId).map(c ->
                 new Triple(currentNode, CONTAINS.asNode(), createURI(c)));
-    }
-
-    private String txId(final Transaction tx) {
-        return tx == null ? null : tx.getId();
     }
 
 }

@@ -17,6 +17,7 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
@@ -73,15 +74,15 @@ abstract class AbstractPersister implements Persister {
 
     /**
      *
-     * @param transactionId The storage session/transaction identifier.
+     * @param transaction The externally generated transaction.
      * @param resourceId The fedora resource identifier
      * @return The associated mapping
      * @throws PersistentStorageException When no mapping is found.
      */
-    protected FedoraOcflMapping getMapping(final String transactionId, final FedoraId resourceId)
+    protected FedoraOcflMapping getMapping(final Transaction transaction, final FedoraId resourceId)
             throws PersistentStorageException {
         try {
-            return this.ocflIndex.getMapping(transactionId, resourceId);
+            return this.ocflIndex.getMappingInternal(transaction, resourceId);
         } catch (final FedoraOcflMappingNotFoundException e) {
             throw new PersistentStorageException(e.getMessage());
         }
@@ -96,7 +97,7 @@ abstract class AbstractPersister implements Persister {
             final var resourceId = fedoraId.getResourceId();
 
             try {
-                final var headers = session.getHeaders(fedoraId.asResourceId(), null);
+                final var headers = session.getHeadersInternal(fedoraId.asResourceId(), null);
                 if (headers != null && headers.isArchivalGroup()) {
                     return Optional.of(fedoraId);
                 }
@@ -114,16 +115,16 @@ abstract class AbstractPersister implements Persister {
 
     /**
      * Maps the Fedora ID to an OCFL ID.
-     * @param sessionId The session ID.
+     * @param transaction The externally generated transaction.
      * @param fedoraId The fedora identifier for the root OCFL object
      * @return The OCFL ID
      */
-    protected String mapToOcflId(final String sessionId, final FedoraId fedoraId) {
+    protected String mapToOcflId(final Transaction transaction, final FedoraId fedoraId) {
         try {
-            final var mapping = ocflIndex.getMapping(sessionId, fedoraId.asBaseId());
+            final var mapping = ocflIndex.getMappingInternal(transaction, fedoraId.asBaseId());
             return mapping.getOcflObjectId();
         } catch (final FedoraOcflMappingNotFoundException e) {
-            // If the a mapping doesn't already exist, use a one-to-one Fedora ID to OCFL ID mapping
+            // If the mapping doesn't already exist, use a one-to-one Fedora ID to OCFL ID mapping
             return fedoraId.getBaseId();
         }
     }

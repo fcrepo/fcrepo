@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.api.operations;
 
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 /**
@@ -30,16 +31,18 @@ public interface DeleteResourceOperationFactory extends ResourceOperationFactory
     /**
      * Get a builder for an operation to delete a resource
      *
+     * @param transaction the transaction
      * @param rescId id of the resource to delete
      * @return new builder
      */
-    ResourceOperationBuilder deleteBuilder(FedoraId rescId);
+    ResourceOperationBuilder deleteBuilder(Transaction transaction, FedoraId rescId);
 
     /**
      * Get a builder for an operation to purge a deleted resource.
      *
+     * @param transaction the transaction
      * @param rescId id of the resource to purge
      * @return new builder
      */
-    ResourceOperationBuilder purgeBuilder(FedoraId rescId);
+    ResourceOperationBuilder purgeBuilder(Transaction transaction, FedoraId rescId);
 }

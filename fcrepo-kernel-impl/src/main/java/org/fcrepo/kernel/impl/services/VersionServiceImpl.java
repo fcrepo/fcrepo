@@ -46,8 +46,8 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
 
     @Override
     public void createVersion(final Transaction transaction, final FedoraId fedoraId, final String userPrincipal) {
-        final var session = psManager.getSession(transaction.getId());
-        final var operation = versionOperationFactory.createBuilder(fedoraId)
+        final var session = psManager.getSession(transaction);
+        final var operation = versionOperationFactory.createBuilder(transaction, fedoraId)
                 .userPrincipal(userPrincipal)
                 .build();
 
@@ -63,7 +63,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
 
         try {
             session.persist(operation);
-            recordEvent(transaction.getId(), fedoraId, operation);
+            recordEvent(transaction, fedoraId, operation);
         } catch (final PersistentStorageException e) {
             throw new RepositoryRuntimeException(String.format("Failed to create new version of %s",
                     fedoraId.getResourceId()), e);

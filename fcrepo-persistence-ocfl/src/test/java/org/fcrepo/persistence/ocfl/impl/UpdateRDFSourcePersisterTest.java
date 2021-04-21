@@ -24,6 +24,7 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.vocabulary.DC;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
@@ -98,16 +99,19 @@ public class UpdateRDFSourcePersisterTest {
 
     private UpdateRdfSourcePersister persister;
 
+    @Mock
+    private Transaction transaction;
+
     private static final String SESSION_ID = "SOME-SESSION-ID";
 
     @Before
     public void setup() throws Exception {
         operation = mock(RdfSourceOperation.class);
 
-        when(psSession.getId()).thenReturn(SESSION_ID);
         when(psSession.findOrCreateSession(anyString())).thenReturn(session);
-        when(index.getMapping(eq(SESSION_ID), any())).thenReturn(mapping);
+        when(index.getMappingInternal(eq(transaction), any())).thenReturn(mapping);
         when(operation.getType()).thenReturn(UPDATE);
+        when(operation.getTransaction()).thenReturn(transaction);
 
         persister = new UpdateRdfSourcePersister(this.index);
     }

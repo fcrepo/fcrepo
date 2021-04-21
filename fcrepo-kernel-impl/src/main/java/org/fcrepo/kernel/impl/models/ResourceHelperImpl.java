@@ -23,7 +23,6 @@ import javax.inject.Inject;
 
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.TransactionUtils;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
@@ -33,6 +32,7 @@ import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
+
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -58,7 +58,7 @@ public class ResourceHelperImpl implements ResourceHelper {
     @Override
     public boolean isGhostNode(final Transaction transaction, final FedoraId resourceId) {
         if (!doesResourceExist(transaction, resourceId, true)) {
-            return containmentIndex.hasResourcesStartingWith(TransactionUtils.openTxId(transaction), resourceId);
+            return containmentIndex.hasResourcesStartingWith(transaction, resourceId);
         }
         return false;
     }
@@ -66,7 +66,6 @@ public class ResourceHelperImpl implements ResourceHelper {
     @Override
     public boolean doesResourceExist(final Transaction transaction, final FedoraId fedoraId,
                                      final boolean includeDeleted) {
-        final String transactionId = TransactionUtils.openTxId(transaction);
         if (fedoraId.isRepositoryRoot()) {
             // Root always exists.
             return true;
@@ -74,10 +73,10 @@ public class ResourceHelperImpl implements ResourceHelper {
         if (!(fedoraId.isMemento() || fedoraId.isAcl())) {
             // containment index doesn't handle versions and only tells us if the resource (not acl) is there,
             // so don't bother checking for them.
-            return containmentIndex.resourceExists(transactionId, fedoraId, includeDeleted);
+            return containmentIndex.resourceExists(transaction, fedoraId, includeDeleted);
         } else {
 
-            final PersistentStorageSession psSession = getSession(transactionId);
+            final PersistentStorageSession psSession = getSession(transaction);
 
             try {
                 // Resource ID for metadata or ACL contains their individual endopoints (ie. fcr:metadata, fcr:acl)
@@ -96,15 +95,15 @@ public class ResourceHelperImpl implements ResourceHelper {
     /**
      * Get a session for this interaction.
      *
-     * @param transactionId The supplied transaction id.
+     * @param transaction The supplied transaction.
      * @return a storage session.
      */
-    private PersistentStorageSession getSession(final String transactionId) {
+    private PersistentStorageSession getSession(final Transaction transaction) {
         final PersistentStorageSession session;
-        if (transactionId == null) {
+        if (transaction == null) {
             session = persistentStorageSessionManager.getReadOnlySession();
         } else {
-            session = persistentStorageSessionManager.getSession(transactionId);
+            session = persistentStorageSessionManager.getSession(transaction);
         }
         return session;
     }

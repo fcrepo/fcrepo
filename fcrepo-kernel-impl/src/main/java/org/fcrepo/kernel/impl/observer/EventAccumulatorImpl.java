@@ -18,20 +18,8 @@
 
 package org.fcrepo.kernel.impl.observer;
 
-import com.google.common.collect.Multimap;
-import com.google.common.collect.MultimapBuilder;
-import com.google.common.eventbus.EventBus;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.fcrepo.config.AuthPropsConfig;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.ResourceFactory;
-import org.fcrepo.kernel.api.observer.EventAccumulator;
-import org.fcrepo.kernel.api.operations.ResourceOperation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-
-import javax.inject.Inject;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
@@ -39,8 +27,23 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Strings.emptyToNull;
+import javax.inject.Inject;
+
+import org.fcrepo.config.AuthPropsConfig;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.observer.EventAccumulator;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
+import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
+import com.google.common.eventbus.EventBus;
 
 /**
  * @author pwinckles
@@ -61,16 +64,20 @@ public class EventAccumulatorImpl implements EventAccumulator {
     @Inject
     private AuthPropsConfig authPropsConfig;
 
+    @Inject
+    private TransactionManager txManager;
+
     public EventAccumulatorImpl() {
         this.transactionEventMap = new ConcurrentHashMap<>();
     }
 
     @Override
-    public void recordEventForOperation(final String transactionId, final FedoraId fedoraId,
+    public void recordEventForOperation(final Transaction transaction, final FedoraId fedoraId,
                                         final ResourceOperation operation) {
-        checkNotNull(emptyToNull(transactionId), "transactionId cannot be blank");
+        checkNotNull(transaction, "transaction cannot be blank");
         checkNotNull(fedoraId, "fedoraId cannot be null");
 
+        final String transactionId = transaction.getId();
         final var events = transactionEventMap.computeIfAbsent(transactionId, key ->
                 MultimapBuilder.hashKeys().arrayListValues().build());
         final var eventBuilder = ResourceOperationEventBuilder.fromResourceOperation(
@@ -79,10 +86,10 @@ public class EventAccumulatorImpl implements EventAccumulator {
     }
 
     @Override
-    public void emitEvents(final String transactionId, final String baseUrl, final String userAgent) {
-        LOG.debug("Emitting events for transaction {}", transactionId);
+    public void emitEvents(final Transaction transaction, final String baseUrl, final String userAgent) {
+        LOG.debug("Emitting events for transaction {}", transaction.getId());
 
-        final var eventMap = transactionEventMap.remove(transactionId);
+        final var eventMap = transactionEventMap.remove(transaction.getId());
 
         if (eventMap != null) {
             eventMap.keySet().forEach(fedoraId -> {
@@ -93,7 +100,7 @@ public class EventAccumulatorImpl implements EventAccumulator {
                             .reduce(EventBuilder::merge).get();
 
                     final var event = mergedBuilder
-                            .withResourceTypes(loadResourceTypes(fedoraId))
+                            .withResourceTypes(loadResourceTypes(transaction, fedoraId))
                             .withBaseUrl(baseUrl)
                             .withUserAgent(userAgent)
                             .build();
@@ -108,14 +115,14 @@ public class EventAccumulatorImpl implements EventAccumulator {
     }
 
     @Override
-    public void clearEvents(final String transactionId) {
-        LOG.trace("Clearing events for transaction {}", transactionId);
-        transactionEventMap.remove(transactionId);
+    public void clearEvents(final Transaction transaction) {
+        LOG.trace("Clearing events for transaction {}", transaction.getId());
+        transactionEventMap.remove(transaction.getId());
     }
 
-    private Set<String> loadResourceTypes(final FedoraId fedoraId) {
+    private Set<String> loadResourceTypes(final Transaction transaction, final FedoraId fedoraId) {
         try {
-            return resourceFactory.getResource(fedoraId).getTypes().stream()
+            return resourceFactory.getResource(transaction, fedoraId).getTypes().stream()
                     .map(URI::toString)
                     .collect(Collectors.toSet());
         } catch (final Exception e) {

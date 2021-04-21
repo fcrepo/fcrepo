@@ -89,19 +89,20 @@ public class ResourceHelperImplTest {
 
         sessionId = UUID.randomUUID().toString();
         when(mockTx.getId()).thenReturn(sessionId);
+        when(mockTx.isShortLived()).thenReturn(false);
 
         resourceHelper = new ResourceHelperImpl();
 
         setField(resourceHelper, "persistentStorageSessionManager", sessionManager);
         setField(resourceHelper, "containmentIndex", containmentIndex);
 
-        when(sessionManager.getSession(sessionId)).thenReturn(psSession);
+        when(sessionManager.getSession(mockTx)).thenReturn(psSession);
         when(sessionManager.getReadOnlySession()).thenReturn(psSession);
     }
 
     @Test
     public void doesResourceExist_Exists_WithSession() throws Exception {
-        containmentIndex.addContainedBy(mockTx.getId(), rootId, fedoraId);
+        containmentIndex.addContainedBy(mockTx, rootId, fedoraId);
         final boolean answerIn = resourceHelper.doesResourceExist(mockTx, fedoraId, false);
         assertTrue(answerIn);
         final boolean answerOut = resourceHelper.doesResourceExist(null, fedoraId, false);
@@ -110,7 +111,7 @@ public class ResourceHelperImplTest {
 
     @Test
     public void doesResourceExist_Exists_Description_WithSession() {
-        containmentIndex.addContainedBy(mockTx.getId(), rootId, fedoraId);
+        containmentIndex.addContainedBy(mockTx, rootId, fedoraId);
         final FedoraId descId = fedoraId.asDescription();
         final boolean answerIn = resourceHelper.doesResourceExist(mockTx, descId, false);
         assertTrue(answerIn);
@@ -120,16 +121,16 @@ public class ResourceHelperImplTest {
 
     @Test
     public void doesResourceExist_Exists_WithoutSession() throws Exception {
-        containmentIndex.addContainedBy(mockTx.getId(), rootId, fedoraId);
-        containmentIndex.commitTransaction(mockTx.getId());
+        containmentIndex.addContainedBy(mockTx, rootId, fedoraId);
+        containmentIndex.commitTransaction(mockTx);
         final boolean answer = resourceHelper.doesResourceExist(null, fedoraId, false);
         assertTrue(answer);
     }
 
     @Test
     public void doesResourceExist_Exists_Description_WithoutSession() {
-        containmentIndex.addContainedBy(mockTx.getId(), rootId, fedoraId);
-        containmentIndex.commitTransaction(mockTx.getId());
+        containmentIndex.addContainedBy(mockTx, rootId, fedoraId);
+        containmentIndex.commitTransaction(mockTx);
         final FedoraId descId = fedoraId.asDescription();
         final boolean answer = resourceHelper.doesResourceExist(null, descId, false);
         assertTrue(answer);
@@ -186,7 +187,7 @@ public class ResourceHelperImplTest {
      */
     @Test
     public void testGhostNodeFailure() {
-        containmentIndex.addContainedBy(mockTx.getId(), rootId, fedoraId);
+        containmentIndex.addContainedBy(mockTx, rootId, fedoraId);
         // Inside the transaction the resource exists, so its not a ghost node.
         assertTrue(resourceHelper.doesResourceExist(mockTx, fedoraId, false));
         assertFalse(resourceHelper.isGhostNode(mockTx, fedoraId));
@@ -195,7 +196,7 @@ public class ResourceHelperImplTest {
         // Because there are no other items it is not a ghost node.
         assertFalse(resourceHelper.isGhostNode(null, fedoraId));
 
-        containmentIndex.commitTransaction(mockTx.getId());
+        containmentIndex.commitTransaction(mockTx);
 
         // Now it exists outside the transaction.
         assertTrue(resourceHelper.doesResourceExist(null, fedoraId, false));
@@ -209,7 +210,7 @@ public class ResourceHelperImplTest {
     @Test
     public void testGhostNodeSuccess() {
         final var resourceId = fedoraId.resolve("the/child/path");
-        containmentIndex.addContainedBy(mockTx.getId(), rootId, resourceId);
+        containmentIndex.addContainedBy(mockTx, rootId, resourceId);
         assertTrue(resourceHelper.doesResourceExist(mockTx, resourceId, false));
         assertFalse(resourceHelper.doesResourceExist(mockTx, fedoraId, false));
         assertTrue(resourceHelper.isGhostNode(mockTx, fedoraId));
@@ -217,7 +218,7 @@ public class ResourceHelperImplTest {
         assertFalse(resourceHelper.doesResourceExist(null, fedoraId, false));
         assertFalse(resourceHelper.isGhostNode(null, fedoraId));
 
-        containmentIndex.commitTransaction(mockTx.getId());
+        containmentIndex.commitTransaction(mockTx);
 
         assertTrue(resourceHelper.doesResourceExist(null, resourceId, false));
         assertFalse(resourceHelper.doesResourceExist(null, fedoraId,false));
