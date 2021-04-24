@@ -17,6 +17,26 @@
  */
 package org.fcrepo.http.api;
 
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.Response.ok;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Response;
+
 import io.micrometer.core.annotation.Timed;
 import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
@@ -30,25 +50,6 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Scope;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Response;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.Response.ok;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author dbernstein
@@ -92,7 +93,7 @@ public class FedoraSearch extends FedoraBaseResource {
                              @DefaultValue("100") @QueryParam("max_results") final int maxResults,
                              @DefaultValue("0") @QueryParam("offset") final int offset,
                              @DefaultValue("asc") @QueryParam("order") final String order,
-                             @DefaultValue("fedora_id") @QueryParam("order_by") final String orderBy) {
+                             @QueryParam("order_by") final String orderBy) {
 
         LOGGER.info("GET on search with conditions: {}, and fields: {}", conditions, fields);
         try {
@@ -118,7 +119,11 @@ public class FedoraSearch extends FedoraBaseResource {
 
             final Condition.Field orderByField;
             try {
-                orderByField = Condition.Field.fromString(orderBy);
+                if (!StringUtils.isBlank(orderBy)) {
+                    orderByField = Condition.Field.fromString(orderBy);
+                } else {
+                    orderByField = null;
+                }
             } catch (final Exception e) {
                 throw new InvalidQueryException("The order_by field must contain a valid value such as " +
                         StringUtils.join(Condition.Field.values(), ","));

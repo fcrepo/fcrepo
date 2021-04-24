@@ -283,8 +283,10 @@ public class DbSearchIndexImpl implements SearchIndex {
                 createSearchQuery(parameters, parameterSource, Arrays.asList("count(0) as count")).toString();
         final var selectQuery = createSearchQuery(parameters, parameterSource, fields);
 
-        //add order by limit and offset to selectquery.
-        selectQuery.append(" ORDER BY " + parameters.getOrderBy() + " " + parameters.getOrder());
+        if (parameters.getOrderBy() != null) {
+            //add order by limit and offset to selectquery.
+            selectQuery.append(" ORDER BY " + parameters.getOrderBy() + " " + parameters.getOrder());
+        }
         selectQuery.append(" LIMIT :limit OFFSET :offset");
         parameterSource.addValue("limit", parameters.getMaxResults());
         parameterSource.addValue("offset", parameters.getOffset());
