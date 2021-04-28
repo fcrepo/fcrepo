@@ -158,7 +158,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     private static final String DIRECT_UPSERT_RECORDS_POSTGRESQL = "INSERT INTO " + RESOURCES_TABLE +
             " ( " + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + END_TIME_COLUMN +
-            ") VALUES (:parent, :child, :startTime, :endTime) ON CONFLICT ( " +  FEDORA_ID_COLUMN + ") " +
+            ") VALUES (:parent, :child, :endTime) ON CONFLICT ( " +  FEDORA_ID_COLUMN + ") " +
             "DO UPDATE SET " + PARENT_COLUMN + " = EXCLUDED." + PARENT_COLUMN + ", " +
             END_TIME_COLUMN + " = EXCLUDED." + END_TIME_COLUMN;
 
@@ -172,7 +172,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     private static final String DIRECT_UPSERT_RECORDS_MYSQL_MARIA = "INSERT INTO " + RESOURCES_TABLE +
             " (" + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + END_TIME_COLUMN +
-            ") VALUES (:parent, :child, :startTime, :endTime) ON DUPLICATE KEY UPDATE " +
+            ") VALUES (:parent, :child, :endTime) ON DUPLICATE KEY UPDATE " +
             PARENT_COLUMN + " = VALUES(" + PARENT_COLUMN + "), " +
             END_TIME_COLUMN + " = VALUES(" + END_TIME_COLUMN + ")";
 
