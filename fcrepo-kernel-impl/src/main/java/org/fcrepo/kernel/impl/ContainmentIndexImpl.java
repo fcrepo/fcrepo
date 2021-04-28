@@ -156,12 +156,6 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             START_TIME_COLUMN + " = EXCLUDED." + START_TIME_COLUMN + ", " + END_TIME_COLUMN + " = EXCLUDED." +
             END_TIME_COLUMN + ", " + OPERATION_COLUMN + " = EXCLUDED." + OPERATION_COLUMN;
 
-    private static final String DIRECT_UPSERT_RECORDS_POSTGRESQL = "INSERT INTO " + RESOURCES_TABLE +
-            " ( " + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + END_TIME_COLUMN +
-            ") VALUES (:parent, :child, :endTime) ON CONFLICT ( " +  FEDORA_ID_COLUMN + ") " +
-            "DO UPDATE SET " + PARENT_COLUMN + " = EXCLUDED." + PARENT_COLUMN + ", " +
-            END_TIME_COLUMN + " = EXCLUDED." + END_TIME_COLUMN;
-
     private static final String UPSERT_RECORDS_MYSQL_MARIA = "INSERT INTO " + TRANSACTION_OPERATIONS_TABLE +
             " (" + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ", " +
             TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + ") VALUES (:parent, :child, :startTime, :endTime, " +
@@ -170,20 +164,14 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             START_TIME_COLUMN + "), " + END_TIME_COLUMN + " = VALUES(" + END_TIME_COLUMN + "), " + OPERATION_COLUMN +
             " = VALUES(" + OPERATION_COLUMN + ")";
 
-    private static final String DIRECT_UPSERT_RECORDS_MYSQL_MARIA = "INSERT INTO " + RESOURCES_TABLE +
-            " (" + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + END_TIME_COLUMN +
-            ") VALUES (:parent, :child, :endTime) ON DUPLICATE KEY UPDATE " +
-            PARENT_COLUMN + " = VALUES(" + PARENT_COLUMN + "), " +
-            END_TIME_COLUMN + " = VALUES(" + END_TIME_COLUMN + ")";
-
     private static final String UPSERT_RECORDS_H2 = "MERGE INTO " + TRANSACTION_OPERATIONS_TABLE +
             " (" + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ", " +
             TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + ") KEY (" + FEDORA_ID_COLUMN + ", " +
             TRANSACTION_ID_COLUMN + ") VALUES (:parent, :child, :startTime, :endTime, :transactionId, :operation)";
 
-    private static final String DIRECT_UPSERT_RECORDS_H2 = "MERGE INTO " + RESOURCES_TABLE +
-            " (" + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + END_TIME_COLUMN + ")" +
-            " KEY (" + FEDORA_ID_COLUMN + ") VALUES (:parent, :child, :endTime)";
+    private static final String DIRECT_UPDATE_END_TIME = "UPDATE " + RESOURCES_TABLE +
+            " SET " + END_TIME_COLUMN + " = :endTime WHERE " +
+            PARENT_COLUMN + " = :parent AND " + FEDORA_ID_COLUMN + " = :child";
 
     private static final String DIRECT_INSERT_RECORDS = "INSERT INTO " + RESOURCES_TABLE +
             " (" + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ")" +
@@ -194,13 +182,6 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             DbPlatform.MYSQL, UPSERT_RECORDS_MYSQL_MARIA,
             DbPlatform.MARIADB, UPSERT_RECORDS_MYSQL_MARIA,
             DbPlatform.POSTGRESQL, UPSERT_RECORDS_POSTGRESQL
-    );
-
-    private static final Map<DbPlatform, String> DIRECT_UPSERT_MAPPING = Map.of(
-            DbPlatform.H2, DIRECT_UPSERT_RECORDS_H2,
-            DbPlatform.MYSQL, DIRECT_UPSERT_RECORDS_MYSQL_MARIA,
-            DbPlatform.MARIADB, DIRECT_UPSERT_RECORDS_MYSQL_MARIA,
-            DbPlatform.POSTGRESQL, DIRECT_UPSERT_RECORDS_POSTGRESQL
     );
 
     private static final String DIRECT_PURGE = "DELETE FROM containment WHERE fedora_id = :child";
@@ -679,7 +660,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
         if (startTime == null) {
             // This the case for an update
-            query = DIRECT_UPSERT_MAPPING.get(dbPlatform);
+            query = DIRECT_UPDATE_END_TIME;
         } else {
             // This is the case for a new record
             parameterSource.addValue("startTime", formatInstant(startTime));
