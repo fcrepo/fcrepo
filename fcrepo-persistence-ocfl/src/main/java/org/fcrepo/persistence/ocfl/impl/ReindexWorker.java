@@ -92,6 +92,7 @@ public class ReindexWorker implements Runnable {
 
             for (final var id : ids) {
                 final Transaction tx = txManager.create();
+                tx.setShortLived(true);
                 if (!running) {
                     break;
                 }

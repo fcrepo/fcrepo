@@ -222,6 +222,7 @@ public class ReindexManager {
     private Transaction transaction() {
         if (transaction == null) {
             transaction = txManager.create();
+            transaction.setShortLived(true);
         }
         return transaction;
     }

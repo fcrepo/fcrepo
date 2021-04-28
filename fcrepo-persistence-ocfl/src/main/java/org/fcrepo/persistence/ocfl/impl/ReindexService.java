@@ -60,6 +60,7 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Service that does the reindexing for one OCFL object.
@@ -103,6 +104,7 @@ public class ReindexService {
 
     private int membershipPageSize = 500;
 
+    @Transactional
     public void indexOcflObject(final Transaction tx, final String ocflId) {
         LOGGER.debug("Indexing ocflId {} in transaction {}", ocflId, tx.getId());
 
