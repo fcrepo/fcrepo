@@ -47,8 +47,6 @@ public class TransactionUtils {
      * @return True if above statements are all true, false otherwise
      */
     public static boolean isLongRunningTx(final Transaction transaction) {
-        // TODO I think we might be able to get rid of this class because I do not think we'll be passing
-        //      around null transactions anymore
         return transaction != null && transaction.isOpenLongRunning();
     }
 }
