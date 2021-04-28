@@ -34,6 +34,7 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 
@@ -67,6 +68,7 @@ public class WebacAclServiceImpl extends AbstractService implements WebacAclServ
     }
 
     @Override
+    @Transactional
     public void create(final Transaction transaction, final FedoraId fedoraId, final String userPrincipal,
                                  final Model model) {
         final PersistentStorageSession pSession = this.psManager.getSession(transaction);

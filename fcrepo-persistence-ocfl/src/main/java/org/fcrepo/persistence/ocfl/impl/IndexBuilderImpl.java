@@ -91,24 +91,26 @@ public class IndexBuilderImpl implements IndexBuilder {
 
         reindexService.reset();
 
-        final ReindexManager reindexManager = new ReindexManager(ocflRepository.listObjectIds(), reindexService,
-                ocflPropsConfig, txManager);
+        try (var objectIds = ocflRepository.listObjectIds()) {
+            final ReindexManager reindexManager = new ReindexManager(objectIds,
+                    reindexService, ocflPropsConfig, txManager);
 
-        LOGGER.debug("Reading object ids...");
-        final var startTime = Instant.now();
-        try {
-            reindexManager.start();
-            LOGGER.info("Reindexing complete.");
-        } catch (final InterruptedException e) {
-            throw new RuntimeException(e);
-        } finally {
-            reindexManager.shutdown();
+            LOGGER.debug("Reading object ids...");
+            final var startTime = Instant.now();
+            try {
+                reindexManager.start();
+                LOGGER.info("Reindexing complete.");
+            } catch (final InterruptedException e) {
+                throw new RuntimeException(e);
+            } finally {
+                reindexManager.shutdown();
+            }
+            final var endTime = Instant.now();
+            final var count = reindexManager.getCompletedCount();
+            final var errors = reindexManager.getErrorCount();
+            LOGGER.info("Index rebuild completed {} objects successfully and {} objects had errors in {} ",
+                    count, errors, getDurationMessage(Duration.between(startTime, endTime)));
         }
-        final var endTime = Instant.now();
-        final var count = reindexManager.getCompletedCount();
-        final var errors = reindexManager.getErrorCount();
-        LOGGER.info("Index rebuild completed {} objects successfully and {} objects had errors in {} ", count, errors,
-                getDurationMessage(Duration.between(startTime, endTime)));
     }
 
     private boolean shouldRebuild() {

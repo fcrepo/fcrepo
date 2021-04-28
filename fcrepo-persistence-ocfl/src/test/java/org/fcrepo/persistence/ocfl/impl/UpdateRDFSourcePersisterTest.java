@@ -109,7 +109,7 @@ public class UpdateRDFSourcePersisterTest {
         operation = mock(RdfSourceOperation.class);
 
         when(psSession.findOrCreateSession(anyString())).thenReturn(session);
-        when(index.getMappingInternal(eq(transaction), any())).thenReturn(mapping);
+        when(index.getMapping(eq(transaction), any())).thenReturn(mapping);
         when(operation.getType()).thenReturn(UPDATE);
         when(operation.getTransaction()).thenReturn(transaction);
 

@@ -77,6 +77,7 @@ public class ContainmentTriplesServiceImplTest {
         final String txId = UUID.randomUUID().toString();
         when(transaction.getId()).thenReturn(txId);
         when(transaction.isShortLived()).thenReturn(false);
+        when(transaction.isOpenLongRunning()).thenReturn(true);
         when(parentResource.getFedoraId()).thenReturn(parentId);
         setField(containmentTriplesService, "containmentIndex", containmentIndex);
     }
@@ -139,6 +140,7 @@ public class ContainmentTriplesServiceImplTest {
         final String otherTransactionId = UUID.randomUUID().toString();
 
         when(transaction2.getId()).thenReturn(otherTransactionId);
+        when(transaction2.isOpenLongRunning()).thenReturn(true);
         containmentIndex.addContainedBy(transaction, parentResource.getFedoraId(), child);
         assertEquals(1, containmentTriplesService.get(transaction, parentResource).count());
         final Model expectedModel = ModelFactory.createDefaultModel();

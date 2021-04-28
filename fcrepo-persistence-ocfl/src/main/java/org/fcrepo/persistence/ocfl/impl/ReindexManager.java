@@ -107,12 +107,12 @@ public class ReindexManager {
             for (final var worker : workers) {
                 worker.join();
             }
+            indexMembership();
         } catch (final Exception e) {
             LOGGER.error("Error while rebuilding index", e);
             stop();
             throw e;
         } finally {
-            indexMembership();
             reporter.interrupt();
         }
     }
@@ -164,37 +164,18 @@ public class ReindexManager {
 
     /**
      * Index the membership relationships
-     * @throws InterruptedException If fails to succeed after 3 tries.
      */
-    private void indexMembership() throws InterruptedException {
-        // How much to back off between each attempt (seconds).
-        final long backoff = 10L;
-        int attempt = 0;
-        boolean finished = false;
-        while (!finished && attempt < 3) {
+    private void indexMembership() {
+        try {
+            reindexService.indexMembership(transaction());
+        } catch (final RuntimeException e) {
             try {
-                reindexService.indexMembership(transaction());
-                finished = true;
-            } catch (final Exception e) {
-                reindexService.rollbackMembership(transaction().getId());
+                reindexService.rollbackMembership(transaction());
+            } catch (final Exception e2) {
+                LOGGER.error("Failed to rollback membership", e2);
             }
-            attempt += 1;
-            try {
-                TimeUnit.SECONDS.sleep(backoff * attempt);
-            } catch (final InterruptedException e) {
-                // Continue on if we are interrupted.
-            }
+            throw e;
         }
-        if (!finished) {
-            throw new InterruptedException("Unable to complete membership indexing.");
-        }
-    }
-
-    /**
-     * Rollback the current transaction.
-     */
-    public void rollback() {
-        reindexService.rollback(transaction());
     }
 
     /**

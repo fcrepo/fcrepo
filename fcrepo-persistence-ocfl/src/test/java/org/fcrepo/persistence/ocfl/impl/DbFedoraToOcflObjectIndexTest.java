@@ -71,6 +71,7 @@ public class DbFedoraToOcflObjectIndexTest {
         when(session.getId()).thenReturn(UUID.randomUUID().toString());
         when(session.isShortLived()).thenReturn(false);
         when(session.isCommitted()).thenReturn(false);
+        when(session.isOpenLongRunning()).thenReturn(true);
     }
 
     @Test

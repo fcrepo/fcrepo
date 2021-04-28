@@ -292,6 +292,7 @@ public class ReferenceServiceImplTest {
         when(transaction2.isCommitted()).thenReturn(false);
         when(transaction2.isRolledBack()).thenReturn(false);
         when(transaction2.hasExpired()).thenReturn(false);
+        when(transaction2.isOpenLongRunning()).thenReturn(true);
         model.add(subject1, ResourceFactory.createProperty("http://someother/description"), "Some text");
         model.remove(subject1, referenceProp, target);
         final RdfStream stream2 = fromModel(subject1.asNode(), model);

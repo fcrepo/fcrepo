@@ -282,17 +282,17 @@ public class ReindexService {
         } catch (final InvalidQueryException e) {
             throw new RepositoryRuntimeException("Failed to repopulate membership history", e);
         }
-        membershipService.commitTransaction(transaction.getId());
+        membershipService.commitTransaction(transaction);
         LOGGER.debug("Finished indexMembership for transaction {}", transaction);
     }
 
     /**
      * Rollback changes in the transaction.
-     * @param txId the transaction id.
+     * @param tx the transaction
      */
-    public void rollbackMembership(@NotNull final String txId) {
-        execQuietly("Failed to rollback membership index transaction " + txId, () -> {
-            membershipService.rollbackTransaction(txId);
+    public void rollbackMembership(@NotNull final Transaction tx) {
+        execQuietly("Failed to rollback membership index transaction " + tx.getId(), () -> {
+            membershipService.rollbackTransaction(tx);
             return null;
         });
     }

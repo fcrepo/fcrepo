@@ -33,11 +33,11 @@ public interface MembershipService {
     /**
      * Return an RdfStream of membership relations of which the provided resource is the subject.
      *
-     * @param txId transaction id
+     * @param transaction transaction
      * @param fedoraId the resource to get membership relations for.
      * @return RdfStream of membership relations.
      */
-    RdfStream getMembership(final String txId, final FedoraId fedoraId);
+    RdfStream getMembership(final Transaction transaction, final FedoraId fedoraId);
 
     /**
      * Update membership properties based on the creation of the specified resource
@@ -81,15 +81,15 @@ public interface MembershipService {
 
     /**
      * Commit any pending membership changes.
-     * @param txId the transaction id.
+     * @param transaction the transaction
      */
-    void commitTransaction(final String txId);
+    void commitTransaction(final Transaction transaction);
 
     /**
      * Rollback any pending membership changes.
-     * @param txId the transaction id.
+     * @param transaction the transaction
      */
-    void rollbackTransaction(final String txId);
+    void rollbackTransaction(final Transaction transaction);
 
     /**
      * Truncates the membership index. This should only be called when rebuilding the index.

@@ -218,22 +218,11 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
     }
 
     @Override
-    public ResourceHeaders getHeadersInternal(final FedoraId identifier, final Instant version)
-            throws PersistentStorageException {
-        return getHeaders(identifier, version, true);
-    }
-
-    @Override
     public ResourceHeaders getHeaders(final FedoraId identifier, final Instant version)
-            throws PersistentStorageException {
-        return getHeaders(identifier, version, false);
-    }
-
-    private ResourceHeaders getHeaders(final FedoraId identifier, final Instant version, final boolean internal)
             throws PersistentStorageException {
         ensureCommitNotStarted();
 
-        final FedoraOcflMapping mapping = getFedoraOcflMapping(identifier, internal);
+        final FedoraOcflMapping mapping = getFedoraOcflMapping(identifier);
         final OcflObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
 
         final var versionId = resolveVersionNumber(objSession, identifier, version);
@@ -242,12 +231,9 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         return new ResourceHeadersAdapter(headers).asKernelHeaders();
     }
 
-    private FedoraOcflMapping getFedoraOcflMapping(final FedoraId identifier, final boolean internal)
+    private FedoraOcflMapping getFedoraOcflMapping(final FedoraId identifier)
             throws PersistentStorageException {
         try {
-            if (internal) {
-                return fedoraOcflIndex.getMappingInternal(transaction, identifier);
-            }
             return fedoraOcflIndex.getMapping(transaction, identifier);
         } catch (final FedoraOcflMappingNotFoundException e) {
             throw new PersistentItemNotFoundException(e.getMessage());
@@ -283,7 +269,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
     @Override
     public List<Instant> listVersions(final FedoraId fedoraIdentifier)
             throws PersistentStorageException {
-        final var mapping = getFedoraOcflMapping(fedoraIdentifier, false);
+        final var mapping = getFedoraOcflMapping(fedoraIdentifier);
         final var objSession = findOrCreateSession(mapping.getOcflObjectId());
 
         return objSession.listVersions(fedoraIdentifier.getResourceId()).stream()
@@ -307,7 +293,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         throws PersistentStorageException {
         ensureCommitNotStarted();
 
-        final var mapping = getFedoraOcflMapping(identifier, internal);
+        final var mapping = getFedoraOcflMapping(identifier);
         final var objSession = findOrCreateSession(mapping.getOcflObjectId());
 
         final var versionNumber = resolveVersionNumber(objSession, identifier, version);

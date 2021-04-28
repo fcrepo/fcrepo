@@ -50,28 +50,6 @@ public interface FedoraToOcflObjectIndex {
             throws FedoraOcflMappingNotFoundException;
 
     /**
-     * Retrieve identification information for the OCFL object which either contains, or is identified by,
-     * the provided fedora resource id. In other words the method will find the closest resource that is persisted
-     * as an OCFL object and returns its identifiers.
-     *
-     * If you pass fedora identifier that is not part of an archival group such as
-     * "my/fedora/binary/fcr:metadata"  the  fedora resource returned in the mapping will be "my/fedora/binary".
-     *
-     * Contrast this  with an Archival Group example:  if you pass in "my/archival-group/binary/fcr:metadata" the
-     * resource returned in the mapping would be "my/archival-group".
-     *
-     * NOTE: This method ALWAYS uses the transaction tables, and so will perform slower queries. Use only as necessary.
-     *
-     * @param session the current session, or null for read-only.
-     * @param fedoraResourceIdentifier the fedora resource identifier
-     *
-     * @return the mapping
-     * @throws FedoraOcflMappingNotFoundException when no mapping exists for the specified identifier.
-     */
-    FedoraOcflMapping getMappingInternal(final Transaction session, final FedoraId fedoraResourceIdentifier)
-            throws FedoraOcflMappingNotFoundException;
-
-    /**
      * Adds a mapping to the index
      *
      * @param session the current session.

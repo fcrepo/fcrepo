@@ -102,6 +102,12 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
             OCFL_ID_COLUMN + " = EXCLUDED." + OCFL_ID_COLUMN + ", " + OPERATION_COLUMN + " = EXCLUDED." +
             OPERATION_COLUMN;
 
+    private static final String DIRECT_UPSERT_MAPPING_POSTGRESQL = "INSERT INTO " + MAPPING_TABLE +
+            " ( " + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN +
+            ") VALUES (:fedoraId, :fedoraRootId, :ocflId) ON CONFLICT (" + FEDORA_ID_COLUMN + ")" +
+            " DO UPDATE SET " + FEDORA_ROOT_ID_COLUMN + " = EXCLUDED." + FEDORA_ROOT_ID_COLUMN + ", " +
+            OCFL_ID_COLUMN + " = EXCLUDED." + OCFL_ID_COLUMN;
+
     private static final String UPSERT_MAPPING_TX_MYSQL_MARIA = "INSERT INTO " + TRANSACTION_OPERATIONS_TABLE +
             " (" + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ", " +
             TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + ")" +
@@ -109,11 +115,22 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
             FEDORA_ROOT_ID_COLUMN + " = VALUES(" + FEDORA_ROOT_ID_COLUMN + "), " + OCFL_ID_COLUMN + " = VALUES(" +
             OCFL_ID_COLUMN + "), " + OPERATION_COLUMN + " = VALUES(" + OPERATION_COLUMN + ")";
 
+    private static final String DIRECT_UPSERT_MAPPING_MYSQL_MARIA = "INSERT INTO " + MAPPING_TABLE +
+            " (" + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ")" +
+            " VALUES (:fedoraId, :fedoraRootId, :ocflId) ON DUPLICATE KEY UPDATE " +
+            FEDORA_ROOT_ID_COLUMN + " = VALUES(" + FEDORA_ROOT_ID_COLUMN + "), " + OCFL_ID_COLUMN + " = VALUES(" +
+            OCFL_ID_COLUMN + ")";
+
     private static final String UPSERT_MAPPING_TX_H2 = "MERGE INTO " + TRANSACTION_OPERATIONS_TABLE +
             " (" + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ", " +
             TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + ")" +
             " KEY (" + FEDORA_ID_COLUMN + ", " + TRANSACTION_ID_COLUMN + ")" +
             " VALUES (:fedoraId, :fedoraRootId, :ocflId, :transactionId, :operation)";
+
+    private static final String DIRECT_UPSERT_MAPPING_H2 = "MERGE INTO " + MAPPING_TABLE +
+            " (" + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ")" +
+            " KEY (" + FEDORA_ID_COLUMN + ")" +
+            " VALUES (:fedoraId, :fedoraRootId, :ocflId)";
 
     /**
      * Map of database product to UPSERT into operations table SQL.
@@ -124,6 +141,15 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
             DbPlatform.POSTGRESQL, UPSERT_MAPPING_TX_POSTGRESQL,
             DbPlatform.MARIADB, UPSERT_MAPPING_TX_MYSQL_MARIA
     );
+
+    private static final Map<DbPlatform, String> DIRECT_UPSERT_MAPPING_MAP = Map.of(
+            DbPlatform.MYSQL, DIRECT_UPSERT_MAPPING_MYSQL_MARIA,
+            DbPlatform.H2, DIRECT_UPSERT_MAPPING_H2,
+            DbPlatform.POSTGRESQL, DIRECT_UPSERT_MAPPING_POSTGRESQL,
+            DbPlatform.MARIADB, DIRECT_UPSERT_MAPPING_MYSQL_MARIA
+    );
+
+    private static final String DIRECT_DELETE_MAPPING = "DELETE FROM ocfl_id_map WHERE fedora_id = :fedoraId";
 
     private static final String COMMIT_ADD_MAPPING_POSTGRESQL = "INSERT INTO " + MAPPING_TABLE +
             " ( " + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ") SELECT " +
@@ -200,23 +226,12 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     }
 
     @Override
-    public FedoraOcflMapping getMappingInternal(final Transaction transaction, final FedoraId fedoraId)
-            throws FedoraOcflMappingNotFoundException {
-        return getMapping(transaction, fedoraId, true);
-    }
-
-    @Override
     public FedoraOcflMapping getMapping(final Transaction transaction, final FedoraId fedoraId)
             throws FedoraOcflMappingNotFoundException {
-        return getMapping(transaction, fedoraId, false);
-    }
-
-    private FedoraOcflMapping getMapping(final Transaction transaction, final FedoraId fedoraId,
-        final boolean internal) throws FedoraOcflMappingNotFoundException {
         try {
             final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
             parameterSource.addValue("fedoraId", fedoraId.getResourceId());
-            if (internal || isLongRunningTx(transaction)) {
+            if (isLongRunningTx(transaction)) {
                 parameterSource.addValue("transactionId", transaction.getId());
                 return jdbcTemplate.queryForObject(LOOKUP_MAPPING_IN_TRANSACTION, parameterSource,
                         GET_MAPPING_ROW_MAPPER);
@@ -231,13 +246,23 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     @Override
     public FedoraOcflMapping addMapping(@Nonnull final Transaction transaction, final FedoraId fedoraId,
                                         final FedoraId fedoraRootId, final String ocflId) {
-        upsert(transaction, fedoraId, "add", fedoraRootId, ocflId);
+        if (isLongRunningTx(transaction)) {
+            upsert(transaction, fedoraId, "add", fedoraRootId, ocflId);
+        } else {
+            directUpsert(fedoraId, fedoraRootId, ocflId);
+        }
         return new FedoraOcflMapping(fedoraRootId, ocflId);
     }
 
     @Override
     public void removeMapping(@Nonnull final Transaction transaction, final FedoraId fedoraId) {
-        upsert(transaction, fedoraId, "delete");
+        if (isLongRunningTx(transaction)) {
+            upsert(transaction, fedoraId, "delete");
+        } else {
+            final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+            parameterSource.addValue("fedoraId", fedoraId.getResourceId());
+            jdbcTemplate.update(DIRECT_DELETE_MAPPING, parameterSource);
+        }
     }
 
     private void upsert(final Transaction transaction, final FedoraId fedoraId, final String operation) {
@@ -264,11 +289,26 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
         try {
             jdbcTemplate.update(UPSERT_MAPPING_TX_MAP.get(dbPlatform), parameterSource);
         } catch (final DataIntegrityViolationException | BadSqlGrammarException e) {
-            if (e.getMessage().contains("too long for")) {
-                throw new InvalidResourceIdentifierException("Database error - Fedora ID path too long",e);
-            } else {
-                throw new RepositoryRuntimeException("Database error - error during upsert",e);
-            }
+            handleInsertException(e);
+        }
+    }
+
+    /**
+     * Perform the upsert directly to the mapping table.
+     *
+     * @param fedoraId the resource id.
+     * @param fedoraRootId the fedora root id (for add only)
+     * @param ocflId the ocfl id (for add only).
+     */
+    private void directUpsert(final FedoraId fedoraId, final FedoraId fedoraRootId, final String ocflId) {
+        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+        parameterSource.addValue("fedoraId", fedoraId.getResourceId());
+        parameterSource.addValue("fedoraRootId", fedoraRootId == null ? null : fedoraRootId.getResourceId());
+        parameterSource.addValue("ocflId", ocflId);
+        try {
+            jdbcTemplate.update(DIRECT_UPSERT_MAPPING_MAP.get(dbPlatform), parameterSource);
+        } catch (final DataIntegrityViolationException | BadSqlGrammarException e) {
+            handleInsertException(e);
         }
     }
 
@@ -286,21 +326,33 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     @Transactional
     @Override
     public void commit(@Nonnull final Transaction transaction) {
-        LOGGER.debug("Committing FedoraToOcfl index changes from transaction {}", transaction.getId());
-        final Map<String, String> map = Map.of("transactionId", transaction.getId());
-        try {
-            jdbcTemplate.update(COMMIT_DELETE_RECORDS, map);
-            jdbcTemplate.update(COMMIT_ADD_MAPPING_MAP.get(dbPlatform), map);
-            jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, map);
-        } catch (final Exception e) {
-            LOGGER.warn("Unable to commit FedoraToOcfl index transaction {}: {}", transaction, e.getMessage());
-            throw new RepositoryRuntimeException("Unable to commit FedoraToOcfl index transaction", e);
+        if (isLongRunningTx(transaction)) {
+            LOGGER.debug("Committing FedoraToOcfl index changes from transaction {}", transaction.getId());
+            final Map<String, String> map = Map.of("transactionId", transaction.getId());
+            try {
+                jdbcTemplate.update(COMMIT_DELETE_RECORDS, map);
+                jdbcTemplate.update(COMMIT_ADD_MAPPING_MAP.get(dbPlatform), map);
+                jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, map);
+            } catch (final Exception e) {
+                LOGGER.warn("Unable to commit FedoraToOcfl index transaction {}: {}", transaction, e.getMessage());
+                throw new RepositoryRuntimeException("Unable to commit FedoraToOcfl index transaction", e);
+            }
         }
     }
 
     @Override
     public void rollback(@Nonnull final Transaction transaction) {
-        jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, Map.of("transactionId", transaction.getId()));
+        if (isLongRunningTx(transaction)) {
+            jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, Map.of("transactionId", transaction.getId()));
+        }
+    }
+
+    private void handleInsertException(final Exception e) {
+        if (e.getMessage().contains("too long for")) {
+            throw new InvalidResourceIdentifierException("Database error - Fedora ID path too long",e);
+        } else {
+            throw new RepositoryRuntimeException("Database error - error during upsert",e);
+        }
     }
 
 }

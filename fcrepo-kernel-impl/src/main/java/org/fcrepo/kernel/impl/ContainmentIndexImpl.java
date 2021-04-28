@@ -156,6 +156,12 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             START_TIME_COLUMN + " = EXCLUDED." + START_TIME_COLUMN + ", " + END_TIME_COLUMN + " = EXCLUDED." +
             END_TIME_COLUMN + ", " + OPERATION_COLUMN + " = EXCLUDED." + OPERATION_COLUMN;
 
+    private static final String DIRECT_UPSERT_RECORDS_POSTGRESQL = "INSERT INTO " + RESOURCES_TABLE +
+            " ( " + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + END_TIME_COLUMN +
+            ") VALUES (:parent, :child, :startTime, :endTime) ON CONFLICT ( " +  FEDORA_ID_COLUMN + ") " +
+            "DO UPDATE SET " + PARENT_COLUMN + " = EXCLUDED." + PARENT_COLUMN + ", " +
+            END_TIME_COLUMN + " = EXCLUDED." + END_TIME_COLUMN;
+
     private static final String UPSERT_RECORDS_MYSQL_MARIA = "INSERT INTO " + TRANSACTION_OPERATIONS_TABLE +
             " (" + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ", " +
             TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + ") VALUES (:parent, :child, :startTime, :endTime, " +
@@ -164,10 +170,24 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             START_TIME_COLUMN + "), " + END_TIME_COLUMN + " = VALUES(" + END_TIME_COLUMN + "), " + OPERATION_COLUMN +
             " = VALUES(" + OPERATION_COLUMN + ")";
 
+    private static final String DIRECT_UPSERT_RECORDS_MYSQL_MARIA = "INSERT INTO " + RESOURCES_TABLE +
+            " (" + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + END_TIME_COLUMN +
+            ") VALUES (:parent, :child, :startTime, :endTime) ON DUPLICATE KEY UPDATE " +
+            PARENT_COLUMN + " = VALUES(" + PARENT_COLUMN + "), " +
+            END_TIME_COLUMN + " = VALUES(" + END_TIME_COLUMN + ")";
+
     private static final String UPSERT_RECORDS_H2 = "MERGE INTO " + TRANSACTION_OPERATIONS_TABLE +
             " (" + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ", " +
             TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + ") KEY (" + FEDORA_ID_COLUMN + ", " +
             TRANSACTION_ID_COLUMN + ") VALUES (:parent, :child, :startTime, :endTime, :transactionId, :operation)";
+
+    private static final String DIRECT_UPSERT_RECORDS_H2 = "MERGE INTO " + RESOURCES_TABLE +
+            " (" + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + END_TIME_COLUMN + ")" +
+            " KEY (" + FEDORA_ID_COLUMN + ") VALUES (:parent, :child, :endTime)";
+
+    private static final String DIRECT_INSERT_RECORDS = "INSERT INTO " + RESOURCES_TABLE +
+            " (" + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ")" +
+            " VALUES (:parent, :child, :startTime, :endTime)";
 
     private static final Map<DbPlatform, String> UPSERT_MAPPING = Map.of(
             DbPlatform.H2, UPSERT_RECORDS_H2,
@@ -175,6 +195,15 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             DbPlatform.MARIADB, UPSERT_RECORDS_MYSQL_MARIA,
             DbPlatform.POSTGRESQL, UPSERT_RECORDS_POSTGRESQL
     );
+
+    private static final Map<DbPlatform, String> DIRECT_UPSERT_MAPPING = Map.of(
+            DbPlatform.H2, DIRECT_UPSERT_RECORDS_H2,
+            DbPlatform.MYSQL, DIRECT_UPSERT_RECORDS_MYSQL_MARIA,
+            DbPlatform.MARIADB, DIRECT_UPSERT_RECORDS_MYSQL_MARIA,
+            DbPlatform.POSTGRESQL, DIRECT_UPSERT_RECORDS_POSTGRESQL
+    );
+
+    private static final String DIRECT_PURGE = "DELETE FROM containment WHERE fedora_id = :child";
 
     /*
      * Remove an insert row from the transaction operation table for this parent child relationship.
@@ -283,11 +312,11 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     /*
      * Remove from the main table all rows from transaction operation table marked 'purge' for this transaction.
      */
-    private static final String COMMIT_PURGE_RECORDS = "DELETE FROM " + RESOURCES_TABLE + " WHERE " +
+    private static final String COMMIT_PURGE_RECORDS = "DELETE FROM " + RESOURCES_TABLE + " c WHERE " +
             "EXISTS (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE + " t WHERE t." +
             TRANSACTION_ID_COLUMN + " = :transactionId AND t." +  OPERATION_COLUMN + " = 'purge' AND" +
-            " t." + FEDORA_ID_COLUMN + " = " + RESOURCES_TABLE + "." + FEDORA_ID_COLUMN +
-            " AND t." + PARENT_COLUMN + " = " + RESOURCES_TABLE + "." + PARENT_COLUMN + ")";
+            " t." + FEDORA_ID_COLUMN + " = c." + FEDORA_ID_COLUMN +
+            " AND t." + PARENT_COLUMN + " = c." + PARENT_COLUMN + ")";
 
     /*
      * Query if a resource exists in the main table and is not deleted.
@@ -404,6 +433,10 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     private static final String UPDATE_LAST_UPDATED = "UPDATE " + RESOURCES_TABLE + " SET " + UPDATED_COLUMN +
             " = :updated WHERE " + FEDORA_ID_COLUMN + " = :resourceId";
 
+    private static final String CONDITIONALLY_UPDATE_LAST_UPDATED = "UPDATE " + RESOURCES_TABLE +
+            " SET " + UPDATED_COLUMN + " = :updated WHERE " + FEDORA_ID_COLUMN + " = :resourceId" +
+            " AND (" + UPDATED_COLUMN + " IS NULL OR " + UPDATED_COLUMN + " < :updated)";
+
     private static final String SELECT_LAST_UPDATED_IN_TX = "SELECT MAX(x.updated)" +
             " FROM (SELECT " + UPDATED_COLUMN + " as updated FROM " + RESOURCES_TABLE + " WHERE " +
             FEDORA_ID_COLUMN + " = :resourceId UNION SELECT " + START_TIME_COLUMN +
@@ -504,73 +537,101 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
+    @Transactional
     public void addContainedBy(@Nonnull final Transaction tx, final FedoraId parent, final FedoraId child) {
         addContainedBy(tx, parent, child, Instant.now(), null);
     }
 
     @Override
+    @Transactional
     public void addContainedBy(@Nonnull final Transaction tx, final FedoraId parent, final FedoraId child,
                                final Instant startTime, final Instant endTime) {
         final String parentID = parent.getFullId();
         final String childID = child.getFullId();
 
-        LOGGER.debug("Adding: parent: {}, child: {}, in txn: {}, start time {}, end time {}", parentID, childID,
-                tx.getId(), formatInstant(startTime), formatInstant(endTime));
-        doUpsert(tx, parentID, childID, startTime, endTime, "add");
-    }
-
-    @Override
-    public void removeContainedBy(@Nonnull final Transaction tx, final FedoraId parent, final FedoraId child) {
-        final String parentID = parent.getFullId();
-        final String childID = child.getFullId();
-        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-        parameterSource.addValue("parent", parentID);
-        parameterSource.addValue("child", childID);
-        parameterSource.addValue("transactionId", openTxId(tx));
-        final boolean addedInTxn = !jdbcTemplate.queryForList(IS_CHILD_ADDED_IN_TRANSACTION, parameterSource)
-                .isEmpty();
-        if (addedInTxn) {
-            jdbcTemplate.update(UNDO_INSERT_CHILD_IN_TRANSACTION, parameterSource);
+        if (isLongRunningTx(tx)) {
+            LOGGER.debug("Adding: parent: {}, child: {}, in txn: {}, start time {}, end time {}", parentID, childID,
+                    tx.getId(), formatInstant(startTime), formatInstant(endTime));
+            doUpsert(tx, parentID, childID, startTime, endTime, "add");
         } else {
-            doUpsert(tx, parentID, childID, null, Instant.now(), "delete");
+            LOGGER.debug("Adding: parent: {}, child: {}, start time {}, end time {}", parentID, childID,
+                    formatInstant(startTime), formatInstant(endTime));
+            doDirectUpsert(parentID, childID, startTime, endTime);
         }
     }
 
     @Override
+    @Transactional
+    public void removeContainedBy(@Nonnull final Transaction tx, final FedoraId parent, final FedoraId child) {
+        final String parentID = parent.getFullId();
+        final String childID = child.getFullId();
+
+        if (isLongRunningTx(tx)) {
+            final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+            parameterSource.addValue("parent", parentID);
+            parameterSource.addValue("child", childID);
+            parameterSource.addValue("transactionId", openTxId(tx));
+            final boolean addedInTxn = !jdbcTemplate.queryForList(IS_CHILD_ADDED_IN_TRANSACTION, parameterSource)
+                    .isEmpty();
+            if (addedInTxn) {
+                jdbcTemplate.update(UNDO_INSERT_CHILD_IN_TRANSACTION, parameterSource);
+            } else {
+                doUpsert(tx, parentID, childID, null, Instant.now(), "delete");
+            }
+        } else {
+            doDirectUpsert(parentID, childID, null, Instant.now());
+        }
+    }
+
+    @Override
+    @Transactional
     public void removeResource(@Nonnull final Transaction tx, final FedoraId resource) {
         final String resourceID = resource.getFullId();
-        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-        parameterSource.addValue("child", resourceID);
-        parameterSource.addValue("transactionId", openTxId(tx));
-        final boolean addedInTxn = !jdbcTemplate.queryForList(IS_CHILD_ADDED_IN_TRANSACTION_NO_PARENT,
-                parameterSource).isEmpty();
-        if (addedInTxn) {
-            jdbcTemplate.update(UNDO_INSERT_CHILD_IN_TRANSACTION_NO_PARENT, parameterSource);
+
+        if (isLongRunningTx(tx)) {
+            final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+            parameterSource.addValue("child", resourceID);
+            parameterSource.addValue("transactionId", openTxId(tx));
+            final boolean addedInTxn = !jdbcTemplate.queryForList(IS_CHILD_ADDED_IN_TRANSACTION_NO_PARENT,
+                    parameterSource).isEmpty();
+            if (addedInTxn) {
+                jdbcTemplate.update(UNDO_INSERT_CHILD_IN_TRANSACTION_NO_PARENT, parameterSource);
+            } else {
+                final String parent = getContainedBy(tx, resource);
+                if (parent != null) {
+                    LOGGER.debug("Marking containment relationship between parent ({}) and child ({}) deleted", parent,
+                            resourceID);
+                    doUpsert(tx, parent, resourceID, null, Instant.now(), "delete");
+                }
+            }
         } else {
             final String parent = getContainedBy(tx, resource);
             if (parent != null) {
                 LOGGER.debug("Marking containment relationship between parent ({}) and child ({}) deleted", parent,
                         resourceID);
-                doUpsert(tx, parent, resourceID, null, Instant.now(), "delete");
+                doDirectUpsert(parent, resourceID, null, Instant.now());
             }
         }
     }
 
     @Override
+    @Transactional
     public void purgeResource(@Nonnull final Transaction tx, final FedoraId resource) {
         final String resourceID = resource.getFullId();
-        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-        parameterSource.addValue("child", resourceID);
-        parameterSource.addValue("transactionId", openTxId(tx));
+
         final String parent = getContainedByDeleted(tx, resource);
-        final boolean deletedInTxn = !jdbcTemplate.queryForList(IS_CHILD_DELETED_IN_TRANSACTION_NO_PARENT,
-                parameterSource).isEmpty();
-        if (deletedInTxn) {
-            jdbcTemplate.update(UNDO_DELETE_CHILD_IN_TRANSACTION_NO_PARENT, parameterSource);
-        }
+
         if (parent != null) {
-            LOGGER.debug("Removing containment relationship between parent ({}) and child ({})", parent, resourceID);
-            doUpsert(tx, parent, resourceID, null, null, "purge");
+            LOGGER.debug("Removing containment relationship between parent ({}) and child ({})",
+                    parent, resourceID);
+
+            if (isLongRunningTx(tx)) {
+                doUpsert(tx, parent, resourceID, null, null, "purge");
+            } else {
+                final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+                parameterSource.addValue("child", resourceID);
+                jdbcTemplate.update(DIRECT_PURGE, parameterSource);
+            }
         }
     }
 
@@ -600,6 +661,44 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     /**
+     * Do the Upsert directly to the containment index; not the tx table
+     *
+     * @param parentId the containing resource id
+     * @param resourceId the contained resource id
+     * @param startTime the instant the relationship started, if null get the current time from the main table.
+     * @param endTime the instant the relationship ended or null for none.
+     */
+    private void doDirectUpsert(final String parentId, final String resourceId, final Instant startTime,
+                                final Instant endTime) {
+        final var parameterSource = new MapSqlParameterSource();
+        parameterSource.addValue("child", resourceId);
+        parameterSource.addValue("parent", parentId);
+        parameterSource.addValue("endTime", formatInstant(endTime));
+
+        final String query;
+
+        if (startTime == null) {
+            // This the case for an update
+            query = DIRECT_UPSERT_MAPPING.get(dbPlatform);
+        } else {
+            // This is the case for a new record
+            parameterSource.addValue("startTime", formatInstant(startTime));
+            query = DIRECT_INSERT_RECORDS;
+        }
+
+        jdbcTemplate.update(query, parameterSource);
+        updateParentTimestamp(parentId, startTime, endTime);
+    }
+
+    private void updateParentTimestamp(final String parentId, final Instant startTime, final Instant endTime) {
+        final var parameterSource = new MapSqlParameterSource();
+        final var updated = endTime == null ? startTime : endTime;
+        parameterSource.addValue("resourceId", parentId);
+        parameterSource.addValue("updated", formatInstant(updated));
+        jdbcTemplate.update(CONDITIONALLY_UPDATE_LAST_UPDATED, parameterSource);
+    }
+
+    /**
      * Find parent for a resource using a deleted containment relationship.
      * @param tx the transaction.
      * @param resource the child resource id.
@@ -622,7 +721,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     @Transactional
     @Override
     public void commitTransaction(final Transaction tx) {
-        if (openTxId(tx) != null) {
+        if (isLongRunningTx(tx)) {
             try {
                 final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
                 parameterSource.addValue("transactionId", tx.getId());
@@ -651,7 +750,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     @Override
     public void rollbackTransaction(final Transaction tx) {
-        if (openTxId(tx) != null) {
+        if (isLongRunningTx(tx)) {
             final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
             parameterSource.addValue("transactionId", tx.getId());
             jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, parameterSource);

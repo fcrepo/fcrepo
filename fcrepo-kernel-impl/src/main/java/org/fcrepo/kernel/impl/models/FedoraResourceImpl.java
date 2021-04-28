@@ -53,7 +53,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
-import static org.fcrepo.kernel.api.TransactionUtils.isLongRunningTx;
 
 /**
  * Implementation of a Fedora resource, containing functionality common to the more concrete resource implementations.
@@ -340,7 +339,7 @@ public class FedoraResourceImpl implements FedoraResource {
     }
 
     protected PersistentStorageSession getSession() {
-        if (isLongRunningTx(transaction)) {
+        if (transaction != null && transaction.isOpen()) {
             return pSessionManager.getSession(transaction);
         } else {
             return pSessionManager.getReadOnlySession();

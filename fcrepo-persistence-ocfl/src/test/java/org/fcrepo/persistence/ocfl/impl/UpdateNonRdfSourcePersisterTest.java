@@ -110,7 +110,7 @@ public class UpdateNonRdfSourcePersisterTest {
         when(nonRdfSourceOperation.getContentSize()).thenReturn(-1L);
         when(transaction.getId()).thenReturn(SESSION_ID);
         when(psSession.findOrCreateSession(anyString())).thenReturn(session);
-        when(index.getMappingInternal(eq(transaction), any())).thenReturn(mapping);
+        when(index.getMapping(eq(transaction), any())).thenReturn(mapping);
         when(nonRdfSourceOperation.getType()).thenReturn(UPDATE);
         when(nonRdfSourceOperation.getTransaction()).thenReturn(transaction);
 

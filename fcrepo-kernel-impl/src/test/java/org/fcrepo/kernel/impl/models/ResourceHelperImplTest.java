@@ -90,6 +90,7 @@ public class ResourceHelperImplTest {
         sessionId = UUID.randomUUID().toString();
         when(mockTx.getId()).thenReturn(sessionId);
         when(mockTx.isShortLived()).thenReturn(false);
+        when(mockTx.isOpenLongRunning()).thenReturn(true);
 
         resourceHelper = new ResourceHelperImpl();
 

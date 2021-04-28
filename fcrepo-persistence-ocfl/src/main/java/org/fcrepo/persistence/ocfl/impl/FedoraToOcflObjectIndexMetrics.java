@@ -69,17 +69,6 @@ public class FedoraToOcflObjectIndexMetrics implements FedoraToOcflObjectIndex {
     }
 
     @Override
-    public FedoraOcflMapping getMappingInternal(final Transaction session, final FedoraId fedoraResourceIdentifier)
-            throws FedoraOcflMappingNotFoundException {
-        final var stopwatch = Timer.start();
-        try  {
-            return ocflIndexImpl.getMappingInternal(session, fedoraResourceIdentifier);
-        } finally {
-            stopwatch.stop(getMappingTimer);
-        }
-    }
-
-    @Override
     public FedoraOcflMapping addMapping(final Transaction session,
                                         final FedoraId fedoraResourceIdentifier,
                                         final FedoraId fedoraRootObjectIdentifier,

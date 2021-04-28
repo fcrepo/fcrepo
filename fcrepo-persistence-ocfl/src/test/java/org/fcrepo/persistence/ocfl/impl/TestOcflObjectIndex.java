@@ -55,12 +55,6 @@ public class TestOcflObjectIndex implements FedoraToOcflObjectIndex {
     }
 
     @Override
-    public FedoraOcflMapping getMappingInternal(final Transaction transaction, final FedoraId fedoraResourceIdentifier)
-            throws FedoraOcflMappingNotFoundException {
-        return getMapping(transaction, fedoraResourceIdentifier);
-    }
-
-    @Override
     public FedoraOcflMapping addMapping(@Nonnull final Transaction transaction,
                                         final FedoraId fedoraResourceIdentifier,
                                         final FedoraId fedoraRootObjectResourceId,

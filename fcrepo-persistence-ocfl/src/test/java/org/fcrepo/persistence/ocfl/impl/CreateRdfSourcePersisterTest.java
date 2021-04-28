@@ -164,8 +164,8 @@ public class CreateRdfSourcePersisterTest {
         when(((CreateResourceOperation) operation).getParentId()).thenReturn(FedoraId.getRepositoryRootId());
         when(((CreateResourceOperation) operation).getInteractionModel()).thenReturn(RDF_SOURCE.toString());
         when(operation.getTriples()).thenReturn(userTriplesStream);
-        when(psSession.getHeadersInternal(RESOURCE_ID, null)).thenReturn(null);
-        when(psSession.getHeadersInternal(ROOT_RESOURCE_ID, null)).thenReturn(parentHeaders);
+        when(psSession.getHeaders(RESOURCE_ID, null)).thenReturn(null);
+        when(psSession.getHeaders(ROOT_RESOURCE_ID, null)).thenReturn(parentHeaders);
 
         persister.persist(psSession, operation);
 

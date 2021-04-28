@@ -217,7 +217,7 @@ public class CreateResourceServiceImplTest {
     public void testParentAg() {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("child");
-        containmentIndex.addContainedBy(transaction, fedoraId, childId);
+        containmentIndex.addContainedBy(transaction, FedoraId.getRepositoryRootId(), fedoraId);
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.isArchivalGroup()).thenReturn(true);
         createResourceService.perform(transaction, USER_PRINCIPAL, childId, null, model);
@@ -230,7 +230,7 @@ public class CreateResourceServiceImplTest {
         final FedoraId agId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId fedoraId = agId.resolve(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("child");
-        containmentIndex.addContainedBy(transaction, fedoraId, childId);
+        containmentIndex.addContainedBy(transaction, agId, fedoraId);
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.isArchivalGroup()).thenReturn(false);
         when(resourceHeaders.getArchivalGroupId()).thenReturn(agId);
@@ -383,7 +383,7 @@ public class CreateResourceServiceImplTest {
     public void testWithBinary() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("testSlug");
-        containmentIndex.addContainedBy(transaction, fedoraId, childId);
+        containmentIndex.addContainedBy(transaction, FedoraId.getRepositoryRootId(), fedoraId);
         containmentIndex.commitTransaction(transaction);
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(psSession.getHeaders(childId, null)).thenReturn(resourceHeaders);

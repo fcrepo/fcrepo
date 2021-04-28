@@ -23,7 +23,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_WEBAC_ACL_URI;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.kernel.api.TransactionUtils.isLongRunningTx;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.time.Instant;
@@ -73,13 +72,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
     @Override
     public FedoraResource getResource(final Transaction transaction, final FedoraId fedoraID)
             throws PathNotFoundException {
-        return instantiateResource(transaction, fedoraID, false);
-    }
-
-    @Override
-    public FedoraResource getResourceInternal(final Transaction transaction, final FedoraId fedoraID)
-            throws PathNotFoundException {
-        return instantiateResource(transaction, fedoraID, true);
+        return instantiateResource(transaction, fedoraID);
     }
 
     @Override
@@ -138,25 +131,18 @@ public class ResourceFactoryImpl implements ResourceFactory {
      *
      * @param transaction the transaction id
      * @param identifier    identifier for the new instance
-     * @param internal     true if this is an getResourceInternal request, false otherwise.
      * @return new FedoraResource instance
      * @throws PathNotFoundException
      */
     private FedoraResource instantiateResource(final Transaction transaction,
-                                               final FedoraId identifier,
-                                               final boolean internal)
+                                               final FedoraId identifier)
             throws PathNotFoundException {
         try {
             // For descriptions and ACLs we need the actual endpoint.
-            final var psSession = getSession(transaction, internal);
+            final var psSession = getSession(transaction);
             final Instant versionDateTime = identifier.isMemento() ? identifier.getMementoInstant() : null;
 
-            final ResourceHeaders headers;
-            if (internal) {
-                headers = psSession.getHeadersInternal(identifier, versionDateTime);
-            } else {
-                headers = psSession.getHeaders(identifier, versionDateTime);
-            }
+            final ResourceHeaders headers = psSession.getHeaders(identifier, versionDateTime);
 
             // Determine the appropriate class from headers
             final var createClass = getClassForTypes(headers);
@@ -229,19 +215,14 @@ public class ResourceFactoryImpl implements ResourceFactory {
      * Get a session for this interaction.
      *
      * @param transaction The supplied transaction.
-     * @param internal   Is this a getResourceInternal request.
      * @return a storage session.
      */
-    private PersistentStorageSession getSession(final Transaction transaction, final boolean internal) {
+    private PersistentStorageSession getSession(final Transaction transaction) {
         final PersistentStorageSession session;
-        if (internal) {
+        if (transaction != null && transaction.isOpen()) {
             session = persistentStorageSessionManager.getSession(transaction);
         } else {
-            if (isLongRunningTx(transaction)) {
-                session = persistentStorageSessionManager.getSession(transaction);
-            } else {
-                session = persistentStorageSessionManager.getReadOnlySession();
-            }
+            session = persistentStorageSessionManager.getReadOnlySession();
         }
         return session;
     }

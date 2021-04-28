@@ -87,7 +87,7 @@ public class ResourceTripleServiceImpl implements ResourceTripleService {
         // LDP container membership triples for this resource, returned by default. Membership is server managed so
         // also check that tag.
         if (preferences.displayMembership()) {
-            streams.add(membershipService.getMembership(tx.getId(), resource.getFedoraId()));
+            streams.add(membershipService.getMembership(tx, resource.getFedoraId()));
         }
 
         // Include inbound references to this object, NOT returned by default.

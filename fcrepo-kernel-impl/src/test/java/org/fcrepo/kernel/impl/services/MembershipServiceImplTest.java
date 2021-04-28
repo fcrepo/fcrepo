@@ -162,7 +162,7 @@ public class MembershipServiceImplTest {
         containmentIndex.addContainedBy(transaction, rootId, membershipRescId);
         membershipService.resourceCreated(transaction, membershipRescId);
 
-        assertUncommittedMembershipCount(txId, membershipRescId, 0);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 0);
 
         assertNull(membershipService.getLastUpdatedTimestamp(transaction, membershipRescId));
     }
@@ -175,7 +175,7 @@ public class MembershipServiceImplTest {
         final var dcId = createDirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
         membershipService.resourceCreated(transaction, dcId);
 
-        assertUncommittedMembershipCount(txId, membershipRescId, 0);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 0);
 
         assertNull(membershipService.getLastUpdatedTimestamp(transaction, membershipRescId));
     }
@@ -191,13 +191,13 @@ public class MembershipServiceImplTest {
         final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
         final var member2Id = createDCMember(dcId, RdfLexicon.NON_RDF_SOURCE);
 
-        assertHasMembers(txId, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
+        assertHasMembers(transaction, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
 
         final var lastUpdated = membershipService.getLastUpdatedTimestamp(transaction, membershipRescId);
         assertNotNull(lastUpdated);
 
         // Commit the transaction and verify we can still get the added members
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertHasMembersNoTx(membershipRescId, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
         assertEquals("Last updated timestamp should not change during commit",
@@ -215,7 +215,7 @@ public class MembershipServiceImplTest {
 
         final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
 
-        assertHasMembers(txId, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
+        assertHasMembers(transaction, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
     }
 
     @Test
@@ -229,9 +229,9 @@ public class MembershipServiceImplTest {
         final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
         final var member2Id = createDCMember(dcId, RdfLexicon.NON_RDF_SOURCE);
 
-        assertUncommittedMembershipCount(txId, membershipRescId, 0);
-        assertIsMemberOf(txId, member1Id, MEMBER_OF, membershipRescId);
-        assertIsMemberOf(txId, member2Id, MEMBER_OF, membershipRescId);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 0);
+        assertIsMemberOf(transaction, member1Id, MEMBER_OF, membershipRescId);
+        assertIsMemberOf(transaction, member2Id, MEMBER_OF, membershipRescId);
 
         final var member1Updated = membershipService.getLastUpdatedTimestamp(transaction, member1Id);
         assertNotNull(member1Updated);
@@ -241,7 +241,7 @@ public class MembershipServiceImplTest {
                 membershipService.getLastUpdatedTimestamp(transaction, membershipRescId));
 
         // Commit the transaction and verify we can still get the added members
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(membershipRescId, 0);
 
@@ -264,9 +264,9 @@ public class MembershipServiceImplTest {
 
         final var descId = membershipRescId.asDescription();
 
-        assertHasMembers(txId, descId, RdfLexicon.LDP_MEMBER, member1Id);
+        assertHasMembers(transaction, descId, RdfLexicon.LDP_MEMBER, member1Id);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertHasMembersNoTx(descId, RdfLexicon.LDP_MEMBER, member1Id);
     }
@@ -281,7 +281,7 @@ public class MembershipServiceImplTest {
 
         final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
 
-        assertUncommittedMembershipCount(txId, membershipRescId, 1);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 1);
 
         assertNotNull(membershipService.getLastUpdatedTimestamp(transaction, membershipRescId));
 
@@ -289,12 +289,12 @@ public class MembershipServiceImplTest {
         // Notify that the member was deleted
         membershipService.resourceDeleted(transaction, member1Id);
 
-        assertUncommittedMembershipCount(txId, membershipRescId, 0);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 0);
         assertCommittedMembershipCount(membershipRescId, 0);
 
         assertNull(membershipService.getLastUpdatedTimestamp(transaction, membershipRescId));
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(membershipRescId, 0);
 
@@ -311,7 +311,7 @@ public class MembershipServiceImplTest {
 
         final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(membershipRescId, 1);
 
@@ -322,10 +322,10 @@ public class MembershipServiceImplTest {
         // Notify that the member was deleted
         membershipService.resourceDeleted(transaction, member1Id);
 
-        assertUncommittedMembershipCount(txId, membershipRescId, 0);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 0);
         assertCommittedMembershipCount(membershipRescId, 1);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(membershipRescId, 0);
 
@@ -345,7 +345,7 @@ public class MembershipServiceImplTest {
         final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
         final var member2Id = createDCMember(dcId, BASIC_CONTAINER);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(membershipRescId, 2);
 
@@ -353,10 +353,10 @@ public class MembershipServiceImplTest {
         // Notify that the member was deleted
         membershipService.resourceDeleted(transaction, member1Id);
 
-        assertUncommittedMembershipCount(txId, membershipRescId, 1);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 1);
         assertCommittedMembershipCount(membershipRescId, 2);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertHasMembersNoTx(membershipRescId, RdfLexicon.LDP_MEMBER, member2Id);
     }
@@ -371,7 +371,7 @@ public class MembershipServiceImplTest {
 
         final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(member1Id, 1);
 
@@ -380,9 +380,9 @@ public class MembershipServiceImplTest {
         membershipService.resourceDeleted(transaction, member1Id);
 
         assertCommittedMembershipCount(member1Id, 1);
-        assertUncommittedMembershipCount(txId, member1Id, 0);
+        assertUncommittedMembershipCount(transaction, member1Id, 0);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(member1Id, 0);
     }
@@ -398,17 +398,17 @@ public class MembershipServiceImplTest {
         createDCMember(dcId, BASIC_CONTAINER);
 
         assertCommittedMembershipCount(membershipRescId, 0);
-        assertUncommittedMembershipCount(txId, membershipRescId, 1);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 1);
 
         mockDeleteHeaders(dcId, rootId, RdfLexicon.DIRECT_CONTAINER);
 
         // Notify that the DC was deleted
         membershipService.resourceDeleted(transaction, dcId);
 
-        assertUncommittedMembershipCount(txId, membershipRescId, 0);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 0);
         assertCommittedMembershipCount(membershipRescId, 0);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(membershipRescId, 0);
     }
@@ -423,7 +423,7 @@ public class MembershipServiceImplTest {
 
         createDCMember(dcId, BASIC_CONTAINER);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(membershipRescId, 1);
 
@@ -431,10 +431,10 @@ public class MembershipServiceImplTest {
         // Notify that the DC was deleted
         membershipService.resourceDeleted(transaction, dcId);
 
-        assertUncommittedMembershipCount(txId, membershipRescId, 0);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 0);
         assertCommittedMembershipCount(membershipRescId, 1);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(membershipRescId, 0);
     }
@@ -449,7 +449,7 @@ public class MembershipServiceImplTest {
 
         final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         mockDeleteHeaders(dcId, rootId, RdfLexicon.DIRECT_CONTAINER);
         mockDeleteHeaders(member1Id, dcId, BASIC_CONTAINER);
@@ -459,9 +459,9 @@ public class MembershipServiceImplTest {
         membershipService.resourceDeleted(transaction, dcId);
 
         assertCommittedMembershipCount(membershipRescId, 1);
-        assertUncommittedMembershipCount(txId, membershipRescId, 0);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 0);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(membershipRescId, 0);
     }
@@ -476,7 +476,7 @@ public class MembershipServiceImplTest {
 
         createDCMember(dcId, BASIC_CONTAINER);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(membershipRescId, 1);
 
@@ -486,7 +486,7 @@ public class MembershipServiceImplTest {
         membershipService.resourceDeleted(transaction, dcId);
 
         assertCommittedMembershipCount(membershipRescId, 0);
-        assertUncommittedMembershipCount(txId, membershipRescId, 0);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 0);
     }
 
     @Test
@@ -500,7 +500,7 @@ public class MembershipServiceImplTest {
         final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
         final var member2Id = createDCMember(dcId, BASIC_CONTAINER);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(membershipRescId, 2);
 
@@ -513,7 +513,7 @@ public class MembershipServiceImplTest {
         membershipService.resourceDeleted(transaction, member1Id);
 
         assertHasMembersNoTx(membershipRescId, RdfLexicon.LDP_MEMBER, member2Id);
-        assertUncommittedMembershipCount(txId, membershipRescId, 1);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 1);
 
         assertEquals(lastUpdated, membershipService.getLastUpdatedTimestamp(null, membershipRescId));
     }
@@ -528,7 +528,7 @@ public class MembershipServiceImplTest {
 
         final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(member1Id, 1);
 
@@ -538,7 +538,7 @@ public class MembershipServiceImplTest {
         membershipService.resourceDeleted(transaction, membershipRescId);
 
         assertCommittedMembershipCount(member1Id, 0);
-        assertUncommittedMembershipCount(txId, member1Id, 0);
+        assertUncommittedMembershipCount(transaction, member1Id, 0);
     }
 
     @Test
@@ -551,23 +551,23 @@ public class MembershipServiceImplTest {
 
         final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(membershipRescId, 1);
 
         // Notify that the member was deleted
         membershipService.resourceDeleted(transaction, member1Id);
 
-        assertUncommittedMembershipCount(txId, membershipRescId, 0);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 0);
         assertCommittedMembershipCount(membershipRescId, 1);
 
         // Recreate the resource in the same TX
         membershipService.resourceCreated(transaction, member1Id);
 
-        assertUncommittedMembershipCount(txId, membershipRescId, 1);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 1);
         assertCommittedMembershipCount(membershipRescId, 1);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(membershipRescId, 1);
     }
@@ -589,16 +589,16 @@ public class MembershipServiceImplTest {
         // Add a child to the outer DC
         final var member2Id = createDCMember(dc2Id, BASIC_CONTAINER);
 
-        assertUncommittedMembershipCount(txId, membershipRescId, 2);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 2);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertHasMembersNoTx(membershipRescId, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
 
         // Delete one to ensure only those members are cleaned up
         membershipService.resourceDeleted(transaction, member2Id);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertHasMembersNoTx(membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
     }
@@ -620,11 +620,11 @@ public class MembershipServiceImplTest {
         // Add a child to the outer DC
         final var member2Id = createDCMember(dc2Id, BASIC_CONTAINER);
 
-        assertUncommittedMembershipCount(txId, membershipRescId, 0);
-        assertUncommittedMembershipCount(txId, member1Id, 1);
-        assertUncommittedMembershipCount(txId, member2Id, 1);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 0);
+        assertUncommittedMembershipCount(transaction, member1Id, 1);
+        assertUncommittedMembershipCount(transaction, member2Id, 1);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertIsMemberOfNoTx(member1Id, MEMBER_OF, membershipRescId);
         assertIsMemberOfNoTx(member2Id, MEMBER_OF, membershipRescId);
@@ -632,7 +632,7 @@ public class MembershipServiceImplTest {
         // Delete one to ensure only those members are cleaned up
         membershipService.resourceDeleted(transaction, member2Id);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertIsMemberOfNoTx(member1Id, MEMBER_OF, membershipRescId);
         assertCommittedMembershipCount(member2Id, 0);
@@ -657,16 +657,16 @@ public class MembershipServiceImplTest {
         final var nestedMemberId = createDCMember(nestedDcId, BASIC_CONTAINER);
 
         assertCommittedMembershipCount(membershipRescId, 0);
-        assertUncommittedMembershipCount(txId, membershipRescId, 3);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 3);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertHasMembersNoTx(membershipRescId, RdfLexicon.LDP_MEMBER, outerMemberId, nestedDcId, nestedMemberId);
 
         // Delete the nested DC to ensure that it gets cleaned up as both a DC and a member
         membershipService.resourceDeleted(transaction, nestedDcId);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertHasMembersNoTx(membershipRescId, RdfLexicon.LDP_MEMBER, outerMemberId);
     }
@@ -686,7 +686,7 @@ public class MembershipServiceImplTest {
         final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
         final var member2Id = createDCMember(dcId, BASIC_CONTAINER);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(membershipRescId, 2);
         assertCommittedMembershipCount(membershipResc2Id, 0);
@@ -699,9 +699,9 @@ public class MembershipServiceImplTest {
         mockGetTriplesForDC(dcId, LAST_MODIFIED_DATE, membershipResc2Id, RdfLexicon.LDP_MEMBER, false);
         membershipService.resourceModified(transaction, dcId);
 
-        assertHasMembers(txId, membershipResc2Id, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
+        assertHasMembers(transaction, membershipResc2Id, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(membershipRescId, 0);
         assertHasMembersNoTx(membershipResc2Id, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
@@ -729,7 +729,7 @@ public class MembershipServiceImplTest {
 
         final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(membershipRescId, 1);
         assertCommittedMembershipCount(membershipResc2Id, 0);
@@ -740,9 +740,9 @@ public class MembershipServiceImplTest {
         membershipService.resourceModified(transaction, dcId);
 
         assertHasMembersNoTx(membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
-        assertHasMembers(txId, membershipResc2Id, RdfLexicon.LDP_MEMBER, member1Id);
+        assertHasMembers(transaction, membershipResc2Id, RdfLexicon.LDP_MEMBER, member1Id);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(membershipRescId, 0);
         assertHasMembersNoTx(membershipResc2Id, RdfLexicon.LDP_MEMBER, member1Id);
@@ -752,9 +752,9 @@ public class MembershipServiceImplTest {
         membershipService.resourceModified(transaction, dcId);
 
         assertHasMembersNoTx(membershipResc2Id, RdfLexicon.LDP_MEMBER, member1Id);
-        assertHasMembers(txId, membershipResc2Id, OTHER_HAS_MEMBER, member1Id);
+        assertHasMembers(transaction, membershipResc2Id, OTHER_HAS_MEMBER, member1Id);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(membershipRescId, 0);
         assertHasMembersNoTx(membershipResc2Id, OTHER_HAS_MEMBER, member1Id);
@@ -775,13 +775,13 @@ public class MembershipServiceImplTest {
         membershipService.resourceModified(transaction, dcId);
 
         // Membership resc 2 should still have a member prior to the version creation/last property update
-        assertHasMembers(txId, membershipResc2Id.asMemento(CREATED_DATE), OTHER_HAS_MEMBER,
+        assertHasMembers(transaction, membershipResc2Id.asMemento(CREATED_DATE), OTHER_HAS_MEMBER,
                 member1Id);
-        assertUncommittedMembershipCount(txId, membershipResc2Id, 0);
+        assertUncommittedMembershipCount(transaction, membershipResc2Id, 0);
         assertHasMembersNoTx(membershipResc2Id, OTHER_HAS_MEMBER, member1Id);
-        assertHasMembers(txId, membershipRescId, OTHER_HAS_MEMBER, member1Id);
+        assertHasMembers(transaction, membershipRescId, OTHER_HAS_MEMBER, member1Id);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(membershipResc2Id, 0);
         assertHasMembersNoTx(membershipResc2Id.asMemento(CREATED_DATE), OTHER_HAS_MEMBER,
@@ -801,9 +801,9 @@ public class MembershipServiceImplTest {
         final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
         final var member2Id = createDCMember(dcId, BASIC_CONTAINER);
 
-        assertUncommittedMembershipCount(txId, membershipRescId, 2);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 2);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertHasMembersNoTx(membershipRescId, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
 
@@ -811,9 +811,9 @@ public class MembershipServiceImplTest {
         mockGetTriplesForDC(dcId, LAST_MODIFIED_DATE, membershipRescId, OTHER_HAS_MEMBER, false);
         membershipService.resourceModified(transaction, dcId);
 
-        assertHasMembers(txId, membershipRescId, OTHER_HAS_MEMBER, member1Id, member2Id);
+        assertHasMembers(transaction, membershipRescId, OTHER_HAS_MEMBER, member1Id, member2Id);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertHasMembersNoTx(membershipRescId, OTHER_HAS_MEMBER, member1Id, member2Id);
     }
@@ -828,9 +828,9 @@ public class MembershipServiceImplTest {
 
         final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
 
-        assertUncommittedMembershipCount(txId, membershipRescId, 1);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 1);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertHasMembers(null, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
 
@@ -843,10 +843,10 @@ public class MembershipServiceImplTest {
         membershipService.resourceModified(transaction, dcId);
 
         assertCommittedMembershipCount(membershipRescId, 1);
-        assertUncommittedMembershipCount(txId, membershipRescId, 0);
-        assertIsMemberOf(txId, member1Id, MEMBER_OF, membershipRescId);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 0);
+        assertIsMemberOf(transaction, member1Id, MEMBER_OF, membershipRescId);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertIsMemberOfNoTx(member1Id, MEMBER_OF, membershipRescId);
 
@@ -862,10 +862,10 @@ public class MembershipServiceImplTest {
         membershipService.resourceModified(transaction, dcId);
 
         assertCommittedMembershipCount(member1Id, 1);
-        assertUncommittedMembershipCount(txId, member1Id, 0);
-        assertHasMembers(txId, membershipRescId, OTHER_HAS_MEMBER, member1Id);
+        assertUncommittedMembershipCount(transaction, member1Id, 0);
+        assertHasMembers(transaction, membershipRescId, OTHER_HAS_MEMBER, member1Id);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(member1Id, 0);
         assertHasMembersNoTx(membershipRescId, OTHER_HAS_MEMBER, member1Id);
@@ -888,7 +888,7 @@ public class MembershipServiceImplTest {
 
         final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertIsMemberOfNoTx(member1Id, MEMBER_OF, membershipRescId);
 
@@ -896,9 +896,9 @@ public class MembershipServiceImplTest {
         mockGetTriplesForDC(dcId, LAST_MODIFIED_DATE, membershipRescId, OTHER_MEMBER_OF, true);
         membershipService.resourceModified(transaction, dcId);
 
-        assertIsMemberOf(txId, member1Id, OTHER_MEMBER_OF, membershipRescId);
+        assertIsMemberOf(transaction, member1Id, OTHER_MEMBER_OF, membershipRescId);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertIsMemberOfNoTx(member1Id, OTHER_MEMBER_OF, membershipRescId);
 
@@ -906,9 +906,9 @@ public class MembershipServiceImplTest {
         mockGetTriplesForDC(dcId, LAST_MODIFIED_DATE, membershipRescId, MEMBER_OF, true);
         membershipService.resourceModified(transaction, dcId);
 
-        assertIsMemberOf(txId, member1Id, MEMBER_OF, membershipRescId);
+        assertIsMemberOf(transaction, member1Id, MEMBER_OF, membershipRescId);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertIsMemberOfNoTx(member1Id, MEMBER_OF, membershipRescId);
     }
@@ -930,11 +930,11 @@ public class MembershipServiceImplTest {
         final var afterLastModifiedId = membershipRescId.asMemento(afterLastModified);
 
         // No membership before creation time
-        assertUncommittedMembershipCount(txId, beforeCreatedId, 0);
-        assertUncommittedMembershipCount(txId, membershipRescId, 1);
-        assertUncommittedMembershipCount(txId, afterLastModifiedId, 1);
+        assertUncommittedMembershipCount(transaction, beforeCreatedId, 0);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 1);
+        assertUncommittedMembershipCount(transaction, afterLastModifiedId, 1);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(beforeCreatedId, 0);
         assertHasMembersNoTx(membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
@@ -960,10 +960,10 @@ public class MembershipServiceImplTest {
         final var member1Id = createDCMember(dcId, BASIC_CONTAINER, memberCreated);
 
         // No membership at first memento timestamp
-        assertUncommittedMembershipCount(txId, beforeAddMementoId, 0);
-        assertUncommittedMembershipCount(txId, membershipRescId, 1);
+        assertUncommittedMembershipCount(transaction, beforeAddMementoId, 0);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 1);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         // No membership at first memento timestamp
         assertCommittedMembershipCount(beforeAddMementoId, 0);
@@ -989,10 +989,10 @@ public class MembershipServiceImplTest {
         final var beforeCreate = Instant.parse("2019-11-10T00:00:00.0Z");
         final var beforeCreateId = member1Id.asMemento(beforeCreate);
 
-        assertUncommittedMembershipCount(txId, beforeCreateId, 0);
-        assertUncommittedMembershipCount(txId, member1Id, 1);
+        assertUncommittedMembershipCount(transaction, beforeCreateId, 0);
+        assertUncommittedMembershipCount(transaction, member1Id, 1);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         // No membership before member created
         assertCommittedMembershipCount(beforeCreateId, 0);
@@ -1015,12 +1015,12 @@ public class MembershipServiceImplTest {
         // Make sure delete hasn't leaked
         assertCommittedMembershipCount(member1Id, 1);
 
-        assertIsMemberOf(txId, memberCreatedId, MEMBER_OF, membershipRescId);
-        assertUncommittedMembershipCount(txId, deletedMemberId, 0);
-        assertUncommittedMembershipCount(txId, afterDeleteMemberId, 0);
-        assertUncommittedMembershipCount(txId, member1Id, 0);
+        assertIsMemberOf(transaction, memberCreatedId, MEMBER_OF, membershipRescId);
+        assertUncommittedMembershipCount(transaction, deletedMemberId, 0);
+        assertUncommittedMembershipCount(transaction, afterDeleteMemberId, 0);
+        assertUncommittedMembershipCount(transaction, member1Id, 0);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(beforeCreateId, 0);
         assertIsMemberOfNoTx(memberCreatedId, MEMBER_OF, membershipRescId);
@@ -1050,13 +1050,13 @@ public class MembershipServiceImplTest {
         final var membershipRescAtMember2Create1Id = membershipRescId.asMemento(member2Created);
 
         // No membership before members added
-        assertUncommittedMembershipCount(txId, beforeAddMementoId, 0);
+        assertUncommittedMembershipCount(transaction, beforeAddMementoId, 0);
         // Check membership at the times members were added
-        assertUncommittedMembershipCount(txId, membershipRescAtMember1Create1Id, 1);
-        assertUncommittedMembershipCount(txId, membershipRescAtMember2Create1Id, 2);
-        assertUncommittedMembershipCount(txId, membershipRescId, 2);
+        assertUncommittedMembershipCount(transaction, membershipRescAtMember1Create1Id, 1);
+        assertUncommittedMembershipCount(transaction, membershipRescAtMember2Create1Id, 2);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 2);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         // No membership before members added
         assertCommittedMembershipCount(beforeAddMementoId, 0);
@@ -1076,11 +1076,11 @@ public class MembershipServiceImplTest {
         final var membershipRescAtDeleteId = membershipRescId.asMemento(deleteInstant);
         final var membershipRescAfterDeleteId = membershipRescId.asMemento(Instant.parse("2019-11-13T15:00:00.0Z"));
 
-        assertUncommittedMembershipCount(txId, membershipRescAtMember2Create1Id, 2);
-        assertUncommittedMembershipCount(txId, membershipRescAtDeleteId, 1);
-        assertUncommittedMembershipCount(txId, membershipRescAfterDeleteId, 1);
+        assertUncommittedMembershipCount(transaction, membershipRescAtMember2Create1Id, 2);
+        assertUncommittedMembershipCount(transaction, membershipRescAtDeleteId, 1);
+        assertUncommittedMembershipCount(transaction, membershipRescAfterDeleteId, 1);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         // No membership before members added
         assertCommittedMembershipCount(beforeAddMementoId, 0);
@@ -1104,20 +1104,20 @@ public class MembershipServiceImplTest {
 
         final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertHasMembersNoTx(membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
 
         final var member2Id = createDCMember(dcId, RdfLexicon.NON_RDF_SOURCE);
 
-        assertHasMembers(txId, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
+        assertHasMembers(transaction, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
 
-        membershipService.rollbackTransaction(txId);
+        membershipService.rollbackTransaction(transaction);
 
-        assertHasMembers(txId, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
+        assertHasMembers(transaction, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
 
         // Commit the transaction and verify the non-rollback entries persist
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertHasMembersNoTx(membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
     }
@@ -1132,17 +1132,17 @@ public class MembershipServiceImplTest {
 
         final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertHasMembersNoTx(membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
 
         final var member2Id = createDCMember(dcId, RdfLexicon.NON_RDF_SOURCE);
 
-        assertHasMembers(txId, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
+        assertHasMembers(transaction, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
 
         membershipService.reset();
 
-        assertUncommittedMembershipCount(txId, membershipRescId, 0);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 0);
         assertCommittedMembershipCount(membershipRescId, 0);
     }
 
@@ -1166,7 +1166,7 @@ public class MembershipServiceImplTest {
         final var membershipRescAtMember1Create1Id = membershipRescId.asMemento(member1Created);
         final var membershipRescAtMember2Create1Id = membershipRescId.asMemento(member2Created);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         // Delete one of the members
         final var deleteInstant = Instant.parse("2019-11-13T12:00:00.0Z");
@@ -1177,7 +1177,7 @@ public class MembershipServiceImplTest {
         final var membershipRescAtDeleteId = membershipRescId.asMemento(deleteInstant);
         final var membershipRescAfterDeleteId = membershipRescId.asMemento(Instant.parse("2019-11-13T15:00:00.0Z"));
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         // Clear the index
         membershipService.reset();
@@ -1187,7 +1187,7 @@ public class MembershipServiceImplTest {
         // Repopulate index
         membershipService.populateMembershipHistory(transaction, dcId);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         // No membership before members added
         assertCommittedMembershipCount(beforeAddMementoId, 0);
@@ -1209,7 +1209,7 @@ public class MembershipServiceImplTest {
         final var dcId = createDirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
         membershipService.resourceCreated(transaction, dcId);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         // Change the membership relation
         final var changeRelationInstant = Instant.parse("2019-11-14T12:00:00.0Z");
@@ -1222,14 +1222,14 @@ public class MembershipServiceImplTest {
                 RdfLexicon.DIRECT_CONTAINER, CREATED_DATE, changeRelationInstant), rootId);
         membershipService.resourceModified(transaction, dcId);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertHasMembersNoTx(membershipRescId.asMemento(changeRelationInstant), OTHER_HAS_MEMBER, member2Id);
 
         final var member1Created = Instant.parse("2019-11-15T12:00:00.0Z");
         final var member1Id = createDCMember(dcId, BASIC_CONTAINER, member1Created);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         membershipService.reset();
 
@@ -1237,7 +1237,7 @@ public class MembershipServiceImplTest {
 
         membershipService.populateMembershipHistory(transaction, dcId);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         // No membership before member added
         assertCommittedMembershipCount(membershipRescId.asMemento(Instant.parse("2019-11-13T12:00:00.0Z")), 0);
@@ -1259,12 +1259,12 @@ public class MembershipServiceImplTest {
 
         final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         final var member2Created = Instant.parse("2019-11-13T12:00:00.0Z");
         final var member2Id = createDCMember(dcId, BASIC_CONTAINER, member2Created);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         // Change the membership relation
         final var changeRelationInstant = Instant.parse("2019-11-14T12:00:00.0Z");
@@ -1276,7 +1276,7 @@ public class MembershipServiceImplTest {
                 RdfLexicon.DIRECT_CONTAINER, CREATED_DATE, changeRelationInstant), rootId);
         membershipService.resourceModified(transaction, dcId);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         membershipService.reset();
 
@@ -1284,7 +1284,7 @@ public class MembershipServiceImplTest {
 
         membershipService.populateMembershipHistory(transaction, dcId);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         // No membership before creation
         assertCommittedMembershipCount(membershipRescId.asMemento(Instant.parse("2019-01-01T12:00:00.0Z")), 0);
@@ -1304,7 +1304,7 @@ public class MembershipServiceImplTest {
 
         final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         final var member2Created = Instant.parse("2019-11-13T12:00:00.0Z");
         final var member2Id = createDCMember(dcId, BASIC_CONTAINER, member2Created);
@@ -1314,7 +1314,7 @@ public class MembershipServiceImplTest {
         mockDeleteHeaders(member1Id, dcId, BASIC_CONTAINER, CREATED_DATE, deleteInstant);
         membershipService.resourceDeleted(transaction, member1Id);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         // Change the membership relation
         final var changeRelationInstant = Instant.parse("2019-11-14T12:00:00.0Z");
@@ -1326,7 +1326,7 @@ public class MembershipServiceImplTest {
                 RdfLexicon.DIRECT_CONTAINER, CREATED_DATE, changeRelationInstant), rootId);
         membershipService.resourceModified(transaction, dcId);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         membershipService.reset();
 
@@ -1334,7 +1334,7 @@ public class MembershipServiceImplTest {
 
         membershipService.populateMembershipHistory(transaction, dcId);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         // No membership before creation
         assertCommittedMembershipCount(membershipRescId.asMemento(Instant.parse("2019-01-01T12:00:00.0Z")), 0);
@@ -1369,7 +1369,7 @@ public class MembershipServiceImplTest {
 
         createProxy(idcId, member1Id, CREATED_DATE, true);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(membershipRescId, 1);
         assertCommittedMembershipCount(membershipResc2Id, 0);
@@ -1380,9 +1380,9 @@ public class MembershipServiceImplTest {
         membershipService.resourceModified(transaction, idcId);
 
         assertHasMembersNoTx(membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
-        assertHasMembers(txId, membershipResc2Id, RdfLexicon.LDP_MEMBER, member1Id);
+        assertHasMembers(transaction, membershipResc2Id, RdfLexicon.LDP_MEMBER, member1Id);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(membershipRescId, 0);
         assertHasMembersNoTx(membershipResc2Id, RdfLexicon.LDP_MEMBER, member1Id);
@@ -1392,9 +1392,9 @@ public class MembershipServiceImplTest {
         membershipService.resourceModified(transaction, idcId);
 
         assertHasMembersNoTx(membershipResc2Id, RdfLexicon.LDP_MEMBER, member1Id);
-        assertHasMembers(txId, membershipResc2Id, OTHER_HAS_MEMBER, member1Id);
+        assertHasMembers(transaction, membershipResc2Id, OTHER_HAS_MEMBER, member1Id);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(membershipRescId, 0);
         assertHasMembersNoTx(membershipResc2Id, OTHER_HAS_MEMBER, member1Id);
@@ -1415,13 +1415,13 @@ public class MembershipServiceImplTest {
         membershipService.resourceModified(transaction, idcId);
 
         // Membership resc 2 should still have a member prior to the version creation/last property update
-        assertHasMembers(txId, membershipResc2Id.asMemento(CREATED_DATE), OTHER_HAS_MEMBER,
+        assertHasMembers(transaction, membershipResc2Id.asMemento(CREATED_DATE), OTHER_HAS_MEMBER,
                 member1Id);
-        assertUncommittedMembershipCount(txId, membershipResc2Id, 0);
+        assertUncommittedMembershipCount(transaction, membershipResc2Id, 0);
         assertHasMembersNoTx(membershipResc2Id, OTHER_HAS_MEMBER, member1Id);
-        assertHasMembers(txId, membershipRescId, OTHER_HAS_MEMBER, member1Id);
+        assertHasMembers(transaction, membershipRescId, OTHER_HAS_MEMBER, member1Id);
 
-        membershipService.commitTransaction(txId);
+        membershipService.commitTransaction(transaction);
 
         assertCommittedMembershipCount(membershipResc2Id, 0);
         assertHasMembersNoTx(membershipResc2Id.asMemento(CREATED_DATE), OTHER_HAS_MEMBER,
@@ -1436,12 +1436,12 @@ public class MembershipServiceImplTest {
 
     private void assertHasMembersNoTx(final FedoraId membershipRescId,
             final Property hasMemberRelation, final FedoraId... memberIds) {
-        assertHasMembers(shortLivedTxId, membershipRescId, hasMemberRelation, memberIds);
+        assertHasMembers(shortLivedTx, membershipRescId, hasMemberRelation, memberIds);
     }
 
-    private void assertHasMembers(final String txId, final FedoraId membershipRescId,
+    private void assertHasMembers(final Transaction transaction, final FedoraId membershipRescId,
             final Property hasMemberRelation, final FedoraId... memberIds) {
-        final var membershipList = getMembershipList(txId, membershipRescId);
+        final var membershipList = getMembershipList(transaction, membershipRescId);
         assertEquals(memberIds.length, membershipList.size());
         final var subjectId = membershipRescId.asBaseId();
         for (final FedoraId memberId : memberIds) {
@@ -1451,18 +1451,18 @@ public class MembershipServiceImplTest {
 
     private void assertIsMemberOfNoTx(final FedoraId memberId, final Property isMemberOf,
             final FedoraId membershipRescId) {
-        assertIsMemberOf(shortLivedTxId, memberId, isMemberOf, membershipRescId);
+        assertIsMemberOf(shortLivedTx, memberId, isMemberOf, membershipRescId);
     }
 
-    private void assertIsMemberOf(final String txId, final FedoraId memberId, final Property isMemberOf,
+    private void assertIsMemberOf(final Transaction transaction, final FedoraId memberId, final Property isMemberOf,
             final FedoraId membershipRescId) {
-        final var membershipList = getMembershipList(txId, memberId);
+        final var membershipList = getMembershipList(transaction, memberId);
         assertEquals(1, membershipList.size());
         assertContainsMembership(membershipList, memberId.asBaseId(), isMemberOf, membershipRescId);
     }
 
-    private List<Triple> getMembershipList(final String txId, final FedoraId fedoraId) {
-        final var results = membershipService.getMembership(txId, fedoraId);
+    private List<Triple> getMembershipList(final Transaction transaction, final FedoraId fedoraId) {
+        final var results = membershipService.getMembership(transaction, fedoraId);
         return results.collect(Collectors.toList());
     }
 
@@ -1477,11 +1477,8 @@ public class MembershipServiceImplTest {
     private void mockGetHeaders(final Transaction transaction, final FedoraId fedoraId, final ResourceHeaders headers,
             final FedoraId parentId) {
         when(psSession.getHeaders(eq(fedoraId), nullable(Instant.class))).thenReturn(headers);
-        when(psSession.getHeadersInternal(eq(fedoraId), nullable(Instant.class))).thenReturn(headers);
         if (!fedoraId.isMemento()) {
             when(psSession.getHeaders(eq(headers.getId().asMemento(headers.getCreatedDate())),
-                    nullable(Instant.class))).thenReturn(headers);
-            when(psSession.getHeadersInternal(eq(headers.getId().asMemento(headers.getCreatedDate())),
                     nullable(Instant.class))).thenReturn(headers);
         }
         containmentIndex.addContainedBy(transaction, parentId, fedoraId);
@@ -1644,13 +1641,15 @@ public class MembershipServiceImplTest {
     }
 
     private void assertCommittedMembershipCount(final FedoraId subjectId, final int expected) {
-        final var results = membershipService.getMembership(shortLivedTxId, subjectId);
+        final var results = membershipService.getMembership(shortLivedTx, subjectId);
         assertEquals("Incorrect number of committed membership properties for " + subjectId,
                 expected, results.count());
     }
 
-    private void assertUncommittedMembershipCount(final String txId, final FedoraId subjectId, final int expected) {
-        final var results = membershipService.getMembership(txId, subjectId);
+    private void assertUncommittedMembershipCount(final Transaction transaction,
+                                                  final FedoraId subjectId,
+                                                  final int expected) {
+        final var results = membershipService.getMembership(transaction, subjectId);
         assertEquals("Incorrect number of uncommitted membership properties for " + subjectId,
                 expected, results.count());
     }

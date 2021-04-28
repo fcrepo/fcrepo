@@ -108,7 +108,7 @@ public class TransactionImpl implements Transaction {
                 getTransactionTemplate().executeWithoutResult(status -> {
                     this.getContainmentIndex().commitTransaction(this);
                     this.getReferenceService().commitTransaction(this);
-                    this.getMembershipService().commitTransaction(id);
+                    this.getMembershipService().commitTransaction(this);
                     this.getPersistentSession().prepare();
                     // The storage session must be committed last because mutable head changes cannot be rolled back.
                     // The db transaction will remain open until all changes have been written to OCFL. If the changes
@@ -118,8 +118,8 @@ public class TransactionImpl implements Transaction {
                     this.getPersistentSession().commit();
                 });
             });
-            this.getEventAccumulator().emitEvents(this, baseUri, userAgent);
             this.committed = true;
+            this.getEventAccumulator().emitEvents(this, baseUri, userAgent);
             releaseLocks();
         } catch (final Exception ex) {
             log.error("Failed to commit transaction: {}", id, ex);
@@ -154,7 +154,7 @@ public class TransactionImpl implements Transaction {
             this.getReferenceService().rollbackTransaction(this);
         });
         execQuietly("Failed to rollback membership index in transaction " + id, () -> {
-            this.getMembershipService().rollbackTransaction(id);
+            this.getMembershipService().rollbackTransaction(this);
         });
         execQuietly("Failed to rollback events in transaction " + id, () -> {
             this.getEventAccumulator().clearEvents(this);
@@ -181,6 +181,15 @@ public class TransactionImpl implements Transaction {
     @Override
     public boolean isShortLived() {
         return this.shortLived;
+    }
+
+    @Override
+    public boolean isOpenLongRunning() {
+        return !this.isShortLived() && isOpen();
+    }
+
+    public boolean isOpen() {
+        return !(this.isCommitted() || this.hasExpired() || this.isRolledBack());
     }
 
     @Override
@@ -312,4 +321,8 @@ public class TransactionImpl implements Transaction {
         return this.txManager.getResourceLockManager();
     }
 
+    @Override
+    public String toString() {
+        return id;
+    }
 }

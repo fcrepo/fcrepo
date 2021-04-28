@@ -43,18 +43,6 @@ public interface ResourceFactory {
             throws PathNotFoundException;
 
     /**
-     * Get a FedoraResource for existing resource, always uses the provided transaction to ensure loading resources
-     * not yet committed.
-     *
-     * @param transaction The transaction associated with this request or null if not in a transaction.
-     * @param fedoraID The identifier for the resource.
-     * @return The resource.
-     * @throws PathNotFoundException If the identifier cannot be found.
-     */
-    public FedoraResource getResourceInternal(final Transaction transaction, final FedoraId fedoraID)
-            throws PathNotFoundException;
-
-    /**
      * Get a resource as a particular type without a transaction
      *
      * @param <T> type for the resource

@@ -124,6 +124,10 @@ public class ReferenceServiceImpl implements ReferenceService {
             TRANSACTION_COLUMN + ", " + OPERATION_COLUMN + ") VALUES (:resourceId, :subjectId, :property, :targetId, " +
             ":transactionId, 'add')";
 
+    private static final String INSERT_REFERENCE_DIRECT = "INSERT INTO " + TABLE_NAME + "(" +
+            RESOURCE_COLUMN + ", " + SUBJECT_COLUMN + ", " + PROPERTY_COLUMN + ", " + TARGET_COLUMN +
+            ") VALUES (:resourceId, :subjectId, :property, :targetId)";
+
     private static final String UNDO_INSERT_REFERENCE_IN_TRANSACTION = "DELETE FROM " + TRANSACTION_TABLE + " WHERE " +
             RESOURCE_COLUMN + " = :resourceId AND " + SUBJECT_COLUMN + " = :subjectId AND " + PROPERTY_COLUMN +
             " = :property AND " + TARGET_COLUMN + " = :targetId AND " + TRANSACTION_COLUMN + " = :transactionId AND " +
@@ -133,6 +137,10 @@ public class ReferenceServiceImpl implements ReferenceService {
             RESOURCE_COLUMN + ", " + SUBJECT_COLUMN + ", " + PROPERTY_COLUMN + ", " + TARGET_COLUMN + ", " +
             TRANSACTION_COLUMN + ", " + OPERATION_COLUMN + ") VALUES (:resourceId, :subjectId, :property, :targetId, " +
             ":transactionId, 'delete')";
+
+    private static final String DELETE_REFERENCE_DIRECT = "DELETE FROM reference" +
+            " WHERE fedora_id = :resourceId AND subject_id = :subjectId" +
+            " AND property = :property AND target_id = :targetId";
 
     private static final String UNDO_DELETE_REFERENCE_IN_TRANSACTION = "DELETE FROM " + TRANSACTION_TABLE + " WHERE " +
             RESOURCE_COLUMN + " = :resourceId AND " + SUBJECT_COLUMN + " = :subjectId AND " + PROPERTY_COLUMN +
@@ -222,7 +230,7 @@ public class ReferenceServiceImpl implements ReferenceService {
             deleteReferences.addAll(getOutboundReferences(tx, resourceId.asBaseId()));
         }
         // Remove all the existing references.
-        deleteReferences.forEach(t -> removeReference(openTxId(tx), t));
+        deleteReferences.forEach(t -> removeReference(tx, t));
     }
 
     /**
@@ -272,7 +280,7 @@ public class ReferenceServiceImpl implements ReferenceService {
                 existingReferences.addAll(getOutboundReferences(tx, resourceId.asBaseId()));
             }
             // Remove any existing references not being re-added.
-            existingReferences.stream().filter(notInAdds).forEach(t -> removeReference(openTxId(tx), t));
+            existingReferences.stream().filter(notInAdds).forEach(t -> removeReference(tx, t));
             final Node resourceNode = NodeFactory.createURI(resourceId.getFullId());
             // This predicate checks for references that didn't already exist in the database.
             final Predicate<Triple> alreadyExists = t -> !existingReferences.contains(Quad.create(resourceNode, t));
@@ -289,25 +297,29 @@ public class ReferenceServiceImpl implements ReferenceService {
     @Override
     @Transactional
     public void commitTransaction(final Transaction tx) {
-        try {
-            final Map<String, String> parameterSource = Map.of("transactionId", openTxId(tx));
-            jdbcTemplate.update(COMMIT_DELETE_RECORDS, parameterSource);
-            jdbcTemplate.update(COMMIT_ADD_RECORDS, parameterSource);
-            jdbcTemplate.update(DELETE_TRANSACTION, parameterSource);
-        } catch (final Exception e) {
-            LOGGER.warn("Unable to commit reference index transaction {}: {}", tx, e.getMessage());
-            throw new RepositoryRuntimeException("Unable to commit reference index transaction", e);
+        if (isLongRunningTx(tx)) {
+            try {
+                final Map<String, String> parameterSource = Map.of("transactionId", openTxId(tx));
+                jdbcTemplate.update(COMMIT_DELETE_RECORDS, parameterSource);
+                jdbcTemplate.update(COMMIT_ADD_RECORDS, parameterSource);
+                jdbcTemplate.update(DELETE_TRANSACTION, parameterSource);
+            } catch (final Exception e) {
+                LOGGER.warn("Unable to commit reference index transaction {}: {}", tx, e.getMessage());
+                throw new RepositoryRuntimeException("Unable to commit reference index transaction", e);
+            }
         }
     }
 
     @Override
     public void rollbackTransaction(final Transaction tx) {
-        try {
-            final Map<String, String> parameterSource = Map.of("transactionId", openTxId(tx));
-            jdbcTemplate.update(DELETE_TRANSACTION, parameterSource);
-        } catch (final Exception e) {
-            LOGGER.warn("Unable to rollback reference index transaction {}: {}", tx, e.getMessage());
-            throw new RepositoryRuntimeException("Unable to rollback reference index transaction", e);
+        if (isLongRunningTx(tx)) {
+            try {
+                final Map<String, String> parameterSource = Map.of("transactionId", openTxId(tx));
+                jdbcTemplate.update(DELETE_TRANSACTION, parameterSource);
+            } catch (final Exception e) {
+                LOGGER.warn("Unable to rollback reference index transaction {}: {}", tx, e.getMessage());
+                throw new RepositoryRuntimeException("Unable to rollback reference index transaction", e);
+            }
         }
     }
 
@@ -323,21 +335,30 @@ public class ReferenceServiceImpl implements ReferenceService {
 
     /**
      * Remove a reference.
-     * @param txId transaction Id.
+     * @param tx the transaction
      * @param reference the quad with the reference, is Quad(resourceId, subjectId, propertyId, targetId)
      */
-    private void removeReference(@Nonnull final String txId, final Quad reference) {
-        final Map<String, String> parameterSource = Map.of("transactionId", txId,
-                "resourceId", reference.getGraph().getURI(),
-                "subjectId", reference.getSubject().getURI(),
-                "property", reference.getPredicate().getURI(),
-                "targetId", reference.getObject().getURI());
-        final boolean addedInTx = !jdbcTemplate.queryForList(IS_REFERENCE_ADDED_IN_TRANSACTION, parameterSource)
-                .isEmpty();
-        if (addedInTx) {
-            jdbcTemplate.update(UNDO_INSERT_REFERENCE_IN_TRANSACTION, parameterSource);
+    private void removeReference(final Transaction tx, final Quad reference) {
+        if (isLongRunningTx(tx)) {
+            final Map<String, String> parameterSource = Map.of("transactionId", tx.getId(),
+                    "resourceId", reference.getGraph().getURI(),
+                    "subjectId", reference.getSubject().getURI(),
+                    "property", reference.getPredicate().getURI(),
+                    "targetId", reference.getObject().getURI());
+            final boolean addedInTx = !jdbcTemplate.queryForList(IS_REFERENCE_ADDED_IN_TRANSACTION, parameterSource)
+                    .isEmpty();
+            if (addedInTx) {
+                jdbcTemplate.update(UNDO_INSERT_REFERENCE_IN_TRANSACTION, parameterSource);
+            } else {
+                jdbcTemplate.update(DELETE_REFERENCE_IN_TRANSACTION, parameterSource);
+            }
         } else {
-            jdbcTemplate.update(DELETE_REFERENCE_IN_TRANSACTION, parameterSource);
+            final Map<String, String> parameterSource = Map.of(
+                    "resourceId", reference.getGraph().getURI(),
+                    "subjectId", reference.getSubject().getURI(),
+                    "property", reference.getPredicate().getURI(),
+                    "targetId", reference.getObject().getURI());
+            jdbcTemplate.update(DELETE_REFERENCE_DIRECT, parameterSource);
         }
     }
 
@@ -350,17 +371,28 @@ public class ReferenceServiceImpl implements ReferenceService {
     private void addReference(@Nonnull final Transaction transaction, final Quad reference,
                               final String userPrincipal) {
         final String targetId = reference.getObject().getURI();
-        final Map<String, String> parameterSource = Map.of("transactionId", transaction.getId(),
-                "resourceId", reference.getGraph().getURI(),
-                "subjectId", reference.getSubject().getURI(),
-                "property", reference.getPredicate().getURI(),
-                "targetId", targetId);
-        final boolean addedInTx = !jdbcTemplate.queryForList(IS_REFERENCE_DELETED_IN_TRANSACTION, parameterSource)
-                .isEmpty();
-        if (addedInTx) {
-            jdbcTemplate.update(UNDO_DELETE_REFERENCE_IN_TRANSACTION, parameterSource);
+
+        if (isLongRunningTx(transaction)) {
+            final Map<String, String> parameterSource = Map.of("transactionId", transaction.getId(),
+                    "resourceId", reference.getGraph().getURI(),
+                    "subjectId", reference.getSubject().getURI(),
+                    "property", reference.getPredicate().getURI(),
+                    "targetId", targetId);
+            final boolean addedInTx = !jdbcTemplate.queryForList(IS_REFERENCE_DELETED_IN_TRANSACTION, parameterSource)
+                    .isEmpty();
+            if (addedInTx) {
+                jdbcTemplate.update(UNDO_DELETE_REFERENCE_IN_TRANSACTION, parameterSource);
+            } else {
+                jdbcTemplate.update(INSERT_REFERENCE_IN_TRANSACTION, parameterSource);
+                recordEvent(transaction, targetId, userPrincipal);
+            }
         } else {
-            jdbcTemplate.update(INSERT_REFERENCE_IN_TRANSACTION, parameterSource);
+            final Map<String, String> parameterSource = Map.of(
+                    "resourceId", reference.getGraph().getURI(),
+                    "subjectId", reference.getSubject().getURI(),
+                    "property", reference.getPredicate().getURI(),
+                    "targetId", targetId);
+            jdbcTemplate.update(INSERT_REFERENCE_DIRECT, parameterSource);
             recordEvent(transaction, targetId, userPrincipal);
         }
     }

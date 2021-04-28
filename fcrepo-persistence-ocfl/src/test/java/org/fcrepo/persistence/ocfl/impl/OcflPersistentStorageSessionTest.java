@@ -192,19 +192,12 @@ public class OcflPersistentStorageSessionTest {
 
     private Transaction mockTransaction(final boolean longRunning) {
         final var tx = mock(Transaction.class);
-        if (longRunning) {
-            when(tx.isShortLived()).thenReturn(false);
-            when(tx.hasExpired()).thenReturn(false);
-            when(tx.isCommitted()).thenReturn(false);
-            when(tx.isRolledBack()).thenReturn(false);
-        } else {
-            when(tx.isShortLived()).thenReturn(true);
-        }
+        when(tx.isOpenLongRunning()).thenReturn(longRunning);
         return tx;
     }
 
     private void mockNoIndex(final FedoraId resourceId) throws FedoraOcflMappingNotFoundException {
-        when(index.getMappingInternal(any(), eq(resourceId)))
+        when(index.getMapping(any(), eq(resourceId)))
                 .thenThrow(new FedoraOcflMappingNotFoundException(resourceId.getFullId()));
     }
 
@@ -212,7 +205,6 @@ public class OcflPersistentStorageSessionTest {
                                      final FedoraOcflMapping mapping) throws FedoraOcflMappingNotFoundException {
         mockMapping(ocflObjectId, rootObjectId, mapping);
         when(index.getMapping(any(Transaction.class), eq(resourceId))).thenReturn(mapping);
-        when(index.getMappingInternal(any(Transaction.class), eq(resourceId))).thenReturn(mapping);
     }
 
     private void mockMapping(final String ocflObjectId, final FedoraId rootObjectId, final FedoraOcflMapping mapping) {
@@ -269,7 +261,7 @@ public class OcflPersistentStorageSessionTest {
         assertEquals(dcTitleTriple, retrievedUserStream.findFirst().get());
 
         //verify get server props within the transaction
-        final var headers = session.getHeadersInternal(RESOURCE_ID, null);
+        final var headers = session.getHeaders(RESOURCE_ID, null);
         assertEquals(USER_PRINCIPAL, headers.getCreatedBy());
         final var originalCreatedDate = headers.getCreatedDate();
         assertNotNull("Headers must contain created date", originalCreatedDate);
@@ -649,7 +641,7 @@ public class OcflPersistentStorageSessionTest {
 
         mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
         final var mappingCount = new AtomicInteger(0);
-        when(index.getMappingInternal(any(Transaction.class), eq(RESOURCE_ID))).thenAnswer(
+        when(index.getMapping(any(Transaction.class), eq(RESOURCE_ID))).thenAnswer(
                 (Answer<FedoraOcflMapping>) invocationOnMock -> {
             final var current = mappingCount.getAndIncrement();
             if (current == 0) {
@@ -665,7 +657,6 @@ public class OcflPersistentStorageSessionTest {
 
         final var childId = RESOURCE_ID.resolve("child");
         when(index.getMapping(any(Transaction.class), eq(childId))).thenReturn(mapping);
-        when(index.getMappingInternal(any(Transaction.class), eq(childId))).thenReturn(mapping);
 
         final String title = "title";
         final var dcTitleTriple = Triple.create(resourceUri, DC.title.asNode(), createLiteral(title));

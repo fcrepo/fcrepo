@@ -89,7 +89,7 @@ public class ContainmentIndexImplTest {
     private ContainmentIndexImpl containmentIndex;
 
     @Rule
-    public MockitoRule rule = MockitoJUnit.rule();
+    public MockitoRule rule = MockitoJUnit.rule().silent();
 
     private final Map<String, FedoraResource> id_to_resource = new HashMap<>();
     private final Map<String, Transaction> id_to_transaction = new HashMap<>();
@@ -103,6 +103,8 @@ public class ContainmentIndexImplTest {
         id_to_resource.put("child2", child2);
         id_to_transaction.put("transaction1", transaction1);
         id_to_transaction.put("transaction2", transaction2);
+        when(transaction1.isOpenLongRunning()).thenReturn(true);
+        when(transaction2.isOpenLongRunning()).thenReturn(true);
     }
 
     /**
@@ -121,6 +123,7 @@ public class ContainmentIndexImplTest {
     }
 
     private void stubShortLived() {
+        when(shortLivedTx.isOpenLongRunning()).thenReturn(false);
         when(shortLivedTx.isShortLived()).thenReturn(true);
         when(shortLivedTx.isCommitted()).thenReturn(false);
         when(shortLivedTx.isRolledBack()).thenReturn(false);

@@ -111,7 +111,7 @@ public class DeleteResourcePersisterTest {
         when(mapping.getRootObjectIdentifier()).thenReturn(parentId);
         when(operation.getResourceId()).thenReturn(resourceId);
         when(operation.getTransaction()).thenReturn(transaction);
-        when(index.getMappingInternal(eq(transaction), any())).thenReturn(mapping);
+        when(index.getMapping(eq(transaction), any())).thenReturn(mapping);
         when(session.containsResource(resourceId.getResourceId())).thenReturn(true);
 
         persister.persist(psSession, operation);
@@ -141,7 +141,7 @@ public class DeleteResourcePersisterTest {
         when(mapping.getRootObjectIdentifier()).thenReturn(parentId);
         when(operation.getResourceId()).thenReturn(resourceId);
         when(operation.getTransaction()).thenReturn(transaction);
-        when(index.getMappingInternal(eq(transaction), any())).thenReturn(mapping);
+        when(index.getMapping(eq(transaction), any())).thenReturn(mapping);
         when(session.containsResource(resourceId.getResourceId())).thenReturn(false);
 
         persister.persist(psSession, operation);
@@ -162,7 +162,7 @@ public class DeleteResourcePersisterTest {
         when(mapping.getRootObjectIdentifier()).thenReturn(parentId);
         when(operation.getResourceId()).thenReturn(resourceId);
         when(operation.getTransaction()).thenReturn(transaction);
-        when(index.getMappingInternal(eq(transaction), any())).thenReturn(mapping);
+        when(index.getMapping(eq(transaction), any())).thenReturn(mapping);
         when(session.readHeaders(resourceId.getResourceId())).thenThrow(NotFoundException.class);
         persister.persist(psSession, operation);
     }
@@ -173,7 +173,7 @@ public class DeleteResourcePersisterTest {
         when(mapping.getRootObjectIdentifier()).thenReturn(FedoraId.create("info:fedora/an-ocfl-object"));
         when(operation.getResourceId()).thenReturn(FedoraId.create("info:fedora/an-ocfl-object"));
         when(operation.getTransaction()).thenReturn(transaction);
-        when(index.getMappingInternal(eq(transaction), any()))
+        when(index.getMapping(eq(transaction), any()))
                 .thenThrow(new FedoraOcflMappingNotFoundException("error"));
 
         persister.persist(psSession, operation);

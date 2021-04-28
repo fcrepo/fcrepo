@@ -122,7 +122,7 @@ public class CreateVersionPersisterTest {
             throws PersistentStorageException {
         final var headers = new ResourceHeadersImpl();
         headers.setArchivalGroup(isAgChild);
-        when(session.getHeadersInternal(resourceId, null)).thenReturn(headers);
+        when(session.getHeaders(resourceId, null)).thenReturn(headers);
     }
 
     private OcflObjectSession addMapping(final FedoraId resourceId, final String ocflId) {

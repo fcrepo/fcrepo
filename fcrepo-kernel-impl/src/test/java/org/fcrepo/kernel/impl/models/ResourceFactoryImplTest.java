@@ -438,6 +438,8 @@ public class ResourceFactoryImplTest {
             when(transaction.isRolledBack()).thenReturn(false);
             when(transaction.hasExpired()).thenReturn(false);
         }
+        when(transaction.isOpenLongRunning()).thenReturn(!isShortLived);
+        when(transaction.isOpen()).thenReturn(true);
         return transaction;
     }
 }

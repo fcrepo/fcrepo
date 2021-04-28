@@ -64,19 +64,6 @@ public interface PersistentStorageSession {
             throws PersistentStorageException;
 
     /**
-     * Get the header information for the identified resource. This method ALWAYS uses the transaction tables, and
-     * so will perform slower queries. Use only as necessary.
-     *
-     * @param identifier identifier of the resource
-     * @param version instant identifying the version of the resource to read from.
-     *      If null, then the head version is used.
-     * @return header information
-     * @throws PersistentStorageException  Either a PersistentItemNotFoundException or PersistentSessionClosedException
-     */
-    ResourceHeaders getHeadersInternal(final FedoraId identifier, final Instant version)
-            throws PersistentStorageException;
-
-    /**
      * Get the client managed triples for the provided resource.
      *
      * @param identifier identifier for the resource.

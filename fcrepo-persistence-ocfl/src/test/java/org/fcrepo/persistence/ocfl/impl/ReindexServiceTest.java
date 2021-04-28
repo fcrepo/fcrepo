@@ -18,7 +18,6 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -277,7 +276,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
                 org.fcrepo.kernel.api.models.ResourceHeaders.class));
         verify(membershipService, times(numberContainers)).populateMembershipHistory(any(Transaction.class),
                 any(FedoraId.class));
-        verify(membershipService).commitTransaction(anyString());
+        verify(membershipService).commitTransaction(any(Transaction.class));
     }
 
     @Test
