@@ -139,7 +139,7 @@ public class WebappConfig {
     public ExceptionChecker dbExceptionChecker() {
         return new ExceptionChecker() {
             @Override
-            public boolean shouldRetry(Exception e) {
+            public boolean shouldRetry(final Exception e) {
                 return e instanceof DeadlockLoserDataAccessException
                         || (e.getCause() != null && e.getCause() instanceof DeadlockLoserDataAccessException);
             }
