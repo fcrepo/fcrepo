@@ -19,6 +19,8 @@
 package org.fcrepo.kernel.impl.services;
 
 import org.apache.jena.rdf.model.Model;
+
+import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
@@ -31,7 +33,6 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 
@@ -51,7 +52,7 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
     private RdfSourceOperationFactory factory;
 
     @Override
-    @Transactional
+    @TransactionalWithRetry
     public void perform(final Transaction tx,
                         final String userPrincipal,
                         final FedoraId fedoraId,

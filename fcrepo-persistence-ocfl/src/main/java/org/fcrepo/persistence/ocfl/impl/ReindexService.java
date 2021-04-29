@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 
+import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.RdfLexicon;
@@ -60,7 +61,6 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Service that does the reindexing for one OCFL object.
@@ -104,7 +104,7 @@ public class ReindexService {
 
     private int membershipPageSize = 500;
 
-    @Transactional
+    @TransactionalWithRetry
     public void indexOcflObject(final Transaction tx, final String ocflId) {
         LOGGER.debug("Indexing ocflId {} in transaction {}", ocflId, tx.getId());
 
@@ -213,6 +213,7 @@ public class ReindexService {
      * Commit the records added from transaction.
      * @param transaction the transaction.
      */
+    @TransactionalWithRetry
     public void commit(final Transaction transaction) {
         try {
             LOGGER.debug("Performing commit of transaction {}", transaction);

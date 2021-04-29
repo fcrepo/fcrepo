@@ -29,6 +29,7 @@ import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 
 import org.fcrepo.common.db.DbPlatform;
+import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -46,7 +47,6 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Maps Fedora IDs to the OCFL IDs of the OCFL objects the Fedora resource is stored in. This implementation is backed
@@ -286,8 +286,8 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
         }
     }
 
-    @Transactional
     @Override
+    @TransactionalWithRetry
     public void reset() {
         try {
             jdbcTemplate.update(TRUNCATE_MAPPINGS, Collections.emptyMap());
@@ -297,8 +297,8 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
         }
     }
 
-    @Transactional
     @Override
+    @TransactionalWithRetry
     public void commit(@Nonnull final Transaction transaction) {
         if (isLongRunningTx(transaction)) {
             LOGGER.debug("Committing FedoraToOcfl index changes from transaction {}", transaction.getId());

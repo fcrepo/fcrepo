@@ -18,6 +18,8 @@
 package org.fcrepo.kernel.impl.services;
 
 import org.apache.jena.rdf.model.Model;
+
+import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
@@ -34,7 +36,6 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 
@@ -68,7 +69,7 @@ public class WebacAclServiceImpl extends AbstractService implements WebacAclServ
     }
 
     @Override
-    @Transactional
+    @TransactionalWithRetry
     public void create(final Transaction transaction, final FedoraId fedoraId, final String userPrincipal,
                                  final Model model) {
         final PersistentStorageSession pSession = this.psManager.getSession(transaction);

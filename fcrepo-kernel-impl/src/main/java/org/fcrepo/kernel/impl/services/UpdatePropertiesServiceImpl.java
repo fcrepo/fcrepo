@@ -22,6 +22,8 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.update.UpdateAction;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
+
+import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
@@ -34,7 +36,6 @@ import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 
@@ -55,7 +56,7 @@ public class UpdatePropertiesServiceImpl extends AbstractService implements Upda
     private PersistentStorageSessionManager persistentStorageSessionManager;
 
     @Override
-    @Transactional
+    @TransactionalWithRetry
     public void updateProperties(final Transaction tx, final String userPrincipal,
                                  final FedoraId fedoraId, final String sparqlUpdateStatement)
             throws MalformedRdfException, AccessDeniedException {

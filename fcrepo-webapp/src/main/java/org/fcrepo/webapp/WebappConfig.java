@@ -21,6 +21,7 @@ package org.fcrepo.webapp;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.fcrepo.common.retry.ExceptionChecker;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.api.ExternalContentHandlerFactory;
 import org.fcrepo.http.api.ExternalContentPathValidator;
@@ -32,6 +33,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.dao.DeadlockLoserDataAccessException;
+import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import com.google.common.eventbus.AsyncEventBus;
@@ -42,6 +45,7 @@ import com.google.common.eventbus.EventBus;
  *
  * @author pwinckles
  */
+@EnableRetry
 @Configuration
 public class WebappConfig {
 
@@ -124,6 +128,22 @@ public class WebappConfig {
         final var factory = new ExternalContentHandlerFactory();
         factory.setValidator(validator);
         return factory;
+    }
+
+    /**
+     * Used by the @TransactionalWithRetry annotation to determine if a db operation should be retried
+     *
+     * @return exception checker
+     */
+    @Bean
+    public ExceptionChecker dbExceptionChecker() {
+        return new ExceptionChecker() {
+            @Override
+            public boolean shouldRetry(Exception e) {
+                return e instanceof DeadlockLoserDataAccessException
+                        || (e.getCause() != null && e.getCause() instanceof DeadlockLoserDataAccessException);
+            }
+        };
     }
 
 }

@@ -47,6 +47,7 @@ import javax.inject.Inject;
 import javax.sql.DataSource;
 
 import org.fcrepo.common.db.DbPlatform;
+import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -67,8 +68,6 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
 
 /**
  * An implementation of the {@link SearchIndex}
@@ -309,8 +308,8 @@ public class DbSearchIndexImpl implements SearchIndex {
         addUpdateIndex(null, resourceHeaders);
     }
 
-    @Transactional
     @Override
+    @TransactionalWithRetry
     public void addUpdateIndex(final Transaction transaction, final ResourceHeaders resourceHeaders) {
         final var fedoraId = resourceHeaders.getId();
         final var fullId = fedoraId.getFullId();

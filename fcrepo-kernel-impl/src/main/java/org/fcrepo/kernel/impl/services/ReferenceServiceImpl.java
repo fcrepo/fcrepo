@@ -32,8 +32,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.sql.DataSource;
-import javax.transaction.Transactional;
 
+import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
@@ -274,7 +274,7 @@ public class ReferenceServiceImpl implements ReferenceService {
     }
 
     @Override
-    @Transactional
+    @TransactionalWithRetry
     public void updateReferences(@Nonnull final Transaction tx, final FedoraId resourceId, final String userPrincipal,
                                  final RdfStream rdfStream) {
         try {
@@ -303,7 +303,7 @@ public class ReferenceServiceImpl implements ReferenceService {
     }
 
     @Override
-    @Transactional
+    @TransactionalWithRetry
     public void commitTransaction(final Transaction tx) {
         if (isLongRunningTx(tx)) {
             try {

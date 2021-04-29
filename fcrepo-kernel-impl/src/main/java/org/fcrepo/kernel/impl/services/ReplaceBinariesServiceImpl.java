@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -30,7 +31,6 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.MultiDigestInputStreamWrapper;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.io.InputStream;
@@ -58,7 +58,7 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
     private NonRdfSourceOperationFactory factory;
 
     @Override
-    @Transactional
+    @TransactionalWithRetry
     public void perform(final Transaction tx,
                         final String userPrincipal,
                         final FedoraId fedoraId,

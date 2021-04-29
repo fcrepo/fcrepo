@@ -55,9 +55,9 @@ public class TransactionImpl implements Transaction {
                 return e instanceof DeadlockLoserDataAccessException
                         || (e.getCause() != null && e.getCause() instanceof DeadlockLoserDataAccessException);
             })
-            .withBackoff(50, 1000, ChronoUnit.MILLIS, 1.5)
+            .withBackoff(10, 100, ChronoUnit.MILLIS, 1.5)
             .withJitter(0.1)
-            .withMaxRetries(5);
+            .withMaxRetries(10);
 
     private final String id;
 

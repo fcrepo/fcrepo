@@ -37,9 +37,9 @@ import java.util.stream.StreamSupport;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.sql.DataSource;
-import javax.transaction.Transactional;
 
 import org.fcrepo.common.db.DbPlatform;
+import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
@@ -438,7 +438,7 @@ public class MembershipIndexManager {
      * @param proxyId ID of the proxy producing this membership, when applicable
      * @param endTime the time the resource was deleted, generally its last modified
      */
-    @Transactional
+    @TransactionalWithRetry
     public void endMembershipFromChild(final Transaction tx, final FedoraId sourceId, final FedoraId proxyId,
             final Instant endTime) {
         if (isLongRunningTx(tx)) {
@@ -470,7 +470,7 @@ public class MembershipIndexManager {
         }
     }
 
-    @Transactional
+    @TransactionalWithRetry
     public void deleteMembershipForProxyAfter(final Transaction tx,
                                               final FedoraId sourceId,
                                               final FedoraId proxyId,
@@ -509,7 +509,7 @@ public class MembershipIndexManager {
      * @param sourceId ID of the direct/indirect container whose membership should be ended
      * @param endTime the time the resource was deleted, generally its last modified
      */
-    @Transactional
+    @TransactionalWithRetry
     public void endMembershipForSource(final Transaction tx, final FedoraId sourceId, final Instant endTime) {
         if (isLongRunningTx(tx)) {
             final Map<String, Object> parameterSource = Map.of(
@@ -541,7 +541,7 @@ public class MembershipIndexManager {
      * @param sourceId ID of the direct/indirect container
      * @param afterTime time at or after which membership should be removed
      */
-    @Transactional
+    @TransactionalWithRetry
     public void deleteMembershipForSourceAfter(final Transaction tx, final FedoraId sourceId, final Instant afterTime) {
         final var afterTimestamp = afterTime == null ? NO_START_TIMESTAMP : formatInstant(afterTime);
 
@@ -575,7 +575,7 @@ public class MembershipIndexManager {
      * @param txId transaction id
      * @param targetId identifier of the resource to cleanup membership references for
      */
-    @Transactional
+    @TransactionalWithRetry
     public void deleteMembershipReferences(final String txId, final FedoraId targetId) {
         final Map<String, Object> parameterSource = Map.of(
                 TARGET_ID_PARAM, targetId.getFullId(),
@@ -594,7 +594,7 @@ public class MembershipIndexManager {
      * @param membership membership triple
      * @param startTime time the membership triple was added
      */
-    @Transactional
+    @TransactionalWithRetry
     public void addMembership(final Transaction tx, final FedoraId sourceId, final FedoraId proxyId,
             final Triple membership, final Instant startTime) {
         if (membership == null) {
@@ -612,7 +612,7 @@ public class MembershipIndexManager {
      * @param startTime time the membership triple was added
      * @param endTime time the membership triple ends, or never if not provided
      */
-    @Transactional
+    @TransactionalWithRetry
     public void addMembership(final Transaction tx, final FedoraId sourceId, final FedoraId proxyId,
             final Triple membership, final Instant startTime, final Instant endTime) {
         final Timestamp endTimestamp;
@@ -719,7 +719,7 @@ public class MembershipIndexManager {
      * Perform a commit of operations stored in the specified transaction
      * @param tx transaction
      */
-    @Transactional
+    @TransactionalWithRetry
     public void commitTransaction(final Transaction tx) {
         if (isLongRunningTx(tx)) {
             final Map<String, String> parameterSource = Map.of(
@@ -763,7 +763,7 @@ public class MembershipIndexManager {
     /**
      * Clear all entries from the index
      */
-    @Transactional
+    @TransactionalWithRetry
     public void clearIndex() {
         jdbcTemplate.update(TRUNCATE_MEMBERSHIP, Map.of());
         jdbcTemplate.update(TRUNCATE_MEMBERSHIP_TX, Map.of());
