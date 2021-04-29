@@ -524,7 +524,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected void addTransactionHeaders(final FedoraResource resource) {
         final var tx = transaction();
-        if (tx != null && !tx.isShortLived()) {
+        if (!tx.isShortLived()) {
             final var externalId = identifierConverter()
                     .toExternalId(FEDORA_ID_PREFIX + "/" + TX_PREFIX + tx.getId());
             servletResponse.addHeader(ATOMIC_ID_HEADER, externalId);

@@ -32,6 +32,8 @@ import org.apache.jena.sparql.core.Quad;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.kernel.api.FedoraTypes;
+import org.fcrepo.kernel.api.ReadOnlyTransaction;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.ocfl.RepositoryInitializer;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
@@ -87,6 +89,7 @@ public class RebuildIT extends AbstractResourceIT {
     private ObjectMapper objectMapper;
     private FedoraPropsConfig fedoraPropsConfig;
     private FedoraToOcflObjectIndex index;
+    private Transaction readOnlyTx;
 
     private void setBeans() {
         ocflRepository = getBean(OcflRepository.class);
@@ -95,6 +98,7 @@ public class RebuildIT extends AbstractResourceIT {
         objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
         fedoraPropsConfig = getBean(FedoraPropsConfig.class);
         index = getBean("ocflIndexImpl", FedoraToOcflObjectIndex.class);
+        readOnlyTx = ReadOnlyTransaction.INSTANCE;
     }
 
     @Before
@@ -158,7 +162,7 @@ public class RebuildIT extends AbstractResourceIT {
         this.ocflRepository.purgeObject(binaryId.getFullId());
 
         //verify that the index st
-        this.index.getMapping(null, binaryId);
+        this.index.getMapping(readOnlyTx, binaryId);
 
         //set rebuild on start flag before initializing
         restartContainer();
@@ -169,7 +173,7 @@ public class RebuildIT extends AbstractResourceIT {
         assertNotContains("binary");
 
         //but the index does not know is it gone because no rebuild occurred.
-        this.index.getMapping(null, binaryId);
+        this.index.getMapping(readOnlyTx, binaryId);
 
         //restart the container again, but initialize after setting the rebuild on start
         restartContainer();
@@ -178,7 +182,7 @@ public class RebuildIT extends AbstractResourceIT {
         initializer.initialize();
 
         try {
-            this.index.getMapping(null, binaryId);
+            this.index.getMapping(readOnlyTx, binaryId);
             fail("Expected failure to retrieve mapping");
         } catch (final FedoraOcflMappingNotFoundException ex) {
             //intentionally left blank

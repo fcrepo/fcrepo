@@ -48,6 +48,7 @@ import javax.sql.DataSource;
 
 import org.fcrepo.common.db.DbPlatform;
 import org.fcrepo.common.db.TransactionalWithRetry;
+import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -305,7 +306,7 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     @Override
     public void addUpdateIndex(final ResourceHeaders resourceHeaders) {
-        addUpdateIndex(null, resourceHeaders);
+        addUpdateIndex(ReadOnlyTransaction.INSTANCE, resourceHeaders);
     }
 
     @Override

@@ -73,6 +73,7 @@ import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.http.commons.responses.ViewHelpers;
+import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.TransactionManager;
@@ -118,11 +119,13 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
 
     private HttpIdentifierConverter identifierConverter;
 
+    private Transaction readOnlyTx;
+
     private Transaction transaction() {
         if (request.getHeader(ATOMIC_ID_HEADER) != null) {
             return transactionManager.get(request.getHeader(ATOMIC_ID_HEADER));
         }
-        return null;
+        return readOnlyTx;
     }
 
     private HttpIdentifierConverter identifierConverter() {
@@ -189,6 +192,9 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
             .put(RDF_SOURCE.toString(), velocity.getTemplate(getTemplateLocation("resource"))).build();
 
         LOGGER.trace("Assembled template map.");
+
+        readOnlyTx = ReadOnlyTransaction.INSTANCE;
+
         LOGGER.trace("HtmlProvider initialization complete.");
     }
 

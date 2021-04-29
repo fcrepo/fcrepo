@@ -188,8 +188,14 @@ public class TransactionImpl implements Transaction {
         return !this.isShortLived() && isOpen();
     }
 
+    @Override
     public boolean isOpen() {
         return !(this.isCommitted() || this.hasExpired() || this.isRolledBack());
+    }
+
+    @Override
+    public boolean isReadOnly() {
+        return false;
     }
 
     @Override

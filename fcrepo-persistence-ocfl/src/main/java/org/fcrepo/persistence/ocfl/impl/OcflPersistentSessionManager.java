@@ -17,6 +17,7 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
@@ -90,7 +91,8 @@ public class OcflPersistentSessionManager implements PersistentStorageSessionMan
                 localSession = this.readOnlySession;
                 if (localSession == null) {
                     this.readOnlySession = new OcflPersistentStorageSessionMetrics(
-                            new OcflPersistentStorageSession(ocflIndex, objectSessionFactory, reindexService));
+                            new OcflPersistentStorageSession(ReadOnlyTransaction.INSTANCE,
+                                    ocflIndex, objectSessionFactory, reindexService));
                     localSession = this.readOnlySession;
                 }
             }

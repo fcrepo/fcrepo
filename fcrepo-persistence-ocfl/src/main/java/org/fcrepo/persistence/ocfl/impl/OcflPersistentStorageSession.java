@@ -131,8 +131,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         this.reindexSerivce = reindexService;
         this.sessionsToRollback = new HashMap<>();
 
-        if (tx != null) {
-            // tx is only null for the read-only session
+        if (!tx.isReadOnly()) {
             this.sessionMap = new ConcurrentHashMap<>();
         } else {
             // The read-only session is never closed, so it needs to periodically expire object sessions
@@ -155,25 +154,9 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
 
     }
 
-    /**
-     * Constructor
-     *
-     * @param fedoraOcflIndex      the index
-     * @param objectSessionFactory the session factory
-     */
-    protected OcflPersistentStorageSession(final FedoraToOcflObjectIndex fedoraOcflIndex,
-                                           final OcflObjectSessionFactory objectSessionFactory,
-                                           final ReindexService reindexService) {
-        this(null, fedoraOcflIndex, objectSessionFactory, reindexService);
-    }
-
     @Override
     public String getId() {
-        // null when read-only
-        if (transaction != null) {
-            return this.transaction.getId();
-        }
-        return null;
+        return this.transaction.getId();
     }
 
     @Override
@@ -474,7 +457,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
      * @return whether we are read-only (ie. no transaction).
      */
     private boolean isReadOnly() {
-        return this.transaction == null;
+        return this.transaction.isReadOnly();
     }
 
     /**

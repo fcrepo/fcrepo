@@ -18,9 +18,6 @@
 
 package org.fcrepo.persistence.ocfl.impl;
 
-import static org.fcrepo.kernel.api.TransactionUtils.isLongRunningTx;
-import static org.fcrepo.kernel.api.TransactionUtils.openTxId;
-
 import java.util.Collections;
 import java.util.Map;
 
@@ -212,7 +209,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
             final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
             parameterSource.addValue("fedoraId", fedoraId.getResourceId());
             final String query;
-            if (isLongRunningTx(transaction)) {
+            if (transaction.isOpenLongRunning()) {
                 parameterSource.addValue("transactionId", transaction.getId());
                 query = LOOKUP_MAPPING_IN_TRANSACTION;
             } else {
@@ -227,7 +224,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     @Override
     public FedoraOcflMapping addMapping(@Nonnull final Transaction transaction, final FedoraId fedoraId,
                                         final FedoraId fedoraRootId, final String ocflId) {
-        if (isLongRunningTx(transaction)) {
+        if (transaction.isOpenLongRunning()) {
             upsert(transaction, fedoraId, "add", fedoraRootId, ocflId);
         } else {
             directInsert(fedoraId, fedoraRootId, ocflId);
@@ -237,7 +234,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     @Override
     public void removeMapping(@Nonnull final Transaction transaction, final FedoraId fedoraId) {
-        if (isLongRunningTx(transaction)) {
+        if (transaction.isOpenLongRunning()) {
             upsert(transaction, fedoraId, "delete");
         } else {
             final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
@@ -265,7 +262,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
         parameterSource.addValue("fedoraId", fedoraId.getResourceId());
         parameterSource.addValue("fedoraRootId", fedoraRootId == null ? null : fedoraRootId.getResourceId());
         parameterSource.addValue("ocflId", ocflId);
-        parameterSource.addValue("transactionId", openTxId(transaction));
+        parameterSource.addValue("transactionId", transaction.getId());
         parameterSource.addValue("operation", operation);
         try {
             jdbcTemplate.update(UPSERT_MAPPING_TX_MAP.get(dbPlatform), parameterSource);
@@ -300,7 +297,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     @Override
     @TransactionalWithRetry
     public void commit(@Nonnull final Transaction transaction) {
-        if (isLongRunningTx(transaction)) {
+        if (transaction.isOpenLongRunning()) {
             LOGGER.debug("Committing FedoraToOcfl index changes from transaction {}", transaction.getId());
             final Map<String, String> map = Map.of("transactionId", transaction.getId());
             try {
@@ -316,7 +313,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     @Override
     public void rollback(@Nonnull final Transaction transaction) {
-        if (isLongRunningTx(transaction)) {
+        if (transaction.isOpenLongRunning()) {
             jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, Map.of("transactionId", transaction.getId()));
         }
     }

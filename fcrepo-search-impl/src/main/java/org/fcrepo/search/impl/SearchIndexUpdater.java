@@ -23,6 +23,8 @@ import com.google.common.collect.Sets;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+
+import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.models.ResourceHelper;
 import org.fcrepo.kernel.api.observer.Event;
 import org.fcrepo.kernel.api.observer.EventType;
@@ -77,7 +79,8 @@ public class SearchIndexUpdater {
         try {
             final var fedoraId = event.getFedoraId();
             final var types = event.getTypes();
-            if (types.contains(RESOURCE_DELETION) && !resourceHelper.doesResourceExist(null, fedoraId, false)) {
+            if (types.contains(RESOURCE_DELETION) && !resourceHelper.doesResourceExist(ReadOnlyTransaction.INSTANCE,
+                    fedoraId, false)) {
                 this.searchIndex.removeFromIndex(fedoraId);
             } else if (types.contains(RESOURCE_CREATION) || types.contains(RESOURCE_MODIFICATION)) {
                 final var session = persistentStorageSessionManager.getReadOnlySession();

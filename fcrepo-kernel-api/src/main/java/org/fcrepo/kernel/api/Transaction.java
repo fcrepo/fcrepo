@@ -66,6 +66,11 @@ public interface Transaction {
     boolean isOpen();
 
     /**
+     * @return true the tx is read-only
+     */
+    boolean isReadOnly();
+
+    /**
      * Get the transaction id
      *
      * @return the transaction id.

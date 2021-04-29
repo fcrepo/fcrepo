@@ -20,6 +20,7 @@ package org.fcrepo.kernel.impl.models;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -182,7 +183,7 @@ public class ResourceFactoryImplTest {
 
         // Need to make a short lived transaction or the verify will fail.
         final var shortTx = mockTransaction(sessionId, true);
-        final var resc = factory.getResource(null, fedoraId);
+        final var resc = factory.getResource(ReadOnlyTransaction.INSTANCE, fedoraId);
 
         assertTrue("Factory must return a container", resc instanceof Container);
         assertEquals(fedoraIdStr, resc.getId());
@@ -227,19 +228,6 @@ public class ResourceFactoryImplTest {
         assertStateFieldsMatches(resc);
 
         verify(sessionManager).getSession(mockTx);
-    }
-
-    @Test
-    public void getResource_BasicContainer_Cast() throws Exception {
-        populateHeaders(resourceHeaders, BASIC_CONTAINER);
-
-        final var resc = factory.getResource(fedoraId, Container.class);
-
-        assertTrue("Factory must return a container", resc instanceof Container);
-        assertEquals(fedoraIdStr, resc.getId());
-        assertStateFieldsMatches(resc);
-
-        verify(sessionManager).getReadOnlySession();
     }
 
     @Test

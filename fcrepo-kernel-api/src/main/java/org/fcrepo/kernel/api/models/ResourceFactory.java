@@ -43,18 +43,6 @@ public interface ResourceFactory {
             throws PathNotFoundException;
 
     /**
-     * Get a resource as a particular type without a transaction
-     *
-     * @param <T> type for the resource
-     * @param fedoraID The identifier for the resource.
-     * @param clazz class the resource will be cast to
-     * @return The resource.
-     * @throws PathNotFoundException If the identifier cannot be found.
-     */
-    public <T extends FedoraResource> T getResource(final FedoraId fedoraID,
-            final Class<T> clazz) throws PathNotFoundException;
-
-    /**
      * Get a resource as a particular type
      *
      * @param <T> type for the resource

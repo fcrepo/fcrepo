@@ -18,8 +18,6 @@
 package org.fcrepo.kernel.impl.services;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.fcrepo.kernel.api.TransactionUtils.isLongRunningTx;
-import static org.fcrepo.kernel.api.TransactionUtils.openTxId;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.List;
@@ -210,7 +208,7 @@ public class ReferenceServiceImpl implements ReferenceService {
 
         final String query;
 
-        if (isLongRunningTx(tx)) {
+        if (tx.isOpenLongRunning()) {
             // we are in a transaction
             parameterSource.addValue("transactionId", tx.getId());
             query = SELECT_INBOUND_IN_TRANSACTION;
@@ -257,7 +255,7 @@ public class ReferenceServiceImpl implements ReferenceService {
 
         final String query;
 
-        if (isLongRunningTx(tx)) {
+        if (tx.isOpenLongRunning()) {
             // we are in a long-running transaction
             parameterSource.addValue("transactionId", tx.getId());
             query = SELECT_OUTBOUND_IN_TRANSACTION;
@@ -297,7 +295,7 @@ public class ReferenceServiceImpl implements ReferenceService {
                     addReference(tx, Quad.create(resourceNode, r), userPrincipal));
         } catch (final Exception e) {
             LOGGER.warn("Unable to update reference index for resource {} in transaction {}: {}",
-                    resourceId.getFullId(), openTxId(tx), e.getMessage());
+                    resourceId.getFullId(), tx.getId(), e.getMessage());
             throw new RepositoryRuntimeException("Unable to update reference index", e);
         }
     }
@@ -305,9 +303,9 @@ public class ReferenceServiceImpl implements ReferenceService {
     @Override
     @TransactionalWithRetry
     public void commitTransaction(final Transaction tx) {
-        if (isLongRunningTx(tx)) {
+        if (tx.isOpenLongRunning()) {
             try {
-                final Map<String, String> parameterSource = Map.of("transactionId", openTxId(tx));
+                final Map<String, String> parameterSource = Map.of("transactionId", tx.getId());
                 jdbcTemplate.update(COMMIT_DELETE_RECORDS, parameterSource);
                 jdbcTemplate.update(COMMIT_ADD_RECORDS, parameterSource);
                 jdbcTemplate.update(DELETE_TRANSACTION, parameterSource);
@@ -320,9 +318,9 @@ public class ReferenceServiceImpl implements ReferenceService {
 
     @Override
     public void rollbackTransaction(final Transaction tx) {
-        if (tx != null && !tx.isShortLived()) {
+        if (!tx.isShortLived()) {
             try {
-                final Map<String, String> parameterSource = Map.of("transactionId", openTxId(tx));
+                final Map<String, String> parameterSource = Map.of("transactionId", tx.getId());
                 jdbcTemplate.update(DELETE_TRANSACTION, parameterSource);
             } catch (final Exception e) {
                 LOGGER.warn("Unable to rollback reference index transaction {}: {}", tx, e.getMessage());
@@ -353,7 +351,7 @@ public class ReferenceServiceImpl implements ReferenceService {
         parameterSource.addValue("property", reference.getPredicate().getURI());
         parameterSource.addValue("targetId", reference.getObject().getURI());
 
-        if (isLongRunningTx(tx)) {
+        if (tx.isOpenLongRunning()) {
             parameterSource.addValue("transactionId", tx.getId());
             final boolean addedInTx = !jdbcTemplate.queryForList(IS_REFERENCE_ADDED_IN_TRANSACTION, parameterSource)
                     .isEmpty();
@@ -383,7 +381,7 @@ public class ReferenceServiceImpl implements ReferenceService {
         parameterSource.addValue("property", reference.getPredicate().getURI());
         parameterSource.addValue("targetId", targetId);
 
-        if (isLongRunningTx(transaction)) {
+        if (transaction.isOpenLongRunning()) {
             parameterSource.addValue("transactionId", transaction.getId());
             final boolean addedInTx = !jdbcTemplate.queryForList(IS_REFERENCE_DELETED_IN_TRANSACTION, parameterSource)
                     .isEmpty();

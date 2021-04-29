@@ -43,6 +43,7 @@ import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrin
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.commons.session.TransactionProvider;
 import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
@@ -101,7 +102,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     private Transaction transaction() {
         final String txId = request.getHeader(ATOMIC_ID_HEADER);
         if (txId == null) {
-            return null;
+            return ReadOnlyTransaction.INSTANCE;
         }
         final var txProvider = new TransactionProvider(transactionManager, request,
                 getBaseUri(request), fedoraPropsConfig.getJmsBaseUrl());

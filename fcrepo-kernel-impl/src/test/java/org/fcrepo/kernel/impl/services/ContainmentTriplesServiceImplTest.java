@@ -30,6 +30,7 @@ import java.util.UUID;
 import javax.inject.Inject;
 
 import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -70,6 +71,8 @@ public class ContainmentTriplesServiceImplTest {
     @InjectMocks
     private ContainmentTriplesServiceImpl containmentTriplesService;
 
+    private Transaction readOnlyTx;
+
     @Before
     public void setup() {
         MockitoAnnotations.openMocks(this);
@@ -80,6 +83,7 @@ public class ContainmentTriplesServiceImplTest {
         when(transaction.isOpenLongRunning()).thenReturn(true);
         when(parentResource.getFedoraId()).thenReturn(parentId);
         setField(containmentTriplesService, "containmentIndex", containmentIndex);
+        readOnlyTx = ReadOnlyTransaction.INSTANCE;
     }
 
     @After
@@ -150,15 +154,15 @@ public class ContainmentTriplesServiceImplTest {
         matchModels(expectedModel, received);
         // Commit and ensure we can see the child.
         containmentIndex.commitTransaction(transaction);
-        final Model received2 = containmentTriplesService.get(null, parentResource).collect(toModel());
+        final Model received2 = containmentTriplesService.get(readOnlyTx, parentResource).collect(toModel());
         matchModels(expectedModel, received2);
         // Now remove the child in a transaction, but verify we can still see it outside the transaction.
         containmentIndex.removeResource(transaction2, child);
-        final Model received3 = containmentTriplesService.get(null, parentResource).collect(toModel());
+        final Model received3 = containmentTriplesService.get(readOnlyTx, parentResource).collect(toModel());
         matchModels(expectedModel, received3);
         // Now commit the transaction and ensure it disappears.
         containmentIndex.commitTransaction(transaction2);
-        assertEquals(0, containmentTriplesService.get(null, parentResource).count());
+        assertEquals(0, containmentTriplesService.get(readOnlyTx, parentResource).count());
     }
 
     /**

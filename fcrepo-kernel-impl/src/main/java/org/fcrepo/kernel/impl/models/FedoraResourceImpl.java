@@ -339,7 +339,7 @@ public class FedoraResourceImpl implements FedoraResource {
     }
 
     protected PersistentStorageSession getSession() {
-        if (transaction != null && transaction.isOpen()) {
+        if (transaction.isOpen()) {
             return pSessionManager.getSession(transaction);
         } else {
             return pSessionManager.getReadOnlySession();

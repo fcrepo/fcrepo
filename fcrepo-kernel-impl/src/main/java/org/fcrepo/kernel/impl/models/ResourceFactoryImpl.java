@@ -76,12 +76,6 @@ public class ResourceFactoryImpl implements ResourceFactory {
     }
 
     @Override
-    public <T extends FedoraResource> T getResource(final FedoraId identifier,
-                                                    final Class<T> clazz) throws PathNotFoundException {
-        return clazz.cast(getResource((Transaction)null, identifier));
-    }
-
-    @Override
     public <T extends FedoraResource> T getResource(final Transaction transaction, final FedoraId identifier,
                                                     final Class<T> clazz) throws PathNotFoundException {
         return clazz.cast(getResource(transaction, identifier));
@@ -219,10 +213,10 @@ public class ResourceFactoryImpl implements ResourceFactory {
      */
     private PersistentStorageSession getSession(final Transaction transaction) {
         final PersistentStorageSession session;
-        if (transaction != null && transaction.isOpen()) {
-            session = persistentStorageSessionManager.getSession(transaction);
-        } else {
+        if (transaction.isReadOnly() || !transaction.isOpen()) {
             session = persistentStorageSessionManager.getReadOnlySession();
+        } else {
+            session = persistentStorageSessionManager.getSession(transaction);
         }
         return session;
     }

@@ -46,6 +46,7 @@ import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
@@ -128,6 +129,8 @@ public class MembershipServiceImplTest {
     private String txId;
     private String shortLivedTxId;
 
+    private Transaction readOnlyTx;
+
     @Before
     @FlywayTest
     public void setup() {
@@ -154,6 +157,7 @@ public class MembershipServiceImplTest {
         membershipRescId = mintFedoraId();
 
         setField(propsConfig, "autoVersioningEnabled", Boolean.TRUE);
+        readOnlyTx = ReadOnlyTransaction.INSTANCE;
     }
 
     @Test
@@ -201,7 +205,7 @@ public class MembershipServiceImplTest {
 
         assertHasMembersNoTx(membershipRescId, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
         assertEquals("Last updated timestamp should not change during commit",
-                lastUpdated, membershipService.getLastUpdatedTimestamp(null, membershipRescId));
+                lastUpdated, membershipService.getLastUpdatedTimestamp(readOnlyTx, membershipRescId));
     }
 
     @Test
@@ -248,8 +252,8 @@ public class MembershipServiceImplTest {
         assertHasMembersNoTx(member1Id, MEMBER_OF, membershipRescId);
         assertHasMembersNoTx(member2Id, MEMBER_OF, membershipRescId);
 
-        assertEquals(member1Updated, membershipService.getLastUpdatedTimestamp(null, member1Id));
-        assertEquals(member2Updated, membershipService.getLastUpdatedTimestamp(null, member2Id));
+        assertEquals(member1Updated, membershipService.getLastUpdatedTimestamp(readOnlyTx, member1Id));
+        assertEquals(member2Updated, membershipService.getLastUpdatedTimestamp(readOnlyTx, member2Id));
     }
 
     @Test
@@ -298,7 +302,7 @@ public class MembershipServiceImplTest {
 
         assertCommittedMembershipCount(membershipRescId, 0);
 
-        assertNull(membershipService.getLastUpdatedTimestamp(null, membershipRescId));
+        assertNull(membershipService.getLastUpdatedTimestamp(readOnlyTx, membershipRescId));
     }
 
     @Test
@@ -315,7 +319,7 @@ public class MembershipServiceImplTest {
 
         assertCommittedMembershipCount(membershipRescId, 1);
 
-        final var lastUpdated = membershipService.getLastUpdatedTimestamp(null, membershipRescId);
+        final var lastUpdated = membershipService.getLastUpdatedTimestamp(readOnlyTx, membershipRescId);
         assertNotNull(lastUpdated);
 
         mockDeleteHeaders(member1Id, dcId, BASIC_CONTAINER);
@@ -329,7 +333,7 @@ public class MembershipServiceImplTest {
 
         assertCommittedMembershipCount(membershipRescId, 0);
 
-        final var afterDeleteUpdated = membershipService.getLastUpdatedTimestamp(null, membershipRescId);
+        final var afterDeleteUpdated = membershipService.getLastUpdatedTimestamp(readOnlyTx, membershipRescId);
         assertNotNull(afterDeleteUpdated);
         assertNotEquals(lastUpdated, afterDeleteUpdated);
     }
@@ -504,7 +508,7 @@ public class MembershipServiceImplTest {
 
         assertCommittedMembershipCount(membershipRescId, 2);
 
-        final var lastUpdated = membershipService.getLastUpdatedTimestamp(null, membershipRescId);
+        final var lastUpdated = membershipService.getLastUpdatedTimestamp(readOnlyTx, membershipRescId);
         assertNotNull(lastUpdated);
 
         when(psSession.getHeaders(eq(member1Id), nullable(Instant.class))).thenThrow(
@@ -515,7 +519,7 @@ public class MembershipServiceImplTest {
         assertHasMembersNoTx(membershipRescId, RdfLexicon.LDP_MEMBER, member2Id);
         assertUncommittedMembershipCount(transaction, membershipRescId, 1);
 
-        assertEquals(lastUpdated, membershipService.getLastUpdatedTimestamp(null, membershipRescId));
+        assertEquals(lastUpdated, membershipService.getLastUpdatedTimestamp(readOnlyTx, membershipRescId));
     }
 
     @Test
@@ -691,9 +695,9 @@ public class MembershipServiceImplTest {
         assertCommittedMembershipCount(membershipRescId, 2);
         assertCommittedMembershipCount(membershipResc2Id, 0);
 
-        final var msRescUpdated = membershipService.getLastUpdatedTimestamp(null, membershipRescId);
+        final var msRescUpdated = membershipService.getLastUpdatedTimestamp(readOnlyTx, membershipRescId);
         assertNotNull(msRescUpdated);
-        assertNull(membershipService.getLastUpdatedTimestamp(null, membershipResc2Id));
+        assertNull(membershipService.getLastUpdatedTimestamp(readOnlyTx, membershipResc2Id));
 
         // Change the membership resource for the DC
         mockGetTriplesForDC(dcId, LAST_MODIFIED_DATE, membershipResc2Id, RdfLexicon.LDP_MEMBER, false);
@@ -706,11 +710,11 @@ public class MembershipServiceImplTest {
         assertCommittedMembershipCount(membershipRescId, 0);
         assertHasMembersNoTx(membershipResc2Id, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
 
-        final var msRescUpdatedAfter = membershipService.getLastUpdatedTimestamp(null, membershipRescId);
+        final var msRescUpdatedAfter = membershipService.getLastUpdatedTimestamp(readOnlyTx, membershipRescId);
         assertNotNull(msRescUpdatedAfter);
         assertNotEquals("First membership resc should have changed last_updated timestamp",
                 msRescUpdated, msRescUpdatedAfter);
-        assertNotNull(membershipService.getLastUpdatedTimestamp(null, membershipResc2Id));
+        assertNotNull(membershipService.getLastUpdatedTimestamp(readOnlyTx, membershipResc2Id));
     }
 
     @Test
@@ -832,11 +836,11 @@ public class MembershipServiceImplTest {
 
         membershipService.commitTransaction(transaction);
 
-        assertHasMembers(null, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
+        assertHasMembers(readOnlyTx, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
 
-        final var msRescUpdated1 = indexManager.getLastUpdated(null, membershipRescId);
+        final var msRescUpdated1 = indexManager.getLastUpdated(readOnlyTx, membershipRescId);
         assertNotNull(msRescUpdated1);
-        assertNull(indexManager.getLastUpdated(null, member1Id));
+        assertNull(indexManager.getLastUpdated(readOnlyTx, member1Id));
 
         // Change the membership direction from a ldp:hasMemberRelation to a ldp:isMemberOfRelation
         mockGetTriplesForDC(dcId, LAST_MODIFIED_DATE, membershipRescId, MEMBER_OF, true);
@@ -850,9 +854,9 @@ public class MembershipServiceImplTest {
 
         assertIsMemberOfNoTx(member1Id, MEMBER_OF, membershipRescId);
 
-        final var memRescUpdated1 = indexManager.getLastUpdated(null, member1Id);
+        final var memRescUpdated1 = indexManager.getLastUpdated(readOnlyTx, member1Id);
         assertNotNull(memRescUpdated1);
-        final var msRescUpdated2 = indexManager.getLastUpdated(null, membershipRescId);
+        final var msRescUpdated2 = indexManager.getLastUpdated(readOnlyTx, membershipRescId);
         assertNotNull(msRescUpdated2);
         assertNotEquals(msRescUpdated1, msRescUpdated2);
 
@@ -870,10 +874,10 @@ public class MembershipServiceImplTest {
         assertCommittedMembershipCount(member1Id, 0);
         assertHasMembersNoTx(membershipRescId, OTHER_HAS_MEMBER, member1Id);
 
-        final var memRescUpdated2 = indexManager.getLastUpdated(null, member1Id);
+        final var memRescUpdated2 = indexManager.getLastUpdated(readOnlyTx, member1Id);
         assertNotNull(memRescUpdated2);
         assertNotEquals(memRescUpdated1, memRescUpdated2);
-        final var msRescUpdated3 = indexManager.getLastUpdated(null, membershipRescId);
+        final var msRescUpdated3 = indexManager.getLastUpdated(readOnlyTx, membershipRescId);
         assertNotNull(msRescUpdated3);
         assertNotEquals(msRescUpdated2, msRescUpdated3);
     }

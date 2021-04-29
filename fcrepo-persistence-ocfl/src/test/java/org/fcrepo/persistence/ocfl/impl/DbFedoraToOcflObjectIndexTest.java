@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 import java.util.UUID;
 
 import org.fcrepo.config.FlywayFactory;
+import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -53,6 +54,7 @@ public class DbFedoraToOcflObjectIndexTest {
     private static DbFedoraToOcflObjectIndex index;
 
     private Transaction session;
+    private Transaction readOnlyTx;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
@@ -72,6 +74,7 @@ public class DbFedoraToOcflObjectIndexTest {
         when(session.isShortLived()).thenReturn(false);
         when(session.isCommitted()).thenReturn(false);
         when(session.isOpenLongRunning()).thenReturn(true);
+        readOnlyTx = ReadOnlyTransaction.INSTANCE;
     }
 
     @Test
@@ -92,14 +95,14 @@ public class DbFedoraToOcflObjectIndexTest {
 
         index.commit(session);
 
-        final FedoraOcflMapping mapping1_1 = index.getMapping(null, RESOURCE_ID_1);
-        final FedoraOcflMapping mapping1_2 = index.getMapping(null, RESOURCE_ID_2);
-        final FedoraOcflMapping mapping1_3 = index.getMapping(null, ROOT_RESOURCE_ID);
+        final FedoraOcflMapping mapping1_1 = index.getMapping(readOnlyTx, RESOURCE_ID_1);
+        final FedoraOcflMapping mapping1_2 = index.getMapping(readOnlyTx, RESOURCE_ID_2);
+        final FedoraOcflMapping mapping1_3 = index.getMapping(readOnlyTx, ROOT_RESOURCE_ID);
 
         assertEquals(mapping1_1, mapping1_2);
         assertEquals(mapping1_2, mapping1_3);
 
-        final FedoraOcflMapping mapping4 = index.getMapping(null, RESOURCE_ID_3);
+        final FedoraOcflMapping mapping4 = index.getMapping(readOnlyTx, RESOURCE_ID_3);
         assertNotEquals(mapping4, mapping3);
 
         verifyMapping(mapping4, RESOURCE_ID_3, OCFL_ID_RESOURCE_3);
@@ -110,7 +113,7 @@ public class DbFedoraToOcflObjectIndexTest {
 
     @Test(expected = FedoraOcflMappingNotFoundException.class)
     public void testNotExists() throws Exception {
-        index.getMapping(null, RESOURCE_ID_1);
+        index.getMapping(readOnlyTx, RESOURCE_ID_1);
     }
 
     @Test
@@ -119,19 +122,19 @@ public class DbFedoraToOcflObjectIndexTest {
 
         assertEquals(mapping, index.getMapping(session, RESOURCE_ID_1));
         try {
-            index.getMapping(null, RESOURCE_ID_1);
+            index.getMapping(readOnlyTx, RESOURCE_ID_1);
             fail("This mapping should not be accessible to everyone yet.");
         } catch (final FedoraOcflMappingNotFoundException e) {
             // This should happen and is okay.
         }
         index.commit(session);
 
-        assertEquals(mapping, index.getMapping(null, RESOURCE_ID_1));
+        assertEquals(mapping, index.getMapping(readOnlyTx, RESOURCE_ID_1));
 
         index.removeMapping(session, RESOURCE_ID_1);
 
         // Should still appear to outside the transaction.
-        assertEquals(mapping, index.getMapping(null, RESOURCE_ID_1));
+        assertEquals(mapping, index.getMapping(readOnlyTx, RESOURCE_ID_1));
 
         // Should also still appear inside the transaction or we can't access files on disk.
         assertEquals(mapping, index.getMapping(session, RESOURCE_ID_1));
@@ -140,7 +143,7 @@ public class DbFedoraToOcflObjectIndexTest {
 
         try {
             // No longer accessible to anyone.
-            index.getMapping(null, RESOURCE_ID_1);
+            index.getMapping(readOnlyTx, RESOURCE_ID_1);
             fail("expected exception");
         } catch (final FedoraOcflMappingNotFoundException e) {
             // expected mapping to not exist
@@ -153,7 +156,7 @@ public class DbFedoraToOcflObjectIndexTest {
         index.commit(session);
 
         try {
-            index.getMapping(null, RESOURCE_ID_1);
+            index.getMapping(readOnlyTx, RESOURCE_ID_1);
             fail("expected exception");
         } catch (final FedoraOcflMappingNotFoundException e) {
             // expected mapping to not exist
@@ -169,7 +172,7 @@ public class DbFedoraToOcflObjectIndexTest {
 
         try {
             // Not yet committed
-            index.getMapping(null, RESOURCE_ID_1);
+            index.getMapping(readOnlyTx, RESOURCE_ID_1);
             fail();
         } catch (final FedoraOcflMappingNotFoundException e) {
             // The exception is expected.

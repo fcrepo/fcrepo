@@ -17,7 +17,6 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static org.fcrepo.kernel.api.TransactionUtils.isLongRunningTx;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.sql.ResultSet;
@@ -441,7 +440,7 @@ public class MembershipIndexManager {
     @TransactionalWithRetry
     public void endMembershipFromChild(final Transaction tx, final FedoraId sourceId, final FedoraId proxyId,
             final Instant endTime) {
-        if (isLongRunningTx(tx)) {
+        if (tx.isOpenLongRunning()) {
             final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
             parameterSource.addValue(TX_ID_PARAM, tx.getId());
             parameterSource.addValue(SOURCE_ID_PARAM, sourceId.getFullId());
@@ -477,7 +476,7 @@ public class MembershipIndexManager {
                                               final Instant afterTime) {
         final var afterTimestamp = afterTime == null ? NO_START_TIMESTAMP : formatInstant(afterTime);
 
-        if (isLongRunningTx(tx)) {
+        if (tx.isOpenLongRunning()) {
             // Clear all membership added in this transaction
             final var parameterSource =  Map.of(
                     TX_ID_PARAM, tx.getId(),
@@ -511,7 +510,7 @@ public class MembershipIndexManager {
      */
     @TransactionalWithRetry
     public void endMembershipForSource(final Transaction tx, final FedoraId sourceId, final Instant endTime) {
-        if (isLongRunningTx(tx)) {
+        if (tx.isOpenLongRunning()) {
             final Map<String, Object> parameterSource = Map.of(
                     TX_ID_PARAM, tx.getId(),
                     SOURCE_ID_PARAM, sourceId.getFullId(),
@@ -545,7 +544,7 @@ public class MembershipIndexManager {
     public void deleteMembershipForSourceAfter(final Transaction tx, final FedoraId sourceId, final Instant afterTime) {
         final var afterTimestamp = afterTime == null ? NO_START_TIMESTAMP : formatInstant(afterTime);
 
-        if (isLongRunningTx(tx)) {
+        if (tx.isOpenLongRunning()) {
             // Clear all membership added in this transaction
             final Map<String, Object> parameterSource = Map.of(
                     TX_ID_PARAM, tx.getId(),
@@ -636,7 +635,7 @@ public class MembershipIndexManager {
         parameterSource.addValue(END_TIME_PARAM, endTimestamp);
         parameterSource.addValue(LAST_UPDATED_PARAM, lastUpdated);
 
-        if (isLongRunningTx(tx)) {
+        if (tx.isOpenLongRunning()) {
             parameterSource.addValue(TX_ID_PARAM, tx.getId());
             parameterSource.addValue(OPERATION_PARAM, ADD_OPERATION);
             jdbcTemplate.update(INSERT_MEMBERSHIP_IN_TX, parameterSource);
@@ -670,7 +669,7 @@ public class MembershipIndexManager {
             parameterSource.addValue(NO_END_TIME_PARAM, NO_END_TIMESTAMP);
         }
 
-        if (isLongRunningTx(tx)) {
+        if (tx.isOpenLongRunning()) {
             parameterSource.addValue(TX_ID_PARAM, tx.getId());
 
             if (subjectId.isMemento()) {
@@ -698,7 +697,7 @@ public class MembershipIndexManager {
             lastUpdatedQuery = SELECT_LAST_UPDATED_MEMENTO;
             parameterSource.addValue(SUBJECT_ID_PARAM, subjectId.getBaseId());
             parameterSource.addValue(MEMENTO_TIME_PARAM, formatInstant(subjectId.getMementoInstant()));
-        } else if (isLongRunningTx(transaction)) {
+        } else if (transaction.isOpenLongRunning()) {
             lastUpdatedQuery = SELECT_LAST_UPDATED_IN_TX;
             parameterSource.addValue(SUBJECT_ID_PARAM, subjectId.getFullId());
             parameterSource.addValue(TX_ID_PARAM, transaction.getId());
@@ -721,7 +720,7 @@ public class MembershipIndexManager {
      */
     @TransactionalWithRetry
     public void commitTransaction(final Transaction tx) {
-        if (isLongRunningTx(tx)) {
+        if (tx.isOpenLongRunning()) {
             final Map<String, String> parameterSource = Map.of(
                     TX_ID_PARAM, tx.getId(),
                     ADD_OP_PARAM, ADD_OPERATION,
@@ -742,7 +741,7 @@ public class MembershipIndexManager {
      * @param tx transaction
      */
     public void deleteTransaction(final Transaction tx) {
-        if (tx != null && !tx.isShortLived()) {
+        if (!tx.isShortLived()) {
             final Map<String, String> parameterSource = Map.of(TX_ID_PARAM, tx.getId());
             jdbcTemplate.update(DELETE_TRANSACTION, parameterSource);
         }

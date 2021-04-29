@@ -100,7 +100,7 @@ public class ResourceHelperImpl implements ResourceHelper {
      */
     private PersistentStorageSession getSession(final Transaction transaction) {
         final PersistentStorageSession session;
-        if (transaction == null) {
+        if (transaction.isReadOnly() || !transaction.isOpen()) {
             session = persistentStorageSessionManager.getReadOnlySession();
         } else {
             session = persistentStorageSessionManager.getSession(transaction);

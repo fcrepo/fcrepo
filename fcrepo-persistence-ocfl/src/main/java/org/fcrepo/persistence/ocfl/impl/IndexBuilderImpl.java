@@ -21,6 +21,7 @@ import edu.wisc.library.ocfl.api.OcflRepository;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
@@ -126,7 +127,7 @@ public class IndexBuilderImpl implements IndexBuilder {
 
     private String getRepoRootMapping() {
         try {
-            return ocflIndex.getMapping(null, FedoraId.getRepositoryRootId()).getOcflObjectId();
+            return ocflIndex.getMapping(ReadOnlyTransaction.INSTANCE, FedoraId.getRepositoryRootId()).getOcflObjectId();
         } catch (final FedoraOcflMappingNotFoundException e) {
             return null;
         }
