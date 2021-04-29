@@ -320,7 +320,7 @@ public class ReferenceServiceImpl implements ReferenceService {
 
     @Override
     public void rollbackTransaction(final Transaction tx) {
-        if (isLongRunningTx(tx)) {
+        if (tx != null && !tx.isShortLived()) {
             try {
                 final Map<String, String> parameterSource = Map.of("transactionId", openTxId(tx));
                 jdbcTemplate.update(DELETE_TRANSACTION, parameterSource);

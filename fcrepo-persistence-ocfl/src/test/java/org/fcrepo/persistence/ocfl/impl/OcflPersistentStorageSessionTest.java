@@ -165,7 +165,7 @@ public class OcflPersistentStorageSessionTest {
                 new NoOpCache<>(),
                 CommitType.NEW_VERSION,
                 "Fedora 6 test", "fedoraAdmin", "info:fedora/fedoraAdmin");
-        session = createSession(index, objectSessionFactory, true);
+        session = createSession(index, objectSessionFactory);
 
         // Create rdf operations implement two interfaces
         rdfSourceOperation = mock(RdfSourceOperation.class, withSettings().extraInterfaces(
@@ -179,21 +179,12 @@ public class OcflPersistentStorageSessionTest {
 
     private OcflPersistentStorageSession createSession(final FedoraToOcflObjectIndex index,
                                                        final OcflObjectSessionFactory objectSessionFactory) {
-        return createSession(index, objectSessionFactory, false);
-
-    }
-
-    private OcflPersistentStorageSession createSession(final FedoraToOcflObjectIndex index,
-                                                       final OcflObjectSessionFactory objectSessionFactory,
-                                                       final boolean longRunning) {
-        final var tx = mockTransaction(longRunning);
+        final var tx = mockTransaction();
         return new OcflPersistentStorageSession(tx, index, objectSessionFactory, reindexService);
     }
 
-    private Transaction mockTransaction(final boolean longRunning) {
-        final var tx = mock(Transaction.class);
-        when(tx.isOpenLongRunning()).thenReturn(longRunning);
-        return tx;
+    private Transaction mockTransaction() {
+        return mock(Transaction.class);
     }
 
     private void mockNoIndex(final FedoraId resourceId) throws FedoraOcflMappingNotFoundException {
@@ -256,7 +247,7 @@ public class OcflPersistentStorageSessionTest {
         final var node = createURI(RESOURCE_ID.getFullId());
 
         //verify get triples within the transaction
-        var retrievedUserStream = session.getTriplesInternal(RESOURCE_ID, null);
+        var retrievedUserStream = session.getTriples(RESOURCE_ID, null);
         assertEquals(node, retrievedUserStream.topic());
         assertEquals(dcTitleTriple, retrievedUserStream.findFirst().get());
 
@@ -783,7 +774,7 @@ public class OcflPersistentStorageSessionTest {
                 .<String, OcflObjectSession>build()
                 .asMap();
 
-        final var shortTx = mockTransaction(false);
+        final var shortTx = mockTransaction();
         final var readOnlySession = new OcflPersistentStorageSession(shortTx, index, objectSessionFactory,
                 reindexService);
         ReflectionTestUtils.setField(readOnlySession, "sessionMap", sessionMap);

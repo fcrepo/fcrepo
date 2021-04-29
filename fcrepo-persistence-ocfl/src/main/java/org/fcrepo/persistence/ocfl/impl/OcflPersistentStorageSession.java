@@ -21,7 +21,6 @@ import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
-import static org.fcrepo.kernel.api.TransactionUtils.isLongRunningTx;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -132,7 +131,8 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         this.reindexSerivce = reindexService;
         this.sessionsToRollback = new HashMap<>();
 
-        if (isLongRunningTx(transaction)) {
+        if (tx != null) {
+            // tx is only null for the read-only session
             this.sessionMap = new ConcurrentHashMap<>();
         } else {
             // The read-only session is never closed, so it needs to periodically expire object sessions
@@ -169,7 +169,11 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
 
     @Override
     public String getId() {
-        return this.transaction.getId();
+        // null when read-only
+        if (transaction != null) {
+            return this.transaction.getId();
+        }
+        return null;
     }
 
     @Override
@@ -243,20 +247,9 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
     @Override
     public RdfStream getTriples(final FedoraId identifier, final Instant version)
             throws PersistentStorageException {
-        return getTriples(identifier, version, false);
-    }
-
-    @Override
-    public RdfStream getTriplesInternal(final FedoraId identifier, final Instant version)
-            throws PersistentStorageException {
-        return getTriples(identifier, version, true);
-    }
-
-    private RdfStream getTriples(final FedoraId identifier, final Instant version, final boolean internal)
-            throws PersistentStorageException {
         ensureCommitNotStarted();
 
-        try (final InputStream is = getBinaryContent(identifier, version, internal)) {
+        try (final InputStream is = getBinaryContent(identifier, version)) {
             final Model model = createDefaultModel();
             RDFDataMgr.read(model, is, OcflPersistentStorageUtils.getRdfFormat().getLang());
             final FedoraId topic = resolveTopic(identifier);
@@ -280,17 +273,6 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
     @Override
     public InputStream getBinaryContent(final FedoraId identifier, final Instant version)
             throws PersistentStorageException {
-        return getBinaryContent(identifier, version, false);
-    }
-
-    @Override
-    public InputStream getBinaryContentInternal(final FedoraId identifier, final Instant version)
-            throws PersistentStorageException {
-        return getBinaryContent(identifier, version, true);
-    }
-
-    private InputStream getBinaryContent(final FedoraId identifier, final Instant version, final boolean internal)
-        throws PersistentStorageException {
         ensureCommitNotStarted();
 
         final var mapping = getFedoraOcflMapping(identifier);

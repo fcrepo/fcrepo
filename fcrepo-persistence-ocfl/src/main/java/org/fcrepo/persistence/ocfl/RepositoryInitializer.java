@@ -78,6 +78,7 @@ public class RepositoryInitializer {
     public void initialize() {
         //check that the root is initialized
         final var transaction = txManager.create();
+        transaction.setShortLived(true);
         final PersistentStorageSession session = this.sessionManager.getSession(transaction);
 
         indexBuilder.rebuildIfNecessary();

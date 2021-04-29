@@ -731,7 +731,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     @Override
     public void rollbackTransaction(final Transaction tx) {
-        if (isLongRunningTx(tx)) {
+        if (tx != null && !tx.isShortLived()) {
             final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
             parameterSource.addValue("transactionId", tx.getId());
             jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, parameterSource);

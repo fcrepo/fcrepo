@@ -742,7 +742,7 @@ public class MembershipIndexManager {
      * @param tx transaction
      */
     public void deleteTransaction(final Transaction tx) {
-        if (isLongRunningTx(tx)) {
+        if (tx != null && !tx.isShortLived()) {
             final Map<String, String> parameterSource = Map.of(TX_ID_PARAM, tx.getId());
             jdbcTemplate.update(DELETE_TRANSACTION, parameterSource);
         }

@@ -76,19 +76,6 @@ public interface PersistentStorageSession {
             throws PersistentStorageException;
 
     /**
-     * Get the client managed triples for the provided resource. This method ALWAYS uses the transaction tables, and
-     * so will perform slower queries. Use only as necessary.
-     *
-     * @param identifier identifier for the resource.
-     * @param version instant identifying the version of the resource to read from. If null, then the head version is
-     *        used.
-     * @return the triples as an RdfStream.
-     * @throws PersistentStorageException  Either a PersistentItemNotFoundException or PersistentSessionClosedException
-     */
-    RdfStream getTriplesInternal(final FedoraId identifier, final Instant version)
-            throws PersistentStorageException;
-
-    /**
      * Get the persisted binary content for the provided resource.
      *
      * @param identifier identifier for the resource.
@@ -98,19 +85,6 @@ public interface PersistentStorageSession {
      * @throws PersistentStorageException  Either a PersistentItemNotFoundException or PersistentSessionClosedException
      */
     InputStream getBinaryContent(final FedoraId identifier, final Instant version)
-            throws PersistentStorageException;
-
-    /**
-     * Get the persisted binary content for the provided resource. This method ALWAYS uses the transaction tables, and
-     * so will perform slower queries. Use only as necessary.
-     *
-     * @param identifier identifier for the resource.
-     * @param version instant identifying the version of the resource to read from. If null, then the head version is
-     *        used.
-     * @return the binary content.
-     * @throws PersistentStorageException  Either a PersistentItemNotFoundException or PersistentSessionClosedException
-     */
-    InputStream getBinaryContentInternal(final FedoraId identifier, final Instant version)
             throws PersistentStorageException;
 
     /**

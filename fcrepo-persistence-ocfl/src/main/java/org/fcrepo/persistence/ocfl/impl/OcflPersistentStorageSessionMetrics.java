@@ -85,23 +85,11 @@ public class OcflPersistentStorageSessionMetrics implements PersistentStorageSes
     }
 
     @Override
-    public RdfStream getTriplesInternal(final FedoraId identifier, final Instant version)
-            throws PersistentStorageException {
-        return MetricsHelper.time(getTriplesTimer, () -> delegate.getTriplesInternal(identifier, version));
-    }
-
-    @Override
     public InputStream getBinaryContent(final FedoraId identifier, final Instant version)
             throws PersistentStorageException {
         return MetricsHelper.time(getContentTimer, () -> {
             return delegate.getBinaryContent(identifier, version);
         });
-    }
-
-    @Override
-    public InputStream getBinaryContentInternal(final FedoraId identifier, final Instant version)
-            throws PersistentStorageException {
-        return MetricsHelper.time(getContentTimer, () -> delegate.getBinaryContentInternal(identifier, version));
     }
 
     @Override
