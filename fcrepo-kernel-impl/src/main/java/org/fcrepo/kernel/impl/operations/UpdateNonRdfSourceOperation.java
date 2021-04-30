@@ -47,6 +47,7 @@ public class UpdateNonRdfSourceOperation extends AbstractNonRdfSourceOperation {
     /**
      * Constructor for external content.
      *
+     * @param transaction the transaction
      * @param rescId the internal identifier.
      * @param externalContentURI the URI of the external content.
      * @param externalHandling the type of external content handling (REDIRECT, PROXY)

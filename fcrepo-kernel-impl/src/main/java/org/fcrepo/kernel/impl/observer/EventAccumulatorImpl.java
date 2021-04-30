@@ -31,7 +31,6 @@ import javax.inject.Inject;
 
 import org.fcrepo.config.AuthPropsConfig;
 import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
@@ -63,9 +62,6 @@ public class EventAccumulatorImpl implements EventAccumulator {
 
     @Inject
     private AuthPropsConfig authPropsConfig;
-
-    @Inject
-    private TransactionManager txManager;
 
     public EventAccumulatorImpl() {
         this.transactionEventMap = new ConcurrentHashMap<>();

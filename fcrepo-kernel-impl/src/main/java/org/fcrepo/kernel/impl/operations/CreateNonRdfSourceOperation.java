@@ -50,6 +50,7 @@ public class CreateNonRdfSourceOperation extends AbstractNonRdfSourceOperation i
     /**
      * Constructor for internal binaries.
      *
+     * @param transaction the transaction
      * @param rescId the internal identifier.
      * @param content the stream of the content.
      */
