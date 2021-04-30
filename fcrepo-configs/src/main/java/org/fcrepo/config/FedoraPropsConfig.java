@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * General Fedora properties
@@ -38,6 +39,7 @@ import org.springframework.core.io.Resource;
  * @since 6.0.0
  */
 @Configuration
+@EnableScheduling
 public class FedoraPropsConfig extends BasePropsConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FedoraPropsConfig.class);
