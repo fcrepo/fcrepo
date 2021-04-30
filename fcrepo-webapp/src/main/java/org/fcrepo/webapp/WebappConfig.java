@@ -35,6 +35,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.dao.DeadlockLoserDataAccessException;
 import org.springframework.retry.annotation.EnableRetry;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import com.google.common.eventbus.AsyncEventBus;
@@ -47,6 +48,7 @@ import com.google.common.eventbus.EventBus;
  */
 @EnableRetry
 @Configuration
+@EnableScheduling
 public class WebappConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WebappConfig.class);

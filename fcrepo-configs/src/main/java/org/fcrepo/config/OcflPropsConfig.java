@@ -82,6 +82,12 @@ public class OcflPropsConfig extends BasePropsConfig {
     @Value("${fcrepo.aws.region:}")
     private String awsRegion;
 
+    @Value("${fcrepo.s3.endpoint:}")
+    private String s3Endpoint;
+
+    @Value("${fcrepo.s3.path.style.access:false}")
+    private boolean pathStyleAccessEnabled;
+
     @Value("${" + FCREPO_OCFL_S3_BUCKET + ":}")
     private String ocflS3Bucket;
 
@@ -108,6 +114,9 @@ public class OcflPropsConfig extends BasePropsConfig {
 
     @Value("${" + FCREPO_PERSISTENCE_ALGORITHM + ":sha512}")
     private String FCREPO_DIGEST_ALGORITHM_VALUE;
+
+    @Value("${fcrepo.ocfl.s3.db.enabled:true}")
+    private boolean ocflS3DbEnabled;
 
     private DigestAlgorithm FCREPO_DIGEST_ALGORITHM;
 
@@ -425,5 +434,26 @@ public class OcflPropsConfig extends BasePropsConfig {
      */
     public DigestAlgorithm getDefaultDigestAlgorithm() {
         return FCREPO_DIGEST_ALGORITHM;
+    }
+
+    /**
+     * @return an optional custom s3 endpoint or null
+     */
+    public String getS3Endpoint() {
+        return s3Endpoint;
+    }
+
+    /**
+     * @return true if path style S3 access should be used
+     */
+    public boolean isPathStyleAccessEnabled() {
+        return pathStyleAccessEnabled;
+    }
+
+    /**
+     * @return true if the ocfl client should be configured to use a database when storing objects in S3
+     */
+    public boolean isOcflS3DbEnabled() {
+        return ocflS3DbEnabled;
     }
 }
