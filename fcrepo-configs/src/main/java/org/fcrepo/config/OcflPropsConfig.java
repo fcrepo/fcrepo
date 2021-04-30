@@ -118,6 +118,9 @@ public class OcflPropsConfig extends BasePropsConfig {
     @Value("${fcrepo.ocfl.s3.db.enabled:true}")
     private boolean ocflS3DbEnabled;
 
+    @Value("${fcrepo.ocfl.unsafe.write.enabled:false}")
+    private boolean unsafeWriteEnabled;
+
     private DigestAlgorithm FCREPO_DIGEST_ALGORITHM;
 
     /**
@@ -455,5 +458,15 @@ public class OcflPropsConfig extends BasePropsConfig {
      */
     public boolean isOcflS3DbEnabled() {
         return ocflS3DbEnabled;
+    }
+
+    /**
+     * When unsafe writes are enabled, the OCFL client does not calculate a digest for files that are added, and
+     * trusts the digest value that it's given. If this value is incorrect, the object will be corrupted.
+     *
+     * @return true if objects should be written to OCFL using an "unsafe" write
+     */
+    public boolean isUnsafeWriteEnabled() {
+        return unsafeWriteEnabled;
     }
 }

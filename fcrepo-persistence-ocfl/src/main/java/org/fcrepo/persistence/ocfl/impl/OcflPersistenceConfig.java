@@ -100,7 +100,7 @@ public class OcflPersistenceConfig {
     public OcflObjectSessionFactory ocflObjectSessionFactory() throws IOException {
         final var objectMapper = OcflPersistentStorageUtils.objectMapper();
 
-        return new DefaultOcflObjectSessionFactory(repository(),
+        final var factory = new DefaultOcflObjectSessionFactory(repository(),
                 ocflPropsConfig.getFedoraOcflStaging(),
                 objectMapper,
                 resourceHeadersCache(),
@@ -108,6 +108,8 @@ public class OcflPersistenceConfig {
                 "Authored by Fedora 6",
                 "fedoraAdmin",
                 "info:fedora/fedoraAdmin");
+        factory.useUnsafeWrite(ocflPropsConfig.isUnsafeWriteEnabled());
+        return factory;
     }
 
     @Bean
