@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import com.google.common.eventbus.AsyncEventBus;
@@ -43,6 +44,7 @@ import com.google.common.eventbus.EventBus;
  * @author pwinckles
  */
 @Configuration
+@EnableScheduling
 public class WebappConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WebappConfig.class);
