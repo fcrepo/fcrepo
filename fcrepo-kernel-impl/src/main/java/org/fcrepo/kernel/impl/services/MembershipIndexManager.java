@@ -497,8 +497,7 @@ public class MembershipIndexManager {
         } else {
             final Map<String, Object> parameterSource = Map.of(
                     PROXY_ID_PARAM, proxyId.getFullId(),
-                    END_TIME_PARAM, afterTimestamp,
-                    NO_END_TIME_PARAM, NO_END_TIMESTAMP);
+                    END_TIME_PARAM, afterTimestamp);
             jdbcTemplate.update(DIRECT_DELETE_EXISTING_FOR_PROXY_AFTER, parameterSource);
         }
     }
