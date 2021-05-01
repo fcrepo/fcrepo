@@ -19,6 +19,7 @@ package org.fcrepo.integration.http.api;
 
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
+import static javax.ws.rs.core.HttpHeaders.LOCATION;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
@@ -57,7 +58,10 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response.Status;
 
+import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.RdfLexicon;
+import org.fcrepo.storage.ocfl.CommitType;
+import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -75,6 +79,8 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.DC;
 import org.apache.jena.vocabulary.RDF;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.context.TestExecutionListeners;
 
@@ -97,6 +103,21 @@ public class LDPContainerIT extends AbstractResourceIT {
     private static final String DIRECT_CONTAINER_LINK_HEADER = "<" + DIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
 
     private static final String INDIRECT_CONTAINER_LINK_HEADER = "<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
+
+    private DefaultOcflObjectSessionFactory objectSessionFactory;
+    private OcflPropsConfig ocflPropsConfig;
+
+    @Before
+    public void init() {
+        objectSessionFactory = getBean(DefaultOcflObjectSessionFactory.class);
+        ocflPropsConfig = getBean(OcflPropsConfig.class);
+    }
+
+    @After
+    public void after() {
+        objectSessionFactory.setDefaultCommitType(CommitType.NEW_VERSION);
+        ocflPropsConfig.setAutoVersioningEnabled(true);
+    }
 
     @Test
     public void testIndirectContainerDefaults() throws Exception {
@@ -557,6 +578,177 @@ public class LDPContainerIT extends AbstractResourceIT {
         executeAndClose(deleteObjMethod(proxy1Id));
 
         assertHasNoMembership(membershipRescId, PCDM_HAS_MEMBER_PROP);
+    }
+
+    @Test
+    public void indirectContainerDeleteInTx() throws Exception {
+        final var membershipRescId = createBasicContainer();
+        final var membershipRescURI = serverAddress + membershipRescId;
+
+        final var indirectId = createIndirectContainer(membershipRescURI);
+
+        assertHasNoMembership(membershipRescId, PCDM_HAS_MEMBER_PROP);
+
+        // Create the members
+        final String member1Id = createBasicContainer();
+        final String member1Uri = serverAddress + member1Id;
+
+        // Create proxies to members
+        final String proxy1Id = indirectId + "/proxy1";
+        createProxy(proxy1Id, member1Uri);
+
+        assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id);
+        assertHasNoMembershipWhenOmitted(membershipRescId, PCDM_HAS_MEMBER_PROP);
+
+        final var txUri = createTransaction();
+
+        final HttpDelete deleteMethod = deleteObjMethod(indirectId);
+        deleteMethod.addHeader(ATOMIC_ID_HEADER, txUri);
+        executeAndClose(deleteMethod);
+
+        assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id);
+        assertHasMembers(txUri, membershipRescId, membershipRescId, PCDM_HAS_MEMBER_PROP);
+
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txUri)));
+
+        assertHasNoMembership(membershipRescId, PCDM_HAS_MEMBER_PROP);
+    }
+
+    @Test
+    public void indirectContainerModifyProxyAutoVersioning() throws Exception {
+        final var membershipRescId = createBasicContainer();
+        final var membershipRescURI = serverAddress + membershipRescId;
+
+        final var indirect1Id = createIndirectContainer(membershipRescURI);
+
+        assertHasNoMembership(membershipRescId, PCDM_HAS_MEMBER_PROP);
+
+        // Create the members
+        final String member1Id = createBasicContainer();
+        final String member1Uri = serverAddress + member1Id;
+        final String member2Id = createBasicContainer();
+        final String member2Uri = serverAddress + member2Id;
+
+        TimeUnit.MILLISECONDS.sleep(1000);
+
+        // Create proxy to member1
+        final String proxy1Id = indirect1Id + "/proxy1";
+        final String proxy1Uri = serverAddress + proxy1Id;
+        createProxy(proxy1Id, member1Uri);
+        assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id);
+
+        // Memento preceeds addition of proxy, so no membership
+        final var mementos = listMementoIds(membershipRescId);
+        assertEquals(1, mementos.size());
+        assertMementoHasMembers(mementos.get(0), PCDM_HAS_MEMBER_PROP);
+
+        changeProxyMember(proxy1Uri, member1Uri, member2Uri, null);
+        assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member2Id);
+
+        // History sohuld be unchanged since the membership resource hasn't been versioned
+        final var mementos2 = listMementoIds(membershipRescId);
+        assertEquals(1, mementos2.size());
+        assertMementoHasMembers(mementos2.get(0), PCDM_HAS_MEMBER_PROP);
+
+        TimeUnit.MILLISECONDS.sleep(1000);
+
+        // Change proxy inside of a transaction
+        final var txUri = createTransaction();
+        final String member3Id = createBasicContainer(null, getRandomUniqueId(), txUri);
+        final String member3Uri = serverAddress + member3Id;
+        changeProxyMember(proxy1Uri, member2Uri, member3Uri, txUri);
+
+        // Unchanged outside of tx, changed in tx
+        assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member2Id);
+        assertHasMembers(txUri, membershipRescId, membershipRescId, PCDM_HAS_MEMBER_PROP, member3Id);
+
+        // Commit tx
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txUri)));
+        assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member3Id);
+
+        final var mementos3 = listMementoIds(membershipRescId);
+        assertEquals(1, mementos3.size());
+        assertMementoHasMembers(mementos3.get(0), PCDM_HAS_MEMBER_PROP);
+    }
+
+    @Test
+    public void indirectContainerModifyProxyOnDemandVersioning() throws Exception {
+        objectSessionFactory.setDefaultCommitType(CommitType.UNVERSIONED);
+        ocflPropsConfig.setAutoVersioningEnabled(false);
+
+        final var membershipRescId = createBasicContainer();
+        final var membershipRescURI = serverAddress + membershipRescId;
+
+        final var indirect1Id = createIndirectContainer(membershipRescURI);
+
+        assertHasNoMembership(membershipRescId, PCDM_HAS_MEMBER_PROP);
+
+        // Create the members
+        final String member1Id = createBasicContainer();
+        final String member1Uri = serverAddress + member1Id;
+        final String member2Id = createBasicContainer();
+        final String member2Uri = serverAddress + member2Id;
+
+        // Create proxy to member1
+        final String proxy1Id = indirect1Id + "/proxy1";
+        final String proxy1Uri = serverAddress + proxy1Id;
+        createProxy(proxy1Id, member1Uri);
+        assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id);
+
+        changeProxyMember(proxy1Uri, member1Uri, member2Uri, null);
+        assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member2Id);
+
+        TimeUnit.MILLISECONDS.sleep(1000);
+
+        createMemento(membershipRescURI);
+        final var mementos = listMementoIds(membershipRescId);
+        assertEquals(1, mementos.size());
+        assertMementoHasMembers(mementos.get(0), PCDM_HAS_MEMBER_PROP, member2Id);
+
+        // Change proxy target again, should rewrite history of membership resc
+        changeProxyMember(proxy1Uri, member2Uri, member1Uri, null);
+        assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id);
+        final var mementos2 = listMementoIds(membershipRescId);
+        assertEquals(1, mementos2.size());
+        assertMementoHasMembers(mementos2.get(0), PCDM_HAS_MEMBER_PROP, member1Id);
+
+        TimeUnit.MILLISECONDS.sleep(1000);
+
+        // Create memento of the proxy, the membership state of the memento should be immutable now
+        createMemento(proxy1Uri);
+        changeProxyMember(proxy1Uri, member1Uri, member2Uri, null);
+        assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member2Id);
+        final var mementos3 = listMementoIds(membershipRescId);
+        assertEquals(1, mementos3.size());
+        assertMementoHasMembers(mementos3.get(0), PCDM_HAS_MEMBER_PROP, member1Id);
+
+        final var txUri = createTransaction();
+        final String member3Id = createBasicContainer(null, getRandomUniqueId(), txUri);
+        final String member3Uri = serverAddress + member3Id;
+        changeProxyMember(proxy1Uri, member2Uri, member3Uri, txUri);
+
+        // Unchanged outside of tx, changed in tx
+        assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member2Id);
+        assertHasMembers(txUri, membershipRescId, membershipRescId, PCDM_HAS_MEMBER_PROP, member3Id);
+
+        // Commit tx
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txUri)));
+        assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member3Id);
+    }
+
+    private void changeProxyMember(final String proxyUri, final String oldMember, final String newMember,
+            final String txUri) throws Exception {
+        final HttpPatch patch = new HttpPatch(proxyUri);
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        if (txUri != null) {
+            patch.addHeader(ATOMIC_ID_HEADER, txUri);
+        }
+        patch.setEntity(new StringEntity(
+                "DELETE { <> <" + PROXY_FOR + "> <" + oldMember + "> . }" +
+                "INSERT { <> <" + PROXY_FOR + "> <" + newMember + "> } WHERE {}\n"));
+        try (final CloseableHttpResponse response = execute(patch)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+        }
     }
 
     @Test
@@ -1383,6 +1575,103 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id, member2Id);
         assertEquals("Rolled back transaction should be gone",
                 GONE.getStatusCode(), getStatus(new HttpGet(txUri2)));
+    }
+
+    @Test
+    public void directContainerChangeDCOnDemandVersioning() throws Exception {
+        objectSessionFactory.setDefaultCommitType(CommitType.UNVERSIONED);
+        ocflPropsConfig.setAutoVersioningEnabled(false);
+
+        final var membershipRescId = createBasicContainer();
+        final var membershipRescURI = serverAddress + membershipRescId;
+
+        final var directId = createDirectContainer(membershipRescURI);
+
+        assertHasNoMembership(membershipRescId, PCDM_HAS_MEMBER_PROP);
+
+        final String initialEtag = getEtag(membershipRescURI);
+
+        final var member1Id = createBasicContainer(directId, "member1");
+        final var member2Id = createBasicContainer(directId, "member2");
+
+        final String afterPropEtag1 = getEtag(membershipRescURI);
+        assertNotEquals("Etag must change after additions", initialEtag, afterPropEtag1);
+
+        assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id, member2Id);
+        assertHasNoMembershipWhenOmitted(membershipRescId, PCDM_HAS_MEMBER_PROP);
+
+        // Change the membership relation
+        final String directURI = serverAddress + directId;
+        changeMembershipRelation(directURI, PCDM_HAS_MEMBER_PROP, RdfLexicon.LDP_MEMBER, null);
+
+        assertHasMembers(membershipRescId, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
+        assertHasNoMembershipWhenOmitted(membershipRescId, RdfLexicon.LDP_MEMBER);
+
+        // Version the membership resc
+        createMemento(membershipRescURI);
+
+        TimeUnit.MILLISECONDS.sleep(1000);
+
+        // Verify membership in the created memento
+        final var mementos = listMementoIds(membershipRescId);
+        assertEquals(1, mementos.size());
+        assertMementoHasMembers(mementos.get(0), RdfLexicon.LDP_MEMBER, member1Id, member2Id);
+
+        // Change membership relation, should rewrite history of membership resc
+        changeMembershipRelation(directURI, RdfLexicon.LDP_MEMBER, PCDM_HAS_MEMBER_PROP, null);
+
+        assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id, member2Id);
+        final var mementos2 = listMementoIds(membershipRescId);
+        assertEquals(1, mementos2.size());
+        assertMementoHasMembers(mementos2.get(0), PCDM_HAS_MEMBER_PROP, member1Id, member2Id);
+
+        // Version the DC and change property again, should preserve membership in memento
+        createMemento(directURI);
+        changeMembershipRelation(directURI, PCDM_HAS_MEMBER_PROP, RdfLexicon.LDP_MEMBER, null);
+
+        assertHasMembers(membershipRescId, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
+        final var mementos3 = listMementoIds(membershipRescId);
+        assertEquals(1, mementos3.size());
+        assertMementoHasMembers(mementos3.get(0), PCDM_HAS_MEMBER_PROP, member1Id, member2Id);
+
+        // Modify within a transaction
+        final var txUri = createTransaction();
+        final Property otherMembership = createProperty("http://example.com/member");
+        changeMembershipRelation(directURI, RdfLexicon.LDP_MEMBER, otherMembership, txUri);
+
+        // Unchanged outside of tx, changed in tx
+        assertHasMembers(membershipRescId, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
+        assertHasMembers(txUri, membershipRescId, membershipRescId, otherMembership, member1Id, member2Id);
+
+        // Commit tx
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txUri)));
+        assertHasMembers(membershipRescId, otherMembership, member1Id, member2Id);
+    }
+
+    private void changeMembershipRelation(final String containerUri, final Property oldRel,
+            final Property newRel, final String txUri) throws Exception {
+        final HttpPatch patch = new HttpPatch(containerUri);
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        if (txUri != null) {
+            patch.addHeader(ATOMIC_ID_HEADER, txUri);
+        }
+        patch.setEntity(new StringEntity(
+                "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
+                "DELETE { <> ldp:hasMemberRelation <" + oldRel + "> . }" +
+                "INSERT { <> ldp:hasMemberRelation <" + newRel + "> } WHERE {}\n"));
+        try (final CloseableHttpResponse response = execute(patch)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+        }
+    }
+
+    private String createMemento(final String subjectUri) throws Exception {
+        final HttpPost createVersionMethod = new HttpPost(subjectUri + "/" + FCR_VERSIONS);
+
+        // Create new memento of resource with updated body
+        try (final CloseableHttpResponse response = execute(createVersionMethod)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            return response.getFirstHeader(LOCATION).getValue();
+        }
     }
 
     @Test

@@ -285,10 +285,10 @@ public class MembershipIndexManager {
                 " OR m.end_time >= :startTime)";
 
     private static final String DIRECT_DELETE_EXISTING_FOR_PROXY_AFTER =
-            "DELETE FROM membership" +
+            "UPDATE membership SET end_time = :endTime, last_updated = :endTime" +
             " WHERE proxy_id = :proxyId" +
-                " AND (start_time >= :startTime" +
-                " OR end_time >= :startTime)";
+                " AND (start_time >= :endTime" +
+                " OR end_time >= :endTime)";
 
     private static final String PURGE_ALL_REFERENCES_MEMBERSHIP =
             "DELETE from membership" +
@@ -497,7 +497,7 @@ public class MembershipIndexManager {
         } else {
             final Map<String, Object> parameterSource = Map.of(
                     PROXY_ID_PARAM, proxyId.getFullId(),
-                    START_TIME_PARAM, afterTimestamp);
+                    END_TIME_PARAM, afterTimestamp);
             jdbcTemplate.update(DIRECT_DELETE_EXISTING_FOR_PROXY_AFTER, parameterSource);
         }
     }
@@ -771,7 +771,7 @@ public class MembershipIndexManager {
     /**
      * Log all membership entries, for debugging usage only
      */
-    private void logMembership() {
+    protected void logMembership() {
         log.info("source_id, proxy_id, subject_id, property, object_id, start_time, end_time, last_updated");
         jdbcTemplate.query(SELECT_ALL_MEMBERSHIP, new RowCallbackHandler() {
             @Override
@@ -787,7 +787,7 @@ public class MembershipIndexManager {
     /**
      * Log all membership operations, for debugging usage only
      */
-    private void logOperations() {
+    protected void logOperations() {
         log.info("source_id, proxy_id, subject_id, property, object_id, start_time, end_time,"
                 + " last_updated, tx_id, operation, force_flag");
         jdbcTemplate.query(SELECT_ALL_OPERATIONS, new RowCallbackHandler() {
