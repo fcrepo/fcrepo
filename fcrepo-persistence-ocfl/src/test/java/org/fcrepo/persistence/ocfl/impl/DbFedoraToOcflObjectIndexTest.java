@@ -43,12 +43,12 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
  */
 public class DbFedoraToOcflObjectIndexTest {
 
-    private static final FedoraId RESOURCE_ID_1 = FedoraId.create("info:fedora/parent/child1");
-    private static final FedoraId RESOURCE_ID_2 = FedoraId.create("info:fedora/parent/child2");
-    private static final FedoraId RESOURCE_ID_3 = FedoraId.create("info:fedora/resource3");
-    private static final FedoraId ROOT_RESOURCE_ID = FedoraId.create("info:fedora/parent");
-    private static final String OCFL_ID = "ocfl-id";
-    private static final String OCFL_ID_RESOURCE_3 = "ocfl-id-resource-3";
+    private FedoraId RESOURCE_ID_1;
+    private FedoraId RESOURCE_ID_2;
+    private FedoraId RESOURCE_ID_3;
+    private FedoraId ROOT_RESOURCE_ID;
+    private String OCFL_ID;
+    private String OCFL_ID_RESOURCE_3;
 
     private static DriverManagerDataSource dataSource;
     private static DbFedoraToOcflObjectIndex index;
@@ -75,6 +75,16 @@ public class DbFedoraToOcflObjectIndexTest {
         when(session.isCommitted()).thenReturn(false);
         when(session.isOpenLongRunning()).thenReturn(true);
         readOnlyTx = ReadOnlyTransaction.INSTANCE;
+        ROOT_RESOURCE_ID = FedoraId.create(getRandomUUID());
+        RESOURCE_ID_1 = ROOT_RESOURCE_ID.resolve(getRandomUUID());
+        RESOURCE_ID_2 = ROOT_RESOURCE_ID.resolve(getRandomUUID());
+        RESOURCE_ID_3 = FedoraId.create(getRandomUUID());
+        OCFL_ID = "ocfl-id-" + getRandomUUID();
+        OCFL_ID_RESOURCE_3 = "ocfl-id-resource-3-" + getRandomUUID();
+    }
+
+    private static String getRandomUUID() {
+        return UUID.randomUUID().toString();
     }
 
     @Test

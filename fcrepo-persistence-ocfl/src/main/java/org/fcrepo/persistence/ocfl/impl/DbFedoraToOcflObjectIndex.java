@@ -19,7 +19,9 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
 import javax.annotation.PostConstruct;
@@ -33,6 +35,7 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
+import org.fcrepo.storage.ocfl.cache.CaffeineCache;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +47,8 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
+
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 /**
  * Maps Fedora IDs to the OCFL IDs of the OCFL objects the Fedora resource is stored in. This implementation is backed
@@ -168,6 +173,13 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
             MAPPING_TABLE + "." + FEDORA_ID_COLUMN + " = " + TRANSACTION_OPERATIONS_TABLE + "." + FEDORA_ID_COLUMN +
             ")";
 
+    /*
+     * Collect IDs to invalidate on transaction commit.
+     */
+    private static final String GET_DELETE_IDS = "SELECT " + FEDORA_ID_COLUMN + " FROM " +
+            TRANSACTION_OPERATIONS_TABLE + " WHERE " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
+            OPERATION_COLUMN + " = 'delete'";
+
     private static final String TRUNCATE_MAPPINGS = "TRUNCATE TABLE " + MAPPING_TABLE;
 
     private static final String TRUNCATE_TRANSACTIONS = "TRUNCATE TABLE " + TRANSACTION_OPERATIONS_TABLE;
@@ -186,6 +198,8 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
             resultSet.getString(2)
     );
 
+    private CaffeineCache<String, FedoraOcflMapping> mappingCache;
+
     private final DataSource dataSource;
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
@@ -195,6 +209,11 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     public DbFedoraToOcflObjectIndex(@Autowired final DataSource dataSource) {
         this.dataSource = dataSource;
         this.jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
+        final var cache = Caffeine.newBuilder()
+                .maximumSize(512)
+                .expireAfterAccess(10, TimeUnit.MINUTES)
+                .build();
+        this.mappingCache = new CaffeineCache<>(cache);
     }
 
     @PostConstruct
@@ -206,16 +225,17 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     public FedoraOcflMapping getMapping(final Transaction transaction, final FedoraId fedoraId)
             throws FedoraOcflMappingNotFoundException {
         try {
-            final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-            parameterSource.addValue("fedoraId", fedoraId.getResourceId());
-            final String query;
             if (transaction.isOpenLongRunning()) {
+                final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+                parameterSource.addValue("fedoraId", fedoraId.getResourceId());
                 parameterSource.addValue("transactionId", transaction.getId());
-                query = LOOKUP_MAPPING_IN_TRANSACTION;
+                return jdbcTemplate.queryForObject(LOOKUP_MAPPING_IN_TRANSACTION, parameterSource,
+                        GET_MAPPING_ROW_MAPPER);
             } else {
-                query = LOOKUP_MAPPING;
+                return this.mappingCache.get(fedoraId.getResourceId(), key ->
+                        jdbcTemplate.queryForObject(LOOKUP_MAPPING, Map.of("fedoraId", key), GET_MAPPING_ROW_MAPPER)
+                );
             }
-            return jdbcTemplate.queryForObject(query, parameterSource, GET_MAPPING_ROW_MAPPER);
         } catch (final EmptyResultDataAccessException e) {
             throw new FedoraOcflMappingNotFoundException("No OCFL mapping found for " + fedoraId);
         }
@@ -289,6 +309,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
         try {
             jdbcTemplate.update(TRUNCATE_MAPPINGS, Collections.emptyMap());
             jdbcTemplate.update(TRUNCATE_TRANSACTIONS, Collections.emptyMap());
+            this.mappingCache.invalidateAll();
         } catch (final Exception e) {
             throw new RepositoryRuntimeException("Failed to truncate FedoraToOcfl index tables", e);
         }
@@ -301,9 +322,11 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
             LOGGER.debug("Committing FedoraToOcfl index changes from transaction {}", transaction.getId());
             final Map<String, String> map = Map.of("transactionId", transaction.getId());
             try {
+                final List<String> deleteIds = jdbcTemplate.queryForList(GET_DELETE_IDS, map, String.class);
                 jdbcTemplate.update(COMMIT_DELETE_RECORDS, map);
                 jdbcTemplate.update(COMMIT_ADD_MAPPING_MAP.get(dbPlatform), map);
                 jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, map);
+                this.mappingCache.invalidateAll(deleteIds);
             } catch (final Exception e) {
                 LOGGER.warn("Unable to commit FedoraToOcfl index transaction {}: {}", transaction, e.getMessage());
                 throw new RepositoryRuntimeException("Unable to commit FedoraToOcfl index transaction", e);
