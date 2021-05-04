@@ -166,16 +166,9 @@ public class ReindexManager {
      * Index the membership relationships
      */
     private void indexMembership() {
-        try {
-            reindexService.indexMembership(transaction());
-        } catch (final RuntimeException e) {
-            try {
-                reindexService.rollbackMembership(transaction());
-            } catch (final Exception e2) {
-                LOGGER.error("Failed to rollback membership", e2);
-            }
-            throw e;
-        }
+        final var tx = transaction();
+        reindexService.indexMembership(tx);
+        tx.commit();
     }
 
     /**

@@ -131,8 +131,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         verify(searchIndex, times(2))
                 .addUpdateIndex(any(Transaction.class), any(org.fcrepo.kernel.api.models.ResourceHeaders.class));
 
-        verify(containmentIndex).commitTransaction(any(Transaction.class));
-        verify(referenceService).commitTransaction(any(Transaction.class));
+        verify(transaction, times(2)).commit();
         verify(searchIndex).doSearch(any(SearchParameters.class));
     }
 
@@ -166,7 +165,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
                 any(Instant.class), isNull());
         verify(searchIndex, times(2)).addUpdateIndex(any(Transaction.class), isA(
                 org.fcrepo.kernel.api.models.ResourceHeaders.class));
-        verify(containmentIndex).commitTransaction(any(Transaction.class));
+        verify(transaction, times(2)).commit();
     }
 
     @Test
@@ -197,7 +196,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
                 eq(resource1), any(Instant.class), isNull());
         verify(containmentIndex).addContainedBy(any(Transaction.class), eq(resource1), eq(resource2),
                 any(Instant.class), isNull());
-        verify(containmentIndex, times(2)).commitTransaction(any(Transaction.class));
+        verify(transaction, times(3)).commit();
         verify(searchIndex, times(2)).addUpdateIndex(any(Transaction.class),
                 isA(ResourceHeaders.class));
     }
@@ -239,7 +238,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
                 eq(resource1), any(Instant.class), isNull());
         verify(containmentIndex, never()).addContainedBy(any(Transaction.class), eq(resource1), eq(resource2),
                 any(Instant.class), isNull());
-        verify(containmentIndex).commitTransaction(any(Transaction.class));
+        verify(transaction, times(2)).commit();
         verify(searchIndex, times(1)).addUpdateIndex(any(Transaction.class), isA(ResourceHeaders.class));
     }
 
@@ -271,12 +270,11 @@ public class ReindexServiceTest extends AbstractReindexerTest {
 
         verify(containmentIndex, times(numberContainers)).addContainedBy(any(Transaction.class),
                 eq(FedoraId.getRepositoryRootId()), any(FedoraId.class), any(Instant.class), isNull());
-        verify(containmentIndex, times(numberContainers)).commitTransaction(any(Transaction.class));
+        verify(transaction, times(numberContainers + 1)).commit();
         verify(searchIndex, times(numberContainers)).addUpdateIndex(any(Transaction.class), isA(
                 org.fcrepo.kernel.api.models.ResourceHeaders.class));
         verify(membershipService, times(numberContainers)).populateMembershipHistory(any(Transaction.class),
                 any(FedoraId.class));
-        verify(membershipService).commitTransaction(any(Transaction.class));
     }
 
     @Test
