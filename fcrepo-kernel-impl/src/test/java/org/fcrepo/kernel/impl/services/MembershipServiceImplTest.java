@@ -20,7 +20,6 @@ package org.fcrepo.kernel.impl.services;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
-import static org.fcrepo.kernel.impl.models.ResourceFactoryImplTest.mockTransaction;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -52,6 +51,7 @@ import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.MembershipService;
+import org.fcrepo.kernel.impl.TestTransactionHelper;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
@@ -137,9 +137,9 @@ public class MembershipServiceImplTest {
         MockitoAnnotations.openMocks(this);
 
         txId = UUID.randomUUID().toString();
-        transaction = mockTransaction(txId, false);
+        transaction = TestTransactionHelper.mockTransaction(txId, false);
         shortLivedTxId = UUID.randomUUID().toString();
-        shortLivedTx = mockTransaction(shortLivedTxId, true);
+        shortLivedTx = TestTransactionHelper.mockTransaction(shortLivedTxId, true);
 
         when(pSessionManager.getSession(transaction)).thenReturn(psSession);
         when(pSessionManager.getSession(shortLivedTx)).thenReturn(psSession);

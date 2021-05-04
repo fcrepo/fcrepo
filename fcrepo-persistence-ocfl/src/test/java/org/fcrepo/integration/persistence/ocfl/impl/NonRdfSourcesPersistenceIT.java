@@ -27,6 +27,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -103,6 +105,11 @@ public class NonRdfSourcesPersistenceIT {
     public void setup() {
         rescId = makeRescId();
         tx = mock(Transaction.class);
+        when(tx.isShortLived()).thenReturn(true);
+        doAnswer(invocationOnMock -> {
+            invocationOnMock.getArgument(0, Runnable.class).run();
+            return null;
+        }).when(tx).doInTx(any(Runnable.class));
         storageSession = startWriteSession();
     }
 

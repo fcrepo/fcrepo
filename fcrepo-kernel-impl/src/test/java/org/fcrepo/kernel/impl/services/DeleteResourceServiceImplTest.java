@@ -42,6 +42,7 @@ import org.fcrepo.kernel.api.models.WebacAcl;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
+import org.fcrepo.kernel.impl.TestTransactionHelper;
 import org.fcrepo.kernel.impl.operations.DeleteResourceOperation;
 import org.fcrepo.kernel.impl.operations.DeleteResourceOperationFactoryImpl;
 import org.fcrepo.persistence.api.PersistentStorageSession;
@@ -70,7 +71,6 @@ public class DeleteResourceServiceImplTest {
 
     private static final String USER = "fedoraAdmin";
 
-    @Mock
     private Transaction tx;
 
     @Mock
@@ -134,11 +134,7 @@ public class DeleteResourceServiceImplTest {
     public void setup() {
         MockitoAnnotations.openMocks(this);
         final String txId = UUID.randomUUID().toString();
-        when(tx.getId()).thenReturn(txId);
-        when(tx.isShortLived()).thenReturn(false);
-        when(tx.isCommitted()).thenReturn(false);
-        when(tx.isRolledBack()).thenReturn(false);
-        when(tx.hasExpired()).thenReturn(false);
+        tx = TestTransactionHelper.mockTransaction(txId, false);
         when(psManager.getSession(any(Transaction.class))).thenReturn(pSession);
         final DeleteResourceOperationFactoryImpl factoryImpl = new DeleteResourceOperationFactoryImpl();
         setField(service, "deleteResourceFactory", factoryImpl);

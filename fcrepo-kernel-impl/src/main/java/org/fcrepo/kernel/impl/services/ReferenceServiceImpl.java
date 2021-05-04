@@ -303,7 +303,8 @@ public class ReferenceServiceImpl implements ReferenceService {
     @Override
     @TransactionalWithRetry
     public void commitTransaction(final Transaction tx) {
-        if (tx.isOpenLongRunning()) {
+        if (!tx.isShortLived()) {
+            tx.ensureCommitting();
             try {
                 final Map<String, String> parameterSource = Map.of("transactionId", tx.getId());
                 jdbcTemplate.update(COMMIT_DELETE_RECORDS, parameterSource);
@@ -345,24 +346,26 @@ public class ReferenceServiceImpl implements ReferenceService {
      * @param reference the quad with the reference, is Quad(resourceId, subjectId, propertyId, targetId)
      */
     private void removeReference(final Transaction tx, final Quad reference) {
-        final var parameterSource = new MapSqlParameterSource();
-        parameterSource.addValue("resourceId", reference.getGraph().getURI());
-        parameterSource.addValue("subjectId", reference.getSubject().getURI());
-        parameterSource.addValue("property", reference.getPredicate().getURI());
-        parameterSource.addValue("targetId", reference.getObject().getURI());
+        tx.doInTx(() -> {
+            final var parameterSource = new MapSqlParameterSource();
+            parameterSource.addValue("resourceId", reference.getGraph().getURI());
+            parameterSource.addValue("subjectId", reference.getSubject().getURI());
+            parameterSource.addValue("property", reference.getPredicate().getURI());
+            parameterSource.addValue("targetId", reference.getObject().getURI());
 
-        if (tx.isOpenLongRunning()) {
-            parameterSource.addValue("transactionId", tx.getId());
-            final boolean addedInTx = !jdbcTemplate.queryForList(IS_REFERENCE_ADDED_IN_TRANSACTION, parameterSource)
-                    .isEmpty();
-            if (addedInTx) {
-                jdbcTemplate.update(UNDO_INSERT_REFERENCE_IN_TRANSACTION, parameterSource);
+            if (!tx.isShortLived()) {
+                parameterSource.addValue("transactionId", tx.getId());
+                final boolean addedInTx = !jdbcTemplate.queryForList(IS_REFERENCE_ADDED_IN_TRANSACTION, parameterSource)
+                        .isEmpty();
+                if (addedInTx) {
+                    jdbcTemplate.update(UNDO_INSERT_REFERENCE_IN_TRANSACTION, parameterSource);
+                } else {
+                    jdbcTemplate.update(DELETE_REFERENCE_IN_TRANSACTION, parameterSource);
+                }
             } else {
-                jdbcTemplate.update(DELETE_REFERENCE_IN_TRANSACTION, parameterSource);
+                jdbcTemplate.update(DELETE_REFERENCE_DIRECT, parameterSource);
             }
-        } else {
-            jdbcTemplate.update(DELETE_REFERENCE_DIRECT, parameterSource);
-        }
+        });
     }
 
     /**
@@ -373,28 +376,31 @@ public class ReferenceServiceImpl implements ReferenceService {
      */
     private void addReference(@Nonnull final Transaction transaction, final Quad reference,
                               final String userPrincipal) {
-        final String targetId = reference.getObject().getURI();
+        transaction.doInTx(() -> {
+            final String targetId = reference.getObject().getURI();
 
-        final var parameterSource = new MapSqlParameterSource();
-        parameterSource.addValue("resourceId", reference.getGraph().getURI());
-        parameterSource.addValue("subjectId", reference.getSubject().getURI());
-        parameterSource.addValue("property", reference.getPredicate().getURI());
-        parameterSource.addValue("targetId", targetId);
+            final var parameterSource = new MapSqlParameterSource();
+            parameterSource.addValue("resourceId", reference.getGraph().getURI());
+            parameterSource.addValue("subjectId", reference.getSubject().getURI());
+            parameterSource.addValue("property", reference.getPredicate().getURI());
+            parameterSource.addValue("targetId", targetId);
 
-        if (transaction.isOpenLongRunning()) {
-            parameterSource.addValue("transactionId", transaction.getId());
-            final boolean addedInTx = !jdbcTemplate.queryForList(IS_REFERENCE_DELETED_IN_TRANSACTION, parameterSource)
-                    .isEmpty();
-            if (addedInTx) {
-                jdbcTemplate.update(UNDO_DELETE_REFERENCE_IN_TRANSACTION, parameterSource);
+            if (!transaction.isShortLived()) {
+                parameterSource.addValue("transactionId", transaction.getId());
+                final boolean addedInTx = !jdbcTemplate.queryForList(
+                        IS_REFERENCE_DELETED_IN_TRANSACTION, parameterSource)
+                        .isEmpty();
+                if (addedInTx) {
+                    jdbcTemplate.update(UNDO_DELETE_REFERENCE_IN_TRANSACTION, parameterSource);
+                } else {
+                    jdbcTemplate.update(INSERT_REFERENCE_IN_TRANSACTION, parameterSource);
+                    recordEvent(transaction, targetId, userPrincipal);
+                }
             } else {
-                jdbcTemplate.update(INSERT_REFERENCE_IN_TRANSACTION, parameterSource);
+                jdbcTemplate.update(INSERT_REFERENCE_DIRECT, parameterSource);
                 recordEvent(transaction, targetId, userPrincipal);
             }
-        } else {
-            jdbcTemplate.update(INSERT_REFERENCE_DIRECT, parameterSource);
-            recordEvent(transaction, targetId, userPrincipal);
-        }
+        });
     }
 
     /**

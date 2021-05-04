@@ -21,7 +21,6 @@ import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
-import static org.fcrepo.kernel.impl.models.ResourceFactoryImplTest.mockTransaction;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -40,6 +39,7 @@ import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.services.ReferenceService;
+import org.fcrepo.kernel.impl.TestTransactionHelper;
 
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
@@ -52,7 +52,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
@@ -105,8 +104,8 @@ public class ReferenceServiceImplTest {
     public void setUp() {
         MockitoAnnotations.openMocks(this);
         final String transactionId = UUID.randomUUID().toString();
-        transaction = mockTransaction(transactionId, false);
-        shortLivedTx = mockTransaction(UUID.randomUUID().toString(), true);
+        transaction = TestTransactionHelper.mockTransaction(transactionId, false);
+        shortLivedTx = TestTransactionHelper.mockTransaction(UUID.randomUUID().toString(), true);
         subject1Id = FedoraId.create(UUID.randomUUID().toString());
         subject2Id = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId targetId = FedoraId.create(UUID.randomUUID().toString());
@@ -250,13 +249,8 @@ public class ReferenceServiceImplTest {
         referenceService.updateReferences(transaction, subject1Id, TEST_USER, stream);
 
         final String transaction2Id = UUID.randomUUID().toString();
-        final Transaction transaction2 = Mockito.mock(Transaction.class);
-        when(transaction2.getId()).thenReturn(transaction2Id);
-        when(transaction2.isCommitted()).thenReturn(false);
-        when(transaction2.isRolledBack()).thenReturn(false);
-        when(transaction2.hasExpired()).thenReturn(false);
+        final Transaction transaction2 = TestTransactionHelper.mockTransaction(transaction2Id, false);
         // Make both of these long-running.
-        when(transaction2.isShortLived()).thenReturn(false);
         when(transaction.isShortLived()).thenReturn(false);
 
         // Still not public.
@@ -286,13 +280,7 @@ public class ReferenceServiceImplTest {
 
         // Change the RDF to remove the reference.
         final String transaction2Id = UUID.randomUUID().toString();
-        final Transaction transaction2 = Mockito.mock(Transaction.class);
-        when(transaction2.getId()).thenReturn(transaction2Id);
-        when(transaction2.isShortLived()).thenReturn(false);
-        when(transaction2.isCommitted()).thenReturn(false);
-        when(transaction2.isRolledBack()).thenReturn(false);
-        when(transaction2.hasExpired()).thenReturn(false);
-        when(transaction2.isOpenLongRunning()).thenReturn(true);
+        final Transaction transaction2 = TestTransactionHelper.mockTransaction(transaction2Id, false);
         model.add(subject1, ResourceFactory.createProperty("http://someother/description"), "Some text");
         model.remove(subject1, referenceProp, target);
         final RdfStream stream2 = fromModel(subject1.asNode(), model);

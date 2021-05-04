@@ -440,33 +440,35 @@ public class MembershipIndexManager {
     @TransactionalWithRetry
     public void endMembershipFromChild(final Transaction tx, final FedoraId sourceId, final FedoraId proxyId,
             final Instant endTime) {
-        if (tx.isOpenLongRunning()) {
-            final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-            parameterSource.addValue(TX_ID_PARAM, tx.getId());
-            parameterSource.addValue(SOURCE_ID_PARAM, sourceId.getFullId());
-            parameterSource.addValue(PROXY_ID_PARAM, proxyId.getFullId());
+        tx.doInTx(() -> {
+            if (!tx.isShortLived()) {
+                final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+                parameterSource.addValue(TX_ID_PARAM, tx.getId());
+                parameterSource.addValue(SOURCE_ID_PARAM, sourceId.getFullId());
+                parameterSource.addValue(PROXY_ID_PARAM, proxyId.getFullId());
 
-            final int affected = jdbcTemplate.update(CLEAR_FOR_PROXY_IN_TX, parameterSource);
+                final int affected = jdbcTemplate.update(CLEAR_FOR_PROXY_IN_TX, parameterSource);
 
-            // If no rows were deleted, then assume we need to delete permanent entry
-            if (affected == 0) {
-                final MapSqlParameterSource parameterSource2 = new MapSqlParameterSource();
-                parameterSource2.addValue(TX_ID_PARAM, tx.getId());
-                parameterSource2.addValue(SOURCE_ID_PARAM, sourceId.getFullId());
-                parameterSource2.addValue(PROXY_ID_PARAM, proxyId.getFullId());
-                parameterSource2.addValue(END_TIME_PARAM, formatInstant(endTime));
-                parameterSource2.addValue(NO_END_TIME_PARAM, NO_END_TIMESTAMP);
-                parameterSource2.addValue(DELETE_OP_PARAM, DELETE_OPERATION);
-                jdbcTemplate.update(END_EXISTING_MEMBERSHIP, parameterSource2);
+                // If no rows were deleted, then assume we need to delete permanent entry
+                if (affected == 0) {
+                    final MapSqlParameterSource parameterSource2 = new MapSqlParameterSource();
+                    parameterSource2.addValue(TX_ID_PARAM, tx.getId());
+                    parameterSource2.addValue(SOURCE_ID_PARAM, sourceId.getFullId());
+                    parameterSource2.addValue(PROXY_ID_PARAM, proxyId.getFullId());
+                    parameterSource2.addValue(END_TIME_PARAM, formatInstant(endTime));
+                    parameterSource2.addValue(NO_END_TIME_PARAM, NO_END_TIMESTAMP);
+                    parameterSource2.addValue(DELETE_OP_PARAM, DELETE_OPERATION);
+                    jdbcTemplate.update(END_EXISTING_MEMBERSHIP, parameterSource2);
+                }
+            } else {
+                final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+                parameterSource.addValue(SOURCE_ID_PARAM, sourceId.getFullId());
+                parameterSource.addValue(PROXY_ID_PARAM, proxyId.getFullId());
+                parameterSource.addValue(END_TIME_PARAM, formatInstant(endTime));
+                parameterSource.addValue(NO_END_TIME_PARAM, NO_END_TIMESTAMP);
+                jdbcTemplate.update(DIRECT_END_EXISTING_MEMBERSHIP, parameterSource);
             }
-        } else {
-            final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-            parameterSource.addValue(SOURCE_ID_PARAM, sourceId.getFullId());
-            parameterSource.addValue(PROXY_ID_PARAM, proxyId.getFullId());
-            parameterSource.addValue(END_TIME_PARAM, formatInstant(endTime));
-            parameterSource.addValue(NO_END_TIME_PARAM, NO_END_TIMESTAMP);
-            jdbcTemplate.update(DIRECT_END_EXISTING_MEMBERSHIP, parameterSource);
-        }
+        });
     }
 
     @TransactionalWithRetry
@@ -474,32 +476,34 @@ public class MembershipIndexManager {
                                               final FedoraId sourceId,
                                               final FedoraId proxyId,
                                               final Instant afterTime) {
-        final var afterTimestamp = afterTime == null ? NO_START_TIMESTAMP : formatInstant(afterTime);
+        tx.doInTx(() -> {
+            final var afterTimestamp = afterTime == null ? NO_START_TIMESTAMP : formatInstant(afterTime);
 
-        if (tx.isOpenLongRunning()) {
-            // Clear all membership added in this transaction
-            final var parameterSource =  Map.of(
-                    TX_ID_PARAM, tx.getId(),
-                    SOURCE_ID_PARAM, sourceId.getFullId(),
-                    PROXY_ID_PARAM, proxyId.getFullId(),
-                    OPERATION_PARAM, ADD_OPERATION);
+            if (!tx.isShortLived()) {
+                // Clear all membership added in this transaction
+                final var parameterSource = Map.of(
+                        TX_ID_PARAM, tx.getId(),
+                        SOURCE_ID_PARAM, sourceId.getFullId(),
+                        PROXY_ID_PARAM, proxyId.getFullId(),
+                        OPERATION_PARAM, ADD_OPERATION);
 
-            jdbcTemplate.update(CLEAR_FOR_PROXY_IN_TX, parameterSource);
+                jdbcTemplate.update(CLEAR_FOR_PROXY_IN_TX, parameterSource);
 
-            // Delete all existing membership entries that start after or end after the given timestamp
-            final Map<String, Object> parameterSource2 = Map.of(
-                    TX_ID_PARAM, tx.getId(),
-                    PROXY_ID_PARAM, proxyId.getFullId(),
-                    START_TIME_PARAM, afterTimestamp,
-                    FORCE_PARAM, FORCE_FLAG,
-                    DELETE_OP_PARAM, DELETE_OPERATION);
-            jdbcTemplate.update(DELETE_EXISTING_FOR_PROXY_AFTER, parameterSource2);
-        } else {
-            final Map<String, Object> parameterSource = Map.of(
-                    PROXY_ID_PARAM, proxyId.getFullId(),
-                    END_TIME_PARAM, afterTimestamp);
-            jdbcTemplate.update(DIRECT_DELETE_EXISTING_FOR_PROXY_AFTER, parameterSource);
-        }
+                // Delete all existing membership entries that start after or end after the given timestamp
+                final Map<String, Object> parameterSource2 = Map.of(
+                        TX_ID_PARAM, tx.getId(),
+                        PROXY_ID_PARAM, proxyId.getFullId(),
+                        START_TIME_PARAM, afterTimestamp,
+                        FORCE_PARAM, FORCE_FLAG,
+                        DELETE_OP_PARAM, DELETE_OPERATION);
+                jdbcTemplate.update(DELETE_EXISTING_FOR_PROXY_AFTER, parameterSource2);
+            } else {
+                final Map<String, Object> parameterSource = Map.of(
+                        PROXY_ID_PARAM, proxyId.getFullId(),
+                        END_TIME_PARAM, afterTimestamp);
+                jdbcTemplate.update(DIRECT_DELETE_EXISTING_FOR_PROXY_AFTER, parameterSource);
+            }
+        });
     }
 
     /**
@@ -510,28 +514,30 @@ public class MembershipIndexManager {
      */
     @TransactionalWithRetry
     public void endMembershipForSource(final Transaction tx, final FedoraId sourceId, final Instant endTime) {
-        if (tx.isOpenLongRunning()) {
-            final Map<String, Object> parameterSource = Map.of(
-                    TX_ID_PARAM, tx.getId(),
-                    SOURCE_ID_PARAM, sourceId.getFullId(),
-                    ADD_OP_PARAM, ADD_OPERATION);
+        tx.doInTx(() -> {
+            if (!tx.isShortLived()) {
+                final Map<String, Object> parameterSource = Map.of(
+                        TX_ID_PARAM, tx.getId(),
+                        SOURCE_ID_PARAM, sourceId.getFullId(),
+                        ADD_OP_PARAM, ADD_OPERATION);
 
-            jdbcTemplate.update(CLEAR_ALL_ADDED_FOR_SOURCE_IN_TX, parameterSource);
+                jdbcTemplate.update(CLEAR_ALL_ADDED_FOR_SOURCE_IN_TX, parameterSource);
 
-            final Map<String, Object> parameterSource2 = Map.of(
-                    TX_ID_PARAM, tx.getId(),
-                    SOURCE_ID_PARAM, sourceId.getFullId(),
-                    END_TIME_PARAM, formatInstant(endTime),
-                    NO_END_TIME_PARAM, NO_END_TIMESTAMP,
-                    DELETE_OP_PARAM, DELETE_OPERATION);
-            jdbcTemplate.update(END_EXISTING_FOR_SOURCE, parameterSource2);
-        } else {
-            final Map<String, Object> parameterSource = Map.of(
-                    SOURCE_ID_PARAM, sourceId.getFullId(),
-                    END_TIME_PARAM, formatInstant(endTime),
-                    NO_END_TIME_PARAM, NO_END_TIMESTAMP);
-            jdbcTemplate.update(DIRECT_END_EXISTING_FOR_SOURCE, parameterSource);
-        }
+                final Map<String, Object> parameterSource2 = Map.of(
+                        TX_ID_PARAM, tx.getId(),
+                        SOURCE_ID_PARAM, sourceId.getFullId(),
+                        END_TIME_PARAM, formatInstant(endTime),
+                        NO_END_TIME_PARAM, NO_END_TIMESTAMP,
+                        DELETE_OP_PARAM, DELETE_OPERATION);
+                jdbcTemplate.update(END_EXISTING_FOR_SOURCE, parameterSource2);
+            } else {
+                final Map<String, Object> parameterSource = Map.of(
+                        SOURCE_ID_PARAM, sourceId.getFullId(),
+                        END_TIME_PARAM, formatInstant(endTime),
+                        NO_END_TIME_PARAM, NO_END_TIMESTAMP);
+                jdbcTemplate.update(DIRECT_END_EXISTING_FOR_SOURCE, parameterSource);
+            }
+        });
     }
 
     /**
@@ -542,31 +548,33 @@ public class MembershipIndexManager {
      */
     @TransactionalWithRetry
     public void deleteMembershipForSourceAfter(final Transaction tx, final FedoraId sourceId, final Instant afterTime) {
-        final var afterTimestamp = afterTime == null ? NO_START_TIMESTAMP : formatInstant(afterTime);
+        tx.doInTx(() -> {
+            final var afterTimestamp = afterTime == null ? NO_START_TIMESTAMP : formatInstant(afterTime);
 
-        if (tx.isOpenLongRunning()) {
-            // Clear all membership added in this transaction
-            final Map<String, Object> parameterSource = Map.of(
-                    TX_ID_PARAM, tx.getId(),
-                    SOURCE_ID_PARAM, sourceId.getFullId(),
-                    ADD_OP_PARAM, ADD_OPERATION);
+            if (!tx.isShortLived()) {
+                // Clear all membership added in this transaction
+                final Map<String, Object> parameterSource = Map.of(
+                        TX_ID_PARAM, tx.getId(),
+                        SOURCE_ID_PARAM, sourceId.getFullId(),
+                        ADD_OP_PARAM, ADD_OPERATION);
 
-            jdbcTemplate.update(CLEAR_ALL_ADDED_FOR_SOURCE_IN_TX, parameterSource);
+                jdbcTemplate.update(CLEAR_ALL_ADDED_FOR_SOURCE_IN_TX, parameterSource);
 
-            // Delete all existing membership entries that start after or end after the given timestamp
-            final Map<String, Object> parameterSource2 = Map.of(
-                    TX_ID_PARAM, tx.getId(),
-                    SOURCE_ID_PARAM, sourceId.getFullId(),
-                    START_TIME_PARAM, afterTimestamp,
-                    FORCE_PARAM, FORCE_FLAG,
-                    DELETE_OP_PARAM, DELETE_OPERATION);
-            jdbcTemplate.update(DELETE_EXISTING_FOR_SOURCE_AFTER, parameterSource2);
-        } else {
-            final Map<String, Object> parameterSource = Map.of(
-                    SOURCE_ID_PARAM, sourceId.getFullId(),
-                    START_TIME_PARAM, afterTimestamp);
-            jdbcTemplate.update(DIRECT_DELETE_EXISTING_FOR_SOURCE_AFTER, parameterSource);
-        }
+                // Delete all existing membership entries that start after or end after the given timestamp
+                final Map<String, Object> parameterSource2 = Map.of(
+                        TX_ID_PARAM, tx.getId(),
+                        SOURCE_ID_PARAM, sourceId.getFullId(),
+                        START_TIME_PARAM, afterTimestamp,
+                        FORCE_PARAM, FORCE_FLAG,
+                        DELETE_OP_PARAM, DELETE_OPERATION);
+                jdbcTemplate.update(DELETE_EXISTING_FOR_SOURCE_AFTER, parameterSource2);
+            } else {
+                final Map<String, Object> parameterSource = Map.of(
+                        SOURCE_ID_PARAM, sourceId.getFullId(),
+                        START_TIME_PARAM, afterTimestamp);
+                jdbcTemplate.update(DIRECT_DELETE_EXISTING_FOR_SOURCE_AFTER, parameterSource);
+            }
+        });
     }
 
     /**
@@ -614,34 +622,36 @@ public class MembershipIndexManager {
     @TransactionalWithRetry
     public void addMembership(final Transaction tx, final FedoraId sourceId, final FedoraId proxyId,
             final Triple membership, final Instant startTime, final Instant endTime) {
-        final Timestamp endTimestamp;
-        final Timestamp lastUpdated;
-        final Timestamp startTimestamp = formatInstant(startTime);
-        if (endTime == null) {
-            endTimestamp = NO_END_TIMESTAMP;
-            lastUpdated = startTimestamp;
-        } else {
-            endTimestamp = formatInstant(endTime);
-            lastUpdated = endTimestamp;
-        }
-        // Add the new membership operation
-        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-        parameterSource.addValue(SUBJECT_ID_PARAM, membership.getSubject().getURI());
-        parameterSource.addValue(PROPERTY_PARAM, membership.getPredicate().getURI());
-        parameterSource.addValue(TARGET_ID_PARAM, membership.getObject().getURI());
-        parameterSource.addValue(SOURCE_ID_PARAM, sourceId.getFullId());
-        parameterSource.addValue(PROXY_ID_PARAM, proxyId.getFullId());
-        parameterSource.addValue(START_TIME_PARAM, startTimestamp);
-        parameterSource.addValue(END_TIME_PARAM, endTimestamp);
-        parameterSource.addValue(LAST_UPDATED_PARAM, lastUpdated);
+        tx.doInTx(() -> {
+            final Timestamp endTimestamp;
+            final Timestamp lastUpdated;
+            final Timestamp startTimestamp = formatInstant(startTime);
+            if (endTime == null) {
+                endTimestamp = NO_END_TIMESTAMP;
+                lastUpdated = startTimestamp;
+            } else {
+                endTimestamp = formatInstant(endTime);
+                lastUpdated = endTimestamp;
+            }
+            // Add the new membership operation
+            final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+            parameterSource.addValue(SUBJECT_ID_PARAM, membership.getSubject().getURI());
+            parameterSource.addValue(PROPERTY_PARAM, membership.getPredicate().getURI());
+            parameterSource.addValue(TARGET_ID_PARAM, membership.getObject().getURI());
+            parameterSource.addValue(SOURCE_ID_PARAM, sourceId.getFullId());
+            parameterSource.addValue(PROXY_ID_PARAM, proxyId.getFullId());
+            parameterSource.addValue(START_TIME_PARAM, startTimestamp);
+            parameterSource.addValue(END_TIME_PARAM, endTimestamp);
+            parameterSource.addValue(LAST_UPDATED_PARAM, lastUpdated);
 
-        if (tx.isOpenLongRunning()) {
-            parameterSource.addValue(TX_ID_PARAM, tx.getId());
-            parameterSource.addValue(OPERATION_PARAM, ADD_OPERATION);
-            jdbcTemplate.update(INSERT_MEMBERSHIP_IN_TX, parameterSource);
-        } else {
-            jdbcTemplate.update(DIRECT_INSERT_MEMBERSHIP, parameterSource);
-        }
+            if (!tx.isShortLived()) {
+                parameterSource.addValue(TX_ID_PARAM, tx.getId());
+                parameterSource.addValue(OPERATION_PARAM, ADD_OPERATION);
+                jdbcTemplate.update(INSERT_MEMBERSHIP_IN_TX, parameterSource);
+            } else {
+                jdbcTemplate.update(DIRECT_INSERT_MEMBERSHIP, parameterSource);
+            }
+        });
     }
 
     /**
@@ -720,7 +730,8 @@ public class MembershipIndexManager {
      */
     @TransactionalWithRetry
     public void commitTransaction(final Transaction tx) {
-        if (tx.isOpenLongRunning()) {
+        if (!tx.isShortLived()) {
+            tx.ensureCommitting();
             final Map<String, String> parameterSource = Map.of(
                     TX_ID_PARAM, tx.getId(),
                     ADD_OP_PARAM, ADD_OPERATION,

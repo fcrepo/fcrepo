@@ -29,6 +29,7 @@ import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.impl.TestTransactionHelper;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
@@ -40,7 +41,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -134,7 +134,7 @@ public class ResourceFactoryImplTest {
         fedoraMementoIdStr = fedoraIdStr + "/fcr:versions/20000102120000";
 
         sessionId = UUID.randomUUID().toString();
-        mockTx = mockTransaction(sessionId, false);
+        mockTx = TestTransactionHelper.mockTransaction(sessionId, false);
 
         factory = new ResourceFactoryImpl();
 
@@ -182,7 +182,7 @@ public class ResourceFactoryImplTest {
         populateHeaders(resourceHeaders, BASIC_CONTAINER);
 
         // Need to make a short lived transaction or the verify will fail.
-        final var shortTx = mockTransaction(sessionId, true);
+        final var shortTx = TestTransactionHelper.mockTransaction(sessionId, true);
         final var resc = factory.getResource(ReadOnlyTransaction.INSTANCE, fedoraId);
 
         assertTrue("Factory must return a container", resc instanceof Container);
@@ -411,23 +411,4 @@ public class ResourceFactoryImplTest {
         headers.setFilename(FILENAME);
     }
 
-    /**
-     * Create a mock transaction.
-     * @param transactionId the id of the transaction
-     * @param isShortLived is the transaction short-lived.
-     * @return the mock transaction.
-     */
-    public static Transaction mockTransaction(final String transactionId, final boolean isShortLived) {
-        final var transaction = Mockito.mock(Transaction.class);
-        when(transaction.getId()).thenReturn(transactionId);
-        when(transaction.isShortLived()).thenReturn(isShortLived);
-        if (!isShortLived) {
-            when(transaction.isCommitted()).thenReturn(false);
-            when(transaction.isRolledBack()).thenReturn(false);
-            when(transaction.hasExpired()).thenReturn(false);
-        }
-        when(transaction.isOpenLongRunning()).thenReturn(!isShortLived);
-        when(transaction.isOpen()).thenReturn(true);
-        return transaction;
-    }
 }

@@ -19,6 +19,7 @@ package org.fcrepo.kernel.impl;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
@@ -29,6 +30,9 @@ import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Phaser;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.fcrepo.kernel.api.ContainmentIndex;
@@ -48,6 +52,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.transaction.support.TransactionTemplate;
+
+import com.google.common.base.Stopwatch;
 
 /**
  * <p>
@@ -268,6 +274,38 @@ public class TransactionImplTest {
     @Test
     public void testNewTransactionNotExpired() {
         assertTrue(testTx.getExpires().isAfter(Instant.now()));
+    }
+
+    @Test(expected = TransactionClosedException.class)
+    public void operationsShouldFailWhenTxNotOpen() {
+        testTx.commit();
+        testTx.doInTx(() -> {
+            fail("This code should not be executed");
+        });
+    }
+
+    @Test
+    public void commitShouldWaitTillAllOperationsComplete() {
+        final var executor = Executors.newCachedThreadPool();
+        final var phaser = new Phaser(2);
+
+        executor.submit(() -> {
+            testTx.doInTx(() -> {
+                phaser.arriveAndAwaitAdvance();
+                try {
+                    TimeUnit.SECONDS.sleep(2);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        });
+
+        phaser.arriveAndAwaitAdvance();
+        final var stopwatch = Stopwatch.createStarted();
+        testTx.commit();
+        final var duration = stopwatch.stop().elapsed().toMillis();
+
+        assertTrue(duration < 3000 && duration > 1000);
     }
 
     private void verifyRollback() throws PersistentStorageException {

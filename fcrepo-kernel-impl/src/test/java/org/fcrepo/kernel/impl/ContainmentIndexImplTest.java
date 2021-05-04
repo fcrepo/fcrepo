@@ -76,13 +76,10 @@ public class ContainmentIndexImplTest {
     @Mock
     private FedoraResource child2;
 
-    @Mock
     private Transaction transaction1;
 
-    @Mock
     private Transaction transaction2;
 
-    @Mock
     private Transaction shortLivedTx;
 
     @Inject
@@ -101,10 +98,13 @@ public class ContainmentIndexImplTest {
         id_to_resource.put("parent2", parent2);
         id_to_resource.put("child1", child1);
         id_to_resource.put("child2", child2);
+
+        transaction1 = TestTransactionHelper.mockTransaction("transaction1", false);
+        transaction2 = TestTransactionHelper.mockTransaction("transaction2", false);
+        shortLivedTx = TestTransactionHelper.mockTransaction("shortLived", true);
+
         id_to_transaction.put("transaction1", transaction1);
         id_to_transaction.put("transaction2", transaction2);
-        when(transaction1.isOpenLongRunning()).thenReturn(true);
-        when(transaction2.isOpenLongRunning()).thenReturn(true);
     }
 
     /**
@@ -122,17 +122,8 @@ public class ContainmentIndexImplTest {
         }
     }
 
-    private void stubShortLived() {
-        when(shortLivedTx.isOpenLongRunning()).thenReturn(false);
-        when(shortLivedTx.isShortLived()).thenReturn(true);
-        when(shortLivedTx.isCommitted()).thenReturn(false);
-        when(shortLivedTx.isRolledBack()).thenReturn(false);
-        when(shortLivedTx.hasExpired()).thenReturn(false);
-    }
-
     @Test
     public void testAddChildInTransaction() {
-        stubShortLived();
         stubObject("parent1");
         stubObject("child1");
         stubObject("transaction1");
@@ -152,7 +143,6 @@ public class ContainmentIndexImplTest {
 
     @Test
     public void testAddRemoveChildInSameTransaction() {
-        stubShortLived();
         stubObject("parent1");
         stubObject("child1");
         stubObject("transaction1");
@@ -174,7 +164,6 @@ public class ContainmentIndexImplTest {
 
     @Test
     public void testAddRemoveChildInTwoTransactions() {
-        stubShortLived();
         stubObject("parent1");
         stubObject("child1");
         stubObject("transaction1");
@@ -201,7 +190,6 @@ public class ContainmentIndexImplTest {
 
     @Test
     public void testAddRemovePurgeChildInTransaction() {
-        stubShortLived();
         stubObject("parent1");
         stubObject("child1");
         stubObject("transaction1");
@@ -226,7 +214,6 @@ public class ContainmentIndexImplTest {
 
     @Test
     public void testAddRemovePurgeChildThreeTransaction() {
-        stubShortLived();
         stubObject("parent1");
         stubObject("child1");
         stubObject("transaction1");
@@ -254,7 +241,6 @@ public class ContainmentIndexImplTest {
 
     @Test
     public void testRollbackTransaction() {
-        stubShortLived();
         stubObject("parent1");
         stubObject("child1");
         stubObject("transaction1");
@@ -279,7 +265,6 @@ public class ContainmentIndexImplTest {
 
     @Test
     public void testCommitTransaction() {
-        stubShortLived();
         stubObject("parent1");
         stubObject("child2");
         stubObject("transaction1");
@@ -308,7 +293,6 @@ public class ContainmentIndexImplTest {
 
     @Test
     public void testSwapContained() {
-        stubShortLived();
         stubObject("parent1");
         stubObject("child1");
         stubObject("child2");
@@ -347,7 +331,6 @@ public class ContainmentIndexImplTest {
 
     @Test
     public void testOnlyCommitOne() throws Exception {
-        stubShortLived();
         stubObject("parent1");
         stubObject("child1");
         stubObject("child2");
@@ -382,7 +365,6 @@ public class ContainmentIndexImplTest {
 
     @Test
     public void testTwoTransactionDeleteSameChild() {
-        stubShortLived();
         stubObject("parent1");
         stubObject("child1");
         stubObject("child2");
@@ -412,7 +394,6 @@ public class ContainmentIndexImplTest {
 
     @Test
     public void testContainedByTwoSameTransactionException() {
-        stubShortLived();
         stubObject("parent1");
         stubObject("parent2");
         stubObject("child1");
@@ -441,7 +422,6 @@ public class ContainmentIndexImplTest {
 
     @Test
     public void testExistsOutsideTransaction() {
-        stubShortLived();
         stubObject("parent1");
         stubObject("child1");
         stubObject("transaction1");
@@ -456,7 +436,6 @@ public class ContainmentIndexImplTest {
 
     @Test
     public void testExistsInsideTransaction() {
-        stubShortLived();
         stubObject("parent1");
         stubObject("child1");
         stubObject("transaction1");
@@ -488,7 +467,6 @@ public class ContainmentIndexImplTest {
 
     @Test
     public void testRemoveResource() {
-        stubShortLived();
         stubObject("parent1");
         stubObject("child1");
         stubObject("transaction1");
@@ -505,7 +483,6 @@ public class ContainmentIndexImplTest {
 
     @Test
     public void testRemoveNotFromTransaction() {
-        stubShortLived();
         stubObject("parent1");
         stubObject("child1");
         stubObject("parent2");
@@ -532,7 +509,6 @@ public class ContainmentIndexImplTest {
 
     @Test
     public void testCommitRemoveFromTransaction() {
-        stubShortLived();
         stubObject("parent1");
         stubObject("child1");
         stubObject("transaction1");
@@ -558,7 +534,6 @@ public class ContainmentIndexImplTest {
      */
     @Test
     public void testResourceExistsFedoraIDNoTrailingSlash() {
-        stubShortLived();
         stubObject("parent1");
         stubObject("child1");
         stubObject("transaction1");
@@ -577,7 +552,6 @@ public class ContainmentIndexImplTest {
      */
     @Test
     public void testResourceExistsFedoraIDTrailingSlash() {
-        stubShortLived();
         stubObject("parent1");
         stubObject("child1");
         stubObject("transaction1");
@@ -608,7 +582,6 @@ public class ContainmentIndexImplTest {
 
     @Test
     public void testHasResourcesStartingFailure() {
-        stubShortLived();
         stubObject("parent1");
         stubObject("child1");
         stubObject("transaction1");
@@ -641,7 +614,6 @@ public class ContainmentIndexImplTest {
 
     @Test
     public void testDeletedResourceExists() {
-        stubShortLived();
         stubObject("parent1");
         stubObject("transaction1");
         containmentIndex.addContainedBy(transaction1, FedoraId.getRepositoryRootId(), parent1.getFedoraId());
@@ -660,7 +632,6 @@ public class ContainmentIndexImplTest {
 
     @Test
     public void testMementosContainment() throws Exception {
-        stubShortLived();
         stubObject("parent1");
         stubObject("child1");
         stubObject("child2");
@@ -701,7 +672,6 @@ public class ContainmentIndexImplTest {
 
     @Test
     public void testChecksum() throws Exception {
-        stubShortLived();
         stubObject("parent1");
         stubObject("transaction1");
         // Need to add a containment record for the parent to hold the updated value.
@@ -754,7 +724,6 @@ public class ContainmentIndexImplTest {
 
     @Test
     public void testLargeContainment() {
-        stubShortLived();
         stubObject("transaction1");
         stubObject("parent1");
         containmentIndex.setContainsLimit(5);
