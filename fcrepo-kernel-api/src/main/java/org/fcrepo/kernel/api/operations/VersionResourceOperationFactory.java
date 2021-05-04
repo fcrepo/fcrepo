@@ -18,6 +18,7 @@
 
 package org.fcrepo.kernel.api.operations;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 /**
@@ -30,9 +31,10 @@ public interface VersionResourceOperationFactory extends ResourceOperationFactor
     /**
      * Create a new {@link CreateVersionResourceOperationBuilder} builder.
      *
+     * @param transaction the transaction
      * @param rescId the resource id
      * @return builder
      */
-    CreateVersionResourceOperationBuilder createBuilder(FedoraId rescId);
+    CreateVersionResourceOperationBuilder createBuilder(Transaction transaction, FedoraId rescId);
 
 }

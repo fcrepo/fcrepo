@@ -15,28 +15,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.impl.operations;
-
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.DELETE;
+package org.fcrepo.kernel.api.operations;
 
 import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.operations.ResourceOperationType;
-
 
 /**
- * Operation for deleting a resource
+ * Interface for reindex operation methods.
  *
- * @author bbpennel
+ * @author whikloj
  */
-public class DeleteResourceOperation extends AbstractResourceOperation {
+public interface ReindexResourceOperation {
 
-    protected DeleteResourceOperation(final Transaction transaction, final FedoraId rescId) {
-        super(transaction, rescId);
-    }
-
-    @Override
-    public ResourceOperationType getType() {
-        return DELETE;
-    }
+    /**
+     * Return the transaction the Reindex is happening in.
+     * @return the transaction
+     */
+    Transaction getTransaction();
 }

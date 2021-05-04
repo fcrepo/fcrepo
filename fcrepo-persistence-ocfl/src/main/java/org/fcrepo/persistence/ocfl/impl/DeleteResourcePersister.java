@@ -43,7 +43,7 @@ class DeleteResourcePersister extends AbstractPersister {
     @Override
     public void persist(final OcflPersistentStorageSession session, final ResourceOperation operation)
             throws PersistentStorageException {
-        final var mapping = getMapping(session.getId(), operation.getResourceId());
+        final var mapping = getMapping(operation.getTransaction(), operation.getResourceId());
         final var resourceId = operation.getResourceId();
 
         final var objectSession = session.findOrCreateSession(mapping.getOcflObjectId());
@@ -67,7 +67,7 @@ class DeleteResourcePersister extends AbstractPersister {
         }
 
         if (!objectSession.containsResource(resourceId.getResourceId())) {
-            ocflIndex.removeMapping(session.getId(), resourceId);
+            ocflIndex.removeMapping(operation.getTransaction(), resourceId);
         }
     }
 

@@ -18,6 +18,8 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import org.apache.commons.io.IOUtils;
+
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
@@ -80,6 +82,9 @@ public class UpdateNonRdfSourcePersisterTest {
     @Mock
     private OcflPersistentStorageSession psSession;
 
+    @Mock
+    private Transaction transaction;
+
     private static final FedoraId RESOURCE_ID = FedoraId.create("info:fedora/parent/child");
 
     private static final FedoraId ROOT_RESOURCE_ID = FedoraId.create("info:fedora/parent");
@@ -103,16 +108,13 @@ public class UpdateNonRdfSourcePersisterTest {
         when(nonRdfSourceOperation.getUserPrincipal()).thenReturn(USER_PRINCIPAL);
         when(nonRdfSourceOperation.getResourceId()).thenReturn(RESOURCE_ID);
         when(nonRdfSourceOperation.getContentSize()).thenReturn(-1L);
-
+        when(transaction.getId()).thenReturn(SESSION_ID);
         when(psSession.findOrCreateSession(anyString())).thenReturn(session);
-        when(index.getMapping(eq(SESSION_ID), any())).thenReturn(mapping);
+        when(index.getMapping(eq(transaction), any())).thenReturn(mapping);
         when(nonRdfSourceOperation.getType()).thenReturn(UPDATE);
-
+        when(nonRdfSourceOperation.getTransaction()).thenReturn(transaction);
 
         persister = new UpdateNonRdfSourcePersister(index);
-
-        when(psSession.findOrCreateSession(anyString())).thenReturn(session);
-        when(index.getMapping(eq(SESSION_ID), any())).thenReturn(mapping);
     }
 
     @Test

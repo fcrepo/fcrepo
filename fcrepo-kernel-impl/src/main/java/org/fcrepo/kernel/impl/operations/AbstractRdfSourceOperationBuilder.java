@@ -27,6 +27,7 @@ import java.time.Instant;
 
 import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
@@ -69,9 +70,12 @@ public abstract class AbstractRdfSourceOperationBuilder implements RdfSourceOper
 
     protected ServerManagedPropsMode serverManagedPropsMode;
 
-    protected AbstractRdfSourceOperationBuilder(final FedoraId rescId,
+    protected Transaction transaction;
+
+    protected AbstractRdfSourceOperationBuilder(final Transaction transaction, final FedoraId rescId,
                                                 final String model,
                                                 final ServerManagedPropsMode serverManagedPropsMode) {
+        this.transaction = transaction;
         resourceId = rescId;
         interactionModel = model;
         this.serverManagedPropsMode = serverManagedPropsMode;

@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.api.operations;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 import java.io.InputStream;
@@ -32,38 +33,47 @@ public interface NonRdfSourceOperationFactory extends ResourceOperationFactory {
     /**
      * Get a builder for a external binary update operation
      *
+     * @param transaction the transaction
      * @param rescId id of the resource targeted by the operation
      * @param handling the type of handling to be used for the external binary content
      * @param contentUri the URI of the external binary content
      * @return a new builder
      */
-    NonRdfSourceOperationBuilder updateExternalBinaryBuilder(FedoraId rescId, String handling, URI contentUri);
+    NonRdfSourceOperationBuilder updateExternalBinaryBuilder(Transaction transaction, FedoraId rescId, String handling,
+                                                             URI contentUri);
 
     /**
      * Get a builder for an internal binary update operation
      *
+     * @param transaction the transaction
      * @param rescId id of the resource targeted by the operation
      * @param contentStream inputstream for the content of this binary
      * @return a new builder
      */
-    NonRdfSourceOperationBuilder updateInternalBinaryBuilder(FedoraId rescId, InputStream contentStream);
+    NonRdfSourceOperationBuilder updateInternalBinaryBuilder(Transaction transaction, FedoraId rescId,
+                                                             InputStream contentStream);
 
     /**
      * Get a builder for a external binary create operation
      *
+     * @param transaction the transaction
      * @param rescId id of the resource targeted by the operation
      * @param handling the type of handling to be used for the external binary content
      * @param contentUri the URI of the external binary content
      * @return a new builder
      */
-    CreateNonRdfSourceOperationBuilder createExternalBinaryBuilder(FedoraId rescId, String handling, URI contentUri);
+    CreateNonRdfSourceOperationBuilder createExternalBinaryBuilder(Transaction transaction, FedoraId rescId,
+                                                                   String handling,
+                                                                   URI contentUri);
 
     /**
      * Get a builder for an internal binary create operation
      *
+     * @param transaction the transaction
      * @param rescId id of the resource targeted by the operation
      * @param contentStream inputstream for the content of this binary
      * @return a new builder
      */
-    CreateNonRdfSourceOperationBuilder createInternalBinaryBuilder(FedoraId rescId, InputStream contentStream);
+    CreateNonRdfSourceOperationBuilder createInternalBinaryBuilder(Transaction transaction, FedoraId rescId,
+                                                                   InputStream contentStream);
 }

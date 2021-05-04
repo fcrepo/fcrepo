@@ -19,6 +19,7 @@ package org.fcrepo.kernel.api.operations;
 
 
 import org.fcrepo.config.ServerManagedPropsMode;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 /**
@@ -31,22 +32,26 @@ public interface RdfSourceOperationFactory extends ResourceOperationFactory {
     /**
      * Get a builder for an operation to create an RDF source
      *
+     * @param transaction the transaction
      * @param rescId id of the resource targeted by the operation
      * @param interactionModel interaction model for the resource being created
      * @param serverManagedPropsMode server managed props mode
      * @return new builder
      */
-    CreateRdfSourceOperationBuilder createBuilder(FedoraId rescId,
+    CreateRdfSourceOperationBuilder createBuilder(Transaction transaction,
+                                                  FedoraId rescId,
                                                   String interactionModel,
                                                   ServerManagedPropsMode serverManagedPropsMode);
 
     /**
      * Get a builder for an operation to update an RDF source
      *
+     * @param transaction the transaction
      * @param rescId id of the resource targeted by the operation
      * @param serverManagedPropsMode server managed props mode
      * @return new builder
      */
-    RdfSourceOperationBuilder updateBuilder(FedoraId rescId, final ServerManagedPropsMode serverManagedPropsMode);
+    RdfSourceOperationBuilder updateBuilder(Transaction transaction, FedoraId rescId,
+                                            final ServerManagedPropsMode serverManagedPropsMode);
 
 }

@@ -17,6 +17,8 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import org.fcrepo.kernel.api.ReadOnlyTransaction;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
@@ -64,16 +66,16 @@ public class OcflPersistentSessionManager implements PersistentStorageSessionMan
     }
 
     @Override
-    public PersistentStorageSession getSession(final String sessionId) {
-        if (sessionId == null) {
+    public PersistentStorageSession getSession(final Transaction transaction) {
+        if (transaction == null) {
             throw new IllegalArgumentException("session id must be non-null");
         }
 
-        return sessionMap.computeIfAbsent(sessionId, key -> {
-            LOGGER.debug("Creating storage session {}", sessionId);
+        return sessionMap.computeIfAbsent(transaction.getId(), key -> {
+            LOGGER.debug("Creating storage session {}", transaction);
             return new OcflPersistentStorageSessionMetrics(
                     new OcflPersistentStorageSession(
-                            key,
+                            transaction,
                             ocflIndex,
                             objectSessionFactory,
                             reindexService));
@@ -89,7 +91,8 @@ public class OcflPersistentSessionManager implements PersistentStorageSessionMan
                 localSession = this.readOnlySession;
                 if (localSession == null) {
                     this.readOnlySession = new OcflPersistentStorageSessionMetrics(
-                            new OcflPersistentStorageSession(ocflIndex, objectSessionFactory, reindexService));
+                            new OcflPersistentStorageSession(ReadOnlyTransaction.INSTANCE,
+                                    ocflIndex, objectSessionFactory, reindexService));
                     localSession = this.readOnlySession;
                 }
             }

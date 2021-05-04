@@ -18,6 +18,8 @@
 package org.fcrepo.kernel.impl.services;
 
 import org.apache.jena.rdf.model.Model;
+
+import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
@@ -67,16 +69,18 @@ public class WebacAclServiceImpl extends AbstractService implements WebacAclServ
     }
 
     @Override
+    @TransactionalWithRetry
     public void create(final Transaction transaction, final FedoraId fedoraId, final String userPrincipal,
                                  final Model model) {
-        final PersistentStorageSession pSession = this.psManager.getSession(transaction.getId());
+        final PersistentStorageSession pSession = this.psManager.getSession(transaction);
 
         ensureValidACLAuthorization(model);
 
         final RdfStream stream = fromModel(model.getResource(fedoraId.getFullId()).asNode(), model);
 
         final RdfSourceOperation createOp = rdfSourceOperationFactory
-                .createBuilder(fedoraId, FEDORA_WEBAC_ACL_URI, fedoraPropsConfig.getServerManagedPropsMode())
+                .createBuilder(transaction, fedoraId, FEDORA_WEBAC_ACL_URI,
+                        fedoraPropsConfig.getServerManagedPropsMode())
                 .parentId(fedoraId.asBaseId())
                 .triples(stream)
                 .relaxedProperties(model)
@@ -88,7 +92,7 @@ public class WebacAclServiceImpl extends AbstractService implements WebacAclServ
 
         try {
             pSession.persist(createOp);
-            recordEvent(transaction.getId(), fedoraId, createOp);
+            recordEvent(transaction, fedoraId, createOp);
         } catch (final PersistentStorageException exc) {
             throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
         }

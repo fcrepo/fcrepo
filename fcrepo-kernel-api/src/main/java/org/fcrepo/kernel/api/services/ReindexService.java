@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.api.services;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 /**
@@ -25,5 +26,5 @@ import org.fcrepo.kernel.api.identifiers.FedoraId;
  * @author dbernstein
  */
 public interface ReindexService {
-    void reindexByFedoraId(String txId, String principal, FedoraId fedoraId);
+    void reindexByFedoraId(Transaction transaction, String principal, FedoraId fedoraId);
 }

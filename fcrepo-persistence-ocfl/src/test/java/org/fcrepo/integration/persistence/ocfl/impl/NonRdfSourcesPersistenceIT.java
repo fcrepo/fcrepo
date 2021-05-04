@@ -17,25 +17,18 @@
  */
 package org.fcrepo.integration.persistence.ocfl.impl;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.fcrepo.config.OcflPropsConfig;
-import org.fcrepo.config.ServerManagedPropsMode;
-import org.fcrepo.kernel.api.exception.InvalidChecksumException;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.operations.DeleteResourceOperationFactory;
-import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
-import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
-import org.fcrepo.persistence.api.PersistentStorageSession;
-import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
-import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.fcrepo.persistence.ocfl.impl.OcflPersistentSessionManager;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Arrays.asList;
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.net.URI;
 import java.nio.file.Files;
@@ -47,16 +40,27 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Arrays.asList;
-import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.fcrepo.config.OcflPropsConfig;
+import org.fcrepo.config.ServerManagedPropsMode;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.operations.DeleteResourceOperationFactory;
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
+import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.ocfl.impl.OcflPersistentSessionManager;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
  * @author bbpennel
@@ -91,19 +95,21 @@ public class NonRdfSourcesPersistenceIT {
     @Autowired
     private OcflPropsConfig ocflPropsConfig;
 
+    private Transaction tx;
+
     private FedoraId rescId;
 
     @Before
     public void setup() {
-        storageSession = startWriteSession();
-
         rescId = makeRescId();
+        tx = mock(Transaction.class);
+        storageSession = startWriteSession();
     }
 
     @Test
     public void createInternalNonRdfResource() throws Exception {
         final var op = nonRdfSourceOpFactory.createInternalBinaryBuilder(
-                    rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
+                    tx, rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
                 .filename("test.txt")
                 .mimeType("text/plain")
                 .parentId(FedoraId.getRepositoryRootId())
@@ -129,7 +135,7 @@ public class NonRdfSourcesPersistenceIT {
     @Test
     public void createInternalNonRdfResourceWithDigests() throws Exception {
         final var op = nonRdfSourceOpFactory.createInternalBinaryBuilder(
-                    rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
+                    tx, rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
                 .contentDigests(new ArrayList<>(List.of(CONTENT_SHA1, CONTENT_MD5)))
                 .mimeType("text/plain")
                 .parentId(FedoraId.getRepositoryRootId())
@@ -158,7 +164,7 @@ public class NonRdfSourcesPersistenceIT {
     @Test
     public void createInternalNonRdfResourceUncommittedSession() throws Exception {
         final var op = nonRdfSourceOpFactory.createInternalBinaryBuilder(
-                    rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
+                    tx, rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
                 .mimeType("text/plain")
                 .parentId(FedoraId.getRepositoryRootId())
                 .build();
@@ -179,7 +185,7 @@ public class NonRdfSourcesPersistenceIT {
     @Test(expected = InvalidChecksumException.class)
     public void createInternalNonRdfResourceWithInvalidDigest() throws Exception {
         final var op = nonRdfSourceOpFactory.createInternalBinaryBuilder(
-                    rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
+                    tx, rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
                 .contentDigests(new ArrayList<>(List.of(URI.create("urn:sha1:ohnothisisbad"))))
                 .parentId(FedoraId.getRepositoryRootId())
                 .mimeType("text/plain")
@@ -191,7 +197,7 @@ public class NonRdfSourcesPersistenceIT {
     @Test(expected = InvalidChecksumException.class)
     public void createInternalNonRdfResourceWithInvalidDefaultDigest() throws Exception {
         final var op = nonRdfSourceOpFactory.createInternalBinaryBuilder(
-                    rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
+                    tx, rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
                 .contentDigests(asList(URI.create("urn:sha-512:ohnothisisbad"), CONTENT_SHA1))
                 .parentId(FedoraId.getRepositoryRootId())
                 .mimeType("text/plain")
@@ -203,7 +209,7 @@ public class NonRdfSourcesPersistenceIT {
     @Test
     public void updateInternalNonRdfResource() throws Exception {
         final var op = nonRdfSourceOpFactory.createInternalBinaryBuilder(
-                    rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
+                    tx, rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
                 .filename("test.txt")
                 .mimeType("text/plain")
                 .contentDigests(new ArrayList<>(List.of(CONTENT_SHA1)))
@@ -213,7 +219,7 @@ public class NonRdfSourcesPersistenceIT {
         storageSession.persist(op);
 
         final var updateOp = nonRdfSourceOpFactory.updateInternalBinaryBuilder(
-                    rescId, IOUtils.toInputStream(UPDATED_CONTENT, UTF_8))
+                    tx, rescId, IOUtils.toInputStream(UPDATED_CONTENT, UTF_8))
                 .mimeType("text/plain")
                 .build();
 
@@ -238,7 +244,7 @@ public class NonRdfSourcesPersistenceIT {
     @Test
     public void rollbackUpdateToInternalNonRdfResource() throws Exception {
         final var op = nonRdfSourceOpFactory.createInternalBinaryBuilder(
-                rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
+                tx, rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
             .filename("test.txt")
             .mimeType("text/plain")
             .parentId(FedoraId.getRepositoryRootId())
@@ -249,7 +255,7 @@ public class NonRdfSourcesPersistenceIT {
         storageSession.commit();
 
         final var updateOp = nonRdfSourceOpFactory.updateInternalBinaryBuilder(
-                    rescId, IOUtils.toInputStream(UPDATED_CONTENT, UTF_8))
+                    tx, rescId, IOUtils.toInputStream(UPDATED_CONTENT, UTF_8))
                 .filename("test_updated.txt")
                 .mimeType("text/plain")
                 .build();
@@ -274,7 +280,7 @@ public class NonRdfSourcesPersistenceIT {
     @Test
     public void createInternalNonRdfResourceInAG() throws Exception {
         final var agOp = rdfSourceOpFactory
-                .createBuilder(rescId, BASIC_CONTAINER.getURI(), ServerManagedPropsMode.RELAXED)
+                .createBuilder(tx, rescId, BASIC_CONTAINER.getURI(), ServerManagedPropsMode.RELAXED)
                 .archivalGroup(true)
                 .parentId(FedoraId.getRepositoryRootId())
                 .build();
@@ -282,7 +288,7 @@ public class NonRdfSourcesPersistenceIT {
 
         final var binId = rescId.resolve(UUID.randomUUID().toString());
         final var op = nonRdfSourceOpFactory.createInternalBinaryBuilder(
-                    binId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
+                    tx, binId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
                 .parentId(rescId)
                 .mimeType("text/plain")
                 .build();
@@ -314,7 +320,7 @@ public class NonRdfSourcesPersistenceIT {
     @Test
     public void deleteInternalNonRdfResource() throws Exception {
         final var op = nonRdfSourceOpFactory.createInternalBinaryBuilder(
-                    rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
+                    tx, rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
                 .filename("test.txt")
                 .mimeType("text/plain")
                 .contentDigests(new ArrayList<>(List.of(CONTENT_SHA1)))
@@ -325,7 +331,7 @@ public class NonRdfSourcesPersistenceIT {
         storageSession.prepare();
         storageSession.commit();
 
-        final var deleteOp = deleteResourceOpFactory.deleteBuilder(rescId).build();
+        final var deleteOp = deleteResourceOpFactory.deleteBuilder(tx, rescId).build();
 
         final var deleteSession = startWriteSession();
         deleteSession.persist(deleteOp);
@@ -349,7 +355,7 @@ public class NonRdfSourcesPersistenceIT {
     @Test
     public void createInternalNonRdfResourceTransmissionFixityToOcflFailure() throws Exception {
         final var op = nonRdfSourceOpFactory.createInternalBinaryBuilder(
-                    rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
+                    tx, rescId, IOUtils.toInputStream(BINARY_CONTENT, UTF_8))
                 .filename("test.txt")
                 .mimeType("text/plain")
                 .parentId(FedoraId.getRepositoryRootId())
@@ -383,8 +389,8 @@ public class NonRdfSourcesPersistenceIT {
     }
 
     private PersistentStorageSession startWriteSession() {
-        final String sessionId = UUID.randomUUID().toString();
-        return sessionManager.getSession(sessionId);
+        when(tx.getId()).thenReturn(UUID.randomUUID().toString());
+        return sessionManager.getSession(tx);
     }
 
     private FedoraId makeRescId(final String... parentIds) {

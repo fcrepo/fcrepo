@@ -19,7 +19,6 @@ package org.fcrepo.kernel.impl.services;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
-
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
@@ -39,8 +38,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
-import javax.inject.Inject;
-
 import java.io.File;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -54,10 +51,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.jena.datatypes.xsd.XSDDateTime;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
+import javax.inject.Inject;
 
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.config.ServerManagedPropsMode;
@@ -84,7 +78,12 @@ import org.fcrepo.kernel.impl.operations.RdfSourceOperationFactoryImpl;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
-import org.junit.After;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.jena.datatypes.xsd.XSDDateTime;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.flywaydb.test.annotation.FlywayTest;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -167,8 +166,6 @@ public class CreateResourceServiceImplTest {
 
     private static final Long CONTENT_SIZE = 100L;
 
-    private static final String EXTERNAL_URL = "http://example.org/rest/object";
-
     private static final String EXTERNAL_CONTENT_TYPE = "text/plain";
 
     private final Model model = ModelFactory.createDefaultModel();
@@ -182,6 +179,7 @@ public class CreateResourceServiceImplTest {
     private FedoraPropsConfig propsConfig = new FedoraPropsConfig();
 
     @Before
+    @FlywayTest
     public void setUp() {
         MockitoAnnotations.openMocks(this);
         rdfSourceOperationFactory = new RdfSourceOperationFactoryImpl();
@@ -196,17 +194,11 @@ public class CreateResourceServiceImplTest {
         propsConfig.setServerManagedPropsMode(ServerManagedPropsMode.STRICT);
         when(psManager.getSession(ArgumentMatchers.any())).thenReturn(psSession);
         when(transaction.getId()).thenReturn(TX_ID);
-        // Always try to clean up root.
-        cleanupList.add(FedoraId.getRepositoryRootId());
+        when(transaction.isShortLived()).thenReturn(false);
+        when(transaction.isCommitted()).thenReturn(false);
+        when(transaction.isRolledBack()).thenReturn(false);
+        when(transaction.hasExpired()).thenReturn(false);
     }
-
-    @After
-    public void cleanUp() {
-        containmentIndex.reset();
-        cleanupList.clear();
-    }
-
-
 
     /**
      * Test trying to add a child to a non-existant parent.
@@ -225,7 +217,7 @@ public class CreateResourceServiceImplTest {
     public void testParentAg() {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("child");
-        containmentIndex.addContainedBy(TX_ID, fedoraId, childId);
+        containmentIndex.addContainedBy(transaction, FedoraId.getRepositoryRootId(), fedoraId);
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.isArchivalGroup()).thenReturn(true);
         createResourceService.perform(transaction, USER_PRINCIPAL, childId, null, model);
@@ -238,7 +230,7 @@ public class CreateResourceServiceImplTest {
         final FedoraId agId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId fedoraId = agId.resolve(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("child");
-        containmentIndex.addContainedBy(TX_ID, fedoraId, childId);
+        containmentIndex.addContainedBy(transaction, agId, fedoraId);
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.isArchivalGroup()).thenReturn(false);
         when(resourceHeaders.getArchivalGroupId()).thenReturn(agId);
@@ -254,7 +246,7 @@ public class CreateResourceServiceImplTest {
     public void testParentIsBinaryRdf() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("child");
-        containmentIndex.addContainedBy(TX_ID, rootId, fedoraId);
+        containmentIndex.addContainedBy(transaction, rootId, fedoraId);
         when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         createResourceService.perform(transaction, USER_PRINCIPAL, childId, null, model);
@@ -267,7 +259,7 @@ public class CreateResourceServiceImplTest {
     public void testParentIsBinary() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("child");
-        containmentIndex.addContainedBy(TX_ID, rootId, fedoraId);
+        containmentIndex.addContainedBy(transaction, rootId, fedoraId);
         when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         createResourceService.perform(transaction, USER_PRINCIPAL, childId, null, FILENAME, CONTENT_SIZE, null,
@@ -282,7 +274,7 @@ public class CreateResourceServiceImplTest {
     public void testParentIsExternal() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("child");
-        containmentIndex.addContainedBy(TX_ID, rootId, fedoraId);
+        containmentIndex.addContainedBy(transaction, rootId, fedoraId);
         when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         createResourceService.perform(transaction, USER_PRINCIPAL, childId, null, FILENAME, CONTENT_SIZE, null,
@@ -296,7 +288,7 @@ public class CreateResourceServiceImplTest {
     public void testParentIsRdf() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("child");
-        containmentIndex.addContainedBy(TX_ID, rootId, fedoraId);
+        containmentIndex.addContainedBy(transaction, rootId, fedoraId);
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         createResourceService.perform(transaction, USER_PRINCIPAL, childId, null, model);
@@ -305,7 +297,7 @@ public class CreateResourceServiceImplTest {
         final FedoraId persistedId = operationCaptor.getValue().getResourceId();
         assertNotEquals(fedoraId, persistedId);
         assertTrue(persistedId.getFullId().startsWith(fedoraId.getFullId()));
-        assertEquals(1, containmentIndex.getContains(transaction.getId(), fedoraId).count());
+        assertEquals(1, containmentIndex.getContains(transaction, fedoraId).count());
 
         verify(transaction).lockResource(childId);
     }
@@ -317,7 +309,7 @@ public class CreateResourceServiceImplTest {
     public void testParentIsRdfBinary() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("child");
-        containmentIndex.addContainedBy(TX_ID, rootId, fedoraId);
+        containmentIndex.addContainedBy(transaction, rootId, fedoraId);
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         createResourceService.perform(transaction, USER_PRINCIPAL, childId, CONTENT_TYPE,
@@ -331,7 +323,7 @@ public class CreateResourceServiceImplTest {
         assertTrue(persistedId.getFullId().startsWith(fedoraId.getFullId()));
         assertBinaryPropertiesPresent(operation);
         assertEquals(fedoraId, operation.getParentId());
-        assertEquals(1, containmentIndex.getContains(transaction.getId(), fedoraId).count());
+        assertEquals(1, containmentIndex.getContains(transaction, fedoraId).count());
         verify(transaction).lockResource(childId);
     }
 
@@ -350,7 +342,7 @@ public class CreateResourceServiceImplTest {
         final String relaxedUser = "relaxedUser";
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("testSlug");
-        containmentIndex.addContainedBy(TX_ID, rootId, fedoraId);
+        containmentIndex.addContainedBy(transaction, rootId, fedoraId);
 
         final var resc = model.getResource(childId.getFullId());
         resc.addLiteral(LAST_MODIFIED_DATE, lastModifiedDateXsd);
@@ -379,7 +371,7 @@ public class CreateResourceServiceImplTest {
         assertEquals(relaxedUser, rdfOp.getLastModifiedBy());
         assertEquals(createdDate, rdfOp.getCreatedDate());
         assertEquals(lastModifiedDate, rdfOp.getLastModifiedDate());
-        assertEquals(1, containmentIndex.getContains(transaction.getId(), fedoraId).count());
+        assertEquals(1, containmentIndex.getContains(transaction, fedoraId).count());
         verify(transaction).lockResource(childId);
     }
 
@@ -391,8 +383,8 @@ public class CreateResourceServiceImplTest {
     public void testWithBinary() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("testSlug");
-        containmentIndex.addContainedBy(TX_ID, fedoraId, childId);
-        containmentIndex.commitTransaction(transaction.getId());
+        containmentIndex.addContainedBy(transaction, FedoraId.getRepositoryRootId(), fedoraId);
+        containmentIndex.commitTransaction(transaction);
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(psSession.getHeaders(childId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
@@ -411,7 +403,7 @@ public class CreateResourceServiceImplTest {
 
         final var descOperation = getOperation(operations, CreateRdfSourceOperation.class);
         assertEquals(persistedId.asDescription(), descOperation.getResourceId());
-        assertEquals(1, containmentIndex.getContains(transaction.getId(), fedoraId).count());
+        assertEquals(1, containmentIndex.getContains(transaction, fedoraId).count());
         verify(transaction).lockResource(childId);
     }
 

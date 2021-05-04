@@ -76,9 +76,9 @@ import org.fcrepo.http.commons.domain.MultiPrefer;
 import org.fcrepo.http.commons.domain.SinglePrefer;
 import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.http.commons.session.TransactionProvider;
+import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
-import org.fcrepo.kernel.api.TransactionUtils;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
@@ -294,7 +294,7 @@ public class WebACFilter extends RequestContextFilter {
     private Transaction transaction(final HttpServletRequest request) {
         final String txId = request.getHeader(ATOMIC_ID_HEADER);
         if (txId == null) {
-            return null;
+            return ReadOnlyTransaction.INSTANCE;
         }
         final var txProvider = new TransactionProvider(transactionManager, request,
                 getBaseUri(request), fedoraPropsConfig.getJmsBaseUrl());
@@ -814,8 +814,7 @@ public class WebACFilter extends RequestContextFilter {
                                                       final boolean deepTraversal) {
         if (!isBinaryOrDescription(resource)) {
             final Transaction transaction = transaction(request);
-            final Stream<FedoraResource> children = resourceFactory.getChildren(TransactionUtils.openTxId(transaction),
-                    resource.getFedoraId());
+            final Stream<FedoraResource> children = resourceFactory.getChildren(transaction, resource.getFedoraId());
             return children.noneMatch(resc -> {
                 final URI childURI = URI.create(resc.getFedoraId().getFullId());
                 log.debug("Found embedded resource: {}", resc);

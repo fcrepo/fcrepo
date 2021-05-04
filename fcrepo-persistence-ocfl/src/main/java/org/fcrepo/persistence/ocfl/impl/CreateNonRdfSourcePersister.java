@@ -52,10 +52,10 @@ class CreateNonRdfSourcePersister extends AbstractNonRdfSourcePersister {
 
         final var archivalGroupId = findArchivalGroupInAncestry(resourceId, session);
         final var rootObjectId = archivalGroupId.orElseGet(resourceId::asBaseId);
-        final String ocflId = mapToOcflId(session.getId(), rootObjectId);
+        final String ocflId = mapToOcflId(operation.getTransaction(), rootObjectId);
         final OcflObjectSession ocflObjectSession = session.findOrCreateSession(ocflId);
 
         persistNonRDFSource(operation, ocflObjectSession, rootObjectId.asBaseId(), archivalGroupId.isPresent());
-        ocflIndex.addMapping(session.getId(), resourceId.asResourceId(), rootObjectId.asBaseId(), ocflId);
+        ocflIndex.addMapping(operation.getTransaction(), resourceId.asResourceId(), rootObjectId.asBaseId(), ocflId);
     }
 }

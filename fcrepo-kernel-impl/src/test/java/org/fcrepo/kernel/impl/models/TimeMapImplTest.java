@@ -21,6 +21,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.fcrepo.kernel.api.RdfLexicon;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -40,6 +41,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
@@ -67,12 +69,17 @@ public class TimeMapImplTest {
     @Mock
     private ResourceFactory resourceFactory;
 
+    @Mock
+    private Transaction transaction;
+
     private final String defaultId = FEDORA_ID_PREFIX + "/resource";
 
     private TimeMapImpl timeMap;
 
     @Before
     public void setup() {
+        when(transaction.getId()).thenReturn(UUID.randomUUID().toString());
+        when(transaction.isShortLived()).thenReturn(true);
         timeMap = createTimeMap(defaultId);
 
         when(sessionManager.getReadOnlySession()).thenReturn(session);
@@ -81,7 +88,7 @@ public class TimeMapImplTest {
     @Test
     public void copyParentPropsWhenCreatingTimeMap() {
         final var parent = createParent(FEDORA_ID_PREFIX + "id");
-        final var timeMap = new TimeMapImpl(parent, null, sessionManager, resourceFactory);
+        final var timeMap = new TimeMapImpl(parent, transaction, sessionManager, resourceFactory);
 
         assertEquals(parent.getId(), timeMap.getId());
         assertEquals(parent.getCreatedBy(), timeMap.getCreatedBy());
@@ -158,7 +165,7 @@ public class TimeMapImplTest {
             mementos.add(memento);
             final FedoraId mementoID = FedoraId.create(id, FCR_VERSIONS, instantStr(version));
             when(memento.getFedoraId()).thenReturn(mementoID);
-            when(resourceFactory.getResource((String)null, mementoID)).thenReturn(memento);
+            when(resourceFactory.getResource(transaction, mementoID)).thenReturn(memento);
         }
         return mementos;
     }
@@ -184,12 +191,12 @@ public class TimeMapImplTest {
     }
 
     private TimeMapImpl createTimeMap(final String id) {
-        return new TimeMapImpl(createParent(id), null, sessionManager, resourceFactory);
+        return new TimeMapImpl(createParent(id), transaction, sessionManager, resourceFactory);
     }
 
     private FedoraResource createParent(final String id) {
         final var fedoraId = FedoraId.create(id);
-        final var parent = new ContainerImpl(fedoraId, null, sessionManager, resourceFactory);
+        final var parent = new ContainerImpl(fedoraId, transaction, sessionManager, resourceFactory);
 
         parent.setCreatedBy("createdBy");
         parent.setCreatedDate(Instant.now());

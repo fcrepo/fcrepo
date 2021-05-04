@@ -15,28 +15,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.impl.operations;
 
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.DELETE;
+package org.fcrepo.common.db;
 
-import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.operations.ResourceOperationType;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Operation for deleting a resource
+ * Meta annotation for applying @Transactional with a policy that retries MySQL deadlock exceptions
  *
- * @author bbpennel
+ * @author pwinckles
  */
-public class DeleteResourceOperation extends AbstractResourceOperation {
-
-    protected DeleteResourceOperation(final Transaction transaction, final FedoraId rescId) {
-        super(transaction, rescId);
-    }
-
-    @Override
-    public ResourceOperationType getType() {
-        return DELETE;
-    }
+@Transactional
+@Retryable(
+        exceptionExpression = "@dbExceptionChecker.shouldRetry(#root)",
+        backoff = @Backoff(delay = 10L, maxDelay = 100L, multiplier = 1.5),
+        maxAttempts = 10)
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface TransactionalWithRetry {
 }

@@ -18,6 +18,8 @@
 package org.fcrepo.kernel.impl.services;
 
 import org.apache.jena.rdf.model.Model;
+
+import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
@@ -80,15 +82,15 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
     private NonRdfSourceOperationFactory nonRdfSourceOperationFactory;
 
     @Override
+    @TransactionalWithRetry
     public void perform(final Transaction tx, final String userPrincipal, final FedoraId fedoraId,
                         final String contentType, final String filename,
                         final long contentSize, final List<String> linkHeaders, final Collection<URI> digest,
                         final InputStream requestBody, final ExternalContent externalContent) {
-        final var txId = tx.getId();
-        final PersistentStorageSession pSession = this.psManager.getSession(txId);
+        final PersistentStorageSession pSession = this.psManager.getSession(tx);
         checkAclLinkHeader(linkHeaders);
         // Locate a containment parent of fedoraId, if exists.
-        final FedoraId parentId = containmentIndex.getContainerIdByPath(txId, fedoraId, true);
+        final FedoraId parentId = containmentIndex.getContainerIdByPath(tx, fedoraId, true);
         checkParent(pSession, parentId);
 
         final CreateNonRdfSourceOperationBuilder builder;
@@ -101,9 +103,9 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                 contentInputStream = externalContent.fetchExternalContent();
             }
 
-            builder = nonRdfSourceOperationFactory.createInternalBinaryBuilder(fedoraId, contentInputStream);
+            builder = nonRdfSourceOperationFactory.createInternalBinaryBuilder(tx, fedoraId, contentInputStream);
         } else {
-            builder = nonRdfSourceOperationFactory.createExternalBinaryBuilder(fedoraId,
+            builder = nonRdfSourceOperationFactory.createExternalBinaryBuilder(tx, fedoraId,
                     externalContent.getHandling(), externalContent.getURI());
             if (contentSize == -1L) {
                 size = externalContent.getContentSize();
@@ -137,9 +139,9 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
             pSession.persist(createOp);
             // Populate the description for the new binary
             createDescription(tx, pSession, userPrincipal, fedoraId);
-            addToContainmentIndex(txId, parentId, fedoraId);
-            membershipService.resourceCreated(txId, fedoraId);
-            recordEvent(txId, fedoraId, createOp);
+            addToContainmentIndex(tx, parentId, fedoraId);
+            membershipService.resourceCreated(tx, fedoraId);
+            recordEvent(tx, fedoraId, createOp);
         } catch (final PersistentStorageException exc) {
             throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
         }
@@ -151,6 +153,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                                    final FedoraId binaryId) {
         final var descId = binaryId.asDescription();
         final var createOp = rdfSourceOperationFactory.createBuilder(
+                    tx,
                     descId,
                     FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI,
                     fedoraPropsConfig.getServerManagedPropsMode()
@@ -168,13 +171,13 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
     }
 
     @Override
+    @TransactionalWithRetry
     public void perform(final Transaction tx, final String userPrincipal, final FedoraId fedoraId,
             final List<String> linkHeaders, final Model model) {
-        final var txId = tx.getId();
-        final PersistentStorageSession pSession = this.psManager.getSession(txId);
+        final PersistentStorageSession pSession = this.psManager.getSession(tx);
         checkAclLinkHeader(linkHeaders);
         // Locate a containment parent of fedoraId, if exists.
-        final FedoraId parentId = containmentIndex.getContainerIdByPath(txId, fedoraId, true);
+        final FedoraId parentId = containmentIndex.getContainerIdByPath(tx, fedoraId, true);
         checkParent(pSession, parentId);
 
         final List<String> rdfTypes = isEmpty(linkHeaders) ? emptyList() : getTypes(linkHeaders);
@@ -186,7 +189,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         ensureValidDirectContainer(fedoraId, interactionModel, model);
 
         final RdfSourceOperation createOp = rdfSourceOperationFactory
-                .createBuilder(fedoraId, interactionModel, fedoraPropsConfig.getServerManagedPropsMode())
+                .createBuilder(tx, fedoraId, interactionModel, fedoraPropsConfig.getServerManagedPropsMode())
                 .parentId(parentId)
                 .triples(stream)
                 .relaxedProperties(model)
@@ -199,10 +202,10 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
         try {
             pSession.persist(createOp);
-            updateReferences(txId, fedoraId, userPrincipal, model);
-            addToContainmentIndex(txId, parentId, fedoraId);
-            membershipService.resourceCreated(txId, fedoraId);
-            recordEvent(txId, fedoraId, createOp);
+            updateReferences(tx, fedoraId, userPrincipal, model);
+            addToContainmentIndex(tx, parentId, fedoraId);
+            membershipService.resourceCreated(tx, fedoraId);
+            recordEvent(tx, fedoraId, createOp);
         } catch (final PersistentStorageException exc) {
             throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
         }
@@ -275,11 +278,11 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
     /**
      * Add this pairing to the containment index.
-     * @param txId The transaction ID or null if no transaction.
+     * @param tx The transaction.
      * @param parentId The parent ID.
      * @param id The child ID.
      */
-    private void addToContainmentIndex(final String txId, final FedoraId parentId, final FedoraId id) {
-        containmentIndex.addContainedBy(txId, parentId, id);
+    private void addToContainmentIndex(final Transaction tx, final FedoraId parentId, final FedoraId id) {
+        containmentIndex.addContainedBy(tx, parentId, id);
     }
 }

@@ -47,6 +47,9 @@ import javax.inject.Inject;
 import javax.sql.DataSource;
 
 import org.fcrepo.common.db.DbPlatform;
+import org.fcrepo.common.db.TransactionalWithRetry;
+import org.fcrepo.kernel.api.ReadOnlyTransaction;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceFactory;
@@ -66,8 +69,6 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
 
 /**
  * An implementation of the {@link SearchIndex}
@@ -305,12 +306,12 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     @Override
     public void addUpdateIndex(final ResourceHeaders resourceHeaders) {
-        addUpdateIndex(null, resourceHeaders);
+        addUpdateIndex(ReadOnlyTransaction.INSTANCE, resourceHeaders);
     }
 
-    @Transactional
     @Override
-    public void addUpdateIndex(final String txId, final ResourceHeaders resourceHeaders) {
+    @TransactionalWithRetry
+    public void addUpdateIndex(final Transaction transaction, final ResourceHeaders resourceHeaders) {
         final var fedoraId = resourceHeaders.getId();
         final var fullId = fedoraId.getFullId();
 
@@ -325,7 +326,7 @@ public class DbSearchIndexImpl implements SearchIndex {
                 jdbcTemplate.queryForList(SELECT_BY_FEDORA_ID,
                         selectParams);
         try {
-            final var fedoraResource = resourceFactory.getResource(txId, fedoraId);
+            final var fedoraResource = resourceFactory.getResource(transaction, fedoraId);
             final var rdfTypes = fedoraResource.getTypes();
             final var rdfTypeIds = findOrCreateRdfTypesInDb(rdfTypes);
             final var params = new MapSqlParameterSource();

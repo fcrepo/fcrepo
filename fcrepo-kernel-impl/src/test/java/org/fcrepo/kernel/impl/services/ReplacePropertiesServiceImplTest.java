@@ -21,7 +21,6 @@ import static org.apache.jena.vocabulary.DC_11.title;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -121,8 +120,7 @@ public class ReplacePropertiesServiceImplTest {
         setField(service, "membershipService", membershipService);
         setField(service, "fedoraPropsConfig", propsConfig);
         propsConfig.setServerManagedPropsMode(ServerManagedPropsMode.STRICT);
-        when(tx.getId()).thenReturn(TX_ID);
-        when(psManager.getSession(anyString())).thenReturn(pSession);
+        when(psManager.getSession(any(Transaction.class))).thenReturn(pSession);
         when(pSession.getHeaders(any(FedoraId.class), nullable(Instant.class))).thenReturn(headers);
     }
 

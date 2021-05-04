@@ -55,9 +55,9 @@ public class TransactionImpl implements Transaction {
                 return e instanceof DeadlockLoserDataAccessException
                         || (e.getCause() != null && e.getCause() instanceof DeadlockLoserDataAccessException);
             })
-            .withBackoff(50, 1000, ChronoUnit.MILLIS, 1.5)
+            .withBackoff(10, 100, ChronoUnit.MILLIS, 1.5)
             .withJitter(0.1)
-            .withMaxRetries(5);
+            .withMaxRetries(10);
 
     private final String id;
 
@@ -106,9 +106,9 @@ public class TransactionImpl implements Transaction {
             Failsafe.with(DB_RETRY).run(() -> {
                 // Cannot use transactional annotations because this class is not managed by spring
                 getTransactionTemplate().executeWithoutResult(status -> {
-                    this.getContainmentIndex().commitTransaction(id);
-                    this.getReferenceService().commitTransaction(id);
-                    this.getMembershipService().commitTransaction(id);
+                    this.getContainmentIndex().commitTransaction(this);
+                    this.getReferenceService().commitTransaction(this);
+                    this.getMembershipService().commitTransaction(this);
                     this.getPersistentSession().prepare();
                     // The storage session must be committed last because mutable head changes cannot be rolled back.
                     // The db transaction will remain open until all changes have been written to OCFL. If the changes
@@ -118,8 +118,8 @@ public class TransactionImpl implements Transaction {
                     this.getPersistentSession().commit();
                 });
             });
-            this.getEventAccumulator().emitEvents(id, baseUri, userAgent);
             this.committed = true;
+            this.getEventAccumulator().emitEvents(this, baseUri, userAgent);
             releaseLocks();
         } catch (final Exception ex) {
             log.error("Failed to commit transaction: {}", id, ex);
@@ -148,16 +148,16 @@ public class TransactionImpl implements Transaction {
             this.getPersistentSession().rollback();
         });
         execQuietly("Failed to rollback index in transaction " + id, () -> {
-            this.getContainmentIndex().rollbackTransaction(id);
+            this.getContainmentIndex().rollbackTransaction(this);
         });
         execQuietly("Failed to rollback reference index in transaction " + id, () -> {
-            this.getReferenceService().rollbackTransaction(id);
+            this.getReferenceService().rollbackTransaction(this);
         });
         execQuietly("Failed to rollback membership index in transaction " + id, () -> {
-            this.getMembershipService().rollbackTransaction(id);
+            this.getMembershipService().rollbackTransaction(this);
         });
         execQuietly("Failed to rollback events in transaction " + id, () -> {
-            this.getEventAccumulator().clearEvents(id);
+            this.getEventAccumulator().clearEvents(this);
         });
 
         releaseLocks();
@@ -181,6 +181,21 @@ public class TransactionImpl implements Transaction {
     @Override
     public boolean isShortLived() {
         return this.shortLived;
+    }
+
+    @Override
+    public boolean isOpenLongRunning() {
+        return !this.isShortLived() && isOpen();
+    }
+
+    @Override
+    public boolean isOpen() {
+        return !(this.isCommitted() || this.hasExpired() || this.isRolledBack());
+    }
+
+    @Override
+    public boolean isReadOnly() {
+        return false;
     }
 
     @Override
@@ -247,7 +262,7 @@ public class TransactionImpl implements Transaction {
     }
 
     private PersistentStorageSession getPersistentSession() {
-        return this.txManager.getPersistentStorageSessionManager().getSession(this.id);
+        return this.txManager.getPersistentStorageSessionManager().getSession(this);
     }
 
     private void failIfExpired() {
@@ -312,4 +327,8 @@ public class TransactionImpl implements Transaction {
         return this.txManager.getResourceLockManager();
     }
 
+    @Override
+    public String toString() {
+        return id;
+    }
 }

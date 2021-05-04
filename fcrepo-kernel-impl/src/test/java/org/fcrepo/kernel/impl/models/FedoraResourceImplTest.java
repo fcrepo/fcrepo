@@ -18,34 +18,15 @@
 
 package org.fcrepo.kernel.impl.models;
 
-import org.apache.jena.rdf.model.Model;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.ResourceFactory;
-import org.fcrepo.kernel.api.models.ResourceHeaders;
-import org.fcrepo.kernel.api.models.TimeMap;
-import org.fcrepo.kernel.api.services.VersionService;
-import org.fcrepo.persistence.api.PersistentStorageSession;
-import org.fcrepo.persistence.api.PersistentStorageSessionManager;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-
-import java.net.URI;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-
 import static java.net.URI.create;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
@@ -58,6 +39,27 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
+
+import java.net.URI;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.kernel.api.models.TimeMap;
+import org.fcrepo.kernel.api.services.VersionService;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+
+import org.apache.jena.rdf.model.Model;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * @author pwinckles
@@ -79,6 +81,9 @@ public class FedoraResourceImplTest {
 
     @Mock
     private ResourceHeaders headers;
+
+    @Mock
+    private Transaction transaction;
 
     private static final String ID = "info:fedora/test";
 
@@ -151,7 +156,9 @@ public class FedoraResourceImplTest {
                 create(VERSIONING_TIMEGATE_TYPE)
         );
 
-        final var resource = new FedoraResourceImpl(FEDORA_ID, null, sessionManager, resourceFactory);
+        when(transaction.isShortLived()).thenReturn(true);
+
+        final var resource = new FedoraResourceImpl(FEDORA_ID, transaction, sessionManager, resourceFactory);
         resource.setInteractionModel(BASIC_CONTAINER.toString());
         resource.setIsArchivalGroup(false);
         final var resourceTypes = resource.getTypes();
@@ -176,7 +183,7 @@ public class FedoraResourceImplTest {
         final var description = new NonRdfSourceDescriptionImpl(descriptionFedoraId, null, sessionManager,
                 resourceFactory);
 
-        when(resourceFactory.getResource((String)any(), eq(descriptionFedoraId))).thenReturn(description);
+        when(resourceFactory.getResource(any(Transaction.class), eq(descriptionFedoraId))).thenReturn(description);
         when(sessionManager.getReadOnlySession()).thenReturn(psSession);
         when(psSession.getTriples(eq(descriptionFedoraId), any())).thenReturn(userStream);
 
@@ -190,7 +197,9 @@ public class FedoraResourceImplTest {
                 create(VERSIONING_TIMEGATE_TYPE)
         );
 
-        final var resource = new BinaryImpl(FEDORA_ID, null, sessionManager, resourceFactory);
+        when(transaction.isShortLived()).thenReturn(true);
+
+        final var resource = new BinaryImpl(FEDORA_ID, transaction, sessionManager, resourceFactory);
         resource.setInteractionModel(NON_RDF_SOURCE.toString());
         resource.setIsArchivalGroup(false);
         final var resourceTypes = resource.getTypes();

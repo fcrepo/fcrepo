@@ -24,7 +24,6 @@ import static org.fcrepo.kernel.api.models.ExternalContent.COPY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,8 +35,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Collection;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -52,6 +49,9 @@ import org.fcrepo.kernel.impl.operations.UpdateNonRdfSourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -117,7 +117,7 @@ public class ReplaceBinariesServiceImplTest {
         factory = new NonRdfSourceOperationFactoryImpl();
         setField(service, "factory", factory);
         setField(service, "eventAccumulator", eventAccumulator);
-        when(psManager.getSession(anyString())).thenReturn(pSession);
+        when(psManager.getSession(any(Transaction.class))).thenReturn(pSession);
         when(tx.getId()).thenReturn(TX_ID);
         when(pSession.getHeaders(FEDORA_ID, null)).thenReturn(headers);
     }

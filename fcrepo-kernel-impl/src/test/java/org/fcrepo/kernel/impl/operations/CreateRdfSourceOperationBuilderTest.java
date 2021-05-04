@@ -37,6 +37,7 @@ import java.util.Date;
 
 import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateRdfSourceOperation;
@@ -54,6 +55,7 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /**
@@ -93,13 +95,16 @@ public class CreateRdfSourceOperationBuilderTest {
 
     private final Calendar calendar = Calendar.getInstance();
 
+    @Mock
+    private Transaction tx;
+
     @Before
     public void setUp() {
         calendar.setTime(Date.from(CREATED_INSTANT));
         Created_xsddatetime = new XSDDateTime(calendar);
         calendar.setTime(Date.from(MODIFIED_INSTANT));
         Modified_xsddatetime = new XSDDateTime(calendar);
-        builder = new CreateRdfSourceOperationBuilderImpl(RESOURCE_ID, RDF_SOURCE.toString(),
+        builder = new CreateRdfSourceOperationBuilderImpl(tx, RESOURCE_ID, RDF_SOURCE.toString(),
                 ServerManagedPropsMode.STRICT);
         model = ModelFactory.createDefaultModel();
         model.add(
@@ -220,7 +225,7 @@ public class CreateRdfSourceOperationBuilderTest {
 
 
     private RdfSourceOperation buildOperationWithRelaxProperties(final Model model) {
-        builder = new CreateRdfSourceOperationBuilderImpl(RESOURCE_ID, RDF_SOURCE.toString(),
+        builder = new CreateRdfSourceOperationBuilderImpl(tx, RESOURCE_ID, RDF_SOURCE.toString(),
                 ServerManagedPropsMode.RELAXED);
         return builder.relaxedProperties(model).build();
     }

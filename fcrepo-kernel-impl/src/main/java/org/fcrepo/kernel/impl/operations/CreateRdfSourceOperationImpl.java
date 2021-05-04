@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.impl.operations;
 
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateRdfSourceOperation;
 
@@ -40,13 +41,14 @@ public class CreateRdfSourceOperationImpl extends AbstractRdfSourceOperation imp
     /**
      * Constructor for creation operation
      *
+     * @param transaction the transaction
      * @param rescId the internal identifier.
      * @param interactionModel interaction model for the resource
      * @param triples triples stream for the resource
      */
-    protected CreateRdfSourceOperationImpl(final FedoraId rescId, final String interactionModel,
-                                           final RdfStream triples) {
-        super(rescId, triples);
+    protected CreateRdfSourceOperationImpl(final Transaction transaction, final FedoraId rescId,
+                                           final String interactionModel, final RdfStream triples) {
+        super(transaction, rescId, triples);
         this.interactionModel = interactionModel;
     }
 

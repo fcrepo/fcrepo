@@ -40,7 +40,7 @@ class PurgeResourcePersister extends AbstractPersister {
     @Override
     public void persist(final OcflPersistentStorageSession session, final ResourceOperation operation)
             throws PersistentStorageException {
-        final var mapping = getMapping(session.getId(), operation.getResourceId());
+        final var mapping = getMapping(operation.getTransaction(), operation.getResourceId());
         final var resourceId = operation.getResourceId();
         final var objectSession = session.findOrCreateSession(mapping.getOcflObjectId());
         log.debug("Deleting {} from {}", resourceId, mapping.getOcflObjectId());
@@ -51,7 +51,7 @@ class PurgeResourcePersister extends AbstractPersister {
             throw new PersistentStorageException(String.format("Purge resource %s failed", resourceId), e);
         }
 
-        ocflIndex.removeMapping(session.getId(), resourceId.asResourceId());
+        ocflIndex.removeMapping(operation.getTransaction(), resourceId.asResourceId());
     }
 
 }

@@ -98,6 +98,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 
+import org.fcrepo.config.DigestAlgorithm;
 import org.fcrepo.http.api.services.EtagService;
 import org.fcrepo.http.api.services.HttpRdfService;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
@@ -109,7 +110,6 @@ import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.TransactionUtils;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
@@ -135,7 +135,6 @@ import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.ResourceTripleService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
 import org.fcrepo.kernel.api.utils.ContentDigest;
-import org.fcrepo.config.DigestAlgorithm;
 
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPut;
@@ -284,7 +283,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         // Embed the children of this object
         if (ldpPreferences.displayEmbed()) {
             final var containedResources = resourceFactory.getChildren(
-                    TransactionUtils.openTxId(transaction()),
+                    transaction(),
                     resource.getFedoraId());
             embedStreams.add(containedResources.flatMap(child -> resourceTripleService.getResourceTriples(
                     transaction(), child, ldpPreferences, limit)));
@@ -525,7 +524,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected void addTransactionHeaders(final FedoraResource resource) {
         final var tx = transaction();
-        if (tx != null && !tx.isShortLived()) {
+        if (!tx.isShortLived()) {
             final var externalId = identifierConverter()
                     .toExternalId(FEDORA_ID_PREFIX + "/" + TX_PREFIX + tx.getId());
             servletResponse.addHeader(ATOMIC_ID_HEADER, externalId);
@@ -654,8 +653,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             etag = new EntityTag(resource.getEtagValue());
         } else {
             // Use a weak ETag for the LDP-RS
-            final String txId = TransactionUtils.openTxId(transaction);
-            etag = new EntityTag(etagService.getRdfResourceEtag(txId, resource, getLdpPreferTag(),
+            etag = new EntityTag(etagService.getRdfResourceEtag(transaction, resource, getLdpPreferTag(),
                     headers.getAcceptableMediaTypes()), true);
         }
 
@@ -716,8 +714,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             etag = new EntityTag(resource.getEtagValue());
         } else {
             // Use a strong ETag for the LDP-RS when validating If-(None)-Match headers
-            final String txId = TransactionUtils.openTxId(transaction);
-            etag = new EntityTag(etagService.getRdfResourceEtag(txId, resource, getLdpPreferTag(),
+            etag = new EntityTag(etagService.getRdfResourceEtag(transaction, resource, getLdpPreferTag(),
                     headers.getAcceptableMediaTypes()), false);
         }
 

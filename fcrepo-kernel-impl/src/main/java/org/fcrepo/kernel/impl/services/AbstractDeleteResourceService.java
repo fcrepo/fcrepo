@@ -23,6 +23,7 @@ import javax.inject.Inject;
 
 import java.util.stream.Stream;
 
+import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
@@ -60,6 +61,7 @@ abstract public class AbstractDeleteResourceService extends AbstractService {
      * @param fedoraResource the resource to start delete/purging.
      * @param userPrincipal the user performing the action.
      */
+    @TransactionalWithRetry
     public void perform(final Transaction tx, final FedoraResource fedoraResource, final String userPrincipal) {
         final String fedoraResourceId = fedoraResource.getId();
 
@@ -71,7 +73,7 @@ abstract public class AbstractDeleteResourceService extends AbstractService {
 
         try {
             log.debug("operating on {}", fedoraResourceId);
-            final PersistentStorageSession pSession = this.psManager.getSession(tx.getId());
+            final PersistentStorageSession pSession = this.psManager.getSession(tx);
             deleteDepthFirst(tx, pSession, fedoraResource, userPrincipal);
         } catch (final PersistentStorageException ex) {
             throw new RepositoryRuntimeException(format("failed to delete/purge resource %s", fedoraResourceId), ex);

@@ -20,6 +20,7 @@ package org.fcrepo.kernel.impl.operations;
 import java.time.Instant;
 
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 
@@ -40,8 +41,9 @@ public abstract class AbstractRdfSourceOperation extends AbstractResourceOperati
 
     protected Instant createdDate;
 
-    protected AbstractRdfSourceOperation(final FedoraId rescId, final RdfStream triples) {
-        super(rescId);
+    protected AbstractRdfSourceOperation(final Transaction transaction, final FedoraId rescId,
+                                         final RdfStream triples) {
+        super(transaction, rescId);
         this.triples = triples;
     }
 

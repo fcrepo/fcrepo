@@ -18,39 +18,32 @@
 
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateVersionResourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
-import org.fcrepo.kernel.api.operations.ResourceOperationBuilder;
 
 /**
  * Default impl of {@link CreateVersionResourceOperationBuilder}
  *
  * @author pwinckles
  */
-public class CreateVersionResourceOperationBuilderImpl implements CreateVersionResourceOperationBuilder {
-
-    private final FedoraId resourceId;
-    private String userPrincipal;
+public class CreateVersionResourceOperationBuilderImpl extends AbstractResourceOperationBuilder
+        implements CreateVersionResourceOperationBuilder {
 
     /**
      * Create a new builder
      *
+     * @param transaction the transaction.
      * @param resourceId the resource id
      */
-    public CreateVersionResourceOperationBuilderImpl(final FedoraId resourceId) {
-        this.resourceId = resourceId;
-    }
-
-    @Override
-    public ResourceOperationBuilder userPrincipal(final String userPrincipal) {
-        this.userPrincipal = userPrincipal;
-        return this;
+    public CreateVersionResourceOperationBuilderImpl(final Transaction transaction, final FedoraId resourceId) {
+        super(transaction, resourceId);
     }
 
     @Override
     public ResourceOperation build() {
-        final var operation = new CreateVersionResourceOperationImpl(resourceId);
+        final var operation = new CreateVersionResourceOperationImpl(transaction, rescId);
         operation.setUserPrincipal(userPrincipal);
         return operation;
     }

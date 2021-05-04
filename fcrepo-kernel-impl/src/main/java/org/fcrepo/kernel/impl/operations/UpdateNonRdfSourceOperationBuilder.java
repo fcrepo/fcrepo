@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 import java.io.InputStream;
@@ -28,21 +29,24 @@ import java.net.URI;
  * @author bbpennel
  */
 public class UpdateNonRdfSourceOperationBuilder extends AbstractNonRdfSourceOperationBuilder {
-    protected UpdateNonRdfSourceOperationBuilder(final FedoraId rescId, final InputStream stream) {
-        super(rescId, stream);
+    protected UpdateNonRdfSourceOperationBuilder(final Transaction transaction, final FedoraId rescId,
+                                                 final InputStream stream) {
+        super(transaction, rescId, stream);
     }
 
-    protected UpdateNonRdfSourceOperationBuilder(final FedoraId rescId, final String handling, final URI contentUri) {
-        super(rescId, handling, contentUri);
+    protected UpdateNonRdfSourceOperationBuilder(final Transaction transaction, final FedoraId rescId,
+                                                 final String handling,
+                                                 final URI contentUri) {
+        super(transaction, rescId, handling, contentUri);
     }
 
     @Override
     public UpdateNonRdfSourceOperation build() {
         final UpdateNonRdfSourceOperation operation;
         if (externalURI != null && externalType != null) {
-            operation = new UpdateNonRdfSourceOperation(resourceId, externalURI, externalType);
+            operation = new UpdateNonRdfSourceOperation(transaction, resourceId, externalURI, externalType);
         } else {
-            operation = new UpdateNonRdfSourceOperation(resourceId, content);
+            operation = new UpdateNonRdfSourceOperation(transaction, resourceId, content);
         }
 
         operation.setUserPrincipal(userPrincipal);

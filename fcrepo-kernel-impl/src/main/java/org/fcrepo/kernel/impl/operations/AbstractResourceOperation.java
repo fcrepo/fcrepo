@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 
@@ -34,8 +35,11 @@ public abstract class AbstractResourceOperation implements ResourceOperation {
 
     private String userPrincipal;
 
-    protected AbstractResourceOperation(final FedoraId rescId) {
+    private Transaction transaction;
+
+    protected AbstractResourceOperation(final Transaction transaction, final FedoraId rescId) {
         this.rescId = rescId;
+        this.transaction = transaction;
     }
 
     @Override
@@ -46,6 +50,11 @@ public abstract class AbstractResourceOperation implements ResourceOperation {
     @Override
     public String getUserPrincipal() {
         return userPrincipal;
+    }
+
+    @Override
+    public Transaction getTransaction() {
+        return transaction;
     }
 
     /**

@@ -17,40 +17,6 @@
  */
 package org.fcrepo.auth.webac;
 
-import org.apache.http.auth.BasicUserPrincipal;
-import org.apache.shiro.authc.AuthenticationException;
-import org.apache.shiro.authc.AuthenticationInfo;
-import org.apache.shiro.authc.AuthenticationToken;
-import org.apache.shiro.authz.AuthorizationInfo;
-import org.apache.shiro.authz.SimpleAuthorizationInfo;
-import org.apache.shiro.realm.AuthorizingRealm;
-import org.apache.shiro.subject.PrincipalCollection;
-import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrincipal;
-import org.fcrepo.config.FedoraPropsConfig;
-import org.fcrepo.http.commons.session.TransactionProvider;
-import org.fcrepo.kernel.api.ContainmentIndex;
-import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.TransactionManager;
-import org.fcrepo.kernel.api.TransactionUtils;
-import org.fcrepo.kernel.api.exception.PathNotFoundException;
-import org.fcrepo.kernel.api.exception.RepositoryConfigurationException;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.ResourceFactory;
-import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import java.net.URI;
-import java.security.Principal;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import static org.fcrepo.auth.common.DelegateHeaderPrincipalProvider.DelegatedHeaderPrincipal;
 import static org.fcrepo.auth.common.HttpHeaderPrincipalProvider.HttpHeaderPrincipal;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_ADMIN_ROLE;
@@ -61,6 +27,42 @@ import static org.fcrepo.auth.webac.WebACFilter.getBaseUri;
 import static org.fcrepo.auth.webac.WebACFilter.identifierConverter;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import java.net.URI;
+import java.security.Principal;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+
+import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrincipal;
+import org.fcrepo.config.FedoraPropsConfig;
+import org.fcrepo.http.commons.session.TransactionProvider;
+import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.ReadOnlyTransaction;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.RepositoryConfigurationException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+
+import org.apache.http.auth.BasicUserPrincipal;
+import org.apache.shiro.authc.AuthenticationException;
+import org.apache.shiro.authc.AuthenticationInfo;
+import org.apache.shiro.authc.AuthenticationToken;
+import org.apache.shiro.authz.AuthorizationInfo;
+import org.apache.shiro.authz.SimpleAuthorizationInfo;
+import org.apache.shiro.realm.AuthorizingRealm;
+import org.apache.shiro.subject.PrincipalCollection;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 /**
  * Authorization-only realm that performs authorization checks using WebAC ACLs stored in a Fedora repository. It
  * locates the ACL for the currently requested resource and parses the ACL RDF into a set of {@link WebACPermission}
@@ -100,7 +102,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     private Transaction transaction() {
         final String txId = request.getHeader(ATOMIC_ID_HEADER);
         if (txId == null) {
-            return null;
+            return ReadOnlyTransaction.INSTANCE;
         }
         final var txProvider = new TransactionProvider(transactionManager, request,
                 getBaseUri(request), fedoraPropsConfig.getJmsBaseUrl());
@@ -248,7 +250,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
         } catch (final PathNotFoundException exc) {
             log.debug("Resource {} not found getting container", fedoraId.getFullIdPath());
             final FedoraId containerId =
-                    containmentIndex.getContainerIdByPath(TransactionUtils.openTxId(transaction()), fedoraId, false);
+                    containmentIndex.getContainerIdByPath(transaction(), fedoraId, false);
             log.debug("Attempting to get FedoraResource for {}", fedoraId.getFullIdPath());
             try {
                 log.debug("Got FedoraResource for {}", containerId.getFullIdPath());

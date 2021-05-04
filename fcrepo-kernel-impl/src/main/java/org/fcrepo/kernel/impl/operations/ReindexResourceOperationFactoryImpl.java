@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.ReindexResourceOperationFactory;
 import org.springframework.stereotype.Component;
@@ -30,7 +31,7 @@ import org.springframework.stereotype.Component;
 public class ReindexResourceOperationFactoryImpl implements ReindexResourceOperationFactory {
 
     @Override
-    public ReindexResourceOperationBuilder create(final FedoraId resourceId) {
-        return new ReindexResourceOperationBuilder(resourceId);
+    public ReindexResourceOperationBuilder create(final Transaction transaction, final FedoraId resourceId) {
+        return new ReindexResourceOperationBuilder(transaction, resourceId);
     }
 }

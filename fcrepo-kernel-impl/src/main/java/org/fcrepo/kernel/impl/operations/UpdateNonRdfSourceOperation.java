@@ -22,6 +22,7 @@ import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
 import java.io.InputStream;
 import java.net.URI;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 
@@ -38,20 +39,22 @@ public class UpdateNonRdfSourceOperation extends AbstractNonRdfSourceOperation {
      * @param rescId the internal identifier.
      * @param content the stream of the content.
      */
-    protected UpdateNonRdfSourceOperation(final FedoraId rescId, final InputStream content) {
-        super(rescId, content);
+    protected UpdateNonRdfSourceOperation(final Transaction transaction, final FedoraId rescId,
+                                          final InputStream content) {
+        super(transaction, rescId, content);
     }
 
     /**
      * Constructor for external content.
      *
+     * @param transaction the transaction
      * @param rescId the internal identifier.
      * @param externalContentURI the URI of the external content.
      * @param externalHandling the type of external content handling (REDIRECT, PROXY)
      */
-    protected UpdateNonRdfSourceOperation(final FedoraId rescId, final URI externalContentURI,
-            final String externalHandling) {
-        super(rescId, externalContentURI, externalHandling);
+    protected UpdateNonRdfSourceOperation(final Transaction transaction, final FedoraId rescId,
+                                          final URI externalContentURI, final String externalHandling) {
+        super(transaction, rescId, externalContentURI, externalHandling);
     }
 
     @Override

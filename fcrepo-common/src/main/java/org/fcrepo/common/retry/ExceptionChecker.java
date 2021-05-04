@@ -16,23 +16,21 @@
  * limitations under the License.
  */
 
-package org.fcrepo.kernel.api;
+package org.fcrepo.common.retry;
 
 /**
- * A utility class for working with common transaction related operations.
- * @author dbernstein
+ * Tests if a method should be retried based on the exception thrown
+ *
+ * @author pwinckles
  */
-public class TransactionUtils {
-
-    private TransactionUtils() {
-    }
+public interface ExceptionChecker {
 
     /**
-     * Returns the transaction  ID if the transaction is both non-null and uncommitted. Otherwise it returns null.
-     * @param transaction The transaction
-     * @return The transaction ID or null
+     * Return true if the method that produced the exception should be retried
+     *
+     * @param e the exception
+     * @return true if the method should be retried
      */
-    public static String openTxId(final Transaction transaction) {
-        return transaction == null || transaction.isCommitted() ? null : transaction.getId();
-    }
+    boolean shouldRetry(Exception e);
+
 }

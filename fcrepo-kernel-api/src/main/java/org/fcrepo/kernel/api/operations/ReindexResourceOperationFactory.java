@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.api.operations;
 
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 /**
@@ -30,8 +31,9 @@ public interface ReindexResourceOperationFactory extends ResourceOperationFactor
     /**
      * Get a builder for an operation to reindex a resource
      *
+     * @param transaction the transaction
      * @param resourceId id of the resource to reindex
      * @return new builder
      */
-    ResourceOperationBuilder create(FedoraId resourceId);
+    ResourceOperationBuilder create(Transaction transaction, FedoraId resourceId);
 }

@@ -22,6 +22,7 @@ import com.google.common.eventbus.EventBus;
 
 import org.fcrepo.config.AuthPropsConfig;
 import org.fcrepo.config.ServerManagedPropsMode;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -53,6 +54,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -81,6 +84,8 @@ public class EventAccumulatorImplTest {
     @Mock
     private EventBus eventBus;
 
+    private Transaction transaction;
+
     private ArgumentCaptor<Event> eventCaptor;
 
     private AuthPropsConfig authPropsConfig;
@@ -89,6 +94,7 @@ public class EventAccumulatorImplTest {
     public void setup() {
         authPropsConfig = new AuthPropsConfig();
         accumulator = new EventAccumulatorImpl();
+        transaction = mockTransaction(TX_ID);
         setField(accumulator, "resourceFactory", resourceFactory);
         setField(accumulator, "eventBus", eventBus);
         setField(accumulator, "authPropsConfig", authPropsConfig);
@@ -103,13 +109,13 @@ public class EventAccumulatorImplTest {
         final var op1 = createOp(fId1);
         final var op2 = updateOp(fId2);
 
-        accumulator.recordEventForOperation(TX_ID, fId1, op1);
-        accumulator.recordEventForOperation(TX_ID, fId2, op2);
+        accumulator.recordEventForOperation(transaction, fId1, op1);
+        accumulator.recordEventForOperation(transaction, fId2, op2);
 
         expectResource(fId1, CONTAINER_TYPE);
         expectResource(fId2, CONTAINER_TYPE, RESOURCE_TYPE);
 
-        accumulator.emitEvents(TX_ID, BASE_URL, USER_AGENT);
+        accumulator.emitEvents(transaction, BASE_URL, USER_AGENT);
 
         verify(eventBus, times(2)).post(eventCaptor.capture());
 
@@ -131,14 +137,14 @@ public class EventAccumulatorImplTest {
         final var op2 = updateOp(fId2);
         final var op3 = updateOp(fId1);
 
-        accumulator.recordEventForOperation(TX_ID, fId1, op1);
-        accumulator.recordEventForOperation(TX_ID, fId2, op2);
-        accumulator.recordEventForOperation(TX_ID, fId1, op3);
+        accumulator.recordEventForOperation(transaction, fId1, op1);
+        accumulator.recordEventForOperation(transaction, fId2, op2);
+        accumulator.recordEventForOperation(transaction, fId1, op3);
 
         expectResource(fId1, CONTAINER_TYPE, RDF_TYPE);
         expectResource(fId2, CONTAINER_TYPE, RESOURCE_TYPE);
 
-        accumulator.emitEvents(TX_ID, BASE_URL, USER_AGENT);
+        accumulator.emitEvents(transaction, BASE_URL, USER_AGENT);
 
         verify(eventBus, times(2)).post(eventCaptor.capture());
 
@@ -160,12 +166,14 @@ public class EventAccumulatorImplTest {
         final var op1 = createOp(fId1);
         final var op2 = updateOp(fId2);
 
-        accumulator.recordEventForOperation(TX_ID, fId1, op1);
-        accumulator.recordEventForOperation("tx2", fId2, op2);
+        final Transaction transaction2 = mockTransaction("tx2");
+
+        accumulator.recordEventForOperation(transaction, fId1, op1);
+        accumulator.recordEventForOperation(transaction2, fId2, op2);
 
         expectResource(fId2, CONTAINER_TYPE);
 
-        accumulator.emitEvents("tx2", BASE_URL, USER_AGENT);
+        accumulator.emitEvents(transaction2, BASE_URL, USER_AGENT);
 
         verify(eventBus, times(1)).post(eventCaptor.capture());
 
@@ -185,12 +193,15 @@ public class EventAccumulatorImplTest {
         final var op1 = createOp(fId1);
         final var op2 = updateOp(fId2);
 
-        accumulator.recordEventForOperation(TX_ID, fId1, op1);
-        accumulator.recordEventForOperation("tx2", fId2, op2);
+        final Transaction transaction2 = mockTransaction("tx2");
+        final Transaction transaction3 = mockTransaction("tx3");
+
+        accumulator.recordEventForOperation(transaction, fId1, op1);
+        accumulator.recordEventForOperation(transaction2, fId2, op2);
 
         expectResource(fId2, CONTAINER_TYPE);
 
-        accumulator.emitEvents("tx3", BASE_URL, USER_AGENT);
+        accumulator.emitEvents(transaction3, BASE_URL, USER_AGENT);
 
         verify(eventBus, times(0)).post(eventCaptor.capture());
 
@@ -208,16 +219,16 @@ public class EventAccumulatorImplTest {
         final var op2 = updateOp(fId2);
         final var op3 = updateOp(fId1);
 
-        accumulator.recordEventForOperation(TX_ID, fId1, op1);
-        accumulator.recordEventForOperation(TX_ID, fId2, op2);
-        accumulator.recordEventForOperation(TX_ID, fId1, op3);
+        accumulator.recordEventForOperation(transaction, fId1, op1);
+        accumulator.recordEventForOperation(transaction, fId2, op2);
+        accumulator.recordEventForOperation(transaction, fId1, op3);
 
         expectResource(fId1, CONTAINER_TYPE, RDF_TYPE);
         expectResource(fId2, CONTAINER_TYPE, RESOURCE_TYPE);
 
-        accumulator.clearEvents(TX_ID);
+        accumulator.clearEvents(transaction);
 
-        accumulator.emitEvents(TX_ID, BASE_URL, USER_AGENT);
+        accumulator.emitEvents(transaction, BASE_URL, USER_AGENT);
 
         verify(eventBus, times(0)).post(eventCaptor.capture());
 
@@ -228,6 +239,7 @@ public class EventAccumulatorImplTest {
     @Test
     public void nonDefaultValues() throws PathNotFoundException {
         final var tx = "tx4";
+        final Transaction transaction4 = mockTransaction(tx);
         final var url = "http://example.com/rest";
         final var agent = "me";
 
@@ -238,14 +250,14 @@ public class EventAccumulatorImplTest {
         final var op2 = updateOp(fId2);
         final var op3 = deleteOp(fId1);
 
-        accumulator.recordEventForOperation(tx, fId1, op1);
-        accumulator.recordEventForOperation(tx, fId2, op2);
-        accumulator.recordEventForOperation(tx, fId1, op3);
+        accumulator.recordEventForOperation(transaction4, fId1, op1);
+        accumulator.recordEventForOperation(transaction4, fId2, op2);
+        accumulator.recordEventForOperation(transaction4, fId1, op3);
 
         expectResource(fId1, RDF_TYPE);
         expectResource(fId2, RESOURCE_TYPE);
 
-        accumulator.emitEvents(tx, url, agent);
+        accumulator.emitEvents(transaction4, url, agent);
 
         verify(eventBus, times(2)).post(eventCaptor.capture());
 
@@ -269,15 +281,16 @@ public class EventAccumulatorImplTest {
         final var op2 = deleteOp(fId2);
         final var op3 = updateOp(fId3);
 
-        accumulator.recordEventForOperation(TX_ID, fId1, op1);
-        accumulator.recordEventForOperation(TX_ID, fId2, op2);
-        accumulator.recordEventForOperation(TX_ID, fId3, op3);
+        accumulator.recordEventForOperation(transaction, fId1, op1);
+        accumulator.recordEventForOperation(transaction, fId2, op2);
+        accumulator.recordEventForOperation(transaction, fId3, op3);
 
         expectResource(fId1, CONTAINER_TYPE);
-        when(resourceFactory.getResource(fId2)).thenThrow(new PathNotFoundException("not found"));
+        when(resourceFactory.getResource(any(Transaction.class), eq(fId2))).thenThrow(new PathNotFoundException("not " +
+                "found"));
         expectResource(fId3, RESOURCE_TYPE);
 
-        accumulator.emitEvents(TX_ID, BASE_URL, USER_AGENT);
+        accumulator.emitEvents(transaction, BASE_URL, USER_AGENT);
 
         verify(eventBus, times(3)).post(eventCaptor.capture());
 
@@ -294,27 +307,27 @@ public class EventAccumulatorImplTest {
     }
 
     private ResourceOperation createOp(final FedoraId fedoraId) {
-        return new RdfSourceOperationFactoryImpl().createBuilder(fedoraId, RDF_SOURCE.toString(),
+        return new RdfSourceOperationFactoryImpl().createBuilder(transaction, fedoraId, RDF_SOURCE.toString(),
                 ServerManagedPropsMode.RELAXED)
                 .userPrincipal(USER)
                 .build();
     }
 
     private ResourceOperation updateOp(final FedoraId fedoraId) {
-        return new RdfSourceOperationFactoryImpl().updateBuilder(fedoraId, ServerManagedPropsMode.RELAXED)
+        return new RdfSourceOperationFactoryImpl().updateBuilder(transaction, fedoraId, ServerManagedPropsMode.RELAXED)
                 .userPrincipal(USER)
                 .build();
     }
 
     private ResourceOperation deleteOp(final FedoraId fedoraId) {
-        return new DeleteResourceOperationFactoryImpl().deleteBuilder(fedoraId)
+        return new DeleteResourceOperationFactoryImpl().deleteBuilder(transaction, fedoraId)
                 .userPrincipal(USER)
                 .build();
     }
 
     private void expectResource(final FedoraId fedoraId, final URI... types) throws PathNotFoundException {
         final var resource = mockResource(types);
-        when(resourceFactory.getResource(fedoraId)).thenReturn(resource);
+        when(resourceFactory.getResource(any(Transaction.class), eq(fedoraId))).thenReturn(resource);
     }
 
     private FedoraResource mockResource(final URI... types) {
@@ -370,4 +383,14 @@ public class EventAccumulatorImplTest {
         };
     }
 
+    /**
+     * Create a mock transaction.
+     * @param transactionId the id of the transaction
+     * @return the mock transaction.
+     */
+    private static Transaction mockTransaction(final String transactionId) {
+        final var transaction = Mockito.mock(Transaction.class);
+        when(transaction.getId()).thenReturn(transactionId);
+        return transaction;
+    }
 }

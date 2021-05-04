@@ -24,9 +24,11 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 
+import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -40,8 +42,8 @@ import org.fcrepo.kernel.api.services.MembershipService;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
-import javax.transaction.Transactional;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -78,9 +80,9 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
-    @Transactional
-    public void resourceCreated(final String txId, final FedoraId fedoraId) {
-        final var fedoraResc = getFedoraResource(txId, fedoraId);
+    @TransactionalWithRetry
+    public void resourceCreated(final Transaction tx, final FedoraId fedoraId) {
+        final var fedoraResc = getFedoraResource(tx, fedoraId);
 
         // Only need to compute membership for created containers and binaries
         if (!(fedoraResc instanceof Container || fedoraResc instanceof Binary)) {
@@ -92,24 +94,24 @@ public class MembershipServiceImpl implements MembershipService {
 
         if (containerProperties.containerType != null) {
             final var newMembership = generateMembership(containerProperties, fedoraResc);
-            indexManager.addMembership(txId, parentResc.getFedoraId(), fedoraResc.getFedoraId(),
+            indexManager.addMembership(tx, parentResc.getFedoraId(), fedoraResc.getFedoraId(),
                     newMembership, fedoraResc.getCreatedDate());
         }
     }
 
     @Override
-    @Transactional
-    public void resourceModified(final String txId, final FedoraId fedoraId) {
-        final var fedoraResc = getFedoraResource(txId, fedoraId);
+    @TransactionalWithRetry
+    public void resourceModified(final Transaction tx, final FedoraId fedoraId) {
+        final var fedoraResc = getFedoraResource(tx, fedoraId);
         final var containerProperties = new DirectContainerProperties(fedoraResc);
 
         if (containerProperties.containerType != null) {
             log.debug("Modified DirectContainer {}, recomputing generated membership relations", fedoraId);
 
             if (propsConfig.isAutoVersioningEnabled()) {
-                modifyDCAutoversioned(txId, fedoraResc, containerProperties);
+                modifyDCAutoversioned(tx, fedoraResc, containerProperties);
             } else {
-                modifyDCOnDemandVersioning(txId, fedoraResc);
+                modifyDCOnDemandVersioning(tx, fedoraResc);
             }
         }
 
@@ -118,17 +120,17 @@ public class MembershipServiceImpl implements MembershipService {
 
         // Handle updates of proxies in IndirectContainer
         if (ContainerType.Indirect.equals(parentProperties.containerType)) {
-            modifyProxy(txId, fedoraResc, parentProperties);
+            modifyProxy(tx, fedoraResc, parentProperties);
         }
     }
 
-    private void modifyProxy(final String txId, final FedoraResource proxyResc,
+    private void modifyProxy(final Transaction tx, final FedoraResource proxyResc,
             final DirectContainerProperties containerProperties) {
         final var lastModified = proxyResc.getLastModifiedDate();
 
         if (propsConfig.isAutoVersioningEnabled()) {
             // end existing stuff
-            indexManager.endMembershipFromChild(txId, containerProperties.id, proxyResc.getFedoraId(), lastModified);
+            indexManager.endMembershipFromChild(tx, containerProperties.id, proxyResc.getFedoraId(), lastModified);
             // add new membership
         } else {
             final var mementoDatetimes = proxyResc.getTimeMap().listMementoDatetimes();
@@ -140,32 +142,32 @@ public class MembershipServiceImpl implements MembershipService {
                 // If at least one past version, then reindex membership involving the last version and after
                 lastVersionDatetime = mementoDatetimes.get(mementoDatetimes.size() - 1);
             }
-            indexManager.deleteMembershipForProxyAfter(txId, containerProperties.id,
+            indexManager.deleteMembershipForProxyAfter(tx, containerProperties.id,
                     proxyResc.getFedoraId(), lastVersionDatetime);
         }
 
-        indexManager.addMembership(txId, containerProperties.id, proxyResc.getFedoraId(),
+        indexManager.addMembership(tx, containerProperties.id, proxyResc.getFedoraId(),
                 generateMembership(containerProperties, proxyResc), lastModified);
     }
 
-    private void modifyDCAutoversioned(final String txId, final FedoraResource dcResc,
+    private void modifyDCAutoversioned(final Transaction tx, final FedoraResource dcResc,
             final DirectContainerProperties containerProperties) {
         final var dcId = dcResc.getFedoraId();
         final var dcLastModified = dcResc.getLastModifiedDate();
         // Delete/end existing membership from this container
-        indexManager.endMembershipForSource(txId, dcResc.getFedoraId(), dcLastModified);
+        indexManager.endMembershipForSource(tx, dcResc.getFedoraId(), dcLastModified);
 
         // Add updated membership properties for all non-tombstone children
         dcResc.getChildren()
                 .filter(child -> !(child instanceof Tombstone))
                 .forEach(child -> {
                     final var newMembership = generateMembership(containerProperties, child);
-                    indexManager.addMembership(txId, dcId, child.getFedoraId(),
+                    indexManager.addMembership(tx, dcId, child.getFedoraId(),
                             newMembership, dcLastModified);
                 });
     }
 
-    private void modifyDCOnDemandVersioning(final String txId, final FedoraResource dcResc) {
+    private void modifyDCOnDemandVersioning(final Transaction tx, final FedoraResource dcResc) {
         final var dcId = dcResc.getFedoraId();
         final var mementoDatetimes = dcResc.getTimeMap().listMementoDatetimes();
         final Instant lastVersionDatetime;
@@ -176,8 +178,8 @@ public class MembershipServiceImpl implements MembershipService {
             // If at least one past version, then reindex membership involving the last version and after
             lastVersionDatetime = mementoDatetimes.get(mementoDatetimes.size() - 1);
         }
-        indexManager.deleteMembershipForSourceAfter(txId, dcId, lastVersionDatetime);
-        populateMembershipHistory(txId, dcResc, lastVersionDatetime);
+        indexManager.deleteMembershipForSourceAfter(tx, dcId, lastVersionDatetime);
+        populateMembershipHistory(tx, dcResc, lastVersionDatetime);
     }
 
     private Triple generateMembership(final DirectContainerProperties properties, final FedoraResource childResc) {
@@ -224,9 +226,9 @@ public class MembershipServiceImpl implements MembershipService {
         return org.apache.jena.rdf.model.ResourceFactory.createResource(fedoraId.getFullId());
     }
 
-    private FedoraResource getFedoraResource(final String txId, final FedoraId fedoraId) {
+    private FedoraResource getFedoraResource(final Transaction transaction, final FedoraId fedoraId) {
         try {
-            return resourceFactory.getResource(txId, fedoraId);
+            return resourceFactory.getResource(transaction, fedoraId);
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e.getMessage(), e);
         }
@@ -241,15 +243,15 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
-    @Transactional
-    public void resourceDeleted(final String txId, final FedoraId fedoraId) {
+    @TransactionalWithRetry
+    public void resourceDeleted(@Nonnull final Transaction transaction, final FedoraId fedoraId) {
         // delete DirectContainer, end all membership for that source
         FedoraResource fedoraResc;
         try {
-            fedoraResc = getFedoraResource(txId, fedoraId);
+            fedoraResc = getFedoraResource(transaction, fedoraId);
         } catch (final PathNotFoundRuntimeException e) {
             log.debug("Deleted resource {} does not have a tombstone, cleanup any references", fedoraId);
-            indexManager.deleteMembershipReferences(txId, fedoraId);
+            indexManager.deleteMembershipReferences(transaction.getId(), fedoraId);
             return;
         }
         if (fedoraResc instanceof Tombstone) {
@@ -258,8 +260,8 @@ public class MembershipServiceImpl implements MembershipService {
 
         final var resourceContainerType = getContainerType(fedoraResc);
         if (resourceContainerType != null) {
-            log.debug("Ending membership for deleted Direct/IndirectContainer {} in {}", fedoraId, txId);
-            indexManager.endMembershipForSource(txId, fedoraId, fedoraResc.getLastModifiedDate());
+            log.debug("Ending membership for deleted Direct/IndirectContainer {} in {}", fedoraId, transaction);
+            indexManager.endMembershipForSource(transaction, fedoraId, fedoraResc.getLastModifiedDate());
         }
 
         // delete child of DirectContainer, clear from tx and end existing
@@ -268,14 +270,14 @@ public class MembershipServiceImpl implements MembershipService {
 
         if (parentContainerType != null) {
             log.debug("Ending membership for deleted proxy or member in tx {} for {} at {}",
-                    txId, parentResc.getFedoraId(), fedoraResc.getLastModifiedDate());
-            indexManager.endMembershipFromChild(txId, parentResc.getFedoraId(), fedoraResc.getFedoraId(),
+                    transaction, parentResc.getFedoraId(), fedoraResc.getLastModifiedDate());
+            indexManager.endMembershipFromChild(transaction, parentResc.getFedoraId(), fedoraResc.getFedoraId(),
                     fedoraResc.getLastModifiedDate());
         }
     }
 
     @Override
-    public RdfStream getMembership(final String txId, final FedoraId fedoraId) {
+    public RdfStream getMembership(final Transaction tx, final FedoraId fedoraId) {
         final FedoraId subjectId;
         if (fedoraId.isDescription()) {
             subjectId = fedoraId.asBaseId();
@@ -283,19 +285,19 @@ public class MembershipServiceImpl implements MembershipService {
             subjectId = fedoraId;
         }
         final var subject = NodeFactory.createURI(subjectId.getBaseId());
-        final var membershipStream = indexManager.getMembership(txId, subjectId);
+        final var membershipStream = indexManager.getMembership(tx, subjectId);
         return new DefaultRdfStream(subject, membershipStream);
     }
 
-    @Transactional
+    @TransactionalWithRetry
     @Override
-    public void commitTransaction(final String txId) {
-        indexManager.commitTransaction(txId);
+    public void commitTransaction(final Transaction tx) {
+        indexManager.commitTransaction(tx);
     }
 
     @Override
-    public void rollbackTransaction(final String txId) {
-        indexManager.deleteTransaction(txId);
+    public void rollbackTransaction(final Transaction tx) {
+        indexManager.deleteTransaction(tx);
     }
 
     @Override
@@ -304,17 +306,17 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
-    @Transactional
-    public void populateMembershipHistory(final String txId, final FedoraId containerId) {
-        final FedoraResource fedoraResc = getFedoraResource(txId, containerId);
+    @TransactionalWithRetry
+    public void populateMembershipHistory(@Nonnull final Transaction transaction, final FedoraId containerId) {
+        final FedoraResource fedoraResc = getFedoraResource(transaction, containerId);
         final var containerType = getContainerType(fedoraResc);
 
         if (containerType != null) {
-            populateMembershipHistory(txId, fedoraResc, null);
+            populateMembershipHistory(transaction, fedoraResc, null);
         }
     }
 
-    private void populateMembershipHistory(final String txId, final FedoraResource fedoraResc,
+    private void populateMembershipHistory(final Transaction tx, final FedoraResource fedoraResc,
             final Instant afterTime) {
         final var containerId = fedoraResc.getFedoraId();
         final var propertyTimeline = makePropertyTimeline(fedoraResc);
@@ -353,7 +355,7 @@ public class MembershipServiceImpl implements MembershipService {
             // Index each addition or change to the membership generated by this member
             timelineStream.forEach(e -> {
                 // Start time of the membership is the later of member creation or membership resc memento time
-                indexManager.addMembership(txId, containerId, member.getFedoraId(),
+                indexManager.addMembership(tx, containerId, member.getFedoraId(),
                         generateMembership(e, member),
                         instantMax(memberCreated, e.startDatetime),
                         instantMin(memberEnd, e.endDatetime));
@@ -470,8 +472,8 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
-    public Instant getLastUpdatedTimestamp(final String txId, final FedoraId fedoraId) {
-        return indexManager.getLastUpdated(txId, fedoraId);
+    public Instant getLastUpdatedTimestamp(final Transaction transaction, final FedoraId fedoraId) {
+        return indexManager.getLastUpdated(transaction, fedoraId);
     }
 
     /**

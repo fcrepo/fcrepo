@@ -20,10 +20,14 @@ package org.fcrepo.integration.persistence.ocfl.impl;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.UUID;
 
 import org.fcrepo.config.ServerManagedPropsMode;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.DeleteResourceOperationFactory;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
@@ -60,19 +64,29 @@ public class DeleteResourcePersisterIT {
     @Autowired
     private MutableOcflRepository ocflRepository;
 
+    @Autowired
+    private TransactionManager txManager;
+
+    private Transaction transaction;
+
     private FedoraId rescId;
 
     @Before
     public void setup() {
         rescId = FedoraId.create(UUID.randomUUID().toString());
+        transaction = mock(Transaction.class);
+        when(transaction.getId()).thenReturn(UUID.randomUUID().toString());
+        when(txManager.create()).thenReturn(transaction);
     }
 
     @Test
     public void testDeleteAgResource() {
-        final PersistentStorageSession storageSession1 = startWriteSession();
+
+        final var tx = txManager.create();
+        final PersistentStorageSession storageSession1 = startWriteSession(tx);
         // Create an AG resource.
         final var agOp = rdfSourceOpFactory
-                .createBuilder(rescId, BASIC_CONTAINER.getURI(), ServerManagedPropsMode.STRICT)
+                .createBuilder(tx, rescId, BASIC_CONTAINER.getURI(), ServerManagedPropsMode.STRICT)
                 .archivalGroup(true)
                 .parentId(FedoraId.getRepositoryRootId())
                 .build();
@@ -86,9 +100,10 @@ public class DeleteResourcePersisterIT {
         assertTrue(ocflRepository.hasStagedChanges(rescId.getResourceId()));
 
         // In a new session delete it
-        final PersistentStorageSession storageSession2 = startWriteSession();
+        final var tx2 = txManager.create();
+        final PersistentStorageSession storageSession2 = startWriteSession(tx2);
         final var deleteOp = deleteResourceOpFactory
-                .deleteBuilder(rescId)
+                .deleteBuilder(tx2, rescId)
                 .build();
         storageSession2.persist(deleteOp);
         storageSession2.prepare();
@@ -104,10 +119,11 @@ public class DeleteResourcePersisterIT {
     public void testDeleteResourceInAg() {
         final String childResourceId = UUID.randomUUID().toString();
         final FedoraId childId = rescId.resolve(childResourceId);
-        final PersistentStorageSession storageSession1 = startWriteSession();
+        final Transaction tx = txManager.create();
+        final PersistentStorageSession storageSession1 = startWriteSession(tx);
         // Create an AG resource.
         final var agOp = rdfSourceOpFactory
-                .createBuilder(rescId, BASIC_CONTAINER.getURI(), ServerManagedPropsMode.STRICT)
+                .createBuilder(tx, rescId, BASIC_CONTAINER.getURI(), ServerManagedPropsMode.STRICT)
                 .archivalGroup(true)
                 .parentId(FedoraId.getRepositoryRootId())
                 .build();
@@ -120,11 +136,12 @@ public class DeleteResourcePersisterIT {
         // Assert it has a mutable head.
         assertTrue(ocflRepository.hasStagedChanges(rescId.getResourceId()));
 
-        final PersistentStorageSession storageSession2 = startWriteSession();
+        final Transaction tx2 = txManager.create();
+        final PersistentStorageSession storageSession2 = startWriteSession(tx2);
 
         // Create a resource in the AG
         final var agChild = rdfSourceOpFactory
-                .createBuilder(childId, BASIC_CONTAINER.getURI(), ServerManagedPropsMode.STRICT)
+                .createBuilder(tx2, childId, BASIC_CONTAINER.getURI(), ServerManagedPropsMode.STRICT)
                 .parentId(rescId)
                 .build();
         storageSession2.persist(agChild);
@@ -138,9 +155,10 @@ public class DeleteResourcePersisterIT {
         assertTrue(ocflRepository.hasStagedChanges(rescId.getResourceId()));
 
         // In a new session delete the child resource.
-        final PersistentStorageSession storageSession3 = startWriteSession();
+        final Transaction tx3 = txManager.create();
+        final PersistentStorageSession storageSession3 = startWriteSession(tx3);
         final var deleteOp = deleteResourceOpFactory
-                .deleteBuilder(childId)
+                .deleteBuilder(tx3, childId)
                 .build();
         storageSession3.persist(deleteOp);
         storageSession3.prepare();
@@ -157,10 +175,11 @@ public class DeleteResourcePersisterIT {
 
     @Test
     public void testDeleteAtomicResource() {
-        final PersistentStorageSession storageSession1 = startWriteSession();
+        final Transaction tx = txManager.create();
+        final PersistentStorageSession storageSession1 = startWriteSession(tx);
         // Create an atomic resource.
         final var op = rdfSourceOpFactory
-                .createBuilder(rescId, BASIC_CONTAINER.getURI(), ServerManagedPropsMode.RELAXED)
+                .createBuilder(tx, rescId, BASIC_CONTAINER.getURI(), ServerManagedPropsMode.RELAXED)
                 .parentId(FedoraId.getRepositoryRootId())
                 .build();
         storageSession1.persist(op);
@@ -173,9 +192,10 @@ public class DeleteResourcePersisterIT {
         assertTrue(ocflRepository.hasStagedChanges(rescId.getResourceId()));
 
         // In a new session delete it
-        final PersistentStorageSession storageSession2 = startWriteSession();
+        final Transaction tx2 = txManager.create();
+        final PersistentStorageSession storageSession2 = startWriteSession(tx2);
         final var deleteOp = deleteResourceOpFactory
-                .deleteBuilder(rescId)
+                .deleteBuilder(tx2, rescId)
                 .build();
         storageSession2.persist(deleteOp);
         storageSession2.prepare();
@@ -187,7 +207,8 @@ public class DeleteResourcePersisterIT {
         assertFalse(ocflRepository.hasStagedChanges(rescId.getResourceId()));
     }
 
-    private PersistentStorageSession startWriteSession() {
-        return sessionManager.getSession(UUID.randomUUID().toString());
+    private PersistentStorageSession startWriteSession(final Transaction transaction) {
+        sessionManager.removeSession(transaction.getId());
+        return sessionManager.getSession(transaction);
     }
 }

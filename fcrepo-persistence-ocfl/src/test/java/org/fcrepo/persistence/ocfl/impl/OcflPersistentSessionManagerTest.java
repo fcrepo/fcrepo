@@ -17,6 +17,7 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -33,6 +34,7 @@ import java.io.IOException;
 import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
@@ -60,10 +62,14 @@ public class OcflPersistentSessionManagerTest {
     @Mock
     private OcflObjectSessionFactory objectSessionFactory;
 
+    @Mock
+    private Transaction transaction;
+
     @Before
     public void setUp() throws IOException {
         this.sessionManager = new OcflPersistentSessionManager();
-        readWriteSession = this.sessionManager.getSession(testSessionId);
+        when(transaction.getId()).thenReturn(testSessionId);
+        readWriteSession = this.sessionManager.getSession(transaction);
         setField(sessionManager, "objectSessionFactory", objectSessionFactory);
         setField(sessionManager, "ocflIndex", index);
         readOnlySession = this.sessionManager.getReadOnlySession();

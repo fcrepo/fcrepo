@@ -20,6 +20,7 @@ package org.fcrepo.kernel.impl.models;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -39,6 +40,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -126,13 +128,13 @@ public class ResourceFactoryImplTest {
 
     @Before
     public void setup() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         fedoraIdStr = FEDORA_ID_PREFIX + "/" + UUID.randomUUID().toString();
         fedoraId = FedoraId.create(fedoraIdStr);
         fedoraMementoIdStr = fedoraIdStr + "/fcr:versions/20000102120000";
 
         sessionId = UUID.randomUUID().toString();
-        when(mockTx.getId()).thenReturn(sessionId);
+        mockTx = mockTransaction(sessionId, false);
 
         factory = new ResourceFactoryImpl();
 
@@ -142,7 +144,7 @@ public class ResourceFactoryImplTest {
         resourceHeaders = new ResourceHeadersImpl();
         resourceHeaders.setId(fedoraId);
 
-        when(sessionManager.getSession(sessionId)).thenReturn(psSession);
+        when(sessionManager.getSession(mockTx)).thenReturn(psSession);
         when(sessionManager.getReadOnlySession()).thenReturn(psSession);
 
         when(psSession.getHeaders(eq(fedoraId), nullable(Instant.class))).thenReturn(resourceHeaders);
@@ -151,38 +153,37 @@ public class ResourceFactoryImplTest {
     @After
     public void cleanUp() {
         when(mockResource.getFedoraId()).thenReturn(rootId);
-        containmentIndex.rollbackTransaction(mockTx.getId());
-        containmentIndex.getContains(null, rootId).forEach(c ->
-                containmentIndex.removeContainedBy(mockTx.getId(), rootId, FedoraId.create(c)));
-        containmentIndex.commitTransaction(mockTx.getId());
+        containmentIndex.reset();
     }
 
     @Test(expected = PathNotFoundException.class)
     public void getResource_ObjectNotFound() throws Exception {
         when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
 
-        factory.getResource(fedoraId);
+        factory.getResource(mockTx, fedoraId);
     }
 
     @Test(expected = ResourceTypeException.class)
     public void getResource_NoInteractionModel() throws Exception {
         resourceHeaders.setInteractionModel(null);
 
-        factory.getResource(fedoraId);
+        factory.getResource(mockTx, fedoraId);
     }
 
     @Test(expected = ResourceTypeException.class)
     public void getResource_UnknownInteractionModel() throws Exception {
         resourceHeaders.setInteractionModel("http://example.com/mystery_stroop");
 
-        factory.getResource(fedoraId);
+        factory.getResource(mockTx, fedoraId);
     }
 
     @Test
     public void getResource_BasicContainer() throws Exception {
         populateHeaders(resourceHeaders, BASIC_CONTAINER);
 
-        final var resc = factory.getResource(fedoraId);
+        // Need to make a short lived transaction or the verify will fail.
+        final var shortTx = mockTransaction(sessionId, true);
+        final var resc = factory.getResource(ReadOnlyTransaction.INSTANCE, fedoraId);
 
         assertTrue("Factory must return a container", resc instanceof Container);
         assertEquals(fedoraIdStr, resc.getId());
@@ -226,20 +227,7 @@ public class ResourceFactoryImplTest {
         assertEquals(fedoraIdStr, resc.getId());
         assertStateFieldsMatches(resc);
 
-        verify(sessionManager).getSession(sessionId);
-    }
-
-    @Test
-    public void getResource_BasicContainer_Cast() throws Exception {
-        populateHeaders(resourceHeaders, BASIC_CONTAINER);
-
-        final var resc = factory.getResource(fedoraId, Container.class);
-
-        assertTrue("Factory must return a container", resc instanceof Container);
-        assertEquals(fedoraIdStr, resc.getId());
-        assertStateFieldsMatches(resc);
-
-        verify(sessionManager).getReadOnlySession();
+        verify(sessionManager).getSession(mockTx);
     }
 
     @Test
@@ -252,14 +240,14 @@ public class ResourceFactoryImplTest {
         assertEquals(fedoraIdStr, resc.getId());
         assertStateFieldsMatches(resc);
 
-        verify(sessionManager).getSession(sessionId);
+        verify(sessionManager).getSession(mockTx);
     }
 
     @Test
     public void getResource_DirectContainer() throws Exception {
         populateHeaders(resourceHeaders, DIRECT_CONTAINER);
 
-        final var resc = factory.getResource(fedoraId);
+        final var resc = factory.getResource(mockTx, fedoraId);
 
         assertTrue("Factory must return a container", resc instanceof Container);
         assertEquals(fedoraIdStr, resc.getId());
@@ -270,7 +258,7 @@ public class ResourceFactoryImplTest {
     public void getResource_IndirectContainer() throws Exception {
         populateHeaders(resourceHeaders, INDIRECT_CONTAINER);
 
-        final var resc = factory.getResource(fedoraId);
+        final var resc = factory.getResource(mockTx, fedoraId);
 
         assertTrue("Factory must return a container", resc instanceof Container);
         assertEquals(fedoraIdStr, resc.getId());
@@ -282,7 +270,7 @@ public class ResourceFactoryImplTest {
         populateHeaders(resourceHeaders, NON_RDF_SOURCE);
         populateInternalBinaryHeaders(resourceHeaders);
 
-        final var resc = factory.getResource(fedoraId);
+        final var resc = factory.getResource(mockTx, fedoraId);
 
         assertTrue("Factory must return a binary", resc instanceof Binary);
         assertEquals(fedoraIdStr, resc.getId());
@@ -297,7 +285,7 @@ public class ResourceFactoryImplTest {
         populateHeaders(resourceHeaders, NON_RDF_SOURCE);
         populateInternalBinaryHeaders(resourceHeaders);
 
-        factory.getResource(fedoraId);
+        factory.getResource(mockTx, fedoraId);
     }
 
     @Test
@@ -308,7 +296,7 @@ public class ResourceFactoryImplTest {
         resourceHeaders.setExternalUrl(externalUrl);
         resourceHeaders.setExternalHandling(PROXY);
 
-        final var resc = factory.getResource(fedoraId);
+        final var resc = factory.getResource(mockTx, fedoraId);
 
         assertTrue("Factory must return a container", resc instanceof Binary);
         assertEquals(fedoraIdStr, resc.getId());
@@ -328,7 +316,7 @@ public class ResourceFactoryImplTest {
         populateHeaders(headers, ResourceFactory.createResource(FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI));
         when(psSession.getHeaders(descFedoraId, null)).thenReturn(headers);
 
-        final var resc = factory.getResource(descFedoraId);
+        final var resc = factory.getResource(mockTx, descFedoraId);
         assertTrue("Factory must return a NonRdfSourceDescripton", resc instanceof NonRdfSourceDescriptionImpl);
     }
 
@@ -336,14 +324,14 @@ public class ResourceFactoryImplTest {
     public void getChildren_NoChildren() throws Exception {
         populateHeaders(resourceHeaders, BASIC_CONTAINER);
 
-        final var childrenStream = factory.getChildren(sessionId, fedoraId);
+        final var childrenStream = factory.getChildren(mockTx, fedoraId);
 
         assertEquals(0, childrenStream.count());
     }
 
     @Test
     public void getChildren_DoesNotExist() throws Exception {
-        final var childrenStream = factory.getChildren(sessionId, fedoraId);
+        final var childrenStream = factory.getChildren(mockTx, fedoraId);
         assertEquals(0, childrenStream.count());
     }
 
@@ -370,13 +358,13 @@ public class ResourceFactoryImplTest {
         populateInternalBinaryHeaders(child2Headers);
         when(psSession.getHeaders(child2Id, null)).thenReturn(child2Headers);
 
-        containmentIndex.addContainedBy(mockTx.getId(), rootId, fedoraId);
-        containmentIndex.addContainedBy(mockTx.getId(), fedoraId, child1Id);
-        containmentIndex.addContainedBy(mockTx.getId(), child1Id, childNestedId);
-        containmentIndex.addContainedBy(mockTx.getId(), fedoraId, child2Id);
-        containmentIndex.commitTransaction(mockTx.getId());
+        containmentIndex.addContainedBy(mockTx, rootId, fedoraId);
+        containmentIndex.addContainedBy(mockTx, fedoraId, child1Id);
+        containmentIndex.addContainedBy(mockTx, child1Id, childNestedId);
+        containmentIndex.addContainedBy(mockTx, fedoraId, child2Id);
+        containmentIndex.commitTransaction(mockTx);
 
-        final var childrenStream = factory.getChildren(sessionId, fedoraId);
+        final var childrenStream = factory.getChildren(mockTx, fedoraId);
         final var childrenList = childrenStream.collect(Collectors.toList());
 
         assertEquals(2, childrenList.size());
@@ -421,5 +409,25 @@ public class ResourceFactoryImplTest {
         headers.setMimeType(MIME_TYPE);
         headers.setDigests(DIGESTS);
         headers.setFilename(FILENAME);
+    }
+
+    /**
+     * Create a mock transaction.
+     * @param transactionId the id of the transaction
+     * @param isShortLived is the transaction short-lived.
+     * @return the mock transaction.
+     */
+    public static Transaction mockTransaction(final String transactionId, final boolean isShortLived) {
+        final var transaction = Mockito.mock(Transaction.class);
+        when(transaction.getId()).thenReturn(transactionId);
+        when(transaction.isShortLived()).thenReturn(isShortLived);
+        if (!isShortLived) {
+            when(transaction.isCommitted()).thenReturn(false);
+            when(transaction.isRolledBack()).thenReturn(false);
+            when(transaction.hasExpired()).thenReturn(false);
+        }
+        when(transaction.isOpenLongRunning()).thenReturn(!isShortLived);
+        when(transaction.isOpen()).thenReturn(true);
+        return transaction;
     }
 }

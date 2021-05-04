@@ -56,6 +56,21 @@ public interface Transaction {
     boolean isRolledBack();
 
     /**
+     * @return true if the tx is an open, long-running tx that has not expired or been rolledback
+     */
+    boolean isOpenLongRunning();
+
+    /**
+     * @return true if the tx has not been committed, rolled back, or expired
+     */
+    boolean isOpen();
+
+    /**
+     * @return true the tx is read-only
+     */
+    boolean isReadOnly();
+
+    /**
      * Get the transaction id
      *
      * @return the transaction id.

@@ -268,19 +268,20 @@ public abstract class AbstractService {
         });
     }
 
-    protected void recordEvent(final String transactionId, final FedoraId fedoraId, final ResourceOperation operation) {
-        this.eventAccumulator.recordEventForOperation(transactionId, fedoraId, operation);
+    protected void recordEvent(final Transaction transaction, final FedoraId fedoraId,
+                               final ResourceOperation operation) {
+        this.eventAccumulator.recordEventForOperation(transaction, fedoraId, operation);
     }
 
     /**
      * Wrapper to call the referenceService updateReference method
-     * @param transactionId the transaction ID.
+     * @param transaction the transaction.
      * @param resourceId the resource's ID.
      * @param model the model of the request body.
      */
-    protected void updateReferences(final String transactionId, final FedoraId resourceId, final String user,
+    protected void updateReferences(final Transaction transaction, final FedoraId resourceId, final String user,
                                     final Model model) {
-        referenceService.updateReferences(transactionId, resourceId, user,
+        referenceService.updateReferences(transaction, resourceId, user,
                 fromModel(model.getResource(resourceId.getFullId()).asNode(), model));
     }
 

@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 import java.time.Duration;
 import java.time.Instant;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateVersionResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
@@ -99,9 +100,7 @@ public class CreateVersionPersisterTest {
     @Test(expected = PersistentItemConflictException.class)
     public void forbidVersionCreationWhenChildOfAg() throws PersistentStorageException {
         final var resourceId = FedoraId.create("info:fedora/ag/blah");
-        final var ocflId = "blah";
 
-        final var objectSession = addMapping(resourceId, ocflId);
         expectArchivalGroup(resourceId, false);
         expectArchivalGroup(FedoraId.create("info:fedora/ag"), true);
 
@@ -127,7 +126,9 @@ public class CreateVersionPersisterTest {
     }
 
     private OcflObjectSession addMapping(final FedoraId resourceId, final String ocflId) {
-        index.addMapping("not-used", resourceId, resourceId, ocflId);
+        final var tx = mock(Transaction.class);
+        when(tx.getId()).thenReturn("not-used");
+        index.addMapping(tx, resourceId, resourceId, ocflId);
         final var objectSession = mock(OcflObjectSession.class);
         when(session.findOrCreateSession(ocflId)).thenReturn(objectSession);
         doReturn(ResourceHeaders.builder().build()).when(objectSession)

@@ -58,7 +58,7 @@ public class CreateVersionPersister extends AbstractPersister {
                             + " Version the Archival Group instead.", resourceId, archivalGroupId));
         }
 
-        final var ocflMapping = getMapping(session.getId(), resourceId);
+        final var ocflMapping = getMapping(operation.getTransaction(), resourceId);
         final var ocflObjectSession = session.findOrCreateSession(ocflMapping.getOcflObjectId());
 
         // Touching the last modified date is necessary so that resource that do not have any outstanding changes are

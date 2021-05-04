@@ -24,12 +24,13 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import org.fcrepo.config.OcflPropsConfig;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
 
 import org.slf4j.Logger;
 
@@ -43,8 +44,6 @@ public class ReindexManager {
     private static final Logger LOGGER = getLogger(ReindexManager.class);
 
     private static final long REPORTING_INTERVAL_SECS = 300;
-
-    private final String transactionId;
 
     private final List<ReindexWorker> workers;
 
@@ -62,19 +61,25 @@ public class ReindexManager {
 
     private final boolean failOnError;
 
+    private TransactionManager txManager;
+
+    private Transaction transaction = null;
+
     /**
      * Basic constructor
      * @param ids stream of ocfl ids.
      * @param reindexService the reindexing service.
      * @param config OCFL property config object.
+     * @param manager the transaction manager object.
      */
-    public ReindexManager(final Stream<String> ids, final ReindexService reindexService, final OcflPropsConfig config) {
+    public ReindexManager(final Stream<String> ids, final ReindexService reindexService, final OcflPropsConfig config,
+                          final TransactionManager manager) {
         this.ocflStream = ids;
         this.ocflIter = ocflStream.iterator();
         this.reindexService = reindexService;
         this.batchSize = config.getReindexBatchSize();
         this.failOnError = config.isReindexFailOnError();
-        transactionId = UUID.randomUUID().toString();
+        txManager = manager;
         workers = new ArrayList<>();
         completedCount = new AtomicInteger(0);
         errorCount = new AtomicInteger(0);
@@ -87,7 +92,7 @@ public class ReindexManager {
         }
 
         for (var foo = 0; foo < workerCount; foo += 1) {
-            workers.add(new ReindexWorker(this, this.reindexService, transactionId, this.failOnError));
+            workers.add(new ReindexWorker(this, this.reindexService, txManager, this.failOnError));
         }
     }
 
@@ -102,6 +107,7 @@ public class ReindexManager {
             for (final var worker : workers) {
                 worker.join();
             }
+            indexMembership();
         } catch (final Exception e) {
             LOGGER.error("Error while rebuilding index", e);
             stop();
@@ -157,18 +163,19 @@ public class ReindexManager {
     }
 
     /**
-     * Commit the actions.
+     * Index the membership relationships
      */
-    public void commit() {
-        reindexService.commit(transactionId);
-        reindexService.indexMembership(transactionId);
-    }
-
-    /**
-     * Rollback the current transaction.
-     */
-    public void rollback() {
-        reindexService.rollback(transactionId);
+    private void indexMembership() {
+        try {
+            reindexService.indexMembership(transaction());
+        } catch (final RuntimeException e) {
+            try {
+                reindexService.rollbackMembership(transaction());
+            } catch (final Exception e2) {
+                LOGGER.error("Failed to rollback membership", e2);
+            }
+            throw e;
+        }
     }
 
     /**
@@ -192,7 +199,7 @@ public class ReindexManager {
                             complete, errored, getDurationMessage(duration),
                             (complete + errored) / duration.getSeconds());
                 }
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
                 // processing has completed exit normally
             }
         });
@@ -210,5 +217,13 @@ public class ReindexManager {
             message = String.format("%d hours, ", duration.toHoursPart()) + message;
         }
         return message;
+    }
+
+    private Transaction transaction() {
+        if (transaction == null) {
+            transaction = txManager.create();
+            transaction.setShortLived(true);
+        }
+        return transaction;
     }
 }

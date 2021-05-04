@@ -26,6 +26,7 @@ import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 
 import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.LdpTriplePreferences;
 import org.fcrepo.kernel.api.services.MembershipService;
@@ -54,14 +55,15 @@ public class EtagService {
      * current state of the resource, as well as request options which change the
      * representation of the resource.
      *
-     * @param txId transaction id
+     * @param transaction transaction
      * @param resource resource
      * @param prefers LDP preference headers for the request
      * @param acceptableMediaTypes collection of acceptable media types for the response
      * @return etag for the request
      */
-    public String getRdfResourceEtag(final String txId, final FedoraResource resource,
-            final LdpTriplePreferences prefers, final Collection<MediaType> acceptableMediaTypes) {
+    public String getRdfResourceEtag(final Transaction transaction, final FedoraResource resource,
+                                     final LdpTriplePreferences prefers,
+                                     final Collection<MediaType> acceptableMediaTypes) {
         // Start etag based on the current state of the fedora resource, using the state token
         final StringBuilder etag = new StringBuilder(resource.getStateToken());
 
@@ -75,14 +77,14 @@ public class EtagService {
         // Factor in preferences which change which triples are included in the response
         etag.append('|');
         if (prefers.displayContainment()) {
-            final var lastUpdated = containmentIndex.containmentLastUpdated(txId, resource.getFedoraId());
+            final var lastUpdated = containmentIndex.containmentLastUpdated(transaction, resource.getFedoraId());
             if (lastUpdated != null) {
                 etag.append(lastUpdated);
             }
         }
         etag.append('|');
         if (prefers.displayMembership()) {
-            final var lastUpdated = membershipService.getLastUpdatedTimestamp(txId, resource.getFedoraId());
+            final var lastUpdated = membershipService.getLastUpdatedTimestamp(transaction, resource.getFedoraId());
             if (lastUpdated != null) {
                 etag.append(lastUpdated);
             }

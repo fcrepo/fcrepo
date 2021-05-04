@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.models;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
@@ -36,10 +37,10 @@ public class TombstoneImpl extends FedoraResourceImpl implements Tombstone {
 
     private FedoraResource originalResource;
 
-    protected TombstoneImpl(final FedoraId fedoraID, final String txId,
+    protected TombstoneImpl(final FedoraId fedoraID, final Transaction transaction,
                             final PersistentStorageSessionManager pSessionManager,
                             final ResourceFactory resourceFactory, final FedoraResource original) {
-        super(fedoraID, txId, pSessionManager, resourceFactory);
+        super(fedoraID, transaction, pSessionManager, resourceFactory);
         this.originalResource = original;
     }
 

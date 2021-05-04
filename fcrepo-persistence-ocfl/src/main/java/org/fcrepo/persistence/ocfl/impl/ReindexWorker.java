@@ -22,6 +22,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
+
 import org.slf4j.Logger;
 
 import com.google.common.base.Stopwatch;
@@ -39,22 +42,22 @@ public class ReindexWorker implements Runnable {
     private Thread t;
     private ReindexManager manager;
     private ReindexService service;
-    private String transactionId;
     private boolean running = true;
     private boolean failOnError;
+    private TransactionManager txManager;
 
     /**
      * Basic Constructor
      * @param reindexManager the manager service.
      * @param reindexService the reindexing service.
-     * @param txId the transaction id.
+     * @param transactionManager a transaction manager to generate
      * @param failOnError whether the thread should fail on an error or log and continue.
      */
     public ReindexWorker(final ReindexManager reindexManager, final ReindexService reindexService,
-                         final String txId, final boolean failOnError) {
+                         final TransactionManager transactionManager, final boolean failOnError) {
         manager = reindexManager;
         service = reindexService;
-        transactionId = txId;
+        txManager = transactionManager;
         this.failOnError = failOnError;
         t = new Thread(this, "ReindexWorker");
     }
@@ -88,6 +91,8 @@ public class ReindexWorker implements Runnable {
             int errors = 0;
 
             for (final var id : ids) {
+                final Transaction tx = txManager.create();
+                tx.setShortLived(true);
                 if (!running) {
                     break;
                 }
@@ -98,22 +103,24 @@ public class ReindexWorker implements Runnable {
                     stopwatch.reset().start();
                 }
                 try {
-                    service.indexOcflObject(transactionId, id);
+                    service.indexOcflObject(tx, id);
+                    service.commit(tx);
                     completed += 1;
                 } catch (final Exception e) {
+                    service.rollback(tx);
                     errors += 1;
                     if (failOnError) {
                         stopThread();
                         manager.updateComplete(completed, errors);
                         manager.stop();
-                        service.cleanupSession(transactionId);
+                        service.cleanupSession(tx.getId());
                         throw e;
                     }
                     LOGGER.error("Reindexing of OCFL id {} failed", id, e);
                 }
+                service.cleanupSession(tx.getId());
             }
             manager.updateComplete(completed, errors);
-            service.cleanupSession(transactionId);
         }
     }
 

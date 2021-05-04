@@ -19,6 +19,7 @@ package org.fcrepo.persistence.ocfl.api;
 
 import javax.annotation.Nonnull;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.ocfl.impl.FedoraOcflMapping;
 
@@ -39,33 +40,34 @@ public interface FedoraToOcflObjectIndex {
      * Contrast this  with an Archival Group example:  if you pass in "my/archival-group/binary/fcr:metadata" the
      * resource returned in the mapping would be "my/archival-group".
      *
-     * @param sessionId id of the current session, or null for read-only.
+     * @param session the current session, or null for read-only.
      * @param fedoraResourceIdentifier the fedora resource identifier
+     *
      * @return the mapping
      * @throws FedoraOcflMappingNotFoundException when no mapping exists for the specified identifier.
      */
-    FedoraOcflMapping getMapping(final String sessionId, final FedoraId fedoraResourceIdentifier) throws
-            FedoraOcflMappingNotFoundException;
+    FedoraOcflMapping getMapping(final Transaction session, final FedoraId fedoraResourceIdentifier)
+            throws FedoraOcflMappingNotFoundException;
 
     /**
      * Adds a mapping to the index
      *
-     * @param sessionId id of the current session.
+     * @param session the current session.
      * @param fedoraResourceIdentifier The fedora resource
      * @param fedoraRootObjectIdentifier   The identifier of the root fedora object resource
      * @param ocflObjectId             The ocfl object id
      * @return  The newly created mapping
      */
-    FedoraOcflMapping addMapping(@Nonnull String sessionId, final FedoraId fedoraResourceIdentifier,
+    FedoraOcflMapping addMapping(@Nonnull Transaction session, final FedoraId fedoraResourceIdentifier,
                                  final FedoraId fedoraRootObjectIdentifier, final String ocflObjectId);
 
     /**
      * Removes a mapping
      *
-     * @param sessionId id of the current session.
+     * @param session the current session.
      * @param fedoraResourceIdentifier The fedora resource to remove the mapping for
      */
-    void removeMapping(@Nonnull final String sessionId, final FedoraId fedoraResourceIdentifier);
+    void removeMapping(@Nonnull final Transaction session, final FedoraId fedoraResourceIdentifier);
 
     /**
      * Remove all persistent state associated with the index.
@@ -75,16 +77,16 @@ public interface FedoraToOcflObjectIndex {
     /**
      * Commit mapping changes for the session.
      *
-     * @param sessionId id of the session to commit.
+     * @param session the session to commit.
      */
-    void commit(@Nonnull final String sessionId);
+    void commit(@Nonnull final Transaction session);
 
     /**
      * Rollback mapping changes for the session.
      *
-     * @param sessionId id of the session to rollback.
+     * @param session the session to rollback.
      */
-    void rollback(@Nonnull final String sessionId);
+    void rollback(@Nonnull final Transaction session);
 
 }
 

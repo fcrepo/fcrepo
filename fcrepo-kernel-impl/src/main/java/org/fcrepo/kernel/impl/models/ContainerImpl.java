@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.models;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -47,13 +48,13 @@ public class ContainerImpl extends FedoraResourceImpl implements Container {
      * Construct the container
      *
      * @param fedoraID internal identifier
-     * @param txId transaction id
+     * @param transaction transaction
      * @param pSessionManager session manager
      * @param resourceFactory resource factory
      */
-    public ContainerImpl(final FedoraId fedoraID, final String txId,
+    public ContainerImpl(final FedoraId fedoraID, final Transaction transaction,
                          final PersistentStorageSessionManager pSessionManager, final ResourceFactory resourceFactory) {
-        super(fedoraID, txId, pSessionManager, resourceFactory);
+        super(fedoraID, transaction, pSessionManager, resourceFactory);
     }
 
     @Override
@@ -77,6 +78,6 @@ public class ContainerImpl extends FedoraResourceImpl implements Container {
 
     @Override
     public Stream<FedoraResource> getChildren(final Boolean recursive) {
-        return resourceFactory.getChildren(txId, fedoraId);
+        return resourceFactory.getChildren(transaction, fedoraId);
     }
 }

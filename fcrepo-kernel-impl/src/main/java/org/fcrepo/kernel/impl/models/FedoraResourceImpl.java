@@ -19,6 +19,7 @@ package org.fcrepo.kernel.impl.models;
 
 import org.apache.jena.graph.Triple;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
@@ -103,16 +104,16 @@ public class FedoraResourceImpl implements FedoraResource {
     private String interactionModel;
 
     // The transaction this representation of the resource belongs to
-    protected final String txId;
+    protected final Transaction transaction;
 
     private boolean isArchivalGroup;
 
     protected FedoraResourceImpl(final FedoraId fedoraId,
-                                 final String txId,
+                                 final Transaction transaction,
                                  final PersistentStorageSessionManager pSessionManager,
                                  final ResourceFactory resourceFactory) {
         this.fedoraId = fedoraId;
-        this.txId = txId;
+        this.transaction = transaction;
         this.pSessionManager = pSessionManager;
         this.resourceFactory = resourceFactory;
     }
@@ -129,7 +130,7 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public FedoraResource getContainer() {
-        return resourceFactory.getContainer(txId, fedoraId);
+        return resourceFactory.getContainer(transaction, fedoraId);
     }
 
     @Override
@@ -147,12 +148,12 @@ public class FedoraResourceImpl implements FedoraResource {
     }
 
     private FedoraResource getFedoraResource(final FedoraId fedoraId) throws PathNotFoundException {
-        return resourceFactory.getResource(txId, fedoraId);
+        return resourceFactory.getResource(transaction, fedoraId);
     }
 
     @Override
     public TimeMap getTimeMap() {
-        return new TimeMapImpl(this.getOriginalResource(), txId, pSessionManager, resourceFactory);
+        return new TimeMapImpl(this.getOriginalResource(), transaction, pSessionManager, resourceFactory);
     }
 
     @Override
@@ -338,16 +339,16 @@ public class FedoraResourceImpl implements FedoraResource {
     }
 
     protected PersistentStorageSession getSession() {
-        if (txId == null) {
-            return pSessionManager.getReadOnlySession();
+        if (transaction.isOpen()) {
+            return pSessionManager.getSession(transaction);
         } else {
-            return pSessionManager.getSession(txId);
+            return pSessionManager.getReadOnlySession();
         }
     }
 
     @Override
     public FedoraResource getParent() throws PathNotFoundException {
-        return resourceFactory.getResource(txId, parentId);
+        return resourceFactory.getResource(transaction, parentId);
     }
 
     @Override

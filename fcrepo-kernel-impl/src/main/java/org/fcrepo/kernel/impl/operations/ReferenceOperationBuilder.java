@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 /**
@@ -28,15 +29,16 @@ public class ReferenceOperationBuilder extends AbstractResourceOperationBuilder 
     /**
      * Constructor.
      *
+     * @param transaction the transaction
      * @param rescId the resource identifier.
      */
-    public ReferenceOperationBuilder(final FedoraId rescId) {
-        super(rescId);
+    public ReferenceOperationBuilder(final Transaction transaction, final FedoraId rescId) {
+        super(transaction, rescId);
     }
 
     @Override
     public ReferenceOperation build() {
-        final var operation = new ReferenceOperation(rescId);
+        final var operation = new ReferenceOperation(transaction, rescId);
         operation.setUserPrincipal(userPrincipal);
         return operation;
     }
