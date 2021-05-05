@@ -121,6 +121,12 @@ public class OcflPropsConfig extends BasePropsConfig {
     @Value("${fcrepo.ocfl.unsafe.write.enabled:false}")
     private boolean unsafeWriteEnabled;
 
+    @Value("${fcrepo.ocfl.id_map_cache.size:1024}")
+    private long fedoraToOcflCacheSize;
+
+    @Value("${fcrepo.ocfl.id_map_cache.timeout:30}")
+    private long fedoraToOcflCacheTimeout;
+
     private DigestAlgorithm FCREPO_DIGEST_ALGORITHM;
 
     /**
@@ -468,5 +474,19 @@ public class OcflPropsConfig extends BasePropsConfig {
      */
     public boolean isUnsafeWriteEnabled() {
         return unsafeWriteEnabled;
+    }
+
+    /**
+     * @return Size of the fedoraToOcflIndex cache.
+     */
+    public long getFedoraToOcflCacheSize() {
+        return fedoraToOcflCacheSize;
+    }
+
+    /**
+     * @return Time to cache expiration in minutes.
+     */
+    public long getFedoraToOcflCacheTimeout() {
+        return fedoraToOcflCacheTimeout;
     }
 }

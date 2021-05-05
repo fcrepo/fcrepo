@@ -20,11 +20,14 @@ package org.fcrepo.persistence.ocfl.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.util.UUID;
 
 import org.fcrepo.config.FlywayFactory;
+import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
@@ -56,13 +59,19 @@ public class DbFedoraToOcflObjectIndexTest {
     private Transaction session;
     private Transaction readOnlyTx;
 
+    private static OcflPropsConfig propsConfig;
+
     @BeforeClass
     public static void beforeClass() throws Exception {
         dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName("org.h2.jdbcx.JdbcDataSource");
         dataSource.setUrl("jdbc:h2:mem:index;DB_CLOSE_DELAY=-1");
         FlywayFactory.create().setDataSource(dataSource).setDatabaseType("h2").getObject();
+        propsConfig = mock(OcflPropsConfig.class);
+        when(propsConfig.getFedoraToOcflCacheSize()).thenReturn(2L);
+        when(propsConfig.getFedoraToOcflCacheTimeout()).thenReturn(1L);
         index = new DbFedoraToOcflObjectIndex(dataSource);
+        setField(index, "ocflPropsConfig", propsConfig);
         index.setup();
     }
 

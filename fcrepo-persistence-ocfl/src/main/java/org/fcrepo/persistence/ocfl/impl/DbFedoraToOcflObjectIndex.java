@@ -25,16 +25,19 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
 import javax.annotation.PostConstruct;
+import javax.inject.Inject;
 import javax.sql.DataSource;
 
 import org.fcrepo.common.db.DbPlatform;
 import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
+import org.fcrepo.storage.ocfl.cache.Cache;
 import org.fcrepo.storage.ocfl.cache.CaffeineCache;
 
 import org.slf4j.Logger;
@@ -198,7 +201,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
             resultSet.getString(2)
     );
 
-    private CaffeineCache<String, FedoraOcflMapping> mappingCache;
+    private Cache<String, FedoraOcflMapping> mappingCache;
 
     private final DataSource dataSource;
 
@@ -206,19 +209,22 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     private DbPlatform dbPlatform;
 
+    @Inject
+    private OcflPropsConfig ocflPropsConfig;
+
     public DbFedoraToOcflObjectIndex(@Autowired final DataSource dataSource) {
         this.dataSource = dataSource;
         this.jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
-        final var cache = Caffeine.newBuilder()
-                .maximumSize(512)
-                .expireAfterAccess(10, TimeUnit.MINUTES)
-                .build();
-        this.mappingCache = new CaffeineCache<>(cache);
     }
 
     @PostConstruct
     public void setup() {
         dbPlatform = DbPlatform.fromDataSource(dataSource);
+        final var cache = Caffeine.newBuilder()
+                .maximumSize(ocflPropsConfig.getFedoraToOcflCacheSize())
+                .expireAfterAccess(ocflPropsConfig.getFedoraToOcflCacheTimeout(), TimeUnit.MINUTES)
+                .build();
+        this.mappingCache = new CaffeineCache<>(cache);
     }
 
     @Override
