@@ -76,16 +76,16 @@ public class RepositoryInitializer {
      */
     @PostConstruct
     public void initialize() {
-        //check that the root is initialized
-        final var transaction = txManager.create();
-        transaction.setShortLived(true);
-        final PersistentStorageSession session = this.sessionManager.getSession(transaction);
-
         indexBuilder.rebuildIfNecessary();
 
         final var root = FedoraId.getRepositoryRootId();
 
         try {
+            //check that the root is initialized
+            final var transaction = txManager.create();
+            transaction.setShortLived(true);
+            final PersistentStorageSession session = this.sessionManager.getSession(transaction);
+
             try {
                 session.getHeaders(root, null);
             } catch (final PersistentItemNotFoundException e) {
@@ -102,8 +102,8 @@ public class RepositoryInitializer {
                             .createBuilder(transaction, root).build();
                     session.persist(versionOperation);
                 }
-                session.prepare();
-                session.commit();
+
+                transaction.commit();
 
                 LOGGER.info("Successfully created repository root ({}).", root);
             }

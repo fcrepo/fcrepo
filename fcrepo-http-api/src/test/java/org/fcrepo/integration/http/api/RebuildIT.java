@@ -35,6 +35,7 @@ import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.impl.TransactionManagerImpl;
 import org.fcrepo.persistence.ocfl.RepositoryInitializer;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
@@ -53,9 +54,11 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -90,6 +93,7 @@ public class RebuildIT extends AbstractResourceIT {
     private FedoraPropsConfig fedoraPropsConfig;
     private FedoraToOcflObjectIndex index;
     private Transaction readOnlyTx;
+    private TransactionManagerImpl txManager;
 
     private void setBeans() {
         ocflRepository = getBean(OcflRepository.class);
@@ -99,6 +103,7 @@ public class RebuildIT extends AbstractResourceIT {
         fedoraPropsConfig = getBean(FedoraPropsConfig.class);
         index = getBean("ocflIndexImpl", FedoraToOcflObjectIndex.class);
         readOnlyTx = ReadOnlyTransaction.INSTANCE;
+        txManager = getBean(TransactionManagerImpl.class);
     }
 
     @Before
@@ -192,7 +197,15 @@ public class RebuildIT extends AbstractResourceIT {
 
     @Test
     public void testRebuildWebapp() throws Exception {
+        // Set how long tx will live for so that any txs created by the rebuild expire before we attempt to
+        // get the resources they created.
+        propsConfig.setSessionTimeout(Duration.ofSeconds(5));
+
         rebuild("test-rebuild-ocfl/objects");
+
+        // Wait for txs to expire and ensure they're cleaned up
+        TimeUnit.SECONDS.sleep(5);
+        txManager.cleanupClosedTransactions();
 
         // Test against the Fedora API
         assertEquals(OK.getStatusCode(), getStatus(getObjMethod("")));

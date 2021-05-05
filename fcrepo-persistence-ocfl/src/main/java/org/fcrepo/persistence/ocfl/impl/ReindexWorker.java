@@ -104,10 +104,10 @@ public class ReindexWorker implements Runnable {
                 }
                 try {
                     service.indexOcflObject(tx, id);
-                    service.commit(tx);
+                    tx.commit();
                     completed += 1;
                 } catch (final Exception e) {
-                    service.rollback(tx);
+                    tx.rollback();
                     errors += 1;
                     if (failOnError) {
                         stopThread();
