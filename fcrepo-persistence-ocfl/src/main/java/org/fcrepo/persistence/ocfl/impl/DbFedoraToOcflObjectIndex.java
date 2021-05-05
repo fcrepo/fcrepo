@@ -266,6 +266,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
             final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
             parameterSource.addValue("fedoraId", fedoraId.getResourceId());
             jdbcTemplate.update(DIRECT_DELETE_MAPPING, parameterSource);
+            this.mappingCache.invalidate(fedoraId.getResourceId());
         }
     }
 

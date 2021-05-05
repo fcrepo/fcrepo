@@ -121,10 +121,10 @@ public class OcflPropsConfig extends BasePropsConfig {
     @Value("${fcrepo.ocfl.unsafe.write.enabled:false}")
     private boolean unsafeWriteEnabled;
 
-    @Value("${fcrepo.ocfl.id_map_cache.size:1024}")
+    @Value("${fcrepo.cache.db.ocfl.id_map.size.entries:1024}")
     private long fedoraToOcflCacheSize;
 
-    @Value("${fcrepo.ocfl.id_map_cache.timeout:30}")
+    @Value("${fcrepo.cache.db.ocfl.id_map.timeout.minutes:30}")
     private long fedoraToOcflCacheTimeout;
 
     private DigestAlgorithm FCREPO_DIGEST_ALGORITHM;
