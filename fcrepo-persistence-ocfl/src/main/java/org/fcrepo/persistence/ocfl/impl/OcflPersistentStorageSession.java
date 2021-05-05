@@ -223,7 +223,8 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         try {
             return fedoraOcflIndex.getMapping(transaction, identifier);
         } catch (final FedoraOcflMappingNotFoundException e) {
-            throw new PersistentItemNotFoundException(String.format("Resource %s not found", identifier), e);
+            throw new PersistentItemNotFoundException(String.format("Resource %s not found",
+                    identifier.getFullIdPath()), e);
         }
     }
 
