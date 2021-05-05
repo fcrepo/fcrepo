@@ -19,7 +19,6 @@
 package org.fcrepo.config;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 
@@ -131,12 +130,12 @@ public class FedoraPropsConfig extends BasePropsConfig {
         LOGGER.info("Fedora home: {}", fedoraHome);
         LOGGER.debug("Fedora home data: {}", fedoraData);
         try {
-            Files.createDirectories(fedoraHome);
+            createDirectories(fedoraHome);
         } catch (final IOException e) {
             throw new IOException(String.format("Failed to create Fedora home directory at %s." +
                     " Fedora home can be configured by setting the %s property.", fedoraHome, FCREPO_HOME_PROPERTY), e);
         }
-        Files.createDirectories(fedoraData);
+        createDirectories(fedoraData);
         serverManagedPropsMode = ServerManagedPropsMode.fromString(serverManagedPropsModeStr);
         sessionTimeout = Duration.ofMillis(sessionTimeoutLong);
         jmsDestinationType = JmsDestination.fromString(jmsDestinationTypeStr);
