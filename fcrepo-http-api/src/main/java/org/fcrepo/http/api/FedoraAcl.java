@@ -23,6 +23,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shared.JenaException;
 
+import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.config.AuthPropsConfig;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.domain.RDFMediaType;
@@ -125,6 +126,7 @@ public class FedoraAcl extends ContentExposingResource {
      * @return the response for a request to create a Fedora WebAc acl
      */
     @PUT
+    @TransactionalWithRetry
     public Response createFedoraWebacAcl(@HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
                                          final InputStream requestBodyStream) {
 
@@ -180,6 +182,7 @@ public class FedoraAcl extends ContentExposingResource {
      */
     @PATCH
     @Consumes({ contentTypeSPARQLUpdate })
+    @TransactionalWithRetry
     public Response updateSparql(final InputStream requestBodyStream)
         throws IOException, ItemNotFoundException {
         hasRestrictedPath(externalPath);
@@ -291,6 +294,7 @@ public class FedoraAcl extends ContentExposingResource {
      * @return response
      */
     @DELETE
+    @TransactionalWithRetry
     public Response deleteObject() throws ItemNotFoundException {
 
         hasRestrictedPath(externalPath);

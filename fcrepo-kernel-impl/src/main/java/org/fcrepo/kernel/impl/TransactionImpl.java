@@ -109,26 +109,15 @@ public class TransactionImpl implements Transaction {
         operationPhaser.register();
         operationPhaser.awaitAdvance(operationPhaser.arriveAndDeregister());
 
+        log.debug("Committing transaction {}", id);
+
         try {
-            log.debug("Committing transaction {}", id);
-            // MySQL can deadlock when update db records and it must be retried. Unfortunately, the entire transaction
-            // must be retried because something marks the transaction for rollback when the exception is thrown
-            // regardless if you then retry at the query level.
-            Failsafe.with(DB_RETRY).run(() -> {
-                // Cannot use transactional annotations because this class is not managed by spring
-                getTransactionTemplate().executeWithoutResult(status -> {
-                    this.getContainmentIndex().commitTransaction(this);
-                    this.getReferenceService().commitTransaction(this);
-                    this.getMembershipService().commitTransaction(this);
-                    this.getPersistentSession().prepare();
-                    // The storage session must be committed last because mutable head changes cannot be rolled back.
-                    // The db transaction will remain open until all changes have been written to OCFL. If the changes
-                    // are large, or are going to S3, this could take some time. In which case, it is possible the
-                    // db's connection timeout may need to be adjusted so that the connection is not closed while
-                    // waiting for the OCFL changes to be committed.
-                    this.getPersistentSession().commit();
-                });
-            });
+            if (isShortLived()) {
+                doCommitShortLived();
+            } else {
+                doCommitLongRunning();
+            }
+
             updateState(TransactionState.COMMITTED);
             this.getEventAccumulator().emitEvents(this, baseUri, userAgent);
             releaseLocks();
@@ -312,6 +301,33 @@ public class TransactionImpl implements Transaction {
     @Override
     public void setUserAgent(final String userAgent) {
         this.userAgent = userAgent;
+    }
+
+    private void doCommitShortLived() {
+        // short-lived txs do not write to tx tables and do not need to commit db indexes.
+        this.getPersistentSession().prepare();
+        this.getPersistentSession().commit();
+    }
+
+    private void doCommitLongRunning() {
+        // MySQL can deadlock when update db records and it must be retried. Unfortunately, the entire transaction
+        // must be retried because something marks the transaction for rollback when the exception is thrown
+        // regardless if you then retry at the query level.
+        Failsafe.with(DB_RETRY).run(() -> {
+            // Cannot use transactional annotations because this class is not managed by spring
+            getTransactionTemplate().executeWithoutResult(status -> {
+                this.getContainmentIndex().commitTransaction(this);
+                this.getReferenceService().commitTransaction(this);
+                this.getMembershipService().commitTransaction(this);
+                this.getPersistentSession().prepare();
+                // The storage session must be committed last because mutable head changes cannot be rolled back.
+                // The db transaction will remain open until all changes have been written to OCFL. If the changes
+                // are large, or are going to S3, this could take some time. In which case, it is possible the
+                // db's connection timeout may need to be adjusted so that the connection is not closed while
+                // waiting for the OCFL changes to be committed.
+                this.getPersistentSession().commit();
+            });
+        });
     }
 
     private void updateState(final TransactionState newState) {
