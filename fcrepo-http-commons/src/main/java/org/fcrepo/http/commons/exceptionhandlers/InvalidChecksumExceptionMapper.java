@@ -46,7 +46,7 @@ public class InvalidChecksumExceptionMapper implements
 
     @Override
     public Response toResponse(final InvalidChecksumException e) {
-        LOGGER.error("Invalid checksum", e);
+        LOGGER.debug("Invalid checksum", e);
 
         return status(CONFLICT).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
     }
