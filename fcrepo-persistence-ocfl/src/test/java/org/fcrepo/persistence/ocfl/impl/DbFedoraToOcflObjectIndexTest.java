@@ -20,11 +20,14 @@ package org.fcrepo.persistence.ocfl.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.util.UUID;
 
 import org.fcrepo.config.FlywayFactory;
+import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
@@ -43,12 +46,12 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
  */
 public class DbFedoraToOcflObjectIndexTest {
 
-    private static final FedoraId RESOURCE_ID_1 = FedoraId.create("info:fedora/parent/child1");
-    private static final FedoraId RESOURCE_ID_2 = FedoraId.create("info:fedora/parent/child2");
-    private static final FedoraId RESOURCE_ID_3 = FedoraId.create("info:fedora/resource3");
-    private static final FedoraId ROOT_RESOURCE_ID = FedoraId.create("info:fedora/parent");
-    private static final String OCFL_ID = "ocfl-id";
-    private static final String OCFL_ID_RESOURCE_3 = "ocfl-id-resource-3";
+    private FedoraId RESOURCE_ID_1;
+    private FedoraId RESOURCE_ID_2;
+    private FedoraId RESOURCE_ID_3;
+    private FedoraId ROOT_RESOURCE_ID;
+    private String OCFL_ID;
+    private String OCFL_ID_RESOURCE_3;
 
     private static DriverManagerDataSource dataSource;
     private static DbFedoraToOcflObjectIndex index;
@@ -56,13 +59,19 @@ public class DbFedoraToOcflObjectIndexTest {
     private Transaction session;
     private Transaction readOnlyTx;
 
+    private static OcflPropsConfig propsConfig;
+
     @BeforeClass
     public static void beforeClass() throws Exception {
         dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName("org.h2.jdbcx.JdbcDataSource");
         dataSource.setUrl("jdbc:h2:mem:index;DB_CLOSE_DELAY=-1");
         FlywayFactory.create().setDataSource(dataSource).setDatabaseType("h2").getObject();
+        propsConfig = mock(OcflPropsConfig.class);
+        when(propsConfig.getFedoraToOcflCacheSize()).thenReturn(2L);
+        when(propsConfig.getFedoraToOcflCacheTimeout()).thenReturn(1L);
         index = new DbFedoraToOcflObjectIndex(dataSource);
+        setField(index, "ocflPropsConfig", propsConfig);
         index.setup();
     }
 
@@ -75,6 +84,16 @@ public class DbFedoraToOcflObjectIndexTest {
         when(session.isCommitted()).thenReturn(false);
         when(session.isOpenLongRunning()).thenReturn(true);
         readOnlyTx = ReadOnlyTransaction.INSTANCE;
+        ROOT_RESOURCE_ID = FedoraId.create(getRandomUUID());
+        RESOURCE_ID_1 = ROOT_RESOURCE_ID.resolve(getRandomUUID());
+        RESOURCE_ID_2 = ROOT_RESOURCE_ID.resolve(getRandomUUID());
+        RESOURCE_ID_3 = FedoraId.create(getRandomUUID());
+        OCFL_ID = "ocfl-id-" + getRandomUUID();
+        OCFL_ID_RESOURCE_3 = "ocfl-id-resource-3-" + getRandomUUID();
+    }
+
+    private static String getRandomUUID() {
+        return UUID.randomUUID().toString();
     }
 
     @Test
