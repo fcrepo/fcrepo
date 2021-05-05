@@ -18,6 +18,11 @@
 
 package org.fcrepo.config;
 
+import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.annotation.PropertySources;
 
@@ -39,5 +44,14 @@ abstract class BasePropsConfig {
     public static final String DEFAULT_FCREPO_CONFIG_FILE_PROP_SOURCE =
             "file:${" + FCREPO_HOME_PROPERTY + ":" + DEFAULT_FCREPO_HOME_VALUE + "}/config/fcrepo.properties";
     public static final String FCREPO_CONFIG_FILE_PROP_SOURCE = "file:${fcrepo.config.file}";
+
+    protected Path createDirectories(final Path path) throws IOException {
+        try {
+            return Files.createDirectories(path);
+        } catch (final FileAlreadyExistsException e) {
+            // Ignore. This only happens with the path is a symlink
+            return path;
+        }
+    }
 
 }

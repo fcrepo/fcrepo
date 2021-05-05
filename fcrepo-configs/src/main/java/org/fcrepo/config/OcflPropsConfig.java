@@ -153,12 +153,12 @@ public class OcflPropsConfig extends BasePropsConfig {
         LOGGER.info("Fedora OCFL reindexing threads: {}", reindexThreads);
         LOGGER.info("Fedora OCFL reindexing batch size: {}", reindexBatchSize);
         LOGGER.info("Fedora OCFL reindexing fail on error: {}", reindexFailOnError);
-        Files.createDirectories(fedoraOcflStaging);
-        Files.createDirectories(ocflTemp);
+        createDirectories(fedoraOcflStaging);
+        createDirectories(ocflTemp);
 
         if (storage == Storage.OCFL_FILESYSTEM) {
             LOGGER.info("Fedora OCFL root: {}", ocflRepoRoot);
-            Files.createDirectories(ocflRepoRoot);
+            createDirectories(ocflRepoRoot);
         } else if (storage == Storage.OCFL_S3) {
             Objects.requireNonNull(ocflS3Bucket,
                     String.format("The property %s must be set when OCFL S3 storage is used", FCREPO_OCFL_S3_BUCKET));

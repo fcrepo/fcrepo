@@ -21,6 +21,7 @@ import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS
 import static org.apache.jena.riot.RDFFormat.NTRIPLES;
 
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Consumer;
@@ -95,7 +96,7 @@ public class OcflPersistentStorageUtils {
                                                                    final Path ocflWorkDir,
                                                                    final org.fcrepo.config.DigestAlgorithm algorithm)
             throws IOException {
-        Files.createDirectories(ocflStorageRootDir);
+        createDirectories(ocflStorageRootDir);
 
         final var storage = FileSystemOcflStorage.builder().repositoryRoot(ocflStorageRootDir).build();
 
@@ -124,7 +125,7 @@ public class OcflPersistentStorageUtils {
                                                            final org.fcrepo.config.DigestAlgorithm algorithm,
                                                            final boolean withDb)
             throws IOException {
-        Files.createDirectories(ocflWorkDir);
+        createDirectories(ocflWorkDir);
 
         final var storage = CloudOcflStorage.builder()
                 .cloudClient(OcflS3Client.builder()
@@ -149,7 +150,7 @@ public class OcflPersistentStorageUtils {
                                                           final Consumer<OcflRepositoryBuilder> configurer,
                                                           final org.fcrepo.config.DigestAlgorithm algorithm)
             throws IOException {
-        Files.createDirectories(ocflWorkDir);
+        createDirectories(ocflWorkDir);
 
         final DigestAlgorithm ocflDigestAlg = translateFedoraDigestToOcfl(algorithm);
         if (ocflDigestAlg == null) {
@@ -193,5 +194,14 @@ public class OcflPersistentStorageUtils {
                 .filter(alg -> alg != null)
                 .findFirst()
                 .orElse(null);
+    }
+
+    private static Path createDirectories(final Path path) throws IOException {
+        try {
+            return Files.createDirectories(path);
+        } catch (final FileAlreadyExistsException e) {
+            // Ignore. This only happens with the path is a symlink
+            return path;
+        }
     }
 }
