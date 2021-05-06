@@ -96,6 +96,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
+
+import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
@@ -325,6 +327,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @return response
      */
     @DELETE
+    @TransactionalWithRetry
     public Response deleteObject() {
         hasRestrictedPath(externalPath);
         if (resource() instanceof Container) {
@@ -371,6 +374,7 @@ public class FedoraLdp extends ContentExposingResource {
      */
     @PUT
     @Consumes
+    @TransactionalWithRetry
     public Response createOrReplaceObjectRdf(
             @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
             final InputStream requestBodyStream,
@@ -507,6 +511,7 @@ public class FedoraLdp extends ContentExposingResource {
      */
     @PATCH
     @Consumes({contentTypeSPARQLUpdate})
+    @TransactionalWithRetry
     public Response updateSparql(final InputStream requestBodyStream)
             throws IOException {
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
@@ -587,6 +592,7 @@ public class FedoraLdp extends ContentExposingResource {
     @Produces({TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
             N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
             TURTLE_X, TEXT_HTML_WITH_CHARSET, "*/*"})
+    @TransactionalWithRetry
     public Response createObject(@HeaderParam(CONTENT_DISPOSITION) final ContentDisposition contentDisposition,
                                  @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
                                  @HeaderParam("Slug") final String slug,

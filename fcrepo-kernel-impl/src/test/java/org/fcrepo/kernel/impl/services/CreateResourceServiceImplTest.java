@@ -72,6 +72,7 @@ import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
+import org.fcrepo.kernel.impl.TestTransactionHelper;
 import org.fcrepo.kernel.impl.operations.CreateNonRdfSourceOperation;
 import org.fcrepo.kernel.impl.operations.NonRdfSourceOperationFactoryImpl;
 import org.fcrepo.kernel.impl.operations.RdfSourceOperationFactoryImpl;
@@ -138,7 +139,6 @@ public class CreateResourceServiceImplTest {
     @Mock
     private FedoraResource fedoraResource;
 
-    @Mock
     private Transaction transaction;
 
     @Mock
@@ -193,11 +193,7 @@ public class CreateResourceServiceImplTest {
         setField(createResourceService, "fedoraPropsConfig", propsConfig);
         propsConfig.setServerManagedPropsMode(ServerManagedPropsMode.STRICT);
         when(psManager.getSession(ArgumentMatchers.any())).thenReturn(psSession);
-        when(transaction.getId()).thenReturn(TX_ID);
-        when(transaction.isShortLived()).thenReturn(false);
-        when(transaction.isCommitted()).thenReturn(false);
-        when(transaction.isRolledBack()).thenReturn(false);
-        when(transaction.hasExpired()).thenReturn(false);
+        transaction = TestTransactionHelper.mockTransaction(TX_ID, false);
     }
 
     /**

@@ -525,93 +525,101 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     @TransactionalWithRetry
     public void addContainedBy(@Nonnull final Transaction tx, final FedoraId parent, final FedoraId child,
                                final Instant startTime, final Instant endTime) {
-        final String parentID = parent.getFullId();
-        final String childID = child.getFullId();
+        tx.doInTx(() -> {
+            final String parentID = parent.getFullId();
+            final String childID = child.getFullId();
 
-        if (tx.isOpenLongRunning()) {
-            LOGGER.debug("Adding: parent: {}, child: {}, in txn: {}, start time {}, end time {}", parentID, childID,
-                    tx.getId(), formatInstant(startTime), formatInstant(endTime));
-            doUpsert(tx, parentID, childID, startTime, endTime, "add");
-        } else {
-            LOGGER.debug("Adding: parent: {}, child: {}, start time {}, end time {}", parentID, childID,
-                    formatInstant(startTime), formatInstant(endTime));
-            doDirectUpsert(parentID, childID, startTime, endTime);
-        }
+            if (!tx.isShortLived()) {
+                LOGGER.debug("Adding: parent: {}, child: {}, in txn: {}, start time {}, end time {}", parentID, childID,
+                        tx.getId(), formatInstant(startTime), formatInstant(endTime));
+                doUpsert(tx, parentID, childID, startTime, endTime, "add");
+            } else {
+                LOGGER.debug("Adding: parent: {}, child: {}, start time {}, end time {}", parentID, childID,
+                        formatInstant(startTime), formatInstant(endTime));
+                doDirectUpsert(parentID, childID, startTime, endTime);
+            }
+        });
     }
 
     @Override
     @TransactionalWithRetry
     public void removeContainedBy(@Nonnull final Transaction tx, final FedoraId parent, final FedoraId child) {
-        final String parentID = parent.getFullId();
-        final String childID = child.getFullId();
+        tx.doInTx(() -> {
+            final String parentID = parent.getFullId();
+            final String childID = child.getFullId();
 
-        if (tx.isOpenLongRunning()) {
-            final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-            parameterSource.addValue("parent", parentID);
-            parameterSource.addValue("child", childID);
-            parameterSource.addValue("transactionId", tx.getId());
-            final boolean addedInTxn = !jdbcTemplate.queryForList(IS_CHILD_ADDED_IN_TRANSACTION, parameterSource)
-                    .isEmpty();
-            if (addedInTxn) {
-                jdbcTemplate.update(UNDO_INSERT_CHILD_IN_TRANSACTION, parameterSource);
+            if (!tx.isShortLived()) {
+                final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+                parameterSource.addValue("parent", parentID);
+                parameterSource.addValue("child", childID);
+                parameterSource.addValue("transactionId", tx.getId());
+                final boolean addedInTxn = !jdbcTemplate.queryForList(IS_CHILD_ADDED_IN_TRANSACTION, parameterSource)
+                        .isEmpty();
+                if (addedInTxn) {
+                    jdbcTemplate.update(UNDO_INSERT_CHILD_IN_TRANSACTION, parameterSource);
+                } else {
+                    doUpsert(tx, parentID, childID, null, Instant.now(), "delete");
+                }
             } else {
-                doUpsert(tx, parentID, childID, null, Instant.now(), "delete");
+                doDirectUpsert(parentID, childID, null, Instant.now());
             }
-        } else {
-            doDirectUpsert(parentID, childID, null, Instant.now());
-        }
+        });
     }
 
     @Override
     @TransactionalWithRetry
     public void removeResource(@Nonnull final Transaction tx, final FedoraId resource) {
-        final String resourceID = resource.getFullId();
+        tx.doInTx(() -> {
+            final String resourceID = resource.getFullId();
 
-        if (tx.isOpenLongRunning()) {
-            final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-            parameterSource.addValue("child", resourceID);
-            parameterSource.addValue("transactionId", tx.getId());
-            final boolean addedInTxn = !jdbcTemplate.queryForList(IS_CHILD_ADDED_IN_TRANSACTION_NO_PARENT,
-                    parameterSource).isEmpty();
-            if (addedInTxn) {
-                jdbcTemplate.update(UNDO_INSERT_CHILD_IN_TRANSACTION_NO_PARENT, parameterSource);
+            if (!tx.isShortLived()) {
+                final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+                parameterSource.addValue("child", resourceID);
+                parameterSource.addValue("transactionId", tx.getId());
+                final boolean addedInTxn = !jdbcTemplate.queryForList(IS_CHILD_ADDED_IN_TRANSACTION_NO_PARENT,
+                        parameterSource).isEmpty();
+                if (addedInTxn) {
+                    jdbcTemplate.update(UNDO_INSERT_CHILD_IN_TRANSACTION_NO_PARENT, parameterSource);
+                } else {
+                    final String parent = getContainedBy(tx, resource);
+                    if (parent != null) {
+                        LOGGER.debug("Marking containment relationship between parent ({}) and child ({}) deleted",
+                                parent, resourceID);
+                        doUpsert(tx, parent, resourceID, null, Instant.now(), "delete");
+                    }
+                }
             } else {
                 final String parent = getContainedBy(tx, resource);
                 if (parent != null) {
                     LOGGER.debug("Marking containment relationship between parent ({}) and child ({}) deleted", parent,
                             resourceID);
-                    doUpsert(tx, parent, resourceID, null, Instant.now(), "delete");
+                    doDirectUpsert(parent, resourceID, null, Instant.now());
                 }
             }
-        } else {
-            final String parent = getContainedBy(tx, resource);
-            if (parent != null) {
-                LOGGER.debug("Marking containment relationship between parent ({}) and child ({}) deleted", parent,
-                        resourceID);
-                doDirectUpsert(parent, resourceID, null, Instant.now());
-            }
-        }
+        });
     }
 
     @Override
     @TransactionalWithRetry
     public void purgeResource(@Nonnull final Transaction tx, final FedoraId resource) {
-        final String resourceID = resource.getFullId();
+        tx.doInTx(() -> {
+            final String resourceID = resource.getFullId();
 
-        final String parent = getContainedByDeleted(tx, resource);
+            final String parent = getContainedByDeleted(tx, resource);
 
-        if (parent != null) {
-            LOGGER.debug("Removing containment relationship between parent ({}) and child ({})",
-                    parent, resourceID);
+            if (parent != null) {
+                LOGGER.debug("Removing containment relationship between parent ({}) and child ({})",
+                        parent, resourceID);
 
-            if (tx.isOpenLongRunning()) {
-                doUpsert(tx, parent, resourceID, null, null, "purge");
-            } else {
-                final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-                parameterSource.addValue("child", resourceID);
-                jdbcTemplate.update(DIRECT_PURGE, parameterSource);
+                if (!tx.isShortLived()) {
+                    doUpsert(tx, parent, resourceID, null, null, "purge");
+                } else {
+                    final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+                    parameterSource.addValue("child", resourceID);
+                    jdbcTemplate.update(DIRECT_PURGE, parameterSource);
+                }
             }
-        }
+        });
     }
 
     /**
@@ -700,7 +708,8 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     @Override
     @TransactionalWithRetry
     public void commitTransaction(final Transaction tx) {
-        if (tx.isOpenLongRunning()) {
+        if (!tx.isShortLived()) {
+            tx.ensureCommitting();
             try {
                 final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
                 parameterSource.addValue("transactionId", tx.getId());

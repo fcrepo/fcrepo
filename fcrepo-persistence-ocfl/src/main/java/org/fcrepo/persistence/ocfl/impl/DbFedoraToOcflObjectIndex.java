@@ -250,24 +250,29 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     @Override
     public FedoraOcflMapping addMapping(@Nonnull final Transaction transaction, final FedoraId fedoraId,
                                         final FedoraId fedoraRootId, final String ocflId) {
-        if (transaction.isOpenLongRunning()) {
-            upsert(transaction, fedoraId, "add", fedoraRootId, ocflId);
-        } else {
-            directInsert(fedoraId, fedoraRootId, ocflId);
-        }
+        transaction.doInTx(() -> {
+            if (!transaction.isShortLived()) {
+                upsert(transaction, fedoraId, "add", fedoraRootId, ocflId);
+            } else {
+                directInsert(fedoraId, fedoraRootId, ocflId);
+            }
+        });
+
         return new FedoraOcflMapping(fedoraRootId, ocflId);
     }
 
     @Override
     public void removeMapping(@Nonnull final Transaction transaction, final FedoraId fedoraId) {
-        if (transaction.isOpenLongRunning()) {
-            upsert(transaction, fedoraId, "delete");
-        } else {
-            final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-            parameterSource.addValue("fedoraId", fedoraId.getResourceId());
-            jdbcTemplate.update(DIRECT_DELETE_MAPPING, parameterSource);
-            this.mappingCache.invalidate(fedoraId.getResourceId());
-        }
+        transaction.doInTx(() -> {
+            if (!transaction.isShortLived()) {
+                upsert(transaction, fedoraId, "delete");
+            } else {
+                final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+                parameterSource.addValue("fedoraId", fedoraId.getResourceId());
+                jdbcTemplate.update(DIRECT_DELETE_MAPPING, parameterSource);
+                this.mappingCache.invalidate(fedoraId.getResourceId());
+            }
+        });
     }
 
     private void upsert(final Transaction transaction, final FedoraId fedoraId, final String operation) {
@@ -325,7 +330,9 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     @Override
     @TransactionalWithRetry
     public void commit(@Nonnull final Transaction transaction) {
-        if (transaction.isOpenLongRunning()) {
+        if (!transaction.isShortLived()) {
+            transaction.ensureCommitting();
+
             LOGGER.debug("Committing FedoraToOcfl index changes from transaction {}", transaction.getId());
             final Map<String, String> map = Map.of("transactionId", transaction.getId());
             try {
@@ -343,7 +350,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     @Override
     public void rollback(@Nonnull final Transaction transaction) {
-        if (transaction.isOpenLongRunning()) {
+        if (!transaction.isShortLived()) {
             jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, Map.of("transactionId", transaction.getId()));
         }
     }

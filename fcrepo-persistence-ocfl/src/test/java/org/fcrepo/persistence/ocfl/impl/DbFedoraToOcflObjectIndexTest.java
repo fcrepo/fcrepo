@@ -21,6 +21,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
@@ -83,6 +85,10 @@ public class DbFedoraToOcflObjectIndexTest {
         when(session.isShortLived()).thenReturn(false);
         when(session.isCommitted()).thenReturn(false);
         when(session.isOpenLongRunning()).thenReturn(true);
+        doAnswer(invocationOnMock -> {
+            invocationOnMock.getArgument(0, Runnable.class).run();
+            return null;
+        }).when(session).doInTx(any(Runnable.class));
         readOnlyTx = ReadOnlyTransaction.INSTANCE;
         ROOT_RESOURCE_ID = FedoraId.create(getRandomUUID());
         RESOURCE_ID_1 = ROOT_RESOURCE_ID.resolve(getRandomUUID());

@@ -19,6 +19,8 @@ package org.fcrepo.http.api;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.micrometer.core.annotation.Timed;
+
+import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.LinkFormatStream;
 import org.fcrepo.kernel.api.exception.CannotCreateMementoException;
@@ -120,6 +122,7 @@ public class FedoraVersioning extends ContentExposingResource {
      * @throws MementoDatetimeFormatException if the header value of memento-datetime is not RFC-1123 format
      */
     @POST
+    @TransactionalWithRetry
     public Response addVersion() {
 
         if (headers.getHeaderString("Slug") != null) {

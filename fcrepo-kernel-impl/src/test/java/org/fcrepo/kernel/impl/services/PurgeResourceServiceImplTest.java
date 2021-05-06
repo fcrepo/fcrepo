@@ -40,6 +40,7 @@ import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.models.WebacAcl;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
+import org.fcrepo.kernel.impl.TestTransactionHelper;
 import org.fcrepo.kernel.impl.operations.DeleteResourceOperationFactoryImpl;
 import org.fcrepo.kernel.impl.operations.PurgeResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
@@ -70,7 +71,6 @@ public class PurgeResourceServiceImplTest {
 
     private static final String USER = "fedoraAdmin";
 
-    @Mock
     private Transaction tx;
 
     @Mock
@@ -128,11 +128,7 @@ public class PurgeResourceServiceImplTest {
     @Before
     public void setup() {
         MockitoAnnotations.openMocks(this);
-        when(tx.getId()).thenReturn(TX_ID);
-        when(tx.isShortLived()).thenReturn(false);
-        when(tx.isCommitted()).thenReturn(false);
-        when(tx.isRolledBack()).thenReturn(false);
-        when(tx.hasExpired()).thenReturn(false);
+        tx = TestTransactionHelper.mockTransaction(TX_ID, false);
         when(psManager.getSession(any(Transaction.class))).thenReturn(pSession);
         final DeleteResourceOperationFactoryImpl factoryImpl = new DeleteResourceOperationFactoryImpl();
         setField(service, "deleteResourceFactory", factoryImpl);

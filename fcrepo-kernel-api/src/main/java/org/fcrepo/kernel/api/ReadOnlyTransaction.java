@@ -61,6 +61,11 @@ public class ReadOnlyTransaction implements Transaction {
     }
 
     @Override
+    public void fail() {
+        // no-op
+    }
+
+    @Override
     public boolean isRolledBack() {
         return false;
     }
@@ -73,6 +78,11 @@ public class ReadOnlyTransaction implements Transaction {
     @Override
     public boolean isOpen() {
         return true;
+    }
+
+    @Override
+    public void ensureCommitting() {
+        // no-op
     }
 
     @Override
@@ -128,6 +138,11 @@ public class ReadOnlyTransaction implements Transaction {
     @Override
     public void releaseResourceLocksIfShortLived() {
         // no-op
+    }
+
+    @Override
+    public void doInTx(final Runnable runnable) {
+        runnable.run();
     }
 
     @Override

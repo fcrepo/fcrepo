@@ -32,6 +32,7 @@ import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.impl.TestTransactionHelper;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
@@ -59,7 +60,6 @@ public class ResourceHelperImplTest {
     @Mock
     private PersistentStorageSession psSession;
 
-    @Mock
     private Transaction mockTx;
 
     @Inject
@@ -91,9 +91,7 @@ public class ResourceHelperImplTest {
         fedoraMementoId = FedoraId.create(fedoraMementoIdStr);
 
         sessionId = UUID.randomUUID().toString();
-        when(mockTx.getId()).thenReturn(sessionId);
-        when(mockTx.isShortLived()).thenReturn(false);
-        when(mockTx.isOpenLongRunning()).thenReturn(true);
+        mockTx = TestTransactionHelper.mockTransaction(sessionId, false);
 
         resourceHelper = new ResourceHelperImpl();
 

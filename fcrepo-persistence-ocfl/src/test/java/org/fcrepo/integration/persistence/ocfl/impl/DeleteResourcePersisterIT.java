@@ -20,6 +20,8 @@ package org.fcrepo.integration.persistence.ocfl.impl;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -76,6 +78,10 @@ public class DeleteResourcePersisterIT {
         rescId = FedoraId.create(UUID.randomUUID().toString());
         transaction = mock(Transaction.class);
         when(transaction.getId()).thenReturn(UUID.randomUUID().toString());
+        doAnswer(invocationOnMock -> {
+            invocationOnMock.getArgument(0, Runnable.class).run();
+            return null;
+        }).when(transaction).doInTx(any(Runnable.class));
         when(txManager.create()).thenReturn(transaction);
     }
 

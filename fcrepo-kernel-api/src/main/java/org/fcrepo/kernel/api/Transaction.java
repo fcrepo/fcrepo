@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.api;
 
 import org.fcrepo.kernel.api.exception.ConcurrentUpdateException;
+import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 import java.time.Duration;
@@ -51,19 +52,31 @@ public interface Transaction {
     void rollback();
 
     /**
+     * Marks the transaction as failed. Failed transactions cannot be committed but may be rolledback.
+     */
+    void fail();
+
+    /**
      * @return true if this transaction has been rolled back
      */
     boolean isRolledBack();
 
     /**
-     * @return true if the tx is an open, long-running tx that has not expired or been rolledback
+     * @return true if the tx is a long-running tx that has not expired and is not in a
+     * COMMITTED, ROLLEDBACK, or FAILED state
      */
     boolean isOpenLongRunning();
 
     /**
-     * @return true if the tx has not been committed, rolled back, or expired
+     * @return true if the tx is in an OPEN state and has not expired
      */
     boolean isOpen();
+
+    /**
+     * Throws an exception if the tx is not in a COMMITTING state
+     * @throws TransactionRuntimeException when not in committing
+     */
+    void ensureCommitting();
 
     /**
      * @return true the tx is read-only
@@ -89,7 +102,7 @@ public interface Transaction {
      *
      * @param shortLived boolean true (short-lived) or false (not short-lived)
      */
-    void setShortLived(boolean shortLived);
+    void setShortLived(final boolean shortLived);
 
     /**
      * Expire a transaction
@@ -107,7 +120,7 @@ public interface Transaction {
     * @param amountToAdd the amount of time to add
     * @return the new expiration date
     */
-    Instant updateExpiry(Duration amountToAdd);
+    Instant updateExpiry(final Duration amountToAdd);
 
     /**
      * Get the date this session expires
@@ -136,15 +149,23 @@ public interface Transaction {
     void releaseResourceLocksIfShortLived();
 
     /**
+     * Executes the runnable within the tx. While there are active runnables being executed, the tx may not be
+     * committed or rolledback. Runnables may only be executed when the tx is in an OPEN state and has not expired.
+     *
+     * @param runnable the code to execute within the tx
+     */
+    void doInTx(final Runnable runnable);
+
+    /**
      * Sets the baseUri on the transaction
      * @param baseUri the baseUri of the requests
      */
-    void setBaseUri(String baseUri);
+    void setBaseUri(final String baseUri);
 
     /**
      * Sets the user-agent on the transaction
      * @param userAgent the request's user-agent
      */
-    void setUserAgent(String userAgent);
+    void setUserAgent(final String userAgent);
 
 }

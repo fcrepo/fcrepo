@@ -34,6 +34,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
+import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.services.ReindexService;
 
@@ -75,6 +76,7 @@ public class FedoraReindex extends FedoraBaseResource {
     @POST
     @Produces({APPLICATION_JSON + ";qs=1.0",
             TEXT_PLAIN_WITH_CHARSET})
+    @TransactionalWithRetry
     public Response reindexObject() {
         LOGGER.info("receiving reindex request for fedora_id = {}", externalPath);
         try {

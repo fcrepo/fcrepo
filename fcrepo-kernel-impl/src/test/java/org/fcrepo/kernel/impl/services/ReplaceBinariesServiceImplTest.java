@@ -44,6 +44,7 @@ import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.kernel.impl.TestTransactionHelper;
 import org.fcrepo.kernel.impl.operations.NonRdfSourceOperationFactoryImpl;
 import org.fcrepo.kernel.impl.operations.UpdateNonRdfSourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
@@ -89,7 +90,6 @@ public class ReplaceBinariesServiceImplTest {
     @Mock
     private EventAccumulator eventAccumulator;
 
-    @Mock
     private Transaction tx;
 
     @Mock
@@ -118,7 +118,7 @@ public class ReplaceBinariesServiceImplTest {
         setField(service, "factory", factory);
         setField(service, "eventAccumulator", eventAccumulator);
         when(psManager.getSession(any(Transaction.class))).thenReturn(pSession);
-        when(tx.getId()).thenReturn(TX_ID);
+        tx = TestTransactionHelper.mockTransaction(TX_ID, false);
         when(pSession.getHeaders(FEDORA_ID, null)).thenReturn(headers);
     }
 

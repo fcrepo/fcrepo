@@ -20,12 +20,15 @@ package org.fcrepo.kernel.impl;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.concurrent.Phaser;
 
 import org.fcrepo.common.lang.CheckedRunnable;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionState;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TransactionClosedException;
+import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.lock.ResourceLockManager;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
@@ -63,21 +66,21 @@ public class TransactionImpl implements Transaction {
 
     private final TransactionManagerImpl txManager;
 
+    private TransactionState state;
+
     private boolean shortLived = true;
 
     private Instant expiration;
 
     private boolean expired = false;
 
-    private boolean rolledback = false;
-
-    private boolean committed = false;
-
     private String baseUri;
 
     private String userAgent;
 
-    private Duration sessionTimeout;
+    private final Duration sessionTimeout;
+
+    private final Phaser operationPhaser;
 
     protected TransactionImpl(final String id,
                               final TransactionManagerImpl txManager,
@@ -89,36 +92,33 @@ public class TransactionImpl implements Transaction {
         this.txManager = txManager;
         this.sessionTimeout = sessionTimeout;
         this.expiration = Instant.now().plus(sessionTimeout);
+        this.state = TransactionState.OPEN;
+        this.operationPhaser = new Phaser();
     }
 
     @Override
     public synchronized void commit() {
-        failIfExpired();
-        failIfRolledback();
-        if (this.committed) {
+        if (state == TransactionState.COMMITTED) {
             return;
         }
+        failIfNotOpen();
+        failIfExpired();
+
+        updateState(TransactionState.COMMITTING);
+
+        operationPhaser.register();
+        operationPhaser.awaitAdvance(operationPhaser.arriveAndDeregister());
+
+        log.debug("Committing transaction {}", id);
+
         try {
-            log.debug("Committing transaction {}", id);
-            // MySQL can deadlock when update db records and it must be retried. Unfortunately, the entire transaction
-            // must be retried because something marks the transaction for rollback when the exception is thrown
-            // regardless if you then retry at the query level.
-            Failsafe.with(DB_RETRY).run(() -> {
-                // Cannot use transactional annotations because this class is not managed by spring
-                getTransactionTemplate().executeWithoutResult(status -> {
-                    this.getContainmentIndex().commitTransaction(this);
-                    this.getReferenceService().commitTransaction(this);
-                    this.getMembershipService().commitTransaction(this);
-                    this.getPersistentSession().prepare();
-                    // The storage session must be committed last because mutable head changes cannot be rolled back.
-                    // The db transaction will remain open until all changes have been written to OCFL. If the changes
-                    // are large, or are going to S3, this could take some time. In which case, it is possible the
-                    // db's connection timeout may need to be adjusted so that the connection is not closed while
-                    // waiting for the OCFL changes to be committed.
-                    this.getPersistentSession().commit();
-                });
-            });
-            this.committed = true;
+            if (isShortLived()) {
+                doCommitShortLived();
+            } else {
+                doCommitLongRunning();
+            }
+
+            updateState(TransactionState.COMMITTED);
             this.getEventAccumulator().emitEvents(this, baseUri, userAgent);
             releaseLocks();
         } catch (final Exception ex) {
@@ -131,18 +131,24 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
-    public synchronized boolean isCommitted() {
-        return committed;
+    public boolean isCommitted() {
+        return state == TransactionState.COMMITTED;
     }
 
     @Override
     public synchronized void rollback() {
-        failIfCommitted();
-        if (this.rolledback) {
+        if (state == TransactionState.ROLLEDBACK || state == TransactionState.ROLLINGBACK) {
             return;
         }
+
+        failIfCommitted();
+
         log.info("Rolling back transaction {}", id);
-        this.rolledback = true;
+
+        updateState(TransactionState.ROLLINGBACK);
+
+        operationPhaser.register();
+        operationPhaser.awaitAdvance(operationPhaser.arriveAndDeregister());
 
         execQuietly("Failed to rollback storage in transaction " + id, () -> {
             this.getPersistentSession().rollback();
@@ -160,12 +166,37 @@ public class TransactionImpl implements Transaction {
             this.getEventAccumulator().clearEvents(this);
         });
 
+        updateState(TransactionState.ROLLEDBACK);
+
         releaseLocks();
     }
 
     @Override
-    public synchronized boolean isRolledBack() {
-        return rolledback;
+    public void doInTx(final Runnable runnable) {
+        operationPhaser.register();
+
+        try {
+            failIfNotOpen();
+            failIfExpired();
+
+            runnable.run();
+        } finally {
+            operationPhaser.arriveAndDeregister();
+        }
+    }
+
+    @Override
+    public synchronized void fail() {
+        if (state != TransactionState.OPEN) {
+            log.error("Transaction {} is in state {} and may not be marked as FAILED", id, state);
+        } else {
+            updateState(TransactionState.FAILED);
+        }
+    }
+
+    @Override
+    public boolean isRolledBack() {
+        return state == TransactionState.ROLLEDBACK;
     }
 
     @Override
@@ -185,12 +216,23 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public boolean isOpenLongRunning() {
-        return !this.isShortLived() && isOpen();
+        return !this.isShortLived() && !hasExpired()
+                && !(state == TransactionState.COMMITTED
+                || state == TransactionState.ROLLEDBACK
+                || state == TransactionState.FAILED);
     }
 
     @Override
     public boolean isOpen() {
-        return !(this.isCommitted() || this.hasExpired() || this.isRolledBack());
+        return state == TransactionState.OPEN && !hasExpired();
+    }
+
+    @Override
+    public void ensureCommitting() {
+        if (state != TransactionState.COMMITTING) {
+            throw new TransactionRuntimeException(
+                    String.format("Transaction %s must be in state COMMITTING, but was %s", id, state));
+        }
     }
 
     @Override
@@ -199,7 +241,7 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
-    public synchronized void expire() {
+    public void expire() {
         this.expiration = Instant.now();
         this.expired = true;
     }
@@ -217,7 +259,7 @@ public class TransactionImpl implements Transaction {
     public synchronized Instant updateExpiry(final Duration amountToAdd) {
         failIfExpired();
         failIfCommitted();
-        failIfRolledback();
+        failIfNotOpen();
         this.expiration = this.expiration.plus(amountToAdd);
         return this.expiration;
     }
@@ -261,25 +303,61 @@ public class TransactionImpl implements Transaction {
         this.userAgent = userAgent;
     }
 
+    private void doCommitShortLived() {
+        // short-lived txs do not write to tx tables and do not need to commit db indexes.
+        this.getPersistentSession().prepare();
+        this.getPersistentSession().commit();
+    }
+
+    private void doCommitLongRunning() {
+        // MySQL can deadlock when update db records and it must be retried. Unfortunately, the entire transaction
+        // must be retried because something marks the transaction for rollback when the exception is thrown
+        // regardless if you then retry at the query level.
+        Failsafe.with(DB_RETRY).run(() -> {
+            // Cannot use transactional annotations because this class is not managed by spring
+            getTransactionTemplate().executeWithoutResult(status -> {
+                this.getContainmentIndex().commitTransaction(this);
+                this.getReferenceService().commitTransaction(this);
+                this.getMembershipService().commitTransaction(this);
+                this.getPersistentSession().prepare();
+                // The storage session must be committed last because mutable head changes cannot be rolled back.
+                // The db transaction will remain open until all changes have been written to OCFL. If the changes
+                // are large, or are going to S3, this could take some time. In which case, it is possible the
+                // db's connection timeout may need to be adjusted so that the connection is not closed while
+                // waiting for the OCFL changes to be committed.
+                this.getPersistentSession().commit();
+            });
+        });
+    }
+
+    private void updateState(final TransactionState newState) {
+        this.state = newState;
+    }
+
     private PersistentStorageSession getPersistentSession() {
         return this.txManager.getPersistentStorageSessionManager().getSession(this);
     }
 
     private void failIfExpired() {
         if (hasExpired()) {
-            throw new TransactionClosedException("Transaction with transactionId: " + id + " expired!");
+            throw new TransactionClosedException("Transaction " + id + " expired!");
         }
     }
 
     private void failIfCommitted() {
-        if (this.committed) {
-            throw new TransactionClosedException("Transaction with transactionId: " + id + " is already committed!");
+        if (state == TransactionState.COMMITTED) {
+            throw new TransactionClosedException(
+                    String.format("Transaction %s cannot be transitioned because it is already committed!", id));
         }
     }
 
-    private void failIfRolledback() {
-        if (this.rolledback) {
-            throw new TransactionClosedException("Transaction with transactionId: " + id + " is already rolledback!");
+    private void failIfNotOpen() {
+        if (state == TransactionState.FAILED) {
+            throw new TransactionRuntimeException(
+                    String.format("Transaction %s cannot be committed because it is in a failed state!", id));
+        } else if (state != TransactionState.OPEN) {
+            throw new TransactionClosedException(
+                    String.format("Transaction %s cannot be committed because it is in state %s!", id, state));
         }
     }
 

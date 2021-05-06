@@ -34,6 +34,7 @@ import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.impl.TestTransactionHelper;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -59,10 +60,8 @@ public class ContainmentTriplesServiceImplTest {
     @Mock
     private FedoraResource parentResource;
 
-    @Mock
     private Transaction transaction;
 
-    @Mock
     private Transaction transaction2;
 
     @Inject
@@ -78,9 +77,7 @@ public class ContainmentTriplesServiceImplTest {
         MockitoAnnotations.openMocks(this);
         final FedoraId parentId = FedoraId.create(UUID.randomUUID().toString());
         final String txId = UUID.randomUUID().toString();
-        when(transaction.getId()).thenReturn(txId);
-        when(transaction.isShortLived()).thenReturn(false);
-        when(transaction.isOpenLongRunning()).thenReturn(true);
+        transaction = TestTransactionHelper.mockTransaction(txId, false);
         when(parentResource.getFedoraId()).thenReturn(parentId);
         setField(containmentTriplesService, "containmentIndex", containmentIndex);
         readOnlyTx = ReadOnlyTransaction.INSTANCE;
@@ -143,8 +140,7 @@ public class ContainmentTriplesServiceImplTest {
         final FedoraId child = FedoraId.create(UUID.randomUUID().toString());
         final String otherTransactionId = UUID.randomUUID().toString();
 
-        when(transaction2.getId()).thenReturn(otherTransactionId);
-        when(transaction2.isOpenLongRunning()).thenReturn(true);
+        transaction2 = TestTransactionHelper.mockTransaction(otherTransactionId, false);
         containmentIndex.addContainedBy(transaction, parentResource.getFedoraId(), child);
         assertEquals(1, containmentTriplesService.get(transaction, parentResource).count());
         final Model expectedModel = ModelFactory.createDefaultModel();

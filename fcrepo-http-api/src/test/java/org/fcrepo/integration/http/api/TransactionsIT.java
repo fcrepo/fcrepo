@@ -484,6 +484,40 @@ public class TransactionsIT extends AbstractResourceIT {
                 CONFLICT.getStatusCode(), getStatus(addTxTo(new HttpGet(datasetLoc), txLocation)));
     }
 
+    @Test
+    public void transactionShouldNotBeAbleToBeCommittedWhenARequestFails() throws IOException {
+        final var agId = getRandomUniqueId();
+        final var childId = agId + "/child";
+
+        // create a tx
+        final String txLocation = createTransaction();
+
+        putAg(agId, txLocation);
+        getResource(agId, txLocation);
+
+        var put = putObjMethod(childId);
+        put.addHeader(ATOMIC_ID_HEADER, txLocation);
+        put.setHeader("Link", ARCHIVAL_GROUP_TYPE);
+        try (final CloseableHttpResponse response = execute(put)) {
+            assertEquals(CONFLICT.getStatusCode(), getStatus(response));
+        }
+
+        // subsequent request should fail
+        put = putObjMethod(childId);
+        put.addHeader(ATOMIC_ID_HEADER, txLocation);
+        try (final CloseableHttpResponse response = execute(put)) {
+            assertEquals(CONFLICT.getStatusCode(), getStatus(response));
+        }
+
+        // and commit should fail
+        assertEquals(CONFLICT.getStatusCode(), getStatus(new HttpPut(txLocation)));
+
+        // ag should not exist
+        try (final CloseableHttpResponse response = execute(new HttpGet(serverAddress + agId))) {
+            assertEquals(NOT_FOUND.getStatusCode(), response.getStatusLine().getStatusCode());
+        }
+    }
+
     private void assertHasAtomicId(final String txId, final CloseableHttpResponse resp) {
         final Header header = resp.getFirstHeader(ATOMIC_ID_HEADER);
         assertNotNull("No atomic id header present in response", header);
@@ -879,7 +913,7 @@ public class TransactionsIT extends AbstractResourceIT {
         final var childId = agId + "/child";
         final var binaryId = agId + "/child/bin";
 
-        putAg(agId);
+        putAg(agId, null);
         putContainer(childId, null);
         putBinary(binaryId, null, "binary");
 
@@ -1017,8 +1051,13 @@ public class TransactionsIT extends AbstractResourceIT {
         assertEquals("Expected binary content for " + id, expected, actual);
     }
 
-    private void putAg(final String id) throws IOException {
+    private void putAg(final String id, final String txLocation) throws IOException {
         final var put = putObjMethod(id);
+
+        if (txLocation != null) {
+            put.addHeader(ATOMIC_ID_HEADER, txLocation);
+        }
+
         put.setHeader("Link", ARCHIVAL_GROUP_TYPE);
         try (final CloseableHttpResponse response = execute(put)) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));

@@ -70,7 +70,11 @@ public class UpdatePropertiesServiceImpl extends AbstractService implements Upda
         } catch (final PersistentItemNotFoundException ex) {
             throw new ItemNotFoundException(ex.getMessage(), ex);
         } catch (final PersistentStorageException ex) {
+            tx.fail();
             throw new RepositoryRuntimeException(ex.getMessage(), ex);
+        } catch (final RuntimeException e) {
+            tx.fail();
+            throw e;
         }
 
     }
