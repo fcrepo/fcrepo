@@ -366,7 +366,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testCreateBinaryAsArchivalGroupWithPostFails() throws Exception {
         final var id = getRandomUniqueId();
-        final var postMethod = postObjMethod(id);
+        final var postMethod = postObjMethod();
+        postMethod.setHeader("Slug", id);
         postMethod.setEntity(new StringEntity("test"));
         postMethod.addHeader("Link", ARCHIVAL_GROUP_LINK_HEADER);
         postMethod.addHeader("Link", NON_RDF_SOURCE_LINK_HEADER);
@@ -4586,6 +4587,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testLongIdentifier1() throws IOException {
         final String url = genLongUrl(serverAddress,476);
+        final HttpPut putMethod = new HttpPut(url);
+        assertEquals(CREATED.getStatusCode(), getStatus(putMethod));
         final HttpPost postMethod = new HttpPost(url);
         postMethod.setHeader("Slug", getRandomUniqueId());
         try (final CloseableHttpResponse response = execute(postMethod)) {
@@ -4596,6 +4599,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testLongIdentifier2() throws IOException {
         final String url = genLongUrl(serverAddress,477);
+        final HttpPut putMethod = new HttpPut(url);
+        assertEquals(CREATED.getStatusCode(), getStatus(putMethod));
         final HttpPost postMethod = new HttpPost(url);
         postMethod.setHeader("Slug", getRandomUniqueId());
         try (final CloseableHttpResponse response = execute(postMethod)) {
@@ -4713,6 +4718,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final var response = execute(new HttpGet(location))) {
             assertEquals(SC_OK, response.getStatusLine().getStatusCode());
         }
+    }
+
+    @Test
+    public void postToNonexistantResourceFails() throws IOException {
+        final var id = getRandomUniqueId();
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(getObjMethod(id)));
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(postObjMethod(id)));
     }
 
     private void assertIdStringConstraint(final String id) throws IOException {
