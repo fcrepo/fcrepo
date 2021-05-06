@@ -308,7 +308,6 @@ public class TransactionImpl implements Transaction {
 
     private void doCommitShortLived() {
         // short-lived txs do not write to tx tables and do not need to commit db indexes.
-        this.getSearchIndex().commitTransaction(this);
         this.getPersistentSession().prepare();
         this.getPersistentSession().commit();
     }
