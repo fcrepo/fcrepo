@@ -510,7 +510,7 @@ public class TransactionsIT extends AbstractResourceIT {
         }
 
         // and commit should fail
-        assertEquals(GONE.getStatusCode(), getStatus(new HttpPut(txLocation)));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(new HttpPut(txLocation)));
 
         // ag should not exist
         try (final CloseableHttpResponse response = execute(new HttpGet(serverAddress + agId))) {

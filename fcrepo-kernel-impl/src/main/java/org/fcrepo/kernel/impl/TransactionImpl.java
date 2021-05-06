@@ -352,7 +352,10 @@ public class TransactionImpl implements Transaction {
     }
 
     private void failIfNotOpen() {
-        if (state != TransactionState.OPEN) {
+        if (state == TransactionState.FAILED) {
+            throw new TransactionRuntimeException(
+                    String.format("Transaction %s cannot be committed because it is in a failed state!", id));
+        } else if (state != TransactionState.OPEN) {
             throw new TransactionClosedException(
                     String.format("Transaction %s cannot be committed because it is in state %s!", id, state));
         }
