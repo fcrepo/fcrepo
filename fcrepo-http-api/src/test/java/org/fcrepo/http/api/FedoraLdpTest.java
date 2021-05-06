@@ -259,6 +259,8 @@ public class FedoraLdpTest {
     public void setUp() {
         testObj = spy(new FedoraLdp(path));
 
+        when(resourceHelper.doesResourceExist(any(Transaction.class), eq(pathId), eq(false))).thenReturn(true);
+
         mockResponse = new MockHttpServletResponse();
 
         final HttpRdfService httpRdfService = new HttpRdfService();

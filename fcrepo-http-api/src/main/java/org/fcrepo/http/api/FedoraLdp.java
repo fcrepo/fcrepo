@@ -619,6 +619,11 @@ public class FedoraLdp extends ContentExposingResource {
             final String interactionModel = checkInteractionModel(links);
 
             final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath());
+            // If the resource doesn't exist and it's not a ghost node, throw an exception.
+            // Ghost node checking is done further down in the code and returns a 400 Bad Request error.
+            if (!doesResourceExist(transaction, fedoraId, false) && !isGhostNode(transaction, fedoraId)) {
+                throw new PathNotFoundRuntimeException(String.format("Path %s not found", fedoraId.getFullIdPath()));
+            }
             final FedoraId newFedoraId = mintNewPid(fedoraId, decodedSlug);
             final var providedContentType = getSimpleContentType(requestContentType);
 
