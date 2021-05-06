@@ -247,6 +247,7 @@ public class DbSearchIndexImpl implements SearchIndex {
             "DELETE FROM " + SEARCH_RESOURCE_RDF_TYPE_TRANSACTIONS_TABLE + " WHERE " +
                     FEDORA_ID_COLUMN + "= :" + FEDORA_ID_PARAM + " AND " + TRANSACTION_ID_COLUMN + "= :" +
                     TRANSACTION_ID_PARAM;
+    private static final List<String> COUNT_QUERY_COLUMNS = Arrays.asList("count(0) as count");
 
     @Inject
     private DataSource dataSource;
@@ -280,12 +281,12 @@ public class DbSearchIndexImpl implements SearchIndex {
         final var fields = parameters.getFields().stream().map(Condition.Field::toString).collect(Collectors.toList());
 
         final var countQuery =
-                createSearchQuery(parameters, parameterSource, Arrays.asList("count(0) as count")).toString();
+                createSearchQuery(parameters, parameterSource, COUNT_QUERY_COLUMNS).toString();
         final var selectQuery = createSearchQuery(parameters, parameterSource, fields);
 
         if (parameters.getOrderBy() != null) {
             //add order by limit and offset to selectquery.
-            selectQuery.append(" ORDER BY " + parameters.getOrderBy() + " " + parameters.getOrder());
+            selectQuery.append(" ORDER BY ").append(parameters.getOrderBy()).append(" " ).append(parameters.getOrder());
         }
         selectQuery.append(" LIMIT :limit OFFSET :offset");
         parameterSource.addValue("limit", parameters.getMaxResults());
@@ -333,7 +334,7 @@ public class DbSearchIndexImpl implements SearchIndex {
         final var hasRdfTypeCondition = conditions.stream().anyMatch(c -> c.getField().equals(RDF_TYPE));
         final var containsRDFTypeField = selectedFields.contains(RDF_TYPE.toString());
 
-        final var subQueryWhereClauses = new ArrayList<String>();
+        final var subQueryWhereClauses = new ArrayList<String>(conditions.size());
         for (int i = 0; i < conditions.size(); i++) {
             addWhereClause(i, parameterSource, subQueryWhereClauses, conditions.get(i));
         }
@@ -520,7 +521,7 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     private void insertRdfTypeAssociations(final Set<URI> rdfTypes, final String txId, final FedoraId fedoraId) {
         //remove and add type associations for the fedora id.
-        final List<MapSqlParameterSource> parameterSourcesList = new ArrayList<>();
+        final List<MapSqlParameterSource> parameterSourcesList = new ArrayList<>(rdfTypes.size());
         final var parameterSource = new MapSqlParameterSource();
         parameterSource.addValue(TRANSACTION_ID_PARAM, txId);
         parameterSource.addValue(FEDORA_ID_PARAM, fedoraId.getFullId());
@@ -548,6 +549,7 @@ public class DbSearchIndexImpl implements SearchIndex {
         }
     }
 
+    @TransactionalWithRetry
     @Override
     public void reset() {
         try (final var conn = this.dataSource.getConnection();
@@ -591,8 +593,8 @@ public class DbSearchIndexImpl implements SearchIndex {
                         txId, addedResources, addRdfTypeAssociations, addedRdfTypes, deletedResources,
                         deletedAssociations);
             } catch (final Exception e) {
-                LOGGER.warn("Unable to commit containment index transaction {}: {}", txId, e.getMessage());
-                throw new RepositoryRuntimeException("Unable to commit containment index transaction", e);
+                LOGGER.warn("Unable to commit search index transaction {}: {}", txId, e.getMessage());
+                throw new RepositoryRuntimeException("Unable to commit search index transaction", e);
             }
         }
     }

@@ -64,7 +64,7 @@ public interface SearchIndex {
     void commitTransaction(final Transaction tx);
 
     /**
-     * Rollback the containment index changes in the transaction.
+     * Rollback the changes in the transaction.
      *
      * @param tx The transaction.
      */
