@@ -31,6 +31,7 @@ import java.util.Queue;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -42,6 +43,7 @@ import javax.sql.DataSource;
 
 import org.fcrepo.common.db.DbPlatform;
 import org.fcrepo.common.db.TransactionalWithRetry;
+import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -52,6 +54,9 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 /**
  * @author peichman
@@ -437,6 +442,15 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     private static final String GET_START_TIME = "SELECT " + START_TIME_COLUMN + " FROM " + RESOURCES_TABLE +
             " WHERE " + FEDORA_ID_COLUMN + " = :child";
 
+    private static final String GET_DELETED_RESOURCES = "SELECT " + FEDORA_ID_COLUMN + " FROM " +
+            TRANSACTION_OPERATIONS_TABLE + " WHERE " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
+            OPERATION_COLUMN + " = 'delete'";
+
+    @Inject
+    private FedoraPropsConfig fedoraPropsConfig;
+
+    private Cache<String, String> getContainedByCache;
+
     /**
      * Connect to the database
      */
@@ -444,6 +458,10 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     private void setup() {
         jdbcTemplate = getNamedParameterJdbcTemplate();
         dbPlatform = DbPlatform.fromDataSource(dataSource);
+        this.getContainedByCache = Caffeine.newBuilder()
+                .maximumSize(fedoraPropsConfig.getContainmentCacheSize())
+                .expireAfterAccess(fedoraPropsConfig.getContainmentCacheTimeout(), TimeUnit.MINUTES)
+                .build();
     }
 
     private NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
@@ -503,16 +521,17 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     @Override
     public String getContainedBy(@Nonnull final Transaction tx, final FedoraId resource) {
         final String resourceID = resource.getFullId();
-        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-        parameterSource.addValue("child", resourceID);
-        final List<String> parentID;
+        final String parentID;
         if (tx.isOpenLongRunning()) {
-            parameterSource.addValue("transactionId", tx.getId());
-            parentID = jdbcTemplate.queryForList(PARENT_EXISTS_IN_TRANSACTION, parameterSource, String.class);
+            parentID = jdbcTemplate.queryForList(PARENT_EXISTS_IN_TRANSACTION, Map.of("child", resourceID,
+                    "transactionId", tx.getId()), String.class).stream().findFirst().orElse(null);
         } else {
-            parentID = jdbcTemplate.queryForList(PARENT_EXISTS, parameterSource, String.class);
+            parentID = this.getContainedByCache.get(resourceID, key ->
+                    jdbcTemplate.queryForList(PARENT_EXISTS, Map.of("child", key), String.class).stream()
+                    .findFirst().orElse(null)
+            );
         }
-        return parentID.stream().findFirst().orElse(null);
+        return parentID;
     }
 
     @Override
@@ -562,6 +581,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
                 }
             } else {
                 doDirectUpsert(parentID, childID, null, Instant.now());
+                this.getContainedByCache.invalidate(childID);
             }
         });
     }
@@ -594,6 +614,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
                     LOGGER.debug("Marking containment relationship between parent ({}) and child ({}) deleted", parent,
                             resourceID);
                     doDirectUpsert(parent, resourceID, null, Instant.now());
+                    this.getContainedByCache.invalidate(resourceID);
                 }
             }
         });
@@ -715,6 +736,8 @@ public class ContainmentIndexImpl implements ContainmentIndex {
                 parameterSource.addValue("transactionId", tx.getId());
                 final List<String> changedParents = jdbcTemplate.queryForList(GET_UPDATED_RESOURCES, parameterSource,
                         String.class);
+                final List<String> removedResources = jdbcTemplate.queryForList(GET_DELETED_RESOURCES, parameterSource,
+                        String.class);
                 final int purged = jdbcTemplate.update(COMMIT_PURGE_RECORDS, parameterSource);
                 final int deleted = jdbcTemplate.update(COMMIT_DELETE_RECORDS.get(dbPlatform), parameterSource);
                 final int added = jdbcTemplate.update(COMMIT_ADD_RECORDS_MAP.get(dbPlatform), parameterSource);
@@ -727,6 +750,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
                     }
                 }
                 jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, parameterSource);
+                this.getContainedByCache.invalidateAll(removedResources);
                 LOGGER.debug("Commit of tx {} complete with {} adds, {} deletes and {} purges",
                         tx.getId(), added, deleted, purged);
             } catch (final Exception e) {
@@ -799,6 +823,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         try {
             jdbcTemplate.update(TRUNCATE_TABLE + RESOURCES_TABLE, Collections.emptyMap());
             jdbcTemplate.update(TRUNCATE_TABLE + TRANSACTION_OPERATIONS_TABLE, Collections.emptyMap());
+            this.getContainedByCache.invalidateAll();
         } catch (final Exception e) {
             throw new RepositoryRuntimeException("Failed to truncate containment tables", e);
         }
