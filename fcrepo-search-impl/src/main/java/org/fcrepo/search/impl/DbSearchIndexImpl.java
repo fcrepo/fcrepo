@@ -709,7 +709,7 @@ public class DbSearchIndexImpl implements SearchIndex {
     @Override
     public void removeFromIndex(final Transaction transaction, final FedoraId fedoraId) {
         transaction.doInTx(() -> {
-            if (transaction.isOpenLongRunning()) {
+            if (!transaction.isShortLived()) {
                 try {
                     doUpsertIntoTranactionTables(transaction.getId(), fedoraId, null, "delete");
                 } catch (final Exception e) {
