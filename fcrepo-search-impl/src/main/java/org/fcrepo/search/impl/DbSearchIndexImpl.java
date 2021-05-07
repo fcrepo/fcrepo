@@ -221,7 +221,7 @@ public class DbSearchIndexImpl implements SearchIndex {
                     " WHERE " + TRANSACTION_ID_COLUMN + "= :" + TRANSACTION_ID_PARAM + " AND " + RDF_TYPE_URI_COLUMN +
                     " NOT IN (SELECT " + RDF_TYPE_URI_PARAM + " FROM " + SEARCH_RDF_TYPE_TABLE + ")";
 
-    private static final String INSERT_RDF_TYPE =
+    private static final String     INSERT_RDF_TYPE =
             "INSERT INTO " + SEARCH_RDF_TYPE_TABLE + " (" + RDF_TYPE_URI_COLUMN + ") SELECT :"  + RDF_TYPE_URI_PARAM +
             " WHERE NOT EXISTS (" +
                     "SELECT * from " + SEARCH_RDF_TYPE_TABLE + " WHERE " +
@@ -291,11 +291,11 @@ public class DbSearchIndexImpl implements SearchIndex {
             TRANSACTION_ID_PARAM + ")";
 
     private static final String INSERT_RDF_TYPE_ASSOC = "INSERT INTO " + SEARCH_RESOURCE_RDF_TYPE_TABLE +
-            " (" + RESOURCE_ID_COLUMN + ", " + RDF_TYPE_ID_COLUMN + ") SELECT " + RESOURCE_ID_COLUMN +
-            "," + RDF_TYPE_ID_COLUMN + " FROM  (SELECT " + ID_COLUMN + " AS " + RESOURCE_ID_COLUMN + " FROM " +
-            SIMPLE_SEARCH_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :" + FEDORA_ID_PARAM + "), (SELECT " + ID_COLUMN +
-            " AS " + RDF_TYPE_ID_COLUMN + " from " + SEARCH_RDF_TYPE_TABLE +
-            " WHERE " + RDF_TYPE_URI_COLUMN + "= :" + RDF_TYPE_URI_PARAM + ")";
+            " (" + RESOURCE_ID_COLUMN + ", " + RDF_TYPE_ID_COLUMN + ") SELECT a." + RESOURCE_ID_COLUMN +
+            ", b." + RDF_TYPE_ID_COLUMN + " FROM  (SELECT " + ID_COLUMN + " AS " + RESOURCE_ID_COLUMN + " FROM " +
+            SIMPLE_SEARCH_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :" + FEDORA_ID_PARAM + ") a, " +
+            "(SELECT " + ID_COLUMN + " AS " + RDF_TYPE_ID_COLUMN + " from " + SEARCH_RDF_TYPE_TABLE +
+            " WHERE " + RDF_TYPE_URI_COLUMN + "= :" + RDF_TYPE_URI_PARAM + ") b";
 
     private static final String DELETE_RESOURCE_TYPE_ASSOCIATIONS_IN_TRANSACTION =
             "DELETE FROM " + SEARCH_RESOURCE_RDF_TYPE_TRANSACTIONS_TABLE + " WHERE " +
