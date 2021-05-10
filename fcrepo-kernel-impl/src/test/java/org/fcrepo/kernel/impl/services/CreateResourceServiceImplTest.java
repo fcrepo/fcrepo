@@ -79,6 +79,7 @@ import org.fcrepo.kernel.impl.operations.RdfSourceOperationFactoryImpl;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.search.api.SearchIndex;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.datatypes.xsd.XSDDateTime;
@@ -126,6 +127,9 @@ public class CreateResourceServiceImplTest {
 
     @Inject
     private ContainmentIndex containmentIndex;
+
+    @Mock
+    private SearchIndex searchIndex;
 
     @Mock
     private PersistentStorageSession psSession;
@@ -187,6 +191,7 @@ public class CreateResourceServiceImplTest {
         nonRdfSourceOperationFactory = new NonRdfSourceOperationFactoryImpl();
         setField(createResourceService, "nonRdfSourceOperationFactory", nonRdfSourceOperationFactory);
         setField(createResourceService, "containmentIndex", containmentIndex);
+        setField(createResourceService, "searchIndex", searchIndex);
         setField(createResourceService, "eventAccumulator", eventAccumulator);
         setField(createResourceService, "referenceService", referenceService);
         setField(createResourceService, "membershipService", membershipService);
@@ -347,7 +352,7 @@ public class CreateResourceServiceImplTest {
         resc.addLiteral(CREATED_BY, relaxedUser);
 
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
-        when(psSession.getHeaders(childId, null)).thenThrow(PersistentItemNotFoundException.class);
+        when(psSession.getHeaders(childId, null)).thenReturn(resourceHeaders);
 
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         propsConfig.setServerManagedPropsMode(ServerManagedPropsMode.RELAXED);

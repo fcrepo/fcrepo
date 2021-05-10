@@ -82,6 +82,7 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
             pSession.persist(updateOp);
             updateReferences(tx, fedoraId, userPrincipal, inputModel);
             membershipService.resourceModified(tx, fedoraId);
+            searchIndex.addUpdateIndex(tx, pSession.getHeaders(fedoraId, null));
             recordEvent(tx, fedoraId, updateOp);
         } catch (final PersistentStorageException ex) {
             tx.fail();

@@ -22,6 +22,8 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.Phaser;
 
+import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.RetryPolicy;
 import org.fcrepo.common.lang.CheckedRunnable;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
@@ -35,14 +37,11 @@ import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.persistence.api.PersistentStorageSession;
-
+import org.fcrepo.search.api.SearchIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DeadlockLoserDataAccessException;
 import org.springframework.transaction.support.TransactionTemplate;
-
-import net.jodah.failsafe.Failsafe;
-import net.jodah.failsafe.RetryPolicy;
 
 /**
  * The Fedora Transaction implementation
@@ -162,6 +161,10 @@ public class TransactionImpl implements Transaction {
         execQuietly("Failed to rollback membership index in transaction " + id, () -> {
             this.getMembershipService().rollbackTransaction(this);
         });
+        execQuietly("Failed to rollback search index in transaction " + id, () -> {
+            this.getSearchIndex().rollbackTransaction(this);
+        });
+
         execQuietly("Failed to rollback events in transaction " + id, () -> {
             this.getEventAccumulator().clearEvents(this);
         });
@@ -319,6 +322,7 @@ public class TransactionImpl implements Transaction {
                 this.getContainmentIndex().commitTransaction(this);
                 this.getReferenceService().commitTransaction(this);
                 this.getMembershipService().commitTransaction(this);
+                this.getSearchIndex().commitTransaction(this);
                 this.getPersistentSession().prepare();
                 // The storage session must be committed last because mutable head changes cannot be rolled back.
                 // The db transaction will remain open until all changes have been written to OCFL. If the changes
@@ -395,6 +399,10 @@ public class TransactionImpl implements Transaction {
 
     private MembershipService getMembershipService() {
         return this.txManager.getMembershipService();
+    }
+
+    private SearchIndex getSearchIndex() {
+        return this.txManager.getSearchIndex();
     }
 
     private TransactionTemplate getTransactionTemplate() {

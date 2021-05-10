@@ -47,7 +47,7 @@ import org.fcrepo.kernel.impl.operations.DeleteResourceOperation;
 import org.fcrepo.kernel.impl.operations.DeleteResourceOperationFactoryImpl;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
-
+import org.fcrepo.search.api.SearchIndex;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -81,6 +81,9 @@ public class DeleteResourceServiceImplTest {
 
     @Inject
     private ContainmentIndex containmentIndex;
+
+    @Mock
+    private SearchIndex searchIndex;
 
     @Mock
     private PersistentStorageSessionManager psManager;
@@ -142,6 +145,7 @@ public class DeleteResourceServiceImplTest {
         setField(service, "eventAccumulator", eventAccumulator);
         setField(service, "referenceService", referenceService);
         setField(service, "membershipService", membershipService);
+        setField(service, "searchIndex", searchIndex);
         when(container.getFedoraId()).thenReturn(RESOURCE_ID);
 
         when(pSession.getHeaders(RESOURCE_ID, null)).thenReturn(resourceHeaders);

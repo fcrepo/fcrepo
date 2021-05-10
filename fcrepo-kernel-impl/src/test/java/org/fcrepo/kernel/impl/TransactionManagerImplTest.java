@@ -39,6 +39,7 @@ import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 
+import org.fcrepo.search.api.SearchIndex;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -78,6 +79,9 @@ public class TransactionManagerImplTest {
     private MembershipService membershipService;
 
     @Mock
+    private SearchIndex searchIndex;
+
+    @Mock
     private PlatformTransactionManager platformTransactionManager;
 
     @Mock
@@ -96,6 +100,7 @@ public class TransactionManagerImplTest {
         when(pssManager.getSession(any())).thenReturn(psSession);
         setField(testTxManager, "pSessionManager", pssManager);
         setField(testTxManager, "containmentIndex", containmentIndex);
+        setField(testTxManager, "searchIndex", searchIndex);
         setField(testTxManager, "eventAccumulator", eventAccumulator);
         setField(testTxManager, "referenceService", referenceService);
         setField(testTxManager, "membershipService", membershipService);

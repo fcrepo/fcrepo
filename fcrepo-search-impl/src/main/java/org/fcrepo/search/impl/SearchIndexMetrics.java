@@ -53,17 +53,14 @@ public class SearchIndexMetrics implements SearchIndex {
             DB, SEARCH, OPERATION, "doSearch");
     private static final Timer resetTimer = Metrics.timer(METRIC_NAME,
             DB, SEARCH, OPERATION, "reset");
+    private static final Timer commitTransactionTimer = Metrics.timer(METRIC_NAME,
+            DB, SEARCH, OPERATION, "commitTransaction");
+    private static final Timer rollbackTransactionTimer = Metrics.timer(METRIC_NAME,
+            DB, SEARCH, OPERATION, "rollbackTransaction");
 
     @Autowired
     @Qualifier("searchIndexImpl")
     private SearchIndex searchIndexImpl;
-
-    @Override
-    public void addUpdateIndex(final ResourceHeaders resourceHeaders) {
-        addUpdateIndexTimer.record(() -> {
-            searchIndexImpl.addUpdateIndex(resourceHeaders);
-        });
-    }
 
     @Override
     public void addUpdateIndex(final Transaction transaction, final ResourceHeaders resourceHeaders) {
@@ -73,9 +70,9 @@ public class SearchIndexMetrics implements SearchIndex {
     }
 
     @Override
-    public void removeFromIndex(final FedoraId fedoraId) {
+    public void removeFromIndex(final Transaction transaction, final FedoraId fedoraId) {
         removeFromIndexTimer.record(() -> {
-            searchIndexImpl.removeFromIndex(fedoraId);
+            searchIndexImpl.removeFromIndex(transaction, fedoraId);
         });
     }
 
@@ -96,4 +93,17 @@ public class SearchIndexMetrics implements SearchIndex {
         });
     }
 
+    @Override
+    public void commitTransaction(final Transaction tx) {
+        commitTransactionTimer.record(() -> {
+            searchIndexImpl.commitTransaction(tx);
+        });
+    }
+
+    @Override
+    public void rollbackTransaction(final Transaction tx) {
+        rollbackTransactionTimer.record(() -> {
+            searchIndexImpl.rollbackTransaction(tx);
+        });
+    }
 }

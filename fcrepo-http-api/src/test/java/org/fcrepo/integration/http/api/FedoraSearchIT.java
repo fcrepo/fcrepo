@@ -436,11 +436,11 @@ public class FedoraSearchIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testDefaultOrdering() throws Exception {
+    public void testOrderingISAscendingByDefaultIfOrderByIsDefined() throws Exception {
         final var prefix = getRandomUniqueId();
         final var resources = createResources(prefix, 3);
         final var condition = FEDORA_ID + "=" + prefix + "*";
-        final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition);
+        final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition) + "&order_by=fedora_id";
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
@@ -455,7 +455,8 @@ public class FedoraSearchIT extends AbstractResourceIT {
         final var resources = createResources(prefix, 3);
         Collections.reverse(resources);
         final var condition = FEDORA_ID + "=" + prefix + "*";
-        final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition) + "&order=desc";
+        final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition) +
+                "&order_by=fedora_id&order=desc";
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
