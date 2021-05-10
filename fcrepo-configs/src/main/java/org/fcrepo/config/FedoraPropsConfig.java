@@ -125,6 +125,12 @@ public class FedoraPropsConfig extends BasePropsConfig {
     @Value("${" + FCREPO_EVENT_THREADS + ":1}")
     private int eventBusThreads;
 
+    @Value("${fcrepo.cache.db.containment.size.entries:1024}")
+    private long containmentCacheSize;
+
+    @Value("${fcrepo.cache.db.containment.timeout.minutes:10}")
+    private long containmentCacheTimeout;
+
     @PostConstruct
     private void postConstruct() throws IOException {
         LOGGER.info("Fedora home: {}", fedoraHome);
@@ -315,5 +321,19 @@ public class FedoraPropsConfig extends BasePropsConfig {
             return 1;
         }
         return eventBusThreads;
+    }
+
+    /**
+     * @return The number of entries in the containment cache.
+     */
+    public long getContainmentCacheSize() {
+        return containmentCacheSize;
+    }
+
+    /**
+     * @return The number of minutes before items in the containment cache expire.
+     */
+    public long getContainmentCacheTimeout() {
+        return containmentCacheTimeout;
     }
 }
