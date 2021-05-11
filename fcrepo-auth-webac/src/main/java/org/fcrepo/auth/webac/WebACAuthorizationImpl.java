@@ -22,12 +22,14 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.fcrepo.kernel.api.auth.WebACAuthorization;
+
 /**
  * @author whikloj
  * @author acoburn
  * @since 2015-08-25
  */
-public class WebACAuthorization {
+public class WebACAuthorizationImpl implements WebACAuthorization {
 
     private final Set<String> agents = new HashSet<>();
 
@@ -54,9 +56,10 @@ public class WebACAuthorization {
      * @param agentGroups the acl:agentGroup values
      * @param defaults the acl:default values
      */
-    public WebACAuthorization(final Collection<String> agents, final Collection<String> agentClasses,
-            final Collection<URI> modes, final Collection<String> accessTo, final Collection<String> accessToClass,
-            final Collection<String> agentGroups, final Collection<String> defaults) {
+    public WebACAuthorizationImpl(final Collection<String> agents, final Collection<String> agentClasses,
+                                  final Collection<URI> modes, final Collection<String> accessTo,
+                                  final Collection<String> accessToClass, final Collection<String> agentGroups,
+                                  final Collection<String> defaults) {
         this.agents.addAll(agents);
         this.agentClasses.addAll(agentClasses);
         this.modes.addAll(modes);

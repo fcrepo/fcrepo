@@ -60,7 +60,7 @@ public class WebACAuthorizationTest {
         final List<String> accessGroups = Arrays.asList(ACCESS_GROUP1, ACCESS_GROUP2);
         final List<String> defaults = Collections.singletonList(DEFAULT_1);
 
-        final WebACAuthorization auth = new WebACAuthorization(agents, agentClasses,
+        final WebACAuthorizationImpl auth = new WebACAuthorizationImpl(agents, agentClasses,
                 modes, accessTo, accessToClass, accessGroups, defaults);
 
         assertEquals(2, auth.getAgents().size());
@@ -90,7 +90,7 @@ public class WebACAuthorizationTest {
         final Set<String> accessGroups = new HashSet<>(Arrays.asList(ACCESS_GROUP1, ACCESS_GROUP2));
         final Set<String> defaults = new HashSet<>(Collections.singletonList(DEFAULT_1));
 
-        final WebACAuthorization auth = new WebACAuthorization(agents, agentClasses,
+        final WebACAuthorizationImpl auth = new WebACAuthorizationImpl(agents, agentClasses,
                 modes, accessTo, accessToClass, accessGroups, defaults);
 
         assertEquals(2, auth.getAgents().size());

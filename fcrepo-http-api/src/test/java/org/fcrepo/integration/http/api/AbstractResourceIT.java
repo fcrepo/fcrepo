@@ -17,6 +17,8 @@
  */
 package org.fcrepo.integration.http.api;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.base.Strings;
 
 import org.apache.http.Header;
@@ -54,9 +56,13 @@ import org.fcrepo.config.AuthPropsConfig;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.http.commons.test.util.ContainerWrapper;
+import org.fcrepo.kernel.api.auth.ACLHandle;
+
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -79,6 +85,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -843,5 +850,17 @@ public abstract class AbstractResourceIT {
         Arrays.stream(aTriples).map(String::trim).sorted().toArray(unused -> aTriples);
         Arrays.stream(bTriples).map(String::trim).sorted().toArray(unused -> bTriples);
         assertArrayEquals(aTriples, bTriples);
+    }
+
+    /**
+     * Instantiation of the authentication handle cache for integration tests.
+     */
+    @Configuration
+    static class TestConfig {
+        @Bean
+        public Cache<String, Optional<ACLHandle>> authHandleCache() {
+            return Caffeine.newBuilder().weakValues().expireAfterAccess(10, TimeUnit.SECONDS)
+                    .maximumSize(10).build();
+        }
     }
 }

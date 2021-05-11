@@ -17,40 +17,6 @@
  */
 package org.fcrepo.auth.webac;
 
-import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Statement;
-
-import org.fcrepo.config.AuthPropsConfig;
-import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.exception.PathNotFoundException;
-import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
-import org.fcrepo.kernel.api.exception.RepositoryException;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.api.models.ResourceFactory;
-import org.fcrepo.kernel.api.models.TimeMap;
-import org.fcrepo.kernel.api.models.WebacAcl;
-import org.slf4j.Logger;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
@@ -78,6 +44,45 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+
+import org.fcrepo.config.AuthPropsConfig;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.auth.ACLHandle;
+import org.fcrepo.kernel.api.auth.WebACAuthorization;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.exception.RepositoryException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.TimeMap;
+import org.fcrepo.kernel.api.models.WebacAcl;
+
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Statement;
+import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
+
+import com.github.benmanes.caffeine.cache.Cache;
+
 
 /**
  * @author acoburn
@@ -98,6 +103,9 @@ public class WebACRolesProvider {
     @Inject
     private ResourceFactory resourceFactory;
 
+    @Inject
+    private Cache<String, Optional<ACLHandle>> authHandleCache;
+
     private String userBaseUri;
     private String groupBaseUri;
 
@@ -117,8 +125,10 @@ public class WebACRolesProvider {
     public Map<String, Collection<String>> getRoles(final FedoraResource resource, final Transaction transaction) {
         LOGGER.debug("Getting agent roles for: {}", resource.getId());
 
+
         // Get the effective ACL by searching the target node and any ancestors.
-        final Optional<ACLHandle> effectiveAcl = getEffectiveAcl(resource, false);
+        final Optional<ACLHandle> effectiveAcl = authHandleCache.get(resource.getId(),
+                key -> getEffectiveAcl(resource,false));
 
         // Construct a list of acceptable acl:accessTo values for the target resource.
         final List<String> resourcePaths = new ArrayList<>();
@@ -135,7 +145,7 @@ public class WebACRolesProvider {
         // Add the resource location and types of the ACL-bearing parent,
         // if present and if different than the target resource.
         effectiveAcl
-            .map(aclHandle -> aclHandle.resource)
+            .map(ACLHandle::getResource)
             .filter(effectiveResource -> !effectiveResource.getId().equals(resource.getId()))
             .ifPresent(effectiveResource -> {
                 resourcePaths.add(effectiveResource.getId());
@@ -162,7 +172,7 @@ public class WebACRolesProvider {
 
         // Read the effective Acl and return a list of acl:Authorization statements
         final List<WebACAuthorization> authorizations = effectiveAcl
-                .map(auth -> auth.authorizations)
+                .map(ACLHandle::getAuthorizations)
                 .orElseGet(() -> getDefaultAuthorizations());
 
         // Filter the acl:Authorization statements so that they correspond only to statements that apply to
@@ -320,7 +330,7 @@ public class WebACRolesProvider {
      * @return a list of acl:Authorization objects
      */
     private List<WebACAuthorization> getAuthorizations(final FedoraResource aclResource,
-                                                              final boolean ancestorAcl) {
+                                                           final boolean ancestorAcl) {
 
         final List<WebACAuthorization> authorizations = new ArrayList<>();
 
@@ -372,7 +382,7 @@ public class WebACRolesProvider {
     }
 
     private static WebACAuthorization createAuthorizationFromMap(final Map<String, List<String>> data) {
-        return new WebACAuthorization(
+        return new WebACAuthorizationImpl(
                 data.getOrDefault(WEBAC_AGENT_VALUE, emptyList()),
                 data.getOrDefault(WEBAC_AGENT_CLASS_VALUE, emptyList()),
                 data.getOrDefault(WEBAC_MODE_VALUE, emptyList()).stream()
@@ -401,7 +411,7 @@ public class WebACRolesProvider {
                     getAuthorizations(aclResource, ancestorAcl);
                 if (authorizations.size() > 0) {
                     return Optional.of(
-                        new ACLHandle(resource, authorizations));
+                        new ACLHandleImpl(resource, authorizations));
                 }
             }
 
@@ -459,11 +469,16 @@ public class WebACRolesProvider {
         return empty();
     }
 
+    /*
+     * The below two methods are ONLY used by tests and so invalidating the cache should not have any impact.
+     */
+
     /**
      * @param userBaseUri the user base uri
      */
     public void setUserBaseUri(final String userBaseUri) {
         this.userBaseUri = userBaseUri;
+        authHandleCache.invalidateAll();
     }
 
     /**
@@ -471,5 +486,6 @@ public class WebACRolesProvider {
      */
     public void setGroupBaseUri(final String groupBaseUri) {
         this.groupBaseUri = groupBaseUri;
+        authHandleCache.invalidateAll();
     }
 }

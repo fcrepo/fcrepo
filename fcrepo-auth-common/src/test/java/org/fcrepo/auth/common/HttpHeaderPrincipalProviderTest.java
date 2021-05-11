@@ -22,17 +22,18 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
-
-import org.fcrepo.auth.common.HttpHeaderPrincipalProvider.HttpHeaderPrincipal;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-
-import javax.servlet.http.HttpServletRequest;
 
 import java.security.Principal;
 import java.util.Set;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.fcrepo.auth.common.HttpHeaderPrincipalProvider.HttpHeaderPrincipal;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 /**
  * @author daines
@@ -48,7 +49,7 @@ public class HttpHeaderPrincipalProviderTest {
 
     @Before
     public void setUp() {
-        initMocks(this);
+        MockitoAnnotations.openMocks(this);
 
         provider = new HttpHeaderPrincipalProvider();
     }

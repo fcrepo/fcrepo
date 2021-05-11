@@ -37,6 +37,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
@@ -57,6 +58,7 @@ import org.fcrepo.event.serialization.JsonLDEventMessage;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.auth.ACLHandle;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -80,9 +82,13 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 /**
  * <p>
@@ -396,4 +402,15 @@ abstract class AbstractJmsIT implements MessageListener {
         }
     }
 
+    /**
+     * Instantiation of the authentication handle cache for integration tests.
+     */
+    @Configuration
+    static class TestConfig {
+        @Bean
+        public Cache<String, Optional<ACLHandle>> authHandleCache() {
+            return Caffeine.newBuilder().weakValues().expireAfterAccess(10, TimeUnit.SECONDS)
+                    .maximumSize(10).build();
+        }
+    }
 }

@@ -18,12 +18,14 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.update.UpdateAction;
-import org.apache.jena.update.UpdateFactory;
-import org.apache.jena.update.UpdateRequest;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+
+import java.util.Optional;
+
+import javax.inject.Inject;
 
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.auth.ACLHandle;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
@@ -36,9 +38,12 @@ import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.update.UpdateAction;
+import org.apache.jena.update.UpdateFactory;
+import org.apache.jena.update.UpdateRequest;
 
-import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import com.github.benmanes.caffeine.cache.Cache;
 
 /**
  * This class implements the update properties operation.
@@ -54,6 +59,9 @@ public class UpdatePropertiesServiceImpl extends AbstractService implements Upda
     @Inject
     private PersistentStorageSessionManager persistentStorageSessionManager;
 
+    @Inject
+    private Cache<String, Optional<ACLHandle>> authHandleCache;
+
     @Override
     public void updateProperties(final Transaction tx, final String userPrincipal,
                                  final FedoraId fedoraId, final String sparqlUpdateStatement)
@@ -65,6 +73,10 @@ public class UpdatePropertiesServiceImpl extends AbstractService implements Upda
             final UpdateRequest request = UpdateFactory.create(sparqlUpdateStatement, fedoraId.getFullId());
             UpdateAction.execute(request, model);
             replacePropertiesService.perform(tx, userPrincipal, fedoraId, model);
+            if (fedoraId.isAcl()) {
+                // Flush ACL cache on any ACL creation/update/deletion.
+                authHandleCache.invalidateAll();
+            }
         } catch (final PersistentItemNotFoundException ex) {
             throw new ItemNotFoundException(ex.getMessage(), ex);
         } catch (final PersistentStorageException ex) {

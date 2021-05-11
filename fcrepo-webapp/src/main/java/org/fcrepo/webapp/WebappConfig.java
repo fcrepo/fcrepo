@@ -18,12 +18,15 @@
 
 package org.fcrepo.webapp;
 
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.api.ExternalContentHandlerFactory;
 import org.fcrepo.http.api.ExternalContentPathValidator;
+import org.fcrepo.kernel.api.auth.ACLHandle;
 import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
 
 import org.apache.http.conn.HttpClientConnectionManager;
@@ -35,6 +38,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 
@@ -128,4 +133,9 @@ public class WebappConfig {
         return factory;
     }
 
+    @Bean
+    public Cache<String, Optional<ACLHandle>> authHandleCache() {
+        return Caffeine.newBuilder().weakValues().expireAfterAccess(10, TimeUnit.SECONDS)
+                .maximumSize(100).build();
+    }
 }
