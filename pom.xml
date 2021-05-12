@@ -23,37 +23,38 @@
     <project_name>fcrepo4</project_name>
     <project_organization>fcrepo4</project_organization>
     <!-- Dependency version properties -->
-    <activemq.version>5.15.5</activemq.version>
+    <activemq.version>5.15.15</activemq.version>
     <commons-codec.version>1.15</commons-codec.version>
     <commons-collections.version>3.2.2</commons-collections.version>
     <commons-io.version>2.8.0</commons-io.version>
-    <commons-lang.version>3.11</commons-lang.version>
+    <commons-lang.version>3.12.0</commons-lang.version>
     <narayana-jta.version>5.9.0.Final</narayana-jta.version>
-    <jetty.version>9.4.34.v20201102</jetty.version>
-    <guava.version>30.0-jre</guava.version>
+    <jetty.version>9.4.40.v20210413</jetty.version>
+    <guava.version>30.1.1-jre</guava.version>
     <hk2.version>2.6.1</hk2.version>
-    <htmlunit.version>2.33</htmlunit.version>
+    <htmlunit.version>2.49.1</htmlunit.version>
+    <htmlunit-core-js.version>2.49.0</htmlunit-core-js.version>
     <httpclient.version>4.5.13</httpclient.version>
     <httpmime.version>4.5.13</httpmime.version>
-    <httpcore.version>4.4.13</httpcore.version>
+    <httpcore.version>4.4.14</httpcore.version>
     <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
     <javax.annotation.version>1.3.2</javax.annotation.version>
     <javaee-api.version>8.0.1</javaee-api.version>
-    <jackson2.version>2.11.3</jackson2.version>
+    <jackson2.version>2.12.3</jackson2.version>
     <jboss-logging.version>3.3.2.Final</jboss-logging.version>
     <jcr.version>2.0</jcr.version>
     <jena.version>3.17.0</jena.version>
-    <jersey.version>2.32</jersey.version>
+    <jersey.version>2.34</jersey.version>
     <jgroups.version>4.2.10.Final</jgroups.version>
-    <jsonld.version>0.13.2</jsonld.version>
+    <jsonld.version>0.13.3</jsonld.version>
     <logback.version>1.2.3</logback.version>
     <modeshape.version>5.4.1.fcr</modeshape.version>
-    <shiro.version>1.7.0</shiro.version>
-    <slf4j.version>1.7.25</slf4j.version>
+    <shiro.version>1.7.1</shiro.version>
+    <slf4j.version>1.7.30</slf4j.version>
     <snappy-java.version>1.1.7.2</snappy-java.version>
-    <spring.version>5.3.1</spring.version>
+    <spring.version>5.3.7</spring.version>
     <tika.version>1.24.1</tika.version>
-    <xerces.version>2.12.0</xerces.version>
+    <xerces.version>2.12.1</xerces.version>
     <xml-apis.version>1.4.01</xml-apis.version>
     <velocity.version>1.7</velocity.version>
     <!-- JCBC dependencies -->
@@ -64,7 +65,7 @@
     <!-- test gear -->
     <awaitility.version>1.7.0</awaitility.version>
     <grizzly.version>2.4.4</grizzly.version>
-    <junit.version>4.13.1</junit.version>
+    <junit.version>4.13.2</junit.version>
     <system-rules.version>1.18.0</system-rules.version>
     <mockito.version>2.28.2</mockito.version>
     <wiremock.version>2.27.2</wiremock.version>
@@ -392,12 +393,27 @@
       </dependency>
       <dependency>
         <groupId>org.apache.commons</groupId>
-        <artifactId>commons-dbcp2</artifactId>
-        <version>2.1.1</version>
+        <artifactId>commons-pool2</artifactId>
+        <version>2.9.0</version>
         <exclusions>
           <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-dbcp2</artifactId>
+        <version>2.8.0</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-dbcp2</artifactId>
           </exclusion>
         </exclusions>
       </dependency>

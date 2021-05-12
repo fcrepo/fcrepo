@@ -205,7 +205,7 @@
       <groupId>net.sourceforge.htmlunit</groupId>
       <artifactId>htmlunit-core-js</artifactId>
       <scope>test</scope>
-      <version>${htmlunit.version}</version>
+      <version>${htmlunit-core-js.version}</version>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>

@@ -17,7 +17,7 @@
  */
 package org.fcrepo.integration;
 
-import static com.gargoylesoftware.htmlunit.BrowserVersion.FIREFOX_60;
+import static com.gargoylesoftware.htmlunit.BrowserVersion.FIREFOX;
 import static com.google.common.collect.Lists.transform;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
@@ -35,7 +35,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.List;
 
-import com.gargoylesoftware.htmlunit.html.DomElement;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.client.CredentialsProvider;
@@ -54,6 +53,7 @@ import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.SilentCssErrorHandler;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.DomAttr;
+import com.gargoylesoftware.htmlunit.html.DomElement;
 import com.gargoylesoftware.htmlunit.html.DomText;
 import com.gargoylesoftware.htmlunit.html.HtmlButton;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
@@ -404,7 +404,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
     private WebClient getDefaultWebClient() {
 
-        final WebClient webClient = new WebClient(FIREFOX_60);
+        final WebClient webClient = new WebClient(FIREFOX);
         webClient.addRequestHeader(ACCEPT, "text/html");
         webClient.setCredentialsProvider(getFedoraAdminCredentials());
         webClient.waitForBackgroundJavaScript(1000);
