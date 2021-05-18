@@ -561,21 +561,17 @@ public class DbSearchIndexImpl implements SearchIndex {
     }
 
     private void insertRdfTypes(final List<URI> rdfTypes) {
-        final List<MapSqlParameterSource> parameterSourcesList = new ArrayList<>(rdfTypes.size());
-        for (final var rdfType : rdfTypes) {
-            final var assocParams = new MapSqlParameterSource();
-            assocParams.addValue(RDF_TYPE_URI_PARAM, rdfType.toString());
-            parameterSourcesList.add(assocParams);
-        }
-        final MapSqlParameterSource[] psArray = parameterSourcesList.toArray(new MapSqlParameterSource[0]);
-
         // RDF types are upserted outside of the tx to avoid concurrent update contention between txs, especially
         // in MySQL. This means that they will not be rolled back if the tx fails.
         noTransactionTemplate.executeWithoutResult(status -> {
-            try {
-                jdbcTemplate.batchUpdate(INSERT_RDF_TYPE, psArray);
-            } catch (DuplicateKeyException e) {
-                // ignore duplicate keys
+            for (final var rdfType : rdfTypes) {
+                try {
+                    final var params = new MapSqlParameterSource();
+                    params.addValue(RDF_TYPE_URI_PARAM, rdfType.toString());
+                    jdbcTemplate.update(INSERT_RDF_TYPE, params);
+                } catch (DuplicateKeyException e) {
+                    // ignore duplicate keys
+                }
             }
         });
     }
