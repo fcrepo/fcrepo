@@ -25,6 +25,7 @@ import java.lang.annotation.Target;
 
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -32,11 +33,11 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * @author pwinckles
  */
-@Transactional
 @Retryable(
         exceptionExpression = "@dbExceptionChecker.shouldRetry(#root)",
         backoff = @Backoff(delay = 10L, maxDelay = 100L, multiplier = 1.5),
         maxAttempts = 10)
+@Transactional(isolation = Isolation.READ_COMMITTED, rollbackFor = {Exception.class})
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface TransactionalWithRetry {

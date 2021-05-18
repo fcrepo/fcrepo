@@ -46,7 +46,6 @@ import javax.sql.DataSource;
 
 import com.google.common.collect.Sets;
 import org.fcrepo.common.db.DbPlatform;
-import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -60,10 +59,16 @@ import org.fcrepo.search.api.SearchParameters;
 import org.fcrepo.search.api.SearchResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * An implementation of the {@link SearchIndex}
@@ -221,11 +226,9 @@ public class DbSearchIndexImpl implements SearchIndex {
                     " WHERE " + TRANSACTION_ID_COLUMN + "= :" + TRANSACTION_ID_PARAM + " AND " + RDF_TYPE_URI_COLUMN +
                     " NOT IN (SELECT " + RDF_TYPE_URI_PARAM + " FROM " + SEARCH_RDF_TYPE_TABLE + ")";
 
-    private static final String     INSERT_RDF_TYPE =
-            "INSERT INTO " + SEARCH_RDF_TYPE_TABLE + " (" + RDF_TYPE_URI_COLUMN + ") SELECT :"  + RDF_TYPE_URI_PARAM +
-            " WHERE NOT EXISTS (" +
-                    "SELECT * from " + SEARCH_RDF_TYPE_TABLE + " WHERE " +
-                    RDF_TYPE_URI_COLUMN + " = :" + RDF_TYPE_URI_PARAM + ")";
+    private static final String INSERT_RDF_TYPE =
+            "INSERT INTO " + SEARCH_RDF_TYPE_TABLE + " (" + RDF_TYPE_URI_COLUMN + ")" +
+                    " VALUES (:" + RDF_TYPE_URI_PARAM + ")";
 
     private static final String COMMIT_RDF_TYPE_ASSOCIATIONS =
             "INSERT INTO " + SEARCH_RESOURCE_RDF_TYPE_TABLE +
@@ -309,35 +312,20 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     private static final List<String> COUNT_QUERY_COLUMNS = Arrays.asList("count(0) as count");
 
-    private static class RdfType {
-        private String typeUri;
-        private Long typeId;
-
-        public RdfType(final Long id, final String uri) {
-            typeId = id;
-            typeUri = uri;
-        }
-
-        public Long getTypeId() {
-            return typeId;
-        }
-
-        public String getTypeUri() {
-            return typeUri;
-        }
-    }
-
     @Inject
     private DataSource dataSource;
 
+    @Inject
+    private PlatformTransactionManager platformTransactionManager;
+
     private NamedParameterJdbcTemplate jdbcTemplate;
+
+    private TransactionTemplate noTransactionTemplate;
 
     @Inject
     private ResourceFactory resourceFactory;
 
     private DbPlatform dbPlatForm;
-
-    private String rdfTablesSqlFragment;
 
     /**
      * Setup database table and connection
@@ -346,6 +334,8 @@ public class DbSearchIndexImpl implements SearchIndex {
     public void setup() {
         this.dbPlatForm = DbPlatform.fromDataSource(this.dataSource);
         this.jdbcTemplate = getNamedParameterJdbcTemplate();
+        this.noTransactionTemplate = new TransactionTemplate(platformTransactionManager);
+        this.noTransactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_NOT_SUPPORTED);
     }
 
     private NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
@@ -535,7 +525,7 @@ public class DbSearchIndexImpl implements SearchIndex {
         return value.replace("*", "%");
     }
 
-    @TransactionalWithRetry
+    @Transactional
     @Override
     public void addUpdateIndex(final Transaction transaction, final ResourceHeaders resourceHeaders) {
         final var fedoraId = resourceHeaders.getId();
@@ -544,6 +534,7 @@ public class DbSearchIndexImpl implements SearchIndex {
                     fedoraId.getFullId());
             return;
         }
+        LOGGER.debug("Updating search index for {}", fedoraId);
         transaction.doInTx(() -> {
             if (!transaction.isShortLived()) {
                 doUpsertWithTransaction(transaction, resourceHeaders, fedoraId);
@@ -577,7 +568,16 @@ public class DbSearchIndexImpl implements SearchIndex {
             parameterSourcesList.add(assocParams);
         }
         final MapSqlParameterSource[] psArray = parameterSourcesList.toArray(new MapSqlParameterSource[0]);
-        jdbcTemplate.batchUpdate(INSERT_RDF_TYPE, psArray);
+
+        // RDF types are upserted outside of the tx to avoid concurrent update contention between txs, especially
+        // in MySQL. This means that they will not be rolled back if the tx fails.
+        noTransactionTemplate.executeWithoutResult(status -> {
+            try {
+                jdbcTemplate.batchUpdate(INSERT_RDF_TYPE, psArray);
+            } catch (DuplicateKeyException e) {
+                // ignore duplicate keys
+            }
+        });
     }
 
     private void doUpsertWithTransaction(final Transaction transaction, final ResourceHeaders resourceHeaders,
@@ -705,7 +705,7 @@ public class DbSearchIndexImpl implements SearchIndex {
     }
 
 
-    @TransactionalWithRetry
+    @Transactional
     @Override
     public void removeFromIndex(final Transaction transaction, final FedoraId fedoraId) {
         transaction.doInTx(() -> {
@@ -716,12 +716,12 @@ public class DbSearchIndexImpl implements SearchIndex {
                     throw new RepositoryRuntimeException("Failed to remove " + fedoraId + " from search index", e);
                 }
             } else {
-                doDirectRemove(transaction, fedoraId);
+                doDirectRemove(fedoraId);
             }
         });
     }
 
-    private void doDirectRemove(final Transaction transaction, final FedoraId fedoraId) {
+    private void doDirectRemove(final FedoraId fedoraId) {
         deleteRdfTypeAssociations(fedoraId);
         deleteResource(fedoraId);
     }
@@ -732,7 +732,7 @@ public class DbSearchIndexImpl implements SearchIndex {
         jdbcTemplate.update(DELETE_RESOURCE_FROM_SEARCH, params);
     }
 
-    @TransactionalWithRetry
+    @Transactional
     @Override
     public void reset() {
         try (final var conn = this.dataSource.getConnection();
@@ -754,7 +754,7 @@ public class DbSearchIndexImpl implements SearchIndex {
         }
     }
 
-    @TransactionalWithRetry
+    @Transactional
     @Override
     public void commitTransaction(final Transaction tx) {
         if (!tx.isShortLived()) {
@@ -783,7 +783,7 @@ public class DbSearchIndexImpl implements SearchIndex {
         }
     }
 
-    @TransactionalWithRetry
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     @Override
     public void rollbackTransaction(final Transaction tx) {
         if (!tx.isShortLived()) {

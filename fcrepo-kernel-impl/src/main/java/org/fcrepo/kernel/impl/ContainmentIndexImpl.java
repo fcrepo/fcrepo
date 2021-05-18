@@ -42,7 +42,6 @@ import javax.inject.Inject;
 import javax.sql.DataSource;
 
 import org.fcrepo.common.db.DbPlatform;
-import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
@@ -54,6 +53,8 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -535,13 +536,13 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    @TransactionalWithRetry
+    @Transactional
     public void addContainedBy(@Nonnull final Transaction tx, final FedoraId parent, final FedoraId child) {
         addContainedBy(tx, parent, child, Instant.now(), null);
     }
 
     @Override
-    @TransactionalWithRetry
+    @Transactional
     public void addContainedBy(@Nonnull final Transaction tx, final FedoraId parent, final FedoraId child,
                                final Instant startTime, final Instant endTime) {
         tx.doInTx(() -> {
@@ -561,7 +562,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    @TransactionalWithRetry
+    @Transactional
     public void removeContainedBy(@Nonnull final Transaction tx, final FedoraId parent, final FedoraId child) {
         tx.doInTx(() -> {
             final String parentID = parent.getFullId();
@@ -587,7 +588,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    @TransactionalWithRetry
+    @Transactional
     public void removeResource(@Nonnull final Transaction tx, final FedoraId resource) {
         tx.doInTx(() -> {
             final String resourceID = resource.getFullId();
@@ -621,7 +622,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    @TransactionalWithRetry
+    @Transactional
     public void purgeResource(@Nonnull final Transaction tx, final FedoraId resource) {
         tx.doInTx(() -> {
             final String resourceID = resource.getFullId();
@@ -727,7 +728,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    @TransactionalWithRetry
+    @Transactional
     public void commitTransaction(final Transaction tx) {
         if (!tx.isShortLived()) {
             tx.ensureCommitting();
@@ -760,6 +761,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         }
     }
 
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     @Override
     public void rollbackTransaction(final Transaction tx) {
         if (!tx.isShortLived()) {
@@ -818,7 +820,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    @TransactionalWithRetry
+    @Transactional
     public void reset() {
         try {
             jdbcTemplate.update(TRUNCATE_TABLE + RESOURCES_TABLE, Collections.emptyMap());

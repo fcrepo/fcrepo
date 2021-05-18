@@ -29,7 +29,6 @@ import javax.inject.Inject;
 import javax.sql.DataSource;
 
 import org.fcrepo.common.db.DbPlatform;
-import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
@@ -50,6 +49,8 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 
@@ -316,7 +317,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     }
 
     @Override
-    @TransactionalWithRetry
+    @Transactional
     public void reset() {
         try {
             jdbcTemplate.update(TRUNCATE_MAPPINGS, Collections.emptyMap());
@@ -328,7 +329,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     }
 
     @Override
-    @TransactionalWithRetry
+    @Transactional
     public void commit(@Nonnull final Transaction transaction) {
         if (!transaction.isShortLived()) {
             transaction.ensureCommitting();
@@ -348,6 +349,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
         }
     }
 
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     @Override
     public void rollback(@Nonnull final Transaction transaction) {
         if (!transaction.isShortLived()) {
