@@ -273,7 +273,6 @@ public class ReferenceServiceImpl implements ReferenceService {
     }
 
     @Override
-    @Transactional
     public void updateReferences(@Nonnull final Transaction tx, final FedoraId resourceId, final String userPrincipal,
                                  final RdfStream rdfStream) {
         try {
@@ -302,7 +301,6 @@ public class ReferenceServiceImpl implements ReferenceService {
     }
 
     @Override
-    @Transactional
     public void commitTransaction(final Transaction tx) {
         if (!tx.isShortLived()) {
             tx.ensureCommitting();

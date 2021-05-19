@@ -25,6 +25,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 
+import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.api.services.EtagService;
 import org.fcrepo.http.api.services.HttpRdfService;
@@ -287,6 +288,7 @@ public class FedoraLdpTest {
         setField(testObj, "updatePropertiesService", updatePropertiesService);
         setField(testObj, "resourceHelper", resourceHelper);
         setField(testObj, "etagService", etagService);
+        setField(testObj, "dbTransactionExecutor", new DbTransactionExecutor());
 
         when(rdfNamespaceRegistry.getNamespaces()).thenReturn(new HashMap<>());
 

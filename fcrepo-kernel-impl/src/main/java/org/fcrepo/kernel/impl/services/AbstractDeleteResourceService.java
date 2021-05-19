@@ -39,7 +39,6 @@ import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Shared delete/purge code.
@@ -61,7 +60,6 @@ abstract public class AbstractDeleteResourceService extends AbstractService {
      * @param fedoraResource the resource to start delete/purging.
      * @param userPrincipal the user performing the action.
      */
-    @Transactional
     public void perform(final Transaction tx, final FedoraResource fedoraResource, final String userPrincipal) {
         final String fedoraResourceId = fedoraResource.getId();
 

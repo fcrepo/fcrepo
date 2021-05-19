@@ -525,7 +525,6 @@ public class DbSearchIndexImpl implements SearchIndex {
         return value.replace("*", "%");
     }
 
-    @Transactional
     @Override
     public void addUpdateIndex(final Transaction transaction, final ResourceHeaders resourceHeaders) {
         final var fedoraId = resourceHeaders.getId();
@@ -701,7 +700,6 @@ public class DbSearchIndexImpl implements SearchIndex {
     }
 
 
-    @Transactional
     @Override
     public void removeFromIndex(final Transaction transaction, final FedoraId fedoraId) {
         transaction.doInTx(() -> {
@@ -728,7 +726,6 @@ public class DbSearchIndexImpl implements SearchIndex {
         jdbcTemplate.update(DELETE_RESOURCE_FROM_SEARCH, params);
     }
 
-    @Transactional
     @Override
     public void reset() {
         try (final var conn = this.dataSource.getConnection();
@@ -750,7 +747,6 @@ public class DbSearchIndexImpl implements SearchIndex {
         }
     }
 
-    @Transactional
     @Override
     public void commitTransaction(final Transaction tx) {
         if (!tx.isShortLived()) {

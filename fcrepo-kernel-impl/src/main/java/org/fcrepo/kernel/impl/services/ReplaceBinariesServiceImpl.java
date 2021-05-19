@@ -30,7 +30,6 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.MultiDigestInputStreamWrapper;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.io.InputStream;
@@ -58,7 +57,6 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
     private NonRdfSourceOperationFactory factory;
 
     @Override
-    @Transactional
     public void perform(final Transaction tx,
                         final String userPrincipal,
                         final FedoraId fedoraId,

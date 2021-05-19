@@ -17,6 +17,7 @@
  */
 package org.fcrepo.http.api;
 
+import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.http.commons.session.TransactionProvider;
@@ -58,6 +59,9 @@ abstract public class FedoraBaseResource extends AbstractResource {
 
     @Inject
     protected TransactionManager txManager;
+
+    @Inject
+    protected DbTransactionExecutor dbTransactionExecutor;
 
     private TransactionProvider txProvider;
 
@@ -120,6 +124,15 @@ abstract public class FedoraBaseResource extends AbstractResource {
             transaction = txProvider.provide();
         }
         return transaction;
+    }
+
+    /**
+     * Executes the runnable within a DB transaction that will retry entire block on MySQL deadlock exceptions.
+     *
+     * @param action the code to execute
+     */
+    protected void doInDbTxWithRetry(final Runnable action) {
+        dbTransactionExecutor.doInTxWithRetry(action);
     }
 
 }

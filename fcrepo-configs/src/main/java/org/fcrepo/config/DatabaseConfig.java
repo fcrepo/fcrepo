@@ -36,7 +36,11 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.converter.ConverterRegistry;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -138,6 +142,13 @@ public class DatabaseConfig extends BasePropsConfig {
         final var txManager = new DataSourceTransactionManager();
         txManager.setDataSource(dataSource);
         return txManager;
+    }
+
+    @Bean
+    public TransactionTemplate txTemplate(final PlatformTransactionManager txManager) {
+        final var txDefinition = new DefaultTransactionDefinition();
+        txDefinition.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
+        return new TransactionTemplate(txManager, txDefinition);
     }
 
     @Bean

@@ -34,7 +34,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 
-import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.RdfLexicon;
@@ -104,7 +103,6 @@ public class ReindexService {
 
     private int membershipPageSize = 500;
 
-    @TransactionalWithRetry
     public void indexOcflObject(final Transaction tx, final String ocflId) {
         LOGGER.debug("Indexing ocflId {} in transaction {}", ocflId, tx.getId());
 

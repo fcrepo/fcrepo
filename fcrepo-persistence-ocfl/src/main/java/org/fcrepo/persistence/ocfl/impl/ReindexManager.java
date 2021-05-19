@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
+import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
@@ -63,6 +64,8 @@ public class ReindexManager {
 
     private TransactionManager txManager;
 
+    private DbTransactionExecutor dbTransactionExecutor;
+
     private Transaction transaction = null;
 
     /**
@@ -71,15 +74,20 @@ public class ReindexManager {
      * @param reindexService the reindexing service.
      * @param config OCFL property config object.
      * @param manager the transaction manager object.
+     * @param dbTransactionExecutor manages db transactions
      */
-    public ReindexManager(final Stream<String> ids, final ReindexService reindexService, final OcflPropsConfig config,
-                          final TransactionManager manager) {
+    public ReindexManager(final Stream<String> ids,
+                          final ReindexService reindexService,
+                          final OcflPropsConfig config,
+                          final TransactionManager manager,
+                          final DbTransactionExecutor dbTransactionExecutor) {
         this.ocflStream = ids;
         this.ocflIter = ocflStream.iterator();
         this.reindexService = reindexService;
         this.batchSize = config.getReindexBatchSize();
         this.failOnError = config.isReindexFailOnError();
         txManager = manager;
+        this.dbTransactionExecutor = dbTransactionExecutor;
         workers = new ArrayList<>();
         completedCount = new AtomicInteger(0);
         errorCount = new AtomicInteger(0);
@@ -93,7 +101,7 @@ public class ReindexManager {
 
         for (var i = 0; i < workerCount; i += 1) {
             workers.add(new ReindexWorker("ReindexWorker-" + i, this,
-                    this.reindexService, txManager, this.failOnError));
+                    this.reindexService, txManager, this.dbTransactionExecutor, this.failOnError));
         }
     }
 

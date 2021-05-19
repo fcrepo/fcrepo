@@ -32,7 +32,6 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 
@@ -52,7 +51,6 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
     private RdfSourceOperationFactory factory;
 
     @Override
-    @Transactional
     public void perform(final Transaction tx,
                         final String userPrincipal,
                         final FedoraId fedoraId,

@@ -317,7 +317,6 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     }
 
     @Override
-    @Transactional
     public void reset() {
         try {
             jdbcTemplate.update(TRUNCATE_MAPPINGS, Collections.emptyMap());
@@ -329,7 +328,6 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     }
 
     @Override
-    @Transactional
     public void commit(@Nonnull final Transaction transaction) {
         if (!transaction.isShortLived()) {
             transaction.ensureCommitting();
