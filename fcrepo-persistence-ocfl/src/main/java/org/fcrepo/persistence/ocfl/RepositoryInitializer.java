@@ -33,9 +33,11 @@ import org.fcrepo.persistence.ocfl.api.IndexBuilder;
 import org.fcrepo.persistence.ocfl.impl.OcflPersistentSessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
@@ -71,11 +73,24 @@ public class RepositoryInitializer {
     @Inject
     private TransactionManager txManager;
 
+    // This is used in-place of @PostConstruct so that it is called _after_ the rest of context has been
+    // completely initialized.
+    @EventListener
+    public void onApplicationEvent(final ContextRefreshedEvent event) {
+        try {
+            initialize();
+        } catch (Exception e) {
+            LOGGER.error("Failed to initialize repository", e);
+            ((ConfigurableApplicationContext) event.getApplicationContext()).close();
+        }
+    }
+
     /**
      * Initializes the repository
      */
-    @PostConstruct
     public void initialize() {
+        LOGGER.info("Initializing repository");
+
         indexBuilder.rebuildIfNecessary();
 
         final var root = FedoraId.getRepositoryRootId();
@@ -89,7 +104,7 @@ public class RepositoryInitializer {
             try {
                 session.getHeaders(root, null);
             } catch (final PersistentItemNotFoundException e) {
-                LOGGER.info("Repository root ({}) not found. Creating...", root);
+                LOGGER.debug("Repository root ({}) not found. Creating...", root);
                 final RdfSourceOperation operation = this.operationFactory.createBuilder(transaction, root,
                         BASIC_CONTAINER.getURI(), fedoraPropsConfig.getServerManagedPropsMode())
                         .parentId(root).build();
@@ -105,7 +120,7 @@ public class RepositoryInitializer {
 
                 transaction.commit();
 
-                LOGGER.info("Successfully created repository root ({}).", root);
+                LOGGER.debug("Successfully created repository root ({}).", root);
             }
 
         } catch (final PersistentStorageException ex) {

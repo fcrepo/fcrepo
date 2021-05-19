@@ -48,18 +48,22 @@ public class ReindexWorker implements Runnable {
 
     /**
      * Basic Constructor
+     * @param name the name of the worker -- used in logging
      * @param reindexManager the manager service.
      * @param reindexService the reindexing service.
      * @param transactionManager a transaction manager to generate
      * @param failOnError whether the thread should fail on an error or log and continue.
      */
-    public ReindexWorker(final ReindexManager reindexManager, final ReindexService reindexService,
-                         final TransactionManager transactionManager, final boolean failOnError) {
+    public ReindexWorker(final String name,
+                         final ReindexManager reindexManager,
+                         final ReindexService reindexService,
+                         final TransactionManager transactionManager,
+                         final boolean failOnError) {
         manager = reindexManager;
         service = reindexService;
         txManager = transactionManager;
         this.failOnError = failOnError;
-        t = new Thread(this, "ReindexWorker");
+        t = new Thread(this, name);
     }
 
     /**
@@ -83,6 +87,7 @@ public class ReindexWorker implements Runnable {
         while (running) {
             final List<String> ids = manager.getIds();
             if (ids.isEmpty()) {
+                LOGGER.debug("No more objects found to process. Stopping...");
                 stopThread();
                 break;
             }
@@ -91,11 +96,12 @@ public class ReindexWorker implements Runnable {
             int errors = 0;
 
             for (final var id : ids) {
-                final Transaction tx = txManager.create();
-                tx.setShortLived(true);
                 if (!running) {
                     break;
                 }
+
+                final Transaction tx = txManager.create();
+                tx.setShortLived(true);
                 if (stopwatch.elapsed(TimeUnit.SECONDS) > REPORTING_INTERVAL_SECS) {
                     manager.updateComplete(completed, errors);
                     completed = 0;
@@ -107,16 +113,15 @@ public class ReindexWorker implements Runnable {
                     tx.commit();
                     completed += 1;
                 } catch (final Exception e) {
+                    LOGGER.error("Reindexing of OCFL id {} failed", id, e);
                     tx.rollback();
                     errors += 1;
                     if (failOnError) {
-                        stopThread();
                         manager.updateComplete(completed, errors);
                         manager.stop();
                         service.cleanupSession(tx.getId());
                         throw e;
                     }
-                    LOGGER.error("Reindexing of OCFL id {} failed", id, e);
                 }
                 service.cleanupSession(tx.getId());
             }

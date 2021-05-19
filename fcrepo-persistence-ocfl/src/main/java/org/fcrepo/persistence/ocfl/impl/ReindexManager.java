@@ -91,8 +91,9 @@ public class ReindexManager {
                     workerCount));
         }
 
-        for (var foo = 0; foo < workerCount; foo += 1) {
-            workers.add(new ReindexWorker(this, this.reindexService, txManager, this.failOnError));
+        for (var i = 0; i < workerCount; i += 1) {
+            workers.add(new ReindexWorker("ReindexWorker-" + i, this,
+                    this.reindexService, txManager, this.failOnError));
         }
     }
 
@@ -121,6 +122,7 @@ public class ReindexManager {
      * Stop all threads.
      */
     public void stop() {
+        LOGGER.debug("Stop worker threads");
         workers.forEach(ReindexWorker::stopThread);
     }
 
@@ -167,8 +169,10 @@ public class ReindexManager {
      */
     private void indexMembership() {
         final var tx = transaction();
+        LOGGER.info("Starting membership indexing");
         reindexService.indexMembership(tx);
         tx.commit();
+        LOGGER.debug("Completed membership indexing");
     }
 
     /**
@@ -207,7 +211,7 @@ public class ReindexManager {
             message = String.format("%d mins, ", duration.toMinutesPart()) + message;
         }
         if (duration.getSeconds() > 3600) {
-            message = String.format("%d hours, ", duration.toHoursPart()) + message;
+            message = String.format("%d hours, ", duration.getSeconds() / 3600) + message;
         }
         return message;
     }

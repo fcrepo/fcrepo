@@ -105,6 +105,8 @@ public class TransactionImpl implements Transaction {
 
         updateState(TransactionState.COMMITTING);
 
+        log.debug("Waiting for operations in transaction {} to complete before committing", id);
+
         operationPhaser.register();
         operationPhaser.awaitAdvance(operationPhaser.arriveAndDeregister());
 
@@ -120,6 +122,7 @@ public class TransactionImpl implements Transaction {
             updateState(TransactionState.COMMITTED);
             this.getEventAccumulator().emitEvents(this, baseUri, userAgent);
             releaseLocks();
+            log.debug("Committed transaction {}", id);
         } catch (final Exception ex) {
             log.error("Failed to commit transaction: {}", id, ex);
 
@@ -145,6 +148,8 @@ public class TransactionImpl implements Transaction {
         log.info("Rolling back transaction {}", id);
 
         updateState(TransactionState.ROLLINGBACK);
+
+        log.debug("Waiting for operations in transaction {} to complete before rolling back", id);
 
         operationPhaser.register();
         operationPhaser.awaitAdvance(operationPhaser.arriveAndDeregister());

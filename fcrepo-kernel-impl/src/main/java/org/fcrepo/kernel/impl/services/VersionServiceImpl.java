@@ -19,7 +19,6 @@ package org.fcrepo.kernel.impl.services;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -29,6 +28,7 @@ import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 
@@ -47,7 +47,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     private VersionResourceOperationFactory versionOperationFactory;
 
     @Override
-    @TransactionalWithRetry
+    @Transactional
     public void createVersion(final Transaction transaction, final FedoraId fedoraId, final String userPrincipal) {
         final var session = psManager.getSession(transaction);
         final var operation = versionOperationFactory.createBuilder(transaction, fedoraId)

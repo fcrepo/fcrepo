@@ -31,7 +31,6 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 
-import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
@@ -56,6 +55,8 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Implementation of reference service.
@@ -272,7 +273,7 @@ public class ReferenceServiceImpl implements ReferenceService {
     }
 
     @Override
-    @TransactionalWithRetry
+    @Transactional
     public void updateReferences(@Nonnull final Transaction tx, final FedoraId resourceId, final String userPrincipal,
                                  final RdfStream rdfStream) {
         try {
@@ -301,7 +302,7 @@ public class ReferenceServiceImpl implements ReferenceService {
     }
 
     @Override
-    @TransactionalWithRetry
+    @Transactional
     public void commitTransaction(final Transaction tx) {
         if (!tx.isShortLived()) {
             tx.ensureCommitting();
@@ -317,6 +318,7 @@ public class ReferenceServiceImpl implements ReferenceService {
         }
     }
 
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     @Override
     public void rollbackTransaction(final Transaction tx) {
         if (!tx.isShortLived()) {

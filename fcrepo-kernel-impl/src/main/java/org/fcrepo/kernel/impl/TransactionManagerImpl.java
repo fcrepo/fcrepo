@@ -103,7 +103,7 @@ public class TransactionManagerImpl implements TransactionManager {
      */
     @Scheduled(fixedDelayString = "#{fedoraPropsConfig.sessionTimeout}")
     public void cleanupClosedTransactions() {
-        LOGGER.trace("Cleaning up expired transactions");
+        LOGGER.debug("Cleaning up expired transactions");
 
         final var txIt = transactions.entrySet().iterator();
         while (txIt.hasNext()) {

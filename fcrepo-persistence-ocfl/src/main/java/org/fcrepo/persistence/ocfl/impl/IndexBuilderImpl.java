@@ -100,7 +100,6 @@ public class IndexBuilderImpl implements IndexBuilder {
             final var startTime = Instant.now();
             try {
                 reindexManager.start();
-                LOGGER.info("Reindexing complete.");
             } catch (final InterruptedException e) {
                 throw new RuntimeException(e);
             } finally {
@@ -143,7 +142,7 @@ public class IndexBuilderImpl implements IndexBuilder {
             message = String.format("%d mins, ", duration.toMinutesPart()) + message;
         }
         if (duration.getSeconds() > 3600) {
-            message = String.format("%d hours, ", duration.toHoursPart()) + message;
+            message = String.format("%d hours, ", duration.getSeconds() / 3600) + message;
         }
         return message;
     }
