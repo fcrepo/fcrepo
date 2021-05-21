@@ -106,6 +106,7 @@ public class DbSearchIndexImpl implements SearchIndex {
     private static final String MIME_TYPE_PARAM = "mime_type";
     private static final String CREATED_PARAM = "created";
     public static final String RDF_TYPE_URI_PARAM = "rdf_type_uri";
+    public static final String RESOURCE_SEARCH_ID_PARAM = "resource_search_id";
 
     public static final String TRANSACTION_ID_PARAM = "transaction_id";
     private static final String OPERATION_PARAM = "operation";
@@ -294,11 +295,12 @@ public class DbSearchIndexImpl implements SearchIndex {
             TRANSACTION_ID_PARAM + ")";
 
     private static final String INSERT_RDF_TYPE_ASSOC = "INSERT INTO " + SEARCH_RESOURCE_RDF_TYPE_TABLE +
-            " (" + RESOURCE_ID_COLUMN + ", " + RDF_TYPE_ID_COLUMN + ") SELECT a." + RESOURCE_ID_COLUMN +
-            ", b." + RDF_TYPE_ID_COLUMN + " FROM  (SELECT " + ID_COLUMN + " AS " + RESOURCE_ID_COLUMN + " FROM " +
-            SIMPLE_SEARCH_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :" + FEDORA_ID_PARAM + ") a, " +
-            "(SELECT " + ID_COLUMN + " AS " + RDF_TYPE_ID_COLUMN + " from " + SEARCH_RDF_TYPE_TABLE +
-            " WHERE " + RDF_TYPE_URI_COLUMN + "= :" + RDF_TYPE_URI_PARAM + ") b";
+            " (" + RESOURCE_ID_COLUMN + ", " + RDF_TYPE_ID_COLUMN + ") " +
+            "SELECT :" + RESOURCE_SEARCH_ID_PARAM + "," + ID_COLUMN + " FROM " + SEARCH_RDF_TYPE_TABLE +
+            " WHERE " + RDF_TYPE_URI_COLUMN + "= :" + RDF_TYPE_URI_PARAM;
+
+    private static final String SELECT_RESOURCE_SEARCH_ID = "SELECT " + ID_COLUMN + " FROM " + SIMPLE_SEARCH_TABLE +
+            " WHERE " + FEDORA_ID_COLUMN + " = :" + FEDORA_ID_PARAM;
 
     private static final String DELETE_RESOURCE_TYPE_ASSOCIATIONS_IN_TRANSACTION =
             "DELETE FROM " + SEARCH_RESOURCE_RDF_TYPE_TRANSACTIONS_TABLE + " WHERE " +
@@ -689,10 +691,14 @@ public class DbSearchIndexImpl implements SearchIndex {
     private void insertRdfTypeAssociations(final List<URI> rdfTypes, final FedoraId fedoraId) {
         //add rdf type associations
 
+        final var resourceSearchId = jdbcTemplate.queryForObject(
+                SELECT_RESOURCE_SEARCH_ID,
+                Map.of(FEDORA_ID_PARAM, fedoraId.getFullId()), Long.class);
+
         final List<MapSqlParameterSource> parameterSourcesList = new ArrayList<>();
         for (final var rdfType : rdfTypes) {
             final var assocParams = new MapSqlParameterSource();
-            assocParams.addValue(FEDORA_ID_PARAM, fedoraId.getFullId());
+            assocParams.addValue(RESOURCE_SEARCH_ID_PARAM, resourceSearchId);
             assocParams.addValue(RDF_TYPE_URI_PARAM, rdfType.toString());
             parameterSourcesList.add(assocParams);
         }
