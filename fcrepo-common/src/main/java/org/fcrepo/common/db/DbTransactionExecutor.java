@@ -46,6 +46,9 @@ public class DbTransactionExecutor {
                 return e instanceof DeadlockLoserDataAccessException
                         || (e.getCause() != null && e.getCause() instanceof DeadlockLoserDataAccessException);
             })
+            .onRetry(event -> {
+                LOGGER.debug("Retrying operation that failed with the following exception", event.getLastFailure());
+            })
             .withBackoff(10, 100, ChronoUnit.MILLIS, 1.5)
             .withJitter(0.1)
             .withMaxRetries(10);

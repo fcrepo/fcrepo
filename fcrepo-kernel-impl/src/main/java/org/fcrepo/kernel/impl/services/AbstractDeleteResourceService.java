@@ -74,11 +74,7 @@ abstract public class AbstractDeleteResourceService extends AbstractService {
             final PersistentStorageSession pSession = this.psManager.getSession(tx);
             deleteDepthFirst(tx, pSession, fedoraResource, userPrincipal);
         } catch (final PersistentStorageException ex) {
-            tx.fail();
             throw new RepositoryRuntimeException(format("failed to delete/purge resource %s", fedoraResourceId), ex);
-        } catch (final RuntimeException e) {
-            tx.fail();
-            throw e;
         }
     }
 

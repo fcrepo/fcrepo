@@ -52,11 +52,6 @@ public class ReindexServiceImpl extends AbstractService implements ReindexServic
                 .userPrincipal(principal).build();
         tx.lockResource(fedoraId);
 
-        try {
-            psession.persist(operation);
-        } catch (final RuntimeException e) {
-            tx.fail();
-            throw e;
-        }
+        psession.persist(operation);
     }
 }

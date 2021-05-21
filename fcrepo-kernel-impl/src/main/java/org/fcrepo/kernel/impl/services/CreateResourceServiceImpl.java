@@ -135,16 +135,19 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
         try {
             pSession.persist(createOp);
-            // Populate the description for the new binary
-            createDescription(tx, pSession, userPrincipal, fedoraId);
-            addToContainmentIndex(tx, parentId, fedoraId);
-            membershipService.resourceCreated(tx, fedoraId);
-            addToSearchIndex(tx, fedoraId, pSession);
-            recordEvent(tx, fedoraId, createOp);
         } catch (final PersistentStorageException exc) {
             tx.fail();
             throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
+        } catch (final RuntimeException e) {
+            tx.fail();
+            throw e;
         }
+        // Populate the description for the new binary
+        createDescription(tx, pSession, userPrincipal, fedoraId);
+        addToContainmentIndex(tx, parentId, fedoraId);
+        membershipService.resourceCreated(tx, fedoraId);
+        addToSearchIndex(tx, fedoraId, pSession);
+        recordEvent(tx, fedoraId, createOp);
     }
 
     private void createDescription(final Transaction tx,
@@ -168,6 +171,9 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         } catch (final PersistentStorageException exc) {
             tx.fail();
             throw new RepositoryRuntimeException(String.format("failed to create description %s", descId), exc);
+        } catch (final RuntimeException e) {
+            tx.fail();
+            throw e;
         }
     }
 
@@ -202,11 +208,6 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
         try {
             pSession.persist(createOp);
-            updateReferences(tx, fedoraId, userPrincipal, model);
-            addToContainmentIndex(tx, parentId, fedoraId);
-            membershipService.resourceCreated(tx, fedoraId);
-            addToSearchIndex(tx, fedoraId, pSession);
-            recordEvent(tx, fedoraId, createOp);
         } catch (final PersistentStorageException exc) {
             tx.fail();
             throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
@@ -215,6 +216,11 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
             throw e;
         }
 
+        updateReferences(tx, fedoraId, userPrincipal, model);
+        addToContainmentIndex(tx, parentId, fedoraId);
+        membershipService.resourceCreated(tx, fedoraId);
+        addToSearchIndex(tx, fedoraId, pSession);
+        recordEvent(tx, fedoraId, createOp);
     }
 
     private void addToSearchIndex(final Transaction tx, final FedoraId fedoraId,

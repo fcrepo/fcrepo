@@ -63,7 +63,12 @@ public class PurgeResourceServiceImpl extends AbstractDeleteResourceService impl
         lockArchivalGroupResource(tx, pSession, resourceId);
         tx.lockResource(resourceId);
 
-        pSession.persist(purgeOp);
+        try {
+            pSession.persist(purgeOp);
+        } catch (final RuntimeException e) {
+            tx.fail();
+            throw e;
+        }
         containmentIndex.purgeResource(tx, resourceId);
         recordEvent(tx, resourceId, purgeOp);
         log.debug("purged {}", resourceId.getFullId());

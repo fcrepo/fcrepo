@@ -64,11 +64,8 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * An implementation of the {@link SearchIndex}
@@ -315,12 +312,7 @@ public class DbSearchIndexImpl implements SearchIndex {
     @Inject
     private DataSource dataSource;
 
-    @Inject
-    private PlatformTransactionManager platformTransactionManager;
-
     private NamedParameterJdbcTemplate jdbcTemplate;
-
-    private TransactionTemplate noTransactionTemplate;
 
     @Inject
     private ResourceFactory resourceFactory;
@@ -334,8 +326,6 @@ public class DbSearchIndexImpl implements SearchIndex {
     public void setup() {
         this.dbPlatForm = DbPlatform.fromDataSource(this.dataSource);
         this.jdbcTemplate = getNamedParameterJdbcTemplate();
-        this.noTransactionTemplate = new TransactionTemplate(platformTransactionManager);
-        this.noTransactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_NOT_SUPPORTED);
     }
 
     private NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
@@ -560,19 +550,15 @@ public class DbSearchIndexImpl implements SearchIndex {
     }
 
     private void insertRdfTypes(final List<URI> rdfTypes) {
-        // RDF types are upserted outside of the tx to avoid concurrent update contention between txs, especially
-        // in MySQL. This means that they will not be rolled back if the tx fails.
-        noTransactionTemplate.executeWithoutResult(status -> {
-            for (final var rdfType : rdfTypes) {
-                try {
-                    final var params = new MapSqlParameterSource();
-                    params.addValue(RDF_TYPE_URI_PARAM, rdfType.toString());
-                    jdbcTemplate.update(INSERT_RDF_TYPE, params);
-                } catch (DuplicateKeyException e) {
-                    // ignore duplicate keys
-                }
+        for (final var rdfType : rdfTypes) {
+            try {
+                final var params = new MapSqlParameterSource();
+                params.addValue(RDF_TYPE_URI_PARAM, rdfType.toString());
+                jdbcTemplate.update(INSERT_RDF_TYPE, params);
+            } catch (DuplicateKeyException e) {
+                // ignore duplicate keys
             }
-        });
+        }
     }
 
     private void doUpsertWithTransaction(final Transaction transaction, final ResourceHeaders resourceHeaders,
