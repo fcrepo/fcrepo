@@ -227,6 +227,11 @@ public class DbSearchIndexImpl implements SearchIndex {
             "INSERT INTO " + SEARCH_RDF_TYPE_TABLE + " (" + RDF_TYPE_URI_COLUMN + ")" +
                     " VALUES (:" + RDF_TYPE_URI_PARAM + ")";
 
+    private static final String INSERT_RDF_TYPE_POSTGRES =
+            "INSERT INTO " + SEARCH_RDF_TYPE_TABLE + " (" + RDF_TYPE_URI_COLUMN + ")" +
+                    " VALUES (:" + RDF_TYPE_URI_PARAM + ")" +
+                    " ON CONFLICT (" + RDF_TYPE_URI_COLUMN + ") DO NOTHING";
+
     private static final String COMMIT_RDF_TYPE_ASSOCIATIONS =
             "INSERT INTO " + SEARCH_RESOURCE_RDF_TYPE_TABLE +
                     " (" + RESOURCE_ID_COLUMN + "," + RDF_TYPE_ID_COLUMN + ")" +
@@ -554,7 +559,12 @@ public class DbSearchIndexImpl implements SearchIndex {
             try {
                 final var params = new MapSqlParameterSource();
                 params.addValue(RDF_TYPE_URI_PARAM, rdfType.toString());
-                jdbcTemplate.update(INSERT_RDF_TYPE, params);
+                if (dbPlatForm == POSTGRESQL) {
+                    // weirdly, postgres spoils the entire tx on duplicate keys and must be handled differently
+                    jdbcTemplate.update(INSERT_RDF_TYPE_POSTGRES, params);
+                } else {
+                    jdbcTemplate.update(INSERT_RDF_TYPE, params);
+                }
             } catch (DuplicateKeyException e) {
                 // ignore duplicate keys
             }
