@@ -131,6 +131,9 @@ abstract public class AbstractDeleteResourceService extends AbstractService {
                 // Flush ACL cache on any ACL creation/update/deletion.
                 authHandleCache.invalidateAll();
             }
+        } else {
+            // Flush ACL cache on any ACL creation/update/deletion.
+            authHandleCache.invalidateAll();
         }
 
         //delete/purge the resource itself
