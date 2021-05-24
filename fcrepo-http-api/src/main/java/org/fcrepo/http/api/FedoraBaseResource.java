@@ -128,11 +128,18 @@ abstract public class FedoraBaseResource extends AbstractResource {
 
     /**
      * Executes the runnable within a DB transaction that will retry entire block on MySQL deadlock exceptions.
+     * If the runnable throws an exception, after completing any retires, then the Fedora transaction is marked
+     * as failed.
      *
      * @param action the code to execute
      */
     protected void doInDbTxWithRetry(final Runnable action) {
-        dbTransactionExecutor.doInTxWithRetry(action);
+        try {
+            dbTransactionExecutor.doInTxWithRetry(action);
+        } catch (RuntimeException e) {
+            transaction().fail();
+            throw e;
+        }
     }
 
 }

@@ -77,13 +77,7 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
                 tx.lockResource(fedoraId.asBaseId());
             }
 
-            try {
-                pSession.persist(updateOp);
-            } catch (final RuntimeException e) {
-                tx.fail();
-                throw e;
-            }
-
+            pSession.persist(updateOp);
             updateReferences(tx, fedoraId, userPrincipal, inputModel);
             membershipService.resourceModified(tx, fedoraId);
             searchIndex.addUpdateIndex(tx, pSession.getHeaders(fedoraId, null));

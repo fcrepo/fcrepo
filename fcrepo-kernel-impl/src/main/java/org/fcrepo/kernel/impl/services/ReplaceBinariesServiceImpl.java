@@ -112,13 +112,7 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
             tx.lockResource(fedoraId);
             tx.lockResource(fedoraId.asDescription());
 
-            try {
-                pSession.persist(replaceOp);
-            } catch (final RuntimeException e) {
-                tx.fail();
-                throw e;
-            }
-
+            pSession.persist(replaceOp);
             this.searchIndex.addUpdateIndex(tx, pSession.getHeaders(fedoraId, null));
             recordEvent(tx, fedoraId, replaceOp);
         } catch (final PersistentStorageException ex) {

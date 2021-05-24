@@ -136,12 +136,9 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         try {
             pSession.persist(createOp);
         } catch (final PersistentStorageException exc) {
-            tx.fail();
             throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
-        } catch (final RuntimeException e) {
-            tx.fail();
-            throw e;
         }
+
         // Populate the description for the new binary
         createDescription(tx, pSession, userPrincipal, fedoraId);
         addToContainmentIndex(tx, parentId, fedoraId);
@@ -169,11 +166,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         try {
             pSession.persist(createOp);
         } catch (final PersistentStorageException exc) {
-            tx.fail();
             throw new RepositoryRuntimeException(String.format("failed to create description %s", descId), exc);
-        } catch (final RuntimeException e) {
-            tx.fail();
-            throw e;
         }
     }
 
@@ -209,11 +202,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         try {
             pSession.persist(createOp);
         } catch (final PersistentStorageException exc) {
-            tx.fail();
             throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
-        } catch (final RuntimeException e) {
-            tx.fail();
-            throw e;
         }
 
         updateReferences(tx, fedoraId, userPrincipal, model);
