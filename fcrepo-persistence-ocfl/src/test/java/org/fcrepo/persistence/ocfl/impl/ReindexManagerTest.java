@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
+import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.kernel.api.Transaction;
 
 import org.junit.Before;
@@ -46,7 +47,8 @@ public class ReindexManagerTest extends AbstractReindexerTest {
     public void setup() throws Exception {
         super.setup();
 
-        reindexManager = new ReindexManager(repository.listObjectIds(), reindexService, propsConfig, txManager);
+        reindexManager = new ReindexManager(repository.listObjectIds(),
+                reindexService, propsConfig, txManager, new DbTransactionExecutor());
     }
 
     @Test

@@ -20,7 +20,6 @@ package org.fcrepo.http.api;
 import com.google.common.annotations.VisibleForTesting;
 import io.micrometer.core.annotation.Timed;
 
-import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.LinkFormatStream;
 import org.fcrepo.kernel.api.exception.CannotCreateMementoException;
@@ -122,7 +121,6 @@ public class FedoraVersioning extends ContentExposingResource {
      * @throws MementoDatetimeFormatException if the header value of memento-datetime is not RFC-1123 format
      */
     @POST
-    @TransactionalWithRetry
     public Response addVersion() {
 
         if (headers.getHeaderString("Slug") != null) {
@@ -145,10 +143,12 @@ public class FedoraVersioning extends ContentExposingResource {
         try {
             LOGGER.debug("Request to create version for <{}>", externalPath);
 
-            versionService.createVersion(transaction, resource.getFedoraId(), getUserPrincipal());
+            doInDbTxWithRetry(() -> {
+                versionService.createVersion(transaction, resource.getFedoraId(), getUserPrincipal());
 
-            // need to commit the transaction before loading the memento otherwise it won't exist
-            transaction.commitIfShortLived();
+                // need to commit the transaction before loading the memento otherwise it won't exist
+                transaction.commitIfShortLived();
+            });
 
             final var versions = reloadResource().getTimeMap().getChildren().collect(Collectors.toList());
 

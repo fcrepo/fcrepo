@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
@@ -92,7 +93,8 @@ public class ReindexServiceTest extends AbstractReindexerTest {
 
 
         when(propsConfig.getReindexingThreads()).thenReturn(2L);
-        reindexManager = new ReindexManager(repository.listObjectIds(), reindexService, propsConfig, txManager);
+        reindexManager = new ReindexManager(repository.listObjectIds(),
+                reindexService, propsConfig, txManager, new DbTransactionExecutor());
     }
 
     @Test

@@ -19,11 +19,9 @@ package org.fcrepo.kernel.impl;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.concurrent.Phaser;
 
-import net.jodah.failsafe.Failsafe;
-import net.jodah.failsafe.RetryPolicy;
+import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.common.lang.CheckedRunnable;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
@@ -40,8 +38,6 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.search.api.SearchIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.dao.DeadlockLoserDataAccessException;
-import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * The Fedora Transaction implementation
@@ -51,15 +47,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class TransactionImpl implements Transaction {
 
     private static final Logger log = LoggerFactory.getLogger(TransactionImpl.class);
-
-    private static final RetryPolicy<Object> DB_RETRY = new RetryPolicy<>()
-            .handleIf(e -> {
-                return e instanceof DeadlockLoserDataAccessException
-                        || (e.getCause() != null && e.getCause() instanceof DeadlockLoserDataAccessException);
-            })
-            .withBackoff(10, 100, ChronoUnit.MILLIS, 1.5)
-            .withJitter(0.1)
-            .withMaxRetries(10);
 
     private final String id;
 
@@ -318,24 +305,18 @@ public class TransactionImpl implements Transaction {
     }
 
     private void doCommitLongRunning() {
-        // MySQL can deadlock when update db records and it must be retried. Unfortunately, the entire transaction
-        // must be retried because something marks the transaction for rollback when the exception is thrown
-        // regardless if you then retry at the query level.
-        Failsafe.with(DB_RETRY).run(() -> {
-            // Cannot use transactional annotations because this class is not managed by spring
-            getTransactionTemplate().executeWithoutResult(status -> {
-                this.getContainmentIndex().commitTransaction(this);
-                this.getReferenceService().commitTransaction(this);
-                this.getMembershipService().commitTransaction(this);
-                this.getSearchIndex().commitTransaction(this);
-                this.getPersistentSession().prepare();
-                // The storage session must be committed last because mutable head changes cannot be rolled back.
-                // The db transaction will remain open until all changes have been written to OCFL. If the changes
-                // are large, or are going to S3, this could take some time. In which case, it is possible the
-                // db's connection timeout may need to be adjusted so that the connection is not closed while
-                // waiting for the OCFL changes to be committed.
-                this.getPersistentSession().commit();
-            });
+        getDbTransactionExecutor().doInTxWithRetry(() -> {
+            this.getContainmentIndex().commitTransaction(this);
+            this.getReferenceService().commitTransaction(this);
+            this.getMembershipService().commitTransaction(this);
+            this.getSearchIndex().commitTransaction(this);
+            this.getPersistentSession().prepare();
+            // The storage session must be committed last because mutable head changes cannot be rolled back.
+            // The db transaction will remain open until all changes have been written to OCFL. If the changes
+            // are large, or are going to S3, this could take some time. In which case, it is possible the
+            // db's connection timeout may need to be adjusted so that the connection is not closed while
+            // waiting for the OCFL changes to be committed.
+            this.getPersistentSession().commit();
         });
     }
 
@@ -410,8 +391,8 @@ public class TransactionImpl implements Transaction {
         return this.txManager.getSearchIndex();
     }
 
-    private TransactionTemplate getTransactionTemplate() {
-        return this.txManager.getTransactionTemplate();
+    private DbTransactionExecutor getDbTransactionExecutor() {
+        return this.txManager.getDbTransactionExecutor();
     }
 
     private ResourceLockManager getResourceLockManger() {

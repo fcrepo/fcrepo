@@ -24,7 +24,6 @@ import org.fcrepo.kernel.api.operations.ReindexResourceOperationFactory;
 import org.fcrepo.kernel.api.services.ReindexService;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 
@@ -46,7 +45,6 @@ public class ReindexServiceImpl extends AbstractService implements ReindexServic
     private ReindexResourceOperationFactory resourceOperationFactory;
 
     @Override
-    @Transactional
     public void reindexByFedoraId(final Transaction transaction, final String principal, final FedoraId fedoraId) {
         final var tx = transactionManager.get(transaction.getId());
         final var psession = persistentStorageSessionManager.getSession(transaction);
@@ -54,11 +52,6 @@ public class ReindexServiceImpl extends AbstractService implements ReindexServic
                 .userPrincipal(principal).build();
         tx.lockResource(fedoraId);
 
-        try {
-            psession.persist(operation);
-        } catch (final RuntimeException e) {
-            tx.fail();
-            throw e;
-        }
+        psession.persist(operation);
     }
 }

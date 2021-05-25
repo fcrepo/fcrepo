@@ -20,7 +20,6 @@ package org.fcrepo.http.api;
 import com.google.common.annotations.VisibleForTesting;
 import io.micrometer.core.annotation.Timed;
 
-import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -82,7 +81,6 @@ public class FedoraTombstones extends ContentExposingResource {
      * @return the free resource
      */
     @DELETE
-    @TransactionalWithRetry
     public Response delete() {
         final FedoraResource resource = resource();
         if (!(resource instanceof Tombstone)) {
@@ -92,8 +90,10 @@ public class FedoraTombstones extends ContentExposingResource {
         try {
             final Tombstone tombstone = (Tombstone) resource;
             LOGGER.info("Delete tombstone: {}", resource.getFedoraId());
-            purgeResourceService.perform(transaction(), tombstone.getDeletedObject(), getUserPrincipal());
-            transaction().commitIfShortLived();
+            doInDbTxWithRetry(() -> {
+                purgeResourceService.perform(transaction(), tombstone.getDeletedObject(), getUserPrincipal());
+                transaction().commitIfShortLived();
+            });
             return noContent().build();
         } finally {
             transaction().releaseResourceLocksIfShortLived();

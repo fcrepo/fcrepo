@@ -40,7 +40,6 @@ import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.MembershipService;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -80,7 +79,6 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
-    @Transactional
     public void resourceCreated(final Transaction tx, final FedoraId fedoraId) {
         final var fedoraResc = getFedoraResource(tx, fedoraId);
 
@@ -100,7 +98,6 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
-    @Transactional
     public void resourceModified(final Transaction tx, final FedoraId fedoraId) {
         final var fedoraResc = getFedoraResource(tx, fedoraId);
         final var containerProperties = new DirectContainerProperties(fedoraResc);
@@ -243,7 +240,6 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
-    @Transactional
     public void resourceDeleted(@Nonnull final Transaction transaction, final FedoraId fedoraId) {
         // delete DirectContainer, end all membership for that source
         FedoraResource fedoraResc;
@@ -289,7 +285,6 @@ public class MembershipServiceImpl implements MembershipService {
         return new DefaultRdfStream(subject, membershipStream);
     }
 
-    @Transactional
     @Override
     public void commitTransaction(final Transaction tx) {
         indexManager.commitTransaction(tx);
@@ -306,7 +301,6 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
-    @Transactional
     public void populateMembershipHistory(@Nonnull final Transaction transaction, final FedoraId containerId) {
         final FedoraResource fedoraResc = getFedoraResource(transaction, containerId);
         final var containerType = getContainerType(fedoraResc);

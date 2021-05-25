@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl;
 
+import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
@@ -35,10 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -56,9 +54,6 @@ public class TransactionManagerImpl implements TransactionManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(TransactionManagerImpl.class);
 
     private final Map<String, Transaction> transactions;
-
-    @Inject
-    private PlatformTransactionManager platformTransactionManager;
 
     @Autowired
     @Qualifier("containmentIndex")
@@ -87,12 +82,8 @@ public class TransactionManagerImpl implements TransactionManager {
     @Inject
     private FedoraPropsConfig fedoraPropsConfig;
 
-    private TransactionTemplate transactionTemplate;
-
-    @PostConstruct
-    public void postConstruct() {
-        transactionTemplate = new TransactionTemplate(platformTransactionManager);
-    }
+    @Inject
+    private DbTransactionExecutor dbTransactionExecutor;
 
     TransactionManagerImpl() {
         transactions = new ConcurrentHashMap<>();
@@ -193,12 +184,11 @@ public class TransactionManagerImpl implements TransactionManager {
         return membershipService;
     }
 
-    protected TransactionTemplate getTransactionTemplate() {
-        return transactionTemplate;
-    }
-
     protected ResourceLockManager getResourceLockManager() {
         return resourceLockManager;
     }
 
+    public DbTransactionExecutor getDbTransactionExecutor() {
+        return dbTransactionExecutor;
+    }
 }

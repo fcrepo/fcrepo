@@ -28,6 +28,7 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.time.Duration;
 
+import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.exception.TransactionClosedException;
@@ -46,7 +47,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * <p>TransactionTest class.</p>
@@ -85,9 +85,6 @@ public class TransactionManagerImplTest {
     private PlatformTransactionManager platformTransactionManager;
 
     @Mock
-    private TransactionTemplate transactionTemplate;
-
-    @Mock
     private ResourceLockManager resourceLockManager;
 
     private FedoraPropsConfig fedoraPropsConfig;
@@ -104,8 +101,7 @@ public class TransactionManagerImplTest {
         setField(testTxManager, "eventAccumulator", eventAccumulator);
         setField(testTxManager, "referenceService", referenceService);
         setField(testTxManager, "membershipService", membershipService);
-        setField(testTxManager, "platformTransactionManager", platformTransactionManager);
-        setField(testTxManager, "transactionTemplate", transactionTemplate);
+        setField(testTxManager, "dbTransactionExecutor", new DbTransactionExecutor());
         setField(testTxManager, "fedoraPropsConfig", fedoraPropsConfig);
         setField(testTxManager, "resourceLockManager", resourceLockManager);
         testTx = (TransactionImpl) testTxManager.create();

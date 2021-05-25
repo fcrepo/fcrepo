@@ -22,6 +22,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 
@@ -45,6 +46,7 @@ public class ReindexWorker implements Runnable {
     private boolean running = true;
     private boolean failOnError;
     private TransactionManager txManager;
+    private DbTransactionExecutor dbTransactionExecutor;
 
     /**
      * Basic Constructor
@@ -52,16 +54,19 @@ public class ReindexWorker implements Runnable {
      * @param reindexManager the manager service.
      * @param reindexService the reindexing service.
      * @param transactionManager a transaction manager to generate
+     * @param dbTransactionExecutor manages db transactions
      * @param failOnError whether the thread should fail on an error or log and continue.
      */
     public ReindexWorker(final String name,
                          final ReindexManager reindexManager,
                          final ReindexService reindexService,
                          final TransactionManager transactionManager,
+                         final DbTransactionExecutor dbTransactionExecutor,
                          final boolean failOnError) {
         manager = reindexManager;
         service = reindexService;
         txManager = transactionManager;
+        this.dbTransactionExecutor = dbTransactionExecutor;
         this.failOnError = failOnError;
         t = new Thread(this, name);
     }
@@ -109,8 +114,10 @@ public class ReindexWorker implements Runnable {
                     stopwatch.reset().start();
                 }
                 try {
-                    service.indexOcflObject(tx, id);
-                    tx.commit();
+                    dbTransactionExecutor.doInTxWithRetry(() -> {
+                        service.indexOcflObject(tx, id);
+                        tx.commit();
+                    });
                     completed += 1;
                 } catch (final Exception e) {
                     LOGGER.error("Reindexing of OCFL id {} failed", id, e);

@@ -20,8 +20,6 @@ package org.fcrepo.kernel.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -33,8 +31,8 @@ import java.time.Instant;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
+import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TransactionClosedException;
@@ -51,7 +49,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import com.google.common.base.Stopwatch;
 
@@ -92,9 +89,6 @@ public class TransactionImplTest {
     private MembershipService membershipService;
 
     @Mock
-    private TransactionTemplate transactionTemplate;
-
-    @Mock
     private ResourceLockManager resourceLockManager;
 
     @Before
@@ -107,12 +101,8 @@ public class TransactionImplTest {
         when(txManager.getReferenceService()).thenReturn(referenceService);
         when(txManager.getMembershipService()).thenReturn(membershipService);
         when(txManager.getSearchIndex()).thenReturn(this.searchIndex);
-        when(txManager.getTransactionTemplate()).thenReturn(transactionTemplate);
+        when(txManager.getDbTransactionExecutor()).thenReturn(new DbTransactionExecutor());
         when(txManager.getResourceLockManager()).thenReturn(resourceLockManager);
-        doAnswer(invocationOnMock -> {
-            ((Consumer)invocationOnMock.getArgument(0)).accept(null);
-            return null;
-        }).when(transactionTemplate).executeWithoutResult(any());
     }
 
     @Test

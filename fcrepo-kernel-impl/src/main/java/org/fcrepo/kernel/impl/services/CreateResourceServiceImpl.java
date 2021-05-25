@@ -41,7 +41,6 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.MultiDigestInputStreamWrapper;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
@@ -82,7 +81,6 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
     private NonRdfSourceOperationFactory nonRdfSourceOperationFactory;
 
     @Override
-    @Transactional
     public void perform(final Transaction tx, final String userPrincipal, final FedoraId fedoraId,
                         final String contentType, final String filename,
                         final long contentSize, final List<String> linkHeaders, final Collection<URI> digest,
@@ -137,16 +135,16 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
         try {
             pSession.persist(createOp);
-            // Populate the description for the new binary
-            createDescription(tx, pSession, userPrincipal, fedoraId);
-            addToContainmentIndex(tx, parentId, fedoraId);
-            membershipService.resourceCreated(tx, fedoraId);
-            addToSearchIndex(tx, fedoraId, pSession);
-            recordEvent(tx, fedoraId, createOp);
         } catch (final PersistentStorageException exc) {
-            tx.fail();
             throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
         }
+
+        // Populate the description for the new binary
+        createDescription(tx, pSession, userPrincipal, fedoraId);
+        addToContainmentIndex(tx, parentId, fedoraId);
+        membershipService.resourceCreated(tx, fedoraId);
+        addToSearchIndex(tx, fedoraId, pSession);
+        recordEvent(tx, fedoraId, createOp);
     }
 
     private void createDescription(final Transaction tx,
@@ -168,13 +166,11 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         try {
             pSession.persist(createOp);
         } catch (final PersistentStorageException exc) {
-            tx.fail();
             throw new RepositoryRuntimeException(String.format("failed to create description %s", descId), exc);
         }
     }
 
     @Override
-    @Transactional
     public void perform(final Transaction tx, final String userPrincipal, final FedoraId fedoraId,
             final List<String> linkHeaders, final Model model) {
         final PersistentStorageSession pSession = this.psManager.getSession(tx);
@@ -205,19 +201,15 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
         try {
             pSession.persist(createOp);
-            updateReferences(tx, fedoraId, userPrincipal, model);
-            addToContainmentIndex(tx, parentId, fedoraId);
-            membershipService.resourceCreated(tx, fedoraId);
-            addToSearchIndex(tx, fedoraId, pSession);
-            recordEvent(tx, fedoraId, createOp);
         } catch (final PersistentStorageException exc) {
-            tx.fail();
             throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
-        } catch (final RuntimeException e) {
-            tx.fail();
-            throw e;
         }
 
+        updateReferences(tx, fedoraId, userPrincipal, model);
+        addToContainmentIndex(tx, parentId, fedoraId);
+        membershipService.resourceCreated(tx, fedoraId);
+        addToSearchIndex(tx, fedoraId, pSession);
+        recordEvent(tx, fedoraId, createOp);
     }
 
     private void addToSearchIndex(final Transaction tx, final FedoraId fedoraId,

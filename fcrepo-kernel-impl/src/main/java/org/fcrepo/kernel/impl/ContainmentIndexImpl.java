@@ -536,13 +536,11 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    @Transactional
     public void addContainedBy(@Nonnull final Transaction tx, final FedoraId parent, final FedoraId child) {
         addContainedBy(tx, parent, child, Instant.now(), null);
     }
 
     @Override
-    @Transactional
     public void addContainedBy(@Nonnull final Transaction tx, final FedoraId parent, final FedoraId child,
                                final Instant startTime, final Instant endTime) {
         tx.doInTx(() -> {
@@ -562,7 +560,6 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    @Transactional
     public void removeContainedBy(@Nonnull final Transaction tx, final FedoraId parent, final FedoraId child) {
         tx.doInTx(() -> {
             final String parentID = parent.getFullId();
@@ -588,7 +585,6 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    @Transactional
     public void removeResource(@Nonnull final Transaction tx, final FedoraId resource) {
         tx.doInTx(() -> {
             final String resourceID = resource.getFullId();
@@ -622,7 +618,6 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    @Transactional
     public void purgeResource(@Nonnull final Transaction tx, final FedoraId resource) {
         tx.doInTx(() -> {
             final String resourceID = resource.getFullId();
@@ -728,7 +723,6 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    @Transactional
     public void commitTransaction(final Transaction tx) {
         if (!tx.isShortLived()) {
             tx.ensureCommitting();
@@ -820,7 +814,6 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
-    @Transactional
     public void reset() {
         try {
             jdbcTemplate.update(TRUNCATE_TABLE + RESOURCES_TABLE, Collections.emptyMap());

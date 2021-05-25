@@ -64,11 +64,8 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * An implementation of the {@link SearchIndex}
@@ -230,6 +227,11 @@ public class DbSearchIndexImpl implements SearchIndex {
             "INSERT INTO " + SEARCH_RDF_TYPE_TABLE + " (" + RDF_TYPE_URI_COLUMN + ")" +
                     " VALUES (:" + RDF_TYPE_URI_PARAM + ")";
 
+    private static final String INSERT_RDF_TYPE_POSTGRES =
+            "INSERT INTO " + SEARCH_RDF_TYPE_TABLE + " (" + RDF_TYPE_URI_COLUMN + ")" +
+                    " VALUES (:" + RDF_TYPE_URI_PARAM + ")" +
+                    " ON CONFLICT (" + RDF_TYPE_URI_COLUMN + ") DO NOTHING";
+
     private static final String COMMIT_RDF_TYPE_ASSOCIATIONS =
             "INSERT INTO " + SEARCH_RESOURCE_RDF_TYPE_TABLE +
                     " (" + RESOURCE_ID_COLUMN + "," + RDF_TYPE_ID_COLUMN + ")" +
@@ -315,12 +317,7 @@ public class DbSearchIndexImpl implements SearchIndex {
     @Inject
     private DataSource dataSource;
 
-    @Inject
-    private PlatformTransactionManager platformTransactionManager;
-
     private NamedParameterJdbcTemplate jdbcTemplate;
-
-    private TransactionTemplate noTransactionTemplate;
 
     @Inject
     private ResourceFactory resourceFactory;
@@ -334,8 +331,6 @@ public class DbSearchIndexImpl implements SearchIndex {
     public void setup() {
         this.dbPlatForm = DbPlatform.fromDataSource(this.dataSource);
         this.jdbcTemplate = getNamedParameterJdbcTemplate();
-        this.noTransactionTemplate = new TransactionTemplate(platformTransactionManager);
-        this.noTransactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_NOT_SUPPORTED);
     }
 
     private NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
@@ -525,7 +520,6 @@ public class DbSearchIndexImpl implements SearchIndex {
         return value.replace("*", "%");
     }
 
-    @Transactional
     @Override
     public void addUpdateIndex(final Transaction transaction, final ResourceHeaders resourceHeaders) {
         final var fedoraId = resourceHeaders.getId();
@@ -561,19 +555,20 @@ public class DbSearchIndexImpl implements SearchIndex {
     }
 
     private void insertRdfTypes(final List<URI> rdfTypes) {
-        // RDF types are upserted outside of the tx to avoid concurrent update contention between txs, especially
-        // in MySQL. This means that they will not be rolled back if the tx fails.
-        noTransactionTemplate.executeWithoutResult(status -> {
-            for (final var rdfType : rdfTypes) {
-                try {
-                    final var params = new MapSqlParameterSource();
-                    params.addValue(RDF_TYPE_URI_PARAM, rdfType.toString());
+        for (final var rdfType : rdfTypes) {
+            try {
+                final var params = new MapSqlParameterSource();
+                params.addValue(RDF_TYPE_URI_PARAM, rdfType.toString());
+                if (dbPlatForm == POSTGRESQL) {
+                    // weirdly, postgres spoils the entire tx on duplicate keys and must be handled differently
+                    jdbcTemplate.update(INSERT_RDF_TYPE_POSTGRES, params);
+                } else {
                     jdbcTemplate.update(INSERT_RDF_TYPE, params);
-                } catch (DuplicateKeyException e) {
-                    // ignore duplicate keys
                 }
+            } catch (DuplicateKeyException e) {
+                // ignore duplicate keys
             }
-        });
+        }
     }
 
     private void doUpsertWithTransaction(final Transaction transaction, final ResourceHeaders resourceHeaders,
@@ -701,7 +696,6 @@ public class DbSearchIndexImpl implements SearchIndex {
     }
 
 
-    @Transactional
     @Override
     public void removeFromIndex(final Transaction transaction, final FedoraId fedoraId) {
         transaction.doInTx(() -> {
@@ -728,7 +722,6 @@ public class DbSearchIndexImpl implements SearchIndex {
         jdbcTemplate.update(DELETE_RESOURCE_FROM_SEARCH, params);
     }
 
-    @Transactional
     @Override
     public void reset() {
         try (final var conn = this.dataSource.getConnection();
@@ -750,7 +743,6 @@ public class DbSearchIndexImpl implements SearchIndex {
         }
     }
 
-    @Transactional
     @Override
     public void commitTransaction(final Transaction tx) {
         if (!tx.isShortLived()) {

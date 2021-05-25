@@ -14,6 +14,7 @@
   <context:annotation-config/>
   <context:property-placeholder location="classpath:manual_versioning.properties"/>
   <context:component-scan base-package="org.fcrepo.config"/>
+  <context:component-scan base-package="org.fcrepo.common.db"/>
   <context:component-scan base-package="org.fcrepo.persistence.ocfl.impl"/>
   <context:component-scan base-package="org.fcrepo.kernel.impl.operations" />
   

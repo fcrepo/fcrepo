@@ -17,6 +17,7 @@
  */
 package org.fcrepo.http.api;
 
+import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -93,6 +94,7 @@ public class FedoraTombstonesTest {
         setField(testObj, "securityContext", mockSecurityContext);
         setField(testObj, "request", mockRequest);
         setField(testObj, "context", mockServletContext);
+        setField(testObj, "dbTransactionExecutor", new DbTransactionExecutor());
 
         when(resourceFactory.getResource((Transaction)any(), eq(fedoraId))).thenReturn(mockTombstone);
         when(mockTombstone.getDeletedObject()).thenReturn(mockDeletedObj);

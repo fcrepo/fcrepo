@@ -23,7 +23,6 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.shared.JenaException;
 
-import org.fcrepo.common.db.TransactionalWithRetry;
 import org.fcrepo.config.AuthPropsConfig;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.domain.RDFMediaType;
@@ -126,7 +125,6 @@ public class FedoraAcl extends ContentExposingResource {
      * @return the response for a request to create a Fedora WebAc acl
      */
     @PUT
-    @TransactionalWithRetry
     public Response createFedoraWebacAcl(@HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
                                          final InputStream requestBodyStream) {
 
@@ -142,19 +140,22 @@ public class FedoraAcl extends ContentExposingResource {
             final MediaType contentType =
                     requestContentType == null ?
                             RDFMediaType.TURTLE_TYPE : valueOf(getSimpleContentType(requestContentType));
-            if (isRdfContentType(contentType.toString())) {
-                final Model model = httpRdfService.bodyToInternalModel(aclId,
-                        requestBodyStream, contentType, identifierConverter(), hasLenientPreferHeader());
-                if (exists) {
-                    replacePropertiesService.perform(transaction(), getUserPrincipal(), aclId, model);
+
+            doInDbTxWithRetry(() -> {
+                if (isRdfContentType(contentType.toString())) {
+                    final Model model = httpRdfService.bodyToInternalModel(aclId,
+                            requestBodyStream, contentType, identifierConverter(), hasLenientPreferHeader());
+                    if (exists) {
+                        replacePropertiesService.perform(transaction(), getUserPrincipal(), aclId, model);
+                    } else {
+                        webacAclService.create(transaction(), aclId, getUserPrincipal(), model);
+                    }
                 } else {
-                    webacAclService.create(transaction(), aclId, getUserPrincipal(), model);
+                    throw new BadRequestException("Content-Type (" + requestContentType + ") is invalid." +
+                            " Try text/turtle or other RDF compatible type.");
                 }
-            } else {
-                throw new BadRequestException("Content-Type (" + requestContentType + ") is invalid. Try text/turtle " +
-                        "or other RDF compatible type.");
-            }
-            transaction().commitIfShortLived();
+                transaction().commitIfShortLived();
+            });
 
             try {
                 final var aclResource = getFedoraResource(transaction(), aclId);
@@ -182,7 +183,6 @@ public class FedoraAcl extends ContentExposingResource {
      */
     @PATCH
     @Consumes({ contentTypeSPARQLUpdate })
-    @TransactionalWithRetry
     public Response updateSparql(final InputStream requestBodyStream)
         throws IOException, ItemNotFoundException {
         hasRestrictedPath(externalPath);
@@ -217,8 +217,11 @@ public class FedoraAcl extends ContentExposingResource {
             final String newRequest = httpRdfService.patchRequestToInternalString(aclResource.getFedoraId(),
                     requestBody, identifierConverter());
             LOGGER.debug("PATCH request translated to '{}'", newRequest);
-            patchResourcewithSparql(aclResource, newRequest);
-            transaction().commitIfShortLived();
+
+            doInDbTxWithRetry(() -> {
+                patchResourcewithSparql(aclResource, newRequest);
+                transaction().commitIfShortLived();
+            });
 
             addCacheControlHeaders(servletResponse, aclResource, transaction());
 
@@ -294,7 +297,6 @@ public class FedoraAcl extends ContentExposingResource {
      * @return response
      */
     @DELETE
-    @TransactionalWithRetry
     public Response deleteObject() throws ItemNotFoundException {
 
         hasRestrictedPath(externalPath);
@@ -304,8 +306,10 @@ public class FedoraAcl extends ContentExposingResource {
         final FedoraId aclId = originalId.asAcl();
         try {
             final var aclResource = getFedoraResource(transaction(), aclId);
-            deleteResourceService.perform(transaction(), aclResource, getUserPrincipal());
-            transaction().commitIfShortLived();
+            doInDbTxWithRetry(() -> {
+                deleteResourceService.perform(transaction(), aclResource, getUserPrincipal());
+                transaction().commitIfShortLived();
+            });
         } catch (final PathNotFoundException exc) {
             if (originalId.isRepositoryRoot()) {
                 throw new ClientErrorException("The default root ACL is system generated and cannot be deleted. " +

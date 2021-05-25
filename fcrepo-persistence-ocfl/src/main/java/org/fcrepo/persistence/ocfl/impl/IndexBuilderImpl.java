@@ -18,6 +18,8 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import edu.wisc.library.ocfl.api.OcflRepository;
+
+import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
@@ -78,6 +80,9 @@ public class IndexBuilderImpl implements IndexBuilder {
     @Inject
     private TransactionManager txManager;
 
+    @Inject
+    private DbTransactionExecutor dbTransactionExecutor;
+
     @Override
     public void rebuildIfNecessary() {
         if (shouldRebuild()) {
@@ -94,7 +99,7 @@ public class IndexBuilderImpl implements IndexBuilder {
 
         try (var objectIds = ocflRepository.listObjectIds()) {
             final ReindexManager reindexManager = new ReindexManager(objectIds,
-                    reindexService, ocflPropsConfig, txManager);
+                    reindexService, ocflPropsConfig, txManager, dbTransactionExecutor);
 
             LOGGER.debug("Reading object ids...");
             final var startTime = Instant.now();
