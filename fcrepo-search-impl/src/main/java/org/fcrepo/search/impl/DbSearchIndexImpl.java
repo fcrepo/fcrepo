@@ -35,6 +35,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,7 +61,6 @@ import org.fcrepo.search.api.SearchParameters;
 import org.fcrepo.search.api.SearchResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -554,15 +554,24 @@ public class DbSearchIndexImpl implements SearchIndex {
             final var fedoraResource = resourceFactory.getResource(transaction, fedoraId);
             doUpsertIntoSimpleSearch(fedoraId, resourceHeaders);
             final var rdfTypes = new ArrayList<>(Sets.newHashSet(fedoraResource.getTypes()));
-            insertRdfTypes(rdfTypes);
+            final var newTypes = insertRdfTypes(rdfTypes);
             deleteRdfTypeAssociations(fedoraId);
-            insertRdfTypeAssociations(rdfTypes, fedoraId);
+            insertRdfTypeAssociations(rdfTypes, newTypes, fedoraId);
         } catch (final Exception e) {
             throw new RepositoryRuntimeException("Failed add/updated the search index for : " + fullId, e);
         }
     }
 
-    private void insertRdfTypes(final List<URI> rdfTypes) {
+    /**
+     * Adds the list of RDF types to the db, if they aren't already there, and returns a set of types that were
+     * actually added.
+     *
+     * @param rdfTypes the types to attempt to add
+     * @return the types that were added
+     */
+    private Set<URI> insertRdfTypes(final List<URI> rdfTypes) {
+        final var addTypes = new HashSet<URI>();
+
         rdfTypes.stream()
                 .filter(rdfType -> !rdfTypeIdCache.containsKey(rdfType))
                 .forEach(rdfType -> {
@@ -575,10 +584,14 @@ public class DbSearchIndexImpl implements SearchIndex {
                         } else {
                             jdbcTemplate.update(INSERT_RDF_TYPE, params);
                         }
+
+                        addTypes.add(rdfType);
                     } catch (DuplicateKeyException e) {
                         // ignore duplicate keys
                     }
                 });
+
+        return addTypes;
     }
 
     private void doUpsertWithTransaction(final Transaction transaction, final ResourceHeaders resourceHeaders,
@@ -691,7 +704,9 @@ public class DbSearchIndexImpl implements SearchIndex {
                 deleteParams);
     }
 
-    private void insertRdfTypeAssociations(final List<URI> rdfTypes, final FedoraId fedoraId) {
+    private void insertRdfTypeAssociations(final List<URI> rdfTypes,
+                                           final Set<URI> newTypes,
+                                           final FedoraId fedoraId) {
         //add rdf type associations
 
         final var resourceSearchId = jdbcTemplate.queryForObject(
@@ -700,30 +715,33 @@ public class DbSearchIndexImpl implements SearchIndex {
 
         final List<MapSqlParameterSource> parameterSourcesList = new ArrayList<>();
         for (final var rdfType : rdfTypes) {
-            final var rdfTypeId = getRdfTypeId(rdfType);
+            final Long rdfTypeId;
+            if (newTypes.contains(rdfType)) {
+                // The cache MUST NOT be used when the current TX created the record as it will not be committed yet
+                // and it will break other transactions.
+                rdfTypeId = getRdfTypeIdDirect(rdfType);
+            } else {
+                rdfTypeId = getRdfTypeIdCached(rdfType);
+            }
+
             final var assocParams = new MapSqlParameterSource();
             assocParams.addValue(RESOURCE_SEARCH_ID_PARAM, resourceSearchId);
             assocParams.addValue(RDF_TYPE_ID_PARAM, rdfTypeId);
             parameterSourcesList.add(assocParams);
         }
 
-        try {
-            final MapSqlParameterSource[] psArray = parameterSourcesList.toArray(new MapSqlParameterSource[0]);
-            jdbcTemplate.batchUpdate(INSERT_RDF_TYPE_ASSOC, psArray);
-        } catch (DataAccessException e) {
-            // This could happen if an RDF type was inserted and cached in a request that later failed, resulting
-            // in a cache entry for a rdf type that does not actually exist.
-            rdfTypeIdCache.clear();
-            throw e;
-        }
+        final MapSqlParameterSource[] psArray = parameterSourcesList.toArray(new MapSqlParameterSource[0]);
+        jdbcTemplate.batchUpdate(INSERT_RDF_TYPE_ASSOC, psArray);
     }
 
-    private Long getRdfTypeId(final URI rdfType) {
-        return rdfTypeIdCache.computeIfAbsent(rdfType, k -> {
-            return jdbcTemplate.queryForObject(
-                    SELECT_RDF_TYPE_ID,
-                    Map.of(RDF_TYPE_URI_PARAM, rdfType.toString()), Long.class);
-        });
+    private Long getRdfTypeIdCached(final URI rdfType) {
+        return rdfTypeIdCache.computeIfAbsent(rdfType, this::getRdfTypeIdDirect);
+    }
+
+    private Long getRdfTypeIdDirect(final URI rdfType) {
+        return jdbcTemplate.queryForObject(
+                SELECT_RDF_TYPE_ID,
+                Map.of(RDF_TYPE_URI_PARAM, rdfType.toString()), Long.class);
     }
 
     @Override
