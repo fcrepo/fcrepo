@@ -803,6 +803,11 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             return !jdbcTemplate.queryForList(queryToUse,
                     Map.of("child", resourceId, "transactionId", tx.getId()), String.class).isEmpty();
         } else if (includeDeleted) {
+            final Boolean exists = resourceExistsCache.getIfPresent(resourceId);
+            if (exists != null && exists) {
+                // Only return true, false values might change once deleted resources are included.
+                return true;
+            }
             return !jdbcTemplate.queryForList(RESOURCE_OR_TOMBSTONE_EXISTS,
                     Map.of("child", resourceId), String.class).isEmpty();
         } else {
