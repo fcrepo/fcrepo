@@ -24,18 +24,18 @@
     <project_organization>fcrepo</project_organization>
     <fcrepo-storage-ocfl.version>6.0.0-SNAPSHOT</fcrepo-storage-ocfl.version>
     <!-- Dependency version properties -->
-    <activemq.version>5.16.0</activemq.version>
-    <aws.version>2.16.0</aws.version>
-    <caffeine.version>2.9.0</caffeine.version>
+    <activemq.version>5.16.2</activemq.version>
+    <aws.version>2.16.72</aws.version>
+    <caffeine.version>2.9.1</caffeine.version>
     <commons-codec.version>1.15</commons-codec.version>
     <commons-collections.version>3.2.2</commons-collections.version>
-    <commons-io.version>2.8.0</commons-io.version>
-    <commons-lang.version>3.11</commons-lang.version>
+    <commons-io.version>2.9.0</commons-io.version>
+    <commons-lang.version>3.12.0</commons-lang.version>
     <narayana-jta.version>5.9.0.Final</narayana-jta.version>
     <failsafe.version>2.4.0</failsafe.version>
-    <flyway.version>7.5.3</flyway.version>
+    <flyway.version>7.9.1</flyway.version>
     <flyway.test.version>7.0.0</flyway.test.version>
-    <guava.version>30.1-jre</guava.version>
+    <guava.version>30.1.1-jre</guava.version>
     <h2database.version>1.4.195</h2database.version>
     <hikari.version>4.0.3</hikari.version>
     <hk2.version>2.6.1</hk2.version>
@@ -49,37 +49,37 @@
     <javaee.xml.version>2.3.1</javaee.xml.version>
     <jaxb.core.version>2.3.0.1</jaxb.core.version>
     <jaxb.impl.version>2.3.1</jaxb.impl.version>
-    <jackson2.version>2.12.1</jackson2.version>
-    <jboss-logging.version>3.4.1.Final</jboss-logging.version>
+    <jackson2.version>2.12.3</jackson2.version>
+    <jboss-logging.version>3.4.2.Final</jboss-logging.version>
     <jena.version>3.17.0</jena.version>
-    <jersey.version>2.32</jersey.version>
+    <jersey.version>2.34</jersey.version>
     <jetty.version>9.4.34.v20201102</jetty.version>
-    <jgroups.version>5.1.5.Final</jgroups.version>
-    <jsonld.version>0.13.2</jsonld.version>
+    <jgroups.version>5.1.7.Final</jgroups.version>
+    <jsonld.version>0.13.3</jsonld.version>
     <logback.version>1.2.3</logback.version>
     <micrometer.version>1.6.4</micrometer.version>
-    <netty.version>4.1.59.Final</netty.version>
+    <netty.version>4.1.63.Final</netty.version>
     <ocfl-java.version>1.1.0</ocfl-java.version>
     <prometheus.version>0.9.0</prometheus.version>
-    <reactivestrams.version>1.0.2</reactivestrams.version>
+    <reactivestrams.version>1.0.3</reactivestrams.version>
     <shiro.version>1.7.1</shiro.version>
     <slf4j.version>1.7.25</slf4j.version>
     <snappy-java.version>1.1.8.1</snappy-java.version>
-    <spring.version>5.3.4</spring.version>
+    <spring.version>5.3.7</spring.version>
     <tika.version>1.24.1</tika.version>
     <xerces.version>2.12.1</xerces.version>
     <xml-apis.version>1.4.01</xml-apis.version>
     <velocity.version>1.7</velocity.version>
     <!-- JCBC dependencies -->
-    <postgresql.version>42.2.18</postgresql.version>
-    <mysql.version>8.0.23</mysql.version>
-    <mariadb.version>2.7.2</mariadb.version>
+    <postgresql.version>42.2.20</postgresql.version>
+    <mysql.version>8.0.25</mysql.version>
+    <mariadb.version>2.7.3</mariadb.version>
     <!-- test gear -->
-    <awaitility.version>4.0.3</awaitility.version>
+    <awaitility.version>4.1.0</awaitility.version>
     <grizzly.version>2.4.4</grizzly.version>
     <junit.version>4.13.2</junit.version>
     <system-rules.version>1.19.0</system-rules.version>
-    <mockito.version>3.7.7</mockito.version>
+    <mockito.version>3.10.0</mockito.version>
     <!-- fcrepo5-specific plugins -->
     <enforcer.plugin.version>3.0.0-M3</enforcer.plugin.version>
     <war.plugin.version>3.3.1</war.plugin.version>
