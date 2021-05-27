@@ -23,7 +23,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.security.Principal;
 import java.util.Set;
@@ -31,9 +30,11 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 
 import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrincipal;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 /**
  * Tests for {@link ContainerRolesPrincipalProvider}.
@@ -52,7 +53,7 @@ public class ContainerRolesPrincipalProviderTest {
      */
     @Before
     public void setUp() {
-        initMocks(this);
+        MockitoAnnotations.openMocks(this);
         provider = new ContainerRolesPrincipalProvider();
     }
 

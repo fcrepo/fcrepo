@@ -17,10 +17,16 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import org.apache.jena.rdf.model.Model;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_WEBAC_ACL_URI;
+import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
+
+import java.util.Optional;
+
+import javax.inject.Inject;
 
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.auth.ACLHandle;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -36,10 +42,9 @@ import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
+import org.apache.jena.rdf.model.Model;
 
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_WEBAC_ACL_URI;
-import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
+import com.github.benmanes.caffeine.cache.Cache;
 
 /**
  * Implementation of {@link WebacAclService}
@@ -57,6 +62,9 @@ public class WebacAclServiceImpl extends AbstractService implements WebacAclServ
 
     @Inject
     private RdfSourceOperationFactory rdfSourceOperationFactory;
+
+    @Inject
+    private Cache<String, Optional<ACLHandle>> authHandleCache;
 
     @Override
     public WebacAcl find(final Transaction transaction, final FedoraId fedoraId) {
@@ -91,6 +99,8 @@ public class WebacAclServiceImpl extends AbstractService implements WebacAclServ
         try {
             pSession.persist(createOp);
             recordEvent(transaction, fedoraId, createOp);
+            // Flush ACL cache on any ACL creation/update/deletion.
+            authHandleCache.invalidateAll();
         } catch (final PersistentStorageException exc) {
             throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
         }

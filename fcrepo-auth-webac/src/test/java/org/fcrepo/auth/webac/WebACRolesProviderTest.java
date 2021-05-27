@@ -29,6 +29,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
 
 import org.fcrepo.config.AuthPropsConfig;
+import org.fcrepo.kernel.api.auth.ACLHandle;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceFactory;
@@ -44,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
@@ -62,6 +64,9 @@ import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 /**
  * @author acoburn
@@ -96,12 +101,16 @@ public class WebACRolesProviderTest {
 
     private AuthPropsConfig propsConfig;
 
+    private Cache<String, Optional<ACLHandle>> authHandleCache;
+
     @Before
     public void setUp() throws RepositoryException {
+        authHandleCache = Caffeine.newBuilder().build();
         propsConfig = new AuthPropsConfig();
         roleProvider = new WebACRolesProvider();
         setField(roleProvider, "resourceFactory", mockResourceFactory);
         setField(roleProvider, "authPropsConfig", propsConfig);
+        setField(roleProvider, "authHandleCache", authHandleCache);
 
         when(mockResource.getDescribedResource()).thenReturn(mockResource);
         when(mockResource.getDescription()).thenReturn(mockResource);

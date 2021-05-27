@@ -131,6 +131,12 @@ public class FedoraPropsConfig extends BasePropsConfig {
     @Value("${fcrepo.cache.db.containment.timeout.minutes:10}")
     private long containmentCacheTimeout;
 
+    @Value("${fcrepo.cache.webac.acl.size.entries:1024}")
+    private long webacCacheSize;
+
+    @Value("${fcrepo.cache.webac.acl.timeout.minutes:10}")
+    private long webacCacheTimeout;
+
     @PostConstruct
     private void postConstruct() throws IOException {
         LOGGER.info("Fedora home: {}", fedoraHome);
@@ -335,5 +341,19 @@ public class FedoraPropsConfig extends BasePropsConfig {
      */
     public long getContainmentCacheTimeout() {
         return containmentCacheTimeout;
+    }
+
+    /**
+     * @return The number of entries in the WebAC effective ACL cache.
+     */
+    public long getWebacCacheSize() {
+        return webacCacheSize;
+    }
+
+    /**
+     * @return The number of minutes before items in the WebAC ACL cache expire.
+     */
+    public long getWebacCacheTimeout() {
+        return webacCacheTimeout;
     }
 }

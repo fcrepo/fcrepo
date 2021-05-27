@@ -17,6 +17,8 @@
  */
 package org.fcrepo.auth.integration;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.base.Strings;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -28,13 +30,19 @@ import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.Integer.parseInt;
+
+import org.fcrepo.kernel.api.auth.ACLHandle;
 
 /**
  * <p>Abstract AbstractResourceIT class.</p>
@@ -50,6 +58,15 @@ public abstract class AbstractResourceIT {
     @Before
     public void setLogger() {
         logger = LoggerFactory.getLogger(this.getClass());
+    }
+
+    @Configuration
+    static class TestConfig {
+        @Bean
+        public Cache<String, Optional<ACLHandle>> authHandleCache() {
+            return Caffeine.newBuilder().weakValues().expireAfterAccess(10, TimeUnit.SECONDS)
+                    .maximumSize(10).build();
+        }
     }
 
     private static final int SERVER_PORT = parseInt(Objects.requireNonNullElse(

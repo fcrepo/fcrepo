@@ -19,11 +19,13 @@ package org.fcrepo.kernel.impl.services;
 
 import static java.lang.String.format;
 
-import javax.inject.Inject;
-
+import java.util.Optional;
 import java.util.stream.Stream;
 
+import javax.inject.Inject;
+
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.auth.ACLHandle;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -37,8 +39,11 @@ import org.fcrepo.kernel.api.models.Tombstone;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.github.benmanes.caffeine.cache.Cache;
 
 /**
  * Shared delete/purge code.
@@ -53,6 +58,9 @@ abstract public class AbstractDeleteResourceService extends AbstractService {
 
     @Inject
     protected PersistentStorageSessionManager psManager;
+
+    @Inject
+    private Cache<String, Optional<ACLHandle>> authHandleCache;
 
     /**
      * The starts the service, does initial checks and setups for processing.
@@ -120,7 +128,12 @@ abstract public class AbstractDeleteResourceService extends AbstractService {
             final FedoraResource acl = fedoraResource.getAcl();
             if (acl != null) {
                 doAction(tx, pSession, acl.getFedoraId(), userPrincipal);
+                // Flush ACL cache on any ACL creation/update/deletion.
+                authHandleCache.invalidateAll();
             }
+        } else {
+            // Flush ACL cache on any ACL creation/update/deletion.
+            authHandleCache.invalidateAll();
         }
 
         //delete/purge the resource itself

@@ -25,12 +25,14 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import javax.inject.Inject;
 
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.auth.ACLHandle;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.Binary;
@@ -48,6 +50,7 @@ import org.fcrepo.kernel.impl.operations.DeleteResourceOperationFactoryImpl;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.search.api.SearchIndex;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -59,6 +62,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import com.github.benmanes.caffeine.cache.Cache;
 
 /**
  * DeleteResourceServiceTest
@@ -120,6 +125,9 @@ public class DeleteResourceServiceImplTest {
     private ResourceHeaders descHeaders;
     @Mock
     private ResourceHeaders aclHeaders;
+
+    @Mock
+    private Cache<String, Optional<ACLHandle>> authHandleCache;
 
     @Captor
     private ArgumentCaptor<DeleteResourceOperation> operationCaptor;

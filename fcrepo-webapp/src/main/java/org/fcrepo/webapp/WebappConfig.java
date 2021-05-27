@@ -18,12 +18,17 @@
 
 package org.fcrepo.webapp;
 
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import javax.inject.Inject;
 
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.api.ExternalContentHandlerFactory;
 import org.fcrepo.http.api.ExternalContentPathValidator;
+import org.fcrepo.kernel.api.auth.ACLHandle;
 import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
 
 import org.apache.http.conn.HttpClientConnectionManager;
@@ -35,6 +40,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 
@@ -48,6 +55,9 @@ import com.google.common.eventbus.EventBus;
 public class WebappConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WebappConfig.class);
+
+    @Inject
+    private FedoraPropsConfig fedoraPropsConfig;
 
     /**
      * Task scheduler used for cleaning up transactions
@@ -128,4 +138,15 @@ public class WebappConfig {
         return factory;
     }
 
+    /**
+     * Used to cache the effective ACL location and authorizations for a given resource.
+     *
+     * @return the cache
+     */
+    @Bean
+    public Cache<String, Optional<ACLHandle>> authHandleCache() {
+        return Caffeine.newBuilder().weakValues()
+                .expireAfterAccess(fedoraPropsConfig.getWebacCacheTimeout(), TimeUnit.MINUTES)
+                .maximumSize(fedoraPropsConfig.getWebacCacheSize()).build();
+    }
 }
