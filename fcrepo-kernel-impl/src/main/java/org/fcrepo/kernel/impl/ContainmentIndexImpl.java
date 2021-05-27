@@ -443,14 +443,26 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     private static final String GET_START_TIME = "SELECT " + START_TIME_COLUMN + " FROM " + RESOURCES_TABLE +
             " WHERE " + FEDORA_ID_COLUMN + " = :child";
 
+    /*
+     * Get all resources deleted in this transaction
+     */
     private static final String GET_DELETED_RESOURCES = "SELECT " + FEDORA_ID_COLUMN + " FROM " +
             TRANSACTION_OPERATIONS_TABLE + " WHERE " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
             OPERATION_COLUMN + " = 'delete'";
+
+    /*
+     * Get all resources added in this transaction
+     */
+    private static final String GET_ADDED_RESOURCES = "SELECT " + FEDORA_ID_COLUMN + " FROM " +
+            TRANSACTION_OPERATIONS_TABLE + " WHERE " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +
+            OPERATION_COLUMN + " = 'add'";
 
     @Inject
     private FedoraPropsConfig fedoraPropsConfig;
 
     private Cache<String, String> getContainedByCache;
+
+    private Cache<String, Boolean> resourceExistsCache;
 
     /**
      * Connect to the database
@@ -460,6 +472,10 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         jdbcTemplate = getNamedParameterJdbcTemplate();
         dbPlatform = DbPlatform.fromDataSource(dataSource);
         this.getContainedByCache = Caffeine.newBuilder()
+                .maximumSize(fedoraPropsConfig.getContainmentCacheSize())
+                .expireAfterAccess(fedoraPropsConfig.getContainmentCacheTimeout(), TimeUnit.MINUTES)
+                .build();
+        this.resourceExistsCache = Caffeine.newBuilder()
                 .maximumSize(fedoraPropsConfig.getContainmentCacheSize())
                 .expireAfterAccess(fedoraPropsConfig.getContainmentCacheTimeout(), TimeUnit.MINUTES)
                 .build();
@@ -692,6 +708,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
         jdbcTemplate.update(query, parameterSource);
         updateParentTimestamp(parentId, startTime, endTime);
+        resourceExistsCache.invalidate(resourceId);
     }
 
     private void updateParentTimestamp(final String parentId, final Instant startTime, final Instant endTime) {
@@ -733,6 +750,8 @@ public class ContainmentIndexImpl implements ContainmentIndex {
                         String.class);
                 final List<String> removedResources = jdbcTemplate.queryForList(GET_DELETED_RESOURCES, parameterSource,
                         String.class);
+                final List<String> addedResources = jdbcTemplate.queryForList(GET_ADDED_RESOURCES, parameterSource,
+                        String.class);
                 final int purged = jdbcTemplate.update(COMMIT_PURGE_RECORDS, parameterSource);
                 final int deleted = jdbcTemplate.update(COMMIT_DELETE_RECORDS.get(dbPlatform), parameterSource);
                 final int added = jdbcTemplate.update(COMMIT_ADD_RECORDS_MAP.get(dbPlatform), parameterSource);
@@ -746,6 +765,9 @@ public class ContainmentIndexImpl implements ContainmentIndex {
                 }
                 jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, parameterSource);
                 this.getContainedByCache.invalidateAll(removedResources);
+                // Add inserted records to removed records list.
+                removedResources.addAll(addedResources);
+                this.resourceExistsCache.invalidateAll(removedResources);
                 LOGGER.debug("Commit of tx {} complete with {} adds, {} deletes and {} purges",
                         tx.getId(), added, deleted, purged);
             } catch (final Exception e) {
@@ -775,18 +797,24 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             // Root always exists.
             return true;
         }
-        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-        parameterSource.addValue("child", resourceId);
-        final String queryToUse;
         if (tx.isOpenLongRunning()) {
-            queryToUse = includeDeleted ? RESOURCE_OR_TOMBSTONE_EXISTS_IN_TRANSACTION :
+            final var queryToUse = includeDeleted ? RESOURCE_OR_TOMBSTONE_EXISTS_IN_TRANSACTION :
                     RESOURCE_EXISTS_IN_TRANSACTION;
-            parameterSource.addValue("transactionId", tx.getId());
+            return !jdbcTemplate.queryForList(queryToUse,
+                    Map.of("child", resourceId, "transactionId", tx.getId()), String.class).isEmpty();
+        } else if (includeDeleted) {
+            final Boolean exists = resourceExistsCache.getIfPresent(resourceId);
+            if (exists != null && exists) {
+                // Only return true, false values might change once deleted resources are included.
+                return true;
+            }
+            return !jdbcTemplate.queryForList(RESOURCE_OR_TOMBSTONE_EXISTS,
+                    Map.of("child", resourceId), String.class).isEmpty();
         } else {
-            queryToUse = includeDeleted ? RESOURCE_OR_TOMBSTONE_EXISTS :
-                    RESOURCE_EXISTS;
+            return resourceExistsCache.get(resourceId, key -> !jdbcTemplate.queryForList(RESOURCE_EXISTS,
+                        Map.of("child", resourceId), String.class).isEmpty()
+            );
         }
-        return !jdbcTemplate.queryForList(queryToUse, parameterSource, String.class).isEmpty();
     }
 
     @Override
