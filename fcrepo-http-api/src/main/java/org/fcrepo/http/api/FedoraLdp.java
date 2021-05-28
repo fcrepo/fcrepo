@@ -344,11 +344,11 @@ public class FedoraLdp extends ContentExposingResource {
                 METHOD_NOT_ALLOWED);
         }
 
-        evaluateRequestPreconditions(request, servletResponse, resource(), transaction());
-
         LOGGER.info("Delete resource '{}'", externalPath);
 
         try {
+            evaluateRequestPreconditions(request, servletResponse, resource(), transaction());
+
             doInDbTxWithRetry(() -> {
                 deleteResourceService.perform(transaction(), resource(), getUserPrincipal());
                 transaction().commitIfShortLived();
@@ -441,7 +441,6 @@ public class FedoraLdp extends ContentExposingResource {
 
             final var created = new AtomicBoolean(false);
 
-            doInDbTxWithRetry(() -> {
                 if ((resourceExists && resource() instanceof Binary) ||
                         (!resourceExists && isBinary(interactionModel,
                                 providedContentType,
@@ -457,49 +456,52 @@ public class FedoraLdp extends ContentExposingResource {
                     final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
                     final long contentSize = contentDisposition == null ? -1L : contentDisposition.getSize();
 
-                    if (resourceExists) {
-                        replaceBinariesService.perform(transaction,
-                                getUserPrincipal(),
-                                fedoraId,
-                                originalFileName,
-                                contentType,
-                                checksums,
-                                requestBodyStream,
-                                contentSize,
-                                extContent);
-                    } else {
-                        createResourceService.perform(transaction,
-                                getUserPrincipal(),
-                                fedoraId,
-                                contentType,
-                                originalFileName,
-                                contentSize,
-                                links,
-                                checksums,
-                                requestBodyStream,
-                                extContent);
-                        created.set(true);
-                    }
+                    doInDbTx(() -> {
+                        if (resourceExists) {
+                            replaceBinariesService.perform(transaction,
+                                    getUserPrincipal(),
+                                    fedoraId,
+                                    originalFileName,
+                                    contentType,
+                                    checksums,
+                                    requestBodyStream,
+                                    contentSize,
+                                    extContent);
+                        } else {
+                            createResourceService.perform(transaction,
+                                    getUserPrincipal(),
+                                    fedoraId,
+                                    contentType,
+                                    originalFileName,
+                                    contentSize,
+                                    links,
+                                    checksums,
+                                    requestBodyStream,
+                                    extContent);
+                            created.set(true);
+                        }
+                        transaction.commitIfShortLived();
+                    });
                 } else {
                     final var contentType = requestContentType != null ? requestContentType : DEFAULT_RDF_CONTENT_TYPE;
                     final Model model = httpRdfService.bodyToInternalModel(fedoraId, requestBodyStream,
                             contentType, identifierConverter(), hasLenientPreferHeader());
 
-                    if (resourceExists) {
-                        replacePropertiesService.perform(transaction,
-                                getUserPrincipal(),
-                                fedoraId,
-                                model);
-                    } else {
-                        createResourceService.perform(transaction, getUserPrincipal(), fedoraId, links, model);
-                        created.set(true);
-                    }
+                    doInDbTxWithRetry(() -> {
+                        if (resourceExists) {
+                            replacePropertiesService.perform(transaction,
+                                    getUserPrincipal(),
+                                    fedoraId,
+                                    model);
+                        } else {
+                            createResourceService.perform(transaction, getUserPrincipal(), fedoraId, links, model);
+                            created.set(true);
+                        }
+                        transaction.commitIfShortLived();
+                    });
                 }
 
-                // TODO: How to generate a response.
-                LOGGER.debug("Finished creating resource with path: {}", externalPath());
-                transaction.commitIfShortLived();
-            });
+            LOGGER.debug("Finished creating resource with path: {}", externalPath());
 
             return createUpdateResponse(getFedoraResource(transaction, fedoraId), created.get());
         } finally {
@@ -635,20 +637,20 @@ public class FedoraLdp extends ContentExposingResource {
 
             LOGGER.info("POST to create resource with ID: {}, slug: {}", newFedoraId.getFullIdPath(), decodedSlug);
 
-            doInDbTxWithRetry(() -> {
-                if (isBinary(interactionModel,
-                        providedContentType,
-                        requestBodyStream != null && providedContentType != null,
-                        extContent != null)) {
-                    ensureArchivalGroupHeaderNotPresentForBinaries(links);
+            if (isBinary(interactionModel,
+                    providedContentType,
+                    requestBodyStream != null && providedContentType != null,
+                    extContent != null)) {
+                ensureArchivalGroupHeaderNotPresentForBinaries(links);
 
-                    final Collection<URI> checksums = parseDigestHeader(digest);
-                    final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
-                    final var binaryType = requestContentType != null ?
-                            requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;
-                    final var contentType = extContent == null ? binaryType.toString() : extContent.getContentType();
-                    final long contentSize = contentDisposition == null ? -1L : contentDisposition.getSize();
+                final Collection<URI> checksums = parseDigestHeader(digest);
+                final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
+                final var binaryType = requestContentType != null ?
+                        requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;
+                final var contentType = extContent == null ? binaryType.toString() : extContent.getContentType();
+                final long contentSize = contentDisposition == null ? -1L : contentDisposition.getSize();
 
+                doInDbTx(() -> {
                     createResourceService.perform(transaction,
                             getUserPrincipal(),
                             newFedoraId,
@@ -659,19 +661,26 @@ public class FedoraLdp extends ContentExposingResource {
                             checksums,
                             requestBodyStream,
                             extContent);
-                } else {
-                    final var contentType = requestContentType != null ? requestContentType : DEFAULT_RDF_CONTENT_TYPE;
-                    final Model model = httpRdfService.bodyToInternalModel(newFedoraId, requestBodyStream,
-                            contentType, identifierConverter(), hasLenientPreferHeader());
+
+                    transaction.commitIfShortLived();
+                });
+            } else {
+                final var contentType = requestContentType != null ? requestContentType : DEFAULT_RDF_CONTENT_TYPE;
+                final Model model = httpRdfService.bodyToInternalModel(newFedoraId, requestBodyStream,
+                        contentType, identifierConverter(), hasLenientPreferHeader());
+
+                doInDbTxWithRetry(() -> {
                     createResourceService.perform(transaction,
                             getUserPrincipal(),
                             newFedoraId,
                             links,
                             model);
-                }
-                LOGGER.debug("Finished creating resource with path: {}", externalPath());
-                transaction.commitIfShortLived();
-            });
+
+                    transaction.commitIfShortLived();
+                });
+            }
+
+            LOGGER.debug("Finished creating resource with path: {}", externalPath());
 
             try {
                 final var resource = getFedoraResource(transaction, newFedoraId);

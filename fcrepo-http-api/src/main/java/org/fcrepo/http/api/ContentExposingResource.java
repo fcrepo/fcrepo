@@ -686,6 +686,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                                                        final HttpServletResponse servletResponse,
                                                        final FedoraResource resource,
                                                        final Transaction transaction) {
+        // The resource must be locked prior to applying pre-conditions for the optimistic locking to be effective
+        transaction.lockResource(resource.getFedoraId());
         evaluateRequestPreconditions(request, servletResponse, resource, transaction, false);
     }
 
