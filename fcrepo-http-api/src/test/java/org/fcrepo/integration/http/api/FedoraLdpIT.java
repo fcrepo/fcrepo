@@ -145,6 +145,7 @@ import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Random;
+import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.core.Link;
@@ -3896,15 +3897,20 @@ public class FedoraLdpIT extends AbstractResourceIT {
             binaryEtag = response.getFirstHeader("ETag").getValue();
         }
 
+        final var phaser = new Phaser(5);
+
         final RequestThread[] threads = new RequestThread[] {
-                new RequestThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 1")),
-                new RequestThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 2")),
-                new RequestThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 3")),
-                new RequestThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 4"))  };
+                new RequestThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 1"), phaser),
+                new RequestThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 2"), phaser),
+                new RequestThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 3"), phaser),
+                new RequestThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 4"), phaser)
+        };
 
         for (final RequestThread t : threads) {
             t.start();
         }
+
+        phaser.arriveAndAwaitAdvance();
 
         final List<RequestThread> successfulThreads = new ArrayList<>();
         for (final RequestThread t : threads) {
@@ -3924,15 +3930,19 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         private final HttpUriRequest request;
 
+        private final Phaser phaser;
+
         private HttpResponse response;
 
-        public RequestThread(final HttpUriRequest request) {
+        public RequestThread(final HttpUriRequest request, final Phaser phaser) {
             this.request = request;
+            this.phaser = phaser;
         }
 
         @Override
         public void run() {
             try {
+                phaser.arriveAndAwaitAdvance();
                 response = execute(request);
             } catch (final IOException e) {
                 LOGGER.error("Thread " + Thread.currentThread().getId() + ", failed to request!", e);
