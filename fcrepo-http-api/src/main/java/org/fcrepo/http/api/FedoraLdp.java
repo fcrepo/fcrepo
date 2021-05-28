@@ -344,11 +344,11 @@ public class FedoraLdp extends ContentExposingResource {
                 METHOD_NOT_ALLOWED);
         }
 
-        evaluateRequestPreconditions(request, servletResponse, resource(), transaction());
-
         LOGGER.info("Delete resource '{}'", externalPath);
 
         try {
+            evaluateRequestPreconditions(request, servletResponse, resource(), transaction());
+
             doInDbTxWithRetry(() -> {
                 deleteResourceService.perform(transaction(), resource(), getUserPrincipal());
                 transaction().commitIfShortLived();
