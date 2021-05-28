@@ -141,21 +141,21 @@ public class FedoraAcl extends ContentExposingResource {
                     requestContentType == null ?
                             RDFMediaType.TURTLE_TYPE : valueOf(getSimpleContentType(requestContentType));
 
-            doInDbTxWithRetry(() -> {
-                if (isRdfContentType(contentType.toString())) {
-                    final Model model = httpRdfService.bodyToInternalModel(aclId,
-                            requestBodyStream, contentType, identifierConverter(), hasLenientPreferHeader());
+            if (isRdfContentType(contentType.toString())) {
+                final Model model = httpRdfService.bodyToInternalModel(aclId,
+                        requestBodyStream, contentType, identifierConverter(), hasLenientPreferHeader());
+                doInDbTxWithRetry(() -> {
                     if (exists) {
                         replacePropertiesService.perform(transaction(), getUserPrincipal(), aclId, model);
                     } else {
                         webacAclService.create(transaction(), aclId, getUserPrincipal(), model);
                     }
-                } else {
-                    throw new BadRequestException("Content-Type (" + requestContentType + ") is invalid." +
-                            " Try text/turtle or other RDF compatible type.");
-                }
-                transaction().commitIfShortLived();
-            });
+                    transaction().commitIfShortLived();
+                });
+            } else {
+                throw new BadRequestException("Content-Type (" + requestContentType + ") is invalid." +
+                        " Try text/turtle or other RDF compatible type.");
+            }
 
             try {
                 final var aclResource = getFedoraResource(transaction(), aclId);
