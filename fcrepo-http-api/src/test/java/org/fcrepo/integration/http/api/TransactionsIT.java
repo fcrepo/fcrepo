@@ -30,6 +30,7 @@ import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
+import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static org.apache.http.util.EntityUtils.consume;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
@@ -234,6 +235,44 @@ public class TransactionsIT extends AbstractResourceIT {
 
         assertEquals("Expected to not find our object in transaction after rollback",
                 CONFLICT.getStatusCode(), getStatus(addTxTo(new HttpGet(newLocation), txLocation)));
+    }
+
+    @Test
+    public void rejectPutWhenIfMatchDoesNotMatch() throws IOException {
+        final String txLocation = createTransaction();
+
+        final String newLocation;
+        final HttpPost postNew = new HttpPost(serverAddress);
+        postNew.addHeader(ATOMIC_ID_HEADER, txLocation);
+        try (final CloseableHttpResponse resp = execute(postNew)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(resp));
+            newLocation = getLocation(resp);
+        }
+
+        final var request = new HttpPut(newLocation);
+        request.addHeader(ATOMIC_ID_HEADER, txLocation);
+        request.addHeader("If-Match", "\"doesnt-match\"");
+        assertEquals(PRECONDITION_FAILED.getStatusCode(), getStatus(request));
+    }
+
+    @Test
+    public void allowPutWhenIfMatchMatches() throws IOException {
+        final String txLocation = createTransaction();
+
+        final String newLocation;
+        final String etag;
+        final HttpPost postNew = new HttpPost(serverAddress);
+        postNew.addHeader(ATOMIC_ID_HEADER, txLocation);
+        try (final CloseableHttpResponse resp = execute(postNew)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(resp));
+            newLocation = getLocation(resp);
+            etag = resp.getFirstHeader("ETag").getValue();
+        }
+
+        final var request = new HttpPut(newLocation);
+        request.addHeader(ATOMIC_ID_HEADER, txLocation);
+        request.addHeader("If-Match", etag.substring(2));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(request));
     }
 
     @Test

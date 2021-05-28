@@ -702,7 +702,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             // Force cache revalidation if in a transaction
             servletResponse.addHeader(CACHE_CONTROL, "must-revalidate");
             servletResponse.addHeader(CACHE_CONTROL, "max-age=0");
-            return;
         }
 
         final EntityTag etag;
