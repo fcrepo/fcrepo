@@ -48,6 +48,8 @@ public class TestIsolationExecutionListener extends BaseTestExecutionListener {
         flyway.clean();
         flyway.migrate();
 
+        cleanDb(testContext);
+
         final var hasError = new AtomicBoolean(false);
 
         ocflRepo.listObjectIds().forEach(object -> {

@@ -26,13 +26,8 @@ import static org.fcrepo.auth.webac.URIConstants.VCARD_GROUP;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE_VALUE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
-
-import org.fcrepo.config.AuthPropsConfig;
-import org.fcrepo.kernel.api.auth.ACLHandle;
-import org.fcrepo.kernel.api.exception.PathNotFoundException;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.ResourceFactory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -47,15 +42,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.fcrepo.config.AuthPropsConfig;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.auth.ACLHandle;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.RepositoryException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
-import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.exception.RepositoryException;
-import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -116,6 +117,7 @@ public class WebACRolesProviderTest {
         when(mockResource.getDescription()).thenReturn(mockResource);
 
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
+        when(mockResource.getInteractionModel()).thenReturn(BASIC_CONTAINER.getURI());
     }
 
     private void assertOnlyDefaultAgentInRoles(final Map<String, Collection<String>> roles) {

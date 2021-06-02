@@ -570,7 +570,7 @@ public class WebACFilter extends RequestContextFilter {
      */
     private boolean isPayloadIndirectOrDirect(final HttpServletRequest request) {
         return Collections.list(request.getHeaders("Link")).stream().map(Link::valueOf).map(Link::getUri)
-                .anyMatch(l -> directOrIndirect.contains(l));
+                .anyMatch(directOrIndirect::contains);
     }
 
     /**
@@ -580,7 +580,8 @@ public class WebACFilter extends RequestContextFilter {
      * @return whether it is a direct or indirect container.
      */
     private boolean isResourceIndirectOrDirect(final FedoraResource resource) {
-        return resource != null && resource.getTypes().stream().anyMatch(l -> directOrIndirect.contains(l));
+        return resource != null && Stream.of(resource.getInteractionModel()).map(URI::create)
+                .anyMatch(directOrIndirect::contains);
     }
 
     /**
@@ -761,8 +762,8 @@ public class WebACFilter extends RequestContextFilter {
      * @return true if a binary or binary description.
      */
     private static boolean isBinaryOrDescription(final FedoraResource resource) {
-        return resource.getTypes().stream().map(URI::toString)
-                .anyMatch(t -> t.equals(NON_RDF_SOURCE.toString()) || t.equals(FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI));
+        return resource.getInteractionModel().equals(NON_RDF_SOURCE.toString()) ||
+                resource.getInteractionModel().equals(FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI);
     }
 
     /**
