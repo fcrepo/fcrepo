@@ -351,8 +351,6 @@ public class DbSearchIndexImpl implements SearchIndex {
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         final var fields = parameters.getFields().stream().map(Condition.Field::toString).collect(toList());
         final var selectQuery = createSearchQuery(parameters, parameterSource, fields);
-        final var countQuery = "SELECT COUNT(0) FROM (" +
-                createSearchQuery(parameters, parameterSource, (List<String>)EMPTY_LIST) + ") as cnt";
 
         if (parameters.getOrderBy() != null) {
             //add order by limit and offset to selectquery.
@@ -363,7 +361,14 @@ public class DbSearchIndexImpl implements SearchIndex {
         parameterSource.addValue("offset", parameters.getOffset());
 
         final RowMapper<Map<String, Object>> rowMapper = createRowMapper(fields);
-        final Integer totalResults = jdbcTemplate.queryForObject(countQuery, parameterSource, Integer.class);
+
+
+        Integer totalResults = -1;
+        if (parameters.isIncludeTotalResultCount()) {
+            final var countQuery = "SELECT COUNT(0) FROM (" +
+                    createSearchQuery(parameters, parameterSource, (List<String>) EMPTY_LIST) + ") as cnt";
+            totalResults = jdbcTemplate.queryForObject(countQuery, parameterSource, Integer.class);
+        }
         final List<Map<String, Object>> items = jdbcTemplate.query(selectQuery.toString(), parameterSource, rowMapper);
         final var pagination = new PaginationInfo(parameters.getMaxResults(), parameters.getOffset(),
                 (totalResults != null ? totalResults : 0));

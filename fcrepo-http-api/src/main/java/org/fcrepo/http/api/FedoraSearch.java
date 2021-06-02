@@ -82,6 +82,7 @@ public class FedoraSearch extends FedoraBaseResource {
      * @param offset     The zero-based offset of the first result to be returned
      * @param order      The order: ie "asc" or "desc"
      * @param orderBy    The field by which to order the results
+     * @param includeTotalResultCount A flag for including total result count (true by default)
      * @return A response object with the search results
      */
     @GET
@@ -93,7 +94,9 @@ public class FedoraSearch extends FedoraBaseResource {
                              @DefaultValue("100") @QueryParam("max_results") final int maxResults,
                              @DefaultValue("0") @QueryParam("offset") final int offset,
                              @DefaultValue("asc") @QueryParam("order") final String order,
-                             @QueryParam("order_by") final String orderBy) {
+                             @QueryParam("order_by") final String orderBy,
+                             @DefaultValue("true") @QueryParam("include_total_result_count")
+                                         final boolean includeTotalResultCount) {
 
         LOGGER.info("GET on search with conditions: {}, and fields: {}", conditions, fields);
         try {
@@ -134,7 +137,7 @@ public class FedoraSearch extends FedoraBaseResource {
             }
 
             final var params = new SearchParameters(parsedFields, conditionList, maxResults, offset, orderByField,
-                    order);
+                    order, includeTotalResultCount);
             final Response.ResponseBuilder builder = ok();
             final var result = this.searchIndex.doSearch(params);
             final var translatedResults = translateResults(result);

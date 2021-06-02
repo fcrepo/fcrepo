@@ -40,6 +40,7 @@ public class SearchParameters {
 
     private final String order;
 
+    private final boolean includeTotalResultCount;
     /**
      * Constructoor
      *
@@ -49,15 +50,18 @@ public class SearchParameters {
      * @param offset     The offset
      * @param orderBy    The field by which to order the results
      * @param order      The order: ie "asc" or "desc"
+     * @param includeTotalResultCount A flag indicating whether or not to return the total result count.
      */
     public SearchParameters(final List<Condition.Field> fields, final List<Condition> conditions, final int maxResults,
-                            final int offset, final Condition.Field orderBy, final String order) {
+                            final int offset, final Condition.Field orderBy, final String order,
+                            final boolean includeTotalResultCount) {
         this.fields = fields;
         this.conditions = conditions;
         this.maxResults = maxResults;
         this.offset = offset;
         this.orderBy = orderBy;
         this.order = order;
+        this.includeTotalResultCount = includeTotalResultCount;
     }
 
     /**
@@ -114,6 +118,14 @@ public class SearchParameters {
         return order;
     }
 
+    /**
+     * Returns flag indicating whether or not to include the total result count in the query results.
+     * @return
+     */
+    public boolean isIncludeTotalResultCount() {
+        return includeTotalResultCount;
+    }
+
     @Override
     public String toString() {
         final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this);
@@ -123,6 +135,7 @@ public class SearchParameters {
         helper.add("fields", fields);
         helper.add("orderBy", orderBy);
         helper.add("order", order);
+        helper.add("includeTotalResultCount", includeTotalResultCount);
         return helper.toString();
     }
 }

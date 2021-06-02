@@ -223,7 +223,7 @@ public class ReindexService {
             int numResults;
             do {
                 final var params = new SearchParameters(fields, conditions, membershipPageSize,
-                        offset, Condition.Field.FEDORA_ID, "asc");
+                        offset, Condition.Field.FEDORA_ID, "asc", false);
 
                 final var searchResult = searchIndex.doSearch(params);
                 final var resultList = searchResult.getItems();
