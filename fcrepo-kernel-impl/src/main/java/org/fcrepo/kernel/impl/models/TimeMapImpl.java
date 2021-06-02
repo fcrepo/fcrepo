@@ -178,4 +178,8 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
         return getVersions();
     }
 
+    @Override
+    public String getInteractionModel() {
+        return CONTAINER.getURI();
+    }
 }

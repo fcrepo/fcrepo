@@ -193,13 +193,17 @@ public class WebACFilterTest {
         when(mockChildContainer.getContainer()).thenReturn(mockContainer);
 
         when(mockContainer.getTypes()).thenReturn(Arrays.asList(URI.create(BASIC_CONTAINER.toString())));
+        when(mockContainer.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         when(mockChildContainer.getTypes()).thenReturn(Arrays.asList(URI.create(BASIC_CONTAINER.toString())));
+        when(mockChildContainer.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         when(mockBinary.getTypes()).thenReturn(Arrays.asList(URI.create(NON_RDF_SOURCE.toString())));
+        when(mockBinary.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
 
         final List<URI> rootTypes = new ArrayList<>();
         of("RepositoryRoot", "Resource", "Container").forEach(x -> rootTypes.add(URI.create(REPOSITORY_NAMESPACE +
                 x)));
         when(mockRoot.getTypes()).thenReturn(rootTypes);
+        when(mockRoot.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
 
         // Setup Container by default
         setupContainerResource();
