@@ -19,6 +19,7 @@ package org.fcrepo.search.impl;
 
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
 import static java.util.Collections.EMPTY_LIST;
+import static java.util.stream.Collectors.toList;
 import static org.fcrepo.common.db.DbPlatform.POSTGRESQL;
 import static org.fcrepo.search.api.Condition.Field.CONTENT_SIZE;
 import static org.fcrepo.search.api.Condition.Field.FEDORA_ID;
@@ -40,7 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -349,15 +349,14 @@ public class DbSearchIndexImpl implements SearchIndex {
     public SearchResult doSearch(final SearchParameters parameters) throws InvalidQueryException {
         //translate parameters into a SQL query
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-        final var fields = parameters.getFields().stream().map(Condition.Field::toString).collect(Collectors.toList());
-
-        final var countQuery =
-                createSearchQuery(parameters, parameterSource, COUNT_QUERY_COLUMNS).toString();
+        final var fields = parameters.getFields().stream().map(Condition.Field::toString).collect(toList());
         final var selectQuery = createSearchQuery(parameters, parameterSource, fields);
+        final var countQuery = "SELECT COUNT(0) FROM (" +
+                createSearchQuery(parameters, parameterSource, (List<String>)EMPTY_LIST) + ") as cnt";
 
         if (parameters.getOrderBy() != null) {
             //add order by limit and offset to selectquery.
-            selectQuery.append(" ORDER BY ").append(parameters.getOrderBy()).append(" " ).append(parameters.getOrder());
+            selectQuery.append(" ORDER BY ").append(parameters.getOrderBy()).append(" ").append(parameters.getOrder());
         }
         selectQuery.append(" LIMIT :limit OFFSET :offset");
         parameterSource.addValue("limit", parameters.getMaxResults());
@@ -396,60 +395,52 @@ public class DbSearchIndexImpl implements SearchIndex {
     private StringBuilder createSearchQuery(final SearchParameters parameters,
                                             final MapSqlParameterSource parameterSource,
                                             final List<String> selectedFields) throws InvalidQueryException {
+        final var queryFields = new ArrayList<>(selectedFields);
+        final var fedoraIdStr = FEDORA_ID.toString();
+        if (!queryFields.contains(fedoraIdStr)) {
+            queryFields.add(fedoraIdStr);
+        }
+
         final var whereClauses = new ArrayList<String>();
         final var conditions = parameters.getConditions();
+        final var fields = new ArrayList<String>(queryFields);
+        final var rdfTypeConditionValue =
+                conditions.stream().filter(c -> c.getField().equals(RDF_TYPE)).findFirst().orElse(null);
+        final var containsRDFTypeField = queryFields.contains(RDF_TYPE.toString());
 
-        final var sql = new StringBuilder("SELECT " + String.join(",", selectedFields) +
-                " FROM " + SIMPLE_SEARCH_TABLE + " s");
-
-        final var hasRdfTypeCondition = conditions.stream().anyMatch(c -> c.getField().equals(RDF_TYPE));
-        final var containsRDFTypeField = selectedFields.contains(RDF_TYPE.toString());
-
-        final var subQueryWhereClauses = new ArrayList<String>(conditions.size());
-        for (int i = 0; i < conditions.size(); i++) {
-            addWhereClause(i, parameterSource, subQueryWhereClauses, conditions.get(i));
-        }
-
-        if (hasRdfTypeCondition) {
-            sql.append(", (SELECT rrt." + RESOURCE_ID_COLUMN + " from " +
-                    SEARCH_RESOURCE_RDF_TYPE_TABLE + " rrt, " +
-                    SEARCH_RDF_TYPE_TABLE + " rt, " + SIMPLE_SEARCH_TABLE + " s " +
-                    "WHERE rrt.rdf_type_id = rt.id and s.id = rrt.resource_id AND ");
-            for (String whereClause : subQueryWhereClauses) {
-                sql.append(whereClause);
-                sql.append(" AND ");
-            }
-
-            sql.append("rt." + RDF_TYPE_URI_COLUMN + " like :" + RDF_TYPE_URI_PARAM);
-            sql.append(" group by rrt." + RESOURCE_ID_COLUMN + ") r_filter");
-
-            whereClauses.add("s.id = r_filter.resource_id");
-            addRdfTypeParam(parameterSource, conditions);
-        }
+        final var groupByFields = fields.stream().filter(f->!f.equals(RDF_TYPE.toString())).collect(toList());
+        final var returnFields = new ArrayList<>(groupByFields);
 
         if (containsRDFTypeField) {
             final var groupFunction = isPostgres() ? POSTGRES_GROUP_CONCAT_FUNCTION : DEFAULT_GROUP_CONCAT_FUNCTION;
-            sql.append(", (SELECT rrt.resource_id, ");
-            sql.append(groupFunction + " as rdf_type ");
-            sql.append(" FROM " + SEARCH_RESOURCE_RDF_TYPE_TABLE + " rrt, " +
-                    "search_rdf_type rt ," + SIMPLE_SEARCH_TABLE + " s WHERE  s.id = rrt.resource_id AND " +
-                    "rrt.rdf_type_id = rt.id ");
-            for (String whereClause : subQueryWhereClauses) {
-                sql.append(" AND ");
-                sql.append(whereClause);
-            }
-
-            sql.append(" GROUP BY rrt.resource_id) r ");
-
-            if (hasRdfTypeCondition) {
-                whereClauses.add("r_filter.resource_id = r.resource_id");
-            } else {
-                whereClauses.add("s.id = r.resource_id");
-            }
+            returnFields.add(groupFunction + " as rdf_type");
         }
 
-        if (!hasRdfTypeCondition && !containsRDFTypeField) {
-            whereClauses.addAll(subQueryWhereClauses);
+
+        final var sql =
+                new StringBuilder("SELECT " + String.join(",",
+                        returnFields))
+                        .append(" FROM ")
+                        .append(SEARCH_RESOURCE_RDF_TYPE_TABLE).append(" rrt, ")
+                        .append(SEARCH_RDF_TYPE_TABLE).append(" rt,")
+                        .append(SIMPLE_SEARCH_TABLE).append(" s ");
+
+        whereClauses.add("s.id = rrt.resource_id");
+        whereClauses.add("rrt.rdf_type_id = rt.id");
+
+        if (rdfTypeConditionValue != null) {
+            final var rdfTypeOperator = rdfTypeConditionValue.getObject().contains("*") ? " LIKE " : " = ";
+            sql.append(", (SELECT ").append(RESOURCE_ID_COLUMN).append(" FROM ")
+                    .append(SEARCH_RESOURCE_RDF_TYPE_TABLE).append(" WHERE ")
+                    .append(RDF_TYPE_ID_COLUMN).append(" IN (").append("SELECT ID FROM ").append(SEARCH_RDF_TYPE_TABLE)
+                    .append(" WHERE ").append(RDF_TYPE_URI_COLUMN).append(rdfTypeOperator)
+                    .append(":").append(RDF_TYPE_URI_PARAM).append(")) rdf_type_filter ");
+            whereClauses.add("rdf_type_filter.resource_id = s.id");
+            addRdfTypeParam(parameterSource, conditions);
+        }
+
+        for (int i = 0; i < conditions.size(); i++) {
+            addWhereClause(i, parameterSource, whereClauses, conditions.get(i));
         }
 
         if (!whereClauses.isEmpty()) {
@@ -462,6 +453,7 @@ public class DbSearchIndexImpl implements SearchIndex {
             }
         }
 
+        sql.append(" GROUP BY ").append(String.join(",", groupByFields));
         return sql;
     }
 
@@ -840,7 +832,7 @@ public class DbSearchIndexImpl implements SearchIndex {
     private List<String> toggleForeignKeyChecks(final boolean enable) {
 
         if (isPostgres()) {
-            return EMPTY_LIST;
+            return (List<String>)EMPTY_LIST;
         } else {
             return List.of("SET FOREIGN_KEY_CHECKS = " + (enable ? 1 : 0) + ";");
         }
