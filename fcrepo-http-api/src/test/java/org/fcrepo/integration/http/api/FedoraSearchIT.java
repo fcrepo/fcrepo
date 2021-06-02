@@ -342,7 +342,8 @@ public class FedoraSearchIT extends AbstractResourceIT {
         final var condition = FEDORA_ID + "=" + prefix + "*";
         final var maxResults = 1;
         final String searchUrl =
-                getSearchEndpoint() + "condition=" + encode(condition) + "&max_results=" + maxResults + "&offset=2";
+                getSearchEndpoint() + "condition=" + encode(condition) + "&max_results=" + maxResults + "&offset=2" +
+                        "&order_by=fedora_id";
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
@@ -367,7 +368,7 @@ public class FedoraSearchIT extends AbstractResourceIT {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
             assertEquals(maxResults, result.getItems().size());
-            assertEquals(-1, result.getPagination().getTotalResults());
+            assertEquals(-1, result.getPagination().getTotalResults())  ;
         }
     }
 
