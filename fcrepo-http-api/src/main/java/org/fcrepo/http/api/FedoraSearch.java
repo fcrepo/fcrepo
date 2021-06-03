@@ -95,7 +95,7 @@ public class FedoraSearch extends FedoraBaseResource {
                              @DefaultValue("0") @QueryParam("offset") final int offset,
                              @DefaultValue("asc") @QueryParam("order") final String order,
                              @QueryParam("order_by") final String orderBy,
-                             @DefaultValue("true") @QueryParam("include_total_result_count")
+                             @DefaultValue("false") @QueryParam("include_total_result_count")
                                          final boolean includeTotalResultCount) {
 
         LOGGER.info("GET on search with conditions: {}, and fields: {}", conditions, fields);
