@@ -82,7 +82,7 @@ public class FedoraSearch extends FedoraBaseResource {
      * @param offset     The zero-based offset of the first result to be returned
      * @param order      The order: ie "asc" or "desc"
      * @param orderBy    The field by which to order the results
-     * @param includeTotalResultCount A flag for including total result count (true by default)
+     * @param includeTotalResultCount A flag for including total result count (false by default)
      * @return A response object with the search results
      */
     @GET

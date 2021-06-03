@@ -18,7 +18,6 @@
 package org.fcrepo.search.impl;
 
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
-import static java.util.Collections.EMPTY_LIST;
 import static java.util.stream.Collectors.toList;
 import static org.fcrepo.common.db.DbPlatform.POSTGRESQL;
 import static org.fcrepo.search.api.Condition.Field.CONTENT_SIZE;
@@ -35,6 +34,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -366,7 +366,7 @@ public class DbSearchIndexImpl implements SearchIndex {
         Integer totalResults = -1;
         if (parameters.isIncludeTotalResultCount()) {
             final var countQuery = "SELECT COUNT(0) FROM (" +
-                    createSearchQuery(parameters, parameterSource, (List<String>) EMPTY_LIST) + ") as cnt";
+                    createSearchQuery(parameters, parameterSource, Collections.emptyList()) + ") as cnt";
             totalResults = jdbcTemplate.queryForObject(countQuery, parameterSource, Integer.class);
         }
         final List<Map<String, Object>> items = jdbcTemplate.query(selectQuery.toString(), parameterSource, rowMapper);
@@ -837,7 +837,7 @@ public class DbSearchIndexImpl implements SearchIndex {
     private List<String> toggleForeignKeyChecks(final boolean enable) {
 
         if (isPostgres()) {
-            return (List<String>)EMPTY_LIST;
+            return Collections.emptyList();
         } else {
             return List.of("SET FOREIGN_KEY_CHECKS = " + (enable ? 1 : 0) + ";");
         }
