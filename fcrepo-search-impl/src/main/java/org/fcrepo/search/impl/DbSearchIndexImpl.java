@@ -458,7 +458,10 @@ public class DbSearchIndexImpl implements SearchIndex {
             }
         }
 
-        sql.append(" GROUP BY ").append(String.join(",", groupByFields));
+        //postgres requires that all non aggregated columns in the select clause appear in the group by;
+        //All others do not.  mysql is much slower with the multi-column group by clause.
+        final var groupByFieldStr = isPostgres() ? String.join(",", groupByFields) : FEDORA_ID_COLUMN;
+        sql.append(" GROUP BY ").append(groupByFieldStr);
         return sql;
     }
 
