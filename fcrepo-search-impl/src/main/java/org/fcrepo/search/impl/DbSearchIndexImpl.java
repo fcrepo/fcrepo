@@ -411,20 +411,19 @@ public class DbSearchIndexImpl implements SearchIndex {
         final var fields = new ArrayList<String>(queryFields);
         final var rdfTypeConditionValue =
                 conditions.stream().filter(c -> c.getField().equals(RDF_TYPE)).findFirst().orElse(null);
-        final var containsRDFTypeField = queryFields.contains(RDF_TYPE.toString());
+        final var rdfTypeFunctionColumn = ", " + (isPostgres() ? POSTGRES_GROUP_CONCAT_FUNCTION :
+                DEFAULT_GROUP_CONCAT_FUNCTION) + " as rdf_type";
 
-        final var groupByFields = fields.stream().filter(f->!f.equals(RDF_TYPE.toString())).collect(toList());
-        final var returnFields = new ArrayList<>(groupByFields);
-
-        if (containsRDFTypeField) {
-            final var groupFunction = isPostgres() ? POSTGRES_GROUP_CONCAT_FUNCTION : DEFAULT_GROUP_CONCAT_FUNCTION;
-            returnFields.add(groupFunction + " as rdf_type");
-        }
-
-
-        final var sql =
-                new StringBuilder("SELECT " + String.join(",",
-                        returnFields))
+        final var sql = new StringBuilder("")
+                        .append("SELECT ")
+                        .append(String.join(",", fields))
+                        .append(" FROM ")
+                        .append("(SELECT * FROM ")
+                        .append(SIMPLE_SEARCH_TABLE)
+                        .append(") a,")
+                        .append("(SELECT ")
+                        .append("s.id ")
+                        .append(rdfTypeFunctionColumn)
                         .append(" FROM ")
                         .append(SEARCH_RESOURCE_RDF_TYPE_TABLE).append(" rrt, ")
                         .append(SEARCH_RDF_TYPE_TABLE).append(" rt,")
@@ -458,10 +457,9 @@ public class DbSearchIndexImpl implements SearchIndex {
             }
         }
 
-        //postgres requires that all non aggregated columns in the select clause appear in the group by;
-        //All others do not.  mysql is much slower with the multi-column group by clause.
-        final var groupByFieldStr = isPostgres() ? String.join(",", groupByFields) : FEDORA_ID_COLUMN;
-        sql.append(" GROUP BY ").append(groupByFieldStr);
+        sql.append(" GROUP BY ").append("s.id");
+        sql.append(") b WHERE a.id = b.id");
+
         return sql;
     }
 
