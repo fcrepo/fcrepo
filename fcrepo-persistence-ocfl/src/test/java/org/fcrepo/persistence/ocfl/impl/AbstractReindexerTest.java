@@ -133,7 +133,8 @@ public class AbstractReindexerTest {
 
         final var objectMapper = OcflPersistentStorageUtils.objectMapper();
         ocflObjectSessionFactory = new DefaultOcflObjectSessionFactory(repository,
-                tempFolder.newFolder().toPath(), objectMapper, new NoOpCache<>(), CommitType.NEW_VERSION,
+                tempFolder.newFolder().toPath(), objectMapper, new NoOpCache<>(), new NoOpCache<>(),
+                CommitType.NEW_VERSION,
                 "Fedora 6 test", "fedoraAdmin", "info:fedora/fedoraAdmin");
 
         persistentStorageSessionManager = new OcflPersistentSessionManager();
