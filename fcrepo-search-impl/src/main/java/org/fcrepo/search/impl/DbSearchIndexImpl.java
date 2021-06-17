@@ -411,19 +411,84 @@ public class DbSearchIndexImpl implements SearchIndex {
         final var fields = new ArrayList<String>(queryFields);
         final var rdfTypeConditionValue =
                 conditions.stream().filter(c -> c.getField().equals(RDF_TYPE)).findFirst().orElse(null);
-        final var rdfTypeFunctionColumn = ", " + (isPostgres() ? POSTGRES_GROUP_CONCAT_FUNCTION :
-                DEFAULT_GROUP_CONCAT_FUNCTION) + " as rdf_type";
+
+        if (isPostgres()) {
+            return createPostgresOptimizedQuery(parameterSource, whereClauses, conditions, fields,
+                    rdfTypeConditionValue);
+        } else {
+            return createDefaultQuery(parameterSource, whereClauses, conditions, fields, rdfTypeConditionValue);
+        }
+    }
+
+    private StringBuilder createDefaultQuery(final MapSqlParameterSource parameterSource,
+                                             final List<String> whereClauses, final List<Condition> conditions,
+                                             final List<String> fields, final Condition rdfTypeConditionValue)
+            throws InvalidQueryException {
+
+
+        final var returnFields = fields.stream().filter(x -> !x.equals(RDF_TYPE.toString())).collect(toList());
+        final var sql = new StringBuilder("")
+                .append("SELECT ")
+                .append(String.join(",", returnFields))
+                .append(",")
+                .append(DEFAULT_GROUP_CONCAT_FUNCTION)
+                .append(" as rdf_type")
+                .append(" FROM ")
+                .append(SEARCH_RESOURCE_RDF_TYPE_TABLE).append(" rrt, ")
+                .append(SEARCH_RDF_TYPE_TABLE).append(" rt,")
+                .append(SIMPLE_SEARCH_TABLE).append(" s ");
+
+        whereClauses.add("s.id = rrt.resource_id");
+        whereClauses.add("rrt.rdf_type_id = rt.id");
+
+        if (rdfTypeConditionValue != null) {
+            final var rdfTypeOperator = rdfTypeConditionValue.getObject().contains("*") ? " LIKE " : " = ";
+            sql.append(", (SELECT ").append(RESOURCE_ID_COLUMN).append(" FROM ")
+                    .append(SEARCH_RESOURCE_RDF_TYPE_TABLE).append(" WHERE ")
+                    .append(RDF_TYPE_ID_COLUMN).append(" IN (").append("SELECT ID FROM ").append(SEARCH_RDF_TYPE_TABLE)
+                    .append(" WHERE ").append(RDF_TYPE_URI_COLUMN).append(rdfTypeOperator)
+                    .append(":").append(RDF_TYPE_URI_PARAM).append(")) rdf_type_filter ");
+            whereClauses.add("rdf_type_filter.resource_id = s.id");
+            addRdfTypeParam(parameterSource, conditions);
+        }
+
+        for (int i = 0; i < conditions.size(); i++) {
+            addWhereClause(i, parameterSource, whereClauses, conditions.get(i));
+        }
+
+        if (!whereClauses.isEmpty()) {
+            sql.append(" WHERE ");
+            for (final var it = whereClauses.iterator(); it.hasNext(); ) {
+                sql.append(it.next());
+                if (it.hasNext()) {
+                    sql.append(" AND ");
+                }
+            }
+        }
+
+        sql.append(" GROUP BY ").append(FEDORA_ID_COLUMN);
+
+        return sql;
+    }
+
+    private StringBuilder createPostgresOptimizedQuery(final MapSqlParameterSource parameterSource,
+                                                       final List<String> whereClauses,
+                                                       final List<Condition> conditions,
+                                                       final List<String> fields,
+                                                       final Condition rdfTypeConditionValue)
+            throws InvalidQueryException {
 
         final var sql = new StringBuilder("")
-                        .append("SELECT ")
-                        .append(String.join(",", fields))
-                        .append(" FROM ")
-                        .append("(SELECT * FROM ")
-                        .append(SIMPLE_SEARCH_TABLE)
-                        .append(") a,")
-                        .append("(SELECT ")
-                        .append("s.id ")
-                        .append(rdfTypeFunctionColumn)
+                .append("SELECT ")
+                .append(String.join(",", fields))
+                .append(" FROM ")
+                .append("(SELECT * FROM ")
+                .append(SIMPLE_SEARCH_TABLE)
+                .append(") a,")
+                .append("(SELECT ")
+                .append("s.id, ")
+                .append(POSTGRES_GROUP_CONCAT_FUNCTION)
+                .append(" as rdf_type")
                         .append(" FROM ")
                         .append(SEARCH_RESOURCE_RDF_TYPE_TABLE).append(" rrt, ")
                         .append(SEARCH_RDF_TYPE_TABLE).append(" rt,")
