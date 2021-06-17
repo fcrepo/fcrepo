@@ -367,9 +367,14 @@ public class DbSearchIndexImpl implements SearchIndex {
         if (parameters.isIncludeTotalResultCount()) {
             final var countQuery = "SELECT COUNT(0) FROM (" +
                     createSearchQuery(parameters, parameterSource, Collections.emptyList()) + ") as cnt";
+            LOGGER.debug("countQuery={}, parameterSource={}", countQuery, parameterSource);
             totalResults = jdbcTemplate.queryForObject(countQuery, parameterSource, Integer.class);
         }
-        final List<Map<String, Object>> items = jdbcTemplate.query(selectQuery.toString(), parameterSource, rowMapper);
+
+        final var selectQueryStr = selectQuery.toString();
+        LOGGER.debug("selectQueryStr={}, parameterSource={}", selectQueryStr, parameterSource);
+
+        final List<Map<String, Object>> items = jdbcTemplate.query(selectQueryStr, parameterSource, rowMapper);
         final var pagination = new PaginationInfo(parameters.getMaxResults(), parameters.getOffset(),
                 (totalResults != null ? totalResults : 0));
         LOGGER.debug("Search query with parameters: {} - {}", selectQuery.toString(), parameters);
