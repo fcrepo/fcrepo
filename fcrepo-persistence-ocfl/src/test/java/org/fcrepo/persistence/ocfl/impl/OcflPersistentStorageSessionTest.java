@@ -163,6 +163,7 @@ public class OcflPersistentStorageSessionTest {
         objectSessionFactory = new DefaultOcflObjectSessionFactory(repository, stagingDir,
                 objectMapper,
                 new NoOpCache<>(),
+                new NoOpCache<>(),
                 CommitType.NEW_VERSION,
                 "Fedora 6 test", "fedoraAdmin", "info:fedora/fedoraAdmin");
         session = createSession(index, objectSessionFactory);

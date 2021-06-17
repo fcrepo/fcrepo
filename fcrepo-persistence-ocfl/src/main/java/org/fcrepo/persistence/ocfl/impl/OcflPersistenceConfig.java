@@ -103,7 +103,8 @@ public class OcflPersistenceConfig {
         final var factory = new DefaultOcflObjectSessionFactory(repository(),
                 ocflPropsConfig.getFedoraOcflStaging(),
                 objectMapper,
-                resourceHeadersCache(),
+                createCache("resourceHeadersCache"),
+                createCache("rootIdCache"),
                 commitType(),
                 "Authored by Fedora 6",
                 "fedoraAdmin",
@@ -150,7 +151,7 @@ public class OcflPersistenceConfig {
         return builder.build();
     }
 
-    private Cache<String, ResourceHeaders> resourceHeadersCache() {
+    private <K, V> Cache<K, V> createCache(final String metricName) {
         if (ocflPropsConfig.isResourceHeadersCacheEnabled()) {
             final var builder = Caffeine.newBuilder();
 
@@ -164,7 +165,7 @@ public class OcflPersistenceConfig {
                     .build();
 
             if (metricsConfig.isMetricsEnabled()) {
-                CaffeineCacheMetrics.monitor(meterRegistry, cache, "resourceHeadersCache");
+                CaffeineCacheMetrics.monitor(meterRegistry, cache, metricName);
             }
 
             return new CaffeineCache<>(cache);
