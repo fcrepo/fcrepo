@@ -40,7 +40,7 @@ import edu.wisc.library.ocfl.api.MutableOcflRepository;
 public class TestIsolationExecutionListener extends BaseTestExecutionListener {
 
     @Override
-    public void beforeTestMethod(final TestContext testContext) throws Exception {
+    public void afterTestMethod(final TestContext testContext) throws Exception {
         final var ocflRepo = getBean(testContext, MutableOcflRepository.class);
         final var ocflConfig = getBean(testContext, OcflPropsConfig.class);
         final var flyway = getBean(testContext, Flyway.class);
