@@ -120,9 +120,9 @@ public class DbSearchIndexImpl implements SearchIndex {
             "search_rdf_type rt ," + SIMPLE_SEARCH_TABLE + " s " +
             "WHERE rrt.rdf_type_id = rt.id group by rrt.resource_id) r ";
 
-    private static final String POSTGRES_GROUP_CONCAT_FUNCTION = "STRING_AGG(rt.rdf_type_uri, ',')";
-    private static final String DEFAULT_GROUP_CONCAT_FUNCTION = "GROUP_CONCAT(distinct rt.rdf_type_uri " +
-            "ORDER BY rt.rdf_type_uri ASC SEPARATOR ',')";
+    private static final String POSTGRES_GROUP_CONCAT_FUNCTION = "STRING_AGG(b.rdf_type_uri, ',')";
+    private static final String DEFAULT_GROUP_CONCAT_FUNCTION = "GROUP_CONCAT(distinct b.rdf_type_uri " +
+            "ORDER BY b.rdf_type_uri ASC SEPARATOR ',')";
 
     private static final String UPSERT_SIMPLE_SEARCH_TRANSACTION_H2 =
             "MERGE INTO " + SIMPLE_SEARCH_TRANSACTIONS_TABLE + " (" + MODIFIED_COLUMN + "," + CREATED_COLUMN + ", " +
@@ -350,26 +350,20 @@ public class DbSearchIndexImpl implements SearchIndex {
         //translate parameters into a SQL query
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
         final var fields = parameters.getFields().stream().map(Condition.Field::toString).collect(toList());
-        final var selectQuery = createSearchQuery(parameters, parameterSource, fields);
-
-        if (parameters.getOrderBy() != null) {
-            //add order by limit and offset to selectquery.
-            selectQuery.append(" ORDER BY ").append(parameters.getOrderBy()).append(" ").append(parameters.getOrder());
-        }
-        selectQuery.append(" LIMIT :limit OFFSET :offset");
-        parameterSource.addValue("limit", parameters.getMaxResults());
-        parameterSource.addValue("offset", parameters.getOffset());
-
+        final var selectQuery = createSearchQuery(parameters, parameterSource, fields, false);
         final RowMapper<Map<String, Object>> rowMapper = createRowMapper(fields);
-
 
         Integer totalResults = -1;
         if (parameters.isIncludeTotalResultCount()) {
-            final var countQuery = "SELECT COUNT(0) FROM (" +
-                    createSearchQuery(parameters, parameterSource, Collections.emptyList()) + ") as cnt";
-            totalResults = jdbcTemplate.queryForObject(countQuery, parameterSource, Integer.class);
+            final var countQuery = createSearchQuery(parameters, parameterSource, Collections.emptyList(), true);
+            LOGGER.debug("countQuery={}, parameterSource={}", countQuery, parameterSource);
+            totalResults = jdbcTemplate.queryForObject(countQuery.toString(), parameterSource, Integer.class);
         }
-        final List<Map<String, Object>> items = jdbcTemplate.query(selectQuery.toString(), parameterSource, rowMapper);
+
+        final var selectQueryStr = selectQuery.toString();
+        LOGGER.debug("selectQueryStr={}, parameterSource={}", selectQueryStr, parameterSource);
+
+        final List<Map<String, Object>> items = jdbcTemplate.query(selectQueryStr, parameterSource, rowMapper);
         final var pagination = new PaginationInfo(parameters.getMaxResults(), parameters.getOffset(),
                 (totalResults != null ? totalResults : 0));
         LOGGER.debug("Search query with parameters: {} - {}", selectQuery.toString(), parameters);
@@ -399,11 +393,19 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     private StringBuilder createSearchQuery(final SearchParameters parameters,
                                             final MapSqlParameterSource parameterSource,
-                                            final List<String> selectedFields) throws InvalidQueryException {
+                                            final List<String> selectedFields, final boolean isCountQuery)
+            throws InvalidQueryException {
+
         final var queryFields = new ArrayList<>(selectedFields);
         final var fedoraIdStr = FEDORA_ID.toString();
-        if (!queryFields.contains(fedoraIdStr)) {
-            queryFields.add(fedoraIdStr);
+
+        if (!isCountQuery) {
+            if (!queryFields.contains(fedoraIdStr)) {
+                queryFields.add(0,fedoraIdStr);
+            }
+            queryFields.add(0,"id");
+        } else {
+            queryFields.add("count(0)");
         }
 
         final var whereClauses = new ArrayList<String>();
@@ -411,27 +413,14 @@ public class DbSearchIndexImpl implements SearchIndex {
         final var fields = new ArrayList<String>(queryFields);
         final var rdfTypeConditionValue =
                 conditions.stream().filter(c -> c.getField().equals(RDF_TYPE)).findFirst().orElse(null);
-        final var containsRDFTypeField = queryFields.contains(RDF_TYPE.toString());
+        final var returnRdfType = fields.stream().anyMatch(x -> x.equals(RDF_TYPE.toString()));
+        final var returnFields = fields.stream().filter(x -> !x.equals(RDF_TYPE.toString())).collect(toList());
 
-        final var groupByFields = fields.stream().filter(f->!f.equals(RDF_TYPE.toString())).collect(toList());
-        final var returnFields = new ArrayList<>(groupByFields);
-
-        if (containsRDFTypeField) {
-            final var groupFunction = isPostgres() ? POSTGRES_GROUP_CONCAT_FUNCTION : DEFAULT_GROUP_CONCAT_FUNCTION;
-            returnFields.add(groupFunction + " as rdf_type");
-        }
-
-
-        final var sql =
-                new StringBuilder("SELECT " + String.join(",",
-                        returnFields))
-                        .append(" FROM ")
-                        .append(SEARCH_RESOURCE_RDF_TYPE_TABLE).append(" rrt, ")
-                        .append(SEARCH_RDF_TYPE_TABLE).append(" rt,")
-                        .append(SIMPLE_SEARCH_TABLE).append(" s ");
-
-        whereClauses.add("s.id = rrt.resource_id");
-        whereClauses.add("rrt.rdf_type_id = rt.id");
+        final var sql = new StringBuilder("")
+                .append("SELECT ")
+                .append(String.join(",", returnFields));
+        sql.append(" FROM ")
+                .append(SIMPLE_SEARCH_TABLE).append(" s ");
 
         if (rdfTypeConditionValue != null) {
             final var rdfTypeOperator = rdfTypeConditionValue.getObject().contains("*") ? " LIKE " : " = ";
@@ -458,8 +447,40 @@ public class DbSearchIndexImpl implements SearchIndex {
             }
         }
 
-        sql.append(" GROUP BY ").append(String.join(",", groupByFields));
-        return sql;
+        if (isCountQuery) {
+            return sql;
+        }
+
+        if (parameters.getOrderBy() != null) {
+            //add order by limit and offset to selectquery.
+            sql.append(" ORDER BY ").append(parameters.getOrderBy()).append(" ").append(parameters.getOrder());
+        }
+
+        sql.append(" LIMIT :limit OFFSET :offset");
+        parameterSource.addValue("limit", parameters.getMaxResults());
+        parameterSource.addValue("offset", parameters.getOffset());
+
+        if (!returnRdfType) {
+            return sql;
+        } else {
+            final var rdfTypeWrapperSql = new StringBuilder();
+            rdfTypeWrapperSql.append("SELECT a.*, ")
+                    .append(isPostgres() ? POSTGRES_GROUP_CONCAT_FUNCTION : DEFAULT_GROUP_CONCAT_FUNCTION)
+                    .append(" as rdf_type")
+                    .append(" FROM ")
+                    .append("(").append(sql).append(") a, ")
+                    .append("(SELECT rrt.resource_id , rt.rdf_type_uri FROM search_resource_rdf_type rrt, " +
+                            "search_rdf_type rt WHERE  rrt.rdf_type_id = rt.id) b ")
+                    .append("WHERE a.id = b.resource_id GROUP BY ").append(String.join(",", returnFields));
+
+            if (parameters.getOrderBy() != null) {
+                //add order by limit and offset to selectquery.
+                rdfTypeWrapperSql.append(" ORDER BY ").append(parameters.getOrderBy()).append(" ")
+                        .append(parameters.getOrder());
+            }
+
+            return rdfTypeWrapperSql;
+        }
     }
 
     private void addRdfTypeParam(final MapSqlParameterSource parameterSource, final List<Condition> conditions) {
