@@ -1,8 +1,8 @@
 # PLEASE BE ADVISED
-The `main` branch of Fedora contains the "bleeding edge" of 6.0.0 development.  We are currently in a Beta release.  While we do not yet 
+The `main` branch of Fedora contains the "bleeding edge" of 6.0.0 development.  While we do not yet 
 recommend it for production, it is ready for commmunity testing and feedback (which we welcome).
 
-Updated: February 19, 2021
+Updated: June 21, 2021
 
 ---
 
