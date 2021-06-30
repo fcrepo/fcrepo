@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>AutoReloadingConfiguration.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Persistence Common Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.api.utils</a> &gt; <span class="el_source">AutoReloadingConfiguration.java</span></div><h1>AutoReloadingConfiguration.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.api.utils;
+
+import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
+import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchKey;
+import java.nio.file.WatchService;
+
+import org.slf4j.Logger;
+
+/**
+ * Abstract configuration class which monitors a file path in order to reload the configuration when it changes.
+ *
+ * @author bbpennel
+ */
+<span class="fc" id="L40">public abstract class AutoReloadingConfiguration {</span>
+<span class="fc" id="L41">    private static final Logger LOGGER = getLogger(AutoReloadingConfiguration.class);</span>
+
+    protected String configPath;
+
+    private boolean monitorForChanges;
+
+    private Thread monitorThread;
+
+    private boolean monitorRunning;
+
+    /**
+     * Initialize the configuration and set up monitoring
+     *
+     * @throws IOException thrown if the configuration cannot be loaded.
+     *
+     */
+    public void init() throws IOException {
+<span class="fc bfc" id="L58" title="All 2 branches covered.">        if (isEmpty(configPath)) {</span>
+<span class="fc" id="L59">            return;</span>
+        }
+
+<span class="fc" id="L62">        loadConfiguration();</span>
+
+<span class="pc bpc" id="L64" title="1 of 2 branches missed.">        if (monitorForChanges) {</span>
+<span class="nc" id="L65">            monitorForChanges();</span>
+        }
+<span class="fc" id="L67">    }</span>
+
+    /**
+     * Shut down the change monitoring thread
+     */
+    public void shutdown() {
+<span class="nc bnc" id="L73" title="All 2 branches missed.">        if (monitorThread != null) {</span>
+<span class="nc" id="L74">            monitorThread.interrupt();</span>
+        }
+<span class="nc" id="L76">    }</span>
+
+    /**
+     * Load the configuration file.
+     *
+     * @throws IOException thrown if the configuration cannot be loaded.
+     */
+    protected abstract void loadConfiguration() throws IOException;
+
+    /**
+     * Starts up monitoring of the configuration for changes.
+     */
+    private void monitorForChanges() {
+<span class="nc bnc" id="L89" title="All 2 branches missed.">        if (monitorRunning) {</span>
+<span class="nc" id="L90">            return;</span>
+        }
+
+        final Path path;
+        try {
+<span class="nc" id="L95">            path = Paths.get(configPath);</span>
+<span class="nc" id="L96">        } catch (final Exception e) {</span>
+<span class="nc" id="L97">            LOGGER.warn(&quot;Cannot monitor configuration {}, disabling monitoring; {}&quot;, configPath, e.getMessage());</span>
+<span class="nc" id="L98">            return;</span>
+<span class="nc" id="L99">        }</span>
+
+<span class="nc bnc" id="L101" title="All 2 branches missed.">        if (!path.toFile().exists()) {</span>
+<span class="nc" id="L102">            LOGGER.debug(&quot;Configuration {} does not exist, disabling monitoring&quot;, configPath);</span>
+<span class="nc" id="L103">            return;</span>
+        }
+<span class="nc" id="L105">        final Path directoryPath = path.getParent();</span>
+
+        try {
+<span class="nc" id="L108">            final WatchService watchService = FileSystems.getDefault().newWatchService();</span>
+<span class="nc" id="L109">            directoryPath.register(watchService, ENTRY_MODIFY);</span>
+
+<span class="nc" id="L111">            monitorThread = new Thread(new Runnable() {</span>
+
+                @Override
+                public void run() {
+                    try {
+                        for (;;) {
+                            final WatchKey key;
+                            try {
+<span class="nc" id="L119">                                key = watchService.take();</span>
+<span class="nc" id="L120">                            } catch (final InterruptedException e) {</span>
+<span class="nc" id="L121">                                LOGGER.debug(&quot;Interrupted the configuration monitor thread.&quot;);</span>
+<span class="nc" id="L122">                                break;</span>
+<span class="nc" id="L123">                            }</span>
+
+<span class="nc bnc" id="L125" title="All 2 branches missed.">                            for (final WatchEvent&lt;?&gt; event : key.pollEvents()) {</span>
+<span class="nc" id="L126">                                final WatchEvent.Kind&lt;?&gt; kind = event.kind();</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">                                if (kind == OVERFLOW) {</span>
+<span class="nc" id="L128">                                    continue;</span>
+                                }
+
+                                // If the configuration file triggered this event, reload it
+<span class="nc" id="L132">                                final Path changed = (Path) event.context();</span>
+<span class="nc bnc" id="L133" title="All 2 branches missed.">                                if (changed.equals(path.getFileName())) {</span>
+<span class="nc" id="L134">                                    LOGGER.info(</span>
+                                            &quot;Configuration {} has been updated, reloading.&quot;,
+                                            path);
+                                    try {
+<span class="nc" id="L138">                                        loadConfiguration();</span>
+<span class="nc" id="L139">                                    } catch (final IOException e) {</span>
+<span class="nc" id="L140">                                        LOGGER.error(&quot;Failed to reload configuration {}&quot;, configPath, e);</span>
+<span class="nc" id="L141">                                    }</span>
+                                }
+
+                                // reset the key
+<span class="nc" id="L145">                                final boolean valid = key.reset();</span>
+<span class="nc bnc" id="L146" title="All 2 branches missed.">                                if (!valid) {</span>
+<span class="nc" id="L147">                                    LOGGER.debug(&quot;Monitor of {} is no longer valid&quot;, path);</span>
+<span class="nc" id="L148">                                    break;</span>
+                                }
+<span class="nc" id="L150">                            }</span>
+<span class="nc" id="L151">                        }</span>
+                    } finally {
+                        try {
+<span class="nc" id="L154">                            watchService.close();</span>
+<span class="nc" id="L155">                        } catch (final IOException e) {</span>
+<span class="nc" id="L156">                            LOGGER.error(&quot;Failed to stop configuration monitor&quot;, e);</span>
+<span class="nc" id="L157">                        }</span>
+                    }
+<span class="nc" id="L159">                    monitorRunning = false;</span>
+<span class="nc" id="L160">                }</span>
+            });
+<span class="nc" id="L162">        } catch (final IOException e) {</span>
+<span class="nc" id="L163">            LOGGER.error(&quot;Failed to start configuration monitor&quot;, e);</span>
+<span class="nc" id="L164">        }</span>
+
+<span class="nc" id="L166">        monitorThread.start();</span>
+<span class="nc" id="L167">        monitorRunning = true;</span>
+<span class="nc" id="L168">    }</span>
+
+    /**
+     * Set the file path for the configuration
+     *
+     * @param configPath file path for configuration
+     */
+    public void setConfigPath(final String configPath) {
+        // Resolve classpath references without spring's help
+<span class="pc bpc" id="L177" title="2 of 4 branches missed.">        if (configPath != null &amp;&amp; configPath.startsWith(&quot;classpath:&quot;)) {</span>
+<span class="nc" id="L178">            final String relativePath = configPath.substring(10);</span>
+<span class="nc" id="L179">            this.configPath = this.getClass().getResource(relativePath).getPath();</span>
+<span class="nc" id="L180">        } else {</span>
+<span class="fc" id="L181">            this.configPath = configPath;</span>
+        }
+<span class="fc" id="L183">    }</span>
+
+    /**
+     * Set whether to monitor the configuration file for changes
+     *
+     * @param monitorForChanges flag controlling if to enable configuration monitoring
+     */
+    public void setMonitorForChanges(final boolean monitorForChanges) {
+<span class="nc" id="L191">        this.monitorForChanges = monitorForChanges;</span>
+<span class="nc" id="L192">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>RelaxedPropertiesHelper.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Persistence Common Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.api.utils</a> &gt; <span class="el_source">RelaxedPropertiesHelper.java</span></div><h1>RelaxedPropertiesHelper.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.api.utils;
+
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.vocabulary.RDF.Init.type;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
+import static org.fcrepo.kernel.api.RdfLexicon.isRelaxablePredicate;
+import static org.fcrepo.kernel.api.RdfLexicon.restrictedType;
+
+import java.util.Calendar;
+
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.RelaxableServerManagedPropertyException;
+import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
+import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
+
+import org.apache.jena.datatypes.xsd.XSDDateTime;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+
+/**
+ * Some server managed triples can have the prohibition on user-management overridden.  While
+ * the server still updates them implicitly, it may be possible in some cases for a user
+ * request to override them.
+ *
+ * @author Mike Durbin
+ * @author whikloj
+ */
+public class RelaxedPropertiesHelper {
+
+    /**
+     * Gets the created date (if any) that was included in the statements.
+     * @param resource the resource we are looking for properties of
+     * @return the date that should be set for the CREATED_DATE or null if it should be
+     *         untouched
+     */
+    public static Calendar getCreatedDate(final Resource resource) {
+<span class="nc" id="L61">        final Iterable&lt;Statement&gt; iter = getIterable(resource, CREATED_DATE);</span>
+<span class="nc" id="L62">        return extractSingleCalendarValue(iter, CREATED_DATE);</span>
+    }
+
+    /**
+     * Gets the created by user (if any) that is included within the statements.
+     * @param resource the resource we are looking for properties of
+     * @return the string that should be set for the CREATED_BY or null if it should be
+     *         untouched
+     */
+    public static String getCreatedBy(final Resource resource) {
+<span class="nc" id="L72">        final Iterable&lt;Statement&gt; iter = getIterable(resource, CREATED_BY);</span>
+<span class="nc" id="L73">        return extractSingleStringValue(iter, CREATED_BY);</span>
+    }
+
+    /**
+     * Gets the modified date (if any) that was included within the statements.
+     * @param resource the resource we are looking for properties of
+     * @return the date that should be set for the LAST_MODIFIED_DATE or null if it should be
+     *         untouched
+     */
+    public static Calendar getModifiedDate(final Resource resource) {
+<span class="nc" id="L83">        final Iterable&lt;Statement&gt; iter = getIterable(resource, LAST_MODIFIED_DATE);</span>
+<span class="nc" id="L84">        return extractSingleCalendarValue(iter, LAST_MODIFIED_DATE);</span>
+    }
+
+    /**
+     * Gets the modified by user (if any) that was included within the statements.
+     * @param resource the resource we are looking for properties of
+     * @return the string that should be set for the MODIFIED_BY or null if it should be
+     *         untouched
+     */
+    public static String getModifiedBy(final Resource resource) {
+<span class="nc" id="L94">        final Iterable&lt;Statement&gt; iter = getIterable(resource, LAST_MODIFIED_BY);</span>
+<span class="nc" id="L95">        return extractSingleStringValue(iter, LAST_MODIFIED_BY);</span>
+    }
+
+    private static String extractSingleStringValue(final Iterable&lt;Statement&gt; statements,
+                                                   final Property predicate) {
+<span class="nc" id="L100">        String textValue = null;</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">        for (final Statement added : statements) {</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">            if (textValue == null) {</span>
+<span class="nc" id="L103">                textValue = added.getObject().asLiteral().getString();</span>
+            } else {
+<span class="nc" id="L105">                throw new MalformedRdfException(predicate + &quot; may only appear once!&quot;);</span>
+            }
+<span class="nc" id="L107">        }</span>
+<span class="nc" id="L108">        return textValue;</span>
+    }
+
+    private static Calendar extractSingleCalendarValue(final Iterable&lt;Statement&gt; statements, final Property predicate) {
+<span class="nc" id="L112">        Calendar cal = null;</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">        for (final Statement added : statements) {</span>
+<span class="nc bnc" id="L114" title="All 2 branches missed.">            if (cal == null) {</span>
+                try {
+<span class="nc" id="L116">                    cal = RelaxedPropertiesHelper.parseExpectedXsdDateTimeValue(added.getObject());</span>
+<span class="nc" id="L117">                } catch (final IllegalArgumentException e) {</span>
+<span class="nc" id="L118">                    throw new MalformedRdfException(&quot;Expected a xsd:datetime for &quot; + predicate, e);</span>
+<span class="nc" id="L119">                }</span>
+            } else {
+<span class="nc" id="L121">                throw new MalformedRdfException(predicate + &quot; may only appear once!&quot;);</span>
+            }
+<span class="nc" id="L123">        }</span>
+<span class="nc" id="L124">        return cal;</span>
+    }
+
+    /**
+     * Parses an RDFNode that is expected to be a literal of type xsd:dateTime into a Java Calendar
+     * object.
+     * @param node a node representing an xsd:dateTime literal
+     * @return a Calendar representation of the expressed dateTime
+     */
+    private static Calendar parseExpectedXsdDateTimeValue(final RDFNode node) {
+<span class="nc" id="L134">        final Object value = node.asLiteral().getValue();</span>
+<span class="nc bnc" id="L135" title="All 2 branches missed.">        if (value instanceof XSDDateTime) {</span>
+<span class="nc" id="L136">            return ((XSDDateTime) value).asCalendar();</span>
+        } else {
+<span class="nc" id="L138">            throw new IllegalArgumentException(&quot;Expected an xsd:dateTime!&quot;);</span>
+        }
+    }
+
+    private static Iterable&lt;Statement&gt; getIterable(final Resource resource, final Property predicate) {
+<span class="nc" id="L143">        final var iterator = resource.listProperties(predicate);</span>
+<span class="nc" id="L144">        return () -&gt; iterator;</span>
+    }
+
+    /**
+     * Several tests for invalid or disallowed RDF statements.
+     * @param triple the triple to check.
+     */
+    public static void checkTripleForDisallowed(final Triple triple) {
+<span class="nc bnc" id="L152" title="All 4 branches missed.">        if (triple.getPredicate().equals(type().asNode()) &amp;&amp; !triple.getObject().isVariable() &amp;&amp;</span>
+<span class="nc bnc" id="L153" title="All 2 branches missed.">                !triple.getObject().isURI()) {</span>
+            // The object of a rdf:type triple is not a variable and not a URI.
+<span class="nc" id="L155">            throw new MalformedRdfException(</span>
+<span class="nc" id="L156">                    String.format(&quot;Invalid rdf:type: %s&quot;, triple.getObject()));</span>
+<span class="nc bnc" id="L157" title="All 2 branches missed.">        } else if (restrictedType.test(triple)) {</span>
+            // The object of a rdf:type triple has a restricted namespace.
+<span class="nc" id="L159">            throw new ServerManagedTypeException(</span>
+<span class="nc" id="L160">                    String.format(&quot;The server managed type (%s) cannot be modified by the client.&quot;,</span>
+<span class="nc" id="L161">                            triple.getObject()));</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">        } else if (isManagedPredicate.test(createProperty(triple.getPredicate().getURI()))) {</span>
+            // The predicate is server managed.
+<span class="nc" id="L164">            final var message = String.format(&quot;The server managed predicate (%s) cannot be modified by the client.&quot;,</span>
+<span class="nc" id="L165">                    triple.getPredicate());</span>
+<span class="nc bnc" id="L166" title="All 2 branches missed.">            if (isRelaxablePredicate.test(createProperty(triple.getPredicate().getURI()))) {</span>
+                // It is a relaxable predicate so throw the appropriate exception.
+<span class="nc" id="L168">                throw new RelaxableServerManagedPropertyException(message);</span>
+            }
+<span class="nc" id="L170">            throw new ServerManagedPropertyException(message);</span>
+        }
+<span class="nc" id="L172">    }</span>
+
+    // Prevent instantiation
+    private RelaxedPropertiesHelper() {
+
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
