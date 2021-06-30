@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>AbstractNonRdfSourceOperationBuilder.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.operations</a> &gt; <span class="el_source">AbstractNonRdfSourceOperationBuilder.java</span></div><h1>AbstractNonRdfSourceOperationBuilder.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.operations;
+
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Collection;
+
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
+
+/**
+ * An abstract operation for interacting with a non-rdf source
+ *
+ * @author bbpennel
+ */
+public abstract class AbstractNonRdfSourceOperationBuilder implements NonRdfSourceOperationBuilder {
+
+    protected FedoraId resourceId;
+
+    protected InputStream content;
+
+    protected URI externalURI;
+
+    protected String externalType;
+
+    protected String mimeType;
+
+    protected String filename;
+
+    protected Collection&lt;URI&gt; digests;
+
+<span class="fc" id="L49">    protected long contentSize = -1;</span>
+
+    protected String userPrincipal;
+
+    protected Transaction transaction;
+
+    /**
+     * Constructor for external binary.
+     *
+     * @param transaction the transaction
+     * @param rescId the internal identifier
+     * @param handling the external content handling type.
+     * @param externalUri the external content URI.
+     */
+    protected AbstractNonRdfSourceOperationBuilder(final Transaction transaction, final FedoraId rescId,
+                                                   final String handling,
+<span class="fc" id="L65">                                                   final URI externalUri) {</span>
+<span class="fc" id="L66">        this.transaction = transaction;</span>
+<span class="fc" id="L67">        this.resourceId = rescId;</span>
+<span class="fc" id="L68">        this.externalURI = externalUri;</span>
+<span class="fc" id="L69">        this.externalType = handling;</span>
+<span class="fc" id="L70">    }</span>
+
+    /**
+     * Constructor for internal binary.
+     *
+     * @param transaction the transaction
+     * @param rescId the internal identifier.
+     * @param stream the content stream.
+     */
+    protected AbstractNonRdfSourceOperationBuilder(final Transaction transaction, final FedoraId rescId,
+<span class="fc" id="L80">                                                   final InputStream stream) {</span>
+<span class="fc" id="L81">        this.transaction = transaction;</span>
+<span class="fc" id="L82">        this.resourceId = rescId;</span>
+<span class="fc" id="L83">        this.content = stream;</span>
+<span class="fc" id="L84">    }</span>
+
+    @Override
+    public NonRdfSourceOperationBuilder mimeType(final String mimetype) {
+<span class="fc" id="L88">        this.mimeType = mimetype;</span>
+<span class="fc" id="L89">        return this;</span>
+    }
+
+    @Override
+    public NonRdfSourceOperationBuilder filename(final String filename) {
+<span class="fc" id="L94">        this.filename = filename;</span>
+<span class="fc" id="L95">        return this;</span>
+    }
+
+    @Override
+    public NonRdfSourceOperationBuilder contentDigests(final Collection&lt;URI&gt; digests) {
+<span class="fc" id="L100">        this.digests = digests;</span>
+<span class="fc" id="L101">        return this;</span>
+    }
+
+    @Override
+    public NonRdfSourceOperationBuilder contentSize(final long size) {
+<span class="fc" id="L106">        this.contentSize = size;</span>
+<span class="fc" id="L107">        return this;</span>
+    }
+
+    @Override
+    public NonRdfSourceOperationBuilder userPrincipal(final String userPrincipal) {
+<span class="fc" id="L112">        this.userPrincipal = userPrincipal;</span>
+<span class="fc" id="L113">        return this;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

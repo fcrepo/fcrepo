@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>CreateRdfSourceOperationBuilderImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.operations</a> &gt; <span class="el_source">CreateRdfSourceOperationBuilderImpl.java</span></div><h1>CreateRdfSourceOperationBuilderImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.operations;
+
+import org.apache.jena.rdf.model.Model;
+
+import org.fcrepo.config.ServerManagedPropsMode;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.operations.CreateRdfSourceOperation;
+import org.fcrepo.kernel.api.operations.CreateRdfSourceOperationBuilder;
+
+/**
+ * Builder for operations to create rdf sources
+ *
+ * @author bbpennel
+ */
+public class CreateRdfSourceOperationBuilderImpl extends AbstractRdfSourceOperationBuilder implements
+        CreateRdfSourceOperationBuilder {
+
+    private FedoraId parentId;
+
+<span class="fc" id="L39">    private boolean archivalGroup = false;</span>
+    /**
+     * Constructor.
+     *
+     * @param transaction the transaction
+     * @param resourceId the internal identifier.
+     * @param interactionModel interaction model
+     * @param serverManagedPropsMode server managed props mode
+     */
+    public CreateRdfSourceOperationBuilderImpl(final Transaction transaction, final FedoraId resourceId,
+                                               final String interactionModel,
+                                               final ServerManagedPropsMode serverManagedPropsMode) {
+<span class="fc" id="L51">        super(transaction, resourceId, interactionModel, serverManagedPropsMode);</span>
+<span class="fc" id="L52">    }</span>
+
+    @Override
+    public CreateRdfSourceOperation build() {
+<span class="fc" id="L56">        final var operation = new CreateRdfSourceOperationImpl(transaction, resourceId, interactionModel, tripleStream);</span>
+<span class="fc" id="L57">        operation.setParentId(parentId);</span>
+<span class="fc" id="L58">        operation.setUserPrincipal(userPrincipal);</span>
+<span class="fc" id="L59">        operation.setCreatedBy(createdBy);</span>
+<span class="fc" id="L60">        operation.setCreatedDate(createdDate);</span>
+<span class="fc" id="L61">        operation.setLastModifiedBy(lastModifiedBy);</span>
+<span class="fc" id="L62">        operation.setLastModifiedDate(lastModifiedDate);</span>
+<span class="fc" id="L63">        operation.setArchivalGroup(archivalGroup);</span>
+<span class="fc" id="L64">        return operation;</span>
+    }
+
+    @Override
+    public CreateRdfSourceOperationBuilder userPrincipal(final String userPrincipal) {
+<span class="fc" id="L69">        super.userPrincipal(userPrincipal);</span>
+<span class="fc" id="L70">        return this;</span>
+    }
+
+    @Override
+    public CreateRdfSourceOperationBuilder triples(final RdfStream triples) {
+<span class="fc" id="L75">        super.triples(triples);</span>
+<span class="fc" id="L76">        return this;</span>
+    }
+
+    @Override
+    public CreateRdfSourceOperationBuilder parentId(final FedoraId parentId) {
+<span class="fc" id="L81">        this.parentId = parentId;</span>
+<span class="fc" id="L82">        return this;</span>
+    }
+
+    @Override
+    public CreateRdfSourceOperationBuilder relaxedProperties(final Model model) {
+<span class="fc" id="L87">        super.relaxedProperties(model);</span>
+<span class="fc" id="L88">        return this;</span>
+    }
+
+    @Override
+    public CreateRdfSourceOperationBuilder archivalGroup(final boolean flag) {
+<span class="fc" id="L93">        this.archivalGroup = flag;</span>
+<span class="fc" id="L94">        return this;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

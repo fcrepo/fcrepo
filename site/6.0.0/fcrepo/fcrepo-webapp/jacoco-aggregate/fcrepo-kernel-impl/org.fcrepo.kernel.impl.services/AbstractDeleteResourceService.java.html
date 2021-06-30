@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>AbstractDeleteResourceService.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.services</a> &gt; <span class="el_source">AbstractDeleteResourceService.java</span></div><h1>AbstractDeleteResourceService.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.services;
+
+import static java.lang.String.format;
+
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import javax.inject.Inject;
+
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.auth.ACLHandle;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.Binary;
+import org.fcrepo.kernel.api.models.Container;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.Tombstone;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.github.benmanes.caffeine.cache.Cache;
+
+/**
+ * Shared delete/purge code.
+ * @author whikloj
+ */
+<span class="fc" id="L52">abstract public class AbstractDeleteResourceService extends AbstractService {</span>
+
+<span class="fc" id="L54">    private final static Logger log = LoggerFactory.getLogger(AbstractDeleteResourceService.class);</span>
+
+    @Inject
+    protected ResourceFactory resourceFactory;
+
+    @Inject
+    protected PersistentStorageSessionManager psManager;
+
+    @Inject
+    private Cache&lt;String, Optional&lt;ACLHandle&gt;&gt; authHandleCache;
+
+    /**
+     * The starts the service, does initial checks and setups for processing.
+     * @param tx the transaction.
+     * @param fedoraResource the resource to start delete/purging.
+     * @param userPrincipal the user performing the action.
+     */
+    public void perform(final Transaction tx, final FedoraResource fedoraResource, final String userPrincipal) {
+<span class="fc" id="L72">        final String fedoraResourceId = fedoraResource.getId();</span>
+
+<span class="fc bfc" id="L74" title="All 2 branches covered.">        if (fedoraResource instanceof NonRdfSourceDescription) {</span>
+<span class="fc" id="L75">            throw new RepositoryRuntimeException(</span>
+<span class="fc" id="L76">            format(&quot;A NonRdfSourceDescription cannot be deleted independently of the NonRDFSource:  %s&quot;,</span>
+            fedoraResourceId));
+        }
+
+        try {
+<span class="fc" id="L81">            log.debug(&quot;operating on {}&quot;, fedoraResourceId);</span>
+<span class="fc" id="L82">            final PersistentStorageSession pSession = this.psManager.getSession(tx);</span>
+<span class="fc" id="L83">            deleteDepthFirst(tx, pSession, fedoraResource, userPrincipal);</span>
+<span class="nc" id="L84">        } catch (final PersistentStorageException ex) {</span>
+<span class="nc" id="L85">            throw new RepositoryRuntimeException(format(&quot;failed to delete/purge resource %s&quot;, fedoraResourceId), ex);</span>
+<span class="fc" id="L86">        }</span>
+<span class="fc" id="L87">    }</span>
+
+    /**
+     * Code to perform the recursion of containers.
+     * @param tx the transaction
+     * @param pSession the persistent storage session
+     * @param fedoraResource the current resource to check for any children.
+     * @param userPrincipal the user performing the action.
+     * @throws PersistentStorageException any problems accessing the underlying storage.
+     */
+    private void deleteDepthFirst(final Transaction tx, final PersistentStorageSession pSession,
+                                  final FedoraResource fedoraResource, final String userPrincipal)
+            throws PersistentStorageException {
+
+<span class="fc" id="L101">        final FedoraId fedoraId = fedoraResource.getFedoraId();</span>
+
+<span class="fc bfc" id="L103" title="All 2 branches covered.">        if (fedoraResource instanceof Container) {</span>
+<span class="fc" id="L104">            final Stream&lt;String&gt; children = getContained(tx, fedoraResource);</span>
+<span class="fc" id="L105">            children.forEach(childResourceId -&gt; {</span>
+                try {
+
+<span class="fc" id="L108">                    final FedoraResource res = resourceFactory.getResource(tx, FedoraId.create(childResourceId));</span>
+<span class="fc bfc" id="L109" title="All 2 branches covered.">                    if (res instanceof Tombstone) {</span>
+<span class="fc" id="L110">                        deleteDepthFirst(tx, pSession, ((Tombstone) res).getDeletedObject(), userPrincipal);</span>
+                    } else {
+<span class="fc" id="L112">                        deleteDepthFirst(tx, pSession, res, userPrincipal);</span>
+                    }
+<span class="nc" id="L114">                } catch (final PathNotFoundException ex) {</span>
+<span class="nc" id="L115">                    log.error(&quot;Path not found for {}: {}&quot;, fedoraId.getFullId(), ex.getMessage());</span>
+<span class="nc" id="L116">                    throw new PathNotFoundRuntimeException(ex.getMessage(), ex);</span>
+<span class="nc" id="L117">                } catch (final PersistentStorageException ex) {</span>
+<span class="nc" id="L118">                    throw new RepositoryRuntimeException(format(&quot;failed to delete resource %s&quot;, fedoraId.getFullId()),</span>
+                            ex);
+<span class="fc" id="L120">                }</span>
+<span class="fc" id="L121">            });</span>
+<span class="pc bpc" id="L122" title="1 of 2 branches missed.">        } else if (fedoraResource instanceof Binary) {</span>
+<span class="fc" id="L123">            doAction(tx, pSession, fedoraResource.getDescription().getFedoraId(), userPrincipal);</span>
+        }
+
+        //delete/purge the acl if this is not the acl
+<span class="fc bfc" id="L127" title="All 2 branches covered.">        if (!fedoraResource.isAcl()) {</span>
+<span class="fc" id="L128">            final FedoraResource acl = fedoraResource.getAcl();</span>
+<span class="fc bfc" id="L129" title="All 2 branches covered.">            if (acl != null) {</span>
+<span class="fc" id="L130">                doAction(tx, pSession, acl.getFedoraId(), userPrincipal);</span>
+                // Flush ACL cache on any ACL creation/update/deletion.
+<span class="fc" id="L132">                authHandleCache.invalidateAll();</span>
+            }
+<span class="fc" id="L134">        } else {</span>
+            // Flush ACL cache on any ACL creation/update/deletion.
+<span class="fc" id="L136">            authHandleCache.invalidateAll();</span>
+        }
+
+        //delete/purge the resource itself
+<span class="fc" id="L140">        doAction(tx, pSession, fedoraId, userPrincipal);</span>
+<span class="fc" id="L141">    }</span>
+
+    /**
+     * Get the contained resources to act upon.
+     * @param tx the transaction this occurs in.
+     * @param resource the parent resource to find contained resources for.
+     * @return stream of child ids.
+     */
+    abstract protected Stream&lt;String&gt; getContained(final Transaction tx, final FedoraResource resource);
+
+    /**
+     * Perform the actual delete or purge action
+     * @param tx the transaction this occurs in.
+     * @param pSession the persistent storage session.
+     * @param resourceId the resource to perform the action on.
+     * @param userPrincipal the user performing the action
+     * @throws PersistentStorageException if problem performing the action.
+     */
+    abstract protected void doAction(final Transaction tx, final PersistentStorageSession pSession,
+                                     final FedoraId resourceId, final String userPrincipal)
+            throws PersistentStorageException;
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

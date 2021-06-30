@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>CreateResourceServiceImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.services</a> &gt; <span class="el_source">CreateResourceServiceImpl.java</span></div><h1>CreateResourceServiceImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.services;
+
+import org.apache.jena.rdf.model.Model;
+
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
+import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
+import org.fcrepo.kernel.api.exception.ItemNotFoundException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ExternalContent;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.kernel.api.operations.CreateNonRdfSourceOperationBuilder;
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
+import org.fcrepo.kernel.api.operations.RdfSourceOperation;
+import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.kernel.api.services.CreateResourceService;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.common.MultiDigestInputStreamWrapper;
+import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.core.Link;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static java.util.Collections.emptyList;
+import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_PAIR_TREE;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.springframework.util.CollectionUtils.isEmpty;
+
+/**
+ * Create a RdfSource resource.
+ * @author whikloj
+ * TODO: bbpennel has thoughts about moving this to HTTP layer.
+ */
+@Component
+<span class="fc" id="L70">public class CreateResourceServiceImpl extends AbstractService implements CreateResourceService {</span>
+
+<span class="fc" id="L72">    private static final Logger LOGGER = getLogger(CreateResourceServiceImpl.class);</span>
+
+    @Inject
+    private PersistentStorageSessionManager psManager;
+
+    @Inject
+    private RdfSourceOperationFactory rdfSourceOperationFactory;
+
+    @Inject
+    private NonRdfSourceOperationFactory nonRdfSourceOperationFactory;
+
+    @Override
+    public void perform(final Transaction tx, final String userPrincipal, final FedoraId fedoraId,
+                        final String contentType, final String filename,
+                        final long contentSize, final List&lt;String&gt; linkHeaders, final Collection&lt;URI&gt; digest,
+                        final InputStream requestBody, final ExternalContent externalContent) {
+<span class="fc" id="L88">        final PersistentStorageSession pSession = this.psManager.getSession(tx);</span>
+<span class="fc" id="L89">        checkAclLinkHeader(linkHeaders);</span>
+        // Locate a containment parent of fedoraId, if exists.
+<span class="fc" id="L91">        final FedoraId parentId = containmentIndex.getContainerIdByPath(tx, fedoraId, true);</span>
+<span class="fc" id="L92">        checkParent(pSession, parentId);</span>
+
+        final CreateNonRdfSourceOperationBuilder builder;
+<span class="fc" id="L95">        String mimeType = contentType;</span>
+<span class="fc" id="L96">        long size = contentSize;</span>
+<span class="fc bfc" id="L97" title="All 4 branches covered.">        if (externalContent == null || externalContent.isCopy()) {</span>
+<span class="fc" id="L98">            var contentInputStream = requestBody;</span>
+<span class="fc bfc" id="L99" title="All 2 branches covered.">            if (externalContent != null) {</span>
+<span class="fc" id="L100">                LOGGER.debug(&quot;External content COPY '{}', '{}'&quot;, fedoraId, externalContent.getURL());</span>
+<span class="fc" id="L101">                contentInputStream = externalContent.fetchExternalContent();</span>
+            }
+
+<span class="fc" id="L104">            builder = nonRdfSourceOperationFactory.createInternalBinaryBuilder(tx, fedoraId, contentInputStream);</span>
+<span class="fc" id="L105">        } else {</span>
+<span class="fc" id="L106">            builder = nonRdfSourceOperationFactory.createExternalBinaryBuilder(tx, fedoraId,</span>
+<span class="fc" id="L107">                    externalContent.getHandling(), externalContent.getURI());</span>
+<span class="fc bfc" id="L108" title="All 2 branches covered.">            if (contentSize == -1L) {</span>
+<span class="fc" id="L109">                size = externalContent.getContentSize();</span>
+            }
+<span class="fc bfc" id="L111" title="All 2 branches covered.">            if (!digest.isEmpty()) {</span>
+<span class="fc" id="L112">                final var multiDigestWrapper = new MultiDigestInputStreamWrapper(</span>
+<span class="fc" id="L113">                        externalContent.fetchExternalContent(),</span>
+                        digest,
+<span class="fc" id="L115">                        Collections.emptyList());</span>
+<span class="fc" id="L116">                multiDigestWrapper.checkFixity();</span>
+            }
+        }
+
+<span class="pc bpc" id="L120" title="1 of 4 branches missed.">        if (externalContent != null &amp;&amp; externalContent.getContentType() != null) {</span>
+<span class="fc" id="L121">            mimeType = externalContent.getContentType();</span>
+        }
+
+<span class="fc" id="L124">        final ResourceOperation createOp = builder</span>
+<span class="fc" id="L125">                .parentId(parentId)</span>
+<span class="fc" id="L126">                .userPrincipal(userPrincipal)</span>
+<span class="fc" id="L127">                .contentDigests(digest)</span>
+<span class="fc" id="L128">                .mimeType(mimeType)</span>
+<span class="fc" id="L129">                .contentSize(size)</span>
+<span class="fc" id="L130">                .filename(filename)</span>
+<span class="fc" id="L131">                .build();</span>
+
+<span class="fc" id="L133">        lockArchivalGroupResourceFromParent(tx, pSession, parentId);</span>
+<span class="fc" id="L134">        tx.lockResource(fedoraId);</span>
+
+        try {
+<span class="fc" id="L137">            pSession.persist(createOp);</span>
+<span class="nc" id="L138">        } catch (final PersistentStorageException exc) {</span>
+<span class="nc" id="L139">            throw new RepositoryRuntimeException(String.format(&quot;failed to create resource %s&quot;, fedoraId), exc);</span>
+<span class="fc" id="L140">        }</span>
+
+        // Populate the description for the new binary
+<span class="fc" id="L143">        createDescription(tx, pSession, userPrincipal, fedoraId);</span>
+<span class="fc" id="L144">        addToContainmentIndex(tx, parentId, fedoraId);</span>
+<span class="fc" id="L145">        membershipService.resourceCreated(tx, fedoraId);</span>
+<span class="fc" id="L146">        addToSearchIndex(tx, fedoraId, pSession);</span>
+<span class="fc" id="L147">        recordEvent(tx, fedoraId, createOp);</span>
+<span class="fc" id="L148">    }</span>
+
+    private void createDescription(final Transaction tx,
+                                   final PersistentStorageSession pSession,
+                                   final String userPrincipal,
+                                   final FedoraId binaryId) {
+<span class="fc" id="L154">        final var descId = binaryId.asDescription();</span>
+<span class="fc" id="L155">        final var createOp = rdfSourceOperationFactory.createBuilder(</span>
+                    tx,
+                    descId,
+                    FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI,
+<span class="fc" id="L159">                    fedoraPropsConfig.getServerManagedPropsMode()</span>
+<span class="fc" id="L160">                ).userPrincipal(userPrincipal)</span>
+<span class="fc" id="L161">                .parentId(binaryId)</span>
+<span class="fc" id="L162">                .build();</span>
+
+<span class="fc" id="L164">        tx.lockResource(descId);</span>
+
+        try {
+<span class="fc" id="L167">            pSession.persist(createOp);</span>
+<span class="nc" id="L168">        } catch (final PersistentStorageException exc) {</span>
+<span class="nc" id="L169">            throw new RepositoryRuntimeException(String.format(&quot;failed to create description %s&quot;, descId), exc);</span>
+<span class="fc" id="L170">        }</span>
+<span class="fc" id="L171">    }</span>
+
+    @Override
+    public void perform(final Transaction tx, final String userPrincipal, final FedoraId fedoraId,
+            final List&lt;String&gt; linkHeaders, final Model model) {
+<span class="fc" id="L176">        final PersistentStorageSession pSession = this.psManager.getSession(tx);</span>
+<span class="fc" id="L177">        checkAclLinkHeader(linkHeaders);</span>
+        // Locate a containment parent of fedoraId, if exists.
+<span class="fc" id="L179">        final FedoraId parentId = containmentIndex.getContainerIdByPath(tx, fedoraId, true);</span>
+<span class="fc" id="L180">        checkParent(pSession, parentId);</span>
+
+<span class="fc bfc" id="L182" title="All 2 branches covered.">        final List&lt;String&gt; rdfTypes = isEmpty(linkHeaders) ? emptyList() : getTypes(linkHeaders);</span>
+<span class="pc bpc" id="L183" title="1 of 2 branches missed.">        final String interactionModel = determineInteractionModel(rdfTypes, true,</span>
+                model != null, false);
+
+<span class="fc" id="L186">        final RdfStream stream = fromModel(model.getResource(fedoraId.getFullId()).asNode(), model);</span>
+
+<span class="fc" id="L188">        ensureValidDirectContainer(fedoraId, interactionModel, model);</span>
+
+<span class="fc" id="L190">        final RdfSourceOperation createOp = rdfSourceOperationFactory</span>
+<span class="fc" id="L191">                .createBuilder(tx, fedoraId, interactionModel, fedoraPropsConfig.getServerManagedPropsMode())</span>
+<span class="fc" id="L192">                .parentId(parentId)</span>
+<span class="fc" id="L193">                .triples(stream)</span>
+<span class="fc" id="L194">                .relaxedProperties(model)</span>
+<span class="fc" id="L195">                .archivalGroup(rdfTypes.contains(ARCHIVAL_GROUP.getURI()))</span>
+<span class="fc" id="L196">                .userPrincipal(userPrincipal)</span>
+<span class="fc" id="L197">                .build();</span>
+
+<span class="fc" id="L199">        lockArchivalGroupResourceFromParent(tx, pSession, parentId);</span>
+<span class="fc" id="L200">        tx.lockResource(fedoraId);</span>
+
+        try {
+<span class="fc" id="L203">            pSession.persist(createOp);</span>
+<span class="fc" id="L204">        } catch (final PersistentStorageException exc) {</span>
+<span class="fc" id="L205">            throw new RepositoryRuntimeException(String.format(&quot;failed to create resource %s&quot;, fedoraId), exc);</span>
+<span class="fc" id="L206">        }</span>
+
+<span class="fc" id="L208">        updateReferences(tx, fedoraId, userPrincipal, model);</span>
+<span class="fc" id="L209">        addToContainmentIndex(tx, parentId, fedoraId);</span>
+<span class="fc" id="L210">        membershipService.resourceCreated(tx, fedoraId);</span>
+<span class="fc" id="L211">        addToSearchIndex(tx, fedoraId, pSession);</span>
+<span class="fc" id="L212">        recordEvent(tx, fedoraId, createOp);</span>
+<span class="fc" id="L213">    }</span>
+
+    private void addToSearchIndex(final Transaction tx, final FedoraId fedoraId,
+                                  final PersistentStorageSession persistentStorageSession) {
+<span class="fc" id="L217">        final var resourceHeaders = persistentStorageSession.getHeaders(fedoraId, null);</span>
+<span class="fc" id="L218">        this.searchIndex.addUpdateIndex(tx, resourceHeaders);</span>
+<span class="fc" id="L219">    }</span>
+
+    /**
+     * Check the parent to contain the new resource exists and can have a child.
+     *
+     * @param pSession a persistence session.
+     * @param fedoraId Id of parent.
+     */
+    private void checkParent(final PersistentStorageSession pSession, final FedoraId fedoraId)
+        throws RepositoryRuntimeException {
+
+<span class="pc bpc" id="L230" title="1 of 4 branches missed.">        if (fedoraId != null &amp;&amp; !fedoraId.isRepositoryRoot()) {</span>
+            final ResourceHeaders parent;
+            try {
+                // Make sure the parent exists.
+                // TODO: object existence can be from the index, but we don't have interaction model. Should we add it?
+<span class="fc" id="L235">                parent = pSession.getHeaders(fedoraId.asResourceId(), null);</span>
+<span class="nc" id="L236">            } catch (final PersistentItemNotFoundException exc) {</span>
+<span class="nc" id="L237">                throw new ItemNotFoundException(String.format(&quot;Item %s was not found&quot;, fedoraId), exc);</span>
+<span class="nc" id="L238">            } catch (final PersistentStorageException exc) {</span>
+<span class="nc" id="L239">                throw new RepositoryRuntimeException(String.format(&quot;Failed to find storage headers for %s&quot;, fedoraId),</span>
+                    exc);
+<span class="fc" id="L241">            }</span>
+<span class="fc bfc" id="L242" title="All 2 branches covered.">            if (parent.isDeleted()) {</span>
+<span class="fc" id="L243">                throw new CannotCreateResourceException(</span>
+<span class="fc" id="L244">                        String.format(&quot;Cannot create resource as child of a tombstone. Tombstone found at %s&quot;,</span>
+<span class="fc" id="L245">                                fedoraId.getFullIdPath()));</span>
+            }
+<span class="fc" id="L247">            final boolean isParentBinary = NON_RDF_SOURCE.toString().equals(parent.getInteractionModel());</span>
+<span class="fc bfc" id="L248" title="All 2 branches covered.">            if (isParentBinary) {</span>
+                // Binary is not a container, can't have children.
+<span class="fc" id="L250">                throw new InteractionModelViolationException(&quot;NonRdfSource resources cannot contain other resources&quot;);</span>
+            }
+            // TODO: Will this type still be needed?
+<span class="fc" id="L253">            final boolean isPairTree = FEDORA_PAIR_TREE.toString().equals(parent.getInteractionModel());</span>
+<span class="pc bpc" id="L254" title="1 of 2 branches missed.">            if (isPairTree) {</span>
+<span class="nc" id="L255">                throw new CannotCreateResourceException(&quot;Objects cannot be created under pairtree nodes&quot;);</span>
+            }
+        }
+<span class="fc" id="L258">    }</span>
+
+    /**
+     * Get the rel=&quot;type&quot; link headers from a list of them.
+     * @param headers a list of string LINK headers.
+     * @return a list of LINK headers with rel=&quot;type&quot;
+     */
+    private List&lt;String&gt; getTypes(final List&lt;String&gt; headers) {
+<span class="fc" id="L266">        final List&lt;Link&gt; hdrobjs = getLinkHeaders(headers);</span>
+        try {
+<span class="pc bpc" id="L268" title="1 of 2 branches missed.">            return hdrobjs == null ? emptyList() : hdrobjs.stream()</span>
+<span class="fc" id="L269">                    .filter(p -&gt; p.getRel().equalsIgnoreCase(&quot;type&quot;)).map(Link::getUri)</span>
+<span class="fc" id="L270">                    .map(URI::toString).collect(Collectors.toList());</span>
+<span class="nc" id="L271">        } catch (final Exception e ) {</span>
+<span class="nc" id="L272">            throw new BadRequestException(&quot;Invalid Link header type found&quot;,e);</span>
+        }
+    }
+
+    /**
+     * Converts a list of string LINK headers to actual LINK objects.
+     * @param headers the list of string link headers.
+     * @return the list of LINK headers.
+     */
+    private List&lt;Link&gt; getLinkHeaders(final List&lt;String&gt; headers) {
+<span class="pc bpc" id="L282" title="1 of 2 branches missed.">        return headers == null ? null : headers.stream().map(Link::valueOf).collect(Collectors.toList());</span>
+    }
+
+    /**
+     * Add this pairing to the containment index.
+     * @param tx The transaction.
+     * @param parentId The parent ID.
+     * @param id The child ID.
+     */
+    private void addToContainmentIndex(final Transaction tx, final FedoraId parentId, final FedoraId id) {
+<span class="fc" id="L292">        containmentIndex.addContainedBy(tx, parentId, id);</span>
+<span class="fc" id="L293">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

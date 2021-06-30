@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ReindexWorker.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-persistence-ocfl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.persistence.ocfl.impl</a> &gt; <span class="el_source">ReindexWorker.java</span></div><h1>ReindexWorker.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.persistence.ocfl.impl;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import org.fcrepo.common.db.DbTransactionExecutor;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
+
+import org.slf4j.Logger;
+
+import com.google.common.base.Stopwatch;
+
+/**
+ * A reindexing worker thread.
+ * @author whikloj
+ */
+public class ReindexWorker implements Runnable {
+
+<span class="fc" id="L39">    private static final Logger LOGGER = getLogger(ReindexWorker.class);</span>
+
+    private static final long REPORTING_INTERVAL_SECS = 30;
+
+    private Thread t;
+    private ReindexManager manager;
+    private ReindexService service;
+<span class="fc" id="L46">    private boolean running = true;</span>
+    private boolean failOnError;
+    private TransactionManager txManager;
+    private DbTransactionExecutor dbTransactionExecutor;
+
+    /**
+     * Basic Constructor
+     * @param name the name of the worker -- used in logging
+     * @param reindexManager the manager service.
+     * @param reindexService the reindexing service.
+     * @param transactionManager a transaction manager to generate
+     * @param dbTransactionExecutor manages db transactions
+     * @param failOnError whether the thread should fail on an error or log and continue.
+     */
+    public ReindexWorker(final String name,
+                         final ReindexManager reindexManager,
+                         final ReindexService reindexService,
+                         final TransactionManager transactionManager,
+                         final DbTransactionExecutor dbTransactionExecutor,
+<span class="fc" id="L65">                         final boolean failOnError) {</span>
+<span class="fc" id="L66">        manager = reindexManager;</span>
+<span class="fc" id="L67">        service = reindexService;</span>
+<span class="fc" id="L68">        txManager = transactionManager;</span>
+<span class="fc" id="L69">        this.dbTransactionExecutor = dbTransactionExecutor;</span>
+<span class="fc" id="L70">        this.failOnError = failOnError;</span>
+<span class="fc" id="L71">        t = new Thread(this, name);</span>
+<span class="fc" id="L72">    }</span>
+
+    /**
+     * Join the thread.
+     * @throws InterruptedException if the current thread is interrupted.
+     */
+    public void join() throws InterruptedException {
+<span class="fc" id="L79">        t.join();</span>
+<span class="fc" id="L80">    }</span>
+
+    /**
+     * Start the thread with this Runnable
+     */
+    public void start() {
+<span class="fc" id="L86">        t.start();</span>
+<span class="fc" id="L87">    }</span>
+
+    @Override
+    public void run() {
+<span class="fc" id="L91">        final var stopwatch = Stopwatch.createStarted();</span>
+<span class="pc bpc" id="L92" title="1 of 2 branches missed.">        while (running) {</span>
+<span class="fc" id="L93">            final List&lt;String&gt; ids = manager.getIds();</span>
+<span class="fc bfc" id="L94" title="All 2 branches covered.">            if (ids.isEmpty()) {</span>
+<span class="fc" id="L95">                LOGGER.debug(&quot;No more objects found to process. Stopping...&quot;);</span>
+<span class="fc" id="L96">                stopThread();</span>
+<span class="fc" id="L97">                break;</span>
+            }
+
+<span class="fc" id="L100">            int completed = 0;</span>
+<span class="fc" id="L101">            int errors = 0;</span>
+
+<span class="fc bfc" id="L103" title="All 2 branches covered.">            for (final var id : ids) {</span>
+<span class="pc bpc" id="L104" title="1 of 2 branches missed.">                if (!running) {</span>
+<span class="nc" id="L105">                    break;</span>
+                }
+
+<span class="fc" id="L108">                final Transaction tx = txManager.create();</span>
+<span class="fc" id="L109">                tx.setShortLived(true);</span>
+<span class="pc bpc" id="L110" title="1 of 2 branches missed.">                if (stopwatch.elapsed(TimeUnit.SECONDS) &gt; REPORTING_INTERVAL_SECS) {</span>
+<span class="nc" id="L111">                    manager.updateComplete(completed, errors);</span>
+<span class="nc" id="L112">                    completed = 0;</span>
+<span class="nc" id="L113">                    errors = 0;</span>
+<span class="nc" id="L114">                    stopwatch.reset().start();</span>
+                }
+                try {
+<span class="fc" id="L117">                    dbTransactionExecutor.doInTxWithRetry(() -&gt; {</span>
+<span class="fc" id="L118">                        service.indexOcflObject(tx, id);</span>
+<span class="fc" id="L119">                        tx.commit();</span>
+<span class="fc" id="L120">                    });</span>
+<span class="fc" id="L121">                    completed += 1;</span>
+<span class="fc" id="L122">                } catch (final Exception e) {</span>
+<span class="fc" id="L123">                    LOGGER.error(&quot;Reindexing of OCFL id {} failed&quot;, id, e);</span>
+<span class="fc" id="L124">                    tx.rollback();</span>
+<span class="fc" id="L125">                    errors += 1;</span>
+<span class="pc bpc" id="L126" title="1 of 2 branches missed.">                    if (failOnError) {</span>
+<span class="fc" id="L127">                        manager.updateComplete(completed, errors);</span>
+<span class="fc" id="L128">                        manager.stop();</span>
+<span class="fc" id="L129">                        service.cleanupSession(tx.getId());</span>
+<span class="fc" id="L130">                        throw e;</span>
+                    }
+<span class="fc" id="L132">                }</span>
+<span class="fc" id="L133">                service.cleanupSession(tx.getId());</span>
+<span class="fc" id="L134">            }</span>
+<span class="fc" id="L135">            manager.updateComplete(completed, errors);</span>
+<span class="fc" id="L136">        }</span>
+<span class="fc" id="L137">    }</span>
+
+    /**
+     * Stop this thread from running once it has completed its current batch.
+     */
+    public void stopThread() {
+<span class="fc" id="L143">        this.running = false;</span>
+<span class="fc" id="L144">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

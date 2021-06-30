@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>FedoraPropsConfig.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-configs</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.config</a> &gt; <span class="el_source">FedoraPropsConfig.java</span></div><h1>FedoraPropsConfig.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.config;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.time.Duration;
+
+import javax.annotation.PostConstruct;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
+
+/**
+ * General Fedora properties
+ *
+ * @author pwinckles
+ * @since 6.0.0
+ */
+@Configuration
+<span class="fc" id="L40">public class FedoraPropsConfig extends BasePropsConfig {</span>
+
+<span class="fc" id="L42">    private static final Logger LOGGER = LoggerFactory.getLogger(FedoraPropsConfig.class);</span>
+
+    public static final String FCREPO_JMS_HOST = &quot;fcrepo.jms.host&quot;;
+    public static final String FCREPO_DYNAMIC_JMS_PORT = &quot;fcrepo.dynamic.jms.port&quot;;
+    public static final String FCREPO_DYNAMIC_STOMP_PORT = &quot;fcrepo.dynamic.stomp.port&quot;;
+    public static final String FCREPO_ACTIVEMQ_CONFIGURATION = &quot;fcrepo.activemq.configuration&quot;;
+    public static final String FCREPO_NAMESPACE_REGISTRY = &quot;fcrepo.namespace.registry&quot;;
+    public static final String FCREPO_EXTERNAL_CONTENT_ALLOWED = &quot;fcrepo.external.content.allowed&quot;;
+    private static final String FCREPO_ACTIVEMQ_DIRECTORY = &quot;fcrepo.activemq.directory&quot;;
+    private static final String FCREPO_SESSION_TIMEOUT = &quot;fcrepo.session.timeout&quot;;
+    private static final String FCREPO_VELOCITY_RUNTIME_LOG = &quot;fcrepo.velocity.runtime.log&quot;;
+    private static final String FCREPO_REBUILD_VALIDATION_FIXITY = &quot;fcrepo.rebuild.validation.fixity&quot;;
+    private static final String FCREPO_REBUILD_ON_START = &quot;fcrepo.rebuild.on.start&quot;;
+    private static final String FCREPO_JMS_BASEURL = &quot;fcrepo.jms.baseUrl&quot;;
+    private static final String FCREPO_SERVER_MANAGED_PROPS_MODE = &quot;fcrepo.properties.management&quot;;
+    private static final String FCREPO_JMS_DESTINATION_TYPE = &quot;fcrepo.jms.destination.type&quot;;
+    private static final String FCREPO_JMS_DESTINATION_NAME = &quot;fcrepo.jms.destination.name&quot;;
+    public static final String FCREPO_JMS_ENABLED = &quot;fcrepo.jms.enabled&quot;;
+    private static final String FCREPO_EVENT_THREADS = &quot;fcrepo.event.threads&quot;;
+
+    private static final String DATA_DIR_DEFAULT_VALUE = &quot;data&quot;;
+    private static final String LOG_DIR_DEFAULT_VALUE = &quot;logs&quot;;
+    private static final String ACTIVE_MQ_DIR_DEFAULT_VALUE = &quot;ActiveMQ/kahadb&quot;;
+
+    @Value(&quot;${&quot; + FCREPO_HOME_PROPERTY + &quot;:&quot; + DEFAULT_FCREPO_HOME_VALUE + &quot;}&quot;)
+    protected Path fedoraHome;
+
+    @Value(&quot;#{fedoraPropsConfig.fedoraHome.resolve('&quot; + DATA_DIR_DEFAULT_VALUE + &quot;')}&quot;)
+    private Path fedoraData;
+
+    @Value(&quot;#{fedoraPropsConfig.fedoraHome.resolve('&quot; + LOG_DIR_DEFAULT_VALUE + &quot;')}&quot;)
+    private Path fedoraLogs;
+
+    @Value(&quot;${&quot; + FCREPO_JMS_HOST + &quot;:localhost}&quot;)
+    private String jmsHost;
+
+    @Value(&quot;${&quot; + FCREPO_DYNAMIC_JMS_PORT + &quot;:61616}&quot;)
+    private String jmsPort;
+
+    @Value(&quot;${&quot; + FCREPO_DYNAMIC_STOMP_PORT + &quot;:61613}&quot;)
+    private String stompPort;
+
+    @Value(&quot;${&quot; + FCREPO_ACTIVEMQ_CONFIGURATION + &quot;:classpath:/config/activemq.xml}&quot;)
+    private Resource activeMQConfiguration;
+
+    @Value(&quot;${&quot; + FCREPO_ACTIVEMQ_DIRECTORY + &quot;:#{fedoraPropsConfig.fedoraData.resolve('&quot; +
+            ACTIVE_MQ_DIR_DEFAULT_VALUE + &quot;').toAbsolutePath().toString()}}&quot;)
+    private String activeMqDirectory;
+
+    @Value(&quot;${&quot; + FCREPO_NAMESPACE_REGISTRY + &quot;:classpath:/namespaces.yml}&quot;)
+    private String namespaceRegistry;
+
+    @Value(&quot;${&quot; + FCREPO_EXTERNAL_CONTENT_ALLOWED + &quot;:#{null}}&quot;)
+    private String externalContentAllowed;
+
+    @Value(&quot;${&quot; + FCREPO_SESSION_TIMEOUT + &quot;:180000}&quot;)
+    private Long sessionTimeoutLong;
+    private Duration sessionTimeout;
+
+    @Value(&quot;${&quot; + FCREPO_VELOCITY_RUNTIME_LOG + &quot;:&quot; +
+            &quot;#{fedoraPropsConfig.fedoraLogs.resolve('velocity.log').toString()}}&quot;)
+    private Path velocityLog;
+
+    @Value(&quot;${&quot; + FCREPO_REBUILD_VALIDATION_FIXITY + &quot;:false}&quot;)
+    private boolean rebuildFixityCheck;
+
+    @Value(&quot;${&quot; + FCREPO_REBUILD_ON_START + &quot;:false}&quot;)
+    private boolean rebuildOnStart;
+
+    @Value(&quot;${&quot; + FCREPO_JMS_BASEURL + &quot;:#{null}}&quot;)
+    private String jmsBaseUrl;
+
+    @Value(&quot;${&quot; + FCREPO_SERVER_MANAGED_PROPS_MODE + &quot;:strict}&quot;)
+    private String serverManagedPropsModeStr;
+    private ServerManagedPropsMode serverManagedPropsMode;
+
+    @Value(&quot;${&quot; + FCREPO_JMS_DESTINATION_TYPE + &quot;:topic}&quot;)
+    private String jmsDestinationTypeStr;
+    private JmsDestination jmsDestinationType;
+
+    @Value(&quot;${&quot; + FCREPO_JMS_DESTINATION_NAME + &quot;:fedora}&quot;)
+    private String jmsDestinationName;
+
+    @Value(&quot;${&quot; + FCREPO_EVENT_THREADS + &quot;:1}&quot;)
+    private int eventBusThreads;
+
+    @Value(&quot;${fcrepo.cache.db.containment.size.entries:1024}&quot;)
+    private long containmentCacheSize;
+
+    @Value(&quot;${fcrepo.cache.db.containment.timeout.minutes:10}&quot;)
+    private long containmentCacheTimeout;
+
+    @Value(&quot;${fcrepo.cache.webac.acl.size.entries:1024}&quot;)
+    private long webacCacheSize;
+
+    @Value(&quot;${fcrepo.cache.webac.acl.timeout.minutes:10}&quot;)
+    private long webacCacheTimeout;
+
+    @PostConstruct
+    private void postConstruct() throws IOException {
+<span class="fc" id="L142">        LOGGER.info(&quot;Fedora home: {}&quot;, fedoraHome);</span>
+<span class="fc" id="L143">        LOGGER.debug(&quot;Fedora home data: {}&quot;, fedoraData);</span>
+        try {
+<span class="fc" id="L145">            createDirectories(fedoraHome);</span>
+<span class="nc" id="L146">        } catch (final IOException e) {</span>
+<span class="nc" id="L147">            throw new IOException(String.format(&quot;Failed to create Fedora home directory at %s.&quot; +</span>
+                    &quot; Fedora home can be configured by setting the %s property.&quot;, fedoraHome, FCREPO_HOME_PROPERTY), e);
+<span class="fc" id="L149">        }</span>
+<span class="fc" id="L150">        createDirectories(fedoraData);</span>
+<span class="fc" id="L151">        serverManagedPropsMode = ServerManagedPropsMode.fromString(serverManagedPropsModeStr);</span>
+<span class="fc" id="L152">        sessionTimeout = Duration.ofMillis(sessionTimeoutLong);</span>
+<span class="fc" id="L153">        jmsDestinationType = JmsDestination.fromString(jmsDestinationTypeStr);</span>
+<span class="fc" id="L154">    }</span>
+
+    /**
+     * @return Path to Fedora home directory
+     */
+    public Path getFedoraHome() {
+<span class="fc" id="L160">        return fedoraHome;</span>
+    }
+
+    /**
+     * Sets the path to the Fedora home directory -- should only be used for testing purposes.
+     *
+     * @param fedoraHome Path to Fedora home directory
+     */
+    public void setFedoraHome(final Path fedoraHome) {
+<span class="nc" id="L169">        this.fedoraHome = fedoraHome;</span>
+<span class="nc" id="L170">    }</span>
+
+    /**
+     * @return Path to Fedora home data directory
+     */
+    public Path getFedoraData() {
+<span class="fc" id="L176">        return fedoraData;</span>
+    }
+
+    /**
+     * @return Path to Fedora home logs directory
+     */
+    public Path getFedoraLogs() {
+<span class="fc" id="L183">        return fedoraLogs;</span>
+    }
+
+    /**
+     * Sets the path to the Fedora home data directory -- should only be used for testing purposes.
+     *
+     * @param fedoraData Path to Fedora home data directory
+     */
+    public void setFedoraData(final Path fedoraData) {
+<span class="nc" id="L192">        this.fedoraData = fedoraData;</span>
+<span class="nc" id="L193">    }</span>
+
+    /**
+     * @return The JMS host
+     */
+    public String getJmsHost() {
+<span class="nc" id="L199">        return jmsHost;</span>
+    }
+
+    /**
+     * @return The JMS/Open Wire port
+     */
+    public String getJmsPort() {
+<span class="nc" id="L206">        return jmsPort;</span>
+    }
+
+    /**
+     * @return The STOMP protocol port
+     */
+    public String getStompPort() {
+<span class="nc" id="L213">        return stompPort;</span>
+    }
+
+    /**
+     * @return The ActiveMQ data directory
+     */
+    public String getActiveMqDirectory() {
+<span class="nc" id="L220">        return activeMqDirectory;</span>
+    }
+
+    /**
+     * @return The path to the ActiveMQ xml spring configuration.
+     */
+    public Resource getActiveMQConfiguration() {
+<span class="nc" id="L227">        return activeMQConfiguration;</span>
+    }
+
+    /**
+     * @return The path to the allowed external content pattern definitions.
+     */
+    public String getExternalContentAllowed() {
+<span class="nc" id="L234">        return externalContentAllowed;</span>
+    }
+
+    /**
+     * @return The path to the namespace registry file.
+     */
+    public String getNamespaceRegistry() {
+<span class="nc" id="L241">        return namespaceRegistry;</span>
+    }
+
+    /**
+     * @return The timeout in milliseconds of the persistence session
+     */
+    public Duration getSessionTimeout() {
+<span class="fc" id="L248">        return sessionTimeout;</span>
+    }
+
+    /**
+     * @param sessionTimeout the session timeout duration
+     */
+    public void setSessionTimeout(final Duration sessionTimeout) {
+<span class="fc" id="L255">        this.sessionTimeout = sessionTimeout;</span>
+<span class="fc" id="L256">    }</span>
+
+    /**
+     * @return The path to the velocity log.
+     */
+    public Path getVelocityLog() {
+<span class="fc" id="L262">        return velocityLog;</span>
+    }
+
+    /**
+     * @return true if the rebuild validation should also check file fixity
+     */
+    public boolean isRebuildFixityCheck() {
+<span class="fc" id="L269">        return rebuildFixityCheck;</span>
+    }
+
+    /**
+     * @return true if the internal indices should be rebuilt when Fedora starts up.
+     */
+    public boolean isRebuildOnStart() {
+<span class="fc" id="L276">        return rebuildOnStart;</span>
+    }
+
+    /**
+     * @param rebuildOnStart A boolean flag indicating whether or not to rebuild on start
+     */
+    public void setRebuildOnStart(final boolean rebuildOnStart) {
+<span class="fc" id="L283">        this.rebuildOnStart = rebuildOnStart;</span>
+<span class="fc" id="L284">    }</span>
+
+    /**
+     * @return the JMS base url, if specified
+     */
+    public String getJmsBaseUrl() {
+<span class="fc" id="L290">        return jmsBaseUrl;</span>
+    }
+
+    /**
+     * @return the server managed properties mode, default strict
+     */
+    public ServerManagedPropsMode getServerManagedPropsMode() {
+<span class="fc" id="L297">        return serverManagedPropsMode;</span>
+    }
+
+    /**
+     * @param serverManagedPropsMode the server managed props mode
+     */
+    public void setServerManagedPropsMode(final ServerManagedPropsMode serverManagedPropsMode) {
+<span class="fc" id="L304">        this.serverManagedPropsMode = serverManagedPropsMode;</span>
+<span class="fc" id="L305">    }</span>
+
+    /**
+     * @return the jms destination type
+     */
+    public JmsDestination getJmsDestinationType() {
+<span class="nc" id="L311">        return jmsDestinationType;</span>
+    }
+
+    /**
+     * @return the jms destination name
+     */
+    public String getJmsDestinationName() {
+<span class="nc" id="L318">        return jmsDestinationName;</span>
+    }
+
+    /**
+     * @return the number of threads to allocate in the event bus thread pool
+     *         if this number is less than 1, 1 is returned
+     */
+    public int getEventBusThreads() {
+<span class="nc bnc" id="L326" title="All 2 branches missed.">        if (eventBusThreads &lt; 1) {</span>
+<span class="nc" id="L327">            return 1;</span>
+        }
+<span class="nc" id="L329">        return eventBusThreads;</span>
+    }
+
+    /**
+     * @return The number of entries in the containment cache.
+     */
+    public long getContainmentCacheSize() {
+<span class="fc" id="L336">        return containmentCacheSize;</span>
+    }
+
+    /**
+     * @return The number of minutes before items in the containment cache expire.
+     */
+    public long getContainmentCacheTimeout() {
+<span class="fc" id="L343">        return containmentCacheTimeout;</span>
+    }
+
+    /**
+     * @return The number of entries in the WebAC effective ACL cache.
+     */
+    public long getWebacCacheSize() {
+<span class="nc" id="L350">        return webacCacheSize;</span>
+    }
+
+    /**
+     * @return The number of minutes before items in the WebAC ACL cache expire.
+     */
+    public long getWebacCacheTimeout() {
+<span class="nc" id="L357">        return webacCacheTimeout;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

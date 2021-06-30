@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ContainmentIndexMetrics.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl</a> &gt; <span class="el_source">ContainmentIndexMetrics.java</span></div><h1>ContainmentIndexMetrics.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.kernel.impl;
+
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Timer;
+import org.fcrepo.common.metrics.MetricsHelper;
+import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
+import java.time.Instant;
+import java.util.stream.Stream;
+
+/**
+ * ContainmentIndex wrapper for adding metrics
+ *
+ * @author pwinckles
+ */
+@Component(&quot;containmentIndex&quot;)
+<span class="fc" id="L40">public class ContainmentIndexMetrics implements ContainmentIndex {</span>
+
+    private static final String METRIC_NAME = &quot;fcrepo.db&quot;;
+    private static final String DB = &quot;db&quot;;
+    private static final String CONTAINMENT = &quot;containment&quot;;
+    private static final String OPERATION = &quot;operation&quot;;
+
+<span class="fc" id="L47">    private static final Timer getContainsTimer = Metrics.timer(METRIC_NAME,</span>
+            DB, CONTAINMENT, OPERATION, &quot;getContains&quot;);
+<span class="fc" id="L49">    private static final Timer getContainsDeletedTimer = Metrics.timer(METRIC_NAME,</span>
+            DB, CONTAINMENT, OPERATION, &quot;getContainsDeleted&quot;);
+<span class="fc" id="L51">    private static final Timer getContainsByTimer = Metrics.timer(METRIC_NAME,</span>
+            DB, CONTAINMENT, OPERATION, &quot;getContainsBy&quot;);
+<span class="fc" id="L53">    private static final Timer removeContainedByTimer = Metrics.timer(METRIC_NAME,</span>
+            DB, CONTAINMENT, OPERATION, &quot;removeContainedBy&quot;);
+<span class="fc" id="L55">    private static final Timer removeResourceTimer = Metrics.timer(METRIC_NAME,</span>
+            DB, CONTAINMENT, OPERATION, &quot;removeResource&quot;);
+<span class="fc" id="L57">    private static final Timer purgeResourceTimer = Metrics.timer(METRIC_NAME,</span>
+            DB, CONTAINMENT, OPERATION, &quot;purgeResource&quot;);
+<span class="fc" id="L59">    private static final Timer addContainedByTimer = Metrics.timer(METRIC_NAME,</span>
+            DB, CONTAINMENT, OPERATION, &quot;addContainedBy&quot;);
+<span class="fc" id="L61">    private static final Timer commitTransactionTimer = Metrics.timer(METRIC_NAME,</span>
+            DB, CONTAINMENT, OPERATION, &quot;commitTransaction&quot;);
+<span class="fc" id="L63">    private static final Timer rollbackTransactionTimer = Metrics.timer(METRIC_NAME,</span>
+            DB, CONTAINMENT, OPERATION, &quot;rollbackTransaction&quot;);
+<span class="fc" id="L65">    private static final Timer resourceExistsTimer = Metrics.timer(METRIC_NAME,</span>
+            DB, CONTAINMENT, OPERATION, &quot;resourceExists&quot;);
+<span class="fc" id="L67">    private static final Timer getContainerIdByPathTimer = Metrics.timer(METRIC_NAME,</span>
+            DB, CONTAINMENT, OPERATION, &quot;getContainerIdByPath&quot;);
+<span class="fc" id="L69">    private static final Timer resetTimer = Metrics.timer(METRIC_NAME,</span>
+            DB, CONTAINMENT, OPERATION, &quot;reset&quot;);
+<span class="fc" id="L71">    private static final Timer hasResourcesStartingWithTimer = Metrics.timer(METRIC_NAME,</span>
+            DB, CONTAINMENT, OPERATION, &quot;hasResourcesStartingWith&quot;);
+<span class="fc" id="L73">    private static final Timer containmentLastUpdateTimer = Metrics.timer(METRIC_NAME, DB, CONTAINMENT, OPERATION,</span>
+            &quot;containmentLastUpdated&quot;);
+
+    @Autowired
+    @Qualifier(&quot;containmentIndexImpl&quot;)
+    private ContainmentIndex containmentIndexImpl;
+
+    @Override
+    public Stream&lt;String&gt; getContains(final Transaction tx, final FedoraId fedoraId) {
+<span class="fc" id="L82">        return MetricsHelper.time(getContainsTimer, () -&gt; {</span>
+<span class="fc" id="L83">            return containmentIndexImpl.getContains(tx, fedoraId);</span>
+        });
+    }
+
+    @Override
+    public Stream&lt;String&gt; getContainsDeleted(final Transaction tx, final FedoraId fedoraId) {
+<span class="fc" id="L89">        return MetricsHelper.time(getContainsDeletedTimer, () -&gt; {</span>
+<span class="fc" id="L90">            return containmentIndexImpl.getContainsDeleted(tx, fedoraId);</span>
+        });
+    }
+
+    @Override
+    public String getContainedBy(final Transaction tx, final FedoraId resource) {
+<span class="fc" id="L96">        return MetricsHelper.time(getContainsByTimer, () -&gt; {</span>
+<span class="fc" id="L97">            return containmentIndexImpl.getContainedBy(tx, resource);</span>
+        });
+    }
+
+    @Override
+    public void removeContainedBy(final Transaction tx, final FedoraId parent, final FedoraId child) {
+<span class="nc" id="L103">        removeContainedByTimer.record(() -&gt; {</span>
+<span class="nc" id="L104">            containmentIndexImpl.removeContainedBy(tx, parent, child);</span>
+<span class="nc" id="L105">        });</span>
+<span class="nc" id="L106">    }</span>
+
+    @Override
+    public void removeResource(final Transaction tx, final FedoraId resource) {
+<span class="fc" id="L110">        removeResourceTimer.record(() -&gt; {</span>
+<span class="fc" id="L111">            containmentIndexImpl.removeResource(tx, resource);</span>
+<span class="fc" id="L112">        });</span>
+<span class="fc" id="L113">    }</span>
+
+    @Override
+    public void purgeResource(final Transaction tx, final FedoraId resource) {
+<span class="fc" id="L117">        purgeResourceTimer.record(() -&gt; {</span>
+<span class="fc" id="L118">            containmentIndexImpl.purgeResource(tx, resource);</span>
+<span class="fc" id="L119">        });</span>
+<span class="fc" id="L120">    }</span>
+
+    @Override
+    public void addContainedBy(final Transaction tx, final FedoraId parent, final FedoraId child) {
+<span class="fc" id="L124">        addContainedByTimer.record(() -&gt; {</span>
+<span class="fc" id="L125">            containmentIndexImpl.addContainedBy(tx, parent, child);</span>
+<span class="fc" id="L126">        });</span>
+<span class="fc" id="L127">    }</span>
+
+    @Override
+    public void addContainedBy(final Transaction tx, final FedoraId parent, final FedoraId child,
+                               final Instant startTime, final Instant endTime) {
+<span class="fc" id="L132">        addContainedByTimer.record(() -&gt; containmentIndexImpl.addContainedBy(tx, parent, child, startTime, endTime));</span>
+<span class="fc" id="L133">    }</span>
+
+    @Override
+    public void commitTransaction(final Transaction tx) {
+<span class="fc" id="L137">        commitTransactionTimer.record(() -&gt; {</span>
+<span class="fc" id="L138">            containmentIndexImpl.commitTransaction(tx);</span>
+<span class="fc" id="L139">        });</span>
+<span class="fc" id="L140">    }</span>
+
+    @Override
+    public void rollbackTransaction(final Transaction tx) {
+<span class="fc" id="L144">        rollbackTransactionTimer.record(() -&gt; {</span>
+<span class="fc" id="L145">            containmentIndexImpl.rollbackTransaction(tx);</span>
+<span class="fc" id="L146">        });</span>
+<span class="fc" id="L147">    }</span>
+
+    @Override
+    public boolean resourceExists(final Transaction tx, final FedoraId fedoraId, final boolean includeDeleted) {
+<span class="fc" id="L151">        return MetricsHelper.time(resourceExistsTimer, () -&gt; {</span>
+<span class="fc" id="L152">            return containmentIndexImpl.resourceExists(tx, fedoraId, includeDeleted);</span>
+        });
+    }
+
+    @Override
+    public FedoraId getContainerIdByPath(final Transaction tx, final FedoraId fedoraId, final boolean checkDeleted) {
+<span class="fc" id="L158">        return MetricsHelper.time(getContainerIdByPathTimer, () -&gt; {</span>
+<span class="fc" id="L159">            return containmentIndexImpl.getContainerIdByPath(tx, fedoraId, checkDeleted);</span>
+        });
+    }
+
+    @Override
+    public void reset() {
+<span class="fc" id="L165">        resetTimer.record(() -&gt; {</span>
+<span class="fc" id="L166">            containmentIndexImpl.reset();</span>
+<span class="fc" id="L167">        });</span>
+<span class="fc" id="L168">    }</span>
+
+    @Override
+    public boolean hasResourcesStartingWith(final Transaction tx, final FedoraId fedoraId) {
+<span class="fc" id="L172">        return MetricsHelper.time(hasResourcesStartingWithTimer, () -&gt;</span>
+<span class="fc" id="L173">                containmentIndexImpl.hasResourcesStartingWith(tx, fedoraId));</span>
+    }
+
+    @Override
+    public Instant containmentLastUpdated(final Transaction tx, final FedoraId fedoraId) {
+<span class="fc" id="L178">        return MetricsHelper.time(containmentLastUpdateTimer, () -&gt;</span>
+<span class="fc" id="L179">                containmentIndexImpl.containmentLastUpdated(tx, fedoraId));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

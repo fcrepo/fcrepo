@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WebappConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.webapp</a> &gt; <span class="el_source">WebappConfig.java</span></div><h1>WebappConfig.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.webapp;
+
+import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import javax.inject.Inject;
+
+import org.fcrepo.config.FedoraPropsConfig;
+import org.fcrepo.http.api.ExternalContentHandlerFactory;
+import org.fcrepo.http.api.ExternalContentPathValidator;
+import org.fcrepo.kernel.api.auth.ACLHandle;
+import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
+
+import org.apache.http.conn.HttpClientConnectionManager;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.google.common.eventbus.AsyncEventBus;
+import com.google.common.eventbus.EventBus;
+
+/**
+ * Spring config for the webapp
+ *
+ * @author pwinckles
+ */
+@Configuration
+@EnableScheduling
+<span class="nc" id="L55">public class WebappConfig {</span>
+
+<span class="nc" id="L57">    private static final Logger LOGGER = LoggerFactory.getLogger(WebappConfig.class);</span>
+
+    @Inject
+    private FedoraPropsConfig fedoraPropsConfig;
+
+    /**
+     * Task scheduler used for cleaning up transactions
+     *
+     * @return scheduler
+     */
+    @Bean
+    public ThreadPoolTaskScheduler taskScheduler() {
+<span class="nc" id="L69">        final var scheduler = new ThreadPoolTaskScheduler();</span>
+<span class="nc" id="L70">        scheduler.setPoolSize(1);</span>
+<span class="nc" id="L71">        scheduler.setThreadNamePrefix(&quot;ScheduledTask&quot;);</span>
+<span class="nc" id="L72">        return scheduler;</span>
+    }
+
+    /**
+     * HTTP connection manager
+     *
+     * @return connection manager
+     */
+    @Bean
+    public HttpClientConnectionManager connectionManager() {
+<span class="nc" id="L82">        return new PoolingHttpClientConnectionManager();</span>
+    }
+
+    /**
+     * Fedora's lightweight internal event bus. Currently memory-resident.
+     *
+     * @param propsConfig config
+     * @return event bus
+     */
+    @Bean
+    public EventBus eventBus(final FedoraPropsConfig propsConfig) {
+<span class="nc" id="L93">        return new AsyncEventBus(eventBusExecutor(propsConfig));</span>
+    }
+
+    /**
+     * @param propsConfig config
+     * @return executor intended to be used by the Guava event bus
+     */
+    @Bean
+    public ExecutorService eventBusExecutor(final FedoraPropsConfig propsConfig) {
+<span class="nc" id="L102">        LOGGER.debug(&quot;Event bus threads: {}&quot;, propsConfig);</span>
+<span class="nc" id="L103">        return Executors.newFixedThreadPool(propsConfig.getEventBusThreads());</span>
+    }
+
+    /**
+     * Configuration of namespace prefixes
+     *
+     * @param propsConfig config properties
+     * @return rdf namespace registry
+     */
+    @Bean(initMethod = &quot;init&quot;, destroyMethod = &quot;shutdown&quot;)
+    public RdfNamespaceRegistry rdfNamespaceRegistry(final FedoraPropsConfig propsConfig) {
+<span class="nc" id="L114">        final var registry = new RdfNamespaceRegistry();</span>
+<span class="nc" id="L115">        registry.setConfigPath(propsConfig.getNamespaceRegistry());</span>
+<span class="nc" id="L116">        registry.setMonitorForChanges(true);</span>
+<span class="nc" id="L117">        return registry;</span>
+    }
+
+    /**
+     * External content configuration
+     *
+     * @param propsConfig config properties
+     * @return external content path validator
+     */
+    @Bean(initMethod = &quot;init&quot;, destroyMethod = &quot;shutdown&quot;)
+    public ExternalContentPathValidator externalContentPathValidator(final FedoraPropsConfig propsConfig) {
+<span class="nc" id="L128">        final var validator = new ExternalContentPathValidator();</span>
+<span class="nc" id="L129">        validator.setConfigPath(propsConfig.getExternalContentAllowed());</span>
+<span class="nc" id="L130">        validator.setMonitorForChanges(true);</span>
+<span class="nc" id="L131">        return validator;</span>
+    }
+
+    @Bean
+    public ExternalContentHandlerFactory externalContentHandlerFactory(final ExternalContentPathValidator validator) {
+<span class="nc" id="L136">        final var factory = new ExternalContentHandlerFactory();</span>
+<span class="nc" id="L137">        factory.setValidator(validator);</span>
+<span class="nc" id="L138">        return factory;</span>
+    }
+
+    /**
+     * Used to cache the effective ACL location and authorizations for a given resource.
+     *
+     * @return the cache
+     */
+    @Bean
+    public Cache&lt;String, Optional&lt;ACLHandle&gt;&gt; authHandleCache() {
+<span class="nc" id="L148">        return Caffeine.newBuilder().weakValues()</span>
+<span class="nc" id="L149">                .expireAfterAccess(fedoraPropsConfig.getWebacCacheTimeout(), TimeUnit.MINUTES)</span>
+<span class="nc" id="L150">                .maximumSize(fedoraPropsConfig.getWebacCacheSize()).build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

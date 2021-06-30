@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>RepositoryInitializer.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-persistence-ocfl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.persistence.ocfl</a> &gt; <span class="el_source">RepositoryInitializer.java</span></div><h1>RepositoryInitializer.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.persistence.ocfl;
+
+
+import org.fcrepo.config.FedoraPropsConfig;
+import org.fcrepo.config.OcflPropsConfig;
+import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.operations.RdfSourceOperation;
+import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
+import org.fcrepo.kernel.api.operations.VersionResourceOperationFactory;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.ocfl.api.IndexBuilder;
+import org.fcrepo.persistence.ocfl.impl.OcflPersistentSessionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
+
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+
+/**
+ * This class is responsible for initializing the repository on start-up.
+ *
+ * @author dbernstein
+ */
+@Component
+<span class="fc" id="L51">public class RepositoryInitializer {</span>
+
+<span class="fc" id="L53">    private static final Logger LOGGER = LoggerFactory.getLogger(RepositoryInitializer.class);</span>
+
+    @Inject
+    private OcflPersistentSessionManager sessionManager;
+
+    @Inject
+    private RdfSourceOperationFactory operationFactory;
+
+    @Inject
+    private IndexBuilder indexBuilder;
+
+    @Inject
+    private VersionResourceOperationFactory versionResourceOperationFactory;
+
+    @Inject
+    private OcflPropsConfig config;
+
+    @Inject
+    private FedoraPropsConfig fedoraPropsConfig;
+
+    @Inject
+    private TransactionManager txManager;
+
+    // This is used in-place of @PostConstruct so that it is called _after_ the rest of context has been
+    // completely initialized.
+    @EventListener
+    public void onApplicationEvent(final ContextRefreshedEvent event) {
+        try {
+<span class="fc" id="L81">            initialize();</span>
+<span class="nc" id="L82">        } catch (Exception e) {</span>
+<span class="nc" id="L83">            LOGGER.error(&quot;Failed to initialize repository&quot;, e);</span>
+<span class="nc" id="L84">            ((ConfigurableApplicationContext) event.getApplicationContext()).close();</span>
+<span class="fc" id="L85">        }</span>
+<span class="fc" id="L86">    }</span>
+
+    /**
+     * Initializes the repository
+     */
+    public void initialize() {
+<span class="fc" id="L92">        LOGGER.info(&quot;Initializing repository&quot;);</span>
+
+<span class="fc" id="L94">        indexBuilder.rebuildIfNecessary();</span>
+
+<span class="fc" id="L96">        final var root = FedoraId.getRepositoryRootId();</span>
+
+        try {
+            //check that the root is initialized
+<span class="fc" id="L100">            final var transaction = txManager.create();</span>
+<span class="fc" id="L101">            transaction.setShortLived(true);</span>
+<span class="fc" id="L102">            final PersistentStorageSession session = this.sessionManager.getSession(transaction);</span>
+
+            try {
+<span class="fc" id="L105">                session.getHeaders(root, null);</span>
+<span class="fc" id="L106">            } catch (final PersistentItemNotFoundException e) {</span>
+<span class="fc" id="L107">                LOGGER.debug(&quot;Repository root ({}) not found. Creating...&quot;, root);</span>
+<span class="fc" id="L108">                final RdfSourceOperation operation = this.operationFactory.createBuilder(transaction, root,</span>
+<span class="fc" id="L109">                        BASIC_CONTAINER.getURI(), fedoraPropsConfig.getServerManagedPropsMode())</span>
+<span class="fc" id="L110">                        .parentId(root).build();</span>
+
+<span class="fc" id="L112">                session.persist(operation);</span>
+
+                //if auto versioning is not enabled, be sure to create an immutable version
+<span class="fc bfc" id="L115" title="All 2 branches covered.">                if (!config.isAutoVersioningEnabled()) {</span>
+<span class="fc" id="L116">                    final var versionOperation = this.versionResourceOperationFactory</span>
+<span class="fc" id="L117">                            .createBuilder(transaction, root).build();</span>
+<span class="fc" id="L118">                    session.persist(versionOperation);</span>
+                }
+
+<span class="fc" id="L121">                transaction.commit();</span>
+
+<span class="fc" id="L123">                LOGGER.debug(&quot;Successfully created repository root ({}).&quot;, root);</span>
+<span class="fc" id="L124">            }</span>
+
+<span class="nc" id="L126">        } catch (final PersistentStorageException ex) {</span>
+<span class="nc" id="L127">            throw new RepositoryRuntimeException(ex.getMessage(), ex);</span>
+<span class="fc" id="L128">        }</span>
+<span class="fc" id="L129">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
