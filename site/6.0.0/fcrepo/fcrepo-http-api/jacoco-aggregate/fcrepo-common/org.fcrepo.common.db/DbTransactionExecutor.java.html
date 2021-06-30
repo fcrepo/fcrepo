@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>DbTransactionExecutor.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-common</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.common.db</a> &gt; <span class="el_source">DbTransactionExecutor.java</span></div><h1>DbTransactionExecutor.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.common.db;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.time.temporal.ChronoUnit;
+
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DeadlockLoserDataAccessException;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.RetryPolicy;
+
+/**
+ * Wrapper around Spring's db transaction management
+ *
+ * @author pwinckles
+ */
+@Component
+public class DbTransactionExecutor {
+
+<span class="fc" id="L42">    private static final Logger LOGGER = getLogger(DbTransactionExecutor.class);</span>
+
+<span class="fc" id="L44">    private static final RetryPolicy&lt;Object&gt; DB_RETRY = new RetryPolicy&lt;&gt;()</span>
+<span class="fc" id="L45">            .handleIf(e -&gt; {</span>
+<span class="pc bpc" id="L46" title="1 of 2 branches missed.">                return e instanceof DeadlockLoserDataAccessException</span>
+<span class="pc bpc" id="L47" title="1 of 4 branches missed.">                        || (e.getCause() != null &amp;&amp; e.getCause() instanceof DeadlockLoserDataAccessException);</span>
+            })
+<span class="fc" id="L49">            .onRetry(event -&gt; {</span>
+<span class="nc" id="L50">                LOGGER.debug(&quot;Retrying operation that failed with the following exception&quot;, event.getLastFailure());</span>
+<span class="nc" id="L51">            })</span>
+<span class="fc" id="L52">            .withBackoff(10, 100, ChronoUnit.MILLIS, 1.5)</span>
+<span class="fc" id="L53">            .withJitter(0.1)</span>
+<span class="fc" id="L54">            .withMaxRetries(10);</span>
+
+    @Autowired
+    private TransactionTemplate transactionTemplate;
+
+<span class="fc" id="L59">    public DbTransactionExecutor() {</span>
+
+<span class="fc" id="L61">    }</span>
+
+<span class="nc" id="L63">    public DbTransactionExecutor(final TransactionTemplate transactionTemplate) {</span>
+<span class="nc" id="L64">        this.transactionTemplate = transactionTemplate;</span>
+<span class="nc" id="L65">    }</span>
+
+    /**
+     * Executes the runnable within a DB transaction that will retry entire block on MySQL deadlock exceptions.
+     *
+     * @param action the code to execute
+     */
+    public void doInTxWithRetry(final Runnable action) {
+<span class="fc" id="L73">        Failsafe.with(DB_RETRY).run(() -&gt; {</span>
+<span class="fc" id="L74">            doInTx(action);</span>
+<span class="fc" id="L75">        });</span>
+<span class="fc" id="L76">    }</span>
+
+    /**
+     * Executes the runnable within a DB transaction. MySQL deadlock exceptions are NOT retried.
+     *
+     * @param action the code to execute
+     */
+    public void doInTx(final Runnable action) {
+<span class="fc bfc" id="L84" title="All 2 branches covered.">        if (transactionTemplate == null) {</span>
+            // If the transaction template is not set, just execute the code without a tx.
+            // This will never happen when configured by Spring, but is useful when unit testing
+<span class="fc" id="L87">            LOGGER.warn(&quot;Executing outside of a DB transaction&quot;);</span>
+<span class="fc" id="L88">            action.run();</span>
+        } else {
+<span class="fc" id="L90">            transactionTemplate.executeWithoutResult(status -&gt; {</span>
+<span class="fc" id="L91">                action.run();</span>
+<span class="fc" id="L92">            });</span>
+        }
+<span class="fc" id="L94">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

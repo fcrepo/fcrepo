@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ContentDigest.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.api.utils</a> &gt; <span class="el_source">ContentDigest.java</span></div><h1>ContentDigest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.api.utils;
+
+import static org.apache.commons.codec.binary.Hex.encodeHexString;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import org.fcrepo.config.DigestAlgorithm;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.slf4j.Logger;
+
+/**
+ * Digest helpers to convert digests (checksums) into URI strings
+ * (based loosely on Magnet URIs)
+ * @author Chris Beer
+ * @since Mar 6, 2013
+ */
+public final class ContentDigest {
+
+<span class="fc" id="L38">    private static final Logger LOGGER = getLogger(ContentDigest.class);</span>
+
+    private ContentDigest() {
+    }
+
+    /**
+     * Convert a MessageDigest algorithm and checksum value to a URN
+     * @param algorithm the message digest algorithm
+     * @param value the checksum value
+     * @return URI
+     */
+    public static URI asURI(final String algorithm, final String value) {
+        try {
+<span class="fc" id="L51">            final String scheme = DigestAlgorithm.getScheme(algorithm);</span>
+
+<span class="fc" id="L53">            return new URI(scheme, value, null);</span>
+<span class="nc" id="L54">        } catch (final URISyntaxException unlikelyException) {</span>
+<span class="nc" id="L55">            LOGGER.warn(&quot;Exception creating checksum URI: alg={}; value={}&quot;,</span>
+                               algorithm, value);
+<span class="nc" id="L57">            throw new RepositoryRuntimeException(unlikelyException.getMessage(), unlikelyException);</span>
+        }
+    }
+
+    /**
+     * Convert a MessageDigest algorithm and checksum byte-array data to a URN
+     * @param algorithm the message digest algorithm
+     * @param data the checksum byte-array data
+     * @return URI
+     */
+    public static URI asURI(final String algorithm, final byte[] data) {
+<span class="nc" id="L68">        return asURI(algorithm, asString(data));</span>
+    }
+
+    /**
+     * Given a digest URI, get the corresponding MessageDigest algorithm
+     * @param digestUri the digest uri
+     * @return MessageDigest algorithm
+     */
+    public static String getAlgorithm(final URI digestUri) {
+<span class="fc" id="L77">        return DigestAlgorithm.fromScheme(digestUri.getScheme() + &quot;:&quot; +</span>
+<span class="fc" id="L78">             digestUri.getSchemeSpecificPart().split(&quot;:&quot;, 2)[0]).getAlgorithm();</span>
+    }
+
+    private static String asString(final byte[] data) {
+<span class="nc" id="L82">        return encodeHexString(data);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
