@@ -1,0 +1,284 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * Licensed to DuraSpace under one or more contributor license agreements.</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * See the NOTICE file distributed with this work for additional information</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * regarding copyright ownership.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> *</a>
+<span class="sourceLineNo">006</span><a id="line.6"> * DuraSpace licenses this file to you under the Apache License,</a>
+<span class="sourceLineNo">007</span><a id="line.7"> * Version 2.0 (the "License"); you may not use this file except in</a>
+<span class="sourceLineNo">008</span><a id="line.8"> * compliance with the License.  You may obtain a copy of the License at</a>
+<span class="sourceLineNo">009</span><a id="line.9"> *</a>
+<span class="sourceLineNo">010</span><a id="line.10"> *     http://www.apache.org/licenses/LICENSE-2.0</a>
+<span class="sourceLineNo">011</span><a id="line.11"> *</a>
+<span class="sourceLineNo">012</span><a id="line.12"> * Unless required by applicable law or agreed to in writing, software</a>
+<span class="sourceLineNo">013</span><a id="line.13"> * distributed under the License is distributed on an "AS IS" BASIS,</a>
+<span class="sourceLineNo">014</span><a id="line.14"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<span class="sourceLineNo">015</span><a id="line.15"> * See the License for the specific language governing permissions and</a>
+<span class="sourceLineNo">016</span><a id="line.16"> * limitations under the License.</a>
+<span class="sourceLineNo">017</span><a id="line.17"> */</a>
+<span class="sourceLineNo">018</span><a id="line.18">package org.fcrepo.http.commons.domain;</a>
+<span class="sourceLineNo">019</span><a id="line.19"></a>
+<span class="sourceLineNo">020</span><a id="line.20">import static java.util.Arrays.asList;</a>
+<span class="sourceLineNo">021</span><a id="line.21">import static java.util.Optional.ofNullable;</a>
+<span class="sourceLineNo">022</span><a id="line.22">import static org.fcrepo.kernel.api.RdfLexicon.PREFER_CONTAINMENT;</a>
+<span class="sourceLineNo">023</span><a id="line.23">import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MEMBERSHIP;</a>
+<span class="sourceLineNo">024</span><a id="line.24">import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MINIMAL_CONTAINER;</a>
+<span class="sourceLineNo">025</span><a id="line.25">import static org.fcrepo.kernel.api.RdfLexicon.PREFER_SERVER_MANAGED;</a>
+<span class="sourceLineNo">026</span><a id="line.26">import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;</a>
+<span class="sourceLineNo">027</span><a id="line.27">import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;</a>
+<span class="sourceLineNo">028</span><a id="line.28"></a>
+<span class="sourceLineNo">029</span><a id="line.29">import org.glassfish.jersey.message.internal.HttpHeaderReader;</a>
+<span class="sourceLineNo">030</span><a id="line.30"></a>
+<span class="sourceLineNo">031</span><a id="line.31">import javax.servlet.http.HttpServletResponse;</a>
+<span class="sourceLineNo">032</span><a id="line.32"></a>
+<span class="sourceLineNo">033</span><a id="line.33">import java.text.ParseException;</a>
+<span class="sourceLineNo">034</span><a id="line.34">import java.util.HashMap;</a>
+<span class="sourceLineNo">035</span><a id="line.35">import java.util.List;</a>
+<span class="sourceLineNo">036</span><a id="line.36">import java.util.Map;</a>
+<span class="sourceLineNo">037</span><a id="line.37">import java.util.Optional;</a>
+<span class="sourceLineNo">038</span><a id="line.38"></a>
+<span class="sourceLineNo">039</span><a id="line.39">/**</a>
+<span class="sourceLineNo">040</span><a id="line.40"> * Parse a single prefer tag, value and any optional parameters</a>
+<span class="sourceLineNo">041</span><a id="line.41"> *</a>
+<span class="sourceLineNo">042</span><a id="line.42"> * @author cabeer</a>
+<span class="sourceLineNo">043</span><a id="line.43"> */</a>
+<span class="sourceLineNo">044</span><a id="line.44">public class PreferTag implements Comparable&lt;PreferTag&gt; {</a>
+<span class="sourceLineNo">045</span><a id="line.45">    private final String tag;</a>
+<span class="sourceLineNo">046</span><a id="line.46">    private String value = "";</a>
+<span class="sourceLineNo">047</span><a id="line.47">    private Map&lt;String, String&gt; params = new HashMap&lt;&gt;();</a>
+<span class="sourceLineNo">048</span><a id="line.48"></a>
+<span class="sourceLineNo">049</span><a id="line.49">    /**</a>
+<span class="sourceLineNo">050</span><a id="line.50">     * Create an empty PreferTag</a>
+<span class="sourceLineNo">051</span><a id="line.51">     * @return the empty PreferTag</a>
+<span class="sourceLineNo">052</span><a id="line.52">     */</a>
+<span class="sourceLineNo">053</span><a id="line.53">    public static PreferTag emptyTag() {</a>
+<span class="sourceLineNo">054</span><a id="line.54">        return new PreferTag((String)null);</a>
+<span class="sourceLineNo">055</span><a id="line.55">    }</a>
+<span class="sourceLineNo">056</span><a id="line.56"></a>
+<span class="sourceLineNo">057</span><a id="line.57">    /**</a>
+<span class="sourceLineNo">058</span><a id="line.58">     * Create a new PreferTag from an existing tag</a>
+<span class="sourceLineNo">059</span><a id="line.59">     * @param preferTag the preferTag</a>
+<span class="sourceLineNo">060</span><a id="line.60">     */</a>
+<span class="sourceLineNo">061</span><a id="line.61">    protected PreferTag(final PreferTag preferTag) {</a>
+<span class="sourceLineNo">062</span><a id="line.62">        tag = preferTag.getTag();</a>
+<span class="sourceLineNo">063</span><a id="line.63">        value = preferTag.getValue();</a>
+<span class="sourceLineNo">064</span><a id="line.64">        params = preferTag.getParams();</a>
+<span class="sourceLineNo">065</span><a id="line.65">    }</a>
+<span class="sourceLineNo">066</span><a id="line.66"></a>
+<span class="sourceLineNo">067</span><a id="line.67">    /**</a>
+<span class="sourceLineNo">068</span><a id="line.68">     * Parse the prefer tag and parameters out of the header</a>
+<span class="sourceLineNo">069</span><a id="line.69">     * @param reader the reader</a>
+<span class="sourceLineNo">070</span><a id="line.70">     */</a>
+<span class="sourceLineNo">071</span><a id="line.71">    private PreferTag(final HttpHeaderReader reader) {</a>
+<span class="sourceLineNo">072</span><a id="line.72"></a>
+<span class="sourceLineNo">073</span><a id="line.73">        // Skip any white space</a>
+<span class="sourceLineNo">074</span><a id="line.74">        reader.hasNext();</a>
+<span class="sourceLineNo">075</span><a id="line.75"></a>
+<span class="sourceLineNo">076</span><a id="line.76">        if (reader.hasNext()) {</a>
+<span class="sourceLineNo">077</span><a id="line.77">            try {</a>
+<span class="sourceLineNo">078</span><a id="line.78">                tag = Optional.ofNullable(reader.nextToken())</a>
+<span class="sourceLineNo">079</span><a id="line.79">                          .map(CharSequence::toString).orElse(null);</a>
+<span class="sourceLineNo">080</span><a id="line.80"></a>
+<span class="sourceLineNo">081</span><a id="line.81">                if (reader.hasNextSeparator('=', true)) {</a>
+<span class="sourceLineNo">082</span><a id="line.82">                    reader.next();</a>
+<span class="sourceLineNo">083</span><a id="line.83"></a>
+<span class="sourceLineNo">084</span><a id="line.84">                    value = Optional.ofNullable(reader.nextTokenOrQuotedString())</a>
+<span class="sourceLineNo">085</span><a id="line.85">                            .    map(CharSequence::toString)</a>
+<span class="sourceLineNo">086</span><a id="line.86">                                .orElse(null);</a>
+<span class="sourceLineNo">087</span><a id="line.87">                }</a>
+<span class="sourceLineNo">088</span><a id="line.88"></a>
+<span class="sourceLineNo">089</span><a id="line.89">                if (reader.hasNext()) {</a>
+<span class="sourceLineNo">090</span><a id="line.90">                    params = HttpHeaderReader.readParameters(reader);</a>
+<span class="sourceLineNo">091</span><a id="line.91">                    if ( params == null ) {</a>
+<span class="sourceLineNo">092</span><a id="line.92">                        params = new HashMap&lt;&gt;();</a>
+<span class="sourceLineNo">093</span><a id="line.93">                    }</a>
+<span class="sourceLineNo">094</span><a id="line.94">                }</a>
+<span class="sourceLineNo">095</span><a id="line.95">            } catch (final ParseException e) {</a>
+<span class="sourceLineNo">096</span><a id="line.96">                throw new IllegalArgumentException("Could not parse 'Prefer' header", e);</a>
+<span class="sourceLineNo">097</span><a id="line.97">            }</a>
+<span class="sourceLineNo">098</span><a id="line.98">        } else {</a>
+<span class="sourceLineNo">099</span><a id="line.99">            tag = "";</a>
+<span class="sourceLineNo">100</span><a id="line.100">        }</a>
+<span class="sourceLineNo">101</span><a id="line.101">    }</a>
+<span class="sourceLineNo">102</span><a id="line.102"></a>
+<span class="sourceLineNo">103</span><a id="line.103">    /**</a>
+<span class="sourceLineNo">104</span><a id="line.104">     * Create a blank prefer tag</a>
+<span class="sourceLineNo">105</span><a id="line.105">     * @param inputTag the input tag</a>
+<span class="sourceLineNo">106</span><a id="line.106">     */</a>
+<span class="sourceLineNo">107</span><a id="line.107">    public PreferTag(final String inputTag) {</a>
+<span class="sourceLineNo">108</span><a id="line.108">        this(HttpHeaderReader.newInstance(inputTag));</a>
+<span class="sourceLineNo">109</span><a id="line.109">    }</a>
+<span class="sourceLineNo">110</span><a id="line.110"></a>
+<span class="sourceLineNo">111</span><a id="line.111">    /**</a>
+<span class="sourceLineNo">112</span><a id="line.112">     * Get the tag name</a>
+<span class="sourceLineNo">113</span><a id="line.113">     * @return tag name</a>
+<span class="sourceLineNo">114</span><a id="line.114">     */</a>
+<span class="sourceLineNo">115</span><a id="line.115">    public String getTag() {</a>
+<span class="sourceLineNo">116</span><a id="line.116">        return tag;</a>
+<span class="sourceLineNo">117</span><a id="line.117">    }</a>
+<span class="sourceLineNo">118</span><a id="line.118"></a>
+<span class="sourceLineNo">119</span><a id="line.119">    /**</a>
+<span class="sourceLineNo">120</span><a id="line.120">     * Get the default value for the tag</a>
+<span class="sourceLineNo">121</span><a id="line.121">     * @return default value for the tag</a>
+<span class="sourceLineNo">122</span><a id="line.122">     */</a>
+<span class="sourceLineNo">123</span><a id="line.123">    public String getValue() {</a>
+<span class="sourceLineNo">124</span><a id="line.124">        return value;</a>
+<span class="sourceLineNo">125</span><a id="line.125">    }</a>
+<span class="sourceLineNo">126</span><a id="line.126"></a>
+<span class="sourceLineNo">127</span><a id="line.127">    /**</a>
+<span class="sourceLineNo">128</span><a id="line.128">     * Get any additional parameters for the prefer tag</a>
+<span class="sourceLineNo">129</span><a id="line.129">     * @return additional parameters for the prefer tag</a>
+<span class="sourceLineNo">130</span><a id="line.130">     */</a>
+<span class="sourceLineNo">131</span><a id="line.131">    public Map&lt;String,String&gt; getParams() {</a>
+<span class="sourceLineNo">132</span><a id="line.132">        return params;</a>
+<span class="sourceLineNo">133</span><a id="line.133">    }</a>
+<span class="sourceLineNo">134</span><a id="line.134"></a>
+<span class="sourceLineNo">135</span><a id="line.135">    /**</a>
+<span class="sourceLineNo">136</span><a id="line.136">     * Add appropriate response headers to indicate that the incoming preferences were acknowledged</a>
+<span class="sourceLineNo">137</span><a id="line.137">     * @param servletResponse the servlet response</a>
+<span class="sourceLineNo">138</span><a id="line.138">     */</a>
+<span class="sourceLineNo">139</span><a id="line.139">    public void addResponseHeaders(final HttpServletResponse servletResponse) {</a>
+<span class="sourceLineNo">140</span><a id="line.140"></a>
+<span class="sourceLineNo">141</span><a id="line.141">        final String receivedParam = ofNullable(params.get("received")).orElse("");</a>
+<span class="sourceLineNo">142</span><a id="line.142">        final List&lt;String&gt; includes = asList(ofNullable(params.get("include")).orElse(" ").split(" "));</a>
+<span class="sourceLineNo">143</span><a id="line.143">        final List&lt;String&gt; omits = asList(ofNullable(params.get("omit")).orElse(" ").split(" "));</a>
+<span class="sourceLineNo">144</span><a id="line.144"></a>
+<span class="sourceLineNo">145</span><a id="line.145">        final StringBuilder includeBuilder = new StringBuilder();</a>
+<span class="sourceLineNo">146</span><a id="line.146">        final StringBuilder omitBuilder = new StringBuilder();</a>
+<span class="sourceLineNo">147</span><a id="line.147"></a>
+<span class="sourceLineNo">148</span><a id="line.148">        if (!(value.equals("minimal") || receivedParam.equals("minimal"))) {</a>
+<span class="sourceLineNo">149</span><a id="line.149">            final List&lt;String&gt; appliedPrefs = asList(PREFER_SERVER_MANAGED.toString(),</a>
+<span class="sourceLineNo">150</span><a id="line.150">                    PREFER_MINIMAL_CONTAINER.toString(),</a>
+<span class="sourceLineNo">151</span><a id="line.151">                    PREFER_MEMBERSHIP.toString(),</a>
+<span class="sourceLineNo">152</span><a id="line.152">                    PREFER_CONTAINMENT.toString());</a>
+<span class="sourceLineNo">153</span><a id="line.153">            final List&lt;String&gt; includePrefs = asList(EMBED_CONTAINED.toString(),</a>
+<span class="sourceLineNo">154</span><a id="line.154">                    INBOUND_REFERENCES.toString());</a>
+<span class="sourceLineNo">155</span><a id="line.155">            includes.forEach(param -&gt; includeBuilder.append(</a>
+<span class="sourceLineNo">156</span><a id="line.156">                    (appliedPrefs.contains(param) || includePrefs.contains(param)) ? param + " " : ""));</a>
+<span class="sourceLineNo">157</span><a id="line.157"></a>
+<span class="sourceLineNo">158</span><a id="line.158">            // Note: include params prioritized over omits during implementation</a>
+<span class="sourceLineNo">159</span><a id="line.159">            omits.forEach(param -&gt; omitBuilder.append(</a>
+<span class="sourceLineNo">160</span><a id="line.160">                    (appliedPrefs.contains(param) &amp;&amp; !includes.contains(param)) ? param + " " : ""));</a>
+<span class="sourceLineNo">161</span><a id="line.161">        }</a>
+<span class="sourceLineNo">162</span><a id="line.162"></a>
+<span class="sourceLineNo">163</span><a id="line.163">        // build the header for Preference Applied</a>
+<span class="sourceLineNo">164</span><a id="line.164">        final String appliedReturn = value.equals("minimal") ? "return=minimal" : "return=representation";</a>
+<span class="sourceLineNo">165</span><a id="line.165">        final String appliedReceived = receivedParam.equals("minimal") ? "received=minimal" : "";</a>
+<span class="sourceLineNo">166</span><a id="line.166"></a>
+<span class="sourceLineNo">167</span><a id="line.167">        final StringBuilder preferenceAppliedBuilder = new StringBuilder(appliedReturn);</a>
+<span class="sourceLineNo">168</span><a id="line.168">        preferenceAppliedBuilder.append(appliedReceived.length() &gt; 0 ? "; " + appliedReceived : "");</a>
+<span class="sourceLineNo">169</span><a id="line.169">        appendHeaderParam(preferenceAppliedBuilder, "include", includeBuilder.toString().trim());</a>
+<span class="sourceLineNo">170</span><a id="line.170">        appendHeaderParam(preferenceAppliedBuilder, "omit", omitBuilder.toString().trim());</a>
+<span class="sourceLineNo">171</span><a id="line.171"></a>
+<span class="sourceLineNo">172</span><a id="line.172">        servletResponse.addHeader("Preference-Applied", preferenceAppliedBuilder.toString().trim());</a>
+<span class="sourceLineNo">173</span><a id="line.173"></a>
+<span class="sourceLineNo">174</span><a id="line.174">        servletResponse.addHeader("Vary", "Prefer");</a>
+<span class="sourceLineNo">175</span><a id="line.175">    }</a>
+<span class="sourceLineNo">176</span><a id="line.176"></a>
+<span class="sourceLineNo">177</span><a id="line.177">    private void appendHeaderParam(final StringBuilder builder, final String paramName, final String paramValue) {</a>
+<span class="sourceLineNo">178</span><a id="line.178">        if (paramValue.length() &gt; 0) {</a>
+<span class="sourceLineNo">179</span><a id="line.179">            builder.append("; " + paramName + "=\"" + paramValue.trim() + "\"");</a>
+<span class="sourceLineNo">180</span><a id="line.180">        }</a>
+<span class="sourceLineNo">181</span><a id="line.181">    }</a>
+<span class="sourceLineNo">182</span><a id="line.182"></a>
+<span class="sourceLineNo">183</span><a id="line.183">    /**</a>
+<span class="sourceLineNo">184</span><a id="line.184">     * We consider tags with the same name to be equal, because &lt;a</a>
+<span class="sourceLineNo">185</span><a id="line.185">     * href="http://tools.ietf.org/html/rfc7240#page-4"&gt;the definition of Prefer headers&lt;/a&gt; does not permit that tags</a>
+<span class="sourceLineNo">186</span><a id="line.186">     * with the same name be consumed except by selecting for the first appearing tag.</a>
+<span class="sourceLineNo">187</span><a id="line.187">     *</a>
+<span class="sourceLineNo">188</span><a id="line.188">     * @see java.lang.Comparable#compareTo(java.lang.Object)</a>
+<span class="sourceLineNo">189</span><a id="line.189">     */</a>
+<span class="sourceLineNo">190</span><a id="line.190">    @Override</a>
+<span class="sourceLineNo">191</span><a id="line.191">    public int compareTo(final PreferTag otherTag) {</a>
+<span class="sourceLineNo">192</span><a id="line.192">        return getTag().compareTo(otherTag.getTag());</a>
+<span class="sourceLineNo">193</span><a id="line.193">    }</a>
+<span class="sourceLineNo">194</span><a id="line.194"></a>
+<span class="sourceLineNo">195</span><a id="line.195">    @Override</a>
+<span class="sourceLineNo">196</span><a id="line.196">    public boolean equals(final Object obj) {</a>
+<span class="sourceLineNo">197</span><a id="line.197">        if ((obj instanceof PreferTag)) {</a>
+<span class="sourceLineNo">198</span><a id="line.198">            return getTag().equals(((PreferTag) obj).getTag());</a>
+<span class="sourceLineNo">199</span><a id="line.199">        }</a>
+<span class="sourceLineNo">200</span><a id="line.200">        return false;</a>
+<span class="sourceLineNo">201</span><a id="line.201">    }</a>
+<span class="sourceLineNo">202</span><a id="line.202"></a>
+<span class="sourceLineNo">203</span><a id="line.203">    @Override</a>
+<span class="sourceLineNo">204</span><a id="line.204">    public int hashCode() {</a>
+<span class="sourceLineNo">205</span><a id="line.205">        if (getTag() == null) {</a>
+<span class="sourceLineNo">206</span><a id="line.206">            return 0;</a>
+<span class="sourceLineNo">207</span><a id="line.207">        }</a>
+<span class="sourceLineNo">208</span><a id="line.208">        return getTag().hashCode();</a>
+<span class="sourceLineNo">209</span><a id="line.209">    }</a>
+<span class="sourceLineNo">210</span><a id="line.210">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>
