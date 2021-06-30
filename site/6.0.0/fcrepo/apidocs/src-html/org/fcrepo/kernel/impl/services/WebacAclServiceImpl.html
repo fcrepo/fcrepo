@@ -1,0 +1,183 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * Licensed to DuraSpace under one or more contributor license agreements.</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * See the NOTICE file distributed with this work for additional information</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * regarding copyright ownership.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> *</a>
+<span class="sourceLineNo">006</span><a id="line.6"> * DuraSpace licenses this file to you under the Apache License,</a>
+<span class="sourceLineNo">007</span><a id="line.7"> * Version 2.0 (the "License"); you may not use this file except in</a>
+<span class="sourceLineNo">008</span><a id="line.8"> * compliance with the License.  You may obtain a copy of the License at</a>
+<span class="sourceLineNo">009</span><a id="line.9"> *</a>
+<span class="sourceLineNo">010</span><a id="line.10"> *     http://www.apache.org/licenses/LICENSE-2.0</a>
+<span class="sourceLineNo">011</span><a id="line.11"> *</a>
+<span class="sourceLineNo">012</span><a id="line.12"> * Unless required by applicable law or agreed to in writing, software</a>
+<span class="sourceLineNo">013</span><a id="line.13"> * distributed under the License is distributed on an "AS IS" BASIS,</a>
+<span class="sourceLineNo">014</span><a id="line.14"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<span class="sourceLineNo">015</span><a id="line.15"> * See the License for the specific language governing permissions and</a>
+<span class="sourceLineNo">016</span><a id="line.16"> * limitations under the License.</a>
+<span class="sourceLineNo">017</span><a id="line.17"> */</a>
+<span class="sourceLineNo">018</span><a id="line.18">package org.fcrepo.kernel.impl.services;</a>
+<span class="sourceLineNo">019</span><a id="line.19"></a>
+<span class="sourceLineNo">020</span><a id="line.20">import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_WEBAC_ACL_URI;</a>
+<span class="sourceLineNo">021</span><a id="line.21">import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;</a>
+<span class="sourceLineNo">022</span><a id="line.22"></a>
+<span class="sourceLineNo">023</span><a id="line.23">import java.util.Optional;</a>
+<span class="sourceLineNo">024</span><a id="line.24"></a>
+<span class="sourceLineNo">025</span><a id="line.25">import javax.inject.Inject;</a>
+<span class="sourceLineNo">026</span><a id="line.26"></a>
+<span class="sourceLineNo">027</span><a id="line.27">import org.fcrepo.kernel.api.RdfStream;</a>
+<span class="sourceLineNo">028</span><a id="line.28">import org.fcrepo.kernel.api.Transaction;</a>
+<span class="sourceLineNo">029</span><a id="line.29">import org.fcrepo.kernel.api.auth.ACLHandle;</a>
+<span class="sourceLineNo">030</span><a id="line.30">import org.fcrepo.kernel.api.exception.PathNotFoundException;</a>
+<span class="sourceLineNo">031</span><a id="line.31">import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;</a>
+<span class="sourceLineNo">032</span><a id="line.32">import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;</a>
+<span class="sourceLineNo">033</span><a id="line.33">import org.fcrepo.kernel.api.identifiers.FedoraId;</a>
+<span class="sourceLineNo">034</span><a id="line.34">import org.fcrepo.kernel.api.models.ResourceFactory;</a>
+<span class="sourceLineNo">035</span><a id="line.35">import org.fcrepo.kernel.api.models.WebacAcl;</a>
+<span class="sourceLineNo">036</span><a id="line.36">import org.fcrepo.kernel.api.operations.RdfSourceOperation;</a>
+<span class="sourceLineNo">037</span><a id="line.37">import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;</a>
+<span class="sourceLineNo">038</span><a id="line.38">import org.fcrepo.kernel.api.services.WebacAclService;</a>
+<span class="sourceLineNo">039</span><a id="line.39">import org.fcrepo.kernel.impl.models.WebacAclImpl;</a>
+<span class="sourceLineNo">040</span><a id="line.40">import org.fcrepo.persistence.api.PersistentStorageSession;</a>
+<span class="sourceLineNo">041</span><a id="line.41">import org.fcrepo.persistence.api.PersistentStorageSessionManager;</a>
+<span class="sourceLineNo">042</span><a id="line.42">import org.fcrepo.persistence.api.exceptions.PersistentStorageException;</a>
+<span class="sourceLineNo">043</span><a id="line.43">import org.springframework.stereotype.Component;</a>
+<span class="sourceLineNo">044</span><a id="line.44"></a>
+<span class="sourceLineNo">045</span><a id="line.45">import org.apache.jena.rdf.model.Model;</a>
+<span class="sourceLineNo">046</span><a id="line.46"></a>
+<span class="sourceLineNo">047</span><a id="line.47">import com.github.benmanes.caffeine.cache.Cache;</a>
+<span class="sourceLineNo">048</span><a id="line.48"></a>
+<span class="sourceLineNo">049</span><a id="line.49">/**</a>
+<span class="sourceLineNo">050</span><a id="line.50"> * Implementation of {@link WebacAclService}</a>
+<span class="sourceLineNo">051</span><a id="line.51"> *</a>
+<span class="sourceLineNo">052</span><a id="line.52"> * @author dbernstein</a>
+<span class="sourceLineNo">053</span><a id="line.53"> */</a>
+<span class="sourceLineNo">054</span><a id="line.54">@Component</a>
+<span class="sourceLineNo">055</span><a id="line.55">public class WebacAclServiceImpl extends AbstractService implements WebacAclService {</a>
+<span class="sourceLineNo">056</span><a id="line.56"></a>
+<span class="sourceLineNo">057</span><a id="line.57">    @Inject</a>
+<span class="sourceLineNo">058</span><a id="line.58">    private PersistentStorageSessionManager psManager;</a>
+<span class="sourceLineNo">059</span><a id="line.59"></a>
+<span class="sourceLineNo">060</span><a id="line.60">    @Inject</a>
+<span class="sourceLineNo">061</span><a id="line.61">    private ResourceFactory resourceFactory;</a>
+<span class="sourceLineNo">062</span><a id="line.62"></a>
+<span class="sourceLineNo">063</span><a id="line.63">    @Inject</a>
+<span class="sourceLineNo">064</span><a id="line.64">    private RdfSourceOperationFactory rdfSourceOperationFactory;</a>
+<span class="sourceLineNo">065</span><a id="line.65"></a>
+<span class="sourceLineNo">066</span><a id="line.66">    @Inject</a>
+<span class="sourceLineNo">067</span><a id="line.67">    private Cache&lt;String, Optional&lt;ACLHandle&gt;&gt; authHandleCache;</a>
+<span class="sourceLineNo">068</span><a id="line.68"></a>
+<span class="sourceLineNo">069</span><a id="line.69">    @Override</a>
+<span class="sourceLineNo">070</span><a id="line.70">    public WebacAcl find(final Transaction transaction, final FedoraId fedoraId) {</a>
+<span class="sourceLineNo">071</span><a id="line.71">        try {</a>
+<span class="sourceLineNo">072</span><a id="line.72">            return resourceFactory.getResource(transaction, fedoraId, WebacAclImpl.class);</a>
+<span class="sourceLineNo">073</span><a id="line.73">        } catch (final PathNotFoundException exc) {</a>
+<span class="sourceLineNo">074</span><a id="line.74">            throw new PathNotFoundRuntimeException(exc.getMessage(), exc);</a>
+<span class="sourceLineNo">075</span><a id="line.75">        }</a>
+<span class="sourceLineNo">076</span><a id="line.76">    }</a>
+<span class="sourceLineNo">077</span><a id="line.77"></a>
+<span class="sourceLineNo">078</span><a id="line.78">    @Override</a>
+<span class="sourceLineNo">079</span><a id="line.79">    public void create(final Transaction transaction, final FedoraId fedoraId, final String userPrincipal,</a>
+<span class="sourceLineNo">080</span><a id="line.80">                                 final Model model) {</a>
+<span class="sourceLineNo">081</span><a id="line.81">        final PersistentStorageSession pSession = this.psManager.getSession(transaction);</a>
+<span class="sourceLineNo">082</span><a id="line.82"></a>
+<span class="sourceLineNo">083</span><a id="line.83">        ensureValidACLAuthorization(model);</a>
+<span class="sourceLineNo">084</span><a id="line.84"></a>
+<span class="sourceLineNo">085</span><a id="line.85">        final RdfStream stream = fromModel(model.getResource(fedoraId.getFullId()).asNode(), model);</a>
+<span class="sourceLineNo">086</span><a id="line.86"></a>
+<span class="sourceLineNo">087</span><a id="line.87">        final RdfSourceOperation createOp = rdfSourceOperationFactory</a>
+<span class="sourceLineNo">088</span><a id="line.88">                .createBuilder(transaction, fedoraId, FEDORA_WEBAC_ACL_URI,</a>
+<span class="sourceLineNo">089</span><a id="line.89">                        fedoraPropsConfig.getServerManagedPropsMode())</a>
+<span class="sourceLineNo">090</span><a id="line.90">                .parentId(fedoraId.asBaseId())</a>
+<span class="sourceLineNo">091</span><a id="line.91">                .triples(stream)</a>
+<span class="sourceLineNo">092</span><a id="line.92">                .relaxedProperties(model)</a>
+<span class="sourceLineNo">093</span><a id="line.93">                .userPrincipal(userPrincipal)</a>
+<span class="sourceLineNo">094</span><a id="line.94">                .build();</a>
+<span class="sourceLineNo">095</span><a id="line.95"></a>
+<span class="sourceLineNo">096</span><a id="line.96">        lockArchivalGroupResourceFromParent(transaction, pSession, fedoraId.asBaseId());</a>
+<span class="sourceLineNo">097</span><a id="line.97">        transaction.lockResource(fedoraId);</a>
+<span class="sourceLineNo">098</span><a id="line.98"></a>
+<span class="sourceLineNo">099</span><a id="line.99">        try {</a>
+<span class="sourceLineNo">100</span><a id="line.100">            pSession.persist(createOp);</a>
+<span class="sourceLineNo">101</span><a id="line.101">            recordEvent(transaction, fedoraId, createOp);</a>
+<span class="sourceLineNo">102</span><a id="line.102">            // Flush ACL cache on any ACL creation/update/deletion.</a>
+<span class="sourceLineNo">103</span><a id="line.103">            authHandleCache.invalidateAll();</a>
+<span class="sourceLineNo">104</span><a id="line.104">        } catch (final PersistentStorageException exc) {</a>
+<span class="sourceLineNo">105</span><a id="line.105">            throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);</a>
+<span class="sourceLineNo">106</span><a id="line.106">        }</a>
+<span class="sourceLineNo">107</span><a id="line.107">    }</a>
+<span class="sourceLineNo">108</span><a id="line.108"></a>
+<span class="sourceLineNo">109</span><a id="line.109">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>

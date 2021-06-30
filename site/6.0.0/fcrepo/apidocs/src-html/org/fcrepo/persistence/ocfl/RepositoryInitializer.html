@@ -1,0 +1,205 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * Licensed to DuraSpace under one or more contributor license agreements.</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * See the NOTICE file distributed with this work for additional information</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * regarding copyright ownership.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> *</a>
+<span class="sourceLineNo">006</span><a id="line.6"> * DuraSpace licenses this file to you under the Apache License,</a>
+<span class="sourceLineNo">007</span><a id="line.7"> * Version 2.0 (the "License"); you may not use this file except in</a>
+<span class="sourceLineNo">008</span><a id="line.8"> * compliance with the License.  You may obtain a copy of the License at</a>
+<span class="sourceLineNo">009</span><a id="line.9"> *</a>
+<span class="sourceLineNo">010</span><a id="line.10"> *     http://www.apache.org/licenses/LICENSE-2.0</a>
+<span class="sourceLineNo">011</span><a id="line.11"> *</a>
+<span class="sourceLineNo">012</span><a id="line.12"> * Unless required by applicable law or agreed to in writing, software</a>
+<span class="sourceLineNo">013</span><a id="line.13"> * distributed under the License is distributed on an "AS IS" BASIS,</a>
+<span class="sourceLineNo">014</span><a id="line.14"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<span class="sourceLineNo">015</span><a id="line.15"> * See the License for the specific language governing permissions and</a>
+<span class="sourceLineNo">016</span><a id="line.16"> * limitations under the License.</a>
+<span class="sourceLineNo">017</span><a id="line.17"> */</a>
+<span class="sourceLineNo">018</span><a id="line.18">package org.fcrepo.persistence.ocfl;</a>
+<span class="sourceLineNo">019</span><a id="line.19"></a>
+<span class="sourceLineNo">020</span><a id="line.20"></a>
+<span class="sourceLineNo">021</span><a id="line.21">import org.fcrepo.config.FedoraPropsConfig;</a>
+<span class="sourceLineNo">022</span><a id="line.22">import org.fcrepo.config.OcflPropsConfig;</a>
+<span class="sourceLineNo">023</span><a id="line.23">import org.fcrepo.kernel.api.TransactionManager;</a>
+<span class="sourceLineNo">024</span><a id="line.24">import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;</a>
+<span class="sourceLineNo">025</span><a id="line.25">import org.fcrepo.kernel.api.identifiers.FedoraId;</a>
+<span class="sourceLineNo">026</span><a id="line.26">import org.fcrepo.kernel.api.operations.RdfSourceOperation;</a>
+<span class="sourceLineNo">027</span><a id="line.27">import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;</a>
+<span class="sourceLineNo">028</span><a id="line.28">import org.fcrepo.kernel.api.operations.VersionResourceOperationFactory;</a>
+<span class="sourceLineNo">029</span><a id="line.29">import org.fcrepo.persistence.api.PersistentStorageSession;</a>
+<span class="sourceLineNo">030</span><a id="line.30">import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;</a>
+<span class="sourceLineNo">031</span><a id="line.31">import org.fcrepo.persistence.api.exceptions.PersistentStorageException;</a>
+<span class="sourceLineNo">032</span><a id="line.32">import org.fcrepo.persistence.ocfl.api.IndexBuilder;</a>
+<span class="sourceLineNo">033</span><a id="line.33">import org.fcrepo.persistence.ocfl.impl.OcflPersistentSessionManager;</a>
+<span class="sourceLineNo">034</span><a id="line.34">import org.slf4j.Logger;</a>
+<span class="sourceLineNo">035</span><a id="line.35">import org.slf4j.LoggerFactory;</a>
+<span class="sourceLineNo">036</span><a id="line.36">import org.springframework.context.ConfigurableApplicationContext;</a>
+<span class="sourceLineNo">037</span><a id="line.37">import org.springframework.context.event.ContextRefreshedEvent;</a>
+<span class="sourceLineNo">038</span><a id="line.38">import org.springframework.context.event.EventListener;</a>
+<span class="sourceLineNo">039</span><a id="line.39">import org.springframework.stereotype.Component;</a>
+<span class="sourceLineNo">040</span><a id="line.40"></a>
+<span class="sourceLineNo">041</span><a id="line.41">import javax.inject.Inject;</a>
+<span class="sourceLineNo">042</span><a id="line.42"></a>
+<span class="sourceLineNo">043</span><a id="line.43">import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;</a>
+<span class="sourceLineNo">044</span><a id="line.44"></a>
+<span class="sourceLineNo">045</span><a id="line.45">/**</a>
+<span class="sourceLineNo">046</span><a id="line.46"> * This class is responsible for initializing the repository on start-up.</a>
+<span class="sourceLineNo">047</span><a id="line.47"> *</a>
+<span class="sourceLineNo">048</span><a id="line.48"> * @author dbernstein</a>
+<span class="sourceLineNo">049</span><a id="line.49"> */</a>
+<span class="sourceLineNo">050</span><a id="line.50">@Component</a>
+<span class="sourceLineNo">051</span><a id="line.51">public class RepositoryInitializer {</a>
+<span class="sourceLineNo">052</span><a id="line.52"></a>
+<span class="sourceLineNo">053</span><a id="line.53">    private static final Logger LOGGER = LoggerFactory.getLogger(RepositoryInitializer.class);</a>
+<span class="sourceLineNo">054</span><a id="line.54"></a>
+<span class="sourceLineNo">055</span><a id="line.55">    @Inject</a>
+<span class="sourceLineNo">056</span><a id="line.56">    private OcflPersistentSessionManager sessionManager;</a>
+<span class="sourceLineNo">057</span><a id="line.57"></a>
+<span class="sourceLineNo">058</span><a id="line.58">    @Inject</a>
+<span class="sourceLineNo">059</span><a id="line.59">    private RdfSourceOperationFactory operationFactory;</a>
+<span class="sourceLineNo">060</span><a id="line.60"></a>
+<span class="sourceLineNo">061</span><a id="line.61">    @Inject</a>
+<span class="sourceLineNo">062</span><a id="line.62">    private IndexBuilder indexBuilder;</a>
+<span class="sourceLineNo">063</span><a id="line.63"></a>
+<span class="sourceLineNo">064</span><a id="line.64">    @Inject</a>
+<span class="sourceLineNo">065</span><a id="line.65">    private VersionResourceOperationFactory versionResourceOperationFactory;</a>
+<span class="sourceLineNo">066</span><a id="line.66"></a>
+<span class="sourceLineNo">067</span><a id="line.67">    @Inject</a>
+<span class="sourceLineNo">068</span><a id="line.68">    private OcflPropsConfig config;</a>
+<span class="sourceLineNo">069</span><a id="line.69"></a>
+<span class="sourceLineNo">070</span><a id="line.70">    @Inject</a>
+<span class="sourceLineNo">071</span><a id="line.71">    private FedoraPropsConfig fedoraPropsConfig;</a>
+<span class="sourceLineNo">072</span><a id="line.72"></a>
+<span class="sourceLineNo">073</span><a id="line.73">    @Inject</a>
+<span class="sourceLineNo">074</span><a id="line.74">    private TransactionManager txManager;</a>
+<span class="sourceLineNo">075</span><a id="line.75"></a>
+<span class="sourceLineNo">076</span><a id="line.76">    // This is used in-place of @PostConstruct so that it is called _after_ the rest of context has been</a>
+<span class="sourceLineNo">077</span><a id="line.77">    // completely initialized.</a>
+<span class="sourceLineNo">078</span><a id="line.78">    @EventListener</a>
+<span class="sourceLineNo">079</span><a id="line.79">    public void onApplicationEvent(final ContextRefreshedEvent event) {</a>
+<span class="sourceLineNo">080</span><a id="line.80">        try {</a>
+<span class="sourceLineNo">081</span><a id="line.81">            initialize();</a>
+<span class="sourceLineNo">082</span><a id="line.82">        } catch (Exception e) {</a>
+<span class="sourceLineNo">083</span><a id="line.83">            LOGGER.error("Failed to initialize repository", e);</a>
+<span class="sourceLineNo">084</span><a id="line.84">            ((ConfigurableApplicationContext) event.getApplicationContext()).close();</a>
+<span class="sourceLineNo">085</span><a id="line.85">        }</a>
+<span class="sourceLineNo">086</span><a id="line.86">    }</a>
+<span class="sourceLineNo">087</span><a id="line.87"></a>
+<span class="sourceLineNo">088</span><a id="line.88">    /**</a>
+<span class="sourceLineNo">089</span><a id="line.89">     * Initializes the repository</a>
+<span class="sourceLineNo">090</span><a id="line.90">     */</a>
+<span class="sourceLineNo">091</span><a id="line.91">    public void initialize() {</a>
+<span class="sourceLineNo">092</span><a id="line.92">        LOGGER.info("Initializing repository");</a>
+<span class="sourceLineNo">093</span><a id="line.93"></a>
+<span class="sourceLineNo">094</span><a id="line.94">        indexBuilder.rebuildIfNecessary();</a>
+<span class="sourceLineNo">095</span><a id="line.95"></a>
+<span class="sourceLineNo">096</span><a id="line.96">        final var root = FedoraId.getRepositoryRootId();</a>
+<span class="sourceLineNo">097</span><a id="line.97"></a>
+<span class="sourceLineNo">098</span><a id="line.98">        try {</a>
+<span class="sourceLineNo">099</span><a id="line.99">            //check that the root is initialized</a>
+<span class="sourceLineNo">100</span><a id="line.100">            final var transaction = txManager.create();</a>
+<span class="sourceLineNo">101</span><a id="line.101">            transaction.setShortLived(true);</a>
+<span class="sourceLineNo">102</span><a id="line.102">            final PersistentStorageSession session = this.sessionManager.getSession(transaction);</a>
+<span class="sourceLineNo">103</span><a id="line.103"></a>
+<span class="sourceLineNo">104</span><a id="line.104">            try {</a>
+<span class="sourceLineNo">105</span><a id="line.105">                session.getHeaders(root, null);</a>
+<span class="sourceLineNo">106</span><a id="line.106">            } catch (final PersistentItemNotFoundException e) {</a>
+<span class="sourceLineNo">107</span><a id="line.107">                LOGGER.debug("Repository root ({}) not found. Creating...", root);</a>
+<span class="sourceLineNo">108</span><a id="line.108">                final RdfSourceOperation operation = this.operationFactory.createBuilder(transaction, root,</a>
+<span class="sourceLineNo">109</span><a id="line.109">                        BASIC_CONTAINER.getURI(), fedoraPropsConfig.getServerManagedPropsMode())</a>
+<span class="sourceLineNo">110</span><a id="line.110">                        .parentId(root).build();</a>
+<span class="sourceLineNo">111</span><a id="line.111"></a>
+<span class="sourceLineNo">112</span><a id="line.112">                session.persist(operation);</a>
+<span class="sourceLineNo">113</span><a id="line.113"></a>
+<span class="sourceLineNo">114</span><a id="line.114">                //if auto versioning is not enabled, be sure to create an immutable version</a>
+<span class="sourceLineNo">115</span><a id="line.115">                if (!config.isAutoVersioningEnabled()) {</a>
+<span class="sourceLineNo">116</span><a id="line.116">                    final var versionOperation = this.versionResourceOperationFactory</a>
+<span class="sourceLineNo">117</span><a id="line.117">                            .createBuilder(transaction, root).build();</a>
+<span class="sourceLineNo">118</span><a id="line.118">                    session.persist(versionOperation);</a>
+<span class="sourceLineNo">119</span><a id="line.119">                }</a>
+<span class="sourceLineNo">120</span><a id="line.120"></a>
+<span class="sourceLineNo">121</span><a id="line.121">                transaction.commit();</a>
+<span class="sourceLineNo">122</span><a id="line.122"></a>
+<span class="sourceLineNo">123</span><a id="line.123">                LOGGER.debug("Successfully created repository root ({}).", root);</a>
+<span class="sourceLineNo">124</span><a id="line.124">            }</a>
+<span class="sourceLineNo">125</span><a id="line.125"></a>
+<span class="sourceLineNo">126</span><a id="line.126">        } catch (final PersistentStorageException ex) {</a>
+<span class="sourceLineNo">127</span><a id="line.127">            throw new RepositoryRuntimeException(ex.getMessage(), ex);</a>
+<span class="sourceLineNo">128</span><a id="line.128">        }</a>
+<span class="sourceLineNo">129</span><a id="line.129">    }</a>
+<span class="sourceLineNo">130</span><a id="line.130"></a>
+<span class="sourceLineNo">131</span><a id="line.131">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>

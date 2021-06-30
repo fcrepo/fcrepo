@@ -1,0 +1,274 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * Licensed to DuraSpace under one or more contributor license agreements.</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * See the NOTICE file distributed with this work for additional information</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * regarding copyright ownership.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> *</a>
+<span class="sourceLineNo">006</span><a id="line.6"> * DuraSpace licenses this file to you under the Apache License,</a>
+<span class="sourceLineNo">007</span><a id="line.7"> * Version 2.0 (the "License"); you may not use this file except in</a>
+<span class="sourceLineNo">008</span><a id="line.8"> * compliance with the License.  You may obtain a copy of the License at</a>
+<span class="sourceLineNo">009</span><a id="line.9"> *</a>
+<span class="sourceLineNo">010</span><a id="line.10"> *     http://www.apache.org/licenses/LICENSE-2.0</a>
+<span class="sourceLineNo">011</span><a id="line.11"> *</a>
+<span class="sourceLineNo">012</span><a id="line.12"> * Unless required by applicable law or agreed to in writing, software</a>
+<span class="sourceLineNo">013</span><a id="line.13"> * distributed under the License is distributed on an "AS IS" BASIS,</a>
+<span class="sourceLineNo">014</span><a id="line.14"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<span class="sourceLineNo">015</span><a id="line.15"> * See the License for the specific language governing permissions and</a>
+<span class="sourceLineNo">016</span><a id="line.16"> * limitations under the License.</a>
+<span class="sourceLineNo">017</span><a id="line.17"> */</a>
+<span class="sourceLineNo">018</span><a id="line.18">package org.fcrepo.http.api;</a>
+<span class="sourceLineNo">019</span><a id="line.19"></a>
+<span class="sourceLineNo">020</span><a id="line.20">import static javax.ws.rs.core.MediaType.APPLICATION_JSON;</a>
+<span class="sourceLineNo">021</span><a id="line.21">import static javax.ws.rs.core.Response.ok;</a>
+<span class="sourceLineNo">022</span><a id="line.22">import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;</a>
+<span class="sourceLineNo">023</span><a id="line.23">import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;</a>
+<span class="sourceLineNo">024</span><a id="line.24">import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;</a>
+<span class="sourceLineNo">025</span><a id="line.25">import static org.slf4j.LoggerFactory.getLogger;</a>
+<span class="sourceLineNo">026</span><a id="line.26"></a>
+<span class="sourceLineNo">027</span><a id="line.27">import java.net.URL;</a>
+<span class="sourceLineNo">028</span><a id="line.28">import java.util.ArrayList;</a>
+<span class="sourceLineNo">029</span><a id="line.29">import java.util.Arrays;</a>
+<span class="sourceLineNo">030</span><a id="line.30">import java.util.List;</a>
+<span class="sourceLineNo">031</span><a id="line.31"></a>
+<span class="sourceLineNo">032</span><a id="line.32">import javax.ws.rs.BadRequestException;</a>
+<span class="sourceLineNo">033</span><a id="line.33">import javax.ws.rs.DefaultValue;</a>
+<span class="sourceLineNo">034</span><a id="line.34">import javax.ws.rs.GET;</a>
+<span class="sourceLineNo">035</span><a id="line.35">import javax.ws.rs.Path;</a>
+<span class="sourceLineNo">036</span><a id="line.36">import javax.ws.rs.Produces;</a>
+<span class="sourceLineNo">037</span><a id="line.37">import javax.ws.rs.QueryParam;</a>
+<span class="sourceLineNo">038</span><a id="line.38">import javax.ws.rs.core.Response;</a>
+<span class="sourceLineNo">039</span><a id="line.39"></a>
+<span class="sourceLineNo">040</span><a id="line.40">import io.micrometer.core.annotation.Timed;</a>
+<span class="sourceLineNo">041</span><a id="line.41">import org.apache.commons.lang3.StringUtils;</a>
+<span class="sourceLineNo">042</span><a id="line.42">import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;</a>
+<span class="sourceLineNo">043</span><a id="line.43">import org.fcrepo.search.api.Condition;</a>
+<span class="sourceLineNo">044</span><a id="line.44">import org.fcrepo.search.api.InvalidConditionExpressionException;</a>
+<span class="sourceLineNo">045</span><a id="line.45">import org.fcrepo.search.api.InvalidQueryException;</a>
+<span class="sourceLineNo">046</span><a id="line.46">import org.fcrepo.search.api.SearchIndex;</a>
+<span class="sourceLineNo">047</span><a id="line.47">import org.fcrepo.search.api.SearchParameters;</a>
+<span class="sourceLineNo">048</span><a id="line.48">import org.fcrepo.search.api.SearchResult;</a>
+<span class="sourceLineNo">049</span><a id="line.49">import org.slf4j.Logger;</a>
+<span class="sourceLineNo">050</span><a id="line.50">import org.springframework.beans.factory.annotation.Autowired;</a>
+<span class="sourceLineNo">051</span><a id="line.51">import org.springframework.beans.factory.annotation.Qualifier;</a>
+<span class="sourceLineNo">052</span><a id="line.52">import org.springframework.context.annotation.Scope;</a>
+<span class="sourceLineNo">053</span><a id="line.53"></a>
+<span class="sourceLineNo">054</span><a id="line.54">/**</a>
+<span class="sourceLineNo">055</span><a id="line.55"> * @author dbernstein</a>
+<span class="sourceLineNo">056</span><a id="line.56"> * @since 05/06/20</a>
+<span class="sourceLineNo">057</span><a id="line.57"> */</a>
+<span class="sourceLineNo">058</span><a id="line.58">@Timed</a>
+<span class="sourceLineNo">059</span><a id="line.59">@Scope("request")</a>
+<span class="sourceLineNo">060</span><a id="line.60">@Path("/fcr:search")</a>
+<span class="sourceLineNo">061</span><a id="line.61">public class FedoraSearch extends FedoraBaseResource {</a>
+<span class="sourceLineNo">062</span><a id="line.62"></a>
+<span class="sourceLineNo">063</span><a id="line.63">    private static final Logger LOGGER = getLogger(FedoraSearch.class);</a>
+<span class="sourceLineNo">064</span><a id="line.64"></a>
+<span class="sourceLineNo">065</span><a id="line.65">    @Autowired</a>
+<span class="sourceLineNo">066</span><a id="line.66">    @Qualifier("searchIndex")</a>
+<span class="sourceLineNo">067</span><a id="line.67">    private SearchIndex searchIndex;</a>
+<span class="sourceLineNo">068</span><a id="line.68"></a>
+<span class="sourceLineNo">069</span><a id="line.69">    /**</a>
+<span class="sourceLineNo">070</span><a id="line.70">     * Default JAX-RS entry point</a>
+<span class="sourceLineNo">071</span><a id="line.71">     */</a>
+<span class="sourceLineNo">072</span><a id="line.72">    public FedoraSearch() {</a>
+<span class="sourceLineNo">073</span><a id="line.73">        super();</a>
+<span class="sourceLineNo">074</span><a id="line.74">    }</a>
+<span class="sourceLineNo">075</span><a id="line.75"></a>
+<span class="sourceLineNo">076</span><a id="line.76">    /**</a>
+<span class="sourceLineNo">077</span><a id="line.77">     * Perform simple search on the repository</a>
+<span class="sourceLineNo">078</span><a id="line.78">     *</a>
+<span class="sourceLineNo">079</span><a id="line.79">     * @param conditions The conditions constraining the query</a>
+<span class="sourceLineNo">080</span><a id="line.80">     * @param fields     The fields to return in results</a>
+<span class="sourceLineNo">081</span><a id="line.81">     * @param maxResults The max number of results to return</a>
+<span class="sourceLineNo">082</span><a id="line.82">     * @param offset     The zero-based offset of the first result to be returned</a>
+<span class="sourceLineNo">083</span><a id="line.83">     * @param order      The order: ie "asc" or "desc"</a>
+<span class="sourceLineNo">084</span><a id="line.84">     * @param orderBy    The field by which to order the results</a>
+<span class="sourceLineNo">085</span><a id="line.85">     * @param includeTotalResultCount A flag for including total result count (false by default)</a>
+<span class="sourceLineNo">086</span><a id="line.86">     * @return A response object with the search results</a>
+<span class="sourceLineNo">087</span><a id="line.87">     */</a>
+<span class="sourceLineNo">088</span><a id="line.88">    @GET</a>
+<span class="sourceLineNo">089</span><a id="line.89">    @Produces({APPLICATION_JSON + ";qs=1.0",</a>
+<span class="sourceLineNo">090</span><a id="line.90">            TEXT_PLAIN_WITH_CHARSET,</a>
+<span class="sourceLineNo">091</span><a id="line.91">            TEXT_HTML_WITH_CHARSET})</a>
+<span class="sourceLineNo">092</span><a id="line.92">    public Response doSearch(@QueryParam(value = "condition") final List&lt;String&gt; conditions,</a>
+<span class="sourceLineNo">093</span><a id="line.93">                             @QueryParam(value = "fields") final String fields,</a>
+<span class="sourceLineNo">094</span><a id="line.94">                             @DefaultValue("100") @QueryParam("max_results") final int maxResults,</a>
+<span class="sourceLineNo">095</span><a id="line.95">                             @DefaultValue("0") @QueryParam("offset") final int offset,</a>
+<span class="sourceLineNo">096</span><a id="line.96">                             @DefaultValue("asc") @QueryParam("order") final String order,</a>
+<span class="sourceLineNo">097</span><a id="line.97">                             @QueryParam("order_by") final String orderBy,</a>
+<span class="sourceLineNo">098</span><a id="line.98">                             @DefaultValue("false") @QueryParam("include_total_result_count")</a>
+<span class="sourceLineNo">099</span><a id="line.99">                                         final boolean includeTotalResultCount) {</a>
+<span class="sourceLineNo">100</span><a id="line.100"></a>
+<span class="sourceLineNo">101</span><a id="line.101">        LOGGER.info("GET on search with conditions: {}, and fields: {}", conditions, fields);</a>
+<span class="sourceLineNo">102</span><a id="line.102">        try {</a>
+<span class="sourceLineNo">103</span><a id="line.103">            final var conditionList = new ArrayList&lt;Condition&gt;();</a>
+<span class="sourceLineNo">104</span><a id="line.104">            for (final String condition : conditions) {</a>
+<span class="sourceLineNo">105</span><a id="line.105">                final var parsedCondition = parse(condition, identifierConverter());</a>
+<span class="sourceLineNo">106</span><a id="line.106">                conditionList.add(parsedCondition);</a>
+<span class="sourceLineNo">107</span><a id="line.107">            }</a>
+<span class="sourceLineNo">108</span><a id="line.108"></a>
+<span class="sourceLineNo">109</span><a id="line.109">            List&lt;Condition.Field&gt; parsedFields = null;</a>
+<span class="sourceLineNo">110</span><a id="line.110">            if (StringUtils.isBlank(fields) || fields.equals("*")) {</a>
+<span class="sourceLineNo">111</span><a id="line.111">                parsedFields = Arrays.asList(Condition.Field.values());</a>
+<span class="sourceLineNo">112</span><a id="line.112">            } else {</a>
+<span class="sourceLineNo">113</span><a id="line.113">                parsedFields = new ArrayList&lt;&gt;();</a>
+<span class="sourceLineNo">114</span><a id="line.114">                for (final String field : fields.split(",")) {</a>
+<span class="sourceLineNo">115</span><a id="line.115">                    try {</a>
+<span class="sourceLineNo">116</span><a id="line.116">                        parsedFields.add(Condition.Field.fromString(field));</a>
+<span class="sourceLineNo">117</span><a id="line.117">                    } catch (final Exception e) {</a>
+<span class="sourceLineNo">118</span><a id="line.118">                        throw new InvalidQueryException("The field \"" + field + "\" is not a valid output field.");</a>
+<span class="sourceLineNo">119</span><a id="line.119">                    }</a>
+<span class="sourceLineNo">120</span><a id="line.120">                }</a>
+<span class="sourceLineNo">121</span><a id="line.121">            }</a>
+<span class="sourceLineNo">122</span><a id="line.122"></a>
+<span class="sourceLineNo">123</span><a id="line.123">            final Condition.Field orderByField;</a>
+<span class="sourceLineNo">124</span><a id="line.124">            try {</a>
+<span class="sourceLineNo">125</span><a id="line.125">                if (!StringUtils.isBlank(orderBy)) {</a>
+<span class="sourceLineNo">126</span><a id="line.126">                    orderByField = Condition.Field.fromString(orderBy);</a>
+<span class="sourceLineNo">127</span><a id="line.127">                } else {</a>
+<span class="sourceLineNo">128</span><a id="line.128">                    orderByField = null;</a>
+<span class="sourceLineNo">129</span><a id="line.129">                }</a>
+<span class="sourceLineNo">130</span><a id="line.130">            } catch (final Exception e) {</a>
+<span class="sourceLineNo">131</span><a id="line.131">                throw new InvalidQueryException("The order_by field must contain a valid value such as " +</a>
+<span class="sourceLineNo">132</span><a id="line.132">                        StringUtils.join(Condition.Field.values(), ","));</a>
+<span class="sourceLineNo">133</span><a id="line.133">            }</a>
+<span class="sourceLineNo">134</span><a id="line.134"></a>
+<span class="sourceLineNo">135</span><a id="line.135">            if (!(order.equalsIgnoreCase("asc") || order.equalsIgnoreCase("desc"))) {</a>
+<span class="sourceLineNo">136</span><a id="line.136">                throw new InvalidQueryException("The order field is invalid:  valid values are \"asc\" and \"desc\"");</a>
+<span class="sourceLineNo">137</span><a id="line.137">            }</a>
+<span class="sourceLineNo">138</span><a id="line.138"></a>
+<span class="sourceLineNo">139</span><a id="line.139">            final var params = new SearchParameters(parsedFields, conditionList, maxResults, offset, orderByField,</a>
+<span class="sourceLineNo">140</span><a id="line.140">                    order, includeTotalResultCount);</a>
+<span class="sourceLineNo">141</span><a id="line.141">            final Response.ResponseBuilder builder = ok();</a>
+<span class="sourceLineNo">142</span><a id="line.142">            final var result = this.searchIndex.doSearch(params);</a>
+<span class="sourceLineNo">143</span><a id="line.143">            final var translatedResults = translateResults(result);</a>
+<span class="sourceLineNo">144</span><a id="line.144"></a>
+<span class="sourceLineNo">145</span><a id="line.145">            builder.entity(translatedResults);</a>
+<span class="sourceLineNo">146</span><a id="line.146">            return builder.build();</a>
+<span class="sourceLineNo">147</span><a id="line.147">        } catch (final InvalidConditionExpressionException | InvalidQueryException ex) {</a>
+<span class="sourceLineNo">148</span><a id="line.148">            throw new BadRequestException(ex.getMessage(), ex);</a>
+<span class="sourceLineNo">149</span><a id="line.149">        }</a>
+<span class="sourceLineNo">150</span><a id="line.150">    }</a>
+<span class="sourceLineNo">151</span><a id="line.151"></a>
+<span class="sourceLineNo">152</span><a id="line.152">    private SearchResult translateResults(final SearchResult result) {</a>
+<span class="sourceLineNo">153</span><a id="line.153">        result.getItems().forEach(item -&gt; {</a>
+<span class="sourceLineNo">154</span><a id="line.154">            final var key = Condition.Field.FEDORA_ID.toString();</a>
+<span class="sourceLineNo">155</span><a id="line.155">            final var fedoraId = item.get(key);</a>
+<span class="sourceLineNo">156</span><a id="line.156">            if (fedoraId != null) {</a>
+<span class="sourceLineNo">157</span><a id="line.157">                item.put(key, identifierConverter().toExternalId(fedoraId.toString()));</a>
+<span class="sourceLineNo">158</span><a id="line.158">            }</a>
+<span class="sourceLineNo">159</span><a id="line.159">        });</a>
+<span class="sourceLineNo">160</span><a id="line.160">        return result;</a>
+<span class="sourceLineNo">161</span><a id="line.161">    }</a>
+<span class="sourceLineNo">162</span><a id="line.162"></a>
+<span class="sourceLineNo">163</span><a id="line.163">    /**</a>
+<span class="sourceLineNo">164</span><a id="line.164">     * Parses the url decoded value of a single parameter passed by the</a>
+<span class="sourceLineNo">165</span><a id="line.165">     * http layer into a {@link Condition}.</a>
+<span class="sourceLineNo">166</span><a id="line.166">     *</a>
+<span class="sourceLineNo">167</span><a id="line.167">     * @param expression The url decoded value of the condition parameter.</a>
+<span class="sourceLineNo">168</span><a id="line.168">     * @return the parsed {@link Condition} object.</a>
+<span class="sourceLineNo">169</span><a id="line.169">     */</a>
+<span class="sourceLineNo">170</span><a id="line.170">    protected static Condition parse(final String expression, final HttpIdentifierConverter converter)</a>
+<span class="sourceLineNo">171</span><a id="line.171">            throws InvalidConditionExpressionException {</a>
+<span class="sourceLineNo">172</span><a id="line.172">        final Condition condition = Condition.fromExpression(expression);</a>
+<span class="sourceLineNo">173</span><a id="line.173">        if (condition.getField().equals(Condition.Field.FEDORA_ID)) {</a>
+<span class="sourceLineNo">174</span><a id="line.174">            //convert the object value to an internal identifier stem where appropriate</a>
+<span class="sourceLineNo">175</span><a id="line.175">            final var object = condition.getObject();</a>
+<span class="sourceLineNo">176</span><a id="line.176">            final var field = condition.getField();</a>
+<span class="sourceLineNo">177</span><a id="line.177">            final var operator = condition.getOperator();</a>
+<span class="sourceLineNo">178</span><a id="line.178">            if (!object.startsWith(FEDORA_ID_PREFIX) &amp;&amp; isExternalUrl(object)) {</a>
+<span class="sourceLineNo">179</span><a id="line.179">                return Condition.fromEnums(field, operator, converter.toInternalId(object));</a>
+<span class="sourceLineNo">180</span><a id="line.180">            } else if (object.startsWith("/")) {</a>
+<span class="sourceLineNo">181</span><a id="line.181">                return Condition.fromEnums(field, operator, FEDORA_ID_PREFIX + object);</a>
+<span class="sourceLineNo">182</span><a id="line.182">            } else if (!object.startsWith(FEDORA_ID_PREFIX) &amp;&amp; !object.equals("*")) {</a>
+<span class="sourceLineNo">183</span><a id="line.183">                return Condition.fromEnums(field, operator, FEDORA_ID_PREFIX + "/" + object);</a>
+<span class="sourceLineNo">184</span><a id="line.184">            }</a>
+<span class="sourceLineNo">185</span><a id="line.185">        }</a>
+<span class="sourceLineNo">186</span><a id="line.186"></a>
+<span class="sourceLineNo">187</span><a id="line.187">        return condition;</a>
+<span class="sourceLineNo">188</span><a id="line.188">    }</a>
+<span class="sourceLineNo">189</span><a id="line.189"></a>
+<span class="sourceLineNo">190</span><a id="line.190">    private static boolean isExternalUrl(final String str) {</a>
+<span class="sourceLineNo">191</span><a id="line.191">        try {</a>
+<span class="sourceLineNo">192</span><a id="line.192">            new URL(str);</a>
+<span class="sourceLineNo">193</span><a id="line.193">            return true;</a>
+<span class="sourceLineNo">194</span><a id="line.194">        } catch (final Exception ex) {</a>
+<span class="sourceLineNo">195</span><a id="line.195">            return false;</a>
+<span class="sourceLineNo">196</span><a id="line.196">        }</a>
+<span class="sourceLineNo">197</span><a id="line.197">    }</a>
+<span class="sourceLineNo">198</span><a id="line.198"></a>
+<span class="sourceLineNo">199</span><a id="line.199">}</a>
+<span class="sourceLineNo">200</span><a id="line.200"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>
