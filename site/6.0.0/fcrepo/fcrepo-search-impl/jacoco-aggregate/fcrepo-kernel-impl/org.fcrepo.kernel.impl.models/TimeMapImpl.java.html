@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>TimeMapImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Search Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.models</a> &gt; <span class="el_source">TimeMapImpl.java</span></div><h1>TimeMapImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.models;
+
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.impl.StatementImpl;
+import org.fcrepo.kernel.api.RdfLexicon;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.exception.ItemNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.TimeMap;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+
+import java.net.URI;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.net.URI.create;
+import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
+
+/**
+ * FedoraResource implementation that represents a Memento TimeMap of the base resource.
+ *
+ * @author pwinckles
+ */
+public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
+
+    /**
+     * Types of this class that should be displayed
+     */
+<span class="fc" id="L61">    private static final List&lt;URI&gt; HEADER_AND_RDF_TYPES = List.of(</span>
+<span class="fc" id="L62">            create(RESOURCE.getURI()),</span>
+<span class="fc" id="L63">            create(CONTAINER.getURI()),</span>
+<span class="fc" id="L64">            create(RDF_SOURCE.getURI())</span>
+    );
+
+    /**
+     * Above types but also types not to be displayed in RDF bodies.
+     */
+<span class="fc" id="L70">    private static final List&lt;URI&gt; HEADER_ONLY_TYPES = Stream.concat(HEADER_AND_RDF_TYPES.stream(),</span>
+<span class="fc" id="L71">            List.of(</span>
+<span class="fc" id="L72">                create(RdfLexicon.VERSIONING_TIMEMAP.getURI())</span>
+<span class="fc" id="L73">            ).stream()</span>
+<span class="fc" id="L74">    ).collect(Collectors.toList());</span>
+
+    private final FedoraResource originalResource;
+    private List&lt;Instant&gt; versions;
+
+    protected TimeMapImpl(
+            final FedoraResource originalResource,
+            final Transaction transaction,
+            final PersistentStorageSessionManager pSessionManager,
+            final ResourceFactory resourceFactory) {
+<span class="fc" id="L84">        super(originalResource.getFedoraId().asTimemap(), transaction, pSessionManager, resourceFactory);</span>
+
+<span class="fc" id="L86">        this.originalResource = originalResource;</span>
+<span class="fc" id="L87">        setCreatedBy(originalResource.getCreatedBy());</span>
+<span class="fc" id="L88">        setCreatedDate(originalResource.getCreatedDate());</span>
+<span class="fc" id="L89">        setLastModifiedBy(originalResource.getLastModifiedBy());</span>
+<span class="fc" id="L90">        setLastModifiedDate(originalResource.getLastModifiedDate());</span>
+<span class="fc" id="L91">        setParentId(originalResource.getFedoraId().asResourceId());</span>
+<span class="fc" id="L92">        setEtag(originalResource.getEtagValue());</span>
+<span class="fc" id="L93">        setStateToken(originalResource.getStateToken());</span>
+<span class="fc" id="L94">    }</span>
+
+    @Override
+    public RdfStream getTriples() {
+<span class="fc" id="L98">        final var timeMapResource = asResource(this);</span>
+<span class="fc" id="L99">        final var model = ModelFactory.createDefaultModel();</span>
+<span class="fc" id="L100">        model.add(new StatementImpl(timeMapResource, RdfLexicon.MEMENTO_ORIGINAL_RESOURCE,</span>
+<span class="fc" id="L101">                asResource(getOriginalResource())));</span>
+<span class="fc" id="L102">        getChildren().map(this::asResource).forEach(child -&gt; {</span>
+<span class="fc" id="L103">            model.add(new StatementImpl(timeMapResource, RdfLexicon.CONTAINS, child));</span>
+<span class="fc" id="L104">        });</span>
+<span class="fc" id="L105">        return DefaultRdfStream.fromModel(timeMapResource.asNode(), model);</span>
+    }
+
+    @Override
+    public List&lt;URI&gt; getSystemTypes(final boolean forRdf) {
+        // TimeMaps don't have an on-disk representation so don't call super.getSystemTypes().
+<span class="pc bpc" id="L111" title="1 of 2 branches missed.">        if (forRdf) {</span>
+<span class="nc" id="L112">            return HEADER_AND_RDF_TYPES;</span>
+        }
+<span class="fc" id="L114">        return HEADER_ONLY_TYPES;</span>
+    }
+
+    @Override
+    public List&lt;URI&gt; getUserTypes() {
+        // TimeMaps don't have user triples.
+<span class="fc" id="L120">        return Collections.emptyList();</span>
+    }
+
+    @Override
+    public Stream&lt;FedoraResource&gt; getChildren(final Boolean recursive) {
+<span class="fc" id="L125">        return getVersions().stream().map(version -&gt; {</span>
+            try {
+<span class="fc" id="L127">                final var fedoraId = getInstantFedoraId(version);</span>
+<span class="fc" id="L128">                return resourceFactory.getResource(transaction, fedoraId);</span>
+<span class="nc" id="L129">            } catch (final PathNotFoundException e) {</span>
+<span class="nc" id="L130">                throw new PathNotFoundRuntimeException(e.getMessage(), e);</span>
+            }
+        });
+    }
+
+    @Override
+    public FedoraResource getOriginalResource() {
+<span class="fc" id="L137">        return originalResource;</span>
+    }
+
+    @Override
+    public boolean isOriginalResource() {
+<span class="nc" id="L142">        return false;</span>
+    }
+
+    @Override
+    public TimeMap getTimeMap() {
+<span class="fc" id="L147">        return this;</span>
+    }
+
+    private List&lt;Instant&gt; getVersions() {
+<span class="pc bpc" id="L151" title="1 of 2 branches missed.">        if (versions == null) {</span>
+            try {
+<span class="fc" id="L153">                versions = getSession().listVersions(getFedoraId().asResourceId());</span>
+<span class="nc" id="L154">            } catch (final PersistentItemNotFoundException e) {</span>
+<span class="nc" id="L155">                throw new ItemNotFoundException(&quot;Unable to retrieve versions for &quot; + getId(), e);</span>
+<span class="nc" id="L156">            } catch (final PersistentStorageException e) {</span>
+<span class="nc" id="L157">                throw new RepositoryRuntimeException(e.getMessage(), e);</span>
+<span class="fc" id="L158">            }</span>
+        }
+<span class="fc" id="L160">        return versions;</span>
+    }
+
+    private Resource asResource(final FedoraResource fedoraResource) {
+<span class="fc" id="L164">        return org.apache.jena.rdf.model.ResourceFactory.createResource(fedoraResource.getFedoraId().getFullId());</span>
+    }
+
+    /**
+     * Get a FedoraId for a memento with the specified version datetime.
+     * @param version The instant datetime.
+     * @return the new FedoraId for the current TimeMap and the version.
+     */
+    private FedoraId getInstantFedoraId(final Instant version) {
+<span class="fc" id="L173">        return getFedoraId().asMemento(version);</span>
+    }
+
+    @Override
+    public List&lt;Instant&gt; listMementoDatetimes() {
+<span class="fc" id="L178">        return getVersions();</span>
+    }
+
+    @Override
+    public String getInteractionModel() {
+<span class="nc" id="L183">        return CONTAINER.getURI();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

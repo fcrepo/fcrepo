@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>TombstoneImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Search Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.models</a> &gt; <span class="el_source">TombstoneImpl.java</span></div><h1>TombstoneImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.models;
+
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.Tombstone;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+
+import java.net.URI;
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * Tombstone class
+ *
+ * @author whikloj
+ */
+public class TombstoneImpl extends FedoraResourceImpl implements Tombstone {
+
+    private FedoraResource originalResource;
+
+    protected TombstoneImpl(final FedoraId fedoraID, final Transaction transaction,
+                            final PersistentStorageSessionManager pSessionManager,
+                            final ResourceFactory resourceFactory, final FedoraResource original) {
+<span class="fc" id="L43">        super(fedoraID, transaction, pSessionManager, resourceFactory);</span>
+<span class="fc" id="L44">        this.originalResource = original;</span>
+<span class="fc" id="L45">    }</span>
+
+    @Override
+    public FedoraResource getDeletedObject() {
+<span class="fc" id="L49">        return originalResource;</span>
+    }
+
+    @Override
+    public FedoraId getFedoraId() {
+<span class="fc" id="L54">        return this.originalResource.getFedoraId();</span>
+    }
+
+    @Override
+    public List&lt;URI&gt; getUserTypes() {
+<span class="nc" id="L59">        return Collections.emptyList();</span>
+    }
+
+    @Override
+    public List&lt;URI&gt; getSystemTypes(final boolean forRdf) {
+<span class="nc" id="L64">        return Collections.emptyList();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

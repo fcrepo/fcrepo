@@ -1,0 +1,462 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>FedoraResourceImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Search Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.models</a> &gt; <span class="el_source">FedoraResourceImpl.java</span></div><h1>FedoraResourceImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.models;
+
+import org.apache.jena.graph.Triple;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.exception.ItemNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.TimeMap;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+
+import java.net.URI;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Stream;
+
+import static java.net.URI.create;
+import static java.util.stream.Collectors.toList;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_ROOT;
+import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
+
+/**
+ * Implementation of a Fedora resource, containing functionality common to the more concrete resource implementations.
+ *
+ * @author bbpennel
+ */
+public class FedoraResourceImpl implements FedoraResource {
+
+<span class="fc" id="L64">    private static final URI RESOURCE_URI = create(RESOURCE.toString());</span>
+<span class="fc" id="L65">    private static final URI FEDORA_RESOURCE_URI = create(FEDORA_RESOURCE.getURI());</span>
+<span class="fc" id="L66">    private static final URI ARCHIVAL_GROUP_URI = create(ARCHIVAL_GROUP.getURI());</span>
+<span class="fc" id="L67">    private static final URI MEMENTO_URI = create(MEMENTO_TYPE);</span>
+<span class="fc" id="L68">    private static final URI VERSIONED_RESOURCE_URI = create(VERSIONED_RESOURCE.getURI());</span>
+<span class="fc" id="L69">    private static final URI VERSIONING_TIMEGATE_URI = create(VERSIONING_TIMEGATE_TYPE);</span>
+<span class="fc" id="L70">    private static final URI REPOSITORY_ROOT_URI = create(REPOSITORY_ROOT.getURI());</span>
+
+    private final PersistentStorageSessionManager pSessionManager;
+
+    protected final ResourceFactory resourceFactory;
+
+    protected final FedoraId fedoraId;
+
+    private FedoraId parentId;
+
+    private List&lt;URI&gt; types;
+
+    private List&lt;URI&gt; systemTypes;
+
+    private List&lt;URI&gt; systemTypesForRdf;
+
+    private List&lt;URI&gt; userTypes;
+
+    private Instant lastModifiedDate;
+
+    private String lastModifiedBy;
+
+    private Instant createdDate;
+
+    private String createdBy;
+
+    private Instant mementoDatetime;
+
+    private String stateToken;
+
+    private String etag;
+
+    private boolean isMemento;
+
+    private String interactionModel;
+
+    // The transaction this representation of the resource belongs to
+    protected final Transaction transaction;
+
+    private boolean isArchivalGroup;
+
+    protected FedoraResourceImpl(final FedoraId fedoraId,
+                                 final Transaction transaction,
+                                 final PersistentStorageSessionManager pSessionManager,
+<span class="fc" id="L114">                                 final ResourceFactory resourceFactory) {</span>
+<span class="fc" id="L115">        this.fedoraId = fedoraId;</span>
+<span class="fc" id="L116">        this.transaction = transaction;</span>
+<span class="fc" id="L117">        this.pSessionManager = pSessionManager;</span>
+<span class="fc" id="L118">        this.resourceFactory = resourceFactory;</span>
+<span class="fc" id="L119">    }</span>
+
+    @Override
+    public String getId() {
+<span class="fc" id="L123">        return this.fedoraId.getResourceId();</span>
+    }
+
+    @Override
+    public Stream&lt;FedoraResource&gt; getChildren(final Boolean recursive) {
+<span class="fc" id="L128">        return Stream.empty();</span>
+    }
+
+    @Override
+    public FedoraResource getContainer() {
+<span class="nc" id="L133">        return resourceFactory.getContainer(transaction, fedoraId);</span>
+    }
+
+    @Override
+    public FedoraResource getOriginalResource() {
+<span class="pc bpc" id="L138" title="1 of 2 branches missed.">        if (isMemento()) {</span>
+            try {
+                // We are in a memento so we need to create a FedoraId for just the original resource.
+<span class="nc" id="L141">                final var fedoraId = FedoraId.create(getFedoraId().getResourceId());</span>
+<span class="nc" id="L142">                return getFedoraResource(fedoraId);</span>
+<span class="nc" id="L143">            } catch (final PathNotFoundException e) {</span>
+<span class="nc" id="L144">                throw new PathNotFoundRuntimeException(e.getMessage(), e);</span>
+            }
+        }
+<span class="fc" id="L147">        return this;</span>
+    }
+
+    private FedoraResource getFedoraResource(final FedoraId fedoraId) throws PathNotFoundException {
+<span class="nc" id="L151">        return resourceFactory.getResource(transaction, fedoraId);</span>
+    }
+
+    @Override
+    public TimeMap getTimeMap() {
+<span class="fc" id="L156">        return new TimeMapImpl(this.getOriginalResource(), transaction, pSessionManager, resourceFactory);</span>
+    }
+
+    @Override
+    public Instant getMementoDatetime() {
+<span class="fc" id="L161">        return mementoDatetime;</span>
+    }
+
+    @Override
+    public boolean isMemento() {
+<span class="fc" id="L166">        return isMemento;</span>
+    }
+
+    @Override
+    public boolean isAcl() {
+<span class="nc" id="L171">        return false;</span>
+    }
+
+    @Override
+    public FedoraResource findMementoByDatetime(final Instant mementoDatetime) {
+<span class="fc" id="L176">        FedoraResource match = null;</span>
+<span class="fc" id="L177">        long matchDiff = 0;</span>
+
+<span class="fc bfc" id="L179" title="All 2 branches covered.">        for (final var it = getTimeMap().getChildren().iterator(); it.hasNext();) {</span>
+<span class="fc" id="L180">            final var current = it.next();</span>
+            // Negative if the memento is AFTER the requested datetime
+            // Positive if the memento is BEFORE the requested datetime
+<span class="fc" id="L183">            final var diff = Duration.between(current.getMementoDatetime(), mementoDatetime).toSeconds();</span>
+
+<span class="pc bpc" id="L185" title="2 of 10 branches missed.">            if (match == null                               // Save the first memento examined</span>
+                    || (matchDiff &lt; 0 &amp;&amp; diff &gt;= matchDiff) // Match is AFTER requested &amp;&amp; current is closer
+                    || (diff &gt;= 0 &amp;&amp; diff &lt;= matchDiff)) {  // Current memento EQUAL/BEFORE request &amp;&amp; closer than match
+<span class="fc" id="L188">                match = current;</span>
+<span class="fc" id="L189">                matchDiff = diff;</span>
+            }
+<span class="fc" id="L191">        }</span>
+
+<span class="fc" id="L193">        return match;</span>
+    }
+
+    @Override
+    public FedoraResource getAcl() {
+<span class="nc bnc" id="L198" title="All 2 branches missed.">        if (isAcl()) {</span>
+<span class="nc" id="L199">            return this;</span>
+        }
+        try {
+<span class="nc" id="L202">            final var aclId = fedoraId.asAcl();</span>
+<span class="nc" id="L203">            return getFedoraResource(aclId);</span>
+<span class="nc" id="L204">        } catch (final PathNotFoundException e) {</span>
+<span class="nc" id="L205">            return null;</span>
+        }
+    }
+
+    @Override
+    public boolean hasProperty(final String relPath) {
+        // TODO Auto-generated method stub
+<span class="nc" id="L212">        return false;</span>
+    }
+
+    @Override
+    public Instant getCreatedDate() {
+<span class="fc" id="L217">        return createdDate;</span>
+    }
+
+    @Override
+    public Instant getLastModifiedDate() {
+<span class="fc" id="L222">        return lastModifiedDate;</span>
+    }
+
+    @Override
+    public boolean hasType(final String type) {
+<span class="fc" id="L227">        return getTypes().contains(create(type));</span>
+    }
+
+    @Override
+    public List&lt;URI&gt; getTypes() {
+<span class="fc bfc" id="L232" title="All 2 branches covered.">        if (types == null) {</span>
+<span class="fc" id="L233">            types = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L234">            types.addAll(getSystemTypes(false));</span>
+<span class="fc" id="L235">            types.addAll(getUserTypes());</span>
+        }
+<span class="fc" id="L237">        return types;</span>
+    }
+
+    @Override
+    public List&lt;URI&gt; getSystemTypes(final boolean forRdf) {
+<span class="fc" id="L242">        var types = resolveSystemTypes(forRdf);</span>
+
+<span class="pc bpc" id="L244" title="1 of 2 branches missed.">        if (types == null) {</span>
+<span class="fc" id="L245">            types = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L246">            types.add(create(interactionModel));</span>
+            // ldp:Resource is on all resources
+<span class="fc" id="L248">            types.add(RESOURCE_URI);</span>
+<span class="fc" id="L249">            types.add(FEDORA_RESOURCE_URI);</span>
+<span class="fc bfc" id="L250" title="All 2 branches covered.">            if (getFedoraId().isRepositoryRoot()) {</span>
+<span class="fc" id="L251">                types.add(REPOSITORY_ROOT_URI);</span>
+            }
+<span class="pc bpc" id="L253" title="1 of 2 branches missed.">            if (!forRdf) {</span>
+                // These types are not exposed as RDF triples.
+<span class="pc bpc" id="L255" title="1 of 2 branches missed.">                if (isArchivalGroup) {</span>
+<span class="nc" id="L256">                    types.add(ARCHIVAL_GROUP_URI);</span>
+                }
+<span class="fc bfc" id="L258" title="All 2 branches covered.">                if (isMemento) {</span>
+<span class="fc" id="L259">                    types.add(MEMENTO_URI);</span>
+                } else {
+<span class="fc" id="L261">                    types.add(VERSIONED_RESOURCE_URI);</span>
+<span class="fc" id="L262">                    types.add(VERSIONING_TIMEGATE_URI);</span>
+                }
+            }
+
+<span class="pc bpc" id="L266" title="1 of 2 branches missed.">            if (forRdf) {</span>
+<span class="nc" id="L267">                systemTypesForRdf = types;</span>
+            } else {
+<span class="fc" id="L269">                systemTypes = types;</span>
+            }
+        }
+
+<span class="fc" id="L273">        return types;</span>
+    }
+
+    @Override
+    public List&lt;URI&gt; getUserTypes() {
+<span class="pc bpc" id="L278" title="1 of 2 branches missed.">        if (userTypes == null) {</span>
+<span class="fc" id="L279">            userTypes = new ArrayList&lt;&gt;();</span>
+            try {
+<span class="fc" id="L281">                final var description = getDescription();</span>
+<span class="fc" id="L282">                final var triples = getSession().getTriples(description.getFedoraId().asResourceId(),</span>
+<span class="fc" id="L283">                        description.getMementoDatetime());</span>
+<span class="fc" id="L284">                userTypes = triples.filter(t -&gt; t.predicateMatches(type.asNode())).map(Triple::getObject)</span>
+<span class="fc" id="L285">                        .map(t -&gt; URI.create(t.toString())).collect(toList());</span>
+<span class="nc" id="L286">            } catch (final PersistentItemNotFoundException e) {</span>
+<span class="nc" id="L287">                final var headers = getSession().getHeaders(getFedoraId().asResourceId(), getMementoDatetime());</span>
+<span class="nc bnc" id="L288" title="All 2 branches missed.">                if (headers.isDeleted()) {</span>
+<span class="nc" id="L289">                    userTypes = Collections.emptyList();</span>
+                } else {
+<span class="nc" id="L291">                    throw new ItemNotFoundException(&quot;Unable to retrieve triples for &quot; + getId(), e);</span>
+                }
+<span class="nc" id="L293">            } catch (final PersistentStorageException e) {</span>
+<span class="nc" id="L294">                throw new RepositoryRuntimeException(e.getMessage(), e);</span>
+<span class="pc" id="L295">            }</span>
+        }
+
+<span class="fc" id="L298">        return userTypes;</span>
+    }
+
+    @Override
+    public RdfStream getTriples() {
+        try {
+<span class="fc" id="L304">            final var subject = createURI(getId());</span>
+<span class="fc" id="L305">            final var triples = getSession().getTriples(getFedoraId().asResourceId(), getMementoDatetime());</span>
+
+<span class="fc" id="L307">            return new DefaultRdfStream(subject, triples);</span>
+<span class="nc" id="L308">        } catch (final PersistentItemNotFoundException e) {</span>
+<span class="nc" id="L309">            throw new ItemNotFoundException(&quot;Unable to retrieve triples for &quot; + getId(), e);</span>
+<span class="nc" id="L310">        } catch (final PersistentStorageException e) {</span>
+<span class="nc" id="L311">            throw new RepositoryRuntimeException(e.getMessage(), e);</span>
+        }
+    }
+
+    @Override
+    public String getEtagValue() {
+<span class="fc" id="L317">        return etag;</span>
+    }
+
+    @Override
+    public String getStateToken() {
+        // TODO Auto-generated method stub
+<span class="fc" id="L323">        return stateToken;</span>
+    }
+
+    @Override
+    public boolean isOriginalResource() {
+<span class="nc bnc" id="L328" title="All 2 branches missed.">        return !isMemento();</span>
+    }
+
+    @Override
+    public FedoraResource getDescription() {
+<span class="fc" id="L333">        return this;</span>
+    }
+
+    @Override
+    public FedoraResource getDescribedResource() {
+<span class="nc" id="L338">        return this;</span>
+    }
+
+    protected PersistentStorageSession getSession() {
+<span class="fc bfc" id="L342" title="All 2 branches covered.">        if (transaction.isOpen()) {</span>
+<span class="fc" id="L343">            return pSessionManager.getSession(transaction);</span>
+        } else {
+<span class="fc" id="L345">            return pSessionManager.getReadOnlySession();</span>
+        }
+    }
+
+    @Override
+    public FedoraResource getParent() throws PathNotFoundException {
+<span class="fc" id="L351">        return resourceFactory.getResource(transaction, parentId);</span>
+    }
+
+    @Override
+    public String getCreatedBy() {
+<span class="fc" id="L356">        return createdBy;</span>
+    }
+
+    @Override
+    public String getLastModifiedBy() {
+<span class="fc" id="L361">        return lastModifiedBy;</span>
+    }
+
+    @Override
+    public FedoraId getFedoraId() {
+<span class="fc" id="L366">        return this.fedoraId;</span>
+    }
+
+    @Override
+    public String getInteractionModel() {
+<span class="nc" id="L371">        return this.interactionModel;</span>
+    }
+
+    /**
+     * @param parentId the parentId to set
+     */
+    protected void setParentId(final FedoraId parentId) {
+<span class="fc" id="L378">        this.parentId = parentId;</span>
+<span class="fc" id="L379">    }</span>
+
+    /**
+     * @param types the types to set
+     */
+    protected void setTypes(final List&lt;URI&gt; types) {
+<span class="nc" id="L385">        this.types = types;</span>
+<span class="nc" id="L386">    }</span>
+
+    /**
+     * @param lastModifiedDate the lastModifiedDate to set
+     */
+    protected void setLastModifiedDate(final Instant lastModifiedDate) {
+<span class="fc" id="L392">        this.lastModifiedDate = lastModifiedDate;</span>
+<span class="fc" id="L393">    }</span>
+
+    /**
+     * @param lastModifiedBy the lastModifiedBy to set
+     */
+    protected void setLastModifiedBy(final String lastModifiedBy) {
+<span class="fc" id="L399">        this.lastModifiedBy = lastModifiedBy;</span>
+<span class="fc" id="L400">    }</span>
+
+    /**
+     * @param createdDate the createdDate to set
+     */
+    protected void setCreatedDate(final Instant createdDate) {
+<span class="fc" id="L406">        this.createdDate = createdDate;</span>
+<span class="fc" id="L407">    }</span>
+
+    /**
+     * @param createdBy the createdBy to set
+     */
+    protected void setCreatedBy(final String createdBy) {
+<span class="fc" id="L413">        this.createdBy = createdBy;</span>
+<span class="fc" id="L414">    }</span>
+
+    /**
+     * @param mementoDatetime the mementoDatetime to set
+     */
+    protected void setMementoDatetime(final Instant mementoDatetime) {
+<span class="fc" id="L420">        this.mementoDatetime = mementoDatetime;</span>
+<span class="fc" id="L421">    }</span>
+
+    /**
+     * @param stateToken the stateToken to set
+     */
+    protected void setStateToken(final String stateToken) {
+<span class="fc" id="L427">        this.stateToken = stateToken;</span>
+<span class="fc" id="L428">    }</span>
+
+    /**
+     * @param etag the etag to set
+     */
+    protected void setEtag(final String etag) {
+<span class="fc" id="L434">        this.etag = etag;</span>
+<span class="fc" id="L435">    }</span>
+
+    /**
+     * @param isMemento indicates if the resource is a memento
+     */
+    public void setIsMemento(final boolean isMemento) {
+<span class="fc" id="L441">        this.isMemento = isMemento;</span>
+<span class="fc" id="L442">    }</span>
+
+    /**
+     * @param isArchivalGroup true if the resource is an AG
+     */
+    public void setIsArchivalGroup(final boolean isArchivalGroup) {
+<span class="fc" id="L448">        this.isArchivalGroup = isArchivalGroup;</span>
+<span class="fc" id="L449">    }</span>
+
+    /**
+     * @param interactionModel the resource's interaction model
+     */
+    public void setInteractionModel(final String interactionModel) {
+<span class="fc" id="L455">        this.interactionModel = interactionModel;</span>
+<span class="fc" id="L456">    }</span>
+
+    protected List&lt;URI&gt; resolveSystemTypes(final boolean forRdf) {
+<span class="pc bpc" id="L459" title="1 of 2 branches missed.">        return forRdf ? systemTypesForRdf : systemTypes;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

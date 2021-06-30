@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ResourceTripleServiceImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Search Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.services</a> &gt; <span class="el_source">ResourceTripleServiceImpl.java</span></div><h1>ResourceTripleServiceImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.services;
+
+import static java.util.stream.Stream.empty;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
+
+import javax.inject.Inject;
+
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.rdf.LdpTriplePreferences;
+import org.fcrepo.kernel.api.services.ContainmentTriplesService;
+import org.fcrepo.kernel.api.services.ManagedPropertiesService;
+import org.fcrepo.kernel.api.services.MembershipService;
+import org.fcrepo.kernel.api.services.ReferenceService;
+import org.fcrepo.kernel.api.services.ResourceTripleService;
+
+import org.apache.jena.graph.Triple;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
+/**
+ * Implementation of the ResourceTripleService
+ * @author whikloj
+ * @since 6.0.0
+ */
+@Component
+<span class="nc" id="L48">public class ResourceTripleServiceImpl implements ResourceTripleService {</span>
+
+    @Inject
+    private ManagedPropertiesService managedPropertiesService;
+
+    @Inject
+    private ContainmentTriplesService containmentTriplesService;
+
+    @Autowired
+    @Qualifier(&quot;referenceService&quot;)
+    private ReferenceService referenceService;
+
+    @Inject
+    private MembershipService membershipService;
+
+    @Override
+    public Stream&lt;Triple&gt; getResourceTriples(final Transaction tx, final FedoraResource resource,
+                                             final LdpTriplePreferences preferences, final int limit) {
+<span class="nc" id="L66">        final List&lt;Stream&lt;Triple&gt;&gt; streams = new ArrayList&lt;&gt;();</span>
+
+        // Provide user RDF if we didn't ask for omit=ldp:PreferMinimalContainer.
+<span class="nc bnc" id="L69" title="All 2 branches missed.">        if (preferences.displayUserRdf()) {</span>
+<span class="nc" id="L70">            streams.add(resource.getTriples());</span>
+        }
+        // Provide server-managed triples if we didn't ask for omit=fedora:ServerManaged or
+        // omit=ldp:PreferMinimalContainer
+<span class="nc bnc" id="L74" title="All 2 branches missed.">        if (preferences.displayServerManaged()) {</span>
+<span class="nc" id="L75">            streams.add(this.managedPropertiesService.get(resource));</span>
+        }
+        // containment triples about this resource, return by default. Containment is server managed so also
+        // check for that prefer tag.
+<span class="nc bnc" id="L79" title="All 2 branches missed.">        if (preferences.displayContainment()) {</span>
+<span class="nc bnc" id="L80" title="All 2 branches missed.">            if (limit == -1) {</span>
+<span class="nc" id="L81">                streams.add(this.containmentTriplesService.get(tx, resource));</span>
+            } else {
+<span class="nc" id="L83">                streams.add(this.containmentTriplesService.get(tx, resource).limit(limit));</span>
+            }
+        }
+
+        // LDP container membership triples for this resource, returned by default. Membership is server managed so
+        // also check that tag.
+<span class="nc bnc" id="L89" title="All 2 branches missed.">        if (preferences.displayMembership()) {</span>
+<span class="nc" id="L90">            streams.add(membershipService.getMembership(tx, resource.getFedoraId()));</span>
+        }
+
+        // Include inbound references to this object, NOT returned by default.
+<span class="nc bnc" id="L94" title="All 2 branches missed.">        if (preferences.displayReferences()) {</span>
+<span class="nc" id="L95">            streams.add(referenceService.getInboundReferences(tx, resource));</span>
+        }
+
+<span class="nc" id="L98">        return streams.stream().reduce(empty(), Stream::concat);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
