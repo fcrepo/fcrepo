@@ -1,0 +1,18 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+Fedora Repository Kernel API/fcrepo-configs,org.fcrepo.config,DatabaseConfig.new Converter() {...},10,0,0,0,2,0,2,0,2,0
+Fedora Repository Kernel API/fcrepo-configs,org.fcrepo.config,ServerManagedPropsMode,69,0,4,0,12,0,7,0,5,0
+Fedora Repository Kernel API/fcrepo-configs,org.fcrepo.config,Storage,69,0,4,0,12,0,7,0,5,0
+Fedora Repository Kernel API/fcrepo-configs,org.fcrepo.config,DatabaseConfig,161,0,6,0,36,0,12,0,9,0
+Fedora Repository Kernel API/fcrepo-configs,org.fcrepo.config,JmsDestination,69,0,4,0,12,0,7,0,5,0
+Fedora Repository Kernel API/fcrepo-configs,org.fcrepo.config,OcflPropsConfig,337,0,12,0,95,0,50,0,44,0
+Fedora Repository Kernel API/fcrepo-configs,org.fcrepo.config,MetricsConfig,68,0,4,0,16,0,6,0,4,0
+Fedora Repository Kernel API/fcrepo-configs,org.fcrepo.config,FlywayFactory,52,0,4,0,13,0,8,0,6,0
+Fedora Repository Kernel API/fcrepo-configs,org.fcrepo.config,MetricsConfig.new MeterFilter() {...},35,0,2,0,7,0,3,0,2,0
+Fedora Repository Kernel API/fcrepo-configs,org.fcrepo.config,AuthPropsConfig,34,0,0,0,12,0,11,0,11,0
+Fedora Repository Kernel API/fcrepo-configs,org.fcrepo.config,MetricsConfig.new PrometheusConfig() {...},11,0,0,0,3,0,3,0,3,0
+Fedora Repository Kernel API/fcrepo-configs,org.fcrepo.config,ConditionOnPropertyFalse,9,0,0,0,2,0,1,0,1,0
+Fedora Repository Kernel API/fcrepo-configs,org.fcrepo.config,ConditionOnPropertyTrue,9,0,0,0,2,0,1,0,1,0
+Fedora Repository Kernel API/fcrepo-configs,org.fcrepo.config,ConditionOnProperty,44,0,0,0,10,0,4,0,4,0
+Fedora Repository Kernel API/fcrepo-configs,org.fcrepo.config,FedoraPropsConfig,159,0,2,0,48,0,32,0,31,0
+Fedora Repository Kernel API/fcrepo-configs,org.fcrepo.config,DigestAlgorithm,13,198,3,3,2,24,4,10,2,9
+Fedora Repository Kernel API/fcrepo-configs,org.fcrepo.config,BasePropsConfig,11,0,0,0,4,0,2,0,2,0
