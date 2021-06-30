@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>SearchParameters.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-search-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.search.api</a> &gt; <span class="el_source">SearchParameters.java</span></div><h1>SearchParameters.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.search.api;
+
+import com.google.common.base.MoreObjects;
+
+import java.util.List;
+
+/**
+ * A pojo encapsulating the parameters of a search
+ *
+ * @author dbernstein
+ */
+public class SearchParameters {
+
+    private final List&lt;Condition&gt; conditions;
+
+    private final List&lt;Condition.Field&gt; fields;
+
+    private final int offset;
+
+    private final int maxResults;
+
+    private final Condition.Field orderBy;
+
+    private final String order;
+
+    private final boolean includeTotalResultCount;
+    /**
+     * Constructoor
+     *
+     * @param fields     The fields to be returned in the results
+     * @param conditions The conditions
+     * @param maxResults The max results
+     * @param offset     The offset
+     * @param orderBy    The field by which to order the results
+     * @param order      The order: ie &quot;asc&quot; or &quot;desc&quot;
+     * @param includeTotalResultCount A flag indicating whether or not to return the total result count.
+     */
+    public SearchParameters(final List&lt;Condition.Field&gt; fields, final List&lt;Condition&gt; conditions, final int maxResults,
+                            final int offset, final Condition.Field orderBy, final String order,
+<span class="fc" id="L57">                            final boolean includeTotalResultCount) {</span>
+<span class="fc" id="L58">        this.fields = fields;</span>
+<span class="fc" id="L59">        this.conditions = conditions;</span>
+<span class="fc" id="L60">        this.maxResults = maxResults;</span>
+<span class="fc" id="L61">        this.offset = offset;</span>
+<span class="fc" id="L62">        this.orderBy = orderBy;</span>
+<span class="fc" id="L63">        this.order = order;</span>
+<span class="fc" id="L64">        this.includeTotalResultCount = includeTotalResultCount;</span>
+<span class="fc" id="L65">    }</span>
+
+    /**
+     * The offset (zero-based)
+     *
+     * @return
+     */
+    public int getOffset() {
+<span class="fc" id="L73">        return offset;</span>
+    }
+
+    /**
+     * The max number of results to return
+     *
+     * @return
+     */
+    public int getMaxResults() {
+<span class="fc" id="L82">        return maxResults;</span>
+    }
+
+    /**
+     * The conditions limiting the search
+     *
+     * @return
+     */
+    public List&lt;Condition&gt; getConditions() {
+<span class="fc" id="L91">        return conditions;</span>
+    }
+
+    /**
+     * Returns the list of fields to display in the results.
+     *
+     * @return
+     */
+    public List&lt;Condition.Field&gt; getFields() {
+<span class="fc" id="L100">        return fields;</span>
+    }
+
+    /**
+     * Returns the field by which to order the results.
+     *
+     * @return
+     */
+    public Condition.Field getOrderBy() {
+<span class="fc" id="L109">        return orderBy;</span>
+    }
+
+    /**
+     * Returns the order direction (asc or desc) of the results.
+     *
+     * @return
+     */
+    public String getOrder() {
+<span class="fc" id="L118">        return order;</span>
+    }
+
+    /**
+     * Returns flag indicating whether or not to include the total result count in the query results.
+     * @return
+     */
+    public boolean isIncludeTotalResultCount() {
+<span class="fc" id="L126">        return includeTotalResultCount;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L131">        final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this);</span>
+<span class="nc" id="L132">        helper.add(&quot;conditions&quot;, conditions);</span>
+<span class="nc" id="L133">        helper.add(&quot;maxResults&quot;, maxResults);</span>
+<span class="nc" id="L134">        helper.add(&quot;offset&quot;, offset);</span>
+<span class="nc" id="L135">        helper.add(&quot;fields&quot;, fields);</span>
+<span class="nc" id="L136">        helper.add(&quot;orderBy&quot;, orderBy);</span>
+<span class="nc" id="L137">        helper.add(&quot;order&quot;, order);</span>
+<span class="nc" id="L138">        helper.add(&quot;includeTotalResultCount&quot;, includeTotalResultCount);</span>
+<span class="nc" id="L139">        return helper.toString();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
