@@ -1,0 +1,402 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * Licensed to DuraSpace under one or more contributor license agreements.</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * See the NOTICE file distributed with this work for additional information</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * regarding copyright ownership.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> *</a>
+<span class="sourceLineNo">006</span><a id="line.6"> * DuraSpace licenses this file to you under the Apache License,</a>
+<span class="sourceLineNo">007</span><a id="line.7"> * Version 2.0 (the "License"); you may not use this file except in</a>
+<span class="sourceLineNo">008</span><a id="line.8"> * compliance with the License.  You may obtain a copy of the License at</a>
+<span class="sourceLineNo">009</span><a id="line.9"> *</a>
+<span class="sourceLineNo">010</span><a id="line.10"> *     http://www.apache.org/licenses/LICENSE-2.0</a>
+<span class="sourceLineNo">011</span><a id="line.11"> *</a>
+<span class="sourceLineNo">012</span><a id="line.12"> * Unless required by applicable law or agreed to in writing, software</a>
+<span class="sourceLineNo">013</span><a id="line.13"> * distributed under the License is distributed on an "AS IS" BASIS,</a>
+<span class="sourceLineNo">014</span><a id="line.14"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<span class="sourceLineNo">015</span><a id="line.15"> * See the License for the specific language governing permissions and</a>
+<span class="sourceLineNo">016</span><a id="line.16"> * limitations under the License.</a>
+<span class="sourceLineNo">017</span><a id="line.17"> */</a>
+<span class="sourceLineNo">018</span><a id="line.18">package org.fcrepo.kernel.impl.services;</a>
+<span class="sourceLineNo">019</span><a id="line.19"></a>
+<span class="sourceLineNo">020</span><a id="line.20">import org.apache.jena.graph.Graph;</a>
+<span class="sourceLineNo">021</span><a id="line.21">import org.apache.jena.graph.Node;</a>
+<span class="sourceLineNo">022</span><a id="line.22">import org.apache.jena.rdf.model.Model;</a>
+<span class="sourceLineNo">023</span><a id="line.23">import org.apache.jena.rdf.model.RDFNode;</a>
+<span class="sourceLineNo">024</span><a id="line.24">import org.apache.jena.rdf.model.Statement;</a>
+<span class="sourceLineNo">025</span><a id="line.25"></a>
+<span class="sourceLineNo">026</span><a id="line.26">import org.fcrepo.config.FedoraPropsConfig;</a>
+<span class="sourceLineNo">027</span><a id="line.27">import org.fcrepo.kernel.api.ContainmentIndex;</a>
+<span class="sourceLineNo">028</span><a id="line.28">import org.fcrepo.kernel.api.RdfLexicon;</a>
+<span class="sourceLineNo">029</span><a id="line.29">import org.fcrepo.kernel.api.Transaction;</a>
+<span class="sourceLineNo">030</span><a id="line.30">import org.fcrepo.kernel.api.exception.ACLAuthorizationConstraintViolationException;</a>
+<span class="sourceLineNo">031</span><a id="line.31">import org.fcrepo.kernel.api.exception.MalformedRdfException;</a>
+<span class="sourceLineNo">032</span><a id="line.32">import org.fcrepo.kernel.api.exception.RequestWithAclLinkHeaderException;</a>
+<span class="sourceLineNo">033</span><a id="line.33">import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;</a>
+<span class="sourceLineNo">034</span><a id="line.34">import org.fcrepo.kernel.api.identifiers.FedoraId;</a>
+<span class="sourceLineNo">035</span><a id="line.35">import org.fcrepo.kernel.api.observer.EventAccumulator;</a>
+<span class="sourceLineNo">036</span><a id="line.36">import org.fcrepo.kernel.api.operations.ResourceOperation;</a>
+<span class="sourceLineNo">037</span><a id="line.37">import org.fcrepo.kernel.api.services.MembershipService;</a>
+<span class="sourceLineNo">038</span><a id="line.38">import org.fcrepo.kernel.api.services.ReferenceService;</a>
+<span class="sourceLineNo">039</span><a id="line.39">import org.fcrepo.persistence.api.PersistentStorageSession;</a>
+<span class="sourceLineNo">040</span><a id="line.40">import org.fcrepo.search.api.SearchIndex;</a>
+<span class="sourceLineNo">041</span><a id="line.41">import org.slf4j.Logger;</a>
+<span class="sourceLineNo">042</span><a id="line.42">import org.springframework.beans.factory.annotation.Autowired;</a>
+<span class="sourceLineNo">043</span><a id="line.43">import org.springframework.beans.factory.annotation.Qualifier;</a>
+<span class="sourceLineNo">044</span><a id="line.44"></a>
+<span class="sourceLineNo">045</span><a id="line.45">import javax.inject.Inject;</a>
+<span class="sourceLineNo">046</span><a id="line.46">import java.util.HashSet;</a>
+<span class="sourceLineNo">047</span><a id="line.47">import java.util.List;</a>
+<span class="sourceLineNo">048</span><a id="line.48">import java.util.Set;</a>
+<span class="sourceLineNo">049</span><a id="line.49">import java.util.concurrent.atomic.AtomicBoolean;</a>
+<span class="sourceLineNo">050</span><a id="line.50">import java.util.concurrent.atomic.AtomicInteger;</a>
+<span class="sourceLineNo">051</span><a id="line.51">import java.util.regex.Pattern;</a>
+<span class="sourceLineNo">052</span><a id="line.52"></a>
+<span class="sourceLineNo">053</span><a id="line.53">import static org.apache.jena.graph.NodeFactory.createURI;</a>
+<span class="sourceLineNo">054</span><a id="line.54">import static org.apache.jena.rdf.model.ResourceFactory.createProperty;</a>
+<span class="sourceLineNo">055</span><a id="line.55">import static org.apache.jena.rdf.model.ResourceFactory.createResource;</a>
+<span class="sourceLineNo">056</span><a id="line.56">import static org.apache.jena.rdf.model.ResourceFactory.createStatement;</a>
+<span class="sourceLineNo">057</span><a id="line.57">import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;</a>
+<span class="sourceLineNo">058</span><a id="line.58">import static org.fcrepo.kernel.api.RdfLexicon.DEFAULT_INTERACTION_MODEL;</a>
+<span class="sourceLineNo">059</span><a id="line.59">import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;</a>
+<span class="sourceLineNo">060</span><a id="line.60">import static org.fcrepo.kernel.api.RdfLexicon.INSERTED_CONTENT_RELATION;</a>
+<span class="sourceLineNo">061</span><a id="line.61">import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS_FULL;</a>
+<span class="sourceLineNo">062</span><a id="line.62">import static org.fcrepo.kernel.api.RdfLexicon.IS_MEMBER_OF_RELATION;</a>
+<span class="sourceLineNo">063</span><a id="line.63">import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;</a>
+<span class="sourceLineNo">064</span><a id="line.64">import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;</a>
+<span class="sourceLineNo">065</span><a id="line.65">import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_ACCESS_TO;</a>
+<span class="sourceLineNo">066</span><a id="line.66">import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_ACCESS_TO_CLASS;</a>
+<span class="sourceLineNo">067</span><a id="line.67">import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_ACCESS_TO_PROPERTY;</a>
+<span class="sourceLineNo">068</span><a id="line.68">import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;</a>
+<span class="sourceLineNo">069</span><a id="line.69">import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;</a>
+<span class="sourceLineNo">070</span><a id="line.70">import static org.slf4j.LoggerFactory.getLogger;</a>
+<span class="sourceLineNo">071</span><a id="line.71"></a>
+<span class="sourceLineNo">072</span><a id="line.72"></a>
+<span class="sourceLineNo">073</span><a id="line.73">/**</a>
+<span class="sourceLineNo">074</span><a id="line.74"> * Abstract service for interacting with a kernel service</a>
+<span class="sourceLineNo">075</span><a id="line.75"> *</a>
+<span class="sourceLineNo">076</span><a id="line.76"> * @author whikloj</a>
+<span class="sourceLineNo">077</span><a id="line.77"> * @author bseeger</a>
+<span class="sourceLineNo">078</span><a id="line.78"> */</a>
+<span class="sourceLineNo">079</span><a id="line.79"></a>
+<span class="sourceLineNo">080</span><a id="line.80">public abstract class AbstractService {</a>
+<span class="sourceLineNo">081</span><a id="line.81"></a>
+<span class="sourceLineNo">082</span><a id="line.82">    private static final Logger log = getLogger(ReplacePropertiesServiceImpl.class);</a>
+<span class="sourceLineNo">083</span><a id="line.83"></a>
+<span class="sourceLineNo">084</span><a id="line.84">    private static final Node WEBAC_ACCESS_TO_URI = createURI(WEBAC_ACCESS_TO);</a>
+<span class="sourceLineNo">085</span><a id="line.85"></a>
+<span class="sourceLineNo">086</span><a id="line.86">    private static final Node WEBAC_ACCESS_TO_CLASS_URI = createURI(WEBAC_ACCESS_TO_CLASS);</a>
+<span class="sourceLineNo">087</span><a id="line.87"></a>
+<span class="sourceLineNo">088</span><a id="line.88">    @Autowired</a>
+<span class="sourceLineNo">089</span><a id="line.89">    @Qualifier("containmentIndex")</a>
+<span class="sourceLineNo">090</span><a id="line.90">    protected ContainmentIndex containmentIndex;</a>
+<span class="sourceLineNo">091</span><a id="line.91"></a>
+<span class="sourceLineNo">092</span><a id="line.92">    @Inject</a>
+<span class="sourceLineNo">093</span><a id="line.93">    private EventAccumulator eventAccumulator;</a>
+<span class="sourceLineNo">094</span><a id="line.94"></a>
+<span class="sourceLineNo">095</span><a id="line.95">    @Autowired</a>
+<span class="sourceLineNo">096</span><a id="line.96">    @Qualifier("referenceService")</a>
+<span class="sourceLineNo">097</span><a id="line.97">    protected ReferenceService referenceService;</a>
+<span class="sourceLineNo">098</span><a id="line.98"></a>
+<span class="sourceLineNo">099</span><a id="line.99">    @Inject</a>
+<span class="sourceLineNo">100</span><a id="line.100">    protected MembershipService membershipService;</a>
+<span class="sourceLineNo">101</span><a id="line.101"></a>
+<span class="sourceLineNo">102</span><a id="line.102">    @Inject</a>
+<span class="sourceLineNo">103</span><a id="line.103">    protected SearchIndex searchIndex;</a>
+<span class="sourceLineNo">104</span><a id="line.104"></a>
+<span class="sourceLineNo">105</span><a id="line.105">    @Inject</a>
+<span class="sourceLineNo">106</span><a id="line.106">    protected FedoraPropsConfig fedoraPropsConfig;</a>
+<span class="sourceLineNo">107</span><a id="line.107"></a>
+<span class="sourceLineNo">108</span><a id="line.108">    /**</a>
+<span class="sourceLineNo">109</span><a id="line.109">     * Utility to determine the correct interaction model from elements of a request.</a>
+<span class="sourceLineNo">110</span><a id="line.110">     *</a>
+<span class="sourceLineNo">111</span><a id="line.111">     * @param linkTypes         Link headers with rel="type"</a>
+<span class="sourceLineNo">112</span><a id="line.112">     * @param isRdfContentType  Is the Content-type a known RDF type?</a>
+<span class="sourceLineNo">113</span><a id="line.113">     * @param contentPresent    Is there content present on the request body?</a>
+<span class="sourceLineNo">114</span><a id="line.114">     * @param isExternalContent Is there Link headers that define external content?</a>
+<span class="sourceLineNo">115</span><a id="line.115">     * @return The determined or default interaction model.</a>
+<span class="sourceLineNo">116</span><a id="line.116">     */</a>
+<span class="sourceLineNo">117</span><a id="line.117">    protected String determineInteractionModel(final List&lt;String&gt; linkTypes,</a>
+<span class="sourceLineNo">118</span><a id="line.118">                                               final boolean isRdfContentType, final boolean contentPresent,</a>
+<span class="sourceLineNo">119</span><a id="line.119">                                               final boolean isExternalContent) {</a>
+<span class="sourceLineNo">120</span><a id="line.120">        final String interactionModel = linkTypes == null ? null :</a>
+<span class="sourceLineNo">121</span><a id="line.121">                linkTypes.stream().filter(INTERACTION_MODELS_FULL::contains).findFirst().orElse(null);</a>
+<span class="sourceLineNo">122</span><a id="line.122"></a>
+<span class="sourceLineNo">123</span><a id="line.123">        // If you define a valid interaction model, we try to use it.</a>
+<span class="sourceLineNo">124</span><a id="line.124">        if (interactionModel != null) {</a>
+<span class="sourceLineNo">125</span><a id="line.125">            return interactionModel;</a>
+<span class="sourceLineNo">126</span><a id="line.126">        }</a>
+<span class="sourceLineNo">127</span><a id="line.127">        if (isExternalContent || (contentPresent &amp;&amp; !isRdfContentType)) {</a>
+<span class="sourceLineNo">128</span><a id="line.128">            return NON_RDF_SOURCE.toString();</a>
+<span class="sourceLineNo">129</span><a id="line.129">        } else {</a>
+<span class="sourceLineNo">130</span><a id="line.130">            return DEFAULT_INTERACTION_MODEL.toString();</a>
+<span class="sourceLineNo">131</span><a id="line.131">        }</a>
+<span class="sourceLineNo">132</span><a id="line.132">    }</a>
+<span class="sourceLineNo">133</span><a id="line.133"></a>
+<span class="sourceLineNo">134</span><a id="line.134">    /**</a>
+<span class="sourceLineNo">135</span><a id="line.135">     * Check that we don't try to provide an ACL Link header.</a>
+<span class="sourceLineNo">136</span><a id="line.136">     *</a>
+<span class="sourceLineNo">137</span><a id="line.137">     * @param links list of the link headers provided.</a>
+<span class="sourceLineNo">138</span><a id="line.138">     * @throws RequestWithAclLinkHeaderException If we provide an rel="acl" link header.</a>
+<span class="sourceLineNo">139</span><a id="line.139">     */</a>
+<span class="sourceLineNo">140</span><a id="line.140">    protected void checkAclLinkHeader(final List&lt;String&gt; links) throws RequestWithAclLinkHeaderException {</a>
+<span class="sourceLineNo">141</span><a id="line.141">        final var matcher = Pattern.compile("rel=[\"']?acl[\"']?").asPredicate();</a>
+<span class="sourceLineNo">142</span><a id="line.142">        if (links != null &amp;&amp; links.stream().anyMatch(matcher)) {</a>
+<span class="sourceLineNo">143</span><a id="line.143">            throw new RequestWithAclLinkHeaderException(</a>
+<span class="sourceLineNo">144</span><a id="line.144">                    "Unable to handle request with the specified LDP-RS as the ACL.");</a>
+<span class="sourceLineNo">145</span><a id="line.145">        }</a>
+<span class="sourceLineNo">146</span><a id="line.146">    }</a>
+<span class="sourceLineNo">147</span><a id="line.147"></a>
+<span class="sourceLineNo">148</span><a id="line.148">    /**</a>
+<span class="sourceLineNo">149</span><a id="line.149">     * Verifies that DirectContainer properties are valid, throwing exceptions if the triples</a>
+<span class="sourceLineNo">150</span><a id="line.150">     * do not meet LDP requirements or a server managed property is specified as a membership relation.</a>
+<span class="sourceLineNo">151</span><a id="line.151">     * If no membershipResource or membership relation are specified, defaults will be populated.</a>
+<span class="sourceLineNo">152</span><a id="line.152">     * @param fedoraId id of the resource described</a>
+<span class="sourceLineNo">153</span><a id="line.153">     * @param interactionModel interaction model of the resource</a>
+<span class="sourceLineNo">154</span><a id="line.154">     * @param model model to check</a>
+<span class="sourceLineNo">155</span><a id="line.155">     */</a>
+<span class="sourceLineNo">156</span><a id="line.156">    protected void ensureValidDirectContainer(final FedoraId fedoraId, final String interactionModel,</a>
+<span class="sourceLineNo">157</span><a id="line.157">            final Model model) {</a>
+<span class="sourceLineNo">158</span><a id="line.158">        final boolean isIndirect = RdfLexicon.INDIRECT_CONTAINER.getURI().equals(interactionModel);</a>
+<span class="sourceLineNo">159</span><a id="line.159">        if (!(RdfLexicon.DIRECT_CONTAINER.getURI().equals(interactionModel)</a>
+<span class="sourceLineNo">160</span><a id="line.160">                || isIndirect)) {</a>
+<span class="sourceLineNo">161</span><a id="line.161">            return;</a>
+<span class="sourceLineNo">162</span><a id="line.162">        }</a>
+<span class="sourceLineNo">163</span><a id="line.163">        final var dcResc = model.getResource(fedoraId.getFullId());</a>
+<span class="sourceLineNo">164</span><a id="line.164">        final AtomicBoolean hasMembershipResc = new AtomicBoolean(false);</a>
+<span class="sourceLineNo">165</span><a id="line.165">        final AtomicBoolean hasRelation = new AtomicBoolean(false);</a>
+<span class="sourceLineNo">166</span><a id="line.166">        final AtomicInteger insertedContentRelationCount = new AtomicInteger(0);</a>
+<span class="sourceLineNo">167</span><a id="line.167"></a>
+<span class="sourceLineNo">168</span><a id="line.168">        dcResc.listProperties().forEachRemaining(stmt -&gt; {</a>
+<span class="sourceLineNo">169</span><a id="line.169">            final var predicate = stmt.getPredicate();</a>
+<span class="sourceLineNo">170</span><a id="line.170"></a>
+<span class="sourceLineNo">171</span><a id="line.171">            if (MEMBERSHIP_RESOURCE.equals(predicate)) {</a>
+<span class="sourceLineNo">172</span><a id="line.172">                if (hasMembershipResc.get()) {</a>
+<span class="sourceLineNo">173</span><a id="line.173">                    throw new MalformedRdfException("Direct and Indirect containers must specify"</a>
+<span class="sourceLineNo">174</span><a id="line.174">                            + " exactly one ldp:membershipResource property, multiple are present");</a>
+<span class="sourceLineNo">175</span><a id="line.175">                }</a>
+<span class="sourceLineNo">176</span><a id="line.176"></a>
+<span class="sourceLineNo">177</span><a id="line.177">                if (stmt.getObject().isURIResource()) {</a>
+<span class="sourceLineNo">178</span><a id="line.178">                    hasMembershipResc.set(true);</a>
+<span class="sourceLineNo">179</span><a id="line.179">                } else {</a>
+<span class="sourceLineNo">180</span><a id="line.180">                    throw new MalformedRdfException("Direct and Indirect containers must specify"</a>
+<span class="sourceLineNo">181</span><a id="line.181">                            + " a ldp:membershipResource property with a resource as the object");</a>
+<span class="sourceLineNo">182</span><a id="line.182">                }</a>
+<span class="sourceLineNo">183</span><a id="line.183">            } else if (HAS_MEMBER_RELATION.equals(predicate) || IS_MEMBER_OF_RELATION.equals(predicate)) {</a>
+<span class="sourceLineNo">184</span><a id="line.184">                if (hasRelation.get()) {</a>
+<span class="sourceLineNo">185</span><a id="line.185">                    throw new MalformedRdfException("Direct and Indirect containers must specify exactly one"</a>
+<span class="sourceLineNo">186</span><a id="line.186">                            + " ldp:hasMemberRelation or ldp:isMemberOfRelation property, but multiple were present");</a>
+<span class="sourceLineNo">187</span><a id="line.187">                }</a>
+<span class="sourceLineNo">188</span><a id="line.188"></a>
+<span class="sourceLineNo">189</span><a id="line.189">                final RDFNode obj = stmt.getObject();</a>
+<span class="sourceLineNo">190</span><a id="line.190">                if (obj.isURIResource()) {</a>
+<span class="sourceLineNo">191</span><a id="line.191">                    final String uri = obj.asResource().getURI();</a>
+<span class="sourceLineNo">192</span><a id="line.192"></a>
+<span class="sourceLineNo">193</span><a id="line.193">                    // Throw exception if object is a server-managed property</a>
+<span class="sourceLineNo">194</span><a id="line.194">                    if (isManagedPredicate.test(createProperty(uri))) {</a>
+<span class="sourceLineNo">195</span><a id="line.195">                        throw new ServerManagedPropertyException(String.format(</a>
+<span class="sourceLineNo">196</span><a id="line.196">                                "%s cannot take a server managed property as an object: property value = %s.",</a>
+<span class="sourceLineNo">197</span><a id="line.197">                                predicate.getLocalName(), uri));</a>
+<span class="sourceLineNo">198</span><a id="line.198">                    }</a>
+<span class="sourceLineNo">199</span><a id="line.199">                    hasRelation.set(true);</a>
+<span class="sourceLineNo">200</span><a id="line.200">                } else {</a>
+<span class="sourceLineNo">201</span><a id="line.201">                    throw new MalformedRdfException("Direct and Indirect containers must specify either"</a>
+<span class="sourceLineNo">202</span><a id="line.202">                            + " ldp:hasMemberRelation or ldp:isMemberOfRelation properties,"</a>
+<span class="sourceLineNo">203</span><a id="line.203">                            + " with a predicate as the object");</a>
+<span class="sourceLineNo">204</span><a id="line.204">                }</a>
+<span class="sourceLineNo">205</span><a id="line.205">            } else if (isIndirect &amp;&amp; INSERTED_CONTENT_RELATION.equals(predicate)) {</a>
+<span class="sourceLineNo">206</span><a id="line.206">                insertedContentRelationCount.incrementAndGet();</a>
+<span class="sourceLineNo">207</span><a id="line.207">                final RDFNode obj = stmt.getObject();</a>
+<span class="sourceLineNo">208</span><a id="line.208">                if (obj.isURIResource()) {</a>
+<span class="sourceLineNo">209</span><a id="line.209">                    final String uri = obj.asResource().getURI();</a>
+<span class="sourceLineNo">210</span><a id="line.210">                    // Throw exception if object is a server-managed property</a>
+<span class="sourceLineNo">211</span><a id="line.211">                    if (isManagedPredicate.test(createProperty(uri))) {</a>
+<span class="sourceLineNo">212</span><a id="line.212">                        throw new ServerManagedPropertyException(String.format(</a>
+<span class="sourceLineNo">213</span><a id="line.213">                                "%s cannot take a server managed property as an object: property value = %s.",</a>
+<span class="sourceLineNo">214</span><a id="line.214">                                predicate.getLocalName(), uri));</a>
+<span class="sourceLineNo">215</span><a id="line.215">                    }</a>
+<span class="sourceLineNo">216</span><a id="line.216">                } else {</a>
+<span class="sourceLineNo">217</span><a id="line.217">                    throw new MalformedRdfException("Indirect containers must specify an"</a>
+<span class="sourceLineNo">218</span><a id="line.218">                            + " ldp:insertedContentRelation property with a URI property as the object");</a>
+<span class="sourceLineNo">219</span><a id="line.219">                }</a>
+<span class="sourceLineNo">220</span><a id="line.220">            }</a>
+<span class="sourceLineNo">221</span><a id="line.221">        });</a>
+<span class="sourceLineNo">222</span><a id="line.222"></a>
+<span class="sourceLineNo">223</span><a id="line.223">        if (isIndirect) {</a>
+<span class="sourceLineNo">224</span><a id="line.224">            if (insertedContentRelationCount.get() &gt; 1) {</a>
+<span class="sourceLineNo">225</span><a id="line.225">                throw new MalformedRdfException("Indirect containers must contain exactly one triple"</a>
+<span class="sourceLineNo">226</span><a id="line.226">                        + " with the predicate ldp:insertedContentRelation and a property as the object.");</a>
+<span class="sourceLineNo">227</span><a id="line.227">            } else if (insertedContentRelationCount.get() == 0) {</a>
+<span class="sourceLineNo">228</span><a id="line.228">                dcResc.addProperty(INSERTED_CONTENT_RELATION, RdfLexicon.MEMBER_SUBJECT);</a>
+<span class="sourceLineNo">229</span><a id="line.229">            }</a>
+<span class="sourceLineNo">230</span><a id="line.230">        }</a>
+<span class="sourceLineNo">231</span><a id="line.231">        if (!hasMembershipResc.get()) {</a>
+<span class="sourceLineNo">232</span><a id="line.232">            dcResc.addProperty(MEMBERSHIP_RESOURCE, dcResc);</a>
+<span class="sourceLineNo">233</span><a id="line.233">        }</a>
+<span class="sourceLineNo">234</span><a id="line.234">        if (!hasRelation.get()) {</a>
+<span class="sourceLineNo">235</span><a id="line.235">            dcResc.addProperty(HAS_MEMBER_RELATION, RdfLexicon.LDP_MEMBER);</a>
+<span class="sourceLineNo">236</span><a id="line.236">        }</a>
+<span class="sourceLineNo">237</span><a id="line.237">    }</a>
+<span class="sourceLineNo">238</span><a id="line.238"></a>
+<span class="sourceLineNo">239</span><a id="line.239">    /**</a>
+<span class="sourceLineNo">240</span><a id="line.240">     * This method does two things:</a>
+<span class="sourceLineNo">241</span><a id="line.241">     * - Throws an exception if an authorization has both accessTo and accessToClass</a>
+<span class="sourceLineNo">242</span><a id="line.242">     * - Adds a default accessTo target if an authorization has neither accessTo nor accessToClass</a>
+<span class="sourceLineNo">243</span><a id="line.243">     *</a>
+<span class="sourceLineNo">244</span><a id="line.244">     * @param inputModel to be checked and updated</a>
+<span class="sourceLineNo">245</span><a id="line.245">     */</a>
+<span class="sourceLineNo">246</span><a id="line.246">    protected void ensureValidACLAuthorization(final Model inputModel) {</a>
+<span class="sourceLineNo">247</span><a id="line.247"></a>
+<span class="sourceLineNo">248</span><a id="line.248">        // TODO -- check ACL first</a>
+<span class="sourceLineNo">249</span><a id="line.249"></a>
+<span class="sourceLineNo">250</span><a id="line.250">        final Set&lt;Node&gt; uniqueAuthSubjects = new HashSet&lt;&gt;();</a>
+<span class="sourceLineNo">251</span><a id="line.251">        inputModel.listStatements().forEachRemaining((final Statement s) -&gt; {</a>
+<span class="sourceLineNo">252</span><a id="line.252">            log.debug("statement: s={}, p={}, o={}", s.getSubject(), s.getPredicate(), s.getObject());</a>
+<span class="sourceLineNo">253</span><a id="line.253">            final Node subject = s.getSubject().asNode();</a>
+<span class="sourceLineNo">254</span><a id="line.254">            // If subject is Authorization Hash Resource, add it to the map with its accessTo/accessToClass status.</a>
+<span class="sourceLineNo">255</span><a id="line.255">            if (subject.toString().contains("/" + FCR_ACL + "#")) {</a>
+<span class="sourceLineNo">256</span><a id="line.256">                uniqueAuthSubjects.add(subject);</a>
+<span class="sourceLineNo">257</span><a id="line.257">            }</a>
+<span class="sourceLineNo">258</span><a id="line.258">        });</a>
+<span class="sourceLineNo">259</span><a id="line.259">        final Graph graph = inputModel.getGraph();</a>
+<span class="sourceLineNo">260</span><a id="line.260">        uniqueAuthSubjects.forEach((final Node subject) -&gt; {</a>
+<span class="sourceLineNo">261</span><a id="line.261">            if (graph.contains(subject, WEBAC_ACCESS_TO_URI, Node.ANY) &amp;&amp;</a>
+<span class="sourceLineNo">262</span><a id="line.262">                    graph.contains(subject, WEBAC_ACCESS_TO_CLASS_URI, Node.ANY)) {</a>
+<span class="sourceLineNo">263</span><a id="line.263">                throw new ACLAuthorizationConstraintViolationException(</a>
+<span class="sourceLineNo">264</span><a id="line.264">                        String.format(</a>
+<span class="sourceLineNo">265</span><a id="line.265">                                "Using both accessTo and accessToClass within " +</a>
+<span class="sourceLineNo">266</span><a id="line.266">                                        "a single Authorization is not allowed: %s.",</a>
+<span class="sourceLineNo">267</span><a id="line.267">                                subject.toString().substring(subject.toString().lastIndexOf("#"))));</a>
+<span class="sourceLineNo">268</span><a id="line.268">            } else if (!(graph.contains(subject, WEBAC_ACCESS_TO_URI, Node.ANY) ||</a>
+<span class="sourceLineNo">269</span><a id="line.269">                    graph.contains(subject, WEBAC_ACCESS_TO_CLASS_URI, Node.ANY))) {</a>
+<span class="sourceLineNo">270</span><a id="line.270">                inputModel.add(createDefaultAccessToStatement(subject.toString()));</a>
+<span class="sourceLineNo">271</span><a id="line.271">            }</a>
+<span class="sourceLineNo">272</span><a id="line.272">        });</a>
+<span class="sourceLineNo">273</span><a id="line.273">    }</a>
+<span class="sourceLineNo">274</span><a id="line.274"></a>
+<span class="sourceLineNo">275</span><a id="line.275">    protected void recordEvent(final Transaction transaction, final FedoraId fedoraId,</a>
+<span class="sourceLineNo">276</span><a id="line.276">                               final ResourceOperation operation) {</a>
+<span class="sourceLineNo">277</span><a id="line.277">        this.eventAccumulator.recordEventForOperation(transaction, fedoraId, operation);</a>
+<span class="sourceLineNo">278</span><a id="line.278">    }</a>
+<span class="sourceLineNo">279</span><a id="line.279"></a>
+<span class="sourceLineNo">280</span><a id="line.280">    /**</a>
+<span class="sourceLineNo">281</span><a id="line.281">     * Wrapper to call the referenceService updateReference method</a>
+<span class="sourceLineNo">282</span><a id="line.282">     * @param transaction the transaction.</a>
+<span class="sourceLineNo">283</span><a id="line.283">     * @param resourceId the resource's ID.</a>
+<span class="sourceLineNo">284</span><a id="line.284">     * @param model the model of the request body.</a>
+<span class="sourceLineNo">285</span><a id="line.285">     */</a>
+<span class="sourceLineNo">286</span><a id="line.286">    protected void updateReferences(final Transaction transaction, final FedoraId resourceId, final String user,</a>
+<span class="sourceLineNo">287</span><a id="line.287">                                    final Model model) {</a>
+<span class="sourceLineNo">288</span><a id="line.288">        referenceService.updateReferences(transaction, resourceId, user,</a>
+<span class="sourceLineNo">289</span><a id="line.289">                fromModel(model.getResource(resourceId.getFullId()).asNode(), model));</a>
+<span class="sourceLineNo">290</span><a id="line.290">    }</a>
+<span class="sourceLineNo">291</span><a id="line.291"></a>
+<span class="sourceLineNo">292</span><a id="line.292">    protected void lockArchivalGroupResource(final Transaction tx,</a>
+<span class="sourceLineNo">293</span><a id="line.293">                                             final PersistentStorageSession pSession,</a>
+<span class="sourceLineNo">294</span><a id="line.294">                                             final FedoraId fedoraId) {</a>
+<span class="sourceLineNo">295</span><a id="line.295">        final var headers = pSession.getHeaders(fedoraId, null);</a>
+<span class="sourceLineNo">296</span><a id="line.296">        if (headers.getArchivalGroupId() != null) {</a>
+<span class="sourceLineNo">297</span><a id="line.297">            tx.lockResource(headers.getArchivalGroupId());</a>
+<span class="sourceLineNo">298</span><a id="line.298">        }</a>
+<span class="sourceLineNo">299</span><a id="line.299">    }</a>
+<span class="sourceLineNo">300</span><a id="line.300"></a>
+<span class="sourceLineNo">301</span><a id="line.301">    protected void lockArchivalGroupResourceFromParent(final Transaction tx,</a>
+<span class="sourceLineNo">302</span><a id="line.302">                                                       final PersistentStorageSession pSession,</a>
+<span class="sourceLineNo">303</span><a id="line.303">                                                       final FedoraId parentId) {</a>
+<span class="sourceLineNo">304</span><a id="line.304">        if (parentId != null &amp;&amp; !parentId.isRepositoryRoot()) {</a>
+<span class="sourceLineNo">305</span><a id="line.305">            final var parentHeaders = pSession.getHeaders(parentId, null);</a>
+<span class="sourceLineNo">306</span><a id="line.306">            if (parentHeaders.isArchivalGroup()) {</a>
+<span class="sourceLineNo">307</span><a id="line.307">                tx.lockResource(parentId);</a>
+<span class="sourceLineNo">308</span><a id="line.308">            } else if (parentHeaders.getArchivalGroupId() != null) {</a>
+<span class="sourceLineNo">309</span><a id="line.309">                tx.lockResource(parentHeaders.getArchivalGroupId());</a>
+<span class="sourceLineNo">310</span><a id="line.310">            }</a>
+<span class="sourceLineNo">311</span><a id="line.311">        }</a>
+<span class="sourceLineNo">312</span><a id="line.312">    }</a>
+<span class="sourceLineNo">313</span><a id="line.313"></a>
+<span class="sourceLineNo">314</span><a id="line.314">    /**</a>
+<span class="sourceLineNo">315</span><a id="line.315">     * Returns a Statement with the resource containing the acl to be the accessTo target for the given auth subject.</a>
+<span class="sourceLineNo">316</span><a id="line.316">     *</a>
+<span class="sourceLineNo">317</span><a id="line.317">     * @param authSubject - acl authorization subject uri string</a>
+<span class="sourceLineNo">318</span><a id="line.318">     * @return acl statement</a>
+<span class="sourceLineNo">319</span><a id="line.319">     */</a>
+<span class="sourceLineNo">320</span><a id="line.320">    private Statement createDefaultAccessToStatement(final String authSubject) {</a>
+<span class="sourceLineNo">321</span><a id="line.321">        final String currentResourcePath = authSubject.substring(0, authSubject.indexOf("/" + FCR_ACL));</a>
+<span class="sourceLineNo">322</span><a id="line.322">        return createStatement(</a>
+<span class="sourceLineNo">323</span><a id="line.323">                createResource(authSubject),</a>
+<span class="sourceLineNo">324</span><a id="line.324">                WEBAC_ACCESS_TO_PROPERTY,</a>
+<span class="sourceLineNo">325</span><a id="line.325">                createResource(currentResourcePath));</a>
+<span class="sourceLineNo">326</span><a id="line.326">    }</a>
+<span class="sourceLineNo">327</span><a id="line.327">}</a>
+<span class="sourceLineNo">328</span><a id="line.328"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>
