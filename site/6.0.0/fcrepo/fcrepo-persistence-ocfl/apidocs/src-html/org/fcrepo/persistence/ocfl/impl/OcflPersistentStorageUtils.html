@@ -1,0 +1,281 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * Licensed to DuraSpace under one or more contributor license agreements.</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * See the NOTICE file distributed with this work for additional information</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * regarding copyright ownership.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> *</a>
+<span class="sourceLineNo">006</span><a id="line.6"> * DuraSpace licenses this file to you under the Apache License,</a>
+<span class="sourceLineNo">007</span><a id="line.7"> * Version 2.0 (the "License"); you may not use this file except in</a>
+<span class="sourceLineNo">008</span><a id="line.8"> * compliance with the License.  You may obtain a copy of the License at</a>
+<span class="sourceLineNo">009</span><a id="line.9"> *</a>
+<span class="sourceLineNo">010</span><a id="line.10"> *     http://www.apache.org/licenses/LICENSE-2.0</a>
+<span class="sourceLineNo">011</span><a id="line.11"> *</a>
+<span class="sourceLineNo">012</span><a id="line.12"> * Unless required by applicable law or agreed to in writing, software</a>
+<span class="sourceLineNo">013</span><a id="line.13"> * distributed under the License is distributed on an "AS IS" BASIS,</a>
+<span class="sourceLineNo">014</span><a id="line.14"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<span class="sourceLineNo">015</span><a id="line.15"> * See the License for the specific language governing permissions and</a>
+<span class="sourceLineNo">016</span><a id="line.16"> * limitations under the License.</a>
+<span class="sourceLineNo">017</span><a id="line.17"> */</a>
+<span class="sourceLineNo">018</span><a id="line.18">package org.fcrepo.persistence.ocfl.impl;</a>
+<span class="sourceLineNo">019</span><a id="line.19"></a>
+<span class="sourceLineNo">020</span><a id="line.20">import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS;</a>
+<span class="sourceLineNo">021</span><a id="line.21">import static org.apache.jena.riot.RDFFormat.NTRIPLES;</a>
+<span class="sourceLineNo">022</span><a id="line.22"></a>
+<span class="sourceLineNo">023</span><a id="line.23">import java.io.IOException;</a>
+<span class="sourceLineNo">024</span><a id="line.24">import java.nio.file.FileAlreadyExistsException;</a>
+<span class="sourceLineNo">025</span><a id="line.25">import java.nio.file.Files;</a>
+<span class="sourceLineNo">026</span><a id="line.26">import java.nio.file.Path;</a>
+<span class="sourceLineNo">027</span><a id="line.27">import java.util.function.Consumer;</a>
+<span class="sourceLineNo">028</span><a id="line.28"></a>
+<span class="sourceLineNo">029</span><a id="line.29">import javax.sql.DataSource;</a>
+<span class="sourceLineNo">030</span><a id="line.30"></a>
+<span class="sourceLineNo">031</span><a id="line.31">import org.apache.commons.lang3.SystemUtils;</a>
+<span class="sourceLineNo">032</span><a id="line.32">import org.apache.http.impl.auth.UnsupportedDigestAlgorithmException;</a>
+<span class="sourceLineNo">033</span><a id="line.33">import org.apache.jena.riot.RDFFormat;</a>
+<span class="sourceLineNo">034</span><a id="line.34">import org.slf4j.Logger;</a>
+<span class="sourceLineNo">035</span><a id="line.35">import org.slf4j.LoggerFactory;</a>
+<span class="sourceLineNo">036</span><a id="line.36"></a>
+<span class="sourceLineNo">037</span><a id="line.37">import com.fasterxml.jackson.annotation.JsonInclude;</a>
+<span class="sourceLineNo">038</span><a id="line.38">import com.fasterxml.jackson.databind.ObjectMapper;</a>
+<span class="sourceLineNo">039</span><a id="line.39">import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;</a>
+<span class="sourceLineNo">040</span><a id="line.40"></a>
+<span class="sourceLineNo">041</span><a id="line.41">import edu.wisc.library.ocfl.api.DigestAlgorithmRegistry;</a>
+<span class="sourceLineNo">042</span><a id="line.42">import edu.wisc.library.ocfl.api.MutableOcflRepository;</a>
+<span class="sourceLineNo">043</span><a id="line.43">import edu.wisc.library.ocfl.api.OcflConfig;</a>
+<span class="sourceLineNo">044</span><a id="line.44">import edu.wisc.library.ocfl.api.model.DigestAlgorithm;</a>
+<span class="sourceLineNo">045</span><a id="line.45">import edu.wisc.library.ocfl.aws.OcflS3Client;</a>
+<span class="sourceLineNo">046</span><a id="line.46">import edu.wisc.library.ocfl.core.OcflRepositoryBuilder;</a>
+<span class="sourceLineNo">047</span><a id="line.47">import edu.wisc.library.ocfl.core.extension.storage.layout.config.HashedNTupleLayoutConfig;</a>
+<span class="sourceLineNo">048</span><a id="line.48">import edu.wisc.library.ocfl.core.path.constraint.ContentPathConstraints;</a>
+<span class="sourceLineNo">049</span><a id="line.49">import edu.wisc.library.ocfl.core.path.mapper.LogicalPathMappers;</a>
+<span class="sourceLineNo">050</span><a id="line.50">import edu.wisc.library.ocfl.core.storage.cloud.CloudOcflStorage;</a>
+<span class="sourceLineNo">051</span><a id="line.51">import edu.wisc.library.ocfl.core.storage.filesystem.FileSystemOcflStorage;</a>
+<span class="sourceLineNo">052</span><a id="line.52">import software.amazon.awssdk.services.s3.S3Client;</a>
+<span class="sourceLineNo">053</span><a id="line.53"></a>
+<span class="sourceLineNo">054</span><a id="line.54">/**</a>
+<span class="sourceLineNo">055</span><a id="line.55"> * A set of utility functions for supporting OCFL persistence activities.</a>
+<span class="sourceLineNo">056</span><a id="line.56"> *</a>
+<span class="sourceLineNo">057</span><a id="line.57"> * @author dbernstein</a>
+<span class="sourceLineNo">058</span><a id="line.58"> * @since 6.0.0</a>
+<span class="sourceLineNo">059</span><a id="line.59"> */</a>
+<span class="sourceLineNo">060</span><a id="line.60">public class OcflPersistentStorageUtils {</a>
+<span class="sourceLineNo">061</span><a id="line.61"></a>
+<span class="sourceLineNo">062</span><a id="line.62">    private static final Logger log = LoggerFactory.getLogger(OcflPersistentStorageUtils.class);</a>
+<span class="sourceLineNo">063</span><a id="line.63"></a>
+<span class="sourceLineNo">064</span><a id="line.64">    private OcflPersistentStorageUtils() {</a>
+<span class="sourceLineNo">065</span><a id="line.65">    }</a>
+<span class="sourceLineNo">066</span><a id="line.66"></a>
+<span class="sourceLineNo">067</span><a id="line.67">    /**</a>
+<span class="sourceLineNo">068</span><a id="line.68">     * The default RDF on disk format</a>
+<span class="sourceLineNo">069</span><a id="line.69">     * TODO Make this value configurable</a>
+<span class="sourceLineNo">070</span><a id="line.70">     */</a>
+<span class="sourceLineNo">071</span><a id="line.71"></a>
+<span class="sourceLineNo">072</span><a id="line.72">    private static RDFFormat DEFAULT_RDF_FORMAT = NTRIPLES;</a>
+<span class="sourceLineNo">073</span><a id="line.73"></a>
+<span class="sourceLineNo">074</span><a id="line.74">    /**</a>
+<span class="sourceLineNo">075</span><a id="line.75">     * @return the RDF Format. By default NTRIPLES are returned.</a>
+<span class="sourceLineNo">076</span><a id="line.76">     */</a>
+<span class="sourceLineNo">077</span><a id="line.77">    public static RDFFormat getRdfFormat() {</a>
+<span class="sourceLineNo">078</span><a id="line.78">        return DEFAULT_RDF_FORMAT;</a>
+<span class="sourceLineNo">079</span><a id="line.79">    }</a>
+<span class="sourceLineNo">080</span><a id="line.80"></a>
+<span class="sourceLineNo">081</span><a id="line.81">    /**</a>
+<span class="sourceLineNo">082</span><a id="line.82">     * @return the RDF file extension.</a>
+<span class="sourceLineNo">083</span><a id="line.83">     */</a>
+<span class="sourceLineNo">084</span><a id="line.84">    public static String getRDFFileExtension() {</a>
+<span class="sourceLineNo">085</span><a id="line.85">        return "." + DEFAULT_RDF_FORMAT.getLang().getFileExtensions().get(0);</a>
+<span class="sourceLineNo">086</span><a id="line.86">    }</a>
+<span class="sourceLineNo">087</span><a id="line.87"></a>
+<span class="sourceLineNo">088</span><a id="line.88">    /**</a>
+<span class="sourceLineNo">089</span><a id="line.89">     * Create a new ocfl repository backed by the filesystem</a>
+<span class="sourceLineNo">090</span><a id="line.90">     * @param ocflStorageRootDir The ocfl storage root directory</a>
+<span class="sourceLineNo">091</span><a id="line.91">     * @param ocflWorkDir The ocfl work directory</a>
+<span class="sourceLineNo">092</span><a id="line.92">     * @param algorithm the algorithm for the OCFL repository</a>
+<span class="sourceLineNo">093</span><a id="line.93">     * @return the repository</a>
+<span class="sourceLineNo">094</span><a id="line.94">     */</a>
+<span class="sourceLineNo">095</span><a id="line.95">    public static MutableOcflRepository createFilesystemRepository(final Path ocflStorageRootDir,</a>
+<span class="sourceLineNo">096</span><a id="line.96">                                                                   final Path ocflWorkDir,</a>
+<span class="sourceLineNo">097</span><a id="line.97">                                                                   final org.fcrepo.config.DigestAlgorithm algorithm)</a>
+<span class="sourceLineNo">098</span><a id="line.98">            throws IOException {</a>
+<span class="sourceLineNo">099</span><a id="line.99">        createDirectories(ocflStorageRootDir);</a>
+<span class="sourceLineNo">100</span><a id="line.100"></a>
+<span class="sourceLineNo">101</span><a id="line.101">        final var storage = FileSystemOcflStorage.builder().repositoryRoot(ocflStorageRootDir).build();</a>
+<span class="sourceLineNo">102</span><a id="line.102"></a>
+<span class="sourceLineNo">103</span><a id="line.103">        return createRepository(ocflWorkDir, builder -&gt; {</a>
+<span class="sourceLineNo">104</span><a id="line.104">            builder.storage(storage);</a>
+<span class="sourceLineNo">105</span><a id="line.105">        }, algorithm);</a>
+<span class="sourceLineNo">106</span><a id="line.106">    }</a>
+<span class="sourceLineNo">107</span><a id="line.107"></a>
+<span class="sourceLineNo">108</span><a id="line.108">    /**</a>
+<span class="sourceLineNo">109</span><a id="line.109">     * Create a new ocfl repository backed by s3</a>
+<span class="sourceLineNo">110</span><a id="line.110">     *</a>
+<span class="sourceLineNo">111</span><a id="line.111">     * @param dataSource the datasource to keep inventories in and use as a lock</a>
+<span class="sourceLineNo">112</span><a id="line.112">     * @param s3Client aws s3 client</a>
+<span class="sourceLineNo">113</span><a id="line.113">     * @param bucket the bucket to store objects in</a>
+<span class="sourceLineNo">114</span><a id="line.114">     * @param prefix the prefix within the bucket to store objects under</a>
+<span class="sourceLineNo">115</span><a id="line.115">     * @param ocflWorkDir the local directory to stage objects in</a>
+<span class="sourceLineNo">116</span><a id="line.116">     * @param algorithm the algorithm for the OCFL repository</a>
+<span class="sourceLineNo">117</span><a id="line.117">     * @param withDb true if the ocfl client should use a db</a>
+<span class="sourceLineNo">118</span><a id="line.118">     * @return the repository</a>
+<span class="sourceLineNo">119</span><a id="line.119">     */</a>
+<span class="sourceLineNo">120</span><a id="line.120">    public static MutableOcflRepository createS3Repository(final DataSource dataSource,</a>
+<span class="sourceLineNo">121</span><a id="line.121">                                                           final S3Client s3Client,</a>
+<span class="sourceLineNo">122</span><a id="line.122">                                                           final String bucket,</a>
+<span class="sourceLineNo">123</span><a id="line.123">                                                           final String prefix,</a>
+<span class="sourceLineNo">124</span><a id="line.124">                                                           final Path ocflWorkDir,</a>
+<span class="sourceLineNo">125</span><a id="line.125">                                                           final org.fcrepo.config.DigestAlgorithm algorithm,</a>
+<span class="sourceLineNo">126</span><a id="line.126">                                                           final boolean withDb)</a>
+<span class="sourceLineNo">127</span><a id="line.127">            throws IOException {</a>
+<span class="sourceLineNo">128</span><a id="line.128">        createDirectories(ocflWorkDir);</a>
+<span class="sourceLineNo">129</span><a id="line.129"></a>
+<span class="sourceLineNo">130</span><a id="line.130">        final var storage = CloudOcflStorage.builder()</a>
+<span class="sourceLineNo">131</span><a id="line.131">                .cloudClient(OcflS3Client.builder()</a>
+<span class="sourceLineNo">132</span><a id="line.132">                        .s3Client(s3Client)</a>
+<span class="sourceLineNo">133</span><a id="line.133">                        .bucket(bucket)</a>
+<span class="sourceLineNo">134</span><a id="line.134">                        .repoPrefix(prefix)</a>
+<span class="sourceLineNo">135</span><a id="line.135">                        .build())</a>
+<span class="sourceLineNo">136</span><a id="line.136">                .build();</a>
+<span class="sourceLineNo">137</span><a id="line.137"></a>
+<span class="sourceLineNo">138</span><a id="line.138">        return createRepository(ocflWorkDir, builder -&gt; {</a>
+<span class="sourceLineNo">139</span><a id="line.139">            builder.contentPathConstraints(ContentPathConstraints.cloud())</a>
+<span class="sourceLineNo">140</span><a id="line.140">                    .storage(storage);</a>
+<span class="sourceLineNo">141</span><a id="line.141"></a>
+<span class="sourceLineNo">142</span><a id="line.142">            if (withDb) {</a>
+<span class="sourceLineNo">143</span><a id="line.143">                builder.objectDetailsDb(db -&gt; db.dataSource(dataSource));</a>
+<span class="sourceLineNo">144</span><a id="line.144">            }</a>
+<span class="sourceLineNo">145</span><a id="line.145"></a>
+<span class="sourceLineNo">146</span><a id="line.146">        }, algorithm);</a>
+<span class="sourceLineNo">147</span><a id="line.147">    }</a>
+<span class="sourceLineNo">148</span><a id="line.148"></a>
+<span class="sourceLineNo">149</span><a id="line.149">    private static MutableOcflRepository createRepository(final Path ocflWorkDir,</a>
+<span class="sourceLineNo">150</span><a id="line.150">                                                          final Consumer&lt;OcflRepositoryBuilder&gt; configurer,</a>
+<span class="sourceLineNo">151</span><a id="line.151">                                                          final org.fcrepo.config.DigestAlgorithm algorithm)</a>
+<span class="sourceLineNo">152</span><a id="line.152">            throws IOException {</a>
+<span class="sourceLineNo">153</span><a id="line.153">        createDirectories(ocflWorkDir);</a>
+<span class="sourceLineNo">154</span><a id="line.154"></a>
+<span class="sourceLineNo">155</span><a id="line.155">        final DigestAlgorithm ocflDigestAlg = translateFedoraDigestToOcfl(algorithm);</a>
+<span class="sourceLineNo">156</span><a id="line.156">        if (ocflDigestAlg == null) {</a>
+<span class="sourceLineNo">157</span><a id="line.157">            throw new UnsupportedDigestAlgorithmException(</a>
+<span class="sourceLineNo">158</span><a id="line.158">                    "Unable to map Fedora default digest algorithm " + algorithm + " into OCFL");</a>
+<span class="sourceLineNo">159</span><a id="line.159">        }</a>
+<span class="sourceLineNo">160</span><a id="line.160"></a>
+<span class="sourceLineNo">161</span><a id="line.161">        final var logicalPathMapper = SystemUtils.IS_OS_WINDOWS ?</a>
+<span class="sourceLineNo">162</span><a id="line.162">                LogicalPathMappers.percentEncodingWindowsMapper() : LogicalPathMappers.percentEncodingLinuxMapper();</a>
+<span class="sourceLineNo">163</span><a id="line.163"></a>
+<span class="sourceLineNo">164</span><a id="line.164">        final var builder = new OcflRepositoryBuilder()</a>
+<span class="sourceLineNo">165</span><a id="line.165">                .defaultLayoutConfig(new HashedNTupleLayoutConfig())</a>
+<span class="sourceLineNo">166</span><a id="line.166">                .ocflConfig(new OcflConfig().setDefaultDigestAlgorithm(ocflDigestAlg))</a>
+<span class="sourceLineNo">167</span><a id="line.167">                .logicalPathMapper(logicalPathMapper)</a>
+<span class="sourceLineNo">168</span><a id="line.168">                .workDir(ocflWorkDir);</a>
+<span class="sourceLineNo">169</span><a id="line.169"></a>
+<span class="sourceLineNo">170</span><a id="line.170">        configurer.accept(builder);</a>
+<span class="sourceLineNo">171</span><a id="line.171"></a>
+<span class="sourceLineNo">172</span><a id="line.172">        return builder.buildMutable();</a>
+<span class="sourceLineNo">173</span><a id="line.173">    }</a>
+<span class="sourceLineNo">174</span><a id="line.174"></a>
+<span class="sourceLineNo">175</span><a id="line.175">    /**</a>
+<span class="sourceLineNo">176</span><a id="line.176">     * @return new object mapper with default config</a>
+<span class="sourceLineNo">177</span><a id="line.177">     */</a>
+<span class="sourceLineNo">178</span><a id="line.178">    public static ObjectMapper objectMapper() {</a>
+<span class="sourceLineNo">179</span><a id="line.179">        return new ObjectMapper()</a>
+<span class="sourceLineNo">180</span><a id="line.180">                .configure(WRITE_DATES_AS_TIMESTAMPS, false)</a>
+<span class="sourceLineNo">181</span><a id="line.181">                .registerModule(new JavaTimeModule())</a>
+<span class="sourceLineNo">182</span><a id="line.182">                .setSerializationInclusion(JsonInclude.Include.NON_NULL);</a>
+<span class="sourceLineNo">183</span><a id="line.183">    }</a>
+<span class="sourceLineNo">184</span><a id="line.184"></a>
+<span class="sourceLineNo">185</span><a id="line.185">    /**</a>
+<span class="sourceLineNo">186</span><a id="line.186">     * Translates the provided fedora digest algorithm enum into a OCFL client digest algorithm</a>
+<span class="sourceLineNo">187</span><a id="line.187">     *</a>
+<span class="sourceLineNo">188</span><a id="line.188">     * @param fcrepoAlg fedora digest algorithm</a>
+<span class="sourceLineNo">189</span><a id="line.189">     * @return OCFL client DigestAlgorithm, or null if no match could be made</a>
+<span class="sourceLineNo">190</span><a id="line.190">     */</a>
+<span class="sourceLineNo">191</span><a id="line.191">    public static DigestAlgorithm translateFedoraDigestToOcfl(final org.fcrepo.config.DigestAlgorithm fcrepoAlg) {</a>
+<span class="sourceLineNo">192</span><a id="line.192">        return fcrepoAlg.getAliases().stream()</a>
+<span class="sourceLineNo">193</span><a id="line.193">                .map(alias -&gt; DigestAlgorithmRegistry.getAlgorithm(alias))</a>
+<span class="sourceLineNo">194</span><a id="line.194">                .filter(alg -&gt; alg != null)</a>
+<span class="sourceLineNo">195</span><a id="line.195">                .findFirst()</a>
+<span class="sourceLineNo">196</span><a id="line.196">                .orElse(null);</a>
+<span class="sourceLineNo">197</span><a id="line.197">    }</a>
+<span class="sourceLineNo">198</span><a id="line.198"></a>
+<span class="sourceLineNo">199</span><a id="line.199">    private static Path createDirectories(final Path path) throws IOException {</a>
+<span class="sourceLineNo">200</span><a id="line.200">        try {</a>
+<span class="sourceLineNo">201</span><a id="line.201">            return Files.createDirectories(path);</a>
+<span class="sourceLineNo">202</span><a id="line.202">        } catch (final FileAlreadyExistsException e) {</a>
+<span class="sourceLineNo">203</span><a id="line.203">            // Ignore. This only happens with the path is a symlink</a>
+<span class="sourceLineNo">204</span><a id="line.204">            return path;</a>
+<span class="sourceLineNo">205</span><a id="line.205">        }</a>
+<span class="sourceLineNo">206</span><a id="line.206">    }</a>
+<span class="sourceLineNo">207</span><a id="line.207">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>
