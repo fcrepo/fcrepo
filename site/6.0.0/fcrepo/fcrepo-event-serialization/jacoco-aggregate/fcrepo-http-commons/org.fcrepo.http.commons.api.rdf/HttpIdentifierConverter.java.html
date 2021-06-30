@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>HttpIdentifierConverter.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Event Serialization</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-commons</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.commons.api.rdf</a> &gt; <span class="el_source">HttpIdentifierConverter.java</span></div><h1>HttpIdentifierConverter.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.commons.api.rdf;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.net.URLDecoder;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.ws.rs.core.UriBuilder;
+
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+
+import org.glassfish.jersey.uri.UriTemplate;
+import org.slf4j.Logger;
+
+/**
+ * Convert between HTTP URIs (LDP paths) and internal Fedora ID using a
+ * JAX-RS UriBuilder to mediate the URI translation.
+ *
+ * @author whikloj
+ * @since 2019-09-26
+ */
+public class HttpIdentifierConverter {
+
+<span class="fc" id="L44">    private static final Logger LOGGER = getLogger(HttpIdentifierConverter.class);</span>
+
+    private final UriBuilder uriBuilder;
+
+    private final UriTemplate uriTemplate;
+
+    private static String trimTrailingSlashes(final String string) {
+<span class="fc" id="L51">        return string.replaceAll(&quot;/+$&quot;, &quot;&quot;);</span>
+    }
+
+    /**
+     * Create a new identifier converter with the given URI template.
+     * @param uriBuilder the uri builder
+     */
+<span class="fc" id="L58">    public HttpIdentifierConverter(final UriBuilder uriBuilder) {</span>
+<span class="fc" id="L59">        this.uriBuilder = uriBuilder;</span>
+<span class="fc" id="L60">        this.uriTemplate = new UriTemplate(uriBuilder.toTemplate());</span>
+<span class="fc" id="L61">    }</span>
+
+    /**
+     * Convert an external URI to an internal ID.
+     *
+     * @param httpUri the external URI.
+     * @return the internal identifier.
+     */
+    public String toInternalId(final String httpUri) {
+<span class="fc" id="L70">        return toInternalId(httpUri, false);</span>
+    }
+
+    /**
+     * Convert an external URI to an internal ID.
+     *
+     * @param httpUri the external URI.
+     * @param encoded whether the internal ID is encoded or not.
+     * @return the internal identifier.
+     */
+    public String toInternalId(final String httpUri, final boolean encoded) {
+<span class="fc" id="L81">        LOGGER.trace(&quot;Translating http URI {} to Fedora ID with encoded set to {}&quot;, httpUri, encoded);</span>
+
+<span class="fc" id="L83">        final String path = getPath(httpUri);</span>
+<span class="fc bfc" id="L84" title="All 2 branches covered.">        if (path != null) {</span>
+            final String decodedPath;
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">            if (!encoded) {</span>
+<span class="fc" id="L87">                decodedPath = URLDecoder.decode(path, UTF_8);</span>
+            } else {
+<span class="nc" id="L89">                decodedPath = path;</span>
+            }
+<span class="fc" id="L91">            final String fedoraId = trimTrailingSlashes(decodedPath);</span>
+
+<span class="fc" id="L93">            return FEDORA_ID_PREFIX + fedoraId;</span>
+        }
+<span class="fc" id="L95">        throw new IllegalArgumentException(&quot;Cannot translate NULL path&quot;);</span>
+    }
+
+    /**
+     * Test if the provided external URI is in the domain of this repository.
+     *
+     * If it is not in the domain we can't convert it.
+     *
+     * @param httpUri the external URI.
+     * @return true if it is in domain.
+     */
+    public boolean inExternalDomain(final String httpUri) {
+<span class="fc" id="L107">        LOGGER.trace(&quot;Checking if http URI {} is in domain&quot;, httpUri);</span>
+<span class="fc bfc" id="L108" title="All 2 branches covered.">        return getPath(httpUri) != null;</span>
+    }
+
+    /**
+     * Make a URI into an absolute URI (if relative), an internal encoded ID (if in repository domain) or leave it
+     * alone.
+     * @param httpUri the URI
+     * @return an absolute URI, the original URI or an internal ID.
+     */
+    public String translateUri(final String httpUri) {
+<span class="nc bnc" id="L118" title="All 2 branches missed.">        if (inExternalDomain(httpUri)) {</span>
+<span class="nc" id="L119">            return toInternalId(httpUri, true);</span>
+<span class="nc bnc" id="L120" title="All 2 branches missed.">        } else if (httpUri.startsWith(&quot;/&quot;)) {</span>
+            // Is a relative URI.
+            // Build a fake URI using the hostname so we can resolve against it.
+<span class="nc" id="L123">            final var uri = uriBuilder.build(&quot;placeholder&quot;);</span>
+<span class="nc" id="L124">            return uri.resolve(httpUri).toString();</span>
+        }
+<span class="nc" id="L126">        return httpUri;</span>
+    }
+
+    /**
+     * Convert an internal identifier to an external URI.
+     *
+     * @param fedoraId the internal identifier.
+     * @return the external URI.
+     */
+    public String toExternalId(final String fedoraId) {
+<span class="fc" id="L136">        LOGGER.trace(&quot;Translating Fedora ID {} to Http URI&quot;, fedoraId);</span>
+<span class="fc bfc" id="L137" title="All 2 branches covered.">        if (inInternalDomain(fedoraId)) {</span>
+            // If it starts with our prefix, strip the prefix and any leading slashes and use it as the path
+            // part of the URI.
+<span class="fc" id="L140">            final String path = fedoraId.substring(FEDORA_ID_PREFIX.length()).replaceFirst(&quot;/&quot;, &quot;&quot;);</span>
+<span class="fc" id="L141">            return buildUri(path);</span>
+        }
+<span class="fc" id="L143">        throw new IllegalArgumentException(&quot;Cannot translate IDs without our prefix&quot;);</span>
+    }
+
+    /**
+     * Check if the provided internal identifier is in the domain of the repository.
+     *
+     * If it is not in the domain we can't convert it.
+     *
+     * @param fedoraId the internal identifier.
+     * @return true if it is in domain.
+     */
+    public boolean inInternalDomain(final String fedoraId) {
+<span class="fc" id="L155">        LOGGER.trace(&quot;Checking if fedora ID {} is in domain&quot;, fedoraId);</span>
+<span class="fc" id="L156">        return (fedoraId.startsWith(FEDORA_ID_PREFIX));</span>
+    }
+
+    /**
+     * Return a UriBuilder for the current template.
+     *
+     * @return the uri builder.
+     */
+    private UriBuilder uriBuilder() {
+<span class="fc" id="L165">        return UriBuilder.fromUri(uriBuilder.toTemplate());</span>
+    }
+
+    /**
+     * Convert a path to a full url using the UriBuilder template.
+     * @param path the external path.
+     * @return the full url.
+     */
+    public String toDomain(final String path) {
+
+        final String realPath;
+<span class="pc bpc" id="L176" title="1 of 2 branches missed.">        if (path == null) {</span>
+<span class="nc" id="L177">            realPath = &quot;&quot;;</span>
+<span class="fc bfc" id="L178" title="All 2 branches covered.">        } else if (path.startsWith(&quot;/&quot;)) {</span>
+<span class="fc" id="L179">            realPath = path.substring(1);</span>
+        } else {
+<span class="fc" id="L181">            realPath = path;</span>
+        }
+
+<span class="fc" id="L184">        return buildUri(realPath);</span>
+    }
+
+    /**
+     * Function to convert from the external path of a URI to an internal FedoraId.
+     * @param externalPath the path part of the external URI.
+     * @return the FedoraId.
+     */
+    public FedoraId pathToInternalId(final String externalPath) {
+<span class="fc" id="L193">        return FedoraId.create(externalPath);</span>
+    }
+
+    /**
+     * Utility to build a URL.
+     * @param path the path from the internal Id.
+     * @return an external URI.
+     */
+    private String buildUri(final String path) {
+<span class="fc" id="L202">        final UriBuilder uri = uriBuilder();</span>
+<span class="pc bpc" id="L203" title="1 of 2 branches missed.">        if (path.contains(&quot;#&quot;)) {</span>
+<span class="nc" id="L204">            final String[] split = path.split(&quot;#&quot;, 2);</span>
+<span class="nc" id="L205">            uri.resolveTemplateFromEncoded(&quot;path&quot;, split[0]);</span>
+<span class="nc" id="L206">            uri.fragment(split[1]);</span>
+<span class="nc" id="L207">        } else {</span>
+<span class="fc" id="L208">            uri.resolveTemplateFromEncoded(&quot;path&quot;, path);</span>
+        }
+<span class="fc" id="L210">        return uri.build().toString();</span>
+    }
+
+    /**
+     * Split the path off the URI.
+     *
+     * @param httpUri the incoming URI.
+     * @return the path of the URI.
+     */
+    private String getPath(final String httpUri) {
+<span class="fc" id="L220">        final Map&lt;String, String&gt; values = new HashMap&lt;&gt;();</span>
+
+<span class="pc bpc" id="L222" title="1 of 4 branches missed.">        if (uriTemplate.match(httpUri, values) &amp;&amp; values.containsKey(&quot;path&quot;)) {</span>
+<span class="fc" id="L223">            return &quot;/&quot; + values.get(&quot;path&quot;);</span>
+<span class="fc bfc" id="L224" title="All 2 branches covered.">        } else if (isRootWithoutTrailingSlash(httpUri)) {</span>
+<span class="fc" id="L225">            return &quot;/&quot;;</span>
+        }
+<span class="fc" id="L227">        return null;</span>
+    }
+
+    /**
+     * Test if the URI is the root but missing the trailing slash
+     *
+     * @param httpUri the incoming URI.
+     * @return whether or not it is the root minus trailing slash
+     */
+    private boolean isRootWithoutTrailingSlash(final String httpUri) {
+<span class="fc" id="L237">        final Map&lt;String, String&gt; values = new HashMap&lt;&gt;();</span>
+
+<span class="pc bpc" id="L239" title="1 of 4 branches missed.">        return uriTemplate.match(httpUri + &quot;/&quot;, values) &amp;&amp; values.containsKey(&quot;path&quot;) &amp;&amp;</span>
+<span class="pc bpc" id="L240" title="1 of 2 branches missed.">            values.get(&quot;path&quot;).isEmpty();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

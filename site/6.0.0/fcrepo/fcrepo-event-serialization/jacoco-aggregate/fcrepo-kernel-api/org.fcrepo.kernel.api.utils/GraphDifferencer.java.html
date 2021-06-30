@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>GraphDifferencer.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Event Serialization</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.api.utils</a> &gt; <span class="el_source">GraphDifferencer.java</span></div><h1>GraphDifferencer.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.api.utils;
+
+import java.util.stream.Stream;
+
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+
+import static java.util.Spliterator.IMMUTABLE;
+import static java.util.Spliterators.spliteratorUnknownSize;
+import static java.util.stream.StreamSupport.stream;
+import static org.apache.jena.graph.Node.ANY;
+import static org.apache.jena.sparql.graph.GraphFactory.createDefaultGraph;
+
+/**
+ * A wrapping {@link Stream} that calculates two differences between a
+ * {@link Graph} A and a source Stream B. The differences are (A - (A ∩ B)) and
+ * (B - (A ∩ B)). The ordinary output of this stream is (B - (A ∩ B)), and
+ * after exhaustion, sets containing (A - (A ∩ B)) and (A ∩ B) are available.
+ *
+ * @author ajs6f
+ * @author acoburn
+ * @since Oct 24, 2013
+ */
+public class GraphDifferencer {
+
+    private final Graph notCommon;
+
+    private final Graph common;
+
+<span class="fc" id="L48">    private final Stream.Builder&lt;Triple&gt; source = Stream.builder();</span>
+
+    /**
+     * Diff a Model against a stream of triples
+     *
+     * @param replacement the replacement
+     * @param original the original
+     */
+    public GraphDifferencer(final Model replacement,
+                                     final Stream&lt;Triple&gt; original) {
+<span class="nc" id="L58">        this(replacement.getGraph(), original);</span>
+<span class="nc" id="L59">    }</span>
+
+    /**
+     * Diff a graph against a stream of triples
+     *
+     * @param replacement the replacement
+     * @param original the original
+     */
+    public GraphDifferencer(final Graph replacement,
+<span class="fc" id="L68">                                     final Stream&lt;Triple&gt; original) {</span>
+<span class="fc" id="L69">        notCommon = replacement;</span>
+<span class="fc" id="L70">        common = createDefaultGraph();</span>
+<span class="fc" id="L71">        original.forEach(x -&gt; {</span>
+<span class="fc" id="L72">            synchronized (this) {</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">                if (notCommon.contains(x)) {</span>
+<span class="fc" id="L74">                    notCommon.remove(x.getSubject(), x.getPredicate(), x.getObject());</span>
+<span class="fc" id="L75">                    common.add(x);</span>
+<span class="pc bpc" id="L76" title="1 of 2 branches missed.">                } else if (!common.contains(x)) {</span>
+<span class="fc" id="L77">                    source.accept(x);</span>
+                }
+<span class="fc" id="L79">            }</span>
+<span class="fc" id="L80">        });</span>
+<span class="fc" id="L81">    }</span>
+
+    /**
+     * This method returns the difference between the two input sources.
+     *
+     * @return The differences between the two inputs.
+     */
+    public Stream&lt;Triple&gt; difference() {
+<span class="fc" id="L89">        return source.build();</span>
+    }
+
+    /**
+     * This method will return null until the source iterator is exhausted.
+     *
+     * @return The elements that turned out to be common to the two inputs.
+     */
+    public Stream&lt;Triple&gt; common() {
+<span class="fc" id="L98">        return stream(spliteratorUnknownSize(common.find(ANY, ANY, ANY), IMMUTABLE), false);</span>
+    }
+
+    /**
+     * This method will return null until the source iterator is exhausted.
+     *
+     * @return The elements that turned out not to be common to the two inputs.
+     */
+    public Stream&lt;Triple&gt; notCommon() {
+<span class="fc" id="L107">        return stream(spliteratorUnknownSize(notCommon.find(ANY, ANY, ANY), IMMUTABLE), false);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
