@@ -1,0 +1,871 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>FedoraLdp.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository WebAC Authorization Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">FedoraLdp.java</span></div><h1>FedoraLdp.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api;
+
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.LINK;
+import static javax.ws.rs.core.HttpHeaders.LOCATION;
+import static javax.ws.rs.core.MediaType.WILDCARD;
+import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.notAcceptable;
+import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.temporaryRedirect;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.FOUND;
+import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
+import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_TYPE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_OCTET_STREAM_TYPE;
+
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
+import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODEL_RESOURCES;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
+import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URLDecoder;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ClientErrorException;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.HEAD;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.OPTIONS;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Link;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilderException;
+import javax.ws.rs.core.Variant.VariantListBuilder;
+
+import io.micrometer.core.annotation.Timed;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+
+import org.fcrepo.http.commons.domain.PATCH;
+import org.fcrepo.kernel.api.FedoraTypes;
+import org.fcrepo.kernel.api.exception.AccessDeniedException;
+import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
+import org.fcrepo.kernel.api.exception.GhostNodeException;
+import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.Binary;
+import org.fcrepo.kernel.api.models.Container;
+import org.fcrepo.kernel.api.models.ExternalContent;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.api.services.FixityService;
+import org.fcrepo.kernel.api.services.ReplaceBinariesService;
+import org.fcrepo.config.DigestAlgorithm;
+
+import org.glassfish.jersey.media.multipart.ContentDisposition;
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
+
+/**
+ * @author cabeer
+ * @author ajs6f
+ * @since 9/25/14
+ */
+
+@Timed
+@Scope(&quot;request&quot;)
+@Path(&quot;/{path: .*}&quot;)
+public class FedoraLdp extends ContentExposingResource {
+
+<span class="fc" id="L142">    private static final Logger LOGGER = getLogger(FedoraLdp.class);</span>
+
+    private static final String WANT_DIGEST = &quot;Want-Digest&quot;;
+
+    private static final String DIGEST = &quot;Digest&quot;;
+
+<span class="fc" id="L148">    private static final MediaType DEFAULT_RDF_CONTENT_TYPE = TURTLE_TYPE;</span>
+<span class="fc" id="L149">    private static final MediaType DEFAULT_NON_RDF_CONTENT_TYPE = APPLICATION_OCTET_STREAM_TYPE;</span>
+
+    @PathParam(&quot;path&quot;) protected String externalPath;
+
+    @Inject
+    private FixityService fixityService;
+
+    @Inject
+    private FedoraHttpConfiguration httpConfiguration;
+
+    @Inject
+    protected ReplaceBinariesService replaceBinariesService;
+
+    /**
+     * Default JAX-RS entry point
+     */
+    public FedoraLdp() {
+<span class="fc" id="L166">        super();</span>
+<span class="fc" id="L167">    }</span>
+
+    /**
+     * Create a new FedoraNodes instance for a given path
+     * @param externalPath the external path
+     */
+    @VisibleForTesting
+<span class="fc" id="L174">    public FedoraLdp(final String externalPath) {</span>
+<span class="fc" id="L175">        this.externalPath = externalPath;</span>
+<span class="fc" id="L176">    }</span>
+
+    /**
+     * Retrieve the node headers
+     *
+     * @return response
+     * @throws UnsupportedAlgorithmException if unsupported digest algorithm occurred
+     */
+    @HEAD
+    @Produces({ TURTLE_WITH_CHARSET + &quot;;qs=1.0&quot;, JSON_LD + &quot;;qs=0.8&quot;,
+        N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
+        TURTLE_X, TEXT_HTML_WITH_CHARSET })
+    public Response head() throws UnsupportedAlgorithmException {
+<span class="fc" id="L189">        LOGGER.info(&quot;HEAD for: {}&quot;, externalPath);</span>
+
+<span class="fc" id="L191">        final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);</span>
+<span class="pc bpc" id="L192" title="1 of 4 branches missed.">        if (!isBlank(datetimeHeader) &amp;&amp; resource().isOriginalResource()) {</span>
+<span class="nc" id="L193">            return getMemento(datetimeHeader, resource());</span>
+        }
+
+<span class="fc" id="L196">        checkCacheControlHeaders(request, servletResponse, resource(), transaction());</span>
+
+<span class="fc" id="L198">        addResourceHttpHeaders(resource());</span>
+
+<span class="fc" id="L200">        Response.ResponseBuilder builder = ok();</span>
+
+<span class="fc bfc" id="L202" title="All 2 branches covered.">        if (resource() instanceof Binary) {</span>
+<span class="fc" id="L203">            final Binary binary = (Binary) resource();</span>
+<span class="fc" id="L204">            final MediaType mediaType = getBinaryResourceMediaType(binary);</span>
+
+<span class="fc bfc" id="L206" title="All 2 branches covered.">            if (binary.isRedirect()) {</span>
+<span class="fc" id="L207">                builder = temporaryRedirect(binary.getExternalURI());</span>
+            }
+
+            // we set the content-type explicitly to avoid content-negotiation from getting in the way
+<span class="fc" id="L211">            builder.type(mediaType.toString());</span>
+
+            // Respect the Want-Digest header with fixity check
+<span class="fc" id="L214">            final String wantDigest = headers.getHeaderString(WANT_DIGEST);</span>
+<span class="fc bfc" id="L215" title="All 2 branches covered.">            if (!isNullOrEmpty(wantDigest)) {</span>
+<span class="fc" id="L216">                builder.header(DIGEST, handleWantDigestHeader(binary, wantDigest));</span>
+            }
+<span class="fc" id="L218">        } else {</span>
+<span class="fc" id="L219">            final String accept = headers.getHeaderString(HttpHeaders.ACCEPT);</span>
+<span class="pc bpc" id="L220" title="1 of 4 branches missed.">            if (accept == null || &quot;*/*&quot;.equals(accept)) {</span>
+<span class="fc" id="L221">                builder.type(TURTLE_WITH_CHARSET);</span>
+            }
+<span class="fc" id="L223">            setVaryAndPreferenceAppliedHeaders(servletResponse, prefer, resource());</span>
+        }
+
+
+<span class="fc" id="L227">        return builder.build();</span>
+    }
+
+    /**
+     * Outputs information about the supported HTTP methods, etc.
+     * @return the outputs information about the supported HTTP methods, etc.
+     */
+    @OPTIONS
+    public Response options() {
+<span class="fc" id="L236">        LOGGER.info(&quot;OPTIONS for '{}'&quot;, externalPath);</span>
+
+<span class="fc" id="L238">        addLinkAndOptionsHttpHeaders(resource());</span>
+<span class="fc" id="L239">        return ok().build();</span>
+    }
+
+
+    /**
+     * Retrieve the node profile
+     *
+     * @param rangeValue the range value
+     * @return a binary or the triples for the specified node
+     * @throws IOException if IO exception occurred
+     * @throws UnsupportedAlgorithmException if unsupported digest algorithm occurred
+     */
+    @GET
+    @Produces({TURTLE_WITH_CHARSET + &quot;;qs=1.0&quot;, JSON_LD + &quot;;qs=0.8&quot;,
+            N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
+            TURTLE_X, TEXT_HTML_WITH_CHARSET})
+    public Response getResource(@HeaderParam(&quot;Range&quot;) final String rangeValue)
+            throws IOException, UnsupportedAlgorithmException {
+
+<span class="fc" id="L258">        final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);</span>
+<span class="fc bfc" id="L259" title="All 4 branches covered.">        if (!isBlank(datetimeHeader) &amp;&amp; resource().isOriginalResource()) {</span>
+<span class="fc" id="L260">            return getMemento(datetimeHeader, resource());</span>
+        }
+
+<span class="fc" id="L263">        checkCacheControlHeaders(request, servletResponse, resource(), transaction());</span>
+
+<span class="fc" id="L265">        final ImmutableList&lt;MediaType&gt; acceptableMediaTypes = ImmutableList.copyOf(headers</span>
+<span class="fc" id="L266">                .getAcceptableMediaTypes());</span>
+
+<span class="fc" id="L268">        LOGGER.info(&quot;GET resource '{}'&quot;, externalPath);</span>
+<span class="fc" id="L269">        addResourceHttpHeaders(resource());</span>
+
+<span class="fc bfc" id="L271" title="All 2 branches covered.">        if (resource() instanceof Binary) {</span>
+<span class="fc" id="L272">            final Binary binary = (Binary) resource();</span>
+<span class="fc bfc" id="L273" title="All 2 branches covered.">            if (!acceptableMediaTypes.isEmpty()) {</span>
+<span class="fc" id="L274">                final MediaType mediaType = getBinaryResourceMediaType(resource());</span>
+
+<span class="pc bpc" id="L276" title="1 of 2 branches missed.">                if (acceptableMediaTypes.stream().noneMatch(t -&gt; t.isCompatible(mediaType))) {</span>
+<span class="nc" id="L277">                    return notAcceptable(VariantListBuilder.newInstance().mediaTypes(mediaType).build()).build();</span>
+                }
+            }
+
+            // Respect the Want-Digest header for fixity check
+<span class="fc" id="L282">            final String wantDigest = headers.getHeaderString(WANT_DIGEST);</span>
+<span class="fc bfc" id="L283" title="All 2 branches covered.">            if (!isNullOrEmpty(wantDigest)) {</span>
+<span class="fc" id="L284">                servletResponse.addHeader(DIGEST, handleWantDigestHeader(binary, wantDigest));</span>
+            }
+
+<span class="fc bfc" id="L287" title="All 2 branches covered.">            if (binary.isRedirect()) {</span>
+<span class="fc" id="L288">                return temporaryRedirect(binary.getExternalURI()).build();</span>
+            } else {
+<span class="fc" id="L290">                return getBinaryContent(rangeValue, binary);</span>
+            }
+        } else {
+<span class="fc" id="L293">            return getContent(getChildrenLimit(), resource());</span>
+        }
+    }
+
+    /**
+     * Return the location of a requested Memento.
+     *
+     * @param datetimeHeader The RFC datetime for the Memento.
+     * @param resource The fedora resource
+     * @return A 302 Found response or 406 if no mementos.
+     */
+    private Response getMemento(final String datetimeHeader, final FedoraResource resource) {
+        try {
+<span class="fc" id="L306">            final Instant mementoDatetime = Instant.from(MEMENTO_RFC_1123_FORMATTER.parse(datetimeHeader));</span>
+<span class="fc" id="L307">            final FedoraResource memento = resource.findMementoByDatetime(mementoDatetime);</span>
+            final Response builder;
+<span class="fc bfc" id="L309" title="All 2 branches covered.">            if (memento != null) {</span>
+<span class="fc" id="L310">                builder =</span>
+<span class="fc" id="L311">                    status(FOUND).header(LOCATION, getUri(memento)).build();</span>
+            } else {
+<span class="fc" id="L313">                builder = status(NOT_ACCEPTABLE).build();</span>
+            }
+<span class="fc" id="L315">            addResourceHttpHeaders(resource);</span>
+<span class="fc" id="L316">            setVaryAndPreferenceAppliedHeaders(servletResponse, prefer, resource);</span>
+<span class="fc" id="L317">            return builder;</span>
+<span class="fc" id="L318">        } catch (final DateTimeParseException e) {</span>
+<span class="fc" id="L319">            throw new MementoDatetimeFormatException(&quot;Invalid Accept-Datetime value: &quot; + e.getMessage()</span>
+                + &quot;. Please use RFC-1123 date-time format, such as 'Tue, 3 Jun 2008 11:05:30 GMT'&quot;, e);
+        }
+    }
+
+    /**
+     * Deletes an object.
+     *
+     * @return response
+     */
+    @DELETE
+    public Response deleteObject() {
+<span class="fc" id="L331">        hasRestrictedPath(externalPath);</span>
+<span class="fc bfc" id="L332" title="All 2 branches covered.">        if (resource() instanceof Container) {</span>
+<span class="fc" id="L333">            final String depth = headers.getHeaderString(&quot;Depth&quot;);</span>
+<span class="fc" id="L334">            LOGGER.debug(&quot;Depth header value is: {}&quot;, depth);</span>
+<span class="fc bfc" id="L335" title="All 4 branches covered.">            if (depth != null &amp;&amp; !depth.equalsIgnoreCase(&quot;infinity&quot;)) {</span>
+<span class="fc" id="L336">                throw new ClientErrorException(&quot;Depth header, if present, must be set to 'infinity' for containers&quot;,</span>
+                        SC_BAD_REQUEST);
+            }
+        }
+<span class="pc bpc" id="L340" title="1 of 4 branches missed.">        if (resource() instanceof NonRdfSourceDescription &amp;&amp; resource().isOriginalResource()) {</span>
+<span class="fc" id="L341">            LOGGER.debug(&quot;Trying to delete binary description directly.&quot;);</span>
+<span class="fc" id="L342">            throw new ClientErrorException(</span>
+                &quot;NonRDFSource descriptions are removed when their associated NonRDFSource object is removed.&quot;,
+                METHOD_NOT_ALLOWED);
+        }
+
+<span class="fc" id="L347">        LOGGER.info(&quot;Delete resource '{}'&quot;, externalPath);</span>
+
+        try {
+<span class="fc" id="L350">            evaluateRequestPreconditions(request, servletResponse, resource(), transaction());</span>
+
+<span class="fc" id="L352">            doInDbTxWithRetry(() -&gt; {</span>
+<span class="fc" id="L353">                deleteResourceService.perform(transaction(), resource(), getUserPrincipal());</span>
+<span class="fc" id="L354">                transaction().commitIfShortLived();</span>
+<span class="fc" id="L355">            });</span>
+<span class="fc" id="L356">            return noContent().build();</span>
+        } finally {
+<span class="fc" id="L358">            transaction().releaseResourceLocksIfShortLived();</span>
+        }
+    }
+
+    /**
+     * Create a resource at a specified path, or replace triples with provided RDF.
+     *
+     * @param requestContentType the request content type
+     * @param requestBodyStream the request body stream
+     * @param contentDisposition the content disposition value
+     * @param ifMatch the if-match value
+     * @param rawLinks the raw link values
+     * @param digest the digest header
+     * @return 204
+     * @throws InvalidChecksumException if invalid checksum exception occurred
+     * @throws MalformedRdfException if malformed rdf exception occurred
+     * @throws UnsupportedAlgorithmException if an unsupported algorithm exception occurs
+     */
+    @PUT
+    @Consumes
+    public Response createOrReplaceObjectRdf(
+            @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
+            final InputStream requestBodyStream,
+            @HeaderParam(CONTENT_DISPOSITION) final ContentDisposition contentDisposition,
+            @HeaderParam(&quot;If-Match&quot;) final String ifMatch,
+            @HeaderParam(LINK) final List&lt;String&gt; rawLinks,
+            @HeaderParam(&quot;Digest&quot;) final String digest)
+            throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException,
+                   PathNotFoundException {
+<span class="fc" id="L387">        LOGGER.info(&quot;PUT to create resource with ID: {}&quot;, externalPath());</span>
+
+<span class="fc bfc" id="L389" title="All 2 branches covered.">        if (externalPath.contains(&quot;/&quot; + FedoraTypes.FCR_VERSIONS)) {</span>
+<span class="fc" id="L390">            handleRequestDisallowedOnMemento();</span>
+
+<span class="fc" id="L392">            return status(METHOD_NOT_ALLOWED).build();</span>
+        }
+
+<span class="fc" id="L395">        hasRestrictedPath(externalPath);</span>
+
+<span class="fc" id="L397">        final var transaction = transaction();</span>
+
+        try {
+<span class="fc" id="L400">            final List&lt;String&gt; links = unpackLinks(rawLinks);</span>
+
+            // If request is an external binary, verify link header before proceeding
+<span class="fc" id="L403">            final ExternalContent extContent = extContentHandlerFactory.createFromLinks(links);</span>
+
+<span class="fc" id="L405">            final String interactionModel = checkInteractionModel(links);</span>
+
+<span class="fc" id="L407">            final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath());</span>
+<span class="fc" id="L408">            final boolean resourceExists = doesResourceExist(transaction, fedoraId, true);</span>
+
+<span class="fc bfc" id="L410" title="All 2 branches covered.">            if (resourceExists) {</span>
+
+<span class="pc bpc" id="L412" title="1 of 4 branches missed.">                if (httpConfiguration.putRequiresIfMatch() &amp;&amp; StringUtils.isBlank(ifMatch)) {</span>
+<span class="fc" id="L413">                    throw new ClientErrorException(&quot;An If-Match header is required&quot;, 428);</span>
+                }
+
+<span class="fc" id="L416">                final String resInteractionModel = resource().getInteractionModel();</span>
+<span class="fc bfc" id="L417" title="All 2 branches covered.">                if (StringUtils.isNoneBlank(resInteractionModel, interactionModel) &amp;&amp;</span>
+<span class="fc bfc" id="L418" title="All 2 branches covered.">                        !Objects.equals(resInteractionModel, interactionModel)) {</span>
+<span class="fc" id="L419">                    throw new InteractionModelViolationException(&quot;Changing the interaction model &quot; + resInteractionModel</span>
+                            + &quot; to &quot; + interactionModel + &quot; is not allowed!&quot;);
+                }
+<span class="fc" id="L422">                evaluateRequestPreconditions(request, servletResponse, resource(), transaction);</span>
+            }
+
+<span class="fc bfc" id="L425" title="All 2 branches covered.">            if (isGhostNode(transaction(), fedoraId)) {</span>
+<span class="fc" id="L426">                throw new GhostNodeException(&quot;Resource path &quot; + externalPath() + &quot; is an immutable resource.&quot;);</span>
+            }
+
+<span class="fc bfc" id="L429" title="All 4 branches covered.">            if (!resourceExists &amp;&amp; fedoraId.isDescription()) {</span>
+                // Can't PUT a description to a non-existant binary.
+                final String message;
+<span class="pc bpc" id="L432" title="1 of 2 branches missed.">                if (fedoraId.asBaseId().isRepositoryRoot()) {</span>
+<span class="nc" id="L433">                    message = &quot;The root of the repository is not a binary, so /&quot; + FCR_METADATA + &quot; does not exist.&quot;;</span>
+                } else {
+<span class="fc" id="L435">                    message = &quot;Binary at path &quot; + fedoraId.asBaseId().getFullIdPath() + &quot; not found&quot;;</span>
+                }
+<span class="fc" id="L437">                throw new PathNotFoundException(message);</span>
+            }
+
+<span class="fc" id="L440">            final var providedContentType = getSimpleContentType(requestContentType);</span>
+
+<span class="fc" id="L442">            final var created = new AtomicBoolean(false);</span>
+
+<span class="pc bpc" id="L444" title="1 of 12 branches missed.">                if ((resourceExists &amp;&amp; resource() instanceof Binary) ||</span>
+<span class="fc bfc" id="L445" title="All 2 branches covered.">                        (!resourceExists &amp;&amp; isBinary(interactionModel,</span>
+                                providedContentType,
+                                requestBodyStream != null &amp;&amp; providedContentType != null,
+                                extContent != null))) {
+<span class="fc" id="L449">                    ensureArchivalGroupHeaderNotPresentForBinaries(links);</span>
+
+<span class="fc" id="L451">                    final Collection&lt;URI&gt; checksums = parseDigestHeader(digest);</span>
+<span class="fc bfc" id="L452" title="All 2 branches covered.">                    final var binaryType = requestContentType != null ?</span>
+<span class="fc" id="L453">                            requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;</span>
+<span class="fc bfc" id="L454" title="All 2 branches covered.">                    final var contentType = extContent == null ?</span>
+<span class="fc" id="L455">                            binaryType.toString() : extContent.getContentType();</span>
+<span class="pc bpc" id="L456" title="1 of 2 branches missed.">                    final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : &quot;&quot;;</span>
+<span class="pc bpc" id="L457" title="1 of 2 branches missed.">                    final long contentSize = contentDisposition == null ? -1L : contentDisposition.getSize();</span>
+
+<span class="fc" id="L459">                    doInDbTx(() -&gt; {</span>
+<span class="fc bfc" id="L460" title="All 2 branches covered.">                        if (resourceExists) {</span>
+<span class="fc" id="L461">                            replaceBinariesService.perform(transaction,</span>
+<span class="fc" id="L462">                                    getUserPrincipal(),</span>
+                                    fedoraId,
+                                    originalFileName,
+                                    contentType,
+                                    checksums,
+                                    requestBodyStream,
+                                    contentSize,
+                                    extContent);
+                        } else {
+<span class="fc" id="L471">                            createResourceService.perform(transaction,</span>
+<span class="fc" id="L472">                                    getUserPrincipal(),</span>
+                                    fedoraId,
+                                    contentType,
+                                    originalFileName,
+                                    contentSize,
+                                    links,
+                                    checksums,
+                                    requestBodyStream,
+                                    extContent);
+<span class="fc" id="L481">                            created.set(true);</span>
+                        }
+<span class="fc" id="L483">                        transaction.commitIfShortLived();</span>
+<span class="fc" id="L484">                    });</span>
+<span class="fc" id="L485">                } else {</span>
+<span class="fc bfc" id="L486" title="All 2 branches covered.">                    final var contentType = requestContentType != null ? requestContentType : DEFAULT_RDF_CONTENT_TYPE;</span>
+<span class="fc" id="L487">                    final Model model = httpRdfService.bodyToInternalModel(fedoraId, requestBodyStream,</span>
+<span class="fc" id="L488">                            contentType, identifierConverter(), hasLenientPreferHeader());</span>
+
+<span class="fc" id="L490">                    doInDbTxWithRetry(() -&gt; {</span>
+<span class="fc bfc" id="L491" title="All 2 branches covered.">                        if (resourceExists) {</span>
+<span class="fc" id="L492">                            replacePropertiesService.perform(transaction,</span>
+<span class="fc" id="L493">                                    getUserPrincipal(),</span>
+                                    fedoraId,
+                                    model);
+                        } else {
+<span class="fc" id="L497">                            createResourceService.perform(transaction, getUserPrincipal(), fedoraId, links, model);</span>
+<span class="fc" id="L498">                            created.set(true);</span>
+                        }
+<span class="fc" id="L500">                        transaction.commitIfShortLived();</span>
+<span class="fc" id="L501">                    });</span>
+                }
+
+<span class="fc" id="L504">            LOGGER.debug(&quot;Finished creating resource with path: {}&quot;, externalPath());</span>
+
+<span class="fc" id="L506">            return createUpdateResponse(getFedoraResource(transaction, fedoraId), created.get());</span>
+        } finally {
+<span class="fc" id="L508">            transaction.releaseResourceLocksIfShortLived();</span>
+        }
+    }
+
+    /**
+     * Update an object using SPARQL-UPDATE
+     *
+     * @param requestBodyStream the request body stream
+     * @return 201
+     * @throws IOException if IO exception occurred
+     */
+    @PATCH
+    @Consumes({contentTypeSPARQLUpdate})
+    public Response updateSparql(final InputStream requestBodyStream)
+            throws IOException {
+<span class="fc bfc" id="L523" title="All 2 branches covered.">        if (externalPath.contains(&quot;/&quot; + FedoraTypes.FCR_VERSIONS)) {</span>
+<span class="fc" id="L524">            handleRequestDisallowedOnMemento();</span>
+
+<span class="fc" id="L526">            return status(METHOD_NOT_ALLOWED).build();</span>
+        }
+
+<span class="fc" id="L529">        hasRestrictedPath(externalPath);</span>
+
+<span class="fc bfc" id="L531" title="All 2 branches covered.">        if (null == requestBodyStream) {</span>
+<span class="fc" id="L532">            throw new BadRequestException(&quot;SPARQL-UPDATE requests must have content!&quot;);</span>
+        }
+
+<span class="fc bfc" id="L535" title="All 2 branches covered.">        if (resource() instanceof Binary) {</span>
+<span class="fc" id="L536">            throw new BadRequestException(resource().getFedoraId().getFullIdPath() +</span>
+                    &quot; is not a valid object to receive a PATCH&quot;);
+        }
+
+<span class="fc" id="L540">        final var transaction = transaction();</span>
+
+        try {
+<span class="fc" id="L543">            final String requestBody = IOUtils.toString(requestBodyStream, UTF_8);</span>
+<span class="fc bfc" id="L544" title="All 2 branches covered.">            if (isBlank(requestBody)) {</span>
+<span class="fc" id="L545">                throw new BadRequestException(&quot;SPARQL-UPDATE requests must have content!&quot;);</span>
+            }
+
+<span class="fc" id="L548">            evaluateRequestPreconditions(request, servletResponse, resource(), transaction);</span>
+
+<span class="fc" id="L550">            LOGGER.info(&quot;PATCH for '{}'&quot;, externalPath);</span>
+<span class="fc" id="L551">            final String newRequest = httpRdfService.patchRequestToInternalString(resource().getFedoraId(),</span>
+<span class="fc" id="L552">                    requestBody, identifierConverter());</span>
+<span class="fc" id="L553">            LOGGER.debug(&quot;PATCH request translated to '{}'&quot;, newRequest);</span>
+
+<span class="fc" id="L555">            doInDbTxWithRetry(() -&gt; {</span>
+<span class="fc" id="L556">                patchResourcewithSparql(resource(), newRequest);</span>
+<span class="fc" id="L557">                transaction.commitIfShortLived();</span>
+<span class="fc" id="L558">            });</span>
+
+<span class="fc" id="L560">            addCacheControlHeaders(servletResponse, reloadResource(), transaction);</span>
+
+<span class="fc" id="L562">            return noContent().build();</span>
+<span class="nc" id="L563">        } catch (final IllegalArgumentException iae) {</span>
+<span class="nc" id="L564">            throw new BadRequestException(iae.getMessage());</span>
+<span class="nc" id="L565">        } catch (final AccessDeniedException e) {</span>
+<span class="nc" id="L566">            throw e;</span>
+<span class="fc" id="L567">        } catch ( final RuntimeException ex ) {</span>
+<span class="fc" id="L568">            final Throwable cause = ex.getCause();</span>
+<span class="pc bpc" id="L569" title="1 of 2 branches missed.">            if (cause instanceof PathNotFoundRuntimeException) {</span>
+                // the sparql update referred to a repository resource that doesn't exist
+<span class="nc" id="L571">                throw new BadRequestException(cause.getMessage());</span>
+            }
+<span class="fc" id="L573">            throw ex;</span>
+        } finally {
+<span class="fc" id="L575">            transaction.releaseResourceLocksIfShortLived();</span>
+        }
+    }
+
+    /**
+     * Creates a new object.
+     *
+     * This originally used application/octet-stream;qs=1001 as a workaround
+     * for JERSEY-2636, to ensure requests without a Content-Type get routed here.
+     * This qs value does not parse with newer versions of Jersey, as qs values
+     * must be between 0 and 1. We use qs=1.000 to mark where this historical
+     * anomaly had been.
+     *
+     * @param contentDisposition the content Disposition value
+     * @param requestContentType the request content type
+     * @param slug the slug value
+     * @param requestBodyStream the request body stream
+     * @param rawLinks the link values
+     * @param digest the digest header
+     * @return 201
+     * @throws InvalidChecksumException if invalid checksum exception occurred
+     * @throws MalformedRdfException if malformed rdf exception occurred
+     * @throws UnsupportedAlgorithmException if an unsupported algorithm exception occurs
+     */
+    @POST
+    @Consumes({MediaType.APPLICATION_OCTET_STREAM + &quot;;qs=1.000&quot;, WILDCARD})
+    @Produces({TURTLE_WITH_CHARSET + &quot;;qs=1.0&quot;, JSON_LD + &quot;;qs=0.8&quot;,
+            N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
+            TURTLE_X, TEXT_HTML_WITH_CHARSET, &quot;*/*&quot;})
+    public Response createObject(@HeaderParam(CONTENT_DISPOSITION) final ContentDisposition contentDisposition,
+                                 @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
+                                 @HeaderParam(&quot;Slug&quot;) final String slug,
+                                 final InputStream requestBodyStream,
+                                 @HeaderParam(LINK) final List&lt;String&gt; rawLinks,
+                                 @HeaderParam(&quot;Digest&quot;) final String digest)
+            throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException {
+
+<span class="fc bfc" id="L612" title="All 2 branches covered.">        final var decodedSlug = slug != null ? URLDecoder.decode(slug, UTF_8) : null;</span>
+<span class="fc" id="L613">        final var transaction = transaction();</span>
+
+        try {
+<span class="fc" id="L616">            final List&lt;String&gt; links = unpackLinks(rawLinks);</span>
+
+<span class="fc bfc" id="L618" title="All 2 branches covered.">            if (externalPath.contains(&quot;/&quot; + FedoraTypes.FCR_VERSIONS)) {</span>
+<span class="fc" id="L619">                handleRequestDisallowedOnMemento();</span>
+
+<span class="fc" id="L621">                return status(METHOD_NOT_ALLOWED).build();</span>
+            }
+
+            // If request is an external binary, verify link header before proceeding
+<span class="fc" id="L625">            final ExternalContent extContent = extContentHandlerFactory.createFromLinks(links);</span>
+
+<span class="fc" id="L627">            final String interactionModel = checkInteractionModel(links);</span>
+
+<span class="fc" id="L629">            final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath());</span>
+            // If the resource doesn't exist and it's not a ghost node, throw an exception.
+            // Ghost node checking is done further down in the code and returns a 400 Bad Request error.
+<span class="fc bfc" id="L632" title="All 4 branches covered.">            if (!doesResourceExist(transaction, fedoraId, false) &amp;&amp; !isGhostNode(transaction, fedoraId)) {</span>
+<span class="fc" id="L633">                throw new PathNotFoundRuntimeException(String.format(&quot;Path %s not found&quot;, fedoraId.getFullIdPath()));</span>
+            }
+<span class="fc" id="L635">            final FedoraId newFedoraId = mintNewPid(fedoraId, decodedSlug);</span>
+<span class="fc" id="L636">            final var providedContentType = getSimpleContentType(requestContentType);</span>
+
+<span class="fc" id="L638">            LOGGER.info(&quot;POST to create resource with ID: {}, slug: {}&quot;, newFedoraId.getFullIdPath(), decodedSlug);</span>
+
+<span class="pc bpc" id="L640" title="1 of 8 branches missed.">            if (isBinary(interactionModel,</span>
+                    providedContentType,
+                    requestBodyStream != null &amp;&amp; providedContentType != null,
+                    extContent != null)) {
+<span class="fc" id="L644">                ensureArchivalGroupHeaderNotPresentForBinaries(links);</span>
+
+<span class="fc" id="L646">                final Collection&lt;URI&gt; checksums = parseDigestHeader(digest);</span>
+<span class="fc bfc" id="L647" title="All 2 branches covered.">                final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : &quot;&quot;;</span>
+<span class="fc bfc" id="L648" title="All 2 branches covered.">                final var binaryType = requestContentType != null ?</span>
+<span class="fc" id="L649">                        requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;</span>
+<span class="fc bfc" id="L650" title="All 2 branches covered.">                final var contentType = extContent == null ? binaryType.toString() : extContent.getContentType();</span>
+<span class="fc bfc" id="L651" title="All 2 branches covered.">                final long contentSize = contentDisposition == null ? -1L : contentDisposition.getSize();</span>
+
+<span class="fc" id="L653">                doInDbTx(() -&gt; {</span>
+<span class="fc" id="L654">                    createResourceService.perform(transaction,</span>
+<span class="fc" id="L655">                            getUserPrincipal(),</span>
+                            newFedoraId,
+                            contentType,
+                            originalFileName,
+                            contentSize,
+                            links,
+                            checksums,
+                            requestBodyStream,
+                            extContent);
+
+<span class="fc" id="L665">                    transaction.commitIfShortLived();</span>
+<span class="fc" id="L666">                });</span>
+<span class="fc" id="L667">            } else {</span>
+<span class="fc bfc" id="L668" title="All 2 branches covered.">                final var contentType = requestContentType != null ? requestContentType : DEFAULT_RDF_CONTENT_TYPE;</span>
+<span class="fc" id="L669">                final Model model = httpRdfService.bodyToInternalModel(newFedoraId, requestBodyStream,</span>
+<span class="fc" id="L670">                        contentType, identifierConverter(), hasLenientPreferHeader());</span>
+
+<span class="fc" id="L672">                doInDbTxWithRetry(() -&gt; {</span>
+<span class="fc" id="L673">                    createResourceService.perform(transaction,</span>
+<span class="fc" id="L674">                            getUserPrincipal(),</span>
+                            newFedoraId,
+                            links,
+                            model);
+
+<span class="fc" id="L679">                    transaction.commitIfShortLived();</span>
+<span class="fc" id="L680">                });</span>
+            }
+
+<span class="fc" id="L683">            LOGGER.debug(&quot;Finished creating resource with path: {}&quot;, externalPath());</span>
+
+            try {
+<span class="fc" id="L686">                final var resource = getFedoraResource(transaction, newFedoraId);</span>
+<span class="fc" id="L687">                return createUpdateResponse(resource, true);</span>
+<span class="nc" id="L688">            } catch (final PathNotFoundException e) {</span>
+<span class="nc" id="L689">                throw new PathNotFoundRuntimeException(e.getMessage(), e);</span>
+            }
+        } finally {
+<span class="fc" id="L692">            transaction.releaseResourceLocksIfShortLived();</span>
+        }
+    }
+
+    @Override
+    protected void addResourceHttpHeaders(final FedoraResource resource) {
+<span class="fc" id="L698">        super.addResourceHttpHeaders(resource);</span>
+
+<span class="fc bfc" id="L700" title="All 2 branches covered.">        if (!transaction().isShortLived()) {</span>
+<span class="fc" id="L701">            final String canonical = identifierConverter().toExternalId(resource.getFedoraId().getFullId())</span>
+<span class="fc" id="L702">                    .replaceFirst(&quot;/tx:[^/]+&quot;, &quot;&quot;);</span>
+
+<span class="fc" id="L704">            servletResponse.addHeader(LINK, &quot;&lt;&quot; + canonical + &quot;&gt;;rel=\&quot;canonical\&quot;&quot;);</span>
+
+        }
+<span class="fc" id="L707">        addExternalContentHeaders(resource);</span>
+<span class="fc" id="L708">        addTransactionHeaders(resource);</span>
+<span class="fc" id="L709">    }</span>
+
+    @Override
+    protected String externalPath() {
+<span class="fc" id="L713">        return externalPath;</span>
+    }
+
+    /**
+     * Determine based on several factors whether the interaction model should be ldp:NonRdfSource
+     * @param interactionModel the interaction model from the links.
+     * @param contentType the content type.
+     * @param contentPresent is there a request body.
+     * @param contentExternal is there an external content header.
+     * @return Use ldp:NonRdfSource as the interaction model.
+     */
+    private boolean isBinary(final String interactionModel, final String contentType,
+                             final boolean contentPresent, final boolean contentExternal) {
+<span class="fc bfc" id="L726" title="All 2 branches covered.">        final String simpleContentType = contentPresent ? contentType : null;</span>
+<span class="fc" id="L727">        final boolean isRdfContent = isRdfContentType(simpleContentType);</span>
+<span class="fc bfc" id="L728" title="All 10 branches covered.">        return NON_RDF_SOURCE.getURI().equals(interactionModel) || contentExternal ||</span>
+                (contentPresent &amp;&amp; interactionModel == null &amp;&amp; !isRdfContent);
+    }
+
+    private String handleWantDigestHeader(final Binary binary, final String wantDigest)
+            throws UnsupportedAlgorithmException {
+        // handle the Want-Digest header with fixity check
+<span class="fc" id="L735">        final Collection&lt;String&gt; preferredDigests = parseWantDigestHeader(wantDigest);</span>
+<span class="pc bpc" id="L736" title="1 of 2 branches missed.">        if (preferredDigests.isEmpty()) {</span>
+<span class="nc" id="L737">            throw new UnsupportedAlgorithmException(</span>
+                    &quot;Unsupported digest algorithm provided in 'Want-Digest' header: &quot; + wantDigest);
+        }
+
+<span class="fc" id="L741">        final Collection&lt;URI&gt; checksumResults = fixityService.getFixity(binary, preferredDigests);</span>
+<span class="fc" id="L742">        return checksumResults.stream().map(uri -&gt; uri.toString().replaceFirst(&quot;urn:&quot;, &quot;&quot;)</span>
+<span class="fc" id="L743">                .replaceFirst(&quot;:&quot;, &quot;=&quot;).replaceFirst(&quot;sha1=&quot;, &quot;sha=&quot;)).collect(Collectors.joining(&quot;,&quot;));</span>
+    }
+
+    private static void ensureArchivalGroupHeaderNotPresentForBinaries(final List&lt;String&gt; links) {
+<span class="pc bpc" id="L747" title="1 of 2 branches missed.">        if (links == null) {</span>
+<span class="nc" id="L748">            return;</span>
+        }
+
+<span class="fc" id="L751">        if (links.stream().map(Link::valueOf)</span>
+<span class="fc" id="L752">                      .filter(l -&gt; l.getUri().toString().equals(ARCHIVAL_GROUP.getURI()))</span>
+<span class="fc bfc" id="L753" title="All 2 branches covered.">                      .anyMatch(l -&gt; l.getRel().equals(&quot;type&quot;))) {</span>
+<span class="fc" id="L754">            throw new ClientErrorException(&quot;Binary resources cannot be created as an&quot; +</span>
+                    &quot; ArchiveGroup. Please remove the ArchiveGroup link header and try again&quot;, BAD_REQUEST);
+        }
+<span class="fc" id="L757">    }</span>
+
+    private static String checkInteractionModel(final List&lt;String&gt; links) {
+<span class="fc bfc" id="L760" title="All 2 branches covered.">        if (links == null) {</span>
+<span class="fc" id="L761">            return null;</span>
+        }
+
+        try {
+<span class="fc bfc" id="L765" title="All 2 branches covered.">            for (final String link : links) {</span>
+<span class="fc" id="L766">                final Link linq = Link.valueOf(link);</span>
+<span class="fc bfc" id="L767" title="All 2 branches covered.">                if (&quot;type&quot;.equals(linq.getRel())) {</span>
+                    //skip ArchivalGroup types
+<span class="fc bfc" id="L769" title="All 2 branches covered.">                    if (linq.getUri().toString().equals(ARCHIVAL_GROUP.getURI())) {</span>
+<span class="fc" id="L770">                        continue;</span>
+                    }
+<span class="fc" id="L772">                    final Resource type = createResource(linq.getUri().toString());</span>
+<span class="fc bfc" id="L773" title="All 2 branches covered.">                    if (INTERACTION_MODEL_RESOURCES.contains(type)) {</span>
+<span class="fc" id="L774">                        return type.getURI();</span>
+<span class="fc bfc" id="L775" title="All 2 branches covered.">                    } else if (type.equals(VERSIONED_RESOURCE)) {</span>
+                        // skip if versioned resource link header
+                        // NB: the versioned resource header is used for enabling
+                        // versioning on a resource and is thus orthogonal to
+                        // issue of interaction models. Nevertheless, it is
+                        // a possible link header and, therefore, must be ignored.
+                    } else {
+<span class="fc" id="L782">                        LOGGER.info(&quot;Invalid interaction model: {}&quot;, type);</span>
+<span class="fc" id="L783">                        throw new CannotCreateResourceException(&quot;Invalid interaction model: &quot; + type);</span>
+                    }
+                }
+<span class="fc" id="L786">            }</span>
+<span class="fc" id="L787">        } catch (final RuntimeException e) {</span>
+<span class="pc bpc" id="L788" title="1 of 4 branches missed.">            if (e instanceof IllegalArgumentException || e instanceof UriBuilderException) {</span>
+<span class="fc" id="L789">                throw new ClientErrorException(&quot;Invalid link specified: &quot; + String.join(&quot;, &quot;, links), BAD_REQUEST);</span>
+            }
+<span class="fc" id="L791">            throw e;</span>
+<span class="fc" id="L792">        }</span>
+
+<span class="fc" id="L794">        return null;</span>
+    }
+
+    /**
+     * Parse the RFC-3230 Want-Digest header value.
+     * @param wantDigest The Want-Digest header value with optional q value in format:
+     *    'md5', 'md5, sha', 'MD5;q=0.3, sha;q=1' etc.
+     * @return Digest algorithms that are supported
+     */
+    private static Collection&lt;String&gt; parseWantDigestHeader(final String wantDigest) {
+<span class="fc" id="L804">        final Map&lt;String, Double&gt; digestPairs = new HashMap&lt;&gt;();</span>
+        try {
+<span class="fc" id="L806">            final List&lt;String&gt; algs = Splitter.on(',').omitEmptyStrings().trimResults().splitToList(wantDigest);</span>
+            // Parse the optional q value with default 1.0, and 0 ignore. Format could be: SHA-1;qvalue=0.1
+<span class="fc bfc" id="L808" title="All 2 branches covered.">            for (final String alg : algs) {</span>
+<span class="fc" id="L809">                final String[] tokens = alg.split(&quot;;&quot;, 2);</span>
+<span class="pc bpc" id="L810" title="1 of 4 branches missed.">                final double qValue = tokens.length == 1 || !tokens[1].contains(&quot;=&quot;) ?</span>
+<span class="fc" id="L811">                        1.0 : Double.parseDouble(tokens[1].split(&quot;=&quot;, 2)[1]);</span>
+<span class="fc" id="L812">                digestPairs.put(tokens[0], qValue);</span>
+<span class="fc" id="L813">            }</span>
+
+<span class="pc bpc" id="L815" title="1 of 2 branches missed.">            return digestPairs.entrySet().stream().filter(entry -&gt; entry.getValue() &gt; 0)</span>
+<span class="fc" id="L816">                    .map(Map.Entry::getKey)</span>
+<span class="fc" id="L817">                    .filter(DigestAlgorithm::isSupportedAlgorithm)</span>
+<span class="fc" id="L818">                    .collect(Collectors.toSet());</span>
+<span class="nc" id="L819">        } catch (final NumberFormatException e) {</span>
+<span class="nc" id="L820">            throw new ClientErrorException(&quot;Invalid 'Want-Digest' header value: &quot; + wantDigest, SC_BAD_REQUEST, e);</span>
+<span class="nc" id="L821">        } catch (final RuntimeException e) {</span>
+<span class="nc bnc" id="L822" title="All 2 branches missed.">            if (e instanceof IllegalArgumentException) {</span>
+<span class="nc" id="L823">                throw new ClientErrorException(&quot;Invalid 'Want-Digest' header value: &quot; + wantDigest + &quot;\n&quot;, BAD_REQUEST);</span>
+            }
+<span class="nc" id="L825">            throw e;</span>
+        }
+    }
+
+    private void handleRequestDisallowedOnMemento() {
+        try {
+<span class="fc" id="L831">            addLinkAndOptionsHttpHeaders(resource());</span>
+<span class="fc" id="L832">        } catch (final Exception ex) {</span>
+            // Catch the exception to ensure status 405 for any requests on memento.
+<span class="fc" id="L834">            LOGGER.debug(&quot;Unable to add link and options headers for PATCH request to memento path {}: {}.&quot;,</span>
+<span class="fc" id="L835">                externalPath, ex.getMessage());</span>
+<span class="fc" id="L836">        }</span>
+
+<span class="fc" id="L838">        LOGGER.info(&quot;Unable to handle {} request on a path containing {}. Path was: {}&quot;, request.getMethod(),</span>
+            FedoraTypes.FCR_VERSIONS, externalPath);
+<span class="fc" id="L840">    }</span>
+
+    private FedoraId mintNewPid(final FedoraId fedoraId, final String slug) {
+        final String pid;
+
+<span class="fc bfc" id="L845" title="All 2 branches covered.">        if (isGhostNode(transaction(), fedoraId)) {</span>
+<span class="fc" id="L846">            LOGGER.debug(&quot;Resource with path {} is an immutable resource; it cannot be POSTed to.&quot;, fedoraId);</span>
+<span class="fc" id="L847">            throw new CannotCreateResourceException(&quot;Cannot create resource as child of the immutable resource at &quot; +</span>
+<span class="fc" id="L848">                    fedoraId.getFullIdPath());</span>
+        }
+<span class="fc bfc" id="L850" title="All 2 branches covered.">        if (!isBlank(slug)) {</span>
+<span class="fc" id="L851">            pid = slug;</span>
+<span class="pc bpc" id="L852" title="1 of 2 branches missed.">        } else if (pidMinter != null) {</span>
+<span class="fc" id="L853">            pid = pidMinter.get();</span>
+        } else {
+<span class="nc" id="L855">            pid = defaultPidMinter.get();</span>
+        }
+
+<span class="fc" id="L858">        final FedoraId fullTestPath = fedoraId.resolve(pid);</span>
+<span class="fc" id="L859">        hasRestrictedPath(fullTestPath.getFullIdPath());</span>
+
+<span class="fc bfc" id="L861" title="All 4 branches covered.">        if (doesResourceExist(transaction(), fullTestPath, true) || isGhostNode(transaction(), fullTestPath)) {</span>
+<span class="fc" id="L862">            LOGGER.debug(&quot;Resource with path {} already exists or is an immutable resource; minting new path instead&quot;,</span>
+                    fullTestPath);
+<span class="fc" id="L864">            return mintNewPid(fedoraId, null);</span>
+        }
+
+<span class="fc" id="L867">        return fullTestPath;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

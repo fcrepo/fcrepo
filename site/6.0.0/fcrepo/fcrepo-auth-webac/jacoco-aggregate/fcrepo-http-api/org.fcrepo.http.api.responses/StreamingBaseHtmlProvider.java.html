@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>StreamingBaseHtmlProvider.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository WebAC Authorization Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api.responses</a> &gt; <span class="el_source">StreamingBaseHtmlProvider.java</span></div><h1>StreamingBaseHtmlProvider.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api.responses;
+
+import static java.util.stream.Stream.of;
+import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
+import static com.google.common.collect.ImmutableMap.builder;
+import static org.apache.jena.graph.Node.ANY;
+import static org.apache.jena.sparql.util.graph.GraphUtils.multiValueURI;
+import static org.apache.jena.vocabulary.RDF.type;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
+import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
+import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_ROOT;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+import java.net.URI;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.ext.MessageBodyWriter;
+import javax.ws.rs.ext.Provider;
+
+import com.google.common.collect.ImmutableMap;
+import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Model;
+import org.apache.velocity.Template;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.VelocityEngine;
+import org.apache.velocity.context.Context;
+import org.apache.velocity.tools.generic.EscapeTool;
+import org.apache.velocity.tools.generic.FieldTool;
+import org.fcrepo.config.FedoraPropsConfig;
+import org.fcrepo.config.OcflPropsConfig;
+import org.fcrepo.http.api.FedoraLdp;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
+import org.fcrepo.http.commons.responses.HtmlTemplate;
+import org.fcrepo.http.commons.responses.RdfNamespacedStream;
+import org.fcrepo.http.commons.responses.ViewHelpers;
+import org.fcrepo.kernel.api.ReadOnlyTransaction;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.RdfLexicon;
+import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.Binary;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.slf4j.Logger;
+
+/**
+ * Simple HTML provider for RdfNamespacedStreams
+ *
+ * @author ajs6f
+ * @author whikloj
+ * @since Nov 19, 2013
+ */
+@Provider
+@Produces({TEXT_HTML_WITH_CHARSET})
+<span class="fc" id="L97">public class StreamingBaseHtmlProvider implements MessageBodyWriter&lt;RdfNamespacedStream&gt; {</span>
+
+
+    @Inject
+    UriInfo uriInfo;
+
+    @Inject
+    TransactionManager transactionManager;
+
+    @Inject
+    HttpServletRequest request;
+
+    @Inject
+    private ResourceFactory resourceFactory;
+
+    @Inject
+    private OcflPropsConfig ocflPropsConfig;
+
+    @Inject
+    private FedoraPropsConfig fedoraPropsConfig;
+
+    private boolean autoVersioningEnabled;
+
+    private HttpIdentifierConverter identifierConverter;
+
+    private Transaction readOnlyTx;
+
+    private Transaction transaction() {
+<span class="pc bpc" id="L125" title="1 of 2 branches missed.">        if (request.getHeader(ATOMIC_ID_HEADER) != null) {</span>
+<span class="nc" id="L126">            return transactionManager.get(request.getHeader(ATOMIC_ID_HEADER));</span>
+        }
+<span class="fc" id="L128">        return readOnlyTx;</span>
+    }
+
+    private HttpIdentifierConverter identifierConverter() {
+<span class="fc bfc" id="L132" title="All 2 branches covered.">        if (identifierConverter == null) {</span>
+<span class="fc" id="L133">            final UriBuilder uriBuilder =</span>
+<span class="fc" id="L134">                    uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class);</span>
+<span class="fc" id="L135">            identifierConverter = new HttpIdentifierConverter(uriBuilder);</span>
+        }
+<span class="fc" id="L137">        return identifierConverter;</span>
+    }
+
+<span class="fc" id="L140">    private static final EscapeTool escapeTool = new EscapeTool();</span>
+
+<span class="fc" id="L142">    private final VelocityEngine velocity = new VelocityEngine();</span>
+
+    /**
+     * Location in the classpath where Velocity templates are to be found.
+     */
+    private static final String templatesLocation = &quot;/views&quot;;
+
+    /**
+     * A map from String names for primary node types to the Velocity templates
+     * that should be used for those node types.
+     */
+    private Map&lt;String, Template&gt; templatesMap;
+
+    private static final String templateFilenameExtension = &quot;.vsl&quot;;
+
+    private static final String velocityPropertiesLocation =
+            &quot;/velocity.properties&quot;;
+
+<span class="fc" id="L160">    private static final ViewHelpers VIEW_HELPERS = ViewHelpers.getInstance();</span>
+
+<span class="fc" id="L162">    private static final Logger LOGGER =</span>
+<span class="fc" id="L163">        getLogger(StreamingBaseHtmlProvider.class);</span>
+
+    @PostConstruct
+    void init() throws IOException {
+<span class="fc" id="L167">        LOGGER.trace(&quot;Velocity engine initializing...&quot;);</span>
+<span class="fc" id="L168">        final Properties properties = new Properties();</span>
+<span class="fc" id="L169">        final var velocityLog = fedoraPropsConfig.getVelocityLog().toString();</span>
+<span class="fc" id="L170">        autoVersioningEnabled = ocflPropsConfig.isAutoVersioningEnabled();</span>
+<span class="fc" id="L171">        LOGGER.debug(&quot;Setting Velocity runtime log: {}&quot;, velocityLog);</span>
+<span class="fc" id="L172">        properties.setProperty(&quot;runtime.log&quot;, velocityLog);</span>
+
+<span class="fc" id="L174">        final URL propertiesUrl =</span>
+<span class="fc" id="L175">                getClass().getResource(velocityPropertiesLocation);</span>
+<span class="fc" id="L176">        LOGGER.debug(&quot;Using Velocity configuration from {}&quot;, propertiesUrl);</span>
+<span class="fc" id="L177">        try (final InputStream propertiesStream = propertiesUrl.openStream()) {</span>
+<span class="fc" id="L178">            properties.load(propertiesStream);</span>
+        }
+<span class="fc" id="L180">        velocity.init(properties);</span>
+<span class="fc" id="L181">        LOGGER.trace(&quot;Velocity engine initialized.&quot;);</span>
+
+<span class="fc" id="L183">        LOGGER.trace(&quot;Assembling a map of node primary types -&gt; templates...&quot;);</span>
+<span class="fc" id="L184">        final ImmutableMap.Builder&lt;String, Template&gt; templatesMapBuilder = builder();</span>
+
+<span class="fc" id="L186">        of(&quot;fcr:versions&quot;, &quot;fcr:fixity&quot;, &quot;default&quot;)</span>
+<span class="fc" id="L187">            .forEach(key -&gt; templatesMapBuilder.put(key, velocity.getTemplate(getTemplateLocation(key))));</span>
+
+<span class="fc" id="L189">        templatesMap = templatesMapBuilder</span>
+<span class="fc" id="L190">            .put(REPOSITORY_ROOT.toString(), velocity.getTemplate(getTemplateLocation(&quot;root&quot;)))</span>
+<span class="fc" id="L191">            .put(NON_RDF_SOURCE.toString(), velocity.getTemplate(getTemplateLocation(&quot;binary&quot;)))</span>
+<span class="fc" id="L192">            .put(RDF_SOURCE.toString(), velocity.getTemplate(getTemplateLocation(&quot;resource&quot;))).build();</span>
+
+<span class="fc" id="L194">        LOGGER.trace(&quot;Assembled template map.&quot;);</span>
+
+<span class="fc" id="L196">        readOnlyTx = ReadOnlyTransaction.INSTANCE;</span>
+
+<span class="fc" id="L198">        LOGGER.trace(&quot;HtmlProvider initialization complete.&quot;);</span>
+<span class="fc" id="L199">    }</span>
+
+    @Override
+    public void writeTo(final RdfNamespacedStream nsStream, final Class&lt;?&gt; type,
+                        final Type genericType, final Annotation[] annotations,
+                        final MediaType mediaType,
+                        final MultivaluedMap&lt;String, Object&gt; httpHeaders,
+                        final OutputStream entityStream) throws IOException {
+
+<span class="fc" id="L208">        final Node subject = ViewHelpers.getContentNode(nsStream.stream.topic());</span>
+
+<span class="fc" id="L210">        final Model model = nsStream.stream.collect(toModel());</span>
+<span class="fc" id="L211">        model.setNsPrefixes(nsStream.namespaces);</span>
+
+<span class="fc" id="L213">        final Template nodeTypeTemplate = getTemplate(model, subject, Arrays.asList(annotations));</span>
+
+<span class="fc" id="L215">        final Context context = getContext(model, subject);</span>
+
+<span class="fc" id="L217">        final FedoraId fedoraID = FedoraId.create(identifierConverter().toInternalId(subject.toString()));</span>
+        try {
+<span class="fc" id="L219">            final FedoraResource resource = getResourceFromSubject(fedoraID);</span>
+<span class="pc bpc" id="L220" title="2 of 4 branches missed.">            context.put(&quot;isOriginalResource&quot;, (resource != null &amp;&amp; resource.isOriginalResource()));</span>
+<span class="pc bpc" id="L221" title="1 of 2 branches missed.">            context.put(&quot;isArchivalGroup&quot;, (resource != null &amp;&amp; resource.getSystemTypes(false)</span>
+<span class="pc bpc" id="L222" title="1 of 2 branches missed.">                    .contains(URI.create(ARCHIVAL_GROUP.getURI()))));</span>
+<span class="pc bpc" id="L223" title="2 of 4 branches missed.">            context.put(&quot;isVersion&quot;, (resource != null &amp;&amp; resource.isMemento()));</span>
+<span class="pc bpc" id="L224" title="1 of 4 branches missed.">            context.put(&quot;isLDPNR&quot;, (resource != null &amp;&amp; (resource instanceof Binary || !resource</span>
+<span class="pc bpc" id="L225" title="1 of 2 branches missed.">                    .getDescribedResource().equals(resource))));</span>
+<span class="fc" id="L226">        } catch (final PathNotFoundException e) {</span>
+<span class="fc" id="L227">            final var baseId = FedoraId.create(fedoraID.getBaseId());</span>
+<span class="pc bpc" id="L228" title="2 of 4 branches missed.">            if (fedoraID.isRepositoryRoot() || baseId.isRepositoryRoot()) {</span>
+                // We have requested the root resource or default ACL.
+<span class="fc" id="L230">                context.put(&quot;isOriginalResource&quot;, true);</span>
+<span class="fc" id="L231">                context.put(&quot;isArchivalGroup&quot;, false);</span>
+<span class="fc" id="L232">                context.put(&quot;isVersion&quot;, false);</span>
+<span class="fc" id="L233">                context.put(&quot;isLDPNR&quot;, false);</span>
+            } else {
+<span class="nc" id="L235">                throw new RepositoryRuntimeException(e.getMessage(), e);</span>
+            }
+<span class="fc" id="L237">        }</span>
+<span class="fc" id="L238">        context.put(&quot;autoVersioningEnabled&quot;, autoVersioningEnabled);</span>
+
+        // the contract of MessageBodyWriter&lt;T&gt; is _not_ to close the stream
+        // after writing to it
+<span class="fc" id="L242">        final Writer outWriter = new OutputStreamWriter(entityStream, StandardCharsets.UTF_8);</span>
+<span class="fc" id="L243">        nodeTypeTemplate.merge(context, outWriter);</span>
+<span class="fc" id="L244">        outWriter.flush();</span>
+<span class="fc" id="L245">    }</span>
+
+    /**
+     * Get a FedoraResource for the subject of the graph, if it exists.
+     *
+     * @param resourceId the FedoraId of the subject
+     * @return FedoraResource if exists or null
+     * @throws PathNotFoundException if the OCFL mapping is not found.
+     */
+    private FedoraResource getResourceFromSubject(final FedoraId resourceId) throws PathNotFoundException {
+<span class="fc" id="L255">        return resourceFactory.getResource(transaction(), resourceId);</span>
+    }
+
+    private Context getContext(final Model model, final Node subject) {
+<span class="fc" id="L259">        final FieldTool fieldTool = new FieldTool();</span>
+
+<span class="fc" id="L261">        final Context context = new VelocityContext();</span>
+<span class="fc" id="L262">        final String[] baseUrl = uriInfo.getBaseUri().getPath().split(&quot;/&quot;);</span>
+<span class="pc bpc" id="L263" title="1 of 2 branches missed.">        if (baseUrl.length &gt; 0) {</span>
+<span class="nc" id="L264">            final String staticBaseUrl = String.join(&quot;/&quot;, Arrays.copyOf(baseUrl, baseUrl.length - 1));</span>
+<span class="nc" id="L265">            context.put(&quot;staticBaseUrl&quot;, staticBaseUrl);</span>
+<span class="nc" id="L266">        } else {</span>
+<span class="fc" id="L267">            context.put(&quot;staticBaseUrl&quot;, &quot;/&quot;);</span>
+        }
+<span class="fc" id="L269">        context.put(&quot;rdfLexicon&quot;, fieldTool.in(RdfLexicon.class));</span>
+<span class="fc" id="L270">        context.put(&quot;helpers&quot;, VIEW_HELPERS);</span>
+<span class="fc" id="L271">        context.put(&quot;esc&quot;, escapeTool);</span>
+<span class="fc" id="L272">        context.put(&quot;rdf&quot;, model.getGraph());</span>
+
+<span class="fc" id="L274">        context.put(&quot;model&quot;, model);</span>
+<span class="fc" id="L275">        context.put(&quot;subjects&quot;, model.listSubjects());</span>
+<span class="fc" id="L276">        context.put(&quot;nodeany&quot;, ANY);</span>
+<span class="fc" id="L277">        context.put(&quot;topic&quot;, subject);</span>
+<span class="fc" id="L278">        context.put(&quot;originalResource&quot;, VIEW_HELPERS.getOriginalResource(subject));</span>
+<span class="fc" id="L279">        context.put(&quot;uriInfo&quot;, uriInfo);</span>
+<span class="fc" id="L280">        return context;</span>
+    }
+
+    private Template getTemplate(final Model rdf, final Node subject,
+                                 final List&lt;Annotation&gt; annotations) {
+
+<span class="fc" id="L286">        final String tplName = annotations.stream().filter(x -&gt; x instanceof HtmlTemplate)</span>
+<span class="pc" id="L287">            .map(x -&gt; ((HtmlTemplate) x).value()).filter(templatesMap::containsKey).findFirst()</span>
+<span class="fc" id="L288">            .orElseGet(() -&gt; {</span>
+<span class="fc" id="L289">                final List&lt;String&gt; types = multiValueURI(rdf.getResource(subject.getURI()), type);</span>
+<span class="fc bfc" id="L290" title="All 2 branches covered.">                if (types.contains(REPOSITORY_ROOT.toString())) {</span>
+<span class="fc" id="L291">                    return REPOSITORY_ROOT.toString();</span>
+                }
+<span class="fc" id="L293">                return types.stream().filter(templatesMap::containsKey).findFirst().orElse(&quot;default&quot;);</span>
+            });
+<span class="fc" id="L295">        LOGGER.debug(&quot;Using template: {}&quot;, tplName);</span>
+<span class="fc" id="L296">        return templatesMap.get(tplName);</span>
+    }
+
+    @Override
+    public boolean isWriteable(final Class&lt;?&gt; type, final Type genericType,
+                               final Annotation[] annotations, final MediaType mediaType) {
+<span class="fc" id="L302">        LOGGER.debug(</span>
+                &quot;Checking to see if type: {} is serializable to mimeType: {}&quot;,
+<span class="fc" id="L304">                type.getName(), mediaType);</span>
+<span class="pc bpc" id="L305" title="1 of 4 branches missed.">        return isTextHtml(mediaType) &amp;&amp; RdfNamespacedStream.class.isAssignableFrom(type);</span>
+    }
+
+    @Override
+    public long getSize(final RdfNamespacedStream t, final Class&lt;?&gt; type,
+                        final Type genericType, final Annotation[] annotations,
+                        final MediaType mediaType) {
+        // we don't know in advance how large the result might be
+<span class="nc" id="L313">        return -1;</span>
+    }
+
+    private static String getTemplateLocation(final String nodeTypeName) {
+<span class="fc" id="L317">        return templatesLocation + &quot;/&quot; +</span>
+<span class="fc" id="L318">            nodeTypeName.replace(':', '-') + templateFilenameExtension;</span>
+    }
+
+    private static boolean isTextHtml(final MediaType mediaType) {
+<span class="pc bpc" id="L322" title="1 of 2 branches missed.">        return mediaType.getType().equals(TEXT_HTML_TYPE.getType()) &amp;&amp;</span>
+<span class="pc bpc" id="L323" title="1 of 2 branches missed.">            mediaType.getSubtype().equals(TEXT_HTML_TYPE.getSubtype());</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
