@@ -1,0 +1,185 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * Licensed to DuraSpace under one or more contributor license agreements.</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * See the NOTICE file distributed with this work for additional information</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * regarding copyright ownership.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> *</a>
+<span class="sourceLineNo">006</span><a id="line.6"> * DuraSpace licenses this file to you under the Apache License,</a>
+<span class="sourceLineNo">007</span><a id="line.7"> * Version 2.0 (the "License"); you may not use this file except in</a>
+<span class="sourceLineNo">008</span><a id="line.8"> * compliance with the License.  You may obtain a copy of the License at</a>
+<span class="sourceLineNo">009</span><a id="line.9"> *</a>
+<span class="sourceLineNo">010</span><a id="line.10"> *     http://www.apache.org/licenses/LICENSE-2.0</a>
+<span class="sourceLineNo">011</span><a id="line.11"> *</a>
+<span class="sourceLineNo">012</span><a id="line.12"> * Unless required by applicable law or agreed to in writing, software</a>
+<span class="sourceLineNo">013</span><a id="line.13"> * distributed under the License is distributed on an "AS IS" BASIS,</a>
+<span class="sourceLineNo">014</span><a id="line.14"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<span class="sourceLineNo">015</span><a id="line.15"> * See the License for the specific language governing permissions and</a>
+<span class="sourceLineNo">016</span><a id="line.16"> * limitations under the License.</a>
+<span class="sourceLineNo">017</span><a id="line.17"> */</a>
+<span class="sourceLineNo">018</span><a id="line.18">package org.fcrepo.config;</a>
+<span class="sourceLineNo">019</span><a id="line.19"></a>
+<span class="sourceLineNo">020</span><a id="line.20">import static java.util.stream.Collectors.toSet;</a>
+<span class="sourceLineNo">021</span><a id="line.21"></a>
+<span class="sourceLineNo">022</span><a id="line.22">import java.util.Arrays;</a>
+<span class="sourceLineNo">023</span><a id="line.23">import java.util.Set;</a>
+<span class="sourceLineNo">024</span><a id="line.24">import java.util.stream.Stream;</a>
+<span class="sourceLineNo">025</span><a id="line.25"></a>
+<span class="sourceLineNo">026</span><a id="line.26">/**</a>
+<span class="sourceLineNo">027</span><a id="line.27"> * Digest Algorith enum</a>
+<span class="sourceLineNo">028</span><a id="line.28"> * @author cbeer</a>
+<span class="sourceLineNo">029</span><a id="line.29"> *</a>
+<span class="sourceLineNo">030</span><a id="line.30"> * Moved to its own class for Fedora 6.0.0</a>
+<span class="sourceLineNo">031</span><a id="line.31"> */</a>
+<span class="sourceLineNo">032</span><a id="line.32">public enum DigestAlgorithm {</a>
+<span class="sourceLineNo">033</span><a id="line.33">    SHA1("SHA", "urn:sha1", "sha-1", "sha1"),</a>
+<span class="sourceLineNo">034</span><a id="line.34">    SHA256("SHA-256", "urn:sha-256", "sha256"),</a>
+<span class="sourceLineNo">035</span><a id="line.35">    SHA512("SHA-512", "urn:sha-512", "sha512"),</a>
+<span class="sourceLineNo">036</span><a id="line.36">    SHA512256("SHA-512/256", "urn:sha-512/256", "sha512/256"),</a>
+<span class="sourceLineNo">037</span><a id="line.37">    MD5("MD5", "urn:md5"),</a>
+<span class="sourceLineNo">038</span><a id="line.38">    MISSING("NONE", "missing");</a>
+<span class="sourceLineNo">039</span><a id="line.39"></a>
+<span class="sourceLineNo">040</span><a id="line.40">    final private String algorithm;</a>
+<span class="sourceLineNo">041</span><a id="line.41">    final private String scheme;</a>
+<span class="sourceLineNo">042</span><a id="line.42">    final private Set&lt;String&gt; aliases;</a>
+<span class="sourceLineNo">043</span><a id="line.43"></a>
+<span class="sourceLineNo">044</span><a id="line.44">    DigestAlgorithm(final String alg, final String scheme, final String... aliases) {</a>
+<span class="sourceLineNo">045</span><a id="line.45">        this.algorithm = alg;</a>
+<span class="sourceLineNo">046</span><a id="line.46">        this.scheme = scheme;</a>
+<span class="sourceLineNo">047</span><a id="line.47">        this.aliases = Stream.concat(Arrays.stream(aliases), Stream.of(algorithm)).map(String::valueOf)</a>
+<span class="sourceLineNo">048</span><a id="line.48">                        .map(String::toLowerCase).collect(toSet());</a>
+<span class="sourceLineNo">049</span><a id="line.49">    }</a>
+<span class="sourceLineNo">050</span><a id="line.50"></a>
+<span class="sourceLineNo">051</span><a id="line.51">    /**</a>
+<span class="sourceLineNo">052</span><a id="line.52">     * Return the scheme associated with the provided algorithm (e.g. SHA-1 returns urn:sha1)</a>
+<span class="sourceLineNo">053</span><a id="line.53">     *</a>
+<span class="sourceLineNo">054</span><a id="line.54">     * @param alg for which scheme is requested</a>
+<span class="sourceLineNo">055</span><a id="line.55">     * @return scheme</a>
+<span class="sourceLineNo">056</span><a id="line.56">     */</a>
+<span class="sourceLineNo">057</span><a id="line.57">    public static String getScheme(final String alg) {</a>
+<span class="sourceLineNo">058</span><a id="line.58">        return Arrays.stream(values()).filter(value -&gt;</a>
+<span class="sourceLineNo">059</span><a id="line.59">                value.algorithm.equalsIgnoreCase(alg) || value.algorithm.replace("-", "").equalsIgnoreCase(alg)</a>
+<span class="sourceLineNo">060</span><a id="line.60">        ).findFirst().orElse(MISSING).scheme;</a>
+<span class="sourceLineNo">061</span><a id="line.61">    }</a>
+<span class="sourceLineNo">062</span><a id="line.62"></a>
+<span class="sourceLineNo">063</span><a id="line.63">    /**</a>
+<span class="sourceLineNo">064</span><a id="line.64">     * Return enum value for the provided scheme (e.g. urn:sha1 returns SHA-1)</a>
+<span class="sourceLineNo">065</span><a id="line.65">     *</a>
+<span class="sourceLineNo">066</span><a id="line.66">     * @param argScheme for which enum is requested</a>
+<span class="sourceLineNo">067</span><a id="line.67">     * @return enum value associated with the arg scheme</a>
+<span class="sourceLineNo">068</span><a id="line.68">     */</a>
+<span class="sourceLineNo">069</span><a id="line.69">    public static DigestAlgorithm fromScheme(final String argScheme) {</a>
+<span class="sourceLineNo">070</span><a id="line.70">        return Arrays.stream(values()).filter(value -&gt; value.scheme.equalsIgnoreCase(argScheme)</a>
+<span class="sourceLineNo">071</span><a id="line.71">        ).findFirst().orElse(MISSING);</a>
+<span class="sourceLineNo">072</span><a id="line.72">    }</a>
+<span class="sourceLineNo">073</span><a id="line.73"></a>
+<span class="sourceLineNo">074</span><a id="line.74">    /**</a>
+<span class="sourceLineNo">075</span><a id="line.75">     * Return enum value for the provided algorithm</a>
+<span class="sourceLineNo">076</span><a id="line.76">     *</a>
+<span class="sourceLineNo">077</span><a id="line.77">     * @param alg algorithm name to seek</a>
+<span class="sourceLineNo">078</span><a id="line.78">     * @return enum value associated with the algorithm name, or missing if not found</a>
+<span class="sourceLineNo">079</span><a id="line.79">     */</a>
+<span class="sourceLineNo">080</span><a id="line.80">    public static DigestAlgorithm fromAlgorithm(final String alg) {</a>
+<span class="sourceLineNo">081</span><a id="line.81">        final String seek = alg.toLowerCase();</a>
+<span class="sourceLineNo">082</span><a id="line.82">        return Arrays.stream(values())</a>
+<span class="sourceLineNo">083</span><a id="line.83">                .filter(value -&gt; value.aliases.contains(seek))</a>
+<span class="sourceLineNo">084</span><a id="line.84">                .findFirst()</a>
+<span class="sourceLineNo">085</span><a id="line.85">                .orElse(MISSING);</a>
+<span class="sourceLineNo">086</span><a id="line.86">    }</a>
+<span class="sourceLineNo">087</span><a id="line.87"></a>
+<span class="sourceLineNo">088</span><a id="line.88">    /**</a>
+<span class="sourceLineNo">089</span><a id="line.89">     * Return true if the provided algorithm is included in this enum</a>
+<span class="sourceLineNo">090</span><a id="line.90">     *</a>
+<span class="sourceLineNo">091</span><a id="line.91">     * @param alg to test</a>
+<span class="sourceLineNo">092</span><a id="line.92">     * @return true if arg algorithm is supported</a>
+<span class="sourceLineNo">093</span><a id="line.93">     */</a>
+<span class="sourceLineNo">094</span><a id="line.94">    public static boolean isSupportedAlgorithm(final String alg) {</a>
+<span class="sourceLineNo">095</span><a id="line.95">        return !getScheme(alg).equals(MISSING.scheme);</a>
+<span class="sourceLineNo">096</span><a id="line.96">    }</a>
+<span class="sourceLineNo">097</span><a id="line.97"></a>
+<span class="sourceLineNo">098</span><a id="line.98">    /**</a>
+<span class="sourceLineNo">099</span><a id="line.99">     * @return the aliases</a>
+<span class="sourceLineNo">100</span><a id="line.100">     */</a>
+<span class="sourceLineNo">101</span><a id="line.101">    public Set&lt;String&gt; getAliases() {</a>
+<span class="sourceLineNo">102</span><a id="line.102">        return aliases;</a>
+<span class="sourceLineNo">103</span><a id="line.103">    }</a>
+<span class="sourceLineNo">104</span><a id="line.104"></a>
+<span class="sourceLineNo">105</span><a id="line.105">    /**</a>
+<span class="sourceLineNo">106</span><a id="line.106">     * @return the algorithm</a>
+<span class="sourceLineNo">107</span><a id="line.107">     */</a>
+<span class="sourceLineNo">108</span><a id="line.108">    public String getAlgorithm() {</a>
+<span class="sourceLineNo">109</span><a id="line.109">        return algorithm;</a>
+<span class="sourceLineNo">110</span><a id="line.110">    }</a>
+<span class="sourceLineNo">111</span><a id="line.111">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>
