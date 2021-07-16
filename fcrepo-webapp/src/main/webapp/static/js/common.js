@@ -73,9 +73,14 @@
     if (mixin == 'binary') {
       const update_file = document.getElementById('binary_payload').files[0];
       const reader = new FileReader();
+
+      const mime_type = document.getElementById('mime_type').value
+          || update_file.type
+          || 'application/octet-stream';
+
       headers.push(['Content-Disposition', 'attachment; filename=\"' + update_file.name + '\"']);
       headers.push(['Link', '<http://www.w3.org/ns/ldp#NonRDFSource>; rel=\"type\"']);
-      headers.push(['Content-Type', update_file.type || 'application/octet-stream']);
+      headers.push(['Content-Type', mime_type]);
       reader.onload = function(e) {
           fn(method, url, headers, e.target.result);
       };
@@ -237,9 +242,13 @@
       const url = window.location.href.replace('fcr:metadata', '');
       const reader = new FileReader();
 
+      const mime_type = document.getElementById('update_mime_type').value
+          || update_file.type
+          || 'application/octet-stream';
+
       const headers = [
         ['Content-Disposition', 'attachment; filename=\"' + update_file.name + '\"'],
-        ['Content-Type', update_file.type]];
+        ['Content-Type', mime_type]];
 
       reader.onload = function(e) {
           http('PUT', url, headers, e.target.result, function(res) {
@@ -483,6 +492,7 @@
   ready(function() {
       listen('new_mixin', 'change', function(e) {
         document.getElementById('binary_payload_container').style.display = e.target.value == 'binary' ? 'block' : 'none';
+        document.getElementById('binary_mime_type_container').style.display = e.target.value == 'binary' ? 'block' : 'none';
         document.getElementById('turtle_payload_container').style.display = e.target.value == 'binary' ? 'none' : 'block';
 
       });
