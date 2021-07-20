@@ -62,6 +62,7 @@ import static org.fcrepo.http.commons.session.TransactionConstants.TX_PREFIX;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.models.ExternalContent.COPY;
 import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
 import static org.fcrepo.kernel.api.models.ExternalContent.REDIRECT;
@@ -429,6 +430,39 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
     }
 
+    private void addArchiveGroupLinkHeader(final FedoraResource resource) {
+        try {
+            final var archivalGroupURI = URI.create(ARCHIVAL_GROUP.getURI());
+            final var archivalGroup = findArchivalGroup(resource.getParent(), archivalGroupURI);
+            archivalGroup.ifPresent(agResource -> {
+                final var uri = getUri(agResource);
+                final var link = buildLink(uri, "archival-group");
+                servletResponse.addHeader(LINK, link);
+            });
+        } catch (final PathNotFoundException ex) {
+            LOGGER.warn("Could not get parent for resource {}", fedoraResource, ex);
+        }
+    }
+
+    /**
+     * Recursively search for an archival group in the ancestry of a resource
+     *
+     * @param resource the resource to search through
+     * @param agURI ArchivalGroup RDF URI
+     * @return An archival group if it exists, otherwise an empty optional
+     * @throws PathNotFoundException if there is an exception getting the parent resource
+     */
+    private java.util.Optional<FedoraResource> findArchivalGroup(final FedoraResource resource, final URI agURI)
+        throws PathNotFoundException {
+        if (resource.getTypes().contains(agURI)) {
+            return java.util.Optional.of(resource);
+        } else if (resource.getFedoraId().isRepositoryRoot()) {
+            return java.util.Optional.empty();
+        }
+
+        return findArchivalGroup(resource.getParent(), agURI);
+    }
+
     protected void addExternalContentHeaders(final FedoraResource resource) {
         if (resource instanceof Binary) {
             final Binary binary = (Binary)resource;
@@ -497,6 +531,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected void addLinkAndOptionsHttpHeaders(final FedoraResource resource) {
         // Add Link headers
         addResourceLinkHeaders(resource);
+        addArchiveGroupLinkHeader(resource);
         addAcceptExternalHeader();
 
         // Add Options headers
