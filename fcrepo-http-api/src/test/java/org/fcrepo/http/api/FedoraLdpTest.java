@@ -95,6 +95,7 @@ import java.util.stream.Stream;
 import static com.google.common.base.Predicates.containsPattern;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Stream.of;
@@ -119,7 +120,9 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES_TYPE;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getServletContextImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
@@ -197,6 +200,9 @@ public class FedoraLdpTest {
 
     @Mock
     private Binary mockBinary;
+
+    @Mock
+    private FedoraResource mockParent;
 
     @Mock
     private ResourceFactory resourceFactory;
@@ -338,17 +344,28 @@ public class FedoraLdpTest {
     }
 
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) {
+        return setResourceWithParentRdfTypes(klass, emptyList());
+    }
+
+    private FedoraResource setResourceWithParentRdfTypes(final Class<? extends FedoraResource> klass,
+                                                         final List<URI> parentRdfTypes) {
         final List<tripleTypes> defaultTriples = List.of(
-                tripleTypes.PROPERTIES,
-                tripleTypes.LDP_CONTAINMENT,
-                tripleTypes.SERVER_MANAGED,
-                tripleTypes.LDP_MEMBERSHIP
-        );
-        return setResource(klass, defaultTriples);
+            tripleTypes.PROPERTIES,
+            tripleTypes.LDP_CONTAINMENT,
+            tripleTypes.SERVER_MANAGED,
+            tripleTypes.LDP_MEMBERSHIP
+                                                        );
+        return setResource(klass, defaultTriples, parentRdfTypes);
+    }
+
+    private FedoraResource setResourceWithTriples(final Class<? extends FedoraResource> klass,
+                                                  final List<tripleTypes> tripleTypesList) {
+        return setResource(klass, tripleTypesList, emptyList());
     }
 
     private FedoraResource setResource(final Class<? extends FedoraResource> klass,
-                                       final List<tripleTypes> tripleTypesList) {
+                                       final List<tripleTypes> tripleTypesList,
+                                       final List<URI> parentRdfTypes) {
         final FedoraResource mockResource = mock(klass);
         typeList.add(URI.create(RESOURCE.toString()));
         if (mockResource instanceof Binary) {
@@ -371,6 +388,14 @@ public class FedoraLdpTest {
         when(mockResource.getEtagValue()).thenReturn("");
         when(mockResource.getStateToken()).thenReturn("");
         when(mockResource.getDescribedResource()).thenReturn(mockResource);
+
+        try {
+            when(mockResource.getParent()).thenReturn(mockParent);
+            when(mockParent.getTypes()).thenReturn(parentRdfTypes);
+            when(mockParent.getFedoraId()).thenReturn(FedoraId.create(FEDORA_ID_PREFIX));
+        } catch (PathNotFoundException ignored) {
+        }
+
         setupResourceService(mockResource, tripleTypesList);
         return mockResource;
     }
@@ -414,6 +439,24 @@ public class FedoraLdpTest {
         assertTrue("Should have a Vary header", mockResponse.containsHeader("Vary"));
         assertTrue("Should be an LDP Resource",
                 mockResponse.getHeaders(LINK).contains("<" + RESOURCE + ">; rel=\"type\""));
+    }
+
+    @Test
+    public void testHeadWithArchivalGroup() {
+        setResourceWithParentRdfTypes(FedoraResource.class, List.of(URI.create(ARCHIVAL_GROUP.getURI())));
+        when(mockRequest.getMethod()).thenReturn("HEAD");
+        final Response actual = testObj.head();
+        assertEquals(OK.getStatusCode(), actual.getStatus());
+        assertTrue("Should have a Link header", mockResponse.containsHeader(LINK));
+        assertTrue("Should have an Allow header", mockResponse.containsHeader("Allow"));
+        assertTrue("Should have a Preference-Applied header", mockResponse.containsHeader("Preference-Applied"));
+        assertTrue("Should have a Vary header", mockResponse.containsHeader("Vary"));
+        assertTrue("Should be an LDP Resource",
+                   mockResponse.getHeaders(LINK).contains("<" + RESOURCE + ">; rel=\"type\""));
+
+        final var rootUri = identifierConverter.toExternalId(mockParent.getFedoraId().getFullId());
+        assertTrue("Should have an Archival Group Link",
+                   mockResponse.getHeaders(LINK).contains("<" + rootUri + ">; rel=\"archival-group\""));
     }
 
     @Test
@@ -592,6 +635,9 @@ public class FedoraLdpTest {
     public void testOptionWithBinary() throws Exception {
         setField(testObj, "externalPath", binaryPath);
         when(resourceFactory.getResource(mockTransaction, binaryPathId)).thenReturn(mockBinary);
+        when(mockBinary.getParent()).thenReturn(mockParent);
+        when(mockParent.getTypes()).thenReturn(emptyList());
+        when(mockParent.getFedoraId()).thenReturn(FedoraId.create(FEDORA_ID_PREFIX));
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertShouldNotAdvertiseAcceptPostFlavors();
@@ -605,6 +651,9 @@ public class FedoraLdpTest {
         setField(testObj, "externalPath", binaryDescriptionPath);
         when(resourceFactory.getResource(mockTransaction, binaryDescId))
                 .thenReturn(mockNonRdfSourceDescription);
+        when(mockNonRdfSourceDescription.getParent()).thenReturn(mockParent);
+        when(mockParent.getTypes()).thenReturn(emptyList());
+        when(mockParent.getFedoraId()).thenReturn(FedoraId.create(FEDORA_ID_PREFIX));
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertShouldNotAdvertiseAcceptPostFlavors();
@@ -827,7 +876,7 @@ public class FedoraLdpTest {
                 tripleTypes.LDP_MEMBERSHIP,
                 tripleTypes.INBOUND_REFERENCES
         );
-        setResource(Container.class, triples);
+        setResourceWithTriples(Container.class, triples);
         when(mockRequest.getMethod()).thenReturn("GET");
         setField(testObj, "prefer", new MultiPrefer("return=representation; include=\"" + INBOUND_REFERENCES + "\""));
         final Response actual = testObj.getResource(null);
