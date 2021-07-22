@@ -175,11 +175,6 @@ public class FedoraResourceImpl implements FedoraResource {
     }
 
     @Override
-    public boolean isArchivalGroup() {
-        return isArchivalGroup;
-    }
-
-    @Override
     public FedoraResource findMementoByDatetime(final Instant mementoDatetime) {
         FedoraResource match = null;
         long matchDiff = 0;
