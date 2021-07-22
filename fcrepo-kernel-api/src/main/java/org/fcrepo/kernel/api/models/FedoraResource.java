@@ -114,6 +114,13 @@ public interface FedoraResource {
     boolean isAcl();
 
     /**
+     * Returns true if this resource in an Archival Group
+     *
+     * @return true if the resource is an Archival Group
+     */
+    boolean isArchivalGroup();
+
+    /**
      * Retrieve the Memento with the closest datetime to the request.
      *
      * @param mementoDatetime The requested date time.

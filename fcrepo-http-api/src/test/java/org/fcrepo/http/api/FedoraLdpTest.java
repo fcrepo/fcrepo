@@ -122,7 +122,6 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
-import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
@@ -344,28 +343,28 @@ public class FedoraLdpTest {
     }
 
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) {
-        return setResourceWithParentRdfTypes(klass, emptyList());
+        return setResourceWithParent(klass, false);
     }
 
-    private FedoraResource setResourceWithParentRdfTypes(final Class<? extends FedoraResource> klass,
-                                                         final List<URI> parentRdfTypes) {
+    private FedoraResource setResourceWithParent(final Class<? extends FedoraResource> klass,
+                                                 final boolean isArchivalGroup) {
         final List<tripleTypes> defaultTriples = List.of(
             tripleTypes.PROPERTIES,
             tripleTypes.LDP_CONTAINMENT,
             tripleTypes.SERVER_MANAGED,
             tripleTypes.LDP_MEMBERSHIP
                                                         );
-        return setResource(klass, defaultTriples, parentRdfTypes);
+        return setResource(klass, defaultTriples, isArchivalGroup);
     }
 
     private FedoraResource setResourceWithTriples(final Class<? extends FedoraResource> klass,
                                                   final List<tripleTypes> tripleTypesList) {
-        return setResource(klass, tripleTypesList, emptyList());
+        return setResource(klass, tripleTypesList, false);
     }
 
     private FedoraResource setResource(final Class<? extends FedoraResource> klass,
                                        final List<tripleTypes> tripleTypesList,
-                                       final List<URI> parentRdfTypes) {
+                                       final boolean isArchivalGroup) {
         final FedoraResource mockResource = mock(klass);
         typeList.add(URI.create(RESOURCE.toString()));
         if (mockResource instanceof Binary) {
@@ -391,7 +390,7 @@ public class FedoraLdpTest {
 
         try {
             when(mockResource.getParent()).thenReturn(mockParent);
-            when(mockParent.getTypes()).thenReturn(parentRdfTypes);
+            when(mockParent.isArchivalGroup()).thenReturn(isArchivalGroup);
             when(mockParent.getFedoraId()).thenReturn(FedoraId.create(FEDORA_ID_PREFIX));
         } catch (PathNotFoundException ignored) {
         }
@@ -443,7 +442,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testHeadWithArchivalGroup() {
-        setResourceWithParentRdfTypes(FedoraResource.class, List.of(URI.create(ARCHIVAL_GROUP.getURI())));
+        setResourceWithParent(FedoraResource.class, true);
         when(mockRequest.getMethod()).thenReturn("HEAD");
         final Response actual = testObj.head();
         assertEquals(OK.getStatusCode(), actual.getStatus());
