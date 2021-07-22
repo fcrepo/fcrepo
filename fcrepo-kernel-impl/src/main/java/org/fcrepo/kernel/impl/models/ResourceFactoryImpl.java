@@ -183,6 +183,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
         resc.setLastModifiedBy(headers.getLastModifiedBy());
         resc.setLastModifiedDate(headers.getLastModifiedDate());
         resc.setParentId(headers.getParent());
+        resc.setArchivalGroupId(headers.getArchivalGroupId());
         resc.setEtag(headers.getStateToken());
         resc.setStateToken(headers.getStateToken());
         resc.setIsArchivalGroup(headers.isArchivalGroup());

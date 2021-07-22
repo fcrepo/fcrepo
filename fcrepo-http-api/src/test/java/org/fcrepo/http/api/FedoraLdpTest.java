@@ -89,6 +89,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -198,9 +199,6 @@ public class FedoraLdpTest {
 
     @Mock
     private Binary mockBinary;
-
-    @Mock
-    private FedoraResource mockParent;
 
     @Mock
     private ResourceFactory resourceFactory;
@@ -342,28 +340,28 @@ public class FedoraLdpTest {
     }
 
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) {
-        return setResourceWithParent(klass, false);
+        return setResourceWithArchivalGroup(klass, null);
     }
 
-    private FedoraResource setResourceWithParent(final Class<? extends FedoraResource> klass,
-                                                 final boolean isArchivalGroup) {
+    private FedoraResource setResourceWithArchivalGroup(final Class<? extends FedoraResource> klass,
+                                                        final FedoraId archivalGroupId) {
         final List<tripleTypes> defaultTriples = List.of(
             tripleTypes.PROPERTIES,
             tripleTypes.LDP_CONTAINMENT,
             tripleTypes.SERVER_MANAGED,
-            tripleTypes.LDP_MEMBERSHIP
-                                                        );
-        return setResource(klass, defaultTriples, isArchivalGroup);
+            tripleTypes.LDP_MEMBERSHIP);
+
+        return setResource(klass, defaultTriples, archivalGroupId);
     }
 
     private FedoraResource setResourceWithTriples(final Class<? extends FedoraResource> klass,
                                                   final List<tripleTypes> tripleTypesList) {
-        return setResource(klass, tripleTypesList, false);
+        return setResource(klass, tripleTypesList, null);
     }
 
     private FedoraResource setResource(final Class<? extends FedoraResource> klass,
                                        final List<tripleTypes> tripleTypesList,
-                                       final boolean isArchivalGroup) {
+                                       final FedoraId archivalGroupId) {
         final FedoraResource mockResource = mock(klass);
         typeList.add(URI.create(RESOURCE.toString()));
         if (mockResource instanceof Binary) {
@@ -386,13 +384,7 @@ public class FedoraLdpTest {
         when(mockResource.getEtagValue()).thenReturn("");
         when(mockResource.getStateToken()).thenReturn("");
         when(mockResource.getDescribedResource()).thenReturn(mockResource);
-
-        try {
-            when(mockResource.getParent()).thenReturn(mockParent);
-            when(mockParent.isArchivalGroup()).thenReturn(isArchivalGroup);
-            when(mockParent.getFedoraId()).thenReturn(FedoraId.create(FEDORA_ID_PREFIX));
-        } catch (PathNotFoundException ignored) {
-        }
+        when(mockResource.getArchivalGroupId()).thenReturn(Optional.ofNullable(archivalGroupId));
 
         setupResourceService(mockResource, tripleTypesList);
         return mockResource;
@@ -441,7 +433,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testHeadWithArchivalGroup() {
-        setResourceWithParent(FedoraResource.class, true);
+        setResourceWithArchivalGroup(FedoraResource.class, FedoraId.create(FEDORA_ID_PREFIX));
         when(mockRequest.getMethod()).thenReturn("HEAD");
         final Response actual = testObj.head();
         assertEquals(OK.getStatusCode(), actual.getStatus());
@@ -452,7 +444,7 @@ public class FedoraLdpTest {
         assertTrue("Should be an LDP Resource",
                    mockResponse.getHeaders(LINK).contains("<" + RESOURCE + ">; rel=\"type\""));
 
-        final var rootUri = identifierConverter.toExternalId(mockParent.getFedoraId().getFullId());
+        final var rootUri = identifierConverter.toExternalId(FedoraId.create(FEDORA_ID_PREFIX).getFullId());
         assertTrue("Should have an Archival Group Link",
                    mockResponse.getHeaders(LINK).contains("<" + rootUri + ">; rel=\"archival-group\""));
     }
@@ -633,9 +625,7 @@ public class FedoraLdpTest {
     public void testOptionWithBinary() throws Exception {
         setField(testObj, "externalPath", binaryPath);
         when(resourceFactory.getResource(mockTransaction, binaryPathId)).thenReturn(mockBinary);
-        when(mockBinary.getParent()).thenReturn(mockParent);
-        when(mockParent.isArchivalGroup()).thenReturn(false);
-        when(mockParent.getFedoraId()).thenReturn(FedoraId.create(FEDORA_ID_PREFIX));
+        when(mockBinary.getArchivalGroupId()).thenReturn(Optional.empty());
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertShouldNotAdvertiseAcceptPostFlavors();
@@ -649,9 +639,7 @@ public class FedoraLdpTest {
         setField(testObj, "externalPath", binaryDescriptionPath);
         when(resourceFactory.getResource(mockTransaction, binaryDescId))
                 .thenReturn(mockNonRdfSourceDescription);
-        when(mockNonRdfSourceDescription.getParent()).thenReturn(mockParent);
-        when(mockParent.isArchivalGroup()).thenReturn(false);
-        when(mockParent.getFedoraId()).thenReturn(FedoraId.create(FEDORA_ID_PREFIX));
+        when(mockNonRdfSourceDescription.getArchivalGroupId()).thenReturn(Optional.empty());
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertShouldNotAdvertiseAcceptPostFlavors();

@@ -430,34 +430,15 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     private void addArchiveGroupLinkHeader(final FedoraResource resource) {
-        try {
-            final var archivalGroup = findArchivalGroup(resource.getParent());
-            archivalGroup.ifPresent(agResource -> {
-                final var uri = getUri(agResource);
+        resource.getArchivalGroupId().ifPresent(agFedoraId -> {
+            try {
+                final var uri = new URI(identifierConverter().toExternalId(agFedoraId.getFullId()));
                 final var link = buildLink(uri, "archival-group");
                 servletResponse.addHeader(LINK, link);
-            });
-        } catch (final PathNotFoundException ex) {
-            LOGGER.warn("Could not get parent for resource {}", fedoraResource, ex);
-        }
-    }
-
-    /**
-     * Recursively search for an archival group in the ancestry of a resource
-     *
-     * @param resource the resource to search through
-     * @return An archival group if it exists, otherwise an empty optional
-     * @throws PathNotFoundException if there is an exception getting the parent resource
-     */
-    private java.util.Optional<FedoraResource> findArchivalGroup(final FedoraResource resource)
-        throws PathNotFoundException {
-        if (resource.isArchivalGroup()) {
-            return java.util.Optional.of(resource);
-        } else if (resource.getFedoraId().isRepositoryRoot()) {
-            return java.util.Optional.empty();
-        }
-
-        return findArchivalGroup(resource.getParent());
+            } catch (URISyntaxException e) {
+                throw new BadRequestException(e);
+            }
+        });
     }
 
     protected void addExternalContentHeaders(final FedoraResource resource) {
