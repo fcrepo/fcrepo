@@ -95,7 +95,6 @@ import java.util.stream.Stream;
 import static com.google.common.base.Predicates.containsPattern;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Stream.of;
@@ -635,7 +634,7 @@ public class FedoraLdpTest {
         setField(testObj, "externalPath", binaryPath);
         when(resourceFactory.getResource(mockTransaction, binaryPathId)).thenReturn(mockBinary);
         when(mockBinary.getParent()).thenReturn(mockParent);
-        when(mockParent.getTypes()).thenReturn(emptyList());
+        when(mockParent.isArchivalGroup()).thenReturn(false);
         when(mockParent.getFedoraId()).thenReturn(FedoraId.create(FEDORA_ID_PREFIX));
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
@@ -651,7 +650,7 @@ public class FedoraLdpTest {
         when(resourceFactory.getResource(mockTransaction, binaryDescId))
                 .thenReturn(mockNonRdfSourceDescription);
         when(mockNonRdfSourceDescription.getParent()).thenReturn(mockParent);
-        when(mockParent.getTypes()).thenReturn(emptyList());
+        when(mockParent.isArchivalGroup()).thenReturn(false);
         when(mockParent.getFedoraId()).thenReturn(FedoraId.create(FEDORA_ID_PREFIX));
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
