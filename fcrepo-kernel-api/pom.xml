@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo</artifactId>
-    <version>5.2.0-SNAPSHOT</version>
+    <version>5.1.2-RC-1</version>
   </parent>
   <artifactId>fcrepo-kernel-api</artifactId>
   <name>Fedora Repository Kernel API</name>
