@@ -40,6 +40,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static java.net.URI.create;
@@ -76,6 +77,8 @@ public class FedoraResourceImpl implements FedoraResource {
     protected final FedoraId fedoraId;
 
     private FedoraId parentId;
+
+    private FedoraId archivalGroupId;
 
     private List<URI> types;
 
@@ -457,5 +460,16 @@ public class FedoraResourceImpl implements FedoraResource {
 
     protected List<URI> resolveSystemTypes(final boolean forRdf) {
         return forRdf ? systemTypesForRdf : systemTypes;
+    }
+
+    /**
+     * @param archivalGroupId the FedoraId of the Archival Group for this resource
+     */
+    public void setArchivalGroupId(final FedoraId archivalGroupId) {
+        this.archivalGroupId = archivalGroupId;
+    }
+
+    public Optional<FedoraId> getArchivalGroupId() {
+        return Optional.ofNullable(archivalGroupId);
     }
 }

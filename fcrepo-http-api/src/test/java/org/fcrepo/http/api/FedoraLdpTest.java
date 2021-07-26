@@ -89,6 +89,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -119,6 +120,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES_TYPE;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getServletContextImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
@@ -338,17 +340,28 @@ public class FedoraLdpTest {
     }
 
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) {
+        return setResourceWithArchivalGroup(klass, null);
+    }
+
+    private FedoraResource setResourceWithArchivalGroup(final Class<? extends FedoraResource> klass,
+                                                        final FedoraId archivalGroupId) {
         final List<tripleTypes> defaultTriples = List.of(
-                tripleTypes.PROPERTIES,
-                tripleTypes.LDP_CONTAINMENT,
-                tripleTypes.SERVER_MANAGED,
-                tripleTypes.LDP_MEMBERSHIP
-        );
-        return setResource(klass, defaultTriples);
+            tripleTypes.PROPERTIES,
+            tripleTypes.LDP_CONTAINMENT,
+            tripleTypes.SERVER_MANAGED,
+            tripleTypes.LDP_MEMBERSHIP);
+
+        return setResource(klass, defaultTriples, archivalGroupId);
+    }
+
+    private FedoraResource setResourceWithTriples(final Class<? extends FedoraResource> klass,
+                                                  final List<tripleTypes> tripleTypesList) {
+        return setResource(klass, tripleTypesList, null);
     }
 
     private FedoraResource setResource(final Class<? extends FedoraResource> klass,
-                                       final List<tripleTypes> tripleTypesList) {
+                                       final List<tripleTypes> tripleTypesList,
+                                       final FedoraId archivalGroupId) {
         final FedoraResource mockResource = mock(klass);
         typeList.add(URI.create(RESOURCE.toString()));
         if (mockResource instanceof Binary) {
@@ -371,6 +384,8 @@ public class FedoraLdpTest {
         when(mockResource.getEtagValue()).thenReturn("");
         when(mockResource.getStateToken()).thenReturn("");
         when(mockResource.getDescribedResource()).thenReturn(mockResource);
+        when(mockResource.getArchivalGroupId()).thenReturn(Optional.ofNullable(archivalGroupId));
+
         setupResourceService(mockResource, tripleTypesList);
         return mockResource;
     }
@@ -414,6 +429,24 @@ public class FedoraLdpTest {
         assertTrue("Should have a Vary header", mockResponse.containsHeader("Vary"));
         assertTrue("Should be an LDP Resource",
                 mockResponse.getHeaders(LINK).contains("<" + RESOURCE + ">; rel=\"type\""));
+    }
+
+    @Test
+    public void testHeadWithArchivalGroup() {
+        setResourceWithArchivalGroup(FedoraResource.class, FedoraId.create(FEDORA_ID_PREFIX));
+        when(mockRequest.getMethod()).thenReturn("HEAD");
+        final Response actual = testObj.head();
+        assertEquals(OK.getStatusCode(), actual.getStatus());
+        assertTrue("Should have a Link header", mockResponse.containsHeader(LINK));
+        assertTrue("Should have an Allow header", mockResponse.containsHeader("Allow"));
+        assertTrue("Should have a Preference-Applied header", mockResponse.containsHeader("Preference-Applied"));
+        assertTrue("Should have a Vary header", mockResponse.containsHeader("Vary"));
+        assertTrue("Should be an LDP Resource",
+                   mockResponse.getHeaders(LINK).contains("<" + RESOURCE + ">; rel=\"type\""));
+
+        final var rootUri = identifierConverter.toExternalId(FedoraId.create(FEDORA_ID_PREFIX).getFullId());
+        assertTrue("Should have an Archival Group Link",
+                   mockResponse.getHeaders(LINK).contains("<" + rootUri + ">; rel=\"archival-group\""));
     }
 
     @Test
@@ -592,6 +625,7 @@ public class FedoraLdpTest {
     public void testOptionWithBinary() throws Exception {
         setField(testObj, "externalPath", binaryPath);
         when(resourceFactory.getResource(mockTransaction, binaryPathId)).thenReturn(mockBinary);
+        when(mockBinary.getArchivalGroupId()).thenReturn(Optional.empty());
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertShouldNotAdvertiseAcceptPostFlavors();
@@ -605,6 +639,7 @@ public class FedoraLdpTest {
         setField(testObj, "externalPath", binaryDescriptionPath);
         when(resourceFactory.getResource(mockTransaction, binaryDescId))
                 .thenReturn(mockNonRdfSourceDescription);
+        when(mockNonRdfSourceDescription.getArchivalGroupId()).thenReturn(Optional.empty());
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertShouldNotAdvertiseAcceptPostFlavors();
@@ -827,7 +862,7 @@ public class FedoraLdpTest {
                 tripleTypes.LDP_MEMBERSHIP,
                 tripleTypes.INBOUND_REFERENCES
         );
-        setResource(Container.class, triples);
+        setResourceWithTriples(Container.class, triples);
         when(mockRequest.getMethod()).thenReturn("GET");
         setField(testObj, "prefer", new MultiPrefer("return=representation; include=\"" + INBOUND_REFERENCES + "\""));
         final Response actual = testObj.getResource(null);

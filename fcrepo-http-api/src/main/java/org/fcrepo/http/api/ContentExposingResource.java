@@ -429,6 +429,18 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
     }
 
+    private void addArchiveGroupLinkHeader(final FedoraResource resource) {
+        resource.getArchivalGroupId().ifPresent(agFedoraId -> {
+            try {
+                final var uri = new URI(identifierConverter().toExternalId(agFedoraId.getFullId()));
+                final var link = buildLink(uri, "archival-group");
+                servletResponse.addHeader(LINK, link);
+            } catch (URISyntaxException e) {
+                throw new BadRequestException(e);
+            }
+        });
+    }
+
     protected void addExternalContentHeaders(final FedoraResource resource) {
         if (resource instanceof Binary) {
             final Binary binary = (Binary)resource;
@@ -497,6 +509,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected void addLinkAndOptionsHttpHeaders(final FedoraResource resource) {
         // Add Link headers
         addResourceLinkHeaders(resource);
+        addArchiveGroupLinkHeader(resource);
         addAcceptExternalHeader();
 
         // Add Options headers

@@ -21,6 +21,7 @@ import java.net.URI;
 import java.time.Instant;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.fcrepo.kernel.api.RdfStream;
@@ -47,6 +48,12 @@ public interface FedoraResource {
      * @return the FedoraId identifier.
      */
     FedoraId getFedoraId();
+
+    /**
+     * Get the FedoraId for the Archival Group of this resource, if it exists
+     * @return an Optional containing the FedoraId
+     */
+    Optional<FedoraId> getArchivalGroupId();
 
     /**
      * Get the resource which contains this resource.
