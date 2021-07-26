@@ -264,6 +264,20 @@
   }
 
   /*
+   * Updates the mime type based on the file selected, or clears the type if the type is unknown
+   */
+  function updateMimeType(target, mimeInputId) {
+      const mime_input = document.getElementById(mimeInputId);
+      const file = target.files[0];
+
+      if (file != null && file.type != null) {
+          mime_input.value = file.type;
+      } else {
+          mime_input.value = '';
+      }
+  }
+
+  /*
    * Do the search
    */
   function doSearch(e) {
@@ -520,6 +534,13 @@
       listen('action_enable_version', 'submit', enableVersioning);
       listen('action_update_file', 'submit', updateFile);
       listen('action_search', 'submit', doSearch);
+
+      listen('update_file', 'change', function(e) {
+          updateMimeType(e.target, 'update_mime_type');
+      });
+      listen('binary_payload', 'change', function(e) {
+          updateMimeType(e.target, 'mime_type');
+      });
 
       const links = document.querySelectorAll('a[property][href*="' + location.host + '"],#childList a,.breadcrumb a,.version_link');
       for (var i = 0; i < links.length; ++i) {
