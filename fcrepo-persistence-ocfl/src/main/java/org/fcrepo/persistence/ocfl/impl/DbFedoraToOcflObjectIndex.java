@@ -43,6 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.RowMapper;
@@ -300,7 +301,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
         try {
             jdbcTemplate.update(UPSERT_MAPPING_TX_MAP.get(dbPlatform), parameterSource);
         } catch (final DataIntegrityViolationException | BadSqlGrammarException e) {
-            handleInsertException(e);
+            handleInsertException(fedoraId, e);
         }
     }
 
@@ -312,7 +313,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
         try {
             jdbcTemplate.update(DIRECT_INSERT_MAPPING, parameterSource);
         } catch (final DataIntegrityViolationException | BadSqlGrammarException e) {
-            handleInsertException(e);
+            handleInsertException(fedoraId, e);
         }
     }
 
@@ -355,9 +356,12 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
         }
     }
 
-    private void handleInsertException(final Exception e) {
+    private void handleInsertException(final FedoraId fedoraId, final Exception e) {
         if (e.getMessage().contains("too long for")) {
             throw new InvalidResourceIdentifierException("Database error - Fedora ID path too long",e);
+        } else if (e instanceof DuplicateKeyException) {
+            throw new RepositoryRuntimeException("Database error - primary key already exists for Fedora ID: " +
+                                                 fedoraId, e);
         } else {
             throw new RepositoryRuntimeException("Database error - error during upsert",e);
         }
