@@ -18,6 +18,12 @@
           <label for="update_file" class="control-label">File</label>
           <input type="file" id="update_file"/>
         </div>
+        <div class="form-group">
+          <label for="update_mime_type" class="control-label">
+            MIME Type
+          </label>
+          <input type="text" id="update_mime_type" placeholder="application/octet-stream" name="update_mime_type" class="form-control"/>
+        </div>
         <input type="submit" id="binary_update_content" class="btn btn-primary" value="Update">
       </form>
     #end
@@ -62,7 +68,14 @@
     </label>
     <input type="file" name="file" id="binary_payload"/>
     </div>
-    
+
+    <div id="binary_mime_type_container" class="form-group">
+      <label for="mime_type" class="control-label">
+          MIME Type
+       </label>
+       <input type="text" id="mime_type" placeholder="application/octet-stream" name="mime_type" class="form-control"/>
+    </div>
+
     <button id="btn_action_create" class="btn btn-primary">Add</button>
     <hr />
   </form>

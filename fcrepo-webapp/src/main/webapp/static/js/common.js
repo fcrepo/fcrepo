@@ -73,9 +73,14 @@
     if (mixin == 'binary') {
       const update_file = document.getElementById('binary_payload').files[0];
       const reader = new FileReader();
+
+      const mime_type = document.getElementById('mime_type').value
+          || update_file.type
+          || 'application/octet-stream';
+
       headers.push(['Content-Disposition', 'attachment; filename=\"' + update_file.name + '\"']);
       headers.push(['Link', '<http://www.w3.org/ns/ldp#NonRDFSource>; rel=\"type\"']);
-      headers.push(['Content-Type', update_file.type || 'application/octet-stream']);
+      headers.push(['Content-Type', mime_type]);
       reader.onload = function(e) {
           fn(method, url, headers, e.target.result);
       };
@@ -237,9 +242,13 @@
       const url = window.location.href.replace('fcr:metadata', '');
       const reader = new FileReader();
 
+      const mime_type = document.getElementById('update_mime_type').value
+          || update_file.type
+          || 'application/octet-stream';
+
       const headers = [
         ['Content-Disposition', 'attachment; filename=\"' + update_file.name + '\"'],
-        ['Content-Type', update_file.type]];
+        ['Content-Type', mime_type]];
 
       reader.onload = function(e) {
           http('PUT', url, headers, e.target.result, function(res) {
@@ -252,6 +261,20 @@
       };
       reader.readAsArrayBuffer(update_file);
       e.preventDefault();
+  }
+
+  /*
+   * Updates the mime type based on the file selected, or clears the type if the type is unknown
+   */
+  function updateMimeType(target, mimeInputId) {
+      const mime_input = document.getElementById(mimeInputId);
+      const file = target.files[0];
+
+      if (file != null && file.type != null) {
+          mime_input.value = file.type;
+      } else {
+          mime_input.value = '';
+      }
   }
 
   /*
@@ -483,6 +506,7 @@
   ready(function() {
       listen('new_mixin', 'change', function(e) {
         document.getElementById('binary_payload_container').style.display = e.target.value == 'binary' ? 'block' : 'none';
+        document.getElementById('binary_mime_type_container').style.display = e.target.value == 'binary' ? 'block' : 'none';
         document.getElementById('turtle_payload_container').style.display = e.target.value == 'binary' ? 'none' : 'block';
 
       });
@@ -510,6 +534,13 @@
       listen('action_enable_version', 'submit', enableVersioning);
       listen('action_update_file', 'submit', updateFile);
       listen('action_search', 'submit', doSearch);
+
+      listen('update_file', 'change', function(e) {
+          updateMimeType(e.target, 'update_mime_type');
+      });
+      listen('binary_payload', 'change', function(e) {
+          updateMimeType(e.target, 'mime_type');
+      });
 
       const links = document.querySelectorAll('a[property][href*="' + location.host + '"],#childList a,.breadcrumb a,.version_link');
       for (var i = 0; i < links.length; ++i) {

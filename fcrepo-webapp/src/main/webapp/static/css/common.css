@@ -50,6 +50,10 @@ dd {
     display: none;
 }
 
+#binary_mime_type_container {
+    display: none;
+}
+
 #actions.visible-lg.in, #actions.visible-lg.collapsing, #actions.visible-md.in, #actions.visible-md.collapsing  {
     display: block !important;
 }
