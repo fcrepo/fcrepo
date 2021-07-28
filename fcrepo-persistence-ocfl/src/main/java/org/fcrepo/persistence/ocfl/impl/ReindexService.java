@@ -222,6 +222,9 @@ public class ReindexService {
         try {
             int numResults;
             do {
+                // must ensure the tx does not close before indexing is complete
+                transaction.refresh();
+
                 final var params = new SearchParameters(fields, conditions, membershipPageSize,
                         offset, Condition.Field.FEDORA_ID, "asc", false);
 
