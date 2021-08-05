@@ -326,6 +326,9 @@ public class MembershipServiceImpl implements MembershipService {
 
         // get all the members of the DC and index the history for each, accounting for changes to the DC
         fedoraResc.getChildren().forEach(member -> {
+            // must ensure the tx does not close before indexing is complete
+            tx.refresh();
+
             final var memberDeleted = member instanceof Tombstone;
             log.debug("Populating membership history for DirectContainer {}member {}",
                     memberDeleted ? "deleted " : "", member.getFedoraId());
