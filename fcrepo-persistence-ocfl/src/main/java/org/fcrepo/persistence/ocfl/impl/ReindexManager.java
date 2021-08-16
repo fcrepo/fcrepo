@@ -116,7 +116,11 @@ public class ReindexManager {
             for (final var worker : workers) {
                 worker.join();
             }
-            indexMembership();
+            if (!failOnError || errorCount.get() == 0) {
+                indexMembership();
+            } else {
+                LOGGER.error("Reindex did not complete successfully");
+            }
         } catch (final Exception e) {
             LOGGER.error("Error while rebuilding index", e);
             stop();
