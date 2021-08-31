@@ -28,6 +28,7 @@ import org.fcrepo.kernel.api.operations.ResourceOperationType;
 /**
  * Operation for updating headers of an RDFSource
  *
+ * @author mikejritter
  */
 public class UpdateRdfHeadersOperation extends AbstractRdfSourceOperation {
 

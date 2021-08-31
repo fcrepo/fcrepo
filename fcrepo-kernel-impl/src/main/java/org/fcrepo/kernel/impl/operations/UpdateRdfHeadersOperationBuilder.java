@@ -26,6 +26,7 @@ import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 /**
  * Builder for operations to update RDF Source headers
  *
+ * @author mikejritter
  */
 public class UpdateRdfHeadersOperationBuilder extends AbstractRdfSourceOperationBuilder {
 

@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 /**
  * This class implements the persistence of the headers for an RDFSource to bring in new system managed properties
  *
+ * @author mikejritter
  * @since 6.0.0
  */
 public class UpdateRdfHeadersPersister extends AbstractRdfSourcePersister {
@@ -47,7 +48,7 @@ public class UpdateRdfHeadersPersister extends AbstractRdfSourcePersister {
     }
 
     @Override
-    public void persist(OcflPersistentStorageSession session, ResourceOperation operation)
+    public void persist(final OcflPersistentStorageSession session, final ResourceOperation operation)
         throws PersistentStorageException {
         final var resourceId = operation.getResourceId();
         log.info("persisting {} headers to {}", resourceId, session);
@@ -60,7 +61,7 @@ public class UpdateRdfHeadersPersister extends AbstractRdfSourcePersister {
         // in the event the server managed mode is strict, all values will be null
         final var headers = new ResourceHeadersAdapter(objSession.readHeaders(resourceId.getResourceId()));
 
-        final RdfSourceOperation rdfSourceOp = (RdfSourceOperation)operation;
+        final RdfSourceOperation rdfSourceOp = (RdfSourceOperation) operation;
         final var createdDate = rdfSourceOp.getCreatedDate();
         final var lastModifiedDate = rdfSourceOp.getLastModifiedDate();
         final var createdBy = rdfSourceOp.getCreatedBy();
