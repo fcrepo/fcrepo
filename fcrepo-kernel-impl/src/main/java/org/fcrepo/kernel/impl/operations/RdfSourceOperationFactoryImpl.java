@@ -49,4 +49,11 @@ public class RdfSourceOperationFactoryImpl implements RdfSourceOperationFactory 
         return new UpdateRdfSourceOperationBuilder(transaction, rescId, serverManagedPropsMode);
     }
 
+    @Override
+    public RdfSourceOperationBuilder updateManagedHeadersBuilder(final Transaction transaction,
+                                                                 final FedoraId resourceId,
+                                                                 final ServerManagedPropsMode serverManagedPropsMode) {
+        return new UpdateRdfHeadersOperationBuilder(transaction, resourceId, serverManagedPropsMode);
+    }
+
 }
