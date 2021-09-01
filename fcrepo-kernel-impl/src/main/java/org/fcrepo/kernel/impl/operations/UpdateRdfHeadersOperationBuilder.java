@@ -38,8 +38,8 @@ public class UpdateRdfHeadersOperationBuilder extends AbstractRdfSourceOperation
      * @param serverManagedPropsMode server managed properties mode
      */
     public UpdateRdfHeadersOperationBuilder(final Transaction transaction,
-                                               final FedoraId resourceId,
-                                               final ServerManagedPropsMode serverManagedPropsMode) {
+                                            final FedoraId resourceId,
+                                            final ServerManagedPropsMode serverManagedPropsMode) {
         super(transaction, resourceId, null, serverManagedPropsMode);
     }
 
