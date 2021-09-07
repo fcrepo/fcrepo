@@ -51,7 +51,7 @@ public class UpdateRdfHeadersPersister extends AbstractRdfSourcePersister {
     public void persist(final OcflPersistentStorageSession session, final ResourceOperation operation)
         throws PersistentStorageException {
         final var resourceId = operation.getResourceId();
-        log.info("persisting {} headers to {}", resourceId, session);
+        log.debug("persisting {} headers to {}", resourceId, session);
 
         final var fedoraOcflMapping = getMapping(operation.getTransaction(), resourceId);
         final var ocflId = fedoraOcflMapping.getOcflObjectId();
