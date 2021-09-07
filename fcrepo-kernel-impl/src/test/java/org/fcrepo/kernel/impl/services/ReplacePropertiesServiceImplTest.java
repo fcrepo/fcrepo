@@ -168,7 +168,7 @@ public class ReplacePropertiesServiceImplTest {
 
         service.perform(tx, USER_PRINCIPAL, descId, model);
         verify(tx).lockResource(agId);
-        verify(tx, times(2)).lockResource(binaryId);
+        verify(tx).lockResource(binaryId);
         verify(tx).lockResource(descId);
         verify(pSession, times(2)).persist(operationCaptor.capture());
 
