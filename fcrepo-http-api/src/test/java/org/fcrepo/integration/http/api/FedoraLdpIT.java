@@ -2654,7 +2654,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-@Ignore("Membership/containment not included as inbound references - FCREPO-3589")
+    @Ignore("Membership/containment not included as inbound references - FCREPO-3589")
     public void testGetObjectReferencesIndirect() throws Exception {
         final String uuid = getRandomUniqueId();
         final String pid1 = uuid + "/parent";
@@ -3996,6 +3996,38 @@ public class FedoraLdpIT extends AbstractResourceIT {
             lastmod3 = Instant.from(headerFormat.parse(response.getFirstHeader("Last-Modified").getValue()));
             assertTrue(lastmod3.isAfter(lastmod2));
         }
+    }
+
+    @Test
+    public void testBinaryDescUpdateLastModified() throws Exception {
+        final String objId = getRandomUniqueId();
+        final String objURI = serverAddress + objId;
+        final String binURI = objURI + "/binary";
+
+        final Instant lastModified;
+        final Instant lastModifiedUpdate;
+        try (final CloseableHttpResponse response = execute(putDSMethod(objId, "binary", "test content"))) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+        }
+
+        try (final CloseableDataset dataset = getDataset(new HttpGet(binURI + "/fcr:metadata"))) {
+            final var graph = dataset.asDatasetGraph();
+            final var modifiedNode = graph.find(ANY, ANY, LAST_MODIFIED_DATE.asNode(), ANY).next().getObject();
+            lastModified = Instant.from(tripleFormat.parse(modifiedNode.getLiteralValue().toString()));
+        }
+
+        // replace the binary and make sure the last modified is updated
+        try (final CloseableHttpResponse response = execute(putDSMethod(objId, "binary", "updated content"))) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+        }
+
+        try (final CloseableDataset dataset = getDataset(new HttpGet(binURI + "/fcr:metadata"))) {
+            final var graph = dataset.asDatasetGraph();
+            final var modifiedNode = graph.find(ANY, ANY, LAST_MODIFIED_DATE.asNode(), ANY).next().getObject();
+            lastModifiedUpdate = Instant.from(tripleFormat.parse(modifiedNode.getLiteralValue().toString()));
+        }
+
+        assertTrue(lastModified.isBefore(lastModifiedUpdate));
     }
 
     @Test
