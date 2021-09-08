@@ -73,6 +73,7 @@ public class ResourceOperationEventBuilder implements EventBuilder {
             case CREATE:
                 return EventType.RESOURCE_CREATION;
             case UPDATE:
+            case UPDATE_HEADERS:
                 return EventType.RESOURCE_MODIFICATION;
             case DELETE:
                 return EventType.RESOURCE_DELETION;

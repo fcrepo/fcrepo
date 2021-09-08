@@ -22,11 +22,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.time.Instant;
+import java.util.List;
 
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.config.ServerManagedPropsMode;
@@ -37,6 +39,7 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
+import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
@@ -104,7 +107,7 @@ public class ReplacePropertiesServiceImplTest {
     private RdfSourceOperationFactory factory;
 
     @Captor
-    private ArgumentCaptor<UpdateRdfSourceOperation> operationCaptor;
+    private ArgumentCaptor<RdfSourceOperation> operationCaptor;
 
     private FedoraPropsConfig propsConfig;
 
@@ -167,8 +170,18 @@ public class ReplacePropertiesServiceImplTest {
         verify(tx).lockResource(agId);
         verify(tx).lockResource(binaryId);
         verify(tx).lockResource(descId);
-        verify(pSession).persist(operationCaptor.capture());
-        assertEquals(descId, operationCaptor.getValue().getResourceId());
+        verify(pSession, times(2)).persist(operationCaptor.capture());
+
+        final var updateOp = getOperation(operationCaptor.getAllValues(), UpdateRdfSourceOperation.class);
+        assertEquals(descId, updateOp.getResourceId());
+    }
+
+    private <T extends RdfSourceOperation> T getOperation(final List<RdfSourceOperation> ops, final Class<T> clazz) {
+        return ops.stream()
+            .filter(clazz::isInstance)
+            .findFirst()
+            .map(clazz::cast)
+            .orElseThrow();
     }
 
 }

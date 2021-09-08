@@ -38,7 +38,6 @@ import java.util.stream.Stream;
 import org.apache.jena.graph.Triple;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.TimeMap;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.ManagedPropertiesService;
@@ -56,23 +55,22 @@ public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {
     @Override
     public Stream<Triple> get(final FedoraResource resource) {
         final List<Triple> triples = new ArrayList<>();
-        final var subject = createURI(resolveId(resource.getDescribedResource()));
-        triples.add(Triple.create(subject, CREATED_DATE.asNode(),
-                createLiteral(resource.getCreatedDate().toString(), XSDdateTime)));
-        triples.add(Triple.create(subject, LAST_MODIFIED_DATE.asNode(),
-                createLiteral(resource.getLastModifiedDate().toString(), XSDdateTime)));
-        if (resource.getCreatedBy() != null) {
-            triples.add(Triple.create(subject, CREATED_BY.asNode(), createLiteral(resource.getCreatedBy())));
-        }
-        if (resource.getLastModifiedBy() != null) {
-            triples.add(Triple.create(subject, LAST_MODIFIED_BY.asNode(), createLiteral(resource.getLastModifiedBy())));
-        }
 
-        resource.getDescribedResource().getSystemTypes(true).forEach(triple -> {
-            triples.add(Triple.create(subject, type.asNode(), createURI(triple.toString())));
-        });
-        if (resource instanceof NonRdfSourceDescription) {
-            final Binary binary = (Binary) resource.getDescribedResource();
+        final var describedResource = resource.getDescribedResource();
+        final var subject = createURI(resolveId(describedResource));
+
+        var createdBy = resource.getCreatedBy();
+        var createdDate = resource.getCreatedDate();
+        var lastModifiedBy = resource.getLastModifiedBy();
+        var lastModifiedDate = resource.getLastModifiedDate();
+
+        if (describedResource instanceof Binary) {
+            final Binary binary = (Binary) describedResource;
+
+            createdBy = binary.getCreatedBy();
+            createdDate = binary.getCreatedDate();
+            lastModifiedBy = binary.getLastModifiedBy();
+            lastModifiedDate = binary.getLastModifiedDate();
 
             triples.add(Triple.create(subject, HAS_SIZE.asNode(),
                     createLiteral(String.valueOf(binary.getContentSize()), XSDlong)));
@@ -90,6 +88,21 @@ public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {
 
             }
         }
+
+        triples.add(Triple.create(subject, CREATED_DATE.asNode(),
+                                  createLiteral(createdDate.toString(), XSDdateTime)));
+        triples.add(Triple.create(subject, LAST_MODIFIED_DATE.asNode(),
+                                  createLiteral(lastModifiedDate.toString(), XSDdateTime)));
+        if (createdBy != null) {
+            triples.add(Triple.create(subject, CREATED_BY.asNode(), createLiteral(createdBy)));
+        }
+        if (lastModifiedBy != null) {
+            triples.add(Triple.create(subject, LAST_MODIFIED_BY.asNode(), createLiteral(lastModifiedBy)));
+        }
+
+        describedResource.getSystemTypes(true).forEach(triple -> {
+            triples.add(Triple.create(subject, type.asNode(), createURI(triple.toString())));
+        });
 
         return new DefaultRdfStream(subject, triples.stream());
     }

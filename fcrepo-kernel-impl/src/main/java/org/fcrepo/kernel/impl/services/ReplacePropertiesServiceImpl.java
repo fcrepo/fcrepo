@@ -37,6 +37,8 @@ import javax.inject.Inject;
 
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 
+import java.util.Optional;
+
 /**
  * This class mediates update operations between the kernel and persistent storage layers
  * @author bseeger
@@ -56,7 +58,7 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
                         final FedoraId fedoraId,
                         final Model inputModel) throws MalformedRdfException {
         try {
-            final PersistentStorageSession pSession = this.psManager.getSession(tx);
+            final PersistentStorageSession pSession = psManager.getSession(tx);
 
             final var headers = pSession.getHeaders(fedoraId, null);
             final var interactionModel = headers.getInteractionModel();
@@ -64,12 +66,31 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
             ensureValidDirectContainer(fedoraId, interactionModel, inputModel);
             ensureValidACLAuthorization(inputModel);
 
-            final ResourceOperation updateOp = factory.updateBuilder(tx, fedoraId,
-                    fedoraPropsConfig.getServerManagedPropsMode())
-                .relaxedProperties(inputModel)
-                .userPrincipal(userPrincipal)
-                .triples(fromModel(inputModel.createResource(fedoraId.getFullId()).asNode(), inputModel))
-                .build();
+            final var rdfStream = fromModel(inputModel.createResource(fedoraId.getFullId()).asNode(), inputModel);
+            final var serverManagedMode = fedoraPropsConfig.getServerManagedPropsMode();
+
+            // create 2 updates -- one for the properties coming in and one for and server managed properties
+            final ResourceOperation primaryOp;
+            final Optional<ResourceOperation> secondaryOp;
+            if (fedoraId.isDescription()) {
+                primaryOp = factory.updateBuilder(tx, fedoraId, serverManagedMode)
+                                   .userPrincipal(userPrincipal)
+                                   .triples(rdfStream)
+                                   .build();
+
+                // we need to use the description id until we write the headers in order to resolve properties
+                secondaryOp = Optional.of(factory.updateManagedHeadersBuilder(tx, fedoraId, serverManagedMode)
+                                                 .relaxedProperties(inputModel)
+                                                 .userPrincipal(userPrincipal)
+                                                 .build());
+            } else {
+                primaryOp = factory.updateBuilder(tx, fedoraId, serverManagedMode)
+                                   .relaxedProperties(inputModel)
+                                   .userPrincipal(userPrincipal)
+                                   .triples(rdfStream)
+                                   .build();
+                secondaryOp = Optional.empty();
+            }
 
             lockArchivalGroupResource(tx, pSession, fedoraId);
             tx.lockResource(fedoraId);
@@ -77,14 +98,22 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
                 tx.lockResource(fedoraId.asBaseId());
             }
 
-            pSession.persist(updateOp);
+            pSession.persist(primaryOp);
             updateReferences(tx, fedoraId, userPrincipal, inputModel);
             membershipService.resourceModified(tx, fedoraId);
             searchIndex.addUpdateIndex(tx, pSession.getHeaders(fedoraId, null));
-            recordEvent(tx, fedoraId, updateOp);
+            recordEvent(tx, fedoraId, primaryOp);
+            secondaryOp.ifPresent(operation -> updateBinaryHeaders(tx, pSession, operation));
         } catch (final PersistentStorageException ex) {
             throw new RepositoryRuntimeException(String.format("failed to replace resource %s",
                     fedoraId), ex);
         }
+    }
+
+    private void updateBinaryHeaders(final Transaction tx,
+                                     final PersistentStorageSession pSession,
+                                     final ResourceOperation operation) {
+        pSession.persist(operation);
+        recordEvent(tx, operation.getResourceId(), operation);
     }
 }
