@@ -32,6 +32,7 @@ import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -80,7 +81,8 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
     public InputStream getContent() {
         try {
             if (isProxy() || isRedirect()) {
-                return URI.create(getExternalURL()).toURL().openStream();
+                // non-external streams are already buffered
+                return new BufferedInputStream(URI.create(getExternalURL()).toURL().openStream());
             } else {
                 return getSession().getBinaryContent(getFedoraId().asResourceId(), getMementoDatetime());
             }

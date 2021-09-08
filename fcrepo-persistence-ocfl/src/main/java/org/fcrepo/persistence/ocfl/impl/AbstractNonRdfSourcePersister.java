@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
 
+import java.io.BufferedInputStream;
 import java.util.Collections;
 
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
@@ -97,7 +98,7 @@ abstract class AbstractNonRdfSourcePersister extends AbstractPersister {
                     Collections.emptyList());
             final var contentStream = multiDigestWrapper.getInputStream();
 
-            objectSession.writeResource(headers.asStorageHeaders(), contentStream);
+            objectSession.writeResource(headers.asStorageHeaders(), new BufferedInputStream(contentStream));
 
             // Verify that the content matches the provided digests
             if (!CollectionUtils.isEmpty(providedDigests)) {

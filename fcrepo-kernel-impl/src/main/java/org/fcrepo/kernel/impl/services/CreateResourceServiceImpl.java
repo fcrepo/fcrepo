@@ -45,6 +45,8 @@ import org.springframework.stereotype.Component;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.Link;
+
+import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
@@ -110,7 +112,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
             }
             if (!digest.isEmpty()) {
                 final var multiDigestWrapper = new MultiDigestInputStreamWrapper(
-                        externalContent.fetchExternalContent(),
+                        new BufferedInputStream(externalContent.fetchExternalContent()),
                         digest,
                         Collections.emptyList());
                 multiDigestWrapper.checkFixity();
