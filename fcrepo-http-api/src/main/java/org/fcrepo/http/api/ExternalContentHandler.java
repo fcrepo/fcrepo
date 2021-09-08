@@ -32,6 +32,7 @@ import org.fcrepo.kernel.api.exception.ExternalContentAccessException;
 import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
 import javax.ws.rs.core.Link;
 
+import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -147,9 +148,9 @@ public class ExternalContentHandler implements ExternalContent {
         if (scheme != null) {
             try {
                 if (scheme.equals("file")) {
-                    return new FileInputStream(uri.getPath());
+                    return new BufferedInputStream(new FileInputStream(uri.getPath()));
                 } else if (scheme.equals("http") || scheme.equals("https")) {
-                    return uri.toURL().openStream();
+                    return new BufferedInputStream(uri.toURL().openStream());
                 }
             } catch (final IOException e) {
                 throw new ExternalContentAccessException("Failed to read external content from " + uri, e);
