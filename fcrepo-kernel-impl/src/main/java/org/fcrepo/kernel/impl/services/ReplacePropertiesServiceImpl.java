@@ -113,7 +113,6 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
     private void updateBinaryHeaders(final Transaction tx,
                                      final PersistentStorageSession pSession,
                                      final ResourceOperation operation) {
-        // tx.lockResource(operation.getResourceId());
         pSession.persist(operation);
         recordEvent(tx, operation.getResourceId(), operation);
     }
