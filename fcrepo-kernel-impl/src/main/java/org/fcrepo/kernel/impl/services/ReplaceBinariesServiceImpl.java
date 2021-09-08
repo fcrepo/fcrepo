@@ -32,6 +32,8 @@ import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
+
+import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
@@ -90,7 +92,7 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
                 }
                 if (!digests.isEmpty()) {
                     final var multiDigestWrapper = new MultiDigestInputStreamWrapper(
-                            externalContent.fetchExternalContent(),
+                            new BufferedInputStream(externalContent.fetchExternalContent()),
                             digests,
                             Collections.emptyList());
                     multiDigestWrapper.checkFixity();
