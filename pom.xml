@@ -22,7 +22,7 @@
       (for scm, site-distribution, etc -->
     <project_name>fcrepo</project_name>
     <project_organization>fcrepo</project_organization>
-    <fcrepo-storage-ocfl.version>6.0.0</fcrepo-storage-ocfl.version>
+    <fcrepo-storage-ocfl.version>6.1.0-SNAPSHOT</fcrepo-storage-ocfl.version>
     <!-- Dependency version properties -->
     <activemq.version>5.16.2</activemq.version>
     <aws.version>2.16.72</aws.version>
@@ -32,7 +32,7 @@
     <commons-io.version>2.9.0</commons-io.version>
     <commons-lang.version>3.12.0</commons-lang.version>
     <narayana-jta.version>5.9.0.Final</narayana-jta.version>
-    <failsafe.version>2.4.0</failsafe.version>
+    <failsafe.version>2.4.3</failsafe.version>
     <flyway.version>7.9.1</flyway.version>
     <flyway.test.version>7.0.0</flyway.test.version>
     <guava.version>30.1.1-jre</guava.version>
