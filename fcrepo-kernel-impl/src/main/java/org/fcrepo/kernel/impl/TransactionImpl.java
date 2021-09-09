@@ -26,6 +26,7 @@ import org.fcrepo.common.lang.CheckedRunnable;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionState;
+import org.fcrepo.kernel.api.cache.UserTypesCache;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TransactionClosedException;
 import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
@@ -36,6 +37,7 @@ import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.search.api.SearchIndex;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -159,6 +161,10 @@ public class TransactionImpl implements Transaction {
 
         execQuietly("Failed to rollback events in transaction " + id, () -> {
             this.getEventAccumulator().clearEvents(this);
+        });
+
+        execQuietly("Failed to clear user rdf types cache in transaction " + id, () -> {
+            this.getUserTypesCache().dropSessionCache(id);
         });
 
         updateState(TransactionState.ROLLEDBACK);
@@ -302,6 +308,7 @@ public class TransactionImpl implements Transaction {
         // short-lived txs do not write to tx tables and do not need to commit db indexes.
         this.getPersistentSession().prepare();
         this.getPersistentSession().commit();
+        this.getUserTypesCache().mergeSessionCache(id);
     }
 
     private void doCommitLongRunning() {
@@ -317,6 +324,7 @@ public class TransactionImpl implements Transaction {
             // db's connection timeout may need to be adjusted so that the connection is not closed while
             // waiting for the OCFL changes to be committed.
             this.getPersistentSession().commit();
+            this.getUserTypesCache().mergeSessionCache(id);
         });
     }
 
@@ -397,6 +405,10 @@ public class TransactionImpl implements Transaction {
 
     private ResourceLockManager getResourceLockManger() {
         return this.txManager.getResourceLockManager();
+    }
+
+    private UserTypesCache getUserTypesCache() {
+        return this.txManager.getUserTypesCache();
     }
 
     @Override

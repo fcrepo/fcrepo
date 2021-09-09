@@ -1,0 +1,134 @@
+/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.kernel.impl.cache;
+
+import static java.util.stream.Collectors.toList;
+import static org.apache.jena.vocabulary.RDF.type;
+
+import java.net.URI;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.ReadOnlyTransaction;
+import org.fcrepo.kernel.api.cache.UserTypesCache;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+
+import org.apache.jena.graph.Triple;
+import org.springframework.stereotype.Component;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+
+// TODO docs
+@Component
+public class UserTypesCacheImpl implements UserTypesCache {
+
+    private final Cache<FedoraId, List<URI>> globalCache;
+    private final Map<String, Cache<FedoraId, List<URI>>> sessionCaches;
+
+    public UserTypesCacheImpl() {
+        this.globalCache = Caffeine.newBuilder()
+                // TODO config
+                .maximumSize(1024)
+                .expireAfterAccess(15, TimeUnit.MINUTES)
+                .build();
+        this.sessionCaches = new ConcurrentHashMap<>();
+    }
+
+    // TODO note that this must only be called on rdf resources
+    @Override
+    public List<URI> getUserTypes(final FedoraId resourceId,
+                                  final String sessionId,
+                                  final Supplier<RdfStream> rdfProvider) {
+        if (isNotReadOnlySession(sessionId)) {
+            var sessionCache = getSessionCache(sessionId);
+
+            return sessionCache.get(resourceId, k -> {
+                return globalCache.get(resourceId, k2 -> {
+                    return extractRdfTypes(rdfProvider.get());
+                });
+            });
+        } else {
+            return globalCache.get(resourceId, k -> {
+                return extractRdfTypes(rdfProvider.get());
+            });
+        }
+    }
+
+    @Override
+    public void cacheUserTypes(final FedoraId resourceId,
+                               final RdfStream rdf,
+                               final String sessionId) {
+        if (isNotReadOnlySession(sessionId)) {
+            getSessionCache(sessionId).put(resourceId, extractRdfTypes(rdf));
+        }
+    }
+
+    @Override
+    public void cacheUserTypes(final FedoraId resourceId,
+                               final List<URI> userTypes,
+                               final String sessionId) {
+        if (isNotReadOnlySession(sessionId)) {
+            getSessionCache(sessionId).put(resourceId, userTypes);
+        }
+    }
+
+    @Override
+    public void mergeSessionCache(final String sessionId) {
+        if (isNotReadOnlySession(sessionId)) {
+            var sessionCache = getSessionCache(sessionId);
+            globalCache.putAll(sessionCache.asMap());
+            dropSessionCache(sessionId);
+        }
+    }
+
+    @Override
+    public void dropSessionCache(final String sessionId) {
+        if (isNotReadOnlySession(sessionId)) {
+            sessionCaches.remove(sessionId);
+        }
+    }
+
+    private Cache<FedoraId, List<URI>> getSessionCache(final String sessionId) {
+        return sessionCaches.computeIfAbsent(sessionId, k -> {
+            return Caffeine.newBuilder()
+                    // TODO config
+                    .maximumSize(1024)
+                    .expireAfterAccess(15, TimeUnit.MINUTES)
+                    .build();
+        });
+    }
+
+    private List<URI> extractRdfTypes(final RdfStream rdf) {
+        return rdf.filter(t -> t.predicateMatches(type.asNode()))
+                .map(Triple::getObject)
+                .map(t -> URI.create(t.toString()))
+                .collect(toList());
+    }
+
+    private boolean isNotReadOnlySession(final String sessionId) {
+        return !ReadOnlyTransaction.READ_ONLY_TX_ID.equals(sessionId);
+    }
+}

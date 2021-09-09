@@ -87,6 +87,10 @@ public class MembershipServiceImpl implements MembershipService {
             return;
         }
 
+        if (isChildOfRoot(fedoraResc)) {
+            return;
+        }
+
         final var parentResc = getParentResource(fedoraResc);
         final var containerProperties = new DirectContainerProperties(parentResc);
 
@@ -110,6 +114,10 @@ public class MembershipServiceImpl implements MembershipService {
             } else {
                 modifyDCOnDemandVersioning(tx, fedoraResc);
             }
+        }
+
+        if (isChildOfRoot(fedoraResc)) {
+            return;
         }
 
         final var parentResc = getParentResource(fedoraResc);
@@ -258,6 +266,10 @@ public class MembershipServiceImpl implements MembershipService {
         if (resourceContainerType != null) {
             log.debug("Ending membership for deleted Direct/IndirectContainer {} in {}", fedoraId, transaction);
             indexManager.endMembershipForSource(transaction, fedoraId, fedoraResc.getLastModifiedDate());
+        }
+
+        if (isChildOfRoot(fedoraResc)) {
+            return;
         }
 
         // delete child of DirectContainer, clear from tx and end existing
@@ -471,6 +483,10 @@ public class MembershipServiceImpl implements MembershipService {
     @Override
     public Instant getLastUpdatedTimestamp(final Transaction transaction, final FedoraId fedoraId) {
         return indexManager.getLastUpdated(transaction, fedoraId);
+    }
+
+    private boolean isChildOfRoot(final FedoraResource resource) {
+        return resource.getParentId().isRepositoryRoot();
     }
 
     /**

@@ -32,6 +32,7 @@ import javax.inject.Inject;
 
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.cache.UserTypesCache;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -68,6 +69,9 @@ public class ResourceFactoryImpl implements ResourceFactory {
     @Autowired
     @Qualifier("containmentIndex")
     private ContainmentIndex containmentIndex;
+
+    @Inject
+    private UserTypesCache userTypesCache;
 
     @Override
     public FedoraResource getResource(final Transaction transaction, final FedoraId fedoraID)
@@ -146,14 +150,15 @@ public class ResourceFactoryImpl implements ResourceFactory {
                     FedoraId.class,
                     Transaction.class,
                     PersistentStorageSessionManager.class,
-                    ResourceFactory.class);
+                    ResourceFactory.class,
+                    UserTypesCache.class);
 
             // If identifier is to a TimeMap we need to avoid creating a original resource with a Timemap FedoraId
             final var instantiationId = identifier.isTimemap() ?
                     FedoraId.create(identifier.getResourceId()) : identifier;
 
             final var rescImpl = constructor.newInstance(instantiationId, transaction,
-                    persistentStorageSessionManager, this);
+                    persistentStorageSessionManager, this, userTypesCache);
             populateResourceHeaders(rescImpl, headers, versionDateTime);
 
             if (headers.isDeleted()) {

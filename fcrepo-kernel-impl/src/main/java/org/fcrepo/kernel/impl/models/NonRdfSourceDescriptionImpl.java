@@ -21,6 +21,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.cache.UserTypesCache;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -55,10 +56,11 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
      * @param resourceFactory resource factory
      */
     public NonRdfSourceDescriptionImpl(final FedoraId fedoraID,
-            final Transaction transaction,
-            final PersistentStorageSessionManager pSessionManager,
-            final ResourceFactory resourceFactory) {
-        super(fedoraID, transaction, pSessionManager, resourceFactory);
+                                       final Transaction transaction,
+                                       final PersistentStorageSessionManager pSessionManager,
+                                       final ResourceFactory resourceFactory,
+                                       final UserTypesCache userTypesCache) {
+        super(fedoraID, transaction, pSessionManager, resourceFactory, userTypesCache);
     }
 
     @Override

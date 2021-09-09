@@ -22,6 +22,7 @@ import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.cache.UserTypesCache;
 import org.fcrepo.kernel.api.exception.TransactionClosedException;
 import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
 import org.fcrepo.kernel.api.lock.ResourceLockManager;
@@ -84,6 +85,9 @@ public class TransactionManagerImpl implements TransactionManager {
 
     @Inject
     private DbTransactionExecutor dbTransactionExecutor;
+
+    @Inject
+    private UserTypesCache userTypesCache;
 
     TransactionManagerImpl() {
         transactions = new ConcurrentHashMap<>();
@@ -186,6 +190,10 @@ public class TransactionManagerImpl implements TransactionManager {
 
     protected ResourceLockManager getResourceLockManager() {
         return resourceLockManager;
+    }
+
+    protected UserTypesCache getUserTypesCache() {
+        return userTypesCache;
     }
 
     public DbTransactionExecutor getDbTransactionExecutor() {

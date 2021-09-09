@@ -81,7 +81,8 @@ public class TimeMapImpl extends FedoraResourceImpl implements TimeMap {
             final Transaction transaction,
             final PersistentStorageSessionManager pSessionManager,
             final ResourceFactory resourceFactory) {
-        super(originalResource.getFedoraId().asTimemap(), transaction, pSessionManager, resourceFactory);
+        super(originalResource.getFedoraId().asTimemap(), transaction,
+                pSessionManager, resourceFactory, null);
 
         this.originalResource = originalResource;
         setCreatedBy(originalResource.getCreatedBy());

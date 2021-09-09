@@ -20,6 +20,7 @@ package org.fcrepo.kernel.impl.models;
 import org.apache.jena.graph.Triple;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.cache.UserTypesCache;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
@@ -74,6 +75,8 @@ public class FedoraResourceImpl implements FedoraResource {
 
     protected final ResourceFactory resourceFactory;
 
+    private final UserTypesCache userTypesCache;
+
     protected final FedoraId fedoraId;
 
     private FedoraId parentId;
@@ -114,11 +117,13 @@ public class FedoraResourceImpl implements FedoraResource {
     protected FedoraResourceImpl(final FedoraId fedoraId,
                                  final Transaction transaction,
                                  final PersistentStorageSessionManager pSessionManager,
-                                 final ResourceFactory resourceFactory) {
+                                 final ResourceFactory resourceFactory,
+                                 final UserTypesCache userTypesCache) {
         this.fedoraId = fedoraId;
         this.transaction = transaction;
         this.pSessionManager = pSessionManager;
         this.resourceFactory = resourceFactory;
+        this.userTypesCache = userTypesCache;
     }
 
     @Override
@@ -279,13 +284,21 @@ public class FedoraResourceImpl implements FedoraResource {
     @Override
     public List<URI> getUserTypes() {
         if (userTypes == null) {
-            userTypes = new ArrayList<>();
             try {
                 final var description = getDescription();
-                final var triples = getSession().getTriples(description.getFedoraId().asResourceId(),
-                        description.getMementoDatetime());
-                userTypes = triples.filter(t -> t.predicateMatches(type.asNode())).map(Triple::getObject)
-                        .map(t -> URI.create(t.toString())).collect(toList());
+                final var descId = description.getFedoraId().asResourceId();
+
+                // Memento types are not cached
+                if (description.getMementoDatetime() == null && userTypesCache != null) {
+                    userTypes = userTypesCache.getUserTypes(descId,
+                            getSession().getId(), () -> getSession().getTriples(descId, null));
+                } else {
+                    final var triples = getSession().getTriples(descId, description.getMementoDatetime());
+                    userTypes = triples.filter(t -> t.predicateMatches(type.asNode()))
+                            .map(Triple::getObject)
+                            .map(t -> URI.create(t.toString()))
+                            .collect(toList());
+                }
             } catch (final PersistentItemNotFoundException e) {
                 final var headers = getSession().getHeaders(getFedoraId().asResourceId(), getMementoDatetime());
                 if (headers.isDeleted()) {
@@ -352,6 +365,11 @@ public class FedoraResourceImpl implements FedoraResource {
     @Override
     public FedoraResource getParent() throws PathNotFoundException {
         return resourceFactory.getResource(transaction, parentId);
+    }
+
+    @Override
+    public FedoraId getParentId() {
+        return parentId;
     }
 
     @Override

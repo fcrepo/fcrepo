@@ -64,6 +64,13 @@ public interface FedoraResource {
     FedoraResource getParent() throws PathNotFoundException;
 
     /**
+     * Get the FedoraId of this resource's parent
+     *
+     * @return the parent resource's id
+     */
+    FedoraId getParentId();
+
+    /**
      * Get the children of this resource
      * @return a stream of Fedora resources
      */

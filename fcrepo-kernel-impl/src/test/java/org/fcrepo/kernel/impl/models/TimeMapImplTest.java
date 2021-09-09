@@ -196,7 +196,7 @@ public class TimeMapImplTest {
 
     private FedoraResource createParent(final String id) {
         final var fedoraId = FedoraId.create(id);
-        final var parent = new ContainerImpl(fedoraId, transaction, sessionManager, resourceFactory);
+        final var parent = new ContainerImpl(fedoraId, transaction, sessionManager, resourceFactory, null);
 
         parent.setCreatedBy("createdBy");
         parent.setCreatedDate(Instant.now());

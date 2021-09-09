@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.impl.models;
 
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.cache.UserTypesCache;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -40,9 +41,12 @@ public class WebacAclImpl extends ContainerImpl implements WebacAcl {
      * @param pSessionManager a session manager
      * @param resourceFactory a resource factory instance.
      */
-    public WebacAclImpl(final FedoraId fedoraID, final Transaction transaction,
-                        final PersistentStorageSessionManager pSessionManager, final ResourceFactory resourceFactory) {
-        super(fedoraID, transaction, pSessionManager, resourceFactory);
+    public WebacAclImpl(final FedoraId fedoraID,
+                        final Transaction transaction,
+                        final PersistentStorageSessionManager pSessionManager,
+                        final ResourceFactory resourceFactory,
+                        final UserTypesCache userTypesCache) {
+        super(fedoraID, transaction, pSessionManager, resourceFactory, userTypesCache);
     }
 
     @Override

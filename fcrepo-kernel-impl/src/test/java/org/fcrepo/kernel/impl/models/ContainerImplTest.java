@@ -73,7 +73,7 @@ public class ContainerImplTest {
 
         when(resourceFactory.getChildren(transaction, fedoraId)).thenReturn(childrenStream);
 
-        final Container container = new ContainerImpl(fedoraId, transaction, sessionManager, resourceFactory);
+        final Container container = new ContainerImpl(fedoraId, transaction, sessionManager, resourceFactory, null);
 
         final var resultStream = container.getChildren();
         final var childrenList = resultStream.collect(Collectors.toList());
