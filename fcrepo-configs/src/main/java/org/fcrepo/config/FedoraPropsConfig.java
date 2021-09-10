@@ -357,10 +357,24 @@ public class FedoraPropsConfig extends BasePropsConfig {
     }
 
     /**
+     * @param userTypesCacheSize user types cache size
+     */
+    public void setUserTypesCacheSize(final long userTypesCacheSize) {
+        this.userTypesCacheSize = userTypesCacheSize;
+    }
+
+    /**
      * @return The number of minutes before items in the user types cache expire.
      */
     public long getUserTypesCacheTimeout() {
         return userTypesCacheTimeout;
+    }
+
+    /**
+     * @param userTypesCacheTimeout user types cache timeout
+     */
+    public void setUserTypesCacheTimeout(final long userTypesCacheTimeout) {
+        this.userTypesCacheTimeout = userTypesCacheTimeout;
     }
 
     /**
