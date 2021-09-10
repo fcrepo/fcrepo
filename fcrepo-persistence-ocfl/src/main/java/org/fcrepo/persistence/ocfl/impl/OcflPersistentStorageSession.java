@@ -234,6 +234,8 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
             throws PersistentStorageException {
         ensureCommitNotStarted();
 
+        LOGGER.debug("Getting triples for {} at {}", identifier, version);
+
         try (final InputStream is = getBinaryContent(identifier, version)) {
             final Model model = createDefaultModel();
             RDFDataMgr.read(model, is, OcflPersistentStorageUtils.getRdfFormat().getLang());

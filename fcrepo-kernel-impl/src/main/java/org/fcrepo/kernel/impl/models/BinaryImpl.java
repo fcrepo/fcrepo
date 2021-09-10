@@ -72,6 +72,7 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
      * @param transaction transaction
      * @param pSessionManager session manager
      * @param resourceFactory resource factory
+     * @param userTypesCache the user types cache
      */
     public BinaryImpl(final FedoraId fedoraID,
                       final Transaction transaction,

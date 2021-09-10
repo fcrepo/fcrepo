@@ -52,6 +52,7 @@ public class ContainerImpl extends FedoraResourceImpl implements Container {
      * @param transaction transaction
      * @param pSessionManager session manager
      * @param resourceFactory resource factory
+     * @param userTypesCache the user types cache
      */
     public ContainerImpl(final FedoraId fedoraID,
                          final Transaction transaction,

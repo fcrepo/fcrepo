@@ -36,6 +36,7 @@ import org.fcrepo.kernel.api.RdfCollectors;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.cache.UserTypesCache;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
@@ -98,6 +99,9 @@ public class ReplacePropertiesServiceImplTest {
     @Mock
     private ResourceHeaders headers;
 
+    @Mock
+    private UserTypesCache userTypesCache;
+
     @InjectMocks
     private UpdateRdfSourceOperation operation;
 
@@ -127,6 +131,7 @@ public class ReplacePropertiesServiceImplTest {
         setField(service, "membershipService", membershipService);
         setField(service, "searchIndex", searchIndex);
         setField(service, "fedoraPropsConfig", propsConfig);
+        setField(service, "userTypesCache", userTypesCache);
         propsConfig.setServerManagedPropsMode(ServerManagedPropsMode.STRICT);
         when(psManager.getSession(any(Transaction.class))).thenReturn(pSession);
         when(pSession.getHeaders(any(FedoraId.class), nullable(Instant.class))).thenReturn(headers);

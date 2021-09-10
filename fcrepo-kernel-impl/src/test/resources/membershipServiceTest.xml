@@ -55,4 +55,7 @@
     
     <bean id="membershipService" class="org.fcrepo.kernel.impl.services.MembershipServiceImpl">
     </bean>
+
+    <bean id="userTypesCache" class="org.fcrepo.kernel.impl.cache.UserTypesCacheImpl">
+    </bean>
 </beans>

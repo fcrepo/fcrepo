@@ -54,6 +54,7 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
      * @param transaction transaction
      * @param pSessionManager session manager
      * @param resourceFactory resource factory
+     * @param userTypesCache the user types cache
      */
     public NonRdfSourceDescriptionImpl(final FedoraId fedoraID,
                                        final Transaction transaction,

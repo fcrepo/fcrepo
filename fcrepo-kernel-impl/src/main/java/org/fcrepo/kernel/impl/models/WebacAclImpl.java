@@ -40,6 +40,7 @@ public class WebacAclImpl extends ContainerImpl implements WebacAcl {
      * @param transaction the current transactionId
      * @param pSessionManager a session manager
      * @param resourceFactory a resource factory instance.
+     * @param userTypesCache the user types cache
      */
     public WebacAclImpl(final FedoraId fedoraID,
                         final Transaction transaction,

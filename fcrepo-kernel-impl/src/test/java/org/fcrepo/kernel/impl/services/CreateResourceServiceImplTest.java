@@ -57,6 +57,7 @@ import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.cache.UserTypesCache;
 import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
 import org.fcrepo.kernel.api.exception.RequestWithAclLinkHeaderException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -157,6 +158,9 @@ public class CreateResourceServiceImplTest {
     @Mock
     private EventAccumulator eventAccumulator;
 
+    @Mock
+    private UserTypesCache userTypesCache;
+
     @InjectMocks
     private CreateResourceServiceImpl createResourceService;
 
@@ -196,6 +200,7 @@ public class CreateResourceServiceImplTest {
         setField(createResourceService, "referenceService", referenceService);
         setField(createResourceService, "membershipService", membershipService);
         setField(createResourceService, "fedoraPropsConfig", propsConfig);
+        setField(createResourceService, "userTypesCache", userTypesCache);
         propsConfig.setServerManagedPropsMode(ServerManagedPropsMode.STRICT);
         when(psManager.getSession(ArgumentMatchers.any())).thenReturn(psSession);
         transaction = TestTransactionHelper.mockTransaction(TX_ID, false);

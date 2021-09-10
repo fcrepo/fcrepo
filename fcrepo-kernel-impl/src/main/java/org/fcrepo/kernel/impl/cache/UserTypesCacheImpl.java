@@ -26,14 +26,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.cache.UserTypesCache;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.persistence.api.PersistentStorageSession;
 
 import org.apache.jena.graph.Triple;
 import org.springframework.stereotype.Component;
@@ -41,7 +39,11 @@ import org.springframework.stereotype.Component;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
-// TODO docs
+/**
+ * Default UserTypesCache implementation
+ *
+ * @author pwinckles
+ */
 @Component
 public class UserTypesCacheImpl implements UserTypesCache {
 
@@ -57,13 +59,15 @@ public class UserTypesCacheImpl implements UserTypesCache {
         this.sessionCaches = new ConcurrentHashMap<>();
     }
 
-    // TODO note that this must only be called on rdf resources
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<URI> getUserTypes(final FedoraId resourceId,
                                   final String sessionId,
                                   final Supplier<RdfStream> rdfProvider) {
         if (isNotReadOnlySession(sessionId)) {
-            var sessionCache = getSessionCache(sessionId);
+            final var sessionCache = getSessionCache(sessionId);
 
             return sessionCache.get(resourceId, k -> {
                 return globalCache.get(resourceId, k2 -> {
@@ -77,6 +81,9 @@ public class UserTypesCacheImpl implements UserTypesCache {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void cacheUserTypes(final FedoraId resourceId,
                                final RdfStream rdf,
@@ -86,6 +93,9 @@ public class UserTypesCacheImpl implements UserTypesCache {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void cacheUserTypes(final FedoraId resourceId,
                                final List<URI> userTypes,
@@ -95,15 +105,21 @@ public class UserTypesCacheImpl implements UserTypesCache {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void mergeSessionCache(final String sessionId) {
         if (isNotReadOnlySession(sessionId)) {
-            var sessionCache = getSessionCache(sessionId);
+            final var sessionCache = getSessionCache(sessionId);
             globalCache.putAll(sessionCache.asMap());
             dropSessionCache(sessionId);
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void dropSessionCache(final String sessionId) {
         if (isNotReadOnlySession(sessionId)) {

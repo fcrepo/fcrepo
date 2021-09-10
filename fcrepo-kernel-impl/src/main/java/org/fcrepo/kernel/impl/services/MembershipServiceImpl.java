@@ -469,11 +469,12 @@ public class MembershipServiceImpl implements MembershipService {
         if (!(fedoraResc instanceof Container)) {
             return null;
         }
-        if (fedoraResc.hasType(RdfLexicon.INDIRECT_CONTAINER.getURI())) {
+
+        if (RdfLexicon.INDIRECT_CONTAINER.getURI().equals(fedoraResc.getInteractionModel())) {
             return ContainerType.Indirect;
         }
 
-        if (fedoraResc.hasType(RdfLexicon.DIRECT_CONTAINER.getURI())) {
+        if (RdfLexicon.DIRECT_CONTAINER.getURI().equals(fedoraResc.getInteractionModel())) {
             return ContainerType.Direct;
         }
 
