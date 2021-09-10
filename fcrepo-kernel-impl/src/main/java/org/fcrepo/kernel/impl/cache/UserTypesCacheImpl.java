@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.cache.UserTypesCache;
@@ -50,11 +51,10 @@ public class UserTypesCacheImpl implements UserTypesCache {
     private final Cache<FedoraId, List<URI>> globalCache;
     private final Map<String, Cache<FedoraId, List<URI>>> sessionCaches;
 
-    public UserTypesCacheImpl() {
+    public UserTypesCacheImpl(final FedoraPropsConfig config) {
         this.globalCache = Caffeine.newBuilder()
-                // TODO config
-                .maximumSize(1024)
-                .expireAfterAccess(15, TimeUnit.MINUTES)
+                .maximumSize(config.getUserTypesCacheSize())
+                .expireAfterAccess(config.getUserTypesCacheTimeout(), TimeUnit.MINUTES)
                 .build();
         this.sessionCaches = new ConcurrentHashMap<>();
     }
@@ -130,9 +130,7 @@ public class UserTypesCacheImpl implements UserTypesCache {
     private Cache<FedoraId, List<URI>> getSessionCache(final String sessionId) {
         return sessionCaches.computeIfAbsent(sessionId, k -> {
             return Caffeine.newBuilder()
-                    // TODO config
                     .maximumSize(1024)
-                    .expireAfterAccess(15, TimeUnit.MINUTES)
                     .build();
         });
     }
