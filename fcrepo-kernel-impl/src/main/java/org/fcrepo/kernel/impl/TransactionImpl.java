@@ -114,6 +114,7 @@ public class TransactionImpl implements Transaction {
             log.error("Failed to commit transaction: {}", id, ex);
 
             // Rollback on commit failure
+            log.info("Rolling back transaction {}", id);
             rollback();
             throw new RepositoryRuntimeException("Failed to commit transaction " + id, ex);
         }
@@ -131,8 +132,6 @@ public class TransactionImpl implements Transaction {
         }
 
         failIfCommitted();
-
-        log.info("Rolling back transaction {}", id);
 
         updateState(TransactionState.ROLLINGBACK);
 
