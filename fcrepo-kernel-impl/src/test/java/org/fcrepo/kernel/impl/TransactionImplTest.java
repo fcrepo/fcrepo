@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.cache.UserTypesCache;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TransactionClosedException;
 import org.fcrepo.kernel.api.lock.ResourceLockManager;
@@ -91,6 +92,9 @@ public class TransactionImplTest {
     @Mock
     private ResourceLockManager resourceLockManager;
 
+    @Mock
+    private UserTypesCache userTypesCache;
+
     @Before
     public void setUp() {
         testTx = new TransactionImpl("123", txManager, Duration.ofMillis(180000));
@@ -103,6 +107,7 @@ public class TransactionImplTest {
         when(txManager.getSearchIndex()).thenReturn(this.searchIndex);
         when(txManager.getDbTransactionExecutor()).thenReturn(new DbTransactionExecutor());
         when(txManager.getResourceLockManager()).thenReturn(resourceLockManager);
+        when(txManager.getUserTypesCache()).thenReturn(userTypesCache);
     }
 
     @Test

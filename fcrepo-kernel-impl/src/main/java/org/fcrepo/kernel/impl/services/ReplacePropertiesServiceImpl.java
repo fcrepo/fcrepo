@@ -99,6 +99,10 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
             }
 
             pSession.persist(primaryOp);
+
+            userTypesCache.cacheUserTypes(fedoraId,
+                    fromModel(inputModel.getResource(fedoraId.getFullId()).asNode(), inputModel), pSession.getId());
+
             updateReferences(tx, fedoraId, userPrincipal, inputModel);
             membershipService.resourceModified(tx, fedoraId);
             searchIndex.addUpdateIndex(tx, pSession.getHeaders(fedoraId, null));

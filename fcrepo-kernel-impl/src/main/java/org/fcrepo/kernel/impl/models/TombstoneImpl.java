@@ -37,10 +37,12 @@ public class TombstoneImpl extends FedoraResourceImpl implements Tombstone {
 
     private FedoraResource originalResource;
 
-    protected TombstoneImpl(final FedoraId fedoraID, final Transaction transaction,
+    protected TombstoneImpl(final FedoraId fedoraID,
+                            final Transaction transaction,
                             final PersistentStorageSessionManager pSessionManager,
-                            final ResourceFactory resourceFactory, final FedoraResource original) {
-        super(fedoraID, transaction, pSessionManager, resourceFactory);
+                            final ResourceFactory resourceFactory,
+                            final FedoraResource original) {
+        super(fedoraID, transaction, pSessionManager, resourceFactory, null);
         this.originalResource = original;
     }
 

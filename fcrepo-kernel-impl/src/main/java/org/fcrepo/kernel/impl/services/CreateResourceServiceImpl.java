@@ -166,6 +166,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
         try {
             pSession.persist(createOp);
+            userTypesCache.cacheUserTypes(descId, Collections.emptyList(), pSession.getId());
         } catch (final PersistentStorageException exc) {
             throw new RepositoryRuntimeException(String.format("failed to create description %s", descId), exc);
         }
@@ -205,6 +206,9 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         } catch (final PersistentStorageException exc) {
             throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
         }
+
+        userTypesCache.cacheUserTypes(fedoraId,
+                fromModel(model.getResource(fedoraId.getFullId()).asNode(), model), pSession.getId());
 
         updateReferences(tx, fedoraId, userPrincipal, model);
         addToContainmentIndex(tx, parentId, fedoraId);

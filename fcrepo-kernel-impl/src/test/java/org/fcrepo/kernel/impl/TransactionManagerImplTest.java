@@ -31,6 +31,7 @@ import java.time.Duration;
 import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.cache.UserTypesCache;
 import org.fcrepo.kernel.api.exception.TransactionClosedException;
 import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
 import org.fcrepo.kernel.api.lock.ResourceLockManager;
@@ -87,6 +88,9 @@ public class TransactionManagerImplTest {
     @Mock
     private ResourceLockManager resourceLockManager;
 
+    @Mock
+    private UserTypesCache userTypesCache;
+
     private FedoraPropsConfig fedoraPropsConfig;
 
     @Before
@@ -104,6 +108,7 @@ public class TransactionManagerImplTest {
         setField(testTxManager, "dbTransactionExecutor", new DbTransactionExecutor());
         setField(testTxManager, "fedoraPropsConfig", fedoraPropsConfig);
         setField(testTxManager, "resourceLockManager", resourceLockManager);
+        setField(testTxManager, "userTypesCache", userTypesCache);
         testTx = (TransactionImpl) testTxManager.create();
     }
 

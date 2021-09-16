@@ -19,6 +19,7 @@ package org.fcrepo.kernel.impl.models;
 
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.cache.UserTypesCache;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
@@ -71,10 +72,14 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
      * @param transaction transaction
      * @param pSessionManager session manager
      * @param resourceFactory resource factory
+     * @param userTypesCache the user types cache
      */
-    public BinaryImpl(final FedoraId fedoraID, final Transaction transaction,
-                      final PersistentStorageSessionManager pSessionManager, final ResourceFactory resourceFactory) {
-        super(fedoraID, transaction, pSessionManager, resourceFactory);
+    public BinaryImpl(final FedoraId fedoraID,
+                      final Transaction transaction,
+                      final PersistentStorageSessionManager pSessionManager,
+                      final ResourceFactory resourceFactory,
+                      final UserTypesCache userTypesCache) {
+        super(fedoraID, transaction, pSessionManager, resourceFactory, userTypesCache);
     }
 
     @Override

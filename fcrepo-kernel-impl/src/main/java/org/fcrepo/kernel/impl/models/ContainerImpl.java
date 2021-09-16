@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.impl.models;
 
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.cache.UserTypesCache;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -51,10 +52,14 @@ public class ContainerImpl extends FedoraResourceImpl implements Container {
      * @param transaction transaction
      * @param pSessionManager session manager
      * @param resourceFactory resource factory
+     * @param userTypesCache the user types cache
      */
-    public ContainerImpl(final FedoraId fedoraID, final Transaction transaction,
-                         final PersistentStorageSessionManager pSessionManager, final ResourceFactory resourceFactory) {
-        super(fedoraID, transaction, pSessionManager, resourceFactory);
+    public ContainerImpl(final FedoraId fedoraID,
+                         final Transaction transaction,
+                         final PersistentStorageSessionManager pSessionManager,
+                         final ResourceFactory resourceFactory,
+                         final UserTypesCache userTypesCache) {
+        super(fedoraID, transaction, pSessionManager, resourceFactory, userTypesCache);
     }
 
     @Override

@@ -131,6 +131,12 @@ public class FedoraPropsConfig extends BasePropsConfig {
     @Value("${fcrepo.cache.db.containment.timeout.minutes:10}")
     private long containmentCacheTimeout;
 
+    @Value("${fcrepo.cache.types.size.entries:1024}")
+    private long userTypesCacheSize;
+
+    @Value("${fcrepo.cache.types.timeout.minutes:10}")
+    private long userTypesCacheTimeout;
+
     @Value("${fcrepo.cache.webac.acl.size.entries:1024}")
     private long webacCacheSize;
 
@@ -341,6 +347,34 @@ public class FedoraPropsConfig extends BasePropsConfig {
      */
     public long getContainmentCacheTimeout() {
         return containmentCacheTimeout;
+    }
+
+    /**
+     * @return The number of entries in the user types cache.
+     */
+    public long getUserTypesCacheSize() {
+        return userTypesCacheSize;
+    }
+
+    /**
+     * @param userTypesCacheSize user types cache size
+     */
+    public void setUserTypesCacheSize(final long userTypesCacheSize) {
+        this.userTypesCacheSize = userTypesCacheSize;
+    }
+
+    /**
+     * @return The number of minutes before items in the user types cache expire.
+     */
+    public long getUserTypesCacheTimeout() {
+        return userTypesCacheTimeout;
+    }
+
+    /**
+     * @param userTypesCacheTimeout user types cache timeout
+     */
+    public void setUserTypesCacheTimeout(final long userTypesCacheTimeout) {
+        this.userTypesCacheTimeout = userTypesCacheTimeout;
     }
 
     /**

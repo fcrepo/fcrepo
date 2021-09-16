@@ -158,7 +158,7 @@ public class FedoraResourceImplTest {
 
         when(transaction.isShortLived()).thenReturn(true);
 
-        final var resource = new FedoraResourceImpl(FEDORA_ID, transaction, sessionManager, resourceFactory);
+        final var resource = new FedoraResourceImpl(FEDORA_ID, transaction, sessionManager, resourceFactory, null);
         resource.setInteractionModel(BASIC_CONTAINER.toString());
         resource.setIsArchivalGroup(false);
         final var resourceTypes = resource.getTypes();
@@ -181,7 +181,7 @@ public class FedoraResourceImplTest {
         final var userStream = fromModel(subject.asNode(), userModel);
 
         final var description = new NonRdfSourceDescriptionImpl(descriptionFedoraId, null, sessionManager,
-                resourceFactory);
+                resourceFactory, null);
 
         when(resourceFactory.getResource(any(Transaction.class), eq(descriptionFedoraId))).thenReturn(description);
         when(sessionManager.getReadOnlySession()).thenReturn(psSession);
@@ -199,7 +199,7 @@ public class FedoraResourceImplTest {
 
         when(transaction.isShortLived()).thenReturn(true);
 
-        final var resource = new BinaryImpl(FEDORA_ID, transaction, sessionManager, resourceFactory);
+        final var resource = new BinaryImpl(FEDORA_ID, transaction, sessionManager, resourceFactory, null);
         resource.setInteractionModel(NON_RDF_SOURCE.toString());
         resource.setIsArchivalGroup(false);
         final var resourceTypes = resource.getTypes();
@@ -214,7 +214,7 @@ public class FedoraResourceImplTest {
 
     @Test
     public void testGetChildren() {
-        final var resource = new FedoraResourceImpl(FEDORA_ID, null, sessionManager, resourceFactory);
+        final var resource = new FedoraResourceImpl(FEDORA_ID, null, sessionManager, resourceFactory, null);
         assertEquals(0, resource.getChildren().count());
     }
 
@@ -227,7 +227,8 @@ public class FedoraResourceImplTest {
     }
 
     private FedoraResource resourceWithMockedTimeMap() {
-        final var resource = spy(new FedoraResourceImpl(FEDORA_ID, null, sessionManager, resourceFactory));
+        final var resource = spy(new FedoraResourceImpl(FEDORA_ID, null, sessionManager,
+                resourceFactory, null));
         doReturn(timeMap).when(resource).getTimeMap();
         return resource;
     }
@@ -235,7 +236,7 @@ public class FedoraResourceImplTest {
     private FedoraResource memento(final String id, final Instant instant) {
         final String mementoTime = VersionService.MEMENTO_LABEL_FORMATTER.format(instant);
         final FedoraId fedoraID = FedoraId.create(id, FCR_VERSIONS, mementoTime);
-        final var memento = new FedoraResourceImpl(fedoraID, null, sessionManager, resourceFactory);
+        final var memento = new FedoraResourceImpl(fedoraID, null, sessionManager, resourceFactory, null);
         memento.setIsMemento(true);
         memento.setMementoDatetime(instant);
         return memento;
