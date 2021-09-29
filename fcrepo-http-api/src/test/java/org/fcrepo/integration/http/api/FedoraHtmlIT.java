@@ -17,15 +17,18 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
+import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.StringUtils.contains;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 
 import java.io.IOException;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 import org.springframework.test.context.TestExecutionListeners;
@@ -110,6 +113,33 @@ public class FedoraHtmlIT extends AbstractResourceIT {
             final String html = EntityUtils.toString(response.getEntity());
             assertTrue(html, contains(html, "class=\"fcrepo_root\""));
         }
+    }
+
+    @Test
+    public void testGetBlankNodesInHtml() throws IOException {
+        final String blankNodeTtl = "@prefix test:  <info:fedora/test/> .\n" +
+                "@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .\n" +
+                "@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n" +
+                "@prefix fedora: <http://fedora.info/definitions/v4/repository#> .\n" +
+                "@prefix ldp:   <http://www.w3.org/ns/ldp#> .\n" +
+                "@prefix dc:    <http://purl.org/dc/elements/1.1/> .\n" +
+                "\n" +
+                "<> rdfs:label  \"dsa\" ;\n" +
+                "   test:test     _:b0 .\n" +
+                "\n" +
+                "_:b0 rdfs:label  \"r\" ;\n" +
+                "   dc:title    \"tq\" .";
+        final String pid = getRandomUniqueId();
+        final HttpPut putMethod = putObjMethod(pid, "text/turtle", blankNodeTtl);
+        assertEquals(CREATED.getStatusCode(), getStatus(putMethod));
+        // Can get as text/turtle
+        final HttpGet getTtl = getObjMethod(pid);
+        getTtl.addHeader(ACCEPT, "text/turtle");
+        assertEquals(OK.getStatusCode(), getStatus(getTtl));
+        // Can get with text/html
+        final HttpGet getHtml = getObjMethod(pid);
+        getHtml.addHeader(ACCEPT, "text/html");
+        assertEquals(OK.getStatusCode(), getStatus(getHtml));
     }
 
 }
