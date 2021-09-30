@@ -45,7 +45,7 @@ public class FedoraContextLoaderListener extends ContextLoaderListener {
                     "---------- FEDORA CONFIGURATION ERROR ----------\n" +
                     "\n" +
                     "See documentation specific to your version of Fedora\n" +
-                    "https://wiki.duraspace.org/display/FEDORA6x/Application+Configuration\n" +
+                    "https://wiki.lyrasis.org/display/FEDORA6x/Application+Configuration\n" +
                     "\n" +
                     "=====================================================================\n" +
                     "=====================================================================\n";
