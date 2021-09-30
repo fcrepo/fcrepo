@@ -25,7 +25,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.OutputStream;
@@ -47,7 +46,7 @@ import org.slf4j.Logger;
  * @since Nov 19, 2013
  */
 @Provider
-@Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, TEXT_PLAIN, TURTLE_X, JSON_LD})
+@Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, TEXT_PLAIN, JSON_LD})
 public class RdfStreamProvider implements MessageBodyWriter<RdfNamespacedStream> {
 
     private static final Logger LOGGER = getLogger(RdfStreamProvider.class);

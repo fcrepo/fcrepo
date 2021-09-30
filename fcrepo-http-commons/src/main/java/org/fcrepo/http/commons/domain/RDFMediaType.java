@@ -24,7 +24,6 @@ import static org.apache.jena.riot.WebContent.contentTypeN3Alt2;
 import static org.apache.jena.riot.WebContent.contentTypeNTriples;
 import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
 import static org.apache.jena.riot.WebContent.contentTypeTurtle;
-import static org.apache.jena.riot.WebContent.contentTypeTurtleAlt2;
 
 import java.util.List;
 
@@ -60,10 +59,6 @@ public abstract class RDFMediaType extends MediaType {
 
     public static final String TURTLE_WITH_CHARSET = TURTLE + CHARSET_UTF8;
 
-    public static final String TURTLE_X = contentTypeTurtleAlt2;
-
-    public static final MediaType TURTLE_X_TYPE = typeFromString(TURTLE_X);
-
     public static final String RDF_XML = contentTypeRDFXML;
 
     public static final MediaType RDF_XML_TYPE = typeFromString(RDF_XML);
@@ -84,11 +79,11 @@ public abstract class RDFMediaType extends MediaType {
 
     public static final List<Variant> POSSIBLE_RDF_VARIANTS = mediaTypes(
             RDF_XML_TYPE, TURTLE_TYPE, N3_TYPE, N3_ALT2_TYPE, NTRIPLES_TYPE,
-            TEXT_PLAIN_TYPE, TURTLE_X_TYPE, JSON_LD_TYPE).add().build();
+            TEXT_PLAIN_TYPE, JSON_LD_TYPE).add().build();
 
     public static final String[] POSSIBLE_RDF_RESPONSE_VARIANTS_STRING = {
         TURTLE_WITH_CHARSET, N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES,
-        TEXT_PLAIN_WITH_CHARSET, TURTLE_X, JSON_LD };
+        TEXT_PLAIN_WITH_CHARSET, JSON_LD };
 
     private static MediaType typeFromString(final String type) {
         return new MediaType(type.split("/")[0], type.split("/")[1]);

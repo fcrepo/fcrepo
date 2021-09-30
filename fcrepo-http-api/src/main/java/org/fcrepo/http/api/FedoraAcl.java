@@ -82,7 +82,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -256,7 +255,7 @@ public class FedoraAcl extends ContentExposingResource {
     @GET
     @Produces({ TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
                 N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
-                TURTLE_X, TEXT_HTML_WITH_CHARSET })
+                TEXT_HTML_WITH_CHARSET })
     public Response getResource()
             throws IOException, ItemNotFoundException {
 

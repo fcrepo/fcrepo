@@ -94,7 +94,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.QueryParseException;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.RDFReader;
+import org.apache.jena.rdf.model.RDFReaderI;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.riot.Lang;
@@ -671,7 +671,7 @@ public class WebACFilter extends RequestContextFilter {
      */
     private URI getHasMemberFromRequest(final HttpServletRequest request) throws IOException {
         final String baseUri = request.getRequestURL().toString();
-        final RDFReader reader;
+        final RDFReaderI reader;
         final String contentType = request.getContentType();
         final Lang format = contentTypeToLang(contentType);
         final Model inputModel;
