@@ -192,6 +192,26 @@ public class ViewHelpers {
     }
 
     /**
+     * Get the ID of a resource, this is the URI, blank node ID or just the local name. Used in resource.vsl
+     *
+     * @param res
+     *   The resource to get the ID for
+     * @return
+     *   The ID as a string.
+     */
+     public String getResourceId(final Resource res) {
+         if (res == null) {
+            return "";
+         } else if (res.isURIResource()) {
+            return res.getURI();
+         } else if (res.isAnon()) {
+            return res.getId().getLabelString();
+         } else {
+            return res.getLocalName();
+         }
+     }
+
+    /**
      * Determines whether the subject is writable
      * true if node is writable
      * @param graph the graph
