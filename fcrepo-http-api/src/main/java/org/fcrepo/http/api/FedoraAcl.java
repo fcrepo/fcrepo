@@ -21,6 +21,7 @@ import io.micrometer.core.annotation.Timed;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.shared.JenaException;
 
 import org.fcrepo.config.AuthPropsConfig;
@@ -339,7 +340,7 @@ public class FedoraAcl extends ContentExposingResource {
                 LOGGER.debug("Getting root authorization from file: {}", customRootAcl);
 
                 try (final var stream = new BufferedInputStream(Files.newInputStream(customRootAcl))) {
-                    RDFDataMgr.read(model, stream, baseUri, null);
+                    RDFDataMgr.read(model, stream, baseUri, RDFLanguages.pathnameToLang(customRootAcl.toString()));
                 }
 
                 return model;
