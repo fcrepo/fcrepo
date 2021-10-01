@@ -1986,6 +1986,17 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // Retrieve the new resource and verify the content-disposition
         verifyContentDispositionFilename(location, filenamePart);
+
+        final HttpGet get = new HttpGet(location + "/" + FCR_METADATA);
+        try (final CloseableHttpResponse response = execute(get)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            try (final CloseableDataset dataset = getDataset(response)) {
+                final DatasetGraph graph = dataset.asDatasetGraph();
+                assertFalse(dataset.isEmpty());
+                assertTrue(graph.contains(ANY, createURI(location), HAS_ORIGINAL_NAME.asNode(),
+                        createLiteral(filename)));
+            }
+        }
     }
 
     private void verifyContentDispositionFilename(final String location, final String filename)
