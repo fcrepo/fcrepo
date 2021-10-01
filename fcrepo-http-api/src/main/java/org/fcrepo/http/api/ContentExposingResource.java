@@ -72,6 +72,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -136,14 +138,15 @@ import org.fcrepo.kernel.api.services.ResourceTripleService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.jena.atlas.web.ContentType;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
-import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jvnet.hk2.annotations.Optional;
 import org.slf4j.Logger;
+import org.springframework.http.ContentDisposition;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
@@ -218,6 +221,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected static final Splitter.MapSplitter RFC3230_SPLITTER =
         Splitter.on(',').omitEmptyStrings().trimResults().withKeyValueSeparator(Splitter.on('=').limit(2));
+
+    private static final CharsetEncoder ISO_8859_1_ENCODER = StandardCharsets.ISO_8859_1.newEncoder();
 
     /**
      * This method returns an HTTP response with content body appropriate to the following arguments.
@@ -596,15 +601,24 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected void addResourceHttpHeaders(final FedoraResource resource) {
         if (resource instanceof Binary) {
             final Binary binary = (Binary)resource;
-            final Date createdDate = binary.getCreatedDate() != null ? Date.from(binary.getCreatedDate()) : null;
-            final Date modDate = binary.getLastModifiedDate() != null ? Date.from(binary.getLastModifiedDate()) : null;
 
-            final ContentDisposition contentDisposition = ContentDisposition.type("attachment")
-                    .fileName(binary.getFilename())
-                    .creationDate(createdDate)
-                    .modificationDate(modDate)
-                    .size(binary.getContentSize())
-                    .build();
+            final var dispositionBuilder = ContentDisposition.builder("attachment")
+                    .size(binary.getContentSize());
+
+            if (binary.getCreatedDate() != null) {
+                dispositionBuilder.creationDate(binary.getCreatedDate().atZone(ZoneOffset.UTC));
+            }
+            if (binary.getLastModifiedDate() != null) {
+                dispositionBuilder.modificationDate(binary.getLastModifiedDate().atZone(ZoneOffset.UTC));
+            }
+
+            if (StringUtils.isNotBlank(binary.getFilename())) {
+                if (ISO_8859_1_ENCODER.canEncode(binary.getFilename())) {
+                    dispositionBuilder.filename(binary.getFilename());
+                } else {
+                    dispositionBuilder.filename(binary.getFilename(), StandardCharsets.UTF_8);
+                }
+            }
 
             servletResponse.addHeader(CONTENT_TYPE, binary.getMimeType());
             // Returning content-length > 0 causes the client to wait for additional data before following the redirect.
@@ -612,7 +626,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 servletResponse.addHeader(CONTENT_LENGTH, String.valueOf(binary.getContentSize()));
             }
             servletResponse.addHeader("Accept-Ranges", "bytes");
-            servletResponse.addHeader(CONTENT_DISPOSITION, contentDisposition.toString());
+            servletResponse.addHeader(CONTENT_DISPOSITION, dispositionBuilder.build().toString());
         }
 
         addLinkAndOptionsHttpHeaders(resource);
