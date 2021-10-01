@@ -57,6 +57,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -336,10 +338,12 @@ public class FedoraAcl extends ContentExposingResource {
             try {
                 LOGGER.debug("Getting root authorization from file: {}", customRootAcl);
 
-                RDFDataMgr.read(model, customRootAcl.toString(), baseUri, null);
+                try (final var stream = new BufferedInputStream(Files.newInputStream(customRootAcl))) {
+                    RDFDataMgr.read(model, stream, baseUri, null);
+                }
 
                 return model;
-            } catch (final JenaException ex) {
+            } catch (final JenaException | IOException ex) {
                 throw new RuntimeException("Error parsing the default root ACL " + customRootAcl + ".", ex);
             }
         }
