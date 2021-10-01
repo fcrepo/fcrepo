@@ -1966,6 +1966,28 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // verifyContentDispositionFilename(location, filename1);
     }
 
+    @Test
+    public void testContentDispositionHeaderEncoding() throws ParseException, IOException {
+        final HttpPost method = postObjMethod();
+        final File img = new File("src/test/resources/test-objects/img.png");
+        final String filename = "浅顶软呢帽岩石.png";
+        final String filenamePart = "UTF-8''" + URLEncoder.encode(filename, UTF_8);
+        method.addHeader(CONTENT_TYPE, "application/png");
+        method.addHeader(CONTENT_DISPOSITION, "attachment; filename*=" + filenamePart);
+        method.setEntity(new FileEntity(img));
+        method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+
+        // Create a binary resource with content-disposition
+        final String location;
+        try (final CloseableHttpResponse response = execute(method)) {
+            assertEquals("Should be a 201 Created!", CREATED.getStatusCode(), getStatus(response));
+            location = getLocation(response);
+        }
+
+        // Retrieve the new resource and verify the content-disposition
+        verifyContentDispositionFilename(location, filenamePart);
+    }
+
     private void verifyContentDispositionFilename(final String location, final String filename)
             throws IOException, ParseException {
         final HttpHead head = new HttpHead(location);

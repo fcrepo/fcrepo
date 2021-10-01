@@ -120,9 +120,9 @@ import org.fcrepo.kernel.api.services.FixityService;
 import org.fcrepo.kernel.api.services.ReplaceBinariesService;
 import org.fcrepo.config.DigestAlgorithm;
 
-import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
+import org.springframework.http.ContentDisposition;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
@@ -364,7 +364,7 @@ public class FedoraLdp extends ContentExposingResource {
      *
      * @param requestContentType the request content type
      * @param requestBodyStream the request body stream
-     * @param contentDisposition the content disposition value
+     * @param contentDispositionRaw the content disposition value
      * @param ifMatch the if-match value
      * @param rawLinks the raw link values
      * @param digest the digest header
@@ -378,7 +378,7 @@ public class FedoraLdp extends ContentExposingResource {
     public Response createOrReplaceObjectRdf(
             @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
             final InputStream requestBodyStream,
-            @HeaderParam(CONTENT_DISPOSITION) final ContentDisposition contentDisposition,
+            @HeaderParam(CONTENT_DISPOSITION) final String contentDispositionRaw,
             @HeaderParam("If-Match") final String ifMatch,
             @HeaderParam(LINK) final List<String> rawLinks,
             @HeaderParam("Digest") final String digest)
@@ -453,8 +453,18 @@ public class FedoraLdp extends ContentExposingResource {
                             requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;
                     final var contentType = extContent == null ?
                             binaryType.toString() : extContent.getContentType();
-                    final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
-                    final long contentSize = contentDisposition == null ? -1L : contentDisposition.getSize();
+
+                    final String originalFileName;
+                    final long contentSize;
+
+                    if (StringUtils.isNotBlank(contentDispositionRaw)) {
+                        final var contentDisposition = ContentDisposition.parse(contentDispositionRaw);
+                        originalFileName = contentDisposition.getFilename();
+                        contentSize = contentDisposition.getSize() == null ? -1L : contentDisposition.getSize();
+                    } else {
+                        originalFileName = "";
+                        contentSize = -1L;
+                    }
 
                     doInDbTx(() -> {
                         if (resourceExists) {
@@ -585,7 +595,7 @@ public class FedoraLdp extends ContentExposingResource {
      * must be between 0 and 1. We use qs=1.000 to mark where this historical
      * anomaly had been.
      *
-     * @param contentDisposition the content Disposition value
+     * @param contentDispositionRaw the content Disposition value
      * @param requestContentType the request content type
      * @param slug the slug value
      * @param requestBodyStream the request body stream
@@ -601,7 +611,7 @@ public class FedoraLdp extends ContentExposingResource {
     @Produces({TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
             N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
             TURTLE_X, TEXT_HTML_WITH_CHARSET, "*/*"})
-    public Response createObject(@HeaderParam(CONTENT_DISPOSITION) final ContentDisposition contentDisposition,
+    public Response createObject(@HeaderParam(CONTENT_DISPOSITION) final String contentDispositionRaw,
                                  @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
                                  @HeaderParam("Slug") final String slug,
                                  final InputStream requestBodyStream,
@@ -644,11 +654,22 @@ public class FedoraLdp extends ContentExposingResource {
                 ensureArchivalGroupHeaderNotPresentForBinaries(links);
 
                 final Collection<URI> checksums = parseDigestHeader(digest);
-                final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
+
+                final String originalFileName;
+                final long contentSize;
+
+                if (StringUtils.isNotBlank(contentDispositionRaw)) {
+                    final var contentDisposition = ContentDisposition.parse(contentDispositionRaw);
+                    originalFileName = contentDisposition.getFilename();
+                    contentSize = contentDisposition.getSize() == null ? -1L : contentDisposition.getSize();
+                } else {
+                    originalFileName = "";
+                    contentSize = -1L;
+                }
+
                 final var binaryType = requestContentType != null ?
                         requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;
                 final var contentType = extContent == null ? binaryType.toString() : extContent.getContentType();
-                final long contentSize = contentDisposition == null ? -1L : contentDisposition.getSize();
 
                 doInDbTx(() -> {
                     createResourceService.perform(transaction,
