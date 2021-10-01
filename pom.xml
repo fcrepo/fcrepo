@@ -24,22 +24,21 @@
     <project_organization>fcrepo</project_organization>
     <fcrepo-storage-ocfl.version>6.1.0-SNAPSHOT</fcrepo-storage-ocfl.version>
     <!-- Dependency version properties -->
-    <activemq.version>5.16.2</activemq.version>
-    <aws.version>2.16.72</aws.version>
-    <caffeine.version>2.9.1</caffeine.version>
+    <activemq.version>5.16.3</activemq.version>
+    <aws.version>2.17.50</aws.version>
+    <caffeine.version>3.0.4</caffeine.version>
     <commons-codec.version>1.15</commons-codec.version>
     <commons-collections.version>3.2.2</commons-collections.version>
-    <commons-io.version>2.9.0</commons-io.version>
+    <commons-io.version>2.11.0</commons-io.version>
     <commons-lang.version>3.12.0</commons-lang.version>
-    <narayana-jta.version>5.9.0.Final</narayana-jta.version>
-    <failsafe.version>2.4.3</failsafe.version>
-    <flyway.version>7.9.1</flyway.version>
+    <failsafe.version>2.4.4</failsafe.version>
+    <flyway.version>7.15.0</flyway.version>
     <flyway.test.version>7.0.0</flyway.test.version>
-    <guava.version>30.1.1-jre</guava.version>
-    <h2database.version>1.4.195</h2database.version>
-    <hikari.version>4.0.3</hikari.version>
+    <guava.version>31.0.1-jre</guava.version>
+    <h2database.version>1.4.200</h2database.version>
+    <hikari.version>5.0.0</hikari.version>
     <hk2.version>2.6.1</hk2.version>
-    <htmlunit.version>2.45.0</htmlunit.version>
+    <htmlunit.version>2.53.0</htmlunit.version>
     <httpclient.version>4.5.13</httpclient.version>
     <httpmime.version>4.5.13</httpmime.version>
     <httpcore.version>4.4.14</httpcore.version>
@@ -49,40 +48,38 @@
     <javaee.xml.version>2.3.1</javaee.xml.version>
     <jaxb.core.version>2.3.0.1</jaxb.core.version>
     <jaxb.impl.version>2.3.1</jaxb.impl.version>
-    <jackson2.version>2.12.3</jackson2.version>
+    <jackson2.version>2.13.0</jackson2.version>
     <jboss-logging.version>3.4.2.Final</jboss-logging.version>
     <jena.version>4.2.0</jena.version>
-    <jersey.version>2.34</jersey.version>
-    <jetty.version>9.4.34.v20201102</jetty.version>
-    <jgroups.version>5.1.7.Final</jgroups.version>
+    <jersey.version>2.35</jersey.version>
+    <jetty.version>9.4.44.v20210927</jetty.version>
+    <jgroups.version>5.1.9.Final</jgroups.version>
     <jsonld.version>0.13.3</jsonld.version>
-    <logback.version>1.2.3</logback.version>
-    <micrometer.version>1.6.4</micrometer.version>
-    <netty.version>4.1.63.Final</netty.version>
+    <logback.version>1.2.6</logback.version>
+    <micrometer.version>1.7.4</micrometer.version>
+    <netty.version>4.1.68.Final</netty.version>
     <ocfl-java.version>1.3.1</ocfl-java.version>
-    <prometheus.version>0.9.0</prometheus.version>
-    <reactivestrams.version>1.0.3</reactivestrams.version>
-    <shiro.version>1.7.1</shiro.version>
-    <slf4j.version>1.7.25</slf4j.version>
-    <snappy-java.version>1.1.8.1</snappy-java.version>
-    <spring.version>5.3.7</spring.version>
-    <tika.version>1.24.1</tika.version>
+    <prometheus.version>0.10.0</prometheus.version>
+    <reactivestreams.version>1.0.3</reactivestreams.version>
+    <shiro.version>1.8.0</shiro.version>
+    <slf4j.version>1.7.32</slf4j.version>
+    <spring.version>5.3.10</spring.version>
     <xerces.version>2.12.1</xerces.version>
     <xml-apis.version>1.4.01</xml-apis.version>
     <velocity.version>1.7</velocity.version>
     <!-- JCBC dependencies -->
-    <postgresql.version>42.2.20</postgresql.version>
-    <mysql.version>8.0.25</mysql.version>
-    <mariadb.version>2.7.3</mariadb.version>
+    <postgresql.version>42.2.24</postgresql.version>
+    <mysql.version>8.0.26</mysql.version>
+    <mariadb.version>2.7.4</mariadb.version>
     <!-- test gear -->
     <awaitility.version>4.1.0</awaitility.version>
     <grizzly.version>2.4.4</grizzly.version>
     <junit.version>4.13.2</junit.version>
     <system-rules.version>1.19.0</system-rules.version>
-    <mockito.version>3.10.0</mockito.version>
+    <mockito.version>3.12.4</mockito.version>
     <!-- fcrepo5-specific plugins -->
-    <enforcer.plugin.version>3.0.0-M3</enforcer.plugin.version>
-    <war.plugin.version>3.3.1</war.plugin.version>
+    <enforcer.plugin.version>3.0.0</enforcer.plugin.version>
+    <war.plugin.version>3.3.2</war.plugin.version>
     <!-- default properties that can be altered on the command line -->
     <fcrepo.test.context.path />
   </properties>
@@ -161,6 +158,10 @@
             <groupId>jakarta.annotation</groupId>
             <artifactId>jakarta.annotation-api</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -171,6 +172,10 @@
           <exclusion>
             <groupId>jakarta.annotation</groupId>
             <artifactId>jakarta.annotation-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -257,12 +262,30 @@
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.velocity</groupId>
         <artifactId>velocity</artifactId>
         <version>${velocity.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>logkit</groupId>
+            <artifactId>logkit</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.jgroups</groupId>
@@ -532,6 +555,12 @@
         <groupId>org.flywaydb.flyway-test-extensions</groupId>
         <artifactId>flyway-spring-test</artifactId>
         <version>${flyway.test.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.shiro</groupId>
@@ -623,6 +652,20 @@
         <artifactId>jersey-test-framework-provider-grizzly2</artifactId>
         <version>${jersey.version}</version>
         <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>jakarta.activation</groupId>
+            <artifactId>jakarta.activation-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.awaitility</groupId>
