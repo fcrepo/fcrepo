@@ -45,7 +45,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_TYPE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_OCTET_STREAM_TYPE;
 
@@ -184,7 +183,7 @@ public class FedoraLdp extends ContentExposingResource {
     @HEAD
     @Produces({ TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
         N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
-        TURTLE_X, TEXT_HTML_WITH_CHARSET })
+        TEXT_HTML_WITH_CHARSET })
     public Response head() throws UnsupportedAlgorithmException {
         LOGGER.info("HEAD for: {}", externalPath);
 
@@ -251,7 +250,7 @@ public class FedoraLdp extends ContentExposingResource {
     @GET
     @Produces({TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
             N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
-            TURTLE_X, TEXT_HTML_WITH_CHARSET})
+            TEXT_HTML_WITH_CHARSET})
     public Response getResource(@HeaderParam("Range") final String rangeValue)
             throws IOException, UnsupportedAlgorithmException {
 
@@ -610,7 +609,7 @@ public class FedoraLdp extends ContentExposingResource {
     @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1.000", WILDCARD})
     @Produces({TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
             N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
-            TURTLE_X, TEXT_HTML_WITH_CHARSET, "*/*"})
+            TEXT_HTML_WITH_CHARSET, "*/*"})
     public Response createObject(@HeaderParam(CONTENT_DISPOSITION) final String contentDispositionRaw,
                                  @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
                                  @HeaderParam("Slug") final String slug,

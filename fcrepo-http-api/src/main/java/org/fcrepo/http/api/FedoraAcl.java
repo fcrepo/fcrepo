@@ -21,6 +21,7 @@ import io.micrometer.core.annotation.Timed;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.shared.JenaException;
 
 import org.fcrepo.config.AuthPropsConfig;
@@ -57,6 +58,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -82,7 +85,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -256,7 +258,7 @@ public class FedoraAcl extends ContentExposingResource {
     @GET
     @Produces({ TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
                 N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
-                TURTLE_X, TEXT_HTML_WITH_CHARSET })
+                TEXT_HTML_WITH_CHARSET })
     public Response getResource()
             throws IOException, ItemNotFoundException {
 
@@ -337,10 +339,12 @@ public class FedoraAcl extends ContentExposingResource {
             try {
                 LOGGER.debug("Getting root authorization from file: {}", customRootAcl);
 
-                RDFDataMgr.read(model, customRootAcl.toString(), baseUri, null);
+                try (final var stream = new BufferedInputStream(Files.newInputStream(customRootAcl))) {
+                    RDFDataMgr.read(model, stream, baseUri, RDFLanguages.pathnameToLang(customRootAcl.toString()));
+                }
 
                 return model;
-            } catch (final JenaException ex) {
+            } catch (final JenaException | IOException ex) {
                 throw new RuntimeException("Error parsing the default root ACL " + customRootAcl + ".", ex);
             }
         }
