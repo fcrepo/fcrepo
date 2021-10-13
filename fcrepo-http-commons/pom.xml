@@ -245,6 +245,10 @@
           <groupId>org.apache.struts</groupId>
           <artifactId>struts-tiles</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>javax.servlet</groupId>
+          <artifactId>servlet-api</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 

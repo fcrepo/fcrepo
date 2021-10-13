@@ -71,6 +71,14 @@
           <groupId>commons-logging</groupId>
           <artifactId>commons-logging</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>org.apache.zookeeper</groupId>
+          <artifactId>zookeeper</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.linkedin</groupId>
+          <artifactId>org.linkedin.util-core</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 
