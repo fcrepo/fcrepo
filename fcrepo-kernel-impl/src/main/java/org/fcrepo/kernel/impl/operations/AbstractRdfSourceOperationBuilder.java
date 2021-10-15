@@ -38,7 +38,8 @@ import org.apache.jena.rdf.model.Model;
  * Abstract builder for interacting with an Rdf Source Operation Builder
  * @author bseeger
  */
-public abstract class AbstractRdfSourceOperationBuilder implements RdfSourceOperationBuilder {
+public abstract class AbstractRdfSourceOperationBuilder extends AbstractRelaxableResourceOperationBuilder
+                                                        implements RdfSourceOperationBuilder {
 
     /**
      * Holds the stream of user's triples.
@@ -46,39 +47,20 @@ public abstract class AbstractRdfSourceOperationBuilder implements RdfSourceOper
     protected RdfStream tripleStream;
 
     /**
-     * String of the resource ID.
+     * Principal of the user performing the operation
      */
-    protected final FedoraId resourceId;
+    protected String userPrincipal;
 
     /**
      * The interaction model of this resource, null in case of update.
      */
     protected final String interactionModel;
 
-    /**
-     * Principal of the user performing the operation
-     */
-    protected String userPrincipal;
-
-    protected String lastModifiedBy;
-
-    protected String createdBy;
-
-    protected Instant lastModifiedDate;
-
-    protected Instant createdDate;
-
-    protected ServerManagedPropsMode serverManagedPropsMode;
-
-    protected Transaction transaction;
-
     protected AbstractRdfSourceOperationBuilder(final Transaction transaction, final FedoraId rescId,
                                                 final String model,
                                                 final ServerManagedPropsMode serverManagedPropsMode) {
-        this.transaction = transaction;
-        resourceId = rescId;
+        super(transaction, rescId, serverManagedPropsMode);
         interactionModel = model;
-        this.serverManagedPropsMode = serverManagedPropsMode;
     }
 
     @Override
@@ -107,28 +89,6 @@ public abstract class AbstractRdfSourceOperationBuilder implements RdfSourceOper
 
     @Override
     public RdfSourceOperationBuilder relaxedProperties(final Model model) {
-        // Has no affect if the server is not in relaxed mode
-        if (model != null && serverManagedPropsMode == ServerManagedPropsMode.RELAXED) {
-            final var resc = model.getResource(resourceId.getResourceId());
-
-            final var createdDateVal = getCreatedDate(resc);
-            if (createdDateVal != null) {
-                this.createdDate = createdDateVal.toInstant();
-            }
-            final var createdByVal = getCreatedBy(resc);
-            if (createdByVal != null) {
-                this.createdBy = createdByVal;
-            }
-            final var modifiedDate = getModifiedDate(resc);
-            if (modifiedDate != null) {
-                this.lastModifiedDate = modifiedDate.toInstant();
-            }
-            final var modifiedBy = getModifiedBy(resc);
-            if (modifiedBy != null) {
-                this.lastModifiedBy = modifiedBy;
-            }
-        }
-
-        return this;
+        return (RdfSourceOperationBuilder) super.relaxedProperties(model);
     }
 }

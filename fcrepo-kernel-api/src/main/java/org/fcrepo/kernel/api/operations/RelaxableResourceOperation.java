@@ -15,33 +15,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.impl.operations;
+package org.fcrepo.kernel.api.operations;
 
 import java.time.Instant;
 
-import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.operations.RdfSourceOperation;
-
 /**
- * Abstract operation for interacting with an rdf source
+ * Operation involving a resource with relaxable server managed properties
  *
  * @author bbpennel
  */
-public abstract class AbstractRdfSourceOperation extends AbstractRelaxableResourceOperation
-                                                 implements RdfSourceOperation {
+public interface RelaxableResourceOperation extends ResourceOperation {
+    /**
+     * Get last modified by
+     *
+     * @return user that last modified the resource
+     */
+    String getLastModifiedBy();
 
-    protected RdfStream triples;
+    /**
+     * Get created by
+     *
+     * @return user that created the resource
+     */
+    String getCreatedBy();
 
-    protected AbstractRdfSourceOperation(final Transaction transaction, final FedoraId rescId,
-                                         final RdfStream triples) {
-        super(transaction, rescId);
-        this.triples = triples;
-    }
+    /**
+     * Get the timestamp the resource was last modified
+     *
+     * @return timestamp
+     */
+    Instant getLastModifiedDate();
 
-    @Override
-    public RdfStream getTriples() {
-        return triples;
-    }
+    /**
+     * Get the timestamp the resource was created
+     *
+     * @return timestamp
+     */
+    Instant getCreatedDate();
 }
