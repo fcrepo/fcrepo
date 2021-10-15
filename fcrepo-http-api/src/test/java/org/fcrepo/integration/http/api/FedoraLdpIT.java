@@ -28,6 +28,7 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
+import static javax.ws.rs.core.HttpHeaders.LOCATION;
 import static javax.ws.rs.core.Link.fromUri;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -3033,6 +3034,81 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals(OK.getStatusCode(), getStatus(response));
             try (final CloseableDataset dataset = getDataset(response)) {
                 assertTrue(dataset.isEmpty());
+            }
+        }
+    }
+
+    @Test
+    public void binaryDescMementoShouldHaveHistoricFileAttributes() throws Exception {
+        final String id = getRandomUniqueId();
+        final HttpPost post = postObjMethod();
+        final String binaryUri = serverAddress + id;
+        final Node binaryNode = createURI(binaryUri);
+
+        final String originalName = "mytest.txt";
+        final String updatedName = "updated.txt";
+        final String originalSize = "9";
+        final String updatedSize = "17";
+
+        post.setHeader("Slug", id);
+        post.setHeader(CONTENT_TYPE, TEXT_PLAIN);
+        post.setEntity(new StringEntity("some text", UTF_8));
+        post.setHeader(CONTENT_DISPOSITION, "attachment; filename=\"" + originalName + "\"");
+        assertEquals(CREATED.getStatusCode(), getStatus(post));
+
+        // create binary
+        HttpGet get = getObjMethod(id + "/" + FCR_METADATA);
+        try (final CloseableHttpResponse response = execute(get)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            try (final CloseableDataset dataset = getDataset(response)) {
+                final DatasetGraph graph = dataset.asDatasetGraph();
+                assertFalse(dataset.isEmpty());
+                assertTrue(graph.contains(ANY, binaryNode, HAS_SIZE.asNode(), createLiteral(originalSize, XSDlong)));
+                assertTrue(graph.contains(ANY, binaryNode, HAS_ORIGINAL_NAME.asNode(),
+                        createLiteral(originalName)));
+            }
+        }
+
+        // get memento url
+        final HttpPost createVersionMethod = new HttpPost(binaryUri + "/" + FCR_VERSIONS);
+        final String binaryMementoUrl;
+        try (final CloseableHttpResponse response = execute(createVersionMethod)) {
+            binaryMementoUrl = response.getFirstHeader(LOCATION).getValue();
+        }
+        final var binDescMementoUrl = binaryUri + "/" + FCR_METADATA + "/"
+                + binaryMementoUrl.substring(binaryMementoUrl.indexOf("/fcr:"));
+
+        TimeUnit.SECONDS.sleep(1);
+
+        final var put = putObjMethod(id);
+        put.setHeader("Slug", id);
+        put.setHeader(CONTENT_TYPE, TEXT_PLAIN);
+        put.setEntity(new StringEntity("some updated text", UTF_8));
+        put.setHeader(CONTENT_DISPOSITION, "attachment; filename=\"" + updatedName + "\"");
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(put));
+
+        // update binary
+        get = getObjMethod(id + "/" + FCR_METADATA);
+        try (final CloseableHttpResponse response = execute(get)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            try (final CloseableDataset dataset = getDataset(response)) {
+                final DatasetGraph graph = dataset.asDatasetGraph();
+                assertFalse(dataset.isEmpty());
+                assertTrue(graph.contains(ANY, binaryNode, HAS_SIZE.asNode(), createLiteral(updatedSize, XSDlong)));
+                assertTrue(graph.contains(ANY, binaryNode, HAS_ORIGINAL_NAME.asNode(),
+                        createLiteral(updatedName)));
+            }
+        }
+
+        //
+        try (final CloseableHttpResponse response = execute(new HttpGet(binDescMementoUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            try (final CloseableDataset dataset = getDataset(response)) {
+                final DatasetGraph graph = dataset.asDatasetGraph();
+                assertFalse(dataset.isEmpty());
+                assertTrue(graph.contains(ANY, binaryNode, HAS_SIZE.asNode(), createLiteral(originalSize, XSDlong)));
+                assertTrue(graph.contains(ANY, binaryNode, HAS_ORIGINAL_NAME.asNode(),
+                        createLiteral(originalName)));
             }
         }
     }
