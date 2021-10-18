@@ -15,31 +15,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.impl.operations;
+package org.fcrepo.kernel.api.operations;
 
-import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.operations.RdfSourceOperation;
+import org.apache.jena.rdf.model.Model;
 
 /**
- * Abstract operation for interacting with an rdf source
+ * Builder for operations for updating non-RDF source resource headers
  *
  * @author bbpennel
  */
-public abstract class AbstractRdfSourceOperation extends AbstractRelaxableResourceOperation
-                                                 implements RdfSourceOperation {
-
-    protected RdfStream triples;
-
-    protected AbstractRdfSourceOperation(final Transaction transaction, final FedoraId rescId,
-                                         final RdfStream triples) {
-        super(transaction, rescId);
-        this.triples = triples;
-    }
+public interface UpdateNonRdfSourceHeadersOperationBuilder extends RelaxableResourceOperationBuilder,
+        NonRdfSourceOperationBuilder {
+    @Override
+    UpdateNonRdfSourceHeadersOperationBuilder relaxedProperties(Model model);
 
     @Override
-    public RdfStream getTriples() {
-        return triples;
-    }
+    UpdateNonRdfSourceHeadersOperationBuilder mimeType(String mimetype);
+
+    @Override
+    UpdateNonRdfSourceHeadersOperationBuilder filename(String filename);
+
+    @Override
+    UpdateNonRdfSourceHeadersOperation build();
 }

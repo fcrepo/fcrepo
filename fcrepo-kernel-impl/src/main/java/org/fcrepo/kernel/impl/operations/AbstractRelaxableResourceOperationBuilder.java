@@ -19,16 +19,12 @@ package org.fcrepo.kernel.impl.operations;
 
 import org.apache.jena.rdf.model.Model;
 import org.fcrepo.config.ServerManagedPropsMode;
-import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.RelaxableResourceOperationBuilder;
-import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 
 import java.time.Instant;
 
-import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.checkTripleForDisallowed;
 import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getCreatedBy;
 import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getCreatedDate;
 import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getModifiedBy;
@@ -38,13 +34,8 @@ import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getModifiedDat
  * Abstract builder for constructing relaxable resource operations
  * @author bbpennel
  */
-public abstract class AbstractRelaxableResourceOperationBuilder implements RelaxableResourceOperationBuilder {
-
-    /**
-     * String of the resource ID.
-     */
-    protected final FedoraId resourceId;
-
+public abstract class AbstractRelaxableResourceOperationBuilder extends AbstractResourceOperationBuilder
+                                                                implements RelaxableResourceOperationBuilder {
     protected String lastModifiedBy;
 
     protected String createdBy;
@@ -55,12 +46,9 @@ public abstract class AbstractRelaxableResourceOperationBuilder implements Relax
 
     protected ServerManagedPropsMode serverManagedPropsMode;
 
-    protected Transaction transaction;
-
     protected AbstractRelaxableResourceOperationBuilder(final Transaction transaction, final FedoraId rescId,
                                                         final ServerManagedPropsMode serverManagedPropsMode) {
-        this.transaction = transaction;
-        this.resourceId = rescId;
+        super(transaction, rescId);
         this.serverManagedPropsMode = serverManagedPropsMode;
     }
 
@@ -68,7 +56,7 @@ public abstract class AbstractRelaxableResourceOperationBuilder implements Relax
     public RelaxableResourceOperationBuilder relaxedProperties(final Model model) {
         // Has no affect if the server is not in relaxed mode
         if (model != null && serverManagedPropsMode == ServerManagedPropsMode.RELAXED) {
-            final var resc = model.getResource(resourceId.getResourceId());
+            final var resc = model.getResource(rescId.getResourceId());
 
             final var createdDateVal = getCreatedDate(resc);
             if (createdDateVal != null) {

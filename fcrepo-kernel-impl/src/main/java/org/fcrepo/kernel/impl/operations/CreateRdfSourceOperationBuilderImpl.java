@@ -53,7 +53,7 @@ public class CreateRdfSourceOperationBuilderImpl extends AbstractRdfSourceOperat
 
     @Override
     public CreateRdfSourceOperation build() {
-        final var operation = new CreateRdfSourceOperationImpl(transaction, resourceId, interactionModel, tripleStream);
+        final var operation = new CreateRdfSourceOperationImpl(transaction, rescId, interactionModel, tripleStream);
         operation.setParentId(parentId);
         operation.setUserPrincipal(userPrincipal);
         operation.setCreatedBy(createdBy);

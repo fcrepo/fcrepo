@@ -145,7 +145,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         //load the persister list if empty
         persisterList.add(new CreateRdfSourcePersister(this.fedoraOcflIndex));
         persisterList.add(new UpdateRdfSourcePersister(this.fedoraOcflIndex));
-        persisterList.add(new UpdateRdfHeadersPersister(this.fedoraOcflIndex));
+        persisterList.add(new UpdateNonRdfSourceHeadersPersister(this.fedoraOcflIndex));
         persisterList.add(new CreateNonRdfSourcePersister(this.fedoraOcflIndex));
         persisterList.add(new UpdateNonRdfSourcePersister(this.fedoraOcflIndex));
         persisterList.add(new DeleteResourcePersister(this.fedoraOcflIndex));

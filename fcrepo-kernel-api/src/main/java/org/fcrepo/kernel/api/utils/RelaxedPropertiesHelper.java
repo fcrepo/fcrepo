@@ -29,6 +29,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.restrictedType;
 
 import java.util.Calendar;
 
+import com.google.common.net.MediaType;
+import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RelaxableServerManagedPropertyException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
@@ -168,6 +170,17 @@ public class RelaxedPropertiesHelper {
                 throw new RelaxableServerManagedPropertyException(message);
             }
             throw new ServerManagedPropertyException(message);
+        } else if (triple.getPredicate().toString().equals(RdfLexicon.HAS_MIME_TYPE.getURI())) {
+            final String mimetype = triple.getObject().toString(false);
+            if (!mimetype.startsWith("?")) {
+                try {
+                    MediaType.parse(mimetype);
+                } catch (final Exception ex) {
+                    throw new MalformedRdfException("Invalid value for '" + RdfLexicon.HAS_MIME_TYPE +
+                            "' encountered : " + mimetype);
+                }
+
+            }
         }
     }
 

@@ -20,11 +20,13 @@ package org.fcrepo.kernel.impl.services;
 
 import org.apache.jena.rdf.model.Model;
 
+import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
@@ -52,6 +54,9 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
     @Inject
     private RdfSourceOperationFactory factory;
 
+    @Inject
+    private NonRdfSourceOperationFactory nonRdfFactory;
+
     @Override
     public void perform(final Transaction tx,
                         final String userPrincipal,
@@ -65,6 +70,8 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
 
             ensureValidDirectContainer(fedoraId, interactionModel, inputModel);
             ensureValidACLAuthorization(inputModel);
+            // Extract triples which impact the headers of binary resources from incoming description RDF
+            final BinaryHeaderDetails binHeaders = extractNonRdfSourceHeaderTriples(fedoraId, inputModel);
 
             final var rdfStream = fromModel(inputModel.createResource(fedoraId.getFullId()).asNode(), inputModel);
             final var serverManagedMode = fedoraPropsConfig.getServerManagedPropsMode();
@@ -79,9 +86,11 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
                                    .build();
 
                 // we need to use the description id until we write the headers in order to resolve properties
-                secondaryOp = Optional.of(factory.updateManagedHeadersBuilder(tx, fedoraId, serverManagedMode)
+                secondaryOp = Optional.of(nonRdfFactory.updateHeadersBuilder(tx, fedoraId, serverManagedMode)
                                                  .relaxedProperties(inputModel)
                                                  .userPrincipal(userPrincipal)
+                                                 .filename(binHeaders.getFilename())
+                                                 .mimeType(binHeaders.getMimetype())
                                                  .build());
             } else {
                 primaryOp = factory.updateBuilder(tx, fedoraId, serverManagedMode)
@@ -119,5 +128,43 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
                                      final ResourceOperation operation) {
         pSession.persist(operation);
         recordEvent(tx, operation.getResourceId(), operation);
+    }
+
+    protected BinaryHeaderDetails extractNonRdfSourceHeaderTriples(final FedoraId fedoraId, final Model model) {
+        if (!fedoraId.isDescription()) {
+            return null;
+        }
+        final BinaryHeaderDetails details = new BinaryHeaderDetails();
+        final Resource binResc = model.getResource(fedoraId.getBaseId());
+        if (binResc.hasProperty(RdfLexicon.HAS_MIME_TYPE)) {
+            details.setMimetype(binResc.getProperty(RdfLexicon.HAS_MIME_TYPE).getString());
+            binResc.removeAll(RdfLexicon.HAS_MIME_TYPE);
+        }
+        if (binResc.hasProperty(RdfLexicon.HAS_ORIGINAL_NAME)) {
+            details.setFilename(binResc.getProperty(RdfLexicon.HAS_ORIGINAL_NAME).getString());
+            binResc.removeAll(RdfLexicon.HAS_ORIGINAL_NAME);
+        }
+        return details;
+    }
+
+    private static class BinaryHeaderDetails {
+        private String mimetype;
+        private String filename;
+
+        public String getMimetype() {
+            return mimetype;
+        }
+
+        public void setMimetype(final String mimetype) {
+            this.mimetype = mimetype;
+        }
+
+        public String getFilename() {
+            return filename;
+        }
+
+        public void setFilename(final String filename) {
+            this.filename = filename;
+        }
     }
 }

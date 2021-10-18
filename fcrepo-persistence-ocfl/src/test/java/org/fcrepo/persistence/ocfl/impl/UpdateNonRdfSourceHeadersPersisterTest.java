@@ -37,7 +37,7 @@ import java.time.Instant;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
-import org.fcrepo.kernel.api.operations.RdfSourceOperation;
+import org.fcrepo.kernel.api.operations.UpdateNonRdfSourceHeadersOperation;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.storage.ocfl.OcflObjectSession;
 import org.fcrepo.storage.ocfl.ResourceHeaders;
@@ -53,13 +53,13 @@ import org.mockito.junit.MockitoJUnitRunner;
  * @author mikejritter
  */
 @RunWith(MockitoJUnitRunner.class)
-public class UpdateRdfHeadersPersisterTest {
+public class UpdateNonRdfSourceHeadersPersisterTest {
     private static final FedoraId RESOURCE_ID = FedoraId.create("info:fedora/parent/child");
     private static final FedoraId ROOT_RESOURCE_ID = FedoraId.create("info:fedora/parent");
     private static final String USER_PRINCIPAL = "fedoraUser";
 
     @Mock
-    private RdfSourceOperation operation;
+    private UpdateNonRdfSourceHeadersOperation operation;
 
     @Mock
     private OcflObjectSession session;
@@ -76,21 +76,19 @@ public class UpdateRdfHeadersPersisterTest {
     @Captor
     private ArgumentCaptor<ResourceHeaders> headersCaptor;
 
-    private UpdateRdfHeadersPersister persister;
+    private UpdateNonRdfSourceHeadersPersister persister;
 
     @Mock
     private Transaction transaction;
 
     @Before
     public void setup() throws Exception {
-        operation = mock(RdfSourceOperation.class);
-
         when(psSession.findOrCreateSession(anyString())).thenReturn(session);
         when(index.getMapping(eq(transaction), any())).thenReturn(mapping);
         when(operation.getType()).thenReturn(UPDATE_HEADERS);
         when(operation.getTransaction()).thenReturn(transaction);
 
-        persister = new UpdateRdfHeadersPersister(index);
+        persister = new UpdateNonRdfSourceHeadersPersister(index);
     }
 
     @Test

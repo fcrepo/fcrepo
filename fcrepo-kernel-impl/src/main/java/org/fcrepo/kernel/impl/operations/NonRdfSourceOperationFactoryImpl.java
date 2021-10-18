@@ -20,10 +20,12 @@ package org.fcrepo.kernel.impl.operations;
 import java.io.InputStream;
 import java.net.URI;
 
+import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateNonRdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
+import org.fcrepo.kernel.api.operations.UpdateNonRdfSourceHeadersOperationBuilder;
 import org.springframework.stereotype.Component;
 
 /**
@@ -63,4 +65,10 @@ public class NonRdfSourceOperationFactoryImpl implements NonRdfSourceOperationFa
         return new CreateNonRdfSourceOperationBuilderImpl(transaction, rescId, contentStream);
     }
 
+    @Override
+    public UpdateNonRdfSourceHeadersOperationBuilder updateHeadersBuilder(final Transaction transaction,
+                                                               final FedoraId rescId,
+                                                               final ServerManagedPropsMode serverManagedPropsMode) {
+        return new UpdateNonRdfSourceHeadersOperationBuilderImpl(transaction, rescId, serverManagedPropsMode);
+    }
 }

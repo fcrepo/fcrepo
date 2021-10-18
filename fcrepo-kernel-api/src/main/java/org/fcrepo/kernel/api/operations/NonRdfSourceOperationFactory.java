@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.api.operations;
 
+import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
@@ -76,4 +77,16 @@ public interface NonRdfSourceOperationFactory extends ResourceOperationFactory {
      */
     CreateNonRdfSourceOperationBuilder createInternalBinaryBuilder(Transaction transaction, FedoraId rescId,
                                                                    InputStream contentStream);
+
+    /**
+     * Get a builder for an operation to update headers of a Non-RDF resource
+     *
+     * @param transaction the transaction
+     * @param resourceId id of the resource targeted by the operation
+     * @param serverManagedPropsMode server managed props mode
+     * @return new builder
+     */
+    UpdateNonRdfSourceHeadersOperationBuilder updateHeadersBuilder(Transaction transaction,
+                                                          FedoraId resourceId,
+                                                          ServerManagedPropsMode serverManagedPropsMode);
 }

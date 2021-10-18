@@ -19,9 +19,8 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE_HEADERS;
 
-
-import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.kernel.api.operations.UpdateNonRdfSourceHeadersOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.storage.ocfl.OcflObjectSession;
@@ -34,7 +33,7 @@ import org.slf4j.LoggerFactory;
  * @author mikejritter
  * @since 6.0.0
  */
-public class UpdateRdfHeadersPersister extends AbstractRdfSourcePersister {
+public class UpdateNonRdfSourceHeadersPersister extends AbstractRdfSourcePersister {
 
     private static final Logger log = LoggerFactory.getLogger(UpdateRdfSourcePersister.class);
 
@@ -43,8 +42,8 @@ public class UpdateRdfHeadersPersister extends AbstractRdfSourcePersister {
      *
      * @param fedoraOcflIndex the FedoraToOcflObjectIndex
      */
-    public UpdateRdfHeadersPersister(final FedoraToOcflObjectIndex fedoraOcflIndex) {
-        super(RdfSourceOperation.class, UPDATE_HEADERS, fedoraOcflIndex);
+    public UpdateNonRdfSourceHeadersPersister(final FedoraToOcflObjectIndex fedoraOcflIndex) {
+        super(UpdateNonRdfSourceHeadersOperation.class, UPDATE_HEADERS, fedoraOcflIndex);
     }
 
     @Override
@@ -61,11 +60,13 @@ public class UpdateRdfHeadersPersister extends AbstractRdfSourcePersister {
         // in the event the server managed mode is strict, all values will be null
         final var headers = new ResourceHeadersAdapter(objSession.readHeaders(resourceId.getResourceId()));
 
-        final RdfSourceOperation rdfSourceOp = (RdfSourceOperation) operation;
-        final var createdDate = rdfSourceOp.getCreatedDate();
-        final var lastModifiedDate = rdfSourceOp.getLastModifiedDate();
-        final var createdBy = rdfSourceOp.getCreatedBy();
-        final var lastModifiedBy = rdfSourceOp.getLastModifiedBy();
+        final var updateHeadersOp = (UpdateNonRdfSourceHeadersOperation) operation;
+        final var createdDate = updateHeadersOp.getCreatedDate();
+        final var lastModifiedDate = updateHeadersOp.getLastModifiedDate();
+        final var createdBy = updateHeadersOp.getCreatedBy();
+        final var lastModifiedBy = updateHeadersOp.getLastModifiedBy();
+        final var mimetype = updateHeadersOp.getMimeType();
+        final var filename = updateHeadersOp.getFilename();
         if (createdDate != null) {
             headers.setCreatedDate(createdDate);
         }
@@ -77,6 +78,12 @@ public class UpdateRdfHeadersPersister extends AbstractRdfSourcePersister {
         }
         if (lastModifiedBy != null) {
             headers.setLastModifiedBy(lastModifiedBy);
+        }
+        if (mimetype != null) {
+            headers.setMimeType(mimetype);
+        }
+        if (filename != null) {
+            headers.setFilename(filename);
         }
 
         objSession.writeHeaders(headers.asStorageHeaders());

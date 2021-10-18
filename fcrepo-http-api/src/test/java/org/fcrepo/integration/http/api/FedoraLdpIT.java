@@ -82,7 +82,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.EBUCORE_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
@@ -186,6 +185,7 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.DatasetGraph;
@@ -1105,28 +1105,30 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testPatchBinaryNameAndType() throws IOException {
+    public void testPatchBinaryNameAndType() throws Exception {
         final String pid = getRandomUniqueId();
 
-        createDatastream(pid, "x", "some content");
+        final String dsLocation = createDatastream(pid, "x", "some content");
+        verifyContentType(dsLocation, "text/plain");
+        verifyContentDispositionFilename(dsLocation, null);
 
-        final String location = serverAddress + pid + "/x/fcr:metadata";
+        final String location = dsLocation + "/fcr:metadata";
         final HttpPatch patch = new HttpPatch(location);
         patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         patch.setEntity(new StringEntity("DELETE { " +
-                "<" + serverAddress + pid + "/x> <" + HAS_MIME_TYPE + "> ?any . } " +
+                "<" + dsLocation + "> <" + HAS_MIME_TYPE + "> ?any . } " +
                 "WHERE {" +
-                "<" + serverAddress + pid + "/x> <" + HAS_MIME_TYPE + "> ?any . } ; " +
+                "<" + dsLocation + "> <" + HAS_MIME_TYPE + "> ?any . } ; " +
                 "INSERT {" +
-                "<" + serverAddress + pid + "/x> <" + HAS_MIME_TYPE + "> \"text/awesome\" ." +
-                "<" + serverAddress + pid + "/x> <" + HAS_ORIGINAL_NAME + "> \"x.txt\" }" +
+                "<" + dsLocation + "> <" + HAS_MIME_TYPE + "> \"text/awesome\" ." +
+                "<" + dsLocation + "> <" + HAS_ORIGINAL_NAME + "> \"x.txt\" }" +
                 "WHERE {}"));
 
         try (final CloseableHttpResponse response = client.execute(patch)) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
             try (final CloseableDataset dataset = getDataset(new HttpGet(location))) {
                 final DatasetGraph graphStore = dataset.asDatasetGraph();
-                final Node subject = createURI(serverAddress + pid + "/x");
+                final Node subject = createURI(dsLocation);
                 assertTrue(graphStore.contains(ANY, subject, HAS_MIME_TYPE.asNode(), createLiteral("text/awesome")));
                 assertTrue(graphStore.contains(ANY, subject, HAS_ORIGINAL_NAME.asNode(), createLiteral("x.txt")));
                 assertFalse("Should not contain old mime type property", graphStore.contains(ANY,
@@ -1136,6 +1138,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // Ensure binary can be downloaded (test against regression of: https://jira.duraspace.org/browse/FCREPO-1720)
         assertEquals(OK.getStatusCode(), getStatus(getDSMethod(pid, "x")));
+
+        // Ensure headers for binary have updated, FCREPO-3739
+        verifyContentType(dsLocation, "text/awesome");
+        verifyContentDispositionFilename(dsLocation, "x.txt");
     }
 
     @Test
@@ -1997,45 +2003,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testUpdateBinaryHeadersViaPatch() throws ParseException, IOException {
-        final HttpPost method = postObjMethod();
-        final File img = new File("src/test/resources/test-objects/img.png");
-        final String filename = "some-file.png";
-        method.addHeader(CONTENT_TYPE, "application/octet-stream");
-        method.addHeader(CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"");
-        method.setEntity(new FileEntity(img));
-        method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
-
-        // Create a binary resource with content-disposition
-        final String location;
-        try (final CloseableHttpResponse response = execute(method)) {
-            assertEquals("Should be a 201 Created!", CREATED.getStatusCode(), getStatus(response));
-            location = getLocation(response);
-        }
-
-        // Retrieve the new resource and verify the content-disposition
-        verifyContentDispositionFilename(location, filename);
-
-        // Update the filename and content type
-        final String filename2 = "new-file.png";
-        final String contentType2 = "image/png";
-        final HttpPatch patch = new HttpPatch(location + "/" + FCR_METADATA);
-        patch.setHeader(CONTENT_TYPE, "application/sparql-update");
-        final String updateString = "PREFIX ebucore: <http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#>\n" +
-        "DELETE { <> ebucore:filename ?x . <> ebucore:hasMimetype ?y }\n" +
-        "INSERT { <> ebucore:filename \"" + filename2 + "\" ." +
-                "<> ebucore:hasMimetype \"" + contentType2 + "\"}\n" +
-        "WHERE { <> ebucore:filename ?x . <> ebucore:hasMimetype ?y }";
-
-        patch.setEntity(new StringEntity(updateString));
-        assertEquals(location, NO_CONTENT.getStatusCode(), getStatus(patch));
-
-        // Verify the binary headers updated
-        verifyContentType(location, contentType2);
-        verifyContentDispositionFilename(location, filename2);
-    }
-
-    @Test
     public void testUpdateBinaryHeadersViaPut() throws Exception {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
@@ -2060,8 +2027,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpPut replaceMethod = new HttpPut(location + "/" + FCR_METADATA);
         replaceMethod.addHeader(CONTENT_TYPE, "text/turtle");
         replaceMethod.setEntity(new StringEntity(
-                "<> <" + EBUCORE_NAMESPACE + "filename> \"" + filename2 + "\" ;"
-                + " <" + EBUCORE_NAMESPACE + "hasMimetype> \"" + contentType2 + "\""));
+                "<" + location + "> <" + HAS_ORIGINAL_NAME.getURI() + "> \"" + filename2 + "\" ;"
+                + " <" + HAS_MIME_TYPE.getURI() + "> \"" + contentType2 + "\""));
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(replaceMethod));
 
         // Verify the binary headers updated
@@ -2980,8 +2947,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testBinarySetBadMimeType() throws IOException {
-        final String subjectURI = serverAddress + getRandomUniqueId();
+    public void testBinarySetBadMimeType() throws Exception {
+        final String binId = getRandomUniqueId();
+        final String subjectURI = serverAddress + binId;
         final HttpPut createMethod = new HttpPut(subjectURI);
         createMethod.addHeader(CONTENT_TYPE, "text/plain");
         createMethod.setEntity(new StringEntity("Some text here."));
@@ -2996,7 +2964,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 "INSERT { <" + subjectURI + "> ebucore:hasMimeType \"-- invalid syntax! --\" } WHERE {}")
         );
 
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patch));
 
         // make sure it's still retrievable
         final HttpGet getMethod = new HttpGet(subjectURI);
@@ -3015,6 +2983,23 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue("HEAD: Expected 'text/plain' instead got: '" + contentType + "'",
                     contentType.contains("text/plain"));
         }
+        final Model model = getModel(binId + "/fcr:metadata");
+        final Resource binResc = model.getResource(subjectURI);
+        final Statement mimetypeStmt = binResc.getProperty(HAS_MIME_TYPE);
+        assertEquals("Expected binary description to retain previous mimetype",
+                "text/plain", mimetypeStmt.getString());
+    }
+
+    @Test
+    public void testBinarySetBadMimeTypeViaHeader() throws Exception {
+        final String binId = getRandomUniqueId();
+        final String subjectURI = serverAddress + binId;
+        final HttpPut createMethod = new HttpPut(subjectURI);
+        createMethod.addHeader(CONTENT_TYPE, "-- invalid syntax! --");
+        createMethod.setEntity(new StringEntity("Some text here."));
+        createMethod.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(createMethod));
     }
 
     @Test

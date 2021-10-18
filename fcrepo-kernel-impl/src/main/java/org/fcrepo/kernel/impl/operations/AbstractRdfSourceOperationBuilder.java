@@ -18,12 +18,6 @@
 package org.fcrepo.kernel.impl.operations;
 
 import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.checkTripleForDisallowed;
-import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getCreatedBy;
-import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getCreatedDate;
-import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getModifiedBy;
-import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getModifiedDate;
-
-import java.time.Instant;
 
 import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.RdfStream;
