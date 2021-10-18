@@ -132,6 +132,7 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -1145,6 +1146,56 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testPatchBinaryMultipleTypes() throws Exception {
+        final String pid = getRandomUniqueId();
+
+        final String dsLocation = createDatastream(pid, "x", "some content");
+        verifyContentType(dsLocation, "text/plain");
+        verifyContentDispositionFilename(dsLocation, null);
+
+        final String location = dsLocation + "/fcr:metadata";
+        final HttpPatch patch = new HttpPatch(location);
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patch.setEntity(new StringEntity(
+                "INSERT {" +
+                "<" + dsLocation + "> <" + HAS_MIME_TYPE + "> \"text/awesome\" ." +
+                "<" + dsLocation + "> <" + HAS_MIME_TYPE + "> \"text/moreawesome\" }" +
+                "WHERE {}"));
+
+        try (final CloseableHttpResponse response = client.execute(patch)) {
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response));
+            final String body = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+            assertTrue(body.contains("Invalid RDF, cannot provided multiple values for property " + HAS_MIME_TYPE));
+        }
+
+        verifyContentType(dsLocation, "text/plain");
+    }
+
+    @Test
+    public void testPatchBinaryMultipleFilenames() throws Exception {
+        final String pid = getRandomUniqueId();
+
+        final String dsLocation = createDatastream(pid, "x", "some content");
+        verifyContentType(dsLocation, "text/plain");
+        verifyContentDispositionFilename(dsLocation, null);
+
+        final String location = dsLocation + "/fcr:metadata";
+        final HttpPatch patch = new HttpPatch(location);
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patch.setEntity(new StringEntity(
+                "INSERT {" +
+                        "<" + dsLocation + "> <" + HAS_ORIGINAL_NAME + "> \"file1.txt\" ." +
+                        "<" + dsLocation + "> <" + HAS_ORIGINAL_NAME + "> \"file2.txt\" }" +
+                        "WHERE {}"));
+
+        try (final CloseableHttpResponse response = client.execute(patch)) {
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response));
+            final String body = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+            assertTrue(body.contains("Invalid RDF, cannot provided multiple values for property " + HAS_ORIGINAL_NAME));
+        }
+    }
+
+    @Test
     public void testPatchWithBlankNode() throws Exception {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -2034,6 +2085,47 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // Verify the binary headers updated
         verifyContentType(location, contentType2);
         verifyContentDispositionFilename(location, filename2);
+    }
+
+    @Test
+    public void testUpdateBinaryHeadersViaPutMultipleMimetypes() throws Exception {
+        final HttpPost method = postObjMethod();
+        final File img = new File("src/test/resources/test-objects/img.png");
+        method.addHeader(CONTENT_TYPE, "application/octet-stream");
+        method.setEntity(new FileEntity(img));
+        method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        final String location = getLocation(method);
+
+        final HttpPut replaceMethod = new HttpPut(location + "/" + FCR_METADATA);
+        replaceMethod.addHeader(CONTENT_TYPE, "text/turtle");
+        replaceMethod.setEntity(new StringEntity(
+                "<" + location + "> <" + HAS_MIME_TYPE.getURI() + "> \"image/ping\" ;"
+                        + " <" + HAS_MIME_TYPE.getURI() + "> \"image/pong\""));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(replaceMethod));
+
+        // Verify the binary headers not updated
+        verifyContentType(location, "application/octet-stream");
+    }
+
+    @Test
+    public void testUpdateBinaryHeadersViaPutMultipleFilenames() throws Exception {
+        final HttpPost method = postObjMethod();
+        final String filename = "some-file.png";
+        final File img = new File("src/test/resources/test-objects/img.png");
+        method.addHeader(CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"");
+        method.setEntity(new FileEntity(img));
+        method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        final String location = getLocation(method);
+
+        final HttpPut replaceMethod = new HttpPut(location + "/" + FCR_METADATA);
+        replaceMethod.addHeader(CONTENT_TYPE, "text/turtle");
+        replaceMethod.setEntity(new StringEntity(
+                "<" + location + "> <" + HAS_ORIGINAL_NAME.getURI() + "> \"image1.png\" ;"
+                        + " <" + HAS_ORIGINAL_NAME.getURI() + "> \"image2.png\""));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(replaceMethod));
+
+        // Verify the binary headers not updated
+        verifyContentDispositionFilename(location, filename);
     }
 
     private void verifyContentDispositionFilename(final String location, final String filename)

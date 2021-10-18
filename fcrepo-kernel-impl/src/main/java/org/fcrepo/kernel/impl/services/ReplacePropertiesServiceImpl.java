@@ -21,6 +21,7 @@ package org.fcrepo.kernel.impl.services;
 import org.apache.jena.rdf.model.Model;
 
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
@@ -39,6 +40,7 @@ import javax.inject.Inject;
 
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -137,11 +139,21 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
         final BinaryHeaderDetails details = new BinaryHeaderDetails();
         final Resource binResc = model.getResource(fedoraId.getBaseId());
         if (binResc.hasProperty(RdfLexicon.HAS_MIME_TYPE)) {
-            details.setMimetype(binResc.getProperty(RdfLexicon.HAS_MIME_TYPE).getString());
+            final List<Statement> mimetypes = binResc.listProperties(RdfLexicon.HAS_MIME_TYPE).toList();
+            if (mimetypes.size() > 1) {
+                throw new MalformedRdfException("Invalid RDF, cannot provided multiple values for property "
+                        + RdfLexicon.HAS_MIME_TYPE);
+            }
+            details.setMimetype(mimetypes.get(0).getString());
             binResc.removeAll(RdfLexicon.HAS_MIME_TYPE);
         }
         if (binResc.hasProperty(RdfLexicon.HAS_ORIGINAL_NAME)) {
-            details.setFilename(binResc.getProperty(RdfLexicon.HAS_ORIGINAL_NAME).getString());
+            final List<Statement> filenames = binResc.listProperties(RdfLexicon.HAS_ORIGINAL_NAME).toList();
+            if (filenames.size() > 1) {
+                throw new MalformedRdfException("Invalid RDF, cannot provided multiple values for property "
+                        + RdfLexicon.HAS_ORIGINAL_NAME);
+            }
+            details.setFilename(filenames.get(0).getString());
             binResc.removeAll(RdfLexicon.HAS_ORIGINAL_NAME);
         }
         return details;

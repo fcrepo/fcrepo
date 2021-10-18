@@ -177,7 +177,7 @@ public class RelaxedPropertiesHelper {
                     MediaType.parse(mimetype);
                 } catch (final Exception ex) {
                     throw new MalformedRdfException("Invalid value for '" + RdfLexicon.HAS_MIME_TYPE +
-                            "' encountered : " + mimetype);
+                            "' encountered : " + mimetype, ex);
                 }
 
             }
