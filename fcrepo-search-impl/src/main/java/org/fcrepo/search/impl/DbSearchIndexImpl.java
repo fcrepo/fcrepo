@@ -691,7 +691,7 @@ public class DbSearchIndexImpl implements SearchIndex {
         if (instant == null) {
             return null;
         }
-        return Timestamp.from(instant.truncatedTo(ChronoUnit.SECONDS));
+        return Timestamp.from(instant.truncatedTo(ChronoUnit.MILLIS));
     }
 
     private void insertRdfTypeAssociationsInTransaction(final Set<URI> rdfTypes,
