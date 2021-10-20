@@ -53,17 +53,4 @@ public interface RdfSourceOperationFactory extends ResourceOperationFactory {
      */
     RdfSourceOperationBuilder updateBuilder(Transaction transaction, FedoraId rescId,
                                             final ServerManagedPropsMode serverManagedPropsMode);
-
-    /**
-     * Get a builder for an operation to update server managed properties of an RDF source
-     *
-     * @param transaction the transaction
-     * @param resourceId id of the resource targeted by the operation
-     * @param serverManagedPropsMode server managed props mode
-     * @return new builder
-     */
-    RdfSourceOperationBuilder updateManagedHeadersBuilder(Transaction transaction,
-                                                          FedoraId resourceId,
-                                                          ServerManagedPropsMode serverManagedPropsMode);
-
 }

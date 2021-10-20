@@ -17,30 +17,39 @@
  */
 package org.fcrepo.kernel.api.operations;
 
-import org.apache.jena.rdf.model.Model;
-import org.fcrepo.kernel.api.RdfStream;
+import java.time.Instant;
 
 /**
- * Builder for constructing an RdfSourceOperation
+ * Operation involving a resource with relaxable server managed properties
  *
  * @author bbpennel
  */
-public interface RdfSourceOperationBuilder extends RelaxableResourceOperationBuilder {
-
-    @Override
-    RdfSourceOperationBuilder userPrincipal(String userPrincipal);
-
-    @Override
-    RdfSourceOperation build();
+public interface RelaxableResourceOperation extends ResourceOperation {
+    /**
+     * Get last modified by
+     *
+     * @return user that last modified the resource
+     */
+    String getLastModifiedBy();
 
     /**
-     * Set the triples for the operation
+     * Get created by
      *
-     * @param triples the resource's triples
-     * @return this builder
+     * @return user that created the resource
      */
-    RdfSourceOperationBuilder triples(RdfStream triples);
+    String getCreatedBy();
 
-    @Override
-    RdfSourceOperationBuilder relaxedProperties(Model model);
+    /**
+     * Get the timestamp the resource was last modified
+     *
+     * @return timestamp
+     */
+    Instant getLastModifiedDate();
+
+    /**
+     * Get the timestamp the resource was created
+     *
+     * @return timestamp
+     */
+    Instant getCreatedDate();
 }

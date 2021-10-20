@@ -17,8 +17,6 @@
  */
 package org.fcrepo.kernel.api.operations;
 
-import java.time.Instant;
-
 import org.fcrepo.kernel.api.RdfStream;
 
 /**
@@ -26,7 +24,7 @@ import org.fcrepo.kernel.api.RdfStream;
  *
  * @author bbpennel
  */
-public interface RdfSourceOperation extends ResourceOperation {
+public interface RdfSourceOperation extends RelaxableResourceOperation {
 
     /**
      * Get the incoming user space triples for the resource
@@ -35,31 +33,4 @@ public interface RdfSourceOperation extends ResourceOperation {
      */
     RdfStream getTriples();
 
-    /**
-     * Get last modified by
-     *
-     * @return user that last modified the resource
-     */
-    String getLastModifiedBy();
-
-    /**
-     * Get created by
-     *
-     * @return user that created the resource
-     */
-    String getCreatedBy();
-
-    /**
-     * Get the timestamp the resource was last modified
-     *
-     * @return timestamp
-     */
-    Instant getLastModifiedDate();
-
-    /**
-     * Get the timestamp the resource was created
-     *
-     * @return timestamp
-     */
-    Instant getCreatedDate();
 }

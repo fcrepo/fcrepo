@@ -133,6 +133,7 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -186,6 +187,7 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.DatasetGraph;
@@ -1105,28 +1107,30 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testPatchBinaryNameAndType() throws IOException {
+    public void testPatchBinaryNameAndType() throws Exception {
         final String pid = getRandomUniqueId();
 
-        createDatastream(pid, "x", "some content");
+        final String dsLocation = createDatastream(pid, "x", "some content");
+        verifyContentType(dsLocation, "text/plain");
+        verifyContentDispositionFilename(dsLocation, null);
 
-        final String location = serverAddress + pid + "/x/fcr:metadata";
+        final String location = dsLocation + "/fcr:metadata";
         final HttpPatch patch = new HttpPatch(location);
         patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         patch.setEntity(new StringEntity("DELETE { " +
-                "<" + serverAddress + pid + "/x> <" + HAS_MIME_TYPE + "> ?any . } " +
+                "<" + dsLocation + "> <" + HAS_MIME_TYPE + "> ?any . } " +
                 "WHERE {" +
-                "<" + serverAddress + pid + "/x> <" + HAS_MIME_TYPE + "> ?any . } ; " +
+                "<" + dsLocation + "> <" + HAS_MIME_TYPE + "> ?any . } ; " +
                 "INSERT {" +
-                "<" + serverAddress + pid + "/x> <" + HAS_MIME_TYPE + "> \"text/awesome\" ." +
-                "<" + serverAddress + pid + "/x> <" + HAS_ORIGINAL_NAME + "> \"x.txt\" }" +
+                "<" + dsLocation + "> <" + HAS_MIME_TYPE + "> \"text/awesome\" ." +
+                "<" + dsLocation + "> <" + HAS_ORIGINAL_NAME + "> \"x.txt\" }" +
                 "WHERE {}"));
 
         try (final CloseableHttpResponse response = client.execute(patch)) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
             try (final CloseableDataset dataset = getDataset(new HttpGet(location))) {
                 final DatasetGraph graphStore = dataset.asDatasetGraph();
-                final Node subject = createURI(serverAddress + pid + "/x");
+                final Node subject = createURI(dsLocation);
                 assertTrue(graphStore.contains(ANY, subject, HAS_MIME_TYPE.asNode(), createLiteral("text/awesome")));
                 assertTrue(graphStore.contains(ANY, subject, HAS_ORIGINAL_NAME.asNode(), createLiteral("x.txt")));
                 assertFalse("Should not contain old mime type property", graphStore.contains(ANY,
@@ -1136,6 +1140,60 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // Ensure binary can be downloaded (test against regression of: https://jira.duraspace.org/browse/FCREPO-1720)
         assertEquals(OK.getStatusCode(), getStatus(getDSMethod(pid, "x")));
+
+        // Ensure headers for binary have updated, FCREPO-3739
+        verifyContentType(dsLocation, "text/awesome");
+        verifyContentDispositionFilename(dsLocation, "x.txt");
+    }
+
+    @Test
+    public void testPatchBinaryMultipleTypes() throws Exception {
+        final String pid = getRandomUniqueId();
+
+        final String dsLocation = createDatastream(pid, "x", "some content");
+        verifyContentType(dsLocation, "text/plain");
+        verifyContentDispositionFilename(dsLocation, null);
+
+        final String location = dsLocation + "/fcr:metadata";
+        final HttpPatch patch = new HttpPatch(location);
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patch.setEntity(new StringEntity(
+                "INSERT {" +
+                "<" + dsLocation + "> <" + HAS_MIME_TYPE + "> \"text/awesome\" ." +
+                "<" + dsLocation + "> <" + HAS_MIME_TYPE + "> \"text/moreawesome\" }" +
+                "WHERE {}"));
+
+        try (final CloseableHttpResponse response = client.execute(patch)) {
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response));
+            final String body = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+            assertTrue(body.contains("Invalid RDF, cannot provided multiple values for property " + HAS_MIME_TYPE));
+        }
+
+        verifyContentType(dsLocation, "text/plain");
+    }
+
+    @Test
+    public void testPatchBinaryMultipleFilenames() throws Exception {
+        final String pid = getRandomUniqueId();
+
+        final String dsLocation = createDatastream(pid, "x", "some content");
+        verifyContentType(dsLocation, "text/plain");
+        verifyContentDispositionFilename(dsLocation, null);
+
+        final String location = dsLocation + "/fcr:metadata";
+        final HttpPatch patch = new HttpPatch(location);
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patch.setEntity(new StringEntity(
+                "INSERT {" +
+                        "<" + dsLocation + "> <" + HAS_ORIGINAL_NAME + "> \"file1.txt\" ." +
+                        "<" + dsLocation + "> <" + HAS_ORIGINAL_NAME + "> \"file2.txt\" }" +
+                        "WHERE {}"));
+
+        try (final CloseableHttpResponse response = client.execute(patch)) {
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response));
+            final String body = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+            assertTrue(body.contains("Invalid RDF, cannot provided multiple values for property " + HAS_ORIGINAL_NAME));
+        }
     }
 
     @Test
@@ -1934,7 +1992,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
         final String filename = "some-file.png";
-        method.addHeader(CONTENT_TYPE, "application/png");
+        final String contentType = "application/png";
+        method.addHeader(CONTENT_TYPE, contentType);
         method.addHeader(CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"");
         method.setEntity(new FileEntity(img));
         method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
@@ -1945,26 +2004,21 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals("Should be a 201 Created!", CREATED.getStatusCode(), getStatus(response));
             location = getLocation(response);
         }
+        verifyContentType(location, contentType);
+
+        // Change binary headers via PUT headers
+        final HttpPut putMethod = new HttpPut(location);
+        final String filename2 = "some-other.png";
+        final String contentType2 = "image/png";
+        putMethod.addHeader(CONTENT_TYPE, contentType2);
+        putMethod.addHeader(CONTENT_DISPOSITION, "attachment; filename=\"" + filename2 + "\"");
+        putMethod.setEntity(new FileEntity(img));
+
+        assertEquals(location, NO_CONTENT.getStatusCode(), getStatus(putMethod));
 
         // Retrieve the new resource and verify the content-disposition
-        verifyContentDispositionFilename(location, filename);
-
-        // TODO enable once PATCH is working
-        // DO WE WANT TO ALTER THE USER'S RDF BY ADDING THE TRIPLES?
-        // Update the filename
-        // final String filename1 = "new-file.png";
-        // final HttpPatch patch = new HttpPatch(location + "/" + FCR_METADATA);
-        // patch.setHeader(CONTENT_TYPE, "application/sparql-update");
-        // final String updateString = "PREFIX ebucore: <http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#>\n" +
-        // "DELETE { <> ebucore:filename ?x}\n" +
-        // "INSERT { <> ebucore:filename \"" + filename1 + "\"}\n" +
-        // "WHERE { <> ebucore:filename ?x}";
-        //
-        // patch.setEntity(new StringEntity(updateString));
-        // assertEquals(location, NO_CONTENT.getStatusCode(), getStatus(patch));
-        //
-        // // Retrieve the new resource and verify the content-disposition
-        // verifyContentDispositionFilename(location, filename1);
+        verifyContentDispositionFilename(location, filename2);
+        verifyContentType(location, contentType2);
     }
 
     @Test
@@ -2000,6 +2054,81 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
+    @Test
+    public void testUpdateBinaryHeadersViaPut() throws Exception {
+        final HttpPost method = postObjMethod();
+        final File img = new File("src/test/resources/test-objects/img.png");
+        final String filename = "some-file.png";
+        method.addHeader(CONTENT_TYPE, "application/octet-stream");
+        method.addHeader(CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"");
+        method.setEntity(new FileEntity(img));
+        method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+
+        // Create a binary resource with content-disposition
+        final String location;
+        try (final CloseableHttpResponse response = execute(method)) {
+            assertEquals("Should be a 201 Created!", CREATED.getStatusCode(), getStatus(response));
+            location = getLocation(response);
+        }
+
+        // Retrieve the new resource and verify the content-disposition
+        verifyContentDispositionFilename(location, filename);
+
+        final String filename2 = "new-file.png";
+        final String contentType2 = "image/png";
+        final HttpPut replaceMethod = new HttpPut(location + "/" + FCR_METADATA);
+        replaceMethod.addHeader(CONTENT_TYPE, "text/turtle");
+        replaceMethod.setEntity(new StringEntity(
+                "<" + location + "> <" + HAS_ORIGINAL_NAME.getURI() + "> \"" + filename2 + "\" ;"
+                + " <" + HAS_MIME_TYPE.getURI() + "> \"" + contentType2 + "\""));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(replaceMethod));
+
+        // Verify the binary headers updated
+        verifyContentType(location, contentType2);
+        verifyContentDispositionFilename(location, filename2);
+    }
+
+    @Test
+    public void testUpdateBinaryHeadersViaPutMultipleMimetypes() throws Exception {
+        final HttpPost method = postObjMethod();
+        final File img = new File("src/test/resources/test-objects/img.png");
+        method.addHeader(CONTENT_TYPE, "application/octet-stream");
+        method.setEntity(new FileEntity(img));
+        method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        final String location = getLocation(method);
+
+        final HttpPut replaceMethod = new HttpPut(location + "/" + FCR_METADATA);
+        replaceMethod.addHeader(CONTENT_TYPE, "text/turtle");
+        replaceMethod.setEntity(new StringEntity(
+                "<" + location + "> <" + HAS_MIME_TYPE.getURI() + "> \"image/ping\" ;"
+                        + " <" + HAS_MIME_TYPE.getURI() + "> \"image/pong\""));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(replaceMethod));
+
+        // Verify the binary headers not updated
+        verifyContentType(location, "application/octet-stream");
+    }
+
+    @Test
+    public void testUpdateBinaryHeadersViaPutMultipleFilenames() throws Exception {
+        final HttpPost method = postObjMethod();
+        final String filename = "some-file.png";
+        final File img = new File("src/test/resources/test-objects/img.png");
+        method.addHeader(CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"");
+        method.setEntity(new FileEntity(img));
+        method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        final String location = getLocation(method);
+
+        final HttpPut replaceMethod = new HttpPut(location + "/" + FCR_METADATA);
+        replaceMethod.addHeader(CONTENT_TYPE, "text/turtle");
+        replaceMethod.setEntity(new StringEntity(
+                "<" + location + "> <" + HAS_ORIGINAL_NAME.getURI() + "> \"image1.png\" ;"
+                        + " <" + HAS_ORIGINAL_NAME.getURI() + "> \"image2.png\""));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(replaceMethod));
+
+        // Verify the binary headers not updated
+        verifyContentDispositionFilename(location, filename);
+    }
+
     private void verifyContentDispositionFilename(final String location, final String filename)
             throws IOException, ParseException {
         final HttpHead head = new HttpHead(location);
@@ -2009,6 +2138,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
             final ContentDisposition contentDisposition = new ContentDisposition(header.getValue());
             assertEquals(filename, contentDisposition.getFileName());
+        }
+    }
+
+    private void verifyContentType(final String location, final String expectedType) throws IOException {
+        try (final CloseableHttpResponse getResponse = execute(new HttpHead(location))) {
+            assertEquals(expectedType, getResponse.getFirstHeader(CONTENT_TYPE).getValue());
         }
     }
 
@@ -2905,8 +3040,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testBinarySetBadMimeType() throws IOException {
-        final String subjectURI = serverAddress + getRandomUniqueId();
+    public void testBinarySetBadMimeType() throws Exception {
+        final String binId = getRandomUniqueId();
+        final String subjectURI = serverAddress + binId;
         final HttpPut createMethod = new HttpPut(subjectURI);
         createMethod.addHeader(CONTENT_TYPE, "text/plain");
         createMethod.setEntity(new StringEntity("Some text here."));
@@ -2921,7 +3057,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 "INSERT { <" + subjectURI + "> ebucore:hasMimeType \"-- invalid syntax! --\" } WHERE {}")
         );
 
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patch));
 
         // make sure it's still retrievable
         final HttpGet getMethod = new HttpGet(subjectURI);
@@ -2940,6 +3076,23 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue("HEAD: Expected 'text/plain' instead got: '" + contentType + "'",
                     contentType.contains("text/plain"));
         }
+        final Model model = getModel(binId + "/fcr:metadata");
+        final Resource binResc = model.getResource(subjectURI);
+        final Statement mimetypeStmt = binResc.getProperty(HAS_MIME_TYPE);
+        assertEquals("Expected binary description to retain previous mimetype",
+                "text/plain", mimetypeStmt.getString());
+    }
+
+    @Test
+    public void testBinarySetBadMimeTypeViaHeader() throws Exception {
+        final String binId = getRandomUniqueId();
+        final String subjectURI = serverAddress + binId;
+        final HttpPut createMethod = new HttpPut(subjectURI);
+        createMethod.addHeader(CONTENT_TYPE, "-- invalid syntax! --");
+        createMethod.setEntity(new StringEntity("Some text here."));
+        createMethod.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(createMethod));
     }
 
     @Test

@@ -40,10 +40,12 @@ import org.fcrepo.kernel.api.cache.UserTypesCache;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
+import org.fcrepo.kernel.impl.operations.NonRdfSourceOperationFactoryImpl;
 import org.fcrepo.kernel.impl.operations.RdfSourceOperationFactoryImpl;
 import org.fcrepo.kernel.impl.operations.UpdateRdfSourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
@@ -110,6 +112,8 @@ public class ReplacePropertiesServiceImplTest {
 
     private RdfSourceOperationFactory factory;
 
+    private NonRdfSourceOperationFactory nonRdfFactory;
+
     @Captor
     private ArgumentCaptor<RdfSourceOperation> operationCaptor;
 
@@ -125,7 +129,9 @@ public class ReplacePropertiesServiceImplTest {
     public void setup() {
         propsConfig = new FedoraPropsConfig();
         factory = new RdfSourceOperationFactoryImpl();
+        nonRdfFactory = new NonRdfSourceOperationFactoryImpl();
         setField(service, "factory", factory);
+        setField(service, "nonRdfFactory", nonRdfFactory);
         setField(service, "eventAccumulator", eventAccumulator);
         setField(service, "referenceService", referenceService);
         setField(service, "membershipService", membershipService);

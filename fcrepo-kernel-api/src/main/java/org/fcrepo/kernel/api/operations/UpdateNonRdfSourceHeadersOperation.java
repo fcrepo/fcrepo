@@ -15,34 +15,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.impl.operations;
+package org.fcrepo.kernel.api.operations;
 
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE_HEADERS;
 
-
-import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.operations.ResourceOperationType;
-
 /**
- * Operation for updating headers of an RDFSource
+ * Operation for updating non-RDF source resource headers
  *
- * @author mikejritter
+ * @author bbpennel
  */
-public class UpdateRdfHeadersOperation extends AbstractRdfSourceOperation {
-
-    protected UpdateRdfHeadersOperation(final Transaction transaction, final FedoraId resourceId) {
-        super(transaction, resourceId, null);
-    }
-
+public interface UpdateNonRdfSourceHeadersOperation extends RelaxableResourceOperation, NonRdfSourceOperation {
     @Override
-    public RdfStream getTriples() {
-        throw new UnsupportedOperationException("UpdateRdfHeadersOperation has no triples");
-    }
-
-    @Override
-    public ResourceOperationType getType() {
+    public default ResourceOperationType getType() {
         return UPDATE_HEADERS;
     }
 }
