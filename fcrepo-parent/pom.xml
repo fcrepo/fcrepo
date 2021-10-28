@@ -310,6 +310,13 @@
               <artifactId>maven-scm-provider-gitexe</artifactId>
               <version>${scm-provider-gitexe.plugin.version}</version>
             </dependency>
+
+            <dependency>
+              <groupId>org.apache.maven.scm</groupId>
+              <artifactId>maven-scm-api</artifactId>
+              <version>${scm-provider-gitexe.plugin.version}</version>
+            </dependency>
+
           </dependencies>
         </plugin>
 
