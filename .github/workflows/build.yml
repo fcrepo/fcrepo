@@ -172,7 +172,5 @@ jobs:
         run: |
           FCREPO_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:3.1.0:evaluate -Dexpression=project.version -q -DforceStdout)
           cd fcrepo-docker
-          echo "building docker container"
-          ./build.sh ../fcrepo-webapp/target/fcrepo-webapp-${FCREPO_VERSION}.war
-          echo "push image to dockerhub"
-          ./push.sh latest ${FCREPO_VERSION}
+          echo "build and push image to dockerhub"
+          ./build-and-push-to-dockerhub.sh ../fcrepo-webapp/target/fcrepo-webapp-${FCREPO_VERSION}.war latest ${FCREPO_VERSION}
