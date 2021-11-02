@@ -46,7 +46,7 @@ welcome to subscribe and participate.
 * https://groups.google.com/d/forum/fedora-community
 * https://groups.google.com/d/forum/fedora-tech
 
-Many of the developers are available on Slack in the  `#tech` and `bledding-edge` channels, hosted by [fedora-project
+Many of the developers are available on Slack in the  `#tech` and `bleeding-edge` channels, hosted by [fedora-project
 .slack.com](https://fedora-project.slack.com/).
 
 In addition, there are weekly Zoom [technical calls](https://wiki.lyrasis.org/display/FF/Meetings) which anyone may
