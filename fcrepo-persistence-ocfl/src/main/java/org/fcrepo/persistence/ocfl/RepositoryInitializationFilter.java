@@ -35,7 +35,7 @@ public class RepositoryInitializationFilter implements Filter {
         throws IOException, ServletException {
         logger.info("Checking request for db init");
         if (!(request instanceof HttpServletRequest) || !(response instanceof HttpServletResponse)) {
-            throw new ServletException("Unable to handle non-http request");
+            throw new ServletException("Unable to handle non http request");
         }
 
         final var httpResponse = (HttpServletResponse) response;
