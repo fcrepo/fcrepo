@@ -24,11 +24,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This class is responsible for initializing the repository on start-up.
@@ -61,8 +64,11 @@ public class RepositoryInitializer {
     @Inject
     private TransactionManager txManager;
 
+    private final AtomicBoolean rebuildComplete = new AtomicBoolean(false);
+
     // This is used in-place of @PostConstruct so that it is called _after_ the rest of context has been
     // completely initialized.
+    @Async
     @EventListener
     public void onApplicationEvent(final ContextRefreshedEvent event) {
         try {
@@ -70,6 +76,8 @@ public class RepositoryInitializer {
         } catch (Exception e) {
             LOGGER.error("Failed to initialize repository", e);
             ((ConfigurableApplicationContext) event.getApplicationContext()).close();
+        } finally {
+            rebuildComplete.set(true);
         }
     }
 
@@ -114,6 +122,10 @@ public class RepositoryInitializer {
         } catch (final PersistentStorageException ex) {
             throw new RepositoryRuntimeException(ex.getMessage(), ex);
         }
+    }
+
+    public boolean isRebuildComplete() {
+        return rebuildComplete.get();
     }
 
 }
