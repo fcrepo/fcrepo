@@ -39,7 +39,7 @@ public class RepositoryInitializationFilter implements Filter {
         }
 
         final var httpResponse = (HttpServletResponse) response;
-        if (!initializer.isRebuildComplete()) {
+        if (!initializer.isInitializationComplete()) {
             httpResponse.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
             return;
         }

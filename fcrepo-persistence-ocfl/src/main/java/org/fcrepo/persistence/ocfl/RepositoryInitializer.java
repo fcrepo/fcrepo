@@ -64,7 +64,7 @@ public class RepositoryInitializer {
     @Inject
     private TransactionManager txManager;
 
-    private final AtomicBoolean rebuildComplete = new AtomicBoolean(false);
+    private final AtomicBoolean initializationComplete = new AtomicBoolean(false);
 
     // This is used in-place of @PostConstruct so that it is called _after_ the rest of context has been
     // completely initialized.
@@ -77,7 +77,7 @@ public class RepositoryInitializer {
             LOGGER.error("Failed to initialize repository", e);
             ((ConfigurableApplicationContext) event.getApplicationContext()).close();
         } finally {
-            rebuildComplete.set(true);
+            initializationComplete.set(true);
         }
     }
 
@@ -124,8 +124,8 @@ public class RepositoryInitializer {
         }
     }
 
-    public boolean isRebuildComplete() {
-        return rebuildComplete.get();
+    public boolean isInitializationComplete() {
+        return initializationComplete.get();
     }
 
 }
