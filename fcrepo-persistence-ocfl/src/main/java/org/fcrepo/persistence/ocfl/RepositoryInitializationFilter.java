@@ -15,9 +15,6 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Filter which blocks requests if the repository initialization is ongoing
  *
@@ -25,15 +22,12 @@ import org.slf4j.LoggerFactory;
  */
 public class RepositoryInitializationFilter implements Filter {
 
-    final Logger logger = LoggerFactory.getLogger(RepositoryInitializationFilter.class);
-
     @Inject
     private RepositoryInitializer initializer;
 
     @Override
     public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain)
         throws IOException, ServletException {
-        logger.info("Checking request for db init");
         if (!(request instanceof HttpServletRequest) || !(response instanceof HttpServletResponse)) {
             throw new ServletException("Unable to handle non http request");
         }
