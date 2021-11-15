@@ -141,7 +141,7 @@ public class WebappConfig {
     }
 
     /**
-     * Filter to prevent http requests during reindexing
+     * Filter to prevent http requests during repo init
      *
      * @return the filter
      */
