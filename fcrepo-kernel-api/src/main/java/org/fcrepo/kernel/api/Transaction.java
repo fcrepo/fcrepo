@@ -156,4 +156,9 @@ public interface Transaction {
      */
     void setUserAgent(final String userAgent);
 
+    /**
+     * After invoking, any accumulated events will be suppressed.
+     */
+    void suppressEvents();
+
 }

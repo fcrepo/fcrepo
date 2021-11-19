@@ -25,7 +25,6 @@ import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.search.api.SearchIndex;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +56,8 @@ public class TransactionImpl implements Transaction {
     private final Duration sessionTimeout;
 
     private final Phaser operationPhaser;
+
+    private boolean suppressEvents = false;
 
     protected TransactionImpl(final String id,
                               final TransactionManagerImpl txManager,
@@ -97,7 +98,12 @@ public class TransactionImpl implements Transaction {
             }
 
             updateState(TransactionState.COMMITTED);
-            this.getEventAccumulator().emitEvents(this, baseUri, userAgent);
+            if (!this.suppressEvents) {
+                this.getEventAccumulator().emitEvents(this, baseUri, userAgent);
+            } else {
+                this.getEventAccumulator().clearEvents(this);
+            }
+
             releaseLocks();
             log.debug("Committed transaction {}", id);
         } catch (final Exception ex) {
@@ -289,6 +295,11 @@ public class TransactionImpl implements Transaction {
     @Override
     public void setUserAgent(final String userAgent) {
         this.userAgent = userAgent;
+    }
+
+    @Override
+    public void suppressEvents() {
+        this.suppressEvents = true;
     }
 
     private void doCommitShortLived() {

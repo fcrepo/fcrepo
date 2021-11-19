@@ -20,6 +20,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.base.Stopwatch;
 import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.cache.UserTypesCache;
@@ -38,8 +39,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import com.google.common.base.Stopwatch;
 
 /**
  * <p>
@@ -299,5 +298,20 @@ public class TransactionImplTest {
         verify(psSession).rollback();
         verify(containmentIndex).rollbackTransaction(testTx);
         verify(eventAccumulator).clearEvents(testTx);
+    }
+
+    @Test
+    public void testSuppressEvents() {
+        testTx.suppressEvents();
+        testTx.commit();
+        verify(eventAccumulator, times(0))
+                .emitEvents(testTx, null, null);
+    }
+
+    @Test
+    public void testNoEventSuppression() {
+        testTx.commit();
+        verify(eventAccumulator, times(1))
+                .emitEvents(testTx, null, null);
     }
 }
