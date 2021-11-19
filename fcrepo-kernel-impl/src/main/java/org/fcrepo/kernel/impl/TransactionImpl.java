@@ -100,7 +100,10 @@ public class TransactionImpl implements Transaction {
             updateState(TransactionState.COMMITTED);
             if (!this.suppressEvents) {
                 this.getEventAccumulator().emitEvents(this, baseUri, userAgent);
+            } else {
+                this.getEventAccumulator().clearEvents(this);
             }
+
             releaseLocks();
             log.debug("Committed transaction {}", id);
         } catch (final Exception ex) {
