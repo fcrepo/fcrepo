@@ -142,4 +142,9 @@ public class ReadOnlyTransaction implements Transaction {
     public void setUserAgent(final String userAgent) {
         // no-op
     }
+
+    @Override
+    public void suppressEvents() {
+        // no-op
+    }
 }

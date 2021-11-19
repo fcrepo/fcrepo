@@ -94,6 +94,7 @@ public class ReindexWorker implements Runnable {
                 }
 
                 final Transaction tx = txManager.create();
+                tx.suppressEvents();
                 tx.setShortLived(true);
                 if (stopwatch.elapsed(TimeUnit.SECONDS) > REPORTING_INTERVAL_SECS) {
                     manager.updateComplete(completed, errors);
