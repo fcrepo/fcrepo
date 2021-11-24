@@ -340,7 +340,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
             assertContentType(response, "image/jpeg");
             final ContentDisposition disposition =
                     new ContentDisposition(response.getFirstHeader(CONTENT_DISPOSITION).getValue());
-            assertEquals("attachment", disposition.getType());
+            assertEquals("inline", disposition.getType());
         }
     }
 
@@ -367,7 +367,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
             assertEquals("bytes", response.getFirstHeader("Accept-Ranges").getValue());
             final ContentDisposition disposition =
                     new ContentDisposition(response.getFirstHeader(CONTENT_DISPOSITION).getValue());
-            assertEquals("attachment", disposition.getType());
+            assertEquals("inline", disposition.getType());
         }
     }
 

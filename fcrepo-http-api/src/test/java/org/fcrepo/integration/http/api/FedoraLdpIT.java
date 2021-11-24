@@ -511,7 +511,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals("bytes", response.getFirstHeader("Accept-Ranges").getValue());
             final ContentDisposition disposition =
                     new ContentDisposition(response.getFirstHeader(CONTENT_DISPOSITION).getValue());
-            assertEquals("attachment", disposition.getType());
+            assertEquals("inline", disposition.getType());
         }
     }
 
@@ -2186,7 +2186,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals("bytes", response.getFirstHeader("Accept-Ranges").getValue());
             final ContentDisposition disposition =
                     new ContentDisposition(response.getFirstHeader(CONTENT_DISPOSITION).getValue());
-            assertEquals("attachment", disposition.getType());
+            assertEquals("inline", disposition.getType());
 
             final Collection<String> links = getLinkHeaders(response);
             final String describedByHeader =

@@ -428,7 +428,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 final var uri = new URI(identifierConverter().toExternalId(agFedoraId.getFullId()));
                 final var link = buildLink(uri, "archival-group");
                 servletResponse.addHeader(LINK, link);
-            } catch (URISyntaxException e) {
+            } catch (final URISyntaxException e) {
                 throw new BadRequestException(e);
             }
         });
@@ -590,15 +590,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         if (resource instanceof Binary) {
             final Binary binary = (Binary)resource;
 
-            final var dispositionBuilder = ContentDisposition.builder("attachment")
-                    .size(binary.getContentSize());
-
-            if (binary.getCreatedDate() != null) {
-                dispositionBuilder.creationDate(binary.getCreatedDate().atZone(ZoneOffset.UTC));
-            }
-            if (binary.getLastModifiedDate() != null) {
-                dispositionBuilder.modificationDate(binary.getLastModifiedDate().atZone(ZoneOffset.UTC));
-            }
+            final var dispositionBuilder = ContentDisposition.inline();
 
             if (StringUtils.isNotBlank(binary.getFilename())) {
                 if (ISO_8859_1_ENCODER.canEncode(binary.getFilename())) {
