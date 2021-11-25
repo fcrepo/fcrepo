@@ -1029,6 +1029,36 @@ public class TransactionsIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation)));
     }
 
+    /**
+     * Test for accounting for ghost nodes during resource locking.
+     * @throws IOException
+     * @see <a href="https://fedora-repository.atlassian.net/browse/FCREPO-3584">FCREPO-3584</a>
+     */
+    @Test
+    public void testCheckGhostNodesInResourceLocking() throws IOException {
+        // Create a transaction
+        final String txLocation = createTransaction();
+
+        final String parentLocation = getRandomUniqueId();
+        final String childLocation = parentLocation + "/" + getRandomUniqueId();
+
+        final HttpPut putMethod = putObjMethod(childLocation);
+        putMethod.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        putMethod.addHeader(CONTENT_TYPE, TEXT_PLAIN);
+        putMethod.setEntity(new StringEntity("This is some binary content", UTF_8));
+        // Do the PUT in the transaction
+        addTxTo(putMethod, txLocation);
+        // Execute the request
+        assertEquals(CREATED.getStatusCode(), getStatus(putMethod));
+
+        // Create a binary outside the transaction at the parent's location
+        final HttpPut putOutSide = putObjMethod(parentLocation);
+        putOutSide.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        putOutSide.addHeader(CONTENT_TYPE, TEXT_PLAIN);
+        putOutSide.setEntity(new StringEntity("This is some other binary content", UTF_8));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(putOutSide));
+    }
+
     private void assertConcurrentUpdate(final CheckedRunnable runnable) throws Exception {
         try {
             runnable.run();

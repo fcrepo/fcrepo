@@ -277,7 +277,7 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public void lockResource(final FedoraId resourceId) {
-        getResourceLockManger().acquire(getId(), resourceId);
+        getResourceLockManger().acquire(this, resourceId);
     }
 
     @Override

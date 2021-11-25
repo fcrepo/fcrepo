@@ -5,19 +5,28 @@
  */
 package org.fcrepo.kernel.impl.lock;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.common.collect.Sets;
-import org.fcrepo.kernel.api.exception.ConcurrentUpdateException;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.lock.ResourceLockManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+
+import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.exception.ConcurrentUpdateException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.lock.ResourceLockManager;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.google.common.collect.Sets;
 
 /**
  * In memory resource lock manager
@@ -26,6 +35,9 @@ import java.util.concurrent.TimeUnit;
  */
 @Component
 public class InMemoryResourceLockManager implements ResourceLockManager {
+
+    @Inject
+    private ContainmentIndex containmentIndex;
 
     private static final Logger LOG = LoggerFactory.getLogger(InMemoryResourceLockManager.class);
 
@@ -43,15 +55,15 @@ public class InMemoryResourceLockManager implements ResourceLockManager {
     }
 
     @Override
-    public void acquire(final String txId, final FedoraId resourceId) {
+    public void acquire(final Transaction tx, final FedoraId resourceId) {
         final var resourceIdStr = resourceId.getResourceId();
 
-        if (transactionHoldsLock(txId, resourceIdStr)) {
+        if (transactionHoldsLock(tx.getId(), resourceIdStr)) {
             return;
         }
 
         synchronized (acquireInternalLock(resourceIdStr)) {
-            if (transactionHoldsLock(txId, resourceIdStr)) {
+            if (transactionHoldsLock(tx.getId(), resourceIdStr)) {
                 return;
             }
 
@@ -60,11 +72,29 @@ public class InMemoryResourceLockManager implements ResourceLockManager {
                         String.format("Cannot update %s because it is being updated by another transaction.",
                                 resourceIdStr));
             }
+            final String estimateParentPath = resourceIdStr.substring(0, resourceIdStr.lastIndexOf('/'));
+            final var actualParent = containmentIndex.getContainerIdByPath(tx, resourceId, false);
 
-            LOG.debug("Transaction {} acquiring lock on {}", txId, resourceIdStr);
+            if (!estimateParentPath.equalsIgnoreCase(actualParent.getResourceId())) {
+                // If the expected parent does not match the actual parent, then we have ghost nodes.
+                // Add them as well.
+                LOG.debug("Getting lock for ghost parents as well.");
+                final List<String> ghostPaths = Arrays.stream(estimateParentPath
+                        .replace(actualParent.getResourceId(), "")
+                        .split("/")).filter(a -> !a.isBlank()).collect(Collectors.toList());
+                FedoraId tempParent = actualParent;
+                for (final String part : ghostPaths) {
+                    tempParent = tempParent.resolve(part);
+                    lockedResources.add(tempParent.getResourceId());
+                    transactionLocks.computeIfAbsent(tx.getId(), key -> Sets.newConcurrentHashSet())
+                            .add(tempParent.getResourceId());
+                }
+            }
+
+            LOG.debug("Transaction {} acquiring lock on {}", tx.getId(), resourceIdStr);
 
             lockedResources.add(resourceIdStr);
-            transactionLocks.computeIfAbsent(txId, key -> Sets.newConcurrentHashSet())
+            transactionLocks.computeIfAbsent(tx.getId(), key -> Sets.newConcurrentHashSet())
                     .add(resourceIdStr);
         }
     }
