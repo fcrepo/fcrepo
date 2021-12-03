@@ -672,7 +672,6 @@ public class FedoraLdpTest {
             final List<String> rdfNodes = model.listObjects().mapWith(RDFNode::toString).toList();
             assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
                     "LDP_CONTAINMENT", "PROPERTIES", "SERVER_MANAGED", "LDP_MEMBERSHIP")));
-            // TODO: Above list is missing LDP_MEMBERSHIP - https://jira.lyrasis.org/browse/FCREPO-3165
         }
     }
 
