@@ -63,6 +63,7 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
 import javax.ws.rs.HeaderParam;
@@ -72,6 +73,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
@@ -165,6 +167,7 @@ public class FedoraLdp extends ContentExposingResource {
     /**
      * Retrieve the node headers
      *
+     * @param inlineDisposition whether to return a Content-Disposition inline header for a binary
      * @return response
      * @throws UnsupportedAlgorithmException if unsupported digest algorithm occurred
      */
@@ -172,17 +175,18 @@ public class FedoraLdp extends ContentExposingResource {
     @Produces({ TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
         N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
         TEXT_HTML_WITH_CHARSET })
-    public Response head() throws UnsupportedAlgorithmException {
+    public Response head(@DefaultValue("false") @QueryParam("inline") final boolean inlineDisposition)
+            throws UnsupportedAlgorithmException {
         LOGGER.info("HEAD for: {}", externalPath);
 
         final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);
         if (!isBlank(datetimeHeader) && resource().isOriginalResource()) {
-            return getMemento(datetimeHeader, resource());
+            return getMemento(datetimeHeader, resource(), inlineDisposition);
         }
 
         checkCacheControlHeaders(request, servletResponse, resource(), transaction());
 
-        addResourceHttpHeaders(resource());
+        addResourceHttpHeaders(resource(), inlineDisposition);
 
         Response.ResponseBuilder builder = ok();
 
@@ -231,6 +235,7 @@ public class FedoraLdp extends ContentExposingResource {
      * Retrieve the node profile
      *
      * @param rangeValue the range value
+     * @param inlineDisposition whether to return a Content-Disposition inline header for a binary
      * @return a binary or the triples for the specified node
      * @throws IOException if IO exception occurred
      * @throws UnsupportedAlgorithmException if unsupported digest algorithm occurred
@@ -239,12 +244,14 @@ public class FedoraLdp extends ContentExposingResource {
     @Produces({TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
             N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
             TEXT_HTML_WITH_CHARSET})
-    public Response getResource(@HeaderParam("Range") final String rangeValue)
+    public Response getResource(
+            @HeaderParam("Range") final String rangeValue,
+            @DefaultValue("false") @QueryParam("inline") final boolean inlineDisposition)
             throws IOException, UnsupportedAlgorithmException {
 
         final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);
         if (!isBlank(datetimeHeader) && resource().isOriginalResource()) {
-            return getMemento(datetimeHeader, resource());
+            return getMemento(datetimeHeader, resource(), inlineDisposition);
         }
 
         checkCacheControlHeaders(request, servletResponse, resource(), transaction());
@@ -253,7 +260,7 @@ public class FedoraLdp extends ContentExposingResource {
                 .getAcceptableMediaTypes());
 
         LOGGER.info("GET resource '{}'", externalPath);
-        addResourceHttpHeaders(resource());
+        addResourceHttpHeaders(resource(), inlineDisposition);
 
         if (resource() instanceof Binary) {
             final Binary binary = (Binary) resource();
@@ -286,9 +293,11 @@ public class FedoraLdp extends ContentExposingResource {
      *
      * @param datetimeHeader The RFC datetime for the Memento.
      * @param resource The fedora resource
+     * @param inlineDisposition whether to return binary as Content-Disposition inline
      * @return A 302 Found response or 406 if no mementos.
      */
-    private Response getMemento(final String datetimeHeader, final FedoraResource resource) {
+    private Response getMemento(final String datetimeHeader, final FedoraResource resource,
+                                final boolean inlineDisposition) {
         try {
             final Instant mementoDatetime = Instant.from(MEMENTO_RFC_1123_FORMATTER.parse(datetimeHeader));
             final FedoraResource memento = resource.findMementoByDatetime(mementoDatetime);
@@ -299,7 +308,7 @@ public class FedoraLdp extends ContentExposingResource {
             } else {
                 builder = status(NOT_ACCEPTABLE).build();
             }
-            addResourceHttpHeaders(resource);
+            addResourceHttpHeaders(resource, inlineDisposition);
             setVaryAndPreferenceAppliedHeaders(servletResponse, prefer, resource);
             return builder;
         } catch (final DateTimeParseException e) {
@@ -703,7 +712,12 @@ public class FedoraLdp extends ContentExposingResource {
 
     @Override
     protected void addResourceHttpHeaders(final FedoraResource resource) {
-        super.addResourceHttpHeaders(resource);
+        addResourceHttpHeaders(resource, false);
+    }
+
+    @Override
+    protected void addResourceHttpHeaders(final FedoraResource resource, final boolean dispositionInline) {
+        super.addResourceHttpHeaders(resource, dispositionInline);
 
         if (!transaction().isShortLived()) {
             final String canonical = identifierConverter().toExternalId(resource.getFedoraId().getFullId())

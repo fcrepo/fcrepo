@@ -499,11 +499,20 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testHeadDatastream() throws IOException, ParseException {
+    public void testHeadDatastreamAttachment() throws IOException, ParseException {
+        testHeadDatastream(false);
+    }
+
+    @Test
+    public void testHeadDatastreamInline() throws IOException, ParseException {
+        testHeadDatastream(true);
+    }
+
+    private void testHeadDatastream(final boolean inline) throws IOException, ParseException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", "123");
 
-        final HttpHead headObjMethod = headObjMethod(id + "/x");
+        final HttpHead headObjMethod = headObjMethod(id + "/x" + (inline ? "?inline=true" : ""));
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
             assertEquals(TEXT_PLAIN, response.getFirstHeader(CONTENT_TYPE).getValue());
@@ -511,7 +520,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals("bytes", response.getFirstHeader("Accept-Ranges").getValue());
             final ContentDisposition disposition =
                     new ContentDisposition(response.getFirstHeader(CONTENT_DISPOSITION).getValue());
-            assertEquals("inline", disposition.getType());
+            if (inline) {
+                assertEquals("inline", disposition.getType());
+            } else {
+                assertEquals("attachment", disposition.getType());
+            }
         }
     }
 
@@ -2174,19 +2187,32 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testGetDatastream() throws IOException, ParseException {
+    public void testGetDatastreamAttachment() throws IOException, ParseException {
+        testGetDatastream(false);
+    }
+
+    @Test
+    public void testGetDatastreamInline() throws IOException, ParseException {
+        testGetDatastream(true);
+    }
+
+    private void testGetDatastream(final boolean inline) throws IOException, ParseException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
         createDatastream(id, "ds1", "foo");
 
-        try (final CloseableHttpResponse response = execute(getDSMethod(id, "ds1"))) {
+        try (final CloseableHttpResponse response = execute(getDSMethod(id, "ds1", inline))) {
             assertEquals("Wasn't able to retrieve a datastream!", OK.getStatusCode(), getStatus(response));
             assertEquals(TEXT_PLAIN, response.getFirstHeader(CONTENT_TYPE).getValue());
             assertEquals("3", response.getFirstHeader(CONTENT_LENGTH).getValue());
             assertEquals("bytes", response.getFirstHeader("Accept-Ranges").getValue());
             final ContentDisposition disposition =
                     new ContentDisposition(response.getFirstHeader(CONTENT_DISPOSITION).getValue());
-            assertEquals("inline", disposition.getType());
+            if (inline) {
+                assertEquals("inline", disposition.getType());
+            } else {
+                assertEquals("attachment", disposition.getType());
+            }
 
             final Collection<String> links = getLinkHeaders(response);
             final String describedByHeader =

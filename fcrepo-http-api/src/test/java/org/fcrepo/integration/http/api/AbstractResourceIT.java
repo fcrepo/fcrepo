@@ -247,7 +247,11 @@ public abstract class AbstractResourceIT {
     }
 
     protected static HttpGet getDSMethod(final String pid, final String ds) {
-        return new HttpGet(serverAddress + pid + "/" + ds);
+        return getDSMethod(pid, ds, false);
+    }
+
+    protected static HttpGet getDSMethod(final String pid, final String ds, final boolean inline) {
+        return new HttpGet(serverAddress + pid + "/" + ds + (inline ? "?inline=true" : ""));
     }
 
     protected static HttpGet getDSDescMethod(final String pid, final String ds) {
