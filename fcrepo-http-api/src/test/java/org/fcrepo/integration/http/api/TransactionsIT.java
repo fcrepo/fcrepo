@@ -1060,6 +1060,36 @@ public class TransactionsIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testCheckGhostNodesInResourceLockingReverse() throws IOException {
+        // Create a transaction
+        final String txLocation = createTransaction();
+
+        final String parentLocation = getRandomUniqueId();
+        final String childLocation = parentLocation + "/" + getRandomUniqueId();
+
+        // Try to create a binary at the ghost node in a new transaction
+        final String txLocation2 = createTransaction();
+        final HttpPut putMethod2 = putObjMethod(parentLocation);
+        putMethod2.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        putMethod2.addHeader(CONTENT_TYPE, TEXT_PLAIN);
+        putMethod2.setEntity(new StringEntity("This is totally different binary content", UTF_8));
+        // Do the PUT in the transaction
+        addTxTo(putMethod2, txLocation2);
+        // Execute the request
+        assertEquals(CREATED.getStatusCode(), getStatus(putMethod2));
+
+        final HttpPut putMethod = putObjMethod(childLocation);
+        putMethod.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        putMethod.addHeader(CONTENT_TYPE, TEXT_PLAIN);
+        putMethod.setEntity(new StringEntity("This is some binary content", UTF_8));
+        // Do the PUT in the transaction
+        addTxTo(putMethod, txLocation);
+        // Execute the request
+        assertEquals(CONFLICT.getStatusCode(), getStatus(putMethod));
+    }
+
+
+    @Test
     public void testHoldsOnGhostNodesIn2Transactions() throws IOException {
         // Create a transaction
         final String txLocation = createTransaction();

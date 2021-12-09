@@ -4111,6 +4111,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String second = parent + "/00/2";
         final String third = parent + "/00/3";
         final String fourth = parent + "/00/4";
+        final List<String> paths = List.of(first, second, third, fourth);
         final Thread t1 = new Thread(() -> {
             executeAndClose(putObjMethod(first));
         });
@@ -4136,23 +4137,29 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final DatasetGraph graphStore = dataset.asDatasetGraph();
             final List<String> childPaths = new ArrayList<>();
             final Iterator<Quad> children = graphStore.find(ANY, ANY, CONTAINS.asNode(), ANY);
-            assertTrue("Four children should have been created (none found).", children.hasNext());
+            assertTrue("One child should have been created (none found).", children.hasNext());
             childPaths.add(children.next().getObject().getURI());
             LOGGER.info("Found child: {}", childPaths.get(0));
-            assertTrue("Four children should have been created (only one found).", children.hasNext());
-            childPaths.add(children.next().getObject().getURI());
-            LOGGER.info("Found child: {}", childPaths.get(1));
-            assertTrue("Four children should have been created (only two found).", children.hasNext());
-            childPaths.add(children.next().getObject().getURI());
-            LOGGER.info("Found child: {}", childPaths.get(2));
-            assertTrue("Four children should have been created. (only three found)", children.hasNext());
-            childPaths.add(children.next().getObject().getURI());
-            LOGGER.info("Found child: {}", childPaths.get(3));
-            assertFalse("Only four children should have been created.", children.hasNext());
-            assertTrue(childPaths.contains(serverAddress + first));
-            assertTrue(childPaths.contains(serverAddress + second));
-            assertTrue(childPaths.contains(serverAddress + third));
-            assertTrue(childPaths.contains(serverAddress + fourth));
+            assertFalse("One child should have been created (more than one found).", children.hasNext());
+            //childPaths.add(children.next().getObject().getURI());
+            //LOGGER.info("Found child: {}", childPaths.get(1));
+            //assertTrue("Four children should have been created (only two found).", children.hasNext());
+            //childPaths.add(children.next().getObject().getURI());
+            //LOGGER.info("Found child: {}", childPaths.get(2));
+            //assertTrue("Four children should have been created. (only three found)", children.hasNext());
+            //childPaths.add(children.next().getObject().getURI());
+            //LOGGER.info("Found child: {}", childPaths.get(3));
+            //assertFalse("Only four children should have been created.", children.hasNext());
+            for (final var p : paths) {
+                if (childPaths.contains(serverAddress + p)) {
+                    // exit out early as we found one of the paths.
+                    return;
+                }
+            }
+            fail("None of the expected paths were found.");
+            //assertTrue(childPaths.contains(serverAddress + second));
+            //assertTrue(childPaths.contains(serverAddress + third));
+            //assertTrue(childPaths.contains(serverAddress + fourth));
         }
 
     }

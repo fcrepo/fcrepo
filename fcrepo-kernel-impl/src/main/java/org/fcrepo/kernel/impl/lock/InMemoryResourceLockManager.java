@@ -74,21 +74,31 @@ public class InMemoryResourceLockManager implements ResourceLockManager {
             }
             final String estimateParentPath = resourceIdStr.indexOf('/') > -1 ?
                     resourceIdStr.substring(0,resourceIdStr.lastIndexOf('/')) : resourceIdStr;
-            final var actualParent = containmentIndex.getContainerIdByPath(tx, resourceId, false);
+            // NonRdfSourceDescriptions will resolve to their NonRdfSource and cause a false failure.
+            if (!resourceId.isDescription()) {
+                final var actualParent = containmentIndex.getContainerIdByPath(tx, resourceId, false);
 
-            if (!estimateParentPath.equals(actualParent.getResourceId())) {
-                // If the expected parent does not match the actual parent, then we have ghost nodes.
-                // Add them as well.
-                LOG.debug("Getting lock for ghost parents as well.");
-                final List<String> ghostPaths = Arrays.stream(estimateParentPath
-                        .replace(actualParent.getResourceId(), "")
-                        .split("/")).filter(a -> !a.isBlank()).collect(Collectors.toList());
-                FedoraId tempParent = actualParent;
-                for (final String part : ghostPaths) {
-                    tempParent = tempParent.resolve(part);
-                    lockedResources.add(tempParent.getResourceId());
-                    transactionLocks.computeIfAbsent(tx.getId(), key -> Sets.newConcurrentHashSet())
-                            .add(tempParent.getResourceId());
+                if (!estimateParentPath.equals(actualParent.getResourceId())) {
+                    // If the expected parent does not match the actual parent, then we have ghost nodes.
+                    // Add them as well.
+                    LOG.debug("Getting lock for ghost parents as well.");
+                    final List<String> ghostPaths = Arrays.stream(estimateParentPath
+                            .replace(actualParent.getResourceId(), "")
+                            .split("/")).filter(a -> !a.isBlank()).collect(Collectors.toList());
+                    FedoraId tempParent = actualParent;
+                    for (final String part : ghostPaths) {
+                        tempParent = tempParent.resolve(part);
+                        final var parentId = tempParent.getResourceId();
+                        if (lockedResources.contains(parentId)) {
+                            throw new ConcurrentUpdateException(
+                                    String.format(
+                                            "Cannot update %s because it is being updated by another transaction.",
+                                            resourceIdStr));
+                        }
+                        lockedResources.add(parentId);
+                        transactionLocks.computeIfAbsent(tx.getId(), key -> Sets.newConcurrentHashSet())
+                                .add(tempParent.getResourceId());
+                    }
                 }
             }
 
