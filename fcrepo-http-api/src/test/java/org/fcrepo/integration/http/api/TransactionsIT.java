@@ -1042,6 +1042,7 @@ public class TransactionsIT extends AbstractResourceIT {
         final String parentLocation = getRandomUniqueId();
         final String childLocation = parentLocation + "/" + getRandomUniqueId();
 
+        // Create a binary with a ghost node in a transaction.
         final HttpPut putMethod = putObjMethod(childLocation);
         putMethod.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         putMethod.addHeader(CONTENT_TYPE, TEXT_PLAIN);
@@ -1067,7 +1068,7 @@ public class TransactionsIT extends AbstractResourceIT {
         final String parentLocation = getRandomUniqueId();
         final String childLocation = parentLocation + "/" + getRandomUniqueId();
 
-        // Try to create a binary at the ghost node in a new transaction
+        // Create a binary at the ghost node location in a transaction
         final String txLocation2 = createTransaction();
         final HttpPut putMethod2 = putObjMethod(parentLocation);
         putMethod2.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
@@ -1078,6 +1079,7 @@ public class TransactionsIT extends AbstractResourceIT {
         // Execute the request
         assertEquals(CREATED.getStatusCode(), getStatus(putMethod2));
 
+        // Try to create a binary using the path of an actual object in a separate transaction.
         final HttpPut putMethod = putObjMethod(childLocation);
         putMethod.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         putMethod.addHeader(CONTENT_TYPE, TEXT_PLAIN);
@@ -1087,7 +1089,6 @@ public class TransactionsIT extends AbstractResourceIT {
         // Execute the request
         assertEquals(CONFLICT.getStatusCode(), getStatus(putMethod));
     }
-
 
     @Test
     public void testHoldsOnGhostNodesIn2Transactions() throws IOException {
@@ -1128,8 +1129,7 @@ public class TransactionsIT extends AbstractResourceIT {
         // Do the PUT in the transaction
         addTxTo(putMethod3, txLocation3);
         // Execute the request
-        // This does not fail but returns CREATED
-        // assertEquals(CONFLICT.getStatusCode(), getStatus(putMethod3));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(putMethod3));
     }
 
 
