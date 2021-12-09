@@ -12,6 +12,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
+import javax.servlet.Filter;
 
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.api.ExternalContentHandlerFactory;
@@ -21,10 +22,12 @@ import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
 
 import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.fcrepo.persistence.ocfl.RepositoryInitializationFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
@@ -39,6 +42,7 @@ import com.google.common.eventbus.EventBus;
  * @author pwinckles
  */
 @Configuration
+@EnableAsync
 @EnableScheduling
 public class WebappConfig {
 
@@ -137,4 +141,15 @@ public class WebappConfig {
                 .expireAfterAccess(fedoraPropsConfig.getWebacCacheTimeout(), TimeUnit.MINUTES)
                 .maximumSize(fedoraPropsConfig.getWebacCacheSize()).build();
     }
+
+    /**
+     * Filter to prevent http requests during repo init
+     *
+     * @return the filter
+     */
+    @Bean
+    public Filter repositoryInitializationFilter() {
+        return new RepositoryInitializationFilter();
+    }
+
 }
