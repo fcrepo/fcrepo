@@ -72,10 +72,11 @@ public class InMemoryResourceLockManager implements ResourceLockManager {
                         String.format("Cannot update %s because it is being updated by another transaction.",
                                 resourceIdStr));
             }
-            final String estimateParentPath = resourceIdStr.substring(0, resourceIdStr.lastIndexOf('/'));
+            final String estimateParentPath = resourceIdStr.indexOf('/') > -1 ?
+                    resourceIdStr.substring(0,resourceIdStr.lastIndexOf('/')) : resourceIdStr;
             final var actualParent = containmentIndex.getContainerIdByPath(tx, resourceId, false);
 
-            if (!estimateParentPath.equalsIgnoreCase(actualParent.getResourceId())) {
+            if (!estimateParentPath.equals(actualParent.getResourceId())) {
                 // If the expected parent does not match the actual parent, then we have ghost nodes.
                 // Add them as well.
                 LOG.debug("Getting lock for ghost parents as well.");
