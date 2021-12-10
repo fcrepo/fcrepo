@@ -428,7 +428,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 final var uri = new URI(identifierConverter().toExternalId(agFedoraId.getFullId()));
                 final var link = buildLink(uri, "archival-group");
                 servletResponse.addHeader(LINK, link);
-            } catch (URISyntaxException e) {
+            } catch (final URISyntaxException e) {
                 throw new BadRequestException(e);
             }
         });
@@ -582,16 +582,24 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 .collect(Collectors.toList());
     }
 
+    protected void addResourceHttpHeaders(final FedoraResource resource) {
+        addResourceHttpHeaders(resource, false);
+    }
+
     /**
      * Add any resource-specific headers to the response
      * @param resource the resource
+     * @param dispositionInline whether to return a binary as Content-Disposition inline
      */
-    protected void addResourceHttpHeaders(final FedoraResource resource) {
+    protected void addResourceHttpHeaders(final FedoraResource resource, final boolean dispositionInline) {
         if (resource instanceof Binary) {
             final Binary binary = (Binary)resource;
 
-            final var dispositionBuilder = ContentDisposition.builder("attachment")
-                    .size(binary.getContentSize());
+            final ContentDisposition.Builder dispositionBuilder = (dispositionInline ? ContentDisposition.inline() :
+                    ContentDisposition.attachment());
+
+            // TODO: Size, created-date and modification-date have been deprecated by Spring and the RFC-6266 Appendix B
+            dispositionBuilder.size(binary.getContentSize());
 
             if (binary.getCreatedDate() != null) {
                 dispositionBuilder.creationDate(binary.getCreatedDate().atZone(ZoneOffset.UTC));

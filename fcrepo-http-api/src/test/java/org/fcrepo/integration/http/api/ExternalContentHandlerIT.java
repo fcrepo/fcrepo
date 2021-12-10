@@ -317,17 +317,24 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testHeadExternalDatastreamRedirectForHttpUri() throws Exception {
+    public void testHeadExternalDatastreamRedirectForHttpUriAttachment() throws Exception {
+        testHeadExternalDatastreamRedirectForHttpUri(false);
+    }
 
+    @Test
+    public void testHeadExternalDatastreamRedirectForHttpUriInline() throws Exception {
+        testHeadExternalDatastreamRedirectForHttpUri(true);
+    }
+
+    private void testHeadExternalDatastreamRedirectForHttpUri(final boolean inline) throws Exception {
         final String externalLocation = createHttpResource(TEST_BINARY_CONTENT);
-
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
         put.addHeader(LINK, getExternalContentLinkHeader(externalLocation, "redirect", "image/jpeg"));
         assertEquals(CREATED.getStatusCode(), getStatus(put));
 
         // Configure HEAD request to NOT follow redirects
-        final HttpHead headObjMethod = headObjMethod(id);
+        final HttpHead headObjMethod = headObjMethod(id + (inline ? "?inline=true" : ""));
         final RequestConfig.Builder requestConfig = RequestConfig.custom();
         requestConfig.setRedirectsEnabled(false);
         headObjMethod.setConfig(requestConfig.build());
@@ -340,13 +347,25 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
             assertContentType(response, "image/jpeg");
             final ContentDisposition disposition =
                     new ContentDisposition(response.getFirstHeader(CONTENT_DISPOSITION).getValue());
-            assertEquals("attachment", disposition.getType());
+            if (inline) {
+                assertEquals("inline", disposition.getType());
+            } else {
+                assertEquals("attachment", disposition.getType());
+            }
         }
     }
 
     @Test
-    public void testGetExternalDatastreamForHttpUri() throws Exception {
+    public void testGetExternalDatastreamForHttpUriInline() throws Exception {
+        testGetExternalDatastreamForHttpUri(true);
+    }
 
+    @Test
+    public void testGetExternalDatastreamForHttpUriAttachment() throws Exception {
+        testGetExternalDatastreamForHttpUri(false);
+    }
+
+    private void testGetExternalDatastreamForHttpUri(final boolean inline) throws Exception {
         final String externalLocation = createHttpResource(TEST_BINARY_CONTENT);
 
         final String id = getRandomUniqueId();
@@ -355,7 +374,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         assertEquals(CREATED.getStatusCode(), getStatus(put));
 
         // Configure HEAD request to NOT follow redirects
-        final HttpGet getObjMethod = getObjMethod(id);
+        final HttpGet getObjMethod = getObjMethod(id + (inline ? "?inline=true" : ""));
         final RequestConfig.Builder requestConfig = RequestConfig.custom();
         requestConfig.setRedirectsEnabled(false);
         getObjMethod.setConfig(requestConfig.build());
@@ -367,7 +386,11 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
             assertEquals("bytes", response.getFirstHeader("Accept-Ranges").getValue());
             final ContentDisposition disposition =
                     new ContentDisposition(response.getFirstHeader(CONTENT_DISPOSITION).getValue());
-            assertEquals("attachment", disposition.getType());
+            if (inline) {
+                assertEquals("inline", disposition.getType());
+            } else {
+                assertEquals("attachment", disposition.getType());
+            }
         }
     }
 
