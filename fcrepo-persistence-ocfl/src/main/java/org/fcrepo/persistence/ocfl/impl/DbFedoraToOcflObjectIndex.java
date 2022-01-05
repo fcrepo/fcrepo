@@ -114,6 +114,26 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
             " (" + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ")" +
             " VALUES (:fedoraId, :fedoraRootId, :ocflId)";
 
+    private static final String DIRECT_INSERT_POSTGRESQL = " ON CONFLICT (" + FEDORA_ID_COLUMN + ")" +
+            " DO UPDATE SET " + FEDORA_ROOT_ID_COLUMN + " = EXCLUDED." + FEDORA_ROOT_ID_COLUMN + ", " +
+            OCFL_ID_COLUMN + " = EXCLUDED." + OCFL_ID_COLUMN;
+
+    private static final String DIRECT_INSERT_MYSQL_MARIA = " ON DUPLICATE KEY UPDATE " +
+            FEDORA_ROOT_ID_COLUMN + " = VALUES(" + FEDORA_ROOT_ID_COLUMN + "), " + OCFL_ID_COLUMN +
+            " = VALUES(" + OCFL_ID_COLUMN + ")";
+
+    private static final String DIRECT_INSERT_H2 = "MERGE INTO " + MAPPING_TABLE +
+            " (" + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ", " +
+            " KEY (" + FEDORA_ID_COLUMN + ")" +
+            " VALUES (:fedoraId, :fedoraRootId, :ocflId)";
+
+    private static final Map<DbPlatform, String> DIRECT_INSERT_MAP = Map.of(
+        DbPlatform.H2, DIRECT_INSERT_H2,
+        DbPlatform.MYSQL, DIRECT_INSERT_MAPPING + DIRECT_INSERT_MYSQL_MARIA,
+        DbPlatform.MARIADB, DIRECT_INSERT_MAPPING + DIRECT_INSERT_MYSQL_MARIA,
+        DbPlatform.POSTGRESQL, DIRECT_INSERT_MAPPING + DIRECT_INSERT_POSTGRESQL
+    );
+
     /**
      * Map of database product to UPSERT into operations table SQL.
      */
@@ -299,7 +319,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
         parameterSource.addValue("fedoraRootId", fedoraRootId == null ? null : fedoraRootId.getResourceId());
         parameterSource.addValue("ocflId", ocflId);
         try {
-            jdbcTemplate.update(DIRECT_INSERT_MAPPING, parameterSource);
+            jdbcTemplate.update(DIRECT_INSERT_MAP.get(dbPlatform), parameterSource);
         } catch (final DataIntegrityViolationException | BadSqlGrammarException e) {
             handleInsertException(fedoraId, e);
         }
