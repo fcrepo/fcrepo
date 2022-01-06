@@ -179,8 +179,8 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         START_TIME_COLUMN + "), " + END_TIME_COLUMN + " = VALUES(" + END_TIME_COLUMN + ")";
 
     private static final String DIRECT_UPSERT_H2 = "MERGE INTO " + RESOURCES_TABLE +
-        " (" + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ", )" +
-        " KEY (" + FEDORA_ID_COLUMN + ") VALUES (:parent, :child, :startTime, :endTime, :transactionId, :operation)";
+        " (" + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ")" +
+        " KEY (" + FEDORA_ID_COLUMN + ") VALUES (:parent, :child, :startTime, :endTime)";
 
     private static final Map<DbPlatform, String> UPSERT_MAPPING = Map.of(
             DbPlatform.H2, UPSERT_RECORDS_H2,
@@ -190,10 +190,10 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     );
 
     private static final Map<DbPlatform, String> DIRECT_UPSERT_MAPPING = Map.of(
-        DbPlatform.POSTGRESQL, DIRECT_INSERT_RECORDS + DIRECT_UPSERT_POSTGRESQL,
+        DbPlatform.H2, DIRECT_UPSERT_H2,
         DbPlatform.MYSQL, DIRECT_INSERT_RECORDS + DIRECT_UPSERT_MYSQL_MARIA,
         DbPlatform.MARIADB, DIRECT_INSERT_RECORDS + DIRECT_UPSERT_MYSQL_MARIA,
-        DbPlatform.H2, DIRECT_UPSERT_H2
+        DbPlatform.POSTGRESQL, DIRECT_INSERT_RECORDS + DIRECT_UPSERT_POSTGRESQL
     );
 
     private static final String DIRECT_PURGE = "DELETE FROM containment WHERE fedora_id = :child";

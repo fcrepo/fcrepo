@@ -123,7 +123,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
             " = VALUES(" + OCFL_ID_COLUMN + ")";
 
     private static final String DIRECT_INSERT_H2 = "MERGE INTO " + MAPPING_TABLE +
-            " (" + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ", " +
+            " (" + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ") " +
             " KEY (" + FEDORA_ID_COLUMN + ")" +
             " VALUES (:fedoraId, :fedoraRootId, :ocflId)";
 
