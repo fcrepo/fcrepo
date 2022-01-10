@@ -49,7 +49,7 @@ public class PurgeResourceServiceImpl extends AbstractDeleteResourceService impl
                 .build();
 
         lockArchivalGroupResource(tx, pSession, resourceId);
-        tx.lockResource(resourceId);
+        lockResourceDependingOtherStatus(tx, pSession, resourceId);
 
         pSession.persist(purgeOp);
         containmentIndex.purgeResource(tx, resourceId);

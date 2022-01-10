@@ -283,7 +283,6 @@ public class TransactionImpl implements Transaction {
     @Override
     public void lockResource(final FedoraId resourceId) {
         getResourceLockManger().acquire(getId(), resourceId);
-        lockGhostNodesOfResource(resourceId);
     }
 
     /**
@@ -292,24 +291,23 @@ public class TransactionImpl implements Transaction {
      *
      * @param resourceId the resource we are creating
      */
-    private void lockGhostNodesOfResource(final FedoraId resourceId) {
-        // NonRdfSourceDescriptions will resolve to their binary path, so skip them.
-        if (!resourceId.isDescription()) {
-            final var resourceIdStr = resourceId.getResourceId();
-            final String estimateParentPath = resourceIdStr.indexOf('/') > -1 ?
-                    resourceIdStr.substring(0,resourceIdStr.lastIndexOf('/')) : resourceIdStr;
-            final var actualParent = getContainmentIndex().getContainerIdByPath(this, resourceId, false);
-            if (!estimateParentPath.equals(actualParent.getResourceId())) {
-                // If the expected parent does not match the actual parent, then we have ghost nodes.
-                // Lock them too.
-                final List<String> ghostPaths = Arrays.stream(estimateParentPath
-                        .replace(actualParent.getResourceId(), "")
-                        .split("/")).filter(a -> !a.isBlank()).collect(toList());
-                FedoraId tempParent = actualParent;
-                for (final String part : ghostPaths) {
-                    tempParent = tempParent.resolve(part);
-                    getResourceLockManger().acquire(getId(), tempParent);
-                }
+    @Override
+    public void lockResourceAndGhostNodes(final FedoraId resourceId) {
+        getResourceLockManger().acquire(getId(), resourceId);
+        final var resourceIdStr = resourceId.getResourceId();
+        final String estimateParentPath = resourceIdStr.indexOf('/') > -1 ?
+                resourceIdStr.substring(0,resourceIdStr.lastIndexOf('/')) : resourceIdStr;
+        final var actualParent = getContainmentIndex().getContainerIdByPath(this, resourceId, false);
+        if (!estimateParentPath.equals(actualParent.getResourceId())) {
+            // If the expected parent does not match the actual parent, then we have ghost nodes.
+            // Lock them too.
+            final List<String> ghostPaths = Arrays.stream(estimateParentPath
+                    .replace(actualParent.getResourceId(), "")
+                    .split("/")).filter(a -> !a.isBlank()).collect(toList());
+            FedoraId tempParent = actualParent;
+            for (final String part : ghostPaths) {
+                tempParent = tempParent.resolve(part);
+                getResourceLockManger().acquire(getId(), tempParent);
             }
         }
     }

@@ -124,10 +124,9 @@ public class DeleteResourceServiceImplTest {
     private DeleteResourceServiceImpl service;
 
     private static final FedoraId RESOURCE_ID = FedoraId.create("test-resource");
-    private static final FedoraId CHILD_RESOURCE_ID = FedoraId.create("test-resource-child");
-    private static final FedoraId RESOURCE_DESCRIPTION_ID =
-            FedoraId.create("test-resource-description");
-    private static final FedoraId RESOURCE_ACL_ID = FedoraId.create("test-resource-acl");
+    private static final FedoraId CHILD_RESOURCE_ID = RESOURCE_ID.resolve("test-resource-child");
+    private static final FedoraId RESOURCE_DESCRIPTION_ID = RESOURCE_ID.resolve("fcr:metadata");
+    private static final FedoraId RESOURCE_ACL_ID = RESOURCE_ID.resolve("fcr:acl");
 
     @Before
     public void setup() {
@@ -176,9 +175,6 @@ public class DeleteResourceServiceImplTest {
         when(resourceFactory.getResource(tx, CHILD_RESOURCE_ID)).thenReturn(childContainer);
         containmentIndex.addContainedBy(tx, container.getFedoraId(), childContainer.getFedoraId());
 
-        when(container.isAcl()).thenReturn(false);
-        when(container.getAcl()).thenReturn(null);
-
         assertEquals(1, containmentIndex.getContains(tx, RESOURCE_ID).count());
         service.perform(tx, container, USER);
 
@@ -191,8 +187,8 @@ public class DeleteResourceServiceImplTest {
 
         assertEquals(0, containmentIndex.getContains(tx, RESOURCE_ID).count());
 
-        verify(tx).lockResource(RESOURCE_ID);
-        verify(tx).lockResource(CHILD_RESOURCE_ID);
+        verify(tx).lockResourceAndGhostNodes(RESOURCE_ID);
+        verify(tx).lockResourceAndGhostNodes(CHILD_RESOURCE_ID);
     }
 
     private void verifyResourceOperation(final FedoraId fedoraID,
@@ -236,7 +232,7 @@ public class DeleteResourceServiceImplTest {
         assertEquals(RESOURCE_ACL_ID, operations.get(1).getResourceId());
         assertEquals(RESOURCE_ID, operations.get(2).getResourceId());
 
-        verify(tx).lockResource(RESOURCE_ID);
+        verify(tx).lockResourceAndGhostNodes(RESOURCE_ID);
         verify(tx).lockResource(RESOURCE_DESCRIPTION_ID);
         verify(tx).lockResource(RESOURCE_ACL_ID);
     }

@@ -130,6 +130,14 @@ public interface Transaction {
     void lockResource(final FedoraId resourceId);
 
     /**
+     * Acquire a lock on the specified resource and any ghost nodes above it for this transaction.
+     *
+     * @param resourceId the resource to lock
+     * @throws ConcurrentUpdateException if the lock cannot be acquired
+     */
+    void lockResourceAndGhostNodes(final FedoraId resourceId);
+
+    /**
      * Releases any resource locks held by the transaction if the session is short-lived. This method should always be
      * called after handling a request, regardless of the outcome, so that any held locks are released immediately
      * without having to wait for the short-lived transaction to expire.

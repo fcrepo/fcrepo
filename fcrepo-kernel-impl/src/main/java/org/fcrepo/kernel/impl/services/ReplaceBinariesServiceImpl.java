@@ -98,7 +98,8 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
             final var replaceOp = builder.build();
 
             lockArchivalGroupResource(tx, pSession, fedoraId);
-            tx.lockResource(fedoraId);
+            lockResourceDependingOtherStatus(tx, pSession, fedoraId);
+            // Descriptions are always under the binary, so just lock it.
             tx.lockResource(fedoraId.asDescription());
 
             pSession.persist(replaceOp);
