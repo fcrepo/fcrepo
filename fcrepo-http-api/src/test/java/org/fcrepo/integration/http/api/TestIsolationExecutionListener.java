@@ -34,7 +34,11 @@ public class TestIsolationExecutionListener extends BaseTestExecutionListener {
         final var initializer = getBean(testContext, RepositoryInitializer.class);
 
         // must wait for the initialization to finish
+        int i = 0;
         while (!initializer.isInitializationComplete()) {
+            if (++i > 6000) {
+                throw new RuntimeException("Repository failed to initialize");
+            }
             TimeUnit.MILLISECONDS.sleep(10);
         }
 
