@@ -5,19 +5,18 @@
  */
 package org.fcrepo.integration.http.api;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.util.concurrent.atomic.AtomicBoolean;
-
+import edu.wisc.library.ocfl.api.MutableOcflRepository;
+import org.apache.commons.io.FileUtils;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.persistence.ocfl.RepositoryInitializer;
-
-import org.apache.commons.io.FileUtils;
 import org.flywaydb.core.Flyway;
 import org.springframework.test.context.TestContext;
 
-import edu.wisc.library.ocfl.api.MutableOcflRepository;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Listener that baselines the DB and OCFL repo between every test.
@@ -28,10 +27,20 @@ import edu.wisc.library.ocfl.api.MutableOcflRepository;
 public class TestIsolationExecutionListener extends BaseTestExecutionListener {
 
     @Override
-    public void afterTestMethod(final TestContext testContext) throws Exception {
+    public void beforeTestMethod(final TestContext testContext) throws Exception {
         final var ocflRepo = getBean(testContext, MutableOcflRepository.class);
         final var ocflConfig = getBean(testContext, OcflPropsConfig.class);
         final var flyway = getBean(testContext, Flyway.class);
+        final var initializer = getBean(testContext, RepositoryInitializer.class);
+
+        // must wait for the initialization to finish
+        int i = 0;
+        while (!initializer.isInitializationComplete()) {
+            if (++i > 6000) {
+                throw new RuntimeException("Repository failed to initialize");
+            }
+            TimeUnit.MILLISECONDS.sleep(10);
+        }
 
         flyway.clean();
         flyway.migrate();
@@ -63,7 +72,6 @@ public class TestIsolationExecutionListener extends BaseTestExecutionListener {
             }
         }
 
-        final var initializer = getBean(testContext, RepositoryInitializer.class);
         initializer.initialize();
     }
 }

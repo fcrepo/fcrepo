@@ -46,6 +46,7 @@ import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.http.commons.test.util.ContainerWrapper;
 import org.fcrepo.kernel.api.auth.ACLHandle;
 
+import org.fcrepo.persistence.ocfl.RepositoryInitializer;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -158,7 +159,16 @@ public abstract class AbstractResourceIT {
     }
 
     @Before
-    public void setLogger() {
+    public void setLogger() throws InterruptedException {
+        // must wait for the repo to be initialized
+        final var initializer = getBean(RepositoryInitializer.class);
+        int i = 0;
+        while (!initializer.isInitializationComplete()) {
+            if (++i > 6000) {
+                throw new RuntimeException("Repository failed to initialize");
+            }
+            TimeUnit.MILLISECONDS.sleep(10);
+        }
         logger = getLogger(this.getClass());
         propsConfig = getBean(FedoraPropsConfig.class);
         authPropsConfig = getBean(AuthPropsConfig.class);
