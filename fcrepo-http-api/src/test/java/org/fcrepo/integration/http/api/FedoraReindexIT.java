@@ -5,7 +5,7 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static org.apache.http.HttpStatus.SC_CONFLICT;
+import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
@@ -69,11 +69,12 @@ public class FedoraReindexIT extends AbstractResourceIT {
         prepareContentForSideLoading(fedoraId, "reindex-test");
         doReindex(fedoraId, HttpStatus.SC_NO_CONTENT);
 
-        //validate the the fedora resource is found (200)
+        //validate the fedora resource is found (200)
         assertNotDeleted(fedoraId);
 
-        //verify that attempting to index an already existing resource returns a CONFLICT.
-        doReindex(fedoraId, SC_CONFLICT);
+        //verify that updating and reindexing an existing resource returns a 204.
+        prepareContentForSideLoading(fedoraId, "reindex-test-update");
+        doReindex(fedoraId, SC_NO_CONTENT);
     }
 
     @Test

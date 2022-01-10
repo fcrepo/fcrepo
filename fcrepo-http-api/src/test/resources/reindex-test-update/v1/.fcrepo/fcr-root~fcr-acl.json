@@ -5,7 +5,7 @@
   "interactionModel": "http://fedora.info/definitions/v4/webac#Acl",
   "contentSize": 1011,
   "digests": [
-    "urn:sha-512:cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e"
+    "urn:sha-512:d55c23de4e57d7838f701c73f83f603014726165cdffcbac754bc569170e2faf9c52be318d81d81140fa9a9e87f29334e0aff91d5304664a9df1ba8267a6b7db"
   ],
   "createdDate": "2020-11-30T04:37:48.795Z",
   "createdBy": "bypassAdmin",
