@@ -135,6 +135,7 @@ import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Random;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
 
@@ -4112,26 +4113,33 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String third = parent + "/00/3";
         final String fourth = parent + "/00/4";
         final List<String> paths = List.of(first, second, third, fourth);
-        final Thread t1 = new Thread(() -> {
+
+        final var phaser = new Phaser(5);
+        final var executor = Executors.newFixedThreadPool(4);
+
+        executor.execute(() -> {
+            phaser.arriveAndAwaitAdvance();
             executeAndClose(putObjMethod(first));
+            phaser.arriveAndDeregister();
         });
-        final Thread t2 = new Thread(() -> {
+        executor.execute(() -> {
+            phaser.arriveAndAwaitAdvance();
             executeAndClose(putObjMethod(second));
+            phaser.arriveAndDeregister();
         });
-        final Thread t3 = new Thread(() -> {
+        executor.execute(() -> {
+            phaser.arriveAndAwaitAdvance();
             executeAndClose(putObjMethod(third));
+            phaser.arriveAndDeregister();
         });
-        final Thread t4 = new Thread(() -> {
+        executor.execute(() -> {
+            phaser.arriveAndAwaitAdvance();
             executeAndClose(putObjMethod(fourth));
+            phaser.arriveAndDeregister();
         });
-        t1.start();
-        t2.start();
-        t3.start();
-        t4.start();
-        t1.join();
-        t2.join();
-        t3.join();
-        t4.join();
+
+        phaser.arriveAndAwaitAdvance();
+        phaser.arriveAndAwaitAdvance();
 
         try (final CloseableDataset dataset = getDataset(getObjMethod(parent))) {
             final DatasetGraph graphStore = dataset.asDatasetGraph();
