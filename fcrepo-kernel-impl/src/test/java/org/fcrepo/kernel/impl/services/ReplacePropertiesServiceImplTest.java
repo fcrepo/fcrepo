@@ -139,7 +139,7 @@ public class ReplacePropertiesServiceImplTest {
         when(headers.getInteractionModel()).thenReturn(RdfLexicon.RDF_SOURCE.toString());
 
         service.perform(tx, USER_PRINCIPAL, FEDORA_ID, model);
-        verify(tx).lockResourceAndGhostNodes(FEDORA_ID);
+        verify(tx).lockResource(FEDORA_ID);
         verify(pSession).persist(operationCaptor.capture());
         assertEquals(FEDORA_ID, operationCaptor.getValue().getResourceId());
         final RdfStream stream = operationCaptor.getValue().getTriples();
@@ -166,7 +166,7 @@ public class ReplacePropertiesServiceImplTest {
         when(headers.getArchivalGroupId()).thenReturn(agId);
 
         service.perform(tx, USER_PRINCIPAL, descId, model);
-        verify(tx).lockResourceAndGhostNodes(agId);
+        verify(tx).lockResource(agId);
         verify(tx).lockResource(binaryId);
         verify(tx).lockResource(descId);
         verify(pSession, times(2)).persist(operationCaptor.capture());

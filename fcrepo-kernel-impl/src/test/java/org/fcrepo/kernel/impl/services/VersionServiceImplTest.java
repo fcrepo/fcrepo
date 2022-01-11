@@ -113,7 +113,7 @@ public class VersionServiceImplTest {
         service.createVersion(transaction, fedoraId, user);
 
         final var captor = ArgumentCaptor.forClass(ResourceOperation.class);
-        verify(transaction).lockResourceAndGhostNodes(agId);
+        verify(transaction).lockResource(agId);
         verify(transaction).lockResource(fedoraId.asDescription());
         verify(transaction).lockResource(fedoraId);
         verify(session).persist(captor.capture());

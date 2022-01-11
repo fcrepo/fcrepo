@@ -81,7 +81,7 @@ public class WebacAclServiceImpl extends AbstractService implements WebacAclServ
                 .userPrincipal(userPrincipal)
                 .build();
 
-        lockArchivalGroupResourceFromParent(transaction, pSession, fedoraId.asBaseId());
+        lockParent(transaction, pSession, fedoraId.asBaseId());
         transaction.lockResource(fedoraId);
 
         try {

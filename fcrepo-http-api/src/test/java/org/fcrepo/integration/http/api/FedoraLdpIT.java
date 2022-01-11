@@ -4149,25 +4149,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
             childPaths.add(children.next().getObject().getURI());
             LOGGER.info("Found child: {}", childPaths.get(0));
             assertFalse("One child should have been created (more than one found).", children.hasNext());
-            //childPaths.add(children.next().getObject().getURI());
-            //LOGGER.info("Found child: {}", childPaths.get(1));
-            //assertTrue("Four children should have been created (only two found).", children.hasNext());
-            //childPaths.add(children.next().getObject().getURI());
-            //LOGGER.info("Found child: {}", childPaths.get(2));
-            //assertTrue("Four children should have been created. (only three found)", children.hasNext());
-            //childPaths.add(children.next().getObject().getURI());
-            //LOGGER.info("Found child: {}", childPaths.get(3));
-            //assertFalse("Only four children should have been created.", children.hasNext());
             for (final var p : paths) {
                 if (childPaths.contains(serverAddress + p)) {
-                    // exit out early as we found one of the paths.
+                    // exit out early as we found one of the expected paths.
                     return;
                 }
             }
             fail("None of the expected paths were found.");
-            //assertTrue(childPaths.contains(serverAddress + second));
-            //assertTrue(childPaths.contains(serverAddress + third));
-            //assertTrue(childPaths.contains(serverAddress + fourth));
         }
 
     }

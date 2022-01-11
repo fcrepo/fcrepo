@@ -50,7 +50,7 @@ public class DeleteResourceServiceImpl extends AbstractDeleteResourceService imp
                 .build();
 
         lockArchivalGroupResource(tx, pSession, fedoraId);
-        lockResourceDependingOtherStatus(tx, pSession, fedoraId);
+        tx.lockResource(fedoraId);
 
         pSession.persist(deleteOp);
         membershipService.resourceDeleted(tx, fedoraId);

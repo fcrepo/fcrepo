@@ -130,7 +130,7 @@ public class ReplaceBinariesServiceImplTest {
         assertEquals(contentString, IOUtils.toString(op.getContentStream(), UTF_8));
         assertPropertiesPopulated(op);
 
-        verify(tx).lockResourceAndGhostNodes(FEDORA_ID);
+        verify(tx).lockResource(FEDORA_ID);
         verify(tx).lockResource(FEDORA_ID.asDescription());
     }
 
@@ -154,7 +154,7 @@ public class ReplaceBinariesServiceImplTest {
         assertEquals(contentString, IOUtils.toString(op.getContentStream(), UTF_8));
         assertPropertiesPopulated(op);
 
-        verify(tx).lockResourceAndGhostNodes(agId);
+        verify(tx).lockResource(agId);
         verify(tx).lockResource(binId);
         verify(tx).lockResource(binId.asDescription());
     }

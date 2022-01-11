@@ -286,59 +286,23 @@ public abstract class AbstractService {
                                              final FedoraId fedoraId) {
         final var headers = pSession.getHeaders(fedoraId, null);
         if (headers.getArchivalGroupId() != null) {
-            tx.lockResourceAndGhostNodes(headers.getArchivalGroupId());
+            tx.lockResource(headers.getArchivalGroupId());
         }
     }
 
-    protected void lockArchivalGroupResourceFromParent(final Transaction tx,
-                                                       final PersistentStorageSession pSession,
-                                                       final FedoraId parentId) {
+    protected void lockParent(final Transaction tx,
+                              final PersistentStorageSession pSession,
+                              final FedoraId parentId) {
         if (parentId != null && !parentId.isRepositoryRoot()) {
             final var parentHeaders = pSession.getHeaders(parentId, null);
-            if (parentHeaders.isArchivalGroup()) {
-                tx.lockResourceAndGhostNodes(parentId);
-            } else if (parentHeaders.getArchivalGroupId() != null) {
-                tx.lockResourceAndGhostNodes(parentHeaders.getArchivalGroupId());
+            if (parentHeaders.getArchivalGroupId() != null) {
+                // parent is part of an AG, so lock the AG
+                tx.lockResource(parentHeaders.getArchivalGroupId());
+            } else {
+                // otherwise lock the parent.
+                tx.lockResource(parentId);
             }
         }
-    }
-
-    /**
-     * Check to lock ghost nodes for resourceId depending on the status of the checkId. This allows us to
-     * check a parent for creating new resources, or the actual resource for updating/deleting existing resources.
-     *
-     * @param tx The transaction
-     * @param pSession The persistent storage session
-     * @param resourceId The ID we are locking
-     * @param checkId The ID to check status of
-     */
-    protected void lockResourceDependingOtherStatus(final Transaction tx,
-                                                    final PersistentStorageSession pSession,
-                                                    final FedoraId resourceId,
-                                                    final FedoraId checkId) {
-        final var headers = pSession.getHeaders(checkId, null);
-        if (checkId.isRepositoryRoot() || (!headers.isArchivalGroup() && headers.getArchivalGroupId() == null &&
-                !checkId.isAcl() && !checkId.isDescription())) {
-            // The resource's check ID is the root or is not an AG or part of an AG and is not an ACL or binary
-            // description. So we lock it with ghost node checking
-            tx.lockResourceAndGhostNodes(resourceId);
-        } else {
-            // The checkID is an AG or part of an AG that should have been locked by a call to
-            // lockArchivalGroupResource or lockArchivalGroupResourceFromParent.
-            tx.lockResource(resourceId);
-        }
-    }
-
-    /**
-     * Shortcut to call above using a single resource.
-     * @param tx The transaction
-     * @param pSession The persistent storage session
-     * @param resourceId The ID we are locking and checking
-     */
-    protected void lockResourceDependingOtherStatus(final Transaction tx,
-                                                    final PersistentStorageSession pSession,
-                                                    final FedoraId resourceId) {
-        lockResourceDependingOtherStatus(tx, pSession, resourceId, resourceId);
     }
 
     /**

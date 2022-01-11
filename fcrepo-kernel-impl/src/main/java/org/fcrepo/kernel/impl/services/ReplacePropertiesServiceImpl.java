@@ -92,9 +92,9 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
             }
 
             lockArchivalGroupResource(tx, pSession, fedoraId);
-            lockResourceDependingOtherStatus(tx, pSession, fedoraId);
+            tx.lockResource(fedoraId);
             if (RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI.equals(interactionModel)) {
-                lockResourceDependingOtherStatus(tx, pSession, fedoraId.asBaseId());
+                tx.lockResource(fedoraId.asBaseId());
             }
 
             pSession.persist(primaryOp);

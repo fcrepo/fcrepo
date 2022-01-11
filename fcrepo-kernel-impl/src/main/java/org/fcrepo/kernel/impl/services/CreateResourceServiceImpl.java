@@ -119,8 +119,8 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                 .filename(filename)
                 .build();
 
-        lockArchivalGroupResourceFromParent(tx, pSession, parentId);
-        lockResourceDependingOtherStatus(tx, pSession, fedoraId, parentId);
+        lockParent(tx, pSession, parentId);
+        tx.lockResourceAndGhostNodes(fedoraId);
 
         try {
             pSession.persist(createOp);
@@ -187,8 +187,8 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                 .userPrincipal(userPrincipal)
                 .build();
 
-        lockArchivalGroupResourceFromParent(tx, pSession, parentId);
-        lockResourceDependingOtherStatus(tx, pSession, fedoraId, parentId);
+        lockParent(tx, pSession, parentId);
+        tx.lockResourceAndGhostNodes(fedoraId);
 
         try {
             pSession.persist(createOp);

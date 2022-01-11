@@ -167,8 +167,8 @@ public class PurgeResourceServiceImplTest {
 
         assertEquals(0, containmentIndex.getContains(tx, RESOURCE_ID).count());
 
-        verify(tx).lockResourceAndGhostNodes(RESOURCE_ID);
-        verify(tx).lockResourceAndGhostNodes(CHILD_RESOURCE_ID);
+        verify(tx).lockResource(RESOURCE_ID);
+        verify(tx).lockResource(CHILD_RESOURCE_ID);
     }
 
     private void verifyResourceOperation(final FedoraId fedoraID,
@@ -212,7 +212,7 @@ public class PurgeResourceServiceImplTest {
         assertEquals(RESOURCE_ACL_ID, operations.get(1).getResourceId());
         assertEquals(RESOURCE_ID, operations.get(2).getResourceId());
 
-        verify(tx).lockResourceAndGhostNodes(RESOURCE_ID);
+        verify(tx).lockResource(RESOURCE_ID);
         verify(tx).lockResource(RESOURCE_DESCRIPTION_ID);
         verify(tx).lockResource(RESOURCE_ACL_ID);
     }
