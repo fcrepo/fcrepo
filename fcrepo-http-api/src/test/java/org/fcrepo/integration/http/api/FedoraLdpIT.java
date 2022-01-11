@@ -4105,16 +4105,15 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testConcurrentPutsWithPairtrees() throws InterruptedException, IOException {
+    public void testConcurrentPutsWithPairtrees() throws IOException {
         final String parent = getRandomUniqueId();
         executeAndClose(putObjMethod(parent));
         final String first = parent + "/00/1";
         final String second = parent + "/00/2";
         final String third = parent + "/00/3";
-        final String fourth = parent + "/00/4";
-        final List<String> paths = List.of(first, second, third, fourth);
+        final List<String> paths = List.of(first, second, third);
 
-        final var phaser = new Phaser(5);
+        final var phaser = new Phaser(4);
         final var executor = Executors.newFixedThreadPool(4);
 
         executor.execute(() -> {
@@ -4130,11 +4129,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         executor.execute(() -> {
             phaser.arriveAndAwaitAdvance();
             executeAndClose(putObjMethod(third));
-            phaser.arriveAndDeregister();
-        });
-        executor.execute(() -> {
-            phaser.arriveAndAwaitAdvance();
-            executeAndClose(putObjMethod(fourth));
             phaser.arriveAndDeregister();
         });
 
