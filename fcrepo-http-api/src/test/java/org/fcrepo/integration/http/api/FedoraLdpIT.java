@@ -4105,56 +4105,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testConcurrentPutsWithPairtrees() throws IOException {
-        final String parent = getRandomUniqueId();
-        executeAndClose(putObjMethod(parent));
-        final String first = parent + "/00/1";
-        final String second = parent + "/00/2";
-        final String third = parent + "/00/3";
-        final List<String> paths = List.of(first, second, third);
-
-        final var phaser = new Phaser(4);
-        final var executor = Executors.newFixedThreadPool(4);
-
-        executor.execute(() -> {
-            phaser.arriveAndAwaitAdvance();
-            executeAndClose(putObjMethod(first));
-            phaser.arriveAndDeregister();
-        });
-        executor.execute(() -> {
-            phaser.arriveAndAwaitAdvance();
-            executeAndClose(putObjMethod(second));
-            phaser.arriveAndDeregister();
-        });
-        executor.execute(() -> {
-            phaser.arriveAndAwaitAdvance();
-            executeAndClose(putObjMethod(third));
-            phaser.arriveAndDeregister();
-        });
-
-        phaser.arriveAndAwaitAdvance();
-        phaser.arriveAndAwaitAdvance();
-
-        try (final CloseableDataset dataset = getDataset(getObjMethod(parent))) {
-            final DatasetGraph graphStore = dataset.asDatasetGraph();
-            final List<String> childPaths = new ArrayList<>();
-            final Iterator<Quad> children = graphStore.find(ANY, ANY, CONTAINS.asNode(), ANY);
-            assertTrue("One child should have been created (none found).", children.hasNext());
-            childPaths.add(children.next().getObject().getURI());
-            LOGGER.info("Found child: {}", childPaths.get(0));
-            assertFalse("One child should have been created (more than one found).", children.hasNext());
-            for (final var p : paths) {
-                if (childPaths.contains(serverAddress + p)) {
-                    // exit out early as we found one of the expected paths.
-                    return;
-                }
-            }
-            fail("None of the expected paths were found.");
-        }
-
-    }
-
-    @Test
     public void testConcurrentUpdatesToBinary() throws IOException, InterruptedException {
         // create a binary
         final String path = getRandomUniqueId();
