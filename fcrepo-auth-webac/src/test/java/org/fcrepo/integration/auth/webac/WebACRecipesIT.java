@@ -5,6 +5,7 @@
  */
 package org.fcrepo.integration.auth.webac;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.stream;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
@@ -2412,5 +2413,80 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final HttpPost txnCreatePost = postObjMethod("rest/fcr:tx");
         setAuth(txnCreatePost, "testUser92");
         assertEquals(SC_CREATED, getStatus(txnCreatePost));
+    }
+
+    @Test
+    public void testAlterAclWithPatch() throws IOException {
+        final String targetResource = "/rest/" + getRandomUniqueId();
+        final String username = "user88";
+        // Make a basic container.
+        final String targetUri = ingestObj(targetResource);
+        final String readwriteString = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                "<#readauthz> a acl:Authorization ;\n" +
+                "   acl:agent \"" + username + "\" ;\n" +
+                "   acl:mode acl:Read, acl:Write, acl:Append ;\n" +
+                "   acl:accessTo <" + targetResource + "> ;\n" +
+                "   acl:default <" + targetResource + "> .";
+        // Allow user to read and write this object.
+        ingestAclString(targetUri, readwriteString, "fedoraAdmin");
+
+        // Test we can append a container as username
+        final HttpPost okPost = postObjMethod(targetResource);
+        setAuth(okPost, username);
+        assertEquals(SC_CREATED, getStatus(okPost));
+
+        // Change the ACL to read-only for username
+        final String readonlyString = "prefix acl: <http://www.w3.org/ns/auth/acl#> " +
+                " DELETE { <#readauthz> acl:mode acl:Write . <#readauthz> acl:mode acl:Append .} WHERE {}";
+        final HttpPatch httpPatch = patchObjMethod(targetResource + "/fcr:acl");
+        setAuth(httpPatch, "fedoraAdmin");
+        httpPatch.setEntity(new StringEntity(readonlyString, UTF_8));
+        httpPatch.setHeader(CONTENT_TYPE, "application/sparql-update");
+        assertEquals(SC_NO_CONTENT, getStatus(httpPatch));
+
+        // Test we can't append a container as username
+        final HttpPost noPost = postObjMethod(targetResource);
+        setAuth(noPost, username);
+        assertEquals(SC_FORBIDDEN, getStatus(noPost));
+    }
+
+    @Test
+    public void testAlterAclWithPut() throws IOException {
+        final String targetResource = "/rest/" + getRandomUniqueId();
+        final String username = "user88";
+        // Make a basic container.
+        final String targetUri = ingestObj(targetResource);
+        final String readwriteString = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                "<#readauthz> a acl:Authorization ;\n" +
+                "   acl:agent \"" + username + "\" ;\n" +
+                "   acl:mode acl:Read, acl:Write, acl:Append ;\n" +
+                "   acl:accessTo <" + targetResource + "> ;\n" +
+                "   acl:default <" + targetResource + "> .";
+        // Allow user to read and write this object.
+        ingestAclString(targetUri, readwriteString, "fedoraAdmin");
+
+        // Test we can append a container as username
+        final HttpPost okPost = postObjMethod(targetResource);
+        setAuth(okPost, username);
+        assertEquals(SC_CREATED, getStatus(okPost));
+
+        // Change the ACL to read-only for username
+        final String readonlyString = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                "<#readauthz> a acl:Authorization ;\n" +
+                "   acl:agent \"" + username + "\" ;\n" +
+                "   acl:mode acl:Read ;\n" +
+                "   acl:accessTo <" + targetResource + "> ;\n" +
+                "   acl:default <" + targetResource + "> .";
+        final HttpPut httpPut = putObjMethod(targetResource + "/fcr:acl");
+        setAuth(httpPut, "fedoraAdmin");
+        httpPut.setEntity(new StringEntity(readonlyString, UTF_8));
+        httpPut.setHeader(CONTENT_TYPE, "text/turtle");
+        httpPut.setHeader("Prefer", "handling=lenient");
+        assertEquals(SC_NO_CONTENT, getStatus(httpPut));
+
+        // Test we can't append a container as username
+        final HttpPost noPost = postObjMethod(targetResource);
+        setAuth(noPost, username);
+        assertEquals(SC_FORBIDDEN, getStatus(noPost));
     }
 }

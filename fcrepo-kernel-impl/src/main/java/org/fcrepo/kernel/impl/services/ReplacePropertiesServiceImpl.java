@@ -12,6 +12,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.auth.ACLHandle;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -31,6 +32,8 @@ import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 import java.util.List;
 import java.util.Optional;
 
+import com.github.benmanes.caffeine.cache.Cache;
+
 /**
  * This class mediates update operations between the kernel and persistent storage layers
  * @author bseeger
@@ -46,6 +49,9 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
 
     @Inject
     private NonRdfSourceOperationFactory nonRdfFactory;
+
+    @Inject
+    private Cache<String, Optional<ACLHandle>> authHandleCache;
 
     @Override
     public void perform(final Transaction tx,
@@ -107,6 +113,10 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
             searchIndex.addUpdateIndex(tx, pSession.getHeaders(fedoraId, null));
             recordEvent(tx, fedoraId, primaryOp);
             secondaryOp.ifPresent(operation -> updateBinaryHeaders(tx, pSession, operation));
+            if (fedoraId.isAcl()) {
+                // Flush ACL cache on any ACL creation/update/deletion.
+                authHandleCache.invalidateAll();
+            }
         } catch (final PersistentStorageException ex) {
             throw new RepositoryRuntimeException(String.format("failed to replace resource %s",
                     fedoraId), ex);
