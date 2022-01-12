@@ -68,6 +68,7 @@
     <jacoco.out.it.file>jacoco-it.exec</jacoco.out.it.file>
     <sonar.jacoco.reportPath>${jacoco.outputDir}/${jacoco.out.unit.file}</sonar.jacoco.reportPath>
     <sonar.jacoco.itReportPath>${jacoco.outputDir}/${jacoco.out.it.file}</sonar.jacoco.itReportPath>
+    <sonatype.host>s01.oss.sonatype.org</sonatype.host>
   </properties>
 
   <build>
@@ -392,7 +393,7 @@
           <extensions>true</extensions>
           <configuration>
             <serverId>sonatype-nexus-snapshots</serverId>
-            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+            <nexusUrl>https://${sonatype.host}/</nexusUrl>
             <autoReleaseAfterClose>true</autoReleaseAfterClose>
           </configuration>
         </plugin>
@@ -470,7 +471,7 @@
     <pluginRepository>
       <id>sonatype-nexus-snapshots</id>
       <name>Sonatype Nexus Snapshots</name>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <url>https://${sonatype.host}/content/repositories/snapshots</url>
       <releases>
         <enabled>false</enabled>
       </releases>
@@ -482,7 +483,7 @@
     <pluginRepository>
       <id>sonatype-nexus-staging</id>
       <name>Nexus Release Repository</name>
-      <url>https://oss.sonatype.org/content/repositories/releases</url>
+      <url>https://${sonatype.host}/content/repositories/releases</url>
       <releases>
         <enabled>true</enabled>
       </releases>
@@ -560,11 +561,11 @@
     <snapshotRepository>
       <id>sonatype-nexus-snapshots</id>
       <name>Sonatype Nexus Shapshots</name>
-      <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+      <url>https://${sonatype.host}/content/repositories/snapshots/</url>
     </snapshotRepository>
     <repository>
       <id>sonatype-nexus-staging</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+      <url>https://${sonatype.host}/service/local/staging/deploy/maven2/</url>
     </repository>
   </distributionManagement>
 
@@ -712,7 +713,7 @@
   <repositories>
     <repository>
       <id>oss.sonatype.org-snapshot</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <url>https://${sonatype.host}/content/repositories/snapshots</url>
       <releases>
         <enabled>false</enabled>
       </releases>
