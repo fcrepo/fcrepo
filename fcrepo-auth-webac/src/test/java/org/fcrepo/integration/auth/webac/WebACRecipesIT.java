@@ -69,7 +69,6 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.glassfish.grizzly.utils.Charsets;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
@@ -399,7 +398,6 @@ public class WebACRecipesIT extends AbstractResourceIT {
         assertEquals(HttpStatus.SC_OK, getStatus(requestGet4));
     }
 
-    @Ignore("Content-type with charset causes it to be a binary - FCREPO-3312")
     @Test
     public void scenario9() throws IOException {
         final String idPublic = "/rest/anotherCollection/publicObj";
@@ -1340,7 +1338,6 @@ public class WebACRecipesIT extends AbstractResourceIT {
         assertEquals(HttpStatus.SC_OK, getStatus(headDesc2));
     }
 
-    @Ignore("Until FCREPO-3310 and FCREPO-3311 are resolved")
     @Test
     public void testIndirectRelationshipForbidden() throws IOException {
         final String targetResource = "/rest/" + getRandomUniqueId();
@@ -1642,7 +1639,6 @@ public class WebACRecipesIT extends AbstractResourceIT {
 
     }
 
-    @Ignore("Until FCREPO-3310 and FCREPO-3311 are resolved")
     @Test
     public void testDirectRelationshipForbidden() throws IOException {
         final String targetResource = "/rest/" + getRandomUniqueId();
