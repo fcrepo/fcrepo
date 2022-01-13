@@ -1132,6 +1132,29 @@ public class TransactionsIT extends AbstractResourceIT {
         assertEquals(CONFLICT.getStatusCode(), getStatus(putMethod3));
     }
 
+    @Test
+    public void deleteParentWhileAddingChild() throws IOException {
+        final String parent = getRandomUniqueId();
+        final String child = parent + "/" + getRandomUniqueId();
+
+        putContainer(parent, null);
+
+        final String tx1 = createTransaction();
+        final String tx2 = createTransaction();
+
+        // Put a child
+        putBinary(child, tx1, "test 1");
+        // Try to delete the parent in a transaction and fail
+        final HttpDelete deleteParent = deleteObjMethod(parent);
+        addTxTo(deleteParent, tx2);
+        assertEquals(CONFLICT.getStatusCode(), getStatus(deleteParent));
+        // Try to delete the parent outside of a transaction and fail
+        assertEquals(CONFLICT.getStatusCode(), getStatus(deleteObjMethod(parent)));
+        // Commit the transaction
+        commitTransaction(tx1);
+        // See that the child exists
+        assertBinaryContent("test 1", child, null);
+    }
 
     private void assertConcurrentUpdate(final CheckedRunnable runnable) throws Exception {
         try {
