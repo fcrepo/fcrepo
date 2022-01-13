@@ -5,8 +5,12 @@
  */
 package org.fcrepo.kernel.impl;
 
+import static java.util.stream.Collectors.toList;
+
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Phaser;
 
 import org.fcrepo.common.db.DbTransactionExecutor;
@@ -25,6 +29,7 @@ import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.search.api.SearchIndex;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -278,6 +283,33 @@ public class TransactionImpl implements Transaction {
     @Override
     public void lockResource(final FedoraId resourceId) {
         getResourceLockManger().acquire(getId(), resourceId);
+    }
+
+    /**
+     * If you create an object with ghost nodes above it, we need to lock those paths as well to ensure
+     * no other operation alters them while the current transaction is in process.
+     *
+     * @param resourceId the resource we are creating
+     */
+    @Override
+    public void lockResourceAndGhostNodes(final FedoraId resourceId) {
+        getResourceLockManger().acquire(getId(), resourceId);
+        final var resourceIdStr = resourceId.getResourceId();
+        final String estimateParentPath = resourceIdStr.indexOf('/') > -1 ?
+                resourceIdStr.substring(0,resourceIdStr.lastIndexOf('/')) : resourceIdStr;
+        final var actualParent = getContainmentIndex().getContainerIdByPath(this, resourceId, false);
+        if (!estimateParentPath.equals(actualParent.getResourceId())) {
+            // If the expected parent does not match the actual parent, then we have ghost nodes.
+            // Lock them too.
+            final List<String> ghostPaths = Arrays.stream(estimateParentPath
+                    .replace(actualParent.getResourceId(), "")
+                    .split("/")).filter(a -> !a.isBlank()).collect(toList());
+            FedoraId tempParent = actualParent;
+            for (final String part : ghostPaths) {
+                tempParent = tempParent.resolve(part);
+                getResourceLockManger().acquire(getId(), tempParent);
+            }
+        }
     }
 
     @Override

@@ -5,7 +5,6 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
@@ -114,9 +113,8 @@ public class PurgeResourceServiceImplTest {
 
     private static final FedoraId RESOURCE_ID =  FedoraId.create("test-resource");
     private static final FedoraId CHILD_RESOURCE_ID = RESOURCE_ID.resolve("test-resource-child");
-    private static final FedoraId RESOURCE_DESCRIPTION_ID =
-            FedoraId.create(FEDORA_ID_PREFIX + "test-resource-description");
-    private static final FedoraId RESOURCE_ACL_ID = FedoraId.create("test-resource-acl");
+    private static final FedoraId RESOURCE_DESCRIPTION_ID = RESOURCE_ID.resolve("fcr:metadata");
+    private static final FedoraId RESOURCE_ACL_ID = RESOURCE_ID.resolve("fcr:acl");
     private static final String TX_ID = "tx-1234";
 
     @Before
@@ -157,9 +155,6 @@ public class PurgeResourceServiceImplTest {
         containmentIndex.addContainedBy(tx, container.getFedoraId(), childContainer.getFedoraId());
         containmentIndex.commitTransaction(tx);
         containmentIndex.removeContainedBy(tx, container.getFedoraId(), childContainer.getFedoraId());
-
-        when(container.isAcl()).thenReturn(false);
-        when(container.getAcl()).thenReturn(null);
 
         service.perform(tx, container, USER);
 

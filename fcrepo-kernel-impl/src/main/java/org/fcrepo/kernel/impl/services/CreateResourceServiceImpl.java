@@ -119,8 +119,8 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                 .filename(filename)
                 .build();
 
-        lockArchivalGroupResourceFromParent(tx, pSession, parentId);
-        tx.lockResource(fedoraId);
+        lockParent(tx, pSession, parentId);
+        tx.lockResourceAndGhostNodes(fedoraId);
 
         try {
             pSession.persist(createOp);
@@ -150,6 +150,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                 .parentId(binaryId)
                 .build();
 
+        // ghost nodes would be handled on the binary, so just lock the description.
         tx.lockResource(descId);
 
         try {
@@ -186,8 +187,8 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                 .userPrincipal(userPrincipal)
                 .build();
 
-        lockArchivalGroupResourceFromParent(tx, pSession, parentId);
-        tx.lockResource(fedoraId);
+        lockParent(tx, pSession, parentId);
+        tx.lockResourceAndGhostNodes(fedoraId);
 
         try {
             pSession.persist(createOp);

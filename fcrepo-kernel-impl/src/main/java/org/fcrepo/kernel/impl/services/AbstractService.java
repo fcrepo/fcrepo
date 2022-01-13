@@ -290,15 +290,17 @@ public abstract class AbstractService {
         }
     }
 
-    protected void lockArchivalGroupResourceFromParent(final Transaction tx,
-                                                       final PersistentStorageSession pSession,
-                                                       final FedoraId parentId) {
+    protected void lockParent(final Transaction tx,
+                              final PersistentStorageSession pSession,
+                              final FedoraId parentId) {
         if (parentId != null && !parentId.isRepositoryRoot()) {
             final var parentHeaders = pSession.getHeaders(parentId, null);
-            if (parentHeaders.isArchivalGroup()) {
-                tx.lockResource(parentId);
-            } else if (parentHeaders.getArchivalGroupId() != null) {
+            if (parentHeaders.getArchivalGroupId() != null) {
+                // parent is part of an AG, so lock the AG
                 tx.lockResource(parentHeaders.getArchivalGroupId());
+            } else {
+                // otherwise lock the parent.
+                tx.lockResource(parentId);
             }
         }
     }

@@ -124,6 +124,11 @@ public class ReadOnlyTransaction implements Transaction {
     }
 
     @Override
+    public void lockResourceAndGhostNodes(final FedoraId resourceId) {
+        // no-op
+    }
+
+    @Override
     public void releaseResourceLocksIfShortLived() {
         // no-op
     }

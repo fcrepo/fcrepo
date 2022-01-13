@@ -1029,6 +1029,133 @@ public class TransactionsIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation)));
     }
 
+    /**
+     * Test for accounting for ghost nodes during resource locking.
+     * @throws IOException
+     * @see <a href="https://fedora-repository.atlassian.net/browse/FCREPO-3584">FCREPO-3584</a>
+     */
+    @Test
+    public void testCheckGhostNodesInResourceLocking() throws IOException {
+        // Create a transaction
+        final String txLocation = createTransaction();
+
+        final String parentLocation = getRandomUniqueId();
+        final String childLocation = parentLocation + "/" + getRandomUniqueId();
+
+        // Create a binary with a ghost node in a transaction.
+        final HttpPut putMethod = putObjMethod(childLocation);
+        putMethod.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        putMethod.addHeader(CONTENT_TYPE, TEXT_PLAIN);
+        putMethod.setEntity(new StringEntity("This is some binary content", UTF_8));
+        // Do the PUT in the transaction
+        addTxTo(putMethod, txLocation);
+        // Execute the request
+        assertEquals(CREATED.getStatusCode(), getStatus(putMethod));
+
+        // Create a binary outside the transaction at the ghost node's location
+        final HttpPut putOutSide = putObjMethod(parentLocation);
+        putOutSide.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        putOutSide.addHeader(CONTENT_TYPE, TEXT_PLAIN);
+        putOutSide.setEntity(new StringEntity("This is some other binary content", UTF_8));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(putOutSide));
+    }
+
+    @Test
+    public void testCheckGhostNodesInResourceLockingReverse() throws IOException {
+        // Create a transaction
+        final String txLocation = createTransaction();
+
+        final String parentLocation = getRandomUniqueId();
+        final String childLocation = parentLocation + "/" + getRandomUniqueId();
+
+        // Create a binary at the ghost node location in a transaction
+        final String txLocation2 = createTransaction();
+        final HttpPut putMethod2 = putObjMethod(parentLocation);
+        putMethod2.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        putMethod2.addHeader(CONTENT_TYPE, TEXT_PLAIN);
+        putMethod2.setEntity(new StringEntity("This is totally different binary content", UTF_8));
+        // Do the PUT in the transaction
+        addTxTo(putMethod2, txLocation2);
+        // Execute the request
+        assertEquals(CREATED.getStatusCode(), getStatus(putMethod2));
+
+        // Try to create a binary using the path of an actual object in a separate transaction.
+        final HttpPut putMethod = putObjMethod(childLocation);
+        putMethod.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        putMethod.addHeader(CONTENT_TYPE, TEXT_PLAIN);
+        putMethod.setEntity(new StringEntity("This is some binary content", UTF_8));
+        // Do the PUT in the transaction
+        addTxTo(putMethod, txLocation);
+        // Execute the request
+        assertEquals(CONFLICT.getStatusCode(), getStatus(putMethod));
+    }
+
+    @Test
+    public void testHoldsOnGhostNodesIn2Transactions() throws IOException {
+        // Create a transaction
+        final String txLocation = createTransaction();
+
+        final String parentLocation = getRandomUniqueId();
+        final String childLocation = parentLocation + "/" + getRandomUniqueId();
+        final String childLocation2 = parentLocation + "/" + getRandomUniqueId();
+
+        // Create an object with a ghost node in transaction 1
+        final HttpPut putMethod = putObjMethod(childLocation);
+        putMethod.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        putMethod.addHeader(CONTENT_TYPE, TEXT_PLAIN);
+        putMethod.setEntity(new StringEntity("This is some binary content", UTF_8));
+        // Do the PUT in the transaction
+        addTxTo(putMethod, txLocation);
+        // Execute the request
+        assertEquals(CREATED.getStatusCode(), getStatus(putMethod));
+
+        // Try to create a binary at the ghost node in a new transaction
+        final String txLocation2 = createTransaction();
+        final HttpPut putMethod2 = putObjMethod(parentLocation);
+        putMethod2.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        putMethod2.addHeader(CONTENT_TYPE, TEXT_PLAIN);
+        putMethod2.setEntity(new StringEntity("This is totally different binary content", UTF_8));
+        // Do the PUT in the transaction
+        addTxTo(putMethod2, txLocation2);
+        // Execute the request
+        assertEquals(CONFLICT.getStatusCode(), getStatus(putMethod2));
+
+        // Create a binary re-using the ghost node in a new transaction
+        final String txLocation3 = createTransaction();
+        final HttpPut putMethod3 = putObjMethod(childLocation2);
+        putMethod3.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        putMethod3.addHeader(CONTENT_TYPE, TEXT_PLAIN);
+        putMethod3.setEntity(new StringEntity("This is totally different binary content", UTF_8));
+        // Do the PUT in the transaction
+        addTxTo(putMethod3, txLocation3);
+        // Execute the request
+        assertEquals(CONFLICT.getStatusCode(), getStatus(putMethod3));
+    }
+
+    @Test
+    public void deleteParentWhileAddingChild() throws IOException {
+        final String parent = getRandomUniqueId();
+        final String child = parent + "/" + getRandomUniqueId();
+
+        putContainer(parent, null);
+
+        final String tx1 = createTransaction();
+        final String tx2 = createTransaction();
+
+        // Put a child
+        putBinary(child, tx1, "test 1");
+        // Try to delete the parent in a transaction and fail
+        final HttpDelete deleteParent = deleteObjMethod(parent);
+        addTxTo(deleteParent, tx2);
+        assertEquals(CONFLICT.getStatusCode(), getStatus(deleteParent));
+        // Try to delete the parent outside of a transaction and fail
+        assertEquals(CONFLICT.getStatusCode(), getStatus(deleteObjMethod(parent)));
+        // Commit the transaction
+        commitTransaction(tx1);
+        // See that the child exists
+        assertBinaryContent("test 1", child, null);
+    }
+
     private void assertConcurrentUpdate(final CheckedRunnable runnable) throws Exception {
         try {
             runnable.run();

@@ -204,7 +204,7 @@ public class CreateResourceServiceImplTest {
         final FedoraId childId = fedoraId.resolve("child");
         when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
         createResourceService.perform(transaction, USER_PRINCIPAL, childId, null, model);
-        verify(transaction).lockResource(childId);
+        verify(transaction).lockResourceAndGhostNodes(childId);
     }
 
     @Test
@@ -216,7 +216,7 @@ public class CreateResourceServiceImplTest {
         when(resourceHeaders.isArchivalGroup()).thenReturn(true);
         createResourceService.perform(transaction, USER_PRINCIPAL, childId, null, model);
         verify(transaction).lockResource(fedoraId);
-        verify(transaction).lockResource(childId);
+        verify(transaction).lockResourceAndGhostNodes(childId);
     }
 
     @Test
@@ -230,7 +230,7 @@ public class CreateResourceServiceImplTest {
         when(resourceHeaders.getArchivalGroupId()).thenReturn(agId);
         createResourceService.perform(transaction, USER_PRINCIPAL, childId, null, model);
         verify(transaction).lockResource(agId);
-        verify(transaction).lockResource(childId);
+        verify(transaction).lockResourceAndGhostNodes(childId);
     }
 
     /**
@@ -293,7 +293,7 @@ public class CreateResourceServiceImplTest {
         assertTrue(persistedId.getFullId().startsWith(fedoraId.getFullId()));
         assertEquals(1, containmentIndex.getContains(transaction, fedoraId).count());
 
-        verify(transaction).lockResource(childId);
+        verify(transaction).lockResourceAndGhostNodes(childId);
     }
 
     /**
@@ -318,7 +318,7 @@ public class CreateResourceServiceImplTest {
         assertBinaryPropertiesPresent(operation);
         assertEquals(fedoraId, operation.getParentId());
         assertEquals(1, containmentIndex.getContains(transaction, fedoraId).count());
-        verify(transaction).lockResource(childId);
+        verify(transaction).lockResourceAndGhostNodes(childId);
     }
 
     /**
@@ -366,7 +366,7 @@ public class CreateResourceServiceImplTest {
         assertEquals(createdDate, rdfOp.getCreatedDate());
         assertEquals(lastModifiedDate, rdfOp.getLastModifiedDate());
         assertEquals(1, containmentIndex.getContains(transaction, fedoraId).count());
-        verify(transaction).lockResource(childId);
+        verify(transaction).lockResourceAndGhostNodes(childId);
     }
 
     /**
@@ -398,7 +398,7 @@ public class CreateResourceServiceImplTest {
         final var descOperation = getOperation(operations, CreateRdfSourceOperation.class);
         assertEquals(persistedId.asDescription(), descOperation.getResourceId());
         assertEquals(1, containmentIndex.getContains(transaction, fedoraId).count());
-        verify(transaction).lockResource(childId);
+        verify(transaction).lockResourceAndGhostNodes(childId);
     }
 
     @Test
@@ -532,6 +532,12 @@ public class CreateResourceServiceImplTest {
 
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("child");
+        containmentIndex.addContainedBy(transaction, FedoraId.getRepositoryRootId(), fedoraId);
+        containmentIndex.commitTransaction(transaction);
+
+        when(resourceHeaders.getArchivalGroupId()).thenReturn(null);
+        when(resourceHeaders.isArchivalGroup()).thenReturn(false);
+        when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
 
         createResourceService.perform(transaction, USER_PRINCIPAL, childId,
                 CONTENT_TYPE, FILENAME, contentString.length(), null, realDigests, null, extContent);
@@ -543,7 +549,7 @@ public class CreateResourceServiceImplTest {
         assertNotEquals(fedoraId, persistedId);
         assertTrue(persistedId.getFullId().startsWith(fedoraId.getFullId()));
         assertBinaryPropertiesPresent(operation, "text/plain", FILENAME, contentString.length(), realDigests);
-        verify(transaction).lockResource(childId);
+        verify(transaction).lockResourceAndGhostNodes(childId);
     }
 
     @Test
@@ -562,6 +568,12 @@ public class CreateResourceServiceImplTest {
 
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("child");
+        containmentIndex.addContainedBy(transaction, FedoraId.getRepositoryRootId(), fedoraId);
+        containmentIndex.commitTransaction(transaction);
+
+        when(resourceHeaders.getArchivalGroupId()).thenReturn(null);
+        when(resourceHeaders.isArchivalGroup()).thenReturn(false);
+        when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
 
         createResourceService.perform(transaction, USER_PRINCIPAL, childId,
                 CONTENT_TYPE, FILENAME, contentString.length(), null, realDigests, null, extContent);
@@ -576,7 +588,7 @@ public class CreateResourceServiceImplTest {
                 realDigests);
 
         assertExternalBinaryPropertiesPresent(operation, uri, ExternalContent.PROXY);
-        verify(transaction).lockResource(childId);
+        verify(transaction).lockResourceAndGhostNodes(childId);
     }
 
     private void assertBinaryPropertiesPresent(final ResourceOperation operation, final String exMimetype,
