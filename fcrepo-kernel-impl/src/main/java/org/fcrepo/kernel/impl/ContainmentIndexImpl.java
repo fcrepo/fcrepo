@@ -165,23 +165,6 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             " SET " + END_TIME_COLUMN + " = :endTime WHERE " +
             PARENT_COLUMN + " = :parent AND " + FEDORA_ID_COLUMN + " = :child";
 
-    private static final String DIRECT_INSERT_RECORDS = "INSERT INTO " + RESOURCES_TABLE +
-            " (" + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ")" +
-            " VALUES (:parent, :child, :startTime, :endTime)";
-
-    private static final String DIRECT_UPSERT_POSTGRESQL = " ON CONFLICT ( " + FEDORA_ID_COLUMN + ")" +
-        "DO UPDATE SET " + PARENT_COLUMN + " = EXCLUDED." + PARENT_COLUMN + ", " +
-        START_TIME_COLUMN + " = EXCLUDED." + START_TIME_COLUMN + ", " +
-        END_TIME_COLUMN + " = EXCLUDED." + END_TIME_COLUMN;
-
-    private static final String DIRECT_UPSERT_MYSQL_MARIA = " ON DUPLICATE KEY UPDATE " +
-        PARENT_COLUMN + " = VALUES(" + PARENT_COLUMN + "), " + START_TIME_COLUMN + " = VALUES(" +
-        START_TIME_COLUMN + "), " + END_TIME_COLUMN + " = VALUES(" + END_TIME_COLUMN + ")";
-
-    private static final String DIRECT_UPSERT_H2 = "MERGE INTO " + RESOURCES_TABLE +
-        " (" + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ")" +
-        " KEY (" + FEDORA_ID_COLUMN + ") VALUES (:parent, :child, :startTime, :endTime)";
-
     private static final Map<DbPlatform, String> UPSERT_MAPPING = Map.of(
             DbPlatform.H2, UPSERT_RECORDS_H2,
             DbPlatform.MYSQL, UPSERT_RECORDS_MYSQL_MARIA,
@@ -189,11 +172,28 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             DbPlatform.POSTGRESQL, UPSERT_RECORDS_POSTGRESQL
     );
 
+    private static final String DIRECT_INSERT_RECORDS = "INSERT INTO " + RESOURCES_TABLE +
+            " (" + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ")" +
+            " VALUES (:parent, :child, :startTime, :endTime)";
+
+    private static final String DIRECT_INSERT_POSTGRESQL = " ON CONFLICT ( " + FEDORA_ID_COLUMN + ")" +
+            "DO UPDATE SET " + PARENT_COLUMN + " = EXCLUDED." + PARENT_COLUMN + ", " +
+            START_TIME_COLUMN + " = EXCLUDED." + START_TIME_COLUMN + ", " +
+            END_TIME_COLUMN + " = EXCLUDED." + END_TIME_COLUMN;
+
+    private static final String DIRECT_INSERT_MYSQL_MARIA = " ON DUPLICATE KEY UPDATE " +
+            PARENT_COLUMN + " = VALUES(" + PARENT_COLUMN + "), " + START_TIME_COLUMN + " = VALUES(" +
+            START_TIME_COLUMN + "), " + END_TIME_COLUMN + " = VALUES(" + END_TIME_COLUMN + ")";
+
+    private static final String DIRECT_INSERT_H2 = "MERGE INTO " + RESOURCES_TABLE +
+            " (" + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ")" +
+            " KEY (" + FEDORA_ID_COLUMN + ") VALUES (:parent, :child, :startTime, :endTime)";
+
     private static final Map<DbPlatform, String> DIRECT_UPSERT_MAPPING = Map.of(
-        DbPlatform.H2, DIRECT_UPSERT_H2,
-        DbPlatform.MYSQL, DIRECT_INSERT_RECORDS + DIRECT_UPSERT_MYSQL_MARIA,
-        DbPlatform.MARIADB, DIRECT_INSERT_RECORDS + DIRECT_UPSERT_MYSQL_MARIA,
-        DbPlatform.POSTGRESQL, DIRECT_INSERT_RECORDS + DIRECT_UPSERT_POSTGRESQL
+        DbPlatform.H2, DIRECT_INSERT_H2,
+        DbPlatform.MYSQL, DIRECT_INSERT_RECORDS + DIRECT_INSERT_MYSQL_MARIA,
+        DbPlatform.MARIADB, DIRECT_INSERT_RECORDS + DIRECT_INSERT_MYSQL_MARIA,
+        DbPlatform.POSTGRESQL, DIRECT_INSERT_RECORDS + DIRECT_INSERT_POSTGRESQL
     );
 
     private static final String DIRECT_PURGE = "DELETE FROM containment WHERE fedora_id = :child";
