@@ -35,7 +35,7 @@
     <flyway.version>7.15.0</flyway.version>
     <flyway.test.version>7.0.0</flyway.test.version>
     <guava.version>31.0.1-jre</guava.version>
-    <h2database.version>1.4.200</h2database.version>
+    <h2database.version>2.1.210</h2database.version>
     <hikari.version>5.0.0</hikari.version>
     <hk2.version>2.6.1</hk2.version>
     <htmlunit.version>2.53.0</htmlunit.version>
