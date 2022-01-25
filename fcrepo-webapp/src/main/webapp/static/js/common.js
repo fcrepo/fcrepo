@@ -114,10 +114,10 @@
         if (res.status >= 400 || res.getResponseHeader('Link') == null) {
           var newLocation = url;
           // Note: HEADing an external resource returns a temporary redirect to the external resource:
-          // therefore there is no Link header. However what we want to see is the metadata 
+          // therefore there is no Link header. However what we want to see is the metadata
           // for the external reference rather than  the external object itself.
           // (c.f. https://jira.duraspace.org/browse/FCREPO-2387)
-          // WARNING: Fragile code relying on magic suffix '/fcr:metadata' and absence of 'Link' header 
+          // WARNING: Fragile code relying on magic suffix '/fcr:metadata' and absence of 'Link' header
           // on external resource.
           if(!url.match(/.*fcr:(metadata|tx)/)){
             newLocation = url + "/fcr:metadata";
@@ -285,7 +285,7 @@
       if (searchUri != undefined) {
           const searchTerms = collectSearch();
           const newUri = searchUri + searchTerms;
-          http('GET', newUri + (searchTerms.length > 0 ? '&' : '?') + 'max_results=0', function(res) {
+          http('GET', newUri, function(res) {
               if (res.status == 200) {
                   window.location = newUri;
               } else {
@@ -310,7 +310,10 @@
               condition_string += (condition_string.length > 0 ? "&" : "") + "condition=" + encodeSearchCondition(condition.value + operator.value + svalue.value);
           }
       }
-      return (condition_string.length > 0 ? '?' : '') + condition_string;
+
+      const maxElement = document.getElementById('max_results_value');
+      const maxResults = `max_results=${maxElement.value}`;
+      return condition_string.length > 0 ? `?${condition_string}&${maxResults}`: `?${maxResults}`;
   }
 
   /*
@@ -398,6 +401,27 @@
          localvalue.setAttribute('value', condition['value']);
      }
      wrapper.appendChild(localvalue);
+
+    wrapper.appendChild(document.createElement('br'));
+
+    const pageLabel = document.createElement('label');
+    pageLabel.setAttribute('for', 'max_results_value');
+    pageLabel.setAttribute('class', 'control-label');
+    pageLabel.textContent = "Page size";
+    wrapper.appendChild(pageLabel);
+    const pageValue = document.createElement('input');
+    pageValue.setAttribute('type', 'number');
+    pageValue.setAttribute('id', 'max_results_value');
+    pageValue.setAttribute('class', 'form-control');
+    pageValue.setAttribute('min', '1');
+    pageValue.setAttribute('max', '100');
+    if (condition['max_results_value'] != null && condition['max_results_value'] != '') {
+      pageValue.setAttribute('value', condition['max_results_value']);
+    } else {
+      pageValue.setAttribute('value', '10');
+    }
+    wrapper.appendChild(pageValue);
+
      theForm.insertBefore(wrapper, beforeNode);
   }
 
