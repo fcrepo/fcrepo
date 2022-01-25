@@ -311,9 +311,10 @@
           }
       }
 
+      const pageNum = document.getElementById('page_num_value');
       const maxElement = document.getElementById('max_results_value');
-      const maxResults = `max_results=${maxElement.value}`;
-      return condition_string.length > 0 ? `?${condition_string}&${maxResults}`: `?${maxResults}`;
+      const pagination = `max_results=${maxElement.value}&offset=${maxElement.value * pageNum.value}`;
+      return condition_string.length > 0 ? `?${condition_string}&${pagination}`: `?${pagination}`;
   }
 
   /*
@@ -344,7 +345,9 @@
     const {
       condition: conditions = [],
       max_results = 10,
+      offset = 0,
     } = query;
+    const pageNum = Math.floor(offset / max_results);
 
     let wrapper = document.createElement('div');
     wrapper.setAttribute('class', 'form-group');
@@ -352,13 +355,13 @@
     const conditionParts = conditions.map(getConditionParts);
     const condition = conditionParts.pop();
 
-     let label1 = document.createElement('label');
-     label1.setAttribute('for', 'condition_' + count);
-     label1.setAttribute('class', 'control-label');
-     label1.textContent="Field";
-     wrapper.appendChild(label1);
-     let localfield = document.createElement('select');
-     localfield.setAttribute('id', 'condition_' + count);
+    let label1 = document.createElement('label');
+    label1.setAttribute('for', 'condition_' + count);
+    label1.setAttribute('class', 'control-label');
+    label1.textContent="Field";
+    wrapper.appendChild(label1);
+    let localfield = document.createElement('select');
+    localfield.setAttribute('id', 'condition_' + count);
 
     fields.forEach(function(f) {
       let o = document.createElement('option');
@@ -370,64 +373,85 @@
       localfield.appendChild(o);
     });
 
-     wrapper.appendChild(localfield);
-     let label2 = document.createElement('label');
-     label2.setAttribute('for', 'operator_' + count);
-     label2.setAttribute('class', 'control-label');
-     label2.textContent="Operator";
-     wrapper.appendChild(label2);
-     let localoperator = document.createElement('select');
-     localoperator.setAttribute('id', 'operator_' + count);
+    wrapper.appendChild(localfield);
+    let label2 = document.createElement('label');
+    label2.setAttribute('for', 'operator_' + count);
+    label2.setAttribute('class', 'control-label');
+    label2.textContent="Operator";
+    wrapper.appendChild(label2);
+    let localoperator = document.createElement('select');
+    localoperator.setAttribute('id', 'operator_' + count);
 
     operators.forEach(function(f) {
       let o = document.createElement('option');
       o.setAttribute('value', f);
       if (condition !== undefined && f === condition['operator']) {
-          o.setAttribute('selected', 'true');
+        o.setAttribute('selected', 'true');
       }
       o.textContent=f;
       localoperator.appendChild(o);
     });
 
-     wrapper.appendChild(localoperator);
-     let br = document.createElement('br');
-     wrapper.appendChild(br);
-     let label3 = document.createElement('label');
-     label3.setAttribute('for', 'search_value_' + count);
-     label3.setAttribute('class', 'control-label');
-     label3.textContent="Query term";
-     wrapper.appendChild(label3);
-     let localvalue = document.createElement('input');
-     localvalue.setAttribute('type', 'text');
-     localvalue.setAttribute('id', 'search_value_' + count);
-     localvalue.setAttribute('class', 'form-control');
-     localvalue.setAttribute('placeholder', 'info:fedora/*');
-     if (condition['value'] != null && condition['value'] != '') {
-         localvalue.setAttribute('value', condition['value']);
-     }
-     wrapper.appendChild(localvalue);
+    wrapper.appendChild(localoperator);
+    let br = document.createElement('br');
+    wrapper.appendChild(br);
+    let label3 = document.createElement('label');
+    label3.setAttribute('for', 'search_value_' + count);
+    label3.setAttribute('class', 'control-label');
+    label3.textContent="Query term";
+    wrapper.appendChild(label3);
+    let localvalue = document.createElement('input');
+    localvalue.setAttribute('type', 'text');
+    localvalue.setAttribute('id', 'search_value_' + count);
+    localvalue.setAttribute('class', 'form-control');
+    localvalue.setAttribute('placeholder', 'info:fedora/*');
+    if (condition['value'] != null && condition['value'] != '') {
+      localvalue.setAttribute('value', condition['value']);
+    }
+    wrapper.appendChild(localvalue);
 
     wrapper.appendChild(document.createElement('br'));
 
-    const pageLabel = document.createElement('label');
-    pageLabel.setAttribute('for', 'max_results_value');
-    pageLabel.setAttribute('class', 'control-label');
-    pageLabel.textContent = "Page size";
-    wrapper.appendChild(pageLabel);
-    const pageValue = document.createElement('input');
-    pageValue.setAttribute('type', 'number');
-    pageValue.setAttribute('id', 'max_results_value');
-    pageValue.setAttribute('class', 'form-control');
-    pageValue.setAttribute('min', '1');
-    pageValue.setAttribute('max', '100');
+    const pageDiv = document.createElement('div');
+    pageDiv.setAttribute('class', 'form-inline');
+
+    const pageNumLabel = document.createElement('label');
+    pageNumLabel.setAttribute('for', 'max_results_value');
+    pageNumLabel.setAttribute('class', 'control-label');
+    pageNumLabel.textContent = "Page";
+    pageDiv.appendChild(pageNumLabel);
+    const pageNumValue = document.createElement('input');
+    pageNumValue.setAttribute('type', 'number');
+    pageNumValue.setAttribute('id', 'page_num_value');
+    pageNumValue.setAttribute('class', 'form-control');
+    pageNumValue.setAttribute('style', 'width: 30%');
+    pageNumValue.setAttribute('min', '0');
+    pageNumValue.setAttribute('value', pageNum);
+
+    pageDiv.appendChild(pageNumLabel);
+    pageDiv.appendChild(pageNumValue);
+
+    const pageSizeLabel = document.createElement('label');
+    pageSizeLabel.setAttribute('for', 'max_results_value');
+    pageSizeLabel.setAttribute('class', 'control-label');
+    pageSizeLabel.textContent = "Page size";
+    pageDiv.appendChild(pageSizeLabel);
+    const pageSizeValue = document.createElement('input');
+    pageSizeValue.setAttribute('type', 'number');
+    pageSizeValue.setAttribute('id', 'max_results_value');
+    pageSizeValue.setAttribute('class', 'form-control');
+    pageSizeValue.setAttribute('style', 'width: 30%');
+    pageSizeValue.setAttribute('min', '1');
+    pageSizeValue.setAttribute('max', '100');
 
     if (max_results != null) {
-      pageValue.setAttribute('value', max_results);
+      pageSizeValue.setAttribute('value', max_results);
     } else {
-      pageValue.setAttribute('value', '10');
+      pageSizeValue.setAttribute('value', '10');
     }
 
-    wrapper.appendChild(pageValue);
+    pageDiv.appendChild(pageSizeValue);
+    wrapper.appendChild(pageDiv);
     theForm.insertBefore(wrapper, beforeNode);
   }
 
@@ -474,6 +498,8 @@
                result["fields"].push(decodeURIComponent(bits[1]));
            } else if (bits[0] == "max_results") {
                result["max_results"] = decodeURIComponent(bits[1]);
+           } else if (bits[0] == "offset") {
+              result["offset"] = decodeURIComponent(bits[1]);
            }
       }
       return result;
