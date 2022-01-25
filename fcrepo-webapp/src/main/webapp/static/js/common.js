@@ -328,16 +328,8 @@
           if (String(window.location).indexOf('?') > -1) {
               const location = String(window.location);
               const querystring = location.substring(location.indexOf('?') + 1);
-              var conditions = decodeSearchString(querystring);
-              if (conditions['condition'] != null) {
-                  for (var foo = 0; foo < conditions["condition"].length; foo += 1) {
-                      const c = getConditionParts(conditions['condition'][foo]);
-                      buildSearch(c, foo + 1, actionForm, beforeNode);
-                  }
-              } else {
-                  // Build a blank search box.
-                  buildSearch({}, 1, actionForm, beforeNode);
-              }
+              var condition = decodeSearchString(querystring);
+              buildSearch(condition, 1, actionForm, beforeNode);
           } else {
               // Build a blank search box.
               buildSearch({}, 1, actionForm, beforeNode);
@@ -348,9 +340,18 @@
   /**
    * Build a set of search boxes, and see values to match object condition.
    */
-  function buildSearch(condition, count, theForm, beforeNode) {
-     let wrapper = document.createElement('div');
-     wrapper.setAttribute('class', 'form-group');
+  function buildSearch(query, count, theForm, beforeNode) {
+    const {
+      condition: conditions = [],
+      max_results = 10,
+    } = query;
+
+    let wrapper = document.createElement('div');
+    wrapper.setAttribute('class', 'form-group');
+
+    const conditionParts = conditions.map(getConditionParts);
+    const condition = conditionParts.pop();
+
      let label1 = document.createElement('label');
      label1.setAttribute('for', 'condition_' + count);
      label1.setAttribute('class', 'control-label');
@@ -358,15 +359,17 @@
      wrapper.appendChild(label1);
      let localfield = document.createElement('select');
      localfield.setAttribute('id', 'condition_' + count);
-     fields.forEach(function(f) {
-         let o = document.createElement('option');
-         o.setAttribute('value', f);
-         if (f == condition['field']) {
-             o.setAttribute('selected', 'true');
-         }
-         o.textContent=f;
-         localfield.appendChild(o);
-     });
+
+    fields.forEach(function(f) {
+      let o = document.createElement('option');
+      o.setAttribute('value', f);
+      if (condition !== undefined && f === condition['field']) {
+        o.setAttribute('selected', 'true');
+      }
+      o.textContent=f;
+      localfield.appendChild(o);
+    });
+
      wrapper.appendChild(localfield);
      let label2 = document.createElement('label');
      label2.setAttribute('for', 'operator_' + count);
@@ -375,15 +378,17 @@
      wrapper.appendChild(label2);
      let localoperator = document.createElement('select');
      localoperator.setAttribute('id', 'operator_' + count);
-     operators.forEach(function(f) {
-         let o = document.createElement('option');
-         o.setAttribute('value', f);
-         if (f == condition['operator']) {
-             o.setAttribute('selected', 'true');
-         }
-         o.textContent=f;
-         localoperator.appendChild(o);
-     });
+
+    operators.forEach(function(f) {
+      let o = document.createElement('option');
+      o.setAttribute('value', f);
+      if (condition !== undefined && f === condition['operator']) {
+          o.setAttribute('selected', 'true');
+      }
+      o.textContent=f;
+      localoperator.appendChild(o);
+    });
+
      wrapper.appendChild(localoperator);
      let br = document.createElement('br');
      wrapper.appendChild(br);
@@ -415,14 +420,15 @@
     pageValue.setAttribute('class', 'form-control');
     pageValue.setAttribute('min', '1');
     pageValue.setAttribute('max', '100');
-    if (condition['max_results_value'] != null && condition['max_results_value'] != '') {
-      pageValue.setAttribute('value', condition['max_results_value']);
+
+    if (max_results != null) {
+      pageValue.setAttribute('value', max_results);
     } else {
       pageValue.setAttribute('value', '10');
     }
-    wrapper.appendChild(pageValue);
 
-     theForm.insertBefore(wrapper, beforeNode);
+    wrapper.appendChild(pageValue);
+    theForm.insertBefore(wrapper, beforeNode);
   }
 
   /*
@@ -466,6 +472,8 @@
                    result["fields"] = [];
                }
                result["fields"].push(decodeURIComponent(bits[1]));
+           } else if (bits[0] == "max_results") {
+               result["max_results"] = decodeURIComponent(bits[1]);
            }
       }
       return result;
