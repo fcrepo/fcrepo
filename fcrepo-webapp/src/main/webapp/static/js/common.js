@@ -326,34 +326,50 @@
           // On the search page
           const actionForm = document.getElementById('action_search');
           const beforeNode = document.getElementById('search_count');
-          if (String(window.location).indexOf('?') > -1) {
-              const location = String(window.location);
-              const querystring = location.substring(location.indexOf('?') + 1);
-              var condition = decodeSearchString(querystring);
-              buildSearch(condition, 1, actionForm, beforeNode);
+
+          const addButton = document.createElement('button');
+          addButton.setAttribute('type', 'button');
+          addButton.setAttribute('class', 'btn btn-secondary');
+          addButton.setAttribute('value', 'Add Condition');
+          addButton.addEventListener('click', addSearchCondition);
+          actionForm.insertBefore(addButton, beforeNode);
+
+          const location = String(window.location);
+          const querystring = location.substring(location.indexOf('?') + 1);
+          var query = decodeSearchString(querystring);
+          const {
+            condition = [],
+          } = query;
+
+          addPagination(query);
+          if (condition.length > 0) {
+            condition.map(getConditionParts).forEach(addSearchCondition);
           } else {
-              // Build a blank search box.
-              buildSearch({}, 1, actionForm, beforeNode);
+            addSearchCondition();
           }
       }
   }
 
   /**
-   * Build a set of search boxes, and see values to match object condition.
+   * Add the search inputs needed for the given search condition.
+   * If the condition is empty, create a new set of default inputs.
+   * @param {} condition
    */
-  function buildSearch(query, count, theForm, beforeNode) {
+  function addSearchCondition(condition = {}) {
     const {
-      condition: conditions = [],
-      max_results = 10,
-      offset = 0,
-    } = query;
-    const pageNum = Math.floor(offset / max_results);
+      field,
+      operator,
+      value,
+    } = condition;
+
+    const form = document.getElementById('action_search');
+    const paginationNode = document.getElementById('search_pagination');
+    const countNode = document.getElementById('search_count');
+    const count = Number(countNode.value);
 
     let wrapper = document.createElement('div');
     wrapper.setAttribute('class', 'form-group');
-
-    const conditionParts = conditions.map(getConditionParts);
-    const condition = conditionParts.pop();
+    wrapper.setAttribute('id', 'condition_group');
 
     let label1 = document.createElement('label');
     label1.setAttribute('for', 'condition_' + count);
@@ -366,7 +382,7 @@
     fields.forEach(function(f) {
       let o = document.createElement('option');
       o.setAttribute('value', f);
-      if (condition !== undefined && f === condition['field']) {
+      if (f === field) {
         o.setAttribute('selected', 'true');
       }
       o.textContent=f;
@@ -385,7 +401,7 @@
     operators.forEach(function(f) {
       let o = document.createElement('option');
       o.setAttribute('value', f);
-      if (condition !== undefined && f === condition['operator']) {
+      if (f === operator) {
         o.setAttribute('selected', 'true');
       }
       o.textContent=f;
@@ -393,8 +409,7 @@
     });
 
     wrapper.appendChild(localoperator);
-    let br = document.createElement('br');
-    wrapper.appendChild(br);
+    wrapper.appendChild(document.createElement('br'));
     let label3 = document.createElement('label');
     label3.setAttribute('for', 'search_value_' + count);
     label3.setAttribute('class', 'control-label');
@@ -405,14 +420,29 @@
     localvalue.setAttribute('id', 'search_value_' + count);
     localvalue.setAttribute('class', 'form-control');
     localvalue.setAttribute('placeholder', 'info:fedora/*');
-    if (condition !== undefined && condition['value'] != null && condition['value'] != '') {
-      localvalue.setAttribute('value', condition['value']);
+    if (value !== undefined && value !== '') {
+      localvalue.setAttribute('value', value);
     }
     wrapper.appendChild(localvalue);
-
     wrapper.appendChild(document.createElement('br'));
 
+    form.insertBefore(wrapper, paginationNode);
+    countNode.value = count + 1;
+  }
+
+  function addPagination(query) {
+    const {
+      max_results = 10,
+      offset = 0,
+    } = query;
+
+    const pageNum = Math.floor(offset / max_results);
+
+    const form = document.getElementById('action_search');
+    const countNode = document.getElementById('search_count');
+
     const pageDiv = document.createElement('div');
+    pageDiv.setAttribute('id', 'search_pagination');
     pageDiv.setAttribute('class', 'form-inline');
 
     const pageNumLabel = document.createElement('label');
@@ -451,8 +481,7 @@
     }
 
     pageDiv.appendChild(pageSizeValue);
-    wrapper.appendChild(pageDiv);
-    theForm.insertBefore(wrapper, beforeNode);
+    form.insertBefore(pageDiv, countNode);
   }
 
   /*
