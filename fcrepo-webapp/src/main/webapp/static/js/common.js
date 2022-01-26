@@ -327,21 +327,22 @@
           const actionForm = document.getElementById('action_search');
           const beforeNode = document.getElementById('search_count');
 
+          const buttonGroup = document.createElement('div');
+          buttonGroup.setAttribute('class', 'form-group')
           const addButton = document.createElement('button');
           addButton.setAttribute('type', 'button');
           addButton.setAttribute('class', 'btn btn-secondary');
-          addButton.setAttribute('value', 'Add Condition');
           addButton.addEventListener('click', addSearchCondition);
-          actionForm.insertBefore(addButton, beforeNode);
+          addButton.appendChild(document.createTextNode('Add Condition'));
+          buttonGroup.appendChild(addButton);
+          actionForm.insertBefore(buttonGroup, beforeNode);
 
           const location = String(window.location);
           const querystring = location.substring(location.indexOf('?') + 1);
           var query = decodeSearchString(querystring);
-          const {
-            condition = [],
-          } = query;
-
           addPagination(query);
+
+          const condition = query.condition || [];
           if (condition.length > 0) {
             condition.map(getConditionParts).forEach(addSearchCondition);
           } else {
@@ -352,7 +353,7 @@
 
   /**
    * Add the search inputs needed for the given search condition.
-   * If the condition is empty, create a new set of default inputs.
+   * If the condition is empty, create the default search inputs.
    * @param {} condition
    */
   function addSearchCondition(condition = {}) {
@@ -427,7 +428,7 @@
     wrapper.appendChild(document.createElement('br'));
 
     form.insertBefore(wrapper, paginationNode);
-    countNode.value = count + 1;
+    countNode.value++;
   }
 
   function addPagination(query) {
