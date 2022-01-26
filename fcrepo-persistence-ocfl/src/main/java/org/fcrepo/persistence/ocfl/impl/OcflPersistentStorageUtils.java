@@ -16,16 +16,9 @@ import java.util.function.Consumer;
 
 import javax.sql.DataSource;
 
-import org.apache.commons.lang3.SystemUtils;
-import org.apache.http.impl.auth.UnsupportedDigestAlgorithmException;
-import org.apache.jena.riot.RDFFormat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
 import edu.wisc.library.ocfl.api.DigestAlgorithmRegistry;
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import edu.wisc.library.ocfl.api.OcflConfig;
@@ -35,8 +28,12 @@ import edu.wisc.library.ocfl.core.OcflRepositoryBuilder;
 import edu.wisc.library.ocfl.core.extension.storage.layout.config.HashedNTupleLayoutConfig;
 import edu.wisc.library.ocfl.core.path.constraint.ContentPathConstraints;
 import edu.wisc.library.ocfl.core.path.mapper.LogicalPathMappers;
-import edu.wisc.library.ocfl.core.storage.cloud.CloudOcflStorage;
-import edu.wisc.library.ocfl.core.storage.filesystem.FileSystemOcflStorage;
+import edu.wisc.library.ocfl.core.storage.OcflStorageBuilder;
+import org.apache.commons.lang3.SystemUtils;
+import org.apache.http.impl.auth.UnsupportedDigestAlgorithmException;
+import org.apache.jena.riot.RDFFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.s3.S3Client;
 
 /**
@@ -86,7 +83,7 @@ public class OcflPersistentStorageUtils {
             throws IOException {
         createDirectories(ocflStorageRootDir);
 
-        final var storage = FileSystemOcflStorage.builder().repositoryRoot(ocflStorageRootDir).build();
+        final var storage = OcflStorageBuilder.builder().fileSystem(ocflStorageRootDir).build();
 
         return createRepository(ocflWorkDir, builder -> {
             builder.storage(storage);
@@ -115,12 +112,11 @@ public class OcflPersistentStorageUtils {
             throws IOException {
         createDirectories(ocflWorkDir);
 
-        final var storage = CloudOcflStorage.builder()
-                .cloudClient(OcflS3Client.builder()
-                        .s3Client(s3Client)
-                        .bucket(bucket)
-                        .repoPrefix(prefix)
-                        .build())
+        final var storage = OcflStorageBuilder.builder().cloud(OcflS3Client.builder()
+                .s3Client(s3Client)
+                .bucket(bucket)
+                .repoPrefix(prefix)
+                .build())
                 .build();
 
         return createRepository(ocflWorkDir, builder -> {
