@@ -331,7 +331,7 @@
           buttonGroup.setAttribute('class', 'form-group')
           const addButton = document.createElement('button');
           addButton.setAttribute('type', 'button');
-          addButton.setAttribute('class', 'btn btn-secondary');
+          addButton.setAttribute('class', 'btn btn-default');
           addButton.addEventListener('click', addSearchCondition);
           addButton.appendChild(document.createTextNode('Add Condition'));
           buttonGroup.appendChild(addButton);
@@ -444,7 +444,7 @@
 
     const pageDiv = document.createElement('div');
     pageDiv.setAttribute('id', 'search_pagination');
-    pageDiv.setAttribute('class', 'form-inline');
+    pageDiv.setAttribute('class', 'form-group form-inline');
 
     const pageNumLabel = document.createElement('label');
     pageNumLabel.setAttribute('for', 'max_results_value');
