@@ -405,7 +405,7 @@
     localvalue.setAttribute('id', 'search_value_' + count);
     localvalue.setAttribute('class', 'form-control');
     localvalue.setAttribute('placeholder', 'info:fedora/*');
-    if (condition['value'] != null && condition['value'] != '') {
+    if (condition !== undefined && condition['value'] != null && condition['value'] != '') {
       localvalue.setAttribute('value', condition['value']);
     }
     wrapper.appendChild(localvalue);
