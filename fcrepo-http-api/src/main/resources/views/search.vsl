@@ -17,7 +17,7 @@
 
     <div class="row">
         <div class="col-md-5">
-    <p>Enter a search to perform. Where <i>field</i> can be one of:</p>
+        <p>Enter a search to perform. Where <i>field</i> can be one of:</p>
         <ul>
           <li><b>fedora_id</b>: The ID or URI of the resource.</li>
           <li><b>modified</b>: The last modified date/time.</li>
@@ -32,7 +32,7 @@
         <div class="col-md-5 clearfix">
 
         <form id="action_search" method="GET">
-            <p>Query (currently only supports one condition at a time).</p>
+            <p>Query</p>
             <input type="hidden" id="search_count" value="1"/>
             <button type="submit" class="btn btn-primary">Submit</button>
         </form>
