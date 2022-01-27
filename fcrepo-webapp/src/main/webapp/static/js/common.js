@@ -354,14 +354,13 @@
   /**
    * Add the search inputs needed for the given search condition.
    * If the condition is empty, create the default search inputs.
-   * @param {} condition
    */
-  function addSearchCondition(condition = {}) {
+  function addSearchCondition(condition) {
     const {
       field,
       operator,
       value,
-    } = condition;
+    } = condition || {};
 
     const form = document.getElementById('action_search');
     const paginationNode = document.getElementById('search_pagination');
@@ -432,10 +431,8 @@
   }
 
   function addPagination(query) {
-    const {
-      max_results = 10,
-      offset = 0,
-    } = query;
+    const offset = query.offset || 0;
+    const max_results = query.max_results || 10;
 
     const pageNum = Math.floor(offset / max_results);
 
