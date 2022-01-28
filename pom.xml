@@ -103,6 +103,9 @@
     <module>fcrepo-persistence-ocfl</module>
     <module>fcrepo-search-api</module>
     <module>fcrepo-search-impl</module>
+    <module>fcrepo-stats-api</module>
+    <module>fcrepo-stats-impl</module>
+
   </modules>
   <dependencyManagement>
     <dependencies>
