@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 
+import edu.wisc.library.ocfl.api.OcflRepository;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.RdfLexicon;
@@ -67,6 +68,9 @@ public class ReindexService {
     private FedoraToOcflObjectIndex ocflIndex;
 
     @Autowired
+    private OcflRepository ocflRepository;
+
+    @Autowired
     @Qualifier("containmentIndex")
     private ContainmentIndex containmentIndex;
 
@@ -94,6 +98,7 @@ public class ReindexService {
     public void indexOcflObject(final Transaction tx, final String ocflId) {
         LOGGER.debug("Indexing ocflId {} in transaction {}", ocflId, tx.getId());
 
+        ocflRepository.invalidateCache(ocflId);
         objectValidator.validate(ocflId, config.isRebuildFixityCheck());
 
         try (final var session = ocflObjectSessionFactory.newSession(ocflId)) {
