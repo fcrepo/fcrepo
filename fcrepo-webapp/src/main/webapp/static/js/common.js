@@ -311,8 +311,16 @@
           }
       }
 
+      var fields_string = "";
+      const options = document.getElementById('search_fields');
+      Array.from(options.selectedOptions).forEach(option => {
+        fields_string += (fields_string.length > 0 ? "," : "fields=") + option.value;
+      });
+      condition_string += (condition_string.length > 0 ? `&${fields_string}` : fields_string);
+
       const pageNum = document.getElementById('page_num_value');
       const maxElement = document.getElementById('max_results_value');
+
       const pagination = `max_results=${maxElement.value}&offset=${maxElement.value * pageNum.value}`;
       return condition_string.length > 0 ? `?${condition_string}&${pagination}`: `?${pagination}`;
   }
@@ -340,6 +348,7 @@
           const location = String(window.location);
           const querystring = location.substring(location.indexOf('?') + 1);
           var query = decodeSearchString(querystring);
+          addFieldSelect(query);
           addPagination(query);
 
           const condition = query.condition || [];
@@ -430,6 +439,42 @@
     countNode.value++;
   }
 
+  function addFieldSelect(query) {
+    const selectedFields = query.fields || [];
+
+    const form = document.getElementById('action_search');
+    const countNode = document.getElementById('search_count');
+
+    const div = document.createElement('div');
+    div.setAttribute('id', 'field_group');
+    div.setAttribute('class', 'form-group');
+
+    const label = document.createElement('label');
+    label.setAttribute('for', 'search_fields');
+    label.setAttribute('class', 'control-label');
+    label.textContent = 'Display Fields'
+    div.appendChild(label);
+
+    const select = document.createElement('select');
+    select.setAttribute('multiple', null);
+    select.setAttribute('class', 'form-control');
+    select.setAttribute('id', 'search_fields');
+
+    fields.forEach(field => {
+      const option = document.createElement('option');
+      option.setAttribute('value', field);
+      option.setAttribute('class', 'field_option');
+      option.textContent = field;
+      if (selectedFields.includes(field)) {
+        option.selected = true;
+      }
+      select.appendChild(option);
+    });
+    div.appendChild(select);
+
+    form.insertBefore(div, countNode);
+  }
+
   function addPagination(query) {
     const offset = query.offset || 0;
     const max_results = query.max_results || 10;
@@ -437,7 +482,7 @@
     const pageNum = Math.floor(offset / max_results);
 
     const form = document.getElementById('action_search');
-    const countNode = document.getElementById('search_count');
+    const fieldSelect = document.getElementById('field_group');
 
     const pageDiv = document.createElement('div');
     pageDiv.setAttribute('id', 'search_pagination');
@@ -479,7 +524,7 @@
     }
 
     pageDiv.appendChild(pageSizeValue);
-    form.insertBefore(pageDiv, countNode);
+    form.insertBefore(pageDiv, fieldSelect);
   }
 
   /*
@@ -519,10 +564,7 @@
                }
                result["condition"].push(decodeURIComponent(bits[1]));
            } else if (bits[0] == "fields") {
-               if (result["fields"] == null) {
-                   result["fields"] = [];
-               }
-               result["fields"].push(decodeURIComponent(bits[1]));
+               result["fields"] = decodeURIComponent(bits[1]).split(',');
            } else if (bits[0] == "max_results") {
                result["max_results"] = decodeURIComponent(bits[1]);
            } else if (bits[0] == "offset") {
