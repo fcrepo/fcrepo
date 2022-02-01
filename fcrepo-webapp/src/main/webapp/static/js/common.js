@@ -300,6 +300,7 @@
    * Collect all the various query boxes and make a search.
    */
   function collectSearch() {
+      const params = [];
       const numFields = parseInt(document.getElementById('search_count').getAttribute('value'));
       var condition_string="";
       for (var f = 1; f <= numFields; f += 1) {
@@ -310,19 +311,23 @@
               condition_string += (condition_string.length > 0 ? "&" : "") + "condition=" + encodeSearchCondition(condition.value + operator.value + svalue.value);
           }
       }
+      params.push(condition_string);
 
       var fields_string = "";
       const options = document.getElementById('search_fields');
-      Array.from(options.selectedOptions).forEach(option => {
-        fields_string += (fields_string.length > 0 ? "," : "fields=") + option.value;
+      Array.from(options.selectedOptions).forEach((field, index) => {
+        fields_string += (index === 0 ? 'fields=' : ',' ) + field.value;
       });
-      condition_string += (condition_string.length > 0 ? `&${fields_string}` : fields_string);
+      params.push(fields_string);
 
-      const pageNum = document.getElementById('page_num_value');
-      const maxElement = document.getElementById('max_results_value');
+      const max = document.getElementById('max_results_value').value;
+      const pageNum = document.getElementById('page_num_value').value;
+      const offset = `offset=${pageNum * max}`;
+      const maxResults = `max_results=${max}`;
+      params.push(offset, maxResults);
 
-      const pagination = `max_results=${maxElement.value}&offset=${maxElement.value * pageNum.value}`;
-      return condition_string.length > 0 ? `?${condition_string}&${pagination}`: `?${pagination}`;
+      const reducer = (prev, curr) => prev.length === 1 ? `${prev}${curr}` : `${prev}&${curr}`;
+      return params.filter(param => param !== '').reduce(reducer, '?');
   }
 
   /*
@@ -378,7 +383,7 @@
 
     let wrapper = document.createElement('div');
     wrapper.setAttribute('class', 'form-group');
-    wrapper.setAttribute('id', 'condition_group');
+    wrapper.setAttribute('id', 'condition_group_' + count);
 
     let label1 = document.createElement('label');
     label1.setAttribute('for', 'condition_' + count);
