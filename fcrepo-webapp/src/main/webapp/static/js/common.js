@@ -315,7 +315,8 @@
 
       var fields_string = "";
       const options = document.getElementById('search_fields');
-      Array.from(options.selectedOptions).forEach((field, index) => {
+      const selected = options.selectedOptions || [];
+      Array.from(selected).forEach((field, index) => {
         fields_string += (index === 0 ? 'fields=' : ',' ) + field.value;
       });
       params.push(fields_string);
