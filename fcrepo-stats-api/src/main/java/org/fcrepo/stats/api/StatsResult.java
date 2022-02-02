@@ -8,12 +8,13 @@ package org.fcrepo.stats.api;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
+ * A data object representing a statistics result.
  * @author dbernstein
  */
 public class StatsResult {
 
     @JsonProperty("resource_count")
-    private Long resourceCount = -1l;
+    private Long resourceCount = 0l;
 
     public void setResourceCount(final Long resourceCount) {
         this.resourceCount = resourceCount;

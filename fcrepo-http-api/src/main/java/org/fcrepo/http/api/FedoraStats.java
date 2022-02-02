@@ -21,8 +21,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
 import io.micrometer.core.annotation.Timed;
-import org.apache.commons.lang3.time.DateFormatUtils;
-import org.apache.commons.lang3.time.FastDateFormat;
 import org.fcrepo.stats.api.Stats;
 import org.fcrepo.stats.api.StatsParameters;
 import org.slf4j.Logger;
@@ -43,7 +41,6 @@ public class FedoraStats extends FedoraBaseResource {
 
     private static final Logger LOGGER = getLogger(FedoraStats.class);
 
-    private static final FastDateFormat DATE_FORMAT = DateFormatUtils.ISO_8601_EXTENDED_DATE_FORMAT;
     @Autowired
     @Qualifier("stats")
     private Stats stats;
@@ -56,19 +53,18 @@ public class FedoraStats extends FedoraBaseResource {
     }
 
     /**
+     * Method for querying stats
+     *
      * @param mimeTypes A comma-separated list of mimetypes
-     * @param rdfTypes  A comma-separateed list of rdf types
      * @return
      */
     @GET
     @Produces({APPLICATION_JSON + ";qs=1.0",
             TEXT_PLAIN_WITH_CHARSET,
             TEXT_HTML_WITH_CHARSET})
-    public Response getStats(@DefaultValue ("all") @QueryParam(value = "mime_types") final List<String> mimeTypes,
-                             @QueryParam(value = "rdf_types") final List<String> rdfTypes
-    ) {
+    public Response getStats(@DefaultValue("all") @QueryParam(value = "mime_type") final List<String> mimeTypes) {
         final var builder = ok();
-        final var statsParams = new StatsParameters(mimeTypes, rdfTypes, null,
+        final var statsParams = new StatsParameters(mimeTypes, null, null,
                 null);
         final var results = stats.getStatistics(statsParams);
 

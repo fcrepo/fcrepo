@@ -9,5 +9,11 @@ package org.fcrepo.stats.api;
  * @author dbernstein
  */
 public interface Stats {
+    /**
+     * Retrieve the statistics for repository
+     *
+     * @param statsParams params the inform the resuslts
+     * @return A stats results object
+     */
     StatsResults getStatistics(StatsParameters statsParams);
 }

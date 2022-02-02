@@ -13,6 +13,7 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -41,7 +42,7 @@ public class FedoraStatsIT extends AbstractResourceIT {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private String getStatsEndpoint() {
-        return serverAddress + "fcr:stats?";
+        return serverAddress + "fcr:stats";
     }
 
     private List<String> createResources(final int count) throws IOException {
@@ -97,10 +98,10 @@ public class FedoraStatsIT extends AbstractResourceIT {
     @Test
     public void testGetStats() throws Exception {
 
-        final String searchUrl = getStatsEndpoint();
+        final String statsUrl = getStatsEndpoint();
 
         long currentCount = 0;
-        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+        try (final CloseableHttpResponse response = execute(new HttpGet(statsUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final StatsResults result = objectMapper.readValue(response.getEntity().getContent(), StatsResults.class);
             assertNotNull(result);
@@ -111,7 +112,7 @@ public class FedoraStatsIT extends AbstractResourceIT {
         final var resourceCount = 3l;
         final var resources = createResources((int) resourceCount);
 
-        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+        try (final CloseableHttpResponse response = execute(new HttpGet(statsUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final StatsResults result = objectMapper.readValue(response.getEntity().getContent(), StatsResults.class);
             assertNotNull(result);
@@ -122,7 +123,7 @@ public class FedoraStatsIT extends AbstractResourceIT {
 
     @Test
     public void testGetStatsWithBinaries() throws Exception {
-        final String searchUrl = getStatsEndpoint();
+        final String statsUrl = getStatsEndpoint();
         final var imageCount = 3;
         final var textCount = 4;
         createBinaries("text", textCount, "hello world",
@@ -130,7 +131,7 @@ public class FedoraStatsIT extends AbstractResourceIT {
         createBinaries("text", imageCount, "image-data",
                 new BasicHeader("Content-Type", "image/jpg"));
 
-        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+        try (final CloseableHttpResponse response = execute(new HttpGet(statsUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final StatsResults result = objectMapper.readValue(response.getEntity().getContent(), StatsResults.class);
             assertNotNull(result);
@@ -143,6 +144,31 @@ public class FedoraStatsIT extends AbstractResourceIT {
                             .map(x -> x.getResourceCount()).findFirst().get().intValue());
 
             assertEquals(imageCount + textCount, result.getBinaries().getResourceCount().longValue());
+        }
+    }
+
+    @Test
+    public void testGetStatsFilteredByMimetype() throws Exception {
+        createBinaries("text", 1, "hello world",
+                new BasicHeader("Content-Type", "text/plain"));
+        createBinaries("image", 1, "image-data",
+                new BasicHeader("Content-Type", "image/jpg"));
+        createBinaries("audio", 1, "audio-data",
+                new BasicHeader("Content-Type", "audio/mp4"));
+
+        final String statsUrl = getStatsEndpoint() + "?mime_type=text/plain&mime_type=audio/mp4";
+        final var statsGet = new HttpGet(URI.create(statsUrl));
+        try (final CloseableHttpResponse response = execute(statsGet)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final StatsResults result = objectMapper.readValue(response.getEntity().getContent(), StatsResults.class);
+            assertNotNull(result);
+
+            assertEquals(2, result.getMimetypes().size());
+            assertEquals(1,
+                    result.getMimetypes().stream().filter(x -> x.getMimetype().equals("text/plain")).count());
+            assertEquals(1,
+                    result.getMimetypes().stream().filter(x -> x.getMimetype().equals("audio/mp4")).count());
+
         }
     }
 }

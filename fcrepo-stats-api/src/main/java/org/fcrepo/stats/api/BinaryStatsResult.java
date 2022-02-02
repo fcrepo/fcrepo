@@ -8,6 +8,7 @@ package org.fcrepo.stats.api;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
+ *  A data object representing a statistics result for binary objects
  * @author dbernstein
  */
 public class BinaryStatsResult extends StatsResult {
