@@ -6,7 +6,6 @@
 package org.fcrepo.stats.api;
 
 import java.util.List;
-import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -14,44 +13,36 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author dbernstein
  */
 public class StatsResults {
-    @JsonProperty
-    private List<Map<String, Object>> mimetypes;
+    @JsonProperty("mime_types")
+    private List<MimetypeStatsResult> mimetypes;
 
     @JsonProperty
-    private Long resourceCount = -1l;
+    private StatsResult all;
 
     @JsonProperty
-    private Long binaryResourceCount = -1l;
+    private BinaryStatsResult binaries;
 
-    @JsonProperty
-    private Long binaryResourceBytes = -1l;
-
-    public List<Map<String, Object>> getMimetypes() {
+    public List<MimetypeStatsResult> getMimetypes() {
         return mimetypes;
     }
 
-    public void setResourceCount(final Long resourceCount) {
-        this.resourceCount = resourceCount;
+    public void setMimetypes(final List<MimetypeStatsResult> mimetypes) {
+        this.mimetypes = mimetypes;
     }
 
-    public Long getResourceCount() {
-        return resourceCount;
+    public StatsResult getAll() {
+        return all;
     }
 
-    public Long getBinaryResourceCount() {
-        return binaryResourceCount;
+    public void setAll(final StatsResult all) {
+        this.all = all;
     }
 
-    public void setBinaryResourceCount(final Long binaryResourceCount) {
-        this.binaryResourceCount = binaryResourceCount;
+    public BinaryStatsResult getBinaries() {
+        return binaries;
     }
 
-    public Long getBinaryResourceBytes() {
-        return binaryResourceBytes;
+    public void setBinaries(final BinaryStatsResult binaries) {
+        this.binaries = binaries;
     }
-
-    public void setBinaryResourceBytes(final Long binaryResourceBytes) {
-        this.binaryResourceBytes = binaryResourceBytes;
-    }
-
 }
