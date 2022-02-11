@@ -57,7 +57,7 @@
         <label for="rdf"  class="control-label">
 	        RDF (turtle)
         </label>
-        <textarea rows="10" id="turtle_payload" name="turtle" class="form-control" 
+        <textarea rows="10" id="turtle_payload" name="turtle" class="form-control"
                   placeholder="<> a <http://purl.org/dc/dcmitype/Collection>"></textarea>
     </div>
 
@@ -98,9 +98,7 @@ WHERE { }
 
   #if ( !$isRoot )
 	  <h3>Versioning</h3>
-	#if ( $isLDPNR )
-	  <p>Versioning of binary resources is not currently available through the HTML UI.</p>
-	#elseif ($autoVersioningEnabled == true)
+	#if ($autoVersioningEnabled == true)
 	  <p>Autoversioning is enabled. Versions are created with each update to a resource.
 	  <h4><a id="view_versions" href="$topic/fcr:versions">View Versions</a></h4>
 	#elseif ($isOriginalResource == true)

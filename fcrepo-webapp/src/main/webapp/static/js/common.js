@@ -114,26 +114,33 @@
         if (res.status >= 400 || res.getResponseHeader('Link') == null) {
           var newLocation = url;
           // Note: HEADing an external resource returns a temporary redirect to the external resource:
-          // therefore there is no Link header. However what we want to see is the metadata 
+          // therefore there is no Link header. However what we want to see is the metadata
           // for the external reference rather than  the external object itself.
           // (c.f. https://jira.duraspace.org/browse/FCREPO-2387)
-          // WARNING: Fragile code relying on magic suffix '/fcr:metadata' and absence of 'Link' header 
+          // WARNING: Fragile code relying on magic suffix '/fcr:metadata' and absence of 'Link' header
           // on external resource.
           if(!url.match(/.*fcr:(metadata|tx)/)){
             newLocation = url + "/fcr:metadata";
           }
-          location.href = newLocation ;
+          location.href = newLocation;
           return;
         }
 
         // Note: this Link header parsing works for the reference implementation, but it is not particularly robust
         const headers = res.getResponseHeader('Link').split(', ');
-        const isNonRdfSource = headers.filter(function(h) { return h.match(/rel=["']?type["']?/) })
-                                      .some(function(h) { return h.match(/NonRDFSource/) });
+        const isMemento = headers.filter((h) => h.match(/rel=["']?type["']?/))
+                                 .some((h) => h.match(/Memento/));
+
+        const isNonRdfSource = headers.filter((h) => h.match(/rel=["']?type["']?/))
+                                      .some((h) => h.match(/NonRDFSource/));
 
         if (isNonRdfSource) {
-            const description = headers.filter(function(h) { return h.match(/rel="describedby"/)});
-            if (description.length > 0) {
+            const description = headers.filter((h) => h.match(/rel="describedby"/));
+            if (description.length > 0 && isMemento) {
+                const last = description.length - 1;
+                location.href = description[last].substr(1, description[last].indexOf('>') - 1);
+                return;
+            } else if (description.length > 0) {
                 location.href = description[0].substr(1, description[0].indexOf('>') - 1);
                 return;
             }
