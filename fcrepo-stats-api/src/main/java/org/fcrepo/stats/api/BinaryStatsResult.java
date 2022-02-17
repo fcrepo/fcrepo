@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class BinaryStatsResult extends StatsResult {
 
     @JsonProperty("byte_count")
-    private Long byteCount = -1l;
+    private Long byteCount = 0l;
 
     public Long getByteCount() {
         return byteCount;
