@@ -357,6 +357,7 @@
           addFieldSelect(query);
           addPagination(query);
 
+          createConditionContainer();
           const condition = query.condition || [];
           if (condition.length > 0) {
             condition.map(getConditionParts).forEach(addSearchCondition);
@@ -364,6 +365,15 @@
             addSearchCondition();
           }
       }
+  }
+
+  function createConditionContainer() {
+    const form = document.getElementById('action_search');
+    const paginationNode = document.getElementById('search_pagination');
+    let wrapper = document.createElement('ul');
+    wrapper.setAttribute('class', 'list-group form-group');
+    wrapper.setAttribute('id', 'search_conditions');
+    form.insertBefore(wrapper, paginationNode);
   }
 
   /**
@@ -377,13 +387,12 @@
       value,
     } = condition || {};
 
-    const form = document.getElementById('action_search');
-    const paginationNode = document.getElementById('search_pagination');
+    const list = document.getElementById('search_conditions');
     const countNode = document.getElementById('search_count');
     const count = Number(countNode.value);
 
-    let wrapper = document.createElement('div');
-    wrapper.setAttribute('class', 'form-group');
+    let wrapper = document.createElement('li');
+    wrapper.setAttribute('class', 'list-group-item');
     wrapper.setAttribute('id', 'condition_group_' + count);
 
     let label1 = document.createElement('label');
@@ -424,6 +433,18 @@
     });
 
     wrapper.appendChild(localoperator);
+
+    const badge = document.createElement('span');
+    badge.setAttribute('class', 'badge');
+    badge.setAttribute('style', 'background-color: #d9534f; cursor: pointer');
+    badge.setAttribute('aria-label', 'Remove Condition');
+    const glyph = document.createElement('span');
+    glyph.setAttribute('class', 'glyphicon glyphicon-remove');
+    glyph.setAttribute('aria-hidden', 'true');
+    badge.appendChild(glyph);
+    badge.addEventListener('click', () => {removeSearchCondition(count)});
+    wrapper.appendChild(badge);
+
     wrapper.appendChild(document.createElement('br'));
     let label3 = document.createElement('label');
     label3.setAttribute('for', 'search_value_' + count);
@@ -439,10 +460,14 @@
       localvalue.setAttribute('value', value);
     }
     wrapper.appendChild(localvalue);
-    wrapper.appendChild(document.createElement('br'));
 
-    form.insertBefore(wrapper, paginationNode);
+    list.appendChild(wrapper);
     countNode.value++;
+  }
+
+  function removeSearchCondition(condition) {
+    const group = document.getElementById('condition_group_' + condition);
+    group.remove();
   }
 
   function addFieldSelect(query) {
