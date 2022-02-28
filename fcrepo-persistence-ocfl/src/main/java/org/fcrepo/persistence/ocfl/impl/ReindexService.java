@@ -106,6 +106,7 @@ public class ReindexService {
             final var fedoraIds = new ArrayList<FedoraId>();
             final var headersList = new ArrayList<ResourceHeaders>();
 
+            session.invalidateCache(ocflId);
             session.streamResourceHeaders().forEach(storageHeaders -> {
                 final var headers = new ResourceHeadersAdapter(storageHeaders);
 
