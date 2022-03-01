@@ -3,10 +3,14 @@
 #set ($isRoot = $helpers.isRootResource($rdf, $topic))
 
 #if ($isVersion == true)
+  #set ($original = $helpers.getOriginalResource($topic))
   <div class="alert alert-warning">
     <span class="glyphicon glyphicon-warning-sign"></span>
     This is a <strong>historic version</strong> and cannot be modified.
   </div>
+  #if ($helpers.isRdfResource($rdf, $original, "http://fedora.info/definitions/v4/repository#", "Binary"))
+    <a href="$content" class="btn btn-success btn-lg"><span class="glyphicon glyphicon-download"></span> Download Content</a><br/><br/>
+  #end
 #else
   #if ($helpers.isRdfResource($rdf, $content, "http://fedora.info/definitions/v4/repository#", "Binary"))
     <a href="$content" class="btn btn-success btn-lg"><span class="glyphicon glyphicon-download"></span> Download Content</a><br/><br/>
