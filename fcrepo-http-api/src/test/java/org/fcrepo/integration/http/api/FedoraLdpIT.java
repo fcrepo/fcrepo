@@ -3291,6 +3291,36 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
+    /**
+     * Without the asterisks on the GET/HEAD methods Jersey will fail to serve all other content types for binaries.
+     */
+    @Test
+    public void testBinaryAcceptHeaders() throws IOException {
+        final HttpPost post = postObjMethod();
+        post.setHeader(CONTENT_TYPE, "application/pdf");
+        post.setEntity(new StringEntity("Some fake content", UTF_8));
+        final String objectUrl;
+        try (final CloseableHttpResponse response = execute(post)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            objectUrl = getLocation(response);
+        }
+        final HttpGet httpGet = new HttpGet(objectUrl);
+        httpGet.setHeader(ACCEPT, "image/tiff");
+        assertEquals(NOT_ACCEPTABLE.getStatusCode(), getStatus(httpGet));
+
+        final HttpGet httpGet2 = new HttpGet(objectUrl);
+        httpGet2.setHeader(ACCEPT, "application/pdf");
+        assertEquals(OK.getStatusCode(), getStatus(httpGet2));
+
+        final HttpHead httpHead = new HttpHead(objectUrl);
+        httpHead.setHeader(ACCEPT, "image/tiff");
+        assertEquals(NOT_ACCEPTABLE.getStatusCode(), getStatus(httpHead));
+
+        final HttpHead httpHead2 = new HttpHead(objectUrl);
+        httpHead2.setHeader(ACCEPT, "application/pdf");
+        assertEquals(OK.getStatusCode(), getStatus(httpHead2));
+    }
+
     @Test
     public void testDescribeRdfCached() throws IOException {
         try (final CloseableHttpClient cachClient = CachingHttpClientBuilder.create().setCacheConfig(DEFAULT).build()) {

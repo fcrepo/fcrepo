@@ -11,6 +11,7 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.HttpHeaders.LOCATION;
+import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static javax.ws.rs.core.MediaType.WILDCARD;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.notAcceptable;
@@ -56,7 +57,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
@@ -74,7 +77,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -137,6 +139,42 @@ public class FedoraLdp extends ContentExposingResource {
     private static final MediaType DEFAULT_RDF_CONTENT_TYPE = TURTLE_TYPE;
     private static final MediaType DEFAULT_NON_RDF_CONTENT_TYPE = APPLICATION_OCTET_STREAM_TYPE;
 
+    /**
+     * List of RDF_TYPES for comparison, text/plain isn't really an RDF type but it is still accepted.
+     */
+    private static final List<MediaType> RDF_TYPES = Stream.of(TURTLE_WITH_CHARSET, JSON_LD,
+            N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET
+            ).map(MediaType::valueOf).collect(Collectors.toList());
+
+    /**
+     * This predicate allows comparing a list of accept headers to a list of RDF types.
+     * It is needed to account for charset variations.
+     */
+    private static final Predicate<List<MediaType>> IS_RDF_TYPE = t -> {
+        assert t != null;
+        return t.stream()
+                .anyMatch(c -> RDF_TYPES.stream().anyMatch(c::isCompatible));
+    };
+
+    /**
+     * This predicate checks if the list does not have a mediatype that is wildcard
+     */
+    private static final Predicate<List<MediaType>> NOT_WILDCARD = t -> {
+        assert t != null;
+        return t.stream().noneMatch(MediaType::isWildcardType);
+    };
+
+    /**
+     * This predicate checks if the list does not have a mediatype that is compatible with text html
+     */
+    private static final Predicate<List<MediaType>> NOT_HTML =
+            t -> t.stream().noneMatch(TEXT_HTML_TYPE::isCompatible);
+
+    private static final VariantListBuilder RDF_VARIANT_BUILDER = VariantListBuilder.newInstance();
+    static {
+        RDF_TYPES.forEach(t -> RDF_VARIANT_BUILDER.mediaTypes(t).add());
+    }
+
     @PathParam("path") protected String externalPath;
 
     @Inject
@@ -172,9 +210,9 @@ public class FedoraLdp extends ContentExposingResource {
      * @throws UnsupportedAlgorithmException if unsupported digest algorithm occurred
      */
     @HEAD
-    @Produces({ TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
-        N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
-        TEXT_HTML_WITH_CHARSET })
+    @Produces({TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
+            N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
+            TEXT_HTML_WITH_CHARSET, "*/*"})
     public Response head(@DefaultValue("false") @QueryParam("inline") final boolean inlineDisposition)
             throws UnsupportedAlgorithmException {
         LOGGER.info("HEAD for: {}", externalPath);
@@ -183,6 +221,9 @@ public class FedoraLdp extends ContentExposingResource {
         if (!isBlank(datetimeHeader) && resource().isOriginalResource()) {
             return getMemento(datetimeHeader, resource(), inlineDisposition);
         }
+
+        final ImmutableList<MediaType> acceptableMediaTypes = ImmutableList.copyOf(headers
+                .getAcceptableMediaTypes());
 
         checkCacheControlHeaders(request, servletResponse, resource(), transaction());
 
@@ -193,6 +234,12 @@ public class FedoraLdp extends ContentExposingResource {
         if (resource() instanceof Binary) {
             final Binary binary = (Binary) resource();
             final MediaType mediaType = getBinaryResourceMediaType(binary);
+
+            if (!acceptableMediaTypes.isEmpty()) {
+                if (acceptableMediaTypes.stream().noneMatch(t -> t.isCompatible(mediaType))) {
+                    return notAcceptable(VariantListBuilder.newInstance().mediaTypes(mediaType).build()).build();
+                }
+            }
 
             if (binary.isRedirect()) {
                 builder = temporaryRedirect(binary.getExternalURI());
@@ -207,8 +254,13 @@ public class FedoraLdp extends ContentExposingResource {
                 builder.header(DIGEST, handleWantDigestHeader(binary, wantDigest));
             }
         } else {
-            final String accept = headers.getHeaderString(HttpHeaders.ACCEPT);
-            if (accept == null || "*/*".equals(accept)) {
+            if (!acceptableMediaTypes.isEmpty() && NOT_WILDCARD.test(acceptableMediaTypes)) {
+                // Accept header is not empty and is not */*
+                if (!IS_RDF_TYPE.test(acceptableMediaTypes)) {
+                    return notAcceptable(VariantListBuilder.newInstance().mediaTypes().build()).build();
+                }
+            } else if (acceptableMediaTypes.isEmpty() || !NOT_WILDCARD.test(acceptableMediaTypes)) {
+                // If there is no Accept header or it is */*, so default to text/turtle
                 builder.type(TURTLE_WITH_CHARSET);
             }
             setVaryAndPreferenceAppliedHeaders(servletResponse, prefer, resource());
@@ -243,7 +295,7 @@ public class FedoraLdp extends ContentExposingResource {
     @GET
     @Produces({TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
             N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
-            TEXT_HTML_WITH_CHARSET})
+            TEXT_HTML_WITH_CHARSET, "*/*"})
     public Response getResource(
             @HeaderParam("Range") final String rangeValue,
             @DefaultValue("false") @QueryParam("inline") final boolean inlineDisposition)
@@ -284,6 +336,12 @@ public class FedoraLdp extends ContentExposingResource {
                 return getBinaryContent(rangeValue, binary);
             }
         } else {
+            if (!acceptableMediaTypes.isEmpty() && NOT_WILDCARD.test(acceptableMediaTypes) &&
+                    NOT_HTML.test(acceptableMediaTypes) &&
+                    !IS_RDF_TYPE.test(acceptableMediaTypes)) {
+                // Accept header is not empty and is not */* and is not text/html and is not a valid RDF type.
+                return notAcceptable(RDF_VARIANT_BUILDER.build()).build();
+            }
             return getContent(getChildrenLimit(), resource());
         }
     }
