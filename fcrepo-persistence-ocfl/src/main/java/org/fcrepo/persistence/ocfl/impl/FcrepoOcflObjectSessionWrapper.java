@@ -154,6 +154,11 @@ public class FcrepoOcflObjectSessionWrapper implements OcflObjectSession {
     }
 
     @Override
+    public void invalidateCache(final String resourceId) {
+        inner.invalidateCache(resourceId);
+    }
+
+    @Override
     public void commitType(final CommitType commitType) {
         inner.commitType(commitType);
     }

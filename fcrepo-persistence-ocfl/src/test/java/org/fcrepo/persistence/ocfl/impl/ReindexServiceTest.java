@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import edu.wisc.library.ocfl.api.OcflRepository;
 import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.RdfStream;
@@ -57,6 +58,9 @@ public class ReindexServiceTest extends AbstractReindexerTest {
     private ObjectValidator objectValidator;
 
     @Mock
+    private OcflRepository ocflRepository;
+
+    @Mock
     private FedoraPropsConfig fedoraConfig;
 
     private final FedoraId resource1 = FedoraId.create("info:fedora/resource1");
@@ -73,6 +77,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         setField(reindexService, "searchIndex", searchIndex);
         setField(reindexService, "containmentIndex", containmentIndex);
         setField(reindexService, "ocflIndex", ocflIndex);
+        setField(reindexService, "ocflRepository", ocflRepository);
         setField(reindexService, "ocflObjectSessionFactory", ocflObjectSessionFactory);
         setField(reindexService, "persistentStorageSessionManager", persistentStorageSessionManager);
         setField(reindexService, "objectValidator", objectValidator);
