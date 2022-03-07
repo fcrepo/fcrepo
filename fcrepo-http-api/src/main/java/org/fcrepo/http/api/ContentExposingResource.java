@@ -473,6 +473,11 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 builder.param("anchor", getUri(resource).toString());
             }
             servletResponse.addHeader(LINK, builder.build().toString());
+
+            if (resource.isMemento()) {
+                final URI mementoDescription = getUri(resource.getDescription());
+                servletResponse.addHeader(LINK, buildLink(mementoDescription, "describedby"));
+            }
         }
 
         final boolean isOriginal = resource.isOriginalResource();
