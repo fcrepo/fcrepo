@@ -160,6 +160,7 @@ import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
@@ -386,36 +387,61 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @Test
     public void testHeadTurtleContentType() throws IOException {
-        testHeadDefaultContentType(RDFMediaType.TURTLE_WITH_CHARSET);
+        testDefaultContentType(RDFMediaType.TURTLE_WITH_CHARSET, false);
     }
 
     @Test
     public void testHeadRDFContentType() throws IOException {
-        testHeadDefaultContentType(RDFMediaType.RDF_XML);
+        testDefaultContentType(RDFMediaType.RDF_XML, false);
     }
 
     @Test
     public void testHeadJSONLDContentType() throws IOException {
-        testHeadDefaultContentType(RDFMediaType.JSON_LD);
+        testDefaultContentType(RDFMediaType.JSON_LD, false);
     }
 
     @Test
     public void testHeadDefaultContentType() throws IOException {
-        testHeadDefaultContentType(null);
+        testDefaultContentType(null, false);
     }
 
-    private void testHeadDefaultContentType(final String mimeType) throws IOException {
+    @Test
+    public void testGetTurtleContentType() throws IOException {
+        testDefaultContentType(RDFMediaType.TURTLE_WITH_CHARSET, true);
+    }
+
+    @Test
+    public void testGetRDFContentType() throws IOException {
+        testDefaultContentType(RDFMediaType.RDF_XML, true);
+    }
+
+    @Test
+    public void testGetJSONLDContentType() throws IOException {
+        testDefaultContentType(RDFMediaType.JSON_LD, true);
+    }
+
+    @Test
+    public void testGetDefaultContentType() throws IOException {
+        testDefaultContentType(null, true);
+    }
+
+    private void testDefaultContentType(final String mimeType, final boolean isGet) throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
 
-        final HttpHead headObjMethod = headObjMethod(id);
+        final HttpRequestBase req;
+        if (isGet) {
+            req = getObjMethod(id);
+        } else {
+            req = headObjMethod(id);
+        }
         String mt = mimeType;
         if (mt != null) {
-            headObjMethod.addHeader("Accept", mt);
+            req.addHeader("Accept", mt);
         } else {
             mt = RDFMediaType.TURTLE_WITH_CHARSET;
         }
-        try (final CloseableHttpResponse response = execute(headObjMethod)) {
+        try (final CloseableHttpResponse response = execute(req)) {
             final Collection<String> contentTypes = getHeader(response, CONTENT_TYPE);
             final String contentType = contentTypes.iterator().next();
             assertTrue("Didn't find LDP valid content-type header: " + contentType +
