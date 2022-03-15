@@ -6,21 +6,28 @@
 package org.fcrepo.stats.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * A data object representing a statistics result.
  * @author dbernstein
  */
-public class StatsResult {
+public class RepositoryStatsResult {
 
-    @JsonProperty("resource_count")
     private Long resourceCount = 0l;
 
     public void setResourceCount(final Long resourceCount) {
         this.resourceCount = resourceCount;
     }
 
+    @JsonProperty("resource_count")
     public Long getResourceCount() {
         return resourceCount;
+    }
+
+
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this).toString();
     }
 }

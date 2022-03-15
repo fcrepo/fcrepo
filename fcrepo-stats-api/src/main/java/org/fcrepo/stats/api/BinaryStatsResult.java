@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  *  A data object representing a statistics result for binary objects
  * @author dbernstein
  */
-public class BinaryStatsResult extends StatsResult {
+public class BinaryStatsResult extends RepositoryStatsResult {
 
     @JsonProperty("byte_count")
     private Long byteCount = 0l;
