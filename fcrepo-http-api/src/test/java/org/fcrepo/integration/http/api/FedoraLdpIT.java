@@ -406,6 +406,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testHeadAnyContentType() throws IOException {
+        testDefaultContentType(RDFMediaType.WILDCARD, false);
+    }
+
+    @Test
     public void testGetTurtleContentType() throws IOException {
         testDefaultContentType(RDFMediaType.TURTLE_WITH_CHARSET, true);
     }
@@ -425,6 +430,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
         testDefaultContentType(null, true);
     }
 
+    @Test
+    public void testGetAnyContentType() throws IOException {
+        testDefaultContentType(RDFMediaType.WILDCARD, true);
+    }
+
     private void testDefaultContentType(final String mimeType, final boolean isGet) throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -436,16 +446,20 @@ public class FedoraLdpIT extends AbstractResourceIT {
             req = headObjMethod(id);
         }
         String mt = mimeType;
+        final String returnType;
         if (mt != null) {
             req.addHeader("Accept", mt);
+            if (mt.equals(RDFMediaType.WILDCARD)) {
+                returnType = RDFMediaType.TURTLE_WITH_CHARSET;
+            } else {
+                returnType = mt;
+            }
         } else {
             mt = RDFMediaType.TURTLE_WITH_CHARSET;
+            returnType = mt;
         }
         try (final CloseableHttpResponse response = execute(req)) {
-            final Collection<String> contentTypes = getHeader(response, CONTENT_TYPE);
-            final String contentType = contentTypes.iterator().next();
-            assertTrue("Didn't find LDP valid content-type header: " + contentType +
-                    "; expected result: " + mt, contentType.contains(mt));
+            checkContentTypeMatches(response, returnType);
             testHeadVaryAndPreferHeaders(response);
         }
     }
@@ -3338,6 +3352,19 @@ public class FedoraLdpIT extends AbstractResourceIT {
         httpGet2.setHeader(ACCEPT, "application/pdf");
         assertEquals(OK.getStatusCode(), getStatus(httpGet2));
 
+        final HttpGet httpGet3 = new HttpGet(objectUrl);
+        httpGet3.addHeader(ACCEPT, "*/*");
+        try (final var response = execute(httpGet3)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            checkContentTypeMatches(response, "application/pdf");
+        }
+
+        final HttpGet httpGet4 = new HttpGet(objectUrl);
+        try (final var response = execute(httpGet4)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            checkContentTypeMatches(response, "application/pdf");
+        }
+
         final HttpHead httpHead = new HttpHead(objectUrl);
         httpHead.setHeader(ACCEPT, "image/tiff");
         assertEquals(NOT_ACCEPTABLE.getStatusCode(), getStatus(httpHead));
@@ -3345,6 +3372,26 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpHead httpHead2 = new HttpHead(objectUrl);
         httpHead2.setHeader(ACCEPT, "application/pdf");
         assertEquals(OK.getStatusCode(), getStatus(httpHead2));
+
+        final HttpHead httpHead3 = new HttpHead(objectUrl);
+        httpHead3.setHeader(ACCEPT, "*/*");
+        try (final var response = execute(httpHead3)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            checkContentTypeMatches(response, "application/pdf");
+        }
+
+        final HttpHead httpHead4 = new HttpHead(objectUrl);
+        try (final var response = execute(httpHead4)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            checkContentTypeMatches(response, "application/pdf");
+        }
+    }
+
+    private static void checkContentTypeMatches(final CloseableHttpResponse response, final String contentType) {
+        final Collection<String> contentTypes = getHeader(response, CONTENT_TYPE);
+        final String type = contentTypes.iterator().next();
+        assertTrue("Didn't find LDP valid content-type header: " + type +
+                "; expected result: " + contentType, type.contains(contentType));
     }
 
     @Test
