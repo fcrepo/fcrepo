@@ -87,7 +87,7 @@ public class FedoraRepositoryStats extends FedoraBaseResource {
     @Produces({APPLICATION_JSON + ";qs=1.0",
             APPLICATION_JSON})
     public Response getStatsByRdfType(@QueryParam(value = "rdf_type") final List<String> rdfTypes) {
-        if(listHasSingleBlankEntry(rdfTypes)) {
+        if (listHasSingleBlankEntry(rdfTypes)) {
             return status(BAD_REQUEST).build();
         }
         final var builder = ok();
@@ -112,7 +112,7 @@ public class FedoraRepositoryStats extends FedoraBaseResource {
     @Produces({APPLICATION_JSON + ";qs=1.0",
             APPLICATION_JSON})
     public Response getStatsByMimeTypes(@QueryParam(value = "mime_type") final List<String> mimeTypes ) {
-        if(listHasSingleBlankEntry(mimeTypes)) {
+        if (listHasSingleBlankEntry(mimeTypes)) {
             return status(BAD_REQUEST).build();
         }
 
