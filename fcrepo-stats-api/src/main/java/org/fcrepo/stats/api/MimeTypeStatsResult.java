@@ -8,7 +8,7 @@ package org.fcrepo.stats.api;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- *  A data object representing a statistics result a specified mimetype
+ *  A data object representing a statistics result a specified mime type.
  * @author dbernstein
  */
 public class MimeTypeStatsResult extends BinaryStatsResult {
