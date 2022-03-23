@@ -79,11 +79,11 @@ public class FedoraRepositoryStats extends FedoraBaseResource {
     /**
      * Method for querying rdf type stats
      *
-     * @param rdfTypes A list of rdf types
+     * @param rdfTypes A list of rdf types by which to limit the results. By default show all    rdf types.
      * @return
      */
     @GET
-    @Path("/by-rdf-type")
+    @Path("/rdf-types")
     @Produces({APPLICATION_JSON + ";qs=1.0",
             APPLICATION_JSON})
     public Response getStatsByRdfType(@QueryParam(value = "rdf_type") final List<String> rdfTypes) {
@@ -102,16 +102,16 @@ public class FedoraRepositoryStats extends FedoraBaseResource {
     }
 
     /**
-     * Method for querying mimetype stats
+     * Method for querying binary stats
      *
-     * @param mimeTypes A list of mimetypes
+     * @param mimeTypes A list of mime types by which to limit the results. By default show all binary mime types.
      * @return
      */
     @GET
-    @Path("/by-mime-type")
+    @Path("/binaries")
     @Produces({APPLICATION_JSON + ";qs=1.0",
             APPLICATION_JSON})
-    public Response getStatsByMimeTypes(@QueryParam(value = "mime_type") final List<String> mimeTypes ) {
+    public Response getBinaryStats(@QueryParam(value = "mime_type") final List<String> mimeTypes ) {
         if (listHasSingleBlankEntry(mimeTypes)) {
             return status(BAD_REQUEST).build();
         }

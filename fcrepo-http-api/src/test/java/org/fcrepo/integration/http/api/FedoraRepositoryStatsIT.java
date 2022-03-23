@@ -49,6 +49,8 @@ import org.springframework.test.context.TestExecutionListeners;
         mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class FedoraRepositoryStatsIT extends AbstractResourceIT {
 
+    public static final String BINARIES_SUBPATH = "/binaries";
+    private static final String RDF_TYPES_SUBPATH = "/rdf-types" ;
     private static Logger LOGGER = LoggerFactory.getLogger(FedoraRepositoryStatsIT.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -148,8 +150,8 @@ public class FedoraRepositoryStatsIT extends AbstractResourceIT {
     @Test
     public void testGetStatsNotAcceptable() throws Exception {
         testNotAcceptable(getStatsEndpoint());
-        testNotAcceptable(getStatsEndpoint() + "/by-mime-type");
-        testNotAcceptable(getStatsEndpoint() + "/by-rdf-type");
+        testNotAcceptable(getBinaryStatsEndpoint());
+        testNotAcceptable(getRdfTypesStatsEndpoint());
     }
 
     private int getResourceCountByMimetype(final RepositoryStatsByMimeTypeResults results, final String mimeType) {
@@ -175,7 +177,7 @@ public class FedoraRepositoryStatsIT extends AbstractResourceIT {
         createBinaries("audio", audioCount, audioContent,
                 new BasicHeader("Content-Type", "audio/mp4"));
 
-        final String statsUrl = getStatsEndpoint() + "/by-mime-type";
+        final String statsUrl = getBinaryStatsEndpoint();
         final var statsGet = new HttpGet(URI.create(statsUrl));
         try (final CloseableHttpResponse response = execute(statsGet)) {
             assertEquals(OK.getStatusCode(), getStatus(response));
@@ -205,7 +207,7 @@ public class FedoraRepositoryStatsIT extends AbstractResourceIT {
         createBinaries("audio", 2, "audio-data",
                 new BasicHeader("Content-Type", "audio/mp4"));
 
-        final String statsUrl = getStatsEndpoint() + "/by-mime-type" + "?mime_type=text/plain&mime_type=audio/mp4";
+        final String statsUrl = getBinaryStatsEndpoint() + "?mime_type=text/plain&mime_type=audio/mp4";
         final var statsGet = new HttpGet(URI.create(statsUrl));
         try (final CloseableHttpResponse response = execute(statsGet)) {
             assertEquals(OK.getStatusCode(), getStatus(response));
@@ -226,7 +228,7 @@ public class FedoraRepositoryStatsIT extends AbstractResourceIT {
         createBinaries("text", 1, "hello world",
                 new BasicHeader("Content-Type", "text/plain"));
 
-        final String statsUrl = getStatsEndpoint() + "/by-mime-type" + "?mime_type=text/blah";
+        final String statsUrl = getBinaryStatsEndpoint() + "?mime_type=text/blah";
         final var statsGet = new HttpGet(URI.create(statsUrl));
         try (final CloseableHttpResponse response = execute(statsGet)) {
             assertEquals(OK.getStatusCode(), getStatus(response));
@@ -241,11 +243,19 @@ public class FedoraRepositoryStatsIT extends AbstractResourceIT {
 
     @Test
     public void testGetStatsFilteredByBlankMimetype() throws Exception {
-        final String statsUrl = getStatsEndpoint() + "/by-mime-type" + "?mime_type=";
+        final String statsUrl = getBinaryStatsEndpoint() + "?mime_type=";
         final var statsGet = new HttpGet(URI.create(statsUrl));
         try (final CloseableHttpResponse response = execute(statsGet)) {
             assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response));
         }
+    }
+
+    private String getBinaryStatsEndpoint() {
+        return getStatsEndpoint() + BINARIES_SUBPATH;
+    }
+
+    private String getRdfTypesStatsEndpoint() {
+        return getStatsEndpoint() + RDF_TYPES_SUBPATH;
     }
 
     @Test
@@ -255,7 +265,7 @@ public class FedoraRepositoryStatsIT extends AbstractResourceIT {
         createBinaries("text", 1, textContent,
                 new BasicHeader("Content-Type", "text/plain"));
 
-        final String statsUrl = getStatsEndpoint() + "/by-rdf-type";
+        final String statsUrl = getRdfTypesStatsEndpoint();
         final var statsGet = new HttpGet(URI.create(statsUrl));
         try (final CloseableHttpResponse response = execute(statsGet)) {
             assertEquals(OK.getStatusCode(), getStatus(response));
@@ -278,7 +288,7 @@ public class FedoraRepositoryStatsIT extends AbstractResourceIT {
 
     @Test
     public void testGetStatsFilteredByBlankRdfType() throws Exception {
-        final String statsUrl = getStatsEndpoint() + "/by-rdf-type" + "?rdf_type=";
+        final String statsUrl = getRdfTypesStatsEndpoint() + "?rdf_type=";
         final var statsGet = new HttpGet(URI.create(statsUrl));
         try (final CloseableHttpResponse response = execute(statsGet)) {
             assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response));
@@ -297,7 +307,8 @@ public class FedoraRepositoryStatsIT extends AbstractResourceIT {
         final var binaryType = "http://www.w3.org/ns/ldp#NonRDFSource";
 
         //get filtered stats list based on binaries only
-        final String statsUrl = getStatsEndpoint() + "/by-rdf-type?rdf_type=" + URLEncoder.encode(binaryType, "UTF-8");
+        final String statsUrl = getRdfTypesStatsEndpoint() + "?rdf_type=" + URLEncoder.encode(binaryType, "UTF" +
+                "-8");
         final var statsGet = new HttpGet(URI.create(statsUrl));
         try (final CloseableHttpResponse response = execute(statsGet)) {
             assertEquals(OK.getStatusCode(), getStatus(response));
@@ -328,7 +339,8 @@ public class FedoraRepositoryStatsIT extends AbstractResourceIT {
         final var binaryType = "not-an-rdf-type";
 
         //get filtered stats list based on binaries only
-        final String statsUrl = getStatsEndpoint() + "/by-rdf-type?rdf_type=" + URLEncoder.encode(binaryType, "UTF-8");
+        final String statsUrl = getRdfTypesStatsEndpoint() + "?rdf_type=" + URLEncoder.encode(binaryType,
+                "UTF-8");
         final var statsGet = new HttpGet(URI.create(statsUrl));
         try (final CloseableHttpResponse response = execute(statsGet)) {
             assertEquals(OK.getStatusCode(), getStatus(response));
