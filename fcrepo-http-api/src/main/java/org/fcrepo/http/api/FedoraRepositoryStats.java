@@ -98,7 +98,7 @@ public class FedoraRepositoryStats extends FedoraBaseResource {
     }
 
     private boolean listHasSingleBlankEntry(final List<String> list) {
-        return !isEmpty(list) && list.size() == 1 && list.get(0).trim() == "";
+        return !isEmpty(list) && list.size() == 1 && list.get(0).trim().equals("");
     }
 
     /**
