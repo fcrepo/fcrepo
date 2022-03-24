@@ -292,7 +292,7 @@
       if (searchUri != undefined) {
           const searchTerms = collectSearch();
           const newUri = searchUri + searchTerms;
-          http('GET', newUri + (searchTerms.length > 0 ? '&' : '?') + 'max_results=0', function(res) {
+          http('GET', newUri, function(res) {
               if (res.status == 200) {
                   window.location = newUri;
               } else {
@@ -307,6 +307,7 @@
    * Collect all the various query boxes and make a search.
    */
   function collectSearch() {
+      const params = [];
       const numFields = parseInt(document.getElementById('search_count').getAttribute('value'));
       var condition_string="";
       for (var f = 1; f <= numFields; f += 1) {
@@ -317,7 +318,24 @@
               condition_string += (condition_string.length > 0 ? "&" : "") + "condition=" + encodeSearchCondition(condition.value + operator.value + svalue.value);
           }
       }
-      return (condition_string.length > 0 ? '?' : '') + condition_string;
+      params.push(condition_string);
+
+      var fields_string = "";
+      const options = document.getElementById('search_fields');
+      const selected = options.selectedOptions || [];
+      Array.from(selected).forEach((field, index) => {
+        fields_string += (index === 0 ? 'fields=' : ',' ) + field.value;
+      });
+      params.push(fields_string);
+
+      const max = document.getElementById('max_results_value').value;
+      const pageNum = document.getElementById('page_num_value').value;
+      const offset = `offset=${pageNum * max}`;
+      const maxResults = `max_results=${max}`;
+      params.push(offset, maxResults);
+
+      const reducer = (prev, curr) => prev.length === 1 ? `${prev}${curr}` : `${prev}&${curr}`;
+      return params.filter(param => param !== '').reduce(reducer, '?');
   }
 
   /*
@@ -329,83 +347,222 @@
           // On the search page
           const actionForm = document.getElementById('action_search');
           const beforeNode = document.getElementById('search_count');
-          if (String(window.location).indexOf('?') > -1) {
-              const location = String(window.location);
-              const querystring = location.substring(location.indexOf('?') + 1);
-              var conditions = decodeSearchString(querystring);
-              if (conditions['condition'] != null) {
-                  for (var foo = 0; foo < conditions["condition"].length; foo += 1) {
-                      const c = getConditionParts(conditions['condition'][foo]);
-                      buildSearch(c, foo + 1, actionForm, beforeNode);
-                  }
-              } else {
-                  // Build a blank search box.
-                  buildSearch({}, 1, actionForm, beforeNode);
-              }
+
+          const buttonGroup = document.createElement('div');
+          buttonGroup.setAttribute('class', 'form-group')
+          const addButton = document.createElement('button');
+          addButton.setAttribute('type', 'button');
+          addButton.setAttribute('class', 'btn btn-default');
+          addButton.addEventListener('click', addSearchCondition);
+          addButton.appendChild(document.createTextNode('Add Condition'));
+          buttonGroup.appendChild(addButton);
+          actionForm.insertBefore(buttonGroup, beforeNode);
+
+          const location = String(window.location);
+          const querystring = location.substring(location.indexOf('?') + 1);
+          var query = decodeSearchString(querystring);
+          addFieldSelect(query);
+          addPagination(query);
+
+          createConditionContainer();
+          const condition = query.condition || [];
+          if (condition.length > 0) {
+            condition.map(getConditionParts).forEach(addSearchCondition);
           } else {
-              // Build a blank search box.
-              buildSearch({}, 1, actionForm, beforeNode);
+            addSearchCondition();
           }
       }
   }
 
+  function createConditionContainer() {
+    const form = document.getElementById('action_search');
+    const paginationNode = document.getElementById('search_pagination');
+    let wrapper = document.createElement('ul');
+    wrapper.setAttribute('class', 'list-group form-group');
+    wrapper.setAttribute('id', 'search_conditions');
+    form.insertBefore(wrapper, paginationNode);
+  }
+
   /**
-   * Build a set of search boxes, and see values to match object condition.
+   * Add the search inputs needed for the given search condition.
+   * If the condition is empty, create the default search inputs.
    */
-  function buildSearch(condition, count, theForm, beforeNode) {
-     let wrapper = document.createElement('div');
-     wrapper.setAttribute('class', 'form-group');
-     let label1 = document.createElement('label');
-     label1.setAttribute('for', 'condition_' + count);
-     label1.setAttribute('class', 'control-label');
-     label1.textContent="Field";
-     wrapper.appendChild(label1);
-     let localfield = document.createElement('select');
-     localfield.setAttribute('id', 'condition_' + count);
-     fields.forEach(function(f) {
-         let o = document.createElement('option');
-         o.setAttribute('value', f);
-         if (f == condition['field']) {
-             o.setAttribute('selected', 'true');
-         }
-         o.textContent=f;
-         localfield.appendChild(o);
-     });
-     wrapper.appendChild(localfield);
-     let label2 = document.createElement('label');
-     label2.setAttribute('for', 'operator_' + count);
-     label2.setAttribute('class', 'control-label');
-     label2.textContent="Operator";
-     wrapper.appendChild(label2);
-     let localoperator = document.createElement('select');
-     localoperator.setAttribute('id', 'operator_' + count);
-     operators.forEach(function(f) {
-         let o = document.createElement('option');
-         o.setAttribute('value', f);
-         if (f == condition['operator']) {
-             o.setAttribute('selected', 'true');
-         }
-         o.textContent=f;
-         localoperator.appendChild(o);
-     });
-     wrapper.appendChild(localoperator);
-     let br = document.createElement('br');
-     wrapper.appendChild(br);
-     let label3 = document.createElement('label');
-     label3.setAttribute('for', 'search_value_' + count);
-     label3.setAttribute('class', 'control-label');
-     label3.textContent="Query term";
-     wrapper.appendChild(label3);
-     let localvalue = document.createElement('input');
-     localvalue.setAttribute('type', 'text');
-     localvalue.setAttribute('id', 'search_value_' + count);
-     localvalue.setAttribute('class', 'form-control');
-     localvalue.setAttribute('placeholder', 'info:fedora/*');
-     if (condition['value'] != null && condition['value'] != '') {
-         localvalue.setAttribute('value', condition['value']);
-     }
-     wrapper.appendChild(localvalue);
-     theForm.insertBefore(wrapper, beforeNode);
+  function addSearchCondition(condition) {
+    const {
+      field,
+      operator,
+      value,
+    } = condition || {};
+
+    const list = document.getElementById('search_conditions');
+    const countNode = document.getElementById('search_count');
+    const count = Number(countNode.value);
+
+    let wrapper = document.createElement('li');
+    wrapper.setAttribute('class', 'list-group-item');
+    wrapper.setAttribute('id', 'condition_group_' + count);
+
+    let label1 = document.createElement('label');
+    label1.setAttribute('for', 'condition_' + count);
+    label1.setAttribute('class', 'control-label');
+    label1.textContent="Field";
+    wrapper.appendChild(label1);
+    let localfield = document.createElement('select');
+    localfield.setAttribute('id', 'condition_' + count);
+
+    fields.forEach(function(f) {
+      let o = document.createElement('option');
+      o.setAttribute('value', f);
+      if (f === field) {
+        o.setAttribute('selected', 'true');
+      }
+      o.textContent=f;
+      localfield.appendChild(o);
+    });
+
+    wrapper.appendChild(localfield);
+    let label2 = document.createElement('label');
+    label2.setAttribute('for', 'operator_' + count);
+    label2.setAttribute('class', 'control-label');
+    label2.textContent="Operator";
+    wrapper.appendChild(label2);
+    let localoperator = document.createElement('select');
+    localoperator.setAttribute('id', 'operator_' + count);
+
+    operators.forEach(function(f) {
+      let o = document.createElement('option');
+      o.setAttribute('value', f);
+      if (f === operator) {
+        o.setAttribute('selected', 'true');
+      }
+      o.textContent=f;
+      localoperator.appendChild(o);
+    });
+
+    wrapper.appendChild(localoperator);
+
+    const badge = document.createElement('span');
+    badge.setAttribute('class', 'badge');
+    badge.setAttribute('style', 'background-color: #d9534f; cursor: pointer');
+    badge.setAttribute('aria-label', 'Remove Condition');
+    const glyph = document.createElement('span');
+    glyph.setAttribute('class', 'glyphicon glyphicon-remove');
+    glyph.setAttribute('aria-hidden', 'true');
+    badge.appendChild(glyph);
+    badge.addEventListener('click', () => {removeSearchCondition(count)});
+    wrapper.appendChild(badge);
+
+    wrapper.appendChild(document.createElement('br'));
+    let label3 = document.createElement('label');
+    label3.setAttribute('for', 'search_value_' + count);
+    label3.setAttribute('class', 'control-label');
+    label3.textContent="Query term";
+    wrapper.appendChild(label3);
+    let localvalue = document.createElement('input');
+    localvalue.setAttribute('type', 'text');
+    localvalue.setAttribute('id', 'search_value_' + count);
+    localvalue.setAttribute('class', 'form-control');
+    localvalue.setAttribute('placeholder', 'info:fedora/*');
+    if (value !== undefined && value !== '') {
+      localvalue.setAttribute('value', value);
+    }
+    wrapper.appendChild(localvalue);
+
+    list.appendChild(wrapper);
+    countNode.value++;
+  }
+
+  function removeSearchCondition(condition) {
+    const group = document.getElementById('condition_group_' + condition);
+    group.remove();
+  }
+
+  function addFieldSelect(query) {
+    const selectedFields = query.fields || [];
+
+    const form = document.getElementById('action_search');
+    const countNode = document.getElementById('search_count');
+
+    const div = document.createElement('div');
+    div.setAttribute('id', 'field_group');
+    div.setAttribute('class', 'form-group');
+
+    const label = document.createElement('label');
+    label.setAttribute('for', 'search_fields');
+    label.setAttribute('class', 'control-label');
+    label.textContent = 'Display Fields'
+    div.appendChild(label);
+
+    const select = document.createElement('select');
+    select.setAttribute('multiple', null);
+    select.setAttribute('class', 'form-control');
+    select.setAttribute('id', 'search_fields');
+
+    fields.forEach(field => {
+      const option = document.createElement('option');
+      option.setAttribute('value', field);
+      option.setAttribute('class', 'field_option');
+      option.textContent = field;
+      if (selectedFields.includes(field)) {
+        option.selected = true;
+      }
+      select.appendChild(option);
+    });
+    div.appendChild(select);
+
+    form.insertBefore(div, countNode);
+  }
+
+  function addPagination(query) {
+    const offset = query.offset || 0;
+    const max_results = query.max_results || 10;
+
+    const pageNum = Math.floor(offset / max_results);
+
+    const form = document.getElementById('action_search');
+    const fieldSelect = document.getElementById('field_group');
+
+    const pageDiv = document.createElement('div');
+    pageDiv.setAttribute('id', 'search_pagination');
+    pageDiv.setAttribute('class', 'form-group form-inline');
+
+    const pageNumLabel = document.createElement('label');
+    pageNumLabel.setAttribute('for', 'max_results_value');
+    pageNumLabel.setAttribute('class', 'control-label');
+    pageNumLabel.textContent = "Page";
+    pageDiv.appendChild(pageNumLabel);
+    const pageNumValue = document.createElement('input');
+    pageNumValue.setAttribute('type', 'number');
+    pageNumValue.setAttribute('id', 'page_num_value');
+    pageNumValue.setAttribute('class', 'form-control');
+    pageNumValue.setAttribute('style', 'width: 30%');
+    pageNumValue.setAttribute('min', '0');
+    pageNumValue.setAttribute('value', pageNum);
+
+    pageDiv.appendChild(pageNumLabel);
+    pageDiv.appendChild(pageNumValue);
+
+    const pageSizeLabel = document.createElement('label');
+    pageSizeLabel.setAttribute('for', 'max_results_value');
+    pageSizeLabel.setAttribute('class', 'control-label');
+    pageSizeLabel.textContent = "Page size";
+    pageDiv.appendChild(pageSizeLabel);
+    const pageSizeValue = document.createElement('input');
+    pageSizeValue.setAttribute('type', 'number');
+    pageSizeValue.setAttribute('id', 'max_results_value');
+    pageSizeValue.setAttribute('class', 'form-control');
+    pageSizeValue.setAttribute('style', 'width: 30%');
+    pageSizeValue.setAttribute('min', '1');
+    pageSizeValue.setAttribute('max', '100');
+
+    if (max_results != null) {
+      pageSizeValue.setAttribute('value', max_results);
+    } else {
+      pageSizeValue.setAttribute('value', '10');
+    }
+
+    pageDiv.appendChild(pageSizeValue);
+    form.insertBefore(pageDiv, fieldSelect);
   }
 
   /*
@@ -445,10 +602,11 @@
                }
                result["condition"].push(decodeURIComponent(bits[1]));
            } else if (bits[0] == "fields") {
-               if (result["fields"] == null) {
-                   result["fields"] = [];
-               }
-               result["fields"].push(decodeURIComponent(bits[1]));
+               result["fields"] = decodeURIComponent(bits[1]).split(',');
+           } else if (bits[0] == "max_results") {
+               result["max_results"] = decodeURIComponent(bits[1]);
+           } else if (bits[0] == "offset") {
+              result["offset"] = decodeURIComponent(bits[1]);
            }
       }
       return result;
