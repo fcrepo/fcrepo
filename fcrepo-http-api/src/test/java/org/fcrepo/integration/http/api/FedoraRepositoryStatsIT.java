@@ -5,6 +5,7 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static java.net.URLEncoder.encode;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
@@ -17,7 +18,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -87,7 +87,7 @@ public class FedoraRepositoryStatsIT extends AbstractResourceIT {
     private CloseableHttpResponse createObject(final String pid, final String body, final Header... headers) {
         final HttpPost httpPost = postObjMethod("/");
         if (isNotEmpty(pid)) {
-            httpPost.addHeader("Slug", URLEncoder.encode(pid, StandardCharsets.UTF_8));
+            httpPost.addHeader("Slug", encode(pid, StandardCharsets.UTF_8));
         }
 
         for (Header header : headers) {
@@ -307,8 +307,7 @@ public class FedoraRepositoryStatsIT extends AbstractResourceIT {
         final var binaryType = "http://www.w3.org/ns/ldp#NonRDFSource";
 
         //get filtered stats list based on binaries only
-        final String statsUrl = getRdfTypesStatsEndpoint() + "?rdf_type=" + URLEncoder.encode(binaryType, "UTF" +
-                "-8");
+        final String statsUrl = getRdfTypesStatsEndpoint() + "?rdf_type=" + encode(binaryType, "UTF-8");
         final var statsGet = new HttpGet(URI.create(statsUrl));
         try (final CloseableHttpResponse response = execute(statsGet)) {
             assertEquals(OK.getStatusCode(), getStatus(response));
@@ -339,7 +338,7 @@ public class FedoraRepositoryStatsIT extends AbstractResourceIT {
         final var binaryType = "not-an-rdf-type";
 
         //get filtered stats list based on binaries only
-        final String statsUrl = getRdfTypesStatsEndpoint() + "?rdf_type=" + URLEncoder.encode(binaryType,
+        final String statsUrl = getRdfTypesStatsEndpoint() + "?rdf_type=" + encode(binaryType,
                 "UTF-8");
         final var statsGet = new HttpGet(URI.create(statsUrl));
         try (final CloseableHttpResponse response = execute(statsGet)) {

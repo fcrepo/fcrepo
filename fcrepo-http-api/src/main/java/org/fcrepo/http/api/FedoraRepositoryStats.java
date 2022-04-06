@@ -79,7 +79,7 @@ public class FedoraRepositoryStats extends FedoraBaseResource {
     /**
      * Method for querying rdf type stats
      *
-     * @param rdfTypes A list of rdf types by which to limit the results. By default show all    rdf types.
+     * @param rdfTypes A list of rdf types by which to limit the results. By default show all rdf types.
      * @return
      */
     @GET
