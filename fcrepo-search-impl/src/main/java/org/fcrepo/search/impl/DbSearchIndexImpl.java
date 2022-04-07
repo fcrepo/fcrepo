@@ -8,6 +8,7 @@ package org.fcrepo.search.impl;
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
 import static java.util.stream.Collectors.toList;
 import static org.fcrepo.common.db.DbPlatform.POSTGRESQL;
+import static org.fcrepo.common.db.DbPlatform.H2;
 import static org.fcrepo.search.api.Condition.Field.CONTENT_SIZE;
 import static org.fcrepo.search.api.Condition.Field.FEDORA_ID;
 import static org.fcrepo.search.api.Condition.Field.MIME_TYPE;
@@ -847,6 +848,8 @@ public class DbSearchIndexImpl implements SearchIndex {
 
         if (isPostgres()) {
             return Collections.emptyList();
+        } else if (isH2()) {
+            return List.of("SET REFERENTIAL_INTEGRITY  " + (enable ? "TRUE" : "FALSE") + ";");
         } else {
             return List.of("SET FOREIGN_KEY_CHECKS = " + (enable ? 1 : 0) + ";");
         }
@@ -854,6 +857,10 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     private boolean isPostgres() {
         return dbPlatForm.equals(POSTGRESQL);
+    }
+
+    private boolean isH2() {
+        return dbPlatForm.equals(H2);
     }
 
     private String truncateTable(final String tableName) {
