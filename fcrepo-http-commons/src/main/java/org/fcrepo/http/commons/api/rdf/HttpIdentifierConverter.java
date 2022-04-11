@@ -80,7 +80,7 @@ public class HttpIdentifierConverter {
 
             return FEDORA_ID_PREFIX + fedoraId;
         }
-        throw new IllegalArgumentException("Cannot translate NULL path");
+        throw new IllegalArgumentException(String.format("Cannot translate NULL path extracted from URI %s", httpUri));
     }
 
     /**
