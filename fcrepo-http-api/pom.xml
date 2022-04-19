@@ -68,6 +68,12 @@
 
     <dependency>
       <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-stats-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-configs</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -164,6 +170,14 @@
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-stats-impl</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
