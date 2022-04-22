@@ -50,7 +50,7 @@ public class UpdatePropertiesServiceImpl extends AbstractService implements Upda
             final var psession = persistentStorageSessionManager.getSession(tx);
             final var triples = psession.getTriples(fedoraId, null);
             final Model model = triples.collect(toModel());
-            final UpdateRequest request = UpdateFactory.create(sparqlUpdateStatement, fedoraId.getFullId());
+            final UpdateRequest request = UpdateFactory.create(sparqlUpdateStatement, fedoraId.getFullDescribedId());
             UpdateAction.execute(request, model);
             replacePropertiesService.perform(tx, userPrincipal, fedoraId, model);
         } catch (final PersistentItemNotFoundException ex) {

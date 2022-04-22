@@ -117,8 +117,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.PREFER_CONTAINMENT;
-import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
@@ -705,26 +703,6 @@ public class FedoraLdpTest {
         assertShouldBeAnLDPIndirectContainer();
     }
 
-    @Ignore("Requires minimal representation - https://jira.lyrasis.org/browse/FCREPO-3334")
-    @Test
-    public void testGetWithObjectPreferMinimal() throws Exception {
-        setResource(Container.class);
-        when(mockRequest.getMethod()).thenReturn("GET");
-        setField(testObj, "prefer", new MultiPrefer("return=minimal"));
-        final Response actual = testObj.getResource(null, false);
-        assertEquals(OK.getStatusCode(), actual.getStatus());
-
-        try (final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity()) {
-            final Model model = entity.stream.collect(toModel());
-            final List<String> rdfNodes = model.listObjects().mapWith(RDFNode::toString).toList();
-            assertTrue("Expected RDF contexts missing", rdfNodes.stream()
-                    .anyMatch(x -> x.contains("PROPERTIES") && x.contains("MINIMAL")));
-            assertFalse("Included non-minimal contexts", rdfNodes.contains("LDP_MEMBERSHIP"));
-            assertFalse("Included non-minimal contexts", rdfNodes.contains("LDP_CONTAINMENT"));
-        }
-
-    }
-
     /**
      * Emulates an 'If-None-Match' precondition failing for a GET request.  There should not be any entity body set
      * on the response.
@@ -801,42 +779,6 @@ public class FedoraLdpTest {
         // an entity body should _not_ be set under these conditions
         verify(mockRequest).evaluatePreconditions(any(Date.class));
         verify(builder, times(0)).entity(any());
-    }
-
-    @Ignore("Needs membership triples - FCREPO-3165")
-    @Test
-    public void testGetWithObjectOmitContainment() throws Exception {
-        setResource(Container.class);
-        when(mockRequest.getMethod()).thenReturn("GET");
-        setField(testObj, "prefer",
-                new MultiPrefer("return=representation; omit=\"" + PREFER_CONTAINMENT + "\""));
-        final Response actual = testObj.getResource( null, false);
-        assertEquals(OK.getStatusCode(), actual.getStatus());
-
-        try (final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity()) {
-            final Model model = entity.stream.collect(toModel());
-            final List<String> rdfNodes = model.listObjects().mapWith(RDFNode::toString).toList();
-            assertTrue("Should include membership contexts", rdfNodes.contains("LDP_MEMBERSHIP"));
-            assertFalse("Should not include containment contexts", rdfNodes.contains("LDP_CONTAINMENT"));
-        }
-    }
-
-    @Ignore("Membership Triples not implemented - FCREPO-3165")
-    @Test
-    public void testGetWithObjectOmitMembership() throws Exception {
-        setResource(Container.class);
-        when(mockRequest.getMethod()).thenReturn("GET");
-        setField(testObj, "prefer",
-                new MultiPrefer("return=representation; omit=\"" + PREFER_MEMBERSHIP + "\""));
-        final Response actual = testObj.getResource(null, false);
-        assertEquals(OK.getStatusCode(), actual.getStatus());
-
-        try (final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity()) {
-            final Model model = entity.stream.collect(toModel());
-            final List<String> rdfNodes = model.listObjects().mapWith(RDFNode::toString).toList();
-            assertFalse("Should not include membership contexts", rdfNodes.contains("LDP_MEMBERSHIP"));
-            assertTrue("Should include containment contexts", rdfNodes.contains("LDP_CONTAINMENT"));
-        }
     }
 
     @Test
@@ -962,9 +904,7 @@ public class FedoraLdpTest {
         final List<String> rdfNodes = model.listObjects().mapWith(RDFNode::toString).toList();
         log.info("Found RDF objects\n{}", rdfNodes);
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
-                "LDP_CONTAINMENT", "PROPERTIES", "SERVER_MANAGED")));
-        // TODO: Above list is missing LDP_MEMBERSHIP - https://jira.lyrasis.org/browse/FCREPO-3165
-
+                "LDP_CONTAINMENT", "PROPERTIES", "SERVER_MANAGED", "LDP_MEMBERSHIP")));
     }
 
     private void assertShouldAllowOnlyResourceDescriptionMethods() {

@@ -343,6 +343,14 @@ public class FedoraId {
     }
 
     /**
+     * Returns the FullId of the described resource.
+     * @return The ID.
+     */
+    public String getFullDescribedId() {
+        return fullId.replace("/" + FCR_METADATA, "");
+    }
+
+    /**
      * Creates a new Fedora ID based on this ID that points to a tombstone resource. If this ID is already a tombstone,
      * then it returns itself. Otherwise, it uses the base ID, without extensions, to construct the new ID.
      *

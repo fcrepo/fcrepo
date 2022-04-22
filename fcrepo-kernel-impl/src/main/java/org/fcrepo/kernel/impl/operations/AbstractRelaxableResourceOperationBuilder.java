@@ -44,7 +44,7 @@ public abstract class AbstractRelaxableResourceOperationBuilder extends Abstract
     public RelaxableResourceOperationBuilder relaxedProperties(final Model model) {
         // Has no affect if the server is not in relaxed mode
         if (model != null && serverManagedPropsMode == ServerManagedPropsMode.RELAXED) {
-            final var resc = model.getResource(rescId.getResourceId());
+            final var resc = model.getResource(rescId.asResourceId().getFullDescribedId());
 
             final var createdDateVal = getCreatedDate(resc);
             if (createdDateVal != null) {

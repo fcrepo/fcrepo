@@ -118,7 +118,7 @@ public class HttpRdfService {
                                      final boolean lenientHandling)
                                      throws RepositoryRuntimeException, BadRequestException {
         final List<ConstraintViolationException> exceptions = new ArrayList<>();
-        final String externalURI = idTranslator.toExternalId(extResourceId.getFullId());
+        final String externalURI = idTranslator.toExternalId(extResourceId.getFullDescribedId());
         final Model model = parseBodyAsModel(stream, contentType, externalURI);
         final List<Statement> insertStatements = new ArrayList<>();
         final StmtIterator stmtIterator = model.listStatements();
@@ -188,7 +188,7 @@ public class HttpRdfService {
      */
     public String patchRequestToInternalString(final FedoraId resourceId, final String requestBody,
                                                final HttpIdentifierConverter idTranslator) {
-        final String externalURI = idTranslator.toExternalId(resourceId.getFullId());
+        final String externalURI = idTranslator.toExternalId(resourceId.getFullDescribedId());
         final UpdateRequest request = UpdateFactory.create(requestBody, externalURI);
         final List<Update> updates = request.getOperations();
         final SparqlTranslateVisitor visitor = new SparqlTranslateVisitor(idTranslator, fedoraPropsConfig);
