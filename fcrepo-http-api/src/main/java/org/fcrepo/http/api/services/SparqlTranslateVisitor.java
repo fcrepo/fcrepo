@@ -13,6 +13,7 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
@@ -22,6 +23,7 @@ import org.fcrepo.kernel.api.exception.RelaxableServerManagedPropertyException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -58,9 +60,13 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
 
     private boolean isRelaxedMode;
 
-    public SparqlTranslateVisitor(final HttpIdentifierConverter identifierConverter, final FedoraPropsConfig config) {
+    private FedoraId resourceId;
+
+    public SparqlTranslateVisitor(final HttpIdentifierConverter identifierConverter, final FedoraPropsConfig config,
+                                  final FedoraId id) {
         idTranslator = identifierConverter;
         isRelaxedMode = config.getServerManagedPropsMode().equals(RELAXED);
+        resourceId = id;
     }
 
     private List<ConstraintViolationException> exceptions = new ArrayList<>();
@@ -108,6 +114,14 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
         }
         final List<Quad> newQuads = translateQuads(sourceQuads);
         assertNoExceptions();
+        if (update instanceof UpdateDataDelete || update instanceof UpdateDeleteWhere) {
+            if (resourceId.isDescription()) {
+                // This is a NonRdfSourceDescription so add deletes for the ID ending in /fcr:metadata as
+                // per FCREPO-3820
+                final var tempQuads = new ArrayList<>(newQuads);
+                makeBinaryDescriptionsDeletes(tempQuads).forEach(q -> newQuads.add(q));
+            }
+        }
         final Update newUpdate = makeUpdate(update.getClass(), newQuads);
         newUpdates.add(newUpdate);
     }
@@ -126,6 +140,11 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
 
         insertQuads.forEach(q -> newUpdate.getInsertAcc().addQuad(q));
         deleteQuads.forEach(q -> newUpdate.getDeleteAcc().addQuad(q));
+        if (resourceId.isDescription()) {
+            // This is a NonRdfSourceDescription so add deletes for the ID ending in /fcr:metadata as
+            // per FCREPO-3820
+            makeBinaryDescriptionsDeletes(deleteQuads).forEach(q -> newUpdate.getDeleteAcc().addQuad(q));
+        }
 
         final Element where = update.getWherePattern();
         final Element newElement = processElements(where);
@@ -137,6 +156,22 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
         if (!exceptions.isEmpty()) {
             throw new MultipleConstraintViolationException(exceptions);
         }
+    }
+
+    /**
+     * Duplicate DELETEs of triples for a binary ID but with the subject of the binary description.
+     * @param originalDeletes
+     *   The original delete quads
+     * @return
+     *   List of quads for the binary description.
+     */
+    private List<Quad> makeBinaryDescriptionsDeletes(final List<Quad> originalDeletes) {
+        // Id is for the NonRdfSourceDescription so we can use the fullId
+        final Node binDesc = NodeFactory.createURI(resourceId.getFullId());
+        return originalDeletes.stream()
+                .filter(q -> q.getSubject().isURI() && q.getSubject().getURI().equals(resourceId.getFullDescribedId()))
+                .map(q -> new Quad(q.getGraph(), binDesc, q.getPredicate(), q.getObject()))
+                .collect(Collectors.toList());
     }
 
     /**

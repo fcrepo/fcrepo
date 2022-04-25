@@ -191,7 +191,7 @@ public class HttpRdfService {
         final String externalURI = idTranslator.toExternalId(resourceId.getFullDescribedId());
         final UpdateRequest request = UpdateFactory.create(requestBody, externalURI);
         final List<Update> updates = request.getOperations();
-        final SparqlTranslateVisitor visitor = new SparqlTranslateVisitor(idTranslator, fedoraPropsConfig);
+        final SparqlTranslateVisitor visitor = new SparqlTranslateVisitor(idTranslator, fedoraPropsConfig, resourceId);
         for (final Update update : updates) {
             update.visit(visitor);
         }
