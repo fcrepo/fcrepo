@@ -54,6 +54,10 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
 
     private static final Logger LOGGER = getLogger(SparqlTranslateVisitor.class);
 
+    private static final String CUSTOM_SPARQL_VARIABLE = "fedoraBinaryFix";
+
+    private static final Node CUSTOM_SPARQL_VAR_NODE = NodeFactory.createVariable(CUSTOM_SPARQL_VARIABLE);
+
     private List<Update> newUpdates = new ArrayList<>();
 
     private HttpIdentifierConverter idTranslator;
@@ -114,10 +118,10 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
         }
         final List<Quad> newQuads = translateQuads(sourceQuads);
         assertNoExceptions();
-        if (update instanceof UpdateDataDelete || update instanceof UpdateDeleteWhere) {
-            if (resourceId.isDescription()) {
-                // This is a NonRdfSourceDescription so add deletes for the ID ending in /fcr:metadata as
-                // per FCREPO-3820
+        if (resourceId.isDescription()) {
+            // This is a NonRdfSourceDescription so add deletes for the ID ending in /fcr:metadata as
+            // per FCREPO-3820
+            if (update instanceof UpdateDataDelete || update instanceof UpdateDeleteWhere) {
                 final var tempQuads = new ArrayList<>(newQuads);
                 makeBinaryDescriptionsDeletes(tempQuads).forEach(q -> newQuads.add(q));
             }
@@ -143,7 +147,7 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
         if (resourceId.isDescription()) {
             // This is a NonRdfSourceDescription so add deletes for the ID ending in /fcr:metadata as
             // per FCREPO-3820
-            makeBinaryDescriptionsDeletes(deleteQuads).forEach(q -> newUpdate.getDeleteAcc().addQuad(q));
+            makeBinaryDescriptionsDeletesWhere(deleteQuads).forEach(q -> newUpdate.getDeleteAcc().addQuad(q));
         }
 
         final Element where = update.getWherePattern();
@@ -175,6 +179,24 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
     }
 
     /**
+     * Convert any variables in binary description deletes to use the custom variable, which we add in the where clause.
+     * @param originalDeletes
+     *   The original delete quads.
+     * @return
+     *   The converted delete quads.
+     */
+    private List<Quad> makeBinaryDescriptionsDeletesWhere(final List<Quad> originalDeletes) {
+        final var converted = makeBinaryDescriptionsDeletes(originalDeletes);
+        return converted.stream().map(q -> {
+            if (q.getObject().isVariable()) {
+                return new Quad(q.getGraph(), q.getSubject(), q.getPredicate(), CUSTOM_SPARQL_VAR_NODE);
+            } else {
+                return q;
+            }
+        }).collect(Collectors.toList());
+    }
+
+    /**
      * Process triples inside the Element or return the element.
      * @param element the element to translate.
      * @return the translated or original element.
@@ -198,6 +220,19 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
                         }
                     }
                     basicPattern.add(translateTriple(t.asTriple()));
+                    if (resourceId.isDescription() && t.getSubject().isURI() && t.getObject().isVariable()) {
+                        // If this is a binary description resource and the subject is a URI and object is a variable.
+                        // Get an internal ID based on the subject.
+                        final var subjId = idTranslator.toInternalId(t.getSubject().getURI());
+                        // If it matches the binary ID
+                        if (resourceId.getFullDescribedId().equals(subjId)) {
+                            basicPattern.add(new Triple(
+                                    NodeFactory.createURI(resourceId.getFullId()),
+                                    t.getPredicate(),
+                                    CUSTOM_SPARQL_VAR_NODE
+                            ));
+                        }
+                    }
                 }
             });
             return new ElementPathBlock(basicPattern);

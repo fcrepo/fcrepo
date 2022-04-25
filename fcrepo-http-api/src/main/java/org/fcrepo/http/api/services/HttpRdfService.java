@@ -148,7 +148,11 @@ public class HttpRdfService {
                 }
                 if (stmt.getSubject().isURIResource()) {
                     final String originalSubj = stmt.getSubject().getURI();
-                    final String subj = idTranslator.translateUri(originalSubj);
+                    String subj = idTranslator.translateUri(originalSubj);
+                    if (extResourceId.isDescription() && extResourceId.getFullId().equals(subj)) {
+                        // Convert to the binary's ID
+                        subj = extResourceId.getFullDescribedId();
+                    }
 
                     RDFNode obj = stmt.getObject();
                     if (stmt.getObject().isURIResource()) {
@@ -255,7 +259,7 @@ public class HttpRdfService {
 
     /**
      * Does the statement's triple touch any server managed properties / namespaces.
-     * ie.
+     * i.e.
      * - has a rdf:type with an object which is in a managed namespace
      * - has a predicate which is in a managed namespace.
      *

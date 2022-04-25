@@ -194,9 +194,10 @@ public class SparqlTranslateVisitorTest {
                         "\"Some title\" . } WHERE { <> <" + DC_11.title.getURI() + "> ?o }";
         final var visitor = makeVisitor(UUID.randomUUID() + "/fcr:metadata");
         final var expected = "DELETE { <" + resourceId.getFullDescribedId() + "> <" + DC_11.title.getURI() +
-                "> ?o . <" + resourceId.getFullId() + "> <" + DC_11.title.getURI() + "> ?o .} INSERT " +
+                "> ?o . <" + resourceId.getFullId() + "> <" + DC_11.title.getURI() + "> ?fedoraBinaryFix .} INSERT " +
                 "{ <" + resourceId.getFullDescribedId() + "> <" + DC_11.title.getURI() + "> \"Some title\" . } WHERE " +
-                "{ <" + resourceId.getFullDescribedId() + "> <" + DC_11.title.getURI() + "> ?o }";
+                "{ <" + resourceId.getFullDescribedId() + "> <" + DC_11.title.getURI() + "> ?o . <" +
+                resourceId.getFullId() + "> <" + DC_11.title.getURI() + "> ?fedoraBinaryFix }";
         final var output = runVisits(originalString, visitor);
         assertEqualsSparqlStrings(expected, output);
     }

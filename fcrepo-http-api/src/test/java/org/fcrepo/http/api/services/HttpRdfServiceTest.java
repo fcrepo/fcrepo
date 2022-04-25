@@ -6,13 +6,13 @@
 package org.fcrepo.http.api.services;
 
 import static org.fcrepo.config.ServerManagedPropsMode.STRICT;
+import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
-import static org.mockito.Mockito.when;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -21,12 +21,17 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.vocabulary.DC;
 import org.apache.jena.vocabulary.DCTerms;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriBuilder;
+
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.junit.Before;
 import org.junit.Test;
 import java.io.InputStream;
 import java.io.ByteArrayInputStream;
+import java.util.UUID;
+import java.util.function.Predicate;
+
 import org.junit.runner.RunWith;
 
 import org.fcrepo.config.FedoraPropsConfig;
@@ -37,7 +42,6 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.slf4j.Logger;
 
 /**
  * Unit tests for HttpRdfService
@@ -47,23 +51,20 @@ import org.slf4j.Logger;
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class HttpRdfServiceTest {
 
-    private static final Logger log = getLogger(HttpRdfService.class);
-
-    @Mock
     private HttpIdentifierConverter idTranslator;
 
     @Mock
     private FedoraResource resource;
 
-    @Mock
-    private FedoraPropsConfig fedoraPropsConfig;
+    private FedoraPropsConfig fedoraPropsConfig = new FedoraPropsConfig();
 
     @InjectMocks
     private HttpRdfService httpRdfService;
 
-    private static final String FEDORA_URI_1 = "http://www.example.com/fedora/rest/resource1";
+    private static final String HTTP_BASE_URI = "http://www.example.com/fedora/rest/";
+    private static final String FEDORA_URI_1 = HTTP_BASE_URI + "resource1";
     private static final Resource FEDORA_URI_1_RESOURCE = ResourceFactory.createResource(FEDORA_URI_1);
-    private static final String FEDORA_URI_2 = "http://www.example.com/fedora/rest/resource2";
+    private static final String FEDORA_URI_2 = HTTP_BASE_URI + "resource2";
     private static final Resource FEDORA_URI_2_RESOURCE = ResourceFactory.createResource(FEDORA_URI_2);
     private static final FedoraId FEDORA_ID_1 = FedoraId.create("info:fedora/resource1");
     private static final Resource FEDORA_ID_1_RESOURCE = ResourceFactory.createResource(FEDORA_ID_1.getFullId());
@@ -85,25 +86,14 @@ public class HttpRdfServiceTest {
                 "    dcterms:isPartOf <" + FEDORA_ID_2 + "> .";
     private static final MediaType CONTENT_TYPE = new MediaType("text", "turtle");
 
+    public HttpRdfServiceTest() {
+        fedoraPropsConfig.setServerManagedPropsMode(STRICT);
+        idTranslator = new HttpIdentifierConverter(UriBuilder.fromUri(HTTP_BASE_URI + "{path: .*}"));
+    }
+
     @Before
-    public void setup() {
-        when(fedoraPropsConfig.getServerManagedPropsMode()).thenReturn(STRICT);
-        when(idTranslator.translateUri(FEDORA_URI_1)).thenReturn(FEDORA_ID_1.getFullId());
-        when(idTranslator.translateUri(FEDORA_URI_2)).thenReturn(FEDORA_ID_2.getFullId());
-        when(idTranslator.translateUri(NON_FEDORA_URI)).thenReturn(NON_FEDORA_URI);
-
-        when(idTranslator.toExternalId(FEDORA_ID_1.getFullId())).thenReturn(FEDORA_URI_1);
-        when(idTranslator.toExternalId(FEDORA_ID_2.getFullId())).thenReturn(FEDORA_URI_2);
-        when(idTranslator.inInternalDomain(FEDORA_ID_1.getFullId())).thenReturn(true);
-        when(idTranslator.inInternalDomain(FEDORA_ID_2.getFullId())).thenReturn(true);
-        when(idTranslator.inInternalDomain(NON_FEDORA_URI)).thenReturn(false);
-
-        when(resource.getId()).thenReturn(FEDORA_ID_1.getFullId());
-
-        when(idTranslator.translateUri("http://other.com/resource")).thenReturn("http://other.com/resource");
-        when(idTranslator.translateUri(FEDORA_ID_1.getFullId())).thenReturn(FEDORA_ID_1.getFullId());
-
-        log.debug("Rdf is: {}", RDF);
+    public void setUp() {
+        setField(httpRdfService, "fedoraPropsConfig", fedoraPropsConfig);
     }
 
     @Test
@@ -277,6 +267,53 @@ public class HttpRdfServiceTest {
         assertStringMatch("<" + FEDORA_ID_2 + "> <http://example.org#pointer> " +
                 "<" + FEDORA_ID_1 + ">", translated);
         assertStringMatch("?o <http://example.org#pointer> <" + FEDORA_ID_2 + ">", translated);
+    }
+
+    /**
+     * Test that binary descriptions URIs in subjects are converted to the binary IDs.
+     */
+    @Test
+    public void testPutToInternal_BinaryDescriptionSubject() {
+        final var binaryUri = HTTP_BASE_URI + UUID.randomUUID();
+        final var binaryDescUri = binaryUri + "/" + FCR_METADATA;
+        final var descriptionId = FedoraId.create(idTranslator.toInternalId(binaryDescUri));
+        // Predicate to filter for a resource with the full binary description ID (i.e. ending in /fcr:metadata)
+        final Predicate<Resource> keepDescId = a -> a.isURIResource() && a.hasURI(descriptionId.getFullId());
+        final var rdf = "@prefix dc: <"  + DC.getURI() + "> ." +
+                "@prefix dcterms: <"  + DCTerms.getURI() + "> ." +
+                "<" + binaryDescUri + "> dc:title 'fancy title' ;" +
+                "    dcterms:isPartOf <" + binaryUri + "> .";
+        final InputStream requestBodyStream = new ByteArrayInputStream(rdf.getBytes());
+        final Resource binaryRes = ResourceFactory.createResource(descriptionId.getFullDescribedId());
+        final var translated = httpRdfService.bodyToInternalModel(descriptionId, requestBodyStream, CONTENT_TYPE,
+                idTranslator, false);
+        assertTrue(translated.contains(binaryRes, DCTerms.isPartOf, binaryRes));
+        assertTrue(translated.contains(binaryRes, DC.title, ResourceFactory.createPlainLiteral("fancy title")));
+        assertFalse(translated.listSubjects().filterKeep(keepDescId).hasNext());
+    }
+
+    /**
+     * Test we don't touch binary description URIs in the object of a triple.
+     */
+    @Test
+    public void testPutToInternal_BinaryDescriptionObject() {
+        final var binaryUri = HTTP_BASE_URI + UUID.randomUUID();
+        final var binaryDescUri = binaryUri + "/" + FCR_METADATA;
+        final var descriptionId = FedoraId.create(idTranslator.toInternalId(binaryDescUri));
+        // Predicate to filter for a resource with the full binary description ID (i.e. ending in /fcr:metadata)
+        final Predicate<Resource> keepDescId = a -> a.isURIResource() && a.hasURI(descriptionId.getFullId());
+        final var rdf = "@prefix dc: <"  + DC.getURI() + "> ." +
+                "@prefix dcterms: <"  + DCTerms.getURI() + "> ." +
+                "<" + binaryUri + "> dc:title 'fancy title' ;" +
+                "    dcterms:isPartOf <" + binaryDescUri + "> .";
+        final InputStream requestBodyStream = new ByteArrayInputStream(rdf.getBytes());
+        final Resource binaryRes = ResourceFactory.createResource(descriptionId.getFullDescribedId());
+        final Resource binaryDescRes = ResourceFactory.createResource(descriptionId.getFullId());
+        final var translated = httpRdfService.bodyToInternalModel(descriptionId, requestBodyStream, CONTENT_TYPE,
+                idTranslator, false);
+        assertTrue(translated.contains(binaryRes, DCTerms.isPartOf, binaryDescRes));
+        assertTrue(translated.contains(binaryRes, DC.title, ResourceFactory.createPlainLiteral("fancy title")));
+        assertFalse(translated.listSubjects().filterKeep(keepDescId).hasNext());
     }
 
     /**
