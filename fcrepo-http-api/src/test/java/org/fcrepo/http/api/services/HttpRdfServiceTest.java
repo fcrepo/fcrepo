@@ -8,7 +8,6 @@ package org.fcrepo.http.api.services;
 import static org.fcrepo.config.ServerManagedPropsMode.STRICT;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
@@ -18,6 +17,10 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.update.UpdateAction;
+import org.apache.jena.update.UpdateFactory;
+import org.apache.jena.update.UpdateRequest;
 import org.apache.jena.vocabulary.DC;
 import org.apache.jena.vocabulary.DCTerms;
 import javax.ws.rs.core.MediaType;
@@ -37,10 +40,7 @@ import org.junit.runner.RunWith;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.RdfStream;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /**
@@ -53,13 +53,9 @@ public class HttpRdfServiceTest {
 
     private HttpIdentifierConverter idTranslator;
 
-    @Mock
-    private FedoraResource resource;
-
     private FedoraPropsConfig fedoraPropsConfig = new FedoraPropsConfig();
 
-    @InjectMocks
-    private HttpRdfService httpRdfService;
+    private HttpRdfService httpRdfService = new HttpRdfService();
 
     private static final String HTTP_BASE_URI = "http://www.example.com/fedora/rest/";
     private static final String FEDORA_URI_1 = HTTP_BASE_URI + "resource1";
@@ -134,7 +130,7 @@ public class HttpRdfServiceTest {
         final String rdf = "prefix test: <http://example.org#> INSERT { <> test:pointer <http://other.com/resource>" +
                 " } WHERE {}";
         final String translated = httpRdfService.patchRequestToInternalString(FEDORA_ID_1, rdf, idTranslator);
-        assertStringMatch("<" + FEDORA_ID_1 + "> <http://example.org#pointer> <http://other.com/resource>",
+        assertStringContains("<" + FEDORA_ID_1 + "> <http://example.org#pointer> <http://other.com/resource>",
                 translated);
     }
 
@@ -143,7 +139,7 @@ public class HttpRdfServiceTest {
         final String rdf = "prefix test: <http://example.org#> INSERT DATA { <> test:pointer " +
                 "<http://other.com/resource> }";
         final String translated = httpRdfService.patchRequestToInternalString(FEDORA_ID_1, rdf, idTranslator);
-        assertStringMatch("<" + FEDORA_ID_1 + "> <http://example.org#pointer> <http://other.com/resource>",
+        assertStringContains("<" + FEDORA_ID_1 + "> <http://example.org#pointer> <http://other.com/resource>",
                 translated);
     }
 
@@ -152,7 +148,7 @@ public class HttpRdfServiceTest {
         final String rdf = "prefix test: <http://example.org#> DELETE DATA { <> test:pointer " +
                 "<http://other.com/resource> }";
         final String translated = httpRdfService.patchRequestToInternalString(FEDORA_ID_1, rdf, idTranslator);
-        assertStringMatch("<" + FEDORA_ID_1 + "> <http://example.org#pointer> <http://other.com/resource>",
+        assertStringContains("<" + FEDORA_ID_1 + "> <http://example.org#pointer> <http://other.com/resource>",
                 translated);
     }
 
@@ -161,7 +157,7 @@ public class HttpRdfServiceTest {
         final String rdf = "prefix test: <http://example.org#> INSERT { <" + FEDORA_URI_1 + "> test:pointer " +
                 "<http://other.com/resource> } WHERE {}";
         final String translated = httpRdfService.patchRequestToInternalString(FEDORA_ID_1, rdf, idTranslator);
-        assertStringMatch("<" + FEDORA_ID_1 + "> <http://example.org#pointer> <http://other.com/resource>",
+        assertStringContains("<" + FEDORA_ID_1 + "> <http://example.org#pointer> <http://other.com/resource>",
                 translated);
     }
 
@@ -170,7 +166,7 @@ public class HttpRdfServiceTest {
         final String rdf = "prefix test: <http://example.org#> INSERT DATA { <" + FEDORA_URI_1 + "> test:pointer " +
                 "<http://other.com/resource> }";
         final String translated = httpRdfService.patchRequestToInternalString(FEDORA_ID_1, rdf, idTranslator);
-        assertStringMatch("<" + FEDORA_ID_1 + "> <http://example.org#pointer> <http://other.com/resource>",
+        assertStringContains("<" + FEDORA_ID_1 + "> <http://example.org#pointer> <http://other.com/resource>",
                 translated);
     }
 
@@ -179,7 +175,7 @@ public class HttpRdfServiceTest {
         final String rdf = "prefix test: <http://example.org#> DELETE DATA { <" + FEDORA_URI_1 + "> test:pointer " +
                 "<http://other.com/resource> }";
         final String translated = httpRdfService.patchRequestToInternalString(FEDORA_ID_1, rdf, idTranslator);
-        assertStringMatch("<" + FEDORA_ID_1 + "> <http://example.org#pointer> <http://other.com/resource>",
+        assertStringContains("<" + FEDORA_ID_1 + "> <http://example.org#pointer> <http://other.com/resource>",
                 translated);
     }
 
@@ -188,8 +184,8 @@ public class HttpRdfServiceTest {
         final String rdf = "prefix test: <http://example.org#> DELETE { <> test:pointer ?o } INSERT { <> test:pointer" +
                 " <http://other.com/resource> } WHERE { <> test:pointer ?o }";
         final String translated = httpRdfService.patchRequestToInternalString(FEDORA_ID_1, rdf, idTranslator);
-        assertStringMatch("<" + FEDORA_ID_1 + "> <http://example.org#pointer> ?o ", translated);
-        assertStringMatch("<" + FEDORA_ID_1 + "> <http://example.org#pointer> <http://other.com/resource>",
+        assertStringContains("<" + FEDORA_ID_1 + "> <http://example.org#pointer> ?o ", translated);
+        assertStringContains("<" + FEDORA_ID_1 + "> <http://example.org#pointer> <http://other.com/resource>",
                 translated);
     }
 
@@ -198,7 +194,7 @@ public class HttpRdfServiceTest {
         final String rdf = "prefix test: <http://example.org#> INSERT DATA { <> test:pointer " +
                 "<" + FEDORA_URI_2 + "> }";
         final String translated = httpRdfService.patchRequestToInternalString(FEDORA_ID_1, rdf, idTranslator);
-        assertStringMatch("<" + FEDORA_ID_1 + "> <http://example.org#pointer> <" + FEDORA_ID_2 + ">",
+        assertStringContains("<" + FEDORA_ID_1 + "> <http://example.org#pointer> <" + FEDORA_ID_2 + ">",
                 translated);
     }
 
@@ -207,7 +203,7 @@ public class HttpRdfServiceTest {
         final String rdf = "prefix test: <http://example.org#> INSERT DATA { <" + FEDORA_URI_1 + "> " +
                 "test:pointer <" + FEDORA_URI_2 + "> }";
         final String translated = httpRdfService.patchRequestToInternalString(FEDORA_ID_1, rdf, idTranslator);
-        assertStringMatch("<" + FEDORA_ID_1 + "> <http://example.org#pointer> <" + FEDORA_ID_2 + ">",
+        assertStringContains("<" + FEDORA_ID_1 + "> <http://example.org#pointer> <" + FEDORA_ID_2 + ">",
                 translated);
     }
 
@@ -215,7 +211,7 @@ public class HttpRdfServiceTest {
     public void testPatchToInternal_EmptySubjectExplicitObjectDelete() {
         final String rdf = "prefix test: <http://example.org#> DELETE DATA { <> test:pointer <" + FEDORA_URI_2 + "> }";
         final String translated = httpRdfService.patchRequestToInternalString(FEDORA_ID_1, rdf, idTranslator);
-        assertStringMatch("<" + FEDORA_ID_1 + "> <http://example.org#pointer> <" + FEDORA_ID_2 + ">",
+        assertStringContains("<" + FEDORA_ID_1 + "> <http://example.org#pointer> <" + FEDORA_ID_2 + ">",
                 translated);
     }
 
@@ -224,7 +220,7 @@ public class HttpRdfServiceTest {
         final String rdf = "prefix test: <http://example.org#> DELETE DATA { <" + FEDORA_URI_1 + "> test:pointer <" +
                 FEDORA_URI_2 + "> }";
         final String translated = httpRdfService.patchRequestToInternalString(FEDORA_ID_1, rdf, idTranslator);
-        assertStringMatch("<" + FEDORA_ID_1 + "> <http://example.org#pointer> <" + FEDORA_ID_2 + ">",
+        assertStringContains("<" + FEDORA_ID_1 + "> <http://example.org#pointer> <" + FEDORA_ID_2 + ">",
                 translated);
     }
 
@@ -233,9 +229,9 @@ public class HttpRdfServiceTest {
         final String rdf = "prefix test: <http://example.org#> DELETE { <> test:pointer ?o } INSERT { <> test:pointer" +
                 " <" + FEDORA_URI_2 + "> } WHERE { <> test:pointer ?o }";
         final String translated = httpRdfService.patchRequestToInternalString(FEDORA_ID_1, rdf, idTranslator);
-        assertStringMatch("<" + FEDORA_ID_1 + "> <http://example.org#pointer> <" + FEDORA_ID_2 + ">",
+        assertStringContains("<" + FEDORA_ID_1 + "> <http://example.org#pointer> <" + FEDORA_ID_2 + ">",
                 translated);
-        assertStringMatch("<" + FEDORA_ID_1 + "> <http://example.org#pointer> ?o", translated);
+        assertStringContains("<" + FEDORA_ID_1 + "> <http://example.org#pointer> ?o", translated);
     }
 
     @Test
@@ -244,9 +240,9 @@ public class HttpRdfServiceTest {
                 "test:pointer ?o } INSERT { <" + FEDORA_URI_2 + "> test:pointer" +
                 " <" + FEDORA_URI_1 + "> } WHERE { <" + FEDORA_URI_2 + "> test:pointer ?o }";
         final String translated = httpRdfService.patchRequestToInternalString(FEDORA_ID_2, rdf, idTranslator);
-        assertStringMatch("<" + FEDORA_ID_2 + "> <http://example.org#pointer> <" + FEDORA_ID_1 + ">",
+        assertStringContains("<" + FEDORA_ID_2 + "> <http://example.org#pointer> <" + FEDORA_ID_1 + ">",
                 translated);
-        assertStringMatch("<" + FEDORA_ID_2 + "> <http://example.org#pointer> ?o", translated);
+        assertStringContains("<" + FEDORA_ID_2 + "> <http://example.org#pointer> ?o", translated);
     }
 
     @Test
@@ -254,9 +250,9 @@ public class HttpRdfServiceTest {
         final String rdf = "prefix test: <http://example.org#> INSERT { <" + FEDORA_URI_2 + "> test:pointer" +
                 " <" + FEDORA_URI_1 + "> } WHERE { <" + FEDORA_URI_2 + "> test:pointer ?o }";
         final String translated = httpRdfService.patchRequestToInternalString(FEDORA_ID_2, rdf, idTranslator);
-        assertStringMatch("<" + FEDORA_ID_2 + "> <http://example.org#pointer> " +
+        assertStringContains("<" + FEDORA_ID_2 + "> <http://example.org#pointer> " +
                 "<" + FEDORA_ID_1 + ">", translated);
-        assertStringMatch("<" + FEDORA_ID_2 + "> <http://example.org#pointer> ?o", translated);
+        assertStringContains("<" + FEDORA_ID_2 + "> <http://example.org#pointer> ?o", translated);
     }
 
     @Test
@@ -264,9 +260,9 @@ public class HttpRdfServiceTest {
         final String rdf = "prefix test: <http://example.org#> INSERT { <" + FEDORA_URI_2 + "> test:pointer" +
                 " <" + FEDORA_URI_1 + "> } WHERE { ?o test:pointer <" + FEDORA_URI_2 + "> }";
         final String translated = httpRdfService.patchRequestToInternalString(FEDORA_ID_2, rdf, idTranslator);
-        assertStringMatch("<" + FEDORA_ID_2 + "> <http://example.org#pointer> " +
+        assertStringContains("<" + FEDORA_ID_2 + "> <http://example.org#pointer> " +
                 "<" + FEDORA_ID_1 + ">", translated);
-        assertStringMatch("?o <http://example.org#pointer> <" + FEDORA_ID_2 + ">", translated);
+        assertStringContains("?o <http://example.org#pointer> <" + FEDORA_ID_2 + ">", translated);
     }
 
     /**
@@ -316,17 +312,78 @@ public class HttpRdfServiceTest {
         assertFalse(translated.listSubjects().filterKeep(keepDescId).hasNext());
     }
 
+    @Test
+    public void testQueryWithValues() {
+        final var patch = "prefix dc: <" + DC.getURI() + "> DELETE { ?s dc:title ?o } WHERE { VALUES ?s { " +
+                "<info:fedora/binary> <info:fedora/binary/fcr:metadata> } ?s dc:title ?o }";
+        final var translated = httpRdfService.patchRequestToInternalString(FEDORA_ID_1, patch, idTranslator);
+        assertStringContains("?s <" + DC.title.getURI() + "> ?o", translated);
+    }
+
     /**
-     * Assert 2 strings match regardless of whitespace.
+     * Test that with an existing mismatch of binary and binary description IDs. We can clean it up fairly easily.
+     */
+    @Test
+    public void testMixedBinarySubjectsAlter() {
+        final var binaryUri = HTTP_BASE_URI + UUID.randomUUID();
+        final var binaryDescUri = binaryUri + "/" + FCR_METADATA;
+        final var descriptionId = FedoraId.create(idTranslator.toInternalId(binaryDescUri));
+        final var binaryResource = ResourceFactory.createResource(descriptionId.getFullDescribedId());
+        final var binaryDescResource = ResourceFactory.createResource(descriptionId.getFullId());
+        final var internalRdf = "@prefix dc: <" + DC.getURI() + "> ." +
+                "<" + descriptionId.getFullId() + "> dc:title 'Some title' ." +
+                "<" + descriptionId.getFullDescribedId() + "> dc:description 'This is some sample content' .";
+        final Model model = ModelFactory.createDefaultModel();
+        final InputStream requestBodyStream = new ByteArrayInputStream(internalRdf.getBytes());
+        model.read(requestBodyStream, binaryDescUri, Lang.TURTLE.getLabel());
+        assertTrue(model.contains(
+                binaryDescResource,
+                DC.title,
+                ResourceFactory.createPlainLiteral("Some title"))
+        );
+        assertTrue(model.contains(
+                binaryResource,
+                DC.description,
+                ResourceFactory.createPlainLiteral("This is some sample content")
+        ));
+
+        // Sparql is to delete the title and insert a new one.
+        final var patch = "prefix dc: <" + DC.getURI() + "> DELETE { <> dc:title ?o } INSERT { <> dc:title " +
+                "\"New title\" } WHERE { <> dc:title ?o }";
+        final var translatedPatch = httpRdfService.patchRequestToInternalString(descriptionId, patch, idTranslator);
+        final UpdateRequest request = UpdateFactory.create(translatedPatch, binaryUri);
+        // Execute the translated Sparql against the model.
+        UpdateAction.execute(request, model);
+        assertFalse(model.contains(
+                binaryDescResource,
+                DC.title,
+                ResourceFactory.createPlainLiteral("Some title"))
+        );
+        assertTrue(model.contains(
+                binaryResource,
+                DC.description,
+                ResourceFactory.createPlainLiteral("This is some sample content")
+        ));
+        assertTrue(model.contains(
+                binaryResource,
+                DC.title,
+                ResourceFactory.createPlainLiteral("New title")
+        ));
+        assertFalse(model.listSubjects()
+                .filterKeep(a -> a.isURIResource() && a.hasURI(descriptionId.getFullId())).hasNext());
+    }
+
+    /**
+     * Assert one string contains the other regardless of whitespace.
      * @param expected the expected string.
      * @param comparison the string to test.
      */
-    private void assertStringMatch(final String expected, final String comparison) {
+    private void assertStringContains(final String expected, final String comparison) {
         final String cleanedExpected = expected.replaceAll("[\t\n]", "")
                 .replaceAll(" {2,}", " ");
         final String cleanedTest = comparison.replaceAll("[\t\n]", "")
                 .replaceAll(" {2,}", " ");
-        assertEquals(cleanedExpected, cleanedExpected);
+        assertTrue(cleanedTest.contains(cleanedExpected));
     }
 
     private void verifyTriples(final Model model)  {

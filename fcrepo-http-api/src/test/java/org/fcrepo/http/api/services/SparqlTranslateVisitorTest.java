@@ -6,6 +6,7 @@
 package org.fcrepo.http.api.services;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 import java.util.UUID;
@@ -77,6 +78,17 @@ public class SparqlTranslateVisitorTest {
     }
 
     /**
+     * Assert one string contains the other regardless of whitespace.
+     * @param expected the expected string.
+     * @param comparison the string to test.
+     */
+    private void assertStringContains(final String expected, final String comparison) {
+        final String cleanedExpected = sparqlEqualityCleanup(expected);
+        final String cleanedTest = sparqlEqualityCleanup(comparison);
+        assertTrue(cleanedTest.contains(cleanedExpected));
+    }
+
+    /**
      * Assert equality while accounting for changes in the Sparql text when run through the visitor.
      * @param expected
      *   The expected string.
@@ -124,13 +136,32 @@ public class SparqlTranslateVisitorTest {
 
     @Test
     public void testDeleteDataBinary() {
-        final var originalString = "DELETE DATA { <> <" + DC_11.title.getURI() + "> \"Some title\" . }";
-        final var visitor = makeVisitor(UUID.randomUUID() + "/fcr:metadata");
-        final var expected = "DELETE DATA { <" + resourceId.getFullDescribedId() + "> <" + DC_11.title.getURI() +
-                "> \"Some title\" . " +
-                "<" + resourceId.getFullId() + "> <" + DC_11.title.getURI() + "> \"Some title\" . }";
-        final var output = runVisits(originalString, visitor);
-        assertEqualsSparqlStrings(expected, output);
+        final var id = UUID.randomUUID() + "/fcr:metadata";
+        var visitor = makeVisitor(id);
+        final var originalStringTemplate = "DELETE DATA { <%s> <" + DC_11.title.getURI() +
+                "> \"Some title\" . }";
+        final var uris = List.of(
+                "",
+                identifierConverter.toExternalId(resourceId.getFullId()),
+                identifierConverter.toExternalId(resourceId.getFullDescribedId()),
+                resourceId.getFullId(),
+                resourceId.getFullDescribedId()
+        );
+        for (final var uri : uris) {
+            final var input = String.format(originalStringTemplate, uri);
+            final var output = runVisits(input, visitor);
+            // Order of deletes flips so just check for the triples.
+            assertStringContains(
+                    String.format("<%s> <%s> \"Some title\" .", resourceId.getFullId(), DC_11.title.getURI()),
+                    output
+            );
+            assertStringContains(
+                    String.format("<%s> <%s> \"Some title\" .", resourceId.getFullDescribedId(), DC_11.title.getURI()),
+                    output
+            );
+            // Need to clear the request queue
+            visitor = new SparqlTranslateVisitor(identifierConverter, propsConfig, resourceId);
+        }
     }
 
     @Test
@@ -165,13 +196,25 @@ public class SparqlTranslateVisitorTest {
 
     @Test
     public void testDeleteWhereBinary() {
-        final var originalString = "DELETE { <> <" + DC_11.title.getURI() + "> \"Some title\" . } WHERE {}";
-        final var visitor = makeVisitor(UUID.randomUUID() + "/fcr:metadata");
-        final var expected = "DELETE { <" + resourceId.getFullDescribedId() + "> <" + DC_11.title.getURI() +
-                "> \"Some title\" . <" + resourceId.getFullId() + "> <" + DC_11.title.getURI() +
-                "> \"Some title\" . } WHERE {}";
-        final var output = runVisits(originalString, visitor);
-        assertEqualsSparqlStrings(expected, output);
+        final var id = UUID.randomUUID() + "/fcr:metadata";
+        var visitor = makeVisitor(id);
+        final var originalStringTemplate = "DELETE { <%s> <" + DC_11.title.getURI() + "> \"Some title\" . } WHERE {}";
+        final var uris = List.of(
+                "",
+                identifierConverter.toExternalId(resourceId.getFullId()),
+                identifierConverter.toExternalId(resourceId.getFullDescribedId()),
+                resourceId.getFullId(),
+                resourceId.getFullDescribedId()
+        );
+        final var expected = "DELETE { ?fedoraBinaryFix <" + DC_11.title.getURI() + "> \"Some title\" . } " +
+                "WHERE { VALUES ?fedoraBinaryFix { <" + resourceId.getFullDescribedId() + "> <" +
+                resourceId.getFullId() + "> } }";
+        for (final var uri : uris) {
+            final var input = String.format(originalStringTemplate, uri);
+            final var output = runVisits(input, visitor);
+            assertEqualsSparqlStrings(expected, output);
+            visitor = new SparqlTranslateVisitor(identifierConverter, propsConfig, resourceId);
+        }
     }
 
     @Test
@@ -189,16 +232,27 @@ public class SparqlTranslateVisitorTest {
 
     @Test
     public void testDeleteAndInsertWhereBinary() {
-        final var originalString =
-                "DELETE { <> <" + DC_11.title.getURI() + "> ?o . } INSERT { <> <" + DC_11.title.getURI() + "> " +
-                        "\"Some title\" . } WHERE { <> <" + DC_11.title.getURI() + "> ?o }";
-        final var visitor = makeVisitor(UUID.randomUUID() + "/fcr:metadata");
-        final var expected = "DELETE { <" + resourceId.getFullDescribedId() + "> <" + DC_11.title.getURI() +
-                "> ?o . <" + resourceId.getFullId() + "> <" + DC_11.title.getURI() + "> ?fedoraBinaryFix .} INSERT " +
-                "{ <" + resourceId.getFullDescribedId() + "> <" + DC_11.title.getURI() + "> \"Some title\" . } WHERE " +
-                "{ <" + resourceId.getFullDescribedId() + "> <" + DC_11.title.getURI() + "> ?o . <" +
-                resourceId.getFullId() + "> <" + DC_11.title.getURI() + "> ?fedoraBinaryFix }";
-        final var output = runVisits(originalString, visitor);
-        assertEqualsSparqlStrings(expected, output);
+        final var id = UUID.randomUUID() + "/fcr:metadata";
+        var visitor = makeVisitor(id);
+        final var originalStringTemplate =
+                "DELETE { <%1$s> <" + DC_11.title.getURI() + "> ?o . } INSERT { <> <" + DC_11.title.getURI() + "> " +
+                "\"Some title\" . } WHERE { <%1$s> <" + DC_11.title.getURI() + "> ?o }";
+        final var uris = List.of(
+                "",
+                identifierConverter.toExternalId(resourceId.getFullId()),
+                identifierConverter.toExternalId(resourceId.getFullDescribedId()),
+                resourceId.getFullId(),
+                resourceId.getFullDescribedId()
+        );
+        final var expected = "DELETE { ?fedoraBinaryFix <" + DC_11.title.getURI() + "> ?o . } " +
+                "INSERT { <" + resourceId.getFullDescribedId() + "> <" + DC_11.title.getURI() + "> \"Some title\" . }" +
+                " WHERE { ?fedoraBinaryFix <" + DC_11.title.getURI() + "> ?o VALUES ?fedoraBinaryFix { <" +
+                resourceId.getFullDescribedId() + "> <" + resourceId.getFullId() + "> } }";
+        for (final var uri : uris) {
+            final var input = String.format(originalStringTemplate, uri);
+            final var output = runVisits(input, visitor);
+            assertEqualsSparqlStrings(expected, output);
+            visitor = new SparqlTranslateVisitor(identifierConverter, propsConfig, resourceId);
+        }
     }
 }

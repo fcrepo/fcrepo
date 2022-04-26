@@ -13,7 +13,6 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
@@ -30,6 +29,8 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.binding.BindingBuilder;
 import org.apache.jena.sparql.modify.request.QuadAcc;
 import org.apache.jena.sparql.modify.request.QuadDataAcc;
 import org.apache.jena.sparql.modify.request.UpdateData;
@@ -39,6 +40,7 @@ import org.apache.jena.sparql.modify.request.UpdateDeleteWhere;
 import org.apache.jena.sparql.modify.request.UpdateModify;
 import org.apache.jena.sparql.modify.request.UpdateVisitorBase;
 import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementData;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementPathBlock;
 import org.apache.jena.update.Update;
@@ -65,6 +67,8 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
     private boolean isRelaxedMode;
 
     private FedoraId resourceId;
+
+    private boolean resourceVariableUpdate = false;
 
     public SparqlTranslateVisitor(final HttpIdentifierConverter identifierConverter, final FedoraPropsConfig config,
                                   final FedoraId id) {
@@ -110,21 +114,21 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
      * @param update the update request to translate.
      */
     private void translateUpdate(final Update update) {
+        final boolean isUpdateData = (update instanceof UpdateData);
+        final boolean isDelete = (update instanceof UpdateDeleteWhere || update instanceof UpdateDataDelete);
         final List<Quad> sourceQuads;
         if (update instanceof UpdateDeleteWhere) {
             sourceQuads = ((UpdateDeleteWhere)update).getQuads();
         } else {
             sourceQuads = ((UpdateData) update).getQuads();
         }
-        final List<Quad> newQuads = translateQuads(sourceQuads);
+        final List<Quad> newQuads = translateQuads(sourceQuads, isDelete, isUpdateData);
         assertNoExceptions();
-        if (resourceId.isDescription()) {
-            // This is a NonRdfSourceDescription so add deletes for the ID ending in /fcr:metadata as
-            // per FCREPO-3820
-            if (update instanceof UpdateDataDelete || update instanceof UpdateDeleteWhere) {
-                final var tempQuads = new ArrayList<>(newQuads);
-                makeBinaryDescriptionsDeletes(tempQuads).forEach(q -> newQuads.add(q));
-            }
+        if (resourceId.isDescription() && update instanceof UpdateDataDelete) {
+            // This is a NonRdfSourceDescription and an UpdateData block so add a second delete for the ID ending in
+            // /fcr:metadata as per FCREPO-3820
+            final var tempQuads = new ArrayList<>(newQuads);
+            newQuads.addAll(translateQuads(tempQuads, isDelete, isUpdateData));
         }
         final Update newUpdate = makeUpdate(update.getClass(), newQuads);
         newUpdates.add(newUpdate);
@@ -136,19 +140,14 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
      */
     private void translateUpdate(final UpdateModify update) {
         final UpdateModify newUpdate = new UpdateModify();
-        final List<Quad> insertQuads = (update.hasInsertClause() ? translateQuads(update.getInsertQuads()) :
+        final List<Quad> insertQuads = (update.hasInsertClause() ? translateQuads(update.getInsertQuads(), false) :
                 Collections.emptyList());
-        final List<Quad> deleteQuads = (update.hasDeleteClause() ? translateQuads(update.getDeleteQuads()) :
+        final List<Quad> deleteQuads = (update.hasDeleteClause() ? translateQuads(update.getDeleteQuads(), true) :
                 Collections.emptyList());
         assertNoExceptions();
 
         insertQuads.forEach(q -> newUpdate.getInsertAcc().addQuad(q));
         deleteQuads.forEach(q -> newUpdate.getDeleteAcc().addQuad(q));
-        if (resourceId.isDescription()) {
-            // This is a NonRdfSourceDescription so add deletes for the ID ending in /fcr:metadata as
-            // per FCREPO-3820
-            makeBinaryDescriptionsDeletesWhere(deleteQuads).forEach(q -> newUpdate.getDeleteAcc().addQuad(q));
-        }
 
         final Element where = update.getWherePattern();
         final Element newElement = processElements(where);
@@ -163,37 +162,20 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
     }
 
     /**
-     * Duplicate DELETEs of triples for a binary ID but with the subject of the binary description.
-     * @param originalDeletes
-     *   The original delete quads
-     * @return
-     *   List of quads for the binary description.
+     * Generate the variable definition of ?fedoraBinaryFix -> binary & binary description IDs
+     * @return The elementData block.
      */
-    private List<Quad> makeBinaryDescriptionsDeletes(final List<Quad> originalDeletes) {
-        // Id is for the NonRdfSourceDescription so we can use the fullId
-        final Node binDesc = NodeFactory.createURI(resourceId.getFullId());
-        return originalDeletes.stream()
-                .filter(q -> q.getSubject().isURI() && q.getSubject().getURI().equals(resourceId.getFullDescribedId()))
-                .map(q -> new Quad(q.getGraph(), binDesc, q.getPredicate(), q.getObject()))
-                .collect(Collectors.toList());
-    }
+    private ElementData getVariableBlock() {
+        final var descNode = NodeFactory.createURI(resourceId.getFullId());
+        final var binaryNode = NodeFactory.createURI(resourceId.getFullDescribedId());
+        final var elementVar = Var.alloc(CUSTOM_SPARQL_VARIABLE);
 
-    /**
-     * Convert any variables in binary description deletes to use the custom variable, which we add in the where clause.
-     * @param originalDeletes
-     *   The original delete quads.
-     * @return
-     *   The converted delete quads.
-     */
-    private List<Quad> makeBinaryDescriptionsDeletesWhere(final List<Quad> originalDeletes) {
-        final var converted = makeBinaryDescriptionsDeletes(originalDeletes);
-        return converted.stream().map(q -> {
-            if (q.getObject().isVariable()) {
-                return new Quad(q.getGraph(), q.getSubject(), q.getPredicate(), CUSTOM_SPARQL_VAR_NODE);
-            } else {
-                return q;
-            }
-        }).collect(Collectors.toList());
+        final var elementData = new ElementData();
+        // Bind the variable to the values
+        elementData.add(elementVar);
+        elementData.add(BindingBuilder.create().add(elementVar, binaryNode).build());
+        elementData.add(BindingBuilder.create().add(elementVar, descNode).build());
+        return elementData;
     }
 
     /**
@@ -204,7 +186,10 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
     private Element processElements(final Element element) {
         if (element instanceof ElementGroup) {
             final ElementGroup group = new ElementGroup();
-            ((ElementGroup) element).getElements().forEach(e -> group.addElement(processElements(e)));
+            ((ElementGroup)element).getElements().stream().map(this::processElements).forEach(group::addElement);
+            if (resourceVariableUpdate) {
+                group.addElement(getVariableBlock());
+            }
             return group;
         } else if (element instanceof ElementPathBlock) {
             final BasicPattern basicPattern = new BasicPattern();
@@ -219,19 +204,24 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
                             return;
                         }
                     }
-                    basicPattern.add(translateTriple(t.asTriple()));
-                    if (resourceId.isDescription() && t.getSubject().isURI() && t.getObject().isVariable()) {
-                        // If this is a binary description resource and the subject is a URI and object is a variable.
+                    if (resourceId.isDescription() && t.getSubject().isURI()) {
+                        // If this is a binary description resource and the subject is a URI.
                         // Get an internal ID based on the subject.
-                        final var subjId = idTranslator.toInternalId(t.getSubject().getURI());
-                        // If it matches the binary ID
-                        if (resourceId.getFullDescribedId().equals(subjId)) {
-                            basicPattern.add(new Triple(
-                                    NodeFactory.createURI(resourceId.getFullId()),
+                        final var subjId = idTranslator.translateUri(t.getSubject().getURI());
+                        // If it matches the binary ID or binary description ID.
+                        if (resourceId.getFullDescribedId().equals(subjId) || resourceId.getFullId().equals(subjId)) {
+                            // Substitute the variable for the URI.
+                            basicPattern.add(translateTriple(Triple.create(
+                                    Var.alloc(CUSTOM_SPARQL_VARIABLE),
                                     t.getPredicate(),
-                                    CUSTOM_SPARQL_VAR_NODE
-                            ));
+                                    t.getObject()
+                            )));
+                            resourceVariableUpdate = true;
+                        } else {
+                            basicPattern.add(translateTriple(t.asTriple()));
                         }
+                    } else {
+                        basicPattern.add(translateTriple(t.asTriple()));
                     }
                 }
             });
@@ -240,12 +230,19 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
         return element;
     }
 
+    private List<Quad> translateQuads(final List<Quad> quadsList, final boolean isDelete) {
+        return translateQuads(quadsList, isDelete, false);
+    }
+
     /**
      * Perform the translation to a list of quads.
      * @param quadsList the quads
+     * @param isDelete is this part of a delete block or statement
+     * @param isUpdateBlock is this an INSERT|DELETE DATA update.
      * @return the translated list of quads.
      */
-    private List<Quad> translateQuads(final List<Quad> quadsList) {
+    private List<Quad> translateQuads(final List<Quad> quadsList,  final boolean isDelete,
+                                      final boolean isUpdateBlock) {
         final List<Quad> newQuads = new ArrayList<>();
         for (final Quad q : quadsList) {
             try {
@@ -260,13 +257,49 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
                 exceptions.add(exc);
                 continue;
             }
-            final Node subject = translateId(q.getSubject());
-            final Node object = translateId(q.getObject());
-            final Quad quad = new Quad(q.getGraph(), subject, q.getPredicate(), object);
+            final Quad quad;
+            if (resourceId.isDescription()) {
+                quad = translateBinaryQuad(q, isDelete, isUpdateBlock);
+            } else {
+                quad = translateContainerQuad(q);
+            }
             LOGGER.trace("Translated quad is: {}", quad);
             newQuads.add(quad);
         }
         return newQuads;
+    }
+
+    private Quad translateContainerQuad(final Quad quad) {
+        final Node subject = translateId(quad.getSubject());
+        final Node object = translateId(quad.getObject());
+        return Quad.create(quad.getGraph(), subject, quad.getPredicate(), object);
+    }
+
+    private Quad translateBinaryQuad(final Quad quad, final boolean isDelete, final boolean isUpdateBlock) {
+        Node subject = translateId(quad.getSubject());
+        final Node object = translateId(quad.getObject());
+        if (resourceId.isDescription() && (
+                subject.getURI().equals(resourceId.getFullDescribedId()) ||
+                        subject.getURI().equals(resourceId.getFullId()))) {
+            // Deletes use variables to ensure we catch triples with both binary and description as subject.
+            if (isDelete) {
+                // We are not processing an UpdateData block (i.e INSERT DATA {} or DELETE DATA {}), use variables
+                if (!isUpdateBlock) {
+                    subject = Var.alloc(CUSTOM_SPARQL_VARIABLE);
+                    resourceVariableUpdate = true;
+                } else if (subject.getURI().equals(resourceId.getFullDescribedId())) {
+                    // We are processing an UpdateData block, so we must include two delete statements, one for
+                    // the binary and one for the description.
+                    subject = NodeFactory.createURI(resourceId.getFullId());
+                } else {
+                    subject = NodeFactory.createURI(resourceId.getFullDescribedId());
+                }
+            } else {
+                // For insert just make sure to use the binary's ID.
+                subject = NodeFactory.createURI(resourceId.getFullDescribedId());
+            }
+        }
+        return Quad.create(quad.getGraph(), subject, quad.getPredicate(), object);
     }
 
     /**
