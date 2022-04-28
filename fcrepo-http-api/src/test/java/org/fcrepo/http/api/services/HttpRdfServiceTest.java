@@ -289,15 +289,13 @@ public class HttpRdfServiceTest {
     }
 
     /**
-     * Test we don't touch binary description URIs in the object of a triple.
+     * Test we do convert binary description URIs in the object of a triple.
      */
     @Test
     public void testPutToInternal_BinaryDescriptionObject() {
         final var binaryUri = HTTP_BASE_URI + UUID.randomUUID();
         final var binaryDescUri = binaryUri + "/" + FCR_METADATA;
         final var descriptionId = FedoraId.create(idTranslator.toInternalId(binaryDescUri));
-        // Predicate to filter for a resource with the full binary description ID (i.e. ending in /fcr:metadata)
-        final Predicate<Resource> keepDescId = a -> a.isURIResource() && a.hasURI(descriptionId.getFullId());
         final var rdf = "@prefix dc: <"  + DC.getURI() + "> ." +
                 "@prefix dcterms: <"  + DCTerms.getURI() + "> ." +
                 "<" + binaryUri + "> dc:title 'fancy title' ;" +
@@ -307,9 +305,13 @@ public class HttpRdfServiceTest {
         final Resource binaryDescRes = ResourceFactory.createResource(descriptionId.getFullId());
         final var translated = httpRdfService.bodyToInternalModel(descriptionId, requestBodyStream, CONTENT_TYPE,
                 idTranslator, false);
-        assertTrue(translated.contains(binaryRes, DCTerms.isPartOf, binaryDescRes));
+        assertTrue(translated.contains(binaryRes, DCTerms.isPartOf, binaryRes));
         assertTrue(translated.contains(binaryRes, DC.title, ResourceFactory.createPlainLiteral("fancy title")));
-        assertFalse(translated.listSubjects().filterKeep(keepDescId).hasNext());
+        assertFalse(translated.listSubjects().filterKeep(a -> a.isURIResource() && a.hasURI(descriptionId.getFullId()))
+                .hasNext());
+        assertFalse(translated.listObjects()
+                .filterKeep(a -> a.isURIResource() && a.asResource().getURI().equals(descriptionId.getFullId()))
+                .hasNext());
     }
 
     /**
