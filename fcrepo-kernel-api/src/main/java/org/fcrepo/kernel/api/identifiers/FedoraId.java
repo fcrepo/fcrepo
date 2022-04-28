@@ -80,6 +80,12 @@ public class FedoraId {
      */
     private final String encodedFullId;
 
+    /**
+     * The Full ID of the described resource. For binary -> binary, container -> container, binary description -> binary
+     */
+    private final String describedId;
+
+
     private String hashUri;
     private boolean isRepositoryRoot = false;
     private boolean isNonRdfSourceDescription = false;
@@ -108,6 +114,7 @@ public class FedoraId {
         this.baseId = processIdentifier();
         enforceStorageLayoutNamingConstraints();
         this.encodedFullId = fedoraIdEscaper.escape(this.fullId);
+        this.describedId = this.fullId.replace("/" + FCR_METADATA, "");
     }
 
     /**
@@ -344,10 +351,11 @@ public class FedoraId {
 
     /**
      * Returns the FullId of the described resource.
+     *
      * @return The ID.
      */
     public String getFullDescribedId() {
-        return fullId.replace("/" + FCR_METADATA, "");
+        return describedId;
     }
 
     /**

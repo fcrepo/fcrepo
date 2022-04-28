@@ -312,16 +312,9 @@ public class HttpRdfServiceTest {
         assertFalse(translated.listSubjects().filterKeep(keepDescId).hasNext());
     }
 
-    @Test
-    public void testQueryWithValues() {
-        final var patch = "prefix dc: <" + DC.getURI() + "> DELETE { ?s dc:title ?o } WHERE { VALUES ?s { " +
-                "<info:fedora/binary> <info:fedora/binary/fcr:metadata> } ?s dc:title ?o }";
-        final var translated = httpRdfService.patchRequestToInternalString(FEDORA_ID_1, patch, idTranslator);
-        assertStringContains("?s <" + DC.title.getURI() + "> ?o", translated);
-    }
-
     /**
-     * Test that with an existing mismatch of binary and binary description IDs. We can clean it up fairly easily.
+     * Test that with an existing mismatch of binary and binary description IDs. We don't touch the old description
+     * triples anymore.
      */
     @Test
     public void testMixedBinarySubjectsAlter() {
@@ -348,13 +341,12 @@ public class HttpRdfServiceTest {
         ));
 
         // Sparql is to delete the title and insert a new one.
-        final var patch = "prefix dc: <" + DC.getURI() + "> DELETE { <> dc:title ?o } INSERT { <> dc:title " +
-                "\"New title\" } WHERE { <> dc:title ?o }";
+        final var patch = "prefix dc: <" + DC.getURI() + "> DELETE { <> dc:title ?o } WHERE { <> dc:title ?o }";
         final var translatedPatch = httpRdfService.patchRequestToInternalString(descriptionId, patch, idTranslator);
         final UpdateRequest request = UpdateFactory.create(translatedPatch, binaryUri);
         // Execute the translated Sparql against the model.
         UpdateAction.execute(request, model);
-        assertFalse(model.contains(
+        assertTrue(model.contains(
                 binaryDescResource,
                 DC.title,
                 ResourceFactory.createPlainLiteral("Some title"))
@@ -364,13 +356,23 @@ public class HttpRdfServiceTest {
                 DC.description,
                 ResourceFactory.createPlainLiteral("This is some sample content")
         ));
+        // Try with explicit PATCH
+        final var patch2 = "prefix dc: <" + DC.getURI() + "> DELETE { <" + binaryDescUri + "> dc:title ?o } WHERE { <" +
+                binaryDescUri + "> dc:title ?o }";
+        final var translatedPatch2 = httpRdfService.patchRequestToInternalString(descriptionId, patch, idTranslator);
+        final UpdateRequest request2 = UpdateFactory.create(translatedPatch, binaryUri);
+        // Execute the translated Sparql against the model.
+        UpdateAction.execute(request2, model);
+        assertTrue(model.contains(
+                binaryDescResource,
+                DC.title,
+                ResourceFactory.createPlainLiteral("Some title"))
+        );
         assertTrue(model.contains(
                 binaryResource,
-                DC.title,
-                ResourceFactory.createPlainLiteral("New title")
+                DC.description,
+                ResourceFactory.createPlainLiteral("This is some sample content")
         ));
-        assertFalse(model.listSubjects()
-                .filterKeep(a -> a.isURIResource() && a.hasURI(descriptionId.getFullId())).hasNext());
     }
 
     /**
