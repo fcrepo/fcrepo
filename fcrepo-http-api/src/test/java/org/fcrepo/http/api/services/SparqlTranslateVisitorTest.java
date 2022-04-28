@@ -40,8 +40,6 @@ public class SparqlTranslateVisitorTest {
 
     private HttpIdentifierConverter identifierConverter;
 
-    private String idEnding;
-
     private String httpUri;
 
     private FedoraId resourceId;
@@ -58,20 +56,14 @@ public class SparqlTranslateVisitorTest {
 
     @Before
     public void setUp() {
-        // Run by default, run again to override the values.
-        makeVisitor();
-    }
-
-    private void makeVisitor() {
         makeVisitor(UUID.randomUUID().toString());
     }
 
     private void makeVisitor(final String id) {
-        idEnding = id;
-        final var internalhttpUri = URI_BASE + idEnding;
+        final var internalhttpUri = URI_BASE + id;
         resourceId = FedoraId.create(identifierConverter.toInternalId(internalhttpUri));
         httpUri = identifierConverter.toExternalId(resourceId.getFullDescribedId());
-        visitor = new SparqlTranslateVisitor(identifierConverter, propsConfig, resourceId);
+        visitor = new SparqlTranslateVisitor(identifierConverter, propsConfig);
     }
 
     private String runVisits(final String input, final SparqlTranslateVisitor visitor) {
@@ -118,13 +110,13 @@ public class SparqlTranslateVisitorTest {
     }
 
     private void runMultipleTests(final List<String> uris, final String expected, final String inputTemplate) {
-        visitor = new SparqlTranslateVisitor(identifierConverter, propsConfig, resourceId);
+        visitor = new SparqlTranslateVisitor(identifierConverter, propsConfig);
         for (final var uri : uris) {
             final var input = String.format(inputTemplate, uri);
             final var output = runVisits(input, visitor);
             assertEqualsSparqlStrings(expected, output);
             // Need to clear the request queue
-            visitor = new SparqlTranslateVisitor(identifierConverter, propsConfig, resourceId);
+            visitor = new SparqlTranslateVisitor(identifierConverter, propsConfig);
         }
     }
 

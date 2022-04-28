@@ -53,18 +53,13 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
 
     private static final Logger LOGGER = getLogger(SparqlTranslateVisitor.class);
 
-    private static final String CUSTOM_SPARQL_VARIABLE = "fedoraBinaryFix";
-
-    private static final Node CUSTOM_SPARQL_VAR_NODE = NodeFactory.createVariable(CUSTOM_SPARQL_VARIABLE);
-
     private List<Update> newUpdates = new ArrayList<>();
 
     private HttpIdentifierConverter idTranslator;
 
     private boolean isRelaxedMode;
 
-    public SparqlTranslateVisitor(final HttpIdentifierConverter identifierConverter, final FedoraPropsConfig config,
-                                  final FedoraId id) {
+    public SparqlTranslateVisitor(final HttpIdentifierConverter identifierConverter, final FedoraPropsConfig config) {
         idTranslator = identifierConverter;
         isRelaxedMode = config.getServerManagedPropsMode().equals(RELAXED);
     }
@@ -153,7 +148,7 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
     private Element processElements(final Element element) {
         if (element instanceof ElementGroup) {
             final ElementGroup group = new ElementGroup();
-            ((ElementGroup)element).getElements().stream().map(this::processElements).forEach(group::addElement);
+            ((ElementGroup) element).getElements().forEach(e -> group.addElement(processElements(e)));
             return group;
         } else if (element instanceof ElementPathBlock) {
             final BasicPattern basicPattern = new BasicPattern();
@@ -255,7 +250,7 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
                 // If this was converted to an internal ID, make a FedoraId out of it.
                 final var id = FedoraId.create(newUri);
                 if (id.isDescription()) {
-                    // If we are dealing with a binary description so convert it to the binary
+                    // If we are dealing with a binary description ID convert it to the binary ID.
                     return NodeFactory.createURI(id.getFullDescribedId());
                 }
             }
