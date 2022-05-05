@@ -88,7 +88,7 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
     public RdfStream getTriples() {
         // Remap the subject to the described resource
         // TODO: With FCREPO-3819 and FCREPO-3820, this will no longer be necessary.
-        //       But existing sites might RDF with NonRdfSourceDescription subjects, so leave it for now.
+        //       But existing sites might have RDF with NonRdfSourceDescription subjects, so leave it for now.
         final Node describedID = createURI(this.getDescribedResource().getId());
         final Stream<Triple> triples = super.getTriples().map(t ->
                 new Triple(describedID, t.getPredicate(), t.getObject()));

@@ -17,10 +17,6 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.update.UpdateAction;
-import org.apache.jena.update.UpdateFactory;
-import org.apache.jena.update.UpdateRequest;
 import org.apache.jena.vocabulary.DC;
 import org.apache.jena.vocabulary.DCTerms;
 import javax.ws.rs.core.MediaType;
@@ -302,7 +298,6 @@ public class HttpRdfServiceTest {
                 "    dcterms:isPartOf <" + binaryDescUri + "> .";
         final InputStream requestBodyStream = new ByteArrayInputStream(rdf.getBytes());
         final Resource binaryRes = ResourceFactory.createResource(descriptionId.getFullDescribedId());
-        final Resource binaryDescRes = ResourceFactory.createResource(descriptionId.getFullId());
         final var translated = httpRdfService.bodyToInternalModel(descriptionId, requestBodyStream, CONTENT_TYPE,
                 idTranslator, false);
         assertTrue(translated.contains(binaryRes, DCTerms.isPartOf, binaryRes));
@@ -312,69 +307,6 @@ public class HttpRdfServiceTest {
         assertFalse(translated.listObjects()
                 .filterKeep(a -> a.isURIResource() && a.asResource().getURI().equals(descriptionId.getFullId()))
                 .hasNext());
-    }
-
-    /**
-     * Test that with an existing mismatch of binary and binary description IDs. We don't touch the old description
-     * triples anymore.
-     */
-    @Test
-    public void testMixedBinarySubjectsAlter() {
-        final var binaryUri = HTTP_BASE_URI + UUID.randomUUID();
-        final var binaryDescUri = binaryUri + "/" + FCR_METADATA;
-        final var descriptionId = FedoraId.create(idTranslator.toInternalId(binaryDescUri));
-        final var binaryResource = ResourceFactory.createResource(descriptionId.getFullDescribedId());
-        final var binaryDescResource = ResourceFactory.createResource(descriptionId.getFullId());
-        final var internalRdf = "@prefix dc: <" + DC.getURI() + "> ." +
-                "<" + descriptionId.getFullId() + "> dc:title 'Some title' ." +
-                "<" + descriptionId.getFullDescribedId() + "> dc:description 'This is some sample content' .";
-        final Model model = ModelFactory.createDefaultModel();
-        final InputStream requestBodyStream = new ByteArrayInputStream(internalRdf.getBytes());
-        model.read(requestBodyStream, binaryDescUri, Lang.TURTLE.getLabel());
-        assertTrue(model.contains(
-                binaryDescResource,
-                DC.title,
-                ResourceFactory.createPlainLiteral("Some title"))
-        );
-        assertTrue(model.contains(
-                binaryResource,
-                DC.description,
-                ResourceFactory.createPlainLiteral("This is some sample content")
-        ));
-
-        // Sparql is to delete the title and insert a new one.
-        final var patch = "prefix dc: <" + DC.getURI() + "> DELETE { <> dc:title ?o } WHERE { <> dc:title ?o }";
-        final var translatedPatch = httpRdfService.patchRequestToInternalString(descriptionId, patch, idTranslator);
-        final UpdateRequest request = UpdateFactory.create(translatedPatch, binaryUri);
-        // Execute the translated Sparql against the model.
-        UpdateAction.execute(request, model);
-        assertTrue(model.contains(
-                binaryDescResource,
-                DC.title,
-                ResourceFactory.createPlainLiteral("Some title"))
-        );
-        assertTrue(model.contains(
-                binaryResource,
-                DC.description,
-                ResourceFactory.createPlainLiteral("This is some sample content")
-        ));
-        // Try with explicit PATCH
-        final var patch2 = "prefix dc: <" + DC.getURI() + "> DELETE { <" + binaryDescUri + "> dc:title ?o } WHERE { <" +
-                binaryDescUri + "> dc:title ?o }";
-        final var translatedPatch2 = httpRdfService.patchRequestToInternalString(descriptionId, patch, idTranslator);
-        final UpdateRequest request2 = UpdateFactory.create(translatedPatch, binaryUri);
-        // Execute the translated Sparql against the model.
-        UpdateAction.execute(request2, model);
-        assertTrue(model.contains(
-                binaryDescResource,
-                DC.title,
-                ResourceFactory.createPlainLiteral("Some title"))
-        );
-        assertTrue(model.contains(
-                binaryResource,
-                DC.description,
-                ResourceFactory.createPlainLiteral("This is some sample content")
-        ));
     }
 
     /**
