@@ -69,7 +69,8 @@ public class ReplacePropertiesServiceImpl extends AbstractService implements Rep
             // Extract triples which impact the headers of binary resources from incoming description RDF
             final BinaryHeaderDetails binHeaders = extractNonRdfSourceHeaderTriples(fedoraId, inputModel);
 
-            final var rdfStream = fromModel(inputModel.createResource(fedoraId.getFullId()).asNode(), inputModel);
+            final var rdfStream = fromModel(
+                    inputModel.createResource(fedoraId.getFullDescribedId()).asNode(), inputModel);
             final var serverManagedMode = fedoraPropsConfig.getServerManagedPropsMode();
 
             // create 2 updates -- one for the properties coming in and one for and server managed properties

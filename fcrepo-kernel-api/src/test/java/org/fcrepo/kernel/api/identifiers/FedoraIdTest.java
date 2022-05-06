@@ -487,6 +487,28 @@ public class FedoraIdTest {
         assertIdSuffixConstraint("~fcr-acl.nt");
     }
 
+    @Test
+    public void testAsDescribedId() {
+        assertAsDescribedId("original" + "/" + FCR_METADATA + "/" + FCR_VERSIONS,
+                "original/" + FCR_VERSIONS);
+        assertAsDescribedId("original/" + FCR_METADATA + "#blah",
+                "original" + "#blah");
+        assertAsDescribedId("original/" + FCR_METADATA + "/" + FCR_VERSIONS + "/20200401101901",
+                "original/" + FCR_VERSIONS + "/20200401101901");
+        assertAsDescribedId("original/" + FCR_VERSIONS,
+                "original/" + FCR_VERSIONS);
+        assertAsDescribedId("original/" + FCR_VERSIONS + "/20200401101900",
+                "original/" + FCR_VERSIONS + "/20200401101900");
+        assertAsDescribedId("original/" + FCR_TOMBSTONE,
+                "original/" + FCR_TOMBSTONE);
+        assertAsDescribedId("original/" + FCR_ACL,
+                "original/" + FCR_ACL);
+        assertAsDescribedId("original/child/" + FCR_METADATA,
+                "original/child");
+        assertAsDescribedId("original/child/" + FCR_METADATA + "#sad",
+                "original/child#sad");
+    }
+
     private void assertAsMemento(final String original, final String expected) {
         final var id = FedoraId.create(original);
         assertEquals(FedoraTypes.FEDORA_ID_PREFIX + "/" + expected,
@@ -515,6 +537,12 @@ public class FedoraIdTest {
         final var id = FedoraId.create(original);
         assertEquals(FedoraTypes.FEDORA_ID_PREFIX + "/" + expected,
                 id.asDescription().getFullId());
+    }
+
+    private void assertAsDescribedId(final String original, final String expected) {
+        final var id = FedoraId.create(original);
+        assertEquals(FEDORA_ID_PREFIX + "/" + expected,
+                id.getFullDescribedId());
     }
 
     /**

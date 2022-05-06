@@ -102,6 +102,25 @@ public class HttpRdfService {
     }
 
     /**
+     * Converts binary description IDs to their associated binary ID.
+     * @param uri
+     *   The URI of an external resource or the ID of an internal one.
+     * @param idTranslator
+     *   An identifier translator.
+     * @return
+     *   The same as input unless it is an internal binary description ID, then return the binary ID.
+     */
+    private String binaryConversion(final String uri, final HttpIdentifierConverter idTranslator) {
+        if (idTranslator.inInternalDomain(uri)) {
+            final var id = FedoraId.create(uri);
+            if (id.isDescription()) {
+                return id.getFullDescribedId();
+            }
+        }
+        return uri;
+    }
+
+    /**
      * Parse the request body to a Model, with the URI to Fedora ID translations done.
      *
      * @param extResourceId the external ID of the Fedora resource
@@ -118,7 +137,7 @@ public class HttpRdfService {
                                      final boolean lenientHandling)
                                      throws RepositoryRuntimeException, BadRequestException {
         final List<ConstraintViolationException> exceptions = new ArrayList<>();
-        final String externalURI = idTranslator.toExternalId(extResourceId.getFullId());
+        final String externalURI = idTranslator.toExternalId(extResourceId.getFullDescribedId());
         final Model model = parseBodyAsModel(stream, contentType, externalURI);
         final List<Statement> insertStatements = new ArrayList<>();
         final StmtIterator stmtIterator = model.listStatements();
@@ -148,17 +167,17 @@ public class HttpRdfService {
                 }
                 if (stmt.getSubject().isURIResource()) {
                     final String originalSubj = stmt.getSubject().getURI();
-                    final String subj = idTranslator.translateUri(originalSubj);
+                    final String subj = binaryConversion(idTranslator.translateUri(originalSubj), idTranslator);
 
                     RDFNode obj = stmt.getObject();
                     if (stmt.getObject().isURIResource()) {
                         final String objString = stmt.getObject().asResource().getURI();
-                        final String objUri = idTranslator.translateUri(objString);
-                        obj = model.getResource(objUri);
+                        final String objUri = binaryConversion(idTranslator.translateUri(objString), idTranslator);
+                        obj = model.createResource(objUri);
                     }
 
                     if (!subj.equals(originalSubj) || !obj.equals(stmt.getObject())) {
-                        insertStatements.add(new StatementImpl(model.getResource(subj), stmt.getPredicate(), obj));
+                        insertStatements.add(new StatementImpl(model.createResource(subj), stmt.getPredicate(), obj));
 
                         stmtIterator.remove();
                     }
@@ -188,7 +207,7 @@ public class HttpRdfService {
      */
     public String patchRequestToInternalString(final FedoraId resourceId, final String requestBody,
                                                final HttpIdentifierConverter idTranslator) {
-        final String externalURI = idTranslator.toExternalId(resourceId.getFullId());
+        final String externalURI = idTranslator.toExternalId(resourceId.getFullDescribedId());
         final UpdateRequest request = UpdateFactory.create(requestBody, externalURI);
         final List<Update> updates = request.getOperations();
         final SparqlTranslateVisitor visitor = new SparqlTranslateVisitor(idTranslator, fedoraPropsConfig);
@@ -255,7 +274,7 @@ public class HttpRdfService {
 
     /**
      * Does the statement's triple touch any server managed properties / namespaces.
-     * ie.
+     * i.e.
      * - has a rdf:type with an object which is in a managed namespace
      * - has a predicate which is in a managed namespace.
      *

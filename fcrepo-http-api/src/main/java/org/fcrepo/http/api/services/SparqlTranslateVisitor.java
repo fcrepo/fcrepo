@@ -22,6 +22,7 @@ import org.fcrepo.kernel.api.exception.RelaxableServerManagedPropertyException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -192,7 +193,7 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
             }
             final Node subject = translateId(q.getSubject());
             final Node object = translateId(q.getObject());
-            final Quad quad = new Quad(q.getGraph(), subject, q.getPredicate(), object);
+            final Quad quad = Quad.create(q.getGraph(), subject, q.getPredicate(), object);
             LOGGER.trace("Translated quad is: {}", quad);
             newQuads.add(quad);
         }
@@ -245,6 +246,14 @@ public class SparqlTranslateVisitor extends UpdateVisitorBase {
         if (externalNode.isURI()) {
             final String externalId = externalNode.getURI();
             final String newUri = idTranslator.translateUri(externalId);
+            if (idTranslator.inInternalDomain(newUri)) {
+                // If this was converted to an internal ID, make a FedoraId out of it.
+                final var id = FedoraId.create(newUri);
+                if (id.isDescription()) {
+                    // If we are dealing with a binary description ID convert it to the binary ID.
+                    return NodeFactory.createURI(id.getFullDescribedId());
+                }
+            }
             return NodeFactory.createURI(newUri);
         }
         return externalNode;
