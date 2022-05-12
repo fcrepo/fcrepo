@@ -1249,6 +1249,17 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testDeleteOnMemento() throws Exception {
+        createVersionedContainer(id);
+
+        final String mementoUri = createMemento(subjectUri);
+        final var delete = new HttpDelete(mementoUri);
+
+        // status 405: DELETE on memento is not allowed.
+        assertEquals(405, getStatus(delete));
+    }
+
+    @Test
     public void testPostOnInvalidMementoPath() throws Exception {
         createVersionedContainer(id);
 

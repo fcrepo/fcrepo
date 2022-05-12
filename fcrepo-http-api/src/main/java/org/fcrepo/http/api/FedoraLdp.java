@@ -382,6 +382,13 @@ public class FedoraLdp extends ContentExposingResource {
      */
     @DELETE
     public Response deleteObject() {
+        LOGGER.info("Delete resource '{}'", externalPath);
+        if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
+            handleRequestDisallowedOnMemento();
+
+            return status(METHOD_NOT_ALLOWED).build();
+        }
+
         hasRestrictedPath(externalPath);
         if (resource() instanceof Container) {
             final String depth = headers.getHeaderString("Depth");
@@ -397,8 +404,6 @@ public class FedoraLdp extends ContentExposingResource {
                 "NonRDFSource descriptions are removed when their associated NonRDFSource object is removed.",
                 METHOD_NOT_ALLOWED);
         }
-
-        LOGGER.info("Delete resource '{}'", externalPath);
 
         try {
             evaluateRequestPreconditions(request, servletResponse, resource(), transaction());
