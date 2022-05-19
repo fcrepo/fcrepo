@@ -190,6 +190,18 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testResponseForMultipleMementosInASecond() throws Exception {
+        final var v1 = now();
+        createVersionedContainer(id);
+        TimeUnit.SECONDS.sleep(1);
+
+        final var v2 = now();
+        createMemento(subjectUri);
+        createMemento(subjectUri);
+        verifyTimemapResponse(subjectUri, id, new String[]{v1, v2}, v1, v2);
+    }
+
+    @Test
     public void getTimeMapFromBinaryWithMultipleVersions() throws Exception {
         final var v1 = now();
         createVersionedBinary(id, OCTET_STREAM_TYPE, "v1");

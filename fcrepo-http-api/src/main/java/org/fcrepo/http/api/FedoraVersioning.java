@@ -38,10 +38,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
@@ -179,7 +179,7 @@ public class FedoraVersioning extends ContentExposingResource {
             final String extUrl = identifierConverter().toDomain(externalPath());
 
             final URI parentUri = URI.create(extUrl);
-            final List<Link> versionLinks = new ArrayList<>();
+            final Set<Link> versionLinks = new HashSet<>();
             versionLinks.add(Link.fromUri(parentUri).rel("original").build());
             versionLinks.add(Link.fromUri(parentUri).rel("timegate").build());
             // So we don't collect the children twice, store them in an array.
