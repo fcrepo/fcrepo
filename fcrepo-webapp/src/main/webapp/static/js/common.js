@@ -119,7 +119,7 @@
           // (c.f. https://jira.duraspace.org/browse/FCREPO-2387)
           // WARNING: Fragile code relying on magic suffix '/fcr:metadata' and absence of 'Link' header
           // on external resource.
-          if(!url.match(/.*fcr:(metadata|tx)/)){
+          if(!url.match(/.*fcr:(metadata|tx|fixity)/)){
             newLocation = url + "/fcr:metadata";
           }
           location.href = newLocation;
