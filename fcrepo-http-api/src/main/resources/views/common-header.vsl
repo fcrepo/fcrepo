@@ -15,35 +15,6 @@
     <div class="collapse navbar-collapse navbar-ex1-collapse">
         <ul class="nav navbar-nav">
             <li><a href="$uriInfo.baseUriBuilder.build()">Home</a></li>
-            <li><a href="#" class="dropdown-toggle" data-toggle="dropdown">Transactions <span class="caret"></span></a>
-                <ul class="dropdown-menu" role="menu">
-                  #if($uriInfo.getAbsolutePath().toString().contains("/tx:"))
-                    #set ($absPath = $uriInfo.absolutePathBuilder.build().toString())
-                    #set ($txNodePath = $absPath.indexOf("/", $helpers.addOne($absPath.indexOf("/tx:"))))
-                    #if ($txNodePath != -1)
-                      #set ($txPath = $absPath.substring(0, $txNodePath))
-                    #else
-                      #set ($txPath = $uriInfo.getAbsolutePath().toString())
-                    #end
-                    <li>
-                      <form id="action_commit_transaction" data-redirect-after-submit="$uriInfo.baseUriBuilder.build()" action="$txPath/fcr:tx/fcr:commit" method="POST" class="nav-form">
-                        <button type="submit" class="btn btn-primary navbar-btn">Commit</button>
-                      </form>
-                    </li>
-                    <li>
-                      <form  id="action_rollback_transaction" data-redirect-after-submit="$uriInfo.baseUriBuilder.build()" action="$txPath/fcr:tx/fcr:rollback" method="POST" class="nav-form">
-                          <button type="submit" class="btn btn-danger navbar-btn">Rollback</button>
-                      </form>
-                    </li>
-                  #else
-                    <li>
-                      <form  id="action_create_transaction" action="$uriInfo.baseUriBuilder.build()fcr:tx" method="POST" class="nav-form">
-                        <button type="submit" class="btn btn-primary navbar-btn">Start Transaction</button>
-                      </form>
-                    </li>
-                  #end
-                </ul>
-            </li>
             <li><a href="$uriInfo.baseUriBuilder.build()fcr:search">Search</a></li>
         </ul>
     </div>
