@@ -690,9 +690,6 @@
 
       listen('action_sparql_update', 'submit', sendSparqlUpdate);
       listen('action_delete', 'submit', deleteItem);
-      listen('action_create_transaction', 'submit', submitAndFollowLocation);
-      listen('action_rollback_transaction', 'submit', submitAndRedirectToBase);
-      listen('action_commit_transaction', 'submit', submitAndRedirectToBase);
       listen('action_revert', 'submit', patchAndReload);
       listen('action_remove_version', 'submit', removeVersion);
       listen('action_create_version', 'submit', createVersionSnapshot);
