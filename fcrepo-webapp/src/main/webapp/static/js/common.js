@@ -162,30 +162,6 @@
       e.preventDefault();
   }
 
-  function removeVersion(e) {
-      const redirect = e.target.dataset.redirectAfterSubmit;
-      http('DELETE', e.target.getAttribute('action'), function(res) {
-        if (res.status == 204) {
-          window.location = redirect;
-        } else {
-          ajaxErrorHandler(res, 'Error removing version');
-        }
-      });
-      e.preventDefault();
-  }
-
-  function patchAndReload(e) {
-      const redirect = e.target.dataset.redirectAfterSubmit;
-      http('PATCH', e.target.getAttribute('action'), function(res) {
-        if (res.status >= 400) {
-          ajaxErrorHandler(res);
-        } else {
-          window.location = redirect;
-        }
-      });
-      e.preventDefault();
-  }
-
   function submitAndRedirectToBase(e) {
       const redirect = e.target.dataset.redirectAfterSubmit;
       http('POST', e.target.getAttribute('action'), function(res) {
@@ -636,38 +612,6 @@
       (document.getElementById('binary_update_content') || {}).disabled = false;
   }
 
-  function enableVersioning(e) {
-      const url = document.getElementById('main').getAttribute('resource');
-      const d = new Date();
-      const expires = (new Date(d - 1000000)).toUTCString();
-      const get_headers = [
-          ['Prefer', 'return=representation; omit="http://fedora.info/definitions/v4/repository#ServerManaged"'],
-          ['Accept', 'application/ld+json'],
-          ['Cache-Control', 'no-cache, no-store, max-age=0'],
-          ['Expires', expires]
-      ];
-      const put_headers = [
-          ['Prefer', 'handling=lenient; received="minimal"'],
-          ['Content-Type', 'application/ld+json'],
-          ['Link', '<http://mementoweb.org/ns#OriginalResource>; rel="type"']
-      ];
-      http('GET', url, get_headers, function(res) {
-          if (res.status == 200) {
-              var body = res.responseText;
-              http('PUT', url, put_headers, body, function(res) {
-                  if (res.status == 204) {
-                      window.location.reload(true);
-                  } else {
-                      ajaxErrorHandler(res, 'Error');
-                  }
-              });
-          } else {
-              ajaxErrorHandler(res, 'Error');
-          }
-      });
-      e.preventDefault();
-  }
-
   ready(function() {
       listen('new_mixin', 'change', function(e) {
         document.getElementById('binary_payload_container').style.display = e.target.value == 'binary' ? 'block' : 'none';
@@ -690,10 +634,7 @@
 
       listen('action_sparql_update', 'submit', sendSparqlUpdate);
       listen('action_delete', 'submit', deleteItem);
-      listen('action_revert', 'submit', patchAndReload);
-      listen('action_remove_version', 'submit', removeVersion);
       listen('action_create_version', 'submit', createVersionSnapshot);
-      listen('action_enable_version', 'submit', enableVersioning);
       listen('action_update_file', 'submit', updateFile);
       listen('action_search', 'submit', doSearch);
 
