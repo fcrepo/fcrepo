@@ -854,7 +854,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
      * @param uri the URI of the resource.
      */
     private static void verifyTimeMapHeaders(final CloseableHttpResponse response, final String uri) {
-        final String ldpcvUri = uri + "/" + FCR_VERSIONS;
         checkForLinkHeader(response, RESOURCE.toString(), "type");
         checkForLinkHeader(response, CONTAINER.toString(), "type");
         checkForLinkHeader(response, RDF_SOURCE.getURI(), "type");
@@ -862,7 +861,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         checkForLinkHeader(response, uri, "timegate");
         checkForLinkHeader(response, uri + "/" + FCR_VERSIONS, "timemap");
         checkForLinkHeader(response, VERSIONING_TIMEMAP_TYPE, "type");
-        checkForLinkHeader(response, ldpcvUri + "/" + FCR_ACL, "acl");
+        checkForLinkHeader(response, uri + "/" + FCR_ACL, "acl");
         assertFalse(response.getFirstHeader("Allow").getValue().contains("DELETE"));
         assertTrue(response.getFirstHeader("Allow").getValue().contains("GET"));
         assertTrue(response.getFirstHeader("Allow").getValue().contains("HEAD"));
@@ -1258,6 +1257,17 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         // status 405: POST on memento is not allowed.
         assertEquals(405, getStatus(post));
+    }
+
+    @Test
+    public void testDeleteOnMemento() throws Exception {
+        createVersionedContainer(id);
+
+        final String mementoUri = createMemento(subjectUri);
+        final var delete = new HttpDelete(mementoUri);
+
+        // status 405: DELETE on memento is not allowed.
+        assertEquals(405, getStatus(delete));
     }
 
     @Test

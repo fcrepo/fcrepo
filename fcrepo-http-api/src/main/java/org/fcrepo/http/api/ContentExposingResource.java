@@ -446,7 +446,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     private void addAclHeader(final FedoraResource resource) {
         if (!(resource instanceof WebacAcl) && !resource.isMemento()) {
-            final String resourceUri = getUri(resource.getDescribedResource()).toString();
+            final FedoraResource resourceForAcl = resource instanceof TimeMap ? resource.getOriginalResource() :
+                    resource.getDescribedResource();
+            final String resourceUri = getUri(resourceForAcl).toString();
             final String aclLocation =  resourceUri + (resourceUri.endsWith("/") ? "" : "/") + FCR_ACL;
             servletResponse.addHeader(LINK, buildLink(aclLocation, "acl"));
         }
