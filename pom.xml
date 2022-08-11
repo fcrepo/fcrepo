@@ -70,7 +70,7 @@
     <velocity.version>1.7</velocity.version>
     <!-- JCBC dependencies -->
     <postgresql.version>42.3.3</postgresql.version>
-    <mysql.version>8.0.26</mysql.version>
+    <mysql.version>8.0.28</mysql.version>
     <mariadb.version>2.7.4</mariadb.version>
     <!-- test gear -->
     <awaitility.version>4.1.0</awaitility.version>
