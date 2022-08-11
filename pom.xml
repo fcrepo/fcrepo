@@ -62,7 +62,7 @@
     <ocfl-java.version>1.4.6</ocfl-java.version>
     <prometheus.version>0.10.0</prometheus.version>
     <reactivestreams.version>1.0.3</reactivestreams.version>
-    <shiro.version>1.8.0</shiro.version>
+    <shiro.version>1.9.1</shiro.version>
     <slf4j.version>1.7.32</slf4j.version>
     <spring.version>5.3.20</spring.version>
     <xerces.version>2.12.2</xerces.version>
