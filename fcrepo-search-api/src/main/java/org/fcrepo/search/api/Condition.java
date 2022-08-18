@@ -55,8 +55,14 @@ public class Condition {
             return super.toString().toLowerCase();
         }
 
-        public static Field fromString(final String fieldStr) {
-            return Field.valueOf(fieldStr.toUpperCase());
+        public static Field fromString(final String fieldStr) throws InvalidConditionExpressionException {
+            for (final var field : values()) {
+                if (field.toString().equalsIgnoreCase(fieldStr)) {
+                   return field;
+                }
+            }
+
+            throw new InvalidConditionExpressionException(fieldStr + " is not a valid search field");
         }
     }
 

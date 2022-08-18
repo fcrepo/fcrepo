@@ -461,6 +461,15 @@ public class FedoraSearchIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testInvalidField() throws Exception {
+        final var invalidCondition = "customCondition=*";
+        final String searchUrl = getSearchEndpoint() + "condition=" + encode(invalidCondition);
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response));
+        }
+    }
+
+    @Test
     public void testOrderingISAscendingByDefaultIfOrderByIsDefined() throws Exception {
         final var prefix = getRandomUniqueId();
         final var resources = createResources(prefix, 3);
