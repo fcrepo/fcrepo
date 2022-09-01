@@ -60,7 +60,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -210,7 +209,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected static final Splitter.MapSplitter RFC3230_SPLITTER =
         Splitter.on(',').omitEmptyStrings().trimResults().withKeyValueSeparator(Splitter.on('=').limit(2));
 
-    private static final CharsetEncoder ISO_8859_1_ENCODER = StandardCharsets.ISO_8859_1.newEncoder();
 
     /**
      * This method returns an HTTP response with content body appropriate to the following arguments.
@@ -616,7 +614,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             }
 
             if (StringUtils.isNotBlank(binary.getFilename())) {
-                if (ISO_8859_1_ENCODER.canEncode(binary.getFilename())) {
+                final var encoder = StandardCharsets.ISO_8859_1.newEncoder();
+
+                if (encoder.canEncode(binary.getFilename())) {
                     dispositionBuilder.filename(binary.getFilename());
                 } else {
                     dispositionBuilder.filename(binary.getFilename(), StandardCharsets.UTF_8);
