@@ -5,18 +5,18 @@
  */
 package org.fcrepo.http.api.responses;
 
+import static com.google.common.collect.ImmutableMap.builder;
 import static java.util.stream.Stream.of;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
-import static com.google.common.collect.ImmutableMap.builder;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.sparql.util.graph.GraphUtils.multiValueURI;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
-import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_ROOT;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -31,21 +31,39 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
-import com.google.common.collect.ImmutableMap;
+import org.fcrepo.config.FedoraPropsConfig;
+import org.fcrepo.config.OcflPropsConfig;
+import org.fcrepo.http.api.FedoraLdp;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
+import org.fcrepo.http.commons.responses.HtmlTemplate;
+import org.fcrepo.http.commons.responses.RdfNamespacedStream;
+import org.fcrepo.http.commons.responses.ViewHelpers;
+import org.fcrepo.kernel.api.RdfLexicon;
+import org.fcrepo.kernel.api.ReadOnlyTransaction;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.Binary;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.velocity.Template;
@@ -54,24 +72,9 @@ import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.context.Context;
 import org.apache.velocity.tools.generic.EscapeTool;
 import org.apache.velocity.tools.generic.FieldTool;
-import org.fcrepo.config.FedoraPropsConfig;
-import org.fcrepo.config.OcflPropsConfig;
-import org.fcrepo.http.api.FedoraLdp;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
-import org.fcrepo.http.commons.responses.HtmlTemplate;
-import org.fcrepo.http.commons.responses.RdfNamespacedStream;
-import org.fcrepo.http.commons.responses.ViewHelpers;
-import org.fcrepo.kernel.api.ReadOnlyTransaction;
-import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.RdfLexicon;
-import org.fcrepo.kernel.api.TransactionManager;
-import org.fcrepo.kernel.api.exception.PathNotFoundException;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.Binary;
-import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.slf4j.Logger;
+
+import com.google.common.collect.ImmutableMap;
 
 /**
  * Simple HTML provider for RdfNamespacedStreams
@@ -105,7 +108,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
 
     private boolean autoVersioningEnabled;
 
-    private HttpIdentifierConverter identifierConverter;
+    private Map<URI, HttpIdentifierConverter> identifierConverters = new HashMap<>();
 
     private Transaction readOnlyTx;
 
@@ -117,12 +120,8 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
     }
 
     private HttpIdentifierConverter identifierConverter() {
-        if (identifierConverter == null) {
-            final UriBuilder uriBuilder =
-                    uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class);
-            identifierConverter = new HttpIdentifierConverter(uriBuilder);
-        }
-        return identifierConverter;
+        return identifierConverters.computeIfAbsent(uriInfo.getBaseUri(),
+                i -> new HttpIdentifierConverter(uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class)));
     }
 
     private static final EscapeTool escapeTool = new EscapeTool();
