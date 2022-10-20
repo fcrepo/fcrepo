@@ -16,11 +16,13 @@ import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_FORBIDDEN;
+import static org.apache.http.HttpStatus.SC_GONE;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.jena.vocabulary.DC_11.title;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_TX;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
@@ -2488,5 +2490,46 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final HttpPost noPost = postObjMethod(targetResource);
         setAuth(noPost, username);
         assertEquals(SC_FORBIDDEN, getStatus(noPost));
+    }
+
+    @Test
+    public void testDeleteTombstone() throws IOException {
+        final String targetResource = "/rest/" + getRandomUniqueId();
+        final String username = "user99";
+        // Make a basic container.
+        final String targetUri = ingestObj(targetResource);
+        final String readwriteString = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                "<#readauthz> a acl:Authorization ;\n" +
+                "   acl:agent \"" + username + "\" ;\n" +
+                "   acl:mode acl:Read, acl:Write, acl:Append ;\n" +
+                "   acl:accessTo <" + targetResource + "> ;\n" +
+                "   acl:default <" + targetResource + "> .";
+        // Allow user to read and write this object.
+        ingestAclString(targetUri, readwriteString, "fedoraAdmin");
+
+        // Test we can append a container as username
+        final HttpPost okPost = postObjMethod(targetResource);
+        setAuth(okPost, username);
+        final String location;
+        try (final var response = execute(okPost)) {
+            assertEquals(SC_CREATED, getStatus(response));
+            location = getLocation(response);
+        }
+        // Delete the container
+        final HttpDelete deleteContainer = new HttpDelete(location);
+        setAuth(deleteContainer, username);
+        assertEquals(SC_NO_CONTENT, getStatus(deleteContainer));
+        // Test we have a tombstone
+        final HttpGet getContainer = new HttpGet(location);
+        setAuth(getContainer, username);
+        assertEquals(SC_GONE, getStatus(getContainer));
+        // Delete the tombstone
+        final HttpDelete deleteTombstone = new HttpDelete(location + "/" + FCR_TOMBSTONE);
+        setAuth(deleteTombstone, username);
+        assertEquals(SC_NO_CONTENT, getStatus(deleteTombstone));
+        // Test we have a nothing now.
+        final HttpGet getContainer2 = new HttpGet(location);
+        setAuth(getContainer2, username);
+        assertEquals(SC_NOT_FOUND, getStatus(getContainer2));
     }
 }
