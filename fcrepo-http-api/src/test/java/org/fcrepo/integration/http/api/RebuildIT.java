@@ -172,6 +172,8 @@ public class RebuildIT extends AbstractResourceIT {
         restartContainer();
         setBeans();
         fedoraPropsConfig.setRebuildOnStart(true);
+        //give the container a few moments to start up and get the database setup.
+        TimeUnit.MILLISECONDS.sleep(2000);
         initializer.initialize();
 
         try {

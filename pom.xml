@@ -22,7 +22,7 @@
       (for scm, site-distribution, etc -->
     <project_name>fcrepo</project_name>
     <project_organization>fcrepo</project_organization>
-    <fcrepo-storage-ocfl.version>6.2.0-SNAPSHOT</fcrepo-storage-ocfl.version>
+    <fcrepo-storage-ocfl.version>6.3.0-SNAPSHOT</fcrepo-storage-ocfl.version>
     <!-- Dependency version properties -->
     <activemq.version>5.16.3</activemq.version>
     <aws.version>2.17.50</aws.version>
@@ -59,7 +59,7 @@
     <logback.version>1.2.6</logback.version>
     <micrometer.version>1.7.4</micrometer.version>
     <netty.version>4.1.68.Final</netty.version>
-    <ocfl-java.version>1.4.6</ocfl-java.version>
+    <ocfl-java.version>1.5.0</ocfl-java.version>
     <prometheus.version>0.10.0</prometheus.version>
     <reactivestreams.version>1.0.3</reactivestreams.version>
     <shiro.version>1.9.1</shiro.version>
