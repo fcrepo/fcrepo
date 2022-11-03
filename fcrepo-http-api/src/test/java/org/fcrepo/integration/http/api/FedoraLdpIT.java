@@ -36,6 +36,7 @@ import static nu.validator.htmlparser.common.DoctypeExpectation.NO_DOCTYPE_ERROR
 import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CREATED;
+import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.http.entity.ContentType.parse;
 import static org.apache.http.impl.client.cache.CacheConfig.DEFAULT;
@@ -47,6 +48,7 @@ import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ModelFactory.createModelForGraph;
+import static org.apache.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeN3;
@@ -176,6 +178,7 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.riot.RDFFormat;
@@ -5092,6 +5095,45 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final var id = getRandomUniqueId();
         assertEquals(NOT_FOUND.getStatusCode(), getStatus(getObjMethod(id)));
         assertEquals(NOT_FOUND.getStatusCode(), getStatus(postObjMethod(id)));
+    }
+
+    @Test
+    public void testBinaryDescriptionWithOtherSubject() throws IOException {
+        final var schemaName = ResourceFactory.createProperty("http://schema.org/name");
+        final var schemaAbout = ResourceFactory.createProperty("http://schema.org/about");
+        final var wikiCat = ResourceFactory.createResource("http://en.wikipedia.org/Cat");
+
+        final var id = getRandomUniqueId();
+        final String location;
+        final HttpPut putBinary = new HttpPut(serverAddress + id);
+        putBinary.setHeader(CONTENT_TYPE, "text/x-ascii-art");
+        putBinary.setHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        putBinary.setEntity(new StringEntity("\\    /\\\n )  ( `)\n(  /  )\n \\(__)|", UTF_8));
+        // Make a binary
+        try (final var response = execute(putBinary)) {
+            assertEquals(SC_CREATED, getStatus(response));
+            location = getLocation(response);
+        }
+        final HttpPut putDesc = new HttpPut(location + "/" + FCR_METADATA);
+        putDesc.setHeader(CONTENT_TYPE, "text/turtle");
+        putDesc.setEntity(new StringEntity("@prefix ldp:   <http://www.w3.org/ns/ldp#> .\n" +
+                "         @prefix schema: <http://schema.org/> .\n" +
+                "         @prefix wiki: <http://en.wikipedia.org/> .\n" +
+                "         <>  schema:name \"Ashley\";\n" +
+                "             schema:about wiki:Cat;\n" +
+                "              .\n" +
+                "         <" + location + "/" + FCR_METADATA + "> schema:name \"The description\".\n" +
+                "\n" +
+                "         wiki:Cat schema:name \"Cat\".", UTF_8));
+        // Put description
+        assertEquals(SC_NO_CONTENT, getStatus(putDesc));
+        try (final var dataset = getDataset(getObjMethod(id + "/" + FCR_METADATA))) {
+            final Model model = dataset.getDefaultModel();
+            assertTrue(model.contains(createResource(location), schemaName, createPlainLiteral("Ashley")));
+            assertTrue(model.contains(createResource(location), schemaAbout, wikiCat));
+            assertTrue(model.contains(createResource(location), schemaName, createPlainLiteral("The description")));
+            assertTrue(model.contains(wikiCat, schemaName, createPlainLiteral("Cat")));
+        }
     }
 
     private void assertIdStringConstraint(final String id) throws IOException {
