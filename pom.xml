@@ -587,6 +587,16 @@
         <groupId>org.apache.shiro</groupId>
         <artifactId>shiro-spring</artifactId>
         <version>${shiro.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.servlet.jsp</groupId>
+            <artifactId>jsp-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.el</groupId>
+            <artifactId>el-api</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <!-- test gear -->
       <dependency>
