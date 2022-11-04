@@ -77,10 +77,11 @@ public class OcflPersistenceConfig {
                     ocflPropsConfig.getOcflS3Prefix(),
                     ocflPropsConfig.getOcflTemp(),
                     ocflPropsConfig.getDefaultDigestAlgorithm(),
-                    ocflPropsConfig.isOcflS3DbEnabled());
+                    ocflPropsConfig.isOcflS3DbEnabled(),
+                    ocflPropsConfig.isOcflUpgradeOnWrite());
         } else {
             return createFilesystemRepository(ocflPropsConfig.getOcflRepoRoot(), ocflPropsConfig.getOcflTemp(),
-                    ocflPropsConfig.getDefaultDigestAlgorithm());
+                    ocflPropsConfig.getDefaultDigestAlgorithm(), ocflPropsConfig.isOcflUpgradeOnWrite());
         }
     }
 

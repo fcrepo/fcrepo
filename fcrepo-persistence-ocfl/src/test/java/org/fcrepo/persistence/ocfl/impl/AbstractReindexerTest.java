@@ -114,7 +114,7 @@ public class AbstractReindexerTest {
         when(transaction.getId()).thenReturn(session1Id);
         when(txManager.create()).thenReturn(transaction);
 
-        repository = createFilesystemRepository(repoDir, workDir, DEFAULT_FEDORA_ALGORITHM);
+        repository = createFilesystemRepository(repoDir, workDir, DEFAULT_FEDORA_ALGORITHM, false);
 
         ocflIndex = new TestOcflObjectIndex();
         ocflIndex.reset();

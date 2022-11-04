@@ -114,6 +114,9 @@ public class OcflPropsConfig extends BasePropsConfig {
     @Value("${fcrepo.cache.db.ocfl.id_map.timeout.minutes:30}")
     private long fedoraToOcflCacheTimeout;
 
+    @Value("${fcrepo.ocfl.upgrade.enabled:false}")
+    private boolean ocflUpgradeOnWrite;
+
     private DigestAlgorithm FCREPO_DIGEST_ALGORITHM;
 
     /**
@@ -475,5 +478,12 @@ public class OcflPropsConfig extends BasePropsConfig {
      */
     public long getFedoraToOcflCacheTimeout() {
         return fedoraToOcflCacheTimeout;
+    }
+
+    /**
+     * @return True to write new versions of OCFL on older objects, false to keep the original version.
+     */
+    public boolean isOcflUpgradeOnWrite() {
+        return ocflUpgradeOnWrite;
     }
 }

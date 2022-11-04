@@ -147,7 +147,7 @@ public class OcflPersistentStorageSessionTest {
         final var workDir = tempFolder.newFolder("ocfl-work").toPath();
 
         final var objectMapper = OcflPersistentStorageUtils.objectMapper();
-        final var repository = createFilesystemRepository(repoDir, workDir, DEFAULT_FEDORA_ALGORITHM);
+        final var repository = createFilesystemRepository(repoDir, workDir, DEFAULT_FEDORA_ALGORITHM, false);
         objectSessionFactory = new DefaultOcflObjectSessionFactory(repository, stagingDir,
                 objectMapper,
                 new NoOpCache<>(),
