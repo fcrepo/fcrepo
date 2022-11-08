@@ -21,8 +21,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import edu.wisc.library.ocfl.api.DigestAlgorithmRegistry;
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
-import edu.wisc.library.ocfl.api.OcflConfig;
 import edu.wisc.library.ocfl.api.model.DigestAlgorithm;
+import edu.wisc.library.ocfl.api.model.OcflVersion;
 import edu.wisc.library.ocfl.aws.OcflS3Client;
 import edu.wisc.library.ocfl.core.OcflRepositoryBuilder;
 import edu.wisc.library.ocfl.core.extension.storage.layout.config.HashedNTupleLayoutConfig;
@@ -50,6 +50,11 @@ public class OcflPersistentStorageUtils {
     }
 
     /**
+     * The version of OCFL the repository is configured to use.
+     */
+    private static final OcflVersion OCFL_VERSION = OcflVersion.OCFL_1_1;
+
+    /**
      * The default RDF on disk format
      * TODO Make this value configurable
      */
@@ -75,11 +80,13 @@ public class OcflPersistentStorageUtils {
      * @param ocflStorageRootDir The ocfl storage root directory
      * @param ocflWorkDir The ocfl work directory
      * @param algorithm the algorithm for the OCFL repository
+     * @param ocflUpgradeOnWrite true if we want to write new versions on older objects.
      * @return the repository
      */
     public static MutableOcflRepository createFilesystemRepository(final Path ocflStorageRootDir,
                                                                    final Path ocflWorkDir,
-                                                                   final org.fcrepo.config.DigestAlgorithm algorithm)
+                                                                   final org.fcrepo.config.DigestAlgorithm algorithm,
+                                                                   final boolean ocflUpgradeOnWrite)
             throws IOException {
         createDirectories(ocflStorageRootDir);
 
@@ -87,7 +94,7 @@ public class OcflPersistentStorageUtils {
 
         return createRepository(ocflWorkDir, builder -> {
             builder.storage(storage);
-        }, algorithm);
+        }, algorithm, ocflUpgradeOnWrite);
     }
 
     /**
@@ -100,6 +107,7 @@ public class OcflPersistentStorageUtils {
      * @param ocflWorkDir the local directory to stage objects in
      * @param algorithm the algorithm for the OCFL repository
      * @param withDb true if the ocfl client should use a db
+     * @param ocflUpgradeOnWrite true if we want to write new versions on older objects.
      * @return the repository
      */
     public static MutableOcflRepository createS3Repository(final DataSource dataSource,
@@ -108,7 +116,8 @@ public class OcflPersistentStorageUtils {
                                                            final String prefix,
                                                            final Path ocflWorkDir,
                                                            final org.fcrepo.config.DigestAlgorithm algorithm,
-                                                           final boolean withDb)
+                                                           final boolean withDb,
+                                                           final boolean ocflUpgradeOnWrite)
             throws IOException {
         createDirectories(ocflWorkDir);
 
@@ -127,12 +136,13 @@ public class OcflPersistentStorageUtils {
                 builder.objectDetailsDb(db -> db.dataSource(dataSource));
             }
 
-        }, algorithm);
+        }, algorithm, ocflUpgradeOnWrite);
     }
 
     private static MutableOcflRepository createRepository(final Path ocflWorkDir,
                                                           final Consumer<OcflRepositoryBuilder> configurer,
-                                                          final org.fcrepo.config.DigestAlgorithm algorithm)
+                                                          final org.fcrepo.config.DigestAlgorithm algorithm,
+                                                          final boolean ocflUpgradeOnWrite)
             throws IOException {
         createDirectories(ocflWorkDir);
 
@@ -147,7 +157,9 @@ public class OcflPersistentStorageUtils {
 
         final var builder = new OcflRepositoryBuilder()
                 .defaultLayoutConfig(new HashedNTupleLayoutConfig())
-                .ocflConfig(new OcflConfig().setDefaultDigestAlgorithm(ocflDigestAlg))
+                .ocflConfig(config -> config.setDefaultDigestAlgorithm(ocflDigestAlg)
+                        .setOcflVersion(OCFL_VERSION)
+                        .setUpgradeObjectsOnWrite(ocflUpgradeOnWrite))
                 .logicalPathMapper(logicalPathMapper)
                 .workDir(ocflWorkDir);
 
