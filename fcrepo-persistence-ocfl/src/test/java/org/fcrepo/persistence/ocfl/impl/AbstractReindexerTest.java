@@ -104,6 +104,7 @@ public class AbstractReindexerTest {
     protected final FedoraId resource1 = FedoraId.create("resource1");
     protected final FedoraId resource2 =  resource1.resolve("resource2");
 
+    private static final boolean VERIFY_INVENTORY = true;
     private static final DigestAlgorithm DEFAULT_FEDORA_ALGORITHM = DigestAlgorithm.SHA512;
 
     public void setup() throws Exception {
@@ -114,7 +115,7 @@ public class AbstractReindexerTest {
         when(transaction.getId()).thenReturn(session1Id);
         when(txManager.create()).thenReturn(transaction);
 
-        repository = createFilesystemRepository(repoDir, workDir, DEFAULT_FEDORA_ALGORITHM, false);
+        repository = createFilesystemRepository(repoDir, workDir, DEFAULT_FEDORA_ALGORITHM, false, VERIFY_INVENTORY);
 
         ocflIndex = new TestOcflObjectIndex();
         ocflIndex.reset();
