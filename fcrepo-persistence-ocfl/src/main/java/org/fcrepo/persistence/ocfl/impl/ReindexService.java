@@ -99,7 +99,9 @@ public class ReindexService {
         LOGGER.debug("Indexing ocflId {} in transaction {}", ocflId, tx.getId());
 
         ocflRepository.invalidateCache(ocflId);
-        objectValidator.validate(ocflId, config.isRebuildFixityCheck());
+        if (config.isRebuildValidation()) {
+            objectValidator.validate(ocflId, config.isRebuildFixityCheck());
+        }
 
         try (final var session = ocflObjectSessionFactory.newSession(ocflId)) {
             final var rootId = new AtomicReference<FedoraId>();
