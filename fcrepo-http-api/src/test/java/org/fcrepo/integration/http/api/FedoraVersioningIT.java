@@ -78,8 +78,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Link;
+import javax.ws.rs.core.UriBuilder;
 
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.storage.ocfl.CommitType;
 import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
 
@@ -144,6 +147,9 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     private String subjectUri;
     private String id;
 
+    private static final HttpIdentifierConverter identifierConverter =
+            new HttpIdentifierConverter(UriBuilder.fromUri(serverAddress + "{path: .*}"));
+
     @Rule
     public TemporaryFolder tmpDir = new TemporaryFolder();
 
@@ -180,13 +186,13 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final var v2 = now();
         createMemento(subjectUri);
 
-        verifyTimemapResponse(subjectUri, id, new String[]{v1, v2}, v1, v2);
+        verifyTimemapResponse(subjectUri, new String[]{v1, v2}, v1, v2);
     }
 
     @Test
     public void getTimeMapForContainerWithSingleVersion() throws Exception {
         createVersionedContainer(id);
-        verifyTimemapResponse(subjectUri, id, now());
+        verifyTimemapResponse(subjectUri, now());
     }
 
     @Test
@@ -198,7 +204,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final var v2 = now();
         createMemento(subjectUri);
         createMemento(subjectUri);
-        verifyTimemapResponse(subjectUri, id, new String[]{v1, v2}, v1, v2);
+        verifyTimemapResponse(subjectUri, new String[]{v1, v2}, v1, v2);
     }
 
     @Test
@@ -215,7 +221,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         putVersionedBinary(id, OCTET_STREAM_TYPE, "v3", true);
         TimeUnit.SECONDS.sleep(1);
 
-        verifyTimemapResponse(subjectUri, id, new String[]{v1, v2, v3}, v1, v3);
+        verifyTimemapResponse(subjectUri, new String[]{v1, v2, v3}, v1, v3);
     }
 
     @Test
@@ -239,9 +245,9 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         putVersionedBinary(childId1, OCTET_STREAM_TYPE, "v4", true);
         TimeUnit.SECONDS.sleep(1);
 
-        verifyTimemapResponse(subjectUri, id, new String[]{v1, v2, v3, v4}, v1, v4);
-        verifyTimemapResponse(subjectUri + "/child1", childId1, new String[]{v2, v4}, v2, v4);
-        verifyTimemapResponse(subjectUri + "/child2", childId2, v3);
+        verifyTimemapResponse(subjectUri, new String[]{v1, v2, v3, v4}, v1, v4);
+        verifyTimemapResponse(subjectUri + "/child1", new String[]{v2, v4}, v2, v4);
+        verifyTimemapResponse(subjectUri + "/child2", v3);
     }
 
     @Test
@@ -278,7 +284,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         putVersionedContainer(id, "3", true);
         final var v3 = now();
 
-        verifyTimemapResponse(subjectUri, id, new String[] {v1, v2, v3}, v1, v3);
+        verifyTimemapResponse(subjectUri, new String[] {v1, v2, v3}, v1, v3);
     }
 
     @Test
@@ -647,7 +653,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         createVersionedBinary(id);
 
-        verifyTimemapResponse(subjectUri, id);
+        verifyTimemapResponse(subjectUri);
     }
 
     @Test
@@ -670,47 +676,42 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createVersionedBinary(id);
 
         final String descriptionUri = subjectUri + "/fcr:metadata";
-        final String descriptionId = id + "/fcr:metadata";
-
-        verifyTimemapResponse(descriptionUri, descriptionId);
+        verifyTimemapResponse(descriptionUri);
     }
 
     /**
      * Verify an application/link-format TimeMap response.
      *
      * @param uri The full URI of the Original Resource.
-     * @param id The path of the Original Resource.
      * @throws Exception on HTTP request error
      */
-    private void verifyTimemapResponse(final String uri, final String id) throws Exception {
-        verifyTimemapResponse(uri, id, null, null, null);
+    private void verifyTimemapResponse(final String uri) throws Exception {
+        verifyTimemapResponse(uri, null, null, null);
     }
 
     /**
      * Verify an application/link-format TimeMap response.
      *
      * @param uri The full URI of the Original Resource.
-     * @param id The path of the Original Resource.
      * @param mementoDateTime a RFC-1123 datetime
      * @throws Exception on HTTP request error
      */
-    private void verifyTimemapResponse(final String uri, final String id, final String mementoDateTime)
+    private void verifyTimemapResponse(final String uri, final String mementoDateTime)
         throws Exception {
         final String[] mementoDateTimes = { mementoDateTime };
-        verifyTimemapResponse(uri, id, mementoDateTimes, null, null);
+        verifyTimemapResponse(uri, mementoDateTimes, null, null);
     }
 
     /**
      * Verify an application/link-format TimeMap response.
      *
      * @param uri The full URI of the Original Resource.
-     * @param id The path of the Original Resource.
      * @param mementoDateTime Array of all the RFC-1123 datetimes for all the mementos.
      * @param rangeStart RFC-1123 datetime of the first memento.
      * @param rangeEnd RFC-1123 datetime of the last memento.
      * @throws Exception on HTTP request error
      */
-    private void verifyTimemapResponse(final String uri, final String id, final String[] mementoDateTime,
+    private void verifyTimemapResponse(final String uri, final String[] mementoDateTime,
         final String rangeStart, final String rangeEnd)
         throws Exception {
         final String ldpcvUri = uri + "/" + FCR_VERSIONS;
@@ -739,7 +740,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
         expectedLinksMemento.sort(Comparator.comparing(Link::toString));
 
-        final HttpGet httpGet = getObjMethod(id + "/" + FCR_VERSIONS);
+        final HttpGet httpGet = new HttpGet(uri + "/" + FCR_VERSIONS);
         httpGet.setHeader("Accept", APPLICATION_LINK_FORMAT);
         try (final CloseableHttpResponse response = execute(httpGet)) {
             assertEquals("Didn't get a OK response!", OK.getStatusCode(), getStatus(response));
@@ -854,6 +855,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
      * @param uri the URI of the resource.
      */
     private static void verifyTimeMapHeaders(final CloseableHttpResponse response, final String uri) {
+        final var id = FedoraId.create(identifierConverter.toInternalId(uri));
         checkForLinkHeader(response, RESOURCE.toString(), "type");
         checkForLinkHeader(response, CONTAINER.toString(), "type");
         checkForLinkHeader(response, RDF_SOURCE.getURI(), "type");
@@ -861,7 +863,12 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         checkForLinkHeader(response, uri, "timegate");
         checkForLinkHeader(response, uri + "/" + FCR_VERSIONS, "timemap");
         checkForLinkHeader(response, VERSIONING_TIMEMAP_TYPE, "type");
-        checkForLinkHeader(response, uri + "/" + FCR_ACL, "acl");
+        if (id.isDescription()) {
+            final var binaryUri = identifierConverter.toExternalId(id.getFullDescribedId());
+            checkForLinkHeader(response, binaryUri + "/" + FCR_ACL, "acl");
+        } else {
+            checkForLinkHeader(response, uri + "/" + FCR_ACL, "acl");
+        }
         assertFalse(response.getFirstHeader("Allow").getValue().contains("DELETE"));
         assertTrue(response.getFirstHeader("Allow").getValue().contains("GET"));
         assertTrue(response.getFirstHeader("Allow").getValue().contains("HEAD"));
