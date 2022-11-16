@@ -204,7 +204,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final var v2 = now();
         createMemento(subjectUri);
         createMemento(subjectUri);
-        verifyTimemapResponse(subjectUri, id, new String[]{v1, v2}, v1, v2);
+        verifyTimemapResponse(subjectUri, new String[]{v1, v2}, v1, v2);
     }
 
     @Test
