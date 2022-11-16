@@ -138,6 +138,7 @@ public class OcflPersistentStorageSessionTest {
     @Mock
     private Transaction transaction;
 
+    private static final boolean VERIFY_INVENTORY = true;
     private static final DigestAlgorithm DEFAULT_FEDORA_ALGORITHM = DigestAlgorithm.SHA512;
 
     @Before
@@ -147,7 +148,8 @@ public class OcflPersistentStorageSessionTest {
         final var workDir = tempFolder.newFolder("ocfl-work").toPath();
 
         final var objectMapper = OcflPersistentStorageUtils.objectMapper();
-        final var repository = createFilesystemRepository(repoDir, workDir, DEFAULT_FEDORA_ALGORITHM, false);
+        final var repository = createFilesystemRepository(repoDir, workDir, DEFAULT_FEDORA_ALGORITHM, false,
+                                                          VERIFY_INVENTORY);
         objectSessionFactory = new DefaultOcflObjectSessionFactory(repository, stagingDir,
                 objectMapper,
                 new NoOpCache<>(),

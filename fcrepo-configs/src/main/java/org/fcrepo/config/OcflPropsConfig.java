@@ -117,6 +117,9 @@ public class OcflPropsConfig extends BasePropsConfig {
     @Value("${fcrepo.ocfl.upgrade.enabled:false}")
     private boolean ocflUpgradeOnWrite;
 
+    @Value("${fcrepo.ocfl.verify.inventory:true}")
+    private boolean verifyInventory;
+
     private DigestAlgorithm FCREPO_DIGEST_ALGORITHM;
 
     /**
@@ -485,5 +488,12 @@ public class OcflPropsConfig extends BasePropsConfig {
      */
     public boolean isOcflUpgradeOnWrite() {
         return ocflUpgradeOnWrite;
+    }
+
+    /**
+     * @return True to verify inventory when performing OCFL operations
+     */
+    public boolean verifyInventory() {
+        return verifyInventory;
     }
 }

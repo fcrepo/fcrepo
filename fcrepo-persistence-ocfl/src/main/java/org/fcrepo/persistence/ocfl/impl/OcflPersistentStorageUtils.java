@@ -58,7 +58,6 @@ public class OcflPersistentStorageUtils {
      * The default RDF on disk format
      * TODO Make this value configurable
      */
-
     private static RDFFormat DEFAULT_RDF_FORMAT = NTRIPLES;
 
     /**
@@ -81,16 +80,20 @@ public class OcflPersistentStorageUtils {
      * @param ocflWorkDir The ocfl work directory
      * @param algorithm the algorithm for the OCFL repository
      * @param ocflUpgradeOnWrite true if we want to write new versions on older objects.
+     * @param verifyInventory true if we should verify the inventory
      * @return the repository
      */
     public static MutableOcflRepository createFilesystemRepository(final Path ocflStorageRootDir,
                                                                    final Path ocflWorkDir,
                                                                    final org.fcrepo.config.DigestAlgorithm algorithm,
-                                                                   final boolean ocflUpgradeOnWrite)
+                                                                   final boolean ocflUpgradeOnWrite,
+                                                                   final boolean verifyInventory)
             throws IOException {
         createDirectories(ocflStorageRootDir);
 
-        final var storage = OcflStorageBuilder.builder().fileSystem(ocflStorageRootDir).build();
+        final var storage = OcflStorageBuilder.builder()
+                                              .verifyInventoryDigest(verifyInventory)
+                                              .fileSystem(ocflStorageRootDir).build();
 
         return createRepository(ocflWorkDir, builder -> {
             builder.storage(storage);
@@ -108,6 +111,7 @@ public class OcflPersistentStorageUtils {
      * @param algorithm the algorithm for the OCFL repository
      * @param withDb true if the ocfl client should use a db
      * @param ocflUpgradeOnWrite true if we want to write new versions on older objects.
+     * @param verifyInventory true if we should verify the ocfl inventory
      * @return the repository
      */
     public static MutableOcflRepository createS3Repository(final DataSource dataSource,
@@ -117,11 +121,14 @@ public class OcflPersistentStorageUtils {
                                                            final Path ocflWorkDir,
                                                            final org.fcrepo.config.DigestAlgorithm algorithm,
                                                            final boolean withDb,
-                                                           final boolean ocflUpgradeOnWrite)
+                                                           final boolean ocflUpgradeOnWrite,
+                                                           final boolean verifyInventory)
             throws IOException {
         createDirectories(ocflWorkDir);
 
-        final var storage = OcflStorageBuilder.builder().cloud(OcflS3Client.builder()
+        final var storage = OcflStorageBuilder.builder()
+            .verifyInventoryDigest(verifyInventory)
+            .cloud(OcflS3Client.builder()
                 .s3Client(s3Client)
                 .bucket(bucket)
                 .repoPrefix(prefix)

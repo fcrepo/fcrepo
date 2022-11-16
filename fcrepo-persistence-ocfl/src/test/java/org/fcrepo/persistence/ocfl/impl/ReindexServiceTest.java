@@ -86,6 +86,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
 
 
         when(propsConfig.getReindexingThreads()).thenReturn(2L);
+        when(fedoraConfig.isRebuildValidation()).thenReturn(true);
         reindexManager = new ReindexManager(repository.listObjectIds(),
                 reindexService, propsConfig, txManager, new DbTransactionExecutor());
     }

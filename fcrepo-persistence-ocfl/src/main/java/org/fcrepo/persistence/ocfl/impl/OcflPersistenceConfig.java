@@ -47,7 +47,6 @@ import software.amazon.awssdk.services.s3.S3Client;
  * @author dbernstein
  * @since 6.0.0
  */
-
 @Configuration
 public class OcflPersistenceConfig {
 
@@ -78,10 +77,12 @@ public class OcflPersistenceConfig {
                     ocflPropsConfig.getOcflTemp(),
                     ocflPropsConfig.getDefaultDigestAlgorithm(),
                     ocflPropsConfig.isOcflS3DbEnabled(),
-                    ocflPropsConfig.isOcflUpgradeOnWrite());
+                    ocflPropsConfig.isOcflUpgradeOnWrite(),
+                    ocflPropsConfig.verifyInventory());
         } else {
             return createFilesystemRepository(ocflPropsConfig.getOcflRepoRoot(), ocflPropsConfig.getOcflTemp(),
-                    ocflPropsConfig.getDefaultDigestAlgorithm(), ocflPropsConfig.isOcflUpgradeOnWrite());
+                    ocflPropsConfig.getDefaultDigestAlgorithm(), ocflPropsConfig.isOcflUpgradeOnWrite(),
+                    ocflPropsConfig.verifyInventory());
         }
     }
 

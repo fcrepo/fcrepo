@@ -38,6 +38,7 @@ public class FedoraPropsConfig extends BasePropsConfig {
     private static final String FCREPO_ACTIVEMQ_DIRECTORY = "fcrepo.activemq.directory";
     private static final String FCREPO_SESSION_TIMEOUT = "fcrepo.session.timeout";
     private static final String FCREPO_VELOCITY_RUNTIME_LOG = "fcrepo.velocity.runtime.log";
+    private static final String FCREPO_REBUILD_VALIDATION = "fcrepo.rebuild.validation";
     private static final String FCREPO_REBUILD_VALIDATION_FIXITY = "fcrepo.rebuild.validation.fixity";
     private static final String FCREPO_REBUILD_ON_START = "fcrepo.rebuild.on.start";
     private static final String FCREPO_JMS_BASEURL = "fcrepo.jms.baseUrl";
@@ -89,6 +90,9 @@ public class FedoraPropsConfig extends BasePropsConfig {
     @Value("${" + FCREPO_VELOCITY_RUNTIME_LOG + ":" +
             "#{fedoraPropsConfig.fedoraLogs.resolve('velocity.log').toString()}}")
     private Path velocityLog;
+
+    @Value("${" + FCREPO_REBUILD_VALIDATION + ":true}")
+    private boolean rebuildValidation;
 
     @Value("${" + FCREPO_REBUILD_VALIDATION_FIXITY + ":false}")
     private boolean rebuildFixityCheck;
@@ -145,6 +149,18 @@ public class FedoraPropsConfig extends BasePropsConfig {
         serverManagedPropsMode = ServerManagedPropsMode.fromString(serverManagedPropsModeStr);
         sessionTimeout = Duration.ofMillis(sessionTimeoutLong);
         jmsDestinationType = JmsDestination.fromString(jmsDestinationTypeStr);
+
+        checkRebuildProps();
+    }
+
+    /**
+     * Check if the rebuild fixity check prop was set without the rebuild validation being enabled
+     */
+    private void checkRebuildProps() {
+        if (rebuildFixityCheck && !rebuildValidation) {
+            throw new IllegalStateException(FCREPO_REBUILD_VALIDATION_FIXITY + " must be false when " +
+                                            FCREPO_REBUILD_VALIDATION + " is false.");
+        }
     }
 
     /**
@@ -254,6 +270,13 @@ public class FedoraPropsConfig extends BasePropsConfig {
      */
     public Path getVelocityLog() {
         return velocityLog;
+    }
+
+    /**
+     * @return true if the rebuild object validation should run
+     */
+    public boolean isRebuildValidation() {
+        return rebuildValidation;
     }
 
     /**
