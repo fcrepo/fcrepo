@@ -72,6 +72,7 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.glassfish.grizzly.utils.Charsets;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
@@ -196,6 +197,34 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final String encCreds = new String(Base64.encodeBase64(creds.getBytes()));
         final String basic = "Basic " + encCreds;
         method.setHeader("Authorization", basic);
+    }
+
+    @Test
+    public void txScenario() throws IOException {
+        authPropsConfig.setRootAuthAclPath(Paths.get("./target/test-classes/tx-authorization.ttl"));
+
+        final Optional<String> txId;
+        final var txObj = "/rest/fcr:tx";
+        final var method = postObjMethod(txObj);
+        setAuth(method, "testUser");
+        try (final CloseableHttpResponse response = execute(method)) {
+            assertEquals("User 'testUser' can create" + txObj, SC_CREATED, getStatus(response));
+            txId = getHeader(response, "Location").stream().findFirst();
+        }
+
+        final var txClose = txId.orElseThrow();
+        final var delObj = txObj + txClose.substring(txClose.lastIndexOf("/"));
+        final var closeTx = deleteObjMethod(delObj);
+        setAuth(closeTx, "testUser");
+        try (final CloseableHttpResponse response = execute(closeTx)) {
+            assertEquals("User 'testUser' cannot interact" + txObj, SC_FORBIDDEN, getStatus(response));
+        }
+
+        final var adminCloseTx = deleteObjMethod(delObj);
+        setAuth(adminCloseTx, "fedoraAdmin");
+        try (final CloseableHttpResponse response = execute(adminCloseTx)) {
+            assertEquals("User 'fedoraAdmin' can interact" + txObj, SC_NO_CONTENT, getStatus(response));
+        }
     }
 
     @Test
@@ -2411,6 +2440,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
+    @Ignore
     public void testAuthenticatedUserCanCreateTransaction() {
         final HttpPost txnCreatePost = postObjMethod("rest/fcr:tx");
         setAuth(txnCreatePost, "testUser92");
