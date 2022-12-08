@@ -68,7 +68,7 @@
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-storage-ocfl</artifactId>
-      <version>6.3.0-SNAPSHOT</version>
+      <version>${fcrepo-storage-ocfl.version}</version>
     </dependency>
 
     <dependency>
