@@ -74,6 +74,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
+import org.flywaydb.core.Flyway;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -101,6 +102,8 @@ public class TransactionsIT extends AbstractResourceIT {
     private OcflPropsConfig ocflConfig;
     private JdbcTemplate jdbcTemplate;
 
+    private Flyway flyway;
+
     @Before
     public void setup() {
         objectSessionFactory = getBean(DefaultOcflObjectSessionFactory.class);
@@ -108,11 +111,13 @@ public class TransactionsIT extends AbstractResourceIT {
         ocflConfig = getBean(OcflPropsConfig.class);
         final var dataSource = getBean(DataSource.class);
         jdbcTemplate = new JdbcTemplate(dataSource);
+        flyway = getBean(Flyway.class);
     }
 
     @After
     public void after() {
         objectSessionFactory.setDefaultCommitType(CommitType.NEW_VERSION);
+        flyway.clean();
     }
 
     private void dropContainment() {
