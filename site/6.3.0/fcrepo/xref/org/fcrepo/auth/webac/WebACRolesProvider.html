@@ -1,0 +1,492 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>WebACRolesProvider xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../stylesheet.css" />
+</head>
+<body>
+<div id="overview"><a href="../../../../../apidocs/org/fcrepo/auth/webac/WebACRolesProvider.html">View Javadoc</a></div><pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   <em class="jxr_comment"> * The contents of this file are subject to the license and copyright</em>
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <em class="jxr_comment"> * detailed in the LICENSE and NOTICE files at the root of the source</em>
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <em class="jxr_comment"> * tree.</em>
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <strong class="jxr_keyword">package</strong> org.fcrepo.auth.webac;
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> java.util.Arrays.asList;
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> java.util.Collections.emptyList;
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> java.util.stream.Collectors.toList;
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> java.util.stream.Collectors.toSet;
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> java.util.stream.IntStream.range;
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> java.util.stream.Stream.concat;
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> java.util.stream.Stream.empty;
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> java.util.stream.Stream.of;
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.apache.jena.graph.NodeFactory.createURI;
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.auth.webac.URIConstants.VCARD_GROUP_VALUE;
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.auth.webac.URIConstants.VCARD_MEMBER_VALUE;
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.auth.webac.URIConstants.WEBAC_ACCESSTO_CLASS_VALUE;
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.auth.webac.URIConstants.WEBAC_ACCESSTO_VALUE;
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.auth.webac.URIConstants.WEBAC_AGENT_CLASS_VALUE;
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.auth.webac.URIConstants.WEBAC_AGENT_GROUP_VALUE;
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.auth.webac.URIConstants.WEBAC_AGENT_VALUE;
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.auth.webac.URIConstants.WEBAC_AUTHENTICATED_AGENT_VALUE;
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.auth.webac.URIConstants.WEBAC_AUTHORIZATION_VALUE;
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.auth.webac.URIConstants.WEBAC_DEFAULT_VALUE;
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_VALUE;
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.auth.webac.URIConstants.WEBAC_NAMESPACE_VALUE;
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.http.api.FedoraAcl.getDefaultAcl;
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.slf4j.LoggerFactory.getLogger;
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>  
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>  <strong class="jxr_keyword">import</strong> java.net.URI;
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>  <strong class="jxr_keyword">import</strong> java.util.ArrayList;
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>  <strong class="jxr_keyword">import</strong> java.util.Collection;
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>  <strong class="jxr_keyword">import</strong> java.util.HashMap;
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>  <strong class="jxr_keyword">import</strong> java.util.HashSet;
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>  <strong class="jxr_keyword">import</strong> java.util.List;
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>  <strong class="jxr_keyword">import</strong> java.util.Map;
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>  <strong class="jxr_keyword">import</strong> java.util.Objects;
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>  <strong class="jxr_keyword">import</strong> java.util.Optional;
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>  <strong class="jxr_keyword">import</strong> java.util.Set;
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>  <strong class="jxr_keyword">import</strong> java.util.function.Function;
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>  <strong class="jxr_keyword">import</strong> java.util.function.Predicate;
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>  <strong class="jxr_keyword">import</strong> java.util.stream.Collectors;
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>  <strong class="jxr_keyword">import</strong> java.util.stream.Stream;
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>  
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>  <strong class="jxr_keyword">import</strong> javax.annotation.PostConstruct;
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>  <strong class="jxr_keyword">import</strong> javax.inject.Inject;
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>  
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.config.AuthPropsConfig;
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.kernel.api.Transaction;
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.kernel.api.auth.ACLHandle;
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.kernel.api.auth.WebACAuthorization;
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.kernel.api.exception.PathNotFoundException;
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.kernel.api.exception.RepositoryException;
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.kernel.api.identifiers.FedoraId;
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.kernel.api.models.FedoraResource;
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.kernel.api.models.ResourceFactory;
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.kernel.api.models.TimeMap;
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>  <strong class="jxr_keyword">import</strong> org.fcrepo.kernel.api.models.WebacAcl;
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>  
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>  <strong class="jxr_keyword">import</strong> org.apache.jena.graph.Triple;
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>  <strong class="jxr_keyword">import</strong> org.apache.jena.rdf.model.Statement;
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>  <strong class="jxr_keyword">import</strong> org.slf4j.Logger;
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>  <strong class="jxr_keyword">import</strong> org.springframework.stereotype.Component;
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>  
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>  <strong class="jxr_keyword">import</strong> com.github.benmanes.caffeine.cache.Cache;
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>  
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>  
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>  <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>  <em class="jxr_javadoccomment"> * @author acoburn</em>
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>  <em class="jxr_javadoccomment"> * @since 9/3/15</em>
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>  <em class="jxr_javadoccomment"> */</em>
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>  @Component
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> <a name="WebACRolesProvider" href="../../../../org/fcrepo/auth/webac/WebACRolesProvider.html#WebACRolesProvider">WebACRolesProvider</a> {
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>  
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> Logger LOGGER = getLogger(WebACRolesProvider.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>  
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> org.apache.jena.graph.Node RDF_TYPE_NODE = createURI(RDF_NAMESPACE + <span class="jxr_string">"type"</span>);
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> org.apache.jena.graph.Node VCARD_GROUP_NODE = createURI(VCARD_GROUP_VALUE);
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> org.apache.jena.graph.Node VCARD_MEMBER_NODE = createURI(VCARD_MEMBER_VALUE);
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>  
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>      @Inject
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>      <strong class="jxr_keyword">private</strong> <a name="AuthPropsConfig" href="../../../../org/fcrepo/config/AuthPropsConfig.html#AuthPropsConfig">AuthPropsConfig</a> authPropsConfig;
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>  
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>      @Inject
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>      <strong class="jxr_keyword">private</strong> <a name="ResourceFactory" href="../../../../org/fcrepo/kernel/api/models/ResourceFactory.html#ResourceFactory">ResourceFactory</a> resourceFactory;
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>  
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>      @Inject
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>      <strong class="jxr_keyword">private</strong> Cache&lt;String, Optional&lt;ACLHandle&gt;&gt; authHandleCache;
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>  
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>      <strong class="jxr_keyword">private</strong> String userBaseUri;
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>      <strong class="jxr_keyword">private</strong> String groupBaseUri;
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>  
+<a class="jxr_linenumber" name="L100" href="#L100">100</a>     @PostConstruct
+<a class="jxr_linenumber" name="L101" href="#L101">101</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> setup() {
+<a class="jxr_linenumber" name="L102" href="#L102">102</a>         <strong class="jxr_keyword">this</strong>.userBaseUri = authPropsConfig.getUserAgentBaseUri();
+<a class="jxr_linenumber" name="L103" href="#L103">103</a>         <strong class="jxr_keyword">this</strong>.groupBaseUri = authPropsConfig.getGroupAgentBaseUri();
+<a class="jxr_linenumber" name="L104" href="#L104">104</a>     }
+<a class="jxr_linenumber" name="L105" href="#L105">105</a> 
+<a class="jxr_linenumber" name="L106" href="#L106">106</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L107" href="#L107">107</a> <em class="jxr_javadoccomment">     * Get the roles assigned to this Node.</em>
+<a class="jxr_linenumber" name="L108" href="#L108">108</a> <em class="jxr_javadoccomment">     *</em>
+<a class="jxr_linenumber" name="L109" href="#L109">109</a> <em class="jxr_javadoccomment">     * @param resource the subject resource</em>
+<a class="jxr_linenumber" name="L110" href="#L110">110</a> <em class="jxr_javadoccomment">     * @param transaction the transaction being acted upon</em>
+<a class="jxr_linenumber" name="L111" href="#L111">111</a> <em class="jxr_javadoccomment">     * @return a set of roles for each principal</em>
+<a class="jxr_linenumber" name="L112" href="#L112">112</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L113" href="#L113">113</a>     <strong class="jxr_keyword">public</strong> Map&lt;String, Collection&lt;String&gt;&gt; getRoles(<strong class="jxr_keyword">final</strong> <a name="FedoraResource" href="../../../../org/fcrepo/kernel/api/models/FedoraResource.html#FedoraResource">FedoraResource</a> resource, <strong class="jxr_keyword">final</strong> <a name="Transaction" href="../../../../org/fcrepo/kernel/api/Transaction.html#Transaction">Transaction</a> transaction) {
+<a class="jxr_linenumber" name="L114" href="#L114">114</a>         LOGGER.debug(<span class="jxr_string">"Getting agent roles for: {}"</span>, resource.getId());
+<a class="jxr_linenumber" name="L115" href="#L115">115</a> 
+<a class="jxr_linenumber" name="L116" href="#L116">116</a> 
+<a class="jxr_linenumber" name="L117" href="#L117">117</a>         <em class="jxr_comment">// Get the effective ACL by searching the target node and any ancestors.</em>
+<a class="jxr_linenumber" name="L118" href="#L118">118</a>         <strong class="jxr_keyword">final</strong> Optional&lt;ACLHandle&gt; effectiveAcl = authHandleCache.get(resource.getId(),
+<a class="jxr_linenumber" name="L119" href="#L119">119</a>                 key -&gt; getEffectiveAcl(resource,false));
+<a class="jxr_linenumber" name="L120" href="#L120">120</a> 
+<a class="jxr_linenumber" name="L121" href="#L121">121</a>         <em class="jxr_comment">// Construct a list of acceptable acl:accessTo values for the target resource.</em>
+<a class="jxr_linenumber" name="L122" href="#L122">122</a>         <strong class="jxr_keyword">final</strong> List&lt;String&gt; resourcePaths = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L123" href="#L123">123</a>         <strong class="jxr_keyword">if</strong> (resource instanceof <a name="WebacAcl" href="../../../../org/fcrepo/kernel/api/models/WebacAcl.html#WebacAcl">WebacAcl</a>) {
+<a class="jxr_linenumber" name="L124" href="#L124">124</a>             <em class="jxr_comment">// ACLs don't describe their resource, but we still want the container which is the resource.</em>
+<a class="jxr_linenumber" name="L125" href="#L125">125</a>             resourcePaths.add(resource.getContainer().getId());
+<a class="jxr_linenumber" name="L126" href="#L126">126</a>         } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L127" href="#L127">127</a>             resourcePaths.add(resource.getDescribedResource().getId());
+<a class="jxr_linenumber" name="L128" href="#L128">128</a>         }
+<a class="jxr_linenumber" name="L129" href="#L129">129</a> 
+<a class="jxr_linenumber" name="L130" href="#L130">130</a>         <em class="jxr_comment">// Construct a list of acceptable acl:accessToClass values for the target resource.</em>
+<a class="jxr_linenumber" name="L131" href="#L131">131</a>         <strong class="jxr_keyword">final</strong> List&lt;URI&gt; rdfTypes = resource.getDescription().getTypes();
+<a class="jxr_linenumber" name="L132" href="#L132">132</a> 
+<a class="jxr_linenumber" name="L133" href="#L133">133</a>         <em class="jxr_comment">// Add the resource location and types of the ACL-bearing parent,</em>
+<a class="jxr_linenumber" name="L134" href="#L134">134</a>         <em class="jxr_comment">// if present and if different than the target resource.</em>
+<a class="jxr_linenumber" name="L135" href="#L135">135</a>         effectiveAcl
+<a class="jxr_linenumber" name="L136" href="#L136">136</a>             .map(ACLHandle::getResource)
+<a class="jxr_linenumber" name="L137" href="#L137">137</a>             .filter(effectiveResource -&gt; !effectiveResource.getId().equals(resource.getId()))
+<a class="jxr_linenumber" name="L138" href="#L138">138</a>             .ifPresent(effectiveResource -&gt; {
+<a class="jxr_linenumber" name="L139" href="#L139">139</a>                 resourcePaths.add(effectiveResource.getId());
+<a class="jxr_linenumber" name="L140" href="#L140">140</a>                 rdfTypes.addAll(effectiveResource.getTypes());
+<a class="jxr_linenumber" name="L141" href="#L141">141</a>             });
+<a class="jxr_linenumber" name="L142" href="#L142">142</a> 
+<a class="jxr_linenumber" name="L143" href="#L143">143</a>         <em class="jxr_comment">// If we fall through to the system/classpath-based Authorization and it</em>
+<a class="jxr_linenumber" name="L144" href="#L144">144</a>         <em class="jxr_comment">// contains any acl:accessTo properties, it is necessary to add each ancestor</em>
+<a class="jxr_linenumber" name="L145" href="#L145">145</a>         <em class="jxr_comment">// path up the node hierarchy, starting at the resource location up to the</em>
+<a class="jxr_linenumber" name="L146" href="#L146">146</a>         <em class="jxr_comment">// root location. This way, the checkAccessTo predicate (below) can be properly</em>
+<a class="jxr_linenumber" name="L147" href="#L147">147</a>         <em class="jxr_comment">// created to match any acl:accessTo values that are part of the getDefaultAuthorization.</em>
+<a class="jxr_linenumber" name="L148" href="#L148">148</a>         <em class="jxr_comment">// This is not relevant if an effectiveAcl is present.</em>
+<a class="jxr_linenumber" name="L149" href="#L149">149</a>         <strong class="jxr_keyword">if</strong> (!effectiveAcl.isPresent()) {
+<a class="jxr_linenumber" name="L150" href="#L150">150</a>             resourcePaths.addAll(getAllPathAncestors(resource.getId()));
+<a class="jxr_linenumber" name="L151" href="#L151">151</a>         }
+<a class="jxr_linenumber" name="L152" href="#L152">152</a> 
+<a class="jxr_linenumber" name="L153" href="#L153">153</a>         <em class="jxr_comment">// Create a function to check acl:accessTo, scoped to the given resourcePaths</em>
+<a class="jxr_linenumber" name="L154" href="#L154">154</a>         <strong class="jxr_keyword">final</strong> Predicate&lt;WebACAuthorization&gt; checkAccessTo = accessTo.apply(resourcePaths);
+<a class="jxr_linenumber" name="L155" href="#L155">155</a> 
+<a class="jxr_linenumber" name="L156" href="#L156">156</a>         <em class="jxr_comment">// Create a function to check acl:accessToClass, scoped to the given rdf:type values,</em>
+<a class="jxr_linenumber" name="L157" href="#L157">157</a>         <em class="jxr_comment">// but transform the URIs to Strings first.</em>
+<a class="jxr_linenumber" name="L158" href="#L158">158</a>         <strong class="jxr_keyword">final</strong> Predicate&lt;WebACAuthorization&gt; checkAccessToClass =
+<a class="jxr_linenumber" name="L159" href="#L159">159</a>             accessToClass.apply(rdfTypes.stream().map(URI::toString).collect(toList()));
+<a class="jxr_linenumber" name="L160" href="#L160">160</a> 
+<a class="jxr_linenumber" name="L161" href="#L161">161</a>         <em class="jxr_comment">// Read the effective Acl and return a list of acl:Authorization statements</em>
+<a class="jxr_linenumber" name="L162" href="#L162">162</a>         <strong class="jxr_keyword">final</strong> List&lt;WebACAuthorization&gt; authorizations = effectiveAcl
+<a class="jxr_linenumber" name="L163" href="#L163">163</a>                 .map(ACLHandle::getAuthorizations)
+<a class="jxr_linenumber" name="L164" href="#L164">164</a>                 .orElseGet(() -&gt; getDefaultAuthorizations());
+<a class="jxr_linenumber" name="L165" href="#L165">165</a> 
+<a class="jxr_linenumber" name="L166" href="#L166">166</a>         <em class="jxr_comment">// Filter the acl:Authorization statements so that they correspond only to statements that apply to</em>
+<a class="jxr_linenumber" name="L167" href="#L167">167</a>         <em class="jxr_comment">// the target (or acl-bearing ancestor) resource path or rdf:type.</em>
+<a class="jxr_linenumber" name="L168" href="#L168">168</a>         <em class="jxr_comment">// Then, assign all acceptable acl:mode values to the relevant acl:agent values: this creates a UNION</em>
+<a class="jxr_linenumber" name="L169" href="#L169">169</a>         <em class="jxr_comment">// of acl:modes for each particular acl:agent.</em>
+<a class="jxr_linenumber" name="L170" href="#L170">170</a>         <strong class="jxr_keyword">final</strong> Map&lt;String, Collection&lt;String&gt;&gt; effectiveRoles = <strong class="jxr_keyword">new</strong> HashMap&lt;&gt;();
+<a class="jxr_linenumber" name="L171" href="#L171">171</a>         authorizations.stream()
+<a class="jxr_linenumber" name="L172" href="#L172">172</a>                       .filter(checkAccessTo.or(checkAccessToClass))
+<a class="jxr_linenumber" name="L173" href="#L173">173</a>                       .forEach(auth -&gt; {
+<a class="jxr_linenumber" name="L174" href="#L174">174</a>                           concat(auth.getAgents().stream(),
+<a class="jxr_linenumber" name="L175" href="#L175">175</a>                                   dereferenceAgentGroups(transaction, auth.getAgentGroups()).stream())
+<a class="jxr_linenumber" name="L176" href="#L176">176</a>                               .filter(agent -&gt; !agent.equals(FOAF_AGENT_VALUE) &amp;&amp;
+<a class="jxr_linenumber" name="L177" href="#L177">177</a>                                                !agent.equals(WEBAC_AUTHENTICATED_AGENT_VALUE))
+<a class="jxr_linenumber" name="L178" href="#L178">178</a>                               .forEach(agent -&gt; {
+<a class="jxr_linenumber" name="L179" href="#L179">179</a>                                   effectiveRoles.computeIfAbsent(agent, key -&gt; <strong class="jxr_keyword">new</strong> HashSet&lt;&gt;())
+<a class="jxr_linenumber" name="L180" href="#L180">180</a>                                                 .addAll(auth.getModes().stream().map(URI::toString).collect(toSet()));
+<a class="jxr_linenumber" name="L181" href="#L181">181</a>                               });
+<a class="jxr_linenumber" name="L182" href="#L182">182</a>                           auth.getAgentClasses().stream().filter(agentClass -&gt; agentClass.equals(FOAF_AGENT_VALUE) ||
+<a class="jxr_linenumber" name="L183" href="#L183">183</a>                                                                                agentClass.equals(
+<a class="jxr_linenumber" name="L184" href="#L184">184</a>                                                                                    WEBAC_AUTHENTICATED_AGENT_VALUE))
+<a class="jxr_linenumber" name="L185" href="#L185">185</a>                               .forEach(agentClass -&gt; {
+<a class="jxr_linenumber" name="L186" href="#L186">186</a>                                   effectiveRoles.computeIfAbsent(agentClass, key -&gt; <strong class="jxr_keyword">new</strong> HashSet&lt;&gt;())
+<a class="jxr_linenumber" name="L187" href="#L187">187</a>                                                 .addAll(auth.getModes().stream().map(URI::toString).collect(toSet()));
+<a class="jxr_linenumber" name="L188" href="#L188">188</a>                               });
+<a class="jxr_linenumber" name="L189" href="#L189">189</a>                       });
+<a class="jxr_linenumber" name="L190" href="#L190">190</a> 
+<a class="jxr_linenumber" name="L191" href="#L191">191</a>         LOGGER.debug(<span class="jxr_string">"Unfiltered ACL: {}"</span>, effectiveRoles);
+<a class="jxr_linenumber" name="L192" href="#L192">192</a> 
+<a class="jxr_linenumber" name="L193" href="#L193">193</a>         <strong class="jxr_keyword">return</strong> effectiveRoles;
+<a class="jxr_linenumber" name="L194" href="#L194">194</a>     }
+<a class="jxr_linenumber" name="L195" href="#L195">195</a> 
+<a class="jxr_linenumber" name="L196" href="#L196">196</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L197" href="#L197">197</a> <em class="jxr_javadoccomment">     * Given a path (e.g. /a/b/c/d) retrieve a list of all ancestor paths.</em>
+<a class="jxr_linenumber" name="L198" href="#L198">198</a> <em class="jxr_javadoccomment">     * In this case, that would be a list of "/a/b/c", "/a/b", "/a" and "/".</em>
+<a class="jxr_linenumber" name="L199" href="#L199">199</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L200" href="#L200">200</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> List&lt;String&gt; getAllPathAncestors(<strong class="jxr_keyword">final</strong> String path) {
+<a class="jxr_linenumber" name="L201" href="#L201">201</a>         <strong class="jxr_keyword">final</strong> List&lt;String&gt; segments = asList(path.replace(FEDORA_ID_PREFIX, <span class="jxr_string">""</span>).split(<span class="jxr_string">"/"</span>));
+<a class="jxr_linenumber" name="L202" href="#L202">202</a>         <strong class="jxr_keyword">return</strong> range(1, segments.size())
+<a class="jxr_linenumber" name="L203" href="#L203">203</a>                 .mapToObj(frameSize -&gt; {
+<a class="jxr_linenumber" name="L204" href="#L204">204</a>                     <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">var</strong> subpath = String.join(<span class="jxr_string">"/"</span>, segments.subList(1, frameSize));
+<a class="jxr_linenumber" name="L205" href="#L205">205</a>                     <strong class="jxr_keyword">return</strong> FEDORA_ID_PREFIX + (!subpath.isBlank() ? <span class="jxr_string">"/"</span> : <span class="jxr_string">""</span>) + subpath;
+<a class="jxr_linenumber" name="L206" href="#L206">206</a>                 })
+<a class="jxr_linenumber" name="L207" href="#L207">207</a>                 .collect(toList());
+<a class="jxr_linenumber" name="L208" href="#L208">208</a>     }
+<a class="jxr_linenumber" name="L209" href="#L209">209</a> 
+<a class="jxr_linenumber" name="L210" href="#L210">210</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L211" href="#L211">211</a> <em class="jxr_javadoccomment">     *  This is a function for generating a Predicate that filters WebACAuthorizations according</em>
+<a class="jxr_linenumber" name="L212" href="#L212">212</a> <em class="jxr_javadoccomment">     *  to whether the given acl:accessToClass values contain any of the rdf:type values provided</em>
+<a class="jxr_linenumber" name="L213" href="#L213">213</a> <em class="jxr_javadoccomment">     *  when creating the predicate.</em>
+<a class="jxr_linenumber" name="L214" href="#L214">214</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L215" href="#L215">215</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> Function&lt;List&lt;String&gt;, Predicate&lt;WebACAuthorization&gt;&gt; accessToClass = uris -&gt; auth -&gt;
+<a class="jxr_linenumber" name="L216" href="#L216">216</a>         uris.stream().anyMatch(uri -&gt; auth.getAccessToClassURIs().contains(uri));
+<a class="jxr_linenumber" name="L217" href="#L217">217</a> 
+<a class="jxr_linenumber" name="L218" href="#L218">218</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L219" href="#L219">219</a> <em class="jxr_javadoccomment">     *  This is a function for generating a Predicate that filters WebACAuthorizations according</em>
+<a class="jxr_linenumber" name="L220" href="#L220">220</a> <em class="jxr_javadoccomment">     *  to whether the given acl:accessTo values contain any of the target resource values provided</em>
+<a class="jxr_linenumber" name="L221" href="#L221">221</a> <em class="jxr_javadoccomment">     *  when creating the predicate.</em>
+<a class="jxr_linenumber" name="L222" href="#L222">222</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L223" href="#L223">223</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> Function&lt;List&lt;String&gt;, Predicate&lt;WebACAuthorization&gt;&gt; accessTo = uris -&gt; auth -&gt;
+<a class="jxr_linenumber" name="L224" href="#L224">224</a>         uris.stream().anyMatch(uri -&gt; auth.getAccessToURIs().contains(uri));
+<a class="jxr_linenumber" name="L225" href="#L225">225</a> 
+<a class="jxr_linenumber" name="L226" href="#L226">226</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L227" href="#L227">227</a> <em class="jxr_javadoccomment">     *  This maps a Collection of acl:agentGroup values to a List of agents.</em>
+<a class="jxr_linenumber" name="L228" href="#L228">228</a> <em class="jxr_javadoccomment">     *  Any out-of-domain URIs are silently ignored.</em>
+<a class="jxr_linenumber" name="L229" href="#L229">229</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L230" href="#L230">230</a>     <strong class="jxr_keyword">private</strong> List&lt;String&gt; dereferenceAgentGroups(<strong class="jxr_keyword">final</strong> <a name="Transaction" href="../../../../org/fcrepo/kernel/api/Transaction.html#Transaction">Transaction</a> transaction, <strong class="jxr_keyword">final</strong> Collection&lt;String&gt; agentGroups) {
+<a class="jxr_linenumber" name="L231" href="#L231">231</a>         <strong class="jxr_keyword">final</strong> List&lt;String&gt; members = agentGroups.stream().flatMap(agentGroup -&gt; {
+<a class="jxr_linenumber" name="L232" href="#L232">232</a>             <strong class="jxr_keyword">if</strong> (agentGroup.startsWith(FEDORA_ID_PREFIX)) {
+<a class="jxr_linenumber" name="L233" href="#L233">233</a>                 <em class="jxr_comment">//strip off trailing hash.</em>
+<a class="jxr_linenumber" name="L234" href="#L234">234</a>                 <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> hashIndex = agentGroup.indexOf(<span class="jxr_string">"#"</span>);
+<a class="jxr_linenumber" name="L235" href="#L235">235</a>                 <strong class="jxr_keyword">final</strong> String agentGroupNoHash = hashIndex &gt; 0 ?
+<a class="jxr_linenumber" name="L236" href="#L236">236</a>                                          agentGroup.substring(0, hashIndex) :
+<a class="jxr_linenumber" name="L237" href="#L237">237</a>                                          agentGroup;
+<a class="jxr_linenumber" name="L238" href="#L238">238</a>                 <strong class="jxr_keyword">final</strong> String hashedSuffix = hashIndex &gt; 0 ? agentGroup.substring(hashIndex) : <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L239" href="#L239">239</a>                 <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L240" href="#L240">240</a>                     <strong class="jxr_keyword">final</strong> <a name="FedoraId" href="../../../../org/fcrepo/kernel/api/identifiers/FedoraId.html#FedoraId">FedoraId</a> fedoraId = FedoraId.create(agentGroupNoHash);
+<a class="jxr_linenumber" name="L241" href="#L241">241</a>                     <strong class="jxr_keyword">final</strong> <a name="FedoraResource" href="../../../../org/fcrepo/kernel/api/models/FedoraResource.html#FedoraResource">FedoraResource</a> resource = resourceFactory.getResource(transaction, fedoraId);
+<a class="jxr_linenumber" name="L242" href="#L242">242</a>                     <strong class="jxr_keyword">return</strong> getAgentMembers(resource, hashedSuffix);
+<a class="jxr_linenumber" name="L243" href="#L243">243</a>                 } <strong class="jxr_keyword">catch</strong> (<strong class="jxr_keyword">final</strong> <a name="PathNotFoundException" href="../../../../org/fcrepo/kernel/api/exception/PathNotFoundException.html#PathNotFoundException">PathNotFoundException</a> e) {
+<a class="jxr_linenumber" name="L244" href="#L244">244</a>                     <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> <a name="PathNotFoundRuntimeException" href="../../../../org/fcrepo/kernel/api/exception/PathNotFoundRuntimeException.html#PathNotFoundRuntimeException">PathNotFoundRuntimeException</a>(e.getMessage(), e);
+<a class="jxr_linenumber" name="L245" href="#L245">245</a>                 }
+<a class="jxr_linenumber" name="L246" href="#L246">246</a>             } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (agentGroup.equals(FOAF_AGENT_VALUE)) {
+<a class="jxr_linenumber" name="L247" href="#L247">247</a>                 <strong class="jxr_keyword">return</strong> of(agentGroup);
+<a class="jxr_linenumber" name="L248" href="#L248">248</a>             } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L249" href="#L249">249</a>                 LOGGER.info(<span class="jxr_string">"Ignoring agentGroup: {}"</span>, agentGroup);
+<a class="jxr_linenumber" name="L250" href="#L250">250</a>                 <strong class="jxr_keyword">return</strong> empty();
+<a class="jxr_linenumber" name="L251" href="#L251">251</a>             }
+<a class="jxr_linenumber" name="L252" href="#L252">252</a>         }).collect(toList());
+<a class="jxr_linenumber" name="L253" href="#L253">253</a> 
+<a class="jxr_linenumber" name="L254" href="#L254">254</a>         <strong class="jxr_keyword">if</strong> (LOGGER.isDebugEnabled() &amp;&amp; !agentGroups.isEmpty()) {
+<a class="jxr_linenumber" name="L255" href="#L255">255</a>             LOGGER.debug(<span class="jxr_string">"Found {} members in {} agentGroups resources"</span>, members.size(), agentGroups.size());
+<a class="jxr_linenumber" name="L256" href="#L256">256</a>         }
+<a class="jxr_linenumber" name="L257" href="#L257">257</a> 
+<a class="jxr_linenumber" name="L258" href="#L258">258</a>         <strong class="jxr_keyword">return</strong> members;
+<a class="jxr_linenumber" name="L259" href="#L259">259</a>     }
+<a class="jxr_linenumber" name="L260" href="#L260">260</a> 
+<a class="jxr_linenumber" name="L261" href="#L261">261</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L262" href="#L262">262</a> <em class="jxr_javadoccomment">     * Given a FedoraResource, return a list of agents.</em>
+<a class="jxr_linenumber" name="L263" href="#L263">263</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L264" href="#L264">264</a>     <strong class="jxr_keyword">private</strong> Stream&lt;String&gt; getAgentMembers(<strong class="jxr_keyword">final</strong> <a name="FedoraResource" href="../../../../org/fcrepo/kernel/api/models/FedoraResource.html#FedoraResource">FedoraResource</a> resource, <strong class="jxr_keyword">final</strong> String hashPortion) {
+<a class="jxr_linenumber" name="L265" href="#L265">265</a>         <em class="jxr_comment">//resolve list of triples, accounting for hash-uris.</em>
+<a class="jxr_linenumber" name="L266" href="#L266">266</a>         <strong class="jxr_keyword">final</strong> List&lt;Triple&gt; triples = resource.getTriples().filter(
+<a class="jxr_linenumber" name="L267" href="#L267">267</a>             triple -&gt; hashPortion == <strong class="jxr_keyword">null</strong> || triple.getSubject().getURI().endsWith(hashPortion)).collect(toList());
+<a class="jxr_linenumber" name="L268" href="#L268">268</a>         <em class="jxr_comment">//determine if there is a rdf:type vcard:Group</em>
+<a class="jxr_linenumber" name="L269" href="#L269">269</a>         <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">boolean</strong> hasVcardGroup = triples.stream().anyMatch(
+<a class="jxr_linenumber" name="L270" href="#L270">270</a>             triple -&gt; triple.matches(triple.getSubject(), RDF_TYPE_NODE, VCARD_GROUP_NODE));
+<a class="jxr_linenumber" name="L271" href="#L271">271</a>         <em class="jxr_comment">//return members only if there is an associated vcard:Group</em>
+<a class="jxr_linenumber" name="L272" href="#L272">272</a>         <strong class="jxr_keyword">if</strong> (hasVcardGroup) {
+<a class="jxr_linenumber" name="L273" href="#L273">273</a>             <strong class="jxr_keyword">return</strong> triples.stream()
+<a class="jxr_linenumber" name="L274" href="#L274">274</a>                           .filter(triple -&gt; triple.predicateMatches(VCARD_MEMBER_NODE))
+<a class="jxr_linenumber" name="L275" href="#L275">275</a>                           .map(Triple::getObject).flatMap(WebACRolesProvider::nodeToStringStream)
+<a class="jxr_linenumber" name="L276" href="#L276">276</a>                                                  .map(<strong class="jxr_keyword">this</strong>::stripUserAgentBaseURI);
+<a class="jxr_linenumber" name="L277" href="#L277">277</a>         } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L278" href="#L278">278</a>             <strong class="jxr_keyword">return</strong> empty();
+<a class="jxr_linenumber" name="L279" href="#L279">279</a>         }
+<a class="jxr_linenumber" name="L280" href="#L280">280</a>     }
+<a class="jxr_linenumber" name="L281" href="#L281">281</a> 
+<a class="jxr_linenumber" name="L282" href="#L282">282</a>     <strong class="jxr_keyword">private</strong> String stripUserAgentBaseURI(<strong class="jxr_keyword">final</strong> String object) {
+<a class="jxr_linenumber" name="L283" href="#L283">283</a>         <strong class="jxr_keyword">if</strong> (userBaseUri != <strong class="jxr_keyword">null</strong> &amp;&amp; object.startsWith(userBaseUri)) {
+<a class="jxr_linenumber" name="L284" href="#L284">284</a>             <strong class="jxr_keyword">return</strong> object.substring(userBaseUri.length());
+<a class="jxr_linenumber" name="L285" href="#L285">285</a>         }
+<a class="jxr_linenumber" name="L286" href="#L286">286</a>         <strong class="jxr_keyword">return</strong> object;
+<a class="jxr_linenumber" name="L287" href="#L287">287</a>     }
+<a class="jxr_linenumber" name="L288" href="#L288">288</a> 
+<a class="jxr_linenumber" name="L289" href="#L289">289</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L290" href="#L290">290</a> <em class="jxr_javadoccomment">     * Map a Jena Node to a Stream of Strings. Any non-URI, non-Literals map to an empty Stream,</em>
+<a class="jxr_linenumber" name="L291" href="#L291">291</a> <em class="jxr_javadoccomment">     * making this suitable to use with flatMap.</em>
+<a class="jxr_linenumber" name="L292" href="#L292">292</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L293" href="#L293">293</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> Stream&lt;String&gt; nodeToStringStream(<strong class="jxr_keyword">final</strong> org.apache.jena.graph.Node object) {
+<a class="jxr_linenumber" name="L294" href="#L294">294</a>         <strong class="jxr_keyword">if</strong> (object.isURI()) {
+<a class="jxr_linenumber" name="L295" href="#L295">295</a>             <strong class="jxr_keyword">return</strong> of(object.getURI());
+<a class="jxr_linenumber" name="L296" href="#L296">296</a>         } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (object.isLiteral()) {
+<a class="jxr_linenumber" name="L297" href="#L297">297</a>             <strong class="jxr_keyword">return</strong> of(object.getLiteralValue().toString());
+<a class="jxr_linenumber" name="L298" href="#L298">298</a>         } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L299" href="#L299">299</a>             <strong class="jxr_keyword">return</strong> empty();
+<a class="jxr_linenumber" name="L300" href="#L300">300</a>         }
+<a class="jxr_linenumber" name="L301" href="#L301">301</a>     }
+<a class="jxr_linenumber" name="L302" href="#L302">302</a> 
+<a class="jxr_linenumber" name="L303" href="#L303">303</a> 
+<a class="jxr_linenumber" name="L304" href="#L304">304</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L305" href="#L305">305</a> <em class="jxr_javadoccomment">     *  A simple predicate for filtering out any non-acl triples.</em>
+<a class="jxr_linenumber" name="L306" href="#L306">306</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L307" href="#L307">307</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> Predicate&lt;Triple&gt; hasAclPredicate = triple -&gt;
+<a class="jxr_linenumber" name="L308" href="#L308">308</a>         triple.getPredicate().getNameSpace().equals(WEBAC_NAMESPACE_VALUE);
+<a class="jxr_linenumber" name="L309" href="#L309">309</a> 
+<a class="jxr_linenumber" name="L310" href="#L310">310</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L311" href="#L311">311</a> <em class="jxr_javadoccomment">     * This function reads a Fedora ACL resource and all of its acl:Authorization children.</em>
+<a class="jxr_linenumber" name="L312" href="#L312">312</a> <em class="jxr_javadoccomment">     * The RDF from each child resource is put into a WebACAuthorization object, and the</em>
+<a class="jxr_linenumber" name="L313" href="#L313">313</a> <em class="jxr_javadoccomment">     * full list is returned.</em>
+<a class="jxr_linenumber" name="L314" href="#L314">314</a> <em class="jxr_javadoccomment">     *</em>
+<a class="jxr_linenumber" name="L315" href="#L315">315</a> <em class="jxr_javadoccomment">     * @param aclResource the ACL resource</em>
+<a class="jxr_linenumber" name="L316" href="#L316">316</a> <em class="jxr_javadoccomment">     * @param ancestorAcl flag indicating whether or not the ACL resource associated with an ancestor of the target</em>
+<a class="jxr_linenumber" name="L317" href="#L317">317</a> <em class="jxr_javadoccomment">     *                    resource</em>
+<a class="jxr_linenumber" name="L318" href="#L318">318</a> <em class="jxr_javadoccomment">     * @return a list of acl:Authorization objects</em>
+<a class="jxr_linenumber" name="L319" href="#L319">319</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L320" href="#L320">320</a>     <strong class="jxr_keyword">private</strong> List&lt;WebACAuthorization&gt; getAuthorizations(<strong class="jxr_keyword">final</strong> <a name="FedoraResource" href="../../../../org/fcrepo/kernel/api/models/FedoraResource.html#FedoraResource">FedoraResource</a> aclResource,
+<a class="jxr_linenumber" name="L321" href="#L321">321</a>                                                            <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">boolean</strong> ancestorAcl) {
+<a class="jxr_linenumber" name="L322" href="#L322">322</a> 
+<a class="jxr_linenumber" name="L323" href="#L323">323</a>         <strong class="jxr_keyword">final</strong> List&lt;WebACAuthorization&gt; authorizations = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L324" href="#L324">324</a> 
+<a class="jxr_linenumber" name="L325" href="#L325">325</a>         <strong class="jxr_keyword">if</strong> (LOGGER.isDebugEnabled()) {
+<a class="jxr_linenumber" name="L326" href="#L326">326</a>             LOGGER.debug(<span class="jxr_string">"ACL: {}"</span>, aclResource.getId());
+<a class="jxr_linenumber" name="L327" href="#L327">327</a>         }
+<a class="jxr_linenumber" name="L328" href="#L328">328</a> 
+<a class="jxr_linenumber" name="L329" href="#L329">329</a>         <strong class="jxr_keyword">if</strong> (aclResource.isAcl()) {
+<a class="jxr_linenumber" name="L330" href="#L330">330</a>             <em class="jxr_comment">//resolve set of subjects that are of type acl:authorization</em>
+<a class="jxr_linenumber" name="L331" href="#L331">331</a>             <strong class="jxr_keyword">final</strong> List&lt;Triple&gt; triples = aclResource.getTriples().collect(toList());
+<a class="jxr_linenumber" name="L332" href="#L332">332</a> 
+<a class="jxr_linenumber" name="L333" href="#L333">333</a>             <strong class="jxr_keyword">final</strong> Set&lt;org.apache.jena.graph.Node&gt; authSubjects = triples.stream().filter(t -&gt; {
+<a class="jxr_linenumber" name="L334" href="#L334">334</a>                 <strong class="jxr_keyword">return</strong> t.getPredicate().getURI().equals(RDF_NAMESPACE + <span class="jxr_string">"type"</span>) &amp;&amp;
+<a class="jxr_linenumber" name="L335" href="#L335">335</a>                        t.getObject().getURI().equals(WEBAC_AUTHORIZATION_VALUE);
+<a class="jxr_linenumber" name="L336" href="#L336">336</a>             }).map(t -&gt; t.getSubject()).collect(Collectors.toSet());
+<a class="jxr_linenumber" name="L337" href="#L337">337</a> 
+<a class="jxr_linenumber" name="L338" href="#L338">338</a>             <em class="jxr_comment">// Read resource, keeping only acl-prefixed triples.</em>
+<a class="jxr_linenumber" name="L339" href="#L339">339</a>             <strong class="jxr_keyword">final</strong> Map&lt;String, Map&lt;String, List&lt;String&gt;&gt;&gt; authMap = <strong class="jxr_keyword">new</strong> HashMap&lt;&gt;();
+<a class="jxr_linenumber" name="L340" href="#L340">340</a>             triples.stream().filter(hasAclPredicate)
+<a class="jxr_linenumber" name="L341" href="#L341">341</a>                     .forEach(triple -&gt; {
+<a class="jxr_linenumber" name="L342" href="#L342">342</a>                         <strong class="jxr_keyword">if</strong> (authSubjects.contains(triple.getSubject())) {
+<a class="jxr_linenumber" name="L343" href="#L343">343</a>                             <strong class="jxr_keyword">final</strong> Map&lt;String, List&lt;String&gt;&gt; aclTriples =
+<a class="jxr_linenumber" name="L344" href="#L344">344</a>                                 authMap.computeIfAbsent(triple.getSubject().getURI(), key -&gt; <strong class="jxr_keyword">new</strong> HashMap&lt;&gt;());
+<a class="jxr_linenumber" name="L345" href="#L345">345</a> 
+<a class="jxr_linenumber" name="L346" href="#L346">346</a>                             <strong class="jxr_keyword">final</strong> String predicate = triple.getPredicate().getURI();
+<a class="jxr_linenumber" name="L347" href="#L347">347</a>                             <strong class="jxr_keyword">final</strong> List&lt;String&gt; values = aclTriples.computeIfAbsent(predicate,
+<a class="jxr_linenumber" name="L348" href="#L348">348</a>                                                                                    key -&gt; <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;());
+<a class="jxr_linenumber" name="L349" href="#L349">349</a>                             nodeToStringStream(triple.getObject()).forEach(values::add);
+<a class="jxr_linenumber" name="L350" href="#L350">350</a>                             <strong class="jxr_keyword">if</strong> (predicate.equals(WEBAC_AGENT_VALUE)) {
+<a class="jxr_linenumber" name="L351" href="#L351">351</a>                                 additionalAgentValues(triple.getObject()).forEach(values::add);
+<a class="jxr_linenumber" name="L352" href="#L352">352</a>                             }
+<a class="jxr_linenumber" name="L353" href="#L353">353</a>                         }
+<a class="jxr_linenumber" name="L354" href="#L354">354</a>                     });
+<a class="jxr_linenumber" name="L355" href="#L355">355</a>             <em class="jxr_comment">// Create a WebACAuthorization object from the provided triples.</em>
+<a class="jxr_linenumber" name="L356" href="#L356">356</a>             <strong class="jxr_keyword">if</strong> (LOGGER.isDebugEnabled()) {
+<a class="jxr_linenumber" name="L357" href="#L357">357</a>                 LOGGER.debug(<span class="jxr_string">"Adding acl:Authorization from {}"</span>, aclResource.getId());
+<a class="jxr_linenumber" name="L358" href="#L358">358</a>             }
+<a class="jxr_linenumber" name="L359" href="#L359">359</a>             authMap.values().forEach(aclTriples -&gt; {
+<a class="jxr_linenumber" name="L360" href="#L360">360</a>                 <strong class="jxr_keyword">final</strong> <a name="WebACAuthorization" href="../../../../org/fcrepo/kernel/api/auth/WebACAuthorization.html#WebACAuthorization">WebACAuthorization</a> authorization = createAuthorizationFromMap(aclTriples);
+<a class="jxr_linenumber" name="L361" href="#L361">361</a>                 <em class="jxr_comment">//only include authorizations if the acl resource is not an ancestor acl</em>
+<a class="jxr_linenumber" name="L362" href="#L362">362</a>                 <em class="jxr_comment">//or the authorization has at least one acl:default</em>
+<a class="jxr_linenumber" name="L363" href="#L363">363</a>                 <strong class="jxr_keyword">if</strong> (!ancestorAcl || authorization.getDefaults().size() &gt; 0) {
+<a class="jxr_linenumber" name="L364" href="#L364">364</a>                     authorizations.add(authorization);
+<a class="jxr_linenumber" name="L365" href="#L365">365</a>                 }
+<a class="jxr_linenumber" name="L366" href="#L366">366</a>             });
+<a class="jxr_linenumber" name="L367" href="#L367">367</a>         }
+<a class="jxr_linenumber" name="L368" href="#L368">368</a> 
+<a class="jxr_linenumber" name="L369" href="#L369">369</a>         <strong class="jxr_keyword">return</strong> authorizations;
+<a class="jxr_linenumber" name="L370" href="#L370">370</a>     }
+<a class="jxr_linenumber" name="L371" href="#L371">371</a> 
+<a class="jxr_linenumber" name="L372" href="#L372">372</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <a name="WebACAuthorization" href="../../../../org/fcrepo/kernel/api/auth/WebACAuthorization.html#WebACAuthorization">WebACAuthorization</a> createAuthorizationFromMap(<strong class="jxr_keyword">final</strong> Map&lt;String, List&lt;String&gt;&gt; data) {
+<a class="jxr_linenumber" name="L373" href="#L373">373</a>         <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> <a name="WebACAuthorizationImpl" href="../../../../org/fcrepo/auth/webac/WebACAuthorizationImpl.html#WebACAuthorizationImpl">WebACAuthorizationImpl</a>(
+<a class="jxr_linenumber" name="L374" href="#L374">374</a>                 data.getOrDefault(WEBAC_AGENT_VALUE, emptyList()),
+<a class="jxr_linenumber" name="L375" href="#L375">375</a>                 data.getOrDefault(WEBAC_AGENT_CLASS_VALUE, emptyList()),
+<a class="jxr_linenumber" name="L376" href="#L376">376</a>                 data.getOrDefault(WEBAC_MODE_VALUE, emptyList()).stream()
+<a class="jxr_linenumber" name="L377" href="#L377">377</a>                 .map(URI::create).collect(toList()),
+<a class="jxr_linenumber" name="L378" href="#L378">378</a>                 data.getOrDefault(WEBAC_ACCESSTO_VALUE, emptyList()),
+<a class="jxr_linenumber" name="L379" href="#L379">379</a>                 data.getOrDefault(WEBAC_ACCESSTO_CLASS_VALUE, emptyList()),
+<a class="jxr_linenumber" name="L380" href="#L380">380</a>                 data.getOrDefault(WEBAC_AGENT_GROUP_VALUE, emptyList()),
+<a class="jxr_linenumber" name="L381" href="#L381">381</a>                 data.getOrDefault(WEBAC_DEFAULT_VALUE, emptyList()));
+<a class="jxr_linenumber" name="L382" href="#L382">382</a>     }
+<a class="jxr_linenumber" name="L383" href="#L383">383</a> 
+<a class="jxr_linenumber" name="L384" href="#L384">384</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L385" href="#L385">385</a> <em class="jxr_javadoccomment">     * Recursively find the effective ACL as a URI along with the FedoraResource that points to it.</em>
+<a class="jxr_linenumber" name="L386" href="#L386">386</a> <em class="jxr_javadoccomment">     * This way, if the effective ACL is pointed to from a parent resource, the child will inherit</em>
+<a class="jxr_linenumber" name="L387" href="#L387">387</a> <em class="jxr_javadoccomment">     * any permissions that correspond to access to that parent. This ACL resource may or may not exist,</em>
+<a class="jxr_linenumber" name="L388" href="#L388">388</a> <em class="jxr_javadoccomment">     * and it may be external to the fedora repository.</em>
+<a class="jxr_linenumber" name="L389" href="#L389">389</a> <em class="jxr_javadoccomment">     * @param resource the Fedora resource</em>
+<a class="jxr_linenumber" name="L390" href="#L390">390</a> <em class="jxr_javadoccomment">     * @param ancestorAcl the flag for looking up ACL from ancestor hierarchy resources</em>
+<a class="jxr_linenumber" name="L391" href="#L391">391</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L392" href="#L392">392</a>     Optional&lt;ACLHandle&gt; getEffectiveAcl(<strong class="jxr_keyword">final</strong> <a name="FedoraResource" href="../../../../org/fcrepo/kernel/api/models/FedoraResource.html#FedoraResource">FedoraResource</a> resource, <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">boolean</strong> ancestorAcl) {
+<a class="jxr_linenumber" name="L393" href="#L393">393</a>         <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L394" href="#L394">394</a> 
+<a class="jxr_linenumber" name="L395" href="#L395">395</a>             <strong class="jxr_keyword">final</strong> <a name="FedoraResource" href="../../../../org/fcrepo/kernel/api/models/FedoraResource.html#FedoraResource">FedoraResource</a> aclResource = resource.getAcl();
+<a class="jxr_linenumber" name="L396" href="#L396">396</a> 
+<a class="jxr_linenumber" name="L397" href="#L397">397</a>             <strong class="jxr_keyword">if</strong> (aclResource != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L398" href="#L398">398</a>                 <strong class="jxr_keyword">final</strong> List&lt;WebACAuthorization&gt; authorizations =
+<a class="jxr_linenumber" name="L399" href="#L399">399</a>                     getAuthorizations(aclResource, ancestorAcl);
+<a class="jxr_linenumber" name="L400" href="#L400">400</a>                 <strong class="jxr_keyword">if</strong> (authorizations.size() &gt; 0) {
+<a class="jxr_linenumber" name="L401" href="#L401">401</a>                     <strong class="jxr_keyword">return</strong> Optional.of(
+<a class="jxr_linenumber" name="L402" href="#L402">402</a>                         <strong class="jxr_keyword">new</strong> <a name="ACLHandleImpl" href="../../../../org/fcrepo/auth/webac/ACLHandleImpl.html#ACLHandleImpl">ACLHandleImpl</a>(resource, authorizations));
+<a class="jxr_linenumber" name="L403" href="#L403">403</a>                 }
+<a class="jxr_linenumber" name="L404" href="#L404">404</a>             }
+<a class="jxr_linenumber" name="L405" href="#L405">405</a> 
+<a class="jxr_linenumber" name="L406" href="#L406">406</a>             <a name="FedoraResource" href="../../../../org/fcrepo/kernel/api/models/FedoraResource.html#FedoraResource">FedoraResource</a> container = resource.getContainer();
+<a class="jxr_linenumber" name="L407" href="#L407">407</a>             <em class="jxr_comment">// The resource is not ldp:contained by anything, so checked its described resource.</em>
+<a class="jxr_linenumber" name="L408" href="#L408">408</a>             <strong class="jxr_keyword">if</strong> (container == <strong class="jxr_keyword">null</strong> &amp;&amp; (resource instanceof <a name="NonRdfSourceDescription" href="../../../../org/fcrepo/kernel/api/models/NonRdfSourceDescription.html#NonRdfSourceDescription">NonRdfSourceDescription</a> || resource instanceof <a name="TimeMap" href="../../../../org/fcrepo/kernel/api/models/TimeMap.html#TimeMap">TimeMap</a>)) {
+<a class="jxr_linenumber" name="L409" href="#L409">409</a>                 <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">var</strong> described = resource.getDescribedResource();
+<a class="jxr_linenumber" name="L410" href="#L410">410</a>                 <strong class="jxr_keyword">if</strong> (!Objects.equals(resource, described)) {
+<a class="jxr_linenumber" name="L411" href="#L411">411</a>                     container = described;
+<a class="jxr_linenumber" name="L412" href="#L412">412</a>                 }
+<a class="jxr_linenumber" name="L413" href="#L413">413</a>             }
+<a class="jxr_linenumber" name="L414" href="#L414">414</a>             <strong class="jxr_keyword">if</strong> (container == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L415" href="#L415">415</a>                 LOGGER.debug(<span class="jxr_string">"No ACLs defined on this node or in parent hierarchy"</span>);
+<a class="jxr_linenumber" name="L416" href="#L416">416</a>                 <strong class="jxr_keyword">return</strong> Optional.empty();
+<a class="jxr_linenumber" name="L417" href="#L417">417</a>             } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L418" href="#L418">418</a>                 LOGGER.trace(<span class="jxr_string">"Checking parent resource for ACL. No ACL found at {}"</span>, resource.getId());
+<a class="jxr_linenumber" name="L419" href="#L419">419</a>                 <strong class="jxr_keyword">return</strong> getEffectiveAcl(container, <strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L420" href="#L420">420</a>             }
+<a class="jxr_linenumber" name="L421" href="#L421">421</a>         } <strong class="jxr_keyword">catch</strong> (<strong class="jxr_keyword">final</strong> <a name="RepositoryException" href="../../../../org/fcrepo/kernel/api/exception/RepositoryException.html#RepositoryException">RepositoryException</a> ex) {
+<a class="jxr_linenumber" name="L422" href="#L422">422</a>             LOGGER.debug(<span class="jxr_string">"Exception finding effective ACL: {}"</span>, ex.getMessage());
+<a class="jxr_linenumber" name="L423" href="#L423">423</a>             <strong class="jxr_keyword">return</strong> Optional.empty();
+<a class="jxr_linenumber" name="L424" href="#L424">424</a>         }
+<a class="jxr_linenumber" name="L425" href="#L425">425</a>     }
+<a class="jxr_linenumber" name="L426" href="#L426">426</a> 
+<a class="jxr_linenumber" name="L427" href="#L427">427</a>     <strong class="jxr_keyword">private</strong> List&lt;WebACAuthorization&gt; getDefaultAuthorizations() {
+<a class="jxr_linenumber" name="L428" href="#L428">428</a>         <strong class="jxr_keyword">final</strong> Map&lt;String, List&lt;String&gt;&gt; aclTriples = <strong class="jxr_keyword">new</strong> HashMap&lt;&gt;();
+<a class="jxr_linenumber" name="L429" href="#L429">429</a>         <strong class="jxr_keyword">final</strong> List&lt;WebACAuthorization&gt; authorizations = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L430" href="#L430">430</a> 
+<a class="jxr_linenumber" name="L431" href="#L431">431</a>         getDefaultAcl(<strong class="jxr_keyword">null</strong>, authPropsConfig.getRootAuthAclPath())
+<a class="jxr_linenumber" name="L432" href="#L432">432</a>                 .listStatements().mapWith(Statement::asTriple).forEachRemaining(triple -&gt; {
+<a class="jxr_linenumber" name="L433" href="#L433">433</a>             <strong class="jxr_keyword">if</strong> (hasAclPredicate.test(triple)) {
+<a class="jxr_linenumber" name="L434" href="#L434">434</a>                 <strong class="jxr_keyword">final</strong> String predicate = triple.getPredicate().getURI();
+<a class="jxr_linenumber" name="L435" href="#L435">435</a>                 <strong class="jxr_keyword">final</strong> List&lt;String&gt; values = aclTriples.computeIfAbsent(predicate,
+<a class="jxr_linenumber" name="L436" href="#L436">436</a>                     key -&gt; <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;());
+<a class="jxr_linenumber" name="L437" href="#L437">437</a>                 nodeToStringStream(triple.getObject()).forEach(values::add);
+<a class="jxr_linenumber" name="L438" href="#L438">438</a>                 <strong class="jxr_keyword">if</strong> (predicate.equals(WEBAC_AGENT_VALUE)) {
+<a class="jxr_linenumber" name="L439" href="#L439">439</a>                     additionalAgentValues(triple.getObject()).forEach(values::add);
+<a class="jxr_linenumber" name="L440" href="#L440">440</a>                 }
+<a class="jxr_linenumber" name="L441" href="#L441">441</a>             }
+<a class="jxr_linenumber" name="L442" href="#L442">442</a>         });
+<a class="jxr_linenumber" name="L443" href="#L443">443</a> 
+<a class="jxr_linenumber" name="L444" href="#L444">444</a>         authorizations.add(createAuthorizationFromMap(aclTriples));
+<a class="jxr_linenumber" name="L445" href="#L445">445</a>         <strong class="jxr_keyword">return</strong> authorizations;
+<a class="jxr_linenumber" name="L446" href="#L446">446</a>     }
+<a class="jxr_linenumber" name="L447" href="#L447">447</a> 
+<a class="jxr_linenumber" name="L448" href="#L448">448</a>     <strong class="jxr_keyword">private</strong> Stream&lt;String&gt; additionalAgentValues(<strong class="jxr_keyword">final</strong> org.apache.jena.graph.Node object) {
+<a class="jxr_linenumber" name="L449" href="#L449">449</a>         <strong class="jxr_keyword">if</strong> (object.isURI()) {
+<a class="jxr_linenumber" name="L450" href="#L450">450</a>             <strong class="jxr_keyword">final</strong> String uri = object.getURI();
+<a class="jxr_linenumber" name="L451" href="#L451">451</a>             <strong class="jxr_keyword">if</strong> (userBaseUri != <strong class="jxr_keyword">null</strong> &amp;&amp; uri.startsWith(userBaseUri)) {
+<a class="jxr_linenumber" name="L452" href="#L452">452</a>                 <strong class="jxr_keyword">return</strong> of(uri.substring(userBaseUri.length()));
+<a class="jxr_linenumber" name="L453" href="#L453">453</a>             } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (groupBaseUri != <strong class="jxr_keyword">null</strong> &amp;&amp; uri.startsWith(groupBaseUri)) {
+<a class="jxr_linenumber" name="L454" href="#L454">454</a>                 <strong class="jxr_keyword">return</strong> of(uri.substring(groupBaseUri.length()));
+<a class="jxr_linenumber" name="L455" href="#L455">455</a>             }
+<a class="jxr_linenumber" name="L456" href="#L456">456</a>         }
+<a class="jxr_linenumber" name="L457" href="#L457">457</a>         <strong class="jxr_keyword">return</strong> empty();
+<a class="jxr_linenumber" name="L458" href="#L458">458</a>     }
+<a class="jxr_linenumber" name="L459" href="#L459">459</a> 
+<a class="jxr_linenumber" name="L460" href="#L460">460</a>     <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L461" href="#L461">461</a> <em class="jxr_comment">     * The below two methods are ONLY used by tests and so invalidating the cache should not have any impact.</em>
+<a class="jxr_linenumber" name="L462" href="#L462">462</a> <em class="jxr_comment">     */</em>
+<a class="jxr_linenumber" name="L463" href="#L463">463</a> 
+<a class="jxr_linenumber" name="L464" href="#L464">464</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L465" href="#L465">465</a> <em class="jxr_javadoccomment">     * @param userBaseUri the user base uri</em>
+<a class="jxr_linenumber" name="L466" href="#L466">466</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L467" href="#L467">467</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> setUserBaseUri(<strong class="jxr_keyword">final</strong> String userBaseUri) {
+<a class="jxr_linenumber" name="L468" href="#L468">468</a>         <strong class="jxr_keyword">this</strong>.userBaseUri = userBaseUri;
+<a class="jxr_linenumber" name="L469" href="#L469">469</a>         authHandleCache.invalidateAll();
+<a class="jxr_linenumber" name="L470" href="#L470">470</a>     }
+<a class="jxr_linenumber" name="L471" href="#L471">471</a> 
+<a class="jxr_linenumber" name="L472" href="#L472">472</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L473" href="#L473">473</a> <em class="jxr_javadoccomment">     * @param groupBaseUri the group base uri</em>
+<a class="jxr_linenumber" name="L474" href="#L474">474</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L475" href="#L475">475</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> setGroupBaseUri(<strong class="jxr_keyword">final</strong> String groupBaseUri) {
+<a class="jxr_linenumber" name="L476" href="#L476">476</a>         <strong class="jxr_keyword">this</strong>.groupBaseUri = groupBaseUri;
+<a class="jxr_linenumber" name="L477" href="#L477">477</a>         authHandleCache.invalidateAll();
+<a class="jxr_linenumber" name="L478" href="#L478">478</a>     }
+<a class="jxr_linenumber" name="L479" href="#L479">479</a> }
+</pre>
+<hr/>
+<div id="footer">Copyright &#169; 2013&#x2013;2022 <a href="http://www.duraspace.org/">DuraSpace, Inc.</a>. All rights reserved.</div>
+</body>
+</html>
