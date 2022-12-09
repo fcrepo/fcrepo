@@ -1,0 +1,140 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * The contents of this file are subject to the license and copyright</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * detailed in the LICENSE and NOTICE files at the root of the source</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * tree.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> */</a>
+<span class="sourceLineNo">006</span><a id="line.6">package org.fcrepo.auth.common;</a>
+<span class="sourceLineNo">007</span><a id="line.7"></a>
+<span class="sourceLineNo">008</span><a id="line.8">import static org.slf4j.LoggerFactory.getLogger;</a>
+<span class="sourceLineNo">009</span><a id="line.9"></a>
+<span class="sourceLineNo">010</span><a id="line.10">import java.util.HashSet;</a>
+<span class="sourceLineNo">011</span><a id="line.11">import java.util.Set;</a>
+<span class="sourceLineNo">012</span><a id="line.12"></a>
+<span class="sourceLineNo">013</span><a id="line.13">import org.apache.http.auth.BasicUserPrincipal;</a>
+<span class="sourceLineNo">014</span><a id="line.14">import org.apache.shiro.authc.AuthenticationToken;</a>
+<span class="sourceLineNo">015</span><a id="line.15">import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrincipal;</a>
+<span class="sourceLineNo">016</span><a id="line.16">import org.slf4j.Logger;</a>
+<span class="sourceLineNo">017</span><a id="line.17"></a>
+<span class="sourceLineNo">018</span><a id="line.18">/**</a>
+<span class="sourceLineNo">019</span><a id="line.19"> * @author peichman</a>
+<span class="sourceLineNo">020</span><a id="line.20"> */</a>
+<span class="sourceLineNo">021</span><a id="line.21">public class ContainerAuthToken implements AuthenticationToken {</a>
+<span class="sourceLineNo">022</span><a id="line.22"></a>
+<span class="sourceLineNo">023</span><a id="line.23">    private static final Logger log = getLogger(ContainerAuthToken.class);</a>
+<span class="sourceLineNo">024</span><a id="line.24"></a>
+<span class="sourceLineNo">025</span><a id="line.25">    public static final String AUTHORIZED = "AUTHORIZED";</a>
+<span class="sourceLineNo">026</span><a id="line.26"></a>
+<span class="sourceLineNo">027</span><a id="line.27">    private final BasicUserPrincipal servletUser;</a>
+<span class="sourceLineNo">028</span><a id="line.28"></a>
+<span class="sourceLineNo">029</span><a id="line.29">    private final Set&lt;ContainerRolesPrincipal&gt; servletRoles;</a>
+<span class="sourceLineNo">030</span><a id="line.30"></a>
+<span class="sourceLineNo">031</span><a id="line.31">    /**</a>
+<span class="sourceLineNo">032</span><a id="line.32">     * @param servletUsername username returned from servlet container authentication</a>
+<span class="sourceLineNo">033</span><a id="line.33">     * @param servletRoleNames roles returned from servlet container authentication</a>
+<span class="sourceLineNo">034</span><a id="line.34">     */</a>
+<span class="sourceLineNo">035</span><a id="line.35">    public ContainerAuthToken(final String servletUsername, final Set&lt;String&gt; servletRoleNames) {</a>
+<span class="sourceLineNo">036</span><a id="line.36">        servletUser = new BasicUserPrincipal(servletUsername);</a>
+<span class="sourceLineNo">037</span><a id="line.37">        log.debug("Setting servlet username {}", servletUsername);</a>
+<span class="sourceLineNo">038</span><a id="line.38">        this.servletRoles = new HashSet&lt;&gt;();</a>
+<span class="sourceLineNo">039</span><a id="line.39">        for (final String roleName : servletRoleNames) {</a>
+<span class="sourceLineNo">040</span><a id="line.40">            log.debug("Adding servlet role {} to {}", roleName, servletUsername);</a>
+<span class="sourceLineNo">041</span><a id="line.41">            this.servletRoles.add(new ContainerRolesPrincipal(roleName));</a>
+<span class="sourceLineNo">042</span><a id="line.42">        }</a>
+<span class="sourceLineNo">043</span><a id="line.43">    }</a>
+<span class="sourceLineNo">044</span><a id="line.44"></a>
+<span class="sourceLineNo">045</span><a id="line.45">    @Override</a>
+<span class="sourceLineNo">046</span><a id="line.46">    public Object getPrincipal() {</a>
+<span class="sourceLineNo">047</span><a id="line.47">        return servletUser;</a>
+<span class="sourceLineNo">048</span><a id="line.48">    }</a>
+<span class="sourceLineNo">049</span><a id="line.49"></a>
+<span class="sourceLineNo">050</span><a id="line.50">    /**</a>
+<span class="sourceLineNo">051</span><a id="line.51">     * This token represents a user who was already authenticated by the servlet container, so return a constant</a>
+<span class="sourceLineNo">052</span><a id="line.52">     * credentials string.</a>
+<span class="sourceLineNo">053</span><a id="line.53">     */</a>
+<span class="sourceLineNo">054</span><a id="line.54">    @Override</a>
+<span class="sourceLineNo">055</span><a id="line.55">    public Object getCredentials() {</a>
+<span class="sourceLineNo">056</span><a id="line.56">        return AUTHORIZED;</a>
+<span class="sourceLineNo">057</span><a id="line.57">    }</a>
+<span class="sourceLineNo">058</span><a id="line.58"></a>
+<span class="sourceLineNo">059</span><a id="line.59">    /**</a>
+<span class="sourceLineNo">060</span><a id="line.60">     * @return set of principals</a>
+<span class="sourceLineNo">061</span><a id="line.61">     */</a>
+<span class="sourceLineNo">062</span><a id="line.62">    public Set&lt;ContainerRolesPrincipal&gt; getRoles() {</a>
+<span class="sourceLineNo">063</span><a id="line.63">        return servletRoles;</a>
+<span class="sourceLineNo">064</span><a id="line.64">    }</a>
+<span class="sourceLineNo">065</span><a id="line.65"></a>
+<span class="sourceLineNo">066</span><a id="line.66">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>

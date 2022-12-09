@@ -1,0 +1,180 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * The contents of this file are subject to the license and copyright</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * detailed in the LICENSE and NOTICE files at the root of the source</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * tree.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> */</a>
+<span class="sourceLineNo">006</span><a id="line.6">package org.fcrepo.jms;</a>
+<span class="sourceLineNo">007</span><a id="line.7"></a>
+<span class="sourceLineNo">008</span><a id="line.8">import static org.slf4j.LoggerFactory.getLogger;</a>
+<span class="sourceLineNo">009</span><a id="line.9"></a>
+<span class="sourceLineNo">010</span><a id="line.10">import javax.annotation.PostConstruct;</a>
+<span class="sourceLineNo">011</span><a id="line.11">import javax.annotation.PreDestroy;</a>
+<span class="sourceLineNo">012</span><a id="line.12">import javax.inject.Inject;</a>
+<span class="sourceLineNo">013</span><a id="line.13">import javax.jms.Connection;</a>
+<span class="sourceLineNo">014</span><a id="line.14">import javax.jms.Destination;</a>
+<span class="sourceLineNo">015</span><a id="line.15">import javax.jms.JMSException;</a>
+<span class="sourceLineNo">016</span><a id="line.16">import javax.jms.Message;</a>
+<span class="sourceLineNo">017</span><a id="line.17">import javax.jms.MessageProducer;</a>
+<span class="sourceLineNo">018</span><a id="line.18">import javax.jms.Session;</a>
+<span class="sourceLineNo">019</span><a id="line.19"></a>
+<span class="sourceLineNo">020</span><a id="line.20">import com.google.common.eventbus.AllowConcurrentEvents;</a>
+<span class="sourceLineNo">021</span><a id="line.21">import org.apache.activemq.ActiveMQConnectionFactory;</a>
+<span class="sourceLineNo">022</span><a id="line.22">import org.fcrepo.kernel.api.observer.Event;</a>
+<span class="sourceLineNo">023</span><a id="line.23">import org.slf4j.Logger;</a>
+<span class="sourceLineNo">024</span><a id="line.24"></a>
+<span class="sourceLineNo">025</span><a id="line.25">import com.google.common.eventbus.EventBus;</a>
+<span class="sourceLineNo">026</span><a id="line.26">import com.google.common.eventbus.Subscribe;</a>
+<span class="sourceLineNo">027</span><a id="line.27"></a>
+<span class="sourceLineNo">028</span><a id="line.28">/**</a>
+<span class="sourceLineNo">029</span><a id="line.29"> * Machinery to publish JMS messages when an EventBus</a>
+<span class="sourceLineNo">030</span><a id="line.30"> * message is received.</a>
+<span class="sourceLineNo">031</span><a id="line.31"> *</a>
+<span class="sourceLineNo">032</span><a id="line.32"> * @author barmintor</a>
+<span class="sourceLineNo">033</span><a id="line.33"> * @author awoods</a>
+<span class="sourceLineNo">034</span><a id="line.34"> * @author acoburn</a>
+<span class="sourceLineNo">035</span><a id="line.35"> */</a>
+<span class="sourceLineNo">036</span><a id="line.36">public abstract class AbstractJMSPublisher {</a>
+<span class="sourceLineNo">037</span><a id="line.37"></a>
+<span class="sourceLineNo">038</span><a id="line.38">    @Inject</a>
+<span class="sourceLineNo">039</span><a id="line.39">    private EventBus eventBus;</a>
+<span class="sourceLineNo">040</span><a id="line.40"></a>
+<span class="sourceLineNo">041</span><a id="line.41">    @Inject</a>
+<span class="sourceLineNo">042</span><a id="line.42">    private ActiveMQConnectionFactory connectionFactory;</a>
+<span class="sourceLineNo">043</span><a id="line.43"></a>
+<span class="sourceLineNo">044</span><a id="line.44">    @Inject</a>
+<span class="sourceLineNo">045</span><a id="line.45">    private JMSEventMessageFactory eventFactory;</a>
+<span class="sourceLineNo">046</span><a id="line.46"></a>
+<span class="sourceLineNo">047</span><a id="line.47">    private Connection connection;</a>
+<span class="sourceLineNo">048</span><a id="line.48"></a>
+<span class="sourceLineNo">049</span><a id="line.49">    protected Session jmsSession;</a>
+<span class="sourceLineNo">050</span><a id="line.50"></a>
+<span class="sourceLineNo">051</span><a id="line.51">    private MessageProducer producer;</a>
+<span class="sourceLineNo">052</span><a id="line.52"></a>
+<span class="sourceLineNo">053</span><a id="line.53">    private static final Logger LOGGER = getLogger(AbstractJMSPublisher.class);</a>
+<span class="sourceLineNo">054</span><a id="line.54"></a>
+<span class="sourceLineNo">055</span><a id="line.55">    protected abstract Destination createDestination() throws JMSException;</a>
+<span class="sourceLineNo">056</span><a id="line.56"></a>
+<span class="sourceLineNo">057</span><a id="line.57">    /**</a>
+<span class="sourceLineNo">058</span><a id="line.58">     * When an EventBus message is received, map it to our JMS</a>
+<span class="sourceLineNo">059</span><a id="line.59">     * message payload and push it onto the queue.</a>
+<span class="sourceLineNo">060</span><a id="line.60">     *</a>
+<span class="sourceLineNo">061</span><a id="line.61">     * @param event the fedora event</a>
+<span class="sourceLineNo">062</span><a id="line.62">     * @throws JMSException if JMS exception occurred</a>
+<span class="sourceLineNo">063</span><a id="line.63">     */</a>
+<span class="sourceLineNo">064</span><a id="line.64">    @Subscribe</a>
+<span class="sourceLineNo">065</span><a id="line.65">    @AllowConcurrentEvents</a>
+<span class="sourceLineNo">066</span><a id="line.66">    public void publishJCREvent(final Event event) throws JMSException {</a>
+<span class="sourceLineNo">067</span><a id="line.67">        LOGGER.debug("Received an event from the internal bus. {}", event);</a>
+<span class="sourceLineNo">068</span><a id="line.68">        final Message tm =</a>
+<span class="sourceLineNo">069</span><a id="line.69">                eventFactory.getMessage(event, jmsSession);</a>
+<span class="sourceLineNo">070</span><a id="line.70">        LOGGER.trace("Transformed the event to a JMS message.");</a>
+<span class="sourceLineNo">071</span><a id="line.71">        producer.send(tm);</a>
+<span class="sourceLineNo">072</span><a id="line.72"></a>
+<span class="sourceLineNo">073</span><a id="line.73">        LOGGER.debug("Put event: {} onto JMS.", tm.getJMSMessageID());</a>
+<span class="sourceLineNo">074</span><a id="line.74">    }</a>
+<span class="sourceLineNo">075</span><a id="line.75"></a>
+<span class="sourceLineNo">076</span><a id="line.76">    /**</a>
+<span class="sourceLineNo">077</span><a id="line.77">     * Connect to JCR Repository and JMS queue</a>
+<span class="sourceLineNo">078</span><a id="line.78">     *</a>
+<span class="sourceLineNo">079</span><a id="line.79">     * @throws JMSException if JMS Exception occurred</a>
+<span class="sourceLineNo">080</span><a id="line.80">     */</a>
+<span class="sourceLineNo">081</span><a id="line.81">    @PostConstruct</a>
+<span class="sourceLineNo">082</span><a id="line.82">    public void acquireConnections() throws JMSException {</a>
+<span class="sourceLineNo">083</span><a id="line.83">        LOGGER.debug("Initializing: {}", this.getClass().getCanonicalName());</a>
+<span class="sourceLineNo">084</span><a id="line.84"></a>
+<span class="sourceLineNo">085</span><a id="line.85">        connection = connectionFactory.createConnection();</a>
+<span class="sourceLineNo">086</span><a id="line.86">        connection.start();</a>
+<span class="sourceLineNo">087</span><a id="line.87">        jmsSession = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);</a>
+<span class="sourceLineNo">088</span><a id="line.88">        producer = jmsSession.createProducer(createDestination());</a>
+<span class="sourceLineNo">089</span><a id="line.89">        eventBus.register(this);</a>
+<span class="sourceLineNo">090</span><a id="line.90">    }</a>
+<span class="sourceLineNo">091</span><a id="line.91"></a>
+<span class="sourceLineNo">092</span><a id="line.92">    /**</a>
+<span class="sourceLineNo">093</span><a id="line.93">     * Close external connections</a>
+<span class="sourceLineNo">094</span><a id="line.94">     *</a>
+<span class="sourceLineNo">095</span><a id="line.95">     * @throws JMSException if JMS exception occurred</a>
+<span class="sourceLineNo">096</span><a id="line.96">     */</a>
+<span class="sourceLineNo">097</span><a id="line.97">    @PreDestroy</a>
+<span class="sourceLineNo">098</span><a id="line.98">    public void releaseConnections() throws JMSException {</a>
+<span class="sourceLineNo">099</span><a id="line.99">        LOGGER.debug("Tearing down: {}", this.getClass().getCanonicalName());</a>
+<span class="sourceLineNo">100</span><a id="line.100"></a>
+<span class="sourceLineNo">101</span><a id="line.101">        producer.close();</a>
+<span class="sourceLineNo">102</span><a id="line.102">        jmsSession.close();</a>
+<span class="sourceLineNo">103</span><a id="line.103">        connection.close();</a>
+<span class="sourceLineNo">104</span><a id="line.104">        eventBus.unregister(this);</a>
+<span class="sourceLineNo">105</span><a id="line.105">    }</a>
+<span class="sourceLineNo">106</span><a id="line.106">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>

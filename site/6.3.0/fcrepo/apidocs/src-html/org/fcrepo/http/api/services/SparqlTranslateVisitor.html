@@ -1,0 +1,336 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * The contents of this file are subject to the license and copyright</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * detailed in the LICENSE and NOTICE files at the root of the source</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * tree.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> */</a>
+<span class="sourceLineNo">006</span><a id="line.6">package org.fcrepo.http.api.services;</a>
+<span class="sourceLineNo">007</span><a id="line.7"></a>
+<span class="sourceLineNo">008</span><a id="line.8">import static org.fcrepo.config.ServerManagedPropsMode.RELAXED;</a>
+<span class="sourceLineNo">009</span><a id="line.9">import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.checkTripleForDisallowed;</a>
+<span class="sourceLineNo">010</span><a id="line.10">import static org.slf4j.LoggerFactory.getLogger;</a>
+<span class="sourceLineNo">011</span><a id="line.11"></a>
+<span class="sourceLineNo">012</span><a id="line.12">import java.lang.reflect.Constructor;</a>
+<span class="sourceLineNo">013</span><a id="line.13">import java.util.ArrayList;</a>
+<span class="sourceLineNo">014</span><a id="line.14">import java.util.Collections;</a>
+<span class="sourceLineNo">015</span><a id="line.15">import java.util.List;</a>
+<span class="sourceLineNo">016</span><a id="line.16"></a>
+<span class="sourceLineNo">017</span><a id="line.17">import org.fcrepo.config.FedoraPropsConfig;</a>
+<span class="sourceLineNo">018</span><a id="line.18">import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;</a>
+<span class="sourceLineNo">019</span><a id="line.19">import org.fcrepo.kernel.api.exception.ConstraintViolationException;</a>
+<span class="sourceLineNo">020</span><a id="line.20">import org.fcrepo.kernel.api.exception.MultipleConstraintViolationException;</a>
+<span class="sourceLineNo">021</span><a id="line.21">import org.fcrepo.kernel.api.exception.RelaxableServerManagedPropertyException;</a>
+<span class="sourceLineNo">022</span><a id="line.22">import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;</a>
+<span class="sourceLineNo">023</span><a id="line.23">import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;</a>
+<span class="sourceLineNo">024</span><a id="line.24">import org.fcrepo.kernel.api.exception.ServerManagedTypeException;</a>
+<span class="sourceLineNo">025</span><a id="line.25">import org.fcrepo.kernel.api.identifiers.FedoraId;</a>
+<span class="sourceLineNo">026</span><a id="line.26"></a>
+<span class="sourceLineNo">027</span><a id="line.27">import org.apache.jena.graph.Node;</a>
+<span class="sourceLineNo">028</span><a id="line.28">import org.apache.jena.graph.NodeFactory;</a>
+<span class="sourceLineNo">029</span><a id="line.29">import org.apache.jena.graph.Triple;</a>
+<span class="sourceLineNo">030</span><a id="line.30">import org.apache.jena.sparql.core.BasicPattern;</a>
+<span class="sourceLineNo">031</span><a id="line.31">import org.apache.jena.sparql.core.Quad;</a>
+<span class="sourceLineNo">032</span><a id="line.32">import org.apache.jena.sparql.modify.request.QuadAcc;</a>
+<span class="sourceLineNo">033</span><a id="line.33">import org.apache.jena.sparql.modify.request.QuadDataAcc;</a>
+<span class="sourceLineNo">034</span><a id="line.34">import org.apache.jena.sparql.modify.request.UpdateData;</a>
+<span class="sourceLineNo">035</span><a id="line.35">import org.apache.jena.sparql.modify.request.UpdateDataDelete;</a>
+<span class="sourceLineNo">036</span><a id="line.36">import org.apache.jena.sparql.modify.request.UpdateDataInsert;</a>
+<span class="sourceLineNo">037</span><a id="line.37">import org.apache.jena.sparql.modify.request.UpdateDeleteWhere;</a>
+<span class="sourceLineNo">038</span><a id="line.38">import org.apache.jena.sparql.modify.request.UpdateModify;</a>
+<span class="sourceLineNo">039</span><a id="line.39">import org.apache.jena.sparql.modify.request.UpdateVisitorBase;</a>
+<span class="sourceLineNo">040</span><a id="line.40">import org.apache.jena.sparql.syntax.Element;</a>
+<span class="sourceLineNo">041</span><a id="line.41">import org.apache.jena.sparql.syntax.ElementGroup;</a>
+<span class="sourceLineNo">042</span><a id="line.42">import org.apache.jena.sparql.syntax.ElementPathBlock;</a>
+<span class="sourceLineNo">043</span><a id="line.43">import org.apache.jena.update.Update;</a>
+<span class="sourceLineNo">044</span><a id="line.44">import org.apache.jena.update.UpdateFactory;</a>
+<span class="sourceLineNo">045</span><a id="line.45">import org.apache.jena.update.UpdateRequest;</a>
+<span class="sourceLineNo">046</span><a id="line.46">import org.slf4j.Logger;</a>
+<span class="sourceLineNo">047</span><a id="line.47"></a>
+<span class="sourceLineNo">048</span><a id="line.48">/**</a>
+<span class="sourceLineNo">049</span><a id="line.49"> * A special UpdateVisitor to translate Fedora URIs to internal FedoraIDs.</a>
+<span class="sourceLineNo">050</span><a id="line.50"> * @author whikloj</a>
+<span class="sourceLineNo">051</span><a id="line.51"> */</a>
+<span class="sourceLineNo">052</span><a id="line.52">public class SparqlTranslateVisitor extends UpdateVisitorBase {</a>
+<span class="sourceLineNo">053</span><a id="line.53"></a>
+<span class="sourceLineNo">054</span><a id="line.54">    private static final Logger LOGGER = getLogger(SparqlTranslateVisitor.class);</a>
+<span class="sourceLineNo">055</span><a id="line.55"></a>
+<span class="sourceLineNo">056</span><a id="line.56">    private List&lt;Update&gt; newUpdates = new ArrayList&lt;&gt;();</a>
+<span class="sourceLineNo">057</span><a id="line.57"></a>
+<span class="sourceLineNo">058</span><a id="line.58">    private HttpIdentifierConverter idTranslator;</a>
+<span class="sourceLineNo">059</span><a id="line.59"></a>
+<span class="sourceLineNo">060</span><a id="line.60">    private boolean isRelaxedMode;</a>
+<span class="sourceLineNo">061</span><a id="line.61"></a>
+<span class="sourceLineNo">062</span><a id="line.62">    public SparqlTranslateVisitor(final HttpIdentifierConverter identifierConverter, final FedoraPropsConfig config) {</a>
+<span class="sourceLineNo">063</span><a id="line.63">        idTranslator = identifierConverter;</a>
+<span class="sourceLineNo">064</span><a id="line.64">        isRelaxedMode = config.getServerManagedPropsMode().equals(RELAXED);</a>
+<span class="sourceLineNo">065</span><a id="line.65">    }</a>
+<span class="sourceLineNo">066</span><a id="line.66"></a>
+<span class="sourceLineNo">067</span><a id="line.67">    private List&lt;ConstraintViolationException&gt; exceptions = new ArrayList&lt;&gt;();</a>
+<span class="sourceLineNo">068</span><a id="line.68"></a>
+<span class="sourceLineNo">069</span><a id="line.69">    @Override</a>
+<span class="sourceLineNo">070</span><a id="line.70">    public void visit(final UpdateDataInsert update) {</a>
+<span class="sourceLineNo">071</span><a id="line.71">        translateUpdate(update);</a>
+<span class="sourceLineNo">072</span><a id="line.72">    }</a>
+<span class="sourceLineNo">073</span><a id="line.73"></a>
+<span class="sourceLineNo">074</span><a id="line.74">    @Override</a>
+<span class="sourceLineNo">075</span><a id="line.75">    public void visit(final UpdateDataDelete update) {</a>
+<span class="sourceLineNo">076</span><a id="line.76">        translateUpdate(update);</a>
+<span class="sourceLineNo">077</span><a id="line.77">    }</a>
+<span class="sourceLineNo">078</span><a id="line.78"></a>
+<span class="sourceLineNo">079</span><a id="line.79">    @Override</a>
+<span class="sourceLineNo">080</span><a id="line.80">    public void visit(final UpdateDeleteWhere update) {</a>
+<span class="sourceLineNo">081</span><a id="line.81">        translateUpdate(update);</a>
+<span class="sourceLineNo">082</span><a id="line.82">    }</a>
+<span class="sourceLineNo">083</span><a id="line.83"></a>
+<span class="sourceLineNo">084</span><a id="line.84">    @Override</a>
+<span class="sourceLineNo">085</span><a id="line.85">    public void visit(final UpdateModify update) {</a>
+<span class="sourceLineNo">086</span><a id="line.86">        translateUpdate(update);</a>
+<span class="sourceLineNo">087</span><a id="line.87">    }</a>
+<span class="sourceLineNo">088</span><a id="line.88"></a>
+<span class="sourceLineNo">089</span><a id="line.89">    /**</a>
+<span class="sourceLineNo">090</span><a id="line.90">     * Get the new UpdateRequest based on the parsed Updates.</a>
+<span class="sourceLineNo">091</span><a id="line.91">     * @return the new update request object.</a>
+<span class="sourceLineNo">092</span><a id="line.92">     */</a>
+<span class="sourceLineNo">093</span><a id="line.93">    public UpdateRequest getTranslatedRequest() {</a>
+<span class="sourceLineNo">094</span><a id="line.94">        final UpdateRequest newRequest = UpdateFactory.create();</a>
+<span class="sourceLineNo">095</span><a id="line.95">        newUpdates.forEach(newRequest::add);</a>
+<span class="sourceLineNo">096</span><a id="line.96">        return newRequest;</a>
+<span class="sourceLineNo">097</span><a id="line.97">    }</a>
+<span class="sourceLineNo">098</span><a id="line.98"></a>
+<span class="sourceLineNo">099</span><a id="line.99">    /**</a>
+<span class="sourceLineNo">100</span><a id="line.100">     * Perform a translation of all the triples in an Update adding them to the internal list.</a>
+<span class="sourceLineNo">101</span><a id="line.101">     * @param update the update request to translate.</a>
+<span class="sourceLineNo">102</span><a id="line.102">     */</a>
+<span class="sourceLineNo">103</span><a id="line.103">    private void translateUpdate(final Update update) {</a>
+<span class="sourceLineNo">104</span><a id="line.104">        final List&lt;Quad&gt; sourceQuads;</a>
+<span class="sourceLineNo">105</span><a id="line.105">        if (update instanceof UpdateDeleteWhere) {</a>
+<span class="sourceLineNo">106</span><a id="line.106">            sourceQuads = ((UpdateDeleteWhere)update).getQuads();</a>
+<span class="sourceLineNo">107</span><a id="line.107">        } else {</a>
+<span class="sourceLineNo">108</span><a id="line.108">            sourceQuads = ((UpdateData) update).getQuads();</a>
+<span class="sourceLineNo">109</span><a id="line.109">        }</a>
+<span class="sourceLineNo">110</span><a id="line.110">        final List&lt;Quad&gt; newQuads = translateQuads(sourceQuads);</a>
+<span class="sourceLineNo">111</span><a id="line.111">        assertNoExceptions();</a>
+<span class="sourceLineNo">112</span><a id="line.112">        final Update newUpdate = makeUpdate(update.getClass(), newQuads);</a>
+<span class="sourceLineNo">113</span><a id="line.113">        newUpdates.add(newUpdate);</a>
+<span class="sourceLineNo">114</span><a id="line.114">    }</a>
+<span class="sourceLineNo">115</span><a id="line.115"></a>
+<span class="sourceLineNo">116</span><a id="line.116">    /**</a>
+<span class="sourceLineNo">117</span><a id="line.117">     * Perform a translation of all the triples in an UpdateModify request.</a>
+<span class="sourceLineNo">118</span><a id="line.118">     * @param update the update request to translate</a>
+<span class="sourceLineNo">119</span><a id="line.119">     */</a>
+<span class="sourceLineNo">120</span><a id="line.120">    private void translateUpdate(final UpdateModify update) {</a>
+<span class="sourceLineNo">121</span><a id="line.121">        final UpdateModify newUpdate = new UpdateModify();</a>
+<span class="sourceLineNo">122</span><a id="line.122">        final List&lt;Quad&gt; insertQuads = (update.hasInsertClause() ? translateQuads(update.getInsertQuads()) :</a>
+<span class="sourceLineNo">123</span><a id="line.123">                Collections.emptyList());</a>
+<span class="sourceLineNo">124</span><a id="line.124">        final List&lt;Quad&gt; deleteQuads = (update.hasDeleteClause() ? translateQuads(update.getDeleteQuads()) :</a>
+<span class="sourceLineNo">125</span><a id="line.125">                Collections.emptyList());</a>
+<span class="sourceLineNo">126</span><a id="line.126">        assertNoExceptions();</a>
+<span class="sourceLineNo">127</span><a id="line.127"></a>
+<span class="sourceLineNo">128</span><a id="line.128">        insertQuads.forEach(q -&gt; newUpdate.getInsertAcc().addQuad(q));</a>
+<span class="sourceLineNo">129</span><a id="line.129">        deleteQuads.forEach(q -&gt; newUpdate.getDeleteAcc().addQuad(q));</a>
+<span class="sourceLineNo">130</span><a id="line.130"></a>
+<span class="sourceLineNo">131</span><a id="line.131">        final Element where = update.getWherePattern();</a>
+<span class="sourceLineNo">132</span><a id="line.132">        final Element newElement = processElements(where);</a>
+<span class="sourceLineNo">133</span><a id="line.133">        newUpdate.setElement(newElement);</a>
+<span class="sourceLineNo">134</span><a id="line.134">        newUpdates.add(newUpdate);</a>
+<span class="sourceLineNo">135</span><a id="line.135">    }</a>
+<span class="sourceLineNo">136</span><a id="line.136"></a>
+<span class="sourceLineNo">137</span><a id="line.137">    private void assertNoExceptions() {</a>
+<span class="sourceLineNo">138</span><a id="line.138">        if (!exceptions.isEmpty()) {</a>
+<span class="sourceLineNo">139</span><a id="line.139">            throw new MultipleConstraintViolationException(exceptions);</a>
+<span class="sourceLineNo">140</span><a id="line.140">        }</a>
+<span class="sourceLineNo">141</span><a id="line.141">    }</a>
+<span class="sourceLineNo">142</span><a id="line.142"></a>
+<span class="sourceLineNo">143</span><a id="line.143">    /**</a>
+<span class="sourceLineNo">144</span><a id="line.144">     * Process triples inside the Element or return the element.</a>
+<span class="sourceLineNo">145</span><a id="line.145">     * @param element the element to translate.</a>
+<span class="sourceLineNo">146</span><a id="line.146">     * @return the translated or original element.</a>
+<span class="sourceLineNo">147</span><a id="line.147">     */</a>
+<span class="sourceLineNo">148</span><a id="line.148">    private Element processElements(final Element element) {</a>
+<span class="sourceLineNo">149</span><a id="line.149">        if (element instanceof ElementGroup) {</a>
+<span class="sourceLineNo">150</span><a id="line.150">            final ElementGroup group = new ElementGroup();</a>
+<span class="sourceLineNo">151</span><a id="line.151">            ((ElementGroup) element).getElements().forEach(e -&gt; group.addElement(processElements(e)));</a>
+<span class="sourceLineNo">152</span><a id="line.152">            return group;</a>
+<span class="sourceLineNo">153</span><a id="line.153">        } else if (element instanceof ElementPathBlock) {</a>
+<span class="sourceLineNo">154</span><a id="line.154">            final BasicPattern basicPattern = new BasicPattern();</a>
+<span class="sourceLineNo">155</span><a id="line.155">            final var tripleIter = ((ElementPathBlock) element).patternElts();</a>
+<span class="sourceLineNo">156</span><a id="line.156">            tripleIter.forEachRemaining(t -&gt; {</a>
+<span class="sourceLineNo">157</span><a id="line.157">                if (t.isTriple()) {</a>
+<span class="sourceLineNo">158</span><a id="line.158">                    try {</a>
+<span class="sourceLineNo">159</span><a id="line.159">                        checkTripleForDisallowed(t.asTriple());</a>
+<span class="sourceLineNo">160</span><a id="line.160">                    } catch (final ServerManagedPropertyException | ServerManagedTypeException exc) {</a>
+<span class="sourceLineNo">161</span><a id="line.161">                        if (!isRelaxedMode) {</a>
+<span class="sourceLineNo">162</span><a id="line.162">                            exceptions.add(exc);</a>
+<span class="sourceLineNo">163</span><a id="line.163">                            return;</a>
+<span class="sourceLineNo">164</span><a id="line.164">                        }</a>
+<span class="sourceLineNo">165</span><a id="line.165">                    }</a>
+<span class="sourceLineNo">166</span><a id="line.166">                    basicPattern.add(translateTriple(t.asTriple()));</a>
+<span class="sourceLineNo">167</span><a id="line.167">                }</a>
+<span class="sourceLineNo">168</span><a id="line.168">            });</a>
+<span class="sourceLineNo">169</span><a id="line.169">            return new ElementPathBlock(basicPattern);</a>
+<span class="sourceLineNo">170</span><a id="line.170">        }</a>
+<span class="sourceLineNo">171</span><a id="line.171">        return element;</a>
+<span class="sourceLineNo">172</span><a id="line.172">    }</a>
+<span class="sourceLineNo">173</span><a id="line.173"></a>
+<span class="sourceLineNo">174</span><a id="line.174">    /**</a>
+<span class="sourceLineNo">175</span><a id="line.175">     * Perform the translation to a list of quads.</a>
+<span class="sourceLineNo">176</span><a id="line.176">     * @param quadsList the quads</a>
+<span class="sourceLineNo">177</span><a id="line.177">     * @return the translated list of quads.</a>
+<span class="sourceLineNo">178</span><a id="line.178">     */</a>
+<span class="sourceLineNo">179</span><a id="line.179">    private List&lt;Quad&gt; translateQuads(final List&lt;Quad&gt; quadsList) {</a>
+<span class="sourceLineNo">180</span><a id="line.180">        final List&lt;Quad&gt; newQuads = new ArrayList&lt;&gt;();</a>
+<span class="sourceLineNo">181</span><a id="line.181">        for (final Quad q : quadsList) {</a>
+<span class="sourceLineNo">182</span><a id="line.182">            try {</a>
+<span class="sourceLineNo">183</span><a id="line.183">                checkTripleForDisallowed(q.asTriple());</a>
+<span class="sourceLineNo">184</span><a id="line.184">            } catch (final RelaxableServerManagedPropertyException exc) {</a>
+<span class="sourceLineNo">185</span><a id="line.185">                if (!isRelaxedMode) {</a>
+<span class="sourceLineNo">186</span><a id="line.186">                    // Swallow these exceptions to throw together later.</a>
+<span class="sourceLineNo">187</span><a id="line.187">                    exceptions.add(exc);</a>
+<span class="sourceLineNo">188</span><a id="line.188">                    continue;</a>
+<span class="sourceLineNo">189</span><a id="line.189">                }</a>
+<span class="sourceLineNo">190</span><a id="line.190">            } catch (final ServerManagedTypeException | ServerManagedPropertyException exc) {</a>
+<span class="sourceLineNo">191</span><a id="line.191">                exceptions.add(exc);</a>
+<span class="sourceLineNo">192</span><a id="line.192">                continue;</a>
+<span class="sourceLineNo">193</span><a id="line.193">            }</a>
+<span class="sourceLineNo">194</span><a id="line.194">            final Node subject = translateId(q.getSubject());</a>
+<span class="sourceLineNo">195</span><a id="line.195">            final Node object = translateId(q.getObject());</a>
+<span class="sourceLineNo">196</span><a id="line.196">            final Quad quad = Quad.create(q.getGraph(), subject, q.getPredicate(), object);</a>
+<span class="sourceLineNo">197</span><a id="line.197">            LOGGER.trace("Translated quad is: {}", quad);</a>
+<span class="sourceLineNo">198</span><a id="line.198">            newQuads.add(quad);</a>
+<span class="sourceLineNo">199</span><a id="line.199">        }</a>
+<span class="sourceLineNo">200</span><a id="line.200">        return newQuads;</a>
+<span class="sourceLineNo">201</span><a id="line.201">    }</a>
+<span class="sourceLineNo">202</span><a id="line.202"></a>
+<span class="sourceLineNo">203</span><a id="line.203">    /**</a>
+<span class="sourceLineNo">204</span><a id="line.204">     * Translate the subject and object of a triple from external URIs to internal IDs.</a>
+<span class="sourceLineNo">205</span><a id="line.205">     * @param triple the triple to translate</a>
+<span class="sourceLineNo">206</span><a id="line.206">     * @return the translated triple.</a>
+<span class="sourceLineNo">207</span><a id="line.207">     */</a>
+<span class="sourceLineNo">208</span><a id="line.208">    private Triple translateTriple(final Triple triple) {</a>
+<span class="sourceLineNo">209</span><a id="line.209">        final Node subject = translateId(triple.getSubject());</a>
+<span class="sourceLineNo">210</span><a id="line.210">        final Node object = translateId(triple.getObject());</a>
+<span class="sourceLineNo">211</span><a id="line.211">        return Triple.create(subject, triple.getPredicate(), object);</a>
+<span class="sourceLineNo">212</span><a id="line.212">    }</a>
+<span class="sourceLineNo">213</span><a id="line.213"></a>
+<span class="sourceLineNo">214</span><a id="line.214">    /**</a>
+<span class="sourceLineNo">215</span><a id="line.215">     * Quads insert/delete data statements don't contain variables and use QuadDataAcc to accumulate,</a>
+<span class="sourceLineNo">216</span><a id="line.216">     * insert {} delete {} where {} statements can't contain variables and use QuadAcc to accumulate. This function</a>
+<span class="sourceLineNo">217</span><a id="line.217">     * simplifies the creation of the eventual Update.</a>
+<span class="sourceLineNo">218</span><a id="line.218">     * @param updateClass the class of Update we are starting with.</a>
+<span class="sourceLineNo">219</span><a id="line.219">     * @param quadList the list of Quads to generate the above class with.</a>
+<span class="sourceLineNo">220</span><a id="line.220">     * @return a subclass of Update with the provided Quads.</a>
+<span class="sourceLineNo">221</span><a id="line.221">     */</a>
+<span class="sourceLineNo">222</span><a id="line.222">    private Update makeUpdate(final Class&lt;? extends Update&gt; updateClass, final List&lt;Quad&gt; quadList) {</a>
+<span class="sourceLineNo">223</span><a id="line.223">        try {</a>
+<span class="sourceLineNo">224</span><a id="line.224">            if (updateClass.equals(UpdateDeleteWhere.class)) {</a>
+<span class="sourceLineNo">225</span><a id="line.225">                final QuadAcc quadAcc = new QuadAcc();</a>
+<span class="sourceLineNo">226</span><a id="line.226">                quadList.forEach(quadAcc::addQuad);</a>
+<span class="sourceLineNo">227</span><a id="line.227">                return new UpdateDeleteWhere(quadAcc);</a>
+<span class="sourceLineNo">228</span><a id="line.228">            } else {</a>
+<span class="sourceLineNo">229</span><a id="line.229">                final QuadDataAcc quadsAcc = new QuadDataAcc();</a>
+<span class="sourceLineNo">230</span><a id="line.230">                quadList.forEach(quadsAcc::addQuad);</a>
+<span class="sourceLineNo">231</span><a id="line.231">                final Constructor&lt;? extends Update&gt; update = updateClass.getConstructor(QuadDataAcc.class);</a>
+<span class="sourceLineNo">232</span><a id="line.232">                return update.newInstance(quadsAcc);</a>
+<span class="sourceLineNo">233</span><a id="line.233">            }</a>
+<span class="sourceLineNo">234</span><a id="line.234">        } catch (final ReflectiveOperationException exc) {</a>
+<span class="sourceLineNo">235</span><a id="line.235">            LOGGER.warn("Could not find constructor UpdateRequest");</a>
+<span class="sourceLineNo">236</span><a id="line.236">            throw new RepositoryRuntimeException("Could not find constructor UpdateRequest", exc);</a>
+<span class="sourceLineNo">237</span><a id="line.237">        }</a>
+<span class="sourceLineNo">238</span><a id="line.238">    }</a>
+<span class="sourceLineNo">239</span><a id="line.239"></a>
+<span class="sourceLineNo">240</span><a id="line.240">    /**</a>
+<span class="sourceLineNo">241</span><a id="line.241">     * If the node is a URI with the external domain translate it, otherwise leave it alone</a>
+<span class="sourceLineNo">242</span><a id="line.242">     * @param externalNode the node to translate</a>
+<span class="sourceLineNo">243</span><a id="line.243">     * @return the original or translated node.</a>
+<span class="sourceLineNo">244</span><a id="line.244">     */</a>
+<span class="sourceLineNo">245</span><a id="line.245">    private Node translateId(final Node externalNode) {</a>
+<span class="sourceLineNo">246</span><a id="line.246">        if (externalNode.isURI()) {</a>
+<span class="sourceLineNo">247</span><a id="line.247">            final String externalId = externalNode.getURI();</a>
+<span class="sourceLineNo">248</span><a id="line.248">            final String newUri = idTranslator.translateUri(externalId);</a>
+<span class="sourceLineNo">249</span><a id="line.249">            if (idTranslator.inInternalDomain(newUri)) {</a>
+<span class="sourceLineNo">250</span><a id="line.250">                // If this was converted to an internal ID, make a FedoraId out of it.</a>
+<span class="sourceLineNo">251</span><a id="line.251">                final var id = FedoraId.create(newUri);</a>
+<span class="sourceLineNo">252</span><a id="line.252">                if (id.isDescription()) {</a>
+<span class="sourceLineNo">253</span><a id="line.253">                    // If we are dealing with a binary description ID convert it to the binary ID.</a>
+<span class="sourceLineNo">254</span><a id="line.254">                    return NodeFactory.createURI(id.getFullDescribedId());</a>
+<span class="sourceLineNo">255</span><a id="line.255">                }</a>
+<span class="sourceLineNo">256</span><a id="line.256">            }</a>
+<span class="sourceLineNo">257</span><a id="line.257">            return NodeFactory.createURI(newUri);</a>
+<span class="sourceLineNo">258</span><a id="line.258">        }</a>
+<span class="sourceLineNo">259</span><a id="line.259">        return externalNode;</a>
+<span class="sourceLineNo">260</span><a id="line.260">    }</a>
+<span class="sourceLineNo">261</span><a id="line.261"></a>
+<span class="sourceLineNo">262</span><a id="line.262">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>

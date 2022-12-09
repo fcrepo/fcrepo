@@ -1,0 +1,241 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * The contents of this file are subject to the license and copyright</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * detailed in the LICENSE and NOTICE files at the root of the source</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * tree.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> */</a>
+<span class="sourceLineNo">006</span><a id="line.6">package org.fcrepo.persistence.ocfl.impl;</a>
+<span class="sourceLineNo">007</span><a id="line.7"></a>
+<span class="sourceLineNo">008</span><a id="line.8">import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createFilesystemRepository;</a>
+<span class="sourceLineNo">009</span><a id="line.9">import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createS3Repository;</a>
+<span class="sourceLineNo">010</span><a id="line.10"></a>
+<span class="sourceLineNo">011</span><a id="line.11">import java.io.IOException;</a>
+<span class="sourceLineNo">012</span><a id="line.12">import java.net.URI;</a>
+<span class="sourceLineNo">013</span><a id="line.13">import java.util.concurrent.TimeUnit;</a>
+<span class="sourceLineNo">014</span><a id="line.14"></a>
+<span class="sourceLineNo">015</span><a id="line.15">import javax.inject.Inject;</a>
+<span class="sourceLineNo">016</span><a id="line.16">import javax.sql.DataSource;</a>
+<span class="sourceLineNo">017</span><a id="line.17"></a>
+<span class="sourceLineNo">018</span><a id="line.18">import org.fcrepo.config.MetricsConfig;</a>
+<span class="sourceLineNo">019</span><a id="line.19">import org.fcrepo.config.OcflPropsConfig;</a>
+<span class="sourceLineNo">020</span><a id="line.20">import org.fcrepo.config.Storage;</a>
+<span class="sourceLineNo">021</span><a id="line.21">import org.fcrepo.storage.ocfl.CommitType;</a>
+<span class="sourceLineNo">022</span><a id="line.22">import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;</a>
+<span class="sourceLineNo">023</span><a id="line.23">import org.fcrepo.storage.ocfl.validation.ObjectValidator;</a>
+<span class="sourceLineNo">024</span><a id="line.24">import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;</a>
+<span class="sourceLineNo">025</span><a id="line.25">import org.fcrepo.storage.ocfl.ResourceHeaders;</a>
+<span class="sourceLineNo">026</span><a id="line.26">import org.fcrepo.storage.ocfl.cache.Cache;</a>
+<span class="sourceLineNo">027</span><a id="line.27">import org.fcrepo.storage.ocfl.cache.CaffeineCache;</a>
+<span class="sourceLineNo">028</span><a id="line.28">import org.fcrepo.storage.ocfl.cache.NoOpCache;</a>
+<span class="sourceLineNo">029</span><a id="line.29"></a>
+<span class="sourceLineNo">030</span><a id="line.30">import org.apache.commons.lang3.StringUtils;</a>
+<span class="sourceLineNo">031</span><a id="line.31">import org.springframework.context.annotation.Bean;</a>
+<span class="sourceLineNo">032</span><a id="line.32">import org.springframework.context.annotation.Configuration;</a>
+<span class="sourceLineNo">033</span><a id="line.33"></a>
+<span class="sourceLineNo">034</span><a id="line.34">import com.github.benmanes.caffeine.cache.Caffeine;</a>
+<span class="sourceLineNo">035</span><a id="line.35"></a>
+<span class="sourceLineNo">036</span><a id="line.36">import edu.wisc.library.ocfl.api.MutableOcflRepository;</a>
+<span class="sourceLineNo">037</span><a id="line.37">import io.micrometer.core.instrument.MeterRegistry;</a>
+<span class="sourceLineNo">038</span><a id="line.38">import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;</a>
+<span class="sourceLineNo">039</span><a id="line.39">import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;</a>
+<span class="sourceLineNo">040</span><a id="line.40">import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;</a>
+<span class="sourceLineNo">041</span><a id="line.41">import software.amazon.awssdk.regions.Region;</a>
+<span class="sourceLineNo">042</span><a id="line.42">import software.amazon.awssdk.services.s3.S3Client;</a>
+<span class="sourceLineNo">043</span><a id="line.43"></a>
+<span class="sourceLineNo">044</span><a id="line.44">/**</a>
+<span class="sourceLineNo">045</span><a id="line.45"> * A Configuration for OCFL dependencies</a>
+<span class="sourceLineNo">046</span><a id="line.46"> *</a>
+<span class="sourceLineNo">047</span><a id="line.47"> * @author dbernstein</a>
+<span class="sourceLineNo">048</span><a id="line.48"> * @since 6.0.0</a>
+<span class="sourceLineNo">049</span><a id="line.49"> */</a>
+<span class="sourceLineNo">050</span><a id="line.50">@Configuration</a>
+<span class="sourceLineNo">051</span><a id="line.51">public class OcflPersistenceConfig {</a>
+<span class="sourceLineNo">052</span><a id="line.52"></a>
+<span class="sourceLineNo">053</span><a id="line.53">    @Inject</a>
+<span class="sourceLineNo">054</span><a id="line.54">    private OcflPropsConfig ocflPropsConfig;</a>
+<span class="sourceLineNo">055</span><a id="line.55"></a>
+<span class="sourceLineNo">056</span><a id="line.56">    @Inject</a>
+<span class="sourceLineNo">057</span><a id="line.57">    private MetricsConfig metricsConfig;</a>
+<span class="sourceLineNo">058</span><a id="line.58"></a>
+<span class="sourceLineNo">059</span><a id="line.59">    @Inject</a>
+<span class="sourceLineNo">060</span><a id="line.60">    private MeterRegistry meterRegistry;</a>
+<span class="sourceLineNo">061</span><a id="line.61"></a>
+<span class="sourceLineNo">062</span><a id="line.62">    @Inject</a>
+<span class="sourceLineNo">063</span><a id="line.63">    private DataSource dataSource;</a>
+<span class="sourceLineNo">064</span><a id="line.64"></a>
+<span class="sourceLineNo">065</span><a id="line.65">    /**</a>
+<span class="sourceLineNo">066</span><a id="line.66">     * Create an OCFL Repository</a>
+<span class="sourceLineNo">067</span><a id="line.67">     * @return the repository</a>
+<span class="sourceLineNo">068</span><a id="line.68">     */</a>
+<span class="sourceLineNo">069</span><a id="line.69">    @Bean</a>
+<span class="sourceLineNo">070</span><a id="line.70">    public MutableOcflRepository repository() throws IOException {</a>
+<span class="sourceLineNo">071</span><a id="line.71">        if (ocflPropsConfig.getStorage() == Storage.OCFL_S3) {</a>
+<span class="sourceLineNo">072</span><a id="line.72">            return createS3Repository(</a>
+<span class="sourceLineNo">073</span><a id="line.73">                    dataSource,</a>
+<span class="sourceLineNo">074</span><a id="line.74">                    s3Client(),</a>
+<span class="sourceLineNo">075</span><a id="line.75">                    ocflPropsConfig.getOcflS3Bucket(),</a>
+<span class="sourceLineNo">076</span><a id="line.76">                    ocflPropsConfig.getOcflS3Prefix(),</a>
+<span class="sourceLineNo">077</span><a id="line.77">                    ocflPropsConfig.getOcflTemp(),</a>
+<span class="sourceLineNo">078</span><a id="line.78">                    ocflPropsConfig.getDefaultDigestAlgorithm(),</a>
+<span class="sourceLineNo">079</span><a id="line.79">                    ocflPropsConfig.isOcflS3DbEnabled(),</a>
+<span class="sourceLineNo">080</span><a id="line.80">                    ocflPropsConfig.isOcflUpgradeOnWrite(),</a>
+<span class="sourceLineNo">081</span><a id="line.81">                    ocflPropsConfig.verifyInventory());</a>
+<span class="sourceLineNo">082</span><a id="line.82">        } else {</a>
+<span class="sourceLineNo">083</span><a id="line.83">            return createFilesystemRepository(ocflPropsConfig.getOcflRepoRoot(), ocflPropsConfig.getOcflTemp(),</a>
+<span class="sourceLineNo">084</span><a id="line.84">                    ocflPropsConfig.getDefaultDigestAlgorithm(), ocflPropsConfig.isOcflUpgradeOnWrite(),</a>
+<span class="sourceLineNo">085</span><a id="line.85">                    ocflPropsConfig.verifyInventory());</a>
+<span class="sourceLineNo">086</span><a id="line.86">        }</a>
+<span class="sourceLineNo">087</span><a id="line.87">    }</a>
+<span class="sourceLineNo">088</span><a id="line.88"></a>
+<span class="sourceLineNo">089</span><a id="line.89">    @Bean</a>
+<span class="sourceLineNo">090</span><a id="line.90">    public OcflObjectSessionFactory ocflObjectSessionFactory() throws IOException {</a>
+<span class="sourceLineNo">091</span><a id="line.91">        final var objectMapper = OcflPersistentStorageUtils.objectMapper();</a>
+<span class="sourceLineNo">092</span><a id="line.92"></a>
+<span class="sourceLineNo">093</span><a id="line.93">        final var factory = new DefaultOcflObjectSessionFactory(repository(),</a>
+<span class="sourceLineNo">094</span><a id="line.94">                ocflPropsConfig.getFedoraOcflStaging(),</a>
+<span class="sourceLineNo">095</span><a id="line.95">                objectMapper,</a>
+<span class="sourceLineNo">096</span><a id="line.96">                createCache("resourceHeadersCache"),</a>
+<span class="sourceLineNo">097</span><a id="line.97">                createCache("rootIdCache"),</a>
+<span class="sourceLineNo">098</span><a id="line.98">                commitType(),</a>
+<span class="sourceLineNo">099</span><a id="line.99">                "Authored by Fedora 6",</a>
+<span class="sourceLineNo">100</span><a id="line.100">                "fedoraAdmin",</a>
+<span class="sourceLineNo">101</span><a id="line.101">                "info:fedora/fedoraAdmin");</a>
+<span class="sourceLineNo">102</span><a id="line.102">        factory.useUnsafeWrite(ocflPropsConfig.isUnsafeWriteEnabled());</a>
+<span class="sourceLineNo">103</span><a id="line.103">        return factory;</a>
+<span class="sourceLineNo">104</span><a id="line.104">    }</a>
+<span class="sourceLineNo">105</span><a id="line.105"></a>
+<span class="sourceLineNo">106</span><a id="line.106">    @Bean</a>
+<span class="sourceLineNo">107</span><a id="line.107">    public ObjectValidator objectValidator() throws IOException {</a>
+<span class="sourceLineNo">108</span><a id="line.108">        final var objectMapper = OcflPersistentStorageUtils.objectMapper();</a>
+<span class="sourceLineNo">109</span><a id="line.109">        return new ObjectValidator(repository(), objectMapper.readerFor(ResourceHeaders.class));</a>
+<span class="sourceLineNo">110</span><a id="line.110">    }</a>
+<span class="sourceLineNo">111</span><a id="line.111"></a>
+<span class="sourceLineNo">112</span><a id="line.112">    private CommitType commitType() {</a>
+<span class="sourceLineNo">113</span><a id="line.113">        if (ocflPropsConfig.isAutoVersioningEnabled()) {</a>
+<span class="sourceLineNo">114</span><a id="line.114">            return CommitType.NEW_VERSION;</a>
+<span class="sourceLineNo">115</span><a id="line.115">        }</a>
+<span class="sourceLineNo">116</span><a id="line.116">        return CommitType.UNVERSIONED;</a>
+<span class="sourceLineNo">117</span><a id="line.117">    }</a>
+<span class="sourceLineNo">118</span><a id="line.118"></a>
+<span class="sourceLineNo">119</span><a id="line.119">    private S3Client s3Client() {</a>
+<span class="sourceLineNo">120</span><a id="line.120">        final var builder = S3Client.builder();</a>
+<span class="sourceLineNo">121</span><a id="line.121"></a>
+<span class="sourceLineNo">122</span><a id="line.122">        if (StringUtils.isNotBlank(ocflPropsConfig.getAwsRegion())) {</a>
+<span class="sourceLineNo">123</span><a id="line.123">            builder.region(Region.of(ocflPropsConfig.getAwsRegion()));</a>
+<span class="sourceLineNo">124</span><a id="line.124">        }</a>
+<span class="sourceLineNo">125</span><a id="line.125"></a>
+<span class="sourceLineNo">126</span><a id="line.126">        if (StringUtils.isNotBlank(ocflPropsConfig.getS3Endpoint())) {</a>
+<span class="sourceLineNo">127</span><a id="line.127">            builder.endpointOverride(URI.create(ocflPropsConfig.getS3Endpoint()));</a>
+<span class="sourceLineNo">128</span><a id="line.128">        }</a>
+<span class="sourceLineNo">129</span><a id="line.129"></a>
+<span class="sourceLineNo">130</span><a id="line.130">        if (ocflPropsConfig.isPathStyleAccessEnabled()) {</a>
+<span class="sourceLineNo">131</span><a id="line.131">            builder.serviceConfiguration(config -&gt; config.pathStyleAccessEnabled(true));</a>
+<span class="sourceLineNo">132</span><a id="line.132">        }</a>
+<span class="sourceLineNo">133</span><a id="line.133"></a>
+<span class="sourceLineNo">134</span><a id="line.134">        if (StringUtils.isNoneBlank(ocflPropsConfig.getAwsAccessKey(), ocflPropsConfig.getAwsSecretKey())) {</a>
+<span class="sourceLineNo">135</span><a id="line.135">            builder.credentialsProvider(StaticCredentialsProvider.create(</a>
+<span class="sourceLineNo">136</span><a id="line.136">                    AwsBasicCredentials.create(ocflPropsConfig.getAwsAccessKey(), ocflPropsConfig.getAwsSecretKey())));</a>
+<span class="sourceLineNo">137</span><a id="line.137">        }</a>
+<span class="sourceLineNo">138</span><a id="line.138"></a>
+<span class="sourceLineNo">139</span><a id="line.139">        // May want to do additional HTTP client configuration, connection pool, etc</a>
+<span class="sourceLineNo">140</span><a id="line.140"></a>
+<span class="sourceLineNo">141</span><a id="line.141">        return builder.build();</a>
+<span class="sourceLineNo">142</span><a id="line.142">    }</a>
+<span class="sourceLineNo">143</span><a id="line.143"></a>
+<span class="sourceLineNo">144</span><a id="line.144">    private &lt;K, V&gt; Cache&lt;K, V&gt; createCache(final String metricName) {</a>
+<span class="sourceLineNo">145</span><a id="line.145">        if (ocflPropsConfig.isResourceHeadersCacheEnabled()) {</a>
+<span class="sourceLineNo">146</span><a id="line.146">            final var builder = Caffeine.newBuilder();</a>
+<span class="sourceLineNo">147</span><a id="line.147"></a>
+<span class="sourceLineNo">148</span><a id="line.148">            if (metricsConfig.isMetricsEnabled()) {</a>
+<span class="sourceLineNo">149</span><a id="line.149">                builder.recordStats();</a>
+<span class="sourceLineNo">150</span><a id="line.150">            }</a>
+<span class="sourceLineNo">151</span><a id="line.151"></a>
+<span class="sourceLineNo">152</span><a id="line.152">            final var cache = builder</a>
+<span class="sourceLineNo">153</span><a id="line.153">                    .maximumSize(ocflPropsConfig.getResourceHeadersCacheMaxSize())</a>
+<span class="sourceLineNo">154</span><a id="line.154">                    .expireAfterAccess(ocflPropsConfig.getResourceHeadersCacheExpireAfterSeconds(), TimeUnit.SECONDS)</a>
+<span class="sourceLineNo">155</span><a id="line.155">                    .build();</a>
+<span class="sourceLineNo">156</span><a id="line.156"></a>
+<span class="sourceLineNo">157</span><a id="line.157">            if (metricsConfig.isMetricsEnabled()) {</a>
+<span class="sourceLineNo">158</span><a id="line.158">                CaffeineCacheMetrics.monitor(meterRegistry, cache, metricName);</a>
+<span class="sourceLineNo">159</span><a id="line.159">            }</a>
+<span class="sourceLineNo">160</span><a id="line.160"></a>
+<span class="sourceLineNo">161</span><a id="line.161">            return new CaffeineCache&lt;&gt;(cache);</a>
+<span class="sourceLineNo">162</span><a id="line.162">        }</a>
+<span class="sourceLineNo">163</span><a id="line.163"></a>
+<span class="sourceLineNo">164</span><a id="line.164">        return new NoOpCache&lt;&gt;();</a>
+<span class="sourceLineNo">165</span><a id="line.165">    }</a>
+<span class="sourceLineNo">166</span><a id="line.166"></a>
+<span class="sourceLineNo">167</span><a id="line.167">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>

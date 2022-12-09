@@ -1,0 +1,170 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * The contents of this file are subject to the license and copyright</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * detailed in the LICENSE and NOTICE files at the root of the source</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * tree.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> */</a>
+<span class="sourceLineNo">006</span><a id="line.6"></a>
+<span class="sourceLineNo">007</span><a id="line.7">package org.fcrepo.kernel.impl.services;</a>
+<span class="sourceLineNo">008</span><a id="line.8"></a>
+<span class="sourceLineNo">009</span><a id="line.9">import io.micrometer.core.instrument.Metrics;</a>
+<span class="sourceLineNo">010</span><a id="line.10">import io.micrometer.core.instrument.Timer;</a>
+<span class="sourceLineNo">011</span><a id="line.11">import org.fcrepo.common.metrics.MetricsHelper;</a>
+<span class="sourceLineNo">012</span><a id="line.12">import org.fcrepo.kernel.api.RdfStream;</a>
+<span class="sourceLineNo">013</span><a id="line.13">import org.fcrepo.kernel.api.Transaction;</a>
+<span class="sourceLineNo">014</span><a id="line.14">import org.fcrepo.kernel.api.identifiers.FedoraId;</a>
+<span class="sourceLineNo">015</span><a id="line.15">import org.fcrepo.kernel.api.models.FedoraResource;</a>
+<span class="sourceLineNo">016</span><a id="line.16">import org.fcrepo.kernel.api.services.ReferenceService;</a>
+<span class="sourceLineNo">017</span><a id="line.17">import org.springframework.beans.factory.annotation.Autowired;</a>
+<span class="sourceLineNo">018</span><a id="line.18">import org.springframework.beans.factory.annotation.Qualifier;</a>
+<span class="sourceLineNo">019</span><a id="line.19">import org.springframework.stereotype.Component;</a>
+<span class="sourceLineNo">020</span><a id="line.20"></a>
+<span class="sourceLineNo">021</span><a id="line.21">/**</a>
+<span class="sourceLineNo">022</span><a id="line.22"> * ReferenceService wrapper for collecting metrics</a>
+<span class="sourceLineNo">023</span><a id="line.23"> *</a>
+<span class="sourceLineNo">024</span><a id="line.24"> * @author pwinckles</a>
+<span class="sourceLineNo">025</span><a id="line.25"> */</a>
+<span class="sourceLineNo">026</span><a id="line.26">@Component("referenceService")</a>
+<span class="sourceLineNo">027</span><a id="line.27">public class ReferenceServiceMetrics implements ReferenceService {</a>
+<span class="sourceLineNo">028</span><a id="line.28"></a>
+<span class="sourceLineNo">029</span><a id="line.29">    private static final String METRIC_NAME = "fcrepo.db";</a>
+<span class="sourceLineNo">030</span><a id="line.30">    private static final String DB = "db";</a>
+<span class="sourceLineNo">031</span><a id="line.31">    private static final String REFERENCE = "reference";</a>
+<span class="sourceLineNo">032</span><a id="line.32">    private static final String OPERATION = "operation";</a>
+<span class="sourceLineNo">033</span><a id="line.33"></a>
+<span class="sourceLineNo">034</span><a id="line.34">    private static final Timer getInboundReferences = Metrics.timer(METRIC_NAME,</a>
+<span class="sourceLineNo">035</span><a id="line.35">            DB, REFERENCE, OPERATION, "getInboundReferences");</a>
+<span class="sourceLineNo">036</span><a id="line.36">    private static final Timer deleteAllReferencesTimer = Metrics.timer(METRIC_NAME,</a>
+<span class="sourceLineNo">037</span><a id="line.37">            DB, REFERENCE, OPERATION, "deleteAllReferences");</a>
+<span class="sourceLineNo">038</span><a id="line.38">    private static final Timer updateReferencesTimer = Metrics.timer(METRIC_NAME,</a>
+<span class="sourceLineNo">039</span><a id="line.39">            DB, REFERENCE, OPERATION, "updateReferences");</a>
+<span class="sourceLineNo">040</span><a id="line.40">    private static final Timer commitTransactionTimer = Metrics.timer(METRIC_NAME,</a>
+<span class="sourceLineNo">041</span><a id="line.41">            DB, REFERENCE, OPERATION, "commitTransaction");</a>
+<span class="sourceLineNo">042</span><a id="line.42">    private static final Timer rollbackTransactionTimer = Metrics.timer(METRIC_NAME,</a>
+<span class="sourceLineNo">043</span><a id="line.43">            DB, REFERENCE, OPERATION, "rollbackTransaction");</a>
+<span class="sourceLineNo">044</span><a id="line.44">    private static final Timer resetTimer = Metrics.timer(METRIC_NAME,</a>
+<span class="sourceLineNo">045</span><a id="line.45">            DB, REFERENCE, OPERATION, "reset");</a>
+<span class="sourceLineNo">046</span><a id="line.46"></a>
+<span class="sourceLineNo">047</span><a id="line.47">    @Autowired</a>
+<span class="sourceLineNo">048</span><a id="line.48">    @Qualifier("referenceServiceImpl")</a>
+<span class="sourceLineNo">049</span><a id="line.49">    private ReferenceService referenceServiceImpl;</a>
+<span class="sourceLineNo">050</span><a id="line.50"></a>
+<span class="sourceLineNo">051</span><a id="line.51">    @Override</a>
+<span class="sourceLineNo">052</span><a id="line.52">    public RdfStream getInboundReferences(final Transaction tx, final FedoraResource resource) {</a>
+<span class="sourceLineNo">053</span><a id="line.53">        return MetricsHelper.time(getInboundReferences, () -&gt; {</a>
+<span class="sourceLineNo">054</span><a id="line.54">            return referenceServiceImpl.getInboundReferences(tx, resource);</a>
+<span class="sourceLineNo">055</span><a id="line.55">        });</a>
+<span class="sourceLineNo">056</span><a id="line.56">    }</a>
+<span class="sourceLineNo">057</span><a id="line.57"></a>
+<span class="sourceLineNo">058</span><a id="line.58">    @Override</a>
+<span class="sourceLineNo">059</span><a id="line.59">    public void deleteAllReferences(final Transaction tx, final FedoraId resourceId) {</a>
+<span class="sourceLineNo">060</span><a id="line.60">        deleteAllReferencesTimer.record(() -&gt; {</a>
+<span class="sourceLineNo">061</span><a id="line.61">            referenceServiceImpl.deleteAllReferences(tx, resourceId);</a>
+<span class="sourceLineNo">062</span><a id="line.62">        });</a>
+<span class="sourceLineNo">063</span><a id="line.63">    }</a>
+<span class="sourceLineNo">064</span><a id="line.64"></a>
+<span class="sourceLineNo">065</span><a id="line.65">    @Override</a>
+<span class="sourceLineNo">066</span><a id="line.66">    public void updateReferences(final Transaction tx,</a>
+<span class="sourceLineNo">067</span><a id="line.67">                                 final FedoraId resourceId,</a>
+<span class="sourceLineNo">068</span><a id="line.68">                                 final String userPrincipal,</a>
+<span class="sourceLineNo">069</span><a id="line.69">                                 final RdfStream rdfStream) {</a>
+<span class="sourceLineNo">070</span><a id="line.70">        updateReferencesTimer.record(() -&gt; {</a>
+<span class="sourceLineNo">071</span><a id="line.71">            referenceServiceImpl.updateReferences(tx, resourceId, userPrincipal, rdfStream);</a>
+<span class="sourceLineNo">072</span><a id="line.72">        });</a>
+<span class="sourceLineNo">073</span><a id="line.73">    }</a>
+<span class="sourceLineNo">074</span><a id="line.74"></a>
+<span class="sourceLineNo">075</span><a id="line.75">    @Override</a>
+<span class="sourceLineNo">076</span><a id="line.76">    public void commitTransaction(final Transaction tx) {</a>
+<span class="sourceLineNo">077</span><a id="line.77">        commitTransactionTimer.record(() -&gt; {</a>
+<span class="sourceLineNo">078</span><a id="line.78">            referenceServiceImpl.commitTransaction(tx);</a>
+<span class="sourceLineNo">079</span><a id="line.79">        });</a>
+<span class="sourceLineNo">080</span><a id="line.80">    }</a>
+<span class="sourceLineNo">081</span><a id="line.81"></a>
+<span class="sourceLineNo">082</span><a id="line.82">    @Override</a>
+<span class="sourceLineNo">083</span><a id="line.83">    public void rollbackTransaction(final Transaction tx) {</a>
+<span class="sourceLineNo">084</span><a id="line.84">        rollbackTransactionTimer.record(() -&gt; {</a>
+<span class="sourceLineNo">085</span><a id="line.85">            referenceServiceImpl.rollbackTransaction(tx);</a>
+<span class="sourceLineNo">086</span><a id="line.86">        });</a>
+<span class="sourceLineNo">087</span><a id="line.87">    }</a>
+<span class="sourceLineNo">088</span><a id="line.88"></a>
+<span class="sourceLineNo">089</span><a id="line.89">    @Override</a>
+<span class="sourceLineNo">090</span><a id="line.90">    public void reset() {</a>
+<span class="sourceLineNo">091</span><a id="line.91">        resetTimer.record(() -&gt; {</a>
+<span class="sourceLineNo">092</span><a id="line.92">            referenceServiceImpl.reset();</a>
+<span class="sourceLineNo">093</span><a id="line.93">        });</a>
+<span class="sourceLineNo">094</span><a id="line.94">    }</a>
+<span class="sourceLineNo">095</span><a id="line.95"></a>
+<span class="sourceLineNo">096</span><a id="line.96">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>
