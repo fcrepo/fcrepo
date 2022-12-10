@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>MultipleConstraintViolationException.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Search API</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.api.exception</a> &gt; <span class="el_source">MultipleConstraintViolationException.java</span></div><h1>MultipleConstraintViolationException.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.api.exception;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+/**
+ * Wrapper to hold multiple constraint violation exceptions for later reporting.
+ * @author whikloj
+ */
+public class MultipleConstraintViolationException extends ConstraintViolationException {
+
+<span class="nc" id="L18">    private Set&lt;ConstraintViolationException&gt; exceptionTypes = new HashSet&lt;&gt;();</span>
+
+<span class="nc" id="L20">    private String fullMessage = &quot;&quot;;</span>
+
+    public Set&lt;ConstraintViolationException&gt; getExceptionTypes() {
+<span class="nc" id="L23">        return exceptionTypes;</span>
+    }
+
+    public MultipleConstraintViolationException(final List&lt;ConstraintViolationException&gt; exceptions) {
+<span class="nc" id="L27">        super(&quot;There are multiple exceptions&quot;);</span>
+<span class="nc bnc" id="L28" title="All 2 branches missed.">        for (final ConstraintViolationException exception : exceptions) {</span>
+<span class="nc" id="L29">            exceptionTypes.add(exception);</span>
+<span class="nc" id="L30">            fullMessage += exception.getMessage() + &quot;\n&quot;;</span>
+<span class="nc" id="L31">        }</span>
+<span class="nc" id="L32">    }</span>
+
+    @Override
+    public String getMessage() {
+<span class="nc" id="L36">        return fullMessage;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
