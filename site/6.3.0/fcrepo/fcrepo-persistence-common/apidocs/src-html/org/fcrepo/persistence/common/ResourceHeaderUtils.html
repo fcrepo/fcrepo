@@ -1,0 +1,238 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * The contents of this file are subject to the license and copyright</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * detailed in the LICENSE and NOTICE files at the root of the source</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * tree.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> */</a>
+<span class="sourceLineNo">006</span><a id="line.6">package org.fcrepo.persistence.common;</a>
+<span class="sourceLineNo">007</span><a id="line.7"></a>
+<span class="sourceLineNo">008</span><a id="line.8">import java.net.URI;</a>
+<span class="sourceLineNo">009</span><a id="line.9">import java.time.Instant;</a>
+<span class="sourceLineNo">010</span><a id="line.10">import java.time.ZonedDateTime;</a>
+<span class="sourceLineNo">011</span><a id="line.11">import java.util.Collection;</a>
+<span class="sourceLineNo">012</span><a id="line.12"></a>
+<span class="sourceLineNo">013</span><a id="line.13">import org.fcrepo.kernel.api.identifiers.FedoraId;</a>
+<span class="sourceLineNo">014</span><a id="line.14">import org.fcrepo.kernel.api.models.ResourceHeaders;</a>
+<span class="sourceLineNo">015</span><a id="line.15"></a>
+<span class="sourceLineNo">016</span><a id="line.16">import org.apache.commons.codec.digest.DigestUtils;</a>
+<span class="sourceLineNo">017</span><a id="line.17"></a>
+<span class="sourceLineNo">018</span><a id="line.18">/**</a>
+<span class="sourceLineNo">019</span><a id="line.19"> * Helper utilities for populate resource headers</a>
+<span class="sourceLineNo">020</span><a id="line.20"> *</a>
+<span class="sourceLineNo">021</span><a id="line.21"> * @author bbpennel</a>
+<span class="sourceLineNo">022</span><a id="line.22"> */</a>
+<span class="sourceLineNo">023</span><a id="line.23">public class ResourceHeaderUtils {</a>
+<span class="sourceLineNo">024</span><a id="line.24"></a>
+<span class="sourceLineNo">025</span><a id="line.25">    /**</a>
+<span class="sourceLineNo">026</span><a id="line.26">     * Private constructor</a>
+<span class="sourceLineNo">027</span><a id="line.27">     */</a>
+<span class="sourceLineNo">028</span><a id="line.28">    private ResourceHeaderUtils() {</a>
+<span class="sourceLineNo">029</span><a id="line.29">    }</a>
+<span class="sourceLineNo">030</span><a id="line.30"></a>
+<span class="sourceLineNo">031</span><a id="line.31">    /**</a>
+<span class="sourceLineNo">032</span><a id="line.32">     * Construct and populate minimal headers expected for a new resource</a>
+<span class="sourceLineNo">033</span><a id="line.33">     *</a>
+<span class="sourceLineNo">034</span><a id="line.34">     * @param parentId identifier of the parent</a>
+<span class="sourceLineNo">035</span><a id="line.35">     * @param fedoraId identifier of the new resource</a>
+<span class="sourceLineNo">036</span><a id="line.36">     * @param interactionModel interaction model of the resource</a>
+<span class="sourceLineNo">037</span><a id="line.37">     * @return new resource headers object</a>
+<span class="sourceLineNo">038</span><a id="line.38">     */</a>
+<span class="sourceLineNo">039</span><a id="line.39">    public static ResourceHeadersImpl newResourceHeaders(final FedoraId parentId, final FedoraId fedoraId,</a>
+<span class="sourceLineNo">040</span><a id="line.40">                                                         final String interactionModel) {</a>
+<span class="sourceLineNo">041</span><a id="line.41">        final ResourceHeadersImpl headers = new ResourceHeadersImpl();</a>
+<span class="sourceLineNo">042</span><a id="line.42">        headers.setHeadersVersion(ResourceHeaders.V1_0);</a>
+<span class="sourceLineNo">043</span><a id="line.43">        headers.setId(fedoraId);</a>
+<span class="sourceLineNo">044</span><a id="line.44">        headers.setParent(parentId);</a>
+<span class="sourceLineNo">045</span><a id="line.45">        headers.setInteractionModel(interactionModel);</a>
+<span class="sourceLineNo">046</span><a id="line.46"></a>
+<span class="sourceLineNo">047</span><a id="line.47">        return headers;</a>
+<span class="sourceLineNo">048</span><a id="line.48">    }</a>
+<span class="sourceLineNo">049</span><a id="line.49"></a>
+<span class="sourceLineNo">050</span><a id="line.50">    /**</a>
+<span class="sourceLineNo">051</span><a id="line.51">     * Update creation headers to the current state</a>
+<span class="sourceLineNo">052</span><a id="line.52">     *</a>
+<span class="sourceLineNo">053</span><a id="line.53">     * @param headers headers object to update</a>
+<span class="sourceLineNo">054</span><a id="line.54">     * @param userPrincipal user principal performing the change</a>
+<span class="sourceLineNo">055</span><a id="line.55">     */</a>
+<span class="sourceLineNo">056</span><a id="line.56">    public static void touchCreationHeaders(final ResourceHeadersImpl headers, final String userPrincipal) {</a>
+<span class="sourceLineNo">057</span><a id="line.57">        touchCreationHeaders(headers, userPrincipal, null);</a>
+<span class="sourceLineNo">058</span><a id="line.58">    }</a>
+<span class="sourceLineNo">059</span><a id="line.59"></a>
+<span class="sourceLineNo">060</span><a id="line.60">    /**</a>
+<span class="sourceLineNo">061</span><a id="line.61">     * Update creation headers to the current state.</a>
+<span class="sourceLineNo">062</span><a id="line.62">     *</a>
+<span class="sourceLineNo">063</span><a id="line.63">     * @param headers headers object to update</a>
+<span class="sourceLineNo">064</span><a id="line.64">     * @param userPrincipal user principal performing the change</a>
+<span class="sourceLineNo">065</span><a id="line.65">     * @param createdDate time created. Defaults to now if not provided.</a>
+<span class="sourceLineNo">066</span><a id="line.66">     */</a>
+<span class="sourceLineNo">067</span><a id="line.67">    public static void touchCreationHeaders(final ResourceHeadersImpl headers, final String userPrincipal,</a>
+<span class="sourceLineNo">068</span><a id="line.68">            final Instant createdDate) {</a>
+<span class="sourceLineNo">069</span><a id="line.69">        final Instant instant;</a>
+<span class="sourceLineNo">070</span><a id="line.70">        if (createdDate == null) {</a>
+<span class="sourceLineNo">071</span><a id="line.71">            final ZonedDateTime now = ZonedDateTime.now();</a>
+<span class="sourceLineNo">072</span><a id="line.72">            instant = now.toInstant();</a>
+<span class="sourceLineNo">073</span><a id="line.73">        } else {</a>
+<span class="sourceLineNo">074</span><a id="line.74">            instant = createdDate;</a>
+<span class="sourceLineNo">075</span><a id="line.75">        }</a>
+<span class="sourceLineNo">076</span><a id="line.76">        headers.setCreatedDate(instant);</a>
+<span class="sourceLineNo">077</span><a id="line.77">        headers.setCreatedBy(userPrincipal);</a>
+<span class="sourceLineNo">078</span><a id="line.78">        headers.setMementoCreatedDate(instant);</a>
+<span class="sourceLineNo">079</span><a id="line.79">    }</a>
+<span class="sourceLineNo">080</span><a id="line.80"></a>
+<span class="sourceLineNo">081</span><a id="line.81">    /**</a>
+<span class="sourceLineNo">082</span><a id="line.82">     * Update modification headers to the current state</a>
+<span class="sourceLineNo">083</span><a id="line.83">     *</a>
+<span class="sourceLineNo">084</span><a id="line.84">     * @param headers headers object to update</a>
+<span class="sourceLineNo">085</span><a id="line.85">     * @param userPrincipal user principal performing the change</a>
+<span class="sourceLineNo">086</span><a id="line.86">     */</a>
+<span class="sourceLineNo">087</span><a id="line.87">    public static void touchModificationHeaders(final ResourceHeadersImpl headers, final String userPrincipal) {</a>
+<span class="sourceLineNo">088</span><a id="line.88">        touchModificationHeaders(headers, userPrincipal, null);</a>
+<span class="sourceLineNo">089</span><a id="line.89">    }</a>
+<span class="sourceLineNo">090</span><a id="line.90"></a>
+<span class="sourceLineNo">091</span><a id="line.91">    /**</a>
+<span class="sourceLineNo">092</span><a id="line.92">     * Update modification headers to the current state</a>
+<span class="sourceLineNo">093</span><a id="line.93">     *</a>
+<span class="sourceLineNo">094</span><a id="line.94">     * @param headers headers object to update</a>
+<span class="sourceLineNo">095</span><a id="line.95">     * @param userPrincipal user principal performing the change</a>
+<span class="sourceLineNo">096</span><a id="line.96">     * @param modifiedDate modified time. Defaults to now if not provided.</a>
+<span class="sourceLineNo">097</span><a id="line.97">     */</a>
+<span class="sourceLineNo">098</span><a id="line.98">    public static void touchModificationHeaders(final ResourceHeadersImpl headers, final String userPrincipal,</a>
+<span class="sourceLineNo">099</span><a id="line.99">            final Instant modifiedDate) {</a>
+<span class="sourceLineNo">100</span><a id="line.100">        final Instant instant;</a>
+<span class="sourceLineNo">101</span><a id="line.101">        if (modifiedDate == null) {</a>
+<span class="sourceLineNo">102</span><a id="line.102">            final ZonedDateTime now = ZonedDateTime.now();</a>
+<span class="sourceLineNo">103</span><a id="line.103">            instant = now.toInstant();</a>
+<span class="sourceLineNo">104</span><a id="line.104">        } else {</a>
+<span class="sourceLineNo">105</span><a id="line.105">            instant = modifiedDate;</a>
+<span class="sourceLineNo">106</span><a id="line.106">        }</a>
+<span class="sourceLineNo">107</span><a id="line.107">        headers.setLastModifiedDate(instant);</a>
+<span class="sourceLineNo">108</span><a id="line.108">        headers.setLastModifiedBy(userPrincipal);</a>
+<span class="sourceLineNo">109</span><a id="line.109">        touchMementoCreateHeaders(headers, instant);</a>
+<span class="sourceLineNo">110</span><a id="line.110"></a>
+<span class="sourceLineNo">111</span><a id="line.111">        final String stateToken = DigestUtils.md5Hex(String.valueOf(instant.toEpochMilli())).toUpperCase();</a>
+<span class="sourceLineNo">112</span><a id="line.112">        headers.setStateToken(stateToken);</a>
+<span class="sourceLineNo">113</span><a id="line.113">    }</a>
+<span class="sourceLineNo">114</span><a id="line.114"></a>
+<span class="sourceLineNo">115</span><a id="line.115">    /**</a>
+<span class="sourceLineNo">116</span><a id="line.116">     * Update the mementoCreatedDate header</a>
+<span class="sourceLineNo">117</span><a id="line.117">     * @param headers headers object to update.</a>
+<span class="sourceLineNo">118</span><a id="line.118">     * @param versionDate time this version is created.</a>
+<span class="sourceLineNo">119</span><a id="line.119">     */</a>
+<span class="sourceLineNo">120</span><a id="line.120">    public static void touchMementoCreateHeaders(final ResourceHeadersImpl headers, final Instant versionDate) {</a>
+<span class="sourceLineNo">121</span><a id="line.121">        final Instant instant;</a>
+<span class="sourceLineNo">122</span><a id="line.122">        if (versionDate == null) {</a>
+<span class="sourceLineNo">123</span><a id="line.123">            final ZonedDateTime now = ZonedDateTime.now();</a>
+<span class="sourceLineNo">124</span><a id="line.124">            instant = now.toInstant();</a>
+<span class="sourceLineNo">125</span><a id="line.125">        } else {</a>
+<span class="sourceLineNo">126</span><a id="line.126">            instant = versionDate;</a>
+<span class="sourceLineNo">127</span><a id="line.127">        }</a>
+<span class="sourceLineNo">128</span><a id="line.128">        headers.setMementoCreatedDate(instant);</a>
+<span class="sourceLineNo">129</span><a id="line.129">    }</a>
+<span class="sourceLineNo">130</span><a id="line.130"></a>
+<span class="sourceLineNo">131</span><a id="line.131">    public static void touchMementoCreateHeaders(final ResourceHeadersImpl headers) {</a>
+<span class="sourceLineNo">132</span><a id="line.132">        touchMementoCreateHeaders(headers, null);</a>
+<span class="sourceLineNo">133</span><a id="line.133">    }</a>
+<span class="sourceLineNo">134</span><a id="line.134"></a>
+<span class="sourceLineNo">135</span><a id="line.135">    /**</a>
+<span class="sourceLineNo">136</span><a id="line.136">     * Populate general binary resource headers</a>
+<span class="sourceLineNo">137</span><a id="line.137">     *</a>
+<span class="sourceLineNo">138</span><a id="line.138">     * @param headers headers object to update</a>
+<span class="sourceLineNo">139</span><a id="line.139">     * @param mimetype mimetype</a>
+<span class="sourceLineNo">140</span><a id="line.140">     * @param filename filename</a>
+<span class="sourceLineNo">141</span><a id="line.141">     * @param filesize filesize</a>
+<span class="sourceLineNo">142</span><a id="line.142">     * @param digests digests</a>
+<span class="sourceLineNo">143</span><a id="line.143">     */</a>
+<span class="sourceLineNo">144</span><a id="line.144">    public static void populateBinaryHeaders(final ResourceHeadersImpl headers, final String mimetype,</a>
+<span class="sourceLineNo">145</span><a id="line.145">            final String filename, final long filesize, final Collection&lt;URI&gt; digests) {</a>
+<span class="sourceLineNo">146</span><a id="line.146">        headers.setMimeType(mimetype);</a>
+<span class="sourceLineNo">147</span><a id="line.147">        headers.setDigests(digests);</a>
+<span class="sourceLineNo">148</span><a id="line.148">        headers.setFilename(filename);</a>
+<span class="sourceLineNo">149</span><a id="line.149">        headers.setContentSize(filesize);</a>
+<span class="sourceLineNo">150</span><a id="line.150">    }</a>
+<span class="sourceLineNo">151</span><a id="line.151"></a>
+<span class="sourceLineNo">152</span><a id="line.152">    /**</a>
+<span class="sourceLineNo">153</span><a id="line.153">     * Populate external binary related headers</a>
+<span class="sourceLineNo">154</span><a id="line.154">     *</a>
+<span class="sourceLineNo">155</span><a id="line.155">     * @param headers headers object to update</a>
+<span class="sourceLineNo">156</span><a id="line.156">     * @param externalUrl url of external binary content</a>
+<span class="sourceLineNo">157</span><a id="line.157">     * @param externalHandling handling for the external content</a>
+<span class="sourceLineNo">158</span><a id="line.158">     */</a>
+<span class="sourceLineNo">159</span><a id="line.159">    public static void populateExternalBinaryHeaders(final ResourceHeadersImpl headers,</a>
+<span class="sourceLineNo">160</span><a id="line.160">            final String externalUrl, final String externalHandling) {</a>
+<span class="sourceLineNo">161</span><a id="line.161">        headers.setExternalHandling(externalHandling);</a>
+<span class="sourceLineNo">162</span><a id="line.162">        headers.setExternalUrl(externalUrl);</a>
+<span class="sourceLineNo">163</span><a id="line.163">    }</a>
+<span class="sourceLineNo">164</span><a id="line.164">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>
