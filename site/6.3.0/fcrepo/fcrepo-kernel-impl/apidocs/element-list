@@ -1,0 +1,8 @@
+org.fcrepo.kernel.impl
+org.fcrepo.kernel.impl.cache
+org.fcrepo.kernel.impl.lock
+org.fcrepo.kernel.impl.models
+org.fcrepo.kernel.impl.observer
+org.fcrepo.kernel.impl.operations
+org.fcrepo.kernel.impl.services
+org.fcrepo.kernel.impl.util
