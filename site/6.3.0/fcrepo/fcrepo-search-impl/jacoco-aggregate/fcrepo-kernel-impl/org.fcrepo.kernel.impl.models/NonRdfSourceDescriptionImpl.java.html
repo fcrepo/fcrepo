@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>NonRdfSourceDescriptionImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Search Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.models</a> &gt; <span class="el_source">NonRdfSourceDescriptionImpl.java</span></div><h1>NonRdfSourceDescriptionImpl.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.impl.models;
+
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.cache.UserTypesCache;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+
+import java.net.URI;
+import java.util.List;
+import java.util.stream.Stream;
+
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
+
+/**
+ * Implementation of a non-rdf source description
+ *
+ * @author bbpennel
+ */
+public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements NonRdfSourceDescription {
+
+<span class="fc" id="L36">    private static final URI RDF_SOURCE_URI = URI.create(RDF_SOURCE.getURI());</span>
+
+    /**
+     * Construct a description resource
+     *
+     * @param fedoraID internal identifier
+     * @param transaction transaction
+     * @param pSessionManager session manager
+     * @param resourceFactory resource factory
+     * @param userTypesCache the user types cache
+     */
+    public NonRdfSourceDescriptionImpl(final FedoraId fedoraID,
+                                       final Transaction transaction,
+                                       final PersistentStorageSessionManager pSessionManager,
+                                       final ResourceFactory resourceFactory,
+                                       final UserTypesCache userTypesCache) {
+<span class="fc" id="L52">        super(fedoraID, transaction, pSessionManager, resourceFactory, userTypesCache);</span>
+<span class="fc" id="L53">    }</span>
+
+    @Override
+    public String getId() {
+<span class="nc" id="L57">        return getFedoraId().getResourceId();</span>
+    }
+
+    @Override
+    public FedoraResource getDescribedResource() {
+        // Get a FedoraId for the binary
+<span class="nc" id="L63">        FedoraId describedId = getFedoraId().asBaseId();</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">        if (getFedoraId().isMemento()) {</span>
+<span class="nc" id="L65">            describedId = describedId.asMemento(getFedoraId().getMementoInstant());</span>
+        }
+        try {
+<span class="nc" id="L68">            return this.resourceFactory.getResource(transaction, describedId);</span>
+<span class="nc" id="L69">        } catch (final PathNotFoundException e) {</span>
+<span class="nc" id="L70">            throw new PathNotFoundRuntimeException(e.getMessage(), e);</span>
+        }
+    }
+
+    @Override
+    public List&lt;URI&gt; getSystemTypes(final boolean forRdf) {
+<span class="nc" id="L76">        var types = resolveSystemTypes(forRdf);</span>
+
+<span class="nc bnc" id="L78" title="All 2 branches missed.">        if (types == null) {</span>
+<span class="nc" id="L79">            types = super.getSystemTypes(forRdf);</span>
+            // NonRdfSource gets the ldp:Resource and adds ldp:RDFSource types.
+<span class="nc" id="L81">            types.add(RDF_SOURCE_URI);</span>
+        }
+
+<span class="nc" id="L84">        return types;</span>
+    }
+
+    @Override
+    public RdfStream getTriples() {
+        // Remap the subject to the described resource
+        // TODO: With FCREPO-3819 and FCREPO-3820, this will no longer be necessary.
+        //       But existing sites might have RDF with NonRdfSourceDescription subjects, so leave it for now.
+<span class="nc" id="L92">        final Node describedID = createURI(this.getDescribedResource().getId());</span>
+<span class="nc" id="L93">        final Stream&lt;Triple&gt; triples = super.getTriples().map(t -&gt; {</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">            if (t.getSubject().hasURI(this.getId())) {</span>
+<span class="nc" id="L95">                return new Triple(describedID, t.getPredicate(), t.getObject());</span>
+            } else {
+<span class="nc" id="L97">                return t;</span>
+            }
+        });
+<span class="nc" id="L100">        return new DefaultRdfStream(describedID, triples);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

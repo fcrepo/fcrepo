@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>UpdateNonRdfSourceOperationBuilder.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Search Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.operations</a> &gt; <span class="el_source">UpdateNonRdfSourceOperationBuilder.java</span></div><h1>UpdateNonRdfSourceOperationBuilder.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.impl.operations;
+
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+
+import java.io.InputStream;
+import java.net.URI;
+
+/**
+ * Builder for operations to update non-rdf sources
+ *
+ * @author bbpennel
+ */
+public class UpdateNonRdfSourceOperationBuilder extends AbstractNonRdfSourceOperationBuilder {
+    protected UpdateNonRdfSourceOperationBuilder(final Transaction transaction, final FedoraId rescId,
+                                                 final InputStream stream) {
+<span class="fc" id="L22">        super(transaction, rescId, stream);</span>
+<span class="fc" id="L23">    }</span>
+
+    protected UpdateNonRdfSourceOperationBuilder(final Transaction transaction, final FedoraId rescId,
+                                                 final String handling,
+                                                 final URI contentUri) {
+<span class="fc" id="L28">        super(transaction, rescId, handling, contentUri);</span>
+<span class="fc" id="L29">    }</span>
+
+    @Override
+    public UpdateNonRdfSourceOperation build() {
+        final UpdateNonRdfSourceOperation operation;
+<span class="pc bpc" id="L34" title="1 of 4 branches missed.">        if (externalURI != null &amp;&amp; externalType != null) {</span>
+<span class="fc" id="L35">            operation = new UpdateNonRdfSourceOperation(transaction, resourceId, externalURI, externalType);</span>
+        } else {
+<span class="fc" id="L37">            operation = new UpdateNonRdfSourceOperation(transaction, resourceId, content);</span>
+        }
+
+<span class="fc" id="L40">        operation.setUserPrincipal(userPrincipal);</span>
+<span class="fc" id="L41">        operation.setDigests(digests);</span>
+<span class="fc" id="L42">        operation.setFilename(filename);</span>
+<span class="fc" id="L43">        operation.setContentSize(contentSize);</span>
+<span class="fc" id="L44">        operation.setMimeType(mimeType);</span>
+
+<span class="fc" id="L46">        return operation;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>AbstractNonRdfSourceOperation.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Search Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.operations</a> &gt; <span class="el_source">AbstractNonRdfSourceOperation.java</span></div><h1>AbstractNonRdfSourceOperation.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.impl.operations;
+
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Collection;
+
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
+
+/**
+ * An abstract operation for interacting with a non-rdf source
+ *
+ * @author bbpennel
+ */
+public abstract class AbstractNonRdfSourceOperation extends AbstractResourceOperation implements
+        NonRdfSourceOperation {
+
+    private InputStream content;
+
+    private URI externalHandlingURI;
+
+    private String externalHandlingType;
+
+    private String mimeType;
+
+    private String filename;
+
+    private Collection&lt;URI&gt; digests;
+
+<span class="pc" id="L36">    private long contentSize = -1;</span>
+
+    /**
+     * Constructor for external content.
+     *
+     * @param rescId the internal identifier.
+     * @param externalContentURI the URI of the external content.
+     * @param externalHandling the type of external content handling (REDIRECT, PROXY)
+     */
+    protected AbstractNonRdfSourceOperation(final Transaction transaction, final FedoraId rescId,
+                                            final URI externalContentURI,
+                                            final String externalHandling) {
+<span class="fc" id="L48">        super(transaction, rescId);</span>
+<span class="fc" id="L49">        this.externalHandlingURI = externalContentURI;</span>
+<span class="fc" id="L50">        this.externalHandlingType = externalHandling;</span>
+<span class="fc" id="L51">    }</span>
+
+    /**
+     * Constructor for internal binaries.
+     *
+     * @param rescId the internal identifier.
+     * @param content the stream of the content.
+     */
+    protected AbstractNonRdfSourceOperation(final Transaction transaction, final FedoraId rescId,
+                                            final InputStream content) {
+<span class="fc" id="L61">        super(transaction, rescId);</span>
+<span class="fc" id="L62">        this.content = content;</span>
+<span class="fc" id="L63">    }</span>
+
+    /**
+     * Basic constructor.
+     *
+     * @param rescId The internal Fedora ID.
+     */
+    protected AbstractNonRdfSourceOperation(final Transaction transaction, final FedoraId rescId) {
+<span class="nc" id="L71">        super(transaction, rescId);</span>
+<span class="nc" id="L72">    }</span>
+
+    @Override
+    public InputStream getContentStream() {
+<span class="fc" id="L76">        return content;</span>
+    }
+
+    @Override
+    public String getExternalHandling() {
+<span class="fc" id="L81">        return externalHandlingType;</span>
+    }
+
+    @Override
+    public URI getContentUri() {
+<span class="fc" id="L86">        return externalHandlingURI;</span>
+    }
+
+    @Override
+    public String getMimeType() {
+<span class="fc" id="L91">        return mimeType;</span>
+    }
+
+    @Override
+    public String getFilename() {
+<span class="fc" id="L96">        return filename;</span>
+    }
+
+    @Override
+    public Collection&lt;URI&gt; getContentDigests() {
+<span class="fc" id="L101">        return digests;</span>
+    }
+
+    @Override
+    public long getContentSize() {
+<span class="fc" id="L106">        return contentSize;</span>
+    }
+
+    /**
+     * @return the content
+     */
+    protected InputStream getContent() {
+<span class="nc" id="L113">        return content;</span>
+    }
+
+    /**
+     * @param content the content to set
+     */
+    protected void setContent(final InputStream content) {
+<span class="nc" id="L120">        this.content = content;</span>
+<span class="nc" id="L121">    }</span>
+
+    /**
+     * @return the externalHandlingURI
+     */
+    protected URI getExternalHandlingURI() {
+<span class="nc" id="L127">        return externalHandlingURI;</span>
+    }
+
+    /**
+     * @param externalHandlingURI the externalHandlingURI to set
+     */
+    protected void setExternalHandlingURI(final URI externalHandlingURI) {
+<span class="nc" id="L134">        this.externalHandlingURI = externalHandlingURI;</span>
+<span class="nc" id="L135">    }</span>
+
+    /**
+     * @return the externalHandlingType
+     */
+    protected String getExternalHandlingType() {
+<span class="nc" id="L141">        return externalHandlingType;</span>
+    }
+
+    /**
+     * @param externalHandlingType the externalHandlingType to set
+     */
+    protected void setExternalHandlingType(final String externalHandlingType) {
+<span class="nc" id="L148">        this.externalHandlingType = externalHandlingType;</span>
+<span class="nc" id="L149">    }</span>
+
+    /**
+     * @return the digests
+     */
+    protected Collection&lt;URI&gt; getDigests() {
+<span class="nc" id="L155">        return digests;</span>
+    }
+
+    /**
+     * @param digests the digests to set
+     */
+    protected void setDigests(final Collection&lt;URI&gt; digests) {
+<span class="fc" id="L162">        this.digests = digests;</span>
+<span class="fc" id="L163">    }</span>
+
+    /**
+     * @param mimeType the mimeType to set
+     */
+    protected void setMimeType(final String mimeType) {
+<span class="fc" id="L169">        this.mimeType = mimeType;</span>
+<span class="fc" id="L170">    }</span>
+
+    /**
+     * @param filename the filename to set
+     */
+    protected void setFilename(final String filename) {
+<span class="fc" id="L176">        this.filename = filename;</span>
+<span class="fc" id="L177">    }</span>
+
+    /**
+     * @param contentSize the contentSize to set
+     */
+    protected void setContentSize(final long contentSize) {
+<span class="fc" id="L183">        this.contentSize = contentSize;</span>
+<span class="fc" id="L184">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

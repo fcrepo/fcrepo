@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>FixityServiceImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Search Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.services</a> &gt; <span class="el_source">FixityServiceImpl.java</span></div><h1>FixityServiceImpl.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.impl.services;
+
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static org.apache.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_RESULT;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_STATE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
+import static org.fcrepo.kernel.api.RdfLexicon.PREMIS_EVENT_OUTCOME_DETAIL;
+import static org.fcrepo.kernel.api.RdfLexicon.PREMIS_FIXITY;
+
+import org.apache.jena.rdf.model.Literal;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
+import org.fcrepo.kernel.api.models.Binary;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.services.FixityService;
+import org.fcrepo.config.DigestAlgorithm;
+import org.fcrepo.persistence.common.MultiDigestInputStreamWrapper;
+import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+/**
+ * Implementation of {@link org.fcrepo.kernel.api.services.FixityService}
+ *
+ * @author dbernstein
+ * @author whikloj
+ */
+@Component
+<span class="nc" id="L47">public class FixityServiceImpl extends AbstractService implements FixityService {</span>
+
+<span class="nc" id="L49">    private static final Literal successResource = createTypedLiteral(&quot;SUCCESS&quot;);</span>
+<span class="nc" id="L50">    private static final Literal badChecksumResource = createTypedLiteral(&quot;BAD_CHECKSUM&quot;);</span>
+
+    @Override
+    public Collection&lt;URI&gt; getFixity(final Binary binary, final Collection&lt;String&gt; algorithms)
+            throws UnsupportedAlgorithmException {
+<span class="nc" id="L55">        final var digestAlgs = algorithms.stream()</span>
+<span class="nc" id="L56">                .map(DigestAlgorithm::fromAlgorithm)</span>
+<span class="nc" id="L57">                .collect(Collectors.toList());</span>
+
+<span class="nc" id="L59">        try (final var content = binary.getContent()) {</span>
+<span class="nc" id="L60">            final MultiDigestInputStreamWrapper digestWrapper = new MultiDigestInputStreamWrapper(content, null,</span>
+                    digestAlgs);
+<span class="nc" id="L62">            return digestWrapper.getDigests();</span>
+<span class="nc" id="L63">        } catch (final IOException e) {</span>
+            // input stream closed prematurely.
+<span class="nc" id="L65">            throw new RepositoryRuntimeException(&quot;Problem reading content stream from &quot; + binary.getId(), e);</span>
+        }
+    }
+
+    @Override
+    public RdfStream checkFixity(final Binary binary)
+            throws InvalidChecksumException {
+<span class="nc" id="L72">        final Model model = createDefaultModel();</span>
+<span class="nc" id="L73">        final Resource subject = model.createResource(binary.getId());</span>
+<span class="nc" id="L74">        final Resource fixityResult = model.createResource(</span>
+<span class="nc" id="L75">                binary.getFedoraId().resolve(&quot;#&quot; + UUID.randomUUID().toString()).getFullId());</span>
+<span class="nc" id="L76">        model.add(subject, HAS_FIXITY_RESULT, fixityResult);</span>
+<span class="nc" id="L77">        model.add(fixityResult, type, PREMIS_FIXITY);</span>
+<span class="nc" id="L78">        model.add(fixityResult, type, PREMIS_EVENT_OUTCOME_DETAIL);</span>
+<span class="nc" id="L79">        model.add(fixityResult, HAS_SIZE, createTypedLiteral(binary.getContentSize()));</span>
+
+        // Built for more than one digest in anticipation of FCREPO-3419
+<span class="nc" id="L82">        final List&lt;URI&gt; existingDigestList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L83">        existingDigestList.addAll(binary.getContentDigests());</span>
+
+<span class="nc" id="L85">        final var digestAlgs = existingDigestList.stream()</span>
+<span class="nc" id="L86">                .map(URI::toString)</span>
+<span class="nc" id="L87">                .map(a -&gt; a.replace(&quot;urn:&quot;, &quot;&quot;).split(&quot;:&quot;)[0])</span>
+<span class="nc" id="L88">                .map(DigestAlgorithm::fromAlgorithm)</span>
+<span class="nc" id="L89">                .collect(Collectors.toList());</span>
+
+<span class="nc" id="L91">        try (final var content = binary.getContent()) {</span>
+<span class="nc" id="L92">            final MultiDigestInputStreamWrapper digestWrapper = new MultiDigestInputStreamWrapper(content,</span>
+                    existingDigestList, digestAlgs);
+<span class="nc" id="L94">            digestWrapper.getDigests().forEach(d -&gt;</span>
+<span class="nc" id="L95">                    model.add(fixityResult, HAS_MESSAGE_DIGEST, model.createResource(d.toString())));</span>
+<span class="nc" id="L96">            digestWrapper.checkFixity();</span>
+<span class="nc" id="L97">            model.add(fixityResult, HAS_FIXITY_STATE, successResource);</span>
+<span class="nc" id="L98">        } catch (final IOException e) {</span>
+            // input stream closed prematurely.
+<span class="nc" id="L100">            throw new RepositoryRuntimeException(&quot;Problem reading content stream from &quot; + binary.getId(), e);</span>
+<span class="nc" id="L101">        } catch (final InvalidChecksumException e) {</span>
+<span class="nc" id="L102">            model.add(fixityResult, HAS_FIXITY_STATE, badChecksumResource);</span>
+<span class="nc" id="L103">        }</span>
+<span class="nc" id="L104">        return DefaultRdfStream.fromModel(subject.asNode(), model);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

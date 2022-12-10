@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ReplacePropertiesServiceImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Search Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.services</a> &gt; <span class="el_source">ReplacePropertiesServiceImpl.java</span></div><h1>ReplacePropertiesServiceImpl.java</h1><pre class="source lang-java linenums">
+/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.impl.services;
+
+import org.apache.jena.rdf.model.Model;
+
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+import org.fcrepo.kernel.api.RdfLexicon;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.auth.ACLHandle;
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
+import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.kernel.api.services.ReplacePropertiesService;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
+
+import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
+
+import java.util.List;
+import java.util.Optional;
+
+import com.github.benmanes.caffeine.cache.Cache;
+
+/**
+ * This class mediates update operations between the kernel and persistent storage layers
+ * @author bseeger
+ */
+@Component
+<span class="fc" id="L42">public class ReplacePropertiesServiceImpl extends AbstractService implements ReplacePropertiesService {</span>
+
+    @Inject
+    private PersistentStorageSessionManager psManager;
+
+    @Inject
+    private RdfSourceOperationFactory factory;
+
+    @Inject
+    private NonRdfSourceOperationFactory nonRdfFactory;
+
+    @Inject
+    private Cache&lt;String, Optional&lt;ACLHandle&gt;&gt; authHandleCache;
+
+    @Override
+    public void perform(final Transaction tx,
+                        final String userPrincipal,
+                        final FedoraId fedoraId,
+                        final Model inputModel) throws MalformedRdfException {
+        try {
+<span class="fc" id="L62">            final PersistentStorageSession pSession = psManager.getSession(tx);</span>
+
+<span class="fc" id="L64">            final var headers = pSession.getHeaders(fedoraId, null);</span>
+<span class="fc" id="L65">            final var interactionModel = headers.getInteractionModel();</span>
+
+<span class="fc" id="L67">            ensureValidDirectContainer(fedoraId, interactionModel, inputModel);</span>
+<span class="fc" id="L68">            ensureValidACLAuthorization(inputModel);</span>
+            // Extract triples which impact the headers of binary resources from incoming description RDF
+<span class="fc" id="L70">            final BinaryHeaderDetails binHeaders = extractNonRdfSourceHeaderTriples(fedoraId, inputModel);</span>
+
+<span class="fc" id="L72">            final var rdfStream = fromModel(</span>
+<span class="fc" id="L73">                    inputModel.createResource(fedoraId.getFullDescribedId()).asNode(), inputModel);</span>
+<span class="fc" id="L74">            final var serverManagedMode = fedoraPropsConfig.getServerManagedPropsMode();</span>
+
+            // create 2 updates -- one for the properties coming in and one for and server managed properties
+            final ResourceOperation primaryOp;
+            final Optional&lt;ResourceOperation&gt; secondaryOp;
+<span class="fc bfc" id="L79" title="All 2 branches covered.">            if (fedoraId.isDescription()) {</span>
+<span class="fc" id="L80">                primaryOp = factory.updateBuilder(tx, fedoraId, serverManagedMode)</span>
+<span class="fc" id="L81">                                   .userPrincipal(userPrincipal)</span>
+<span class="fc" id="L82">                                   .triples(rdfStream)</span>
+<span class="fc" id="L83">                                   .build();</span>
+
+                // we need to use the description id until we write the headers in order to resolve properties
+<span class="fc" id="L86">                secondaryOp = Optional.of(nonRdfFactory.updateHeadersBuilder(tx, fedoraId, serverManagedMode)</span>
+<span class="fc" id="L87">                                                 .relaxedProperties(inputModel)</span>
+<span class="fc" id="L88">                                                 .userPrincipal(userPrincipal)</span>
+<span class="fc" id="L89">                                                 .filename(binHeaders.getFilename())</span>
+<span class="fc" id="L90">                                                 .mimeType(binHeaders.getMimetype())</span>
+<span class="fc" id="L91">                                                 .build());</span>
+            } else {
+<span class="fc" id="L93">                primaryOp = factory.updateBuilder(tx, fedoraId, serverManagedMode)</span>
+<span class="fc" id="L94">                                   .relaxedProperties(inputModel)</span>
+<span class="fc" id="L95">                                   .userPrincipal(userPrincipal)</span>
+<span class="fc" id="L96">                                   .triples(rdfStream)</span>
+<span class="fc" id="L97">                                   .build();</span>
+<span class="fc" id="L98">                secondaryOp = Optional.empty();</span>
+            }
+
+<span class="fc" id="L101">            lockArchivalGroupResource(tx, pSession, fedoraId);</span>
+<span class="fc" id="L102">            tx.lockResource(fedoraId);</span>
+<span class="fc bfc" id="L103" title="All 2 branches covered.">            if (RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI.equals(interactionModel)) {</span>
+<span class="fc" id="L104">                tx.lockResource(fedoraId.asBaseId());</span>
+            }
+
+<span class="fc" id="L107">            pSession.persist(primaryOp);</span>
+
+<span class="fc" id="L109">            userTypesCache.cacheUserTypes(fedoraId,</span>
+<span class="fc" id="L110">                    fromModel(inputModel.getResource(fedoraId.getFullId()).asNode(), inputModel), pSession.getId());</span>
+
+<span class="fc" id="L112">            updateReferences(tx, fedoraId, userPrincipal, inputModel);</span>
+<span class="fc" id="L113">            membershipService.resourceModified(tx, fedoraId);</span>
+<span class="fc" id="L114">            searchIndex.addUpdateIndex(tx, pSession.getHeaders(fedoraId, null));</span>
+<span class="fc" id="L115">            recordEvent(tx, fedoraId, primaryOp);</span>
+<span class="fc" id="L116">            secondaryOp.ifPresent(operation -&gt; updateBinaryHeaders(tx, pSession, operation));</span>
+<span class="pc bpc" id="L117" title="1 of 2 branches missed.">            if (fedoraId.isAcl()) {</span>
+                // Flush ACL cache on any ACL creation/update/deletion.
+<span class="nc" id="L119">                authHandleCache.invalidateAll();</span>
+            }
+<span class="nc" id="L121">        } catch (final PersistentStorageException ex) {</span>
+<span class="nc" id="L122">            throw new RepositoryRuntimeException(String.format(&quot;failed to replace resource %s&quot;,</span>
+                    fedoraId), ex);
+<span class="fc" id="L124">        }</span>
+<span class="fc" id="L125">    }</span>
+
+    private void updateBinaryHeaders(final Transaction tx,
+                                     final PersistentStorageSession pSession,
+                                     final ResourceOperation operation) {
+<span class="fc" id="L130">        pSession.persist(operation);</span>
+<span class="fc" id="L131">        recordEvent(tx, operation.getResourceId(), operation);</span>
+<span class="fc" id="L132">    }</span>
+
+    protected BinaryHeaderDetails extractNonRdfSourceHeaderTriples(final FedoraId fedoraId, final Model model) {
+<span class="fc bfc" id="L135" title="All 2 branches covered.">        if (!fedoraId.isDescription()) {</span>
+<span class="fc" id="L136">            return null;</span>
+        }
+<span class="fc" id="L138">        final BinaryHeaderDetails details = new BinaryHeaderDetails();</span>
+<span class="fc" id="L139">        final Resource binResc = model.getResource(fedoraId.getBaseId());</span>
+<span class="pc bpc" id="L140" title="1 of 2 branches missed.">        if (binResc.hasProperty(RdfLexicon.HAS_MIME_TYPE)) {</span>
+<span class="nc" id="L141">            final List&lt;Statement&gt; mimetypes = binResc.listProperties(RdfLexicon.HAS_MIME_TYPE).toList();</span>
+<span class="nc bnc" id="L142" title="All 2 branches missed.">            if (mimetypes.size() &gt; 1) {</span>
+<span class="nc" id="L143">                throw new MalformedRdfException(&quot;Invalid RDF, cannot provided multiple values for property &quot;</span>
+                        + RdfLexicon.HAS_MIME_TYPE);
+            }
+<span class="nc" id="L146">            details.setMimetype(mimetypes.get(0).getString());</span>
+<span class="nc" id="L147">            binResc.removeAll(RdfLexicon.HAS_MIME_TYPE);</span>
+        }
+<span class="pc bpc" id="L149" title="1 of 2 branches missed.">        if (binResc.hasProperty(RdfLexicon.HAS_ORIGINAL_NAME)) {</span>
+<span class="nc" id="L150">            final List&lt;Statement&gt; filenames = binResc.listProperties(RdfLexicon.HAS_ORIGINAL_NAME).toList();</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">            if (filenames.size() &gt; 1) {</span>
+<span class="nc" id="L152">                throw new MalformedRdfException(&quot;Invalid RDF, cannot provided multiple values for property &quot;</span>
+                        + RdfLexicon.HAS_ORIGINAL_NAME);
+            }
+<span class="nc" id="L155">            details.setFilename(filenames.get(0).getString());</span>
+<span class="nc" id="L156">            binResc.removeAll(RdfLexicon.HAS_ORIGINAL_NAME);</span>
+        }
+<span class="fc" id="L158">        return details;</span>
+    }
+
+    private static class BinaryHeaderDetails {
+        private String mimetype;
+        private String filename;
+
+        public String getMimetype() {
+<span class="fc" id="L166">            return mimetype;</span>
+        }
+
+        public void setMimetype(final String mimetype) {
+<span class="nc" id="L170">            this.mimetype = mimetype;</span>
+<span class="nc" id="L171">        }</span>
+
+        public String getFilename() {
+<span class="fc" id="L174">            return filename;</span>
+        }
+
+        public void setFilename(final String filename) {
+<span class="nc" id="L178">            this.filename = filename;</span>
+<span class="nc" id="L179">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
