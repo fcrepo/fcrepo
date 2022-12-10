@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ContentDigest.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.api.utils</a> &gt; <span class="el_source">ContentDigest.java</span></div><h1>ContentDigest.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.api.utils;
+
+import static org.apache.commons.codec.binary.Hex.encodeHexString;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import org.fcrepo.config.DigestAlgorithm;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.slf4j.Logger;
+
+/**
+ * Digest helpers to convert digests (checksums) into URI strings
+ * (based loosely on Magnet URIs)
+ * @author Chris Beer
+ * @since Mar 6, 2013
+ */
+public final class ContentDigest {
+
+<span class="fc" id="L26">    private static final Logger LOGGER = getLogger(ContentDigest.class);</span>
+
+    private ContentDigest() {
+    }
+
+    /**
+     * Convert a MessageDigest algorithm and checksum value to a URN
+     * @param algorithm the message digest algorithm
+     * @param value the checksum value
+     * @return URI
+     */
+    public static URI asURI(final String algorithm, final String value) {
+        try {
+<span class="fc" id="L39">            final String scheme = DigestAlgorithm.getScheme(algorithm);</span>
+
+<span class="fc" id="L41">            return new URI(scheme, value, null);</span>
+<span class="nc" id="L42">        } catch (final URISyntaxException unlikelyException) {</span>
+<span class="nc" id="L43">            LOGGER.warn(&quot;Exception creating checksum URI: alg={}; value={}&quot;,</span>
+                               algorithm, value);
+<span class="nc" id="L45">            throw new RepositoryRuntimeException(unlikelyException.getMessage(), unlikelyException);</span>
+        }
+    }
+
+    /**
+     * Convert a MessageDigest algorithm and checksum byte-array data to a URN
+     * @param algorithm the message digest algorithm
+     * @param data the checksum byte-array data
+     * @return URI
+     */
+    public static URI asURI(final String algorithm, final byte[] data) {
+<span class="nc" id="L56">        return asURI(algorithm, asString(data));</span>
+    }
+
+    /**
+     * Given a digest URI, get the corresponding MessageDigest algorithm
+     * @param digestUri the digest uri
+     * @return MessageDigest algorithm
+     */
+    public static String getAlgorithm(final URI digestUri) {
+<span class="fc" id="L65">        return DigestAlgorithm.fromScheme(digestUri.getScheme() + &quot;:&quot; +</span>
+<span class="fc" id="L66">             digestUri.getSchemeSpecificPart().split(&quot;:&quot;, 2)[0]).getAlgorithm();</span>
+    }
+
+    private static String asString(final byte[] data) {
+<span class="nc" id="L70">        return encodeHexString(data);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

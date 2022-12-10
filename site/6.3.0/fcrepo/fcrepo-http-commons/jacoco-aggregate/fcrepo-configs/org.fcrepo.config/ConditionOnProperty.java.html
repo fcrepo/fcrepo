@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ConditionOnProperty.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-configs</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.config</a> &gt; <span class="el_source">ConditionOnProperty.java</span></div><h1>ConditionOnProperty.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+
+package org.fcrepo.config;
+
+import java.util.Objects;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.ConditionContext;
+import org.springframework.context.annotation.ConfigurationCondition;
+import org.springframework.core.type.AnnotatedTypeMetadata;
+
+/**
+ * This condition enables a bean/configuration when the specified property matches the expected value
+ *
+ * Implementations must provide a no-arg constructor.
+ *
+ * @author pwinckles
+ */
+public abstract class ConditionOnProperty&lt;T&gt; implements ConfigurationCondition {
+
+<span class="nc" id="L26">    private static final Logger LOGGER = LoggerFactory.getLogger(ConditionOnProperty.class);</span>
+
+    private final String name;
+    private final T expected;
+    private final T defaultValue;
+    private final Class&lt;T&gt; clazz;
+
+<span class="nc" id="L33">    public ConditionOnProperty(final String name, final T expected, final T defaultValue, final Class&lt;T&gt; clazz) {</span>
+<span class="nc" id="L34">        this.name = name;</span>
+<span class="nc" id="L35">        this.expected = expected;</span>
+<span class="nc" id="L36">        this.defaultValue = defaultValue;</span>
+<span class="nc" id="L37">        this.clazz = clazz;</span>
+<span class="nc" id="L38">    }</span>
+
+    @Override
+    public boolean matches(final ConditionContext context, final AnnotatedTypeMetadata metadata) {
+<span class="nc" id="L42">        LOGGER.debug(&quot;Prop {}: {}&quot;, name, context.getEnvironment().getProperty(name));</span>
+<span class="nc" id="L43">        return Objects.equals(expected, context.getEnvironment().getProperty(name, clazz, defaultValue));</span>
+    }
+
+    @Override
+    public ConfigurationPhase getConfigurationPhase() {
+        // This forces spring to not evaluate these conditions until after it has loaded other @Configuration classes,
+        // ensuring that the properties have been loaded.
+<span class="nc" id="L50">        return ConfigurationPhase.REGISTER_BEAN;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>RequiredRdfContext.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.api</a> &gt; <span class="el_source">RequiredRdfContext.java</span></div><h1>RequiredRdfContext.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.api;
+
+/**
+ * A collection of RDF contexts that can be used to extract triples from FedoraResources. All implementations of the
+ * Fedora kernel are required to support these {@link TripleCategory}s, but may choose to support others.
+ *
+ * @author acoburn
+ * @since Dec 4, 2015
+ */
+<span class="nc" id="L15">public enum RequiredRdfContext implements TripleCategory {</span>
+
+    /* A Minimal representation of Rdf Triples */
+<span class="nc" id="L18">    MINIMAL,</span>
+
+    /* Versions Context */
+<span class="nc" id="L21">    VERSIONS,</span>
+
+    /* fedora:EmbedResources Context: embedded child resources */
+<span class="nc" id="L24">    EMBED_RESOURCES,</span>
+
+    /* fedora:InboundReferences Context: assertions from other Fedora resources */
+<span class="nc" id="L27">    INBOUND_REFERENCES,</span>
+
+    /* fedora:PreferMembership Context: ldp membership triples */
+<span class="nc" id="L30">    LDP_MEMBERSHIP,</span>
+
+    /* fedora:PreferContainment Context: ldp containment triples */
+<span class="nc" id="L33">    LDP_CONTAINMENT</span>
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

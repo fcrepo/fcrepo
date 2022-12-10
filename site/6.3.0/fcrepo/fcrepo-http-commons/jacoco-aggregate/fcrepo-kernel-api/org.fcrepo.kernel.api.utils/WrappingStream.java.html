@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>WrappingStream.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.api.utils</a> &gt; <span class="el_source">WrappingStream.java</span></div><h1>WrappingStream.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.api.utils;
+
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.Optional;
+import java.util.Spliterator;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.IntFunction;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToIntFunction;
+import java.util.function.ToLongFunction;
+import java.util.stream.Collector;
+import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
+import java.util.stream.Stream;
+
+/**
+ * Partial Implementation of a Wrapping Stream
+ *
+ * @author acoburn
+ * @since Dec 6, 2015
+ */
+<span class="fc" id="L35">public abstract class WrappingStream&lt;T&gt; implements Stream&lt;T&gt; {</span>
+
+    protected Stream&lt;T&gt; stream;
+
+    @Override
+    public boolean allMatch(final Predicate&lt;? super T&gt; predicate) {
+<span class="fc" id="L41">        return stream.allMatch(predicate);</span>
+    }
+
+    @Override
+    public boolean anyMatch(final Predicate&lt;? super T&gt; predicate) {
+<span class="nc" id="L46">        return stream.anyMatch(predicate);</span>
+    }
+
+    @Override
+    public &lt;R, A&gt; R collect(final Collector&lt;? super T, A, R&gt; collector) {
+<span class="fc" id="L51">        return stream.collect(collector);</span>
+    }
+
+    @Override
+    public &lt;R&gt; R collect(final Supplier&lt;R&gt; supplier, final BiConsumer&lt;R, ? super T&gt; accumulator,
+            final BiConsumer&lt;R,R&gt; combiner) {
+<span class="nc" id="L57">        return stream.collect(supplier, accumulator, combiner);</span>
+    }
+
+    @Override
+    public long count() {
+<span class="fc" id="L62">        return stream.count();</span>
+    }
+
+    @Override
+    public Optional&lt;T&gt; findAny() {
+<span class="nc" id="L67">        return stream.findAny();</span>
+    }
+
+    @Override
+    public Optional&lt;T&gt; findFirst() {
+<span class="nc" id="L72">        return stream.findFirst();</span>
+    }
+
+    @Override
+    public &lt;R&gt; Stream&lt;R&gt; flatMap(final Function&lt;? super T, ? extends Stream&lt;? extends R&gt;&gt; mapper) {
+<span class="nc" id="L77">        return stream.flatMap(mapper);</span>
+    }
+
+    @Override
+    public DoubleStream flatMapToDouble(final Function&lt;? super T, ? extends DoubleStream&gt; mapper) {
+<span class="nc" id="L82">        return stream.flatMapToDouble(mapper);</span>
+    }
+
+    @Override
+    public IntStream flatMapToInt(final Function&lt;? super T, ? extends IntStream&gt; mapper) {
+<span class="nc" id="L87">        return stream.flatMapToInt(mapper);</span>
+    }
+
+    @Override
+    public LongStream flatMapToLong(final Function&lt;? super T, ? extends LongStream&gt; mapper) {
+<span class="nc" id="L92">        return stream.flatMapToLong(mapper);</span>
+    }
+
+    @Override
+    public void forEach(final Consumer&lt;? super T&gt; action) {
+<span class="fc" id="L97">        stream.forEach(action);</span>
+<span class="fc" id="L98">    }</span>
+
+    @Override
+    public void forEachOrdered(final Consumer&lt;? super T&gt; action) {
+<span class="nc" id="L102">        stream.forEachOrdered(action);</span>
+<span class="nc" id="L103">    }</span>
+
+    @Override
+    public &lt;R&gt; Stream&lt;R&gt; map(final Function&lt;? super T,? extends R&gt; mapper) {
+<span class="fc" id="L107">        return stream.map(mapper);</span>
+    }
+
+    @Override
+    public DoubleStream mapToDouble(final ToDoubleFunction&lt;? super T&gt; mapper) {
+<span class="nc" id="L112">        return stream.mapToDouble(mapper);</span>
+    }
+
+    @Override
+    public IntStream mapToInt(final ToIntFunction&lt;? super T&gt; mapper) {
+<span class="nc" id="L117">        return stream.mapToInt(mapper);</span>
+    }
+
+    @Override
+    public LongStream mapToLong(final ToLongFunction&lt;? super T&gt; mapper) {
+<span class="nc" id="L122">        return stream.mapToLong(mapper);</span>
+    }
+
+    @Override
+    public Optional&lt;T&gt; max(final Comparator&lt;? super T&gt; comparator) {
+<span class="nc" id="L127">        return stream.max(comparator);</span>
+    }
+
+    @Override
+    public Optional&lt;T&gt; min(final Comparator&lt;? super T&gt; comparator) {
+<span class="nc" id="L132">        return stream.min(comparator);</span>
+    }
+
+    @Override
+    public boolean noneMatch(final Predicate&lt;? super T&gt; predicate) {
+<span class="nc" id="L137">        return stream.noneMatch(predicate);</span>
+    }
+
+    @Override
+    public Optional&lt;T&gt; reduce(final BinaryOperator&lt;T&gt; accumulator) {
+<span class="nc" id="L142">        return stream.reduce(accumulator);</span>
+    }
+
+    @Override
+    public T reduce(final T identity, final BinaryOperator&lt;T&gt; accumulator) {
+<span class="nc" id="L147">        return stream.reduce(identity, accumulator);</span>
+    }
+
+    @Override
+    public &lt;U&gt; U reduce(final U identity, final BiFunction&lt;U,? super T,U&gt; accumulator,
+            final BinaryOperator&lt;U&gt; combiner) {
+<span class="nc" id="L153">        return stream.reduce(identity, accumulator, combiner);</span>
+    }
+
+    @Override
+    public Object[] toArray() {
+<span class="nc" id="L158">        return stream.toArray();</span>
+    }
+
+    @Override
+    public &lt;A&gt; A[] toArray(final IntFunction&lt;A[]&gt; generator) {
+<span class="nc" id="L163">        return stream.toArray(generator);</span>
+    }
+
+    @Override
+    public void close() {
+<span class="fc" id="L168">        stream.close();</span>
+<span class="fc" id="L169">    }</span>
+
+    @Override
+    public boolean isParallel() {
+<span class="fc" id="L173">        return stream.isParallel();</span>
+    }
+
+    @Override
+    public Iterator&lt;T&gt; iterator() {
+<span class="nc" id="L178">        return stream.iterator();</span>
+    }
+
+    @Override
+    public Spliterator&lt;T&gt; spliterator() {
+<span class="fc" id="L183">        return stream.spliterator();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
