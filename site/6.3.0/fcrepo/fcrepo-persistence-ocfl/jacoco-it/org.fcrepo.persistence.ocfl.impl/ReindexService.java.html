@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReindexService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository OCFL Persistence Impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.persistence.ocfl.impl</a> &gt; <span class="el_source">ReindexService.java</span></div><h1>ReindexService.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.persistence.ocfl.impl;
+
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.getRdfFormat;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
+
+import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
+
+import edu.wisc.library.ocfl.api.OcflRepository;
+import org.fcrepo.config.FedoraPropsConfig;
+import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.RdfLexicon;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.services.MembershipService;
+import org.fcrepo.kernel.api.services.ReferenceService;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
+import org.fcrepo.search.api.Condition;
+import org.fcrepo.search.api.InvalidQueryException;
+import org.fcrepo.search.api.SearchIndex;
+import org.fcrepo.search.api.SearchParameters;
+import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
+import org.fcrepo.storage.ocfl.validation.ObjectValidator;
+
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.RDFDataMgr;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
+/**
+ * Service that does the reindexing for one OCFL object.
+ * @author whikloj
+ */
+@Component
+<span class="fc" id="L58">public class ReindexService {</span>
+
+    @Inject
+    private PersistentStorageSessionManager persistentStorageSessionManager;
+
+    @Inject
+    private OcflObjectSessionFactory ocflObjectSessionFactory;
+
+    @Autowired
+    @Qualifier(&quot;ocflIndex&quot;)
+    private FedoraToOcflObjectIndex ocflIndex;
+
+    @Autowired
+    private OcflRepository ocflRepository;
+
+    @Autowired
+    @Qualifier(&quot;containmentIndex&quot;)
+    private ContainmentIndex containmentIndex;
+
+    @Autowired
+    @Qualifier(&quot;searchIndex&quot;)
+    private SearchIndex searchIndex;
+
+    @Autowired
+    @Qualifier(&quot;referenceService&quot;)
+    private ReferenceService referenceService;
+
+    @Inject
+    private MembershipService membershipService;
+
+    @Inject
+    private ObjectValidator objectValidator;
+
+    @Inject
+    private FedoraPropsConfig config;
+
+<span class="fc" id="L94">    private static final Logger LOGGER = getLogger(ReindexService.class);</span>
+
+<span class="fc" id="L96">    private int membershipPageSize = 500;</span>
+
+    public void indexOcflObject(final Transaction tx, final String ocflId) {
+<span class="nc" id="L99">        LOGGER.debug(&quot;Indexing ocflId {} in transaction {}&quot;, ocflId, tx.getId());</span>
+
+<span class="nc" id="L101">        ocflRepository.invalidateCache(ocflId);</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">        if (config.isRebuildValidation()) {</span>
+<span class="nc" id="L103">            objectValidator.validate(ocflId, config.isRebuildFixityCheck());</span>
+        }
+
+<span class="nc" id="L106">        try (final var session = ocflObjectSessionFactory.newSession(ocflId)) {</span>
+<span class="nc" id="L107">            final var rootId = new AtomicReference&lt;FedoraId&gt;();</span>
+<span class="nc" id="L108">            final var fedoraIds = new ArrayList&lt;FedoraId&gt;();</span>
+<span class="nc" id="L109">            final var headersList = new ArrayList&lt;ResourceHeaders&gt;();</span>
+
+<span class="nc" id="L111">            session.invalidateCache(ocflId);</span>
+<span class="nc" id="L112">            session.streamResourceHeaders().forEach(storageHeaders -&gt; {</span>
+<span class="nc" id="L113">                final var headers = new ResourceHeadersAdapter(storageHeaders);</span>
+
+<span class="nc" id="L115">                final var fedoraId = headers.getId();</span>
+<span class="nc" id="L116">                fedoraIds.add(fedoraId);</span>
+<span class="nc bnc" id="L117" title="All 4 branches missed.">                if (headers.isArchivalGroup() || headers.isObjectRoot()) {</span>
+<span class="nc" id="L118">                    rootId.set(fedoraId);</span>
+                }
+
+<span class="nc bnc" id="L121" title="All 2 branches missed.">                if (!fedoraId.isRepositoryRoot()) {</span>
+<span class="nc" id="L122">                    var parentId = headers.getParent();</span>
+
+<span class="nc bnc" id="L124" title="All 2 branches missed.">                    if (headers.getParent() == null) {</span>
+<span class="nc bnc" id="L125" title="All 2 branches missed.">                        if (headers.isObjectRoot()) {</span>
+<span class="nc" id="L126">                            parentId = FedoraId.getRepositoryRootId();</span>
+                        } else {
+<span class="nc" id="L128">                            throw new IllegalStateException(</span>
+<span class="nc" id="L129">                                    String.format(&quot;Resource %s must have a parent defined&quot;, fedoraId.getFullId()));</span>
+                        }
+                    }
+<span class="nc" id="L132">                    final var created = headers.getCreatedDate();</span>
+<span class="nc bnc" id="L133" title="All 2 branches missed.">                    if (!headers.isDeleted()) {</span>
+<span class="nc bnc" id="L134" title="All 2 branches missed.">                        if (!headers.getInteractionModel().equals(NON_RDF_SOURCE.toString())) {</span>
+<span class="nc" id="L135">                            final Optional&lt;InputStream&gt; content = session.readContent(fedoraId.getFullId())</span>
+<span class="nc" id="L136">                                    .getContentStream();</span>
+<span class="nc bnc" id="L137" title="All 2 branches missed.">                            if (content.isPresent()) {</span>
+<span class="nc" id="L138">                                try (final var stream = content.get()) {</span>
+<span class="nc" id="L139">                                    final RdfStream rdf = parseRdf(fedoraId, stream);</span>
+<span class="nc" id="L140">                                    this.referenceService.updateReferences(tx, fedoraId, null, rdf);</span>
+<span class="nc" id="L141">                                } catch (final IOException e) {</span>
+<span class="nc" id="L142">                                    LOGGER.warn(&quot;Content stream for {} closed prematurely, inbound references skipped.&quot;,</span>
+<span class="nc" id="L143">                                            fedoraId.getFullId());</span>
+<span class="nc" id="L144">                                    throw new RepositoryRuntimeException(e.getMessage(), e);</span>
+<span class="nc" id="L145">                                }</span>
+                            }
+                        }
+
+<span class="nc" id="L149">                        this.containmentIndex.addContainedBy(tx, parentId, fedoraId, created, null);</span>
+<span class="nc" id="L150">                        headersList.add(headers.asKernelHeaders());</span>
+                    } else {
+<span class="nc" id="L152">                        final var deleted = headers.getLastModifiedDate();</span>
+<span class="nc" id="L153">                        this.containmentIndex.addContainedBy(tx, parentId, fedoraId, created, deleted);</span>
+                    }
+                }
+<span class="nc" id="L156">            });</span>
+
+<span class="nc bnc" id="L158" title="All 2 branches missed.">            if (rootId.get() == null) {</span>
+<span class="nc" id="L159">                throw new IllegalStateException(String.format(&quot;Failed to find the root resource in object &quot; +</span>
+                        &quot;identified by %s. Please ensure that the object ID you are attempting to index &quot; +
+                        &quot;refers to a corresponding valid Fedora-flavored object in the OCFL repository. Additionally &quot; +
+                        &quot;be sure that the object ID corresponds with the object root resource (as opposed to child &quot; +
+                        &quot;resources within the object).&quot;, ocflId));
+            }
+
+<span class="nc" id="L166">            fedoraIds.forEach(fedoraIdentifier -&gt; {</span>
+<span class="nc" id="L167">                final var rootFedoraIdentifier = rootId.get();</span>
+<span class="nc" id="L168">                ocflIndex.addMapping(tx, fedoraIdentifier, rootFedoraIdentifier, ocflId);</span>
+<span class="nc" id="L169">                LOGGER.debug(&quot;Rebuilt fedora-to-ocfl object index entry for {}&quot;, fedoraIdentifier);</span>
+<span class="nc" id="L170">            });</span>
+
+<span class="nc" id="L172">            headersList.forEach(headers -&gt; {</span>
+<span class="nc" id="L173">                searchIndex.addUpdateIndex(tx, headers);</span>
+<span class="nc" id="L174">                LOGGER.debug(&quot;Rebuilt searchIndex for {}&quot;, headers.getId());</span>
+<span class="nc" id="L175">            });</span>
+        }
+<span class="nc" id="L177">    }</span>
+
+    /**
+     * Remove persistent sessions for a transaction to avoid memory leaks.
+     * @param transactionId the transaction id.
+     */
+    public void cleanupSession(final String transactionId) {
+<span class="nc" id="L184">        persistentStorageSessionManager.removeSession(transactionId);</span>
+<span class="nc" id="L185">    }</span>
+
+    /**
+     * Set the membership page size.
+     * @param pageSize the new page size.
+     */
+    public void setMembershipPageSize(final int pageSize) {
+<span class="nc" id="L192">        membershipPageSize = pageSize;</span>
+<span class="nc" id="L193">    }</span>
+
+    /**
+     * Reset all the indexes.
+     */
+    public void reset() {
+<span class="nc" id="L199">        ocflIndex.reset();</span>
+<span class="nc" id="L200">        containmentIndex.reset();</span>
+<span class="nc" id="L201">        searchIndex.reset();</span>
+<span class="nc" id="L202">        referenceService.reset();</span>
+<span class="nc" id="L203">        membershipService.reset();</span>
+<span class="nc" id="L204">    }</span>
+
+    /**
+     * Index all membership properties by querying for Direct containers, and then
+     * trying population of the membership index for each one
+     * @param transaction the transaction id.
+     */
+    public void indexMembership(final Transaction transaction) {
+<span class="nc" id="L212">        LOGGER.debug(&quot;Starting indexMembership for transaction {}&quot;, transaction);</span>
+<span class="nc" id="L213">        final var fields = List.of(Condition.Field.FEDORA_ID);</span>
+<span class="nc" id="L214">        final var conditions = List.of(Condition.fromEnums(Condition.Field.RDF_TYPE, Condition.Operator.EQ,</span>
+<span class="nc" id="L215">                RdfLexicon.DIRECT_CONTAINER.getURI()));</span>
+<span class="nc" id="L216">        int offset = 0;</span>
+
+        try {
+            int numResults;
+            do {
+<span class="nc" id="L221">                final var params = new SearchParameters(fields, conditions, membershipPageSize,</span>
+                        offset, Condition.Field.FEDORA_ID, &quot;asc&quot;, false);
+
+<span class="nc" id="L224">                final var searchResult = searchIndex.doSearch(params);</span>
+<span class="nc" id="L225">                final var resultList = searchResult.getItems();</span>
+<span class="nc" id="L226">                numResults = resultList.size();</span>
+
+<span class="nc" id="L228">                resultList.stream()</span>
+<span class="nc" id="L229">                        .map(entry -&gt; FedoraId.create((String) entry.get(Condition.Field.FEDORA_ID.toString())))</span>
+<span class="nc" id="L230">                        .forEach(containerId -&gt; membershipService.populateMembershipHistory(transaction, containerId));</span>
+
+                // Results are paged, so step through pages until we reach the last one
+<span class="nc" id="L233">                offset += membershipPageSize;</span>
+<span class="nc bnc" id="L234" title="All 2 branches missed.">            } while (numResults == membershipPageSize);</span>
+
+<span class="nc" id="L236">        } catch (final InvalidQueryException e) {</span>
+<span class="nc" id="L237">            throw new RepositoryRuntimeException(&quot;Failed to repopulate membership history&quot;, e);</span>
+<span class="nc" id="L238">        }</span>
+<span class="nc" id="L239">        LOGGER.debug(&quot;Finished indexMembership for transaction {}&quot;, transaction);</span>
+<span class="nc" id="L240">    }</span>
+
+    /**
+     * Rollback changes in the transaction.
+     * @param tx the transaction
+     */
+    public void rollbackMembership(@NotNull final Transaction tx) {
+<span class="nc" id="L247">        execQuietly(&quot;Failed to rollback membership index transaction &quot; + tx.getId(), () -&gt; {</span>
+<span class="nc" id="L248">            membershipService.rollbackTransaction(tx);</span>
+<span class="nc" id="L249">            return null;</span>
+        });
+<span class="nc" id="L251">    }</span>
+
+    /**
+     * Executes the closure, capturing all exceptions, and logging them as errors.
+     *
+     * @param failureMessage what to print if the closure fails
+     * @param callable closure to execute
+     */
+    private void execQuietly(final String failureMessage, final Callable&lt;Void&gt; callable) {
+        try {
+<span class="nc" id="L261">            callable.call();</span>
+<span class="nc" id="L262">        } catch (final Exception e) {</span>
+<span class="nc" id="L263">            LOGGER.error(failureMessage, e);</span>
+<span class="nc" id="L264">        }</span>
+<span class="nc" id="L265">    }</span>
+
+    /**
+     * Parse the inputstream from a Rdf resource to a RDFstream.
+     *
+     * @param fedoraIdentifier the resource identifier.
+     * @param inputStream the inputstream.
+     * @return an RdfStream of the resource triples.
+     */
+    private static RdfStream parseRdf(final FedoraId fedoraIdentifier, final InputStream inputStream) {
+<span class="nc" id="L275">        final Model model = createDefaultModel();</span>
+<span class="nc" id="L276">        RDFDataMgr.read(model, inputStream, getRdfFormat().getLang());</span>
+<span class="nc bnc" id="L277" title="All 2 branches missed.">        final FedoraId topic = (fedoraIdentifier.isDescription() ? fedoraIdentifier.asBaseId() : fedoraIdentifier);</span>
+<span class="nc" id="L278">        return DefaultRdfStream.fromModel(createURI(topic.getFullId()), model);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
