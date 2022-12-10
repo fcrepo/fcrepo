@@ -1,0 +1,98 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * The contents of this file are subject to the license and copyright</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * detailed in the LICENSE and NOTICE files at the root of the source</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * tree.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> */</a>
+<span class="sourceLineNo">006</span><a id="line.6">package org.fcrepo.kernel.api.operations;</a>
+<span class="sourceLineNo">007</span><a id="line.7"></a>
+<span class="sourceLineNo">008</span><a id="line.8">import org.apache.jena.rdf.model.Model;</a>
+<span class="sourceLineNo">009</span><a id="line.9"></a>
+<span class="sourceLineNo">010</span><a id="line.10">/**</a>
+<span class="sourceLineNo">011</span><a id="line.11"> * Builder for operations involving resource with relaxable server managed properties</a>
+<span class="sourceLineNo">012</span><a id="line.12"> *</a>
+<span class="sourceLineNo">013</span><a id="line.13"> * @author bbpennel</a>
+<span class="sourceLineNo">014</span><a id="line.14"> */</a>
+<span class="sourceLineNo">015</span><a id="line.15">public interface RelaxableResourceOperationBuilder extends ResourceOperationBuilder {</a>
+<span class="sourceLineNo">016</span><a id="line.16">    /**</a>
+<span class="sourceLineNo">017</span><a id="line.17">     * Set the relaxed managed properties for this resource if the server</a>
+<span class="sourceLineNo">018</span><a id="line.18">     * is in relaxed mode.</a>
+<span class="sourceLineNo">019</span><a id="line.19">     *</a>
+<span class="sourceLineNo">020</span><a id="line.20">     * @param model rdf of the resource</a>
+<span class="sourceLineNo">021</span><a id="line.21">     * @return this builder</a>
+<span class="sourceLineNo">022</span><a id="line.22">     */</a>
+<span class="sourceLineNo">023</span><a id="line.23">    RelaxableResourceOperationBuilder relaxedProperties(Model model);</a>
+<span class="sourceLineNo">024</span><a id="line.24">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>
