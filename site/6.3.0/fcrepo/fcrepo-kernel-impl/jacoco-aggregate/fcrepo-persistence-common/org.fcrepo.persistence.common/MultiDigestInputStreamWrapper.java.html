@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>MultiDigestInputStreamWrapper.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Kernel Implementation</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-persistence-common</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.persistence.common</a> &gt; <span class="el_source">MultiDigestInputStreamWrapper.java</span></div><h1>MultiDigestInputStreamWrapper.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.persistence.common;
+
+import static java.lang.String.format;
+import static org.apache.commons.codec.binary.Hex.encodeHexString;
+import static org.apache.commons.lang3.StringUtils.substringAfterLast;
+import static org.fcrepo.kernel.api.utils.ContentDigest.getAlgorithm;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
+import org.fcrepo.kernel.api.utils.ContentDigest;
+import org.fcrepo.config.DigestAlgorithm;
+
+/**
+ * Wrapper for an InputStream that allows for the computation and evaluation
+ * of multiple digests at once
+ *
+ * @author bbpennel
+ */
+public class MultiDigestInputStreamWrapper {
+
+    private final InputStream sourceStream;
+
+    private final Map&lt;String, String&gt; algToDigest;
+
+    private final Map&lt;String, DigestInputStream&gt; algToDigestStream;
+
+    private boolean streamRetrieved;
+
+    private Map&lt;String, String&gt; computedDigests;
+
+    /**
+     * Construct a MultiDigestInputStreamWrapper
+     *
+     * @param sourceStream the original source input stream
+     * @param digests collection of digests for the input stream
+     * @param wantDigests list of additional digest algorithms to compute for the input stream
+     */
+    public MultiDigestInputStreamWrapper(final InputStream sourceStream, final Collection&lt;URI&gt; digests,
+<span class="fc" id="L58">            final Collection&lt;DigestAlgorithm&gt; wantDigests) {</span>
+<span class="fc" id="L59">        this.sourceStream = sourceStream;</span>
+<span class="fc" id="L60">        algToDigest = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L61">        algToDigestStream = new HashMap&lt;&gt;();</span>
+
+<span class="fc bfc" id="L63" title="All 2 branches covered.">        if (digests != null) {</span>
+<span class="fc bfc" id="L64" title="All 2 branches covered.">            for (final URI digestUri : digests) {</span>
+<span class="fc" id="L65">                final String algorithm = getAlgorithm(digestUri);</span>
+<span class="fc" id="L66">                final String hash = substringAfterLast(digestUri.toString(), &quot;:&quot;);</span>
+<span class="fc" id="L67">                algToDigest.put(algorithm, hash);</span>
+<span class="fc" id="L68">            }</span>
+        }
+
+        // Merge the list of wanted digest algorithms with set of provided digests
+<span class="fc bfc" id="L72" title="All 2 branches covered.">        if (wantDigests != null) {</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">            for (final DigestAlgorithm wantDigest : wantDigests) {</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">                if (!algToDigest.containsKey(wantDigest.getAlgorithm())) {</span>
+<span class="fc" id="L75">                    algToDigest.put(wantDigest.getAlgorithm(), null);</span>
+                }
+<span class="fc" id="L77">            }</span>
+        }
+<span class="fc" id="L79">    }</span>
+
+    /**
+     * Get the InputStream wrapped to produce the requested digests
+     *
+     * @return wrapped input stream
+     */
+    public InputStream getInputStream() {
+<span class="fc" id="L87">        streamRetrieved = true;</span>
+<span class="fc" id="L88">        InputStream digestStream = sourceStream;</span>
+<span class="fc bfc" id="L89" title="All 2 branches covered.">        for (final String algorithm : algToDigest.keySet()) {</span>
+            try {
+                // Progressively wrap the original stream in layers of digest streams
+<span class="fc" id="L92">                digestStream = new DigestInputStream(</span>
+<span class="fc" id="L93">                        digestStream, MessageDigest.getInstance(algorithm));</span>
+<span class="fc" id="L94">            } catch (final NoSuchAlgorithmException e) {</span>
+<span class="fc" id="L95">                throw new UnsupportedAlgorithmException(&quot;Unsupported digest algorithm: &quot; + algorithm, e);</span>
+<span class="fc" id="L96">            }</span>
+
+<span class="fc" id="L98">            algToDigestStream.put(algorithm, (DigestInputStream) digestStream);</span>
+<span class="fc" id="L99">        }</span>
+<span class="fc" id="L100">        return digestStream;</span>
+    }
+
+    /**
+     * After consuming the inputstream, verify that all of the computed digests
+     * matched the provided digests.
+     *
+     * Note: the wrapped InputStream will be consumed if it has not already been read.
+     *
+     * @throws InvalidChecksumException thrown if any of the digests did not match
+     */
+    public void checkFixity() throws InvalidChecksumException {
+<span class="fc" id="L112">        calculateDigests();</span>
+
+<span class="fc" id="L114">        algToDigest.forEach((algorithm, originalDigest) -&gt; {</span>
+            // Skip any algorithms which were calculated but no digest was provided for verification
+<span class="fc bfc" id="L116" title="All 2 branches covered.">            if (originalDigest == null) {</span>
+<span class="fc" id="L117">                return;</span>
+            }
+<span class="fc" id="L119">            final String computed = computedDigests.get(algorithm);</span>
+
+<span class="fc bfc" id="L121" title="All 2 branches covered.">            if (!originalDigest.equalsIgnoreCase(computed)) {</span>
+<span class="fc" id="L122">                throw new InvalidChecksumException(format(</span>
+                        &quot;Checksum mismatch, computed %s digest %s did not match expected value %s&quot;,
+                        algorithm, computed, originalDigest));
+            }
+<span class="fc" id="L126">        });</span>
+
+<span class="fc" id="L128">    }</span>
+
+    /**
+     * Returns the list of digests calculated for the wrapped InputStream
+     *
+     * Note: the wrapped InputStream will be consumed if it has not already been read.
+     *
+     * @return list of digests calculated from the wrapped InputStream, in URN format.
+     */
+    public List&lt;URI&gt; getDigests() {
+<span class="fc" id="L138">        calculateDigests();</span>
+
+<span class="fc" id="L140">        return computedDigests.entrySet().stream()</span>
+<span class="fc" id="L141">                .map(e -&gt; ContentDigest.asURI(e.getKey(), e.getValue()))</span>
+<span class="fc" id="L142">                .collect(Collectors.toList());</span>
+    }
+
+    /**
+     * Get the digest calculated for the provided algorithm
+     *
+     * @param alg algorithm of the digest to retrieve
+     * @return the calculated digest, or null if no digest of that type was calculated
+     */
+    public String getDigest(final DigestAlgorithm alg) {
+<span class="nc" id="L152">        calculateDigests();</span>
+
+<span class="nc" id="L154">        return computedDigests.entrySet().stream()</span>
+<span class="nc" id="L155">                .filter(entry -&gt; alg.getAlgorithm().equals(entry.getKey()))</span>
+<span class="nc" id="L156">                .map(Entry::getValue)</span>
+<span class="nc" id="L157">                .findFirst()</span>
+<span class="nc" id="L158">                .orElse(null);</span>
+    }
+
+    private void calculateDigests() {
+<span class="fc bfc" id="L162" title="All 2 branches covered.">        if (computedDigests != null) {</span>
+<span class="fc" id="L163">            return;</span>
+        }
+
+<span class="fc bfc" id="L166" title="All 2 branches covered.">        if (!streamRetrieved) {</span>
+            // Stream not previously consumed, consume it now in order to calculate digests
+<span class="fc" id="L168">            try (final InputStream is = getInputStream()) {</span>
+<span class="fc bfc" id="L169" title="All 2 branches covered.">                while (is.read() != -1) {</span>
+                }
+<span class="nc" id="L171">            } catch (final IOException e) {</span>
+<span class="nc" id="L172">                throw new RepositoryRuntimeException(&quot;Failed to read content stream while calculating digests&quot;, e);</span>
+<span class="fc" id="L173">            }</span>
+        }
+
+<span class="fc" id="L176">        computedDigests = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L177">        algToDigestStream.forEach((algorithm, digestStream) -&gt; {</span>
+<span class="fc" id="L178">            final String computed = encodeHexString(digestStream.getMessageDigest().digest());</span>
+<span class="fc" id="L179">            computedDigests.put(algorithm, computed);</span>
+<span class="fc" id="L180">        });</span>
+<span class="fc" id="L181">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

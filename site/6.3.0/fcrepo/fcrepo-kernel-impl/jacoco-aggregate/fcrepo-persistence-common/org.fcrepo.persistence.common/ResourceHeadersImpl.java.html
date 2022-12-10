@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ResourceHeadersImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Kernel Implementation</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-persistence-common</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.persistence.common</a> &gt; <span class="el_source">ResourceHeadersImpl.java</span></div><h1>ResourceHeadersImpl.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.persistence.common;
+
+import java.net.URI;
+import java.time.Instant;
+import java.util.Collection;
+
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
+
+/**
+ * Common implementation of resource headers
+ *
+ * @author bbpennel
+ */
+<span class="fc" id="L20">public class ResourceHeadersImpl implements ResourceHeaders {</span>
+
+    private FedoraId id;
+
+    private FedoraId parent;
+
+    private FedoraId archivalGroupId;
+
+    private String stateToken;
+
+    private String interactionModel;
+
+    private String mimeType;
+
+    private String filename;
+
+    private long contentSize;
+
+    private Collection&lt;URI&gt; digests;
+
+    private String externalUrl;
+
+    private String externalHandling;
+
+    private Instant createdDate;
+
+    private String createdBy;
+
+    private Instant lastModifiedDate;
+
+    private String lastModifiedBy;
+
+    private Instant mementoCreatedDate;
+
+    private boolean archivalGroup;
+
+    private boolean objectRoot;
+
+    private boolean deleted;
+
+    private String contentPath;
+
+    private String headersVersion;
+
+    @Override
+    public FedoraId getId() {
+<span class="fc" id="L66">        return id;</span>
+    }
+
+    /**
+     * @param id the fedora id to set
+     */
+    public void setId(final FedoraId id) {
+<span class="fc" id="L73">        this.id = id;</span>
+<span class="fc" id="L74">    }</span>
+
+    @Override
+    public FedoraId getParent() {
+<span class="fc" id="L78">        return parent;</span>
+    }
+
+    /**
+     * @param parent the parent to set
+     */
+    public void setParent(final FedoraId parent) {
+<span class="fc" id="L85">        this.parent = parent;</span>
+<span class="fc" id="L86">    }</span>
+
+    @Override
+    public FedoraId getArchivalGroupId() {
+<span class="fc" id="L90">        return archivalGroupId;</span>
+    }
+
+    /**
+     * @param archivalGroupId the archivalGroupId to set
+     */
+    public void setArchivalGroupId(final FedoraId archivalGroupId) {
+<span class="nc" id="L97">        this.archivalGroupId = archivalGroupId;</span>
+<span class="nc" id="L98">    }</span>
+
+    @Override
+    public String getStateToken() {
+<span class="fc" id="L102">        return stateToken;</span>
+    }
+
+    /**
+     * @param stateToken the stateToken to set
+     */
+    public void setStateToken(final String stateToken) {
+<span class="fc" id="L109">        this.stateToken = stateToken;</span>
+<span class="fc" id="L110">    }</span>
+
+    @Override
+    public String getInteractionModel() {
+<span class="fc" id="L114">        return interactionModel;</span>
+    }
+
+    /**
+     * @param interactionModel the interactionModel to set
+     */
+    public void setInteractionModel(final String interactionModel) {
+<span class="fc" id="L121">        this.interactionModel = interactionModel;</span>
+<span class="fc" id="L122">    }</span>
+
+    @Override
+    public String getMimeType() {
+<span class="fc" id="L126">        return mimeType;</span>
+    }
+
+    /**
+     * @param mimeType the mimeType to set
+     */
+    public void setMimeType(final String mimeType) {
+<span class="fc" id="L133">        this.mimeType = mimeType;</span>
+<span class="fc" id="L134">    }</span>
+
+    @Override
+    public String getFilename() {
+<span class="fc" id="L138">        return filename;</span>
+    }
+
+    /**
+     * @param filename the filename to set
+     */
+    public void setFilename(final String filename) {
+<span class="fc" id="L145">        this.filename = filename;</span>
+<span class="fc" id="L146">    }</span>
+
+    @Override
+    public long getContentSize() {
+<span class="fc" id="L150">        return contentSize;</span>
+    }
+
+    /**
+     * @param contentSize the contentSize to set
+     */
+    public void setContentSize(final long contentSize) {
+<span class="fc" id="L157">        this.contentSize = contentSize;</span>
+<span class="fc" id="L158">    }</span>
+
+    @Override
+    public Collection&lt;URI&gt; getDigests() {
+<span class="fc" id="L162">        return digests;</span>
+    }
+
+    /**
+     * @param digests the digests to set
+     */
+    public void setDigests(final Collection&lt;URI&gt; digests) {
+<span class="fc" id="L169">        this.digests = digests;</span>
+<span class="fc" id="L170">    }</span>
+
+    @Override
+    public String getExternalHandling() {
+<span class="fc" id="L174">        return externalHandling;</span>
+    }
+
+    /**
+     * @param externalHandling the externalHandling to set
+     */
+    public void setExternalHandling(final String externalHandling) {
+<span class="fc" id="L181">        this.externalHandling = externalHandling;</span>
+<span class="fc" id="L182">    }</span>
+
+    @Override
+    public Instant getCreatedDate() {
+<span class="fc" id="L186">        return createdDate;</span>
+    }
+
+    /**
+     * @param createdDate the createdDate to set
+     */
+    public void setCreatedDate(final Instant createdDate) {
+<span class="fc" id="L193">        this.createdDate = createdDate;</span>
+<span class="fc" id="L194">    }</span>
+
+    @Override
+    public String getCreatedBy() {
+<span class="fc" id="L198">        return createdBy;</span>
+    }
+
+    /**
+     * @param createdBy the createdBy to set
+     */
+    public void setCreatedBy(final String createdBy) {
+<span class="fc" id="L205">        this.createdBy = createdBy;</span>
+<span class="fc" id="L206">    }</span>
+
+    @Override
+    public Instant getLastModifiedDate() {
+<span class="fc" id="L210">        return lastModifiedDate;</span>
+    }
+
+    /**
+     * @param lastModifiedDate the lastModifiedDate to set
+     */
+    public void setLastModifiedDate(final Instant lastModifiedDate) {
+<span class="fc" id="L217">        this.lastModifiedDate = lastModifiedDate;</span>
+<span class="fc" id="L218">    }</span>
+
+    @Override
+    public String getLastModifiedBy() {
+<span class="fc" id="L222">        return lastModifiedBy;</span>
+    }
+
+    /**
+     * @param lastModifiedby the lastModifiedby to set
+     */
+    public void setLastModifiedBy(final String lastModifiedby) {
+<span class="fc" id="L229">        this.lastModifiedBy = lastModifiedby;</span>
+<span class="fc" id="L230">    }</span>
+
+    @Override
+    public Instant getMementoCreatedDate() {
+<span class="nc" id="L234">        return mementoCreatedDate;</span>
+    }
+
+    /**
+     * @param mementoCreatedDate the mementoCreateDate to set
+     */
+    public void setMementoCreatedDate(final Instant mementoCreatedDate) {
+<span class="nc" id="L241">        this.mementoCreatedDate = mementoCreatedDate;</span>
+<span class="nc" id="L242">    }</span>
+
+    /**
+     * @param externalUrl the externalUrl to set
+     */
+    public void setExternalUrl(final String externalUrl) {
+<span class="fc" id="L248">        this.externalUrl = externalUrl;</span>
+<span class="fc" id="L249">    }</span>
+
+    @Override
+    public String getExternalUrl() {
+<span class="fc" id="L253">        return externalUrl;</span>
+    }
+
+    /**
+     *
+     * @param flag boolean flag
+     */
+    public void setArchivalGroup(final boolean flag) {
+<span class="nc" id="L261">        this.archivalGroup = flag;</span>
+<span class="nc" id="L262">    }</span>
+
+    @Override
+    public boolean isArchivalGroup() {
+<span class="fc" id="L266">        return archivalGroup;</span>
+    }
+
+    /**
+     * @param flag boolean flag
+     */
+    public void setObjectRoot(final boolean flag) {
+<span class="nc" id="L273">        this.objectRoot = flag;</span>
+<span class="nc" id="L274">    }</span>
+
+    @Override
+    public boolean isObjectRoot() {
+<span class="nc bnc" id="L278" title="All 2 branches missed.">        if (isArchivalGroup()) {</span>
+<span class="nc" id="L279">            return true;</span>
+        } else {
+<span class="nc" id="L281">            return objectRoot;</span>
+        }
+    }
+
+    /**
+     * Set deleted status flag.
+     * @param deleted true if deleted (a tombstone).
+     */
+    public void setDeleted(final boolean deleted) {
+<span class="fc" id="L290">        this.deleted = deleted;</span>
+<span class="fc" id="L291">    }</span>
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isDeleted() {
+<span class="fc" id="L298">        return deleted;</span>
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getContentPath() {
+<span class="nc" id="L306">        return contentPath;</span>
+    }
+
+    /**
+     * Sets the path to the content file associated with the header file
+     *
+     * @param contentPath path to content file
+     */
+    public void setContentPath(final String contentPath) {
+<span class="nc" id="L315">        this.contentPath = contentPath;</span>
+<span class="nc" id="L316">    }</span>
+
+    @Override
+    public String getHeadersVersion() {
+<span class="nc" id="L320">        return headersVersion;</span>
+    }
+
+    /**
+     * @param headersVersion the headers version
+     */
+    public void setHeadersVersion(final String headersVersion) {
+<span class="nc" id="L327">        this.headersVersion = headersVersion;</span>
+<span class="nc" id="L328">    }</span>
+
+    @Override
+    public String toString() {
+<span class="nc" id="L332">        return &quot;ResourceHeadersImpl{&quot; +</span>
+                &quot;id=&quot; + id +
+                &quot;, parent=&quot; + parent +
+                &quot;, archivalGroupId=&quot; + archivalGroupId +
+                &quot;, stateToken='&quot; + stateToken + '\'' +
+                &quot;, interactionModel='&quot; + interactionModel + '\'' +
+                &quot;, mimeType='&quot; + mimeType + '\'' +
+                &quot;, filename='&quot; + filename + '\'' +
+                &quot;, contentSize=&quot; + contentSize +
+                &quot;, digests=&quot; + digests +
+                &quot;, externalUrl='&quot; + externalUrl + '\'' +
+                &quot;, externalHandling='&quot; + externalHandling + '\'' +
+                &quot;, createdDate=&quot; + createdDate +
+                &quot;, createdBy='&quot; + createdBy + '\'' +
+                &quot;, lastModifiedDate=&quot; + lastModifiedDate +
+                &quot;, lastModifiedBy='&quot; + lastModifiedBy + '\'' +
+                &quot;, mementoCreatedDate=&quot; + mementoCreatedDate +
+                &quot;, archivalGroup=&quot; + archivalGroup +
+                &quot;, objectRoot=&quot; + objectRoot +
+                &quot;, deleted=&quot; + deleted +
+                &quot;, contentPath='&quot; + contentPath + '\'' +
+                &quot;, headersVersion='&quot; + headersVersion + '\'' +
+                '}';
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

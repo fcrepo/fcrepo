@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>PaginationInfo.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Kernel Implementation</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-search-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.search.api</a> &gt; <span class="el_source">PaginationInfo.java</span></div><h1>PaginationInfo.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.search.api;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+/**
+ * A data structure representing the pagination information associated with a {@link org.fcrepo.search.api.SearchResult}
+ *
+ * @author dbernstein
+ */
+public class PaginationInfo {
+<span class="nc" id="L16">    @JsonProperty</span>
+    private int offset = -1;
+<span class="nc" id="L18">    @JsonProperty</span>
+    private int maxResults = -1;
+    @JsonProperty
+    private int totalResults;
+
+    /**
+     * Default constructor
+     */
+<span class="nc" id="L26">    public PaginationInfo() { }</span>
+
+    /**
+     * Constructor
+     *
+     * @param maxResults max results asked off
+     * @param offset     offset of the first result item
+     * @param totalResults The total number of results
+     */
+<span class="nc" id="L35">    public PaginationInfo(final int maxResults, final int offset, final int totalResults) {</span>
+<span class="nc" id="L36">        this.maxResults = maxResults;</span>
+<span class="nc" id="L37">        this.offset = offset;</span>
+<span class="nc" id="L38">        this.totalResults = totalResults;</span>
+<span class="nc" id="L39">    }</span>
+
+    /**
+     * @return The max results of the original query
+     */
+    public int getMaxResults() {
+<span class="nc" id="L45">        return maxResults;</span>
+    }
+
+    /**
+     * @return The offset specified by original query
+     */
+    public int getOffset() {
+<span class="nc" id="L52">        return offset;</span>
+    }
+
+    /**
+     * @return The total number of results for this query.
+     */
+    public int getTotalResults() {
+<span class="nc" id="L59">        return this.totalResults;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

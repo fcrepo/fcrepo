@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","url":"allpackages-index.html"},{"l":"org.fcrepo.kernel.impl"},{"l":"org.fcrepo.kernel.impl.cache"},{"l":"org.fcrepo.kernel.impl.lock"},{"l":"org.fcrepo.kernel.impl.models"},{"l":"org.fcrepo.kernel.impl.observer"},{"l":"org.fcrepo.kernel.impl.operations"},{"l":"org.fcrepo.kernel.impl.services"},{"l":"org.fcrepo.kernel.impl.util"}]
