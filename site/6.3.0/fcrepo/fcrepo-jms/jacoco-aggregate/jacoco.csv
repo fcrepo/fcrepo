@@ -1,0 +1,11 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+Fedora Repository JMS Module/fcrepo-event-serialization,org.fcrepo.event.serialization,EventSerializer,0,29,0,0,0,6,0,1,0,1
+Fedora Repository JMS Module/fcrepo-event-serialization,org.fcrepo.event.serialization,JsonLDEventMessage.Context,0,21,0,0,0,6,0,1,0,1
+Fedora Repository JMS Module/fcrepo-event-serialization,org.fcrepo.event.serialization,JsonLDEventMessage,0,135,1,3,0,31,1,7,0,6
+Fedora Repository JMS Module/fcrepo-event-serialization,org.fcrepo.event.serialization,TurtleSerializer,0,19,0,0,0,5,0,2,0,2
+Fedora Repository JMS Module/fcrepo-event-serialization,org.fcrepo.event.serialization,JsonLDEventMessage.Object,0,15,0,0,0,7,0,2,0,2
+Fedora Repository JMS Module/fcrepo-event-serialization,org.fcrepo.event.serialization,JsonLDEventMessage.ContextElement,9,9,0,0,4,4,1,1,1,1
+Fedora Repository JMS Module/fcrepo-event-serialization,org.fcrepo.event.serialization,JsonLDEventMessage.Person,0,11,0,0,0,5,0,2,0,2
+Fedora Repository JMS Module/fcrepo-event-serialization,org.fcrepo.event.serialization,JsonLDSerializer,8,27,0,0,3,7,0,3,0,3
+Fedora Repository JMS Module/fcrepo-event-serialization,org.fcrepo.event.serialization,JsonLDEventMessage.Actor,0,6,0,0,0,3,0,1,0,1
+Fedora Repository JMS Module/fcrepo-event-serialization,org.fcrepo.event.serialization,JsonLDEventMessage.Application,0,11,0,0,0,5,0,2,0,2
