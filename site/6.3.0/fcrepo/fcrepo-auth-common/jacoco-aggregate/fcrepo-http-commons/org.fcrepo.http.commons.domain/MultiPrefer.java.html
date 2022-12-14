@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>MultiPrefer.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Authorization Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-commons</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.commons.domain</a> &gt; <span class="el_source">MultiPrefer.java</span></div><h1>MultiPrefer.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.http.commons.domain;
+
+import java.util.Set;
+
+import javax.ws.rs.HeaderParam;
+
+/**
+ * Aggregates information from multiple Prefer HTTP headers.
+ *
+ * @author ajs6f
+ * @since 23 October 2014
+ */
+public class MultiPrefer extends SinglePrefer {
+
+    /**
+     * @param header the header
+     */
+    public MultiPrefer(final String header) {
+<span class="fc" id="L24">        super(header);</span>
+<span class="fc" id="L25">    }</span>
+
+    /**
+     * @param prefers the prefers
+     */
+    public MultiPrefer(final @HeaderParam(&quot;Prefer&quot;) Set&lt;SinglePrefer&gt; prefers) {
+<span class="fc" id="L31">        super(&quot;&quot;);</span>
+<span class="fc" id="L32">        prefers.forEach(p -&gt; preferTags().addAll(p.preferTags()));</span>
+<span class="fc" id="L33">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>SinglePrefer.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Authorization Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-commons</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.commons.domain</a> &gt; <span class="el_source">SinglePrefer.java</span></div><h1>SinglePrefer.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.http.commons.domain;
+
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.toSet;
+import static org.fcrepo.http.commons.domain.PreferTag.emptyTag;
+
+import java.util.Set;
+import java.util.TreeSet;
+
+/**
+ * JAX-RS HTTP parameter parser for the Prefer header
+ *
+ * @author cabeer
+ * @author ajs6f
+ * @author acoburn
+ */
+public class SinglePrefer {
+
+<span class="fc" id="L24">    private final Set&lt;PreferTag&gt; preferTags = new TreeSet&lt;&gt;();</span>
+
+    /**
+     * Parse a Prefer: header
+     *
+     * @param header the header
+     */
+<span class="fc" id="L31">    public SinglePrefer(final String header) {</span>
+<span class="fc" id="L32">        preferTags.addAll(stream(header.split(&quot;,&quot;))</span>
+<span class="fc" id="L33">                .map(PreferTag::new)</span>
+<span class="fc" id="L34">                .collect(toSet()));</span>
+<span class="fc" id="L35">    }</span>
+
+    /**
+     * Does the Prefer: header have a return tag
+     *
+     * @return true if the header has a return tag
+     */
+    public Boolean hasReturn() {
+<span class="fc" id="L43">        return preferTags().stream().map(PreferTag::getTag).anyMatch(&quot;return&quot;::equals);</span>
+    }
+
+    /**
+     * Does the Prefer: header have a return tag
+     *
+     * @return true if the header has a return tag
+     */
+    public Boolean hasHandling() {
+<span class="fc" id="L52">        return preferTags().stream().map(PreferTag::getTag).anyMatch(&quot;handling&quot;::equals);</span>
+    }
+
+    /**
+     * Get the return tag, or a blank default, if none exists.
+     *
+     * @return return tag, or a blank default, if none exists
+     */
+    public PreferTag getReturn() {
+<span class="fc" id="L61">        return preferTags().stream()</span>
+<span class="fc" id="L62">                .filter(x -&gt; x.getTag().equals(&quot;return&quot;))</span>
+<span class="fc" id="L63">                .findFirst().orElse(emptyTag());</span>
+    }
+
+    /**
+     * Get the return tag, or a blank default, if none exists.
+     *
+     * @return return tag, or a blank default, if none exists
+     */
+    public PreferTag getHandling() {
+<span class="fc" id="L72">        return preferTags().stream()</span>
+<span class="fc" id="L73">                .filter(x -&gt; x.getTag().equals(&quot;handling&quot;))</span>
+<span class="fc" id="L74">                .findFirst().orElse(emptyTag());</span>
+    }
+
+    protected Set&lt;PreferTag&gt; preferTags() {
+<span class="fc" id="L78">        return preferTags;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

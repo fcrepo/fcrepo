@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DelegateHeaderPrincipalProvider.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Authorization Commons Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.common</a> &gt; <span class="el_source">DelegateHeaderPrincipalProvider.java</span></div><h1>DelegateHeaderPrincipalProvider.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.auth.common;
+
+import javax.servlet.http.HttpServletRequest;
+
+import java.security.Principal;
+import java.util.Set;
+
+import org.fcrepo.kernel.api.exception.RepositoryConfigurationException;
+
+/**
+ * An example principal provider that extracts principals from request headers.
+ *
+ * @author awoods
+ * @since 2015-10-31
+ */
+public class DelegateHeaderPrincipalProvider extends HttpHeaderPrincipalProvider {
+
+    private static final String SEP = &quot;no-separator&quot;;
+    protected static final String DELEGATE_HEADER = &quot;On-Behalf-Of&quot;;
+
+    public static class DelegatedHeaderPrincipal implements Principal {
+
+        private final String name;
+
+<span class="nc" id="L30">        protected DelegatedHeaderPrincipal(final String name) {</span>
+<span class="nc" id="L31">            this.name = name;</span>
+<span class="nc" id="L32">        }</span>
+
+        @Override
+        public String getName() {
+<span class="nc" id="L36">            return name;</span>
+        }
+
+        @Override
+        public String toString() {
+<span class="nc" id="L41">            return name;</span>
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+<span class="nc bnc" id="L46" title="All 2 branches missed.">            if (o instanceof DelegatedHeaderPrincipal) {</span>
+<span class="nc" id="L47">                return ((DelegatedHeaderPrincipal) o).getName().equals(</span>
+<span class="nc" id="L48">                        this.getName());</span>
+            }
+<span class="nc" id="L50">            return false;</span>
+        }
+
+        @Override
+        public int hashCode() {
+<span class="nc bnc" id="L55" title="All 2 branches missed.">            if (name == null) {</span>
+<span class="nc" id="L56">                return 0;</span>
+            }
+<span class="nc" id="L58">            return name.hashCode();</span>
+        }
+
+    }
+
+    /**
+     * Default Constructor
+     */
+    public DelegateHeaderPrincipalProvider() {
+<span class="fc" id="L67">        super();</span>
+<span class="fc" id="L68">        setHeaderName(DELEGATE_HEADER);</span>
+<span class="fc" id="L69">        setSeparator(SEP);</span>
+<span class="fc" id="L70">    }</span>
+
+    /**
+     * @param request from which the principal header is extracted
+     * @return null if no delegate found, and the delegate if one found
+     * @throws RepositoryConfigurationException if more than one delegate found
+     */
+    public Principal getDelegate(final HttpServletRequest request) {
+<span class="nc" id="L78">        final Set&lt;Principal&gt; principals = getPrincipals(request);</span>
+        // No delegate
+<span class="nc bnc" id="L80" title="All 2 branches missed.">        if (principals.size() == 0) {</span>
+<span class="nc" id="L81">            return null;</span>
+        }
+
+        // One delegate
+<span class="nc bnc" id="L85" title="All 2 branches missed.">        if (principals.size() == 1) {</span>
+<span class="nc" id="L86">            return principals.iterator().next();</span>
+        }
+
+<span class="nc" id="L89">        throw new RepositoryConfigurationException(&quot;Too many delegates! &quot; + principals);</span>
+    }
+
+    @Override
+    protected Principal createPrincipal(final String name) {
+<span class="nc" id="L94">        return new DelegatedHeaderPrincipal(name.trim());</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

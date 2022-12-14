@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>SynchonizedStreamRDFWrapper.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Authorization Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-commons</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.commons.responses</a> &gt; <span class="el_source">SynchonizedStreamRDFWrapper.java</span></div><h1>SynchonizedStreamRDFWrapper.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+
+package org.fcrepo.http.commons.responses;
+
+import org.apache.jena.graph.Triple;
+import org.apache.jena.riot.system.StreamRDF;
+import org.apache.jena.riot.system.StreamRDFWrapper;
+import org.apache.jena.sparql.core.Quad;
+
+/**
+ * @author Daniel Bernstein
+ * @since Mar 22, 2017
+ */
+public class SynchonizedStreamRDFWrapper extends StreamRDFWrapper {
+
+    /**
+     *
+     * @param stream the StreamRDF
+     */
+    public SynchonizedStreamRDFWrapper(final StreamRDF stream) {
+<span class="fc" id="L25">        super(stream);</span>
+<span class="fc" id="L26">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see org.apache.jena.riot.system.StreamRDFWrapper#start()
+     */
+    @Override
+    public synchronized void start() {
+<span class="fc" id="L34">        super.start();</span>
+<span class="fc" id="L35">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see org.apache.jena.riot.system.StreamRDFWrapper#finish()
+     */
+    @Override
+    public synchronized void finish() {
+<span class="fc" id="L43">        super.finish();</span>
+<span class="fc" id="L44">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see org.apache.jena.riot.system.StreamRDFWrapper#triple(org.apache.jena.graph.Triple)
+     */
+    @Override
+    public synchronized void triple(final Triple triple) {
+<span class="fc" id="L52">        super.triple(triple);</span>
+<span class="fc" id="L53">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see org.apache.jena.riot.system.StreamRDFWrapper#prefix(java.lang.String, java.lang.String)
+     */
+    @Override
+    public synchronized void prefix(final String prefix, final String iri) {
+<span class="fc" id="L61">        super.prefix(prefix, iri);</span>
+<span class="fc" id="L62">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see org.apache.jena.riot.system.StreamRDFWrapper#quad(org.apache.jena.sparql.core.Quad)
+     */
+    @Override
+    public synchronized void quad(final Quad quad) {
+<span class="nc" id="L70">        super.quad(quad);</span>
+<span class="nc" id="L71">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

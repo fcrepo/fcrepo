@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>PreferTag.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Authorization Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-commons</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.commons.domain</a> &gt; <span class="el_source">PreferTag.java</span></div><h1>PreferTag.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.http.commons.domain;
+
+import static java.util.Arrays.asList;
+import static java.util.Optional.ofNullable;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_CONTAINMENT;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MEMBERSHIP;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MINIMAL_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_SERVER_MANAGED;
+import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
+import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
+
+import org.glassfish.jersey.message.internal.HttpHeaderReader;
+
+import javax.servlet.http.HttpServletResponse;
+
+import java.text.ParseException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+/**
+ * Parse a single prefer tag, value and any optional parameters
+ *
+ * @author cabeer
+ */
+public class PreferTag implements Comparable&lt;PreferTag&gt; {
+    private final String tag;
+<span class="fc" id="L34">    private String value = &quot;&quot;;</span>
+<span class="fc" id="L35">    private Map&lt;String, String&gt; params = new HashMap&lt;&gt;();</span>
+
+    /**
+     * Create an empty PreferTag
+     * @return the empty PreferTag
+     */
+    public static PreferTag emptyTag() {
+<span class="fc" id="L42">        return new PreferTag((String)null);</span>
+    }
+
+    /**
+     * Create a new PreferTag from an existing tag
+     * @param preferTag the preferTag
+     */
+<span class="fc" id="L49">    protected PreferTag(final PreferTag preferTag) {</span>
+<span class="fc" id="L50">        tag = preferTag.getTag();</span>
+<span class="fc" id="L51">        value = preferTag.getValue();</span>
+<span class="fc" id="L52">        params = preferTag.getParams();</span>
+<span class="fc" id="L53">    }</span>
+
+    /**
+     * Parse the prefer tag and parameters out of the header
+     * @param reader the reader
+     */
+<span class="fc" id="L59">    private PreferTag(final HttpHeaderReader reader) {</span>
+
+        // Skip any white space
+<span class="fc" id="L62">        reader.hasNext();</span>
+
+<span class="fc bfc" id="L64" title="All 2 branches covered.">        if (reader.hasNext()) {</span>
+            try {
+<span class="fc" id="L66">                tag = Optional.ofNullable(reader.nextToken())</span>
+<span class="fc" id="L67">                          .map(CharSequence::toString).orElse(null);</span>
+
+<span class="pc bpc" id="L69" title="1 of 2 branches missed.">                if (reader.hasNextSeparator('=', true)) {</span>
+<span class="fc" id="L70">                    reader.next();</span>
+
+<span class="fc" id="L72">                    value = Optional.ofNullable(reader.nextTokenOrQuotedString())</span>
+<span class="fc" id="L73">                            .    map(CharSequence::toString)</span>
+<span class="fc" id="L74">                                .orElse(null);</span>
+                }
+
+<span class="fc bfc" id="L77" title="All 2 branches covered.">                if (reader.hasNext()) {</span>
+<span class="fc" id="L78">                    params = HttpHeaderReader.readParameters(reader);</span>
+<span class="fc bfc" id="L79" title="All 2 branches covered.">                    if ( params == null ) {</span>
+<span class="fc" id="L80">                        params = new HashMap&lt;&gt;();</span>
+                    }
+                }
+<span class="nc" id="L83">            } catch (final ParseException e) {</span>
+<span class="nc" id="L84">                throw new IllegalArgumentException(&quot;Could not parse 'Prefer' header&quot;, e);</span>
+<span class="fc" id="L85">            }</span>
+        } else {
+<span class="fc" id="L87">            tag = &quot;&quot;;</span>
+        }
+<span class="fc" id="L89">    }</span>
+
+    /**
+     * Create a blank prefer tag
+     * @param inputTag the input tag
+     */
+    public PreferTag(final String inputTag) {
+<span class="fc" id="L96">        this(HttpHeaderReader.newInstance(inputTag));</span>
+<span class="fc" id="L97">    }</span>
+
+    /**
+     * Get the tag name
+     * @return tag name
+     */
+    public String getTag() {
+<span class="fc" id="L104">        return tag;</span>
+    }
+
+    /**
+     * Get the default value for the tag
+     * @return default value for the tag
+     */
+    public String getValue() {
+<span class="fc" id="L112">        return value;</span>
+    }
+
+    /**
+     * Get any additional parameters for the prefer tag
+     * @return additional parameters for the prefer tag
+     */
+    public Map&lt;String,String&gt; getParams() {
+<span class="fc" id="L120">        return params;</span>
+    }
+
+    /**
+     * Add appropriate response headers to indicate that the incoming preferences were acknowledged
+     * @param servletResponse the servlet response
+     */
+    public void addResponseHeaders(final HttpServletResponse servletResponse) {
+
+<span class="nc" id="L129">        final String receivedParam = ofNullable(params.get(&quot;received&quot;)).orElse(&quot;&quot;);</span>
+<span class="nc" id="L130">        final List&lt;String&gt; includes = asList(ofNullable(params.get(&quot;include&quot;)).orElse(&quot; &quot;).split(&quot; &quot;));</span>
+<span class="nc" id="L131">        final List&lt;String&gt; omits = asList(ofNullable(params.get(&quot;omit&quot;)).orElse(&quot; &quot;).split(&quot; &quot;));</span>
+
+<span class="nc" id="L133">        final StringBuilder includeBuilder = new StringBuilder();</span>
+<span class="nc" id="L134">        final StringBuilder omitBuilder = new StringBuilder();</span>
+
+<span class="nc bnc" id="L136" title="All 4 branches missed.">        if (!(value.equals(&quot;minimal&quot;) || receivedParam.equals(&quot;minimal&quot;))) {</span>
+<span class="nc" id="L137">            final List&lt;String&gt; appliedPrefs = asList(PREFER_SERVER_MANAGED.toString(),</span>
+<span class="nc" id="L138">                    PREFER_MINIMAL_CONTAINER.toString(),</span>
+<span class="nc" id="L139">                    PREFER_MEMBERSHIP.toString(),</span>
+<span class="nc" id="L140">                    PREFER_CONTAINMENT.toString());</span>
+<span class="nc" id="L141">            final List&lt;String&gt; includePrefs = asList(EMBED_CONTAINED.toString(),</span>
+<span class="nc" id="L142">                    INBOUND_REFERENCES.toString());</span>
+<span class="nc" id="L143">            includes.forEach(param -&gt; includeBuilder.append(</span>
+<span class="nc bnc" id="L144" title="All 4 branches missed.">                    (appliedPrefs.contains(param) || includePrefs.contains(param)) ? param + &quot; &quot; : &quot;&quot;));</span>
+
+            // Note: include params prioritized over omits during implementation
+<span class="nc" id="L147">            omits.forEach(param -&gt; omitBuilder.append(</span>
+<span class="nc bnc" id="L148" title="All 4 branches missed.">                    (appliedPrefs.contains(param) &amp;&amp; !includes.contains(param)) ? param + &quot; &quot; : &quot;&quot;));</span>
+        }
+
+        // build the header for Preference Applied
+<span class="nc bnc" id="L152" title="All 2 branches missed.">        final String appliedReturn = value.equals(&quot;minimal&quot;) ? &quot;return=minimal&quot; : &quot;return=representation&quot;;</span>
+<span class="nc bnc" id="L153" title="All 2 branches missed.">        final String appliedReceived = receivedParam.equals(&quot;minimal&quot;) ? &quot;received=minimal&quot; : &quot;&quot;;</span>
+
+<span class="nc" id="L155">        final StringBuilder preferenceAppliedBuilder = new StringBuilder(appliedReturn);</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">        preferenceAppliedBuilder.append(appliedReceived.length() &gt; 0 ? &quot;; &quot; + appliedReceived : &quot;&quot;);</span>
+<span class="nc" id="L157">        appendHeaderParam(preferenceAppliedBuilder, &quot;include&quot;, includeBuilder.toString().trim());</span>
+<span class="nc" id="L158">        appendHeaderParam(preferenceAppliedBuilder, &quot;omit&quot;, omitBuilder.toString().trim());</span>
+
+<span class="nc" id="L160">        servletResponse.addHeader(&quot;Preference-Applied&quot;, preferenceAppliedBuilder.toString().trim());</span>
+
+<span class="nc" id="L162">        servletResponse.addHeader(&quot;Vary&quot;, &quot;Prefer&quot;);</span>
+<span class="nc" id="L163">    }</span>
+
+    private void appendHeaderParam(final StringBuilder builder, final String paramName, final String paramValue) {
+<span class="nc bnc" id="L166" title="All 2 branches missed.">        if (paramValue.length() &gt; 0) {</span>
+<span class="nc" id="L167">            builder.append(&quot;; &quot; + paramName + &quot;=\&quot;&quot; + paramValue.trim() + &quot;\&quot;&quot;);</span>
+        }
+<span class="nc" id="L169">    }</span>
+
+    /**
+     * We consider tags with the same name to be equal, because &lt;a
+     * href=&quot;http://tools.ietf.org/html/rfc7240#page-4&quot;&gt;the definition of Prefer headers&lt;/a&gt; does not permit that tags
+     * with the same name be consumed except by selecting for the first appearing tag.
+     *
+     * @see java.lang.Comparable#compareTo(java.lang.Object)
+     */
+    @Override
+    public int compareTo(final PreferTag otherTag) {
+<span class="fc" id="L180">        return getTag().compareTo(otherTag.getTag());</span>
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+<span class="fc bfc" id="L185" title="All 2 branches covered.">        if ((obj instanceof PreferTag)) {</span>
+<span class="fc" id="L186">            return getTag().equals(((PreferTag) obj).getTag());</span>
+        }
+<span class="fc" id="L188">        return false;</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="pc bpc" id="L193" title="1 of 2 branches missed.">        if (getTag() == null) {</span>
+<span class="nc" id="L194">            return 0;</span>
+        }
+<span class="fc" id="L196">        return getTag().hashCode();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
