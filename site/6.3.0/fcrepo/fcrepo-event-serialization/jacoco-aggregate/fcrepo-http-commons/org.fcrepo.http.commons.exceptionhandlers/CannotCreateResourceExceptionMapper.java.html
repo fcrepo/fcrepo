@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>CannotCreateResourceExceptionMapper.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Event Serialization</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-commons</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.commons.exceptionhandlers</a> &gt; <span class="el_source">CannotCreateResourceExceptionMapper.java</span></div><h1>CannotCreateResourceExceptionMapper.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.http.commons.exceptionhandlers;
+
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
+
+import org.slf4j.Logger;
+
+import javax.servlet.ServletContext;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Link;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.ext.Provider;
+/**
+ * @author bseeger
+ * @since 2017-04-07
+ */
+@Provider
+<span class="nc" id="L28">public class CannotCreateResourceExceptionMapper extends ConstraintExceptionMapper&lt;CannotCreateResourceException&gt;</span>
+    implements ExceptionDebugLogging {
+
+<span class="nc" id="L31">    private static final Logger LOGGER = getLogger(CannotCreateResourceExceptionMapper.class);</span>
+
+    @Context
+    private UriInfo uriInfo;
+
+    @Context
+    private ServletContext context;
+
+    @Override
+    public Response toResponse(final CannotCreateResourceException e) {
+<span class="nc" id="L41">        debugException(this, e, LOGGER);</span>
+<span class="nc" id="L42">        final Link link = buildConstraintLink(e, context, uriInfo);</span>
+<span class="nc" id="L43">        final String msg = e.getMessage();</span>
+<span class="nc" id="L44">        return status(BAD_REQUEST).entity(msg).links(link).type(TEXT_PLAIN_WITH_CHARSET).build();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
