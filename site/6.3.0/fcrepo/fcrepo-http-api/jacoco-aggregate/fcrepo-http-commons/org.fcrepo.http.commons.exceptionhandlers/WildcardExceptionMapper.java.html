@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>WildcardExceptionMapper.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-commons</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.commons.exceptionhandlers</a> &gt; <span class="el_source">WildcardExceptionMapper.java</span></div><h1>WildcardExceptionMapper.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.http.commons.exceptionhandlers;
+
+import org.fcrepo.kernel.api.exception.SessionMissingException;
+import org.slf4j.Logger;
+
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
+
+import static com.google.common.base.Throwables.getStackTraceAsString;
+import static javax.ws.rs.core.Response.serverError;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * Catch all the exceptions!
+ *
+ * @author lsitu
+ * @author awoods
+ * @author cbeer
+ * @author fasseg
+ */
+@Provider
+<span class="fc" id="L29">public class WildcardExceptionMapper implements</span>
+        ExceptionMapper&lt;Exception&gt;, ExceptionDebugLogging {
+
+<span class="fc" id="L32">    Boolean showStackTrace = false;</span>
+
+<span class="fc" id="L34">    private static final Logger LOGGER =</span>
+<span class="fc" id="L35">        getLogger(WildcardExceptionMapper.class);</span>
+
+    @Override
+    public Response toResponse(final Exception e) {
+<span class="pc bpc" id="L39" title="1 of 2 branches missed.">        if (e.getCause() instanceof SessionMissingException) {</span>
+<span class="nc" id="L40">            return new SessionMissingExceptionMapper()</span>
+<span class="nc" id="L41">                    .toResponse((SessionMissingException) e.getCause());</span>
+        }
+
+<span class="fc" id="L44">        LOGGER.warn(&quot;Unmapped exception&quot;, e);</span>
+<span class="fc" id="L45">        return serverError().entity(</span>
+<span class="fc bfc" id="L46" title="All 2 branches covered.">                showStackTrace ? getStackTraceAsString(e) : null).type(TEXT_PLAIN_WITH_CHARSET).build();</span>
+    }
+
+    /**
+     * Set whether the full stack trace should be returned as part of the
+     * error response. This may be a bad idea if the stack trace is exposed
+     * to the public.
+     * @param showStackTrace the boolean value of showing stack trace
+     */
+    public void setShowStackTrace(final Boolean showStackTrace) {
+<span class="fc" id="L56">        this.showStackTrace = showStackTrace;</span>
+<span class="fc" id="L57">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

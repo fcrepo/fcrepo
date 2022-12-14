@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SparqlTranslateVisitor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api.services</a> &gt; <span class="el_source">SparqlTranslateVisitor.java</span></div><h1>SparqlTranslateVisitor.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.http.api.services;
+
+import static org.fcrepo.config.ServerManagedPropsMode.RELAXED;
+import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.checkTripleForDisallowed;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.fcrepo.config.FedoraPropsConfig;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
+import org.fcrepo.kernel.api.exception.ConstraintViolationException;
+import org.fcrepo.kernel.api.exception.MultipleConstraintViolationException;
+import org.fcrepo.kernel.api.exception.RelaxableServerManagedPropertyException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
+import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.sparql.core.BasicPattern;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.modify.request.QuadAcc;
+import org.apache.jena.sparql.modify.request.QuadDataAcc;
+import org.apache.jena.sparql.modify.request.UpdateData;
+import org.apache.jena.sparql.modify.request.UpdateDataDelete;
+import org.apache.jena.sparql.modify.request.UpdateDataInsert;
+import org.apache.jena.sparql.modify.request.UpdateDeleteWhere;
+import org.apache.jena.sparql.modify.request.UpdateModify;
+import org.apache.jena.sparql.modify.request.UpdateVisitorBase;
+import org.apache.jena.sparql.syntax.Element;
+import org.apache.jena.sparql.syntax.ElementGroup;
+import org.apache.jena.sparql.syntax.ElementPathBlock;
+import org.apache.jena.update.Update;
+import org.apache.jena.update.UpdateFactory;
+import org.apache.jena.update.UpdateRequest;
+import org.slf4j.Logger;
+
+/**
+ * A special UpdateVisitor to translate Fedora URIs to internal FedoraIDs.
+ * @author whikloj
+ */
+public class SparqlTranslateVisitor extends UpdateVisitorBase {
+
+<span class="fc" id="L54">    private static final Logger LOGGER = getLogger(SparqlTranslateVisitor.class);</span>
+
+<span class="fc" id="L56">    private List&lt;Update&gt; newUpdates = new ArrayList&lt;&gt;();</span>
+
+    private HttpIdentifierConverter idTranslator;
+
+    private boolean isRelaxedMode;
+
+<span class="fc" id="L62">    public SparqlTranslateVisitor(final HttpIdentifierConverter identifierConverter, final FedoraPropsConfig config) {</span>
+<span class="fc" id="L63">        idTranslator = identifierConverter;</span>
+<span class="fc" id="L64">        isRelaxedMode = config.getServerManagedPropsMode().equals(RELAXED);</span>
+<span class="fc" id="L65">    }</span>
+
+<span class="fc" id="L67">    private List&lt;ConstraintViolationException&gt; exceptions = new ArrayList&lt;&gt;();</span>
+
+    @Override
+    public void visit(final UpdateDataInsert update) {
+<span class="fc" id="L71">        translateUpdate(update);</span>
+<span class="fc" id="L72">    }</span>
+
+    @Override
+    public void visit(final UpdateDataDelete update) {
+<span class="nc" id="L76">        translateUpdate(update);</span>
+<span class="nc" id="L77">    }</span>
+
+    @Override
+    public void visit(final UpdateDeleteWhere update) {
+<span class="fc" id="L81">        translateUpdate(update);</span>
+<span class="fc" id="L82">    }</span>
+
+    @Override
+    public void visit(final UpdateModify update) {
+<span class="fc" id="L86">        translateUpdate(update);</span>
+<span class="fc" id="L87">    }</span>
+
+    /**
+     * Get the new UpdateRequest based on the parsed Updates.
+     * @return the new update request object.
+     */
+    public UpdateRequest getTranslatedRequest() {
+<span class="fc" id="L94">        final UpdateRequest newRequest = UpdateFactory.create();</span>
+<span class="fc" id="L95">        newUpdates.forEach(newRequest::add);</span>
+<span class="fc" id="L96">        return newRequest;</span>
+    }
+
+    /**
+     * Perform a translation of all the triples in an Update adding them to the internal list.
+     * @param update the update request to translate.
+     */
+    private void translateUpdate(final Update update) {
+        final List&lt;Quad&gt; sourceQuads;
+<span class="fc bfc" id="L105" title="All 2 branches covered.">        if (update instanceof UpdateDeleteWhere) {</span>
+<span class="fc" id="L106">            sourceQuads = ((UpdateDeleteWhere)update).getQuads();</span>
+        } else {
+<span class="fc" id="L108">            sourceQuads = ((UpdateData) update).getQuads();</span>
+        }
+<span class="fc" id="L110">        final List&lt;Quad&gt; newQuads = translateQuads(sourceQuads);</span>
+<span class="fc" id="L111">        assertNoExceptions();</span>
+<span class="fc" id="L112">        final Update newUpdate = makeUpdate(update.getClass(), newQuads);</span>
+<span class="fc" id="L113">        newUpdates.add(newUpdate);</span>
+<span class="fc" id="L114">    }</span>
+
+    /**
+     * Perform a translation of all the triples in an UpdateModify request.
+     * @param update the update request to translate
+     */
+    private void translateUpdate(final UpdateModify update) {
+<span class="fc" id="L121">        final UpdateModify newUpdate = new UpdateModify();</span>
+<span class="fc bfc" id="L122" title="All 2 branches covered.">        final List&lt;Quad&gt; insertQuads = (update.hasInsertClause() ? translateQuads(update.getInsertQuads()) :</span>
+<span class="fc" id="L123">                Collections.emptyList());</span>
+<span class="fc bfc" id="L124" title="All 2 branches covered.">        final List&lt;Quad&gt; deleteQuads = (update.hasDeleteClause() ? translateQuads(update.getDeleteQuads()) :</span>
+<span class="fc" id="L125">                Collections.emptyList());</span>
+<span class="fc" id="L126">        assertNoExceptions();</span>
+
+<span class="fc" id="L128">        insertQuads.forEach(q -&gt; newUpdate.getInsertAcc().addQuad(q));</span>
+<span class="fc" id="L129">        deleteQuads.forEach(q -&gt; newUpdate.getDeleteAcc().addQuad(q));</span>
+
+<span class="fc" id="L131">        final Element where = update.getWherePattern();</span>
+<span class="fc" id="L132">        final Element newElement = processElements(where);</span>
+<span class="fc" id="L133">        newUpdate.setElement(newElement);</span>
+<span class="fc" id="L134">        newUpdates.add(newUpdate);</span>
+<span class="fc" id="L135">    }</span>
+
+    private void assertNoExceptions() {
+<span class="fc bfc" id="L138" title="All 2 branches covered.">        if (!exceptions.isEmpty()) {</span>
+<span class="fc" id="L139">            throw new MultipleConstraintViolationException(exceptions);</span>
+        }
+<span class="fc" id="L141">    }</span>
+
+    /**
+     * Process triples inside the Element or return the element.
+     * @param element the element to translate.
+     * @return the translated or original element.
+     */
+    private Element processElements(final Element element) {
+<span class="fc bfc" id="L149" title="All 2 branches covered.">        if (element instanceof ElementGroup) {</span>
+<span class="fc" id="L150">            final ElementGroup group = new ElementGroup();</span>
+<span class="fc" id="L151">            ((ElementGroup) element).getElements().forEach(e -&gt; group.addElement(processElements(e)));</span>
+<span class="fc" id="L152">            return group;</span>
+<span class="pc bpc" id="L153" title="1 of 2 branches missed.">        } else if (element instanceof ElementPathBlock) {</span>
+<span class="fc" id="L154">            final BasicPattern basicPattern = new BasicPattern();</span>
+<span class="fc" id="L155">            final var tripleIter = ((ElementPathBlock) element).patternElts();</span>
+<span class="fc" id="L156">            tripleIter.forEachRemaining(t -&gt; {</span>
+<span class="pc bpc" id="L157" title="1 of 2 branches missed.">                if (t.isTriple()) {</span>
+                    try {
+<span class="fc" id="L159">                        checkTripleForDisallowed(t.asTriple());</span>
+<span class="nc" id="L160">                    } catch (final ServerManagedPropertyException | ServerManagedTypeException exc) {</span>
+<span class="nc bnc" id="L161" title="All 2 branches missed.">                        if (!isRelaxedMode) {</span>
+<span class="nc" id="L162">                            exceptions.add(exc);</span>
+<span class="nc" id="L163">                            return;</span>
+                        }
+<span class="fc" id="L165">                    }</span>
+<span class="fc" id="L166">                    basicPattern.add(translateTriple(t.asTriple()));</span>
+                }
+<span class="fc" id="L168">            });</span>
+<span class="fc" id="L169">            return new ElementPathBlock(basicPattern);</span>
+        }
+<span class="nc" id="L171">        return element;</span>
+    }
+
+    /**
+     * Perform the translation to a list of quads.
+     * @param quadsList the quads
+     * @return the translated list of quads.
+     */
+    private List&lt;Quad&gt; translateQuads(final List&lt;Quad&gt; quadsList) {
+<span class="fc" id="L180">        final List&lt;Quad&gt; newQuads = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L181" title="All 2 branches covered.">        for (final Quad q : quadsList) {</span>
+            try {
+<span class="fc" id="L183">                checkTripleForDisallowed(q.asTriple());</span>
+<span class="fc" id="L184">            } catch (final RelaxableServerManagedPropertyException exc) {</span>
+<span class="pc bpc" id="L185" title="1 of 2 branches missed.">                if (!isRelaxedMode) {</span>
+                    // Swallow these exceptions to throw together later.
+<span class="nc" id="L187">                    exceptions.add(exc);</span>
+<span class="nc" id="L188">                    continue;</span>
+                }
+<span class="fc" id="L190">            } catch (final ServerManagedTypeException | ServerManagedPropertyException exc) {</span>
+<span class="fc" id="L191">                exceptions.add(exc);</span>
+<span class="fc" id="L192">                continue;</span>
+<span class="fc" id="L193">            }</span>
+<span class="fc" id="L194">            final Node subject = translateId(q.getSubject());</span>
+<span class="fc" id="L195">            final Node object = translateId(q.getObject());</span>
+<span class="fc" id="L196">            final Quad quad = Quad.create(q.getGraph(), subject, q.getPredicate(), object);</span>
+<span class="fc" id="L197">            LOGGER.trace(&quot;Translated quad is: {}&quot;, quad);</span>
+<span class="fc" id="L198">            newQuads.add(quad);</span>
+<span class="fc" id="L199">        }</span>
+<span class="fc" id="L200">        return newQuads;</span>
+    }
+
+    /**
+     * Translate the subject and object of a triple from external URIs to internal IDs.
+     * @param triple the triple to translate
+     * @return the translated triple.
+     */
+    private Triple translateTriple(final Triple triple) {
+<span class="fc" id="L209">        final Node subject = translateId(triple.getSubject());</span>
+<span class="fc" id="L210">        final Node object = translateId(triple.getObject());</span>
+<span class="fc" id="L211">        return Triple.create(subject, triple.getPredicate(), object);</span>
+    }
+
+    /**
+     * Quads insert/delete data statements don't contain variables and use QuadDataAcc to accumulate,
+     * insert {} delete {} where {} statements can't contain variables and use QuadAcc to accumulate. This function
+     * simplifies the creation of the eventual Update.
+     * @param updateClass the class of Update we are starting with.
+     * @param quadList the list of Quads to generate the above class with.
+     * @return a subclass of Update with the provided Quads.
+     */
+    private Update makeUpdate(final Class&lt;? extends Update&gt; updateClass, final List&lt;Quad&gt; quadList) {
+        try {
+<span class="fc bfc" id="L224" title="All 2 branches covered.">            if (updateClass.equals(UpdateDeleteWhere.class)) {</span>
+<span class="fc" id="L225">                final QuadAcc quadAcc = new QuadAcc();</span>
+<span class="fc" id="L226">                quadList.forEach(quadAcc::addQuad);</span>
+<span class="fc" id="L227">                return new UpdateDeleteWhere(quadAcc);</span>
+            } else {
+<span class="fc" id="L229">                final QuadDataAcc quadsAcc = new QuadDataAcc();</span>
+<span class="fc" id="L230">                quadList.forEach(quadsAcc::addQuad);</span>
+<span class="fc" id="L231">                final Constructor&lt;? extends Update&gt; update = updateClass.getConstructor(QuadDataAcc.class);</span>
+<span class="fc" id="L232">                return update.newInstance(quadsAcc);</span>
+            }
+<span class="nc" id="L234">        } catch (final ReflectiveOperationException exc) {</span>
+<span class="nc" id="L235">            LOGGER.warn(&quot;Could not find constructor UpdateRequest&quot;);</span>
+<span class="nc" id="L236">            throw new RepositoryRuntimeException(&quot;Could not find constructor UpdateRequest&quot;, exc);</span>
+        }
+    }
+
+    /**
+     * If the node is a URI with the external domain translate it, otherwise leave it alone
+     * @param externalNode the node to translate
+     * @return the original or translated node.
+     */
+    private Node translateId(final Node externalNode) {
+<span class="fc bfc" id="L246" title="All 2 branches covered.">        if (externalNode.isURI()) {</span>
+<span class="fc" id="L247">            final String externalId = externalNode.getURI();</span>
+<span class="fc" id="L248">            final String newUri = idTranslator.translateUri(externalId);</span>
+<span class="fc bfc" id="L249" title="All 2 branches covered.">            if (idTranslator.inInternalDomain(newUri)) {</span>
+                // If this was converted to an internal ID, make a FedoraId out of it.
+<span class="fc" id="L251">                final var id = FedoraId.create(newUri);</span>
+<span class="pc bpc" id="L252" title="1 of 2 branches missed.">                if (id.isDescription()) {</span>
+                    // If we are dealing with a binary description ID convert it to the binary ID.
+<span class="nc" id="L254">                    return NodeFactory.createURI(id.getFullDescribedId());</span>
+                }
+            }
+<span class="fc" id="L257">            return NodeFactory.createURI(newUri);</span>
+        }
+<span class="fc" id="L259">        return externalNode;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

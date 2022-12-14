@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>SessionMissingExceptionMapper.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-commons</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.commons.exceptionhandlers</a> &gt; <span class="el_source">SessionMissingExceptionMapper.java</span></div><h1>SessionMissingExceptionMapper.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.http.commons.exceptionhandlers;
+
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.GONE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
+
+import org.fcrepo.kernel.api.exception.SessionMissingException;
+
+import org.slf4j.Logger;
+
+/**
+ * If a session is requested that has been closed (or never existed), just
+ * return an HTTP 410 Gone.
+ *
+ * @author awoods
+ */
+@Provider
+<span class="fc" id="L28">public class SessionMissingExceptionMapper implements</span>
+        ExceptionMapper&lt;SessionMissingException&gt;, ExceptionDebugLogging {
+
+<span class="fc" id="L31">    private static final Logger LOGGER =</span>
+<span class="fc" id="L32">            getLogger(SessionMissingExceptionMapper.class);</span>
+
+
+    @Override
+    public Response toResponse(final SessionMissingException e) {
+<span class="nc" id="L37">        debugException(this, e, LOGGER);</span>
+<span class="nc" id="L38">        return status(GONE).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FedoraFixity.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">FedoraFixity.java</span></div><h1>FedoraFixity.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.http.api;
+
+import static javax.ws.rs.core.HttpHeaders.ALLOW;
+import static javax.ws.rs.core.HttpHeaders.LINK;
+import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.inject.Inject;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.HEAD;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.OPTIONS;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Link;
+import javax.ws.rs.core.Response;
+
+import org.fcrepo.http.commons.domain.PATCH;
+import org.fcrepo.http.commons.responses.HtmlTemplate;
+import org.fcrepo.http.commons.responses.RdfNamespacedStream;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.models.Binary;
+import org.fcrepo.kernel.api.services.FixityService;
+
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import io.micrometer.core.annotation.Timed;
+
+/**
+ * Run a fixity check on a path
+ *
+ * @author ajs6f
+ * @since Jun 12, 2013
+ */
+@Timed
+@Scope(&quot;request&quot;)
+@Path(&quot;/{path: .*}/fcr:fixity&quot;)
+public class FedoraFixity extends ContentExposingResource {
+
+<span class="fc" id="L61">    private static final Logger LOGGER = getLogger(FedoraFixity.class);</span>
+
+    private static final String OPTIONS_VALUES = &quot;OPTIONS, GET&quot;;
+
+    @PathParam(&quot;path&quot;) protected String externalPath;
+
+    @Inject private FixityService fixityService;
+
+    /**
+     * Default JAX-RS entry point
+     */
+    public FedoraFixity() {
+<span class="fc" id="L73">        super();</span>
+<span class="fc" id="L74">    }</span>
+
+    /**
+     * Create a new FedoraNodes instance for a given path
+     * @param externalPath the external path
+     */
+    @VisibleForTesting
+<span class="nc" id="L81">    public FedoraFixity(final String externalPath) {</span>
+<span class="nc" id="L82">        this.externalPath = externalPath;</span>
+<span class="nc" id="L83">    }</span>
+
+    /**
+     * Get the results of a fixity check for a path
+     *
+     * GET /path/to/some/datastream/fcr:fixity
+     *
+     * @return datastream fixity in the given format
+     */
+    @GET
+    @HtmlTemplate(value = &quot;fcr:fixity&quot;)
+    @Produces({TURTLE_WITH_CHARSET + &quot;;qs=1.0&quot;, JSON_LD + &quot;;qs=0.8&quot;, N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET,
+            RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET, TEXT_HTML_WITH_CHARSET, &quot;*/*&quot;})
+    public RdfNamespacedStream getDatastreamFixity() {
+
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">        if (!(resource() instanceof Binary)) {</span>
+<span class="nc" id="L99">            throw new NotFoundException(&quot;Error: Resource at &quot; + resource().getFedoraId().getFullIdPath() + &quot; is not a&quot; +</span>
+                    &quot; binary&quot;);
+        }
+
+<span class="fc" id="L103">        final Link.Builder resourceLink = Link.fromUri(RESOURCE.getURI()).rel(&quot;type&quot;);</span>
+<span class="fc" id="L104">        servletResponse.addHeader(LINK, resourceLink.build().toString());</span>
+<span class="fc" id="L105">        final Link.Builder rdfSourceLink = Link.fromUri(RDF_SOURCE.getURI()).rel(&quot;type&quot;);</span>
+<span class="fc" id="L106">        servletResponse.addHeader(LINK, rdfSourceLink.build().toString());</span>
+
+<span class="fc" id="L108">        final Binary binaryResource = (Binary) resource();</span>
+<span class="fc" id="L109">        LOGGER.info(&quot;Get fixity for '{}'&quot;, externalPath);</span>
+
+<span class="fc" id="L111">        final RdfStream rdfStream = httpRdfService.bodyToExternalStream(getUri(binaryResource).toString(),</span>
+<span class="fc" id="L112">                fixityService.checkFixity(binaryResource), identifierConverter());</span>
+<span class="fc" id="L113">        return new RdfNamespacedStream(rdfStream, namespaceRegistry.getNamespaces());</span>
+    }
+
+    @Override
+    protected String externalPath() {
+<span class="fc" id="L118">        return externalPath;</span>
+    }
+
+    @OPTIONS
+    public Response options() {
+<span class="nc" id="L123">        return Response.ok().header(ALLOW, OPTIONS_VALUES).build();</span>
+    }
+    /*
+     * These methods are disallowed, but need to exist here or the path gets caught by the FedoraLdp path matcher.
+     */
+    @HEAD
+    public Response get() {
+<span class="fc" id="L130">        return methodNotAllowed();</span>
+    }
+    @POST
+    public Response post() {
+<span class="fc" id="L134">        return methodNotAllowed();</span>
+    }
+    @PUT
+    public Response put() {
+<span class="fc" id="L138">        return methodNotAllowed();</span>
+    }
+    @PATCH
+    public Response patch() {
+<span class="fc" id="L142">        return methodNotAllowed();</span>
+    }
+    @DELETE
+    public Response delete() {
+<span class="fc" id="L146">        return methodNotAllowed();</span>
+    }
+
+    private Response methodNotAllowed() {
+<span class="fc" id="L150">        return Response.status(Response.Status.METHOD_NOT_ALLOWED).header(ALLOW, OPTIONS_VALUES).build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

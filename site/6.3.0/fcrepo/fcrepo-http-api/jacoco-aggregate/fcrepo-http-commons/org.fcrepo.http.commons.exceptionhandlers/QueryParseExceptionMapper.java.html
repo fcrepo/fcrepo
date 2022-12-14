@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>QueryParseExceptionMapper.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-commons</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.commons.exceptionhandlers</a> &gt; <span class="el_source">QueryParseExceptionMapper.java</span></div><h1>QueryParseExceptionMapper.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.http.commons.exceptionhandlers;
+
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
+
+import org.slf4j.Logger;
+
+import org.apache.jena.query.QueryParseException;
+
+
+/**
+ * Handles Sparql query parsing exceptions thrown when querying or updating.
+ *
+ * @author whikloj
+ * @since September 9, 2014
+ */
+@Provider
+<span class="fc" id="L32">public class QueryParseExceptionMapper implements</span>
+        ExceptionMapper&lt;QueryParseException&gt;, ExceptionDebugLogging {
+
+<span class="fc" id="L35">    private static final Logger LOGGER = getLogger(QueryParseExceptionMapper.class);</span>
+
+    @Override
+    public Response toResponse(final QueryParseException e) {
+
+<span class="fc" id="L40">        LOGGER.error(&quot;Captured a query parse exception {}&quot;, e.getMessage());</span>
+<span class="fc" id="L41">        debugException(this, e, LOGGER);</span>
+<span class="pc bpc" id="L42" title="1 of 2 branches missed.">        if (e.getMessage().matches(&quot;.* Unresolved prefixed name: .*&quot;)) {</span>
+<span class="nc" id="L43">            final Pattern namespacePattern =</span>
+<span class="nc" id="L44">                Pattern.compile(&quot;Unresolved prefixed name: (\\w+:\\w+)&quot;);</span>
+<span class="nc" id="L45">            final Matcher namespaceMatch =</span>
+<span class="nc" id="L46">                namespacePattern.matcher(e.getMessage());</span>
+<span class="nc bnc" id="L47" title="All 2 branches missed.">            if (namespaceMatch.find()) {</span>
+<span class="nc" id="L48">                final String msg =</span>
+<span class="nc" id="L49">                    String.format(</span>
+                        &quot;There are one or more undefined namespace(s) in your request [ %s ], &quot; +
+                        &quot;please define them before retrying&quot;,
+<span class="nc" id="L52">                        namespaceMatch.group(1));</span>
+<span class="nc" id="L53">                return status(BAD_REQUEST).entity(msg).type(TEXT_PLAIN_WITH_CHARSET).build();</span>
+            }
+        }
+
+<span class="fc" id="L57">        return status(BAD_REQUEST).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
