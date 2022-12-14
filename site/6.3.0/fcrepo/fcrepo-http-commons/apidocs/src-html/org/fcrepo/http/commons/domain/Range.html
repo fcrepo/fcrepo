@@ -1,0 +1,195 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * The contents of this file are subject to the license and copyright</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * detailed in the LICENSE and NOTICE files at the root of the source</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * tree.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> */</a>
+<span class="sourceLineNo">006</span><a id="line.6">package org.fcrepo.http.commons.domain;</a>
+<span class="sourceLineNo">007</span><a id="line.7"></a>
+<span class="sourceLineNo">008</span><a id="line.8">import static java.lang.Long.parseLong;</a>
+<span class="sourceLineNo">009</span><a id="line.9">import static java.util.regex.Pattern.compile;</a>
+<span class="sourceLineNo">010</span><a id="line.10"></a>
+<span class="sourceLineNo">011</span><a id="line.11">import java.util.regex.Matcher;</a>
+<span class="sourceLineNo">012</span><a id="line.12">import java.util.regex.Pattern;</a>
+<span class="sourceLineNo">013</span><a id="line.13"></a>
+<span class="sourceLineNo">014</span><a id="line.14">/**</a>
+<span class="sourceLineNo">015</span><a id="line.15"> * Range header parsing logic</a>
+<span class="sourceLineNo">016</span><a id="line.16"> *</a>
+<span class="sourceLineNo">017</span><a id="line.17"> * @author awoods</a>
+<span class="sourceLineNo">018</span><a id="line.18"> */</a>
+<span class="sourceLineNo">019</span><a id="line.19">public class Range {</a>
+<span class="sourceLineNo">020</span><a id="line.20"></a>
+<span class="sourceLineNo">021</span><a id="line.21">    private final long start;</a>
+<span class="sourceLineNo">022</span><a id="line.22"></a>
+<span class="sourceLineNo">023</span><a id="line.23">    private final long end;</a>
+<span class="sourceLineNo">024</span><a id="line.24"></a>
+<span class="sourceLineNo">025</span><a id="line.25">    private static final Pattern rangePattern =</a>
+<span class="sourceLineNo">026</span><a id="line.26">        compile("^bytes\\s*=\\s*(\\d*)\\s*-\\s*(\\d*)");</a>
+<span class="sourceLineNo">027</span><a id="line.27"></a>
+<span class="sourceLineNo">028</span><a id="line.28">    /**</a>
+<span class="sourceLineNo">029</span><a id="line.29">     * Unbounded Range</a>
+<span class="sourceLineNo">030</span><a id="line.30">     */</a>
+<span class="sourceLineNo">031</span><a id="line.31">    private Range() {</a>
+<span class="sourceLineNo">032</span><a id="line.32">        this(0, -1);</a>
+<span class="sourceLineNo">033</span><a id="line.33">    }</a>
+<span class="sourceLineNo">034</span><a id="line.34"></a>
+<span class="sourceLineNo">035</span><a id="line.35">    /**</a>
+<span class="sourceLineNo">036</span><a id="line.36">     * Left-bounded range</a>
+<span class="sourceLineNo">037</span><a id="line.37">     * @param start the start</a>
+<span class="sourceLineNo">038</span><a id="line.38">     */</a>
+<span class="sourceLineNo">039</span><a id="line.39">    public Range(final long start) {</a>
+<span class="sourceLineNo">040</span><a id="line.40">        this(start, -1L);</a>
+<span class="sourceLineNo">041</span><a id="line.41">    }</a>
+<span class="sourceLineNo">042</span><a id="line.42"></a>
+<span class="sourceLineNo">043</span><a id="line.43">    /**</a>
+<span class="sourceLineNo">044</span><a id="line.44">     * Left and right bounded range</a>
+<span class="sourceLineNo">045</span><a id="line.45">     * @param start the start</a>
+<span class="sourceLineNo">046</span><a id="line.46">     * @param end the end</a>
+<span class="sourceLineNo">047</span><a id="line.47">     */</a>
+<span class="sourceLineNo">048</span><a id="line.48">    private Range(final long start, final long end) {</a>
+<span class="sourceLineNo">049</span><a id="line.49">        this.start = start;</a>
+<span class="sourceLineNo">050</span><a id="line.50">        this.end = end;</a>
+<span class="sourceLineNo">051</span><a id="line.51">    }</a>
+<span class="sourceLineNo">052</span><a id="line.52"></a>
+<span class="sourceLineNo">053</span><a id="line.53">    /**</a>
+<span class="sourceLineNo">054</span><a id="line.54">     * Does this range actually impose limits</a>
+<span class="sourceLineNo">055</span><a id="line.55">     * @return true if the range imposes limits</a>
+<span class="sourceLineNo">056</span><a id="line.56">     */</a>
+<span class="sourceLineNo">057</span><a id="line.57">    public boolean hasRange() {</a>
+<span class="sourceLineNo">058</span><a id="line.58">        return !(start == 0 &amp;&amp; end == -1);</a>
+<span class="sourceLineNo">059</span><a id="line.59">    }</a>
+<span class="sourceLineNo">060</span><a id="line.60"></a>
+<span class="sourceLineNo">061</span><a id="line.61">    /**</a>
+<span class="sourceLineNo">062</span><a id="line.62">     * Length contained in the range</a>
+<span class="sourceLineNo">063</span><a id="line.63">     * @return length of the range</a>
+<span class="sourceLineNo">064</span><a id="line.64">     */</a>
+<span class="sourceLineNo">065</span><a id="line.65">    public long size() {</a>
+<span class="sourceLineNo">066</span><a id="line.66">        if (end == -1) {</a>
+<span class="sourceLineNo">067</span><a id="line.67">            return -1;</a>
+<span class="sourceLineNo">068</span><a id="line.68">        }</a>
+<span class="sourceLineNo">069</span><a id="line.69">        return end - start + 1;</a>
+<span class="sourceLineNo">070</span><a id="line.70">    }</a>
+<span class="sourceLineNo">071</span><a id="line.71"></a>
+<span class="sourceLineNo">072</span><a id="line.72">    /**</a>
+<span class="sourceLineNo">073</span><a id="line.73">     * Start of the range</a>
+<span class="sourceLineNo">074</span><a id="line.74">     * @return start of the range</a>
+<span class="sourceLineNo">075</span><a id="line.75">     */</a>
+<span class="sourceLineNo">076</span><a id="line.76">    public long start() {</a>
+<span class="sourceLineNo">077</span><a id="line.77">        return start;</a>
+<span class="sourceLineNo">078</span><a id="line.78">    }</a>
+<span class="sourceLineNo">079</span><a id="line.79"></a>
+<span class="sourceLineNo">080</span><a id="line.80">    /**</a>
+<span class="sourceLineNo">081</span><a id="line.81">     * End of the range</a>
+<span class="sourceLineNo">082</span><a id="line.82">     * @return end of the range</a>
+<span class="sourceLineNo">083</span><a id="line.83">     */</a>
+<span class="sourceLineNo">084</span><a id="line.84">    public long end() {</a>
+<span class="sourceLineNo">085</span><a id="line.85">        return end;</a>
+<span class="sourceLineNo">086</span><a id="line.86">    }</a>
+<span class="sourceLineNo">087</span><a id="line.87"></a>
+<span class="sourceLineNo">088</span><a id="line.88">    /**</a>
+<span class="sourceLineNo">089</span><a id="line.89">     * Convert an HTTP Range header to a Range object</a>
+<span class="sourceLineNo">090</span><a id="line.90">     * @param source the source</a>
+<span class="sourceLineNo">091</span><a id="line.91">     * @return range object</a>
+<span class="sourceLineNo">092</span><a id="line.92">     */</a>
+<span class="sourceLineNo">093</span><a id="line.93">    public static Range convert(final String source) {</a>
+<span class="sourceLineNo">094</span><a id="line.94"></a>
+<span class="sourceLineNo">095</span><a id="line.95">        final Matcher matcher = rangePattern.matcher(source);</a>
+<span class="sourceLineNo">096</span><a id="line.96"></a>
+<span class="sourceLineNo">097</span><a id="line.97">        if (!matcher.matches()) {</a>
+<span class="sourceLineNo">098</span><a id="line.98">            return new Range();</a>
+<span class="sourceLineNo">099</span><a id="line.99">        }</a>
+<span class="sourceLineNo">100</span><a id="line.100"></a>
+<span class="sourceLineNo">101</span><a id="line.101">        final String from = matcher.group(1);</a>
+<span class="sourceLineNo">102</span><a id="line.102">        final String to = matcher.group(2);</a>
+<span class="sourceLineNo">103</span><a id="line.103"></a>
+<span class="sourceLineNo">104</span><a id="line.104">        final long start;</a>
+<span class="sourceLineNo">105</span><a id="line.105"></a>
+<span class="sourceLineNo">106</span><a id="line.106">        if (from.equals("")) {</a>
+<span class="sourceLineNo">107</span><a id="line.107">            start = 0;</a>
+<span class="sourceLineNo">108</span><a id="line.108">        } else {</a>
+<span class="sourceLineNo">109</span><a id="line.109">            start = parseLong(from);</a>
+<span class="sourceLineNo">110</span><a id="line.110">        }</a>
+<span class="sourceLineNo">111</span><a id="line.111"></a>
+<span class="sourceLineNo">112</span><a id="line.112">        final long end;</a>
+<span class="sourceLineNo">113</span><a id="line.113">        if (to.equals("")) {</a>
+<span class="sourceLineNo">114</span><a id="line.114">            end = -1;</a>
+<span class="sourceLineNo">115</span><a id="line.115">        } else {</a>
+<span class="sourceLineNo">116</span><a id="line.116">            end = parseLong(to);</a>
+<span class="sourceLineNo">117</span><a id="line.117">        }</a>
+<span class="sourceLineNo">118</span><a id="line.118"></a>
+<span class="sourceLineNo">119</span><a id="line.119">        return new Range(start, end);</a>
+<span class="sourceLineNo">120</span><a id="line.120">    }</a>
+<span class="sourceLineNo">121</span><a id="line.121">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * The contents of this file are subject to the license and copyright</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * detailed in the LICENSE and NOTICE files at the root of the source</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * tree.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> */</a>
+<span class="sourceLineNo">006</span><a id="line.6">package org.fcrepo.http.commons.exceptionhandlers;</a>
+<span class="sourceLineNo">007</span><a id="line.7"></a>
+<span class="sourceLineNo">008</span><a id="line.8">import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;</a>
+<span class="sourceLineNo">009</span><a id="line.9">import org.slf4j.Logger;</a>
+<span class="sourceLineNo">010</span><a id="line.10"></a>
+<span class="sourceLineNo">011</span><a id="line.11">import javax.ws.rs.core.Context;</a>
+<span class="sourceLineNo">012</span><a id="line.12">import javax.ws.rs.core.Response;</a>
+<span class="sourceLineNo">013</span><a id="line.13">import javax.ws.rs.ext.ExceptionMapper;</a>
+<span class="sourceLineNo">014</span><a id="line.14">import javax.ws.rs.ext.Provider;</a>
+<span class="sourceLineNo">015</span><a id="line.15">import javax.ws.rs.ext.Providers;</a>
+<span class="sourceLineNo">016</span><a id="line.16"></a>
+<span class="sourceLineNo">017</span><a id="line.17">import static javax.ws.rs.core.Response.serverError;</a>
+<span class="sourceLineNo">018</span><a id="line.18">import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;</a>
+<span class="sourceLineNo">019</span><a id="line.19">import static org.slf4j.LoggerFactory.getLogger;</a>
+<span class="sourceLineNo">020</span><a id="line.20"></a>
+<span class="sourceLineNo">021</span><a id="line.21">/**</a>
+<span class="sourceLineNo">022</span><a id="line.22"> * @author cabeer</a>
+<span class="sourceLineNo">023</span><a id="line.23"> * @since 9/13/14</a>
+<span class="sourceLineNo">024</span><a id="line.24"> */</a>
+<span class="sourceLineNo">025</span><a id="line.25"></a>
+<span class="sourceLineNo">026</span><a id="line.26">@Provider</a>
+<span class="sourceLineNo">027</span><a id="line.27">public class RepositoryRuntimeExceptionMapper implements</a>
+<span class="sourceLineNo">028</span><a id="line.28">        ExceptionMapper&lt;RepositoryRuntimeException&gt;, ExceptionDebugLogging {</a>
+<span class="sourceLineNo">029</span><a id="line.29"></a>
+<span class="sourceLineNo">030</span><a id="line.30">    private final Providers providers;</a>
+<span class="sourceLineNo">031</span><a id="line.31"></a>
+<span class="sourceLineNo">032</span><a id="line.32">    /**</a>
+<span class="sourceLineNo">033</span><a id="line.33">     * Get the context Providers so we can rethrow the cause to an appropriate handler</a>
+<span class="sourceLineNo">034</span><a id="line.34">     * @param providers the providers</a>
+<span class="sourceLineNo">035</span><a id="line.35">     */</a>
+<span class="sourceLineNo">036</span><a id="line.36">    public RepositoryRuntimeExceptionMapper(@Context final Providers providers) {</a>
+<span class="sourceLineNo">037</span><a id="line.37">        this.providers = providers;</a>
+<span class="sourceLineNo">038</span><a id="line.38">    }</a>
+<span class="sourceLineNo">039</span><a id="line.39"></a>
+<span class="sourceLineNo">040</span><a id="line.40">    private static final Logger LOGGER = getLogger(RepositoryExceptionMapper.class);</a>
+<span class="sourceLineNo">041</span><a id="line.41"></a>
+<span class="sourceLineNo">042</span><a id="line.42">    @Override</a>
+<span class="sourceLineNo">043</span><a id="line.43">    public Response toResponse(final RepositoryRuntimeException e) {</a>
+<span class="sourceLineNo">044</span><a id="line.44">        final Throwable cause = e.getCause();</a>
+<span class="sourceLineNo">045</span><a id="line.45">        ExceptionMapper&lt;Throwable&gt; exceptionMapper = null;</a>
+<span class="sourceLineNo">046</span><a id="line.46"></a>
+<span class="sourceLineNo">047</span><a id="line.47">        if (cause != null) {</a>
+<span class="sourceLineNo">048</span><a id="line.48">            exceptionMapper = providers.getExceptionMapper((Class&lt;Throwable&gt;) cause.getClass());</a>
+<span class="sourceLineNo">049</span><a id="line.49">        }</a>
+<span class="sourceLineNo">050</span><a id="line.50"></a>
+<span class="sourceLineNo">051</span><a id="line.51">        if (exceptionMapper != null) {</a>
+<span class="sourceLineNo">052</span><a id="line.52">            return exceptionMapper.toResponse(cause);</a>
+<span class="sourceLineNo">053</span><a id="line.53">        }</a>
+<span class="sourceLineNo">054</span><a id="line.54">        LOGGER.error("Caught a repository exception", e);</a>
+<span class="sourceLineNo">055</span><a id="line.55">        return serverError().entity(null).type(TEXT_PLAIN_WITH_CHARSET).build();</a>
+<span class="sourceLineNo">056</span><a id="line.56">    }</a>
+<span class="sourceLineNo">057</span><a id="line.57">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>
